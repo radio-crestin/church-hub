@@ -104,6 +104,7 @@ export function ScheduleVerseRow({
       <button
         type="button"
         onClick={onSelect}
+        data-testid="schedule-verse-open"
         className="flex-1 min-w-0 text-left py-1.5 pr-1 pl-1"
       >
         <div className="flex items-center gap-1.5 min-w-0">

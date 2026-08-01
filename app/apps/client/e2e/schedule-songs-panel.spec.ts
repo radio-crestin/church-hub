@@ -695,12 +695,191 @@ test.describe('Programe panel on the Bible page', () => {
       await expect(songRow).toBeVisible({ timeout: 10000 })
 
       // Clicking it jumps to the songs module, on that exact song.
-      await songRow.getByRole('button').nth(1).click()
+      await songRow.getByTestId('schedule-song-open').click()
       await expect(page).toHaveURL(new RegExp(`/songs/${song.id}`), {
         timeout: 10000,
       })
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+})
+
+test.describe('Programe panel - reordering a mixed list', () => {
+  test('songs and verses reorder against each other, other item types stay put', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Mixed Song ${uniq}`)
+    const schedule = await createSchedule(request, `E2E Mixed Prog ${uniq}`)
+
+    try {
+      const translations = await request.get('/api/bible/translations')
+      const translation = (await translations.json()).data?.[0]
+      test.skip(!translation, 'no bible translation seeded')
+
+      // song, announcement, passage — the announcement sits between the two
+      // rows the panel lists, and must not move.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { slideType: 'announcement', slideContent: 'Anunt' },
+      })
+      const passage = await request.post(
+        `/api/schedules/${schedule.id}/items`,
+        {
+          data: {
+            biblePassage: {
+              translationId: translation.id,
+              translationAbbreviation: translation.abbreviation,
+              bookCode: 'JHN',
+              bookName: 'Ioan',
+              startChapter: 3,
+              startVerse: 16,
+              endChapter: 3,
+              endVerse: 16,
+            },
+          },
+        },
+      )
+      test.skip(passage.status() !== 201, 'passage could not be created')
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem(
+          'song-detail:accordion-column-visible',
+          'true',
+        )
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        // Song page + "also show verses" on: the list is mixed.
+        window.localStorage.setItem('programPanel.showVerses', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+
+      const songRow = panel.getByTestId('schedule-song-item')
+      const verseRow = panel.getByTestId('schedule-verse-item')
+      await expect(songRow).toHaveCount(1, { timeout: 10000 })
+      await expect(verseRow).toHaveCount(1)
+
+      // Drag handles are available even though the list mixes both kinds.
+      const handle = songRow.first().getByTestId('schedule-song-drag-handle')
+      await expect(handle).toBeVisible()
+
+      const from = await handle.boundingBox()
+      const to = await verseRow.first().boundingBox()
+      if (!from || !to) throw new Error('drag targets not laid out')
+
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(
+        from.x + from.width / 2,
+        from.y + from.height / 2 + 20,
+      )
+      await page.mouse.move(to.x + to.width / 2, to.y + to.height + 5, {
+        steps: 10,
+      })
+      await page.mouse.up()
+
+      // The passage now precedes the song, and the announcement — which this
+      // panel never lists — is still the middle item.
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/schedules/${schedule.id}`)
+            const { data } = await res.json()
+            return data.items.map((i: { itemType: string }) => i.itemType)
+          },
+          { timeout: 10000 },
+        )
+        .toEqual(['bible_passage', 'slide', 'song'])
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+})
+
+test.describe('Song list drag handles', () => {
+  test('every row carries a grip, in browse and in search results', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Grip Song ${uniq}`)
+
+    try {
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/songs?fromSong=true')
+      await page.waitForLoadState('networkidle')
+
+      // Browsing: the grip is rendered on the cards.
+      const cards = page.getByTestId('song-card')
+      await expect(cards.first()).toBeVisible({ timeout: 10000 })
+      await expect(
+        cards.first().getByTestId('song-card-drag-handle'),
+      ).toBeAttached()
+
+      // Searching: the suggestions carry it too.
+      await page
+        .getByTestId('song-search-input')
+        .or(page.getByPlaceholder(/caut|search/i))
+        .first()
+        .fill(`E2E Grip Song ${uniq}`)
+
+      const hit = page
+        .getByTestId('song-card')
+        .filter({ hasText: `E2E Grip Song ${uniq}` })
+      await expect(hit).toBeVisible({ timeout: 10000 })
+      await expect(hit.getByTestId('song-card-drag-handle')).toBeAttached()
+    } finally {
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('an internal song drag does not raise the file-import overlay', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E NoOverlay ${uniq}`)
+
+    try {
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/songs?fromSong=true')
+      await page.waitForLoadState('networkidle')
+      await expect(page.getByTestId('song-card').first()).toBeVisible({
+        timeout: 10000,
+      })
+
+      // Dispatch a drag carrying our own MIME. The provider must ignore it, so
+      // the "drop PowerPoint files here" overlay never shows.
+      await page.evaluate(() => {
+        const transfer = new DataTransfer()
+        transfer.setData(
+          'application/x-church-hub-song',
+          JSON.stringify({ id: 1, title: 'x' }),
+        )
+        document.dispatchEvent(
+          new DragEvent('dragenter', {
+            dataTransfer: transfer,
+            bubbles: true,
+          }),
+        )
+      })
+
+      await expect(page.locator('text=/powerpoint|pptx/i')).toHaveCount(0)
+    } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
   })

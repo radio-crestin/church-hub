@@ -106,6 +106,7 @@ export function ScheduleSongRow({
       <button
         type="button"
         onClick={onSelect}
+        data-testid="schedule-song-open"
         className="flex-1 min-w-0 text-left py-1.5 pr-1 pl-1"
       >
         <div className="text-sm font-medium truncate text-gray-900 dark:text-white">
