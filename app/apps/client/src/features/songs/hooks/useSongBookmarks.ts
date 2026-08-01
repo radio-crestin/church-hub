@@ -7,7 +7,6 @@ import {
   getBookmarks,
   markBookmarkSung,
   removeBookmark,
-  reorderBookmarks,
   type SongBookmark,
 } from '../service'
 
@@ -35,7 +34,7 @@ export function useRemoveBookmark() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (songId: number) => removeBookmark(songId),
+    mutationFn: (bookmarkId: number) => removeBookmark(bookmarkId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
     },
@@ -58,10 +57,15 @@ export function useMarkBookmarkSung() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ songId, isSung }: { songId: number; isSung: boolean }) =>
-      markBookmarkSung(songId, isSung),
+    mutationFn: ({
+      bookmarkId,
+      isSung,
+    }: {
+      bookmarkId: number
+      isSung: boolean
+    }) => markBookmarkSung(bookmarkId, isSung),
     // Optimistic toggle so the button feels instant.
-    onMutate: async ({ songId, isSung }) => {
+    onMutate: async ({ bookmarkId, isSung }) => {
       await queryClient.cancelQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
       const previous = queryClient.getQueryData<SongBookmark[]>(
         SONG_BOOKMARKS_QUERY_KEY,
@@ -70,7 +74,7 @@ export function useMarkBookmarkSung() {
         queryClient.setQueryData<SongBookmark[]>(
           SONG_BOOKMARKS_QUERY_KEY,
           previous.map((b) =>
-            b.songId === songId
+            b.id === bookmarkId
               ? { ...b, isSung, sungAt: isSung ? Date.now() : null }
               : b,
           ),
@@ -84,35 +88,6 @@ export function useMarkBookmarkSung() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
-    },
-  })
-}
-
-export function useReorderBookmarks() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (songIds: number[]) => reorderBookmarks(songIds),
-    onMutate: async (songIds: number[]) => {
-      await queryClient.cancelQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
-      const previous = queryClient.getQueryData<SongBookmark[]>(
-        SONG_BOOKMARKS_QUERY_KEY,
-      )
-
-      if (previous) {
-        const reordered = songIds
-          .map((id) => previous.find((b) => b.songId === id))
-          .filter((b): b is SongBookmark => b !== undefined)
-        queryClient.setQueryData(SONG_BOOKMARKS_QUERY_KEY, reordered)
-      }
-
-      return { previous }
-    },
-    onError: (_err, _songIds, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(SONG_BOOKMARKS_QUERY_KEY, context.previous)
-      }
       queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
     },
   })

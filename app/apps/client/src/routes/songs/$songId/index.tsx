@@ -521,18 +521,35 @@ function SongPreviewPage() {
     [song, upsertSong, numericId],
   )
 
-  const isBookmarked = useMemo(
-    () => bookmarks.some((b) => b.songId === numericId),
+  // Every bookmark row for this song. A song may be bookmarked more than once,
+  // so this is a list rather than a flag.
+  const songBookmarks = useMemo(
+    () => bookmarks.filter((b) => b.songId === numericId),
     [bookmarks, numericId],
   )
+  const isBookmarked = songBookmarks.length > 0
 
+  /**
+   * The toolbar icon reads as "this song is in Marcaje", so it stays a strict
+   * toggle: pressing it when bookmarked clears every copy. Extra copies are
+   * added deliberately — by dragging the song onto the panel — not by pressing
+   * a button that looks like an on/off switch.
+   */
   const handleToggleBookmark = useCallback(() => {
     if (isBookmarked) {
-      removeBookmarkMutation.mutate(numericId)
+      for (const bookmark of songBookmarks) {
+        removeBookmarkMutation.mutate(bookmark.id)
+      }
     } else {
       addBookmarkMutation.mutate(numericId)
     }
-  }, [isBookmarked, numericId, addBookmarkMutation, removeBookmarkMutation])
+  }, [
+    isBookmarked,
+    songBookmarks,
+    numericId,
+    addBookmarkMutation,
+    removeBookmarkMutation,
+  ])
 
   const handleSongAddedToSchedule = useCallback(
     (scheduleId: number) => {
