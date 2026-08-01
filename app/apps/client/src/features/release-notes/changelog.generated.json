@@ -1,22 +1,5 @@
 [
   {
-    "version": "0.1.88",
-    "date": "2026-08-01T22:22:24+02:00",
-    "features": [
-      {
-        "scope": "app-update",
-        "message": "a real updates page instead of a pop-up and a link to GitHub"
-      }
-    ],
-    "bugFixes": [],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.87 [skip ci]"
-      }
-    ]
-  },
-  {
     "version": "0.1.87",
     "date": "2026-08-01T10:15:23+02:00",
     "features": [],
