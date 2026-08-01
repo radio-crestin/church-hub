@@ -124,3 +124,34 @@ test.describe('App update - download state', () => {
     expect((await res.json()).error).toBe('no_downloaded_artifact')
   })
 })
+
+test.describe('App update - page', () => {
+  test('the updates page shows the version and a working check button', async ({
+    page,
+  }) => {
+    await page.goto('/settings/updates')
+    await page.waitForLoadState('networkidle')
+
+    const panel = page.getByTestId('update-panel')
+    await expect(panel).toBeVisible({ timeout: 10000 })
+
+    // Current version and the download folder are always shown.
+    await expect(panel.getByTestId('update-download-dir')).toBeVisible()
+
+    const check = panel.getByTestId('update-check-now')
+    await expect(check).toBeVisible()
+    await check.click()
+    // The check runs against GitHub, which may be unreachable from CI; either
+    // way the page must stay usable rather than get stuck.
+    await expect(check).toBeEnabled({ timeout: 15000 })
+  })
+
+  test('no update dialog opens over the app', async ({ page }) => {
+    // The update flow lives on its own page now — a modal that opened itself
+    // interrupted whatever the operator was doing.
+    await page.goto('/songs?fromSong=true')
+    await page.waitForLoadState('networkidle')
+
+    await expect(page.getByTestId('update-available-modal')).toHaveCount(0)
+  })
+})
