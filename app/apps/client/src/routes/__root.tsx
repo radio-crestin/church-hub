@@ -33,6 +33,7 @@ import {
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
 import { SongDiscoveryProvider } from '~/features/song-discovery'
 import { FileDropZoneProvider } from '~/features/song-import'
+import { SongDragGhost } from '~/features/songs/components/SongDragGhost'
 import { I18nProvider } from '~/provider/i18n-provider'
 import { PermissionsProvider } from '~/provider/permissions-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
@@ -165,6 +166,10 @@ function MainLayout() {
                         <MIDISettingsProvider>
                           <ShortcutRecordingProvider>
                             <FileDropZoneProvider>
+                              {/* Follows the cursor while a song is dragged
+                                  onto Marcaje / Programe. Global because the
+                                  drag crosses subtrees. */}
+                              <SongDragGhost />
                               <AutoOpenScreens />
                               <AutoReopenScreensOnPresentation />
                               <AutoCloseScreensOnHide />
