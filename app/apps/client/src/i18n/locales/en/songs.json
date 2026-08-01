@@ -86,8 +86,13 @@
     "label": "Jump to letter",
     "jumpTo": "Jump to songs starting with {{letter}}"
   },
+  "dragToPanel": "Drag onto Marcaje or Programe",
   "picker": {
-    "selectSong": "Select Song"
+    "selectSong": "Select Song",
+    "searchResults": "Showing {{shown}} of {{total}} results",
+    "loadedCount_one": "{{count}} song loaded",
+    "loadedCount_other": "{{count}} songs loaded",
+    "loadMore": "Load {{count}} more"
   },
   "import": {
     "title": "Import from Text",

@@ -5,6 +5,7 @@ export {
   getScheduleItemById,
   getSchedules,
 } from './getSchedules'
+export { markScheduleItemSung } from './markScheduleItemSung'
 export { removeItemFromSchedule } from './removeItemFromSchedule'
 export { reorderScheduleItems } from './reorderScheduleItems'
 export type {

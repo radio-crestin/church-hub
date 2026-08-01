@@ -123,6 +123,11 @@ export const screenSchemas = {
         description:
           'If true, this screen is mirrored in the in-app control-room preview panel. At most one screen is the preview screen at a time.',
       },
+      openOnStartup: {
+        type: 'boolean',
+        description:
+          "Open this screen's window automatically when the app launches. Independent of isActive: when false the window stays closed at launch but still opens as soon as content is presented. Defaults to true.",
+      },
       width: { type: 'integer', description: 'Screen width in pixels' },
       height: { type: 'integer', description: 'Screen height in pixels' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
@@ -164,6 +169,11 @@ export const screenSchemas = {
       alwaysOnTop: { type: 'boolean' },
       closeOnEscape: { type: 'boolean' },
       isPreviewScreen: { type: 'boolean' },
+      openOnStartup: {
+        type: 'boolean',
+        description:
+          "Open this screen's window automatically when the app launches",
+      },
       width: { type: 'integer' },
       height: { type: 'integer' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },

@@ -35,6 +35,13 @@ export const backupConfig = sqliteTable('backup_config', {
   intervalHours: integer('interval_hours').notNull().default(24),
   maxBackups: integer('max_backups').notNull().default(5),
   lastBackupAt: integer('last_backup_at', { mode: 'timestamp' }),
+  /**
+   * Folder the local copy of each backup is written to. Null disables local
+   * backups entirely — they are opt-in, since they need a path the operator
+   * chooses (an external drive, a synced folder, …).
+   */
+  localBackupPath: text('local_backup_path'),
+  lastLocalBackupAt: integer('last_local_backup_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

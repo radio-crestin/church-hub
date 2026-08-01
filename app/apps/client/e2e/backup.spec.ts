@@ -1,3 +1,6 @@
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 
 /**
@@ -27,6 +30,8 @@ test.describe('Backup - API', () => {
       'intervalHours',
       'maxBackups',
       'lastBackupAt',
+      'localBackupPath',
+      'lastLocalBackupAt',
       'storage',
     ]) {
       expect(json.data).toHaveProperty(key)
@@ -152,5 +157,128 @@ test.describe('Backup - UI', () => {
 
     const section = page.locator('text=/google drive|backup|copie de rezerv/i')
     await expect(section.first()).toBeVisible({ timeout: 10000 })
+  })
+})
+
+/**
+ * Local backups need no Google account, so unlike the Drive flow the whole
+ * round-trip is exercised here: point the app at a temp folder, back up, list,
+ * delete.
+ */
+test.describe('Backup - local', () => {
+  let folder: string
+
+  test.beforeEach(() => {
+    folder = mkdtempSync(join(tmpdir(), 'church-hub-e2e-backup-'))
+  })
+
+  test.afterEach(async ({ request }) => {
+    await request.put('/api/backup/config', { data: { localBackupPath: null } })
+    rmSync(folder, { recursive: true, force: true })
+  })
+
+  test('writes, lists and deletes a backup in the configured folder', async ({
+    request,
+  }) => {
+    const configured = await request.put('/api/backup/config', {
+      data: { localBackupPath: folder },
+    })
+    expect(configured.status()).toBe(200)
+    expect((await configured.json()).data.localBackupPath).toBe(folder)
+
+    const created = await request.post('/api/backup/local/now')
+    expect(created.status()).toBe(200)
+    const createdJson = await created.json()
+    expect(createdJson.data.success).toBe(true)
+    expect(createdJson.data.path).toContain(folder)
+
+    // The file really landed on disk, not just in the response.
+    const onDisk = readdirSync(folder).filter((name) => name.endsWith('.db'))
+    expect(onDisk.length).toBe(1)
+
+    const listed = await request.get('/api/backup/local/list')
+    expect(listed.status()).toBe(200)
+    const backups = (await listed.json()).data.backups
+    expect(backups.length).toBe(1)
+    expect(backups[0].name).toBe(onDisk[0])
+    expect(backups[0].sizeBytes).toBeGreaterThan(0)
+
+    const deleted = await request.post('/api/backup/local/delete', {
+      data: { fileName: backups[0].name },
+    })
+    expect(deleted.status()).toBe(200)
+    expect((await deleted.json()).data.success).toBe(true)
+    expect(readdirSync(folder).filter((n) => n.endsWith('.db')).length).toBe(0)
+  })
+
+  test('backing up fails cleanly with no folder configured', async ({
+    request,
+  }) => {
+    await request.put('/api/backup/config', { data: { localBackupPath: null } })
+
+    const response = await request.post('/api/backup/local/now')
+    expect(response.status()).toBe(400)
+    expect((await response.json()).error).toBe('no_local_path')
+
+    // Listing is not an error state — it is simply empty.
+    const listed = await request.get('/api/backup/local/list')
+    expect(listed.status()).toBe(200)
+    expect((await listed.json()).data.backups).toEqual([])
+  })
+
+  test('a relative path is refused so backups never land in the CWD', async ({
+    request,
+  }) => {
+    await request.put('/api/backup/config', {
+      data: { localBackupPath: 'relative/backups' },
+    })
+
+    const response = await request.post('/api/backup/local/now')
+    expect(response.status()).toBe(400)
+    expect((await response.json()).error).toBe('no_local_path')
+  })
+
+  test('delete refuses names outside the backup naming convention', async ({
+    request,
+  }) => {
+    await request.put('/api/backup/config', {
+      data: { localBackupPath: folder },
+    })
+
+    for (const fileName of [
+      '../../etc/hosts',
+      'notes.txt',
+      'church-hub-backup-v1.db/../x',
+    ]) {
+      const response = await request.post('/api/backup/local/delete', {
+        data: { fileName },
+      })
+      expect(response.status()).toBe(400)
+      expect((await response.json()).error).toBe('invalid_file_name')
+    }
+
+    const missingName = await request.post('/api/backup/local/delete', {
+      data: {},
+    })
+    expect(missingName.status()).toBe(400)
+  })
+
+  test('retention prunes older local backups', async ({ request }) => {
+    await request.put('/api/backup/config', {
+      data: { localBackupPath: folder, maxBackups: 2 },
+    })
+
+    for (let i = 0; i < 3; i++) {
+      const response = await request.post('/api/backup/local/now')
+      expect(response.status()).toBe(200)
+      // Backup file names carry a millisecond timestamp; a small gap keeps
+      // them distinct.
+      await new Promise((resolve) => setTimeout(resolve, 1100))
+    }
+
+    const listed = await request.get('/api/backup/local/list')
+    expect((await listed.json()).data.backups.length).toBe(2)
+
+    await request.put('/api/backup/config', { data: { maxBackups: 5 } })
   })
 })

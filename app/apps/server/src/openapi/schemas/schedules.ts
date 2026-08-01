@@ -25,11 +25,22 @@ export const scheduleSchemas = {
           id: { type: 'integer' },
           title: { type: 'string' },
           categoryName: { type: 'string', nullable: true },
+          tagNames: { type: 'array', items: { type: 'string' } },
         },
       },
       slides: {
         type: 'array',
         items: { $ref: '#/components/schemas/SongSlide' },
+      },
+      keyLine: { type: 'string', nullable: true },
+      isSung: {
+        type: 'boolean',
+        description: 'Manual "already sung" marker, scoped to this schedule',
+      },
+      sungAt: {
+        type: 'integer',
+        nullable: true,
+        description: 'Unix timestamp in ms when marked sung, null otherwise',
       },
       slideType: { $ref: '#/components/schemas/SlideTemplate' },
       slideContent: { type: 'string', nullable: true },

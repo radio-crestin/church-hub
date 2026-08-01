@@ -1,6 +1,8 @@
 import { GripHorizontal } from 'lucide-react'
 import { useCallback, useRef } from 'react'
 
+import type { ScheduleItem } from '~/features/schedules'
+import { SchedulePanel } from '~/features/schedules'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { DIVIDER_KEYS } from '~/service/layout'
 import { SongBookmarksPanel } from './SongBookmarksPanel'
@@ -12,41 +14,58 @@ interface SongAccordionColumnProps {
   /** The song currently open — drives the Versiuni panel and active highlight. */
   song: SongWithSlides
   bookmarksOpen: boolean
+  schedulesOpen: boolean
   versionsOpen: boolean
   onToggleBookmarks: () => void
+  onToggleSchedules: () => void
   onToggleVersions: () => void
   onSelectBookmarkSong: (bookmark: { songId: number }) => void
-  onAddAllBookmarksToSchedule: (songIds: number[]) => void
+  onSelectScheduleSong: (songId: number) => void
+  /** Jumps to the Bible page when a program's verse row is clicked. */
+  onSelectSchedulePassage: (item: ScheduleItem) => void
+  onOpenSchedule: (scheduleId: number) => void
+  onAddAllBookmarksToSchedule: () => void
   canViewSongVersions: boolean
   canAddSongVersion: boolean
   canEditSongVersion: boolean
   canDeleteSongVersion: boolean
+  canViewSchedules: boolean
   attentionBadge?: string | null
   className?: string
   style?: React.CSSProperties
 }
 
 /**
- * The song page's right-hand column: the user's bookmarks (Marcaje) stacked
- * above the similar/related versions (Versiuni), each collapsible, with a
- * draggable divider between them when both are expanded. Shared by the classic
- * song layout and the PowerPoint stage layout so the panel behaves identically
- * in both. The parent owns the column's width and show/hide; this component
- * owns the internal Marcaje ↔ Versiuni split.
+ * The song page's right-hand column: the user's bookmarks (Marcaje), the songs
+ * of a chosen program (Programe) and the similar/related versions (Versiuni),
+ * each collapsible. Shared by the classic song layout and the PowerPoint stage
+ * layout so the panels behave identically in both. The parent owns the column's
+ * width and show/hide; this component owns the internal split.
+ *
+ * The draggable Marcaje ↔ Versiuni divider is preserved for the two-section
+ * case (its position is persisted and operators rely on it). As soon as the
+ * Programe section is expanded the column falls back to plain flex
+ * distribution, which keeps three sections legible without a second divider.
  */
 export function SongAccordionColumn({
   isLargeScreen,
   song,
   bookmarksOpen,
+  schedulesOpen,
   versionsOpen,
   onToggleBookmarks,
+  onToggleSchedules,
   onToggleVersions,
   onSelectBookmarkSong,
+  onSelectScheduleSong,
+  onSelectSchedulePassage,
+  onOpenSchedule,
   onAddAllBookmarksToSchedule,
   canViewSongVersions,
   canAddSongVersion,
   canEditSongVersion,
   canDeleteSongVersion,
+  canViewSchedules,
   attentionBadge = null,
   className = '',
   style,
@@ -59,11 +78,17 @@ export function SongAccordionColumn({
     50,
   )
 
-  // The Marcaje↔Versiuni divider only makes sense when both sections are
-  // expanded and visible (Marcaje is hidden below `lg`, Versiuni is gated by
-  // the view permission). Otherwise the column falls back to flex behaviour.
+  // The Marcaje↔Versiuni divider only makes sense when exactly those two
+  // sections are expanded and visible (Marcaje is hidden below `lg`, Versiuni is
+  // gated by the view permission, Programe would be a third section between
+  // them). Otherwise the column falls back to flex behaviour.
+  const schedulesVisible = isLargeScreen && canViewSchedules
   const splitActive =
-    isLargeScreen && bookmarksOpen && versionsOpen && canViewSongVersions
+    isLargeScreen &&
+    bookmarksOpen &&
+    versionsOpen &&
+    canViewSongVersions &&
+    !(schedulesVisible && schedulesOpen)
 
   const handleDividerMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -112,7 +137,6 @@ export function SongAccordionColumn({
         <SongBookmarksPanel
           onSelectSong={onSelectBookmarkSong}
           activeSongId={song.id}
-          onAddAllToSchedule={onAddAllBookmarksToSchedule}
           isCollapsed={!bookmarksOpen}
           onToggleCollapse={onToggleBookmarks}
         />
@@ -126,6 +150,25 @@ export function SongAccordionColumn({
           <GripHorizontal
             size={16}
             className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+          />
+        </div>
+      ) : null}
+
+      {canViewSchedules ? (
+        <div
+          className={`hidden lg:block min-h-0 ${
+            schedulesOpen ? 'flex-1' : 'flex-none'
+          }`}
+        >
+          <SchedulePanel
+            activeSongId={song.id}
+            onSelectSong={onSelectScheduleSong}
+            onSelectPassage={onSelectSchedulePassage}
+            onOpenSchedule={onOpenSchedule}
+            candidateSong={{ id: song.id, title: song.title }}
+            onAddAllBookmarks={onAddAllBookmarksToSchedule}
+            isCollapsed={!schedulesOpen}
+            onToggleCollapse={onToggleSchedules}
           />
         </div>
       ) : null}

@@ -486,10 +486,16 @@ export async function setDisplayAlwaysOnTop(
 }
 
 /**
- * Opens all active screens with native windows
+ * Opens the screens the operator wants up as soon as the app launches.
+ *
+ * `isActive` alone used to decide this, which meant the startup set was
+ * whatever happened to be open last. `openOnStartup` makes it an explicit,
+ * per-screen choice: turn it off and the window stays closed at launch, yet
+ * `reopenMissingActiveScreens` still brings it up the moment something is
+ * presented — after which it behaves like every other screen.
  */
 export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
-  const activeScreens = screens.filter((s) => s.isActive)
+  const activeScreens = screens.filter((s) => s.isActive && s.openOnStartup)
 
   for (const screen of activeScreens) {
     // Always use 'native' mode (matching ScreenManager behavior).

@@ -17,19 +17,19 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  * stamped when marking sung and cleared when unmarking.
  */
 export function markBookmarkSung(
-  songId: number,
+  bookmarkId: number,
   isSung: boolean,
 ): OperationResult {
   try {
-    log('debug', `Marking bookmark for song ${songId} sung=${isSung}`)
+    log('debug', `Marking bookmark ${bookmarkId} sung=${isSung}`)
 
     const db = getDatabase()
     db.update(songBookmarks)
       .set({ isSung, sungAt: isSung ? new Date() : null })
-      .where(eq(songBookmarks.songId, songId))
+      .where(eq(songBookmarks.id, bookmarkId))
       .run()
 
-    log('info', `Bookmark for song ${songId} marked sung=${isSung}`)
+    log('info', `Bookmark ${bookmarkId} marked sung=${isSung}`)
     return { success: true }
   } catch (error) {
     log('error', `Failed to mark bookmark sung: ${error}`)

@@ -1,4 +1,4 @@
-import { Download, History, Search, Trash2 } from 'lucide-react'
+import { ChevronDown, Download, History, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,6 +11,13 @@ const ITEMS_PER_PAGE = 20
 
 interface BibleHistoryPanelProps {
   onSelectVerse: (item: BibleHistoryItemType) => void
+  /**
+   * Renders a chevron beside the title so the panel behaves like the song
+   * page's Marcaje section: the body folds away while the header — and its
+   * export/clear actions — stay reachable.
+   */
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
 interface GroupedHistory {
@@ -108,7 +115,11 @@ function formatHistoryAsSchedule(
   return lines.join('\n')
 }
 
-export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
+export function BibleHistoryPanel({
+  onSelectVerse,
+  isCollapsed = false,
+  onToggleCollapse,
+}: BibleHistoryPanelProps) {
   const { t } = useTranslation('bible')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -236,7 +247,24 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {onToggleCollapse ? (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              aria-expanded={!isCollapsed}
+              aria-label={
+                isCollapsed ? t('history.expand') : t('history.collapse')
+              }
+              data-testid="bible-history-collapse"
+              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+              />
+            </button>
+          ) : null}
           <History className="w-4 h-4 text-teal-600 dark:text-teal-400" />
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('history.title')}
@@ -271,82 +299,86 @@ export function BibleHistoryPanel({ onSelectVerse }: BibleHistoryPanelProps) {
         )}
       </div>
 
-      {/* Search */}
-      {historyItems.length > 3 && (
-        <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('history.searchPlaceholder')}
-              className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-            />
-            {searchQuery && (
-              <ClearSearchButton
-                inputRef={searchInputRef}
-                onClear={() => setSearchQuery('')}
-                size={14}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Content */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
-      >
-        {isLoading ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            ...
-          </div>
-        ) : historyItems.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            {t('history.empty')}
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            {t('history.noResults')}
-          </div>
-        ) : (
-          <div className="p-2 flex flex-col gap-3">
-            {visibleGroupedHistory.map((group) => (
-              <div key={group.date}>
-                {/* Date Header */}
-                <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1.5 mb-1.5">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    {group.dateLabel}
-                  </span>
-                </div>
-                {/* Items for this day */}
-                <div className="flex flex-col gap-1.5">
-                  {group.items.map((item) => (
-                    <BibleHistoryItem
-                      key={item.id}
-                      item={item}
-                      onClick={() => onSelectVerse(item)}
-                    />
-                  ))}
-                </div>
+      {isCollapsed ? null : (
+        <>
+          {/* Search */}
+          {historyItems.length > 3 && (
+            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('history.searchPlaceholder')}
+                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                />
+                {searchQuery && (
+                  <ClearSearchButton
+                    inputRef={searchInputRef}
+                    onClear={() => setSearchQuery('')}
+                    size={14}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  />
+                )}
               </div>
-            ))}
-            {/* Load more trigger */}
-            {hasMore && (
-              <div
-                ref={loadMoreRef}
-                className="py-2 text-center text-xs text-gray-400"
-              >
+            </div>
+          )}
+
+          {/* Content */}
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
+          >
+            {isLoading ? (
+              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 ...
               </div>
+            ) : historyItems.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                {t('history.empty')}
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                {t('history.noResults')}
+              </div>
+            ) : (
+              <div className="p-2 flex flex-col gap-3">
+                {visibleGroupedHistory.map((group) => (
+                  <div key={group.date}>
+                    {/* Date Header */}
+                    <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1.5 mb-1.5">
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        {group.dateLabel}
+                      </span>
+                    </div>
+                    {/* Items for this day */}
+                    <div className="flex flex-col gap-1.5">
+                      {group.items.map((item) => (
+                        <BibleHistoryItem
+                          key={item.id}
+                          item={item}
+                          onClick={() => onSelectVerse(item)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {/* Load more trigger */}
+                {hasMore && (
+                  <div
+                    ref={loadMoreRef}
+                    className="py-2 text-center text-xs text-gray-400"
+                  >
+                    ...
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }
