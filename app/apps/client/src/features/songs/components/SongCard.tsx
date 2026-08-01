@@ -3,6 +3,7 @@ import { forwardRef } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
+import { setSongDragData } from '../utils/songDragData'
 
 interface SongCardProps {
   song: {
@@ -24,6 +25,11 @@ interface SongCardProps {
   showCategoryInTitle?: boolean
   /** Unseen sync change applied from another device (renders a badge). */
   syncChangeKind?: SyncChangeKind
+  /**
+   * Lets the card be dragged onto the Marcaje / Programe panels. The song stays
+   * in the list — this is a copy-style drag, not a move.
+   */
+  isDraggable?: boolean
 }
 
 export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
@@ -35,6 +41,7 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
       isSelected = false,
       showCategoryInTitle,
       syncChangeKind,
+      isDraggable = false,
     },
     ref,
   ) {
@@ -47,6 +54,12 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
         ref={ref}
         type="button"
         data-testid="song-card"
+        draggable={isDraggable}
+        onDragStart={
+          isDraggable
+            ? (e) => setSongDragData(e, { id: song.id, title: song.title })
+            : undefined
+        }
         onClick={(e) => {
           // CMD+click (Mac) or Ctrl+click (Windows/Linux) opens in new window
           if ((e.metaKey || e.ctrlKey) && onMiddleClick) {

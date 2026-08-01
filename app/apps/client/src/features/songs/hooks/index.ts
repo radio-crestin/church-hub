@@ -41,6 +41,7 @@ export {
   useReorderBookmarks,
   useSongBookmarks,
 } from './useSongBookmarks'
+export { useSongDropZone } from './useSongDropZone'
 export {
   type SongEditorLayout,
   setSongEditorLayout,

@@ -18,7 +18,6 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   Bookmark,
-  CalendarPlus,
   Check,
   ChevronDown,
   Download,
@@ -35,6 +34,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ClearSearchButton } from '~/ui/search'
 import {
+  useAddBookmark,
   useAddBookmarkNote,
   useBookmarkNotes,
   useClearBookmarks,
@@ -46,6 +46,7 @@ import {
   useSongBookmarks,
   useUpdateBookmarkNote,
 } from '../hooks'
+import { useSongDropZone } from '../hooks/useSongDropZone'
 import type { BookmarkNote, SongBookmark } from '../service'
 
 // Unified item type for the bookmark list
@@ -316,8 +317,12 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
 
 interface SongBookmarksPanelProps {
   onSelectSong: (bookmark: SongBookmark) => void
-  onAddAllToSchedule?: (songIds: number[]) => void
   activeSongId?: number
+  /**
+   * Accepts songs dragged in from the song list. The song stays in the list —
+   * dropping here only bookmarks it.
+   */
+  acceptsSongDrop?: boolean
   /**
    * When provided, renders a chevron toggle inline with the title so the
    * panel can act as its own accordion section without a wrapping
@@ -331,8 +336,8 @@ interface SongBookmarksPanelProps {
 
 export function SongBookmarksPanel({
   onSelectSong,
-  onAddAllToSchedule,
   activeSongId,
+  acceptsSongDrop = false,
   isCollapsed = false,
   onToggleCollapse,
 }: SongBookmarksPanelProps) {
@@ -340,6 +345,7 @@ export function SongBookmarksPanel({
   const { data: bookmarks = [], isLoading } = useSongBookmarks()
   const { data: notes = [] } = useBookmarkNotes()
   const clearBookmarksMutation = useClearBookmarks()
+  const addBookmarkMutation = useAddBookmark()
   const removeBookmarkMutation = useRemoveBookmark()
   const markSungMutation = useMarkBookmarkSung()
   const reorderItemsMutation = useReorderBookmarkItems()
@@ -494,11 +500,15 @@ export function SongBookmarksPanel({
     [removeNoteMutation],
   )
 
-  const handleAddAllToSchedule = useCallback(() => {
-    if (bookmarks.length > 0 && onAddAllToSchedule) {
-      onAddAllToSchedule(bookmarks.map((b) => b.songId))
-    }
-  }, [bookmarks, onAddAllToSchedule])
+  const { isOver: isSongOver, dropProps } = useSongDropZone(
+    acceptsSongDrop
+      ? (song) => {
+          if (!bookmarks.some((b) => b.songId === song.id)) {
+            addBookmarkMutation.mutate(song.id)
+          }
+        }
+      : undefined,
+  )
 
   const handleExport = useCallback(async () => {
     const text = await exportMutation.mutateAsync()
@@ -566,7 +576,15 @@ export function SongBookmarksPanel({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full">
+    <div
+      {...dropProps}
+      data-testid="bookmarks-drop-zone"
+      className={`bg-white dark:bg-gray-800 rounded-lg border flex flex-col overflow-hidden h-full transition-colors ${
+        isSongOver
+          ? 'border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/40'
+          : 'border-gray-200 dark:border-gray-700'
+      }`}
+    >
       {/* Header — when `onToggleCollapse` is wired, the leading chevron lets
           this panel double as its own accordion section so the parent doesn't
           have to wrap it in a CollapsibleSection (which used to stack a
@@ -625,16 +643,6 @@ export function SongBookmarksPanel({
             >
               <Download className="w-3.5 h-3.5" />
             </button>
-            {onAddAllToSchedule && (
-              <button
-                type="button"
-                onClick={handleAddAllToSchedule}
-                className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
-                title={t('actions.addToSchedule')}
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-              </button>
-            )}
             <button
               type="button"
               onClick={() => clearBookmarksMutation.mutate()}
