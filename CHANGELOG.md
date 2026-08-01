@@ -2,6 +2,16 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.88 — 2026-08-01
+
+### 🚀 Features
+
+- **app-update**: a real updates page instead of a pop-up and a link to GitHub
+
+### 🔧 Changes
+
+- sync version to v0.1.87 [skip ci]
+
 ## v0.1.87 — 2026-08-01
 
 ### 🐛 Bug Fixes
