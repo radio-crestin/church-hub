@@ -18,6 +18,7 @@ import {
   markdownToSlides,
   slidesToMarkdown,
 } from '../utils/slidesMarkdown'
+import { stripHtmlTags } from '../utils/stripHtmlTags'
 
 interface SongSlidesPanelProps {
   song: SongWithSlides
@@ -86,28 +87,6 @@ function clampFontScale(scale: number): number {
 // shows real characters (e.g. an apostrophe) instead of raw codes like
 // `&#039;`. Setting `textContent` does NOT decode entities, which is why the
 // previous textarea-based approach left `&#039;` visible.
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-      String.fromCharCode(Number.parseInt(hex, 16)),
-    )
-}
-
-function stripHtmlTags(html: string): string {
-  const stripped = html
-    .replace(/<\/p>\s*<p>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .trim()
-  return decodeHtmlEntities(stripped)
-}
 
 export function SongSlidesPanel({
   song,

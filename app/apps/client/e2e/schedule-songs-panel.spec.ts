@@ -505,6 +505,10 @@ test.describe('Add-item modal on the program page', () => {
       await expect(row).toBeVisible({ timeout: 10000 })
       await row.click()
 
+      // Picking shows the song rather than adding it; adding is the footer.
+      await expect(modal.getByTestId('add-schedule-item-preview')).toBeVisible()
+      await modal.getByTestId('add-schedule-item-preview-add').click()
+
       await expect
         .poll(
           async () => {
@@ -964,6 +968,83 @@ test.describe('Add-item modal on the program page - rendering', () => {
       expect(backBox?.height ?? 0).toBeGreaterThan(200)
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+    }
+  })
+})
+
+test.describe('Add-item modal - song preview', () => {
+  test('picking a song previews it; nothing is added until the footer button', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const title = `E2E Preview Song ${uniq}`
+    const res = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          { content: '<p>Strofa unu</p>', sortOrder: 0 },
+          { content: '<p>Refren</p>', sortOrder: 1 },
+        ],
+      },
+    })
+    const song = (await res.json()).data
+    const schedule = await createSchedule(request, `E2E Preview Prog ${uniq}`)
+
+    try {
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/schedules/${schedule.id}`)
+      await page.waitForLoadState('networkidle')
+
+      await page.getByTestId('schedule-add-item').click()
+      const modal = page.getByTestId('add-schedule-item-modal')
+      await modal.getByTestId('add-schedule-item-song').click()
+      await modal.getByTestId('song-picker-search').fill(title)
+
+      const row = modal
+        .getByTestId('song-picker-row')
+        .filter({ hasText: title })
+      await expect(row).toBeVisible({ timeout: 10000 })
+      await row.click()
+
+      // The content is shown in the same dialog — no second modal.
+      await expect(page.getByTestId('add-schedule-item-modal')).toHaveCount(1)
+      const preview = modal.getByTestId('add-schedule-item-preview')
+      await expect(preview).toBeVisible()
+      await expect(
+        modal.getByTestId('add-schedule-item-preview-slide'),
+      ).toHaveCount(2)
+      await expect(preview).toContainText('Strofa unu')
+      await expect(preview).toContainText('Refren')
+
+      // Nothing was written by merely looking at it.
+      const beforeAdd = await request.get(`/api/schedules/${schedule.id}`)
+      expect((await beforeAdd.json()).data.items).toHaveLength(0)
+
+      // Back goes to the search, with the query still in place.
+      await modal.getByTestId('add-schedule-item-back').click()
+      await expect(modal.getByTestId('song-picker-search')).toHaveValue(title)
+
+      // Forward again and commit from the footer.
+      await modal
+        .getByTestId('song-picker-row')
+        .filter({ hasText: title })
+        .click()
+      await modal.getByTestId('add-schedule-item-preview-add').click()
+
+      await expect
+        .poll(
+          async () => {
+            const r = await request.get(`/api/schedules/${schedule.id}`)
+            const { data } = await r.json()
+            return data.items.map((i: { songId: number }) => i.songId)
+          },
+          { timeout: 10000 },
+        )
+        .toEqual([song.id])
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
   })
 })
