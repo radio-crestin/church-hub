@@ -17,6 +17,7 @@ interface ScreenFixture {
   isFullscreen: boolean
   closeOnEscape?: boolean
   isPreviewScreen?: boolean
+  openOnStartup?: boolean
   width: number
   height: number
   globalSettings: Record<string, unknown>
@@ -61,8 +62,8 @@ export function seedDefaultScreens(db: Database): void {
       // in the in-app preview — both come straight from the factory fixture.
       db.run(
         `INSERT INTO screens
-          (name, type, is_active, open_mode, is_fullscreen, close_on_escape, is_preview_screen, width, height, global_settings, sort_order, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+          (name, type, is_active, open_mode, is_fullscreen, close_on_escape, is_preview_screen, open_on_startup, width, height, global_settings, sort_order, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
         [
           screen.name,
           screen.type,
@@ -71,6 +72,7 @@ export function seedDefaultScreens(db: Database): void {
           screen.isFullscreen ? 1 : 0,
           screen.closeOnEscape ? 1 : 0,
           screen.isPreviewScreen ? 1 : 0,
+          screen.openOnStartup === false ? 0 : 1,
           screen.width,
           screen.height,
           JSON.stringify(screen.globalSettings),

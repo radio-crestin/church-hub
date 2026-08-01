@@ -8,6 +8,7 @@ import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
 import { addPreviewScreen } from './add-preview-screen'
 import { addScheduleItemSung } from './add-schedule-item-sung'
+import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
@@ -204,6 +205,14 @@ export function runMigrations(
     'add_category_hidden_flag',
     'Running add category is_hidden migration',
     () => addCategoryHiddenFlag(rawDb),
+  )
+
+  // open_on_startup on screens: whether the window opens automatically at
+  // launch, split out of is_active. Before seed_screens so the seed can set it.
+  runStep(
+    'add_screen_open_on_startup',
+    'Running add screen open_on_startup migration',
+    () => addScreenOpenOnStartup(rawDb),
   )
 
   // Seed default screens

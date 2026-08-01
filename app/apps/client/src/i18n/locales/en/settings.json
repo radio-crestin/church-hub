@@ -1011,6 +1011,14 @@
         "disabled": "Window will stay open at all times",
         "error": "Failed to update close-on-escape setting"
       },
+      "openOnStartup": {
+        "tooltip": "Whether this screen's window opens by itself when the app starts",
+        "on": "Opens at startup",
+        "off": "Opens only when needed",
+        "enabled": "This screen will open when the app starts",
+        "disabled": "This screen will stay closed at startup and open on first use",
+        "error": "Failed to update the startup setting"
+      },
       "previewScreen": {
         "set": "Mirror this screen in the in-app preview",
         "unset": "Stop mirroring this screen in the in-app preview",

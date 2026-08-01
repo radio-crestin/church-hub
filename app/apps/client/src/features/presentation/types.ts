@@ -710,6 +710,8 @@ export interface Screen {
   alwaysOnTop: boolean
   closeOnEscape: boolean
   isPreviewScreen: boolean
+  /** Open this screen's window automatically when the app launches. */
+  openOnStartup: boolean
   width: number
   height: number
   globalSettings: ScreenGlobalSettings
@@ -754,6 +756,7 @@ export interface UpsertScreenInput {
   alwaysOnTop?: boolean
   closeOnEscape?: boolean
   isPreviewScreen?: boolean
+  openOnStartup?: boolean
   width?: number
   height?: number
   globalSettings?: ScreenGlobalSettings
