@@ -124,6 +124,16 @@ import {
   regenerateSystemToken,
 } from './service/app-sessions'
 import {
+  cancelDownload,
+  findDownloadedArtifact,
+  getDefaultDownloadDir,
+  getDownloadState,
+  getUpdateConfig,
+  installUpdate,
+  setDownloadDir,
+  startDownload,
+} from './service/app-update'
+import {
   clearDriveAuth,
   completeDriveAuth,
   createDriveAuthUrl,
@@ -140,16 +150,6 @@ import {
   uploadBackup,
   upsertBackupConfig,
 } from './service/backup'
-import {
-  getSyncConfig,
-  getSyncStatus,
-  listPendingChanges,
-  listSyncUpdates,
-  markSyncUpdatesSeen,
-  runSyncCycle,
-  startSyncScheduler,
-  upsertSyncConfig,
-} from './service/sync'
 import {
   type CreateTranslationInput,
   deleteTranslation,
@@ -355,6 +355,16 @@ import {
   upsertTag,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
+import {
+  getSyncConfig,
+  getSyncStatus,
+  listPendingChanges,
+  listSyncUpdates,
+  markSyncUpdatesSeen,
+  runSyncCycle,
+  startSyncScheduler,
+  upsertSyncConfig,
+} from './service/sync'
 import {
   type BootPhase,
   getBootHealth,
@@ -1940,6 +1950,213 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+      }
+
+      // ---- App update routes (localhost only) ----
+      // Downloading and installing a new version happens in the sidecar, not
+      // the webview: the webview's filesystem scope only reaches $HOME and
+      // $DOCUMENT (so an external drive would be refused) and it may not spawn
+      // an installer, while the sidecar has neither limit. Same localhost guard
+      // as /api/backup/* and /api/database/*.
+      const updateLocalhostGuard = (): Response | null =>
+        isStrictLocalhost()
+          ? null
+          : handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Only accessible from localhost' }),
+                {
+                  status: 403,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+
+      // GET /api/app-update/config - Download folder (configured + effective)
+      if (req.method === 'GET' && url.pathname === '/api/app-update/config') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.view')
+        if (permError) return permError
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({
+              data: {
+                ...getUpdateConfig(),
+                defaultDir: getDefaultDownloadDir(),
+              },
+            }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
+        )
+      }
+
+      // PUT /api/app-update/config - Set the download folder
+      if (req.method === 'PUT' && url.pathname === '/api/app-update/config') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { downloadDir?: string | null }
+          const next =
+            typeof body.downloadDir === 'string' ? body.downloadDir : null
+          const config = setDownloadDir(next)
+          return handleCors(
+            req,
+            new Response(
+              JSON.stringify({
+                data: { ...config, defaultDir: getDefaultDownloadDir() },
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
+            ),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // GET /api/app-update/status - Download progress / readiness
+      if (req.method === 'GET' && url.pathname === '/api/app-update/status') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.view')
+        if (permError) return permError
+
+        // `?url=` lets the client ask whether this particular artifact is
+        // already sitting in the folder from an earlier session, so it can
+        // offer "install" without downloading again.
+        const assetUrl = url.searchParams.get('url')
+        const version = url.searchParams.get('version') ?? ''
+        const live = getDownloadState()
+
+        if (live.phase === 'idle' && assetUrl) {
+          const existing = await findDownloadedArtifact(assetUrl, version)
+          if (existing) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ data: existing }), {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-store',
+                },
+              }),
+            )
+          }
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: live }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store',
+            },
+          }),
+        )
+      }
+
+      // POST /api/app-update/download - Start (or reuse) a download
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/app-update/download'
+      ) {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { url?: string; version?: string }
+          if (!body.url) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Missing url' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+          const started = await startDownload(body.url, body.version ?? '')
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: started }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid request body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/app-update/cancel - Abort a download in flight
+      if (req.method === 'POST' && url.pathname === '/api/app-update/cancel') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        cancelDownload()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getDownloadState() }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/app-update/install - Install the downloaded artifact
+      if (req.method === 'POST' && url.pathname === '/api/app-update/install') {
+        const guard = updateLocalhostGuard()
+        if (guard) return guard
+
+        const permError = checkPermission('settings.edit')
+        if (permError) return permError
+
+        const current = getDownloadState()
+        if (current.phase !== 'ready' || !current.filePath) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'no_downloaded_artifact' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = await installUpdate(current.filePath)
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              result.success ? { data: result } : { error: result.error },
+            ),
+            {
+              status: result.success ? 200 : 400,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
       }
 
       // ---- Google Drive backup routes (localhost only) ----

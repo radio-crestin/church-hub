@@ -19,6 +19,7 @@
       "sidebar": "Sidebar",
       "developer": "Developer",
       "backup": "Backup",
+    "updates": "Updates",
       "logs": "Logs",
       "shortcuts": "Shortcuts"
     }
@@ -1175,6 +1176,43 @@
         "cleared": "Logs cleared",
         "clearFailed": "Failed to clear logs: {{error}}",
         "loadFailed": "Failed to load logs: {{error}}"
+      }
+    },
+    "updates": {
+      "title": "Updates",
+      "description": "Where new versions are downloaded, and how the app updates itself.",
+      "folder": {
+        "title": "Download folder",
+        "description": "New versions are downloaded here. Defaults to your Downloads folder.",
+        "choose": "Choose folder",
+        "reset": "Use default",
+        "usingDefault": "Using the system Downloads folder.",
+        "saved": "Download folder saved",
+        "failed": "Could not save the download folder"
+      },
+      "status": {
+        "title": "Version",
+        "check": "Check now",
+        "upToDate": "You are on the latest version (v{{version}})",
+        "available": "Version {{version}} is available"
+      },
+      "categories": {
+        "features": "New",
+        "bugFixes": "Fixed",
+        "changes": "Changed"
+      },
+      "available": {
+        "title": "Version {{version}} is available",
+        "current": "You are running v{{version}}",
+        "noNotes": "No release notes for this version.",
+        "download": "Download",
+        "downloading": "Downloading...",
+        "readyToInstall": "Ready to install",
+        "install": "Install and restart",
+        "installing": "Installing...",
+        "later": "Later",
+        "failed": "The download failed. Check the folder and your connection, then try again.",
+        "unavailable": "No installer is published for this platform."
       }
     },
     "about": {
