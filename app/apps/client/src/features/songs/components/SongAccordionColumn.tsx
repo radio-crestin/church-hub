@@ -1,6 +1,7 @@
 import { GripHorizontal } from 'lucide-react'
 import { useCallback, useRef } from 'react'
 
+import type { ScheduleItem } from '~/features/schedules'
 import { SchedulePanel } from '~/features/schedules'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { DIVIDER_KEYS } from '~/service/layout'
@@ -20,6 +21,8 @@ interface SongAccordionColumnProps {
   onToggleVersions: () => void
   onSelectBookmarkSong: (bookmark: { songId: number }) => void
   onSelectScheduleSong: (songId: number) => void
+  /** Jumps to the Bible page when a program's verse row is clicked. */
+  onSelectSchedulePassage: (item: ScheduleItem) => void
   onOpenSchedule: (scheduleId: number) => void
   onAddAllBookmarksToSchedule: () => void
   canViewSongVersions: boolean
@@ -55,6 +58,7 @@ export function SongAccordionColumn({
   onToggleVersions,
   onSelectBookmarkSong,
   onSelectScheduleSong,
+  onSelectSchedulePassage,
   onOpenSchedule,
   onAddAllBookmarksToSchedule,
   canViewSongVersions,
@@ -159,6 +163,7 @@ export function SongAccordionColumn({
           <SchedulePanel
             activeSongId={song.id}
             onSelectSong={onSelectScheduleSong}
+            onSelectPassage={onSelectSchedulePassage}
             onOpenSchedule={onOpenSchedule}
             candidateSong={{ id: song.id, title: song.title }}
             onAddAllBookmarks={onAddAllBookmarksToSchedule}

@@ -35,7 +35,11 @@ import {
   usePresentationState,
   usePresentTemporarySong,
 } from '~/features/presentation'
-import { AddSongToScheduleModal } from '~/features/schedules'
+import type { ScheduleItem } from '~/features/schedules'
+import {
+  AddSongToScheduleModal,
+  getSchedulePassageTarget,
+} from '~/features/schedules'
 import {
   type ExportFormat,
   ExportFormatModal,
@@ -736,6 +740,27 @@ function SongPreviewPage() {
     [navigate, searchQuery],
   )
 
+  /**
+   * "Vezi si versete" is on and a verse row was clicked — jump into the Bible
+   * module at that exact passage.
+   */
+  const handleSchedulePassageClick = useCallback(
+    (item: ScheduleItem) => {
+      const target = getSchedulePassageTarget(item)
+      if (!target) return
+      navigate({
+        to: '/bible/',
+        search: {
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [navigate],
+  )
+
   const handleOpenSchedule = useCallback(
     (scheduleId: number) => {
       navigate({
@@ -975,6 +1000,7 @@ function SongPreviewPage() {
               onToggleVersions={() => setVersionsOpen(!versionsOpen)}
               onSelectBookmarkSong={handleBookmarkSongClick}
               onSelectScheduleSong={handleScheduleSongClick}
+              onSelectSchedulePassage={handleSchedulePassageClick}
               onOpenSchedule={handleOpenSchedule}
               onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
               canViewSongVersions={canViewSongVersions}
@@ -1143,6 +1169,7 @@ function SongPreviewPage() {
                 onToggleVersions={() => setVersionsOpen(!versionsOpen)}
                 onSelectBookmarkSong={handleBookmarkSongClick}
                 onSelectScheduleSong={handleScheduleSongClick}
+                onSelectSchedulePassage={handleSchedulePassageClick}
                 onOpenSchedule={handleOpenSchedule}
                 onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
                 canViewSongVersions={canViewSongVersions}

@@ -6,7 +6,12 @@ import { useTranslation } from 'react-i18next'
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
-import { AddSongToScheduleModal, SchedulePanel } from '~/features/schedules'
+import type { ScheduleItem } from '~/features/schedules'
+import {
+  AddSongToScheduleModal,
+  getSchedulePassageTarget,
+  SchedulePanel,
+} from '~/features/schedules'
 import { DiscoverButton } from '~/features/song-discovery'
 import { SongBookmarksPanel, SongList } from '~/features/songs/components'
 import { useSearchHistoryById, useSongBookmarks } from '~/features/songs/hooks'
@@ -302,6 +307,27 @@ function SongsPage() {
     [navigate],
   )
 
+  /**
+   * "Vezi si versete" is on and a verse row was clicked — jump into the Bible
+   * module at that exact passage, selected but not projected.
+   */
+  const handleSchedulePassageClick = useCallback(
+    (item: ScheduleItem) => {
+      const target = getSchedulePassageTarget(item)
+      if (!target) return
+      navigate({
+        to: '/bible/',
+        search: {
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [navigate],
+  )
+
   const handleScheduleSongClick = useCallback(
     (targetSongId: number) => {
       navigate({
@@ -436,6 +462,7 @@ function SongsPage() {
             >
               <SchedulePanel
                 onSelectSong={handleScheduleSongClick}
+                onSelectPassage={handleSchedulePassageClick}
                 onOpenSchedule={handleOpenSchedule}
                 candidateSong={selectedSong}
                 acceptsSongDrop

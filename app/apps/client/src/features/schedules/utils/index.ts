@@ -5,3 +5,7 @@ export type {
   ParseScheduleTextResult,
 } from './parseScheduleText'
 export { parseScheduleText } from './parseScheduleText'
+export {
+  getSchedulePassageTarget,
+  type SchedulePassageTarget,
+} from './schedulePassageTarget'
