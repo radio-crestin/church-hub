@@ -6,7 +6,7 @@ import {
   Sparkles,
   Tag,
 } from 'lucide-react'
-import { forwardRef, useState } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
@@ -61,6 +61,20 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
     const [dragArmed, setDragArmed] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
 
+    // A press that never turned into a drag has to disarm somewhere, and the
+    // grip's own pointerup does not fire once the browser takes the gesture
+    // over. The document always sees the release.
+    useEffect(() => {
+      if (!dragArmed) return
+      const disarm = () => setDragArmed(false)
+      document.addEventListener('pointerup', disarm)
+      document.addEventListener('pointercancel', disarm)
+      return () => {
+        document.removeEventListener('pointerup', disarm)
+        document.removeEventListener('pointercancel', disarm)
+      }
+    }, [dragArmed])
+
     const hasHighlight = song.highlightedTitle?.includes('<mark>')
     const categorySuffix =
       showCategoryInTitle && song.categoryName ? ` (${song.categoryName})` : ''
@@ -113,18 +127,19 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
       >
         {/* Grip — the only place a drag can start. Pressing it arms the card's
             native drag, so the ghost is the whole card while an ordinary click
-            or text selection anywhere else still behaves normally. */}
+            or text selection anywhere else still behaves normally.
+            Deliberately NOT disarmed on pointerleave: the pointer leaves this
+            small target as soon as the drag gesture begins, and disarming there
+            flipped `draggable` back to false before `dragstart` could fire —
+            which is why drags never started. A document-level pointerup clears
+            it instead, so a press that never became a drag still disarms. */}
         {isDraggable && (
           <span
             role="presentation"
             data-testid="song-card-drag-handle"
             title={dragHandleTitle}
             onPointerDown={() => setDragArmed(true)}
-            onPointerUp={() => setDragArmed(false)}
-            onPointerLeave={() => {
-              if (!isDragging) setDragArmed(false)
-            }}
-            className="-ml-1 mr-2 flex shrink-0 cursor-grab items-center self-stretch rounded px-1 text-gray-300 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-500 group-hover:opacity-100 active:cursor-grabbing dark:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            className="-ml-1 mr-2 flex shrink-0 cursor-grab items-center self-stretch rounded px-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 active:cursor-grabbing dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
           >
             <GripVertical size={16} />
           </span>
