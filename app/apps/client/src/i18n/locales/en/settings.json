@@ -1211,6 +1211,7 @@
         "downloading": "Downloading...",
         "readyToInstall": "Ready to install",
         "install": "Install and restart",
+        "installFailed": "The install could not start ({{reason}}). A development instance cannot replace itself — try it from an installed build.",
         "installing": "Installing...",
         "later": "Later",
         "failed": "The download failed. Check the folder and your connection, then try again.",

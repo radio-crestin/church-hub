@@ -23,6 +23,10 @@ interface UseAppUpdateResult {
   isDismissed: boolean
   isDownloading: boolean
   isDevInstance: boolean
+  /**
+   * Runs the check. Pressing the button in the UI always reaches GitHub, even
+   * on a dev instance — see `checkNow` for why.
+   */
   checkNow: () => Promise<void>
   dismissUpdate: () => void
   downloadUpdate: () => Promise<void>
@@ -35,26 +39,35 @@ export function useAppUpdate(): UseAppUpdateResult {
   const [isDismissed, setIsDismissed] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
 
-  const checkNow = useCallback(async () => {
-    // Dev instances never reach out to GitHub — that just logs noisy
-    // rate-limit errors and there's nothing to upgrade to. Surface the
-    // current version so the UI can still show it (with a dev badge).
-    if (IS_DEV_INSTANCE) {
-      const currentVersion = await getCurrentVersion()
-      setUpdateInfo({
-        currentVersion,
-        latestVersion: currentVersion,
-        hasUpdate: false,
-        releaseUrl: '',
-        releaseNotes: '',
-        downloadUrl: null,
-        publishedAt: '',
-      })
-      setError(null)
-      setIsLoading(false)
-      return
-    }
+  /**
+   * Fills in the current version without contacting GitHub. Used for the
+   * automatic check on a dev instance, where polling would only burn the
+   * unauthenticated rate limit for a build that has nothing to upgrade to.
+   */
+  const showLocalVersionOnly = useCallback(async () => {
+    const currentVersion = await getCurrentVersion()
+    setUpdateInfo({
+      currentVersion,
+      latestVersion: currentVersion,
+      hasUpdate: false,
+      releaseUrl: '',
+      releaseNotes: '',
+      downloadUrl: null,
+      publishedAt: '',
+    })
+    setError(null)
+    setIsLoading(false)
+  }, [])
 
+  /**
+   * Checks GitHub for a newer release.
+   *
+   * This runs on a dev instance too. Automatic polling is still skipped there
+   * — see the effect below — but a button labelled "Check now" that silently
+   * does nothing is worse than a wasted request, and it made the update flow
+   * impossible to try out without cutting a real build first.
+   */
+  const checkNow = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -94,10 +107,15 @@ export function useAppUpdate(): UseAppUpdateResult {
     }
   }, [updateInfo])
 
-  // Initial check on mount
+  // On mount a dev instance only shows its own version; the operator can still
+  // press "Check now" to reach GitHub deliberately.
   useEffect(() => {
+    if (IS_DEV_INSTANCE) {
+      void showLocalVersionOnly()
+      return
+    }
     void checkNow()
-  }, [checkNow])
+  }, [checkNow, showLocalVersionOnly])
 
   // Periodic check — skipped entirely on dev instances (nothing to poll).
   useEffect(() => {
