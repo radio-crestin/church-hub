@@ -1190,9 +1190,11 @@
         "saved": "Download folder saved",
         "failed": "Could not save the download folder"
       },
+      "whatsNew": "What's new in v{{version}}",
       "status": {
         "title": "Version",
         "check": "Check now",
+        "checking": "Checking...",
         "upToDate": "You are on the latest version (v{{version}})",
         "available": "Version {{version}} is available"
       },
