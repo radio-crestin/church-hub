@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
+  endInternalSongDrag,
   isSongDrag,
   readSongDragData,
   type SongDragPayload,
@@ -87,6 +88,10 @@ export function useSongDropZone(
       if (!song) return
       event.preventDefault()
       reset()
+      // `dragend` fires on the source too, but a drop that lands is the
+      // definitive end of the drag — clear it here so nothing can observe a
+      // stale "internal drag in flight" between the two events.
+      endInternalSongDrag()
       onDropSong(song)
 
       // Matches the .song-drop-land animation duration; re-triggering restarts

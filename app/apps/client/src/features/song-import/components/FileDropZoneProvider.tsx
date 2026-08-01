@@ -23,7 +23,11 @@ import {
 import { useUpsertSong } from '~/features/songs/hooks'
 import { getSongById, searchSongs, upsertSong } from '~/features/songs/service'
 import type { SlideInput, SongSearchResult } from '~/features/songs/types'
-import { SONG_DRAG_MIME } from '~/features/songs/utils/songDragData'
+import {
+  isInternalSongDragActive,
+  SONG_DRAG_MIME,
+  subscribeInternalSongDrag,
+} from '~/features/songs/utils/songDragData'
 import {
   type DuplicateAction,
   DuplicateSongDialog,
@@ -521,14 +525,18 @@ export function FileDropZoneProvider({ children }: Props) {
     }
 
     /**
-     * True for a song being dragged from the song list onto the Marcaje /
-     * Programe panels. That drag is internal to the app and has nothing to do
-     * with importing files, so this provider must keep its hands off it —
-     * otherwise the "drop PowerPoint files here" overlay covers the very panels
-     * the song is being dragged to, and the document-level `preventDefault`
-     * below steals the drop.
+     * True for a song being dragged from one part of the app to another, rather
+     * than a file arriving from outside it. Such a drag has nothing to do with
+     * importing, so this provider must keep its hands off it — otherwise the
+     * "drop PowerPoint files here" overlay covers the very panels the song is
+     * headed for, and the document-level `preventDefault` below steals the drop.
+     *
+     * Two checks, because either can be the only one available: the app's own
+     * flag is authoritative and works even where `dataTransfer` is not readable,
+     * while the MIME check still catches a drag that somehow escaped it.
      */
     const isInternalSongDrag = (e: DragEvent) =>
+      isInternalSongDragActive() ||
       Array.from(e.dataTransfer?.types ?? []).includes(SONG_DRAG_MIME)
 
     const handleDragEnter = (e: DragEvent) => {
@@ -722,6 +730,20 @@ export function FileDropZoneProvider({ children }: Props) {
     [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile],
   )
 
+  // An internal drag can begin while the overlay is already up (the operator
+  // grabbed a song right after waving a file over the window). Drop it at once
+  // so it never sits on top of the panels the song is being dragged to.
+  useEffect(
+    () =>
+      subscribeInternalSongDrag((active) => {
+        if (active) {
+          dragCounterRef.current = 0
+          setIsDragging(false)
+        }
+      }),
+    [],
+  )
+
   // Tauri-specific drag and drop handler
   // Browser drag/drop events don't work in Tauri webview, so we use the Tauri API
   useEffect(() => {
@@ -736,11 +758,15 @@ export function FileDropZoneProvider({ children }: Props) {
         const webview = getCurrentWebview()
         unlisten = await webview.onDragDropEvent(async (event) => {
           if (event.payload.type === 'over') {
-            // User is hovering files over the window
+            // Tauri reports the OS drag session, which on some webviews also
+            // covers drags that started inside the app. Only a genuine file
+            // arriving from outside should raise the import overlay.
+            if (isInternalSongDragActive()) return
             setIsDragging(true)
           } else if (event.payload.type === 'drop') {
             // User dropped files
             setIsDragging(false)
+            if (isInternalSongDragActive()) return
             const paths = event.payload.paths
             if (paths && paths.length > 0) {
               await processFilePaths(paths)

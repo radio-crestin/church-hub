@@ -17,7 +17,57 @@ export interface SongDragPayload {
   title: string
 }
 
-/** Attaches a song to a native drag. Call from `onDragStart`. */
+/**
+ * Whether a song is being dragged *inside* the app right now.
+ *
+ * The file-import provider has to tell two situations apart: the operator
+ * moving a song from the list onto a panel, and the operator bringing a file in
+ * from outside the app. Inspecting `dataTransfer` is not enough to do that —
+ * the provider also listens on Tauri's `onDragDropEvent`, which reports an OS
+ * drag session with no DOM `dataTransfer` to look at. So the app states the
+ * fact explicitly for the lifetime of its own drag, and the provider asks.
+ *
+ * Module-level rather than React state on purpose: it is read from event
+ * handlers and Tauri callbacks that are not part of any render.
+ */
+let internalDragActive = false
+const listeners = new Set<(active: boolean) => void>()
+
+/** Safety net for drags that end without a `dragend` (cancelled off-window). */
+let internalDragTimer: ReturnType<typeof setTimeout> | null = null
+
+function setInternalDragActive(active: boolean): void {
+  if (internalDragActive === active) return
+  internalDragActive = active
+  for (const listener of listeners) listener(active)
+}
+
+/** True while a song is being dragged from one part of the app to another. */
+export function isInternalSongDragActive(): boolean {
+  return internalDragActive
+}
+
+/** Notified whenever an internal song drag starts or ends. */
+export function subscribeInternalSongDrag(
+  listener: (active: boolean) => void,
+): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+/** Ends the current internal drag, if any. */
+export function endInternalSongDrag(): void {
+  if (internalDragTimer) {
+    clearTimeout(internalDragTimer)
+    internalDragTimer = null
+  }
+  setInternalDragActive(false)
+}
+
+/**
+ * Attaches a song to a native drag and marks the drag as internal. Call from
+ * `onDragStart`; pair it with `endInternalSongDrag` on `onDragEnd`.
+ */
 export function setSongDragData(
   event: React.DragEvent,
   song: SongDragPayload,
@@ -26,6 +76,12 @@ export function setSongDragData(
   // A plain-text fallback keeps the drag meaningful if it lands outside the app.
   event.dataTransfer.setData('text/plain', song.title)
   event.dataTransfer.effectAllowed = 'copy'
+
+  setInternalDragActive(true)
+  if (internalDragTimer) clearTimeout(internalDragTimer)
+  // No drag realistically outlives this; without it a drag cancelled outside
+  // the window would leave the app permanently believing one is in flight.
+  internalDragTimer = setTimeout(endInternalSongDrag, 30_000)
 }
 
 /**

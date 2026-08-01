@@ -10,7 +10,7 @@ import { forwardRef, useState } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
-import { setSongDragData } from '../utils/songDragData'
+import { endInternalSongDrag, setSongDragData } from '../utils/songDragData'
 
 interface SongCardProps {
   song: {
@@ -84,6 +84,7 @@ export const SongCard = forwardRef<HTMLButtonElement, SongCardProps>(
             ? () => {
                 setIsDragging(false)
                 setDragArmed(false)
+                endInternalSongDrag()
               }
             : undefined
         }
