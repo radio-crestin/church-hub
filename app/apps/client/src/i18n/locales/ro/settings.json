@@ -19,6 +19,7 @@
       "sidebar": "Bara Laterală",
       "developer": "Dezvoltatori",
       "backup": "Copie de rezervă",
+    "updates": "Actualizari",
       "logs": "Jurnale",
       "shortcuts": "Scurtături"
     }
@@ -1177,6 +1178,43 @@
         "cleared": "Jurnalele au fost șterse",
         "clearFailed": "Nu s-au putut șterge jurnalele: {{error}}",
         "loadFailed": "Nu s-au putut încărca jurnalele: {{error}}"
+      }
+    },
+    "updates": {
+      "title": "Actualizari",
+      "description": "Unde se descarca versiunile noi si cum se actualizeaza aplicatia.",
+      "folder": {
+        "title": "Folderul descarcarilor",
+        "description": "Versiunile noi se descarca aici. Implicit este folderul Downloads.",
+        "choose": "Alege folder",
+        "reset": "Foloseste implicit",
+        "usingDefault": "Se foloseste folderul Downloads al sistemului.",
+        "saved": "Folderul descarcarilor a fost salvat",
+        "failed": "Folderul descarcarilor nu a putut fi salvat"
+      },
+      "status": {
+        "title": "Versiune",
+        "check": "Verifica acum",
+        "upToDate": "Ai ultima versiune (v{{version}})",
+        "available": "Versiunea {{version}} este disponibila"
+      },
+      "categories": {
+        "features": "Noutati",
+        "bugFixes": "Reparatii",
+        "changes": "Modificari"
+      },
+      "available": {
+        "title": "Versiunea {{version}} este disponibila",
+        "current": "Rulezi v{{version}}",
+        "noNotes": "Nu exista note de lansare pentru aceasta versiune.",
+        "download": "Descarca",
+        "downloading": "Se descarca...",
+        "readyToInstall": "Gata de instalare",
+        "install": "Instaleaza si reporneste",
+        "installing": "Se instaleaza...",
+        "later": "Mai tarziu",
+        "failed": "Descarcarea a esuat. Verifica folderul si conexiunea, apoi incearca din nou.",
+        "unavailable": "Nu exista un installer publicat pentru aceasta platforma."
       }
     },
     "about": {

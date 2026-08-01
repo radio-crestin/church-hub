@@ -1,3 +1,4 @@
+export { appUpdatePaths } from './app-update'
 export { authPaths } from './auth'
 export { backupPaths } from './backup'
 export { biblePaths } from './bible'

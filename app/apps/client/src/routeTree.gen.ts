@@ -23,6 +23,7 @@ import { Route as BibleIndexRouteImport } from './routes/bible/index'
 import { Route as rootIndexRouteImport } from './routes/(root)/index'
 import { Route as SongsDiscoverRouteImport } from './routes/songs/discover'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
+import { Route as SettingsUpdatesRouteImport } from './routes/settings/updates'
 import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
 import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
 import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
@@ -113,6 +114,11 @@ const SongsDiscoverRoute = SongsDiscoverRouteImport.update({
 const SettingsUsersRoute = SettingsUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsUpdatesRoute = SettingsUpdatesRouteImport.update({
+  id: '/updates',
+  path: '/updates',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsSongsRoute = SettingsSongsRouteImport.update({
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
   '/': typeof rootIndexRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
   '/': typeof rootIndexRoute
@@ -315,6 +323,7 @@ export interface FileRoutesById {
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
   '/(root)/': typeof rootIndexRoute
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
     | '/'
@@ -390,6 +400,7 @@ export interface FileRouteTypes {
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
     | '/'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
     | '/(root)/'
@@ -564,6 +576,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/settings/users'
       preLoaderRoute: typeof SettingsUsersRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/updates': {
+      id: '/settings/updates'
+      path: '/updates'
+      fullPath: '/settings/updates'
+      preLoaderRoute: typeof SettingsUpdatesRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/songs': {
@@ -732,6 +751,7 @@ interface SettingsRouteRouteChildren {
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
   SettingsSidebarRoute: typeof SettingsSidebarRoute
   SettingsSongsRoute: typeof SettingsSongsRoute
+  SettingsUpdatesRoute: typeof SettingsUpdatesRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
@@ -752,6 +772,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsShortcutsRoute: SettingsShortcutsRoute,
   SettingsSidebarRoute: SettingsSidebarRoute,
   SettingsSongsRoute: SettingsSongsRoute,
+  SettingsUpdatesRoute: SettingsUpdatesRoute,
   SettingsUsersRoute: SettingsUsersRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
