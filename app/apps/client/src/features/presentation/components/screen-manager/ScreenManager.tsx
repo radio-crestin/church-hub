@@ -12,6 +12,8 @@ import {
   Pin,
   PinOff,
   Plus,
+  Power,
+  PowerOff,
   Trash2,
 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
@@ -250,6 +252,28 @@ export function ScreenManager() {
   // Toggle whether this screen is mirrored in the in-app preview panel.
   // The backend enforces a single preview screen, so turning one on turns the
   // others off automatically.
+  const handleToggleOpenOnStartup = async (screen: Screen) => {
+    const newValue = !screen.openOnStartup
+
+    try {
+      await upsertScreen.mutateAsync({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        openOnStartup: newValue,
+      })
+
+      showToast(
+        newValue
+          ? t('sections.screens.openOnStartup.enabled')
+          : t('sections.screens.openOnStartup.disabled'),
+        'success',
+      )
+    } catch {
+      showToast(t('sections.screens.openOnStartup.error'), 'error')
+    }
+  }
+
   const handleTogglePreviewScreen = async (screen: Screen) => {
     const newValue = !screen.isPreviewScreen
 
@@ -456,6 +480,24 @@ export function ScreenManager() {
                     {screen.closeOnEscape
                       ? t('sections.screens.closeOnEscape.on')
                       : t('sections.screens.closeOnEscape.off')}
+                  </span>
+                </Button>
+                <Button
+                  variant={screen.openOnStartup ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => handleToggleOpenOnStartup(screen)}
+                  title={t('sections.screens.openOnStartup.tooltip')}
+                  data-testid="screen-open-on-startup"
+                >
+                  {screen.openOnStartup ? (
+                    <Power size={16} />
+                  ) : (
+                    <PowerOff size={16} />
+                  )}
+                  <span className="ml-1">
+                    {screen.openOnStartup
+                      ? t('sections.screens.openOnStartup.on')
+                      : t('sections.screens.openOnStartup.off')}
                   </span>
                 </Button>
                 <Button
