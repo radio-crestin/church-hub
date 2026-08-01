@@ -720,10 +720,10 @@ function SongPreviewPage() {
     [navigate, searchQuery],
   )
 
-  const handleAddAllBookmarksToSchedule = useCallback((songIds: number[]) => {
-    setBookmarkSongIds(songIds)
+  const handleAddAllBookmarksToSchedule = useCallback(() => {
+    setBookmarkSongIds(bookmarks.map((b) => b.songId))
     setShowAddBookmarksToScheduleModal(true)
-  }, [])
+  }, [bookmarks])
 
   const handleScheduleSongClick = useCallback(
     (targetSongId: number) => {

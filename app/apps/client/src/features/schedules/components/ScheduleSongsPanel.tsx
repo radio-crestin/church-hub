@@ -14,14 +14,28 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { CalendarDays, ChevronDown, ExternalLink, Search } from 'lucide-react'
+import {
+  CalendarDays,
+  CalendarPlus,
+  ChevronDown,
+  ExternalLink,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
+import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
+import { useToast } from '~/ui/toast'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import {
+  useAddItemToSchedule,
+  useDeleteSchedule,
   useMarkScheduleItemSung,
   useRemoveItemFromSchedule,
   useReorderScheduleItems,
@@ -52,6 +66,18 @@ interface ScheduleSongsPanelProps {
   onSelectSong: (songId: number) => void
   /** Opens the full program page. */
   onOpenSchedule?: (scheduleId: number) => void
+  /**
+   * The song the page currently has in focus — the open song on the song page,
+   * the highlighted row on the search page. The header's "+" adds this one.
+   */
+  candidateSong?: { id: number; title: string } | null
+  /** Accepts songs dragged in from the song list. */
+  acceptsSongDrop?: boolean
+  /**
+   * Bulk-adds every bookmarked song to a program. Lives here rather than in the
+   * Marcaje header because it is a program action, not a bookmark one.
+   */
+  onAddAllBookmarks?: () => void
   isCollapsed?: boolean
   onToggleCollapse?: () => void
 }
@@ -70,10 +96,14 @@ export function ScheduleSongsPanel({
   activeSongId,
   onSelectSong,
   onOpenSchedule,
+  candidateSong = null,
+  acceptsSongDrop = false,
+  onAddAllBookmarks,
   isCollapsed = false,
   onToggleCollapse,
 }: ScheduleSongsPanelProps) {
   const { t } = useTranslation('schedules')
+  const { showToast } = useToast()
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
     readStoredScheduleId,
@@ -85,6 +115,9 @@ export function ScheduleSongsPanel({
   const removeItemMutation = useRemoveItemFromSchedule()
   const markSungMutation = useMarkScheduleItemSung()
   const reorderItemsMutation = useReorderScheduleItems()
+  const addItemMutation = useAddItemToSchedule()
+  const deleteScheduleMutation = useDeleteSchedule()
+  const [pendingDelete, setPendingDelete] = useState(false)
   // Local order override so a drag lands instantly instead of waiting for the
   // refetch — cleared as soon as server data catches up.
   const [localOrder, setLocalOrder] = useState<ScheduleItem[] | null>(null)
@@ -193,6 +226,46 @@ export function ScheduleSongsPanel({
     [selectedScheduleId, removeItemMutation],
   )
 
+  /** Appends a song to the selected program, skipping duplicates. */
+  const addSongToSelected = useCallback(
+    (song: { id: number; title: string }) => {
+      if (!selectedScheduleId) {
+        showToast(t('panel.selectScheduleFirst'), 'error')
+        return
+      }
+      if (songItems.some((item) => item.songId === song.id)) {
+        showToast(t('panel.alreadyInSchedule', { title: song.title }), 'info')
+        return
+      }
+      addItemMutation.mutate(
+        { scheduleId: selectedScheduleId, input: { songId: song.id } },
+        {
+          onSuccess: () =>
+            showToast(t('panel.songAdded', { title: song.title }), 'success'),
+          onError: () => showToast(t('messages.error'), 'error'),
+        },
+      )
+    },
+    [selectedScheduleId, songItems, addItemMutation, showToast, t],
+  )
+
+  const { isOver: isSongOver, dropProps } = useSongDropZone(
+    acceptsSongDrop ? addSongToSelected : undefined,
+  )
+
+  const handleDeleteSchedule = useCallback(() => {
+    if (!selectedScheduleId) return
+    deleteScheduleMutation.mutate(selectedScheduleId, {
+      onSuccess: () => {
+        setPendingDelete(false)
+        // Fall back to whatever program is left; the effect above re-picks one.
+        setSelectedScheduleId(null)
+        showToast(t('messages.deleted'), 'success')
+      },
+      onError: () => showToast(t('messages.error'), 'error'),
+    })
+  }, [selectedScheduleId, deleteScheduleMutation, showToast, t])
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event
@@ -235,7 +308,12 @@ export function ScheduleSongsPanel({
 
   return (
     <div
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full"
+      {...dropProps}
+      className={`bg-white dark:bg-gray-800 rounded-lg border flex flex-col overflow-hidden h-full transition-colors ${
+        isSongOver
+          ? 'border-orange-400 dark:border-orange-500 ring-2 ring-orange-400/40'
+          : 'border-gray-200 dark:border-gray-700'
+      }`}
       data-testid="schedule-songs-panel"
     >
       {/* Header — same shape as Marcaje/Versiuni so the column reads as one
@@ -267,15 +345,59 @@ export function ScheduleSongsPanel({
             </span>
           )}
         </div>
-        {selectedScheduleId && onOpenSchedule && (
-          <button
-            type="button"
-            onClick={() => onOpenSchedule(selectedScheduleId)}
-            className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
-            title={t('panel.openSchedule')}
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+        {selectedScheduleId && (
+          <div className="flex items-center gap-1">
+            {/* Adds the song the page has in focus — the open song, or the
+                highlighted row in the search list. */}
+            <button
+              type="button"
+              onClick={() => candidateSong && addSongToSelected(candidateSong)}
+              disabled={!candidateSong || addItemMutation.isPending}
+              data-testid="schedule-add-candidate-song"
+              title={
+                candidateSong
+                  ? t('panel.addSong', { title: candidateSong.title })
+                  : t('panel.addSongDisabled')
+              }
+              className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-40 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
+            >
+              {addItemMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Plus className="w-3.5 h-3.5" />
+              )}
+            </button>
+            {onAddAllBookmarks && (
+              <button
+                type="button"
+                onClick={onAddAllBookmarks}
+                data-testid="schedule-add-all-bookmarks"
+                title={t('panel.addAllBookmarks')}
+                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onOpenSchedule && (
+              <button
+                type="button"
+                onClick={() => onOpenSchedule(selectedScheduleId)}
+                className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
+                title={t('panel.openSchedule')}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setPendingDelete(true)}
+              data-testid="schedule-delete"
+              title={t('panel.deleteSchedule')}
+              className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -437,6 +559,22 @@ export function ScheduleSongsPanel({
           </div>
         </>
       )}
+
+      {/* Deleting a program takes every song, passage and slide in it with
+          it, so the confirmation names the program and says so plainly. */}
+      <ConfirmModal
+        isOpen={pendingDelete}
+        title={t('panel.deleteScheduleTitle')}
+        message={t('panel.deleteScheduleMessage', {
+          title: schedule?.title ?? '',
+          count: schedule?.itemCount ?? 0,
+        })}
+        confirmLabel={t('actions.delete')}
+        cancelLabel={t('modal.cancel')}
+        variant="danger"
+        onConfirm={handleDeleteSchedule}
+        onCancel={() => setPendingDelete(false)}
+      />
     </div>
   )
 }

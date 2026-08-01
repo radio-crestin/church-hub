@@ -21,7 +21,7 @@ interface SongAccordionColumnProps {
   onSelectBookmarkSong: (bookmark: { songId: number }) => void
   onSelectScheduleSong: (songId: number) => void
   onOpenSchedule: (scheduleId: number) => void
-  onAddAllBookmarksToSchedule: (songIds: number[]) => void
+  onAddAllBookmarksToSchedule: () => void
   canViewSongVersions: boolean
   canAddSongVersion: boolean
   canEditSongVersion: boolean
@@ -133,7 +133,6 @@ export function SongAccordionColumn({
         <SongBookmarksPanel
           onSelectSong={onSelectBookmarkSong}
           activeSongId={song.id}
-          onAddAllToSchedule={onAddAllBookmarksToSchedule}
           isCollapsed={!bookmarksOpen}
           onToggleCollapse={onToggleBookmarks}
         />
@@ -161,6 +160,8 @@ export function SongAccordionColumn({
             activeSongId={song.id}
             onSelectSong={onSelectScheduleSong}
             onOpenSchedule={onOpenSchedule}
+            candidateSong={{ id: song.id, title: song.title }}
+            onAddAllBookmarks={onAddAllBookmarksToSchedule}
             isCollapsed={!schedulesOpen}
             onToggleCollapse={onToggleSchedules}
           />
