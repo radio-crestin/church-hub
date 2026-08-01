@@ -6,10 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
-import {
-  AddSongToScheduleModal,
-  ScheduleSongsPanel,
-} from '~/features/schedules'
+import { AddSongToScheduleModal, SchedulePanel } from '~/features/schedules'
 import { DiscoverButton } from '~/features/song-discovery'
 import { SongBookmarksPanel, SongList } from '~/features/songs/components'
 import { useSearchHistoryById, useSongBookmarks } from '~/features/songs/hooks'
@@ -437,7 +434,7 @@ function SongsPage() {
             <div
               className={`min-h-0 ${schedulesOpen ? 'flex-1' : 'flex-none'}`}
             >
-              <ScheduleSongsPanel
+              <SchedulePanel
                 onSelectSong={handleScheduleSongClick}
                 onOpenSchedule={handleOpenSchedule}
                 candidateSong={selectedSong}
