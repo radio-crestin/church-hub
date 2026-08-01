@@ -334,9 +334,11 @@ export function SchedulePanel({
     )
   }, [selectedScheduleId, candidatePassage, addItemMutation, showToast, t])
 
-  const { isOver: isSongOver, dropProps } = useSongDropZone(
-    acceptsSongDrop ? addSongToSelected : undefined,
-  )
+  const {
+    isOver: isSongOver,
+    justLanded: songJustLanded,
+    dropProps,
+  } = useSongDropZone(acceptsSongDrop ? addSongToSelected : undefined)
 
   const handleDeleteSchedule = useCallback(() => {
     if (!selectedScheduleId) return
@@ -365,13 +367,20 @@ export function SchedulePanel({
 
       // The endpoint rewrites sort_order from the index of every id it is
       // given, so it needs the program's FULL running order — not just the
-      // songs shown here. Songs are poured back into the slots songs already
-      // occupied, which leaves bible passages, announcements and scenes exactly
-      // where the operator put them in the program editor.
+      // rows shown here. The reordered rows are poured back into the slots
+      // those same rows already occupied, so whatever this panel does not list
+      // (announcements, Versete Tineri, OBS scenes — and songs or passages when
+      // the cross-module switch is off) keeps the exact position the operator
+      // gave it in the program editor.
+      //
+      // Keying on the visible ids rather than on item kind is what lets this
+      // work unchanged for a mixed list: with the switch on, songs and passages
+      // share one slot set and reorder freely against each other.
+      const visibleIds = new Set(songItems.map((item) => item.id))
       const fullOrder = schedule?.items ?? []
       let cursor = 0
       const itemIds = fullOrder.map((item) =>
-        item.itemType === primaryType
+        visibleIds.has(item.id)
           ? (newSongOrder[cursor++]?.id ?? item.id)
           : item.id,
       )
@@ -381,13 +390,7 @@ export function SchedulePanel({
         input: { itemIds },
       })
     },
-    [
-      songItems,
-      schedule,
-      primaryType,
-      selectedScheduleId,
-      reorderItemsMutation,
-    ],
+    [songItems, schedule, selectedScheduleId, reorderItemsMutation],
   )
 
   const renderRow = useCallback(
@@ -431,10 +434,10 @@ export function SchedulePanel({
   )
 
   const isSearching = searchQuery.trim().length > 0
-  // Dragging only makes sense on an unfiltered list of ONE kind: a filtered
-  // view has no meaningful "drop between these two" position, and a mixed list
-  // would have to reorder two independent slot sets at once.
-  const isFiltering = isSearching || sungFilter !== 'all' || showOther
+  // Dragging only makes sense on an unfiltered list: a filtered view has no
+  // meaningful "drop between these two" position, since the rows in between
+  // are hidden. A *mixed* list is fine — see handleDragEnd.
+  const isFiltering = isSearching || sungFilter !== 'all'
   const isLoading =
     schedulesLoading || (!!selectedScheduleId && scheduleLoading)
 
@@ -445,7 +448,7 @@ export function SchedulePanel({
         isSongOver
           ? 'border-orange-400 dark:border-orange-500 ring-2 ring-orange-400/40'
           : 'border-gray-200 dark:border-gray-700'
-      }`}
+      } ${songJustLanded ? 'song-drop-land' : ''}`}
       data-testid="schedule-songs-panel"
     >
       {/* Header — same shape as Marcaje/Versiuni so the column reads as one

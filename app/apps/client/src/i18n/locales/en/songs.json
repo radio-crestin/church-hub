@@ -86,6 +86,7 @@
     "label": "Jump to letter",
     "jumpTo": "Jump to songs starting with {{letter}}"
   },
+  "dragToPanel": "Drag onto Marcaje or Programe",
   "picker": {
     "selectSong": "Select Song",
     "searchResults": "Showing {{shown}} of {{total}} results",

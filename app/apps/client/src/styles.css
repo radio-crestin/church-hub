@@ -422,3 +422,39 @@ button {
     animation: none;
   }
 }
+
+/*
+ * A song dropped onto the Marcaje / Programe panels: the panel pulses once so
+ * the operator sees the drop land, rather than the row silently appearing.
+ */
+@keyframes song-drop-land {
+  0% {
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 0.55);
+  }
+  40% {
+    box-shadow: 0 0 0 6px rgb(34 197 94 / 0.25);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(34 197 94 / 0);
+  }
+}
+
+.song-drop-land {
+  animation: song-drop-land 600ms ease-out;
+}
+
+/* The row that just arrived slides in from the top and settles. */
+@keyframes song-drop-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.song-drop-row-in {
+  animation: song-drop-row-in 260ms ease-out;
+}

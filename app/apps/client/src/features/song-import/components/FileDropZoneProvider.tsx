@@ -23,6 +23,7 @@ import {
 import { useUpsertSong } from '~/features/songs/hooks'
 import { getSongById, searchSongs, upsertSong } from '~/features/songs/service'
 import type { SlideInput, SongSearchResult } from '~/features/songs/types'
+import { SONG_DRAG_MIME } from '~/features/songs/utils/songDragData'
 import {
   type DuplicateAction,
   DuplicateSongDialog,
@@ -519,7 +520,19 @@ export function FileDropZoneProvider({ children }: Props) {
       dragOverTimerRef.current = setTimeout(cancelDrag, 200)
     }
 
+    /**
+     * True for a song being dragged from the song list onto the Marcaje /
+     * Programe panels. That drag is internal to the app and has nothing to do
+     * with importing files, so this provider must keep its hands off it —
+     * otherwise the "drop PowerPoint files here" overlay covers the very panels
+     * the song is being dragged to, and the document-level `preventDefault`
+     * below steals the drop.
+     */
+    const isInternalSongDrag = (e: DragEvent) =>
+      Array.from(e.dataTransfer?.types ?? []).includes(SONG_DRAG_MIME)
+
     const handleDragEnter = (e: DragEvent) => {
+      if (isInternalSongDrag(e)) return
       e.preventDefault()
       dragCounterRef.current++
 
@@ -535,6 +548,7 @@ export function FileDropZoneProvider({ children }: Props) {
     }
 
     const handleDragOver = (e: DragEvent) => {
+      if (isInternalSongDrag(e)) return
       e.preventDefault()
       // Required to allow drop
       if (e.dataTransfer) {
@@ -544,6 +558,7 @@ export function FileDropZoneProvider({ children }: Props) {
     }
 
     const handleDragLeave = (e: DragEvent) => {
+      if (isInternalSongDrag(e)) return
       e.preventDefault()
       dragCounterRef.current--
 
@@ -560,6 +575,8 @@ export function FileDropZoneProvider({ children }: Props) {
     }
 
     const handleDrop = async (e: DragEvent) => {
+      // Let the panel underneath receive its own song.
+      if (isInternalSongDrag(e)) return
       e.preventDefault()
       dragCounterRef.current = 0
       setIsDragging(false)
