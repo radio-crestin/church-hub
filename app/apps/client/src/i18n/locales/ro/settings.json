@@ -1217,7 +1217,8 @@
         "installing": "Se instaleaza...",
         "later": "Mai tarziu",
         "failed": "Descarcarea a esuat. Verifica folderul si conexiunea, apoi incearca din nou.",
-        "unavailable": "Nu exista un installer publicat pentru aceasta platforma."
+        "unavailable": "Nu s-a putut determina ce installer se potriveste acestei masini, deci nu exista ce descarca automat.",
+        "openRelease": "Deschide release-ul pe GitHub"
       }
     },
     "about": {
