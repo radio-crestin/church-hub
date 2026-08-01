@@ -264,15 +264,53 @@ export async function updateBackupConfig(
 }
 
 /** Lists the backups in the configured local folder, newest first. */
-export async function listLocalBackups(): Promise<LocalBackupFile[]> {
+/**
+ * Backups in the configured folder, or in `dir` when the operator is browsing
+ * somewhere else to restore from — passing a folder here never changes where
+ * future backups are written.
+ */
+export async function listLocalBackups(
+  dir?: string | null,
+): Promise<LocalBackupFile[]> {
+  const query = dir ? `?dir=${encodeURIComponent(dir)}` : ''
   const res = await fetcher<ApiResponse<{ backups: LocalBackupFile[] }>>(
-    '/api/backup/local/list',
+    `/api/backup/local/list${query}`,
     { cache: 'no-store' },
   )
   if (res.error) {
     throw new Error(res.error)
   }
   return res.data?.backups ?? []
+}
+
+/**
+ * Replaces the database with a local backup — either one in the configured
+ * folder (`fileName`) or one anywhere on disk (`path`).
+ *
+ * Given the same ten-minute budget as the Drive restore: the work is a
+ * checkpoint plus a file copy, which on a large library outlasts the default
+ * request timeout even though nothing is downloaded.
+ */
+export async function restoreLocalBackup(input: {
+  fileName?: string
+  path?: string
+}): Promise<BackupActionResult> {
+  const res = await fetcher<
+    ApiResponse<{ success: boolean; message: string; requiresRestart: boolean }>
+  >('/api/backup/local/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+    timeout: LARGE_OP_TIMEOUT_MS,
+  })
+  if (res.error) {
+    return { success: false, error: res.error }
+  }
+  return {
+    success: true,
+    requiresRestart: res.data?.requiresRestart,
+    message: res.data?.message,
+  }
 }
 
 /** Writes a fresh backup into the configured local folder. */

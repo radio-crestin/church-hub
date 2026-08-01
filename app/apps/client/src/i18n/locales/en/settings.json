@@ -19,7 +19,7 @@
       "sidebar": "Sidebar",
       "developer": "Developer",
       "backup": "Backup",
-    "updates": "Updates",
+      "updates": "Updates",
       "logs": "Logs",
       "shortcuts": "Shortcuts"
     }
@@ -873,29 +873,48 @@
         "warningMessage": "Your Drive has only {{free}} free, but the next backup needs about {{needed}}. Free up space in Google Drive, otherwise backups will fail."
       },
       "local": {
-      "title": "Local backup",
-      "description": "Keep a copy on this computer or an external drive. Works without a Google account, and automatic backups write here first.",
-      "folderLabel": "Backup folder",
-      "noFolder": "No folder chosen",
-      "chooseFolder": "Choose folder",
-      "clearFolder": "Clear",
-      "pathPlaceholder": "Absolute path, e.g. /Users/me/ChurchHubBackups",
-      "folderHint": "Backups are named like the Drive ones and pruned to the same retention setting.",
-      "button": "Back up locally",
-      "backingUp": "Backing up...",
-      "lastBackup": "Last local backup",
-      "listTitle": "Local backups",
-      "empty": "No local backups yet",
-      "pathSaved": "Backup folder saved",
-      "pathCleared": "Local backups turned off",
-      "toast": {
-        "success": "Local backup created",
-        "failed": "Local backup failed",
-        "deleteSuccess": "Local backup deleted",
-        "deleteFailed": "Could not delete the local backup"
-      }
-    },
-    "retention": {
+        "title": "Local backup",
+        "description": "Keep a copy on this computer or an external drive. Works without a Google account, and automatic backups write here first.",
+        "folderLabel": "Backup folder",
+        "noFolder": "No folder chosen",
+        "chooseFolder": "Choose folder",
+        "clearFolder": "Clear",
+        "pathPlaceholder": "Absolute path, e.g. /Users/me/ChurchHubBackups",
+        "folderHint": "Backups are named like the Drive ones and pruned to the same retention setting.",
+        "button": "Back up locally",
+        "backingUp": "Backing up...",
+        "lastBackup": "Last local backup",
+        "listTitle": "Local backups",
+        "empty": "No local backups yet",
+        "pathSaved": "Backup folder saved",
+        "pathCleared": "Local backups turned off",
+        "toast": {
+          "success": "Local backup created",
+          "failed": "Local backup failed",
+          "deleteSuccess": "Local backup deleted",
+          "deleteFailed": "Could not delete the local backup",
+          "restoreSuccess": "Backup restored. Reloading...",
+          "restoreFailed": "Could not restore the backup",
+          "restoreNeedsRestart": "The backup was restored but the database could not be reopened. Please restart the application."
+        },
+        "restoreFrom": {
+          "button": "Restore from a folder",
+          "choose": "Choose the folder holding the backup",
+          "label": "Restore from folder",
+          "browsing": "Showing backups in {{path}}",
+          "stopBrowsing": "Back to the backup folder",
+          "restore": "Restore this backup"
+        },
+        "restoreModal": {
+          "title": "Restore this backup?",
+          "message": "The database will be replaced with the copy made on {{date}}.",
+          "warning": "Everything added since then is lost. A copy of the current database is kept next to it in case the restore fails.",
+          "cancel": "Cancel",
+          "confirm": "Restore",
+          "restoring": "Restoring..."
+        }
+      },
+      "retention": {
         "title": "Backups kept",
         "description": "Keeps the most recent {{total}} backups in Drive; when a new one exceeds that, the oldest is deleted automatically."
       },
@@ -907,8 +926,8 @@
         "songs": "Songs ({{total}})",
         "schedules": "Schedules ({{total}})",
         "scheduleSongs_one": "{{count}} song",
-      "scheduleSongs_other": "{{count}} songs",
-      "playlists": "Playlists ({{total}})",
+        "scheduleSongs_other": "{{count}} songs",
+        "playlists": "Playlists ({{total}})",
         "more": "…and {{total}} more",
         "playlistItems_one": "{{count}} item",
         "playlistItems_other": "{{count}} items",

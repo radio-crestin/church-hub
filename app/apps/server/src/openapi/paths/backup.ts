@@ -456,7 +456,17 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'List local backups',
       description:
-        'Lists the backup files present in the configured local folder, newest first. Returns an empty list when local backups are off or the folder is unreachable. Only accessible from localhost.',
+        'Lists the backup files present in the configured local folder, newest first. Returns an empty list when local backups are off or the folder is unreachable. Pass `dir` to look inside another folder instead — used when restoring a copy from somewhere else, and it does not change where future backups are written. Only accessible from localhost.',
+      parameters: [
+        {
+          name: 'dir',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description:
+            'Absolute path of a folder to list instead of the configured one. Relative paths yield an empty list.',
+        },
+      ],
       responses: {
         '200': {
           description: 'Local backups',
@@ -484,6 +494,75 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
                     },
                   },
                 },
+              },
+            },
+          },
+        },
+        '403': localhostError,
+      },
+    },
+  },
+  '/api/backup/local/restore': {
+    post: {
+      tags: ['Backup'],
+      summary: 'Restore the database from a local backup',
+      description:
+        'Replaces the live database with a backup file on disk, using the same whole-file swap the Drive restore performs: the current database is checkpointed, copied aside, replaced, and the connection reinitialised in-process, rolling back if that fails. Send `fileName` for a file in the configured folder, or `path` for an absolute path anywhere the operator browsed to. Either way the name must follow the backup naming convention. Works without a Google account. Only accessible from localhost.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                fileName: {
+                  type: 'string',
+                  description:
+                    'Backup file inside the configured local folder. Cannot contain a path separator.',
+                },
+                path: {
+                  type: 'string',
+                  description:
+                    'Absolute path to a backup file in any folder. Takes precedence over fileName.',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Database restored',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' },
+                      requiresRestart: {
+                        type: 'boolean',
+                        description:
+                          'True only when the database was replaced but could not be reopened in-process, so the server has to be restarted.',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description:
+            'Restore refused or failed — `no_source`, `no_local_path`, `path_not_absolute`, `invalid_file_name`, or the import error message.',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { error: { type: 'string' } },
               },
             },
           },

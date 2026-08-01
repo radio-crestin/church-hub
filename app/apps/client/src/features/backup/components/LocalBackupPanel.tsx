@@ -1,9 +1,13 @@
 import {
+  AlertTriangle,
   FolderOpen,
+  FolderSearch,
   HardDriveDownload,
   Loader2,
   RefreshCw,
+  RotateCcw,
   Trash2,
+  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -48,8 +52,15 @@ export function LocalBackupPanel({
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const hasPath = !!localBackupPath
-  const local = useLocalBackup(hasPath)
+  // A folder the operator is looking inside to restore from. Separate from the
+  // configured path on purpose: restoring last month's copy off a stick should
+  // not redirect where tonight's backup is written.
+  const [browseDir, setBrowseDir] = useState<string | null>(null)
+  const local = useLocalBackup(hasPath, browseDir)
   const [pendingDelete, setPendingDelete] = useState<LocalBackupFile | null>(
+    null,
+  )
+  const [pendingRestore, setPendingRestore] = useState<LocalBackupFile | null>(
     null,
   )
   // Non-Tauri (browser) has no folder picker, so the path is typed there.
@@ -99,6 +110,51 @@ export function LocalBackupPanel({
       showToast(t('sections.backup.local.toast.failed'), 'error')
     }
   }, [local, showToast, t])
+
+  /**
+   * Picks a folder to restore *from*. Unlike `handleChooseFolder` this never
+   * writes the choice to the config — it only points the listing somewhere else.
+   */
+  const handleBrowseFolder = useCallback(async () => {
+    if (!isTauri()) return
+    const { open } = await import('@tauri-apps/plugin-dialog')
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: t('sections.backup.local.restoreFrom.choose'),
+      defaultPath: browseDir ?? localBackupPath ?? undefined,
+    })
+    if (typeof selected === 'string' && selected) {
+      setBrowseDir(selected)
+    }
+  }, [browseDir, localBackupPath, t])
+
+  const handleRestoreConfirm = useCallback(async () => {
+    if (!pendingRestore) return
+    // Sends the absolute path when browsing another folder, and the bare file
+    // name when it came from the configured one — the server resolves the latter
+    // inside that folder and refuses anything that tries to leave it.
+    const result = await local.restore(
+      browseDir
+        ? { path: pendingRestore.path }
+        : { fileName: pendingRestore.name },
+    )
+    setPendingRestore(null)
+
+    if (!result.success) {
+      showToast(t('sections.backup.local.toast.restoreFailed'), 'error')
+      return
+    }
+    if (result.requiresRestart) {
+      // The file was swapped but the database could not be reopened in place;
+      // reloading the page would not reconnect it, so say what actually helps.
+      showToast(t('sections.backup.local.toast.restoreNeedsRestart'), 'error')
+      return
+    }
+    showToast(t('sections.backup.local.toast.restoreSuccess'), 'success')
+    // Every cached query now describes the old database — start clean.
+    setTimeout(() => window.location.reload(), 1000)
+  }, [pendingRestore, browseDir, local, showToast, t])
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!pendingDelete) return
@@ -203,15 +259,64 @@ export function LocalBackupPanel({
                 ? t('sections.backup.local.backingUp')
                 : t('sections.backup.local.button')}
             </button>
+            {isTauri() && (
+              <button
+                type="button"
+                onClick={handleBrowseFolder}
+                data-testid="local-backup-browse"
+                className="inline-flex items-center gap-2 rounded-md bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+              >
+                <FolderSearch className="h-4 w-4" />
+                {t('sections.backup.local.restoreFrom.button')}
+              </button>
+            )}
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {t('sections.backup.local.lastBackup')}:{' '}
               {formatDate(lastLocalBackupAt ?? 0)}
             </span>
           </div>
 
+          {/* Restore-from folder, typed where there is no native picker */}
+          {!isTauri() && (
+            <div className="mt-3">
+              <span className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t('sections.backup.local.restoreFrom.label')}
+              </span>
+              <input
+                type="text"
+                defaultValue={browseDir ?? ''}
+                onBlur={(e) => setBrowseDir(e.target.value.trim() || null)}
+                placeholder={t('sections.backup.local.pathPlaceholder')}
+                data-testid="local-backup-browse-input"
+                className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+              />
+            </div>
+          )}
+
           {/* Local backup list */}
-          {hasPath && (
+          {(hasPath || browseDir) && (
             <div className="mt-4">
+              {browseDir && (
+                <div
+                  className="mb-2 flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2 dark:bg-amber-900/20"
+                  data-testid="local-backup-browsing-banner"
+                >
+                  <FolderSearch className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-amber-800 dark:text-amber-200">
+                    {t('sections.backup.local.restoreFrom.browsing', {
+                      path: browseDir,
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setBrowseDir(null)}
+                    title={t('sections.backup.local.restoreFrom.stopBrowsing')}
+                    className="shrink-0 rounded p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   {t('sections.backup.local.listTitle')}
@@ -253,14 +358,29 @@ export function LocalBackupPanel({
                           {formatBytes(file.sizeBytes)}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setPendingDelete(file)}
-                        title={t('sections.backup.list.delete')}
-                        className="shrink-0 rounded-md p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setPendingRestore(file)}
+                          title={t('sections.backup.local.restoreFrom.restore')}
+                          data-testid="local-backup-restore"
+                          className="rounded-md p-1.5 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 dark:text-gray-400 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </button>
+                        {/* Deleting is scoped to the configured folder, so it is
+                            hidden while browsing someone else's. */}
+                        {!browseDir && (
+                          <button
+                            type="button"
+                            onClick={() => setPendingDelete(file)}
+                            title={t('sections.backup.list.delete')}
+                            className="rounded-md p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -269,6 +389,64 @@ export function LocalBackupPanel({
           )}
         </div>
       </div>
+
+      {/* Restore confirmation — destructive, so it names the file and warns */}
+      {pendingRestore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => !local.isRestoring && setPendingRestore(null)}
+            onKeyDown={(e) => e.key === 'Escape' && setPendingRestore(null)}
+          />
+          <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-gray-800">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/30">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('sections.backup.local.restoreModal.title')}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  {t('sections.backup.local.restoreModal.message', {
+                    date: formatDate(pendingRestore.createdAtMs),
+                  })}
+                </p>
+                <p className="mt-2 break-all text-xs text-gray-400 dark:text-gray-500">
+                  {pendingRestore.path}
+                </p>
+                <p className="mt-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+                  {t('sections.backup.local.restoreModal.warning')}
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingRestore(null)}
+                disabled={local.isRestoring}
+                className="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                {t('sections.backup.local.restoreModal.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleRestoreConfirm}
+                disabled={local.isRestoring}
+                data-testid="local-backup-restore-confirm"
+                className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {local.isRestoring && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {local.isRestoring
+                  ? t('sections.backup.local.restoreModal.restoring')
+                  : t('sections.backup.local.restoreModal.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation */}
       {pendingDelete && (

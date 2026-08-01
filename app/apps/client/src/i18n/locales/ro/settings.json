@@ -19,7 +19,7 @@
       "sidebar": "Bara Laterală",
       "developer": "Dezvoltatori",
       "backup": "Copie de rezervă",
-    "updates": "Actualizari",
+      "updates": "Actualizari",
       "logs": "Jurnale",
       "shortcuts": "Scurtături"
     }
@@ -874,29 +874,48 @@
         "warningMessage": "Drive-ul tău mai are doar {{free}} liber, dar următorul backup are nevoie de aproximativ {{needed}}. Eliberează spațiu în Google Drive, altfel backupurile vor eșua."
       },
       "local": {
-      "title": "Copie locala",
-      "description": "Pastreaza o copie pe acest calculator sau pe un disc extern. Functioneaza fara cont Google, iar copiile automate se scriu mai intai aici.",
-      "folderLabel": "Folderul copiilor",
-      "noFolder": "Niciun folder ales",
-      "chooseFolder": "Alege folder",
-      "clearFolder": "Sterge",
-      "pathPlaceholder": "Cale absoluta, ex. /Users/eu/CopiiChurchHub",
-      "folderHint": "Copiile sunt denumite ca cele din Drive si sunt pastrate dupa aceeasi setare de retentie.",
-      "button": "Fa copie locala",
-      "backingUp": "Se creeaza copia...",
-      "lastBackup": "Ultima copie locala",
-      "listTitle": "Copii locale",
-      "empty": "Nicio copie locala inca",
-      "pathSaved": "Folderul copiilor a fost salvat",
-      "pathCleared": "Copiile locale au fost dezactivate",
-      "toast": {
-        "success": "Copie locala creata",
-        "failed": "Copia locala a esuat",
-        "deleteSuccess": "Copie locala stearsa",
-        "deleteFailed": "Copia locala nu a putut fi stearsa"
-      }
-    },
-    "retention": {
+        "title": "Copie locala",
+        "description": "Pastreaza o copie pe acest calculator sau pe un disc extern. Functioneaza fara cont Google, iar copiile automate se scriu mai intai aici.",
+        "folderLabel": "Folderul copiilor",
+        "noFolder": "Niciun folder ales",
+        "chooseFolder": "Alege folder",
+        "clearFolder": "Sterge",
+        "pathPlaceholder": "Cale absoluta, ex. /Users/eu/CopiiChurchHub",
+        "folderHint": "Copiile sunt denumite ca cele din Drive si sunt pastrate dupa aceeasi setare de retentie.",
+        "button": "Fa copie locala",
+        "backingUp": "Se creeaza copia...",
+        "lastBackup": "Ultima copie locala",
+        "listTitle": "Copii locale",
+        "empty": "Nicio copie locala inca",
+        "pathSaved": "Folderul copiilor a fost salvat",
+        "pathCleared": "Copiile locale au fost dezactivate",
+        "toast": {
+          "success": "Copie locala creata",
+          "failed": "Copia locala a esuat",
+          "deleteSuccess": "Copie locala stearsa",
+          "deleteFailed": "Copia locala nu a putut fi stearsa",
+          "restoreSuccess": "Copia a fost restaurată. Se reîncarcă...",
+          "restoreFailed": "Copia nu a putut fi restaurată",
+          "restoreNeedsRestart": "Copia a fost restaurată, dar baza de date nu a putut fi redeschisă. Te rugăm să repornești aplicația."
+        },
+        "restoreFrom": {
+          "button": "Restaurează dintr-un folder",
+          "choose": "Alege folderul care conține copia",
+          "label": "Restaurează din folderul",
+          "browsing": "Se afișează copiile din {{path}}",
+          "stopBrowsing": "Înapoi la folderul copiilor",
+          "restore": "Restaurează această copie"
+        },
+        "restoreModal": {
+          "title": "Restaurezi această copie?",
+          "message": "Baza de date va fi înlocuită cu copia făcută pe {{date}}.",
+          "warning": "Tot ce a fost adăugat de atunci se pierde. O copie a bazei de date curente este păstrată alături, în caz că restaurarea eșuează.",
+          "cancel": "Anulează",
+          "confirm": "Restaurează",
+          "restoring": "Se restaurează..."
+        }
+      },
+      "retention": {
         "title": "Backupuri păstrate",
         "description": "Păstrează cele mai recente {{total}} backupuri în Drive; când unul nou depășește limita, cel mai vechi este șters automat."
       },
@@ -908,8 +927,8 @@
         "songs": "Cântări ({{total}})",
         "schedules": "Programe ({{total}})",
         "scheduleSongs_one": "{{count}} cantare",
-      "scheduleSongs_other": "{{count}} cantari",
-      "playlists": "Playlisturi ({{total}})",
+        "scheduleSongs_other": "{{count}} cantari",
+        "playlists": "Playlisturi ({{total}})",
         "more": "…și încă {{total}}",
         "playlistItems_one": "{{count}} element",
         "playlistItems_few": "{{count}} elemente",

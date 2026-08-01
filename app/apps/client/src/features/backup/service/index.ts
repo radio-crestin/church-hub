@@ -19,5 +19,6 @@ export {
   listLocalBackups,
   localBackupNow,
   restoreBackup,
+  restoreLocalBackup,
   updateBackupConfig,
 } from './backup'
