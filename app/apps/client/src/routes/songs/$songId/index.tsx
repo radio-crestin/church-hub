@@ -875,6 +875,8 @@ function SongPreviewPage() {
         <div className="flex items-center gap-2 sm:justify-end shrink-0">
           <button
             type="button"
+            data-testid="song-bookmark-toggle"
+            aria-pressed={isBookmarked}
             onClick={handleToggleBookmark}
             className={`p-2 rounded-lg transition-colors inline-flex items-center justify-center ${
               isBookmarked

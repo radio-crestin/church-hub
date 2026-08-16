@@ -112,6 +112,7 @@ function SortableBookmarkItem({
       <div
         {...attributes}
         {...listeners}
+        data-testid="bookmark-drag-handle"
         className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <GripVertical size={14} className="text-gray-400 dark:text-gray-500" />
@@ -246,6 +247,7 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
       <div
         {...attributes}
         {...listeners}
+        data-testid="bookmark-note-drag-handle"
         className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-blue-100 dark:hover:bg-blue-900/30"
       >
         <GripVertical size={14} className="text-blue-400 dark:text-blue-500" />
