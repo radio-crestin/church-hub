@@ -34,6 +34,7 @@ import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
+import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import { ScheduleVerseRow } from './ScheduleVerseRow'
 import {
@@ -252,24 +253,27 @@ export function SchedulePanel({
   const pendingCount = songItems.length - sungCount
 
   const filteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+    // Folded on both sides so "cantare" finds "cântare" and vice versa.
+    const q = normalizeForSearch(searchQuery.trim())
     return songItems.filter((item) => {
       if (sungFilter === 'sung' && !item.isSung) return false
       if (sungFilter === 'pending' && item.isSung) return false
       if (!q) return true
       if (item.itemType === 'bible_passage') {
         return (
-          item.biblePassageReference?.toLowerCase().includes(q) ||
+          normalizeForSearch(item.biblePassageReference ?? '').includes(q) ||
           item.biblePassageVerses.some((verse) =>
-            verse.text.toLowerCase().includes(q),
+            normalizeForSearch(verse.text).includes(q),
           )
         )
       }
       return (
-        item.song?.title.toLowerCase().includes(q) ||
-        item.song?.categoryName?.toLowerCase().includes(q) ||
-        item.keyLine?.toLowerCase().includes(q) ||
-        item.song?.tagNames?.some((name) => name.toLowerCase().includes(q))
+        normalizeForSearch(item.song?.title ?? '').includes(q) ||
+        normalizeForSearch(item.song?.categoryName ?? '').includes(q) ||
+        normalizeForSearch(item.keyLine ?? '').includes(q) ||
+        item.song?.tagNames?.some((name) =>
+          normalizeForSearch(name).includes(q),
+        )
       )
     })
   }, [songItems, searchQuery, sungFilter])

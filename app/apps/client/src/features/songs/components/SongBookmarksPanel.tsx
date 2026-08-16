@@ -33,6 +33,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ClearSearchButton } from '~/ui/search'
+import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import {
   useAddBookmark,
   useAddBookmarkNote,
@@ -397,7 +398,8 @@ export function SongBookmarksPanel({
   const unifiedItems = localOrder ?? serverItems
 
   const filteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+    // Folded on both sides so "cantare" finds "cântare" and vice versa.
+    const q = normalizeForSearch(searchQuery.trim())
     return unifiedItems.filter((item) => {
       // Sung filter applies to song bookmarks only; notes show only in "all".
       if (sungFilter !== 'all') {
@@ -408,14 +410,14 @@ export function SongBookmarksPanel({
       }
       if (!q) return true
       if (item.type === 'note') {
-        return item.note?.content.toLowerCase().includes(q)
+        return normalizeForSearch(item.note?.content ?? '').includes(q)
       }
       const b = item.bookmark
       return (
-        b?.songTitle.toLowerCase().includes(q) ||
-        b?.songCategoryName?.toLowerCase().includes(q) ||
-        b?.songKeyLine?.toLowerCase().includes(q) ||
-        b?.songTagNames?.some((name) => name.toLowerCase().includes(q))
+        normalizeForSearch(b?.songTitle ?? '').includes(q) ||
+        normalizeForSearch(b?.songCategoryName ?? '').includes(q) ||
+        normalizeForSearch(b?.songKeyLine ?? '').includes(q) ||
+        b?.songTagNames?.some((name) => normalizeForSearch(name).includes(q))
       )
     })
   }, [unifiedItems, searchQuery, sungFilter])

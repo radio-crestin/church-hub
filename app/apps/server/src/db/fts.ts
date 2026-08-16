@@ -16,10 +16,14 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 export function createFtsTables(): boolean {
   const db = getRawDatabase()
 
-  // Check if FTS tables already exist
+  // Check if FTS tables already exist. Only the four virtual tables count —
+  // every FTS5 table drags along shadow tables (songs_fts_data, songs_fts_idx,
+  // …) that also match a `%_fts%` pattern, so counting those would report the
+  // set as complete when a single index exists and skip creating the rest.
   const existingTables = db
     .query<{ name: string }, []>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%_fts%'",
+      `SELECT name FROM sqlite_master WHERE type='table' AND name IN
+         ('songs_fts', 'songs_fts_trigram', 'schedules_fts', 'bible_verses_fts')`,
     )
     .all()
 
