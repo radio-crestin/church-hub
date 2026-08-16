@@ -1231,13 +1231,18 @@ export function refreshPresentedSongSlides(
       .where(eq(songs.id, songId))
       .get()
 
-    // Fetch fresh slides from database
+    // Fetch fresh slides from database. Chords and per-slide styling are part
+    // of what the projection renders, so they have to come along — rebuilding
+    // the snapshot without them would strip an edited song of its chords and
+    // of any per-slide formatting while it is live.
     const slides = db
       .select({
         id: songSlides.id,
         content: songSlides.content,
+        chords: songSlides.chords,
         sortOrder: songSlides.sortOrder,
         label: songSlides.label,
+        styleOverrides: songSlides.styleOverrides,
       })
       .from(songSlides)
       .where(eq(songSlides.songId, songId))
@@ -1262,11 +1267,28 @@ export function refreshPresentedSongSlides(
       type: 'song',
       data: {
         ...currentState.temporaryContent.data,
-        slides: expandedSlides.map((s, idx) => ({
-          id: s.id,
-          content: s.content,
-          sortOrder: idx,
-        })),
+        slides: expandedSlides.map((s, idx) => {
+          // Expanded slides reference the original rows, so the per-slide
+          // extras are looked up by id (a repeated chorus keeps its own).
+          const originalSlide = slides.find((os) => os.id === s.id)
+          let chords = null
+          if (originalSlide?.chords) {
+            try {
+              chords = JSON.parse(originalSlide.chords)
+            } catch {
+              /* ignore parse errors */
+            }
+          }
+          return {
+            id: s.id,
+            content: s.content,
+            chords,
+            sortOrder: idx,
+            styleOverrides: parseStyleOverrides(
+              originalSlide?.styleOverrides ?? null,
+            ),
+          }
+        }),
         currentSlideIndex,
         keyLine: song?.keyLine ?? null,
       },

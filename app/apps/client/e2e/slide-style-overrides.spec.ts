@@ -63,9 +63,9 @@ test.describe('Per-slide text styling', () => {
       await page.getByTestId('slide-style-font-increase').click()
       // The size on screen actually grows — the scale is applied to the fitted
       // size, so it is not swallowed by the auto-fit ceiling.
-      await expect.poll(renderedFontSize, { timeout: 5000 }).toBeGreaterThan(
-        before,
-      )
+      await expect
+        .poll(renderedFontSize, { timeout: 5000 })
+        .toBeGreaterThan(before)
       await page.getByTestId('slide-style-bold').click()
       await page.getByTestId('slide-style-align-left').click()
 
@@ -80,9 +80,12 @@ test.describe('Per-slide text styling', () => {
       // The override survives a reload and the toolbar reflects it.
       await page.reload()
       await page.waitForLoadState('networkidle')
-      await expect(page.locator('[data-editing]')).toContainText('First slide', {
-        timeout: 10000,
-      })
+      await expect(page.locator('[data-editing]')).toContainText(
+        'First slide',
+        {
+          timeout: 10000,
+        },
+      )
       await page.locator('[data-editing]').click()
       await expect(page.getByTestId('slide-style-bold')).toHaveAttribute(
         'aria-pressed',
@@ -193,6 +196,77 @@ test.describe('Per-slide text styling', () => {
         )
         .toEqual([null, { italic: true }])
     } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('a live song picks up edits made on the stage', async ({ request }) => {
+    const title = `E2E Slide Style Live ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          {
+            content: 'First slide',
+            sortOrder: 0,
+            chords: [{ wordIndex: 0, chord: 'G' }],
+          },
+          { content: 'Second slide', sortOrder: 1 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    const liveSlides = async () => {
+      const response = await request.get('/api/presentation/state')
+      const { data } = await response.json()
+      return data.temporaryContent?.data?.slides as Array<{
+        content: string
+        chords: unknown
+        styleOverrides: unknown
+      }>
+    }
+
+    try {
+      expect(
+        (
+          await request.post('/api/presentation/temporary-song', {
+            data: { songId: created.id },
+          })
+        ).status(),
+      ).toBe(200)
+
+      // Edit the live song the way the stage editor's autosave does.
+      const edited = await request.post('/api/songs', {
+        data: {
+          id: created.id,
+          title,
+          slides: created.slides.map(
+            (
+              slide: { id: number; content: string; chords: unknown },
+              index: number,
+            ) => ({
+              id: slide.id,
+              content: index === 0 ? 'First slide EDITED' : slide.content,
+              chords: slide.chords,
+              sortOrder: index,
+              styleOverrides:
+                index === 0 ? { fontScale: 1.4, bold: true } : null,
+            }),
+          ),
+        },
+      })
+      expect(edited.status()).toBe(200)
+
+      // The projection snapshot follows: new lyrics, new styling, and the
+      // chords are still there.
+      const slides = await liveSlides()
+      expect(slides[0].content).toContain('First slide EDITED')
+      expect(slides[0].styleOverrides).toEqual({ fontScale: 1.4, bold: true })
+      expect(slides[0].chords).toEqual([{ wordIndex: 0, chord: 'G' }])
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
       await request.delete(`/api/songs/${created.id}`)
     }
   })
