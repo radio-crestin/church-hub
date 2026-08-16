@@ -195,20 +195,30 @@ const AnimatedTextInner = memo(function AnimatedText({
   })
 
   // While a slide transition plays, the hook keeps showing the OUTGOING text.
-  // Its styling has to travel with it: the incoming slide's size would resize
-  // the old words mid-transition, and its ranges are character offsets into a
-  // different text entirely.
+  // Everything that decides how that text looks has to travel with it: the
+  // incoming slide's size, box and inline runs belong to a different text, and
+  // applying them mid-transition resizes and repositions the words that are
+  // still fading out. This is what the operator sees as a flash — most visibly
+  // at the first and last slide, where the layout switches to the first-slide /
+  // last-slide screen config as well.
   const showsCurrentText = displayContent === normalizedText
-  const previousStyleRef = useRef({ contentScale, styleRanges })
-  if (showsCurrentText) {
-    previousStyleRef.current = { contentScale, styleRanges }
+  const currentRender = {
+    contentScale,
+    styleRanges,
+    style,
+    width,
+    height,
+    left,
+    top,
   }
-  const displayScale = showsCurrentText
-    ? contentScale
-    : previousStyleRef.current.contentScale
-  const displayRanges = showsCurrentText
-    ? styleRanges
-    : previousStyleRef.current.styleRanges
+  const previousRenderRef = useRef(currentRender)
+  if (showsCurrentText) {
+    previousRenderRef.current = currentRender
+  }
+  const shown = showsCurrentText ? currentRender : previousRenderRef.current
+  const displayScale = shown.contentScale
+  const displayRanges = shown.styleRanges
+  const displayStyle = shown.style
 
   // Get the final display content - use styled HTML if available
   // Must be before any early returns to maintain hooks order
@@ -231,23 +241,25 @@ const AnimatedTextInner = memo(function AnimatedText({
     const fontSize = calculateFontSize(
       measureRef.current,
       text,
-      width,
-      height,
-      style.maxFontSize,
-      style.minFontSize ?? 12,
+      shown.width,
+      shown.height,
+      displayStyle.maxFontSize,
+      displayStyle.minFontSize ?? 12,
     )
 
     textRef.current.style.fontSize = `${fontSize * displayScale}px`
   }, [
     displayContent,
-    width,
-    height,
-    style.maxFontSize,
-    style.minFontSize,
-    // The marks and the inline runs change how wide the text measures, so the
-    // fit has to be redone when they do.
-    style.bold,
-    style.italic,
+    shown.width,
+    shown.height,
+    displayStyle.maxFontSize,
+    displayStyle.minFontSize,
+    // Everything below changes how wide the text measures, so the fit has to be
+    // redone when any of it does.
+    displayStyle.bold,
+    displayStyle.italic,
+    displayStyle.fontFamily,
+    displayStyle.lineHeight,
     displayRanges,
     displayScale,
     shouldRender,
@@ -259,32 +271,32 @@ const AnimatedTextInner = memo(function AnimatedText({
 
   const containerStyle: React.CSSProperties = {
     position: 'absolute',
-    left,
-    top,
-    width,
-    height,
+    left: shown.left,
+    top: shown.top,
+    width: shown.width,
+    height: shown.height,
     overflow: 'hidden',
     ...animationStyle,
   }
 
   const textStyles: React.CSSProperties = {
-    ...getTextStyles(style),
+    ...getTextStyles(displayStyle),
     // Already carries the slide's own scale so the very first paint — before
     // the fit runs — is never the plain screen size.
-    fontSize: `${style.maxFontSize * displayScale}px`, // Refined by useLayoutEffect
+    fontSize: `${displayStyle.maxFontSize * displayScale}px`, // Refined by useLayoutEffect
     width: '100%',
     height: '100%',
     display: 'flex',
     alignItems:
-      style.verticalAlignment === 'top'
+      displayStyle.verticalAlignment === 'top'
         ? 'flex-start'
-        : style.verticalAlignment === 'bottom'
+        : displayStyle.verticalAlignment === 'bottom'
           ? 'flex-end'
           : 'center',
     justifyContent:
-      style.alignment === 'center'
+      displayStyle.alignment === 'center'
         ? 'center'
-        : style.alignment === 'right'
+        : displayStyle.alignment === 'right'
           ? 'flex-end'
           : 'flex-start',
     whiteSpace: 'pre-wrap',
@@ -293,7 +305,7 @@ const AnimatedTextInner = memo(function AnimatedText({
 
   // Hidden element for measurement (same font properties as display)
   const measureStyle: React.CSSProperties = {
-    ...getTextStyles(style),
+    ...getTextStyles(displayStyle),
     position: 'absolute',
     visibility: 'hidden',
     pointerEvents: 'none',

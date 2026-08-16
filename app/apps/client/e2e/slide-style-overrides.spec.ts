@@ -139,6 +139,19 @@ test.describe('Per-slide text styling', () => {
         .toContain('font-size:')
       expect(await editable.innerHTML()).toContain('<strong')
 
+      // The styled run stays inline. As a flex item it would be blockified —
+      // each run and each line break taking a full row, which split words and
+      // pushed the lines apart while editing.
+      expect(
+        await editable.evaluate((el) => getComputedStyle(el).display),
+      ).not.toBe('flex')
+      expect(
+        await editable.evaluate(
+          (el) =>
+            getComputedStyle(el.querySelector('span') as HTMLElement).display,
+        ),
+      ).toBe('inline')
+
       // And it is stored as a range, leaving the rest of the slide alone.
       await expect
         .poll(
@@ -368,10 +381,9 @@ test.describe('Per-slide text styling', () => {
       await sizeInput.fill(String(secondSize * 2))
       await sizeInput.press('Enter')
       await expect
-        .poll(
-          async () => (await readOverride())?.ranges?.[0]?.fontScale ?? 0,
-          { timeout: 10000 },
-        )
+        .poll(async () => (await readOverride())?.ranges?.[0]?.fontScale ?? 0, {
+          timeout: 10000,
+        })
         .toBeGreaterThan(withRange.ranges[0].fontScale)
       const after = await readOverride()
       expect(after.ranges).toHaveLength(1)
@@ -501,8 +513,8 @@ test.describe('Per-slide text styling', () => {
     const liveRanges = async () => {
       const response = await request.get('/api/presentation/state')
       const { data } = await response.json()
-      return (data.temporaryContent?.data?.slides?.[0]?.styleOverrides?.ranges ??
-        []) as Array<{ fontScale?: number }>
+      return (data.temporaryContent?.data?.slides?.[0]?.styleOverrides
+        ?.ranges ?? []) as Array<{ fontScale?: number }>
     }
 
     try {

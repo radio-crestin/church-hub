@@ -148,7 +148,10 @@ export function EditableMainText({
     if (!measureRef.current || !editRef.current) return
     const fontSize = calculateFontSize(
       measureRef.current,
-      editRef.current.innerText,
+      // What the editor reads back, not what the DOM happens to hold: a
+      // contentEditable keeps a trailing line break and non-breaking spaces
+      // that would measure as extra lines the slide does not have.
+      editRef.current.innerText.replace(/\u00a0/g, ' ').replace(/\n$/, ''),
       width,
       height,
       style.maxFontSize,
@@ -245,6 +248,11 @@ export function EditableMainText({
         ? 'flex-end'
         : 'center'
 
+  // Vertical alignment lives on the container, not on the editable itself.
+  // A contentEditable that is a flex container turns every element inside it
+  // into a flex item, so each styled run and each line break became its own
+  // full-width row: words split mid-line and the lines drifted apart. As a
+  // plain block it lays text out exactly like the read-only renderer does.
   const containerStyle: React.CSSProperties = {
     position: 'absolute',
     left,
@@ -252,16 +260,16 @@ export function EditableMainText({
     width,
     height,
     overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: verticalAlign,
   }
 
   const editableStyle: React.CSSProperties = {
     ...textStyles,
-    fontSize: `${style.maxFontSize}px`, // overwritten by fit()
+    // Carries the slide's own scale so the first paint matches the projection.
+    fontSize: `${style.maxFontSize * contentScale}px`, // refined by fit()
     width: '100%',
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: verticalAlign,
     whiteSpace: 'pre-wrap',
     wordWrap: 'break-word',
     outline: 'none',
@@ -303,6 +311,9 @@ export function EditableMainText({
             ...editableStyle,
             position: 'absolute',
             inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: verticalAlign,
             opacity: 0.4,
             pointerEvents: 'none',
             fontSize: `${Math.min(style.maxFontSize, 48)}px`,
