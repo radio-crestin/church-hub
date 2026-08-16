@@ -107,7 +107,7 @@ function getStoredState(displayId: number): WindowState | null {
 }
 
 /**
- * Puts a still-hidden projection window where its screen says it belongs.
+ * Puts a projection window where its screen says it belongs.
  *
  * A fullscreen screen is laid over the whole of its monitor here rather than
  * being switched to real fullscreen: asking a hidden window to go fullscreen is
@@ -115,6 +115,12 @@ function getStoredState(displayId: number): WindowState | null {
  * point it already covers the display and the switch changes nothing visible.
  * The move has to come first either way, because fullscreen fills whichever
  * monitor the window happens to be standing on.
+ *
+ * Run twice: once before the window is shown, once after. A window that has not
+ * been ordered in yet can have its geometry quietly ignored and come up at the
+ * frame it was created with — which is how the projection ended up as a small
+ * window on a big display. Applying it again to the visible window costs
+ * nothing when the first attempt did take.
  */
 async function placeWindow(
   win: WebviewWindow,
@@ -130,6 +136,11 @@ async function placeWindow(
     if (target) {
       await win.setPosition(new PhysicalPosition(target.x, target.y))
       await win.setSize(new PhysicalSize(target.width, target.height))
+    } else {
+      // No monitor would say how big it is. Maximising still fills the display
+      // the window is on, which beats leaving the projection at the small frame
+      // it was created with.
+      await win.maximize()
     }
     // The chrome deliberately stays on. macOS only lets a *titled* window go
     // fullscreen — a borderless one refuses without a word — so taking the
@@ -144,7 +155,14 @@ async function placeWindow(
   }
 
   if (stored) {
-    await win.setSize(new PhysicalSize(stored.width, stored.height))
+    // Never larger than the display it is going to: a size remembered from a
+    // bigger monitor would push the title bar off the top of this one.
+    await win.setSize(
+      new PhysicalSize(
+        monitor ? Math.min(stored.width, monitor.width) : stored.width,
+        monitor ? Math.min(stored.height, monitor.height) : stored.height,
+      ),
+    )
   }
 
   if (!monitor) {
@@ -365,8 +383,13 @@ async function openInNativeWindow(
       const windowOptions = {
         url,
         title: screen.name || `Display ${displayId}`,
-        width: storedState?.width ?? 1280,
-        height: storedState?.height ?? 720,
+        // A plain starting frame, never the remembered one: creation options are
+        // logical pixels while the geometry we remember is physical, and on a
+        // Retina display feeding one to the other opens the window at twice or
+        // half the size it should be. `placeWindow` sets the real size below, in
+        // the units it was measured in.
+        width: 1280,
+        height: 720,
         resizable: true,
         maximizable: true,
         minimizable: true,
@@ -452,6 +475,17 @@ async function openInNativeWindow(
         } catch (error) {
           // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
           console.error('[openInNativeWindow] Failed to show window:', error)
+        }
+
+        // Again, now that the window is really on screen: geometry set on a
+        // window that has not been ordered in yet can be dropped on the floor,
+        // and the projection then comes up at the frame it was created with —
+        // a small window on a large display.
+        try {
+          await placeWindow(win, screen, monitor, storedState)
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+          console.error('[openInNativeWindow] Failed to place window:', error)
         }
 
         if (screen.isFullscreen) {
