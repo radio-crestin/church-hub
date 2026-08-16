@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { calculateFontSize } from './utils/calculateFontSize'
 import { getTextStyles } from './utils/getTextStyles'
@@ -118,6 +118,25 @@ export function EditableMainText({
   const editRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
   const seededKeyRef = useRef<string | null>(null)
+  // The last run of text the operator actually selected here. Formatting is
+  // applied from the toolbar, which takes focus away and collapses the live
+  // selection, so this is what puts the selection back after the styled markup
+  // is re-seeded — and what keeps the words selected for a second change.
+  const lastSelectionRef = useRef<{ start: number; end: number } | null>(null)
+
+  useEffect(() => {
+    const remember = () => {
+      const editor = editRef.current
+      const anchor = window.getSelection()?.anchorNode
+      if (!editor || !anchor || !editor.contains(anchor)) return
+      const offsets = selectionOffsets(editor)
+      if (offsets && offsets.start !== offsets.end) {
+        lastSelectionRef.current = offsets
+      }
+    }
+    document.addEventListener('selectionchange', remember)
+    return () => document.removeEventListener('selectionchange', remember)
+  }, [])
 
   // The editor shows the same glued markers the projection does, but the text
   // handed back to the caller gets plain spaces again so nothing stores a
@@ -156,7 +175,14 @@ export function EditableMainText({
     const seedKey = `${editKey}|${rangesKey}`
     if (seededKeyRef.current !== seedKey) {
       const sameSlide = seededKeyRef.current?.startsWith(`${editKey}|`) === true
-      const selection = sameSlide ? selectionOffsets(editor) : null
+      const live = selectionOffsets(editor)
+      // A collapsed caret means the toolbar took focus; the run the operator
+      // had selected is the one to restore, not the caret.
+      const selection = sameSlide
+        ? live && live.start !== live.end
+          ? live
+          : (lastSelectionRef.current ?? live)
+        : null
 
       if (styleRanges && styleRanges.length > 0) {
         editor.innerHTML = applyStylesToText(normalizedText, styleRanges)
@@ -169,6 +195,11 @@ export function EditableMainText({
     }
     fit()
   }, [editKey, rangesKey, normalizedText, styleRanges, fit])
+
+  // A new slide starts with no remembered selection of its own.
+  useEffect(() => {
+    lastSelectionRef.current = null
+  }, [editKey])
 
   const handleInput = useCallback(() => {
     if (!editRef.current) return

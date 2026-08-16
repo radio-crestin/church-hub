@@ -332,6 +332,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
                 <SlideCounter
                   currentIndex={activeIndex}
                   total={slides.length}
+                  variant="badge"
                 />
               </div>
               <button

@@ -338,6 +338,9 @@ test.describe('Per-slide text styling', () => {
         selection?.removeAllRanges()
         selection?.addRange(range)
       })
+      // The bar reads the selection from a selectionchange event; give it the
+      // tick it needs before acting on the field.
+      await page.waitForTimeout(300)
       await expect
         .poll(async () => Number(await sizeInput.inputValue()), {
           timeout: 5000,
@@ -358,6 +361,21 @@ test.describe('Per-slide text styling', () => {
       expect(withRange.ranges[0]).toMatchObject({ start: 0, end: 5 })
       expect(withRange.ranges[0].fontScale).toBeGreaterThan(1)
       expect(await editable.innerHTML()).toContain('font-size:')
+
+      // The words stay selected afterwards, so a second size change still
+      // targets them instead of falling back to the whole slide.
+      const secondSize = Number(await sizeInput.inputValue())
+      await sizeInput.fill(String(secondSize * 2))
+      await sizeInput.press('Enter')
+      await expect
+        .poll(
+          async () => (await readOverride())?.ranges?.[0]?.fontScale ?? 0,
+          { timeout: 10000 },
+        )
+        .toBeGreaterThan(withRange.ranges[0].fontScale)
+      const after = await readOverride()
+      expect(after.ranges).toHaveLength(1)
+      expect(after.fontScale).toBeCloseTo(slideOverride.fontScale, 5)
     } finally {
       await request.delete(`/api/songs/${created.id}`)
     }

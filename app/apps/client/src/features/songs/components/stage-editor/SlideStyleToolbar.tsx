@@ -149,16 +149,27 @@ export function SlideStyleToolbar({
     appliedRef.current = null
   }, [selection])
 
-  const commitDraft = useCallback(() => {
-    const parsed = Number.parseFloat(sizeDraft.replace(',', '.'))
-    if (!Number.isFinite(parsed)) {
-      setSizeDraft(String(effectiveSize))
-      return
-    }
-    if (appliedRef.current === parsed) return
-    appliedRef.current = parsed
-    applySize(parsed)
-  }, [sizeDraft, effectiveSize, applySize])
+  const commitDraft = useCallback(
+    (returnFocus = false) => {
+      const parsed = Number.parseFloat(sizeDraft.replace(',', '.'))
+      if (!Number.isFinite(parsed)) {
+        setSizeDraft(String(effectiveSize))
+        return
+      }
+      if (appliedRef.current === parsed) return
+      appliedRef.current = parsed
+      applySize(parsed)
+
+      // Hand the caret back to the slide so the styled words stay visibly
+      // selected and can be resized again without re-selecting them.
+      if (returnFocus) {
+        document
+          .querySelector<HTMLElement>('[data-testid="slide-canvas-editable"]')
+          ?.focus()
+      }
+    },
+    [sizeDraft, effectiveSize, applySize],
+  )
 
   const markState = (mark: Mark): boolean =>
     (selection ? activeRange?.[mark] : override?.[mark]) ?? false
@@ -218,11 +229,11 @@ export function SlideStyleToolbar({
         value={sizeDraft}
         disabled={disabled}
         onChange={(event) => setSizeDraft(event.target.value)}
-        onBlur={commitDraft}
+        onBlur={() => commitDraft()}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
             event.preventDefault()
-            commitDraft()
+            commitDraft(true)
           }
           if (event.key === 'Escape') {
             event.preventDefault()
