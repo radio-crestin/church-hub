@@ -131,10 +131,11 @@ async function placeWindow(
       await win.setPosition(new PhysicalPosition(target.x, target.y))
       await win.setSize(new PhysicalSize(target.width, target.height))
     }
-    // Taken off here rather than at creation, so the window is born with a full
-    // set of window buttons to hand back when it leaves fullscreen — and while
-    // it is still hidden, so the title bar is never seen.
-    await win.setDecorations(false)
+    // The chrome deliberately stays on. macOS only lets a *titled* window go
+    // fullscreen — a borderless one refuses without a word — so taking the
+    // decorations off first is what stopped the projection from ever filling
+    // the screen. `setWindowFullscreen` removes them only if it has to fall
+    // back to covering the display by hand.
     return
   }
 
@@ -369,11 +370,13 @@ async function openInNativeWindow(
         resizable: true,
         maximizable: true,
         minimizable: true,
-        // Always built with its chrome, even for a screen that will go straight
-        // to fullscreen: a window created borderless on macOS has no close /
+        // Always built with its chrome, even for a screen that goes straight to
+        // fullscreen. A window created borderless on macOS has no close /
         // minimise / zoom buttons to give back, so one that later leaves
-        // fullscreen would have a title bar with nothing in it. The chrome is
-        // taken off below, while the window is still hidden, so nothing flashes.
+        // fullscreen ends up with an empty title bar — and, worse, macOS will
+        // not put a borderless window into fullscreen at all. The window
+        // manager hides the chrome itself for as long as the window fills the
+        // screen.
         decorations: true,
         alwaysOnTop,
         skipTaskbar: true,

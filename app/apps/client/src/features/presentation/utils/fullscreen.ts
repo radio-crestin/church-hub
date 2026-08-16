@@ -58,10 +58,11 @@ export async function setWindowFullscreen(
     `[setWindowFullscreen] Platform: ${currentPlatform}, setting fullscreen: ${fullscreen}`,
   )
 
-  // Going in: the chrome comes off first, so the window has none to animate.
-  if (fullscreen) {
-    await setDecorations(win, false)
-  } else if (currentPlatform === 'macos') {
+  // Going in, the chrome stays on: macOS only lets a *titled* window go
+  // fullscreen, and a borderless one refuses without raising anything. The
+  // window manager hides the chrome itself once the window is fullscreen, and
+  // the fallbacks below take it off by hand when they have to stand in.
+  if (!fullscreen && currentPlatform === 'macos') {
     // Coming out: clear simple fullscreen before anything reads the window's
     // state, or the check below is answered by a window that is still stuck.
     // A no-op when the window was never in it.
@@ -166,6 +167,8 @@ async function applyFullscreen(
     try {
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
       console.log('[setWindowFullscreen] Trying macOS setSimpleFullscreen...')
+      // Standing in for fullscreen by hand, so the chrome has to go by hand.
+      await setDecorations(win, false)
       await win.setSimpleFullscreen(true)
       // setSimpleFullscreen doesn't update isFullscreen, so assume success if no error
       return true
@@ -177,9 +180,10 @@ async function applyFullscreen(
     try {
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
       console.log('[setWindowFullscreen] Trying Windows maximize fallback...')
-      // The chrome is handled by the caller; maximising a chromeless window is
-      // as close to fullscreen as Windows gets when setFullscreen refuses.
+      // Maximising a chromeless window is as close to fullscreen as Windows
+      // gets when setFullscreen refuses; the caller puts the chrome back.
       if (fullscreen) {
+        await setDecorations(win, false)
         await win.maximize()
       } else {
         await win.unmaximize()
