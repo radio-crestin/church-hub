@@ -228,6 +228,7 @@
     "slides": "Slide-uri",
     "noSlides": "Fără slide-uri",
     "slideNumber": "Slide {{number}}",
+    "slideCounter": "Slide-ul {{current}} din {{total}}",
     "editMode": "Editează",
     "exitEditMode": "Salvează",
     "saving": "Se salvează...",

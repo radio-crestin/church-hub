@@ -228,6 +228,7 @@
     "slides": "Slides",
     "noSlides": "No slides",
     "slideNumber": "Slide {{number}}",
+    "slideCounter": "Slide {{current}} of {{total}}",
     "editMode": "Edit",
     "exitEditMode": "Save",
     "saving": "Saving...",

@@ -21,6 +21,7 @@ import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
 import type { SongSlide, SongWithSlides } from '../../types'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
+import { SlideCounter } from '../SlideCounter'
 import { type LocalSlide } from '../SongSlideList'
 
 interface SongStageBoardProps {
@@ -292,8 +293,15 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           fillHeight
           canvasFooter={
             /* Presentation navigation hugs the bottom of the stage — advance/
-               retreat the live slide. The session clock is pinned right. */
+               retreat the live slide. The slide counter is pinned left and the
+               session clock right, on the same row. */
             <div className="relative flex w-full items-center justify-center gap-3 pt-3 shrink-0">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                <SlideCounter
+                  currentIndex={activeIndex}
+                  total={slides.length}
+                />
+              </div>
               <button
                 type="button"
                 onClick={handlePrev}
