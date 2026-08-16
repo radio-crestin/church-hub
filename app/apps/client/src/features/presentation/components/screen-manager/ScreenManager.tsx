@@ -9,6 +9,8 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  Maximize,
+  Minimize,
   MonitorUp,
   Pin,
   PinOff,
@@ -39,6 +41,7 @@ import {
   getFrontendUrl,
   openDisplayWindow,
   setDisplayAlwaysOnTop,
+  setDisplayFullscreen,
 } from '../../utils/openDisplayWindow'
 import { ScreenEditor } from '../screen-editor'
 
@@ -236,6 +239,35 @@ export function ScreenManager() {
       )
     } catch {
       showToast(t('sections.screens.alwaysOnTop.error'), 'error')
+    }
+  }
+
+  // Fullscreen or windowed. Worth having here and not only in the projection
+  // window's own toolbar: a fullscreen window cannot be dragged, so this is
+  // what lets the operator take a projection off its display and move it.
+  const handleToggleFullscreen = async (screen: Screen) => {
+    const newValue = !screen.isFullscreen
+
+    try {
+      await upsertScreen.mutateAsync({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        isFullscreen: newValue,
+      })
+
+      if (screen.isActive) {
+        await setDisplayFullscreen(screen.id, newValue)
+      }
+
+      showToast(
+        newValue
+          ? t('presentation:screens.fullscreen.enabled')
+          : t('presentation:screens.fullscreen.disabled'),
+        'success',
+      )
+    } catch {
+      showToast(t('presentation:screens.fullscreen.error'), 'error')
     }
   }
 
@@ -487,6 +519,24 @@ export function ScreenManager() {
                     {screen.alwaysOnTop
                       ? t('sections.screens.alwaysOnTop.enabled')
                       : t('sections.screens.alwaysOnTop.disabled')}
+                  </span>
+                </Button>
+                <Button
+                  variant={screen.isFullscreen ? 'primary' : 'secondary'}
+                  size="sm"
+                  data-testid="screen-fullscreen"
+                  onClick={() => handleToggleFullscreen(screen)}
+                  title={t('presentation:screens.fullscreen.tooltip')}
+                >
+                  {screen.isFullscreen ? (
+                    <Maximize size={16} />
+                  ) : (
+                    <Minimize size={16} />
+                  )}
+                  <span className="ml-1">
+                    {screen.isFullscreen
+                      ? t('presentation:screens.fullscreen.on')
+                      : t('presentation:screens.fullscreen.off')}
                   </span>
                 </Button>
                 <Button

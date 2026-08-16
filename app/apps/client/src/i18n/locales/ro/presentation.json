@@ -223,6 +223,14 @@
       "autoDescription": "Se deschide unde nimerește fereastra",
       "unnamed": "Monitorul {{index}}",
       "disconnected": "{{name}} (neconectat)"
+    },
+    "fullscreen": {
+      "tooltip": "Umple ecranul, sau rulează într-o fereastră care se poate muta",
+      "on": "Pe tot ecranul",
+      "off": "În fereastră",
+      "enabled": "Ecranul umple acum tot display-ul",
+      "disabled": "Ecranul rulează acum într-o fereastră pe care o poți muta",
+      "error": "Nu s-a putut schimba modul de afișare al ecranului"
     }
   },
   "displays": {

@@ -22,11 +22,10 @@ const MIGRATION_KEY = 'add_screen_monitor_v1'
  * the operator's choice in the screens settings and by the window itself when it
  * is dragged to another monitor, so the two stay in step.
  *
- * Also flips `is_fullscreen` on for screens that never had it set. Until now a
- * projection window was force-promoted to fullscreen the moment it maximised, so
- * in practice every screen ran fullscreen regardless of the flag; that promotion
- * is gone and the flag is the memory instead, which would otherwise open those
- * screens in a small window.
+ * Existing screens keep whatever `is_fullscreen` they had. Only new ones default
+ * to fullscreen: forcing it on the screens already in the database took away the
+ * windowed projection some operators had been dragging between displays, and a
+ * fullscreen window cannot be dragged anywhere.
  *
  * Idempotent — safe to run on every boot.
  */
@@ -50,9 +49,6 @@ export function addScreenMonitor(db: Database): void {
     log('info', 'Adding "monitor_name" column to screens...')
     db.run('ALTER TABLE screens ADD COLUMN monitor_name TEXT')
   }
-
-  log('info', 'Defaulting existing screens to fullscreen...')
-  db.run('UPDATE screens SET is_fullscreen = 1 WHERE is_fullscreen = 0')
 
   db.run(
     'INSERT OR REPLACE INTO app_settings (key, value, created_at, updated_at) VALUES (?, ?, unixepoch(), unixepoch())',

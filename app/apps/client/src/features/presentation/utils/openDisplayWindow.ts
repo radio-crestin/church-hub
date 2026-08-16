@@ -613,7 +613,11 @@ export async function toggleDisplayFullscreen(
 }
 
 /**
- * Sets fullscreen mode for a native display window
+ * Sets fullscreen mode for a native display window.
+ *
+ * Goes through `setWindowFullscreen` rather than the raw Tauri call so the
+ * window comes out of fullscreen the way the toolbar's own toggle leaves it:
+ * chrome back on, macOS simple fullscreen cleared, and small enough to grab.
  */
 export async function setDisplayFullscreen(
   displayId: number,
@@ -626,7 +630,7 @@ export async function setDisplayFullscreen(
     const windowLabel = `display-${displayId}`
     const win = await WebviewWindow.getByLabel(windowLabel)
     if (win) {
-      await win.setFullscreen(fullscreen)
+      await setWindowFullscreen(win, fullscreen)
     }
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Error logging
