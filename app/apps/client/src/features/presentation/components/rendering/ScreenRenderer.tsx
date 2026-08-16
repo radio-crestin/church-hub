@@ -10,7 +10,7 @@ import { getBackgroundCSS } from './utils'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
-import { useClearSlide, useUpsertScreen, useWebSocket } from '../../hooks'
+import { useClearSlide, useWebSocket } from '../../hooks'
 import { usePresentationContent } from '../../hooks/usePresentationContent'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
@@ -32,7 +32,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const navigate = useNavigate()
 
   const { data: screenData, isLoading, isError } = useScreen(screenId)
-  const upsertScreen = useUpsertScreen()
   const { data: kioskSettings } = useKioskSettings()
   const clearSlide = useClearSlide()
   const { data: slideHighlights } = useSlideHighlights()
@@ -101,6 +100,10 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   // Track if we're in a native display window (fullscreen only allowed there)
   const [isNativeDisplayWindow, setIsNativeDisplayWindow] = useState(false)
   const appliedInitialFullscreenRef = useRef(false)
+  // What this window was last asked to be, which is not what it will admit to:
+  // a window held in macOS simple fullscreen reports that it is windowed. Null
+  // until the screen has been read, i.e. until nobody has asked it anything.
+  const desiredFullscreenRef = useRef<boolean | null>(null)
 
   // Track container dimensions (start at 0, render only when measured)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -171,6 +174,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     )
       return
     appliedInitialFullscreenRef.current = true
+    desiredFullscreenRef.current = screen.isFullscreen
     if (!screen.isFullscreen || !isTauri()) return
 
     const fillDisplay = async () => {
@@ -217,13 +221,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         )
         const win = getCurrentWebviewWindow()
 
-        // The window is only asked while the screen has no opinion of its own:
-        // a window held in macOS simple fullscreen reports that it is not
-        // fullscreen at all, and believing it would offer the operator a button
-        // that tries to enter fullscreen again instead of leaving it.
+        // The window is only asked while nothing has been asked of it: one held
+        // in macOS simple fullscreen reports that it is not fullscreen at all,
+        // and believing it would offer the operator a button that tries to
+        // enter fullscreen again instead of leaving it.
         const readFullscreen = async () => {
-          if (screen) {
-            setIsFullscreen(screen.isFullscreen)
+          if (desiredFullscreenRef.current !== null) {
+            setIsFullscreen(desiredFullscreenRef.current)
             return
           }
           setIsFullscreen(await win.isFullscreen())
@@ -261,7 +265,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         unlistenResize()
       }
     }
-  }, [screen, upsertScreen])
+  }, [])
 
   // Helper function for browser fullscreen (cross-browser support)
   const useBrowserFullscreen = async (
@@ -328,11 +332,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       return
     }
 
-    // What the screen records, not what the window reports: a window in macOS
-    // simple fullscreen says it is windowed, and toggling from that would try
-    // to enter fullscreen a second time instead of leaving — the operator could
-    // never get the projection back into a window they can move.
-    const newFullscreen = !(screen?.isFullscreen ?? isFullscreen)
+    // What this window was last asked to be, not what it reports: a window in
+    // macOS simple fullscreen says it is windowed, and toggling from that would
+    // try to enter fullscreen a second time instead of leaving — the operator
+    // could never get the projection back into a window they can move.
+    const newFullscreen = !(desiredFullscreenRef.current ?? isFullscreen)
+    desiredFullscreenRef.current = newFullscreen
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.log(`[toggleFullscreen] Toggling fullscreen to: ${newFullscreen}`)
 
@@ -414,16 +419,11 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       }
     }
 
-    // Save fullscreen state to database
-    if (screen) {
-      upsertScreen.mutate({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        isFullscreen: newFullscreen,
-      })
-    }
-  }, [isFullscreen, isNativeDisplayWindow, screen, upsertScreen])
+    // Deliberately not written back to the screen. `isFullscreen` is how the
+    // projection *opens*, and it is set in the screen settings; leaving
+    // fullscreen for a moment during a service used to overwrite it, so every
+    // later open came up as a window until someone went fullscreen by hand.
+  }, [isFullscreen, isNativeDisplayWindow, screen])
 
   // Show toolbar on mouse move near the top
   const handleMouseMove = useCallback((e: React.MouseEvent) => {

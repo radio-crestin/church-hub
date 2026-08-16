@@ -1023,6 +1023,15 @@
         "unpinned": "Window no longer always on top",
         "error": "Failed to update always on top setting"
       },
+      "fullscreen": {
+        "fill": "Open this screen filling its display",
+        "windowed": "Open this screen as a window instead of filling its display",
+        "on": "Opens fullscreen",
+        "off": "Opens windowed",
+        "enabled": "Screen will open fullscreen",
+        "disabled": "Screen will open as a window",
+        "error": "Failed to update fullscreen setting"
+      },
       "closeOnEscape": {
         "tooltip": "Controls whether this screen's native window closes when nothing is being displayed (after Escape / hide). The slide content always clears and the clock shows — this only controls the window itself. Default: window stays open.",
         "on": "Close window when nothing is displayed",

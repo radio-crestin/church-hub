@@ -9,6 +9,8 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  Maximize,
+  Minimize,
   MonitorUp,
   Pin,
   PinOff,
@@ -236,6 +238,31 @@ export function ScreenManager() {
       )
     } catch {
       showToast(t('sections.screens.alwaysOnTop.error'), 'error')
+    }
+  }
+
+  // How the projection window opens. Only this setting decides it: leaving
+  // fullscreen from the projection's own toolbar is for the moment, not for
+  // good, so the next open still fills the display.
+  const handleToggleFullscreen = async (screen: Screen) => {
+    const newValue = !screen.isFullscreen
+
+    try {
+      await upsertScreen.mutateAsync({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        isFullscreen: newValue,
+      })
+
+      showToast(
+        newValue
+          ? t('sections.screens.fullscreen.enabled')
+          : t('sections.screens.fullscreen.disabled'),
+        'success',
+      )
+    } catch {
+      showToast(t('sections.screens.fullscreen.error'), 'error')
     }
   }
 
@@ -487,6 +514,27 @@ export function ScreenManager() {
                     {screen.alwaysOnTop
                       ? t('sections.screens.alwaysOnTop.enabled')
                       : t('sections.screens.alwaysOnTop.disabled')}
+                  </span>
+                </Button>
+                <Button
+                  variant={screen.isFullscreen ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => handleToggleFullscreen(screen)}
+                  title={
+                    screen.isFullscreen
+                      ? t('sections.screens.fullscreen.windowed')
+                      : t('sections.screens.fullscreen.fill')
+                  }
+                >
+                  {screen.isFullscreen ? (
+                    <Maximize size={16} />
+                  ) : (
+                    <Minimize size={16} />
+                  )}
+                  <span className="ml-1">
+                    {screen.isFullscreen
+                      ? t('sections.screens.fullscreen.on')
+                      : t('sections.screens.fullscreen.off')}
                   </span>
                 </Button>
                 <Button
