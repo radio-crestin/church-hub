@@ -14,6 +14,7 @@ import {
   useNavigateTemporary,
   usePresentationState,
   usePresentTemporarySong,
+  usePreviewScreen,
 } from '~/features/presentation'
 import { SlideNotesPanel } from './SlideNotesPanel'
 import { SlideStyleToolbar } from './SlideStyleToolbar'
@@ -68,6 +69,10 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
   const { data: presentationState } = usePresentationState()
+  // The screen the stage previews. Its width is what turns the size rendered on
+  // the (scaled-down) canvas into the screen's own units for the toolbar.
+  const { screen } = usePreviewScreen()
+  const canvasWidth = screen?.width ?? 1920
 
   const [slides, setSlides] = useState<LocalSlide[]>(() => mapSlides(song))
   const [savedSerialized, setSavedSerialized] = useState(() =>
@@ -313,6 +318,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           canvasToolbar={
             <SlideStyleToolbar
               override={activeStyleOverrides}
+              canvasWidth={canvasWidth}
               onChange={handleStyleChange}
               disabled={slides.length === 0}
             />

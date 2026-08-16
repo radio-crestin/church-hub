@@ -271,6 +271,98 @@ test.describe('Per-slide text styling', () => {
     }
   })
 
+  test('the size input sets an exact size for slide and selection', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Size ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    const readOverride = async () => {
+      const res = await request.get(`/api/songs/${created.id}`)
+      const { data } = await res.json()
+      return data.slides[0].styleOverrides
+    }
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const stage = page.locator('[data-editing]')
+      await expect(stage).toContainText('Slava', { timeout: 10000 })
+      await stage.click()
+
+      const sizeInput = page.getByTestId('slide-style-font-size')
+      await expect(sizeInput).toBeVisible()
+      // The field reports the size the slide is actually rendered at.
+      await expect
+        .poll(async () => Number(await sizeInput.inputValue()), {
+          timeout: 5000,
+        })
+        .toBeGreaterThan(0)
+      const shown = Number(await sizeInput.inputValue())
+
+      // Typing a smaller size shrinks the whole slide by that ratio.
+      await sizeInput.fill(String(Math.round(shown / 2)))
+      await sizeInput.press('Enter')
+      await expect
+        .poll(readOverride, { timeout: 10000 })
+        .toMatchObject({ fontScale: expect.any(Number) })
+      const slideOverride = await readOverride()
+      expect(slideOverride.fontScale).toBeLessThan(1)
+      expect(slideOverride.ranges ?? []).toHaveLength(0)
+
+      // The field follows the change instead of keeping the old number.
+      await expect
+        .poll(async () => Number(await sizeInput.inputValue()), {
+          timeout: 5000,
+        })
+        .toBeLessThan(shown)
+
+      // With a word selected, the same field sizes only that word.
+      const editable = page.getByTestId('slide-canvas-editable')
+      await editable.evaluate((el) => {
+        const textNode = el.firstChild
+        if (!textNode) throw new Error('editor has no text')
+        const range = document.createRange()
+        range.setStart(textNode, 0)
+        range.setEnd(textNode, 5)
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+      })
+      await expect
+        .poll(async () => Number(await sizeInput.inputValue()), {
+          timeout: 5000,
+        })
+        .toBeGreaterThan(0)
+      const wordSize = Number(await sizeInput.inputValue())
+      await sizeInput.fill(String(wordSize * 2))
+      await sizeInput.press('Enter')
+
+      // Autosave carries it, and only the selected run is affected.
+      await expect
+        .poll(async () => (await readOverride())?.ranges?.length ?? 0, {
+          timeout: 10000,
+        })
+        .toBe(1)
+      const withRange = await readOverride()
+      expect(withRange.fontScale).toBeCloseTo(slideOverride.fontScale, 5)
+      expect(withRange.ranges[0]).toMatchObject({ start: 0, end: 5 })
+      expect(withRange.ranges[0].fontScale).toBeGreaterThan(1)
+      expect(await editable.innerHTML()).toContain('font-size:')
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('shows the current slide and the slide count', async ({
     page,
     request,

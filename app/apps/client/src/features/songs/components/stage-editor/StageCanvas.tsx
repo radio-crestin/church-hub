@@ -64,6 +64,7 @@ export function StageCanvas({
   const { contentType, contentData, contentKey, isVisible } =
     usePresentationContent({ screen, includeNextSlide: false, previewContent })
 
+  const rootRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const [editing, setEditing] = useState(false)
 
@@ -123,9 +124,20 @@ export function StageCanvas({
 
   // Clicking outside the stage (a button, empty space) blurs the editor and
   // leaves edit mode. Slide-switch is handled separately above.
-  const handleBlur = useCallback(() => {
-    if (clickToEdit) setEditing(false)
-  }, [clickToEdit])
+  //
+  // The formatting bar is the exception: its size field has to take focus to be
+  // typed in, and leaving edit mode there would unmount the very editor the
+  // field is about to restyle. Focus moving anywhere inside this canvas — bar
+  // included — keeps editing alive.
+  const handleBlur = useCallback(
+    (event: React.FocusEvent<HTMLDivElement>) => {
+      if (!clickToEdit) return
+      const next = event.relatedTarget
+      if (next instanceof Node && rootRef.current?.contains(next)) return
+      setEditing(false)
+    },
+    [clickToEdit],
+  )
 
   const framed = clickToEdit && editing
 
@@ -143,6 +155,7 @@ export function StageCanvas({
 
   return (
     <div
+      ref={rootRef}
       className={
         fitHeight ? 'flex w-full shrink-0 flex-col items-center' : 'w-full'
       }
@@ -167,6 +180,7 @@ export function StageCanvas({
       >
         <div
           style={boxStyle}
+          data-testid="slide-canvas-box"
           className={`relative aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
             showEditor ? '' : 'select-none'
           } ${fitHeight ? '' : 'w-full'}`}

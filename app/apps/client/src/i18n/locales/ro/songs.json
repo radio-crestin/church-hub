@@ -49,6 +49,7 @@
     "projectSlide": "Afișează acest slide pe ecran",
     "toggleLayout": "Comută layout PowerPoint",
     "style": {
+      "fontSize": "Marimea textului",
       "increaseFontSize": "Mărește textul",
       "decreaseFontSize": "Micșorează textul",
       "bold": "Îngroșat",
