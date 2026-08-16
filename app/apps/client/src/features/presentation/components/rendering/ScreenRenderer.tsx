@@ -100,6 +100,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   // Track if we're in a native display window (fullscreen only allowed there)
   const [isNativeDisplayWindow, setIsNativeDisplayWindow] = useState(false)
+  const appliedInitialFullscreenRef = useRef(false)
 
   // Track container dimensions (start at 0, render only when measured)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -150,6 +151,51 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
     detectDisplayWindow()
   }, [])
+
+  // Fill the display, if that is what the screen is set to.
+  //
+  // Done from inside the projection window rather than by whoever opened it:
+  // asking a window to go fullscreen from another window's context is refused
+  // on macOS without a word, which is why the projection kept coming up as a
+  // window and had to be sent fullscreen by hand. The opener has already put
+  // this window on the right monitor, so this fills that one.
+  //
+  // Once per window, never on a later re-read of the screen: the operator
+  // leaving fullscreen writes it to the screen, and re-applying on that change
+  // would put them straight back.
+  useEffect(() => {
+    if (
+      !isNativeDisplayWindow ||
+      !screen ||
+      appliedInitialFullscreenRef.current
+    )
+      return
+    appliedInitialFullscreenRef.current = true
+    if (!screen.isFullscreen || !isTauri()) return
+
+    const fillDisplay = async () => {
+      try {
+        const { getCurrentWebviewWindow } = await import(
+          '@tauri-apps/api/webviewWindow'
+        )
+        const win = getCurrentWebviewWindow()
+        if (!(await win.isFullscreen())) {
+          await setWindowFullscreen(win, true)
+        }
+        setIsFullscreen(true)
+        // Going fullscreen restyles the window, which on macOS drops it back to
+        // the ordinary level and hides the projection behind the control room.
+        if (screen.alwaysOnTop) {
+          await win.setAlwaysOnTop(true)
+        }
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+        console.error('[ScreenRenderer] Failed to fill the display:', error)
+      }
+    }
+
+    fillDisplay()
+  }, [isNativeDisplayWindow, screen])
 
   // Follow the window's own fullscreen state.
   //

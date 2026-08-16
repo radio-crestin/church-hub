@@ -488,9 +488,11 @@ async function openInNativeWindow(
           console.error('[openInNativeWindow] Failed to place window:', error)
         }
 
-        if (screen.isFullscreen) {
-          await setWindowFullscreen(win, true)
-        }
+        // Going fullscreen is left to the projection page itself. Asking a
+        // window to fill the screen from another window's context is refused on
+        // macOS without a word, so this used to leave the projection sitting in
+        // a window; the page does it the moment it knows which screen it is, by
+        // which point this has already put it on the right monitor.
 
         // Re-asserted last: changing the decorations rebuilds the window's style
         // on macOS, which drops it back to the ordinary level, and a projection
