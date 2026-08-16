@@ -26,6 +26,13 @@ const FONT_STEP_RATIO = 0.1
 const FONT_MIN = 4
 const FONT_MAX = 4000
 
+/**
+ * How long the size field waits after the last keystroke before applying. Long
+ * enough to type "120" as one number rather than as 1, then 12, then 120; short
+ * enough that nudging the spinner shows up straight away.
+ */
+const SIZE_COMMIT_DELAY_MS = 500
+
 type Alignment = NonNullable<SlideStyleOverride['alignment']>
 type Mark = 'bold' | 'italic' | 'underline'
 type Selection = { start: number; end: number }
@@ -114,6 +121,8 @@ export function SlideStyleToolbar({
   }, [canvasWidth, override, selection])
 
   const [sizeDraft, setSizeDraft] = useState('')
+  const sizeDraftRef = useRef(sizeDraft)
+  sizeDraftRef.current = sizeDraft
   useEffect(() => {
     setSizeDraft(effectiveSize > 0 ? String(effectiveSize) : '')
   }, [effectiveSize])
@@ -150,8 +159,8 @@ export function SlideStyleToolbar({
   }, [selection])
 
   const commitDraft = useCallback(
-    (returnFocus = false) => {
-      const parsed = Number.parseFloat(sizeDraft.replace(',', '.'))
+    (returnFocus = false, draft = sizeDraftRef.current) => {
+      const parsed = Number.parseFloat(draft.replace(',', '.'))
       if (!Number.isFinite(parsed)) {
         setSizeDraft(String(effectiveSize))
         return
@@ -168,8 +177,20 @@ export function SlideStyleToolbar({
           ?.focus()
       }
     },
-    [sizeDraft, effectiveSize, applySize],
+    [effectiveSize, applySize],
   )
+
+  // Typing or nudging the spinner applies on its own: waiting for Enter or for
+  // focus to leave meant a size change sat there unapplied while the operator
+  // kept editing the slide.
+  useEffect(() => {
+    if (sizeDraft === '' || sizeDraft === String(effectiveSize)) return
+    const timer = setTimeout(
+      () => commitDraft(false, sizeDraft),
+      SIZE_COMMIT_DELAY_MS,
+    )
+    return () => clearTimeout(timer)
+  }, [sizeDraft, effectiveSize, commitDraft])
 
   const markState = (mark: Mark): boolean =>
     (selection ? activeRange?.[mark] : override?.[mark]) ?? false

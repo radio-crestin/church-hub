@@ -381,6 +381,60 @@ test.describe('Per-slide text styling', () => {
     }
   })
 
+  test('the size field applies without leaving edit mode', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Live Size ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    const readOverride = async () => {
+      const res = await request.get(`/api/songs/${created.id}`)
+      const { data } = await res.json()
+      return data.slides[0].styleOverrides
+    }
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const stage = page.locator('[data-editing]')
+      await expect(stage).toContainText('Slava', { timeout: 10000 })
+      await stage.click()
+
+      const sizeInput = page.getByTestId('slide-style-font-size')
+      await expect(sizeInput).toBeVisible()
+      await page.waitForTimeout(300)
+      const shown = Number(await sizeInput.inputValue())
+
+      // Nudge the spinner: no Enter, no blur, still inside edit mode.
+      await sizeInput.click()
+      await sizeInput.press('ArrowUp')
+
+      await expect
+        .poll(async () => (await readOverride())?.fontScale ?? 0, {
+          timeout: 10000,
+        })
+        .toBeGreaterThan(0)
+      // The editor is still mounted — the change did not need it to close.
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+      await expect
+        .poll(async () => Number(await sizeInput.inputValue()), {
+          timeout: 5000,
+        })
+        .toBeGreaterThan(shown)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('shows the current slide and the slide count', async ({
     page,
     request,
