@@ -340,6 +340,21 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       console.error('[toggleFullscreen] All fullscreen methods failed')
     }
 
+    // Taking the decorations on or off rebuilds the window's style on macOS,
+    // which drops it back to the ordinary level — a projection that stops
+    // floating vanishes behind the control room.
+    if (screen?.alwaysOnTop && isTauri()) {
+      try {
+        const { getCurrentWebviewWindow } = await import(
+          '@tauri-apps/api/webviewWindow'
+        )
+        await getCurrentWebviewWindow().setAlwaysOnTop(true)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+        console.error('[toggleFullscreen] Failed to re-assert on top:', error)
+      }
+    }
+
     // Save fullscreen state to database
     if (screen) {
       upsertScreen.mutate({

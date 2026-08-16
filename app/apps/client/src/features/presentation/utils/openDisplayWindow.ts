@@ -426,15 +426,38 @@ async function openInNativeWindow(
         } catch (error) {
           // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
           console.error('[openInNativeWindow] Failed to place window:', error)
-        } finally {
-          // Shown whatever happened above: a projection stuck invisible is worse
-          // than one in the wrong place. It already covers its monitor, so the
-          // switch to real fullscreen that follows is invisible.
+        }
+
+        // Shown whatever happened above: a projection stuck invisible is worse
+        // than one in the wrong place, so nothing between here and `show()` is
+        // allowed to throw past it. It already covers its monitor, so the switch
+        // to real fullscreen that follows is invisible.
+        try {
           await win.show()
-          if (screen.isFullscreen) {
-            await setWindowFullscreen(win, true)
-          }
-          if (focus) await win.setFocus()
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+          console.error('[openInNativeWindow] Failed to show window:', error)
+        }
+
+        if (screen.isFullscreen) {
+          await setWindowFullscreen(win, true)
+        }
+
+        // Re-asserted last: changing the decorations rebuilds the window's style
+        // on macOS, which drops it back to the ordinary level, and a projection
+        // that no longer floats disappears behind the control room.
+        try {
+          await win.setAlwaysOnTop(alwaysOnTop)
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+          console.error(
+            '[openInNativeWindow] Failed to re-assert always on top:',
+            error,
+          )
+        }
+
+        if (focus) {
+          await win.setFocus()
         }
 
         // Remember where the operator leaves the window. Only the windowed
