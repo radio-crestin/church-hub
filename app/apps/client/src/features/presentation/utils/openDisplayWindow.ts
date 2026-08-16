@@ -3,6 +3,7 @@ import type { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { setWindowFullscreen } from './fullscreen'
 import {
   findMonitorByName,
+  getDefaultProjectionMonitor,
   getPrimaryMonitor,
   monitorAtPoint,
   monitorContains,
@@ -126,9 +127,14 @@ async function placeWindow(
   if (screen.isFullscreen) {
     // Without an assigned monitor, cover the one the window opened on.
     const target = monitor ?? (await currentMonitorOf(win))
-    if (!target) return
-    await win.setPosition(new PhysicalPosition(target.x, target.y))
-    await win.setSize(new PhysicalSize(target.width, target.height))
+    if (target) {
+      await win.setPosition(new PhysicalPosition(target.x, target.y))
+      await win.setSize(new PhysicalSize(target.width, target.height))
+    }
+    // Taken off here rather than at creation, so the window is born with a full
+    // set of window buttons to hand back when it leaves fullscreen — and while
+    // it is still hidden, so the title bar is never seen.
+    await win.setDecorations(false)
     return
   }
 
@@ -341,7 +347,11 @@ async function openInNativeWindow(
 
       // Where it sat last time it was windowed, and the monitor it belongs on.
       const storedState = getStoredState(displayId)
-      const monitor = await findMonitorByName(screen.monitorName)
+      // An unassigned screen goes to a display the control room is not on, so
+      // the projection never opens over Church Hub itself.
+      const monitor =
+        (await findMonitorByName(screen.monitorName)) ??
+        (await getDefaultProjectionMonitor())
       lastKnownMonitor.set(displayId, screen.monitorName)
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(
@@ -359,10 +369,12 @@ async function openInNativeWindow(
         resizable: true,
         maximizable: true,
         minimizable: true,
-        // A screen that projects fullscreen never wants a title bar, and would
-        // otherwise flash one in the frame between being shown and going
-        // fullscreen. `setWindowFullscreen` puts it back on the way out.
-        decorations: !screen.isFullscreen,
+        // Always built with its chrome, even for a screen that will go straight
+        // to fullscreen: a window created borderless on macOS has no close /
+        // minimise / zoom buttons to give back, so one that later leaves
+        // fullscreen would have a title bar with nothing in it. The chrome is
+        // taken off below, while the window is still hidden, so nothing flashes.
+        decorations: true,
         alwaysOnTop,
         skipTaskbar: true,
         focus,

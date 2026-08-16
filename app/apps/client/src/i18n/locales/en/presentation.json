@@ -223,14 +223,6 @@
       "autoDescription": "Open wherever the window lands",
       "unnamed": "Monitor {{index}}",
       "disconnected": "{{name}} (not connected)"
-    },
-    "fullscreen": {
-      "tooltip": "Fill the display, or run in a window that can be moved",
-      "on": "Fullscreen",
-      "off": "Windowed",
-      "enabled": "The screen now fills its display",
-      "disabled": "The screen now runs in a window you can move",
-      "error": "Could not change how the screen fills its display"
     }
   },
   "displays": {

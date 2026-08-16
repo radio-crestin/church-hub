@@ -54,6 +54,28 @@ export async function listMonitors(): Promise<ScreenMonitor[]> {
   }
 }
 
+/**
+ * Where a screen with no monitor of its own should project.
+ *
+ * Anywhere but the display the control room is sitting on: a projection that
+ * opens over Church Hub covers the very window the operator is driving it from,
+ * and on a two-monitor desk that is never what was meant. Null when there is
+ * only one display to choose from, which is its own answer.
+ */
+export async function getDefaultProjectionMonitor(): Promise<ScreenMonitor | null> {
+  const monitors = await listMonitors()
+  if (monitors.length < 2) return null
+
+  try {
+    const { currentMonitor } = await import('@tauri-apps/api/window')
+    const control = await currentMonitor()
+    const controlName = control ? toScreenMonitor(control).name : null
+    return monitors.find((monitor) => monitor.name !== controlName) ?? null
+  } catch {
+    return null
+  }
+}
+
 /** The monitor the OS treats as the main one, when it names one. */
 export async function getPrimaryMonitor(): Promise<ScreenMonitor | null> {
   try {
