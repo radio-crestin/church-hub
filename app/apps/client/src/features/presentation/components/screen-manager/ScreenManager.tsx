@@ -1,6 +1,7 @@
 import {
   AppWindow,
   Copy,
+  CopyPlus,
   DoorClosed,
   DoorOpen,
   Edit,
@@ -26,6 +27,7 @@ import { ScreenExportModal } from './ScreenExportModal'
 import {
   useBatchUpdateScreenConfig,
   useDeleteScreen,
+  useDuplicateScreen,
   useScreen,
   useScreens,
   useUpsertScreen,
@@ -73,6 +75,7 @@ export function ScreenManager() {
   const { data: screens, isLoading } = useScreens()
   const upsertScreen = useUpsertScreen()
   const deleteScreen = useDeleteScreen()
+  const duplicateScreen = useDuplicateScreen()
   const batchUpdateConfig = useBatchUpdateScreenConfig()
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -196,6 +199,20 @@ export function ScreenManager() {
       showToast(t('settings:sections.screens.toast.urlCopied'), 'success')
     } catch {
       showToast(t('settings:sections.screens.toast.copyError'), 'error')
+    }
+  }
+
+  // Duplicating happens entirely server-side so the copy gets every content
+  // config, the next-slide config and the OBS scene overrides in one write.
+  const handleDuplicate = async (screen: Screen) => {
+    try {
+      const copy = await duplicateScreen.mutateAsync(screen.id)
+      showToast(
+        t('settings:sections.screens.toast.duplicated', { name: copy.name }),
+        'success',
+      )
+    } catch {
+      showToast(t('settings:sections.screens.toast.duplicateError'), 'error')
     }
   }
 
@@ -359,6 +376,8 @@ export function ScreenManager() {
           {screens.map((screen) => (
             <div
               key={screen.id}
+              data-testid="screen-card"
+              data-screen-id={screen.id}
               className="flex flex-col gap-3 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
             >
               {/* Identity row: status + name/type + per-screen actions */}
@@ -401,6 +420,16 @@ export function ScreenManager() {
                     title={t('sections.screens.actions.copyUrl')}
                   >
                     <Copy size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    data-testid="screen-duplicate"
+                    onClick={() => handleDuplicate(screen)}
+                    disabled={duplicateScreen.isPending}
+                    title={t('sections.screens.actions.duplicate')}
+                  >
+                    <CopyPlus size={16} />
                   </Button>
                   <Button
                     variant="secondary"

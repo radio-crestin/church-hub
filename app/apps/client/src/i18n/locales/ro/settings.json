@@ -1053,6 +1053,7 @@
       "actions": {
         "openInNewTab": "Deschide în tab nou",
         "copyUrl": "Copiază URL în clipboard",
+        "duplicate": "Duplică ecranul cu toate setările",
         "edit": "Editează",
         "delete": "Șterge ecran"
       },
@@ -1060,12 +1061,14 @@
         "created": "Ecran creat cu succes",
         "saved": "Ecran salvat cu succes",
         "deleted": "Ecran șters cu succes",
+        "duplicated": "Ecran duplicat: \"{{name}}\"",
         "windowOpened": "Fereastra \"{{name}}\" deschisă",
         "windowClosed": "Fereastra \"{{name}}\" închisă",
         "urlCopied": "URL copiat în clipboard",
         "toggleError": "Nu s-a putut comuta fereastra",
         "copyError": "Nu s-a putut copia URL-ul",
         "deleteError": "Nu s-a putut șterge ecranul",
+        "duplicateError": "Nu s-a putut duplica ecranul",
         "saveError": "Nu s-a putut salva ecranul",
         "createError": "Nu s-a putut crea ecranul"
       },

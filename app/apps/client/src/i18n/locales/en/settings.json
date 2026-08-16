@@ -1051,6 +1051,7 @@
       "actions": {
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
+        "duplicate": "Duplicate the screen with all its settings",
         "edit": "Edit",
         "delete": "Delete screen"
       },
@@ -1058,12 +1059,14 @@
         "created": "Screen created successfully",
         "saved": "Screen saved successfully",
         "deleted": "Screen deleted successfully",
+        "duplicated": "Screen duplicated: \"{{name}}\"",
         "windowOpened": "Window \"{{name}}\" opened",
         "windowClosed": "Window \"{{name}}\" closed",
         "urlCopied": "URL copied to clipboard",
         "toggleError": "Failed to toggle window",
         "copyError": "Failed to copy URL",
         "deleteError": "Failed to delete screen",
+        "duplicateError": "Could not duplicate the screen",
         "saveError": "Failed to save screen",
         "createError": "Failed to create screen"
       },
