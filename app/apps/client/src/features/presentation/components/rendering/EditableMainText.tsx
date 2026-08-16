@@ -4,6 +4,7 @@ import { calculateFontSize } from './utils/calculateFontSize'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { sanitizePastedText } from './utils/sanitizePastedText'
+import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
 import type { TextStyle } from '../../types'
 
 interface EditableMainTextProps {
@@ -53,7 +54,10 @@ export function EditableMainText({
   const measureRef = useRef<HTMLDivElement>(null)
   const seededKeyRef = useRef<string | null>(null)
 
-  const normalizedText = normalizeText(content, true)
+  // The editor shows the same glued markers the projection does, but the text
+  // handed back to the caller gets plain spaces again so nothing stores a
+  // non-breaking space in the slide HTML.
+  const normalizedText = attachRepetitionMarkers(normalizeText(content, true))
 
   // Recompute the auto-scaled font size to fit the current text in the box.
   const fit = useCallback(() => {
@@ -83,7 +87,7 @@ export function EditableMainText({
   const handleInput = useCallback(() => {
     if (!editRef.current) return
     fit()
-    onEdit(editRef.current.innerText)
+    onEdit(editRef.current.innerText.replace(/\u00a0/g, ' '))
   }, [fit, onEdit])
 
   // Force a PLAIN-text paste. The browser's default paste inserts the

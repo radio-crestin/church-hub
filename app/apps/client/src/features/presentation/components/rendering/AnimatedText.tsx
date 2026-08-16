@@ -5,6 +5,7 @@ import { calculateFontSize } from './utils/calculateFontSize'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { compressLines } from './utils/textProcessing'
+import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
 import type {
   TextStyle,
   TextStyleRange,
@@ -158,7 +159,7 @@ const AnimatedTextInner = memo(function AnimatedText({
 
   // Normalize text content and apply line compression if enabled
   const normalizedText = useMemo(() => {
-    let text = normalizeText(content, isHtml)
+    let text = attachRepetitionMarkers(normalizeText(content, isHtml))
 
     // Apply line compression if enabled in style
     if (style.compressLines) {
