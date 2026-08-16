@@ -216,6 +216,13 @@
       "loading": "Loading screen configuration...",
       "error": "Failed to load screen",
       "notFound": "Screen not found"
+    },
+    "monitor": {
+      "label": "Monitor",
+      "auto": "Automatic",
+      "autoDescription": "Open wherever the window lands",
+      "unnamed": "Monitor {{index}}",
+      "disconnected": "{{name}} (not connected)"
     }
   },
   "displays": {

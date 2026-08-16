@@ -64,6 +64,17 @@ export async function setWindowFullscreen(
     }
   }
 
+  // A window filling a screen carries no chrome, and gets it back the moment it
+  // does not — a decorationless window that has left fullscreen cannot be moved
+  // or closed. Done on every platform, not only where the fallback below needs
+  // it, so leaving fullscreen always leaves a usable window behind.
+  try {
+    await win.setDecorations(!fullscreen)
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+    console.warn('[setWindowFullscreen] setDecorations failed:', error)
+  }
+
   // Method 1: Try regular setFullscreen
   try {
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
@@ -108,12 +119,12 @@ export async function setWindowFullscreen(
       console.log(
         '[setWindowFullscreen] Trying Windows maximize+decorations fallback...',
       )
+      // Decorations are already off (set above); maximising a chromeless window
+      // is as close to fullscreen as Windows gets when setFullscreen refuses.
       if (fullscreen) {
-        await win.setDecorations(false)
         await win.maximize()
       } else {
         await win.unmaximize()
-        await win.setDecorations(true)
       }
 
       if (await verifyMaximized()) {

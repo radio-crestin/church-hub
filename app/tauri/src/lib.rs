@@ -165,6 +165,14 @@ pub fn run() {
                         | tauri_plugin_window_state::StateFlags::DECORATIONS
                         | tauri_plugin_window_state::StateFlags::VISIBLE,
                 )
+                // Projection windows place themselves: each screen records the
+                // monitor it belongs on and whether it runs fullscreen, and the
+                // window is built at that geometry before it is ever shown.
+                // Letting the plugin restore them as well put them back wherever
+                // they happened to be last, which on a multi-monitor desk lands
+                // the projection on the wrong display and shows the window
+                // moving there.
+                .with_filter(|label| !label.starts_with("display-"))
                 .build(),
         );
         println!("[startup] plugin_window_state: {:?}", t.elapsed());

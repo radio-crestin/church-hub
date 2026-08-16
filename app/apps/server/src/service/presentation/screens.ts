@@ -454,6 +454,7 @@ function toScreen(record: typeof screens.$inferSelect): Screen {
     closeOnEscape: record.closeOnEscape,
     isPreviewScreen: record.isPreviewScreen,
     openOnStartup: record.openOnStartup,
+    monitorName: record.monitorName,
     width: record.width,
     height: record.height,
     globalSettings: parseGlobalSettings(record.globalSettings),
@@ -670,6 +671,9 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       if (input.openOnStartup !== undefined) {
         updateData.openOnStartup = input.openOnStartup
       }
+      if (input.monitorName !== undefined) {
+        updateData.monitorName = input.monitorName
+      }
       if (input.isPreviewScreen !== undefined) {
         updateData.isPreviewScreen = input.isPreviewScreen
         // Enforce a single preview screen: clear the flag on every other screen
@@ -700,7 +704,9 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         type: screenType,
         isActive: input.isActive === true,
         openMode,
-        isFullscreen: input.isFullscreen === true,
+        // Projection windows are fullscreen unless the operator says otherwise.
+        isFullscreen: input.isFullscreen !== false,
+        monitorName: input.monitorName ?? null,
         alwaysOnTop: input.alwaysOnTop === true,
         closeOnEscape: input.closeOnEscape === true,
         isPreviewScreen: input.isPreviewScreen === true,
@@ -861,6 +867,7 @@ export function duplicateScreen(id: number, name?: string): Screen | null {
         closeOnEscape: source.closeOnEscape,
         isPreviewScreen: false,
         openOnStartup: source.openOnStartup,
+        monitorName: source.monitorName,
         width: source.width,
         height: source.height,
         globalSettings: source.globalSettings,

@@ -8,6 +8,7 @@ import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
 import { addPreviewScreen } from './add-preview-screen'
 import { addScheduleItemSung } from './add-schedule-item-sung'
+import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
@@ -215,6 +216,14 @@ export function runMigrations(
     'add_screen_open_on_startup',
     'Running add screen open_on_startup migration',
     () => addScreenOpenOnStartup(rawDb),
+  )
+
+  // monitor_name on screens: which physical display the projection window
+  // belongs on. Before seed_screens so the seed can set it.
+  runStep(
+    'add_screen_monitor',
+    'Running add screen monitor_name migration',
+    () => addScreenMonitor(rawDb),
   )
 
   // Seed default screens

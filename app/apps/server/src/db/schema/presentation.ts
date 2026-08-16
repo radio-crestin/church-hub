@@ -38,7 +38,14 @@ export const screens = sqliteTable(
     openMode: text('open_mode').notNull().default('browser'),
     isFullscreen: integer('is_fullscreen', { mode: 'boolean' })
       .notNull()
-      .default(false),
+      .default(true),
+    /**
+     * Name of the physical monitor this screen projects onto, as the OS reports
+     * it. Null means "wherever the window opens". Written both by the operator's
+     * choice in the screens settings and by the window when it is dragged to
+     * another monitor, so a closed projection comes back where it was.
+     */
+    monitorName: text('monitor_name'),
     alwaysOnTop: integer('always_on_top', { mode: 'boolean' })
       .notNull()
       .default(false),

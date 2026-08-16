@@ -1,16 +1,33 @@
+import type { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+
 import { setWindowFullscreen } from './fullscreen'
-import type { DisplayOpenMode, Screen } from '../types'
+import {
+  findMonitorByName,
+  getPrimaryMonitor,
+  monitorAtPoint,
+  monitorContains,
+  type ScreenMonitor,
+} from './monitors'
+import { upsertScreen } from '../service/screens'
+import type { Screen } from '../types'
 
 const WINDOW_POSITIONS_KEY = 'display-window-positions'
 
+/**
+ * Where a projection window sat while it was not fullscreen. Only the windowed
+ * geometry lives here: whether the screen runs fullscreen, and which monitor it
+ * belongs on, are the screen's own settings, so they survive a cleared cache and
+ * can be changed from the settings page.
+ */
 interface WindowState {
   x: number
   y: number
   width: number
   height: number
-  maximized: boolean
-  fullscreen: boolean
 }
+
+/** How long a drag settles before the screen records its new monitor. */
+const MONITOR_SAVE_DELAY_MS = 500
 
 // Cached isTauri result to avoid repeated checks and logging
 let isTauriCached: boolean | null = null
@@ -89,23 +106,144 @@ function getStoredState(displayId: number): WindowState | null {
 }
 
 /**
- * Opens a display window based on the configured mode.
+ * Puts a still-hidden projection window where its screen says it belongs.
+ *
+ * A fullscreen screen is laid over the whole of its monitor here rather than
+ * being switched to real fullscreen: asking a hidden window to go fullscreen is
+ * unreliable on macOS, so the caller does that once the window is up — by which
+ * point it already covers the display and the switch changes nothing visible.
+ * The move has to come first either way, because fullscreen fills whichever
+ * monitor the window happens to be standing on.
+ */
+async function placeWindow(
+  win: WebviewWindow,
+  screen: Screen,
+  monitor: ScreenMonitor | null,
+  stored: WindowState | null,
+): Promise<void> {
+  const { PhysicalPosition, PhysicalSize } = await import('@tauri-apps/api/dpi')
+
+  if (screen.isFullscreen) {
+    // Without an assigned monitor, cover the one the window opened on.
+    const target = monitor ?? (await currentMonitorOf(win))
+    if (!target) return
+    await win.setPosition(new PhysicalPosition(target.x, target.y))
+    await win.setSize(new PhysicalSize(target.width, target.height))
+    return
+  }
+
+  if (monitor) {
+    await win.setPosition(new PhysicalPosition(monitor.x, monitor.y))
+  }
+
+  if (stored) {
+    await win.setSize(new PhysicalSize(stored.width, stored.height))
+  }
+
+  if (!monitor) {
+    if (stored) {
+      await win.setPosition(new PhysicalPosition(stored.x, stored.y))
+    } else {
+      await win.center()
+    }
+    return
+  }
+
+  // Back where the operator left it when that is still on this monitor,
+  // centred on the monitor otherwise — a corner position from another display
+  // would drop the window half off the edge of this one.
+  if (stored && monitorContains(monitor, stored.x, stored.y)) {
+    await win.setPosition(new PhysicalPosition(stored.x, stored.y))
+    return
+  }
+
+  const size = await win.outerSize()
+  await win.setPosition(
+    new PhysicalPosition(
+      monitor.x + Math.max(0, Math.round((monitor.width - size.width) / 2)),
+      monitor.y + Math.max(0, Math.round((monitor.height - size.height) / 2)),
+    ),
+  )
+}
+
+/**
+ * The monitor a window is currently standing on. Read from the window's own
+ * corner rather than `currentMonitor()`, which answers for whichever window is
+ * asking — the control room, not the projection being placed.
+ */
+async function currentMonitorOf(
+  win: WebviewWindow,
+): Promise<ScreenMonitor | null> {
+  try {
+    const position = await win.outerPosition()
+    return (
+      (await monitorAtPoint(position.x, position.y)) ??
+      (await getPrimaryMonitor())
+    )
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The monitor each screen's window was last seen on, so a drag that ends where
+ * it started does not write to the database.
+ */
+const lastKnownMonitor = new Map<number, string | null>()
+const monitorSaveTimers = new Map<number, ReturnType<typeof setTimeout>>()
+
+/**
+ * Records the monitor a projection window has been dragged onto, so it comes
+ * back to the same one. Dragging the window and picking the display in the
+ * screens settings write the same field — whichever the operator does last is
+ * where the screen projects.
+ */
+function rememberMonitor(screen: Screen, x: number, y: number): void {
+  clearTimeout(monitorSaveTimers.get(screen.id))
+  monitorSaveTimers.set(
+    screen.id,
+    setTimeout(async () => {
+      monitorSaveTimers.delete(screen.id)
+      try {
+        const monitor = await monitorAtPoint(x, y)
+        if (!monitor) return
+        if (monitor.name === lastKnownMonitor.get(screen.id)) return
+        lastKnownMonitor.set(screen.id, monitor.name)
+        await upsertScreen({
+          id: screen.id,
+          name: screen.name,
+          type: screen.type,
+          monitorName: monitor.name,
+        })
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: Error logging
+        console.error('[rememberMonitor] Failed to record monitor:', error)
+      }
+    }, MONITOR_SAVE_DELAY_MS),
+  )
+}
+
+/**
+ * Opens a screen's projection window.
+ *
+ * The screen carries everything the window needs — the monitor it belongs on,
+ * whether it runs fullscreen, whether it floats above other windows — so the
+ * window is built at its final geometry instead of being nudged into place after
+ * it is already on screen.
+ *
  * Set `focus` to false to open without stealing focus from the control room
  * (used for auto-open on startup and auto-reopen after Escape).
  */
 export async function openDisplayWindow(
-  displayId: number,
-  openMode: DisplayOpenMode,
-  defaultFullscreen = false,
-  screenName?: string,
-  alwaysOnTop = false,
+  screen: Screen,
+  openMode: 'native' | 'browser' = 'native',
   focus = true,
 ): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(
-    `[openDisplayWindow] Opening display ${displayId} in ${openMode} mode, isTauri: ${isTauri()}, defaultFullscreen: ${defaultFullscreen}, alwaysOnTop: ${alwaysOnTop}, focus: ${focus}`,
+    `[openDisplayWindow] Opening display ${screen.id} in ${openMode} mode, isTauri: ${isTauri()}, fullscreen: ${screen.isFullscreen}, monitor: ${screen.monitorName ?? 'auto'}, alwaysOnTop: ${screen.alwaysOnTop}, focus: ${focus}`,
   )
-  const displayUrl = `${getFrontendUrl()}/screen/${displayId}`
+  const displayUrl = `${getFrontendUrl()}/screen/${screen.id}`
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(`[openDisplayWindow] URL: ${displayUrl}`)
 
@@ -113,18 +251,12 @@ export async function openDisplayWindow(
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
     console.log('[openDisplayWindow] Opening in browser mode')
     await openInBrowser(displayUrl)
-  } else {
-    // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-    console.log('[openDisplayWindow] Opening in native mode')
-    await openInNativeWindow(
-      displayId,
-      displayUrl,
-      defaultFullscreen,
-      screenName,
-      alwaysOnTop,
-      focus,
-    )
+    return
   }
+
+  // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+  console.log('[openDisplayWindow] Opening in native mode')
+  await openInNativeWindow(screen, displayUrl, focus)
 }
 
 /**
@@ -159,16 +291,21 @@ export async function openInBrowser(url: string): Promise<void> {
 }
 
 /**
- * Opens the display in a native Tauri window
+ * Opens the display in a native Tauri window.
+ *
+ * The window is created hidden and only shown once it sits on the monitor the
+ * screen belongs to, at the size it is meant to have. Building it visible and
+ * then moving it is what the operator saw as the projection opening in a small
+ * window, maximising and only then going fullscreen — three transitions in front
+ * of the congregation, on whichever monitor the OS happened to pick.
  */
 async function openInNativeWindow(
-  displayId: number,
+  screen: Screen,
   url: string,
-  defaultFullscreen = false,
-  screenName?: string,
-  alwaysOnTop = false,
   focus = true,
 ): Promise<void> {
+  const displayId = screen.id
+  const alwaysOnTop = screen.alwaysOnTop
   // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
   console.log(`[openInNativeWindow] called, isTauri: ${isTauri()}`)
 
@@ -202,27 +339,39 @@ async function openInNativeWindow(
         return
       }
 
-      // Get stored state or use defaults
+      // Where it sat last time it was windowed, and the monitor it belongs on.
       const storedState = getStoredState(displayId)
+      const monitor = await findMonitorByName(screen.monitorName)
+      lastKnownMonitor.set(displayId, screen.monitorName)
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-      console.log('[openInNativeWindow] Stored state:', storedState)
+      console.log(
+        '[openInNativeWindow] Stored state:',
+        storedState,
+        'monitor:',
+        monitor,
+      )
 
       const windowOptions = {
         url,
-        title: screenName || `Display ${displayId}`,
+        title: screen.name || `Display ${displayId}`,
         width: storedState?.width ?? 1280,
         height: storedState?.height ?? 720,
-        x: storedState?.x,
-        y: storedState?.y,
-        center: !storedState,
         resizable: true,
         maximizable: true,
         minimizable: true,
-        decorations: true,
+        // A screen that projects fullscreen never wants a title bar, and would
+        // otherwise flash one in the frame between being shown and going
+        // fullscreen. `setWindowFullscreen` puts it back on the way out.
+        decorations: !screen.isFullscreen,
         alwaysOnTop,
         skipTaskbar: true,
         focus,
         backgroundColor: '#000000',
+        // Placed and sized below, then shown. Everything the window has to be
+        // told — which monitor, how big, fullscreen or not — is applied while it
+        // is still invisible, so the audience sees the projection appear already
+        // in its final shape.
+        visible: false,
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(
@@ -272,42 +421,41 @@ async function openInNativeWindow(
           return
         }
 
-        // Restore fullscreen or maximized state if it was saved, or use default setting
-        if (storedState?.fullscreen) {
+        try {
+          await placeWindow(win, screen, monitor, storedState)
+        } catch (error) {
           // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-          console.log('[openInNativeWindow] Restoring fullscreen state')
-          await setWindowFullscreen(win, true)
-        } else if (storedState?.maximized) {
-          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-          console.log('[openInNativeWindow] Restoring maximized state')
-          await win.maximize()
-        } else if (!storedState && defaultFullscreen) {
-          // No stored state but default fullscreen is enabled
-          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-          console.log(
-            '[openInNativeWindow] Applying default fullscreen setting',
-          )
-          await setWindowFullscreen(win, true)
+          console.error('[openInNativeWindow] Failed to place window:', error)
+        } finally {
+          // Shown whatever happened above: a projection stuck invisible is worse
+          // than one in the wrong place. It already covers its monitor, so the
+          // switch to real fullscreen that follows is invisible.
+          await win.show()
+          if (screen.isFullscreen) {
+            await setWindowFullscreen(win, true)
+          }
+          if (focus) await win.setFocus()
         }
 
-        // Set up state tracking
+        // Remember where the operator leaves the window. Only the windowed
+        // geometry is cached; the monitor goes back to the screen itself, so
+        // dragging the projection to another display is the same act as picking
+        // that display in the settings.
         const trackState = async () => {
           try {
             const win = await WebviewWindow.getByLabel(windowLabel)
-            if (win) {
-              const position = await win.outerPosition()
+            if (!win) return
+            const position = await win.outerPosition()
+            if (!(await win.isFullscreen()) && !(await win.isMaximized())) {
               const size = await win.outerSize()
-              const isMaximized = await win.isMaximized()
-              const isFullscreen = await win.isFullscreen()
               saveWindowState(displayId, {
                 x: position.x,
                 y: position.y,
                 width: size.width,
                 height: size.height,
-                maximized: isMaximized,
-                fullscreen: isFullscreen,
               })
             }
+            rememberMonitor(screen, position.x, position.y)
           } catch {
             // Window might be closed
           }
@@ -500,14 +648,7 @@ export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
   for (const screen of activeScreens) {
     // Always use 'native' mode (matching ScreenManager behavior).
     // focus: false keeps the control room focused during startup.
-    await openDisplayWindow(
-      screen.id,
-      'native',
-      screen.isFullscreen,
-      screen.name,
-      screen.alwaysOnTop,
-      false,
-    )
+    await openDisplayWindow(screen, 'native', false)
     // Small delay to prevent overwhelming the system
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
@@ -534,14 +675,7 @@ export async function reopenMissingActiveScreens(
 
       // focus: false so the user keeps interacting with the control room
       // while a closed display window auto-reopens behind the scenes.
-      await openDisplayWindow(
-        screen.id,
-        'native',
-        screen.isFullscreen,
-        screen.name,
-        screen.alwaysOnTop,
-        false,
-      )
+      await openDisplayWindow(screen, 'native', false)
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
   } catch (error) {

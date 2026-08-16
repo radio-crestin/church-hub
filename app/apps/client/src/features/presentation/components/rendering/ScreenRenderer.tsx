@@ -97,7 +97,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showToolbar, setShowToolbar] = useState(false)
   const toolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const userExitedFullscreenRef = useRef(false)
 
   // Track if we're in a native display window (fullscreen only allowed there)
   const [isNativeDisplayWindow, setIsNativeDisplayWindow] = useState(false)
@@ -152,7 +151,14 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     detectDisplayWindow()
   }, [])
 
-  // Track fullscreen state and auto-switch to fullscreen on maximize
+  // Follow the window's own fullscreen state.
+  //
+  // A maximised projection window used to be promoted to fullscreen from here,
+  // which is why opening one looked like an animation: it appeared windowed,
+  // maximised, and only then filled the screen. It also overrode the operator —
+  // leaving fullscreen and resizing the window put it straight back. The window
+  // is now built fullscreen or windowed as the screen records it, and only the
+  // toolbar changes that.
   useEffect(() => {
     let unlistenResize: (() => void) | null = null
 
@@ -165,48 +171,9 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         )
         const win = getCurrentWebviewWindow()
 
-        // Only apply fullscreen logic to native display windows
-        const isDisplayWindow = win.label.startsWith('display-')
+        setIsFullscreen(await win.isFullscreen())
 
-        // Check initial fullscreen state
-        const fs = await win.isFullscreen()
-        setIsFullscreen(fs)
-
-        // Listen for resize events to detect maximize
         unlistenResize = await win.listen('tauri://resize', async () => {
-          const isMaximized = await win.isMaximized()
-          const isFs = await win.isFullscreen()
-
-          // If window is maximized but not fullscreen, switch to fullscreen
-          // But only if user didn't just exit fullscreen manually
-          // And only for native display windows
-          if (
-            isDisplayWindow &&
-            isMaximized &&
-            !isFs &&
-            !userExitedFullscreenRef.current
-          ) {
-            await setWindowFullscreen(win, true)
-            setIsFullscreen(true)
-
-            // Save to database
-            if (screen) {
-              upsertScreen.mutate({
-                id: screen.id,
-                name: screen.name,
-                type: screen.type,
-                isFullscreen: true,
-              })
-            }
-          }
-
-          // Reset the flag after a short delay to allow re-maximizing later
-          if (!isMaximized && userExitedFullscreenRef.current) {
-            setTimeout(() => {
-              userExitedFullscreenRef.current = false
-            }, 500)
-          }
-
           setIsFullscreen(await win.isFullscreen())
         })
       } catch (_error) {}
@@ -309,11 +276,6 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     const newFullscreen = !isFullscreen
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.log(`[toggleFullscreen] Toggling fullscreen to: ${newFullscreen}`)
-
-    // If exiting fullscreen, set flag to prevent auto-fullscreen on resize
-    if (!newFullscreen) {
-      userExitedFullscreenRef.current = true
-    }
 
     let success = false
 

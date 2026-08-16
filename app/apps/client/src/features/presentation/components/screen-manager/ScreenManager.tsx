@@ -24,6 +24,7 @@ import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { useToast } from '~/ui/toast/useToast'
 import { ScreenExportModal } from './ScreenExportModal'
+import { ScreenMonitorPicker } from './ScreenMonitorPicker'
 import {
   useBatchUpdateScreenConfig,
   useDeleteScreen,
@@ -173,13 +174,7 @@ export function ScreenManager() {
           type: screen.type,
           isActive: true,
         })
-        await openDisplayWindow(
-          screen.id,
-          'native',
-          screen.isFullscreen,
-          screen.name,
-          screen.alwaysOnTop,
-        )
+        await openDisplayWindow(screen)
         showToast(
           t('settings:sections.screens.toast.windowOpened', {
             name: screen.name,
@@ -550,6 +545,7 @@ export function ScreenManager() {
                       : t('sections.screens.previewScreen.off')}
                   </span>
                 </Button>
+                <ScreenMonitorPicker screen={screen} />
               </div>
             </div>
           ))}

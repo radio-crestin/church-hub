@@ -216,6 +216,13 @@
       "loading": "Se încarcă configurația ecranului...",
       "error": "Eroare la încărcarea ecranului",
       "notFound": "Ecranul nu a fost găsit"
+    },
+    "monitor": {
+      "label": "Monitor",
+      "auto": "Automat",
+      "autoDescription": "Se deschide unde nimerește fereastra",
+      "unnamed": "Monitorul {{index}}",
+      "disconnected": "{{name}} (neconectat)"
     }
   },
   "displays": {
