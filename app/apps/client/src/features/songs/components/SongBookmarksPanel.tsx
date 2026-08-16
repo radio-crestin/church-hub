@@ -449,16 +449,33 @@ export function SongBookmarksPanel({
       const { active, over } = event
       if (!over || active.id === over.id) return
 
-      const oldIndex = unifiedItems.findIndex(
+      // The move is computed on the rows the operator can actually see. With
+      // no filter on, filteredItems is the whole list and this is the plain
+      // case.
+      const oldIndex = filteredItems.findIndex(
         (item) => item.uniqueId === active.id,
       )
-      const newIndex = unifiedItems.findIndex(
+      const newIndex = filteredItems.findIndex(
         (item) => item.uniqueId === over.id,
       )
 
       if (oldIndex === -1 || newIndex === -1) return
 
-      const newOrder = arrayMove(unifiedItems, oldIndex, newIndex)
+      const reorderedVisible = arrayMove(filteredItems, oldIndex, newIndex)
+      const visibleIds = new Set(filteredItems.map((item) => item.uniqueId))
+
+      // The reordered rows are poured back into the slots those same rows
+      // already occupied, so rows hidden by the filter (notes, and songs on the
+      // other side of the sung/pending split) keep their exact position. The
+      // endpoint rewrites sort_order from the index of every entry it is given,
+      // so it always gets the full list.
+      let cursor = 0
+      const newOrder = unifiedItems.map((item) =>
+        visibleIds.has(item.uniqueId)
+          ? (reorderedVisible[cursor++] ?? item)
+          : item,
+      )
+
       // Set local order synchronously so the UI doesn't flicker
       setLocalOrder(newOrder)
       reorderItemsMutation.mutate(
@@ -468,7 +485,7 @@ export function SongBookmarksPanel({
         })),
       )
     },
-    [unifiedItems, reorderItemsMutation],
+    [filteredItems, unifiedItems, reorderItemsMutation],
   )
 
   const handleRemoveBookmark = useCallback(
@@ -545,9 +562,6 @@ export function SongBookmarksPanel({
   }, [exportMutation])
 
   const isSearching = searchQuery.trim().length > 0
-  // Any active filter (search or sung state) switches the list to a plain
-  // filtered render (drag-to-reorder is only meaningful on the full list).
-  const isFiltering = isSearching || sungFilter !== 'all'
 
   const renderItem = (item: BookmarkListItem) => {
     if (item.type === 'note' && item.note) {
@@ -792,10 +806,6 @@ export function SongBookmarksPanel({
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {t('bookmarks.noResults')}
               </div>
-            ) : isFiltering ? (
-              <div className="p-2 flex flex-col gap-1.5">
-                {filteredItems.map(renderItem)}
-              </div>
             ) : (
               <DndContext
                 sensors={sensors}
@@ -804,11 +814,11 @@ export function SongBookmarksPanel({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={unifiedItems.map((item) => item.uniqueId)}
+                  items={filteredItems.map((item) => item.uniqueId)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="p-2 flex flex-col gap-1.5">
-                    {unifiedItems.map(renderItem)}
+                    {filteredItems.map(renderItem)}
                   </div>
                 </SortableContext>
               </DndContext>

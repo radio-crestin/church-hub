@@ -72,40 +72,42 @@ export function useReorderBookmarkItems() {
         BOOKMARK_NOTES_QUERY_KEY,
       )
 
+      // Songs and notes share one global sort sequence, so the new position of
+      // a row is its index in the payload. The payload carries ROW ids — the
+      // bookmark row id for songs, the note row id for notes — never the song
+      // id; matching on anything else drops rows out of the cache and makes
+      // bookmarked songs vanish from the list and lose their bookmark icon.
+      const positions = new Map(
+        items.map((item, index) => [`${item.type}:${item.id}`, index]),
+      )
+
+      // Rows the payload does not mention keep their current sortOrder instead
+      // of being filtered out, so a partial payload can never empty the cache.
       if (previousBookmarks) {
-        const reordered = items
-          .filter((item) => item.type === 'song')
-          .map((item, _idx) => {
-            const bookmark = previousBookmarks.find((b) => b.songId === item.id)
-            return bookmark
-              ? {
-                  ...bookmark,
-                  sortOrder: items.findIndex(
-                    (i) => i.type === 'song' && i.id === item.id,
-                  ),
-                }
-              : undefined
-          })
-          .filter((b): b is SongBookmark => b !== undefined)
-        queryClient.setQueryData(SONG_BOOKMARKS_QUERY_KEY, reordered)
+        const reordered = previousBookmarks
+          .map((bookmark) => ({
+            ...bookmark,
+            sortOrder:
+              positions.get(`song:${bookmark.id}`) ?? bookmark.sortOrder,
+          }))
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+        queryClient.setQueryData<SongBookmark[]>(
+          SONG_BOOKMARKS_QUERY_KEY,
+          reordered,
+        )
       }
 
       if (previousNotes) {
-        const reordered = items
-          .filter((item) => item.type === 'note')
-          .map((item) => {
-            const note = previousNotes.find((n) => n.id === item.id)
-            return note
-              ? {
-                  ...note,
-                  sortOrder: items.findIndex(
-                    (i) => i.type === 'note' && i.id === item.id,
-                  ),
-                }
-              : undefined
-          })
-          .filter((n): n is BookmarkNote => n !== undefined)
-        queryClient.setQueryData(BOOKMARK_NOTES_QUERY_KEY, reordered)
+        const reordered = previousNotes
+          .map((note) => ({
+            ...note,
+            sortOrder: positions.get(`note:${note.id}`) ?? note.sortOrder,
+          }))
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+        queryClient.setQueryData<BookmarkNote[]>(
+          BOOKMARK_NOTES_QUERY_KEY,
+          reordered,
+        )
       }
 
       return { previousBookmarks, previousNotes }
@@ -123,6 +125,12 @@ export function useReorderBookmarkItems() {
           context.previousNotes,
         )
       }
+      queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: BOOKMARK_NOTES_QUERY_KEY })
+    },
+    // refetchOnWindowFocus is off app-wide, so without this the optimistic
+    // order is the only order the UI ever sees until a remount.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: BOOKMARK_NOTES_QUERY_KEY })
     },
