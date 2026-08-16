@@ -1,11 +1,70 @@
-import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { calculateFontSize } from './utils/calculateFontSize'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { sanitizePastedText } from './utils/sanitizePastedText'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
-import type { TextStyle } from '../../types'
+import type { TextStyle, TextStyleRange } from '../../types'
+import { applyStylesToText } from '../../utils/applyStylesToText'
+
+/** Character offsets of the current selection inside `root`. */
+function selectionOffsets(
+  root: HTMLElement,
+): { start: number; end: number } | null {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
+  const range = selection.getRangeAt(0)
+  if (!root.contains(range.commonAncestorContainer)) return null
+
+  const offsetOf = (node: Node, nodeOffset: number): number => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    let offset = 0
+    let current: Node | null = walker.nextNode()
+    while (current) {
+      if (current === node) return offset + nodeOffset
+      offset += current.textContent?.length ?? 0
+      current = walker.nextNode()
+    }
+    return offset
+  }
+
+  return {
+    start: offsetOf(range.startContainer, range.startOffset),
+    end: offsetOf(range.endContainer, range.endOffset),
+  }
+}
+
+/** Puts the caret/selection back where it was after the DOM has been re-seeded. */
+function restoreSelection(
+  root: HTMLElement,
+  offsets: { start: number; end: number },
+): void {
+  const locate = (target: number): { node: Node; offset: number } | null => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    let seen = 0
+    let current: Node | null = walker.nextNode()
+    while (current) {
+      const length = current.textContent?.length ?? 0
+      if (seen + length >= target)
+        return { node: current, offset: target - seen }
+      seen += length
+      current = walker.nextNode()
+    }
+    return current ? { node: current, offset: 0 } : null
+  }
+
+  const start = locate(offsets.start)
+  const end = locate(offsets.end)
+  if (!start || !end) return
+
+  const range = document.createRange()
+  range.setStart(start.node, start.offset)
+  range.setEnd(end.node, end.offset)
+  const selection = window.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
 
 interface EditableMainTextProps {
   /** Current slide HTML content */
@@ -30,6 +89,10 @@ interface EditableMainTextProps {
   placeholder?: string
   /** Called with the plain-text value (newline-separated lines) on every edit */
   onEdit: (plainText: string) => void
+  /** Inline styling for runs of the slide's text (per-slide formatting). */
+  styleRanges?: TextStyleRange[]
+  /** Per-slide font multiplier, applied to the auto-fitted size. */
+  contentScale?: number
 }
 
 /**
@@ -49,6 +112,8 @@ export function EditableMainText({
   editKey,
   placeholder,
   onEdit,
+  styleRanges,
+  contentScale = 1,
 }: EditableMainTextProps) {
   const editRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
@@ -70,19 +135,40 @@ export function EditableMainText({
       style.maxFontSize,
       style.minFontSize ?? 12,
     )
-    editRef.current.style.fontSize = `${fontSize}px`
-  }, [width, height, style.maxFontSize, style.minFontSize])
+    editRef.current.style.fontSize = `${fontSize * contentScale}px`
+  }, [width, height, style.maxFontSize, style.minFontSize, contentScale])
 
-  // Seed the editable text only when switching to a different slide. While the
-  // same slide is being edited we leave the DOM alone so the caret is preserved.
+  // Styled runs are re-seeded as markup, so formatting a selection shows up in
+  // the editor at once instead of only after leaving edit mode.
+  const rangesKey = useMemo(
+    () => JSON.stringify(styleRanges ?? []),
+    [styleRanges],
+  )
+
+  // Seed the editable text when switching to a different slide, or when the
+  // slide's inline styling changes. While the same slide is merely being typed
+  // in we leave the DOM alone so the caret is preserved; on a styling change we
+  // re-seed and put the selection back where the operator left it.
   useLayoutEffect(() => {
-    if (!editRef.current) return
-    if (seededKeyRef.current !== editKey) {
-      editRef.current.innerText = normalizedText
-      seededKeyRef.current = editKey
+    const editor = editRef.current
+    if (!editor) return
+
+    const seedKey = `${editKey}|${rangesKey}`
+    if (seededKeyRef.current !== seedKey) {
+      const sameSlide = seededKeyRef.current?.startsWith(`${editKey}|`) === true
+      const selection = sameSlide ? selectionOffsets(editor) : null
+
+      if (styleRanges && styleRanges.length > 0) {
+        editor.innerHTML = applyStylesToText(normalizedText, styleRanges)
+      } else {
+        editor.innerText = normalizedText
+      }
+      seededKeyRef.current = seedKey
+
+      if (selection) restoreSelection(editor, selection)
     }
     fit()
-  }, [editKey, normalizedText, fit])
+  }, [editKey, rangesKey, normalizedText, styleRanges, fit])
 
   const handleInput = useCallback(() => {
     if (!editRef.current) return

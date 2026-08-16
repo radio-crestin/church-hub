@@ -53,6 +53,12 @@ interface AnimatedTextProps {
   slideTransitionIn?: TypesAnimationConfig
   /** Text style ranges for inline highlighting/styling */
   styleRanges?: TextStyleRange[]
+  /**
+   * Per-slide font multiplier, applied to the auto-fitted size. Scaling the fit
+   * ceiling instead would be invisible on a slide whose text is already limited
+   * by the element height, which is most of them.
+   */
+  contentScale?: number
 }
 
 /**
@@ -72,7 +78,9 @@ function areStyleRangesEqual(
       range.end === b[i].end &&
       range.highlight === b[i].highlight &&
       range.bold === b[i].bold &&
-      range.underline === b[i].underline,
+      range.italic === b[i].italic &&
+      range.underline === b[i].underline &&
+      range.fontScale === b[i].fontScale,
   )
 }
 
@@ -93,7 +101,8 @@ function arePropsEqual(
     prevProps.height !== nextProps.height ||
     prevProps.left !== nextProps.left ||
     prevProps.top !== nextProps.top ||
-    prevProps.isHtml !== nextProps.isHtml
+    prevProps.isHtml !== nextProps.isHtml ||
+    prevProps.contentScale !== nextProps.contentScale
   ) {
     return false
   }
@@ -153,6 +162,7 @@ const AnimatedTextInner = memo(function AnimatedText({
   slideTransitionOut,
   slideTransitionIn,
   styleRanges,
+  contentScale = 1,
 }: AnimatedTextProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
@@ -224,13 +234,14 @@ const AnimatedTextInner = memo(function AnimatedText({
       style.minFontSize ?? 12,
     )
 
-    textRef.current.style.fontSize = `${fontSize}px`
+    textRef.current.style.fontSize = `${fontSize * contentScale}px`
   }, [
     displayContent,
     width,
     height,
     style.maxFontSize,
     style.minFontSize,
+    contentScale,
     shouldRender,
   ])
 

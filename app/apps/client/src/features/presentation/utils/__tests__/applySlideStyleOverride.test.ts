@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import type { TextStyle } from '../../types'
-import { applySlideStyleOverride } from '../applySlideStyleOverride'
+import {
+  applySlideStyleOverride,
+  resolveSlideFontScale,
+} from '../applySlideStyleOverride'
 import { toTextStyleRanges } from '../toTextStyleRanges'
 
 const screenStyle: TextStyle = {
@@ -24,10 +27,13 @@ describe('applySlideStyleOverride', () => {
     expect(applySlideStyleOverride(screenStyle, undefined)).toBe(screenStyle)
   })
 
-  it('scales both font bounds so the auto-fit floor follows the size', () => {
+  it('leaves the font bounds alone — the scale applies to the fitted size', () => {
     const scaled = applySlideStyleOverride(screenStyle, { fontScale: 1.5 })
-    expect(scaled.maxFontSize).toBe(120)
-    expect(scaled.minFontSize).toBe(30)
+    expect(scaled.maxFontSize).toBe(80)
+    expect(scaled.minFontSize).toBe(20)
+    expect(resolveSlideFontScale({ fontScale: 1.5 })).toBe(1.5)
+    expect(resolveSlideFontScale(null)).toBe(1)
+    expect(resolveSlideFontScale({ bold: true })).toBe(1)
   })
 
   it('overrides only the keys the slide states', () => {

@@ -310,7 +310,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           onActiveSlideChange={setActiveSlideIndex}
           onSlidesChange={setSlides}
           fillHeight
-          canvasHeader={
+          canvasToolbar={
             <SlideStyleToolbar
               override={activeStyleOverrides}
               onChange={handleStyleChange}

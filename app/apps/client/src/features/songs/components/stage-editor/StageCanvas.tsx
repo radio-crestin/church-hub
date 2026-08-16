@@ -23,6 +23,12 @@ interface StageCanvasProps {
    * sizing purely by width — lets the stage shrink so a notes panel below it
    * can grow. */
   fitHeight?: boolean
+  /**
+   * Formatting bar for the slide being edited. Rendered above the canvas and
+   * only while the in-place editor is actually mounted — the buttons act on the
+   * caret or the selection, so they are meaningless without one.
+   */
+  editingToolbar?: React.ReactNode
   onEditText: (plainText: string) => void
 }
 
@@ -50,6 +56,7 @@ export function StageCanvas({
   canEdit,
   clickToEdit = false,
   fitHeight = false,
+  editingToolbar,
   onEditText,
 }: StageCanvasProps) {
   const { t } = useTranslation('songs')
@@ -140,6 +147,7 @@ export function StageCanvas({
         fitHeight ? 'flex w-full shrink-0 flex-col items-center' : 'w-full'
       }
     >
+      {showEditor && editingToolbar}
       {/* Outer frame: reserves the padding + border ring at all times (so
           toggling edit never reflows the slide) and only colours the frame
           while editing. In fit-height mode it hugs the black box (content

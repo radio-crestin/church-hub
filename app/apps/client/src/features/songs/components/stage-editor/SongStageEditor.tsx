@@ -41,8 +41,11 @@ interface SongStageEditorProps {
   onActiveSlideChange?: (index: number) => void
   /** Rendered directly under the stage (e.g. presentation nav buttons), hugging
    * its bottom edge. */
-  /** Rendered directly above the stage canvas (the formatting bar). */
-  canvasHeader?: React.ReactNode
+  /**
+   * Formatting bar for the slide being edited. The canvas shows it only while
+   * the in-place editor is mounted.
+   */
+  canvasToolbar?: React.ReactNode
   canvasFooter?: React.ReactNode
   /** Rendered at the very bottom of the canvas column, below the stage/nav
    * zone (e.g. the speaker-notes panel pinned to the column footer). */
@@ -75,7 +78,7 @@ export function SongStageEditor({
   clickToEdit = false,
   onProjectSlide,
   onActiveSlideChange,
-  canvasHeader,
+  canvasToolbar,
   canvasFooter,
   columnFooter,
   fillHeight = false,
@@ -370,26 +373,26 @@ export function SongStageEditor({
       >
         {fillHeight ? (
           <div className="flex min-h-0 flex-1 flex-col items-center [container-type:size]">
-            {canvasHeader}
             <StageCanvas
               screen={screen}
               previewContent={previewContent}
               canEdit={editable && activeIndex >= 0}
               clickToEdit={clickToEdit}
               fitHeight
+              editingToolbar={canvasToolbar}
               onEditText={handleEditText}
             />
             {canvasFooter}
           </div>
         ) : (
           <>
-            {canvasHeader}
             <div className="shrink-0">
               <StageCanvas
                 screen={screen}
                 previewContent={previewContent}
                 canEdit={editable && activeIndex >= 0}
                 clickToEdit={clickToEdit}
+                editingToolbar={canvasToolbar}
                 onEditText={handleEditText}
               />
             </div>

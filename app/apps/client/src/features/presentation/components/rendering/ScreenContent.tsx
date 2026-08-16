@@ -21,7 +21,10 @@ import type {
   SongContentConfig,
   TextStyleRange,
 } from '../../types'
-import { applySlideStyleOverride } from '../../utils/applySlideStyleOverride'
+import {
+  applySlideStyleOverride,
+  resolveSlideFontScale,
+} from '../../utils/applySlideStyleOverride'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
 import { toTextStyleRanges } from '../../utils/toTextStyleRanges'
 
@@ -151,6 +154,9 @@ export function ScreenContent({
     )
     const slideRanges = toTextStyleRanges(contentData?.styleOverrides)
     const mainRanges = [...(styleRanges ?? []), ...slideRanges]
+    // Applied to the fitted size rather than to the fit ceiling — see
+    // applySlideStyleOverride.
+    const slideFontScale = resolveSlideFontScale(contentData?.styleOverrides)
 
     const bounds = calculatePixelBounds(
       mt.constraints,
@@ -180,6 +186,8 @@ export function ScreenContent({
           editKey={contentKey}
           placeholder={editPlaceholder}
           onEdit={onMainTextEdit}
+          styleRanges={mainRanges}
+          contentScale={slideFontScale}
         />
       )
     }
@@ -200,7 +208,9 @@ export function ScreenContent({
           height={scaledBounds.height}
           left={scaledBounds.x}
           top={scaledBounds.y}
-          baseFontSize={mainStyle.maxFontSize * fontScale * 0.6}
+          baseFontSize={
+            mainStyle.maxFontSize * fontScale * 0.6 * slideFontScale
+          }
           chordFontSize={(songConfig?.chordFontSize ?? 32) * fontScale}
           color={mainStyle.color}
           fontFamily={mainStyle.fontFamily}
@@ -234,6 +244,7 @@ export function ScreenContent({
           'slideTransitionOut' in mt ? mt.slideTransitionOut : undefined
         }
         styleRanges={mainRanges}
+        contentScale={slideFontScale}
       />
     )
   }
