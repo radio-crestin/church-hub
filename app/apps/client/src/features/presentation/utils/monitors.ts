@@ -21,6 +21,8 @@ export interface ScreenMonitor {
   y: number
   width: number
   height: number
+  /** Physical pixels per logical one, needed to talk to creation options. */
+  scaleFactor: number
 }
 
 /** Reshapes a Tauri monitor into the flat form the placement code uses. */
@@ -28,6 +30,7 @@ export function toScreenMonitor(monitor: {
   name: string | null
   position: { x: number; y: number }
   size: { width: number; height: number }
+  scaleFactor: number
 }): ScreenMonitor {
   return {
     name: monitor.name ?? `@${monitor.position.x},${monitor.position.y}`,
@@ -36,6 +39,29 @@ export function toScreenMonitor(monitor: {
     y: monitor.position.y,
     width: monitor.size.width,
     height: monitor.size.height,
+    scaleFactor: monitor.scaleFactor || 1,
+  }
+}
+
+/**
+ * The same monitor in the units a window's creation options are written in.
+ *
+ * Everything after creation is physical, so this exists only for the frame a
+ * window is *built* with: handing it physical numbers opens it at twice the
+ * size it should be on a Retina display.
+ */
+export function monitorInLogicalUnits(monitor: ScreenMonitor): {
+  x: number
+  y: number
+  width: number
+  height: number
+} {
+  const scale = monitor.scaleFactor || 1
+  return {
+    x: Math.round(monitor.x / scale),
+    y: Math.round(monitor.y / scale),
+    width: Math.round(monitor.width / scale),
+    height: Math.round(monitor.height / scale),
   }
 }
 

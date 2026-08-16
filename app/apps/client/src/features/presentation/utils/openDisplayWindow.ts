@@ -7,6 +7,7 @@ import {
   getPrimaryMonitor,
   monitorAtPoint,
   monitorContains,
+  monitorInLogicalUnits,
   type ScreenMonitor,
 } from './monitors'
 import { upsertScreen } from '../service/screens'
@@ -109,12 +110,10 @@ function getStoredState(displayId: number): WindowState | null {
 /**
  * Puts a projection window where its screen says it belongs.
  *
- * A fullscreen screen is laid over the whole of its monitor here rather than
- * being switched to real fullscreen: asking a hidden window to go fullscreen is
- * unreliable on macOS, so the caller does that once the window is up — by which
- * point it already covers the display and the switch changes nothing visible.
- * The move has to come first either way, because fullscreen fills whichever
- * monitor the window happens to be standing on.
+ * The fullscreen branch is a fallback. A screen that runs fullscreen is built
+ * that way and never reaches here; it only does when the platform ignored the
+ * creation flag, and then covering the monitor by hand is what keeps the
+ * projection from coming up as a small window while the page sorts it out.
  *
  * Run twice: once before the window is shown, once after. A window that has not
  * been ordered in yet can have its geometry quietly ignored and come up at the
@@ -380,6 +379,16 @@ async function openInNativeWindow(
         monitor,
       )
 
+      // A fullscreen screen is built fullscreen rather than being sent there
+      // afterwards. The window manager can only be told which display to fill
+      // through the frame the window is created with, so the monitor's own
+      // geometry goes into the creation options — in logical pixels, the units
+      // those options are written in — and the window is fullscreen on that
+      // display from its first frame. Sending it fullscreen after it was up is
+      // what the operator saw as a small window appearing and then growing.
+      const logicalMonitor = monitor ? monitorInLogicalUnits(monitor) : null
+      const openFullscreen = screen.isFullscreen
+
       const windowOptions = {
         url,
         title: screen.name || `Display ${displayId}`,
@@ -388,8 +397,13 @@ async function openInNativeWindow(
         // Retina display feeding one to the other opens the window at twice or
         // half the size it should be. `placeWindow` sets the real size below, in
         // the units it was measured in.
-        width: 1280,
-        height: 720,
+        width: logicalMonitor?.width ?? 1280,
+        height: logicalMonitor?.height ?? 720,
+        // Which display the window is born on. Fullscreen has no monitor
+        // argument anywhere in the stack — it fills whichever display the
+        // window's frame is on — so this is what aims it.
+        ...(logicalMonitor ? { x: logicalMonitor.x, y: logicalMonitor.y } : {}),
+        fullscreen: openFullscreen,
         resizable: true,
         maximizable: true,
         minimizable: true,
@@ -405,11 +419,12 @@ async function openInNativeWindow(
         skipTaskbar: true,
         focus,
         backgroundColor: '#000000',
-        // Placed and sized below, then shown. Everything the window has to be
-        // told — which monitor, how big, fullscreen or not — is applied while it
-        // is still invisible, so the audience sees the projection appear already
-        // in its final shape.
-        visible: false,
+        // A windowed projection is placed and sized below, then shown, so the
+        // audience never sees it move. A fullscreen one has nothing left to be
+        // told — it is created filling its display — and must come up visible:
+        // an invisible window cannot be taken into fullscreen on macOS, and one
+        // built hidden would come up as an ordinary window with a title bar.
+        visible: openFullscreen,
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(
@@ -459,40 +474,43 @@ async function openInNativeWindow(
           return
         }
 
-        try {
-          await placeWindow(win, screen, monitor, storedState)
-        } catch (error) {
-          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-          console.error('[openInNativeWindow] Failed to place window:', error)
-        }
+        // A window that came up fullscreen is already exactly where it belongs:
+        // placing or showing it now would only drag it back out of the state it
+        // was built in. Everything below is for the windowed case, and for the
+        // platform that would not take the creation flag — the projection page
+        // fills the display itself when it finds the window is not fullscreen.
+        const bornFullscreen =
+          openFullscreen && (await win.isFullscreen().catch(() => false))
 
-        // Shown whatever happened above: a projection stuck invisible is worse
-        // than one in the wrong place, so nothing between here and `show()` is
-        // allowed to throw past it. It already covers its monitor, so the switch
-        // to real fullscreen that follows is invisible.
-        try {
-          await win.show()
-        } catch (error) {
-          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-          console.error('[openInNativeWindow] Failed to show window:', error)
-        }
+        if (!bornFullscreen) {
+          try {
+            await placeWindow(win, screen, monitor, storedState)
+          } catch (error) {
+            // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+            console.error('[openInNativeWindow] Failed to place window:', error)
+          }
 
-        // Again, now that the window is really on screen: geometry set on a
-        // window that has not been ordered in yet can be dropped on the floor,
-        // and the projection then comes up at the frame it was created with —
-        // a small window on a large display.
-        try {
-          await placeWindow(win, screen, monitor, storedState)
-        } catch (error) {
-          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-          console.error('[openInNativeWindow] Failed to place window:', error)
-        }
+          // Shown whatever happened above: a projection stuck invisible is worse
+          // than one in the wrong place, so nothing between here and `show()` is
+          // allowed to throw past it.
+          try {
+            await win.show()
+          } catch (error) {
+            // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+            console.error('[openInNativeWindow] Failed to show window:', error)
+          }
 
-        // Going fullscreen is left to the projection page itself. Asking a
-        // window to fill the screen from another window's context is refused on
-        // macOS without a word, so this used to leave the projection sitting in
-        // a window; the page does it the moment it knows which screen it is, by
-        // which point this has already put it on the right monitor.
+          // Again, now that the window is really on screen: geometry set on a
+          // window that has not been ordered in yet can be dropped on the floor,
+          // and the projection then comes up at the frame it was created with —
+          // a small window on a large display.
+          try {
+            await placeWindow(win, screen, monitor, storedState)
+          } catch (error) {
+            // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+            console.error('[openInNativeWindow] Failed to place window:', error)
+          }
+        }
 
         // Re-asserted last: changing the decorations rebuilds the window's style
         // on macOS, which drops it back to the ordinary level, and a projection
