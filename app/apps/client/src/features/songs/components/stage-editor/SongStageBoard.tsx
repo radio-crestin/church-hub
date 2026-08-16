@@ -187,7 +187,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   // (the classic song page disables its own handler in PowerPoint mode).
   // Escape only hides when something is actually live.
   const handleEscape = useCallback(() => {
-    if (isPresenting) handleHide()
+    if (!isPresenting) return false
+    handleHide()
+    return true
   }, [isPresenting, handleHide])
   useSongKeyboardShortcuts({
     id: 'song-stage-nav',

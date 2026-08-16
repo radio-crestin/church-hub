@@ -8,7 +8,12 @@ import {
 interface UseSongKeyboardShortcutsOptions {
   onNextSlide: () => void
   onPreviousSlide: () => void
-  onHidePresentation: () => void
+  /**
+   * Hides what this page is presenting. Returns false when there was nothing of
+   * its own to hide, so Escape falls through to the global handler instead of
+   * being swallowed by the page.
+   */
+  onHidePresentation: () => boolean | void | Promise<unknown>
   enabled?: boolean
   /** Registry id — override so two independent consumers (e.g. the classic
    * song page and the PowerPoint stage board) don't clobber each other. */
@@ -39,8 +44,10 @@ export function useSongKeyboardShortcuts({
         ) {
           ;(event.target as HTMLElement).blur()
         }
-        onHidePresentation()
-        return true
+        // Only claim Escape when something was actually hidden — otherwise
+        // the app-wide handler must still get its chance to clear whatever is
+        // on screen (a queued song, a passage, an announcement).
+        return onHidePresentation() !== false
       }
 
       switch (event.key) {

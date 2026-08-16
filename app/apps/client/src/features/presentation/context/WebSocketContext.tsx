@@ -18,6 +18,7 @@ import { presentedSongsQueryKey } from '../../song-key/hooks/usePresentedSongs'
 import { updateStateIfNewer } from '../hooks/usePresentationControls'
 import { presentationStateQueryKey } from '../hooks/usePresentationState'
 import { screenQueryKey } from '../hooks/useScreen'
+import { screensQueryKey } from '../hooks/useScreens'
 import { slideHighlightsQueryKey } from '../hooks/useSlideHighlights'
 import type { PresentationState } from '../types'
 
@@ -340,6 +341,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           queryClient.invalidateQueries({
             queryKey: screenQueryKey(data.payload.screenId),
           })
+          // The list carries the per-screen switches (close on hide, always on
+          // top, …), so a change made in another window has to land here too —
+          // the hooks acting on those flags read the list, not one screen.
+          queryClient.invalidateQueries({ queryKey: screensQueryKey })
         }
 
         if (data.type === 'screen_config_preview') {

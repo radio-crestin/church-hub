@@ -10,7 +10,7 @@ import { getBackgroundCSS } from './utils'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
-import { useUpsertScreen, useWebSocket } from '../../hooks'
+import { useClearSlide, useUpsertScreen, useWebSocket } from '../../hooks'
 import { usePresentationContent } from '../../hooks/usePresentationContent'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
@@ -34,6 +34,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const { data: screenData, isLoading, isError } = useScreen(screenId)
   const upsertScreen = useUpsertScreen()
   const { data: kioskSettings } = useKioskSettings()
+  const clearSlide = useClearSlide()
   const { data: slideHighlights } = useSlideHighlights()
   const { currentScene } = useOBSScenes()
 
@@ -471,18 +472,26 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     }
   }, [isKioskModeScreen, screen])
 
-  // Handle keyboard shortcuts
+  // Handle keyboard shortcuts. The projection window carries no app chrome and
+  // none of the control window's shortcut registry, so Escape is wired here:
+  // on a single monitor the projection is what has focus after it opens, and
+  // pressing Escape there used to do nothing at all.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F11') {
         e.preventDefault()
         toggleFullscreen()
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        clearSlide.mutate()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [toggleFullscreen])
+  }, [toggleFullscreen, clearSlide])
 
   // Clock tick for real-time updates (must be before any early returns)
   const [, setClockTick] = useState(0)
