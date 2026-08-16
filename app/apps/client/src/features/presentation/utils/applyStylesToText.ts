@@ -94,8 +94,18 @@ function getOpeningTags(range: TextStyleRange): string {
     )
   }
 
+  if (range.fontScale !== undefined && range.fontScale !== 1) {
+    tags.push(
+      `<span data-highlight-id="${range.id}" style="font-size: ${range.fontScale}em;">`,
+    )
+  }
+
   if (range.bold) {
     tags.push(`<strong data-highlight-id="${range.id}">`)
+  }
+
+  if (range.italic) {
+    tags.push(`<em data-highlight-id="${range.id}">`)
   }
 
   if (range.underline) {
@@ -117,8 +127,16 @@ function getClosingTags(range: TextStyleRange): string {
     tags.push('</u>')
   }
 
+  if (range.italic) {
+    tags.push('</em>')
+  }
+
   if (range.bold) {
     tags.push('</strong>')
+  }
+
+  if (range.fontScale !== undefined && range.fontScale !== 1) {
+    tags.push('</span>')
   }
 
   if (range.highlight) {

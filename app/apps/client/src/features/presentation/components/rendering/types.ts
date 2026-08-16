@@ -1,3 +1,4 @@
+import type { SlideStyleOverride } from '~/features/songs/types'
 import type { ContentType } from '../../types'
 
 export interface ChordMapping {
@@ -13,6 +14,8 @@ export interface ContentData {
   chords?: ChordMapping[] | null
   songKey?: string // Song key ("gama"), populated only on the first slide
   amen?: string // "Amin", populated only on the last slide
+  /** Per-slide text styling merged over the screen's own style. */
+  styleOverrides?: SlideStyleOverride | null
 }
 
 export interface VerseteTineriSummaryEntry {

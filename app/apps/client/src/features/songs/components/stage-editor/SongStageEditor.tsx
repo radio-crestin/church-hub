@@ -41,6 +41,8 @@ interface SongStageEditorProps {
   onActiveSlideChange?: (index: number) => void
   /** Rendered directly under the stage (e.g. presentation nav buttons), hugging
    * its bottom edge. */
+  /** Rendered directly above the stage canvas (the formatting bar). */
+  canvasHeader?: React.ReactNode
   canvasFooter?: React.ReactNode
   /** Rendered at the very bottom of the canvas column, below the stage/nav
    * zone (e.g. the speaker-notes panel pinned to the column footer). */
@@ -73,6 +75,7 @@ export function SongStageEditor({
   clickToEdit = false,
   onProjectSlide,
   onActiveSlideChange,
+  canvasHeader,
   canvasFooter,
   columnFooter,
   fillHeight = false,
@@ -221,6 +224,7 @@ export function SongStageEditor({
           content: s.content,
           chords: s.chords ?? null,
           sortOrder: s.sortOrder,
+          styleOverrides: s.styleOverrides ?? null,
         })),
         currentSlideIndex: effectiveIndex,
       },
@@ -264,6 +268,7 @@ export function SongStageEditor({
         chords: slide.chords ? [...slide.chords] : null,
         sortOrder: index + 1,
         label: slide.label,
+        styleOverrides: slide.styleOverrides ?? null,
       }
       onSlidesChange(
         reindex([
@@ -365,6 +370,7 @@ export function SongStageEditor({
       >
         {fillHeight ? (
           <div className="flex min-h-0 flex-1 flex-col items-center [container-type:size]">
+            {canvasHeader}
             <StageCanvas
               screen={screen}
               previewContent={previewContent}
@@ -377,6 +383,7 @@ export function SongStageEditor({
           </div>
         ) : (
           <>
+            {canvasHeader}
             <div className="shrink-0">
               <StageCanvas
                 screen={screen}

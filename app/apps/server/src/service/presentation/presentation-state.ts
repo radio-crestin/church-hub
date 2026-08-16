@@ -18,6 +18,7 @@ import type {
 import { getDatabase, getRawDatabase } from '../../db'
 import { presentationState, songSlides, songs } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
+import { parseStyleOverrides } from '../songs/song-slides'
 
 const logger = createLogger('presentation-state')
 
@@ -420,6 +421,7 @@ export function presentTemporarySong(
         chords: songSlides.chords,
         sortOrder: songSlides.sortOrder,
         label: songSlides.label,
+        styleOverrides: songSlides.styleOverrides,
       })
       .from(songSlides)
       .where(eq(songSlides.songId, input.songId))
@@ -465,6 +467,11 @@ export function presentTemporarySong(
             content: s.content,
             chords,
             sortOrder: idx, // Use expanded index as sortOrder
+            // A chorus repeated between verses carries the same styling to
+            // each of its repeats, which is what the operator edited.
+            styleOverrides: parseStyleOverrides(
+              originalSlide?.styleOverrides ?? null,
+            ),
           }
         }),
         currentSlideIndex: startIndex,

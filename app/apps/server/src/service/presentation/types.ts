@@ -1,3 +1,5 @@
+import type { SlideStyleOverride } from '../songs/types'
+
 /**
  * Display open mode - browser tab or native Tauri window
  */
@@ -91,6 +93,8 @@ export interface TemporarySongSlide {
   content: string
   chords?: ChordMapping[] | null
   sortOrder: number
+  /** Per-slide text styling; null when the screen defaults apply. */
+  styleOverrides?: SlideStyleOverride | null
 }
 
 export interface ChordMapping {

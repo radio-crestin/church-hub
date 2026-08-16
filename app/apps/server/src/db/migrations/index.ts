@@ -12,10 +12,11 @@ import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
-import { addSync } from './add-sync'
+import { addSongSlideStyleOverrides } from './add-song-slide-style-overrides'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
-import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
+import { addSync } from './add-sync'
 import { addUserAuthFields } from './add-user-auth-fields'
+import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
@@ -300,6 +301,13 @@ export function runMigrations(
     'add_song_slide_notes',
     'Running add song_slide notes migration',
     () => addSongSlideNotes(rawDb),
+  )
+
+  // Add style_overrides column to song_slides (per-slide text styling).
+  runStep(
+    'add_song_slide_style_overrides',
+    'Running add song_slide style overrides migration',
+    () => addSongSlideStyleOverrides(rawDb),
   )
 
   // Add is_sung/sung_at to song_bookmarks (manual "already sung" marker).

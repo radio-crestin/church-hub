@@ -321,6 +321,7 @@ function SongPreviewPage() {
           content: s.content,
           chords: s.chords,
           sortOrder: idx,
+          styleOverrides: s.styleOverrides,
         })),
         currentSlideIndex: stagedSlideIndex,
       },

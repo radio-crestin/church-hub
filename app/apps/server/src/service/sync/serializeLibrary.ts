@@ -123,11 +123,12 @@ export function serializeLibrary(
         chords: string | null
         label: string | null
         notes: string | null
+        style_overrides: string | null
         sort_order: number
       },
       []
     >(
-      'SELECT song_id, content, chords, label, notes, sort_order FROM song_slides ORDER BY song_id, sort_order, id',
+      'SELECT song_id, content, chords, label, notes, style_overrides, sort_order FROM song_slides ORDER BY song_id, sort_order, id',
     )
     .all()
 
@@ -143,6 +144,7 @@ export function serializeLibrary(
       chords: slide.chords,
       label: slide.label,
       notes: slide.notes,
+      styleOverrides: slide.style_overrides,
       sortOrder: slide.sort_order,
     })
   }

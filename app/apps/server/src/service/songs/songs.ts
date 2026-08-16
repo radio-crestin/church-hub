@@ -5,7 +5,7 @@ import {
   cleanupGroupsAfterSongDelete,
   getGroupIdsForSongs,
 } from './song-groups'
-import { getSlidesBySongId } from './song-slides'
+import { getSlidesBySongId, serializeStyleOverrides } from './song-slides'
 import { getTagsBySongId, getTagsBySongIds, setSongTags } from './tags'
 import type {
   BatchImportResult,
@@ -544,6 +544,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
               sortOrder: slide.sortOrder,
               label: slide.label ?? null,
               notes: slide.notes ?? null,
+              styleOverrides: serializeStyleOverrides(slide.styleOverrides),
               updatedAt: now,
             })
             .where(eq(songSlides.id, slide.id as number))
@@ -559,6 +560,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
               sortOrder: slide.sortOrder,
               label: slide.label ?? null,
               notes: slide.notes ?? null,
+              styleOverrides: serializeStyleOverrides(slide.styleOverrides),
               createdAt: now,
               updatedAt: now,
             })

@@ -16,10 +16,11 @@ import {
   usePresentTemporarySong,
 } from '~/features/presentation'
 import { SlideNotesPanel } from './SlideNotesPanel'
+import { SlideStyleToolbar } from './SlideStyleToolbar'
 import { SongStageEditor } from './SongStageEditor'
 import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
-import type { SongSlide, SongWithSlides } from '../../types'
+import type { SlideStyleOverride, SongSlide, SongWithSlides } from '../../types'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
 import { SlideCounter } from '../SlideCounter'
 import { type LocalSlide } from '../SongSlideList'
@@ -38,6 +39,7 @@ function mapSlides(song: SongWithSlides): LocalSlide[] {
     sortOrder: s.sortOrder,
     label: s.label,
     notes: s.notes,
+    styleOverrides: s.styleOverrides,
   }))
 }
 
@@ -49,6 +51,7 @@ function serialize(slides: LocalSlide[]): string {
       label: s.label ?? null,
       chords: s.chords ?? null,
       notes: s.notes ?? null,
+      styleOverrides: s.styleOverrides ?? null,
     })),
   )
 }
@@ -103,6 +106,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
             sortOrder: idx,
             label: s.label,
             notes: s.notes,
+            styleOverrides: s.styleOverrides ?? null,
           })),
         },
         { onSuccess: () => setSavedSerialized(currentSerialized) },
@@ -198,6 +202,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       sortOrder: i,
       label: s.label ?? null,
       notes: s.notes ?? null,
+      styleOverrides: s.styleOverrides ?? null,
       createdAt: 0,
       updatedAt: 0,
     }))
@@ -226,6 +231,20 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     (value: string) => {
       setSlides((prev) =>
         prev.map((s, i) => (i === activeIndex ? { ...s, notes: value } : s)),
+      )
+    },
+    [activeIndex],
+  )
+
+  // Per-slide text styling. It rides along with the slide draft, so the same
+  // debounced autosave that persists an edited lyric persists the styling.
+  const activeStyleOverrides = slides[activeIndex]?.styleOverrides ?? null
+  const handleStyleChange = useCallback(
+    (override: SlideStyleOverride | null) => {
+      setSlides((prev) =>
+        prev.map((s, i) =>
+          i === activeIndex ? { ...s, styleOverrides: override } : s,
+        ),
       )
     },
     [activeIndex],
@@ -291,6 +310,13 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           onActiveSlideChange={setActiveSlideIndex}
           onSlidesChange={setSlides}
           fillHeight
+          canvasHeader={
+            <SlideStyleToolbar
+              override={activeStyleOverrides}
+              onChange={handleStyleChange}
+              disabled={slides.length === 0}
+            />
+          }
           canvasFooter={
             /* Presentation navigation hugs the bottom of the stage — advance/
                retreat the live slide. The slide counter is pinned left and the

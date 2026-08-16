@@ -1,4 +1,4 @@
-import type { ChordMapping } from '~/features/songs/types'
+import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 
 /**
  * Display open mode - browser tab or native Tauri window
@@ -43,7 +43,10 @@ export interface TextStyleRange {
   end: number // Character offset end
   highlight?: string // Hex color (e.g., '#FFFF00')
   bold?: boolean
+  italic?: boolean
   underline?: boolean
+  /** Multiplier applied to this run's font size (per-slide styling). */
+  fontScale?: number
 }
 
 /**
@@ -95,6 +98,8 @@ export interface TemporarySongSlide {
    * the client build a faithful staged preview (Preview mode) with chords.
    */
   chords?: ChordMapping[] | null
+  /** Per-slide text styling; null when the screen defaults apply. */
+  styleOverrides?: SlideStyleOverride | null
 }
 
 /**
