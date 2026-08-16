@@ -435,6 +435,58 @@ test.describe('Per-slide text styling', () => {
     }
   })
 
+  test('a styled slide is projected at its own size right away', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Project ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    const liveSlides = async () => {
+      const response = await request.get('/api/presentation/state')
+      const { data } = await response.json()
+      return (data.temporaryContent?.data?.slides ?? []) as Array<{
+        styleOverrides: { fontScale?: number } | null
+      }>
+    }
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      // Style the second slide, then project without pausing — the styling must
+      // reach the projection with the navigation, not a second later.
+      await page.getByTestId('stage-thumbnail').nth(1).click()
+      await page.locator('[data-editing]').click()
+      await page.getByTestId('slide-style-font-increase').click()
+      await page.getByTestId('stage-present').click()
+      await expect
+        .poll(async () => (await liveSlides()).length, { timeout: 10000 })
+        .toBeGreaterThan(1)
+      await page.getByTestId('stage-next').click()
+
+      const slides = await liveSlides()
+      expect(slides.length).toBeGreaterThan(1)
+      expect(slides[1].styleOverrides?.fontScale).toBeGreaterThan(1)
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('shows the current slide and the slide count', async ({
     page,
     request,

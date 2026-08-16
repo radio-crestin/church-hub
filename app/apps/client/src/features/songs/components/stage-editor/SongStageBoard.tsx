@@ -96,29 +96,48 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const currentSerialized = serialize(slides)
   const isDirty = currentSerialized !== savedSerialized
 
+  const save = useCallback(async () => {
+    await upsert.mutateAsync({
+      id: song.id,
+      title: song.title,
+      slides: slides.map((s, idx) => ({
+        id: typeof s.id === 'number' ? s.id : undefined,
+        content: s.content,
+        chords: s.chords,
+        sortOrder: idx,
+        label: s.label,
+        notes: s.notes,
+        styleOverrides: s.styleOverrides ?? null,
+      })),
+    })
+    setSavedSerialized(currentSerialized)
+  }, [upsert, song.id, song.title, slides, currentSerialized])
+
+  /**
+   * Persists pending edits right now instead of waiting out the autosave.
+   *
+   * What is projected comes from a snapshot the server takes when the song is
+   * presented and refreshes when it is saved, so navigating with an unsaved
+   * edit showed the slide as it was before the edit and only corrected itself
+   * once the autosave landed a second later.
+   */
+  const saveRef = useRef(save)
+  saveRef.current = save
+  const isDirtyRef = useRef(isDirty)
+  isDirtyRef.current = isDirty
+  const flushSave = useCallback(async () => {
+    if (!isDirtyRef.current) return
+    await saveRef.current()
+  }, [])
+
   // Debounced autosave: persist slides ~1s after the last edit.
   useEffect(() => {
     if (!isDirty) return
     const timer = setTimeout(() => {
-      upsert.mutate(
-        {
-          id: song.id,
-          title: song.title,
-          slides: slides.map((s, idx) => ({
-            id: typeof s.id === 'number' ? s.id : undefined,
-            content: s.content,
-            chords: s.chords,
-            sortOrder: idx,
-            label: s.label,
-            notes: s.notes,
-            styleOverrides: s.styleOverrides ?? null,
-          })),
-        },
-        { onSuccess: () => setSavedSerialized(currentSerialized) },
-      )
+      void saveRef.current()
     }, AUTOSAVE_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [isDirty, currentSerialized, slides, song.id, song.title, upsert])
+  }, [isDirty])
 
   // Live presentation position for THIS song (index is into the server's
   // expanded slide list; null when this song isn't the one being projected).
@@ -156,11 +175,13 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   )
 
   const handlePresent = useCallback(async () => {
+    await flushSave()
     await presentSong.mutateAsync({ songId: song.id, slideIndex: 0 })
     bumpNav(1)
-  }, [presentSong, song.id, bumpNav])
+  }, [flushSave, presentSong, song.id, bumpNav])
 
   const handlePrev = useCallback(async () => {
+    await flushSave()
     if (isPresenting) {
       // Server clamps prev at the first slide (never closes), so don't gate on
       // the local slide index — a fast next→prev on a presenter remote would
@@ -170,13 +191,14 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       return
     }
     if (slides.length > 1) bumpNav(-1)
-  }, [isPresenting, navigateTemporary, bumpNav, slides.length])
+  }, [flushSave, isPresenting, navigateTemporary, bumpNav, slides.length])
 
   const handleNext = useCallback(async () => {
     if (!canNavigateNext) return
+    await flushSave()
     if (isPresenting) await navigateTemporary.mutateAsync({ direction: 'next' })
     bumpNav(1)
-  }, [canNavigateNext, isPresenting, navigateTemporary, bumpNav])
+  }, [flushSave, canNavigateNext, isPresenting, navigateTemporary, bumpNav])
 
   const handleHide = useCallback(() => {
     void clearTemporary.mutateAsync()
@@ -224,9 +246,11 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const handleProjectSlide = useCallback(
     (index: number) => {
       const slideIndex = displayIndexByPosition.get(index) ?? index
-      void presentSong.mutateAsync({ songId: song.id, slideIndex })
+      void flushSave().then(() =>
+        presentSong.mutateAsync({ songId: song.id, slideIndex }),
+      )
     },
-    [displayIndexByPosition, presentSong, song.id],
+    [flushSave, displayIndexByPosition, presentSong, song.id],
   )
 
   // Speaker note for the slide currently on the canvas. Clamp the index so a

@@ -179,17 +179,6 @@ const AnimatedTextInner = memo(function AnimatedText({
     return text
   }, [content, isHtml, style.compressLines, style.lineSeparator])
 
-  // Apply style ranges to the text if any
-  const styledContent = useMemo(() => {
-    if (!styleRanges || styleRanges.length === 0) {
-      return null // No styling needed, use plain text
-    }
-    return applyStylesToText(normalizedText, styleRanges)
-  }, [normalizedText, styleRanges])
-
-  // Check if we have any styled content (HTML) to render
-  const hasStyledContent = styledContent !== null
-
   // Use the slide animation hook
   const {
     displayContent,
@@ -205,18 +194,32 @@ const AnimatedTextInner = memo(function AnimatedText({
     slideTransitionIn: toAnimationConfig(slideTransitionIn),
   })
 
+  // While a slide transition plays, the hook keeps showing the OUTGOING text.
+  // Its styling has to travel with it: the incoming slide's size would resize
+  // the old words mid-transition, and its ranges are character offsets into a
+  // different text entirely.
+  const showsCurrentText = displayContent === normalizedText
+  const previousStyleRef = useRef({ contentScale, styleRanges })
+  if (showsCurrentText) {
+    previousStyleRef.current = { contentScale, styleRanges }
+  }
+  const displayScale = showsCurrentText
+    ? contentScale
+    : previousStyleRef.current.contentScale
+  const displayRanges = showsCurrentText
+    ? styleRanges
+    : previousStyleRef.current.styleRanges
+
   // Get the final display content - use styled HTML if available
   // Must be before any early returns to maintain hooks order
   const finalDisplayContent = useMemo(() => {
-    if (hasStyledContent && styledContent) {
-      // Apply styles to the display content
-      return applyStylesToText(
-        typeof displayContent === 'string' ? displayContent : '',
-        styleRanges ?? [],
-      )
-    }
-    return null
-  }, [hasStyledContent, styledContent, displayContent, styleRanges])
+    if (!displayRanges || displayRanges.length === 0) return null
+    // Apply styles to the display content
+    return applyStylesToText(
+      typeof displayContent === 'string' ? displayContent : '',
+      displayRanges,
+    )
+  }, [displayContent, displayRanges])
 
   // Calculate font size synchronously before paint
   useLayoutEffect(() => {
@@ -234,14 +237,19 @@ const AnimatedTextInner = memo(function AnimatedText({
       style.minFontSize ?? 12,
     )
 
-    textRef.current.style.fontSize = `${fontSize * contentScale}px`
+    textRef.current.style.fontSize = `${fontSize * displayScale}px`
   }, [
     displayContent,
     width,
     height,
     style.maxFontSize,
     style.minFontSize,
-    contentScale,
+    // The marks and the inline runs change how wide the text measures, so the
+    // fit has to be redone when they do.
+    style.bold,
+    style.italic,
+    displayRanges,
+    displayScale,
     shouldRender,
   ])
 
@@ -261,7 +269,9 @@ const AnimatedTextInner = memo(function AnimatedText({
 
   const textStyles: React.CSSProperties = {
     ...getTextStyles(style),
-    fontSize: `${style.maxFontSize}px`, // Will be overwritten by useLayoutEffect
+    // Already carries the slide's own scale so the very first paint — before
+    // the fit runs — is never the plain screen size.
+    fontSize: `${style.maxFontSize * displayScale}px`, // Refined by useLayoutEffect
     width: '100%',
     height: '100%',
     display: 'flex',
