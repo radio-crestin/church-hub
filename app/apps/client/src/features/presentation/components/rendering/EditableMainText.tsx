@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { calculateFontSize } from './utils/calculateFontSize'
+import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { sanitizePastedText } from './utils/sanitizePastedText'
@@ -143,22 +144,60 @@ export function EditableMainText({
   // non-breaking space in the slide HTML.
   const normalizedText = attachRepetitionMarkers(normalizeText(content, true))
 
+  // The markup the slide renders, shared by the seeding below and the fit: an
+  // enlarged run only exists as `font-size: Xem` markup, so a fit that measures
+  // plain text cannot tell that the slide has outgrown its box.
+  const styledHtml =
+    styleRanges && styleRanges.length > 0
+      ? applyStylesToText(normalizedText, styleRanges)
+      : null
+
   // Recompute the auto-scaled font size to fit the current text in the box.
   const fit = useCallback(() => {
     if (!measureRef.current || !editRef.current) return
+    // What the editor reads back, not what the DOM happens to hold: a
+    // contentEditable keeps a trailing line break and non-breaking spaces that
+    // would measure as extra lines the slide does not have.
+    const text = editRef.current.innerText
+      .replace(/\u00a0/g, ' ')
+      .replace(/\n$/, '')
+    const minFontSize = style.minFontSize ?? 12
     const fontSize = calculateFontSize(
       measureRef.current,
-      // What the editor reads back, not what the DOM happens to hold: a
-      // contentEditable keeps a trailing line break and non-breaking spaces
-      // that would measure as extra lines the slide does not have.
-      editRef.current.innerText.replace(/\u00a0/g, ' ').replace(/\n$/, ''),
+      text,
       width,
       height,
       style.maxFontSize,
-      style.minFontSize ?? 12,
+      minFontSize,
     )
-    editRef.current.style.fontSize = `${fontSize * contentScale}px`
-  }, [width, height, style.maxFontSize, style.minFontSize, contentScale])
+
+    // The size at which the slide exactly fills its box. The scaled size is held
+    // to it so growing the text can never push it off the top or the bottom of
+    // the screen, and the ratio between the two is the room the formatting bar
+    // still has to grow \u2014 one is useless without the other, so both are measured
+    // here, where the rendered markup is.
+    const boxMax = fitFontSizeToBounds(
+      measureRef.current,
+      text,
+      styledHtml,
+      Math.ceil(height),
+      width,
+      height,
+      minFontSize,
+    )
+    const applied = Math.min(fontSize * contentScale, boxMax)
+    editRef.current.style.fontSize = `${applied}px`
+    editRef.current.dataset.fitHeadroom = String(
+      applied > 0 ? boxMax / applied : 1,
+    )
+  }, [
+    width,
+    height,
+    style.maxFontSize,
+    style.minFontSize,
+    contentScale,
+    styledHtml,
+  ])
 
   // Styled runs are re-seeded as markup, so formatting a selection shows up in
   // the editor at once instead of only after leaving edit mode.
@@ -187,8 +226,8 @@ export function EditableMainText({
           : (lastSelectionRef.current ?? live)
         : null
 
-      if (styleRanges && styleRanges.length > 0) {
-        editor.innerHTML = applyStylesToText(normalizedText, styleRanges)
+      if (styledHtml !== null) {
+        editor.innerHTML = styledHtml
       } else {
         editor.innerText = normalizedText
       }
@@ -197,7 +236,7 @@ export function EditableMainText({
       if (selection) restoreSelection(editor, selection)
     }
     fit()
-  }, [editKey, rangesKey, normalizedText, styleRanges, fit])
+  }, [editKey, rangesKey, normalizedText, styledHtml, fit])
 
   // A new slide starts with no remembered selection of its own.
   useEffect(() => {

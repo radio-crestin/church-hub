@@ -574,6 +574,136 @@ test.describe('Per-slide text styling', () => {
     }
   })
 
+  test('a size typed on a selected word settles instead of creeping', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Settle ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const stage = page.locator('[data-editing]')
+      await expect(stage).toContainText('Slava', { timeout: 10000 })
+      await stage.click()
+
+      const sizeInput = page.getByTestId('slide-style-font-size')
+      await expect(sizeInput).toBeVisible()
+
+      // Select one word — the case where the size used to walk a point at a
+      // time: putting the selection back after each apply looked like a fresh
+      // selection, which cleared the guard and re-applied the size for ever.
+      const editable = page.getByTestId('slide-canvas-editable')
+      await editable.evaluate((el) => {
+        const textNode = el.firstChild
+        if (!textNode) throw new Error('editor has no text')
+        const range = document.createRange()
+        range.setStart(textNode, 0)
+        range.setEnd(textNode, 5)
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+      })
+      await page.waitForTimeout(300)
+
+      const shown = Number(await sizeInput.inputValue())
+      expect(shown).toBeGreaterThan(0)
+
+      await sizeInput.fill(String(Math.round(shown / 2)))
+      await sizeInput.press('Enter')
+
+      // Give the debounce, the re-seeded markup and the re-measure plenty of
+      // room to run, then read twice a second apart: a settled field reports
+      // the same number both times.
+      await page.waitForTimeout(2500)
+      const settled = Number(await sizeInput.inputValue())
+      await page.waitForTimeout(1500)
+      expect(Number(await sizeInput.inputValue())).toBe(settled)
+      expect(settled).toBeLessThan(shown)
+
+      // And the stored scale settled with it, rather than being multiplied
+      // again on every echo.
+      const scaleOf = async () => {
+        const res = await request.get(`/api/songs/${created.id}`)
+        const { data } = await res.json()
+        return data.slides[0].styleOverrides?.ranges?.[0]?.fontScale ?? 0
+      }
+      await expect.poll(scaleOf, { timeout: 10000 }).toBeGreaterThan(0)
+      const storedScale = await scaleOf()
+      await page.waitForTimeout(1500)
+      expect(await scaleOf()).toBeCloseTo(storedScale, 5)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('growing the text stops at the edge of the slide', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Bounds ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title,
+        slides: [
+          {
+            content:
+              'Slava Tie Doamne\nCel ce ne-ai chemat\nDin intuneric la lumina\nSi ne-ai rascumparat',
+            sortOrder: 0,
+          },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const stage = page.locator('[data-editing]')
+      await expect(stage).toContainText('Slava', { timeout: 10000 })
+      await stage.click()
+
+      const editable = page.getByTestId('slide-canvas-editable')
+      await expect(editable).toBeVisible()
+      const increase = page.getByTestId('slide-style-font-increase')
+
+      // Hold the button down well past the point where the text fills the box.
+      for (let press = 0; press < 25; press++) {
+        if (await increase.isDisabled()) break
+        await increase.click()
+        await page.waitForTimeout(120)
+      }
+
+      // Whatever the operator asked for, the words stay inside the slide: the
+      // text is never taller than the box it is laid out in, top or bottom.
+      const overflow = await editable.evaluate((el) => {
+        const box = el.parentElement
+        if (!box) throw new Error('editor has no box')
+        return el.scrollHeight - box.clientHeight
+      })
+      expect(overflow).toBeLessThanOrEqual(1)
+
+      // And the button says so, instead of silently inflating a stored number.
+      await expect(increase).toBeDisabled()
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('shows the current slide and the slide count', async ({
     page,
     request,

@@ -2,6 +2,7 @@ import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { type AnimationConfig, useSlideAnimation } from './useSlideAnimation'
 import { calculateFontSize } from './utils/calculateFontSize'
+import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { compressLines } from './utils/textProcessing'
@@ -238,18 +239,33 @@ const AnimatedTextInner = memo(function AnimatedText({
     const text = typeof displayContent === 'string' ? displayContent : ''
     if (!text) return
 
+    const minFontSize = displayStyle.minFontSize ?? 12
     const fontSize = calculateFontSize(
       measureRef.current,
       text,
       shown.width,
       shown.height,
       displayStyle.maxFontSize,
-      displayStyle.minFontSize ?? 12,
+      minFontSize,
     )
 
-    textRef.current.style.fontSize = `${fontSize * displayScale}px`
+    // The fit measures plain text at the screen's own size; the slide's scale
+    // and any enlarged run are applied on top of it and can push the words off
+    // the top and bottom of the box, where they are cut off. Holding the scaled
+    // size to what the rendered markup still fits into is what keeps the text on
+    // the screen.
+    textRef.current.style.fontSize = `${fitFontSizeToBounds(
+      measureRef.current,
+      text,
+      finalDisplayContent,
+      fontSize * displayScale,
+      shown.width,
+      shown.height,
+      minFontSize,
+    )}px`
   }, [
     displayContent,
+    finalDisplayContent,
     shown.width,
     shown.height,
     displayStyle.maxFontSize,

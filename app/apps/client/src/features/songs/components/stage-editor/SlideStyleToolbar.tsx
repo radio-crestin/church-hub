@@ -13,7 +13,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getSlideSelection } from './getSlideSelection'
-import { measureSlideFontSize } from './measureSlideFontSize'
+import {
+  measureSlideFontHeadroom,
+  measureSlideFontSize,
+} from './measureSlideFontSize'
 import type { SlideStyleOverride, SlideStyleRange } from '../../types'
 import { updateSlideStyleRange } from '../../utils/updateSlideStyleRange'
 
@@ -47,8 +50,14 @@ interface SlideStyleToolbarProps {
   disabled?: boolean
 }
 
-function clampSize(size: number): number {
-  return Math.min(FONT_MAX, Math.max(FONT_MIN, Math.round(size)))
+function clampSize(size: number, max: number = FONT_MAX): number {
+  return Math.min(max, Math.max(FONT_MIN, Math.round(size)))
+}
+
+/** Whether two selections cover the same run. */
+function sameSelection(a: Selection | null, b: Selection | null): boolean {
+  if (a === null || b === null) return a === b
+  return a.start === b.start && a.end === b.end
 }
 
 /** The styled run recorded for exactly this selection, if there is one. */
@@ -97,7 +106,13 @@ export function SlideStyleToolbar({
       // selection it was opened with is what the operator means to restyle, so
       // anything outside the editor leaves the remembered one alone.
       if (!editor || !anchor || !editor.contains(anchor)) return
-      setSelection(getSlideSelection())
+      const next = getSlideSelection()
+      // Applying a size re-seeds the styled markup, which puts the selection
+      // back and fires this again. Handing out the same object when the run has
+      // not moved keeps that echo from re-measuring the slide and from clearing
+      // the guard below — together they used to re-apply the size on every echo,
+      // walking it a point at a time with no end.
+      setSelection((current) => (sameSelection(current, next) ? current : next))
     }
     read()
     document.addEventListener('selectionchange', read)
@@ -111,14 +126,26 @@ export function SlideStyleToolbar({
   // rather than derived from the stored scale, because the text is auto-fitted:
   // the stored scale is a multiplier of a size only the renderer knows.
   const [effectiveSize, setEffectiveSize] = useState(0)
+  // How much bigger the text can get before it leaves the screen. The renderer
+  // measures it against the markup it lays out, so it accounts for an enlarged
+  // run as well as for the slide's own scale.
+  const [headroom, setHeadroom] = useState(1)
   useEffect(() => {
     // A frame late, so the measurement sees the size the fit just settled on.
     const frame = requestAnimationFrame(() => {
-      const measured = measureSlideFontSize(canvasWidth)
+      const measured = measureSlideFontSize(canvasWidth, selection)
       if (measured !== null) setEffectiveSize(clampSize(measured))
+      setHeadroom(measureSlideFontHeadroom())
     })
     return () => cancelAnimationFrame(frame)
   }, [canvasWidth, override, selection])
+
+  // The largest size the slide can still show. Growing past it would only
+  // inflate a stored multiplier the screen has to cut back down anyway.
+  const maxSize =
+    effectiveSize > 0
+      ? Math.min(FONT_MAX, Math.floor(effectiveSize * headroom))
+      : FONT_MAX
 
   const [sizeDraft, setSizeDraft] = useState('')
   const sizeDraftRef = useRef(sizeDraft)
@@ -127,10 +154,23 @@ export function SlideStyleToolbar({
     setSizeDraft(effectiveSize > 0 ? String(effectiveSize) : '')
   }, [effectiveSize])
 
+  // The size the renderer was last asked for. Sizes are stored as a ratio
+  // against what is on screen, so applying the same number twice would scale the
+  // text twice — and every apply is followed by an echo (Enter's blur, the
+  // re-seeded markup, the debounce re-arming) that would do exactly that.
+  const appliedRef = useRef<number | null>(null)
+  useEffect(() => {
+    appliedRef.current = null
+  }, [selection])
+
   const applySize = useCallback(
     (size: number) => {
-      const target = clampSize(size)
       if (effectiveSize <= 0) return
+      const target = clampSize(size, maxSize)
+      // Nothing to do, and nothing to store: asking for the size that is already
+      // rendered would multiply the scale by one and re-render for no reason.
+      if (target === effectiveSize) return
+      appliedRef.current = target
       // Everything is stored as a multiplier, so the new size is expressed as
       // "how much bigger than what is on screen right now".
       const ratio = target / effectiveSize
@@ -146,17 +186,16 @@ export function SlideStyleToolbar({
       }
       onChange({ ...override, fontScale: slideScale * ratio })
     },
-    [override, onChange, selection, activeRange, slideScale, effectiveSize],
+    [
+      override,
+      onChange,
+      selection,
+      activeRange,
+      slideScale,
+      effectiveSize,
+      maxSize,
+    ],
   )
-
-  // Enter and blur both commit, and blur follows Enter — without remembering
-  // what was already applied, leaving the field would apply the same number a
-  // second time and halve (or double) the text again, because sizes are stored
-  // as a ratio against what is currently rendered.
-  const appliedRef = useRef<number | null>(null)
-  useEffect(() => {
-    appliedRef.current = null
-  }, [selection])
 
   const commitDraft = useCallback(
     (returnFocus = false, draft = sizeDraftRef.current) => {
@@ -165,8 +204,7 @@ export function SlideStyleToolbar({
         setSizeDraft(String(effectiveSize))
         return
       }
-      if (appliedRef.current === parsed) return
-      appliedRef.current = parsed
+      if (appliedRef.current === clampSize(parsed, maxSize)) return
       applySize(parsed)
 
       // Hand the caret back to the slide so the styled words stay visibly
@@ -177,7 +215,7 @@ export function SlideStyleToolbar({
           ?.focus()
       }
     },
-    [effectiveSize, applySize],
+    [effectiveSize, maxSize, applySize],
   )
 
   // Typing or nudging the spinner applies on its own: waiting for Enter or for
@@ -245,7 +283,7 @@ export function SlideStyleToolbar({
         type="number"
         inputMode="numeric"
         min={FONT_MIN}
-        max={FONT_MAX}
+        max={maxSize}
         data-testid="slide-style-font-size"
         value={sizeDraft}
         disabled={disabled}
@@ -269,10 +307,7 @@ export function SlideStyleToolbar({
         type="button"
         data-testid="slide-style-font-decrease"
         onMouseDown={keepSelection}
-        onClick={() => {
-          appliedRef.current = null
-          applySize(effectiveSize * (1 - FONT_STEP_RATIO))
-        }}
+        onClick={() => applySize(effectiveSize * (1 - FONT_STEP_RATIO))}
         disabled={disabled}
         title={t('stageEditor.style.decreaseFontSize')}
         aria-label={t('stageEditor.style.decreaseFontSize')}
@@ -284,11 +319,8 @@ export function SlideStyleToolbar({
         type="button"
         data-testid="slide-style-font-increase"
         onMouseDown={keepSelection}
-        onClick={() => {
-          appliedRef.current = null
-          applySize(effectiveSize * (1 + FONT_STEP_RATIO))
-        }}
-        disabled={disabled}
+        onClick={() => applySize(effectiveSize * (1 + FONT_STEP_RATIO))}
+        disabled={disabled || effectiveSize >= maxSize}
         title={t('stageEditor.style.increaseFontSize')}
         aria-label={t('stageEditor.style.increaseFontSize')}
         className={buttonClass(false)}
