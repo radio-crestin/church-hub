@@ -171,11 +171,20 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         )
         const win = getCurrentWebviewWindow()
 
-        setIsFullscreen(await win.isFullscreen())
-
-        unlistenResize = await win.listen('tauri://resize', async () => {
+        // The window is only asked while the screen has no opinion of its own:
+        // a window held in macOS simple fullscreen reports that it is not
+        // fullscreen at all, and believing it would offer the operator a button
+        // that tries to enter fullscreen again instead of leaving it.
+        const readFullscreen = async () => {
+          if (screen) {
+            setIsFullscreen(screen.isFullscreen)
+            return
+          }
           setIsFullscreen(await win.isFullscreen())
-        })
+        }
+
+        await readFullscreen()
+        unlistenResize = await win.listen('tauri://resize', readFullscreen)
       } catch (_error) {}
     }
 
@@ -273,7 +282,11 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       return
     }
 
-    const newFullscreen = !isFullscreen
+    // What the screen records, not what the window reports: a window in macOS
+    // simple fullscreen says it is windowed, and toggling from that would try
+    // to enter fullscreen a second time instead of leaving — the operator could
+    // never get the projection back into a window they can move.
+    const newFullscreen = !(screen?.isFullscreen ?? isFullscreen)
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.log(`[toggleFullscreen] Toggling fullscreen to: ${newFullscreen}`)
 
