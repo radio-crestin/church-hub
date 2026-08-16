@@ -31,6 +31,12 @@ interface SongStageBoardProps {
 }
 
 const AUTOSAVE_DELAY_MS = 1000
+/**
+ * While the song is live, edits have to reach the projector, and that only
+ * happens once they are saved — so the wait drops to something the operator
+ * reads as immediate.
+ */
+const LIVE_AUTOSAVE_DELAY_MS = 200
 
 function mapSlides(song: SongWithSlides): LocalSlide[] {
   return song.slides.map((s) => ({
@@ -130,12 +136,15 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     await saveRef.current()
   }, [])
 
-  // Debounced autosave: persist slides ~1s after the last edit.
+  // Debounced autosave: persist slides shortly after the last edit.
   useEffect(() => {
     if (!isDirty) return
-    const timer = setTimeout(() => {
-      void saveRef.current()
-    }, AUTOSAVE_DELAY_MS)
+    const timer = setTimeout(
+      () => {
+        void saveRef.current()
+      },
+      isPresentingRef.current ? LIVE_AUTOSAVE_DELAY_MS : AUTOSAVE_DELAY_MS,
+    )
     return () => clearTimeout(timer)
   }, [isDirty])
 
@@ -154,6 +163,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   }, [presentationState, song.id])
 
   const isPresenting = presentedSlideIndex !== null
+  // Read by the autosave timer, which is scheduled before this is known.
+  const isPresentingRef = useRef(isPresenting)
+  isPresentingRef.current = isPresenting
   // When presenting, Prev/Next drive the live show (Next is allowed on the last
   // slide — the server ends the presentation). When NOT presenting they browse
   // the slides on the canvas, so keep them usable as long as there's more than

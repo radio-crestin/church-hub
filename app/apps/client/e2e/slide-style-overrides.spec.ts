@@ -487,6 +487,81 @@ test.describe('Per-slide text styling', () => {
     }
   })
 
+  test('styling a selection reaches the projection', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Live Range ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    const liveRanges = async () => {
+      const response = await request.get('/api/presentation/state')
+      const { data } = await response.json()
+      return (data.temporaryContent?.data?.slides?.[0]?.styleOverrides?.ranges ??
+        []) as Array<{ fontScale?: number }>
+    }
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      await page.getByTestId('stage-present').click()
+      await expect
+        .poll(async () => (await liveRanges()).length, { timeout: 10000 })
+        .toBe(0)
+
+      // Open the projection the way a screen window does, then style a word.
+      const screensResponse = await request.get('/api/screens')
+      const { data: screens } = await screensResponse.json()
+      const projection = await page.context().newPage()
+      await projection.goto(`/screen/${screens[0].id}`)
+      await projection.waitForLoadState('networkidle')
+
+      await page.bringToFront()
+      await page.locator('[data-editing]').click()
+      const editable = page.getByTestId('slide-canvas-editable')
+      await editable.evaluate((el) => {
+        const textNode = el.firstChild
+        if (!textNode) throw new Error('editor has no text')
+        const range = document.createRange()
+        range.setStart(textNode, 0)
+        range.setEnd(textNode, 5)
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+      })
+      await page.waitForTimeout(300)
+      const sizeInput = page.getByTestId('slide-style-font-size')
+      const size = Number(await sizeInput.inputValue())
+      await sizeInput.fill(String(size * 2))
+      await sizeInput.press('Enter')
+
+      // The live snapshot carries the run, and the already-open projection
+      // picks it up without being reloaded.
+      await expect
+        .poll(async () => (await liveRanges())[0]?.fontScale ?? 0, {
+          timeout: 10000,
+        })
+        .toBeGreaterThan(1)
+      await expect
+        .poll(async () => projection.locator('body').innerHTML(), {
+          timeout: 10000,
+        })
+        .toContain('slide-style-0-5')
+      await projection.close()
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('shows the current slide and the slide count', async ({
     page,
     request,
