@@ -73,13 +73,22 @@ const SCROLL_OFFSET_TOP = 100
 const SLIDE_FONT_BASE_REM = 0.875
 const SLIDE_FONT_MIN_SCALE = 0.8
 const SLIDE_FONT_MAX_SCALE = 2.2
-const SLIDE_FONT_STEP = 0.1
+// One press moves the rendered text by exactly 1px at the default 16px root
+// size: the base is 0.875rem = 14px, so a 1px step is 1/14 of the base. Kept
+// as a division rather than a literal so it stays correct if the base changes.
+const ROOT_FONT_SIZE_PX = 16
+const SLIDE_FONT_STEP_PX = 1
+const SLIDE_FONT_STEP =
+  SLIDE_FONT_STEP_PX / (SLIDE_FONT_BASE_REM * ROOT_FONT_SIZE_PX)
 const SLIDE_FONT_SCALE_KEY = 'song-slides-font-scale'
 
+// Four decimals, not two: the 1px step is 1/14 (0.0714…), and rounding to two
+// would quantise every press to 0.07 — a 2% shortfall that accumulates over
+// the ~20 presses between the min and max scale.
 function clampFontScale(scale: number): number {
   return Math.min(
     SLIDE_FONT_MAX_SCALE,
-    Math.max(SLIDE_FONT_MIN_SCALE, Math.round(scale * 100) / 100),
+    Math.max(SLIDE_FONT_MIN_SCALE, Math.round(scale * 10000) / 10000),
   )
 }
 
@@ -144,6 +153,27 @@ export function SongSlidesPanel({
     () => expandSongSlidesWithChoruses(song.slides),
     [song.slides],
   )
+
+  // Index shown in the toolbar counter. Mirrors the row-highlight precedence
+  // below: the live (green) slide wins over the staged preview slide, which
+  // wins over the keyboard selection. Null when nothing is highlighted.
+  const activeSlideIndex = useMemo(() => {
+    const index =
+      presentedSlideIndex !== null
+        ? presentedSlideIndex
+        : previewMode
+          ? stagedSlideIndex
+          : selectedSlideIndex
+    if (index === null || index < 0 || index >= expandedSlides.length)
+      return null
+    return index
+  }, [
+    presentedSlideIndex,
+    previewMode,
+    stagedSlideIndex,
+    selectedSlideIndex,
+    expandedSlides.length,
+  ])
 
   // Track chorus duplicates for view mode
   const isOriginalSlide = useMemo(() => {
@@ -282,6 +312,29 @@ export function SongSlidesPanel({
             </div>
           )}
         </div>
+        {!isEditMode && expandedSlides.length > 0 && (
+          <span
+            data-testid="song-slide-counter"
+            aria-label={
+              activeSlideIndex !== null
+                ? t('preview.slideCounterLabel', {
+                    current: activeSlideIndex + 1,
+                    total: expandedSlides.length,
+                  })
+                : undefined
+            }
+            className="shrink-0 text-xs font-medium tabular-nums text-gray-500 dark:text-gray-400"
+          >
+            {activeSlideIndex !== null
+              ? t('preview.slideCounter', {
+                  current: activeSlideIndex + 1,
+                  total: expandedSlides.length,
+                })
+              : t('preview.slideCounterTotal', {
+                  total: expandedSlides.length,
+                })}
+          </span>
+        )}
         {isEditMode && (
           <div className="flex items-center gap-2">
             <button
