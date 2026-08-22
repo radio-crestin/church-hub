@@ -40,6 +40,25 @@ interface WindowState {
 /** How long a drag settles before the screen records its new monitor. */
 const MONITOR_SAVE_DELAY_MS = 500
 
+/** How long `closeDisplayWindow` waits for the window to actually go away. */
+const CLOSE_POLL_MS = 50
+const CLOSE_SETTLE_ATTEMPTS = 40
+
+/**
+ * Which build of each display window is the current one. Event listeners are
+ * keyed by window label, not by window, so the listeners a closed window left
+ * behind keep firing for the next window opened under the same label — and
+ * would record where that one was while it was still being placed.
+ */
+const windowGenerations = new Map<string, number>()
+
+/**
+ * Display windows on their way out. A fullscreen window leaves fullscreen
+ * before it closes and reports the moves that involves; nothing it says from
+ * then on is worth remembering.
+ */
+const closingWindows = new Set<string>()
+
 // Cached isTauri result to avoid repeated checks and logging
 let isTauriCached: boolean | null = null
 
@@ -119,16 +138,15 @@ function getStoredState(displayId: number): WindowState | null {
 /**
  * Puts a projection window where its screen says it belongs.
  *
- * The fullscreen branch is a fallback. A screen that runs fullscreen is built
- * that way and never reaches here; it only does when the platform ignored the
- * creation flag, and then covering the monitor by hand is what keeps the
- * projection from coming up as a small window while the page sorts it out.
+ * A screen that runs fullscreen has its window laid over the whole display
+ * first, so that the fullscreen it is sent into afterwards fills that display
+ * and not the one the window manager happened to build it on.
  *
- * Run twice: once before the window is shown, once after. A window that has not
- * been ordered in yet can have its geometry quietly ignored and come up at the
- * frame it was created with — which is how the projection ended up as a small
- * window on a big display. Applying it again to the visible window costs
- * nothing when the first attempt did take.
+ * Run twice for a windowed screen: once before the window is shown, once
+ * after. A window that has not been ordered in yet can have its geometry
+ * quietly ignored and come up at the frame it was created with — which is how
+ * the projection ended up as a small window on a big display. Applying it
+ * again to the visible window costs nothing when the first attempt did take.
  */
 async function placeWindow(
   win: WebviewWindow,
@@ -140,8 +158,7 @@ async function placeWindow(
     // Without an assigned monitor, cover the one the window opened on.
     const target = monitor ?? (await currentMonitorOf(win))
     if (target) {
-      await setWindowDesktopPosition(win, target)
-      await setWindowDesktopSize(win, target)
+      await coverMonitor(win, target)
     } else {
       // No monitor would say how big it is. Maximising still fills the display
       // the window is on, which beats leaving the projection at the small frame
@@ -191,6 +208,34 @@ async function placeWindow(
     x: monitor.x + Math.max(0, Math.round((monitor.width - size.width) / 2)),
     y: monitor.y + Math.max(0, Math.round((monitor.height - size.height) / 2)),
   })
+}
+
+/**
+ * Lays a window over a monitor and checks that it got there.
+ *
+ * The size goes first: macOS resizes a window about its bottom-left corner, so
+ * a window sized after it was positioned would hang off the bottom of the
+ * display. The position is then read back, because the frame a window is asked
+ * for is not always the frame it gets — on macOS a window can be pulled onto
+ * the operator's display instead, and a fullscreen entered from there would
+ * cover the control room. One more try is enough in practice; the caller
+ * learns whether the window is where it should be.
+ */
+async function coverMonitor(
+  win: WebviewWindow,
+  monitor: ScreenMonitor,
+): Promise<boolean> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await setWindowDesktopSize(win, monitor)
+    await setWindowDesktopPosition(win, monitor)
+    const position = await windowDesktopPosition(win)
+    if (monitorContains(monitor, position.x, position.y)) return true
+    // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window placement
+    console.warn(
+      `[coverMonitor] Window landed at ${position.x},${position.y}, not on ${monitor.name}; retrying`,
+    )
+  }
+  return false
 }
 
 /**
@@ -349,6 +394,7 @@ async function openInNativeWindow(
       const windowLabel = `display-${displayId}`
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(`[openInNativeWindow] Window label: ${windowLabel}`)
+      const generation = (windowGenerations.get(windowLabel) ?? 0) + 1
 
       // Check if window already exists
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
@@ -389,15 +435,16 @@ async function openInNativeWindow(
         monitor,
       )
 
-      // A fullscreen screen is built fullscreen rather than being sent there
-      // afterwards. The window manager can only be told which display to fill
-      // through the frame the window is created with, so the monitor's own
-      // geometry goes into the creation options — in logical pixels, the units
-      // those options are written in — and the window is fullscreen on that
-      // display from its first frame. Sending it fullscreen after it was up is
-      // what the operator saw as a small window appearing and then growing.
+      // The window is built at the monitor's own geometry — in logical pixels,
+      // the units creation options are written in — but hidden and windowed,
+      // whatever the screen wants. The frame a window is created with is only
+      // a request: macOS moves a new window onto the operator's display often
+      // enough that a projection built fullscreen in place came up covering the
+      // control room, and then recorded that display as its own. Geometry set
+      // on a window that already exists does stick, so the window is placed
+      // over its display below, sent fullscreen from there, and shown only
+      // once it is where it belongs.
       const logicalMonitor = monitor ? monitorInLogicalUnits(monitor) : null
-      const openFullscreen = screen.isFullscreen
 
       const windowOptions = {
         url,
@@ -409,11 +456,9 @@ async function openInNativeWindow(
         // the units it was measured in.
         width: logicalMonitor?.width ?? 1280,
         height: logicalMonitor?.height ?? 720,
-        // Which display the window is born on. Fullscreen has no monitor
-        // argument anywhere in the stack — it fills whichever display the
-        // window's frame is on — so this is what aims it.
+        // Where the window is asked to be born; `placeWindow` makes sure of it.
         ...(logicalMonitor ? { x: logicalMonitor.x, y: logicalMonitor.y } : {}),
-        fullscreen: openFullscreen,
+        fullscreen: false,
         resizable: true,
         maximizable: true,
         minimizable: true,
@@ -429,12 +474,9 @@ async function openInNativeWindow(
         skipTaskbar: true,
         focus,
         backgroundColor: '#000000',
-        // A windowed projection is placed and sized below, then shown, so the
-        // audience never sees it move. A fullscreen one has nothing left to be
-        // told — it is created filling its display — and must come up visible:
-        // an invisible window cannot be taken into fullscreen on macOS, and one
-        // built hidden would come up as an ordinary window with a title bar.
-        visible: openFullscreen,
+        // Placed, sized and — for a fullscreen screen — sent fullscreen while
+        // still hidden, so the audience never sees it move.
+        visible: false,
       }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(
@@ -459,6 +501,7 @@ async function openInNativeWindow(
           })()
 
       // Create new native window
+      windowGenerations.set(windowLabel, generation)
       const webview = new WebviewWindow(windowLabel, windowOptions)
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(
@@ -484,35 +527,48 @@ async function openInNativeWindow(
           return
         }
 
-        // A window built fullscreen is already exactly where it belongs, and
-        // placing or showing it now would only drag it back out of the state it
-        // was built in — it may still be animating into it, and would answer
-        // that it is not fullscreen yet if asked. Even where the creation flag
-        // is ignored it was built covering its display, and the projection
-        // page fills that display itself. Everything below is the windowed
-        // case.
-        if (!openFullscreen) {
+        try {
+          await placeWindow(win, screen, monitor, storedState)
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+          console.error('[openInNativeWindow] Failed to place window:', error)
+        }
+
+        // A fullscreen screen goes fullscreen from where it was just placed,
+        // while still hidden: fullscreen fills the display the window's frame
+        // is on, and that frame is now the right one. Entering fullscreen
+        // brings the window up by itself.
+        if (screen.isFullscreen) {
           try {
-            await placeWindow(win, screen, monitor, storedState)
+            await setWindowFullscreen(win, true)
           } catch (error) {
             // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-            console.error('[openInNativeWindow] Failed to place window:', error)
+            console.error(
+              '[openInNativeWindow] Failed to enter fullscreen:',
+              error,
+            )
           }
+        }
 
-          // Shown whatever happened above: a projection stuck invisible is worse
-          // than one in the wrong place, so nothing between here and `show()` is
-          // allowed to throw past it.
-          try {
+        // Shown whatever happened above: a projection stuck invisible is worse
+        // than one in the wrong place, so nothing between here and `show()` is
+        // allowed to throw past it. A window that fullscreen already brought
+        // up is left alone — showing it again would make it the key window
+        // and take the keyboard from the control room.
+        try {
+          if (!(await win.isVisible())) {
             await win.show()
-          } catch (error) {
-            // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
-            console.error('[openInNativeWindow] Failed to show window:', error)
           }
+        } catch (error) {
+          // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
+          console.error('[openInNativeWindow] Failed to show window:', error)
+        }
 
-          // Again, now that the window is really on screen: geometry set on a
-          // window that has not been ordered in yet can be dropped on the floor,
-          // and the projection then comes up at the frame it was created with —
-          // a small window on a large display.
+        // Again for a windowed screen, now that the window is really on
+        // screen: geometry set on a window that has not been ordered in yet
+        // can be dropped on the floor, and the projection then comes up at
+        // the frame it was created with — a small window on a large display.
+        if (!screen.isFullscreen) {
           try {
             await placeWindow(win, screen, monitor, storedState)
           } catch (error) {
@@ -541,25 +597,36 @@ async function openInNativeWindow(
         // Remember where the operator leaves the window. Only the windowed
         // geometry is cached; the monitor goes back to the screen itself, so
         // dragging the projection to another display is the same act as picking
-        // that display in the settings.
+        // that display in the settings. Neither is read off a fullscreen or
+        // maximised window: those cannot be dragged, and the moves they report
+        // while the window manager is still settling them would otherwise
+        // overwrite the display the operator chose with whichever one the
+        // window passed through.
         const trackState = async () => {
+          if (windowGenerations.get(windowLabel) !== generation) return
+          if (closingWindows.has(windowLabel)) return
           try {
             const win = await WebviewWindow.getByLabel(windowLabel)
             if (!win) return
+            if ((await win.isFullscreen()) || (await win.isMaximized())) return
             const position = await windowDesktopPosition(win)
-            if (!(await win.isFullscreen()) && !(await win.isMaximized())) {
-              const size = await windowDesktopSize(win)
-              saveWindowState(displayId, { ...position, ...size })
-            }
+            const size = await windowDesktopSize(win)
+            saveWindowState(displayId, { ...position, ...size })
             rememberMonitor(screen, position.x, position.y)
           } catch {
             // Window might be closed
           }
         }
 
-        // Track state on move, resize, and other changes
-        webview.listen('tauri://move', trackState)
-        webview.listen('tauri://resize', trackState)
+        // Track state on move, resize, and other changes, for as long as this
+        // window is up.
+        const unlisten = await Promise.all([
+          webview.listen('tauri://move', trackState),
+          webview.listen('tauri://resize', trackState),
+        ])
+        webview.once('tauri://destroyed', () => {
+          for (const stop of unlisten) stop()
+        })
 
         // Keep keyboard focus on the control window so the operator can keep
         // navigating verses (keyboard / presenter remote) while the screen
@@ -628,6 +695,17 @@ async function openInNativeWindow(
   }
 }
 
+/** Whether a screen's native display window is currently up. */
+export async function isDisplayWindowOpen(displayId: number): Promise<boolean> {
+  if (!isTauri()) return false
+  try {
+    const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
+    return (await WebviewWindow.getByLabel(`display-${displayId}`)) !== null
+  } catch {
+    return false
+  }
+}
+
 /**
  * Closes a native display window
  */
@@ -647,7 +725,19 @@ export async function closeDisplayWindow(displayId: number): Promise<void> {
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.log(`[closeDisplayWindow] Window found: ${!!win}`)
     if (win) {
-      await win.close()
+      closingWindows.add(windowLabel)
+      try {
+        await win.close()
+        // `close()` returns once the request is in, not once the window is
+        // gone. A reopen that follows straight away would still find the old
+        // window under its label and keep it instead of building the new one.
+        for (let attempt = 0; attempt < CLOSE_SETTLE_ATTEMPTS; attempt++) {
+          if (!(await WebviewWindow.getByLabel(windowLabel))) break
+          await new Promise((resolve) => setTimeout(resolve, CLOSE_POLL_MS))
+        }
+      } finally {
+        closingWindows.delete(windowLabel)
+      }
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
       console.log('[closeDisplayWindow] Window closed successfully')
     } else {

@@ -10,6 +10,7 @@ import { identifyMonitors } from '../../utils/identifyMonitors'
 import { monitorPixelSize } from '../../utils/monitors'
 import {
   closeDisplayWindow,
+  isDisplayWindowOpen,
   isTauri,
   openDisplayWindow,
 } from '../../utils/openDisplayWindow'
@@ -26,7 +27,7 @@ interface ScreenMonitorPickerProps {
  *
  * The same field is written when the operator drags the projection window to
  * another monitor, so the two ways of saying "put it there" agree. Choosing a
- * monitor for a screen whose window is already open reopens it, since a window
+ * monitor for a screen whose window is open reopens it there, since a window
  * cannot be handed to another display while it is fullscreen on this one.
  */
 export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
@@ -74,7 +75,10 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
       monitorName,
     })
 
-    if (screen.isActive) {
+    // Only a window that is up moves now. One that is closed — a screen that
+    // opens when something is presented, say — opens on the new display when
+    // its time comes, and picking a display is not a reason to bring it up.
+    if (screen.isActive && (await isDisplayWindowOpen(screen.id))) {
       await closeDisplayWindow(screen.id)
       await openDisplayWindow({ ...screen, monitorName }, 'native', false)
     }
