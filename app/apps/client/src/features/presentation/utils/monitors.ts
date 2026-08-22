@@ -1,10 +1,13 @@
+import { desktopIsLogical } from './desktopUnits'
+
 /**
  * A physical display, in the units window placement uses.
  *
- * Tauri reports monitor geometry in physical pixels while a window's creation
- * options are logical ones, and on Windows the two differ per monitor. Every
- * placement here is therefore done after creation with `PhysicalPosition` /
- * `PhysicalSize`, so these numbers can be used as they come.
+ * Geometry is in desktop units — see `desktopUnits.ts` — so a point on one
+ * display and a point on another can be compared, and a window can be sent
+ * from one to the other. Tauri reports monitors in physical pixels; on macOS,
+ * where the desktop is laid out in logical points and each display scales them
+ * on its own, that is converted here and nowhere else.
  */
 export interface ScreenMonitor {
   /**
@@ -21,47 +24,68 @@ export interface ScreenMonitor {
   y: number
   width: number
   height: number
-  /** Physical pixels per logical one, needed to talk to creation options. */
+  /** Physical pixels per logical one on this display. */
   scaleFactor: number
 }
 
-/** Reshapes a Tauri monitor into the flat form the placement code uses. */
-export function toScreenMonitor(monitor: {
+/** What Tauri hands back for a monitor, in physical pixels. */
+export interface TauriMonitor {
   name: string | null
   position: { x: number; y: number }
   size: { width: number; height: number }
   scaleFactor: number
-}): ScreenMonitor {
+}
+
+/**
+ * Reshapes a Tauri monitor into the flat form the placement code uses.
+ *
+ * @param logicalDesktop Whether the desktop is laid out in logical points, in
+ * which case the physical geometry is divided by the monitor's own scale.
+ */
+export function toScreenMonitor(
+  monitor: TauriMonitor,
+  logicalDesktop: boolean = desktopIsLogical(),
+): ScreenMonitor {
+  const scale = monitor.scaleFactor || 1
+  const unit = logicalDesktop ? scale : 1
   return {
     name: monitor.name ?? `@${monitor.position.x},${monitor.position.y}`,
     osName: monitor.name,
-    x: monitor.position.x,
-    y: monitor.position.y,
-    width: monitor.size.width,
-    height: monitor.size.height,
-    scaleFactor: monitor.scaleFactor || 1,
+    x: Math.round(monitor.position.x / unit),
+    y: Math.round(monitor.position.y / unit),
+    width: Math.round(monitor.size.width / unit),
+    height: Math.round(monitor.size.height / unit),
+    scaleFactor: scale,
   }
 }
 
 /**
- * The same monitor in the units a window's creation options are written in.
- *
- * Everything after creation is physical, so this exists only for the frame a
- * window is *built* with: handing it physical numbers opens it at twice the
- * size it should be on a Retina display.
+ * The monitor in the units a window's creation options are written in — always
+ * logical, whatever the desktop is laid out in. On a logical desktop that is
+ * what the monitor already holds.
  */
-export function monitorInLogicalUnits(monitor: ScreenMonitor): {
-  x: number
-  y: number
-  width: number
-  height: number
-} {
-  const scale = monitor.scaleFactor || 1
+export function monitorInLogicalUnits(
+  monitor: ScreenMonitor,
+  logicalDesktop: boolean = desktopIsLogical(),
+): { x: number; y: number; width: number; height: number } {
+  const unit = logicalDesktop ? 1 : monitor.scaleFactor || 1
   return {
-    x: Math.round(monitor.x / scale),
-    y: Math.round(monitor.y / scale),
-    width: Math.round(monitor.width / scale),
-    height: Math.round(monitor.height / scale),
+    x: Math.round(monitor.x / unit),
+    y: Math.round(monitor.y / unit),
+    width: Math.round(monitor.width / unit),
+    height: Math.round(monitor.height / unit),
+  }
+}
+
+/** The monitor's resolution in pixels, for showing to the operator. */
+export function monitorPixelSize(
+  monitor: ScreenMonitor,
+  logicalDesktop: boolean = desktopIsLogical(),
+): { width: number; height: number } {
+  const unit = logicalDesktop ? monitor.scaleFactor || 1 : 1
+  return {
+    width: Math.round(monitor.width * unit),
+    height: Math.round(monitor.height * unit),
   }
 }
 
@@ -72,7 +96,9 @@ export function monitorInLogicalUnits(monitor: ScreenMonitor): {
 export async function listMonitors(): Promise<ScreenMonitor[]> {
   try {
     const { availableMonitors } = await import('@tauri-apps/api/window')
-    return (await availableMonitors()).map(toScreenMonitor)
+    return (await availableMonitors()).map((monitor) =>
+      toScreenMonitor(monitor),
+    )
   } catch {
     // Not in the desktop app, or the platform will not say — either way there
     // is nothing to place a window on.

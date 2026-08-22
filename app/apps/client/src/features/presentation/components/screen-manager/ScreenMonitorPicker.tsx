@@ -7,6 +7,7 @@ import { Combobox } from '~/ui/combobox/Combobox'
 import { useMonitors, useUpsertScreen } from '../../hooks'
 import type { Screen } from '../../types'
 import { identifyMonitors } from '../../utils/identifyMonitors'
+import { monitorPixelSize } from '../../utils/monitors'
 import {
   closeDisplayWindow,
   isTauri,
@@ -48,7 +49,9 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
         label: monitor.osName
           ? `${index + 1} · ${monitor.osName}`
           : t('presentation:screens.monitor.unnamed', { index: index + 1 }),
-        description: `${monitor.width}×${monitor.height}`,
+        description: (({ width, height }) => `${width}×${height}`)(
+          monitorPixelSize(monitor),
+        ),
       })),
     ]
   }, [monitors, t])

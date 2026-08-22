@@ -1,5 +1,11 @@
 import type { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 
+import {
+  setWindowDesktopPosition,
+  setWindowDesktopSize,
+  windowDesktopPosition,
+  windowDesktopSize,
+} from './desktopUnits'
 import { setWindowFullscreen } from './fullscreen'
 import {
   findMonitorByName,
@@ -13,13 +19,16 @@ import {
 import { upsertScreen } from '../service/screens'
 import type { Screen } from '../types'
 
-const WINDOW_POSITIONS_KEY = 'display-window-positions'
+// Versioned: earlier entries were physical pixels, which on macOS mean
+// something different on each display, so they are left behind rather than
+// read back as desktop units.
+const WINDOW_POSITIONS_KEY = 'display-window-positions-v2'
 
 /**
- * Where a projection window sat while it was not fullscreen. Only the windowed
- * geometry lives here: whether the screen runs fullscreen, and which monitor it
- * belongs on, are the screen's own settings, so they survive a cleared cache and
- * can be changed from the settings page.
+ * Where a projection window sat while it was not fullscreen, in desktop units.
+ * Only the windowed geometry lives here: whether the screen runs fullscreen, and
+ * which monitor it belongs on, are the screen's own settings, so they survive a
+ * cleared cache and can be changed from the settings page.
  */
 interface WindowState {
   x: number
@@ -127,14 +136,12 @@ async function placeWindow(
   monitor: ScreenMonitor | null,
   stored: WindowState | null,
 ): Promise<void> {
-  const { PhysicalPosition, PhysicalSize } = await import('@tauri-apps/api/dpi')
-
   if (screen.isFullscreen) {
     // Without an assigned monitor, cover the one the window opened on.
     const target = monitor ?? (await currentMonitorOf(win))
     if (target) {
-      await win.setPosition(new PhysicalPosition(target.x, target.y))
-      await win.setSize(new PhysicalSize(target.width, target.height))
+      await setWindowDesktopPosition(win, target)
+      await setWindowDesktopSize(win, target)
     } else {
       // No monitor would say how big it is. Maximising still fills the display
       // the window is on, which beats leaving the projection at the small frame
@@ -150,23 +157,21 @@ async function placeWindow(
   }
 
   if (monitor) {
-    await win.setPosition(new PhysicalPosition(monitor.x, monitor.y))
+    await setWindowDesktopPosition(win, monitor)
   }
 
   if (stored) {
     // Never larger than the display it is going to: a size remembered from a
     // bigger monitor would push the title bar off the top of this one.
-    await win.setSize(
-      new PhysicalSize(
-        monitor ? Math.min(stored.width, monitor.width) : stored.width,
-        monitor ? Math.min(stored.height, monitor.height) : stored.height,
-      ),
-    )
+    await setWindowDesktopSize(win, {
+      width: monitor ? Math.min(stored.width, monitor.width) : stored.width,
+      height: monitor ? Math.min(stored.height, monitor.height) : stored.height,
+    })
   }
 
   if (!monitor) {
     if (stored) {
-      await win.setPosition(new PhysicalPosition(stored.x, stored.y))
+      await setWindowDesktopPosition(win, stored)
     } else {
       await win.center()
     }
@@ -177,17 +182,15 @@ async function placeWindow(
   // centred on the monitor otherwise — a corner position from another display
   // would drop the window half off the edge of this one.
   if (stored && monitorContains(monitor, stored.x, stored.y)) {
-    await win.setPosition(new PhysicalPosition(stored.x, stored.y))
+    await setWindowDesktopPosition(win, stored)
     return
   }
 
-  const size = await win.outerSize()
-  await win.setPosition(
-    new PhysicalPosition(
-      monitor.x + Math.max(0, Math.round((monitor.width - size.width) / 2)),
-      monitor.y + Math.max(0, Math.round((monitor.height - size.height) / 2)),
-    ),
-  )
+  const size = await windowDesktopSize(win)
+  await setWindowDesktopPosition(win, {
+    x: monitor.x + Math.max(0, Math.round((monitor.width - size.width) / 2)),
+    y: monitor.y + Math.max(0, Math.round((monitor.height - size.height) / 2)),
+  })
 }
 
 /**
@@ -199,7 +202,7 @@ async function currentMonitorOf(
   win: WebviewWindow,
 ): Promise<ScreenMonitor | null> {
   try {
-    const position = await win.outerPosition()
+    const position = await windowDesktopPosition(win)
     return (
       (await monitorAtPoint(position.x, position.y)) ??
       (await getPrimaryMonitor())
@@ -481,15 +484,14 @@ async function openInNativeWindow(
           return
         }
 
-        // A window that came up fullscreen is already exactly where it belongs:
+        // A window built fullscreen is already exactly where it belongs, and
         // placing or showing it now would only drag it back out of the state it
-        // was built in. Everything below is for the windowed case, and for the
-        // platform that would not take the creation flag — the projection page
-        // fills the display itself when it finds the window is not fullscreen.
-        const bornFullscreen =
-          openFullscreen && (await win.isFullscreen().catch(() => false))
-
-        if (!bornFullscreen) {
+        // was built in — it may still be animating into it, and would answer
+        // that it is not fullscreen yet if asked. Even where the creation flag
+        // is ignored it was built covering its display, and the projection
+        // page fills that display itself. Everything below is the windowed
+        // case.
+        if (!openFullscreen) {
           try {
             await placeWindow(win, screen, monitor, storedState)
           } catch (error) {
@@ -544,15 +546,10 @@ async function openInNativeWindow(
           try {
             const win = await WebviewWindow.getByLabel(windowLabel)
             if (!win) return
-            const position = await win.outerPosition()
+            const position = await windowDesktopPosition(win)
             if (!(await win.isFullscreen()) && !(await win.isMaximized())) {
-              const size = await win.outerSize()
-              saveWindowState(displayId, {
-                x: position.x,
-                y: position.y,
-                width: size.width,
-                height: size.height,
-              })
+              const size = await windowDesktopSize(win)
+              saveWindowState(displayId, { ...position, ...size })
             }
             rememberMonitor(screen, position.x, position.y)
           } catch {

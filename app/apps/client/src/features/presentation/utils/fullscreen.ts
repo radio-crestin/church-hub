@@ -1,29 +1,13 @@
 import type { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 
+import {
+  setWindowDesktopPosition,
+  setWindowDesktopSize,
+  windowDesktopPosition,
+  windowDesktopSize,
+} from './desktopUnits'
 import { listMonitors, monitorContains } from './monitors'
-
-/**
- * Gets the current platform using browser detection as primary method
- */
-function getCurrentPlatform(): string {
-  const userAgent = navigator.userAgent.toLowerCase()
-  const platform = navigator.platform.toLowerCase()
-
-  if (platform.includes('win') || userAgent.includes('windows')) {
-    return 'windows'
-  }
-  if (
-    platform.includes('mac') ||
-    userAgent.includes('macintosh') ||
-    userAgent.includes('mac os')
-  ) {
-    return 'macos'
-  }
-  if (platform.includes('linux') || userAgent.includes('linux')) {
-    return 'linux'
-  }
-  return 'unknown'
-}
+import { getCurrentPlatform } from './platform'
 
 /**
  * How long to wait for the window manager to report the state we asked for.
@@ -103,11 +87,8 @@ const WINDOWED_SHARE = 0.7
  */
 async function shrinkOffTheDisplay(win: WebviewWindow): Promise<void> {
   try {
-    const { PhysicalPosition, PhysicalSize } = await import(
-      '@tauri-apps/api/dpi'
-    )
-    const position = await win.outerPosition()
-    const size = await win.outerSize()
+    const position = await windowDesktopPosition(win)
+    const size = await windowDesktopSize(win)
     const monitor = (await listMonitors()).find((candidate) =>
       monitorContains(candidate, position.x, position.y),
     )
@@ -116,13 +97,11 @@ async function shrinkOffTheDisplay(win: WebviewWindow): Promise<void> {
 
     const width = Math.round(monitor.width * WINDOWED_SHARE)
     const height = Math.round(monitor.height * WINDOWED_SHARE)
-    await win.setSize(new PhysicalSize(width, height))
-    await win.setPosition(
-      new PhysicalPosition(
-        monitor.x + Math.round((monitor.width - width) / 2),
-        monitor.y + Math.round((monitor.height - height) / 2),
-      ),
-    )
+    await setWindowDesktopSize(win, { width, height })
+    await setWindowDesktopPosition(win, {
+      x: monitor.x + Math.round((monitor.width - width) / 2),
+      y: monitor.y + Math.round((monitor.height - height) / 2),
+    })
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.warn(

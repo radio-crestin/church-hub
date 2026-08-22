@@ -69,6 +69,7 @@
     "core:window:allow-toggle-maximize",
     "core:window:allow-set-fullscreen",
     "core:window:allow-is-fullscreen",
+    "core:window:allow-scale-factor",
     "core:window:allow-set-simple-fullscreen",
     "core:window:allow-set-decorations",
     "core:window:allow-close",
