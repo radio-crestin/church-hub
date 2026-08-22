@@ -40,8 +40,8 @@ import { Route as SettingsBackupRouteImport } from './routes/settings/backup'
 import { Route as SettingsAppearanceRouteImport } from './routes/settings/appearance'
 import { Route as SettingsAboutRouteImport } from './routes/settings/about'
 import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
-import { Route as MonitorBadgeNumberRouteImport } from './routes/monitor-badge/$number'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
+import { Route as MonitorBadgeNumberRouteImport } from './routes/monitor-badge/$number'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
@@ -202,14 +202,14 @@ const ScreenScreenIdRoute = ScreenScreenIdRouteImport.update({
   path: '/screen/$screenId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MonitorBadgeNumberRoute = MonitorBadgeNumberRouteImport.update({
-  id: '/monitor-badge/$number',
-  path: '/monitor-badge/$number',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SchedulesScheduleIdRoute = SchedulesScheduleIdRouteImport.update({
   id: '/schedules/$scheduleId',
   path: '/schedules/$scheduleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitorBadgeNumberRoute = MonitorBadgeNumberRouteImport.update({
+  id: '/monitor-badge/$number',
+  path: '/monitor-badge/$number',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomPagePageIdRoute = CustomPagePageIdRouteImport.update({
@@ -236,9 +236,9 @@ const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
-  '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/backup': typeof SettingsBackupRoute
@@ -274,9 +274,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
-  '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/backup': typeof SettingsBackupRoute
@@ -314,9 +314,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/settings': typeof SettingsRouteRouteWithChildren
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
-  '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/appearance': typeof SettingsAppearanceRoute
   '/settings/backup': typeof SettingsBackupRoute
@@ -355,9 +355,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/settings'
     | '/custom-page/$pageId'
+    | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
-    | '/monitor-badge/$number'
     | '/settings/about'
     | '/settings/appearance'
     | '/settings/backup'
@@ -393,9 +393,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/custom-page/$pageId'
+    | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
-    | '/monitor-badge/$number'
     | '/settings/about'
     | '/settings/appearance'
     | '/settings/backup'
@@ -432,9 +432,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/settings'
     | '/custom-page/$pageId'
+    | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
-    | '/monitor-badge/$number'
     | '/settings/about'
     | '/settings/appearance'
     | '/settings/backup'
@@ -472,9 +472,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
+  MonitorBadgeNumberRoute: typeof MonitorBadgeNumberRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   ScreenScreenIdRoute: typeof ScreenScreenIdRoute
-  MonitorBadgeNumberRoute: typeof MonitorBadgeNumberRoute
   SongsDiscoverRoute: typeof SongsDiscoverRoute
   rootIndexRoute: typeof rootIndexRoute
   BibleIndexRoute: typeof BibleIndexRoute
@@ -710,18 +710,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScreenScreenIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/monitor-badge/$number': {
-      id: '/monitor-badge/$number'
-      path: '/monitor-badge/$number'
-      fullPath: '/monitor-badge/$number'
-      preLoaderRoute: typeof MonitorBadgeNumberRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/schedules/$scheduleId': {
       id: '/schedules/$scheduleId'
       path: '/schedules/$scheduleId'
       fullPath: '/schedules/$scheduleId'
       preLoaderRoute: typeof SchedulesScheduleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitor-badge/$number': {
+      id: '/monitor-badge/$number'
+      path: '/monitor-badge/$number'
+      fullPath: '/monitor-badge/$number'
+      preLoaderRoute: typeof MonitorBadgeNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/custom-page/$pageId': {
@@ -804,9 +804,9 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   CustomPagePageIdRoute: CustomPagePageIdRoute,
+  MonitorBadgeNumberRoute: MonitorBadgeNumberRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   ScreenScreenIdRoute: ScreenScreenIdRoute,
-  MonitorBadgeNumberRoute: MonitorBadgeNumberRoute,
   SongsDiscoverRoute: SongsDiscoverRoute,
   rootIndexRoute: rootIndexRoute,
   BibleIndexRoute: BibleIndexRoute,
