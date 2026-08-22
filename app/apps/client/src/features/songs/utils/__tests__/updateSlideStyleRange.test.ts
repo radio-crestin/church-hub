@@ -24,6 +24,53 @@ describe('updateSlideStyleRange', () => {
     expect(cleared.ranges).toEqual([])
   })
 
+  it('sizes a selection that crosses runs of different sizes as one run', () => {
+    let override = updateSlideStyleRange(
+      null,
+      { start: 0, end: 5 },
+      {
+        fontScale: 1.35,
+      },
+    )
+    override = updateSlideStyleRange(
+      override,
+      { start: 5, end: 10 },
+      {
+        fontScale: 1.27,
+      },
+    )
+    const result = updateSlideStyleRange(
+      override,
+      { start: 0, end: 10 },
+      {
+        fontScale: 1.2,
+      },
+    )
+    expect(result.ranges).toEqual([{ start: 0, end: 10, fontScale: 1.2 }])
+  })
+
+  it('restyles only the selected part of a run', () => {
+    const bold = updateSlideStyleRange(
+      null,
+      { start: 0, end: 10 },
+      {
+        bold: true,
+      },
+    )
+    const result = updateSlideStyleRange(
+      bold,
+      { start: 3, end: 6 },
+      {
+        fontScale: 1.5,
+      },
+    )
+    expect(result.ranges).toEqual([
+      { start: 0, end: 3, bold: true },
+      { start: 3, end: 6, bold: true, fontScale: 1.5 },
+      { start: 6, end: 10, bold: true },
+    ])
+  })
+
   it('leaves other runs and slide-level styling alone', () => {
     const base = updateSlideStyleRange({ fontScale: 1.2 }, span, {
       underline: true,

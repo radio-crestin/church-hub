@@ -60,14 +60,18 @@ function sameSelection(a: Selection | null, b: Selection | null): boolean {
   return a.start === b.start && a.end === b.end
 }
 
-/** The styled run recorded for exactly this selection, if there is one. */
+/**
+ * The styled run the selection starts in, if there is one. A selection can
+ * cross several runs; the first is what the controls report, the way the size
+ * field reports the first character's size.
+ */
 function rangeFor(
   override: SlideStyleOverride | null,
   selection: Selection | null,
 ): SlideStyleRange | undefined {
   if (!selection) return undefined
   return override?.ranges?.find(
-    (range) => range.start === selection.start && range.end === selection.end,
+    (range) => range.start <= selection.start && selection.start < range.end,
   )
 }
 
@@ -126,6 +130,11 @@ export function SlideStyleToolbar({
   // rather than derived from the stored scale, because the text is auto-fitted:
   // the stored scale is a multiplier of a size only the renderer knows.
   const [effectiveSize, setEffectiveSize] = useState(0)
+  // The size of the slide itself, which every styled run is a multiple of. A
+  // run's size is stored against it rather than against whatever the run
+  // happens to be now, so a selection crossing runs of different sizes comes
+  // out at one size — the one typed — instead of each run moving by a ratio.
+  const [slideSize, setSlideSize] = useState(0)
   // How much bigger the text can get before it leaves the screen. The renderer
   // measures it against the markup it lays out, so it accounts for an enlarged
   // run as well as for the slide's own scale.
@@ -135,6 +144,8 @@ export function SlideStyleToolbar({
     const frame = requestAnimationFrame(() => {
       const measured = measureSlideFontSize(canvasWidth, selection)
       if (measured !== null) setEffectiveSize(clampSize(measured))
+      const slide = measureSlideFontSize(canvasWidth, null)
+      if (slide !== null) setSlideSize(slide)
       setHeadroom(measureSlideFontHeadroom())
     })
     return () => cancelAnimationFrame(frame)
@@ -169,29 +180,36 @@ export function SlideStyleToolbar({
       const target = clampSize(size, maxSize)
       // Nothing to do, and nothing to store: asking for the size that is already
       // rendered would multiply the scale by one and re-render for no reason.
-      if (target === effectiveSize) return
+      // The field goes back to that size, so a number the slide cannot show —
+      // one past the edge of the screen — does not sit there looking applied.
+      if (target === effectiveSize) {
+        setSizeDraft(String(effectiveSize))
+        return
+      }
       appliedRef.current = target
-      // Everything is stored as a multiplier, so the new size is expressed as
-      // "how much bigger than what is on screen right now".
-      const ratio = target / effectiveSize
 
       if (selection) {
-        // Only the run's own share changes; the slide's scale stays put.
+        // The run is sized against the slide, not against itself: the whole
+        // selection gets the typed size whatever each word was before, and
+        // the slide's own scale stays put.
+        if (slideSize <= 0) return
         onChange(
           updateSlideStyleRange(override, selection, {
-            fontScale: (activeRange?.fontScale ?? 1) * ratio,
+            fontScale: target / slideSize,
           }),
         )
         return
       }
-      onChange({ ...override, fontScale: slideScale * ratio })
+      // The slide's scale is a multiplier of a size only the renderer knows, so
+      // the new size is expressed as "how much bigger than what is on screen".
+      onChange({ ...override, fontScale: slideScale * (target / effectiveSize) })
     },
     [
       override,
       onChange,
       selection,
-      activeRange,
       slideScale,
+      slideSize,
       effectiveSize,
       maxSize,
     ],

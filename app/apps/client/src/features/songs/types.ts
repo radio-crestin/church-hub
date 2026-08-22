@@ -70,7 +70,11 @@ export interface SlideStyleRange {
   bold?: boolean
   italic?: boolean
   underline?: boolean
-  /** Multiplier applied to this run's font size. */
+  /**
+   * Multiplier applied to the slide's font size for this run. Runs never
+   * overlap — see `flattenSlideStyleRanges` — so a run's size is always
+   * relative to the slide, never to another run.
+   */
   fontScale?: number
 }
 
