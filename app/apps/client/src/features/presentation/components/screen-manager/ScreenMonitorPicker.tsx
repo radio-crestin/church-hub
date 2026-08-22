@@ -1,9 +1,12 @@
+import { ScanSearch } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { useMonitors, useUpsertScreen } from '../../hooks'
 import type { Screen } from '../../types'
+import { identifyMonitors } from '../../utils/identifyMonitors'
 import {
   closeDisplayWindow,
   isTauri,
@@ -38,11 +41,13 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
         label: t('presentation:screens.monitor.auto'),
         description: t('presentation:screens.monitor.autoDescription'),
       },
+      // Numbered the way the badges are, so the operator can read the number
+      // off the wall and pick the same one here.
       ...list.map((monitor, index) => ({
         value: monitor.name,
-        label:
-          monitor.osName ??
-          t('presentation:screens.monitor.unnamed', { index: index + 1 }),
+        label: monitor.osName
+          ? `${index + 1} · ${monitor.osName}`
+          : t('presentation:screens.monitor.unnamed', { index: index + 1 }),
         description: `${monitor.width}×${monitor.height}`,
       })),
     ]
@@ -54,6 +59,9 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
 
   const handleChange = async (value: number | string | null) => {
     const monitorName = value === AUTO || value === null ? null : String(value)
+    // Shown even when the choice has not changed: picking a monitor is how
+    // the operator asks which one it is.
+    if (monitorName) await identifyMonitors(monitorName)
     if (monitorName === screen.monitorName) return
 
     await upsertScreen.mutateAsync({
@@ -102,6 +110,17 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
         disabled={upsertScreen.isPending}
         className="w-56"
       />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => identifyMonitors()}
+        title={t('presentation:screens.monitor.identifyTooltip')}
+      >
+        <ScanSearch size={16} />
+        <span className="ml-1">
+          {t('presentation:screens.monitor.identify')}
+        </span>
+      </Button>
     </div>
   )
 }

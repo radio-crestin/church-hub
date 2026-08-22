@@ -171,8 +171,11 @@ pub fn run() {
                 // Letting the plugin restore them as well put them back wherever
                 // they happened to be last, which on a multi-monitor desk lands
                 // the projection on the wrong display and shows the window
-                // moving there.
-                .with_filter(|label| !label.starts_with("display-"))
+                // moving there. Monitor badges are up for three seconds and
+                // have nothing worth remembering.
+                .with_filter(|label| {
+                    !label.starts_with("display-") && !label.starts_with("monitor-badge-")
+                })
                 .build(),
         );
         println!("[startup] plugin_window_state: {:?}", t.elapsed());

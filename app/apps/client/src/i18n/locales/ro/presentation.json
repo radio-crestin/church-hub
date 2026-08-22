@@ -222,7 +222,9 @@
       "auto": "Automat",
       "autoDescription": "Se deschide pe un ecran pe care nu este aplicația",
       "unnamed": "Monitorul {{index}}",
-      "disconnected": "{{name}} (neconectat)"
+      "disconnected": "{{name}} (neconectat)",
+      "identify": "Identifică",
+      "identifyTooltip": "Afișează un număr pe fiecare ecran, ca să le deosebești"
     }
   },
   "displays": {
