@@ -81,22 +81,44 @@ export async function listMonitors(): Promise<ScreenMonitor[]> {
 }
 
 /**
- * Where a screen with no monitor of its own should project.
+ * Which display a screen that names none of its own should project on.
  *
  * Anywhere but the display the control room is sitting on: a projection that
  * opens over Church Hub covers the very window the operator is driving it from,
- * and on a two-monitor desk that is never what was meant. Null when there is
- * only one display to choose from, which is its own answer.
+ * and on a two-monitor desk that is never what was meant.
+ *
+ * When the control room will not say which display it is on, the main one
+ * stands in for it — that is where the app comes up — so the projection still
+ * goes to the second monitor instead of landing back on top of the operator.
+ * Null when there is nothing else to pick, which is its own answer: the
+ * projection opens on the one display there is.
  */
+export function chooseProjectionMonitor(
+  monitors: ScreenMonitor[],
+  controlName: string | null,
+  primaryName: string | null,
+): ScreenMonitor | null {
+  if (monitors.length < 2) return null
+  const occupied = controlName ?? primaryName
+  return monitors.find((monitor) => monitor.name !== occupied) ?? null
+}
+
+/** The display {@link chooseProjectionMonitor} picks, read off the desktop. */
 export async function getDefaultProjectionMonitor(): Promise<ScreenMonitor | null> {
   const monitors = await listMonitors()
   if (monitors.length < 2) return null
 
+  const controlName = await currentMonitorName()
+  const primary = await getPrimaryMonitor()
+  return chooseProjectionMonitor(monitors, controlName, primary?.name ?? null)
+}
+
+/** The display the window asking for the projection is on, when it will say. */
+async function currentMonitorName(): Promise<string | null> {
   try {
     const { currentMonitor } = await import('@tauri-apps/api/window')
     const control = await currentMonitor()
-    const controlName = control ? toScreenMonitor(control).name : null
-    return monitors.find((monitor) => monitor.name !== controlName) ?? null
+    return control ? toScreenMonitor(control).name : null
   } catch {
     return null
   }

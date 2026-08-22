@@ -365,12 +365,19 @@ async function openInNativeWindow(
 
       // Where it sat last time it was windowed, and the monitor it belongs on.
       const storedState = getStoredState(displayId)
-      // An unassigned screen goes to a display the control room is not on, so
-      // the projection never opens over Church Hub itself.
+      // A screen that names a display gets that display. One that names none
+      // goes to a display the control room is not on, so the projection never
+      // opens over Church Hub itself.
       const monitor =
         (await findMonitorByName(screen.monitorName)) ??
         (await getDefaultProjectionMonitor())
-      lastKnownMonitor.set(displayId, screen.monitorName)
+      // Seeded with the display the window is about to open on, not with the
+      // one the screen names. Opening a screen that names no display would
+      // otherwise look like a drag onto the display we just chose for it, and
+      // the screen would be pinned there — after which moving the control room
+      // to that monitor would leave the projection sitting on top of it. It
+      // stays unassigned until the operator drags it somewhere themselves.
+      lastKnownMonitor.set(displayId, monitor?.name ?? screen.monitorName)
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
       console.log(
         '[openInNativeWindow] Stored state:',

@@ -220,7 +220,7 @@
     "monitor": {
       "label": "Monitor",
       "auto": "Automatic",
-      "autoDescription": "Open wherever the window lands",
+      "autoDescription": "Opens on a display the control room is not on",
       "unnamed": "Monitor {{index}}",
       "disconnected": "{{name}} (not connected)"
     }

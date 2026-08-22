@@ -220,7 +220,7 @@
     "monitor": {
       "label": "Monitor",
       "auto": "Automat",
-      "autoDescription": "Se deschide unde nimerește fereastra",
+      "autoDescription": "Se deschide pe un ecran pe care nu este aplicația",
       "unnamed": "Monitorul {{index}}",
       "disconnected": "{{name}} (neconectat)"
     }
