@@ -49,7 +49,6 @@
     "projectSlide": "Show this slide on screen",
     "toggleLayout": "Toggle PowerPoint layout",
     "style": {
-      "fontSize": "Font size",
       "increaseFontSize": "Increase text size",
       "decreaseFontSize": "Decrease text size",
       "bold": "Bold",

@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Underline,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getSlideSelection } from './getSlideSelection'
@@ -28,13 +28,6 @@ import { updateSlideStyleRange } from '../../utils/updateSlideStyleRange'
 const FONT_STEP_RATIO = 0.1
 const FONT_MIN = 4
 const FONT_MAX = 4000
-
-/**
- * How long the size field waits after the last keystroke before applying. Long
- * enough to type "120" as one number rather than as 1, then 12, then 120; short
- * enough that nudging the spinner shows up straight away.
- */
-const SIZE_COMMIT_DELAY_MS = 500
 
 type Alignment = NonNullable<SlideStyleOverride['alignment']>
 type Mark = 'bold' | 'italic' | 'underline'
@@ -85,9 +78,8 @@ function rangeFor(
  * they act on the whole slide — the same rule PowerPoint uses. Alignment is
  * always a whole-slide property, as it is there.
  *
- * Sizes are shown and typed as plain numbers even though they are stored as a
- * multiplier of the screen's size: that keeps a slide scaling with the screen
- * settings while giving the operator the absolute number they expect to type.
+ * Sizes move in steps from the size on screen, and are stored as a multiplier
+ * of the screen's size: that keeps a slide scaling with the screen settings.
  */
 export function SlideStyleToolbar({
   override,
@@ -158,35 +150,13 @@ export function SlideStyleToolbar({
       ? Math.min(FONT_MAX, Math.floor(effectiveSize * headroom))
       : FONT_MAX
 
-  const [sizeDraft, setSizeDraft] = useState('')
-  const sizeDraftRef = useRef(sizeDraft)
-  sizeDraftRef.current = sizeDraft
-  useEffect(() => {
-    setSizeDraft(effectiveSize > 0 ? String(effectiveSize) : '')
-  }, [effectiveSize])
-
-  // The size the renderer was last asked for. Sizes are stored as a ratio
-  // against what is on screen, so applying the same number twice would scale the
-  // text twice — and every apply is followed by an echo (Enter's blur, the
-  // re-seeded markup, the debounce re-arming) that would do exactly that.
-  const appliedRef = useRef<number | null>(null)
-  useEffect(() => {
-    appliedRef.current = null
-  }, [selection])
-
   const applySize = useCallback(
     (size: number) => {
       if (effectiveSize <= 0) return
       const target = clampSize(size, maxSize)
       // Nothing to do, and nothing to store: asking for the size that is already
       // rendered would multiply the scale by one and re-render for no reason.
-      // The field goes back to that size, so a number the slide cannot show —
-      // one past the edge of the screen — does not sit there looking applied.
-      if (target === effectiveSize) {
-        setSizeDraft(String(effectiveSize))
-        return
-      }
-      appliedRef.current = target
+      if (target === effectiveSize) return
 
       if (selection) {
         // The run is sized against the slide, not against itself: the whole
@@ -202,7 +172,10 @@ export function SlideStyleToolbar({
       }
       // The slide's scale is a multiplier of a size only the renderer knows, so
       // the new size is expressed as "how much bigger than what is on screen".
-      onChange({ ...override, fontScale: slideScale * (target / effectiveSize) })
+      onChange({
+        ...override,
+        fontScale: slideScale * (target / effectiveSize),
+      })
     },
     [
       override,
@@ -214,39 +187,6 @@ export function SlideStyleToolbar({
       maxSize,
     ],
   )
-
-  const commitDraft = useCallback(
-    (returnFocus = false, draft = sizeDraftRef.current) => {
-      const parsed = Number.parseFloat(draft.replace(',', '.'))
-      if (!Number.isFinite(parsed)) {
-        setSizeDraft(String(effectiveSize))
-        return
-      }
-      if (appliedRef.current === clampSize(parsed, maxSize)) return
-      applySize(parsed)
-
-      // Hand the caret back to the slide so the styled words stay visibly
-      // selected and can be resized again without re-selecting them.
-      if (returnFocus) {
-        document
-          .querySelector<HTMLElement>('[data-testid="slide-canvas-editable"]')
-          ?.focus()
-      }
-    },
-    [effectiveSize, maxSize, applySize],
-  )
-
-  // Typing or nudging the spinner applies on its own: waiting for Enter or for
-  // focus to leave meant a size change sat there unapplied while the operator
-  // kept editing the slide.
-  useEffect(() => {
-    if (sizeDraft === '' || sizeDraft === String(effectiveSize)) return
-    const timer = setTimeout(
-      () => commitDraft(false, sizeDraft),
-      SIZE_COMMIT_DELAY_MS,
-    )
-    return () => clearTimeout(timer)
-  }, [sizeDraft, effectiveSize, commitDraft])
 
   const markState = (mark: Mark): boolean =>
     (selection ? activeRange?.[mark] : override?.[mark]) ?? false
@@ -275,9 +215,7 @@ export function SlideStyleToolbar({
   const isCustomized = override !== null
 
   // Controls must not steal focus from the contentEditable canvas, or the
-  // selection they are meant to style is gone by the time they run. The size
-  // input is the exception — it has to take focus to be typed in, so it
-  // remembers the selection it was opened with instead.
+  // selection they are meant to style is gone by the time they run.
   const keepSelection = useCallback((event: React.MouseEvent) => {
     event.preventDefault()
   }, [])
@@ -297,30 +235,6 @@ export function SlideStyleToolbar({
       data-testid="slide-style-toolbar"
       className="mb-2 flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-800"
     >
-      <input
-        type="number"
-        inputMode="numeric"
-        min={FONT_MIN}
-        max={maxSize}
-        data-testid="slide-style-font-size"
-        value={sizeDraft}
-        disabled={disabled}
-        onChange={(event) => setSizeDraft(event.target.value)}
-        onBlur={() => commitDraft()}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            commitDraft(true)
-          }
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            setSizeDraft(String(effectiveSize))
-          }
-        }}
-        title={t('stageEditor.style.fontSize')}
-        aria-label={t('stageEditor.style.fontSize')}
-        className="w-16 rounded-md border border-gray-300 bg-white px-1.5 py-1 text-sm tabular-nums text-gray-700 disabled:opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
-      />
       <button
         type="button"
         data-testid="slide-style-font-decrease"

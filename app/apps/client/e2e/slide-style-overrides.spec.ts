@@ -284,285 +284,6 @@ test.describe('Per-slide text styling', () => {
     }
   })
 
-  test('the size input sets an exact size for slide and selection', async ({
-    page,
-    request,
-  }) => {
-    const title = `E2E Slide Style Size ${Date.now()}`
-    const createResponse = await request.post('/api/songs', {
-      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
-    })
-    expect(createResponse.status()).toBe(201)
-    const { data: created } = await createResponse.json()
-
-    const readOverride = async () => {
-      const res = await request.get(`/api/songs/${created.id}`)
-      const { data } = await res.json()
-      return data.slides[0].styleOverrides
-    }
-
-    try {
-      await page.addInitScript(() => {
-        window.localStorage.setItem('song-editor-layout', 'powerpoint')
-      })
-      await page.goto(`/songs/${created.id}`)
-      await page.waitForLoadState('networkidle')
-
-      const stage = page.locator('[data-editing]')
-      await expect(stage).toContainText('Slava', { timeout: 10000 })
-      await stage.click()
-
-      const sizeInput = page.getByTestId('slide-style-font-size')
-      await expect(sizeInput).toBeVisible()
-      // The field reports the size the slide is actually rendered at.
-      await expect
-        .poll(async () => Number(await sizeInput.inputValue()), {
-          timeout: 5000,
-        })
-        .toBeGreaterThan(0)
-      const shown = Number(await sizeInput.inputValue())
-
-      // Typing a smaller size shrinks the whole slide by that ratio.
-      await sizeInput.fill(String(Math.round(shown / 2)))
-      await sizeInput.press('Enter')
-      await expect
-        .poll(readOverride, { timeout: 10000 })
-        .toMatchObject({ fontScale: expect.any(Number) })
-      const slideOverride = await readOverride()
-      expect(slideOverride.fontScale).toBeLessThan(1)
-      expect(slideOverride.ranges ?? []).toHaveLength(0)
-
-      // The field follows the change instead of keeping the old number.
-      await expect
-        .poll(async () => Number(await sizeInput.inputValue()), {
-          timeout: 5000,
-        })
-        .toBeLessThan(shown)
-
-      // With a word selected, the same field sizes only that word.
-      const editable = page.getByTestId('slide-canvas-editable')
-      await editable.evaluate((el) => {
-        const textNode = el.firstChild
-        if (!textNode) throw new Error('editor has no text')
-        const range = document.createRange()
-        range.setStart(textNode, 0)
-        range.setEnd(textNode, 5)
-        const selection = window.getSelection()
-        selection?.removeAllRanges()
-        selection?.addRange(range)
-      })
-      // The bar reads the selection from a selectionchange event; give it the
-      // tick it needs before acting on the field.
-      await page.waitForTimeout(300)
-      await expect
-        .poll(async () => Number(await sizeInput.inputValue()), {
-          timeout: 5000,
-        })
-        .toBeGreaterThan(0)
-      const wordSize = Number(await sizeInput.inputValue())
-      await sizeInput.fill(String(wordSize * 2))
-      await sizeInput.press('Enter')
-
-      // Autosave carries it, and only the selected run is affected.
-      await expect
-        .poll(async () => (await readOverride())?.ranges?.length ?? 0, {
-          timeout: 10000,
-        })
-        .toBe(1)
-      const withRange = await readOverride()
-      expect(withRange.fontScale).toBeCloseTo(slideOverride.fontScale, 5)
-      expect(withRange.ranges[0]).toMatchObject({ start: 0, end: 5 })
-      expect(withRange.ranges[0].fontScale).toBeGreaterThan(1)
-      expect(await editable.innerHTML()).toContain('font-size:')
-
-      // The words stay selected afterwards, so a second size change still
-      // targets them instead of falling back to the whole slide.
-      const secondSize = Number(await sizeInput.inputValue())
-      await sizeInput.fill(String(secondSize * 2))
-      await sizeInput.press('Enter')
-      await expect
-        .poll(async () => (await readOverride())?.ranges?.[0]?.fontScale ?? 0, {
-          timeout: 10000,
-        })
-        .toBeGreaterThan(withRange.ranges[0].fontScale)
-      const after = await readOverride()
-      expect(after.ranges).toHaveLength(1)
-      expect(after.fontScale).toBeCloseTo(slideOverride.fontScale, 5)
-    } finally {
-      await request.delete(`/api/songs/${created.id}`)
-    }
-  })
-
-  test('sizing a selection that spans differently sized words sets them all', async ({
-    page,
-    request,
-  }) => {
-    const title = `E2E Slide Style Mixed ${Date.now()}`
-    const createResponse = await request.post('/api/songs', {
-      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
-    })
-    expect(createResponse.status()).toBe(201)
-    const { data: created } = await createResponse.json()
-
-    const readRanges = async () => {
-      const res = await request.get(`/api/songs/${created.id}`)
-      const { data } = await res.json()
-      return (data.slides[0].styleOverrides?.ranges ?? []) as Array<{
-        start: number
-        end: number
-        fontScale?: number
-      }>
-    }
-
-    try {
-      await page.addInitScript(() => {
-        window.localStorage.setItem('song-editor-layout', 'powerpoint')
-      })
-      await page.goto(`/songs/${created.id}`)
-      await page.waitForLoadState('networkidle')
-
-      const stage = page.locator('[data-editing]')
-      await expect(stage).toContainText('Slava', { timeout: 10000 })
-      await stage.click()
-
-      const editable = page.getByTestId('slide-canvas-editable')
-      const sizeInput = page.getByTestId('slide-style-font-size')
-      const select = async (start: number, end: number) => {
-        await editable.evaluate(
-          (el, [from, to]) => {
-            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
-            let seen = 0
-            let node: Node | null = walker.nextNode()
-            const range = document.createRange()
-            let startSet = false
-            while (node) {
-              const length = node.textContent?.length ?? 0
-              if (!startSet && seen + length > from) {
-                range.setStart(node, from - seen)
-                startSet = true
-              }
-              if (seen + length >= to) {
-                range.setEnd(node, to - seen)
-                break
-              }
-              seen += length
-              node = walker.nextNode()
-            }
-            const selection = window.getSelection()
-            selection?.removeAllRanges()
-            selection?.addRange(range)
-          },
-          [start, end],
-        )
-        // The bar reads the selection from a selectionchange event.
-        await page.waitForTimeout(300)
-      }
-      const setSize = async (size: number) => {
-        await sizeInput.fill(String(size))
-        await sizeInput.press('Enter')
-      }
-      await expect
-        .poll(async () => Number(await sizeInput.inputValue()), {
-          timeout: 5000,
-        })
-        .toBeGreaterThan(0)
-      const slideSize = Number(await sizeInput.inputValue())
-
-      // Two neighbouring words at two different sizes.
-      await select(0, 5)
-      await setSize(Math.round(slideSize * 0.5))
-      await expect
-        .poll(async () => (await readRanges()).length, { timeout: 10000 })
-        .toBe(1)
-      await select(5, 9)
-      await setSize(Math.round(slideSize * 0.4))
-      await expect
-        .poll(async () => (await readRanges()).length, { timeout: 10000 })
-        .toBe(2)
-
-      // Both at once to a third size: one run, at that size, nothing stacked.
-      await select(0, 9)
-      const target = Math.round(slideSize * 0.3)
-      await setSize(target)
-      await expect
-        .poll(async () => (await readRanges()).length, { timeout: 10000 })
-        .toBe(1)
-      const [run] = await readRanges()
-      expect(run).toMatchObject({ start: 0, end: 9 })
-      expect(run.fontScale).toBeCloseTo(target / slideSize, 1)
-
-      // And that is how the words are rendered: every one at the typed size,
-      // measured in the screen's own units like the field shows them.
-      const rendered = await editable.evaluate((el) => {
-        const box = document.querySelector<HTMLElement>(
-          '[data-testid="slide-canvas-box"]',
-        )
-        const scale = (box?.clientWidth ?? 0) / 1920
-        return [...el.querySelectorAll('span[style]')].map(
-          (span) => Number.parseFloat(getComputedStyle(span).fontSize) / scale,
-        )
-      })
-      expect(rendered).toHaveLength(1)
-      expect(rendered[0]).toBeCloseTo(target, -1)
-    } finally {
-      await request.delete(`/api/songs/${created.id}`)
-    }
-  })
-
-  test('the size field applies without leaving edit mode', async ({
-    page,
-    request,
-  }) => {
-    const title = `E2E Slide Style Live Size ${Date.now()}`
-    const createResponse = await request.post('/api/songs', {
-      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
-    })
-    expect(createResponse.status()).toBe(201)
-    const { data: created } = await createResponse.json()
-
-    const readOverride = async () => {
-      const res = await request.get(`/api/songs/${created.id}`)
-      const { data } = await res.json()
-      return data.slides[0].styleOverrides
-    }
-
-    try {
-      await page.addInitScript(() => {
-        window.localStorage.setItem('song-editor-layout', 'powerpoint')
-      })
-      await page.goto(`/songs/${created.id}`)
-      await page.waitForLoadState('networkidle')
-
-      const stage = page.locator('[data-editing]')
-      await expect(stage).toContainText('Slava', { timeout: 10000 })
-      await stage.click()
-
-      const sizeInput = page.getByTestId('slide-style-font-size')
-      await expect(sizeInput).toBeVisible()
-      await page.waitForTimeout(300)
-      const shown = Number(await sizeInput.inputValue())
-
-      // Nudge the spinner: no Enter, no blur, still inside edit mode.
-      await sizeInput.click()
-      await sizeInput.press('ArrowUp')
-
-      await expect
-        .poll(async () => (await readOverride())?.fontScale ?? 0, {
-          timeout: 10000,
-        })
-        .toBeGreaterThan(0)
-      // The editor is still mounted — the change did not need it to close.
-      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
-      await expect
-        .poll(async () => Number(await sizeInput.inputValue()), {
-          timeout: 5000,
-        })
-        .toBeGreaterThan(shown)
-    } finally {
-      await request.delete(`/api/songs/${created.id}`)
-    }
-  })
-
   test('a styled slide is projected at its own size right away', async ({
     page,
     request,
@@ -666,10 +387,7 @@ test.describe('Per-slide text styling', () => {
         selection?.addRange(range)
       })
       await page.waitForTimeout(300)
-      const sizeInput = page.getByTestId('slide-style-font-size')
-      const size = Number(await sizeInput.inputValue())
-      await sizeInput.fill(String(size * 2))
-      await sizeInput.press('Enter')
+      await page.getByTestId('slide-style-font-increase').click()
 
       // The live snapshot carries the run, and the already-open projection
       // picks it up without being reloaded.
@@ -690,7 +408,215 @@ test.describe('Per-slide text styling', () => {
     }
   })
 
-  test('a size typed on a selected word settles instead of creeping', async ({
+  test('the size buttons size the slide, then only the selected word', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Size ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    const readOverride = async () => {
+      const res = await request.get(`/api/songs/${created.id}`)
+      const { data } = await res.json()
+      return data.slides[0].styleOverrides
+    }
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const stage = page.locator('[data-editing]')
+      await expect(stage).toContainText('Slava', { timeout: 10000 })
+      await stage.click()
+
+      const editable = page.getByTestId('slide-canvas-editable')
+      const decrease = page.getByTestId('slide-style-font-decrease')
+      const select = async (start: number, end: number) => {
+        await editable.evaluate(
+          (el, [from, to]) => {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+            let seen = 0
+            let node: Node | null = walker.nextNode()
+            const range = document.createRange()
+            let startSet = false
+            while (node) {
+              const length = node.textContent?.length ?? 0
+              if (!startSet && seen + length > from) {
+                range.setStart(node, from - seen)
+                startSet = true
+              }
+              if (seen + length >= to) {
+                range.setEnd(node, to - seen)
+                break
+              }
+              seen += length
+              node = walker.nextNode()
+            }
+            const selection = window.getSelection()
+            selection?.removeAllRanges()
+            selection?.addRange(range)
+          },
+          [start, end],
+        )
+        // The bar reads the selection from a selectionchange event.
+        await page.waitForTimeout(300)
+      }
+      await expect(decrease).toBeVisible()
+      await page.waitForTimeout(300)
+      const sizeOf = async () =>
+        editable.evaluate((el) =>
+          Number.parseFloat(getComputedStyle(el).fontSize),
+        )
+      const shown = await sizeOf()
+
+      // With only a caret, a step shrinks the whole slide.
+      await decrease.click()
+      await expect
+        .poll(readOverride, { timeout: 10000 })
+        .toMatchObject({ fontScale: expect.any(Number) })
+      const slideOverride = await readOverride()
+      expect(slideOverride.fontScale).toBeLessThan(1)
+      expect(slideOverride.ranges ?? []).toHaveLength(0)
+      await expect.poll(sizeOf, { timeout: 5000 }).toBeLessThan(shown)
+
+      // With a word selected, the same step sizes only that word.
+      await select(0, 5)
+      await decrease.click()
+      await expect
+        .poll(async () => (await readOverride())?.ranges?.length ?? 0, {
+          timeout: 10000,
+        })
+        .toBe(1)
+      const withRange = await readOverride()
+      expect(withRange.fontScale).toBeCloseTo(slideOverride.fontScale, 5)
+      expect(withRange.ranges[0]).toMatchObject({ start: 0, end: 5 })
+      expect(withRange.ranges[0].fontScale).toBeLessThan(1)
+      expect(await editable.innerHTML()).toContain('font-size:')
+
+      // The words stay selected afterwards, so a second step still targets
+      // them instead of falling back to the whole slide.
+      await decrease.click()
+      await expect
+        .poll(async () => (await readOverride())?.ranges?.[0]?.fontScale ?? 1, {
+          timeout: 10000,
+        })
+        .toBeLessThan(withRange.ranges[0].fontScale)
+      const after = await readOverride()
+      expect(after.ranges).toHaveLength(1)
+      expect(after.fontScale).toBeCloseTo(slideOverride.fontScale, 5)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('sizing a selection that spans differently sized words sets them all', async ({
+    page,
+    request,
+  }) => {
+    const title = `E2E Slide Style Mixed ${Date.now()}`
+    const createResponse = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'Slava Tie Doamne', sortOrder: 0 }] },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    const readRanges = async () => {
+      const res = await request.get(`/api/songs/${created.id}`)
+      const { data } = await res.json()
+      return (data.slides[0].styleOverrides?.ranges ?? []) as Array<{
+        start: number
+        end: number
+        fontScale?: number
+      }>
+    }
+    const rangeCount = async () => (await readRanges()).length
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const stage = page.locator('[data-editing]')
+      await expect(stage).toContainText('Slava', { timeout: 10000 })
+      await stage.click()
+
+      const editable = page.getByTestId('slide-canvas-editable')
+      const decrease = page.getByTestId('slide-style-font-decrease')
+      const select = async (start: number, end: number) => {
+        await editable.evaluate(
+          (el, [from, to]) => {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+            let seen = 0
+            let node: Node | null = walker.nextNode()
+            const range = document.createRange()
+            let startSet = false
+            while (node) {
+              const length = node.textContent?.length ?? 0
+              if (!startSet && seen + length > from) {
+                range.setStart(node, from - seen)
+                startSet = true
+              }
+              if (seen + length >= to) {
+                range.setEnd(node, to - seen)
+                break
+              }
+              seen += length
+              node = walker.nextNode()
+            }
+            const selection = window.getSelection()
+            selection?.removeAllRanges()
+            selection?.addRange(range)
+          },
+          [start, end],
+        )
+        // The bar reads the selection from a selectionchange event.
+        await page.waitForTimeout(300)
+      }
+      await expect(decrease).toBeVisible()
+      await page.waitForTimeout(300)
+
+      // Two neighbouring words at two different sizes.
+      await select(0, 5)
+      await decrease.click()
+      await expect.poll(rangeCount, { timeout: 10000 }).toBe(1)
+      await select(5, 9)
+      await decrease.click()
+      await page.waitForTimeout(400)
+      await decrease.click()
+      await expect.poll(rangeCount, { timeout: 10000 }).toBe(2)
+      const [first, second] = await readRanges()
+      expect(first.fontScale).not.toBeCloseTo(second.fontScale ?? 0, 3)
+
+      // Both at once one step down: one run, nothing stacked.
+      await select(0, 9)
+      await decrease.click()
+      await expect.poll(rangeCount, { timeout: 10000 }).toBe(1)
+      const [run] = await readRanges()
+      expect(run).toMatchObject({ start: 0, end: 9 })
+      expect(run.fontScale).toBeLessThan(1)
+
+      // And that is how the words are rendered: one span, one size.
+      const rendered = await editable.evaluate((el) =>
+        [...el.querySelectorAll('span[style]')].map((span) =>
+          Number.parseFloat(getComputedStyle(span).fontSize),
+        ),
+      )
+      expect(rendered).toHaveLength(1)
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('a size set on a selected word settles instead of creeping', async ({
     page,
     request,
   }) => {
@@ -712,50 +638,67 @@ test.describe('Per-slide text styling', () => {
       await expect(stage).toContainText('Slava', { timeout: 10000 })
       await stage.click()
 
-      const sizeInput = page.getByTestId('slide-style-font-size')
-      await expect(sizeInput).toBeVisible()
+      const editable = page.getByTestId('slide-canvas-editable')
+      const decrease = page.getByTestId('slide-style-font-decrease')
+      const select = async (start: number, end: number) => {
+        await editable.evaluate(
+          (el, [from, to]) => {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+            let seen = 0
+            let node: Node | null = walker.nextNode()
+            const range = document.createRange()
+            let startSet = false
+            while (node) {
+              const length = node.textContent?.length ?? 0
+              if (!startSet && seen + length > from) {
+                range.setStart(node, from - seen)
+                startSet = true
+              }
+              if (seen + length >= to) {
+                range.setEnd(node, to - seen)
+                break
+              }
+              seen += length
+              node = walker.nextNode()
+            }
+            const selection = window.getSelection()
+            selection?.removeAllRanges()
+            selection?.addRange(range)
+          },
+          [start, end],
+        )
+        // The bar reads the selection from a selectionchange event.
+        await page.waitForTimeout(300)
+      }
+      await expect(decrease).toBeVisible()
 
       // Select one word — the case where the size used to walk a point at a
       // time: putting the selection back after each apply looked like a fresh
-      // selection, which cleared the guard and re-applied the size for ever.
-      const editable = page.getByTestId('slide-canvas-editable')
-      await editable.evaluate((el) => {
-        const textNode = el.firstChild
-        if (!textNode) throw new Error('editor has no text')
-        const range = document.createRange()
-        range.setStart(textNode, 0)
-        range.setEnd(textNode, 5)
-        const selection = window.getSelection()
-        selection?.removeAllRanges()
-        selection?.addRange(range)
-      })
-      await page.waitForTimeout(300)
+      // selection and re-applied the size for ever.
+      await select(0, 5)
+      await decrease.click()
 
-      const shown = Number(await sizeInput.inputValue())
-      expect(shown).toBeGreaterThan(0)
-
-      await sizeInput.fill(String(Math.round(shown / 2)))
-      await sizeInput.press('Enter')
-
-      // Give the debounce, the re-seeded markup and the re-measure plenty of
-      // room to run, then read twice a second apart: a settled field reports
-      // the same number both times.
-      await page.waitForTimeout(2500)
-      const settled = Number(await sizeInput.inputValue())
-      await page.waitForTimeout(1500)
-      expect(Number(await sizeInput.inputValue())).toBe(settled)
-      expect(settled).toBeLessThan(shown)
-
-      // And the stored scale settled with it, rather than being multiplied
-      // again on every echo.
+      // Give the re-seeded markup and the re-measure plenty of room to run,
+      // then read twice a second apart: a settled word renders at the same
+      // size both times, and the stored scale stays put.
       const scaleOf = async () => {
         const res = await request.get(`/api/songs/${created.id}`)
         const { data } = await res.json()
         return data.slides[0].styleOverrides?.ranges?.[0]?.fontScale ?? 0
       }
       await expect.poll(scaleOf, { timeout: 10000 }).toBeGreaterThan(0)
+      await page.waitForTimeout(2000)
       const storedScale = await scaleOf()
+      const renderedSize = async () =>
+        editable.evaluate((el) =>
+          Number.parseFloat(
+            getComputedStyle(el.querySelector('span[style]') as HTMLElement)
+              .fontSize,
+          ),
+        )
+      const settled = await renderedSize()
       await page.waitForTimeout(1500)
+      expect(await renderedSize()).toBe(settled)
       expect(await scaleOf()).toBeCloseTo(storedScale, 5)
     } finally {
       await request.delete(`/api/songs/${created.id}`)
