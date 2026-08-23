@@ -13,10 +13,12 @@
  * Input is expected to be diacritic-free and lowercase.
  */
 export function elisionVariants(word: string): string[] {
-  const withI = word.match(/^(\p{L}?[aeiou])in(?=[^aeiou])(\p{L}{3,})$/u)
+  // The tail must be a consonant followed by at least three more letters —
+  // short tails ("pentru", "cainta") are ordinary words, not contractions.
+  const withI = word.match(/^(\p{L}?[aeiou])in(?=[^aeiou])(\p{L}{4,})$/u)
   if (withI) return [`${withI[1]}n${withI[2]}`]
 
-  const withoutI = word.match(/^(\p{L}?[aeiou])n(?=[^aeiou])(\p{L}{3,})$/u)
+  const withoutI = word.match(/^(\p{L}?[aeiou])n(?=[^aeiou])(\p{L}{4,})$/u)
   if (withoutI) return [`${withoutI[1]}in${withoutI[2]}`]
 
   return []
