@@ -57,6 +57,38 @@ export const songSchemas = {
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
     },
   },
+  SlideStyleOverride: {
+    type: 'object',
+    nullable: true,
+    description:
+      'How this slide departs from the screen default text style. Null means the screen settings apply as-is.',
+    properties: {
+      fontScale: {
+        type: 'number',
+        description: "Multiplier applied to the screen's font size",
+      },
+      alignment: { type: 'string', enum: ['left', 'center', 'right'] },
+      bold: { type: 'boolean' },
+      italic: { type: 'boolean' },
+      underline: { type: 'boolean' },
+      ranges: {
+        type: 'array',
+        description:
+          "Styling applied to runs of the slide's normalized plain text",
+        items: {
+          type: 'object',
+          properties: {
+            start: { type: 'integer' },
+            end: { type: 'integer' },
+            bold: { type: 'boolean' },
+            italic: { type: 'boolean' },
+            underline: { type: 'boolean' },
+            fontScale: { type: 'number' },
+          },
+        },
+      },
+    },
+  },
   SongSlide: {
     type: 'object',
     properties: {
@@ -69,6 +101,9 @@ export const songSchemas = {
         type: 'string',
         nullable: true,
         description: 'Per-slide speaker note',
+      },
+      styleOverrides: {
+        $ref: '#/components/schemas/SlideStyleOverride',
       },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
@@ -139,6 +174,7 @@ export const songSchemas = {
             sortOrder: { type: 'integer' },
             label: { type: 'string', nullable: true },
             notes: { type: 'string', nullable: true },
+            styleOverrides: { $ref: '#/components/schemas/SlideStyleOverride' },
           },
         },
       },
@@ -157,6 +193,7 @@ export const songSchemas = {
       sortOrder: { type: 'integer' },
       label: { type: 'string', nullable: true },
       notes: { type: 'string', nullable: true },
+      styleOverrides: { $ref: '#/components/schemas/SlideStyleOverride' },
     },
   },
   ReorderSongSlidesInput: {
@@ -197,6 +234,7 @@ export const songSchemas = {
             sortOrder: { type: 'integer' },
             label: { type: 'string', nullable: true },
             notes: { type: 'string', nullable: true },
+            styleOverrides: { $ref: '#/components/schemas/SlideStyleOverride' },
           },
         },
       },

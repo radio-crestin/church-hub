@@ -1025,6 +1025,15 @@
         "unpinned": "Fereastra nu mai este mereu deasupra",
         "error": "Nu s-a putut actualiza setarea"
       },
+      "fullscreen": {
+        "fill": "Deschide acest ecran pe tot displayul",
+        "windowed": "Deschide acest ecran ca fereastră, nu pe tot displayul",
+        "on": "Se deschide pe tot ecranul",
+        "off": "Se deschide în fereastră",
+        "enabled": "Ecranul se va deschide pe tot ecranul",
+        "disabled": "Ecranul se va deschide ca fereastră",
+        "error": "Nu s-a putut actualiza setarea"
+      },
       "closeOnEscape": {
         "tooltip": "Controlează dacă fereastra nativă a acestui ecran se închide când nu este afișat ceva (după Escape / hide). Conținutul se șterge mereu și apare ceasul — această opțiune controlează doar fereastra în sine. Implicit: fereastra rămâne deschisă.",
         "on": "Închide fereastra când nu este afișat ceva",
@@ -1053,6 +1062,7 @@
       "actions": {
         "openInNewTab": "Deschide în tab nou",
         "copyUrl": "Copiază URL în clipboard",
+        "duplicate": "Duplică ecranul cu toate setările",
         "edit": "Editează",
         "delete": "Șterge ecran"
       },
@@ -1060,12 +1070,14 @@
         "created": "Ecran creat cu succes",
         "saved": "Ecran salvat cu succes",
         "deleted": "Ecran șters cu succes",
+        "duplicated": "Ecran duplicat: \"{{name}}\"",
         "windowOpened": "Fereastra \"{{name}}\" deschisă",
         "windowClosed": "Fereastra \"{{name}}\" închisă",
         "urlCopied": "URL copiat în clipboard",
         "toggleError": "Nu s-a putut comuta fereastra",
         "copyError": "Nu s-a putut copia URL-ul",
         "deleteError": "Nu s-a putut șterge ecranul",
+        "duplicateError": "Nu s-a putut duplica ecranul",
         "saveError": "Nu s-a putut salva ecranul",
         "createError": "Nu s-a putut crea ecranul"
       },

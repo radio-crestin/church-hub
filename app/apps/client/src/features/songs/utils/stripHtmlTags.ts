@@ -1,3 +1,5 @@
+import { attachRepetitionMarkers } from '../../../utils/attachRepetitionMarkers'
+
 /** Turns the entity escapes slide HTML carries back into their characters. */
 function decodeHtmlEntities(text: string): string {
   return text
@@ -27,5 +29,5 @@ export function stripHtmlTags(html: string): string {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, '')
     .trim()
-  return decodeHtmlEntities(stripped)
+  return attachRepetitionMarkers(decodeHtmlEntities(stripped))
 }

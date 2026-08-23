@@ -110,3 +110,6 @@ app/test-results/
 
 # Claude Code worktrees (scripts/release.sh requires a clean tree)
 .claude/worktrees/
+
+# Local working notes for the current branch
+context.md

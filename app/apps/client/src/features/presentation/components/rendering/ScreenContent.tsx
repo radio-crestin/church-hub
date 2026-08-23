@@ -21,7 +21,12 @@ import type {
   SongContentConfig,
   TextStyleRange,
 } from '../../types'
+import {
+  applySlideStyleOverride,
+  resolveSlideFontScale,
+} from '../../utils/applySlideStyleOverride'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { toTextStyleRanges } from '../../utils/toTextStyleRanges'
 
 interface ScreenContentProps {
   screen: ScreenWithConfigs
@@ -140,6 +145,19 @@ export function ScreenContent({
     const mt = config.mainText
     if (mt.hidden) return null
 
+    // The screen settings are the baseline; the slide states only where it
+    // departs from them, so an untouched slide renders exactly as before and a
+    // cleared override restores the screen defaults.
+    const mainStyle = applySlideStyleOverride(
+      mt.style,
+      contentData?.styleOverrides,
+    )
+    const slideRanges = toTextStyleRanges(contentData?.styleOverrides)
+    const mainRanges = [...(styleRanges ?? []), ...slideRanges]
+    // Applied to the fitted size rather than to the fit ceiling — see
+    // applySlideStyleOverride.
+    const slideFontScale = resolveSlideFontScale(contentData?.styleOverrides)
+
     const bounds = calculatePixelBounds(
       mt.constraints,
       mt.size,
@@ -158,8 +176,8 @@ export function ScreenContent({
           key="mainText-edit"
           content={contentData?.mainText ?? ''}
           style={{
-            ...mt.style,
-            maxFontSize: mt.style.maxFontSize * fontScale,
+            ...mainStyle,
+            maxFontSize: mainStyle.maxFontSize * fontScale,
           }}
           width={scaledBounds.width}
           height={scaledBounds.height}
@@ -168,6 +186,8 @@ export function ScreenContent({
           editKey={contentKey}
           placeholder={editPlaceholder}
           onEdit={onMainTextEdit}
+          styleRanges={mainRanges}
+          contentScale={slideFontScale}
         />
       )
     }
@@ -188,11 +208,13 @@ export function ScreenContent({
           height={scaledBounds.height}
           left={scaledBounds.x}
           top={scaledBounds.y}
-          baseFontSize={mt.style.maxFontSize * fontScale * 0.6}
+          baseFontSize={
+            mainStyle.maxFontSize * fontScale * 0.6 * slideFontScale
+          }
           chordFontSize={(songConfig?.chordFontSize ?? 32) * fontScale}
-          color={mt.style.color}
-          fontFamily={mt.style.fontFamily}
-          alignment={mt.style.alignment ?? 'center'}
+          color={mainStyle.color}
+          fontFamily={mainStyle.fontFamily}
+          alignment={mainStyle.alignment ?? 'center'}
           onChordClick={setActiveChord}
         />
       )
@@ -205,8 +227,8 @@ export function ScreenContent({
         contentKey={`mainText-${contentKey}`}
         isVisible={elementVisible}
         style={{
-          ...mt.style,
-          maxFontSize: mt.style.maxFontSize * fontScale,
+          ...mainStyle,
+          maxFontSize: mainStyle.maxFontSize * fontScale,
         }}
         width={scaledBounds.width}
         height={scaledBounds.height}
@@ -221,7 +243,8 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in mt ? mt.slideTransitionOut : undefined
         }
-        styleRanges={styleRanges}
+        styleRanges={mainRanges}
+        contentScale={slideFontScale}
       />
     )
   }

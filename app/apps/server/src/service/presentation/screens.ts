@@ -454,6 +454,7 @@ function toScreen(record: typeof screens.$inferSelect): Screen {
     closeOnEscape: record.closeOnEscape,
     isPreviewScreen: record.isPreviewScreen,
     openOnStartup: record.openOnStartup,
+    monitorName: record.monitorName,
     width: record.width,
     height: record.height,
     globalSettings: parseGlobalSettings(record.globalSettings),
@@ -670,6 +671,9 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       if (input.openOnStartup !== undefined) {
         updateData.openOnStartup = input.openOnStartup
       }
+      if (input.monitorName !== undefined) {
+        updateData.monitorName = input.monitorName
+      }
       if (input.isPreviewScreen !== undefined) {
         updateData.isPreviewScreen = input.isPreviewScreen
         // Enforce a single preview screen: clear the flag on every other screen
@@ -700,7 +704,9 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         type: screenType,
         isActive: input.isActive === true,
         openMode,
-        isFullscreen: input.isFullscreen === true,
+        // Projection windows are fullscreen unless the operator says otherwise.
+        isFullscreen: input.isFullscreen !== false,
+        monitorName: input.monitorName ?? null,
         alwaysOnTop: input.alwaysOnTop === true,
         closeOnEscape: input.closeOnEscape === true,
         isPreviewScreen: input.isPreviewScreen === true,
@@ -821,6 +827,109 @@ function adjustConfigForLivestream(config: Record<string, unknown>) {
   addShadow(config.referenceText)
   addShadow(config.personLabel)
   addShadow(config.clock)
+}
+
+/**
+ * Clones a screen with everything that belongs to it: the row's own settings,
+ * all nine content configs, the next-slide config and every OBS scene override.
+ *
+ * Copying the config rows verbatim rather than going through the create path
+ * matters — the create path seeds defaults for all nine content types, so a
+ * clone built on top of it would have to overwrite them afterwards and would be
+ * briefly wrong in between.
+ *
+ * Two flags are deliberately not copied. `isActive` records that a window is
+ * currently open, which is never true of a screen that was just created, and
+ * `isPreviewScreen` is exclusive — copying it would silently take the preview
+ * role away from the screen being duplicated.
+ */
+export function duplicateScreen(id: number, name?: string): Screen | null {
+  try {
+    logger.debug(`Duplicating screen: ${id}`)
+
+    const db = getDatabase()
+    const source = db.select().from(screens).where(eq(screens.id, id)).get()
+
+    if (!source) {
+      logger.warning(`Screen not found for duplication: ${id}`)
+      return null
+    }
+
+    const inserted = db
+      .insert(screens)
+      .values({
+        name: name?.trim() || `${source.name} (copy)`,
+        type: source.type,
+        isActive: false,
+        openMode: source.openMode,
+        isFullscreen: source.isFullscreen,
+        alwaysOnTop: source.alwaysOnTop,
+        closeOnEscape: source.closeOnEscape,
+        isPreviewScreen: false,
+        openOnStartup: source.openOnStartup,
+        monitorName: source.monitorName,
+        width: source.width,
+        height: source.height,
+        globalSettings: source.globalSettings,
+        sortOrder: source.sortOrder,
+      })
+      .returning({ id: screens.id })
+      .get()
+
+    const contentConfigs = db
+      .select()
+      .from(screenContentConfigs)
+      .where(eq(screenContentConfigs.screenId, id))
+      .all()
+    for (const contentConfig of contentConfigs) {
+      db.insert(screenContentConfigs)
+        .values({
+          screenId: inserted.id,
+          contentType: contentConfig.contentType,
+          config: contentConfig.config,
+        })
+        .run()
+    }
+
+    const nextSlideConfig = db
+      .select()
+      .from(screenNextSlideConfigs)
+      .where(eq(screenNextSlideConfigs.screenId, id))
+      .get()
+    if (nextSlideConfig) {
+      db.insert(screenNextSlideConfigs)
+        .values({
+          screenId: inserted.id,
+          config: nextSlideConfig.config,
+        })
+        .run()
+    }
+
+    const sceneOverrides = db
+      .select()
+      .from(screenSceneOverrides)
+      .where(eq(screenSceneOverrides.screenId, id))
+      .all()
+    for (const override of sceneOverrides) {
+      db.insert(screenSceneOverrides)
+        .values({
+          screenId: inserted.id,
+          obsSceneName: override.obsSceneName,
+          contentType: override.contentType,
+          config: override.config,
+        })
+        .run()
+    }
+
+    logger.info(
+      `Screen ${id} duplicated as ${inserted.id} ` +
+        `(${contentConfigs.length} content configs, ${sceneOverrides.length} scene overrides)`,
+    )
+    return getScreenById(inserted.id)
+  } catch (error) {
+    logger.error(`Failed to duplicate screen: ${error}`)
+    return null
+  }
 }
 
 export function deleteScreen(id: number): OperationResult {

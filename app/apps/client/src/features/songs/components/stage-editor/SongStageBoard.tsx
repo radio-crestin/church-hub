@@ -14,13 +14,16 @@ import {
   useNavigateTemporary,
   usePresentationState,
   usePresentTemporarySong,
+  usePreviewScreen,
 } from '~/features/presentation'
 import { SlideNotesPanel } from './SlideNotesPanel'
+import { SlideStyleToolbar } from './SlideStyleToolbar'
 import { SongStageEditor } from './SongStageEditor'
 import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
-import type { SongSlide, SongWithSlides } from '../../types'
+import type { SlideStyleOverride, SongSlide, SongWithSlides } from '../../types'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
+import { SlideCounter } from '../SlideCounter'
 import { type LocalSlide } from '../SongSlideList'
 
 interface SongStageBoardProps {
@@ -28,6 +31,12 @@ interface SongStageBoardProps {
 }
 
 const AUTOSAVE_DELAY_MS = 1000
+/**
+ * While the song is live, edits have to reach the projector, and that only
+ * happens once they are saved — so the wait drops to something the operator
+ * reads as immediate.
+ */
+const LIVE_AUTOSAVE_DELAY_MS = 200
 
 function mapSlides(song: SongWithSlides): LocalSlide[] {
   return song.slides.map((s) => ({
@@ -37,6 +46,7 @@ function mapSlides(song: SongWithSlides): LocalSlide[] {
     sortOrder: s.sortOrder,
     label: s.label,
     notes: s.notes,
+    styleOverrides: s.styleOverrides,
   }))
 }
 
@@ -48,6 +58,7 @@ function serialize(slides: LocalSlide[]): string {
       label: s.label ?? null,
       chords: s.chords ?? null,
       notes: s.notes ?? null,
+      styleOverrides: s.styleOverrides ?? null,
     })),
   )
 }
@@ -64,6 +75,10 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
   const { data: presentationState } = usePresentationState()
+  // The screen the stage previews. Its width is what turns the size rendered on
+  // the (scaled-down) canvas into the screen's own units for the toolbar.
+  const { screen } = usePreviewScreen()
+  const canvasWidth = screen?.width ?? 1920
 
   const [slides, setSlides] = useState<LocalSlide[]>(() => mapSlides(song))
   const [savedSerialized, setSavedSerialized] = useState(() =>
@@ -87,28 +102,51 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const currentSerialized = serialize(slides)
   const isDirty = currentSerialized !== savedSerialized
 
-  // Debounced autosave: persist slides ~1s after the last edit.
+  const save = useCallback(async () => {
+    await upsert.mutateAsync({
+      id: song.id,
+      title: song.title,
+      slides: slides.map((s, idx) => ({
+        id: typeof s.id === 'number' ? s.id : undefined,
+        content: s.content,
+        chords: s.chords,
+        sortOrder: idx,
+        label: s.label,
+        notes: s.notes,
+        styleOverrides: s.styleOverrides ?? null,
+      })),
+    })
+    setSavedSerialized(currentSerialized)
+  }, [upsert, song.id, song.title, slides, currentSerialized])
+
+  /**
+   * Persists pending edits right now instead of waiting out the autosave.
+   *
+   * What is projected comes from a snapshot the server takes when the song is
+   * presented and refreshes when it is saved, so navigating with an unsaved
+   * edit showed the slide as it was before the edit and only corrected itself
+   * once the autosave landed a second later.
+   */
+  const saveRef = useRef(save)
+  saveRef.current = save
+  const isDirtyRef = useRef(isDirty)
+  isDirtyRef.current = isDirty
+  const flushSave = useCallback(async () => {
+    if (!isDirtyRef.current) return
+    await saveRef.current()
+  }, [])
+
+  // Debounced autosave: persist slides shortly after the last edit.
   useEffect(() => {
     if (!isDirty) return
-    const timer = setTimeout(() => {
-      upsert.mutate(
-        {
-          id: song.id,
-          title: song.title,
-          slides: slides.map((s, idx) => ({
-            id: typeof s.id === 'number' ? s.id : undefined,
-            content: s.content,
-            chords: s.chords,
-            sortOrder: idx,
-            label: s.label,
-            notes: s.notes,
-          })),
-        },
-        { onSuccess: () => setSavedSerialized(currentSerialized) },
-      )
-    }, AUTOSAVE_DELAY_MS)
+    const timer = setTimeout(
+      () => {
+        void saveRef.current()
+      },
+      isPresentingRef.current ? LIVE_AUTOSAVE_DELAY_MS : AUTOSAVE_DELAY_MS,
+    )
     return () => clearTimeout(timer)
-  }, [isDirty, currentSerialized, slides, song.id, song.title, upsert])
+  }, [isDirty])
 
   // Live presentation position for THIS song (index is into the server's
   // expanded slide list; null when this song isn't the one being projected).
@@ -125,6 +163,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   }, [presentationState, song.id])
 
   const isPresenting = presentedSlideIndex !== null
+  // Read by the autosave timer, which is scheduled before this is known.
+  const isPresentingRef = useRef(isPresenting)
+  isPresentingRef.current = isPresenting
   // When presenting, Prev/Next drive the live show (Next is allowed on the last
   // slide — the server ends the presentation). When NOT presenting they browse
   // the slides on the canvas, so keep them usable as long as there's more than
@@ -146,11 +187,13 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   )
 
   const handlePresent = useCallback(async () => {
+    await flushSave()
     await presentSong.mutateAsync({ songId: song.id, slideIndex: 0 })
     bumpNav(1)
-  }, [presentSong, song.id, bumpNav])
+  }, [flushSave, presentSong, song.id, bumpNav])
 
   const handlePrev = useCallback(async () => {
+    await flushSave()
     if (isPresenting) {
       // Server clamps prev at the first slide (never closes), so don't gate on
       // the local slide index — a fast next→prev on a presenter remote would
@@ -160,13 +203,14 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       return
     }
     if (slides.length > 1) bumpNav(-1)
-  }, [isPresenting, navigateTemporary, bumpNav, slides.length])
+  }, [flushSave, isPresenting, navigateTemporary, bumpNav, slides.length])
 
   const handleNext = useCallback(async () => {
     if (!canNavigateNext) return
+    await flushSave()
     if (isPresenting) await navigateTemporary.mutateAsync({ direction: 'next' })
     bumpNav(1)
-  }, [canNavigateNext, isPresenting, navigateTemporary, bumpNav])
+  }, [flushSave, canNavigateNext, isPresenting, navigateTemporary, bumpNav])
 
   const handleHide = useCallback(() => {
     void clearTemporary.mutateAsync()
@@ -177,7 +221,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   // (the classic song page disables its own handler in PowerPoint mode).
   // Escape only hides when something is actually live.
   const handleEscape = useCallback(() => {
-    if (isPresenting) handleHide()
+    if (!isPresenting) return false
+    handleHide()
+    return true
   }, [isPresenting, handleHide])
   useSongKeyboardShortcuts({
     id: 'song-stage-nav',
@@ -197,6 +243,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       sortOrder: i,
       label: s.label ?? null,
       notes: s.notes ?? null,
+      styleOverrides: s.styleOverrides ?? null,
       createdAt: 0,
       updatedAt: 0,
     }))
@@ -211,9 +258,11 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const handleProjectSlide = useCallback(
     (index: number) => {
       const slideIndex = displayIndexByPosition.get(index) ?? index
-      void presentSong.mutateAsync({ songId: song.id, slideIndex })
+      void flushSave().then(() =>
+        presentSong.mutateAsync({ songId: song.id, slideIndex }),
+      )
     },
-    [displayIndexByPosition, presentSong, song.id],
+    [flushSave, displayIndexByPosition, presentSong, song.id],
   )
 
   // Speaker note for the slide currently on the canvas. Clamp the index so a
@@ -225,6 +274,20 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     (value: string) => {
       setSlides((prev) =>
         prev.map((s, i) => (i === activeIndex ? { ...s, notes: value } : s)),
+      )
+    },
+    [activeIndex],
+  )
+
+  // Per-slide text styling. It rides along with the slide draft, so the same
+  // debounced autosave that persists an edited lyric persists the styling.
+  const activeStyleOverrides = slides[activeIndex]?.styleOverrides ?? null
+  const handleStyleChange = useCallback(
+    (override: SlideStyleOverride | null) => {
+      setSlides((prev) =>
+        prev.map((s, i) =>
+          i === activeIndex ? { ...s, styleOverrides: override } : s,
+        ),
       )
     },
     [activeIndex],
@@ -290,10 +353,26 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           onActiveSlideChange={setActiveSlideIndex}
           onSlidesChange={setSlides}
           fillHeight
+          canvasToolbar={
+            <SlideStyleToolbar
+              override={activeStyleOverrides}
+              canvasWidth={canvasWidth}
+              onChange={handleStyleChange}
+              disabled={slides.length === 0}
+            />
+          }
           canvasFooter={
             /* Presentation navigation hugs the bottom of the stage — advance/
-               retreat the live slide. The session clock is pinned right. */
+               retreat the live slide. The slide counter is pinned left and the
+               session clock right, on the same row. */
             <div className="relative flex w-full items-center justify-center gap-3 pt-3 shrink-0">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                <SlideCounter
+                  currentIndex={activeIndex}
+                  total={slides.length}
+                  variant="badge"
+                />
+              </div>
               <button
                 type="button"
                 onClick={handlePrev}

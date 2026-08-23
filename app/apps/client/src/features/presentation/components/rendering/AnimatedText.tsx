@@ -2,9 +2,11 @@ import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { type AnimationConfig, useSlideAnimation } from './useSlideAnimation'
 import { calculateFontSize } from './utils/calculateFontSize'
+import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { compressLines } from './utils/textProcessing'
+import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
 import type {
   TextStyle,
   TextStyleRange,
@@ -52,6 +54,12 @@ interface AnimatedTextProps {
   slideTransitionIn?: TypesAnimationConfig
   /** Text style ranges for inline highlighting/styling */
   styleRanges?: TextStyleRange[]
+  /**
+   * Per-slide font multiplier, applied to the auto-fitted size. Scaling the fit
+   * ceiling instead would be invisible on a slide whose text is already limited
+   * by the element height, which is most of them.
+   */
+  contentScale?: number
 }
 
 /**
@@ -71,7 +79,9 @@ function areStyleRangesEqual(
       range.end === b[i].end &&
       range.highlight === b[i].highlight &&
       range.bold === b[i].bold &&
-      range.underline === b[i].underline,
+      range.italic === b[i].italic &&
+      range.underline === b[i].underline &&
+      range.fontScale === b[i].fontScale,
   )
 }
 
@@ -92,7 +102,8 @@ function arePropsEqual(
     prevProps.height !== nextProps.height ||
     prevProps.left !== nextProps.left ||
     prevProps.top !== nextProps.top ||
-    prevProps.isHtml !== nextProps.isHtml
+    prevProps.isHtml !== nextProps.isHtml ||
+    prevProps.contentScale !== nextProps.contentScale
   ) {
     return false
   }
@@ -152,13 +163,14 @@ const AnimatedTextInner = memo(function AnimatedText({
   slideTransitionOut,
   slideTransitionIn,
   styleRanges,
+  contentScale = 1,
 }: AnimatedTextProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
 
   // Normalize text content and apply line compression if enabled
   const normalizedText = useMemo(() => {
-    let text = normalizeText(content, isHtml)
+    let text = attachRepetitionMarkers(normalizeText(content, isHtml))
 
     // Apply line compression if enabled in style
     if (style.compressLines) {
@@ -167,17 +179,6 @@ const AnimatedTextInner = memo(function AnimatedText({
 
     return text
   }, [content, isHtml, style.compressLines, style.lineSeparator])
-
-  // Apply style ranges to the text if any
-  const styledContent = useMemo(() => {
-    if (!styleRanges || styleRanges.length === 0) {
-      return null // No styling needed, use plain text
-    }
-    return applyStylesToText(normalizedText, styleRanges)
-  }, [normalizedText, styleRanges])
-
-  // Check if we have any styled content (HTML) to render
-  const hasStyledContent = styledContent !== null
 
   // Use the slide animation hook
   const {
@@ -194,18 +195,42 @@ const AnimatedTextInner = memo(function AnimatedText({
     slideTransitionIn: toAnimationConfig(slideTransitionIn),
   })
 
+  // While a slide transition plays, the hook keeps showing the OUTGOING text.
+  // Everything that decides how that text looks has to travel with it: the
+  // incoming slide's size, box and inline runs belong to a different text, and
+  // applying them mid-transition resizes and repositions the words that are
+  // still fading out. This is what the operator sees as a flash — most visibly
+  // at the first and last slide, where the layout switches to the first-slide /
+  // last-slide screen config as well.
+  const showsCurrentText = displayContent === normalizedText
+  const currentRender = {
+    contentScale,
+    styleRanges,
+    style,
+    width,
+    height,
+    left,
+    top,
+  }
+  const previousRenderRef = useRef(currentRender)
+  if (showsCurrentText) {
+    previousRenderRef.current = currentRender
+  }
+  const shown = showsCurrentText ? currentRender : previousRenderRef.current
+  const displayScale = shown.contentScale
+  const displayRanges = shown.styleRanges
+  const displayStyle = shown.style
+
   // Get the final display content - use styled HTML if available
   // Must be before any early returns to maintain hooks order
   const finalDisplayContent = useMemo(() => {
-    if (hasStyledContent && styledContent) {
-      // Apply styles to the display content
-      return applyStylesToText(
-        typeof displayContent === 'string' ? displayContent : '',
-        styleRanges ?? [],
-      )
-    }
-    return null
-  }, [hasStyledContent, styledContent, displayContent, styleRanges])
+    if (!displayRanges || displayRanges.length === 0) return null
+    // Apply styles to the display content
+    return applyStylesToText(
+      typeof displayContent === 'string' ? displayContent : '',
+      displayRanges,
+    )
+  }, [displayContent, displayRanges])
 
   // Calculate font size synchronously before paint
   useLayoutEffect(() => {
@@ -214,22 +239,45 @@ const AnimatedTextInner = memo(function AnimatedText({
     const text = typeof displayContent === 'string' ? displayContent : ''
     if (!text) return
 
+    const minFontSize = displayStyle.minFontSize ?? 12
     const fontSize = calculateFontSize(
       measureRef.current,
       text,
-      width,
-      height,
-      style.maxFontSize,
-      style.minFontSize ?? 12,
+      shown.width,
+      shown.height,
+      displayStyle.maxFontSize,
+      minFontSize,
     )
 
-    textRef.current.style.fontSize = `${fontSize}px`
+    // The fit measures plain text at the screen's own size; the slide's scale
+    // and any enlarged run are applied on top of it and can push the words off
+    // the top and bottom of the box, where they are cut off. Holding the scaled
+    // size to what the rendered markup still fits into is what keeps the text on
+    // the screen.
+    textRef.current.style.fontSize = `${fitFontSizeToBounds(
+      measureRef.current,
+      text,
+      finalDisplayContent,
+      fontSize * displayScale,
+      shown.width,
+      shown.height,
+      minFontSize,
+    )}px`
   }, [
     displayContent,
-    width,
-    height,
-    style.maxFontSize,
-    style.minFontSize,
+    finalDisplayContent,
+    shown.width,
+    shown.height,
+    displayStyle.maxFontSize,
+    displayStyle.minFontSize,
+    // Everything below changes how wide the text measures, so the fit has to be
+    // redone when any of it does.
+    displayStyle.bold,
+    displayStyle.italic,
+    displayStyle.fontFamily,
+    displayStyle.lineHeight,
+    displayRanges,
+    displayScale,
     shouldRender,
   ])
 
@@ -239,30 +287,32 @@ const AnimatedTextInner = memo(function AnimatedText({
 
   const containerStyle: React.CSSProperties = {
     position: 'absolute',
-    left,
-    top,
-    width,
-    height,
+    left: shown.left,
+    top: shown.top,
+    width: shown.width,
+    height: shown.height,
     overflow: 'hidden',
     ...animationStyle,
   }
 
   const textStyles: React.CSSProperties = {
-    ...getTextStyles(style),
-    fontSize: `${style.maxFontSize}px`, // Will be overwritten by useLayoutEffect
+    ...getTextStyles(displayStyle),
+    // Already carries the slide's own scale so the very first paint — before
+    // the fit runs — is never the plain screen size.
+    fontSize: `${displayStyle.maxFontSize * displayScale}px`, // Refined by useLayoutEffect
     width: '100%',
     height: '100%',
     display: 'flex',
     alignItems:
-      style.verticalAlignment === 'top'
+      displayStyle.verticalAlignment === 'top'
         ? 'flex-start'
-        : style.verticalAlignment === 'bottom'
+        : displayStyle.verticalAlignment === 'bottom'
           ? 'flex-end'
           : 'center',
     justifyContent:
-      style.alignment === 'center'
+      displayStyle.alignment === 'center'
         ? 'center'
-        : style.alignment === 'right'
+        : displayStyle.alignment === 'right'
           ? 'flex-end'
           : 'flex-start',
     whiteSpace: 'pre-wrap',
@@ -271,7 +321,7 @@ const AnimatedTextInner = memo(function AnimatedText({
 
   // Hidden element for measurement (same font properties as display)
   const measureStyle: React.CSSProperties = {
-    ...getTextStyles(style),
+    ...getTextStyles(displayStyle),
     position: 'absolute',
     visibility: 'hidden',
     pointerEvents: 'none',

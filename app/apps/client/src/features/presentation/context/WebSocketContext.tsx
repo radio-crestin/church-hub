@@ -11,12 +11,14 @@ import {
 } from 'react'
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
+import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import { presentedSongsQueryKey } from '../../song-key/hooks/usePresentedSongs'
 import { updateStateIfNewer } from '../hooks/usePresentationControls'
 import { presentationStateQueryKey } from '../hooks/usePresentationState'
 import { screenQueryKey } from '../hooks/useScreen'
+import { screensQueryKey } from '../hooks/useScreens'
 import { slideHighlightsQueryKey } from '../hooks/useSlideHighlights'
 import type { PresentationState } from '../types'
 
@@ -82,6 +84,15 @@ interface SlideHighlightsUpdatedMessage {
       bold?: boolean
       underline?: boolean
     }>
+    updatedAt: number
+  }
+}
+
+/** The server broadcasts this whenever a song's slides are saved. */
+interface SongUpdatedMessage {
+  type: 'song_updated'
+  payload: {
+    songId: number
     updatedAt: number
   }
 }
@@ -210,6 +221,7 @@ type MessageData =
   | ScreenConfigPreviewMessage
   | HighlightColorsUpdatedMessage
   | SlideHighlightsUpdatedMessage
+  | SongUpdatedMessage
   | SettingsUpdatedMessage
   | MusicStateMessage
   | SidebarNavigationMessage
@@ -329,6 +341,10 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           queryClient.invalidateQueries({
             queryKey: screenQueryKey(data.payload.screenId),
           })
+          // The list carries the per-screen switches (close on hide, always on
+          // top, …), so a change made in another window has to land here too —
+          // the hooks acting on those flags read the list, not one screen.
+          queryClient.invalidateQueries({ queryKey: screensQueryKey })
         }
 
         if (data.type === 'screen_config_preview') {
@@ -393,7 +409,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
                   slides: Array<{
                     id: number
                     content: string
+                    chords: ChordMapping[] | null
                     sortOrder: number
+                    styleOverrides: SlideStyleOverride | null
                   }>
                 }>(['song', data.payload.songId])
                 const currentState =
@@ -413,8 +431,16 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
                     const fresh = freshSong.slides.find(
                       (s) => s.id === tempSlide.id,
                     )
+                    // Everything the projection renders per slide has to be
+                    // carried over, not just the lyrics: an edited font size or
+                    // a bolded word must reach the live screens too.
                     return fresh
-                      ? { ...tempSlide, content: fresh.content }
+                      ? {
+                          ...tempSlide,
+                          content: fresh.content,
+                          chords: fresh.chords,
+                          styleOverrides: fresh.styleOverrides,
+                        }
                       : tempSlide
                   })
 

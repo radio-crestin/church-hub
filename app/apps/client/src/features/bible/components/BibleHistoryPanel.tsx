@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ClearSearchButton } from '~/ui/search'
+import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { BibleHistoryItem } from './BibleHistoryItem'
 import { useBibleHistory, useClearHistory } from '../hooks'
 import type { BibleHistoryItem as BibleHistoryItemType } from '../types'
@@ -131,14 +132,15 @@ export function BibleHistoryPanel({
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Filter items by search query
+  // Filter items by search query. Folded on both sides so "psalmi" finds
+  // "Psalmi" and "cantare" finds "cântare".
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return historyItems
-    const q = searchQuery.toLowerCase()
+    const q = normalizeForSearch(searchQuery)
     return historyItems.filter(
       (item) =>
-        item.reference.toLowerCase().includes(q) ||
-        item.text.toLowerCase().includes(q),
+        normalizeForSearch(item.reference).includes(q) ||
+        normalizeForSearch(item.text).includes(q),
     )
   }, [historyItems, searchQuery])
 

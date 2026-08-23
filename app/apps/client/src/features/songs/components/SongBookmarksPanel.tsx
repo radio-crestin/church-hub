@@ -33,6 +33,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ClearSearchButton } from '~/ui/search'
+import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import {
   useAddBookmark,
   useAddBookmarkNote,
@@ -111,6 +112,7 @@ function SortableBookmarkItem({
       <div
         {...attributes}
         {...listeners}
+        data-testid="bookmark-drag-handle"
         className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <GripVertical size={14} className="text-gray-400 dark:text-gray-500" />
@@ -245,6 +247,7 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
       <div
         {...attributes}
         {...listeners}
+        data-testid="bookmark-note-drag-handle"
         className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-blue-100 dark:hover:bg-blue-900/30"
       >
         <GripVertical size={14} className="text-blue-400 dark:text-blue-500" />
@@ -397,7 +400,8 @@ export function SongBookmarksPanel({
   const unifiedItems = localOrder ?? serverItems
 
   const filteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+    // Folded on both sides so "cantare" finds "cântare" and vice versa.
+    const q = normalizeForSearch(searchQuery.trim())
     return unifiedItems.filter((item) => {
       // Sung filter applies to song bookmarks only; notes show only in "all".
       if (sungFilter !== 'all') {
@@ -408,14 +412,14 @@ export function SongBookmarksPanel({
       }
       if (!q) return true
       if (item.type === 'note') {
-        return item.note?.content.toLowerCase().includes(q)
+        return normalizeForSearch(item.note?.content ?? '').includes(q)
       }
       const b = item.bookmark
       return (
-        b?.songTitle.toLowerCase().includes(q) ||
-        b?.songCategoryName?.toLowerCase().includes(q) ||
-        b?.songKeyLine?.toLowerCase().includes(q) ||
-        b?.songTagNames?.some((name) => name.toLowerCase().includes(q))
+        normalizeForSearch(b?.songTitle ?? '').includes(q) ||
+        normalizeForSearch(b?.songCategoryName ?? '').includes(q) ||
+        normalizeForSearch(b?.songKeyLine ?? '').includes(q) ||
+        b?.songTagNames?.some((name) => normalizeForSearch(name).includes(q))
       )
     })
   }, [unifiedItems, searchQuery, sungFilter])
@@ -449,16 +453,33 @@ export function SongBookmarksPanel({
       const { active, over } = event
       if (!over || active.id === over.id) return
 
-      const oldIndex = unifiedItems.findIndex(
+      // The move is computed on the rows the operator can actually see. With
+      // no filter on, filteredItems is the whole list and this is the plain
+      // case.
+      const oldIndex = filteredItems.findIndex(
         (item) => item.uniqueId === active.id,
       )
-      const newIndex = unifiedItems.findIndex(
+      const newIndex = filteredItems.findIndex(
         (item) => item.uniqueId === over.id,
       )
 
       if (oldIndex === -1 || newIndex === -1) return
 
-      const newOrder = arrayMove(unifiedItems, oldIndex, newIndex)
+      const reorderedVisible = arrayMove(filteredItems, oldIndex, newIndex)
+      const visibleIds = new Set(filteredItems.map((item) => item.uniqueId))
+
+      // The reordered rows are poured back into the slots those same rows
+      // already occupied, so rows hidden by the filter (notes, and songs on the
+      // other side of the sung/pending split) keep their exact position. The
+      // endpoint rewrites sort_order from the index of every entry it is given,
+      // so it always gets the full list.
+      let cursor = 0
+      const newOrder = unifiedItems.map((item) =>
+        visibleIds.has(item.uniqueId)
+          ? (reorderedVisible[cursor++] ?? item)
+          : item,
+      )
+
       // Set local order synchronously so the UI doesn't flicker
       setLocalOrder(newOrder)
       reorderItemsMutation.mutate(
@@ -468,7 +489,7 @@ export function SongBookmarksPanel({
         })),
       )
     },
-    [unifiedItems, reorderItemsMutation],
+    [filteredItems, unifiedItems, reorderItemsMutation],
   )
 
   const handleRemoveBookmark = useCallback(
@@ -545,9 +566,6 @@ export function SongBookmarksPanel({
   }, [exportMutation])
 
   const isSearching = searchQuery.trim().length > 0
-  // Any active filter (search or sung state) switches the list to a plain
-  // filtered render (drag-to-reorder is only meaningful on the full list).
-  const isFiltering = isSearching || sungFilter !== 'all'
 
   const renderItem = (item: BookmarkListItem) => {
     if (item.type === 'note' && item.note) {
@@ -792,10 +810,6 @@ export function SongBookmarksPanel({
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {t('bookmarks.noResults')}
               </div>
-            ) : isFiltering ? (
-              <div className="p-2 flex flex-col gap-1.5">
-                {filteredItems.map(renderItem)}
-              </div>
             ) : (
               <DndContext
                 sensors={sensors}
@@ -804,11 +818,11 @@ export function SongBookmarksPanel({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={unifiedItems.map((item) => item.uniqueId)}
+                  items={filteredItems.map((item) => item.uniqueId)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="p-2 flex flex-col gap-1.5">
-                    {unifiedItems.map(renderItem)}
+                    {filteredItems.map(renderItem)}
                   </div>
                 </SortableContext>
               </DndContext>

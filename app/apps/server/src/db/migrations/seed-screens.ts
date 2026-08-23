@@ -69,7 +69,8 @@ export function seedDefaultScreens(db: Database): void {
           screen.type,
           screen.isActive ? 1 : 0,
           screen.openMode,
-          screen.isFullscreen ? 1 : 0,
+          // A projection screen fills its display unless the fixture opts out.
+          screen.isFullscreen === false ? 0 : 1,
           screen.closeOnEscape ? 1 : 0,
           screen.isPreviewScreen ? 1 : 0,
           screen.openOnStartup === false ? 0 : 1,

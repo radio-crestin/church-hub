@@ -13,6 +13,9 @@ import { StageCanvas } from './StageCanvas'
 import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
 import { type LocalSlide } from '../SongSlideList'
 
+/** How many slides after the active one the filmstrip keeps in view. */
+const FILMSTRIP_LOOKAHEAD = 2
+
 interface SongStageEditorProps {
   slides: LocalSlide[]
   title: string
@@ -41,6 +44,11 @@ interface SongStageEditorProps {
   onActiveSlideChange?: (index: number) => void
   /** Rendered directly under the stage (e.g. presentation nav buttons), hugging
    * its bottom edge. */
+  /**
+   * Formatting bar for the slide being edited. The canvas shows it only while
+   * the in-place editor is mounted.
+   */
+  canvasToolbar?: React.ReactNode
   canvasFooter?: React.ReactNode
   /** Rendered at the very bottom of the canvas column, below the stage/nav
    * zone (e.g. the speaker-notes panel pinned to the column footer). */
@@ -73,6 +81,7 @@ export function SongStageEditor({
   clickToEdit = false,
   onProjectSlide,
   onActiveSlideChange,
+  canvasToolbar,
   canvasFooter,
   columnFooter,
   fillHeight = false,
@@ -183,7 +192,10 @@ export function SongStageEditor({
 
   // Keep the active thumbnail in view as navigation advances (e.g. a long song
   // in PowerPoint mode): scroll the filmstrip column only when the active slide
-  // is out of view, never the page. Mirrors the classic panel's auto-scroll.
+  // or the slides right after it are out of view, never the page. When it does
+  // scroll, the active slide goes to the top, so the operator sees what is
+  // coming next — a column that only ever showed the active slide at its
+  // bottom edge told them nothing about the verse after it.
   useEffect(() => {
     const container = filmstripScrollRef.current
     if (!container || activeIndex < 0) return
@@ -191,23 +203,43 @@ export function SongStageEditor({
       `[data-slide-index="${activeIndex}"]`,
     )
     if (!active) return
+    const lastAhead = Math.min(
+      activeIndex + FILMSTRIP_LOOKAHEAD,
+      slides.length - 1,
+    )
+    const ahead =
+      container.querySelector<HTMLElement>(
+        `[data-slide-index="${lastAhead}"]`,
+      ) ?? active
     const containerRect = container.getBoundingClientRect()
     const activeRect = active.getBoundingClientRect()
+    const aheadRect = ahead.getBoundingClientRect()
     const margin = 8
-    if (activeRect.top < containerRect.top + margin) {
-      const delta = activeRect.top - containerRect.top - margin
+    if (
+      activeRect.top < containerRect.top + margin ||
+      aheadRect.bottom > containerRect.bottom - margin
+    ) {
       container.scrollTo({
-        top: container.scrollTop + delta,
-        behavior: 'smooth',
-      })
-    } else if (activeRect.bottom > containerRect.bottom - margin) {
-      const delta = activeRect.bottom - containerRect.bottom + margin
-      container.scrollTo({
-        top: container.scrollTop + delta,
+        top:
+          container.scrollTop + (activeRect.top - containerRect.top - margin),
         behavior: 'smooth',
       })
     }
-  }, [activeIndex])
+  }, [activeIndex, slides.length])
+
+  // Navigating while live also hands the keyboard to the active thumbnail.
+  // Presenting opens the projection window, which takes the keyboard as it
+  // appears; what the control window gets back has to land on something in
+  // the page, or the next arrow key goes nowhere until the operator clicks a
+  // slide. The thumbnail is a plain button, so the shortcut handlers see its
+  // keys like any other.
+  useEffect(() => {
+    if (navSeq === 0 || !navStateRef.current.isPresenting) return
+    const thumbnail = filmstripScrollRef.current?.querySelector<HTMLElement>(
+      `[data-slide-index="${activeIndex}"] [data-testid="stage-thumbnail"]`,
+    )
+    thumbnail?.focus({ preventScroll: true })
+  }, [navSeq, activeIndex])
 
   const previewContent = useMemo<TemporaryContent>(
     () => ({
@@ -221,6 +253,7 @@ export function SongStageEditor({
           content: s.content,
           chords: s.chords ?? null,
           sortOrder: s.sortOrder,
+          styleOverrides: s.styleOverrides ?? null,
         })),
         currentSlideIndex: effectiveIndex,
       },
@@ -264,6 +297,7 @@ export function SongStageEditor({
         chords: slide.chords ? [...slide.chords] : null,
         sortOrder: index + 1,
         label: slide.label,
+        styleOverrides: slide.styleOverrides ?? null,
       }
       onSlidesChange(
         reindex([
@@ -371,6 +405,7 @@ export function SongStageEditor({
               canEdit={editable && activeIndex >= 0}
               clickToEdit={clickToEdit}
               fitHeight
+              editingToolbar={canvasToolbar}
               onEditText={handleEditText}
             />
             {canvasFooter}
@@ -383,6 +418,7 @@ export function SongStageEditor({
                 previewContent={previewContent}
                 canEdit={editable && activeIndex >= 0}
                 clickToEdit={clickToEdit}
+                editingToolbar={canvasToolbar}
                 onEditText={handleEditText}
               />
             </div>

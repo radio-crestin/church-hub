@@ -48,6 +48,17 @@
     "editModeOff": "Navigate",
     "projectSlide": "Show this slide on screen",
     "toggleLayout": "Toggle PowerPoint layout",
+    "style": {
+      "increaseFontSize": "Increase text size",
+      "decreaseFontSize": "Decrease text size",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "alignLeft": "Align to the start",
+      "alignCenter": "Align to the middle",
+      "alignRight": "Align to the end",
+      "restoreDefault": "Restore the screen's default style"
+    },
     "notes": {
       "title": "Notes",
       "placeholder": "Notes for this slide…",
@@ -228,6 +239,7 @@
     "slides": "Slides",
     "noSlides": "No slides",
     "slideNumber": "Slide {{number}}",
+    "slideCounter": "Slide {{current}} of {{total}}",
     "editMode": "Edit",
     "exitEditMode": "Save",
     "saving": "Saving...",

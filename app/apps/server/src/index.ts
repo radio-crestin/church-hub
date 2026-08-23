@@ -227,6 +227,7 @@ import {
   deleteAllSceneOverrides,
   deleteSceneOverride,
   deleteScreen,
+  duplicateScreen,
   getAllScreens,
   getContentConfig,
   getNextSlideConfig,
@@ -3853,6 +3854,37 @@ async function startRealServer(): Promise<void> {
       }
 
       // DELETE /api/screens/:id - Delete screen
+      // POST /api/screens/:id/duplicate - Clone a screen with all its settings
+      const duplicateScreenMatch = url.pathname.match(
+        /^\/api\/screens\/(\d+)\/duplicate$/,
+      )
+      if (req.method === 'POST' && duplicateScreenMatch?.[1]) {
+        const permError = checkPermission('displays.create')
+        if (permError) return permError
+
+        const id = parseInt(duplicateScreenMatch[1], 10)
+        const body = (await req.json().catch(() => ({}))) as { name?: string }
+        const screen = duplicateScreen(id, body.name)
+
+        if (!screen) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Screen not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: screen }), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
       const deleteScreenMatch = url.pathname.match(/^\/api\/screens\/(\d+)$/)
       if (req.method === 'DELETE' && deleteScreenMatch?.[1]) {
         const permError = checkPermission('displays.delete')
