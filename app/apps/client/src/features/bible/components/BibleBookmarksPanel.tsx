@@ -558,28 +558,33 @@ export function BibleBookmarksPanel({
           >
             <Upload className="w-3.5 h-3.5" />
           </button>
+          {/* Export sits next to Import and stays on screen whatever the list
+              holds, so the pair never appears to come and go; it is disabled
+              rather than hidden when there is nothing to write out. */}
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={totalCount === 0 || exportMutation.isPending}
+            data-testid="bible-bookmarks-export"
+            className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+            title={
+              totalCount === 0
+                ? t('bookmarks.exportEmpty')
+                : t('bookmarks.exportAsText')
+            }
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
           {totalCount > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={exportMutation.isPending}
-                data-testid="bible-bookmarks-export"
-                className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                title={t('bookmarks.exportAsText')}
-              >
-                <Download className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => clearBookmarksMutation.mutate()}
-                disabled={clearBookmarksMutation.isPending}
-                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
-                title={t('bookmarks.clear')}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => clearBookmarksMutation.mutate()}
+              disabled={clearBookmarksMutation.isPending}
+              className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+              title={t('bookmarks.clear')}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
       </div>

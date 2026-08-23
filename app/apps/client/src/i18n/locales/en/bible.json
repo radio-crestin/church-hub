@@ -144,6 +144,7 @@
         "verse_not_found": "not in this translation",
         "no_translation": "no translation available"
       }
-    }
+    },
+    "exportEmpty": "Nothing to export yet"
   }
 }
