@@ -2,6 +2,13 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.91 — 2026-08-23
+
+### 🔧 Changes
+
+- presentation, songs, screens: multi-monitor placement, per-slide styling, stage navigation fixes
+- sync version to v0.1.90 [skip ci]
+
 ## v0.1.90 — 2026-08-01
 
 ### 🚀 Features
