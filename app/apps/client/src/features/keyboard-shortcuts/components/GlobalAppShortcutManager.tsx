@@ -6,13 +6,17 @@ import {
   useNavigateTemporary,
   useShowSlide,
 } from '~/features/presentation/hooks'
-import { useSidebarItemShortcuts } from '~/features/sidebar-config'
+import {
+  usePageShortcuts,
+  useSidebarItemShortcuts,
+} from '~/features/sidebar-config'
 import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
 import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
 import { useMIDILEDFeedback } from '../midi/hooks'
 import { focusMainWindow } from '../utils/focusMainWindow'
 import { emitFocusSearchEvent } from '../utils/focusSearchEvent'
+import { emitPageShortcutEvent } from '../utils/pageShortcutEvent'
 import { useGlobalRecordingState } from '../utils/recordingState'
 
 const logger = createLogger('keyboard-shortcuts:manager')
@@ -29,6 +33,11 @@ export function GlobalAppShortcutManager() {
   const navigateTemporary = useNavigateTemporary()
   const showSlide = useShowSlide()
   const sidebarShortcuts = useSidebarItemShortcuts()
+  const pageShortcuts = usePageShortcuts()
+  const pageShortcutKeys = useMemo(
+    () => pageShortcuts.map((entry) => entry.shortcut),
+    [pageShortcuts],
+  )
 
   // Synchronous guards to prevent multiple rapid triggers (React state can be stale)
   const isStartOperationRef = useRef(false)
@@ -161,11 +170,45 @@ export function GlobalAppShortcutManager() {
     [navigate, location],
   )
 
+  // A page-scoped key means whatever the OPEN page bound it to — and nothing
+  // at all on any other page. So "F5" can show the selected slide on Songs
+  // and the selected verse on Bible, and pressing it on Settings does nothing.
+  const handlePageShortcut = useCallback(
+    (shortcut: string) => {
+      const currentPath = location.pathname.replace(/\/$/, '')
+      const entry = pageShortcuts.find((candidate) => {
+        if (candidate.shortcut !== shortcut) return false
+        const route = candidate.route.replace(/\/$/, '')
+        return currentPath === route || currentPath.startsWith(`${route}/`)
+      })
+      if (!entry) {
+        logger.debug(
+          `Page shortcut ${shortcut} ignored: no page bound to it is open (${location.pathname})`,
+        )
+        return
+      }
+      logger.debug(
+        `Page shortcut ${shortcut} -> ${entry.pageId}.${entry.action}`,
+      )
+      if (entry.action === 'nextSlide') {
+        navigateTemporary.mutate({ direction: 'next' })
+        return
+      }
+      if (entry.action === 'prevSlide') {
+        navigateTemporary.mutate({ direction: 'prev' })
+        return
+      }
+      emitPageShortcutEvent(entry.pageId, entry.action)
+    },
+    [location.pathname, pageShortcuts, navigateTemporary],
+  )
+
   // Register keyboard shortcuts
   useGlobalAppShortcuts({
     shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,
     sceneShortcuts,
     sidebarShortcuts,
+    pageShortcuts: pageShortcutKeys,
     onStartLive: handleStartLive,
     onStopLive: handleStopLive,
     onShowSlide: handleShowSlide,
@@ -173,6 +216,7 @@ export function GlobalAppShortcutManager() {
     onPrevSlide: handlePrevSlide,
     onSceneSwitch: handleSceneSwitch,
     onSidebarNavigation: handleSidebarNavigation,
+    onPageShortcut: handlePageShortcut,
     isRecordingRef,
     isRecording: isGlobalRecording,
   })
