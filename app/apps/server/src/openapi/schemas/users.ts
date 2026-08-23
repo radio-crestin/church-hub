@@ -1,7 +1,8 @@
 export const userSchemas = {
   CurrentUser: {
     type: 'object',
-    description: 'The currently authenticated user and their effective permissions',
+    description:
+      'The currently authenticated user and their effective permissions',
     properties: {
       id: { type: 'integer', description: '0 for system-token sessions' },
       name: { type: 'string' },
