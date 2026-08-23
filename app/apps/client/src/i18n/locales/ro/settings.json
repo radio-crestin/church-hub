@@ -158,13 +158,57 @@
         "switchDescription": "Scurtătură pentru a naviga la această pagină",
         "focusSearchTitle": "Focusează Căutarea",
         "focusSearchDescription": "Scurtătură pentru a naviga la pagină și a focusa câmpul de căutare",
-        "showSlideTitle": "Afișează Slide-ul Selectat",
-        "showSlideDescription": "Scurtătură pentru a afișa slide-ul selectat pe ecran",
         "sameShortcutHint": "Poți folosi aceeași scurtătură pentru a comuta la pagină și a focusa căutarea.",
         "duplicateError": "Scurtătura există deja",
         "conflictGlobal": "Folosită deja de acțiunea globală \"{{action}}\"",
         "conflictScene": "Folosită deja de scena \"{{scene}}\"",
-        "conflictSidebar": "Folosită deja de \"{{item}}\""
+        "conflictSidebar": "Folosită deja de \"{{item}}\"",
+        "page": {
+          "title": "Doar pe această pagină",
+          "description": "Aceste taste funcționează doar cât timp pagina e deschisă, așa că aceeași tastă poate face altceva pe altă pagină. Doar tastatură — butoanele MIDI sunt globale.",
+          "default": {
+            "showSlide": {
+              "title": "Afișează elementul selectat",
+              "description": "Pune elementul selectat pe ecran"
+            },
+            "nextSlide": {
+              "title": "Următorul",
+              "description": "Trece la următorul element de pe ecran"
+            },
+            "prevSlide": {
+              "title": "Anteriorul",
+              "description": "Trece la elementul anterior de pe ecran"
+            }
+          },
+          "songs": {
+            "showSlide": {
+              "title": "Afișează slide-ul selectat",
+              "description": "Pune pe ecran slide-ul selectat din cântarea deschisă"
+            },
+            "nextSlide": {
+              "title": "Slide-ul următor",
+              "description": "Trece la slide-ul următor al cântării de pe ecran"
+            },
+            "prevSlide": {
+              "title": "Slide-ul anterior",
+              "description": "Trece la slide-ul anterior al cântării de pe ecran"
+            }
+          },
+          "bible": {
+            "showSlide": {
+              "title": "Afișează versetul selectat",
+              "description": "Pune versetul selectat pe ecran"
+            },
+            "nextSlide": {
+              "title": "Versetul următor",
+              "description": "Trece la versetul următor de pe ecran"
+            },
+            "prevSlide": {
+              "title": "Versetul anterior",
+              "description": "Trece la versetul anterior de pe ecran"
+            }
+          }
+        }
       },
       "visibility": {
         "label": "Vizibil în Bara Laterală",
@@ -200,7 +244,7 @@
         "livestream": "Live Stream",
         "livestreamDescription": "Pornește și oprește transmisiunea cu o tastă sau buton MIDI.",
         "pages": "Pagini",
-        "pagesDescription": "Navighează la o pagină și focusează căutarea."
+        "pagesDescription": "Comută la o pagină, focusează căutarea și taste care funcționează doar cât timp pagina e deschisă."
       },
       "actions": {
         "startLive": {

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SlideCounter } from './SlideCounter'
 import { useDividerPosition } from '../../../hooks/useDividerPosition'
+import { isTypingTarget } from '../../../utils/isTypingTarget'
 import type { SongSlide, SongWithSlides } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 import {
@@ -167,6 +168,14 @@ export function SongSlidesPanel({
         elementRect.top - containerRect.top + container.scrollTop
       const targetScrollTop = Math.max(0, elementTop - SCROLL_OFFSET_TOP)
       container.scrollTo({ top: targetScrollTop, behavior: 'smooth' })
+      // Hand the keyboard to the live slide as well. Presenting opens the
+      // projection window, which takes the keyboard as it appears; what the
+      // control window gets back has to land on something in the page, or the
+      // next arrow key goes nowhere until the operator clicks a slide. Never
+      // taken from a field the operator is typing in.
+      if (!isTypingTarget(document.activeElement)) {
+        element.focus({ preventScroll: true })
+      }
     }
   }, [presentedSlideIndex, isEditMode])
 
@@ -448,6 +457,7 @@ export function SongSlidesPanel({
                   ref={getRef()}
                   type="button"
                   data-testid={`song-slide-${index}`}
+                  aria-current={isPresented ? 'true' : undefined}
                   onClick={() => !isPresented && onSlideClick(slide, index)}
                   onDoubleClick={() =>
                     previewMode &&

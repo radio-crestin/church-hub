@@ -15,10 +15,11 @@ export {
   SIDEBAR_CONFIG_KEY,
 } from './constants'
 // Hooks
-export type { SidebarShortcut } from './hooks'
+export type { PageShortcut, SidebarShortcut } from './hooks'
 export {
   getIconComponent,
   SIDEBAR_CONFIG_QUERY_KEY,
+  usePageShortcuts,
   useResolvedSidebarItems,
   useSidebarConfig,
   useSidebarItemShortcuts,
@@ -35,14 +36,16 @@ export {
   saveSidebarConfiguration,
   updateCurrentWebviewBounds,
 } from './service'
-// Types
 export type {
   BuiltInItemDefinition,
   BuiltInMenuItem,
   BuiltInMenuItemId,
   CustomPageInput,
   CustomPageMenuItem,
+  PageShortcutAction,
   ResolvedMenuItem,
   SidebarConfiguration,
   SidebarMenuItem,
 } from './types'
+// Types
+export { PAGE_SHORTCUT_ACTIONS } from './types'

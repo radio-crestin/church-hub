@@ -18,6 +18,11 @@ interface ShortcutRecorderProps {
   onRemove: () => void
   error?: string
   namespace?: string
+  /**
+   * Whether a MIDI button may be recorded here (default true). Off for
+   * bindings only the client can act on — MIDI is dispatched by the server.
+   */
+  allowMidi?: boolean
 }
 
 export function ShortcutRecorder({
@@ -26,6 +31,7 @@ export function ShortcutRecorder({
   onRemove,
   error,
   namespace = 'settings',
+  allowMidi = true,
 }: ShortcutRecorderProps) {
   const { t } = useTranslation(namespace)
   const [isRecording, setIsRecording] = useState(false)
@@ -46,7 +52,7 @@ export function ShortcutRecorder({
 
   // Subscribe to MIDI messages when recording
   useEffect(() => {
-    if (!isRecording || !midi) return
+    if (!isRecording || !midi || !allowMidi) return
 
     // Request MIDI access to ensure WebSocket is connected for recording
     // This works even if MIDI is not globally enabled - we still want to capture shortcuts
@@ -66,7 +72,7 @@ export function ShortcutRecorder({
     })
 
     return unsubscribe
-  }, [isRecording, midi, recording])
+  }, [isRecording, midi, recording, allowMidi])
 
   const translationPrefix =
     namespace === 'livestream' ? 'scenes' : 'sections.shortcuts'
@@ -133,7 +139,7 @@ export function ShortcutRecorder({
         defaultValue: 'Click to record',
       })
     }
-    if (midi?.isEnabled) {
+    if (midi?.isEnabled && allowMidi) {
       return t(`${translationPrefix}.recordShortcutOrMidi`, {
         defaultValue: 'Press key or MIDI button...',
       })

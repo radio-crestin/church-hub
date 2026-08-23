@@ -24,6 +24,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePageShortcutEvent } from '~/features/keyboard-shortcuts/utils'
 import {
   clearSectionLastVisited,
   setSongsLastVisited,
@@ -642,6 +643,15 @@ function SongPreviewPage() {
     onGoBack: handleGoBack,
     enabled: classicKeyboard && presentedSlideIndex === null,
   })
+
+  // The page's own "show the selected slide" shortcut (Settings → Shortcuts →
+  // Songs). In PowerPoint mode the stage board answers it instead.
+  usePageShortcutEvent(
+    'songs',
+    'showSlide',
+    handlePresentSelectedSlide,
+    classicKeyboard,
+  )
 
   // Divider drag handlers
   const handleDividerMouseDown = useCallback(
