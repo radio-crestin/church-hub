@@ -22,7 +22,12 @@ async function search(request: APIRequestContext, query: string) {
     `/api/songs/search?q=${encodeURIComponent(query)}`,
   )
   expect(response.status()).toBe(200)
-  return (await response.json()).data as Array<{ id: number; title: string }>
+  return (await response.json()).data as Array<{
+    id: number
+    title: string
+    highlightedTitle: string
+    matchedContent: string
+  }>
 }
 
 test.describe('Song search', () => {
@@ -70,6 +75,71 @@ test.describe('Song search', () => {
     } finally {
       await request.delete(`/api/songs/${lyricsMatch.id}`).catch(() => {})
       await request.delete(`/api/songs/${titleMatch.id}`).catch(() => {})
+    }
+  })
+
+  test('one word, every spelling: hyphen, apostrophe, joined, with î', async ({
+    request,
+  }) => {
+    // "ne-ncetat", "ne'ncetat", "nencetat" and "neîncetat" are the same
+    // word in Romanian songbooks; whichever one the operator types has to
+    // find all of them, title first, and the mark has to cover the sign.
+    // A made-up word with the same shape keeps the real songbook out of it.
+    const uniq = Date.now()
+    const hyphen = await createSong(
+      request,
+      `Doamne ne-ncezat Te lăudăm ${uniq}`,
+      'Doamne, ne-ncezat Te lăudăm',
+    )
+    const apostrophe = await createSong(
+      request,
+      `Mulțimea Te-nconjoară ${uniq}`,
+      "Mulțimea Te-nconjoară, Isuse, ne'ncezat privirea",
+    )
+    const joined = await createSong(
+      request,
+      `Spune-ți nencezat la toți ${uniq}`,
+      'Spune-ți nencezat la toți să știe',
+    )
+    const withI = await createSong(
+      request,
+      `Te lăudăm neîncezat ${uniq}`,
+      'Te lăudăm neîncezat căci meriți',
+    )
+    const all = [hyphen, apostrophe, joined, withI]
+
+    try {
+      for (const query of ['ne-ncezat', "ne'ncezat", 'nencezat', 'neîncezat']) {
+        const results = await search(request, query)
+        const ids = results.map((song) => song.id)
+        for (const song of all) expect(ids, query).toContain(song.id)
+
+        // The three with the word in the title come before the lyrics-only one.
+        const lyricsOnlyIndex = ids.indexOf(apostrophe.id)
+        for (const song of [hyphen, joined, withI]) {
+          expect(ids.indexOf(song.id), query).toBeLessThan(lyricsOnlyIndex)
+        }
+      }
+
+      // The mark covers the whole word, sign included, in title and lyrics.
+      const results = await search(request, 'ne-ncezat')
+      const byId = new Map(results.map((song) => [song.id, song]))
+      expect(byId.get(hyphen.id)?.highlightedTitle).toContain(
+        '<mark>ne-ncezat</mark>',
+      )
+      expect(byId.get(withI.id)?.highlightedTitle).toContain(
+        '<mark>neîncezat</mark>',
+      )
+      expect(byId.get(joined.id)?.highlightedTitle).toContain(
+        '<mark>nencezat</mark>',
+      )
+      expect(byId.get(apostrophe.id)?.matchedContent).toMatch(
+        /<mark>ne(?:'|&#0?39;|’)ncezat<\/mark>/,
+      )
+    } finally {
+      for (const song of all) {
+        await request.delete(`/api/songs/${song.id}`).catch(() => {})
+      }
     }
   })
 })
