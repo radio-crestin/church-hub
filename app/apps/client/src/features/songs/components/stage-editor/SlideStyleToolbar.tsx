@@ -132,15 +132,39 @@ export function SlideStyleToolbar({
   // run as well as for the slide's own scale.
   const [headroom, setHeadroom] = useState(1)
   useEffect(() => {
-    // A frame late, so the measurement sees the size the fit just settled on.
-    const frame = requestAnimationFrame(() => {
-      const measured = measureSlideFontSize(canvasWidth, selection)
-      if (measured !== null) setEffectiveSize(clampSize(measured))
-      const slide = measureSlideFontSize(canvasWidth, null)
-      if (slide !== null) setSlideSize(slide)
-      setHeadroom(measureSlideFontHeadroom())
+    let frame = 0
+    const measure = () => {
+      cancelAnimationFrame(frame)
+      // A frame late, so the measurement sees the size the fit just settled on.
+      frame = requestAnimationFrame(() => {
+        const measured = measureSlideFontSize(canvasWidth, selection)
+        if (measured !== null) setEffectiveSize(clampSize(measured))
+        const slide = measureSlideFontSize(canvasWidth, null)
+        if (slide !== null) setSlideSize(slide)
+        setHeadroom(measureSlideFontHeadroom())
+      })
+    }
+    measure()
+
+    // The styled markup is re-seeded and re-fitted after the bar has already
+    // rendered with the new override, so a measurement taken then reads the
+    // size from before the change — and a second step from it lands on the
+    // same number as the first. Measuring again whenever the editor's DOM
+    // changes is what keeps the bar describing what is on the canvas.
+    const editor = document.querySelector<HTMLElement>(
+      '[data-testid="slide-canvas-editable"]',
+    )
+    const observer = editor ? new MutationObserver(measure) : null
+    observer?.observe(editor as HTMLElement, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      characterData: true,
     })
-    return () => cancelAnimationFrame(frame)
+    return () => {
+      observer?.disconnect()
+      cancelAnimationFrame(frame)
+    }
   }, [canvasWidth, override, selection])
 
   // The largest size the slide can still show. Growing past it would only
