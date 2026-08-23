@@ -503,8 +503,11 @@ export function BibleBookmarksPanel({
           operator can still Add/Import/Export/Clear. Import sits outside the
           `totalCount > 0` group because an empty list is exactly when someone
           wants to paste one in. */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-y-1 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        {/* The title keeps a floor width so it never collapses to an initial;
+            when the four actions cannot also fit, they wrap to a second row
+            instead of squeezing it. */}
+        <div className="flex min-w-[5.5rem] flex-1 items-center gap-2">
           {onToggleCollapse ? (
             <button
               type="button"
