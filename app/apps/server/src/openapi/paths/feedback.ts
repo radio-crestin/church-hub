@@ -27,7 +27,8 @@ export const feedbackPaths = {
       },
       responses: {
         '200': {
-          description: 'Logs attached (best-effort; always returns 200 unless the request is malformed)',
+          description:
+            'Logs attached (best-effort; always returns 200 unless the request is malformed)',
           content: {
             'application/json': {
               schema: {

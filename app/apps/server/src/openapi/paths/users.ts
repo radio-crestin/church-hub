@@ -56,7 +56,8 @@ export const usersPaths = {
                 permissions: { type: 'array', items: { type: 'string' } },
                 password: {
                   type: 'string',
-                  description: 'Optional login password (omit for passwordless)',
+                  description:
+                    'Optional login password (omit for passwordless)',
                 },
               },
             },
@@ -124,7 +125,7 @@ export const usersPaths = {
   '/api/users/{id}/permissions': {
     put: {
       tags: ['Users'],
-      summary: 'Replace a user\'s custom permissions',
+      summary: "Replace a user's custom permissions",
       parameters: [idParam],
       requestBody: {
         required: true,
@@ -151,7 +152,7 @@ export const usersPaths = {
   '/api/users/{id}/password': {
     put: {
       tags: ['Users'],
-      summary: 'Set or clear a user\'s login password',
+      summary: "Set or clear a user's login password",
       description: 'Send { "password": null } to remove the password.',
       parameters: [idParam],
       requestBody: {
@@ -178,7 +179,7 @@ export const usersPaths = {
   '/api/users/{id}/role': {
     put: {
       tags: ['Users'],
-      summary: 'Set a user\'s role',
+      summary: "Set a user's role",
       parameters: [idParam],
       requestBody: {
         required: true,
@@ -202,7 +203,7 @@ export const usersPaths = {
   '/api/users/{id}/regenerate-token': {
     post: {
       tags: ['Users'],
-      summary: 'Regenerate a user\'s remote-access token',
+      summary: "Regenerate a user's remote-access token",
       parameters: [idParam],
       responses: {
         '200': {
