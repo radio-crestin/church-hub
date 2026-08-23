@@ -501,7 +501,10 @@ test.describe('Per-slide text styling', () => {
       expect(await editable.innerHTML()).toContain('font-size:')
 
       // The words stay selected afterwards, so a second step still targets
-      // them instead of falling back to the whole slide.
+      // them instead of falling back to the whole slide. The bar re-measures
+      // once the canvas has re-seeded its markup; a step taken before that
+      // lands on the same number as the last one.
+      await page.waitForTimeout(600)
       await decrease.click()
       await expect
         .poll(async () => (await readOverride())?.ranges?.[0]?.fontScale ?? 1, {
@@ -584,15 +587,19 @@ test.describe('Per-slide text styling', () => {
       await expect(decrease).toBeVisible()
       await page.waitForTimeout(300)
 
-      // Two neighbouring words at two different sizes.
+      // Two neighbouring words at two different sizes: one step for the first,
+      // two for the second. Each step gives the bar a beat to re-measure the
+      // rendered size, or the next one lands on the same number.
       await select(0, 5)
       await decrease.click()
       await expect.poll(rangeCount, { timeout: 10000 }).toBe(1)
+      await page.waitForTimeout(600)
       await select(5, 9)
       await decrease.click()
-      await page.waitForTimeout(400)
+      await page.waitForTimeout(600)
       await decrease.click()
       await expect.poll(rangeCount, { timeout: 10000 }).toBe(2)
+      await page.waitForTimeout(600)
       const [first, second] = await readRanges()
       expect(first.fontScale).not.toBeCloseTo(second.fontScale ?? 0, 3)
 
