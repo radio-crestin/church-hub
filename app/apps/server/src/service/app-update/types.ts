@@ -41,6 +41,28 @@ export interface UpdateConfig {
   effectiveDownloadDir: string
 }
 
+/**
+ * What the installer window says, in the operator's language. The helper
+ * runs outside the app — after it has quit — so the client hands the texts
+ * over instead of the helper reaching for the app's translations.
+ */
+export interface UpdateInstallerLabels {
+  /** Window heading, e.g. "Church Hub". */
+  title: string
+  /** "Closing the app…" */
+  closing: string
+  /** "Installing version {{version}}…" — already interpolated. */
+  installing: string
+  /** "Starting the new version…" */
+  launching: string
+  /** Small print under the bar: "The app reopens by itself when done." */
+  hint: string
+  /** "The update could not be installed: {{reason}}" — `{{reason}}` is filled by the helper. */
+  failed: string
+  /** What to do after a failure: "Open Church Hub yourself; the installer is in the downloads folder." */
+  openManually: string
+}
+
 export interface OperationResult {
   success: boolean
   error?: string

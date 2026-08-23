@@ -1247,6 +1247,15 @@
           "filesystem": "Programul de instalare nu a putut fi salvat în folderul de descărcare. Alege alt folder mai jos și încearcă din nou.",
           "unknown": "Descărcarea a eșuat."
         }
+      },
+      "installer": {
+        "title": "Church Hub",
+        "closing": "Se închide aplicația…",
+        "installing": "Se instalează versiunea {{version}}…",
+        "launching": "Se pornește noua versiune…",
+        "hint": "Aplicația se redeschide singură când e gata.",
+        "failed": "Actualizarea nu a putut fi instalată: {{reason}}",
+        "openManually": "Deschide Church Hub manual; programul de instalare descărcat este în folderul de descărcări."
       }
     },
     "about": {
