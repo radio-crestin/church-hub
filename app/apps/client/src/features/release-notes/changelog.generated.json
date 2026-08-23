@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.1.92",
+    "date": "2026-08-23T08:26:00+02:00",
+    "features": [
+      {
+        "scope": "songs",
+        "message": "search finds a word in every spelling, title first, and the updates page shows a release-notes card with honest download errors"
+      }
+    ],
+    "bugFixes": [],
+    "changes": [
+      {
+        "scope": null,
+        "message": "sync version to v0.1.91 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.91",
     "date": "2026-08-23T03:05:31+02:00",
     "features": [],

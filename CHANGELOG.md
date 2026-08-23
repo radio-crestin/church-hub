@@ -2,6 +2,16 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.92 — 2026-08-23
+
+### 🚀 Features
+
+- **songs**: search finds a word in every spelling, title first, and the updates page shows a release-notes card with honest download errors
+
+### 🔧 Changes
+
+- sync version to v0.1.91 [skip ci]
+
 ## v0.1.91 — 2026-08-23
 
 ### 🔧 Changes
