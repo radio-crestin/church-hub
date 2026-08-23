@@ -118,3 +118,29 @@ export function clearSlideHighlights(): void {
     logger.error(`Failed to clear slide highlights: ${error}`)
   }
 }
+
+/**
+ * Replaces every highlight on the current slide in one write.
+ *
+ * Used when a saved set is poured back onto the screen - restoring one range
+ * at a time would broadcast a half-drawn slide to every connected screen.
+ */
+export function setSlideHighlights(ranges: TextStyleRange[]): TextStyleRange[] {
+  try {
+    logger.debug(`Setting ${ranges.length} slide highlights`)
+
+    const db = getDatabase()
+    const json = ranges.length > 0 ? JSON.stringify(ranges) : null
+
+    db.update(presentationState)
+      .set({ slideHighlights: json })
+      .where(eq(presentationState.id, 1))
+      .run()
+
+    logger.info(`Set ${ranges.length} highlights`)
+    return ranges
+  } catch (error) {
+    logger.error(`Failed to set slide highlights: ${error}`)
+    return getSlideHighlights()
+  }
+}

@@ -101,7 +101,35 @@ export const bibleSchemas = {
         type: 'integer',
         description: 'Position in the list shared with notes',
       },
+      styleRanges: {
+        type: 'array',
+        description:
+          'Highlights, bold and underline saved with the verse. Character offsets into the text above.',
+        items: { $ref: '#/components/schemas/BibleBookmarkStyleRange' },
+      },
       createdAt: { type: 'integer', description: 'Unix timestamp in ms' },
+    },
+  },
+  BibleBookmarkStyleRange: {
+    type: 'object',
+    description: 'One run of styling over the verse text',
+    required: ['id', 'start', 'end'],
+    properties: {
+      id: { type: 'string', description: 'Client-generated UUID' },
+      start: { type: 'integer', description: 'Character offset, inclusive' },
+      end: { type: 'integer', description: 'Character offset, exclusive' },
+      highlight: {
+        type: 'string',
+        description: 'Hex colour, e.g. #FFFF00',
+        example: '#FFFF00',
+      },
+      bold: { type: 'boolean' },
+      italic: { type: 'boolean' },
+      underline: { type: 'boolean' },
+      fontScale: {
+        type: 'number',
+        description: 'Multiplier applied to this run of text',
+      },
     },
   },
   BibleBookmarkNote: {

@@ -7,6 +7,7 @@ import {
 import {
   addBookmark,
   type BibleBookmark,
+  type BibleBookmarkStyleRange,
   clearBookmarks,
   getBookmarks,
   removeBookmark,
@@ -25,7 +26,13 @@ export function useAddBibleBookmark() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (verseId: number) => addBookmark(verseId),
+    mutationFn: ({
+      verseId,
+      styleRanges,
+    }: {
+      verseId: number
+      styleRanges?: BibleBookmarkStyleRange[]
+    }) => addBookmark(verseId, styleRanges),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BIBLE_BOOKMARKS_QUERY_KEY })
     },

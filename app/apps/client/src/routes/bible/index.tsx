@@ -39,6 +39,10 @@ import {
   useVerses,
 } from '~/features/bible'
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
+import {
+  useSetSlideHighlights,
+  useSlideHighlights,
+} from '~/features/presentation/hooks/useSlideHighlights'
 import { getBibleLastVisited, setBibleLastVisited } from '~/features/navigation'
 import {
   useClearSlide,
@@ -146,6 +150,8 @@ function BiblePage() {
   const { data: bibleBookmarks = [] } = useBibleBookmarks()
   const addBibleBookmark = useAddBibleBookmark()
   const removeBibleBookmark = useRemoveBibleBookmark()
+  const { data: slideHighlights } = useSlideHighlights()
+  const setSlideHighlights = useSetSlideHighlights()
 
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.bibleLeft,
@@ -708,9 +714,26 @@ function BiblePage() {
   const isCurrentVerseBookmarked = bookmarksForFocusedVerse.length > 0
 
   /**
+   * The live highlights, but only when they actually belong to the verse in
+   * focus. Highlights are character offsets kept in a single global row, so
+   * once a different verse is on screen the same numbers point at the wrong
+   * words - saving them then would attach someone else's marking to a verse.
+   */
+  const highlightsForFocusedVerse = useMemo(() => {
+    // focusedVerse prefers presentedIndex, so a non-null one means the verse in
+    // focus is the one on screen and the offsets line up with its text.
+    if (navigation.state.presentedIndex === null) return []
+    return slideHighlights ?? []
+  }, [navigation.state.presentedIndex, slideHighlights])
+
+  /**
    * Bookmarks the verse in focus, or clears it. A verse can be bookmarked more
    * than once (the panel and the import both allow duplicates), so turning the
    * toggle off removes every copy - otherwise it would stay lit after a click.
+   *
+   * Whatever highlighting is on the verse right now is saved with it. Live
+   * highlights are wiped when the slide is hidden, so the bookmark keeping its
+   * own copy is the only way that marking survives the service.
    */
   const handleToggleBookmark = useCallback(() => {
     if (!focusedVerse) return
@@ -722,11 +745,15 @@ function BiblePage() {
       return
     }
 
-    addBibleBookmark.mutate(focusedVerse.id)
+    addBibleBookmark.mutate({
+      verseId: focusedVerse.id,
+      styleRanges: highlightsForFocusedVerse,
+    })
   }, [
     focusedVerse,
     isCurrentVerseBookmarked,
     bookmarksForFocusedVerse,
+    highlightsForFocusedVerse,
     removeBibleBookmark,
     addBibleBookmark,
   ])
@@ -867,6 +894,24 @@ function BiblePage() {
         secondaryTranslationAbbreviation,
       })
 
+      // Bring back whatever highlighting was saved with this verse. Live
+      // highlights are one global set wiped on hide, so without this the
+      // marking a bookmark holds would never reach the screen again. The most
+      // recent bookmark of the verse wins when it has been saved twice; an
+      // empty set clears the previous slide's marks rather than letting them
+      // bleed onto this verse.
+      const savedStyleRanges =
+        [...bibleBookmarks]
+          .reverse()
+          .find(
+            (bookmark) =>
+              bookmark.verseId === verse.id && bookmark.styleRanges.length > 0,
+          )?.styleRanges ?? []
+
+      if (savedStyleRanges.length > 0 || (slideHighlights?.length ?? 0) > 0) {
+        setSlideHighlights.mutate(savedStyleRanges)
+      }
+
       // Add to Bible history
       addToHistory.mutate({
         verseId: verse.id,
@@ -885,6 +930,9 @@ function BiblePage() {
       secondaryTranslation,
       presentTemporaryBible,
       addToHistory,
+      bibleBookmarks,
+      slideHighlights,
+      setSlideHighlights,
     ],
   )
 

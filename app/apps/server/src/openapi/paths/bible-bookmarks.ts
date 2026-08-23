@@ -44,7 +44,7 @@ export const bibleBookmarksPaths = {
       tags: ['Bible'],
       summary: 'Bookmark a verse',
       description:
-        'Appends a verse to the end of the list. The verse is looked up server-side, so only its ID is needed. The same verse may be bookmarked more than once.',
+        'Appends a verse to the end of the list. The verse is looked up server-side, so only its ID is needed, and any highlighting drawn on it can be saved alongside. The same verse may be bookmarked more than once.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
@@ -55,6 +55,14 @@ export const bibleBookmarksPaths = {
               required: ['verseId'],
               properties: {
                 verseId: { type: 'integer', description: 'Verse to bookmark' },
+                styleRanges: {
+                  type: 'array',
+                  description:
+                    'Highlights and underlines drawn on this verse while it was on screen. Offsets are into this verse only, so ranges falling outside its text are discarded.',
+                  items: {
+                    $ref: '#/components/schemas/BibleBookmarkStyleRange',
+                  },
+                },
               },
             },
           },

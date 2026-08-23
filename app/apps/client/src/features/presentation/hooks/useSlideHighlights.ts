@@ -5,6 +5,7 @@ import {
   clearSlideHighlights,
   getSlideHighlights,
   removeSlideHighlight,
+  setSlideHighlights,
 } from '../service/highlights'
 import type { AddHighlightInput, TextStyleRange } from '../types'
 
@@ -73,6 +74,21 @@ export function useClearSlideHighlights() {
     onSuccess: () => {
       // Clear the cache
       queryClient.setQueryData(slideHighlightsQueryKey, [])
+    },
+  })
+}
+
+/**
+ * Hook to replace every highlight on the current slide at once, used when a
+ * bookmark's saved styling is poured back onto the screen.
+ */
+export function useSetSlideHighlights() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (ranges: TextStyleRange[]) => setSlideHighlights(ranges),
+    onSuccess: (data) => {
+      queryClient.setQueryData(slideHighlightsQueryKey, data)
     },
   })
 }

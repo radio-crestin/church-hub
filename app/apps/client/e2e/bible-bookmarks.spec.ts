@@ -157,6 +157,73 @@ test.describe('Bible bookmarks', () => {
     expect(reexported.data).toBe(exported.data)
   })
 
+  test('a bookmark keeps the highlighting drawn on the verse', async ({
+    request,
+  }) => {
+    const search = await (
+      await request.get('/api/bible/search?q=Ioan%203:16')
+    ).json()
+    const verse = search.data.results[0]
+    expect(verse).toBeTruthy()
+
+    await request.post('/api/bible-bookmarks', {
+      data: {
+        verseId: verse.id,
+        styleRanges: [
+          { id: 'h1', start: 0, end: 8, highlight: '#FFFF00' },
+          { id: 'h2', start: 9, end: 13, underline: true },
+          // Offsets past the end of this verse belong to some other slide and
+          // must not be stored.
+          { id: 'stale', start: 5000, end: 5100, bold: true },
+        ],
+      },
+    })
+
+    const list = await (await request.get('/api/bible-bookmarks')).json()
+    const saved = list.data[0]
+
+    expect(saved.styleRanges).toHaveLength(2)
+    expect(saved.styleRanges[0]).toMatchObject({
+      id: 'h1',
+      highlight: '#FFFF00',
+    })
+    expect(saved.styleRanges[1]).toMatchObject({ id: 'h2', underline: true })
+    // The offsets still point at the words they were drawn over.
+    expect(saved.text.slice(0, 8)).toBe('Fiindcă ')
+  })
+
+  test('a bookmark saved without highlighting reports none', async ({
+    request,
+  }) => {
+    await request.post('/api/bible-bookmarks/import', {
+      data: { text: 'Ioan 3:16' },
+    })
+
+    const list = await (await request.get('/api/bible-bookmarks')).json()
+    expect(list.data[0].styleRanges).toEqual([])
+  })
+
+  test('saved highlighting can be put back on the live slide', async ({
+    request,
+  }) => {
+    const ranges = [{ id: 'r1', start: 0, end: 4, highlight: '#FFFF00' }]
+
+    await request.put('/api/presentation/highlights', { data: { ranges } })
+    const applied = await (
+      await request.get('/api/presentation/highlights')
+    ).json()
+    expect(applied.data).toHaveLength(1)
+    expect(applied.data[0]).toMatchObject({ id: 'r1', highlight: '#FFFF00' })
+
+    // An empty set clears them, so a verse with no saved marking does not
+    // inherit the previous slide's.
+    await request.put('/api/presentation/highlights', { data: { ranges: [] } })
+    const cleared = await (
+      await request.get('/api/presentation/highlights')
+    ).json()
+    expect(cleared.data).toEqual([])
+  })
+
   test('a chapter-only reference is refused rather than expanded', async ({
     request,
   }) => {

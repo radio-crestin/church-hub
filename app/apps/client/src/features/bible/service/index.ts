@@ -16,6 +16,7 @@ export type {
   BibleBookmarkImportResult,
   BibleBookmarkItemRef,
   BibleBookmarkNote,
+  BibleBookmarkStyleRange,
 } from './bookmarks'
 export {
   addBookmark,

@@ -218,6 +218,13 @@
       "when": 1768900000000,
       "tag": "0030_add_bible_bookmarks",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1769000000000,
+      "tag": "0031_add_bible_bookmark_style_ranges",
+      "breakpoints": true
     }
   ]
 }

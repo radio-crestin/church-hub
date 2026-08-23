@@ -232,6 +232,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0030_add_bible_bookmarks',
       breakpoints: true,
     },
+    {
+      idx: 31,
+      version: '6',
+      when: 1769000000000,
+      tag: '0031_add_bible_bookmark_style_ranges',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -390,5 +397,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0030_add_bible_bookmarks',
     sql: 'CREATE TABLE IF NOT EXISTS `bible_bookmarks` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`verse_id` integer NOT NULL,\n\t`reference` text NOT NULL,\n\t`text` text NOT NULL,\n\t`translation_abbreviation` text NOT NULL,\n\t`book_name` text NOT NULL,\n\t`book_code` text NOT NULL,\n\t`translation_id` integer NOT NULL,\n\t`book_id` integer NOT NULL,\n\t`chapter` integer NOT NULL,\n\t`verse` integer NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_bible_bookmarks_verse_id` ON `bible_bookmarks` (`verse_id`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_bible_bookmarks_sort_order` ON `bible_bookmarks` (`sort_order`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_bible_bookmarks_created_at` ON `bible_bookmarks` (`created_at`);\n--> statement-breakpoint\nCREATE TABLE IF NOT EXISTS `bible_bookmark_notes` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`content` text NOT NULL,\n\t`sort_order` integer DEFAULT 0 NOT NULL,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_bible_bookmark_notes_sort_order` ON `bible_bookmark_notes` (`sort_order`);\n',
     when: 1768900000000,
+  },
+  {
+    tag: '0031_add_bible_bookmark_style_ranges',
+    sql: 'ALTER TABLE `bible_bookmarks` ADD `style_ranges` text;\n',
+    when: 1769000000000,
   },
 ]
