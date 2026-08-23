@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.1.94",
+    "date": "2026-08-23T16:49:59+02:00",
+    "features": [],
+    "bugFixes": [
+      {
+        "scope": "presentation",
+        "message": "keep the keyboard live after Present, and make page shortcuts mean their page"
+      }
+    ],
+    "changes": [
+      {
+        "scope": null,
+        "message": "sync version to v0.1.93 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.93",
     "date": "2026-08-23T16:01:08+02:00",
     "features": [],
