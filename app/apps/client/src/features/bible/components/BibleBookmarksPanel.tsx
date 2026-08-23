@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next'
 import { applyStylesToText } from '~/features/presentation/utils/applyStylesToText'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
+import { saveTextFile } from '~/utils/saveTextFile'
 import { ImportBibleBookmarksModal } from './ImportBibleBookmarksModal'
 import {
   useAddBibleBookmarkNote,
@@ -450,34 +451,10 @@ export function BibleBookmarksPanel({
     const text = await exportMutation.mutateAsync()
     if (!text) return
 
-    const defaultFilename = `bible-bookmarks-${new Date().toISOString().split('T')[0]}.txt`
-
-    const isTauri =
-      typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-    if (isTauri) {
-      const { save } = await import('@tauri-apps/plugin-dialog')
-      const { writeTextFile } = await import('@tauri-apps/plugin-fs')
-
-      const savePath = await save({
-        defaultPath: defaultFilename,
-        filters: [{ name: 'Text File', extensions: ['txt'] }],
-      })
-
-      if (savePath) {
-        await writeTextFile(savePath, text)
-      }
-    } else {
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = defaultFilename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }
+    await saveTextFile({
+      content: text,
+      defaultFilename: `bible-bookmarks-${new Date().toISOString().split('T')[0]}.txt`,
+    })
   }, [exportMutation])
 
   const isSearching = searchQuery.trim().length > 0
