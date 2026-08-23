@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.1.91",
+    "date": "2026-08-23T02:41:36+02:00",
+    "features": [],
+    "bugFixes": [],
+    "changes": [
+      {
+        "scope": null,
+        "message": "presentation, songs, screens: multi-monitor placement, per-slide styling, stage navigation fixes"
+      },
+      {
+        "scope": null,
+        "message": "sync version to v0.1.90 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.90",
     "date": "2026-08-01T23:45:29+02:00",
     "features": [
