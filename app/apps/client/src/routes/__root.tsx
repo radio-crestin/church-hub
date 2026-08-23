@@ -203,6 +203,12 @@ function MainLayout() {
 function RootComponent() {
   const location = useLocation()
 
+  // A monitor badge is a plate with a number on it, up for three seconds.
+  // It reads nothing and talks to nobody, so it gets no providers at all.
+  if (location.pathname.startsWith('/monitor-badge/')) {
+    return <Outlet />
+  }
+
   // Use minimal layout for screen routes (display windows)
   if (location.pathname.startsWith('/screen/')) {
     return <ScreenLayout />

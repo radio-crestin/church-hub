@@ -6,6 +6,7 @@ import {
 } from './utils/fontFitting'
 import { getTextStyleCSS } from './utils/styleUtils'
 import { compressLines } from './utils/textProcessing'
+import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
 import type { TextStyle } from '../../types'
 
 /**
@@ -37,7 +38,7 @@ function decodeHtmlEntities(text: string): string {
  * Preprocesses HTML to normalize block elements into newlines.
  */
 function normalizeBlockElements(html: string): string {
-  return (
+  return attachRepetitionMarkers(
     html
       // Replace </p><p> with newline (paragraph transitions)
       .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
@@ -46,7 +47,7 @@ function normalizeBlockElements(html: string): string {
       // Remove opening block tags
       .replace(/<(p|div|h[1-6])[^>]*>/gi, '')
       // Replace closing block tags with newline
-      .replace(/<\/(p|div|h[1-6])>/gi, '\n')
+      .replace(/<\/(p|div|h[1-6])>/gi, '\n'),
   )
 }
 

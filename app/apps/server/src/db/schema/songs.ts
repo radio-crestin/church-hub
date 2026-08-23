@@ -117,6 +117,10 @@ export const songSlides = sqliteTable(
     // Free-text speaker note for this slide (PowerPoint-style "what happens on
     // this slide"). Shown/edited in the notes panel below the stage canvas.
     notes: text('notes'),
+    // JSON `SlideStyleOverride`: how THIS slide departs from the screen's
+    // default text style (font scale, alignment, bold/italic/underline, and
+    // per-selection ranges). NULL = follow the screen settings exactly.
+    styleOverrides: text('style_overrides'),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()

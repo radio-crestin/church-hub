@@ -1,10 +1,71 @@
-import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 
 import { calculateFontSize } from './utils/calculateFontSize'
+import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { sanitizePastedText } from './utils/sanitizePastedText'
-import type { TextStyle } from '../../types'
+import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
+import type { TextStyle, TextStyleRange } from '../../types'
+import { applyStylesToText } from '../../utils/applyStylesToText'
+
+/** Character offsets of the current selection inside `root`. */
+function selectionOffsets(
+  root: HTMLElement,
+): { start: number; end: number } | null {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return null
+  const range = selection.getRangeAt(0)
+  if (!root.contains(range.commonAncestorContainer)) return null
+
+  const offsetOf = (node: Node, nodeOffset: number): number => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    let offset = 0
+    let current: Node | null = walker.nextNode()
+    while (current) {
+      if (current === node) return offset + nodeOffset
+      offset += current.textContent?.length ?? 0
+      current = walker.nextNode()
+    }
+    return offset
+  }
+
+  return {
+    start: offsetOf(range.startContainer, range.startOffset),
+    end: offsetOf(range.endContainer, range.endOffset),
+  }
+}
+
+/** Puts the caret/selection back where it was after the DOM has been re-seeded. */
+function restoreSelection(
+  root: HTMLElement,
+  offsets: { start: number; end: number },
+): void {
+  const locate = (target: number): { node: Node; offset: number } | null => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    let seen = 0
+    let current: Node | null = walker.nextNode()
+    while (current) {
+      const length = current.textContent?.length ?? 0
+      if (seen + length >= target)
+        return { node: current, offset: target - seen }
+      seen += length
+      current = walker.nextNode()
+    }
+    return current ? { node: current, offset: 0 } : null
+  }
+
+  const start = locate(offsets.start)
+  const end = locate(offsets.end)
+  if (!start || !end) return
+
+  const range = document.createRange()
+  range.setStart(start.node, start.offset)
+  range.setEnd(end.node, end.offset)
+  const selection = window.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
 
 interface EditableMainTextProps {
   /** Current slide HTML content */
@@ -29,6 +90,10 @@ interface EditableMainTextProps {
   placeholder?: string
   /** Called with the plain-text value (newline-separated lines) on every edit */
   onEdit: (plainText: string) => void
+  /** Inline styling for runs of the slide's text (per-slide formatting). */
+  styleRanges?: TextStyleRange[]
+  /** Per-slide font multiplier, applied to the auto-fitted size. */
+  contentScale?: number
 }
 
 /**
@@ -48,42 +113,140 @@ export function EditableMainText({
   editKey,
   placeholder,
   onEdit,
+  styleRanges,
+  contentScale = 1,
 }: EditableMainTextProps) {
   const editRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
   const seededKeyRef = useRef<string | null>(null)
+  // The last run of text the operator actually selected here. Formatting is
+  // applied from the toolbar, which takes focus away and collapses the live
+  // selection, so this is what puts the selection back after the styled markup
+  // is re-seeded — and what keeps the words selected for a second change.
+  const lastSelectionRef = useRef<{ start: number; end: number } | null>(null)
 
-  const normalizedText = normalizeText(content, true)
+  useEffect(() => {
+    const remember = () => {
+      const editor = editRef.current
+      const anchor = window.getSelection()?.anchorNode
+      if (!editor || !anchor || !editor.contains(anchor)) return
+      const offsets = selectionOffsets(editor)
+      if (offsets && offsets.start !== offsets.end) {
+        lastSelectionRef.current = offsets
+      }
+    }
+    document.addEventListener('selectionchange', remember)
+    return () => document.removeEventListener('selectionchange', remember)
+  }, [])
+
+  // The editor shows the same glued markers the projection does, but the text
+  // handed back to the caller gets plain spaces again so nothing stores a
+  // non-breaking space in the slide HTML.
+  const normalizedText = attachRepetitionMarkers(normalizeText(content, true))
+
+  // The markup the slide renders, shared by the seeding below and the fit: an
+  // enlarged run only exists as `font-size: Xem` markup, so a fit that measures
+  // plain text cannot tell that the slide has outgrown its box.
+  const styledHtml =
+    styleRanges && styleRanges.length > 0
+      ? applyStylesToText(normalizedText, styleRanges)
+      : null
 
   // Recompute the auto-scaled font size to fit the current text in the box.
   const fit = useCallback(() => {
     if (!measureRef.current || !editRef.current) return
+    // What the editor reads back, not what the DOM happens to hold: a
+    // contentEditable keeps a trailing line break and non-breaking spaces that
+    // would measure as extra lines the slide does not have.
+    const text = editRef.current.innerText
+      .replace(/\u00a0/g, ' ')
+      .replace(/\n$/, '')
+    const minFontSize = style.minFontSize ?? 12
     const fontSize = calculateFontSize(
       measureRef.current,
-      editRef.current.innerText,
+      text,
       width,
       height,
       style.maxFontSize,
-      style.minFontSize ?? 12,
+      minFontSize,
     )
-    editRef.current.style.fontSize = `${fontSize}px`
-  }, [width, height, style.maxFontSize, style.minFontSize])
 
-  // Seed the editable text only when switching to a different slide. While the
-  // same slide is being edited we leave the DOM alone so the caret is preserved.
+    // The size at which the slide exactly fills its box. The scaled size is held
+    // to it so growing the text can never push it off the top or the bottom of
+    // the screen, and the ratio between the two is the room the formatting bar
+    // still has to grow \u2014 one is useless without the other, so both are measured
+    // here, where the rendered markup is.
+    const boxMax = fitFontSizeToBounds(
+      measureRef.current,
+      text,
+      styledHtml,
+      Math.ceil(height),
+      width,
+      height,
+      minFontSize,
+    )
+    const applied = Math.min(fontSize * contentScale, boxMax)
+    editRef.current.style.fontSize = `${applied}px`
+    editRef.current.dataset.fitHeadroom = String(
+      applied > 0 ? boxMax / applied : 1,
+    )
+  }, [
+    width,
+    height,
+    style.maxFontSize,
+    style.minFontSize,
+    contentScale,
+    styledHtml,
+  ])
+
+  // Styled runs are re-seeded as markup, so formatting a selection shows up in
+  // the editor at once instead of only after leaving edit mode.
+  const rangesKey = useMemo(
+    () => JSON.stringify(styleRanges ?? []),
+    [styleRanges],
+  )
+
+  // Seed the editable text when switching to a different slide, or when the
+  // slide's inline styling changes. While the same slide is merely being typed
+  // in we leave the DOM alone so the caret is preserved; on a styling change we
+  // re-seed and put the selection back where the operator left it.
   useLayoutEffect(() => {
-    if (!editRef.current) return
-    if (seededKeyRef.current !== editKey) {
-      editRef.current.innerText = normalizedText
-      seededKeyRef.current = editKey
+    const editor = editRef.current
+    if (!editor) return
+
+    const seedKey = `${editKey}|${rangesKey}`
+    if (seededKeyRef.current !== seedKey) {
+      const sameSlide = seededKeyRef.current?.startsWith(`${editKey}|`) === true
+      const live = selectionOffsets(editor)
+      // A collapsed caret means the toolbar took focus; the run the operator
+      // had selected is the one to restore, not the caret.
+      const selection = sameSlide
+        ? live && live.start !== live.end
+          ? live
+          : (lastSelectionRef.current ?? live)
+        : null
+
+      if (styledHtml !== null) {
+        editor.innerHTML = styledHtml
+      } else {
+        editor.innerText = normalizedText
+      }
+      seededKeyRef.current = seedKey
+
+      if (selection) restoreSelection(editor, selection)
     }
     fit()
-  }, [editKey, normalizedText, fit])
+  }, [editKey, rangesKey, normalizedText, styledHtml, fit])
+
+  // A new slide starts with no remembered selection of its own.
+  useEffect(() => {
+    lastSelectionRef.current = null
+  }, [editKey])
 
   const handleInput = useCallback(() => {
     if (!editRef.current) return
     fit()
-    onEdit(editRef.current.innerText)
+    onEdit(editRef.current.innerText.replace(/\u00a0/g, ' '))
   }, [fit, onEdit])
 
   // Force a PLAIN-text paste. The browser's default paste inserts the
@@ -124,6 +287,11 @@ export function EditableMainText({
         ? 'flex-end'
         : 'center'
 
+  // Vertical alignment lives on the container, not on the editable itself.
+  // A contentEditable that is a flex container turns every element inside it
+  // into a flex item, so each styled run and each line break became its own
+  // full-width row: words split mid-line and the lines drifted apart. As a
+  // plain block it lays text out exactly like the read-only renderer does.
   const containerStyle: React.CSSProperties = {
     position: 'absolute',
     left,
@@ -131,16 +299,16 @@ export function EditableMainText({
     width,
     height,
     overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: verticalAlign,
   }
 
   const editableStyle: React.CSSProperties = {
     ...textStyles,
-    fontSize: `${style.maxFontSize}px`, // overwritten by fit()
+    // Carries the slide's own scale so the first paint matches the projection.
+    fontSize: `${style.maxFontSize * contentScale}px`, // refined by fit()
     width: '100%',
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: verticalAlign,
     whiteSpace: 'pre-wrap',
     wordWrap: 'break-word',
     outline: 'none',
@@ -182,6 +350,9 @@ export function EditableMainText({
             ...editableStyle,
             position: 'absolute',
             inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: verticalAlign,
             opacity: 0.4,
             pointerEvents: 'none',
             fontSize: `${Math.min(style.maxFontSize, 48)}px`,

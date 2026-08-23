@@ -10,7 +10,7 @@ import { getBackgroundCSS } from './utils'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
-import { useUpsertScreen, useWebSocket } from '../../hooks'
+import { useClearSlide, useWebSocket } from '../../hooks'
 import { usePresentationContent } from '../../hooks/usePresentationContent'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
@@ -32,8 +32,8 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const navigate = useNavigate()
 
   const { data: screenData, isLoading, isError } = useScreen(screenId)
-  const upsertScreen = useUpsertScreen()
   const { data: kioskSettings } = useKioskSettings()
+  const clearSlide = useClearSlide()
   const { data: slideHighlights } = useSlideHighlights()
   const { currentScene } = useOBSScenes()
 
@@ -96,10 +96,14 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showToolbar, setShowToolbar] = useState(false)
   const toolbarTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const userExitedFullscreenRef = useRef(false)
 
   // Track if we're in a native display window (fullscreen only allowed there)
   const [isNativeDisplayWindow, setIsNativeDisplayWindow] = useState(false)
+  const appliedInitialFullscreenRef = useRef(false)
+  // What this window was last asked to be, which is not what it will admit to:
+  // a window held in macOS simple fullscreen reports that it is windowed. Null
+  // until the screen has been read, i.e. until nobody has asked it anything.
+  const desiredFullscreenRef = useRef<boolean | null>(null)
 
   // Track container dimensions (start at 0, render only when measured)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
@@ -151,7 +155,60 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     detectDisplayWindow()
   }, [])
 
-  // Track fullscreen state and auto-switch to fullscreen on maximize
+  // Fill the display, if that is what the screen is set to.
+  //
+  // Done from inside the projection window rather than by whoever opened it:
+  // asking a window to go fullscreen from another window's context is refused
+  // on macOS without a word, which is why the projection kept coming up as a
+  // window and had to be sent fullscreen by hand. The opener has already put
+  // this window on the right monitor, so this fills that one.
+  //
+  // Once per window, never on a later re-read of the screen: the operator
+  // leaving fullscreen writes it to the screen, and re-applying on that change
+  // would put them straight back.
+  useEffect(() => {
+    if (
+      !isNativeDisplayWindow ||
+      !screen ||
+      appliedInitialFullscreenRef.current
+    )
+      return
+    appliedInitialFullscreenRef.current = true
+    desiredFullscreenRef.current = screen.isFullscreen
+    if (!screen.isFullscreen || !isTauri()) return
+
+    const fillDisplay = async () => {
+      try {
+        const { getCurrentWebviewWindow } = await import(
+          '@tauri-apps/api/webviewWindow'
+        )
+        const win = getCurrentWebviewWindow()
+        if (!(await win.isFullscreen())) {
+          await setWindowFullscreen(win, true)
+        }
+        setIsFullscreen(true)
+        // Going fullscreen restyles the window, which on macOS drops it back to
+        // the ordinary level and hides the projection behind the control room.
+        if (screen.alwaysOnTop) {
+          await win.setAlwaysOnTop(true)
+        }
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+        console.error('[ScreenRenderer] Failed to fill the display:', error)
+      }
+    }
+
+    fillDisplay()
+  }, [isNativeDisplayWindow, screen])
+
+  // Follow the window's own fullscreen state.
+  //
+  // A maximised projection window used to be promoted to fullscreen from here,
+  // which is why opening one looked like an animation: it appeared windowed,
+  // maximised, and only then filled the screen. It also overrode the operator —
+  // leaving fullscreen and resizing the window put it straight back. The window
+  // is now built fullscreen or windowed as the screen records it, and only the
+  // toolbar changes that.
   useEffect(() => {
     let unlistenResize: (() => void) | null = null
 
@@ -164,50 +221,20 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         )
         const win = getCurrentWebviewWindow()
 
-        // Only apply fullscreen logic to native display windows
-        const isDisplayWindow = win.label.startsWith('display-')
-
-        // Check initial fullscreen state
-        const fs = await win.isFullscreen()
-        setIsFullscreen(fs)
-
-        // Listen for resize events to detect maximize
-        unlistenResize = await win.listen('tauri://resize', async () => {
-          const isMaximized = await win.isMaximized()
-          const isFs = await win.isFullscreen()
-
-          // If window is maximized but not fullscreen, switch to fullscreen
-          // But only if user didn't just exit fullscreen manually
-          // And only for native display windows
-          if (
-            isDisplayWindow &&
-            isMaximized &&
-            !isFs &&
-            !userExitedFullscreenRef.current
-          ) {
-            await setWindowFullscreen(win, true)
-            setIsFullscreen(true)
-
-            // Save to database
-            if (screen) {
-              upsertScreen.mutate({
-                id: screen.id,
-                name: screen.name,
-                type: screen.type,
-                isFullscreen: true,
-              })
-            }
+        // The window is only asked while nothing has been asked of it: one held
+        // in macOS simple fullscreen reports that it is not fullscreen at all,
+        // and believing it would offer the operator a button that tries to
+        // enter fullscreen again instead of leaving it.
+        const readFullscreen = async () => {
+          if (desiredFullscreenRef.current !== null) {
+            setIsFullscreen(desiredFullscreenRef.current)
+            return
           }
-
-          // Reset the flag after a short delay to allow re-maximizing later
-          if (!isMaximized && userExitedFullscreenRef.current) {
-            setTimeout(() => {
-              userExitedFullscreenRef.current = false
-            }, 500)
-          }
-
           setIsFullscreen(await win.isFullscreen())
-        })
+        }
+
+        await readFullscreen()
+        unlistenResize = await win.listen('tauri://resize', readFullscreen)
       } catch (_error) {}
     }
 
@@ -238,7 +265,7 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         unlistenResize()
       }
     }
-  }, [screen, upsertScreen])
+  }, [])
 
   // Helper function for browser fullscreen (cross-browser support)
   const useBrowserFullscreen = async (
@@ -305,14 +332,14 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       return
     }
 
-    const newFullscreen = !isFullscreen
+    // What this window was last asked to be, not what it reports: a window in
+    // macOS simple fullscreen says it is windowed, and toggling from that would
+    // try to enter fullscreen a second time instead of leaving — the operator
+    // could never get the projection back into a window they can move.
+    const newFullscreen = !(desiredFullscreenRef.current ?? isFullscreen)
+    desiredFullscreenRef.current = newFullscreen
     // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
     console.log(`[toggleFullscreen] Toggling fullscreen to: ${newFullscreen}`)
-
-    // If exiting fullscreen, set flag to prevent auto-fullscreen on resize
-    if (!newFullscreen) {
-      userExitedFullscreenRef.current = true
-    }
 
     let success = false
 
@@ -377,16 +404,26 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
       console.error('[toggleFullscreen] All fullscreen methods failed')
     }
 
-    // Save fullscreen state to database
-    if (screen) {
-      upsertScreen.mutate({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        isFullscreen: newFullscreen,
-      })
+    // Taking the decorations on or off rebuilds the window's style on macOS,
+    // which drops it back to the ordinary level — a projection that stops
+    // floating vanishes behind the control room.
+    if (screen?.alwaysOnTop && isTauri()) {
+      try {
+        const { getCurrentWebviewWindow } = await import(
+          '@tauri-apps/api/webviewWindow'
+        )
+        await getCurrentWebviewWindow().setAlwaysOnTop(true)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri
+        console.error('[toggleFullscreen] Failed to re-assert on top:', error)
+      }
     }
-  }, [isFullscreen, isNativeDisplayWindow, screen, upsertScreen])
+
+    // Deliberately not written back to the screen. `isFullscreen` is how the
+    // projection *opens*, and it is set in the screen settings; leaving
+    // fullscreen for a moment during a service used to overwrite it, so every
+    // later open came up as a window until someone went fullscreen by hand.
+  }, [isFullscreen, isNativeDisplayWindow, screen])
 
   // Show toolbar on mouse move near the top
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -471,18 +508,26 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     }
   }, [isKioskModeScreen, screen])
 
-  // Handle keyboard shortcuts
+  // Handle keyboard shortcuts. The projection window carries no app chrome and
+  // none of the control window's shortcut registry, so Escape is wired here:
+  // on a single monitor the projection is what has focus after it opens, and
+  // pressing Escape there used to do nothing at all.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F11') {
         e.preventDefault()
         toggleFullscreen()
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        clearSlide.mutate()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [toggleFullscreen])
+  }, [toggleFullscreen, clearSlide])
 
   // Clock tick for real-time updates (must be before any early returns)
   const [, setClockTick] = useState(0)

@@ -1,3 +1,5 @@
+import type { SlideStyleOverride } from '../songs/types'
+
 /**
  * Display open mode - browser tab or native Tauri window
  */
@@ -91,6 +93,8 @@ export interface TemporarySongSlide {
   content: string
   chords?: ChordMapping[] | null
   sortOrder: number
+  /** Per-slide text styling; null when the screen defaults apply. */
+  styleOverrides?: SlideStyleOverride | null
 }
 
 export interface ChordMapping {
@@ -432,6 +436,11 @@ export interface Screen {
   isPreviewScreen: boolean
   /** Open this screen's window automatically when the app launches. */
   openOnStartup: boolean
+  /**
+   * Name of the monitor this screen projects onto, as the OS reports it, or
+   * null to open wherever the window lands.
+   */
+  monitorName: string | null
   width: number
   height: number
   globalSettings: ScreenGlobalSettings
@@ -606,6 +615,8 @@ export interface UpsertScreenInput {
   closeOnEscape?: boolean
   isPreviewScreen?: boolean
   openOnStartup?: boolean
+  /** Monitor to project onto, or null to open wherever the window lands. */
+  monitorName?: string | null
   width?: number
   height?: number
   globalSettings?: ScreenGlobalSettings

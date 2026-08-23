@@ -1,6 +1,7 @@
 import {
   AppWindow,
   Copy,
+  CopyPlus,
   DoorClosed,
   DoorOpen,
   Edit,
@@ -8,6 +9,8 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  Maximize,
+  Minimize,
   MonitorUp,
   Pin,
   PinOff,
@@ -23,9 +26,11 @@ import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { useToast } from '~/ui/toast/useToast'
 import { ScreenExportModal } from './ScreenExportModal'
+import { ScreenMonitorPicker } from './ScreenMonitorPicker'
 import {
   useBatchUpdateScreenConfig,
   useDeleteScreen,
+  useDuplicateScreen,
   useScreen,
   useScreens,
   useUpsertScreen,
@@ -73,6 +78,7 @@ export function ScreenManager() {
   const { data: screens, isLoading } = useScreens()
   const upsertScreen = useUpsertScreen()
   const deleteScreen = useDeleteScreen()
+  const duplicateScreen = useDuplicateScreen()
   const batchUpdateConfig = useBatchUpdateScreenConfig()
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -170,13 +176,7 @@ export function ScreenManager() {
           type: screen.type,
           isActive: true,
         })
-        await openDisplayWindow(
-          screen.id,
-          'native',
-          screen.isFullscreen,
-          screen.name,
-          screen.alwaysOnTop,
-        )
+        await openDisplayWindow(screen)
         showToast(
           t('settings:sections.screens.toast.windowOpened', {
             name: screen.name,
@@ -196,6 +196,20 @@ export function ScreenManager() {
       showToast(t('settings:sections.screens.toast.urlCopied'), 'success')
     } catch {
       showToast(t('settings:sections.screens.toast.copyError'), 'error')
+    }
+  }
+
+  // Duplicating happens entirely server-side so the copy gets every content
+  // config, the next-slide config and the OBS scene overrides in one write.
+  const handleDuplicate = async (screen: Screen) => {
+    try {
+      const copy = await duplicateScreen.mutateAsync(screen.id)
+      showToast(
+        t('settings:sections.screens.toast.duplicated', { name: copy.name }),
+        'success',
+      )
+    } catch {
+      showToast(t('settings:sections.screens.toast.duplicateError'), 'error')
     }
   }
 
@@ -224,6 +238,31 @@ export function ScreenManager() {
       )
     } catch {
       showToast(t('sections.screens.alwaysOnTop.error'), 'error')
+    }
+  }
+
+  // How the projection window opens. Only this setting decides it: leaving
+  // fullscreen from the projection's own toolbar is for the moment, not for
+  // good, so the next open still fills the display.
+  const handleToggleFullscreen = async (screen: Screen) => {
+    const newValue = !screen.isFullscreen
+
+    try {
+      await upsertScreen.mutateAsync({
+        id: screen.id,
+        name: screen.name,
+        type: screen.type,
+        isFullscreen: newValue,
+      })
+
+      showToast(
+        newValue
+          ? t('sections.screens.fullscreen.enabled')
+          : t('sections.screens.fullscreen.disabled'),
+        'success',
+      )
+    } catch {
+      showToast(t('sections.screens.fullscreen.error'), 'error')
     }
   }
 
@@ -359,6 +398,8 @@ export function ScreenManager() {
           {screens.map((screen) => (
             <div
               key={screen.id}
+              data-testid="screen-card"
+              data-screen-id={screen.id}
               className="flex flex-col gap-3 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
             >
               {/* Identity row: status + name/type + per-screen actions */}
@@ -401,6 +442,16 @@ export function ScreenManager() {
                     title={t('sections.screens.actions.copyUrl')}
                   >
                     <Copy size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    data-testid="screen-duplicate"
+                    onClick={() => handleDuplicate(screen)}
+                    disabled={duplicateScreen.isPending}
+                    title={t('sections.screens.actions.duplicate')}
+                  >
+                    <CopyPlus size={16} />
                   </Button>
                   <Button
                     variant="secondary"
@@ -466,6 +517,27 @@ export function ScreenManager() {
                   </span>
                 </Button>
                 <Button
+                  variant={screen.isFullscreen ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => handleToggleFullscreen(screen)}
+                  title={
+                    screen.isFullscreen
+                      ? t('sections.screens.fullscreen.windowed')
+                      : t('sections.screens.fullscreen.fill')
+                  }
+                >
+                  {screen.isFullscreen ? (
+                    <Maximize size={16} />
+                  ) : (
+                    <Minimize size={16} />
+                  )}
+                  <span className="ml-1">
+                    {screen.isFullscreen
+                      ? t('sections.screens.fullscreen.on')
+                      : t('sections.screens.fullscreen.off')}
+                  </span>
+                </Button>
+                <Button
                   variant={screen.closeOnEscape ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => handleToggleCloseOnEscape(screen)}
@@ -521,6 +593,7 @@ export function ScreenManager() {
                       : t('sections.screens.previewScreen.off')}
                   </span>
                 </Button>
+                <ScreenMonitorPicker screen={screen} />
               </div>
             </div>
           ))}

@@ -123,8 +123,8 @@ function upsertSong(song: LibrarySong): number | null {
   // Slides are replaced wholesale — the aggregate's newer version won.
   db.query('DELETE FROM song_slides WHERE song_id = ?').run(songId)
   const insertSlide = db.query(
-    `INSERT INTO song_slides (song_id, content, chords, label, notes, sort_order, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO song_slides (song_id, content, chords, label, notes, style_overrides, sort_order, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
   for (const slide of song.slides) {
     insertSlide.run(
@@ -133,6 +133,7 @@ function upsertSong(song: LibrarySong): number | null {
       slide.chords,
       slide.label,
       slide.notes,
+      slide.styleOverrides ?? null,
       slide.sortOrder,
       song.updatedAt,
       song.updatedAt,

@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SlideCounter } from './SlideCounter'
 import { useDividerPosition } from '../../../hooks/useDividerPosition'
 import type { SongSlide, SongWithSlides } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
@@ -282,37 +283,47 @@ export function SongSlidesPanel({
             </div>
           )}
         </div>
-        {isEditMode && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onToggleEditMode}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <X size={14} />
-              <span>{t('preview.discardChanges')}</span>
-            </button>
-            <button
-              type="button"
-              data-testid="save-slides-edit-mode"
-              onClick={handleSaveClick}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
-                isSaving
-                  ? 'bg-green-200 dark:bg-green-900/60 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 cursor-wait'
-                  : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60'
-              }`}
-            >
-              {isSaving ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Check size={14} />
-              )}
-              <span>
-                {isSaving ? t('preview.saving') : t('preview.exitEditMode')}
-              </span>
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Where the operator is in the song — the presented slide while
+              this song is live, otherwise the one they have selected. */}
+          {!isEditMode && (
+            <SlideCounter
+              currentIndex={presentedSlideIndex ?? selectedSlideIndex ?? null}
+              total={expandedSlides.length}
+            />
+          )}
+          {isEditMode && (
+            <>
+              <button
+                type="button"
+                onClick={onToggleEditMode}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <X size={14} />
+                <span>{t('preview.discardChanges')}</span>
+              </button>
+              <button
+                type="button"
+                data-testid="save-slides-edit-mode"
+                onClick={handleSaveClick}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
+                  isSaving
+                    ? 'bg-green-200 dark:bg-green-900/60 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 cursor-wait'
+                    : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60'
+                }`}
+              >
+                {isSaving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Check size={14} />
+                )}
+                <span>
+                  {isSaving ? t('preview.saving') : t('preview.exitEditMode')}
+                </span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Slides */}

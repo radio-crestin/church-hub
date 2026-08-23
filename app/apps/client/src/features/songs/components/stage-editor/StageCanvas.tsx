@@ -23,6 +23,12 @@ interface StageCanvasProps {
    * sizing purely by width — lets the stage shrink so a notes panel below it
    * can grow. */
   fitHeight?: boolean
+  /**
+   * Formatting bar for the slide being edited. Rendered above the canvas and
+   * only while the in-place editor is actually mounted — the buttons act on the
+   * caret or the selection, so they are meaningless without one.
+   */
+  editingToolbar?: React.ReactNode
   onEditText: (plainText: string) => void
 }
 
@@ -50,6 +56,7 @@ export function StageCanvas({
   canEdit,
   clickToEdit = false,
   fitHeight = false,
+  editingToolbar,
   onEditText,
 }: StageCanvasProps) {
   const { t } = useTranslation('songs')
@@ -57,6 +64,7 @@ export function StageCanvas({
   const { contentType, contentData, contentKey, isVisible } =
     usePresentationContent({ screen, includeNextSlide: false, previewContent })
 
+  const rootRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const [editing, setEditing] = useState(false)
 
@@ -116,9 +124,20 @@ export function StageCanvas({
 
   // Clicking outside the stage (a button, empty space) blurs the editor and
   // leaves edit mode. Slide-switch is handled separately above.
-  const handleBlur = useCallback(() => {
-    if (clickToEdit) setEditing(false)
-  }, [clickToEdit])
+  //
+  // The formatting bar is the exception: its size field has to take focus to be
+  // typed in, and leaving edit mode there would unmount the very editor the
+  // field is about to restyle. Focus moving anywhere inside this canvas — bar
+  // included — keeps editing alive.
+  const handleBlur = useCallback(
+    (event: React.FocusEvent<HTMLDivElement>) => {
+      if (!clickToEdit) return
+      const next = event.relatedTarget
+      if (next instanceof Node && rootRef.current?.contains(next)) return
+      setEditing(false)
+    },
+    [clickToEdit],
+  )
 
   const framed = clickToEdit && editing
 
@@ -136,10 +155,12 @@ export function StageCanvas({
 
   return (
     <div
+      ref={rootRef}
       className={
         fitHeight ? 'flex w-full shrink-0 flex-col items-center' : 'w-full'
       }
     >
+      {showEditor && editingToolbar}
       {/* Outer frame: reserves the padding + border ring at all times (so
           toggling edit never reflows the slide) and only colours the frame
           while editing. In fit-height mode it hugs the black box (content
@@ -159,6 +180,7 @@ export function StageCanvas({
       >
         <div
           style={boxStyle}
+          data-testid="slide-canvas-box"
           className={`relative aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
             showEditor ? '' : 'select-none'
           } ${fitHeight ? '' : 'w-full'}`}

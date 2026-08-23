@@ -3,6 +3,7 @@ import { and, asc, eq, gt, inArray, max, sql } from 'drizzle-orm'
 import type {
   OperationResult,
   ReorderSongSlidesInput,
+  SlideStyleOverride,
   SongSlide,
   UpsertSongSlideInput,
 } from './types'
@@ -11,6 +12,37 @@ import { songSlides } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('song-slides')
+
+/**
+ * Reads the stored per-slide style override. Malformed JSON is treated as "no
+ * override" rather than failing the read — a slide must always render.
+ */
+export function parseStyleOverrides(
+  raw: string | null,
+): SlideStyleOverride | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as SlideStyleOverride
+  } catch {
+    logger.warning('Ignoring malformed slide style overrides')
+    return null
+  }
+}
+
+/** Serializes a style override for storage; an empty override stores as NULL. */
+export function serializeStyleOverrides(
+  override: SlideStyleOverride | null | undefined,
+): string | null {
+  if (!override) return null
+  const hasStyling =
+    override.fontScale !== undefined ||
+    override.alignment !== undefined ||
+    override.bold !== undefined ||
+    override.italic !== undefined ||
+    override.underline !== undefined ||
+    (override.ranges?.length ?? 0) > 0
+  return hasStyling ? JSON.stringify(override) : null
+}
 
 /**
  * Converts database slide record to API format
@@ -32,6 +64,7 @@ function toSongSlide(record: typeof songSlides.$inferSelect): SongSlide {
     sortOrder: record.sortOrder,
     label: record.label,
     notes: record.notes,
+    styleOverrides: parseStyleOverrides(record.styleOverrides),
     createdAt:
       record.createdAt instanceof Date
         ? Math.floor(record.createdAt.getTime() / 1000)
@@ -159,6 +192,7 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
           label: input.label ?? null,
           notes: input.notes ?? null,
           chords: input.chords ? JSON.stringify(input.chords) : null,
+          styleOverrides: serializeStyleOverrides(input.styleOverrides),
           updatedAt: sql`(unixepoch())` as unknown as Date,
         })
         .where(eq(songSlides.id, input.id))
@@ -181,6 +215,7 @@ export function upsertSongSlide(input: UpsertSongSlideInput): SongSlide | null {
         sortOrder,
         label: input.label ?? null,
         notes: input.notes ?? null,
+        styleOverrides: serializeStyleOverrides(input.styleOverrides),
       })
       .returning({ id: songSlides.id })
       .get()

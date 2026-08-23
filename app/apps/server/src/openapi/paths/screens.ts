@@ -137,6 +137,57 @@ export const screensPaths = {
       },
     },
   },
+  '/api/screens/{id}/duplicate': {
+    post: {
+      tags: ['Screens'],
+      summary: 'Duplicate screen',
+      description:
+        'Clones a screen with all its content configs, its next-slide config and its OBS scene overrides. The copy is created inactive and never inherits the preview-screen role.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+        },
+      ],
+      requestBody: {
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                  description:
+                    'Name for the copy. Defaults to the source name with a "(copy)" suffix.',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '201': {
+          description: 'Screen duplicated',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/Screen' },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
   '/api/screens/{id}/config/{contentType}': {
     put: {
       tags: ['Screens'],

@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
 import { SongSlideCard } from './SongSlideCard'
-import type { ChordMapping } from '../types'
+import type { ChordMapping, SlideStyleOverride } from '../types'
 
 export interface LocalSlide {
   id: string | number
@@ -28,6 +28,7 @@ export interface LocalSlide {
   sortOrder: number
   label?: string | null
   notes?: string | null
+  styleOverrides?: SlideStyleOverride | null
 }
 
 interface SongSlideListProps {

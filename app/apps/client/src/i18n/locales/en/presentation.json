@@ -216,6 +216,15 @@
       "loading": "Loading screen configuration...",
       "error": "Failed to load screen",
       "notFound": "Screen not found"
+    },
+    "monitor": {
+      "label": "Monitor",
+      "auto": "Automatic",
+      "autoDescription": "Opens on a display the control room is not on",
+      "unnamed": "Monitor {{index}}",
+      "disconnected": "{{name}} (not connected)",
+      "identify": "Identify",
+      "identifyTooltip": "Flash a number on every display so you can tell them apart"
     }
   },
   "displays": {

@@ -38,6 +38,15 @@ interface SearchCacheEntry {
 const SEARCH_CACHE_MAX_SIZE = 100
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
+/**
+ * How many rows each FTS phase hands to the JS re-ranker. Both phases order by
+ * raw BM25 over a broad `term*` OR, which is a much worse ranking than the
+ * phrase scoring applied afterwards — anything cut here can never be ranked
+ * back in, which is how an exact title match went missing on a large library.
+ */
+const FTS_CANDIDATE_LIMIT = 400
+const TRIGRAM_CANDIDATE_LIMIT = 150
+
 const searchResultsCache = new Map<string, SearchCacheEntry>()
 
 function getSearchCacheKey(
@@ -126,11 +135,13 @@ function loadSynonyms(): Map<string, string[]> {
     const config = JSON.parse(setting.value) as SynonymsConfig
 
     for (const group of config.groups) {
-      // All terms in the group (primary + synonyms)
+      // All terms in the group (primary + synonyms), folded the same way the
+      // search terms are. A group saved as "cântare" is looked up as "cantare"
+      // — without folding here the group could never be hit.
       const allTerms = [
-        group.primary.toLowerCase(),
-        ...group.synonyms.map((s) => s.toLowerCase()),
-      ]
+        foldTerm(group.primary),
+        ...group.synonyms.map(foldTerm),
+      ].filter((term) => term.length > 0)
 
       // Each term maps to all other terms in the group
       for (const term of allTerms) {
@@ -159,7 +170,7 @@ function expandTermsWithSynonyms(terms: string[]): string[] {
   const expandedTerms = new Set<string>(terms)
 
   for (const term of terms) {
-    const synonyms = synonymMap.get(term.toLowerCase())
+    const synonyms = synonymMap.get(foldTerm(term))
     if (synonyms) {
       for (const synonym of synonyms) {
         expandedTerms.add(synonym)
@@ -185,6 +196,15 @@ const logger = createLogger('song-search')
  */
 function removeDiacritics(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+/**
+ * The canonical form a search term is compared in: lowercase and diacritics
+ * folded, matching what `extractSearchTerms` produces and what the FTS
+ * tokenizer indexes.
+ */
+function foldTerm(text: string): string {
+  return removeDiacritics(text).toLowerCase().trim()
 }
 
 /**
@@ -281,6 +301,10 @@ export function updateSearchIndex(songId: number): void {
       VALUES (?, ?, ?)
     `).run(songId, normalizedTitle, normalizedContent)
 
+    // The result cache holds whole result sets keyed by query, so an edited
+    // title stays unfindable for the cache's lifetime unless it is dropped.
+    clearSearchCache()
+
     logger.debug(`Search index updated for song: ${songId}`)
   } catch (error) {
     logger.error(`Failed to update search index: ${error}`)
@@ -297,6 +321,9 @@ export function removeFromSearchIndex(songId: number): void {
     const db = getRawDatabase()
     db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
     db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
+
+    // Otherwise a deleted song keeps showing up in cached result sets.
+    clearSearchCache()
 
     logger.debug(`Song removed from search index: ${songId}`)
   } catch (error) {
@@ -973,11 +1000,6 @@ function buildDiacriticInsensitivePattern(word: string): string {
  * though the leading single-letter segment is dropped from the search
  * tokens for ranking purposes.
  */
-// Unicode letter class — covers every diacritic variant (incl. cedilla
-// forms ş / ţ that show up in Romanian texts alongside the comma-below
-// canonical forms ș / ț). The `u` regex flag is required to enable it.
-const HL_LETTER = '\\p{L}'
-
 /**
  * Returns true if the gap between two highlight ranges should be swallowed
  * into a single merged range — pure whitespace, a hyphen, or a short
@@ -1512,7 +1534,7 @@ export function searchSongs(
       LEFT JOIN song_categories sc ON s.category_id = sc.id
       WHERE songs_fts MATCH ? ${extraFilter}
       ORDER BY rank
-      LIMIT 100
+      LIMIT ${FTS_CANDIDATE_LIMIT}
     `,
       )
       .all(...standardQueryParams) as Array<{
@@ -1570,7 +1592,7 @@ export function searchSongs(
           LEFT JOIN song_categories sc ON s.category_id = sc.id
           WHERE songs_fts_trigram MATCH ? ${extraFilter}
           ORDER BY rank
-          LIMIT 50
+          LIMIT ${TRIGRAM_CANDIDATE_LIMIT}
         `,
           )
           .all(...trigramQueryParams) as typeof trigramResults
@@ -1627,8 +1649,22 @@ export function searchSongs(
     // Phase 3: Calculate match scores using phrase-based scoring
     // FTS content is already diacritics-free (normalizeForIndex strips diacritics)
     // so we skip redundant removeDiacritics calls in scoring
-    // Title bonus: songs where the search matches the title get a ranking edge
-    const TITLE_BONUS = 0.15
+    // Title matches are a different class of result from lyric matches: an
+    // operator typing a title wants that song, not every song that happens to
+    // sing the words. A song whose title matches well is scored in a band
+    // above every content-only match instead of competing with it on a shared
+    // scale, and the boosts below only ever reorder songs inside their band.
+    // The offset clears the highest a content-only match can reach once every
+    // multiplier below is applied (100 * 1.5 * 1.15 * 1.1 ≈ 190), so the bands
+    // never overlap.
+    const TITLE_MATCH_THRESHOLD = 50
+    const TITLE_BAND_OFFSET = 200
+    // Category priority is an unbounded, operator-editable integer. Used raw
+    // as a multiplier it dwarfs every other signal — a weak lyric hit in a
+    // priority-5 category outranked an exact title match in a priority-1 one.
+    // Damped, it stays a tiebreaker.
+    const CATEGORY_PRIORITY_SCALE = 0.05
+    const MAX_CATEGORY_PRIORITY_BOOST = 0.5
     // key_line boost: 15% additive bonus for songs that have a key line set
     const KEY_LINE_BOOST = 0.15
     // presentationCount logarithmic boost: up to ~10% extra for frequently presented songs
@@ -1648,10 +1684,13 @@ export function searchSongs(
         validTerms,
       )
 
-      // Use best match location as base score (don't penalize content-only matches)
-      // Add a title bonus so title matches rank above content-only matches
-      const termScore =
-        Math.max(titleScore, contentScore) + titleScore * TITLE_BONUS
+      // A real title match lands in the upper band; everything else keeps its
+      // content score. Content still contributes inside the title band, so two
+      // equally-titled songs are separated by how well their lyrics match.
+      const isTitleMatch = titleScore >= TITLE_MATCH_THRESHOLD
+      const termScore = isTitleMatch
+        ? TITLE_BAND_OFFSET + titleScore + contentScore / 100
+        : contentScore
 
       // key_line boost: songs with a key line get +15% of base score
       const keyLineMultiplier =
@@ -1664,10 +1703,17 @@ export function searchSongs(
           PRESENTATION_BOOST_DENOM) *
           PRESENTATION_BOOST_SCALE
 
-      // Apply all boosts and category priority multiplier
+      // Apply all boosts and the damped category priority multiplier
+      const categoryMultiplier =
+        1 +
+        Math.min(
+          Math.max(r.category_priority - 1, 0) * CATEGORY_PRIORITY_SCALE,
+          MAX_CATEGORY_PRIORITY_BOOST,
+        )
+
       const boostedScore =
         termScore *
-        r.category_priority *
+        categoryMultiplier *
         keyLineMultiplier *
         presentationMultiplier
 

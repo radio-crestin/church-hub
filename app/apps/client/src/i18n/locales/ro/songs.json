@@ -48,6 +48,17 @@
     "editModeOff": "Navigare",
     "projectSlide": "Afișează acest slide pe ecran",
     "toggleLayout": "Comută layout PowerPoint",
+    "style": {
+      "increaseFontSize": "Mărește textul",
+      "decreaseFontSize": "Micșorează textul",
+      "bold": "Îngroșat",
+      "italic": "Cursiv",
+      "underline": "Subliniat",
+      "alignLeft": "Aliniază la început",
+      "alignCenter": "Aliniază la mijloc",
+      "alignRight": "Aliniază la sfârșit",
+      "restoreDefault": "Revino la stilul implicit al ecranului"
+    },
     "notes": {
       "title": "Notițe",
       "placeholder": "Notițe pentru acest slide…",
@@ -228,6 +239,7 @@
     "slides": "Slide-uri",
     "noSlides": "Fără slide-uri",
     "slideNumber": "Slide {{number}}",
+    "slideCounter": "Slide-ul {{current}} din {{total}}",
     "editMode": "Editează",
     "exitEditMode": "Salvează",
     "saving": "Se salvează...",

@@ -128,6 +128,12 @@ export const screenSchemas = {
         description:
           "Open this screen's window automatically when the app launches. Independent of isActive: when false the window stays closed at launch but still opens as soon as content is presented. Defaults to true.",
       },
+      monitorName: {
+        type: 'string',
+        nullable: true,
+        description:
+          'Name of the physical monitor this screen projects onto, as the OS reports it (e.g. "Built-in Retina Display", "\\\\.\\DISPLAY1", "HDMI-1"). Null opens the window wherever it lands. Written both by the operator and by the window itself when it is dragged to another monitor.',
+      },
       width: { type: 'integer', description: 'Screen width in pixels' },
       height: { type: 'integer', description: 'Screen height in pixels' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
@@ -173,6 +179,12 @@ export const screenSchemas = {
         type: 'boolean',
         description:
           "Open this screen's window automatically when the app launches",
+      },
+      monitorName: {
+        type: 'string',
+        nullable: true,
+        description:
+          'Monitor to project onto, by the name the OS reports. Null opens the window wherever it lands.',
       },
       width: { type: 'integer' },
       height: { type: 'integer' },

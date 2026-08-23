@@ -126,6 +126,37 @@ export interface Song {
 }
 
 /**
+ * How one slide departs from the screen's default text style.
+ *
+ * Everything is optional and additive: an absent key means "follow the screen
+ * settings", which is what a slide with no override does entirely. Character
+ * offsets in `ranges` are counted over the slide's normalized plain text — the
+ * same text the renderer lays out — so a range survives re-rendering as long as
+ * the text is unchanged.
+ */
+export interface SlideStyleRange {
+  start: number
+  end: number
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  /** Multiplier applied to this run's font size. */
+  fontScale?: number
+}
+
+export interface SlideStyleOverride {
+  /** Multiplier applied to the screen's font size for the whole slide. */
+  fontScale?: number
+  /** Horizontal text alignment, PowerPoint-style. */
+  alignment?: 'left' | 'center' | 'right'
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  /** Styling applied to selected runs of the slide's text. */
+  ranges?: SlideStyleRange[]
+}
+
+/**
  * Song slide API response format
  */
 export interface SongSlide {
@@ -137,6 +168,8 @@ export interface SongSlide {
   label: string | null
   /** Per-slide speaker note (PowerPoint-style). */
   notes: string | null
+  /** Per-slide text styling, or null when the screen defaults apply. */
+  styleOverrides: SlideStyleOverride | null
   createdAt: number
   updatedAt: number
 }
@@ -187,6 +220,7 @@ export interface SlideInput {
   sortOrder: number
   label?: string | null
   notes?: string | null
+  styleOverrides?: SlideStyleOverride | null
 }
 
 /**
@@ -230,6 +264,7 @@ export interface UpsertSongSlideInput {
   sortOrder?: number
   label?: string | null
   notes?: string | null
+  styleOverrides?: SlideStyleOverride | null
 }
 
 /**

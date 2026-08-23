@@ -2,6 +2,7 @@ import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { useEffect, useRef, useState } from 'react'
 
 import { getApiUrl, isMobile } from '~/config'
+import type { SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import { usePresentationState } from './usePresentationState'
@@ -97,6 +98,11 @@ export interface ContentData {
   chords?: ChordMapping[] | null
   songKey?: string // Song key ("gama"), populated only on the first slide
   amen?: string // "Amin", populated only on the last slide
+  /**
+   * Per-slide text styling for the main text, merged over the screen's own
+   * style by the renderer. Undefined means the screen settings apply as-is.
+   */
+  styleOverrides?: SlideStyleOverride | null
 }
 
 export interface NextSlideData {
@@ -208,6 +214,7 @@ function buildSongSlideContent(
       chords: resolvedChords,
       songKey: songKeyValue,
       amen: amenValue,
+      styleOverrides: currentSlide.styleOverrides ?? null,
     },
     contentKey: `song|${data.songId}|${data.currentSlideIndex}`,
     nextSlide,

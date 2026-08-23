@@ -34,6 +34,7 @@ import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
+import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import { ScheduleVerseRow } from './ScheduleVerseRow'
 import {
@@ -252,24 +253,27 @@ export function SchedulePanel({
   const pendingCount = songItems.length - sungCount
 
   const filteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+    // Folded on both sides so "cantare" finds "cântare" and vice versa.
+    const q = normalizeForSearch(searchQuery.trim())
     return songItems.filter((item) => {
       if (sungFilter === 'sung' && !item.isSung) return false
       if (sungFilter === 'pending' && item.isSung) return false
       if (!q) return true
       if (item.itemType === 'bible_passage') {
         return (
-          item.biblePassageReference?.toLowerCase().includes(q) ||
+          normalizeForSearch(item.biblePassageReference ?? '').includes(q) ||
           item.biblePassageVerses.some((verse) =>
-            verse.text.toLowerCase().includes(q),
+            normalizeForSearch(verse.text).includes(q),
           )
         )
       }
       return (
-        item.song?.title.toLowerCase().includes(q) ||
-        item.song?.categoryName?.toLowerCase().includes(q) ||
-        item.keyLine?.toLowerCase().includes(q) ||
-        item.song?.tagNames?.some((name) => name.toLowerCase().includes(q))
+        normalizeForSearch(item.song?.title ?? '').includes(q) ||
+        normalizeForSearch(item.song?.categoryName ?? '').includes(q) ||
+        normalizeForSearch(item.keyLine ?? '').includes(q) ||
+        item.song?.tagNames?.some((name) =>
+          normalizeForSearch(name).includes(q),
+        )
       )
     })
   }, [songItems, searchQuery, sungFilter])
@@ -357,39 +361,53 @@ export function SchedulePanel({
       const { active, over } = event
       if (!over || active.id === over.id || !selectedScheduleId) return
 
-      const oldIndex = songItems.findIndex((item) => item.id === active.id)
-      const newIndex = songItems.findIndex((item) => item.id === over.id)
+      // Dragging happens inside whatever the operator is looking at, so the
+      // move is computed on the visible rows. With no filter on, filteredItems
+      // is the whole list and this is the plain case.
+      const oldIndex = filteredItems.findIndex((item) => item.id === active.id)
+      const newIndex = filteredItems.findIndex((item) => item.id === over.id)
       if (oldIndex === -1 || newIndex === -1) return
 
-      const newSongOrder = arrayMove(songItems, oldIndex, newIndex)
-      setLocalOrder(newSongOrder)
+      const reorderedVisible = arrayMove(filteredItems, oldIndex, newIndex)
+      const visibleIds = new Set(filteredItems.map((item) => item.id))
+
+      // The reordered rows are poured back into the slots those same rows
+      // already occupied. Rows hidden by the filter keep their exact position,
+      // so reordering the "Ramase" tab never disturbs the sung songs sitting
+      // between them.
+      const pourInto = (order: ScheduleItem[]): ScheduleItem[] => {
+        let cursor = 0
+        return order.map((item) =>
+          visibleIds.has(item.id) ? (reorderedVisible[cursor++] ?? item) : item,
+        )
+      }
+
+      setLocalOrder(pourInto(songItems))
 
       // The endpoint rewrites sort_order from the index of every id it is
       // given, so it needs the program's FULL running order — not just the
-      // rows shown here. The reordered rows are poured back into the slots
-      // those same rows already occupied, so whatever this panel does not list
-      // (announcements, Versete Tineri, OBS scenes — and songs or passages when
-      // the cross-module switch is off) keeps the exact position the operator
-      // gave it in the program editor.
+      // rows shown here. Whatever this panel does not list (announcements,
+      // Versete Tineri, OBS scenes — and songs or passages when the
+      // cross-module switch is off) keeps the exact position the operator gave
+      // it in the program editor.
       //
       // Keying on the visible ids rather than on item kind is what lets this
       // work unchanged for a mixed list: with the switch on, songs and passages
       // share one slot set and reorder freely against each other.
-      const visibleIds = new Set(songItems.map((item) => item.id))
-      const fullOrder = schedule?.items ?? []
-      let cursor = 0
-      const itemIds = fullOrder.map((item) =>
-        visibleIds.has(item.id)
-          ? (newSongOrder[cursor++]?.id ?? item.id)
-          : item.id,
-      )
+      const itemIds = pourInto(schedule?.items ?? []).map((item) => item.id)
 
       reorderItemsMutation.mutate({
         scheduleId: selectedScheduleId,
         input: { itemIds },
       })
     },
-    [songItems, schedule, selectedScheduleId, reorderItemsMutation],
+    [
+      filteredItems,
+      songItems,
+      schedule,
+      selectedScheduleId,
+      reorderItemsMutation,
+    ],
   )
 
   const renderRow = useCallback(
@@ -433,10 +451,6 @@ export function SchedulePanel({
   )
 
   const isSearching = searchQuery.trim().length > 0
-  // Dragging only makes sense on an unfiltered list: a filtered view has no
-  // meaningful "drop between these two" position, since the rows in between
-  // are hidden. A *mixed* list is fine — see handleDragEnd.
-  const isFiltering = isSearching || sungFilter !== 'all'
   const isLoading =
     schedulesLoading || (!!selectedScheduleId && scheduleLoading)
 
@@ -696,10 +710,6 @@ export function SchedulePanel({
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {t('panel.noResults')}
               </div>
-            ) : isFiltering ? (
-              <div className="p-2 flex flex-col gap-1.5">
-                {filteredItems.map((item) => renderRow(item, false))}
-              </div>
             ) : (
               <DndContext
                 sensors={sensors}
@@ -708,11 +718,11 @@ export function SchedulePanel({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={songItems.map((item) => item.id)}
+                  items={filteredItems.map((item) => item.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="p-2 flex flex-col gap-1.5">
-                    {songItems.map((item) => renderRow(item, true))}
+                    {filteredItems.map((item) => renderRow(item, true))}
                   </div>
                 </SortableContext>
               </DndContext>

@@ -104,6 +104,28 @@ export async function upsertScreen(input: UpsertScreenInput): Promise<Screen> {
 }
 
 /**
+ * Clones a screen together with every setting it holds — content configs,
+ * next-slide config and OBS scene overrides. The copy is created inactive.
+ */
+export async function duplicateScreen(id: number): Promise<Screen> {
+  logger.debug(`Duplicating screen: ${id}`)
+
+  const response = await fetchFn(`${getApiUrl()}/api/screens/${id}/duplicate`, {
+    method: 'POST',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({}),
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to duplicate screen')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
  * Deletes a screen
  */
 export async function deleteScreen(id: number): Promise<void> {

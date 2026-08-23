@@ -6,6 +6,8 @@ export interface LibrarySlide {
   chords: string | null
   label: string | null
   notes: string | null
+  /** JSON `SlideStyleOverride`, or null when the screen defaults apply. */
+  styleOverrides: string | null
   sortOrder: number
 }
 

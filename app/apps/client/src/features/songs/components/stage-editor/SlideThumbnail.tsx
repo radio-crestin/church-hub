@@ -70,6 +70,7 @@ export function SlideThumbnail({
           content: s.content,
           chords: s.chords ?? null,
           sortOrder: s.sortOrder,
+          styleOverrides: s.styleOverrides ?? null,
         })),
         currentSlideIndex: index,
       },
