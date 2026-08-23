@@ -84,3 +84,46 @@ export const bibleVerses = sqliteTable(
     ),
   ],
 )
+
+// Bible bookmarks - verses saved by the user, denormalized so a bookmark
+// survives a translation being deleted and re-imported
+export const bibleBookmarks = sqliteTable(
+  'bible_bookmarks',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    verseId: integer('verse_id').notNull(),
+    reference: text('reference').notNull(),
+    text: text('text').notNull(),
+    translationAbbreviation: text('translation_abbreviation').notNull(),
+    bookName: text('book_name').notNull(),
+    bookCode: text('book_code').notNull(),
+    translationId: integer('translation_id').notNull(),
+    bookId: integer('book_id').notNull(),
+    chapter: integer('chapter').notNull(),
+    verse: integer('verse').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    // Deliberately NOT unique - the same verse may be bookmarked several times
+    index('idx_bible_bookmarks_verse_id').on(table.verseId),
+    index('idx_bible_bookmarks_sort_order').on(table.sortOrder),
+    index('idx_bible_bookmarks_created_at').on(table.createdAt),
+  ],
+)
+
+// Free-text separator rows that interleave with bookmarks via a shared sortOrder
+export const bibleBookmarkNotes = sqliteTable(
+  'bible_bookmark_notes',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    content: text('content').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [index('idx_bible_bookmark_notes_sort_order').on(table.sortOrder)],
+)
