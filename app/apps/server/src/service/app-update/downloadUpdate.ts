@@ -1,4 +1,4 @@
-import { mkdir, stat, unlink } from 'node:fs/promises'
+import { mkdir, rename, stat, unlink } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 
 import { classifyDownloadError } from './classifyDownloadError'
@@ -162,8 +162,9 @@ export async function startDownload(
         }
       }
 
-      await Bun.write(filePath, Bun.file(partPath))
-      await unlink(partPath).catch(() => {})
+      // One atomic step, same directory: the finished name only ever points
+      // at a complete file, and there is no copy to be interrupted halfway.
+      await rename(partPath, filePath)
 
       logger.info(`Update ${version} downloaded to ${filePath}`)
       state = {
