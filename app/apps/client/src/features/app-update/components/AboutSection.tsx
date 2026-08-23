@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { Download, ExternalLink, Info, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -6,14 +7,7 @@ import { useAppUpdate } from '../hooks/useAppUpdate'
 
 export function AboutSection() {
   const { t } = useTranslation('settings')
-  const {
-    updateInfo,
-    isLoading,
-    isDownloading,
-    isDevInstance,
-    checkNow,
-    downloadUpdate,
-  } = useAppUpdate()
+  const { updateInfo, isLoading, isDevInstance, checkNow } = useAppUpdate()
 
   return (
     <div className="flex flex-col gap-6">
@@ -80,16 +74,17 @@ export function AboutSection() {
                     {t('sections.about.updateDescription')}
                   </p>
                 </div>
-                <button
-                  onClick={() => void downloadUpdate()}
-                  disabled={isDownloading}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 whitespace-nowrap"
+                {/* The whole flow — notes, download, install — lives on the
+                    updates page; sending people to a browser download is how
+                    updates used to go unapplied. */}
+                <Link
+                  to="/settings/updates"
+                  data-testid="about-open-updates"
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
                 >
                   <Download size={16} />
-                  {isDownloading
-                    ? t('sections.about.downloading')
-                    : t('sections.about.downloadUpdate')}
-                </button>
+                  {t('sections.about.openUpdates')}
+                </Link>
               </div>
             </div>
           ) : (

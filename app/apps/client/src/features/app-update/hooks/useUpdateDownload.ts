@@ -43,6 +43,15 @@ export function useUpdateDownload(
       if (!assetUrl) throw new Error('no_asset')
       return startUpdateDownload(assetUrl, version ?? '')
     },
+    // A status poll already in flight when the button was pressed would land
+    // after the "downloading" answer and overwrite it with the stale idle or
+    // error state it set out to read — which stopped the polling and left a
+    // failure from an earlier attempt on screen while the download ran.
+    onMutate: async () => {
+      await queryClient.cancelQueries({
+        queryKey: [...STATUS_KEY, assetUrl, version],
+      })
+    },
     onSuccess: (next) => {
       queryClient.setQueryData([...STATUS_KEY, assetUrl, version], next)
     },
@@ -87,9 +96,15 @@ export function useUpdateDownload(
     isReady: state?.phase === 'ready',
     isInstalling: state?.phase === 'installing',
     error: state?.phase === 'error' ? state.error : null,
+    errorCode: state?.phase === 'error' ? state.errorCode : null,
     startDownload: download.mutateAsync,
     isStarting: download.isPending,
-    cancelDownload: cancel.mutateAsync,
+    /**
+     * Clears a failure once it has been seen. The sidecar keeps the last
+     * outcome for as long as it runs, so without this a download that failed
+     * hours ago would greet the operator as a fresh error on every visit.
+     */
+    dismissError: cancel.mutateAsync,
     install,
   }
 }

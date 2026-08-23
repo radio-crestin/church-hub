@@ -46,7 +46,9 @@ export function ReleaseNotesSection({
           <VersionNotesCard
             key={notes.version}
             notes={notes}
-            isCurrent={notes.version === normalizedCurrent}
+            variant={
+              notes.version === normalizedCurrent ? 'current' : 'default'
+            }
           />
         ))}
       </div>

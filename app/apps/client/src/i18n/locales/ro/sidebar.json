@@ -22,19 +22,12 @@
     "closeMenu": "Închide meniu"
   },
   "version": {
-    "current": "Versiunea curentă",
-    "checkForUpdates": "Verifică actualizări",
     "updateAvailable": "v{{version}} disponibilă",
-    "clickToDownload": "Apasă pentru a descărca ultima versiune",
-    "download": "Descarcă Actualizarea",
-    "downloading": "Se deschide...",
     "readyToInstall": "v{{version}} gata de instalare",
     "clickToOpenUpdates": "Deschide pagina de actualizari",
     "clickToInstall": "Descarcata - instaleaz-o acum",
     "viewUpdate": "Vezi ce e nou",
     "install": "Instaleaza acum",
-    "dismiss": "Închide",
-    "dev": "Dev",
-    "devInstanceHint": "Rulează o instanță de dezvoltare — verificarea actualizărilor este dezactivată"
+    "dismiss": "Închide"
   }
 }

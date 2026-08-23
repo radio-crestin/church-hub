@@ -12,6 +12,16 @@ export type UpdateDownloadPhase =
   | 'installing'
   | 'error'
 
+/**
+ * Why a download failed — mirrors the sidecar's classification so the panel
+ * can tell "GitHub unreachable" from "the folder cannot be written to".
+ */
+export type UpdateDownloadErrorCode =
+  | 'network'
+  | 'http'
+  | 'filesystem'
+  | 'unknown'
+
 export interface UpdateDownloadState {
   phase: UpdateDownloadPhase
   version: string | null
@@ -20,6 +30,7 @@ export interface UpdateDownloadState {
   receivedBytes: number
   totalBytes: number | null
   error: string | null
+  errorCode: UpdateDownloadErrorCode | null
 }
 
 export interface UpdateDownloadConfig {
@@ -87,6 +98,7 @@ export async function startUpdateDownload(
   return res.data ?? null
 }
 
+/** Aborts a download in flight, or clears a failure that has been seen. */
 export async function cancelUpdateDownload(): Promise<void> {
   await fetcher('/api/app-update/cancel', { method: 'POST' })
 }

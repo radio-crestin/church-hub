@@ -1,18 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Bug,
   CheckCircle2,
   Download,
+  ExternalLink,
   FolderOpen,
   Loader2,
   RefreshCw,
-  Sparkles,
-  Wrench,
 } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ChangeCategoryList, useReleaseNotes } from '~/features/release-notes'
+import {
+  parseReleaseBody,
+  useReleaseNotes,
+  VersionNotesCard,
+} from '~/features/release-notes'
 import { useToast } from '~/ui/toast'
 import { isTauri } from '~/utils/isTauri'
 import { useAppUpdate } from '../hooks/useAppUpdate'
@@ -54,18 +56,40 @@ export function UpdatePanel() {
     isReady,
     isInstalling,
     error,
+    errorCode,
     startDownload,
     isStarting,
+    dismissError,
     install,
   } = useUpdateDownload(updateInfo?.downloadUrl ?? null, version)
 
-  // The same structured notes the release-notes history renders, so a new
-  // version reads exactly like every past one instead of raw markdown.
-  const { data: notes } = useReleaseNotes()
-  const versionNotes = useMemo(
-    () => notes?.find((entry) => entry.version === version) ?? null,
-    [notes, version],
+  // A failure stays on screen while the operator is here, and is cleared once
+  // they leave — so it is seen once, not again on every later visit.
+  const hasErrorRef = useRef(false)
+  hasErrorRef.current = !!error
+  useEffect(
+    () => () => {
+      if (hasErrorRef.current) void dismissError()
+    },
+    [dismissError],
   )
+
+  // The same structured notes the release-notes history renders, so a new
+  // version reads exactly like every past one instead of raw markdown. The
+  // history comes from its own request to GitHub; when that one has not landed
+  // (or was rate-limited) the release body the update check already fetched is
+  // parsed the same way, so the notes never fall back to "nothing here".
+  const { data: notes } = useReleaseNotes()
+  const versionNotes = useMemo(() => {
+    if (!version || !updateInfo) return null
+    const listed = notes?.find((entry) => entry.version === version)
+    if (listed) return listed
+    return parseReleaseBody(
+      version,
+      updateInfo.publishedAt || null,
+      updateInfo.releaseNotes,
+    )
+  }, [notes, version, updateInfo])
 
   const configQuery = useQuery({
     queryKey: CONFIG_KEY,
@@ -97,12 +121,6 @@ export function UpdatePanel() {
   }, [config?.effectiveDownloadDir, setDir, t])
 
   const canDownload = isTauri() && !!updateInfo?.downloadUrl
-  const isEmptyNotes =
-    !!versionNotes &&
-    versionNotes.features.length +
-      versionNotes.bugFixes.length +
-      versionNotes.changes.length ===
-      0
 
   return (
     <div className="space-y-4" data-testid="update-panel">
@@ -157,42 +175,18 @@ export function UpdatePanel() {
         </div>
       </div>
 
-      {/* What's new — same shape as the release-notes history */}
-      {hasUpdate && (
-        <div className="rounded-lg border border-green-200 bg-green-50/40 p-4 dark:border-green-800 dark:bg-green-900/10">
-          <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+      {/* What's new — the same card the release-notes history uses */}
+      {hasUpdate && versionNotes && (
+        <div data-testid="update-available">
+          <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
             {t('sections.updates.whatsNew', { version })}
           </h4>
 
-          {versionNotes && !isEmptyNotes ? (
-            <div className="space-y-3">
-              <ChangeCategoryList
-                icon={Sparkles}
-                label={tNotes('categories.features')}
-                accentClassName="text-green-600 dark:text-green-400"
-                entries={versionNotes.features}
-              />
-              <ChangeCategoryList
-                icon={Bug}
-                label={tNotes('categories.bugFixes')}
-                accentClassName="text-red-600 dark:text-red-400"
-                entries={versionNotes.bugFixes}
-              />
-              <ChangeCategoryList
-                icon={Wrench}
-                label={tNotes('categories.changes')}
-                accentClassName="text-blue-600 dark:text-blue-400"
-                entries={versionNotes.changes}
-              />
-            </div>
-          ) : (
-            <p className="text-sm italic text-gray-500 dark:text-gray-400">
-              {tNotes('empty')}
-            </p>
-          )}
-
-          {/* Download / progress / install */}
-          <div className="mt-4 border-t border-green-200 pt-4 dark:border-green-800">
+          <VersionNotesCard
+            notes={versionNotes}
+            variant="available"
+            data-testid="update-version-notes"
+          >
             {(isDownloading || isReady || isInstalling) && (
               <div className="mb-3">
                 <div className="mb-1 flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
@@ -228,70 +222,88 @@ export function UpdatePanel() {
             )}
 
             {error && (
-              <p className="mb-2 text-sm text-red-600 dark:text-red-400">
-                {t('sections.updates.available.failed')}
-              </p>
+              <div
+                role="alert"
+                data-testid="update-error"
+                className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900 dark:bg-red-900/20"
+              >
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                  {t(
+                    `sections.updates.available.errors.${errorCode ?? 'unknown'}`,
+                  )}
+                </p>
+                <p className="mt-0.5 break-all font-mono text-xs text-red-600/80 dark:text-red-400/80">
+                  {error}
+                </p>
+              </div>
             )}
 
-            {isReady ? (
-              <button
-                type="button"
-                onClick={() => {
-                  void install().then((result) => {
-                    if (!result.success) {
-                      showToast(
-                        t('sections.updates.available.installFailed', {
-                          reason: result.error ?? '',
-                        }),
-                        'error',
-                      )
-                    }
-                  })
-                }}
-                disabled={isInstalling}
-                data-testid="update-install"
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-              >
-                {isInstalling ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <CheckCircle2 size={16} />
-                )}
-                {t('sections.updates.available.install')}
-              </button>
-            ) : !canDownload ? (
-              /* A disabled button with only a tooltip left the operator with
-                 no idea why nothing happened. Say it outright. */
-              <div data-testid="update-unavailable">
-                <p className="text-sm text-amber-700 dark:text-amber-400">
+            <div className="flex flex-wrap items-center gap-3">
+              {isReady ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void install().then((result) => {
+                      if (!result.success) {
+                        showToast(
+                          t('sections.updates.available.installFailed', {
+                            reason: result.error ?? '',
+                          }),
+                          'error',
+                        )
+                      }
+                    })
+                  }}
+                  disabled={isInstalling}
+                  data-testid="update-install"
+                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                >
+                  {isInstalling ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={16} />
+                  )}
+                  {t('sections.updates.available.install')}
+                </button>
+              ) : !canDownload ? (
+                /* A disabled button with only a tooltip left the operator with
+                   no idea why nothing happened. Say it outright. */
+                <p
+                  className="text-sm text-amber-700 dark:text-amber-400"
+                  data-testid="update-unavailable"
+                >
                   {t('sections.updates.available.unavailable')}
                 </p>
-                <a
-                  href={updateInfo?.releaseUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-block text-xs text-indigo-600 underline dark:text-indigo-400"
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void startDownload()}
+                  disabled={isDownloading || isStarting}
+                  data-testid="update-download"
+                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                 >
-                  {t('sections.updates.available.openRelease')}
-                </a>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => void startDownload()}
-                disabled={isDownloading || isStarting}
-                data-testid="update-download"
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  {isDownloading || isStarting ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Download size={16} />
+                  )}
+                  {error
+                    ? t('sections.updates.available.retry')
+                    : t('sections.updates.available.download')}
+                </button>
+              )}
+
+              <a
+                href={updateInfo?.releaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline dark:text-indigo-400"
               >
-                {isDownloading || isStarting ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Download size={16} />
-                )}
-                {t('sections.updates.available.download')}
-              </button>
-            )}
-          </div>
+                <ExternalLink size={12} />
+                {t('sections.updates.available.openRelease')}
+              </a>
+            </div>
+          </VersionNotesCard>
         </div>
       )}
 
