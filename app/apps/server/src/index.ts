@@ -2111,7 +2111,7 @@ async function startRealServer(): Promise<void> {
         }
       }
 
-      // POST /api/app-update/cancel - Abort a download in flight
+      // POST /api/app-update/cancel - Abort a download in flight / dismiss a failure
       if (req.method === 'POST' && url.pathname === '/api/app-update/cancel') {
         const guard = updateLocalhostGuard()
         if (guard) return guard

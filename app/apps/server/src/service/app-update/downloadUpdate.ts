@@ -1,14 +1,19 @@
-import { createWriteStream } from 'node:fs'
 import { mkdir, stat, unlink } from 'node:fs/promises'
 import { basename, join } from 'node:path'
-import { Readable } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
 
+import { classifyDownloadError } from './classifyDownloadError'
+import { fetchArtifact } from './fetchArtifact'
 import type { UpdateDownloadState } from './types'
 import { resolveDownloadDir } from './updateConfig'
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('app-update')
+
+// A dropped connection or a hiccup on GitHub's CDN should not leave the
+// operator staring at an error they then fix by pressing the same button
+// again. Three attempts, with a short pause between them.
+const MAX_ATTEMPTS = 3
+const RETRY_DELAYS_MS = [1_000, 3_000]
 
 /**
  * One download at a time, held in module state.
@@ -26,6 +31,7 @@ let state: UpdateDownloadState = {
   receivedBytes: 0,
   totalBytes: null,
   error: null,
+  errorCode: null,
 }
 
 let abortController: AbortController | null = null
@@ -68,6 +74,7 @@ export async function findDownloadedArtifact(
       receivedBytes: info.size,
       totalBytes: info.size,
       error: null,
+      errorCode: null,
     }
   } catch {
     return null
@@ -112,8 +119,10 @@ export async function startDownload(
     receivedBytes: 0,
     totalBytes: null,
     error: null,
+    errorCode: null,
   }
-  abortController = new AbortController()
+  const controller = new AbortController()
+  abortController = controller
 
   // Run detached from the request: the route answers immediately and the
   // client follows progress by polling.
@@ -121,27 +130,38 @@ export async function startDownload(
     try {
       await mkdir(dir, { recursive: true })
 
-      const response = await fetch(url, {
-        signal: abortController?.signal,
-        redirect: 'follow',
-      })
-      if (!response.ok || !response.body) {
-        throw new Error(`Download failed: ${response.status}`)
+      let received = 0
+      for (let attempt = 1; ; attempt++) {
+        try {
+          received = await fetchArtifact(url, partPath, controller.signal, {
+            onTotalBytes: (total) => {
+              state = { ...state, totalBytes: total }
+            },
+            onReceivedBytes: (bytes) => {
+              state = { ...state, receivedBytes: bytes }
+            },
+          })
+          break
+        } catch (error) {
+          await unlink(partPath).catch(() => {})
+          const failure = classifyDownloadError(error)
+          const delay = RETRY_DELAYS_MS[attempt - 1]
+          if (
+            controller.signal.aborted ||
+            !failure.retryable ||
+            attempt >= MAX_ATTEMPTS ||
+            delay === undefined
+          ) {
+            throw error
+          }
+          logger.warning(
+            `Update download attempt ${attempt}/${MAX_ATTEMPTS} failed (${failure.message}); retrying in ${delay}ms`,
+          )
+          state = { ...state, receivedBytes: 0, totalBytes: null }
+          await Bun.sleep(delay)
+        }
       }
 
-      const length = response.headers.get('content-length')
-      state = { ...state, totalBytes: length ? Number(length) : null }
-
-      let received = 0
-      const source = Readable.fromWeb(
-        response.body as Parameters<typeof Readable.fromWeb>[0],
-      )
-      source.on('data', (chunk: Buffer) => {
-        received += chunk.length
-        state = { ...state, receivedBytes: received }
-      })
-
-      await pipeline(source, createWriteStream(partPath))
       await Bun.write(filePath, Bun.file(partPath))
       await unlink(partPath).catch(() => {})
 
@@ -154,24 +174,45 @@ export async function startDownload(
         totalBytes: state.totalBytes ?? received,
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      logger.error(`Update download failed: ${message}`)
       await unlink(partPath).catch(() => {})
-      state = { ...state, phase: 'error', error: message }
+      // A cancel already put the state back to idle; nothing to report.
+      if (controller.signal.aborted) return
+      const failure = classifyDownloadError(error)
+      logger.error(
+        `Update download failed [${failure.code}]: ${failure.message}`,
+      )
+      state = {
+        ...state,
+        phase: 'error',
+        error: failure.message,
+        errorCode: failure.code,
+      }
     } finally {
-      abortController = null
+      if (abortController === controller) abortController = null
     }
   })()
 
   return getDownloadState()
 }
 
-/** Aborts a download in flight and clears the partial file. */
+/**
+ * Aborts a download in flight and clears the partial file. Also dismisses a
+ * failure once the operator has seen it: the state lives for as long as the
+ * sidecar does, and an error from hours ago greeting them on the next visit
+ * read as "the download you just asked for failed".
+ */
 export function cancelDownload(): void {
   abortController?.abort()
   abortController = null
-  if (state.phase === 'downloading') {
-    state = { ...state, phase: 'idle', receivedBytes: 0, error: null }
+  if (state.phase === 'downloading' || state.phase === 'error') {
+    state = {
+      ...state,
+      phase: 'idle',
+      receivedBytes: 0,
+      totalBytes: null,
+      error: null,
+      errorCode: null,
+    }
   }
 }
 
