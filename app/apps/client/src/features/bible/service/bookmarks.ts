@@ -1,5 +1,20 @@
 import { fetcher } from '../../../utils/fetcher'
 
+/**
+ * A run of styling drawn over the verse text, by character offset.
+ * Mirrors the live slide's `TextStyleRange`.
+ */
+export interface BibleBookmarkStyleRange {
+  id: string
+  start: number
+  end: number
+  highlight?: string
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  fontScale?: number
+}
+
 export interface BibleBookmark {
   id: number
   verseId: number
@@ -13,6 +28,8 @@ export interface BibleBookmark {
   chapter: number
   verse: number
   sortOrder: number
+  /** Highlights/bold/underline saved with the verse, empty when none. */
+  styleRanges: BibleBookmarkStyleRange[]
   createdAt: number
 }
 
@@ -51,15 +68,21 @@ export async function getBookmarks(): Promise<BibleBookmark[]> {
   return response.data ?? []
 }
 
+/**
+ * Bookmarks a verse, optionally keeping the highlights and underlines drawn on
+ * it. The ranges are character offsets into this verse's text, so only pass
+ * ranges that were actually drawn on it.
+ */
 export async function addBookmark(
   verseId: number,
+  styleRanges?: BibleBookmarkStyleRange[],
 ): Promise<BibleBookmark | null> {
   const response = await fetcher<{ data: BibleBookmark }>(
     '/api/bible-bookmarks',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ verseId }),
+      body: JSON.stringify({ verseId, styleRanges }),
     },
   )
   return response.data ?? null

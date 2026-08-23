@@ -72,6 +72,30 @@ export async function addSlideHighlight(
 }
 
 /**
+ * Replaces every highlight on the current slide in one write.
+ *
+ * Restoring a saved set one range at a time would broadcast a half-drawn
+ * slide to every connected screen, so the whole set goes over together.
+ */
+export async function setSlideHighlights(
+  ranges: TextStyleRange[],
+): Promise<TextStyleRange[]> {
+  const response = await fetchFn(`${getApiUrl()}/api/presentation/highlights`, {
+    method: 'PUT',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ ranges }),
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to set slide highlights')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+/**
  * Removes a specific highlight by ID
  */
 export async function removeSlideHighlight(

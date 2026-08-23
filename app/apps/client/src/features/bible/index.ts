@@ -65,6 +65,7 @@ export type {
   BibleBookmarkImportResult,
   BibleBookmarkItemRef,
   BibleBookmarkNote,
+  BibleBookmarkStyleRange,
 } from './service'
 export {
   addBookmark,

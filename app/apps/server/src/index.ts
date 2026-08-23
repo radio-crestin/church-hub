@@ -174,6 +174,7 @@ import {
   addBookmark as addBibleBookmark,
   addBookmarkNote as addBibleBookmarkNote,
   type BibleBookmarkItemRef,
+  type BibleBookmarkStyleRange,
   clearBookmarks as clearBibleBookmarks,
   exportBookmarksAsText as exportBibleBookmarksAsText,
   getBookmarkNotes as getBibleBookmarkNotes,
@@ -267,6 +268,7 @@ import {
   refreshPresentedSongSlides,
   removeSlideHighlight,
   type ScreenGlobalSettings,
+  setSlideHighlights,
   showSlide,
   stopPresentation,
   type TextStyleRange,
@@ -4573,6 +4575,47 @@ async function startRealServer(): Promise<void> {
         }
       }
 
+      // PUT /api/presentation/highlights - Replace every highlight at once
+      if (
+        req.method === 'PUT' &&
+        url.pathname === '/api/presentation/highlights'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { ranges: TextStyleRange[] }
+
+          if (!Array.isArray(body.ranges)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Ranges are required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const highlights = setSlideHighlights(body.ranges)
+          broadcastSlideHighlights(highlights)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: highlights }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // DELETE /api/presentation/highlights/:id - Remove a specific highlight
       if (
         req.method === 'DELETE' &&
@@ -7612,7 +7655,10 @@ async function startRealServer(): Promise<void> {
         if (permError) return permError
 
         try {
-          const body = (await req.json()) as { verseId: number }
+          const body = (await req.json()) as {
+            verseId: number
+            styleRanges?: BibleBookmarkStyleRange[]
+          }
 
           if (typeof body.verseId !== 'number') {
             return handleCors(
@@ -7624,7 +7670,7 @@ async function startRealServer(): Promise<void> {
             )
           }
 
-          const result = addBibleBookmark(body.verseId)
+          const result = addBibleBookmark(body.verseId, body.styleRanges)
 
           if ('error' in result) {
             return handleCors(

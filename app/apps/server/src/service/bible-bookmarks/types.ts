@@ -1,4 +1,21 @@
 /**
+ * A run of styling drawn over the verse text, by character offset.
+ *
+ * Mirrors the live slide's `TextStyleRange` so a saved bookmark can be poured
+ * straight back onto the screen.
+ */
+export interface BibleBookmarkStyleRange {
+  id: string
+  start: number
+  end: number
+  highlight?: string
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  fontScale?: number
+}
+
+/**
  * A bookmarked Bible verse.
  *
  * Verse fields are denormalized so a bookmark keeps reading correctly even if
@@ -17,6 +34,8 @@ export interface BibleBookmark {
   chapter: number
   verse: number
   sortOrder: number
+  /** Highlights/bold/underline saved with the verse, empty when none. */
+  styleRanges: BibleBookmarkStyleRange[]
   createdAt: number
 }
 

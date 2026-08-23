@@ -33,6 +33,7 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { applyStylesToText } from '~/features/presentation/utils/applyStylesToText'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { ImportBibleBookmarksModal } from './ImportBibleBookmarksModal'
@@ -131,9 +132,23 @@ function SortableBookmarkItem({
             </span>
           )}
         </div>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-          {bookmark.text}
-        </p>
+        {/* The highlighting saved with the verse is shown here, so the row is
+            proof the marking survived. `applyStylesToText` escapes the verse
+            text and emits only its own mark/strong/em/u tags - the same
+            renderer the screen itself uses. */}
+        {bookmark.styleRanges.length > 0 ? (
+          <p
+            data-testid="bible-bookmark-styled-text"
+            className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_mark]:text-gray-900"
+            dangerouslySetInnerHTML={{
+              __html: applyStylesToText(bookmark.text, bookmark.styleRanges),
+            }}
+          />
+        ) : (
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+            {bookmark.text}
+          </p>
+        )}
       </button>
 
       <button

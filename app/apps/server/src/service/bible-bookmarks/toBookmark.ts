@@ -1,3 +1,4 @@
+import { parseStyleRanges } from './parseStyleRanges'
 import type { BibleBookmark } from './types'
 import type { bibleBookmarks } from '../../db/schema'
 
@@ -20,6 +21,7 @@ export function toBookmark(
     chapter: record.chapter,
     verse: record.verse,
     sortOrder: record.sortOrder,
+    styleRanges: parseStyleRanges(record.styleRanges),
     createdAt: record.createdAt.getTime(),
   }
 }

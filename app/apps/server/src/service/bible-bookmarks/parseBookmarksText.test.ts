@@ -1,6 +1,5 @@
-import { describe, expect, test } from 'bun:test'
-
 import { parseBookmarksText } from './parseBookmarksText'
+import { describe, expect, test } from 'bun:test'
 
 describe('parseBookmarksText', () => {
   test('returns nothing for empty input', () => {
@@ -100,7 +99,11 @@ describe('parseBookmarksText', () => {
     const result = parseBookmarksText(text)
 
     expect(result.map((entry) => entry.line)).toEqual([3, 5, 8])
-    expect(result.map((entry) => entry.kind)).toEqual(['note', 'verse', 'verse'])
+    expect(result.map((entry) => entry.kind)).toEqual([
+      'note',
+      'verse',
+      'verse',
+    ])
   })
 
   test('handles CRLF line endings', () => {
