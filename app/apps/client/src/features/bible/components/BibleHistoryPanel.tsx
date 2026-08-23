@@ -1,12 +1,19 @@
-import { ChevronDown, Download, History, Search, Trash2 } from 'lucide-react'
+import { ChevronDown, History, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
+import { saveTextFile } from '~/utils/saveTextFile'
+import {
+  BibleHistoryExportMenu,
+  type BibleHistoryExportScope,
+} from './BibleHistoryExportMenu'
 import { BibleHistoryItem } from './BibleHistoryItem'
 import { useBibleHistory, useClearHistory } from '../hooks'
 import type { BibleHistoryItem as BibleHistoryItemType } from '../types'
+import { formatHistoryAsSchedule } from '../utils/formatHistoryAsSchedule'
+import { getLastSessionItems } from '../utils/getLastSessionItems'
 
 const ITEMS_PER_PAGE = 20
 
@@ -72,48 +79,6 @@ function groupHistoryByDay(
     dateLabel: formatDateLabel(new Date(groupItems[0].createdAt), t),
     items: groupItems,
   }))
-}
-
-function getTodayItems(items: BibleHistoryItemType[]): BibleHistoryItemType[] {
-  const now = new Date()
-  const todayStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).getTime()
-  const todayEnd = todayStart + 24 * 60 * 60 * 1000
-
-  return items.filter(
-    (item) => item.createdAt >= todayStart && item.createdAt < todayEnd,
-  )
-}
-
-function formatHistoryAsSchedule(
-  items: BibleHistoryItemType[],
-  t: (key: string) => string,
-): string {
-  const lines: string[] = []
-
-  // Add format help comments
-  lines.push(`# ${t('history.exportTitle')}`)
-  lines.push(`# ${t('history.exportHelp')}`)
-  lines.push('')
-
-  // Sort by newest first and add each verse as a schedule item
-  const sortedItems = [...items].sort((a, b) => b.createdAt - a.createdAt)
-
-  for (const item of sortedItems) {
-    // Remove translation suffix from reference if present (e.g., "Ioan 3:16 - VDCC" -> "Ioan 3:16")
-    const refWithoutTranslation = item.reference
-      .replace(/\s*-\s*[A-Z]+$/, '')
-      .trim()
-    lines.push(`${refWithoutTranslation} [V]`)
-    // Add verse content as comment (ignored by parser)
-    lines.push(`# ${item.text}`)
-    lines.push('')
-  }
-
-  return lines.join('\n')
 }
 
 export function BibleHistoryPanel({
@@ -212,38 +177,37 @@ export function BibleHistoryPanel({
     clearHistoryMutation.mutate()
   }, [clearHistoryMutation])
 
-  const handleExport = useCallback(async () => {
-    const todayItems = getTodayItems(historyItems)
-    const content = formatHistoryAsSchedule(todayItems, t)
-    const defaultFilename = `bible-history-${new Date().toISOString().split('T')[0]}.schedule.txt`
+  // The most recent sitting, used both for the menu's counter and its export.
+  const sessionItems = useMemo(
+    () => getLastSessionItems(historyItems),
+    [historyItems],
+  )
 
-    const isTauri =
-      typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+  const handleExport = useCallback(
+    async (scope: BibleHistoryExportScope) => {
+      const isSession = scope === 'session'
+      const items = isSession ? sessionItems : historyItems
+      if (items.length === 0) return
 
-    if (isTauri) {
-      const { save } = await import('@tauri-apps/plugin-dialog')
-      const { writeTextFile } = await import('@tauri-apps/plugin-fs')
-
-      const savePath = await save({
-        defaultPath: defaultFilename,
-        filters: [{ name: 'Schedule Text', extensions: ['txt'] }],
+      const content = formatHistoryAsSchedule(items, {
+        title: isSession
+          ? t('history.exportTitleSession')
+          : t('history.exportTitle'),
+        help: t('history.exportHelp'),
       })
+      const day = new Date().toISOString().split('T')[0]
+      const defaultFilename = isSession
+        ? `bible-history-session-${day}.schedule.txt`
+        : `bible-history-${day}.schedule.txt`
 
-      if (savePath) {
-        await writeTextFile(savePath, content)
-      }
-    } else {
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = defaultFilename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }
-  }, [historyItems, t])
+      await saveTextFile({
+        content,
+        defaultFilename,
+        filterName: 'Schedule Text',
+      })
+    },
+    [historyItems, sessionItems, t],
+  )
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full">
@@ -280,14 +244,11 @@ export function BibleHistoryPanel({
         </div>
         {historyItems.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handleExport}
-              className="p-1.5 rounded-md bg-teal-50 text-teal-600 hover:bg-teal-100 dark:bg-teal-900/30 dark:text-teal-400 dark:hover:bg-teal-900/50 transition-colors"
-              title={t('history.export')}
-            >
-              <Download className="w-3.5 h-3.5" />
-            </button>
+            <BibleHistoryExportMenu
+              sessionCount={sessionItems.length}
+              totalCount={historyItems.length}
+              onExport={handleExport}
+            />
             <button
               type="button"
               onClick={handleClear}
