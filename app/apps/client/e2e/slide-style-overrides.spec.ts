@@ -52,7 +52,10 @@ test.describe('Per-slide text styling', () => {
       // A brand new slide follows the screen settings — no override stored.
       expect(await readOverride()).toBeNull()
 
-      // Enlarge the slide's text and make it bold, then align it to the start.
+      // Resize the slide's text and make it bold, then align it to the start.
+      // Shrinking rather than growing: whether the text can grow depends on
+      // how much of the box the font already fills, which differs between
+      // machines — A+ is disabled at the edge.
       const editable = page.getByTestId('slide-canvas-editable')
       const renderedFontSize = async () =>
         Number.parseFloat(
@@ -60,12 +63,12 @@ test.describe('Per-slide text styling', () => {
         )
       const before = await renderedFontSize()
 
-      await page.getByTestId('slide-style-font-increase').click()
-      // The size on screen actually grows — the scale is applied to the fitted
-      // size, so it is not swallowed by the auto-fit ceiling.
+      await page.getByTestId('slide-style-font-decrease').click()
+      // The size on screen actually changes — the scale is applied to the
+      // fitted size, so it is not swallowed by the auto-fit ceiling.
       await expect
         .poll(renderedFontSize, { timeout: 5000 })
-        .toBeGreaterThan(before)
+        .toBeLessThan(before)
       await page.getByTestId('slide-style-bold').click()
       await page.getByTestId('slide-style-align-left').click()
 
@@ -75,7 +78,7 @@ test.describe('Per-slide text styling', () => {
         .toMatchObject({ bold: true, alignment: 'left' })
 
       const stored = await readOverride()
-      expect(stored.fontScale).toBeGreaterThan(1)
+      expect(stored.fontScale).toBeLessThan(1)
 
       // The override survives a reload and the toolbar reflects it.
       await page.reload()
@@ -128,9 +131,9 @@ test.describe('Per-slide text styling', () => {
 
       const editable = page.getByTestId('slide-canvas-editable')
       await expect(editable).toBeVisible()
-      // Select one word, then enlarge it and make it bold.
+      // Select one word, then shrink it and make it bold.
       await editable.dblclick()
-      await page.getByTestId('slide-style-font-increase').click()
+      await page.getByTestId('slide-style-font-decrease').click()
       await page.getByTestId('slide-style-bold').click()
 
       // The editor shows the styling straight away, not only after saving.
@@ -320,7 +323,7 @@ test.describe('Per-slide text styling', () => {
       // reach the projection with the navigation, not a second later.
       await page.getByTestId('stage-thumbnail').nth(1).click()
       await page.locator('[data-editing]').click()
-      await page.getByTestId('slide-style-font-increase').click()
+      await page.getByTestId('slide-style-font-decrease').click()
       await page.getByTestId('stage-present').click()
       await expect
         .poll(async () => (await liveSlides()).length, { timeout: 10000 })
@@ -329,7 +332,7 @@ test.describe('Per-slide text styling', () => {
 
       const slides = await liveSlides()
       expect(slides.length).toBeGreaterThan(1)
-      expect(slides[1].styleOverrides?.fontScale).toBeGreaterThan(1)
+      expect(slides[1].styleOverrides?.fontScale).toBeLessThan(1)
     } finally {
       await request.post('/api/presentation/clear-temporary').catch(() => {})
       await request.delete(`/api/songs/${created.id}`)
@@ -387,15 +390,15 @@ test.describe('Per-slide text styling', () => {
         selection?.addRange(range)
       })
       await page.waitForTimeout(300)
-      await page.getByTestId('slide-style-font-increase').click()
+      await page.getByTestId('slide-style-font-decrease').click()
 
       // The live snapshot carries the run, and the already-open projection
       // picks it up without being reloaded.
       await expect
-        .poll(async () => (await liveRanges())[0]?.fontScale ?? 0, {
+        .poll(async () => (await liveRanges())[0]?.fontScale ?? 1, {
           timeout: 10000,
         })
-        .toBeGreaterThan(1)
+        .toBeLessThan(1)
       await expect
         .poll(async () => projection.locator('body').innerHTML(), {
           timeout: 10000,
