@@ -108,13 +108,32 @@ export async function cancelUpdateDownload(): Promise<void> {
  * the sidecar to exit — which happens when the app quits — before it replaces
  * anything, so nothing is swapped from under a running app.
  */
-export async function installUpdate(): Promise<{
+/**
+ * What the installer window says. It runs after the app has quit, so the
+ * texts travel with the request instead of being looked up there.
+ */
+export interface UpdateInstallerLabels {
+  title: string
+  closing: string
+  installing: string
+  launching: string
+  hint: string
+  /** May contain `{{reason}}`, filled in by the installer. */
+  failed: string
+  openManually: string
+}
+
+export async function installUpdate(labels: UpdateInstallerLabels): Promise<{
   success: boolean
   error?: string
 }> {
   const res = await fetcher<ApiResponse<{ success: boolean }>>(
     '/api/app-update/install',
-    { method: 'POST' },
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ labels }),
+    },
   )
   if (res.error) return { success: false, error: res.error }
   return { success: true }
