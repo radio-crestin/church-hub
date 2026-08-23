@@ -1245,6 +1245,15 @@
           "filesystem": "The installer could not be saved to the download folder. Choose another folder below and try again.",
           "unknown": "The download failed."
         }
+      },
+      "installer": {
+        "title": "Church Hub",
+        "closing": "Closing the app…",
+        "installing": "Installing version {{version}}…",
+        "launching": "Starting the new version…",
+        "hint": "The app reopens by itself when this is done.",
+        "failed": "The update could not be installed: {{reason}}",
+        "openManually": "Open Church Hub yourself; the downloaded installer is in the downloads folder."
       }
     },
     "about": {

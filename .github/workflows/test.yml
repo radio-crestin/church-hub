@@ -313,6 +313,15 @@ jobs:
         shell: bash
         run: bun test src/__tests__/compiled-sidecar.test.ts
 
+      # The update installer helpers are scripts run by osascript / Windows
+      # PowerShell after the app has quit; nothing else executes them. Each
+      # platform's own parser at least vouches for the generated syntax.
+      - name: Parse the generated update-installer helpers
+        if: matrix.os != 'ubuntu-latest'
+        working-directory: app/apps/server
+        shell: bash
+        run: bun test src/service/app-update/__tests__/helper-syntax.test.ts
+
       - name: Upload compiled binary on failure
         if: failure()
         uses: actions/upload-artifact@v5

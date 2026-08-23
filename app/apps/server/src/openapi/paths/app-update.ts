@@ -195,7 +195,36 @@ export const appUpdatePaths: Record<string, Record<string, unknown>> = {
       tags: ['App update'],
       summary: 'Install the downloaded artifact',
       description:
-        'Starts a detached helper that waits for the app to quit, installs without any prompts (bundle swap on macOS, silent NSIS on Windows) and relaunches. User data is untouched: the database lives in the per-user data directory and migrations run on the next boot. Requires settings.edit.',
+        'Starts a detached helper with a native progress window that waits for the app to quit (terminating it after a grace period if it does not), installs without any prompts (bundle swap on macOS, silent NSIS on Windows), relaunches the app, and logs to church-hub-update.log in the data directory. User data is untouched: the database lives in the per-user data directory and migrations run on the next boot. Requires settings.edit.',
+      requestBody: {
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                labels: {
+                  type: 'object',
+                  description:
+                    "What the installer window says, in the operator's language; English defaults otherwise",
+                  properties: {
+                    title: { type: 'string' },
+                    closing: { type: 'string' },
+                    installing: { type: 'string' },
+                    launching: { type: 'string' },
+                    hint: { type: 'string' },
+                    failed: {
+                      type: 'string',
+                      description: 'May contain {{reason}}',
+                    },
+                    openManually: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       responses: {
         '200': {
           description: 'Installer started; the caller should now quit the app',
