@@ -723,26 +723,33 @@ test.describe('Song editing layout preference', () => {
         })
         .toBeGreaterThan(0)
 
-      // The active thumbnail (aria-current) ends up within the scroll viewport.
-      // Poll to let the smooth-scroll animation settle.
+      // The active thumbnail (aria-current) ends up within the scroll viewport,
+      // and so do the two slides after it — the operator needs to see what is
+      // coming, not just where they are. Poll to let the smooth-scroll
+      // animation settle.
       const active = page.locator(
         '[data-testid="stage-thumbnail"][aria-current="true"]',
       )
       await expect(active).toBeVisible()
+      const thumbs = page.getByTestId('stage-thumbnail')
+      const inView = (el: Element) => {
+        const box = el.getBoundingClientRect()
+        const container = el.closest(
+          '[data-testid="stage-filmstrip-scroll"]',
+        ) as HTMLElement
+        const cRect = container.getBoundingClientRect()
+        return box.top >= cRect.top - 1 && box.bottom <= cRect.bottom + 1
+      }
       await expect
-        .poll(
-          async () =>
-            active.evaluate((el) => {
-              const box = el.getBoundingClientRect()
-              const container = el.closest(
-                '[data-testid="stage-filmstrip-scroll"]',
-              ) as HTMLElement
-              const cRect = container.getBoundingClientRect()
-              return box.top >= cRect.top - 1 && box.bottom <= cRect.bottom + 1
-            }),
-          { timeout: 5000 },
-        )
+        .poll(async () => active.evaluate(inView), { timeout: 5000 })
         .toBe(true)
+      for (const offset of [1, 2]) {
+        await expect
+          .poll(async () => thumbs.nth(12 + offset).evaluate(inView), {
+            timeout: 5000,
+          })
+          .toBe(true)
+      }
     } finally {
       await request.delete(`/api/songs/${created.id}`)
     }

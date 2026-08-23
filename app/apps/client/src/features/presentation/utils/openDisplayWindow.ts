@@ -40,6 +40,20 @@ interface WindowState {
 /** How long a drag settles before the screen records its new monitor. */
 const MONITOR_SAVE_DELAY_MS = 500
 
+/**
+ * When the control window asks for the keyboard back after a projection
+ * window has come up. The projection takes it when it appears and again when
+ * its fullscreen transition ends — on macOS around a second in, sometimes
+ * later on a slow display — so the asks are spread past that.
+ */
+const FOCUS_RECLAIM_DELAYS_MS = [200, 500, 900, 1500, 2500]
+
+/**
+ * How long after a projection window is built that its taking the keyboard
+ * is treated as the window manager's doing rather than the operator's.
+ */
+const FOCUS_HANDBACK_WINDOW_MS = 4000
+
 /** How long `closeDisplayWindow` waits for the window to actually go away. */
 const CLOSE_POLL_MS = 50
 const CLOSE_SETTLE_ATTEMPTS = 40
@@ -654,6 +668,10 @@ async function openInNativeWindow(
             const reclaimFocus = async () => {
               try {
                 await mainWindowToRefocus.setFocus()
+                // The window being key is not the whole story: the keys go to
+                // whatever is first responder inside it, and asking the page
+                // for focus is what makes sure that is the page.
+                window.focus()
               } catch (error) {
                 // biome-ignore lint/suspicious/noConsole: Tauri focus restoration
                 console.warn(
@@ -666,9 +684,23 @@ async function openInNativeWindow(
             // The OS can hand focus back to the new window again once it
             // finishes appearing / the fullscreen transition animates
             // (≈1s on macOS), so re-assert a few more times across that window.
-            for (const delay of [200, 500, 900]) {
+            for (const delay of FOCUS_RECLAIM_DELAYS_MS) {
               setTimeout(reclaimFocus, delay)
             }
+            // And whenever the new window does take the keyboard while it is
+            // still settling in — the end of the fullscreen transition lands
+            // after every timer above — hand it straight back. The operator
+            // is not clicking the projection in its first seconds; they are
+            // at the keyboard, about to go to the next slide.
+            const settledAt = Date.now() + FOCUS_HANDBACK_WINDOW_MS
+            const stopHandback = await webview.listen('tauri://focus', () => {
+              if (Date.now() > settledAt) {
+                stopHandback()
+                return
+              }
+              void reclaimFocus()
+            })
+            setTimeout(stopHandback, FOCUS_HANDBACK_WINDOW_MS)
           }
         }
       })
@@ -902,12 +934,13 @@ export async function reclaimControlWindowFocus(): Promise<void> {
     const reclaim = async () => {
       try {
         await control.setFocus()
+        window.focus()
       } catch {
         // best-effort; the window may be mid-transition
       }
     }
     await reclaim()
-    for (const delay of [200, 500]) {
+    for (const delay of FOCUS_RECLAIM_DELAYS_MS) {
       setTimeout(reclaim, delay)
     }
   } catch {
