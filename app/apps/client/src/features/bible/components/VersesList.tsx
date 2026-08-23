@@ -5,7 +5,13 @@ import {
   Loader2,
   LocateFixed,
 } from 'lucide-react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { KeyboardShortcutBadge } from '~/ui/kbd'
@@ -238,7 +244,9 @@ export function VersesList({
       }
       if (currentChapterFirstVerseRef.current) {
         const verseElement = currentChapterFirstVerseRef.current
-        const chapterContainer = verseElement.closest('.mb-4') as HTMLElement | null
+        const chapterContainer = verseElement.closest(
+          '.mb-4',
+        ) as HTMLElement | null
         if (chapterContainer) {
           scrollElementToStart(chapterContainer)
           return isInView(verseElement)

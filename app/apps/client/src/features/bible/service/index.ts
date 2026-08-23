@@ -10,4 +10,24 @@ export {
   importTranslation,
   searchBible,
 } from './bible'
+export type {
+  BibleBookmark,
+  BibleBookmarkImportError,
+  BibleBookmarkImportResult,
+  BibleBookmarkItemRef,
+  BibleBookmarkNote,
+} from './bookmarks'
+export {
+  addBookmark,
+  addBookmarkNote,
+  clearBookmarks,
+  exportBookmarksAsText,
+  getBookmarkNotes,
+  getBookmarks,
+  importBookmarksFromText,
+  removeBookmark,
+  removeBookmarkNote,
+  reorderBookmarkItems,
+  updateBookmarkNote,
+} from './bookmarks'
 export { addToHistory, clearHistory, getHistory } from './history'
