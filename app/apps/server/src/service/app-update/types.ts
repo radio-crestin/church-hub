@@ -17,7 +17,19 @@ export interface UpdateDownloadState {
   /** Null while the server has not been told a Content-Length. */
   totalBytes: number | null
   error: string | null
+  /**
+   * Why the last attempt failed, so the client can say something more useful
+   * than "check your connection": the network was unreachable, GitHub answered
+   * with an error status, or the folder could not be written to.
+   */
+  errorCode: UpdateDownloadErrorCode | null
 }
+
+export type UpdateDownloadErrorCode =
+  | 'network'
+  | 'http'
+  | 'filesystem'
+  | 'unknown'
 
 export interface UpdateConfig {
   /**

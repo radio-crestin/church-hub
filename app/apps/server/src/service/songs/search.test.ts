@@ -1,8 +1,11 @@
 import {
+  buildScoringTermLists,
   buildSearchQuery,
+  buildTitleSearchQuery,
   calculateBestPhraseScoreNormalized,
   calculateTitleScoreNormalized,
   createFuzzyHighlightedSnippet,
+  extractQueryVariants,
   extractSearchTerms,
   getValidTerms,
   highlightWithDiacritics,
@@ -45,9 +48,14 @@ describe('extractSearchTerms', () => {
     // leading "1." is a hymn number that the user remembers — drop it
     // from the query. The "m" and "a" from "m-a", however, are clitic
     // tokens that need to survive so the title phrase still matches.
-    expect(
-      extractSearchTerms('1. Cand Isus Hristos m-a mantuit'),
-    ).toEqual(['cand', 'isus', 'hristos', 'm', 'a', 'mantuit'])
+    expect(extractSearchTerms('1. Cand Isus Hristos m-a mantuit')).toEqual([
+      'cand',
+      'isus',
+      'hristos',
+      'm',
+      'a',
+      'mantuit',
+    ])
   })
 
   test('strips hymn-number prefixes with various separators', () => {
@@ -207,14 +215,18 @@ describe('highlightWithDiacritics - literal-substring path (rawQuery)', () => {
       '<mark>Când Isus Hristos m-a</mark> mântuit',
     )
     // Leading hymn-number prefix is dropped for the highlight too
-    expect(
-      highlightWithDiacritics(title, [], '1. cand isus hristos m-a'),
-    ).toBe('<mark>Când Isus Hristos m-a</mark> mântuit')
+    expect(highlightWithDiacritics(title, [], '1. cand isus hristos m-a')).toBe(
+      '<mark>Când Isus Hristos m-a</mark> mântuit',
+    )
   })
 
   test('"m-am departat de Mântuitorul" marks exactly that phrase', () => {
     const title = 'M-am depărtat de Mântuitorul ce m-a salvat'
-    const out = highlightWithDiacritics(title, [], 'm-am departat de mantuitorul')
+    const out = highlightWithDiacritics(
+      title,
+      [],
+      'm-am departat de mantuitorul',
+    )
     // M- prefix is included; trailing "ce m-a salvat" is not touched.
     expect(out).toBe('<mark>M-am depărtat de Mântuitorul</mark> ce m-a salvat')
   })
@@ -243,10 +255,12 @@ describe('highlightWithDiacritics - per-term fallback', () => {
 
   test('does not nest <mark> tags when a shorter term overlaps a longer one', () => {
     // Pre-existing artefact regression guard.
-    const out = highlightWithDiacritics(
-      'M-am depărtat de Mântuitorul',
-      ['am', 'departat', 'de', 'mantuitorul'],
-    )
+    const out = highlightWithDiacritics('M-am depărtat de Mântuitorul', [
+      'am',
+      'departat',
+      'de',
+      'mantuitorul',
+    ])
     expect(out).not.toMatch(/<mark><mark>/)
     expect(out).not.toMatch(/<\/mark><\/mark>/)
   })
@@ -354,5 +368,109 @@ describe('scoring - exact phrase matching across punctuation', () => {
 
     // Full match should score higher than partial match
     expect(fullScore).toBeGreaterThan(partialScore)
+  })
+})
+
+describe('normalizeForIndex - spellings of one word', () => {
+  test('decodes HTML entities so an escaped apostrophe does not split the word', () => {
+    const normalized = normalizeForIndex(
+      '<p>Te-nconjoară, Isuse, ne&#039;ncetat</p>',
+    )
+    expect(normalized).not.toContain('039')
+    expect(normalized).toContain('ne ncetat')
+  })
+
+  test('appends the joined spellings after the text, keeping the phrase intact', () => {
+    const normalized = normalizeForIndex('Doamne ne-ncetat Te lăudăm')
+    expect(normalized.startsWith('Doamne ne ncetat')).toBe(true)
+    expect(normalized).toContain('Te laudam')
+    expect(normalized.split(' ')).toEqual(
+      expect.arrayContaining(['nencetat', 'neincetat']),
+    )
+    // Phrase scoring still sees the words in order.
+    expect(normalized).toContain('ne ncetat cetat Te laudam')
+  })
+})
+
+describe('extractQueryVariants', () => {
+  test('yields the other spellings of hyphen words and of elided words', () => {
+    expect(extractQueryVariants('Te laudam ne-ncetat')).toEqual([
+      'nencetat',
+      'neincetat',
+    ])
+    expect(extractQueryVariants('te laudam neîncetat')).toEqual(['nencetat'])
+    expect(extractQueryVariants('1. Isus Hristos')).toEqual([])
+  })
+})
+
+describe('buildSearchQuery / buildTitleSearchQuery - spelling variants', () => {
+  test('a single hyphen word searches its split phrase and its joined spellings', () => {
+    const variants = extractQueryVariants('ne-ncetat')
+    const query = buildSearchQuery('ne-ncetat', undefined, variants)
+    expect(query).toContain('("ne ncetat")')
+    expect(query).toContain('("nencetat"* OR "neincetat"*)')
+  })
+
+  test('the title query carries the same tiers restricted to the title column', () => {
+    const variants = extractQueryVariants('laudam ne-ncetat')
+    const query = buildTitleSearchQuery('laudam ne-ncetat', variants)
+    expect(query.startsWith('title : (')).toBe(true)
+    expect(query).toContain('("laudam ne ncetat")')
+    expect(query).toContain('"nencetat"*')
+    expect(query).toContain('NEAR("laudam" "ne" "ncetat", 10)')
+  })
+})
+
+describe('highlighting - signs and entities', () => {
+  test('the title mark covers the hyphen or apostrophe, whatever was typed', () => {
+    expect(
+      highlightWithDiacritics(
+        'Te lăudăm neîncetat',
+        ['ne', 'ncetat'],
+        'ne-ncetat',
+      ),
+    ).toBe('Te lăudăm <mark>neîncetat</mark>')
+    expect(
+      highlightWithDiacritics("Ne'ncetat mă-nveți", ['neincetat'], 'neîncetat'),
+    ).toBe("<mark>Ne'ncetat</mark> mă-nveți")
+  })
+
+  test('the snippet marks the escaped apostrophe word as one word', () => {
+    const snippet = createFuzzyHighlightedSnippet(
+      '<p>Mulţimea Te-nconjoară, Isuse, ne&#039;ncetat, privirea Ție-e dorită</p>',
+      ['ne', 'ncetat'],
+      150,
+      'ne-ncetat',
+    )
+    expect(snippet).toContain('<mark>ne&#039;ncetat</mark>')
+  })
+})
+
+describe('buildScoringTermLists', () => {
+  test('swaps each other spelling into the typed terms', () => {
+    const terms = extractSearchTerms('te laudam ne-ncetat')
+    expect(buildScoringTermLists('te laudam ne-ncetat', terms)).toEqual([
+      ['te', 'laudam', 'ne', 'ncetat'],
+      ['te', 'laudam', 'nencetat'],
+      ['te', 'laudam', 'neincetat'],
+    ])
+    expect(buildScoringTermLists('neincetat', ['neincetat'])).toEqual([
+      ['neincetat'],
+      ['nencetat'],
+    ])
+    expect(buildScoringTermLists('nencetat', ['nencetat'])).toEqual([
+      ['nencetat'],
+      ['neincetat'],
+    ])
+  })
+
+  test('a title in another spelling scores as a full title match', () => {
+    const lists = buildScoringTermLists('ne-ncetat', ['ne', 'ncetat'])
+    const best = Math.max(
+      ...lists.map((terms) =>
+        calculateTitleScoreNormalized('te laudam neincetat', terms),
+      ),
+    )
+    expect(best).toBeGreaterThanOrEqual(95)
   })
 })

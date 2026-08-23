@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import type { UpdateInfo } from '../services/versionService'
-import {
-  checkForUpdates,
-  getCurrentVersion,
-  openDownloadUrl,
-} from '../services/versionService'
+import { checkForUpdates, getCurrentVersion } from '../services/versionService'
 
 const UPDATE_DISMISSED_KEY = 'update-dismissed-version'
 const CHECK_INTERVAL = 1000 * 60 * 60 // Check every hour
@@ -21,7 +17,6 @@ interface UseAppUpdateResult {
   isLoading: boolean
   error: string | null
   isDismissed: boolean
-  isDownloading: boolean
   isDevInstance: boolean
   /**
    * Runs the check. Pressing the button in the UI always reaches GitHub, even
@@ -29,7 +24,6 @@ interface UseAppUpdateResult {
    */
   checkNow: () => Promise<void>
   dismissUpdate: () => void
-  downloadUpdate: () => Promise<void>
 }
 
 export function useAppUpdate(): UseAppUpdateResult {
@@ -37,7 +31,6 @@ export function useAppUpdate(): UseAppUpdateResult {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isDismissed, setIsDismissed] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
 
   /**
    * Fills in the current version without contacting GitHub. Used for the
@@ -93,20 +86,6 @@ export function useAppUpdate(): UseAppUpdateResult {
     }
   }, [updateInfo?.latestVersion])
 
-  const downloadUpdate = useCallback(async () => {
-    if (!updateInfo) return
-
-    setIsDownloading(true)
-    try {
-      const url = updateInfo.downloadUrl || updateInfo.releaseUrl
-      await openDownloadUrl(url)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to open download')
-    } finally {
-      setIsDownloading(false)
-    }
-  }, [updateInfo])
-
   // On mount a dev instance only shows its own version; the operator can still
   // press "Check now" to reach GitHub deliberately.
   useEffect(() => {
@@ -133,9 +112,7 @@ export function useAppUpdate(): UseAppUpdateResult {
     error,
     isDevInstance: IS_DEV_INSTANCE,
     isDismissed,
-    isDownloading,
     checkNow,
     dismissUpdate,
-    downloadUpdate,
   }
 }

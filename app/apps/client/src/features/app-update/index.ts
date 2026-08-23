@@ -7,5 +7,4 @@ export type { GithubRelease, UpdateInfo } from './services/versionService'
 export {
   checkForUpdates,
   getCurrentVersion,
-  openDownloadUrl,
 } from './services/versionService'

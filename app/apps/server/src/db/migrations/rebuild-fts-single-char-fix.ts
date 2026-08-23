@@ -1,5 +1,4 @@
 import type { Database } from 'bun:sqlite'
-
 import { rebuildSearchIndex } from '../../service/songs/search'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -10,14 +9,17 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[migrate-fts-single-char:${level}] ${message}`)
 }
 
-// Bumped from v1 → v2 because the v1 rebuild dropped single-char tokens
-// from the index ("cand isus hristos m a mantuit" → "cand isus hristos
-// mantuit"), which lost linguistic signal for Romanian clitics. The v2
-// rebuild reinstates them — single chars now flow through normalizeForIndex
-// untouched and are filtered defensively only where they cause noise (the
-// broad-OR tier of buildSearchQuery + meaningful-term denominator in the
-// title score). Any dev DB that already ran v1 still needs this re-rebuild.
-const MIGRATION_KEY = 'rebuild_fts_clitic_aware_v2'
+// Bump the key whenever normalizeForIndex changes what it emits — every
+// existing database then re-indexes once on its next boot.
+//
+// v2: the v1 rebuild dropped single-char tokens from the index ("cand isus
+//     hristos m a mantuit" → "cand isus hristos mantuit"), which lost
+//     linguistic signal for Romanian clitics; v2 reinstated them.
+// v3: HTML entities in slide content are decoded (an escaped apostrophe
+//     used to index as a stray "039" that split phrases), and every
+//     hyphen/apostrophe word is also indexed in its joined spellings so
+//     "ne-ncetat", "ne'ncetat", "nencetat" and "neîncetat" find each other.
+const MIGRATION_KEY = 'rebuild_fts_word_spellings_v3'
 
 /**
  * Re-runs rebuildSearchIndex once with the current normalizeForIndex so the

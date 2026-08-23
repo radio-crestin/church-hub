@@ -2,6 +2,7 @@
   "title": "Note de lansare",
   "description": "Ce este nou în fiecare versiune Church Hub — funcționalități, corectări de erori și alte modificări.",
   "current": "Curentă",
+  "available": "Nouă",
   "empty": "Nicio modificare notabilă.",
   "showAll": "Afișează toate cele {{count}} versiuni",
   "showLess": "Afișează mai puțin",

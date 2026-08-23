@@ -1229,25 +1229,22 @@
         "upToDate": "You are on the latest version (v{{version}})",
         "available": "Version {{version}} is available"
       },
-      "categories": {
-        "features": "New",
-        "bugFixes": "Fixed",
-        "changes": "Changed"
-      },
       "available": {
-        "title": "Version {{version}} is available",
-        "current": "You are running v{{version}}",
-        "noNotes": "No release notes for this version.",
         "download": "Download",
+        "retry": "Try again",
         "downloading": "Downloading...",
         "readyToInstall": "Ready to install",
         "install": "Install and restart",
         "installFailed": "The install could not start ({{reason}}). A development instance cannot replace itself — try it from an installed build.",
         "installing": "Installing...",
-        "later": "Later",
-        "failed": "The download failed. Check the folder and your connection, then try again.",
         "unavailable": "Could not work out which installer fits this machine, so there is nothing to download automatically.",
-        "openRelease": "Open the release on GitHub"
+        "openRelease": "Open the release on GitHub",
+        "errors": {
+          "network": "Could not reach GitHub to fetch the installer. Check that this computer is online (and that no proxy or firewall is in the way), then try again.",
+          "http": "GitHub did not hand over the installer. Wait a moment and try again.",
+          "filesystem": "The installer could not be saved to the download folder. Choose another folder below and try again.",
+          "unknown": "The download failed."
+        }
       }
     },
     "about": {
@@ -1257,8 +1254,7 @@
       "checkForUpdates": "Check for updates",
       "updateAvailable": "Update Available",
       "updateDescription": "A new version is available. Download and install to get the latest features and fixes.",
-      "downloadUpdate": "Download Update",
-      "downloading": "Opening...",
+      "openUpdates": "Open the updates page",
       "upToDate": "You are running the latest version.",
       "viewReleaseNotes": "View release notes on GitHub",
       "devInstance": "Development instance",

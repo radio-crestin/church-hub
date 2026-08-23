@@ -19,7 +19,18 @@ const downloadState = {
     fileName: { type: 'string', nullable: true },
     receivedBytes: { type: 'integer' },
     totalBytes: { type: 'integer', nullable: true },
-    error: { type: 'string', nullable: true },
+    error: {
+      type: 'string',
+      nullable: true,
+      description: 'What went wrong, when phase is `error`',
+    },
+    errorCode: {
+      type: 'string',
+      nullable: true,
+      enum: ['network', 'http', 'filesystem', 'unknown', null],
+      description:
+        'Why the download failed: GitHub unreachable (`network`), GitHub answered with an error status (`http`), or the download folder could not be written to (`filesystem`)',
+    },
   },
 }
 
@@ -163,7 +174,9 @@ export const appUpdatePaths: Record<string, Record<string, unknown>> = {
   '/api/app-update/cancel': {
     post: {
       tags: ['App update'],
-      summary: 'Abort a download in flight',
+      summary: 'Abort a download in flight, or dismiss a failure',
+      description:
+        'Aborts the download and removes the partial file. When the last download failed, clears that failure so the next status read is idle again. Transient failures (connection dropped, 5xx from GitHub) are retried up to three times before being reported.',
       responses: {
         '200': {
           description: 'Download state after aborting',

@@ -22,19 +22,12 @@
     "closeMenu": "Close menu"
   },
   "version": {
-    "current": "Current version",
-    "checkForUpdates": "Check for updates",
     "updateAvailable": "v{{version}} available",
-    "clickToDownload": "Click to download the latest version",
-    "download": "Download Update",
-    "downloading": "Opening...",
     "readyToInstall": "v{{version}} ready to install",
     "clickToOpenUpdates": "Open the updates page",
     "clickToInstall": "Downloaded — install it now",
     "viewUpdate": "See what's new",
     "install": "Install now",
-    "dismiss": "Dismiss",
-    "dev": "Dev",
-    "devInstanceHint": "Running a dev instance — update checks are disabled"
+    "dismiss": "Dismiss"
   }
 }
