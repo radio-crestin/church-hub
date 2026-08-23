@@ -152,6 +152,19 @@ function BiblePage() {
   const removeBibleBookmark = useRemoveBibleBookmark()
   const { data: slideHighlights } = useSlideHighlights()
   const setSlideHighlights = useSetSlideHighlights()
+  /**
+   * Read through refs inside presentVerseToScreen. Both change identity often -
+   * the highlights query refetches on a 10s interval - and putting them in that
+   * callback's deps would rebuild it constantly, re-running every effect that
+   * depends on it and disturbing the chapter-boundary scroll behaviour those
+   * effects are carefully tuned for.
+   */
+  const slideHighlightsRef = useRef(slideHighlights)
+  slideHighlightsRef.current = slideHighlights
+  const bibleBookmarksRef = useRef(bibleBookmarks)
+  bibleBookmarksRef.current = bibleBookmarks
+  const setSlideHighlightsRef = useRef(setSlideHighlights)
+  setSlideHighlightsRef.current = setSlideHighlights
 
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.bibleLeft,
@@ -901,15 +914,18 @@ function BiblePage() {
       // empty set clears the previous slide's marks rather than letting them
       // bleed onto this verse.
       const savedStyleRanges =
-        [...bibleBookmarks]
+        [...bibleBookmarksRef.current]
           .reverse()
           .find(
             (bookmark) =>
               bookmark.verseId === verse.id && bookmark.styleRanges.length > 0,
           )?.styleRanges ?? []
 
-      if (savedStyleRanges.length > 0 || (slideHighlights?.length ?? 0) > 0) {
-        setSlideHighlights.mutate(savedStyleRanges)
+      if (
+        savedStyleRanges.length > 0 ||
+        (slideHighlightsRef.current?.length ?? 0) > 0
+      ) {
+        setSlideHighlightsRef.current.mutate(savedStyleRanges)
       }
 
       // Add to Bible history
@@ -930,9 +946,6 @@ function BiblePage() {
       secondaryTranslation,
       presentTemporaryBible,
       addToHistory,
-      bibleBookmarks,
-      slideHighlights,
-      setSlideHighlights,
     ],
   )
 
