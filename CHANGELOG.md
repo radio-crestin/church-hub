@@ -2,6 +2,16 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.94 — 2026-08-23
+
+### 🐛 Bug Fixes
+
+- **presentation**: keep the keyboard live after Present, and make page shortcuts mean their page
+
+### 🔧 Changes
+
+- sync version to v0.1.93 [skip ci]
+
 ## v0.1.93 — 2026-08-23
 
 ### 🐛 Bug Fixes
