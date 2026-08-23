@@ -90,23 +90,44 @@ function Wait-Seconds($seconds) {
 }
 
 # ---- helpers --------------------------------------------------------------
-function Is-Alive($processId) {
-  if ($processId -le 0) { return $false }
-  return $null -ne (Get-Process -Id $processId -ErrorAction SilentlyContinue)
+# The processes that belong to the installed app: everything whose executable
+# lives in the install folder (the app itself, the sidecar, helpers). Decided
+# by path, never by a bare process id — the ids handed over by the caller are
+# only a hint and are never trusted on their own, so a stale or wrong one can
+# never have some unrelated process terminated.
+function Get-AppProcesses() {
+  $separator = [System.IO.Path]::DirectorySeparatorChar
+  $prefix = $P.installDir.TrimEnd($separator) + $separator
+  @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
+    $path = $null
+    try { $path = $_.Path } catch { $path = $null }
+    $path -and $path.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)
+  })
 }
 
-# Waits for the process to go away on its own; after the grace period it is
-# terminated so the update never stalls on an app that did not exit.
-function Wait-ForExit($processId, $graceSeconds) {
+# Waits for the app's processes to go away on their own; after the grace
+# period they are terminated so the update never stalls on an app that did
+# not exit.
+function Wait-ForAppToExit($graceSeconds) {
   $deadline = (Get-Date).AddSeconds($graceSeconds)
-  while ((Is-Alive $processId) -and ((Get-Date) -lt $deadline)) { Pump; Start-Sleep -Milliseconds 100 }
-  if (Is-Alive $processId) {
-    Log "pid $processId still running after \${graceSeconds}s; terminating"
-    Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-    $hardDeadline = (Get-Date).AddSeconds(5)
-    while ((Is-Alive $processId) -and ((Get-Date) -lt $hardDeadline)) { Pump; Start-Sleep -Milliseconds 100 }
+  $remaining = Get-AppProcesses
+  while ($remaining.Count -gt 0 -and (Get-Date) -lt $deadline) {
+    Pump
+    Start-Sleep -Milliseconds 250
+    $remaining = Get-AppProcesses
   }
-  return -not (Is-Alive $processId)
+  if ($remaining.Count -gt 0) {
+    Log ("still running after \${graceSeconds}s: " + (($remaining | ForEach-Object { "$($_.ProcessName)($($_.Id))" }) -join ', ') + '; terminating')
+    $remaining | ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }
+    $hardDeadline = (Get-Date).AddSeconds(5)
+    $remaining = Get-AppProcesses
+    while ($remaining.Count -gt 0 -and (Get-Date) -lt $hardDeadline) {
+      Pump
+      Start-Sleep -Milliseconds 250
+      $remaining = Get-AppProcesses
+    }
+  }
+  return ($remaining.Count -eq 0)
 }
 
 function Fail($reason) {
@@ -118,14 +139,10 @@ function Fail($reason) {
 }
 
 # ---- the update -----------------------------------------------------------
-Log "updating $($P.installDir) to $($P.version) from $($P.installerPath)"
+Log "updating $($P.installDir) to $($P.version) from $($P.installerPath) (app pid $($P.appPid), sidecar pid $($P.sidecarPid))"
 
 Show $P.labels.closing 10
-if (-not (Wait-ForExit $P.appPid 15)) { Fail 'the running app could not be closed' }
-if (Is-Alive $P.sidecarPid) {
-  Log "sidecar $($P.sidecarPid) outlived the app; terminating"
-  Stop-Process -Id $P.sidecarPid -Force -ErrorAction SilentlyContinue
-}
+if (-not (Wait-ForAppToExit 15)) { Fail 'the running app could not be closed' }
 # Let Windows release the file locks of the process that just went away.
 Wait-Seconds 1
 

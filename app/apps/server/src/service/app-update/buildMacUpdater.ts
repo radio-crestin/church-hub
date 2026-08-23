@@ -98,37 +98,69 @@ function show(text, progress) {
 }
 
 // ---- helpers -------------------------------------------------------------
-function isAlive(pid) {
-  return pid > 0 && $.kill(pid, 0) === 0
-}
-
-// Waits for the process to go away on its own; after the grace period it is
-// terminated so the update never stalls on an app that did not quit.
-function waitForExit(pid, graceSeconds) {
-  const deadline = Date.now() + graceSeconds * 1000
-  while (isAlive(pid) && Date.now() < deadline) pump(0.1)
-  if (isAlive(pid)) {
-    log('pid ' + pid + ' still running after ' + graceSeconds + 's; terminating')
-    $.kill(pid, 9)
-    const hardDeadline = Date.now() + 5000
-    while (isAlive(pid) && Date.now() < hardDeadline) pump(0.1)
+// The processes that belong to the installed app: everything whose
+// executable lives inside the bundle (the app itself, the sidecar, helpers).
+// Decided by path, never by a bare process id — an id handed over by the
+// caller is only a hint and is never trusted on its own, so a stale or wrong
+// one can never have some unrelated process terminated.
+function appProcesses() {
+  const prefix = P.appPath.replace(/\\/+$/, '') + '/Contents/MacOS/'
+  // -ww: unlimited width, otherwise the path is cut to a few characters.
+  // command= is argv as launched, which for a bundle is the full path.
+  const listing = runTask('/bin/ps', ['-axww', '-o', 'pid=,command='], { quiet: true })
+  const pids = []
+  for (const line of listing.output.split('\\n')) {
+    const match = line.match(/^\\s*(\\d+)\\s+(.*)$/)
+    if (match && match[2].startsWith(prefix)) pids.push(Number(match[1]))
   }
-  return !isAlive(pid)
+  return pids
 }
 
-function runTask(command, args) {
+// Waits for the app's processes to go away on their own; after the grace
+// period they are terminated so the update never stalls on an app that did
+// not quit.
+function waitForAppToQuit(graceSeconds) {
+  const deadline = Date.now() + graceSeconds * 1000
+  let remaining = appProcesses()
+  while (remaining.length > 0 && Date.now() < deadline) {
+    pump(0.25)
+    remaining = appProcesses()
+  }
+  if (remaining.length > 0) {
+    log('still running after ' + graceSeconds + 's: ' + remaining.join(', ') + '; terminating')
+    for (const pid of remaining) $.kill(pid, 9)
+    const hardDeadline = Date.now() + 5000
+    remaining = appProcesses()
+    while (remaining.length > 0 && Date.now() < hardDeadline) {
+      pump(0.25)
+      remaining = appProcesses()
+    }
+  }
+  return remaining.length === 0
+}
+
+// Output goes to a temp file rather than a pipe: a pipe must be drained
+// while the task runs or a chatty command (ps on a busy Mac) fills it and
+// deadlocks, and draining it would mean not pumping the window meanwhile.
+let taskCounter = 0
+function runTask(command, args, options) {
+  const outputPath = $.NSTemporaryDirectory().js + 'church-hub-update-task-' + $.NSProcessInfo.processInfo.processIdentifier + '-' + (taskCounter++) + '.txt'
+  $.NSFileManager.defaultManager.createFileAtPathContentsAttributes(outputPath, $(), $())
+  const handle = $.NSFileHandle.fileHandleForWritingAtPath(outputPath)
   const task = $.NSTask.alloc.init
   task.launchPath = command
   task.arguments = args
-  const pipe = $.NSPipe.pipe
-  task.standardOutput = pipe
-  task.standardError = pipe
+  task.standardOutput = handle
+  task.standardError = handle
   task.launch
   while (task.isRunning) pump(0.1)
-  const data = pipe.fileHandleForReading.readDataToEndOfFile
-  const output = $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding)
+  handle.closeFile
+  const output = $.NSString.stringWithContentsOfFileEncodingError(outputPath, $.NSUTF8StringEncoding, null)
+  $.NSFileManager.defaultManager.removeItemAtPathError(outputPath, null)
   const text = output.isNil() ? '' : output.js.trim()
-  log('$ ' + command + ' ' + args.join(' ') + ' -> ' + task.terminationStatus + (text ? '\\n' + text : ''))
+  if (!(options && options.quiet)) {
+    log('$ ' + command + ' ' + args.join(' ') + ' -> ' + task.terminationStatus + (text ? '\\n' + text : ''))
+  }
   return { status: task.terminationStatus, output: text }
 }
 
@@ -144,14 +176,10 @@ function fail(reason) {
 }
 
 // ---- the update ----------------------------------------------------------
-log('updating ' + P.appPath + ' to ' + P.version + ' from ' + P.dmgPath)
+log('updating ' + P.appPath + ' to ' + P.version + ' from ' + P.dmgPath + ' (app pid ' + P.appPid + ', sidecar pid ' + P.sidecarPid + ')')
 
 show(P.labels.closing, 10)
-if (!waitForExit(P.appPid, 15)) fail('the running app could not be closed')
-if (isAlive(P.sidecarPid)) {
-  log('sidecar ' + P.sidecarPid + ' outlived the app; terminating')
-  $.kill(P.sidecarPid, 9)
-}
+if (!waitForAppToQuit(15)) fail('the running app could not be closed')
 
 show(P.labels.installing, 30)
 const mountPoint = '/tmp/church-hub-update-' + Date.now()
@@ -174,12 +202,21 @@ if (!newApp) {
 }
 
 show(P.labels.installing, 50)
-runTask('/bin/rm', ['-rf', P.appPath])
+// Copy next to the installed bundle first and only then swap, so a copy that
+// fails halfway (disk full, image gone) leaves the current version in place.
+const staged = P.appPath.replace(/\\/+$/, '') + '.update'
+runTask('/bin/rm', ['-rf', staged])
 // ditto preserves the bundle's structure, symlinks and code signature.
-const copy = runTask('/usr/bin/ditto', [newApp, P.appPath])
+const copy = runTask('/usr/bin/ditto', [newApp, staged])
 runTask('/usr/bin/hdiutil', ['detach', mountPoint, '-quiet'])
 runTask('/bin/rmdir', [mountPoint])
-if (copy.status !== 0) fail('the application could not be copied (' + copy.output + ')')
+if (copy.status !== 0) {
+  runTask('/bin/rm', ['-rf', staged])
+  fail('the application could not be copied (' + copy.output + ')')
+}
+runTask('/bin/rm', ['-rf', P.appPath])
+const swap = runTask('/bin/mv', [staged, P.appPath])
+if (swap.status !== 0) fail('the application could not be moved into place (' + swap.output + ')')
 // Clear the download quarantine so the swapped bundle opens without a prompt.
 runTask('/usr/bin/xattr', ['-dr', 'com.apple.quarantine', P.appPath])
 

@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { closeSync, openSync } from 'node:fs'
 import { chmod, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 
@@ -124,6 +125,11 @@ export async function installUpdate(
     }
 
     // Detached and fully disowned: this process is about to be replaced.
+    // Whatever the interpreter itself prints — a script-execution policy
+    // refusing the .ps1, osascript rejecting the script — lands in the same
+    // log as the helper's own lines, so a helper that never got going still
+    // leaves a trace instead of the app simply not coming back.
+    const helperOutput = openSync(logPath, 'a')
     const child = isWindows
       ? spawn(
           'powershell.exe',
@@ -138,13 +144,18 @@ export async function installUpdate(
             '-File',
             scriptPath,
           ],
-          { detached: true, stdio: 'ignore', windowsHide: true },
+          {
+            detached: true,
+            stdio: ['ignore', helperOutput, helperOutput],
+            windowsHide: true,
+          },
         )
       : spawn('/usr/bin/osascript', ['-l', 'JavaScript', scriptPath], {
           detached: true,
-          stdio: 'ignore',
+          stdio: ['ignore', helperOutput, helperOutput],
         })
     child.unref()
+    closeSync(helperOutput)
 
     markInstalling()
     logger.info(

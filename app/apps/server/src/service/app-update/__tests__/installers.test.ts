@@ -39,7 +39,12 @@ describe('buildMacUpdater', () => {
   })
 
   test('waits for the app, swaps the bundle from the image and relaunches', () => {
-    expect(script).toContain('waitForExit(P.appPid, 15)')
+    expect(script).toContain('waitForAppToQuit(15)')
+    // Processes are found by executable path; a bare pid is never killed.
+    expect(script).toContain("'/Contents/MacOS/'")
+    expect(script).not.toMatch(/\$\.kill\(P\./)
+    // The new bundle is staged beside the old one before the swap.
+    expect(script).toContain("'.update'")
     expect(script).toContain("'/usr/bin/hdiutil', ['attach'")
     expect(script).toContain("'/usr/bin/ditto'")
     expect(script).toContain("'/usr/bin/open', ['-a', P.appPath]")
@@ -80,7 +85,10 @@ describe('buildWindowsUpdater', () => {
   })
 
   test('waits for the app, runs the installer silently and relaunches', () => {
-    expect(script).toContain('Wait-ForExit $P.appPid 15')
+    expect(script).toContain('Wait-ForAppToExit 15')
+    // Processes are found by executable path; a bare pid is never killed.
+    expect(script).toContain('$P.installDir.TrimEnd($separator) + $separator')
+    expect(script).not.toContain('Stop-Process -Id $P.')
     expect(script).toContain("-ArgumentList '/S'")
     expect(script).toContain('-Verb RunAs')
     expect(script).toContain('Start-Process -FilePath $P.launchPath')
