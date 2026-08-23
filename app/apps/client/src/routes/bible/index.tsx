@@ -6,6 +6,8 @@ import {
 } from '@tanstack/react-router'
 import {
   Book,
+  Bookmark,
+  BookmarkCheck,
   CalendarPlus,
   GripVertical,
   Loader2,
@@ -20,15 +22,19 @@ import type {
   BibleVerse,
 } from '~/features/bible'
 import {
+  BibleBookmarksPanel,
   BibleControlPanel,
   BibleHistoryPanel,
   BibleNavigationPanel,
   formatVerseReference,
   getVerseByReference,
+  useAddBibleBookmark,
   useAddToHistory,
+  useBibleBookmarks,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
   useBooks,
+  useRemoveBibleBookmark,
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
@@ -137,6 +143,9 @@ function BiblePage() {
   const navigateTemporary = useNavigateTemporary()
   const addToHistory = useAddToHistory()
   const addItemToSchedule = useAddItemToSchedule()
+  const { data: bibleBookmarks = [] } = useBibleBookmarks()
+  const addBibleBookmark = useAddBibleBookmark()
+  const removeBibleBookmark = useRemoveBibleBookmark()
 
   const [dividerPosition, setDividerPosition] = useDividerPosition(
     DIVIDER_KEYS.bibleLeft,
@@ -162,6 +171,13 @@ function BiblePage() {
       return true
     }
   })
+  const [bookmarksOpen, setBookmarksOpenRaw] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('bible:bookmarks-open') === 'true'
+    } catch {
+      return false
+    }
+  })
   const [programsOpen, setProgramsOpenRaw] = useState<boolean>(() => {
     try {
       return localStorage.getItem('bible:programs-open') === 'true'
@@ -173,6 +189,14 @@ function BiblePage() {
     setHistoryOpenRaw(next)
     try {
       localStorage.setItem('bible:history-open', String(next))
+    } catch {
+      // Ignore quota errors — non-critical UI state.
+    }
+  }, [])
+  const setBookmarksOpen = useCallback((next: boolean) => {
+    setBookmarksOpenRaw(next)
+    try {
+      localStorage.setItem('bible:bookmarks-open', String(next))
     } catch {
       // Ignore quota errors — non-critical UI state.
     }
@@ -663,6 +687,49 @@ function BiblePage() {
   )
 
   // --- Programe panel wiring -------------------------------------------------
+
+  /** The verse the page has in focus — presented, or merely selected. */
+  const focusedVerse = useMemo(() => {
+    const index =
+      navigation.state.presentedIndex ?? navigation.state.searchedIndex
+    return index !== null && index >= 0 ? verses[index] : undefined
+  }, [navigation.state.presentedIndex, navigation.state.searchedIndex, verses])
+
+  /** Every bookmark row pointing at the verse in focus. */
+  const bookmarksForFocusedVerse = useMemo(
+    () =>
+      focusedVerse
+        ? bibleBookmarks.filter(
+            (bookmark) => bookmark.verseId === focusedVerse.id,
+          )
+        : [],
+    [bibleBookmarks, focusedVerse],
+  )
+  const isCurrentVerseBookmarked = bookmarksForFocusedVerse.length > 0
+
+  /**
+   * Bookmarks the verse in focus, or clears it. A verse can be bookmarked more
+   * than once (the panel and the import both allow duplicates), so turning the
+   * toggle off removes every copy - otherwise it would stay lit after a click.
+   */
+  const handleToggleBookmark = useCallback(() => {
+    if (!focusedVerse) return
+
+    if (isCurrentVerseBookmarked) {
+      for (const bookmark of bookmarksForFocusedVerse) {
+        removeBibleBookmark.mutate(bookmark.id)
+      }
+      return
+    }
+
+    addBibleBookmark.mutate(focusedVerse.id)
+  }, [
+    focusedVerse,
+    isCurrentVerseBookmarked,
+    bookmarksForFocusedVerse,
+    removeBibleBookmark,
+    addBibleBookmark,
+  ])
 
   /** The verse the page has in focus, shaped for "add to program". */
   const candidatePassage = useMemo(() => {
@@ -1183,6 +1250,31 @@ function BiblePage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
+          {/* Mirrors the song page's bookmark toggle: bookmarks whatever verse
+              is currently open. */}
+          <button
+            type="button"
+            onClick={handleToggleBookmark}
+            disabled={!focusedVerse}
+            aria-pressed={isCurrentVerseBookmarked}
+            data-testid="bible-bookmark-toggle"
+            title={
+              isCurrentVerseBookmarked
+                ? t('bookmarks.remove')
+                : t('bookmarks.add')
+            }
+            className={`ml-auto p-2 rounded-lg disabled:opacity-40 transition-colors inline-flex items-center justify-center ${
+              isCurrentVerseBookmarked
+                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            {isCurrentVerseBookmarked ? (
+              <BookmarkCheck size={20} />
+            ) : (
+              <Bookmark size={20} />
+            )}
+          </button>
           {/* Mirrors the song page's Programe button: adds whatever verse is
               currently open to the program picked in the Programe panel. */}
           <button
@@ -1197,7 +1289,7 @@ function BiblePage() {
                   })
                 : tSchedules('panel.addVerseDisabled')
             }
-            className="ml-auto p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors inline-flex items-center justify-center"
+            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors inline-flex items-center justify-center"
           >
             <CalendarPlus size={20} />
           </button>
@@ -1345,6 +1437,32 @@ function BiblePage() {
                             bookName: item.bookName,
                             chapter: item.chapter,
                             verse: item.verse,
+                            select: true,
+                          },
+                        })
+                      }}
+                    />
+                  </div>
+                  <div
+                    className={`min-h-0 ${bookmarksOpen ? 'flex-1' : 'flex-none'}`}
+                  >
+                    <BibleBookmarksPanel
+                      isCollapsed={!bookmarksOpen}
+                      onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+                      activeVerseId={focusedVerse?.id}
+                      translationId={primaryTranslation?.id}
+                      onSelectVerse={(bookmark) => {
+                        // Navigate via URL - select only without presenting,
+                        // the same as picking a verse out of the history.
+                        isBrowsingRef.current = true
+                        pendingInternalNavRef.current = true
+                        navigate({
+                          to: '/bible/',
+                          search: {
+                            book: bookmark.bookId,
+                            bookName: bookmark.bookName,
+                            chapter: bookmark.chapter,
+                            verse: bookmark.verse,
                             select: true,
                           },
                         })
