@@ -115,6 +115,43 @@ test.describe('App update - download state', () => {
     expect((await res.json()).error).toBe('Missing url')
   })
 
+  test('a failed download says why, and cancel clears it', async ({
+    request,
+  }) => {
+    // Nothing listens on this port, so every attempt is refused; the sidecar
+    // retries a network failure before giving up, hence the wait.
+    const deadUrl = 'http://127.0.0.1:9/church-hub-test-v-9.9.9.dmg'
+    const started = await request.post('/api/app-update/download', {
+      data: { url: deadUrl, version: '9.9.9' },
+    })
+    expect(started.status()).toBe(200)
+    expect((await started.json()).data.phase).toBe('downloading')
+
+    await expect
+      .poll(
+        async () => {
+          const res = await request.get('/api/app-update/status')
+          return (await res.json()).data.phase
+        },
+        { timeout: 15000 },
+      )
+      .toBe('error')
+
+    const failed = (await (await request.get('/api/app-update/status')).json())
+      .data
+    expect(failed.errorCode).toBe('network')
+    expect(failed.error).toBeTruthy()
+
+    // Seen once, then gone — it must not greet the next visit as a new failure.
+    const cleared = await request.post('/api/app-update/cancel')
+    expect(cleared.status()).toBe(200)
+    expect((await cleared.json()).data).toMatchObject({
+      phase: 'idle',
+      error: null,
+      errorCode: null,
+    })
+  })
+
   test('install refuses when nothing has been downloaded', async ({
     request,
   }) => {
@@ -144,6 +181,98 @@ test.describe('App update - page', () => {
     // The check runs against GitHub, which may be unreachable from CI; either
     // way the page must stay usable rather than get stuck.
     await expect(check).toBeEnabled({ timeout: 15000 })
+  })
+
+  test('a new version is presented like a release-notes entry, not as markdown', async ({
+    page,
+  }) => {
+    // Stand in for GitHub with a release newer than any build, carrying the
+    // body our changelog generator writes.
+    const body = [
+      '# Church Hub v99.0.0',
+      '',
+      "## What's Changed",
+      '',
+      '### ✨ Features',
+      '',
+      '- **songs**: transpose from the stage view',
+      '- remote control from a phone',
+      '',
+      '### 🐛 Bug Fixes',
+      '',
+      '- **bible**: verse search ignored diacritics',
+      '',
+      '### 🔧 Changes',
+      '',
+      '- faster startup on Windows',
+      '',
+      '## Direct Downloads',
+      '',
+      '| Platform | Download |',
+      '| **macOS** | [Download .dmg](https://example.invalid/x.dmg) |',
+    ].join('\n')
+
+    await page.route('https://api.github.com/**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            tag_name: 'v99.0.0',
+            name: 'v99.0.0',
+            body,
+            html_url:
+              'https://github.com/radio-crestin/church-hub/releases/tag/v99.0.0',
+            published_at: '2026-08-23T10:00:00Z',
+            draft: false,
+            prerelease: false,
+            assets: [],
+          },
+        ]),
+      }),
+    )
+
+    await page.goto('/settings/updates')
+    const panel = page.getByTestId('update-panel')
+    await expect(panel).toBeVisible({ timeout: 10000 })
+
+    await panel.getByTestId('update-check-now').click()
+    await expect(panel.getByTestId('update-new-version')).toHaveText(
+      'v99.0.0',
+      {
+        timeout: 15000,
+      },
+    )
+
+    const card = panel.getByTestId('update-version-notes')
+    await expect(card).toBeVisible()
+    // Version, badge and date in the header — the same header the history
+    // uses. The test database may be in either shipped language.
+    await expect(card).toContainText('v99.0.0')
+    await expect(card).toContainText(/New|Nouă/)
+    await expect(card).toContainText('2026')
+    // Grouped, with scopes pulled out of the bold prefix.
+    await expect(card).toContainText(/(Features|Funcționalități) \(2\)/)
+    await expect(card).toContainText('songs: transpose from the stage view')
+    await expect(card).toContainText(/(Bug Fixes|Corectări de erori) \(1\)/)
+    await expect(card).toContainText('bible: verse search ignored diacritics')
+    await expect(card).toContainText(/(Changes|Modificări) \(1\)/)
+    // No markdown leaks through, and the download table stays out.
+    const text = (await card.textContent()) ?? ''
+    expect(text).not.toContain('##')
+    expect(text).not.toContain('**')
+    expect(text).not.toContain('Direct Downloads')
+
+    // A browser tab has no installer to fetch; it says so and links to GitHub.
+    await expect(card.getByTestId('update-unavailable')).toBeVisible()
+    await expect(card.getByRole('link', { name: /GitHub/ })).toHaveAttribute(
+      'href',
+      /releases\/tag\/v99\.0\.0/,
+    )
+
+    await card.screenshot({
+      path: `${process.env.UPDATE_SHOT_DIR ?? 'test-results'}/update-card.png`,
+    })
   })
 
   test('no update dialog opens over the app', async ({ page }) => {

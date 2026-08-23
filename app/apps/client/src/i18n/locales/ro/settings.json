@@ -1212,44 +1212,41 @@
       }
     },
     "updates": {
-      "title": "Actualizari",
-      "description": "Unde se descarca versiunile noi si cum se actualizeaza aplicatia.",
+      "title": "Actualizări",
+      "description": "Unde se descarcă versiunile noi și cum se actualizează aplicația.",
       "folder": {
-        "title": "Folderul descarcarilor",
-        "description": "Versiunile noi se descarca aici. Implicit este folderul Downloads.",
+        "title": "Folderul descărcărilor",
+        "description": "Versiunile noi se descarcă aici. Implicit este folderul Downloads.",
         "choose": "Alege folder",
-        "reset": "Foloseste implicit",
-        "usingDefault": "Se foloseste folderul Downloads al sistemului.",
-        "saved": "Folderul descarcarilor a fost salvat",
-        "failed": "Folderul descarcarilor nu a putut fi salvat"
+        "reset": "Folosește implicit",
+        "usingDefault": "Se folosește folderul Downloads al sistemului.",
+        "saved": "Folderul descărcărilor a fost salvat",
+        "failed": "Folderul descărcărilor nu a putut fi salvat"
       },
-      "whatsNew": "Ce e nou in v{{version}}",
+      "whatsNew": "Ce e nou în v{{version}}",
       "status": {
         "title": "Versiune",
-        "check": "Verifica acum",
-        "checking": "Se verifica...",
+        "check": "Verifică acum",
+        "checking": "Se verifică...",
         "upToDate": "Ai ultima versiune (v{{version}})",
-        "available": "Versiunea {{version}} este disponibila"
-      },
-      "categories": {
-        "features": "Noutati",
-        "bugFixes": "Reparatii",
-        "changes": "Modificari"
+        "available": "Versiunea {{version}} este disponibilă"
       },
       "available": {
-        "title": "Versiunea {{version}} este disponibila",
-        "current": "Rulezi v{{version}}",
-        "noNotes": "Nu exista note de lansare pentru aceasta versiune.",
-        "download": "Descarca",
-        "downloading": "Se descarca...",
+        "download": "Descarcă",
+        "retry": "Încearcă din nou",
+        "downloading": "Se descarcă...",
         "readyToInstall": "Gata de instalare",
-        "install": "Instaleaza si reporneste",
-        "installFailed": "Instalarea nu a putut porni ({{reason}}). O instanta de dezvoltare nu se poate inlocui pe sine - incearca dintr-o versiune instalata.",
-        "installing": "Se instaleaza...",
-        "later": "Mai tarziu",
-        "failed": "Descarcarea a esuat. Verifica folderul si conexiunea, apoi incearca din nou.",
-        "unavailable": "Nu s-a putut determina ce installer se potriveste acestei masini, deci nu exista ce descarca automat.",
-        "openRelease": "Deschide release-ul pe GitHub"
+        "install": "Instalează și repornește",
+        "installFailed": "Instalarea nu a putut porni ({{reason}}). O instanță de dezvoltare nu se poate înlocui pe sine — încearcă dintr-o versiune instalată.",
+        "installing": "Se instalează...",
+        "unavailable": "Nu s-a putut determina ce installer se potrivește acestei mașini, deci nu există ce descărca automat.",
+        "openRelease": "Deschide release-ul pe GitHub",
+        "errors": {
+          "network": "Nu s-a putut ajunge la GitHub pentru a descărca programul de instalare. Verifică dacă acest calculator este conectat la internet (și că niciun proxy sau firewall nu blochează), apoi încearcă din nou.",
+          "http": "GitHub nu a livrat programul de instalare. Așteaptă puțin și încearcă din nou.",
+          "filesystem": "Programul de instalare nu a putut fi salvat în folderul de descărcare. Alege alt folder mai jos și încearcă din nou.",
+          "unknown": "Descărcarea a eșuat."
+        }
       }
     },
     "about": {
@@ -1259,8 +1256,7 @@
       "checkForUpdates": "Verifică actualizări",
       "updateAvailable": "Actualizare Disponibilă",
       "updateDescription": "O nouă versiune este disponibilă. Descarcă și instalează pentru a obține cele mai noi funcționalități și corecții.",
-      "downloadUpdate": "Descarcă Actualizarea",
-      "downloading": "Se deschide...",
+      "openUpdates": "Deschide pagina de actualizări",
       "upToDate": "Rulezi cea mai recentă versiune.",
       "viewReleaseNotes": "Vezi notele versiunii pe GitHub",
       "devInstance": "Instanță de dezvoltare",

@@ -182,15 +182,3 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
     }
   }
 }
-
-/**
- * Opens the download URL or release page
- */
-export async function openDownloadUrl(url: string): Promise<void> {
-  if (isTauri) {
-    const { openUrl } = await import('@tauri-apps/plugin-opener')
-    await openUrl(url)
-  } else {
-    window.open(url, '_blank')
-  }
-}
