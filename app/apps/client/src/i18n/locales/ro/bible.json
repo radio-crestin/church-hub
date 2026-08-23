@@ -144,6 +144,7 @@
         "verse_not_found": "nu exista in aceasta traducere",
         "no_translation": "nicio traducere disponibila"
       }
-    }
+    },
+    "exportEmpty": "Nimic de exportat inca"
   }
 }
