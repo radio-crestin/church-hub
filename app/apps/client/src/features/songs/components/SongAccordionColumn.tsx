@@ -24,7 +24,8 @@ interface SongAccordionColumnProps {
   /** Jumps to the Bible page when a program's verse row is clicked. */
   onSelectSchedulePassage: (item: ScheduleItem) => void
   onOpenSchedule: (scheduleId: number) => void
-  onAddAllBookmarksToSchedule: () => void
+  /** Absent when nothing is marked — there would be nothing to add. */
+  onAddAllBookmarksToSchedule?: () => void
   canViewSongVersions: boolean
   canAddSongVersion: boolean
   canEditSongVersion: boolean
