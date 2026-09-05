@@ -1,4 +1,4 @@
-import { isAppFrontmost } from './isAppFrontmost'
+import { isAppFrontmost } from '~/utils/isAppFrontmost'
 
 /**
  * Re-asserts keyboard focus now and again after each delay, for as long as

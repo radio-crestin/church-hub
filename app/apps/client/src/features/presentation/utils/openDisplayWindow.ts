@@ -1,5 +1,6 @@
 import type { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 
+import { isAppFrontmost } from '~/utils/isAppFrontmost'
 import {
   setWindowDesktopPosition,
   setWindowDesktopSize,
@@ -7,7 +8,6 @@ import {
   windowDesktopSize,
 } from './desktopUnits'
 import { setWindowFullscreen } from './fullscreen'
-import { isAppFrontmost } from './isAppFrontmost'
 import {
   findMonitorByName,
   getDefaultProjectionMonitor,

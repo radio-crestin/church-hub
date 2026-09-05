@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { isAppFrontmost } from '../isAppFrontmost'
+import { isAppFrontmost } from '~/utils/isAppFrontmost'
 import { reclaimFocusSeries } from '../reclaimFocusSeries'
 
-vi.mock('../isAppFrontmost', () => ({
+vi.mock('~/utils/isAppFrontmost', () => ({
   isAppFrontmost: vi.fn(),
 }))
 
