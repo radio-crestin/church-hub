@@ -43,16 +43,20 @@ export function useReopenScreensOnPresentation(): void {
     if (!shouldReopen(presentationState)) return
 
     reopenMissingActiveScreens(screens)
+      .then((reopened) => {
+        // Keep the keyboard live in the control window after presenting (the
+        // projector grabs focus when it appears). Multi-monitor only, and only
+        // when a window actually came up: every presentation change lands here
+        // — including ones the operator did not cause, from a remote, a
+        // footswitch or another client — so an unconditional re-focus would
+        // pull the app in front of whatever they are working in.
+        if (reopened > 0) void reclaimControlWindowFocus()
+      })
       .catch((error) => {
         logger.error(
           'Failed to reopen screen windows on presentation change:',
           error,
         )
-      })
-      // Keep the keyboard live in the control window after presenting (the
-      // projector can grab focus when it appears / updates). Multi-monitor only.
-      .finally(() => {
-        void reclaimControlWindowFocus()
       })
   }, [presentationState, screens])
 }

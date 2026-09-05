@@ -468,14 +468,15 @@ export function SongList({
     }
   }, [debouncedQuery, searchResults, urlPath, categoryIds, isAISearchActive])
 
-  // Sync local state when URL search param changes (e.g., navigation)
-  // Also clear filters when a new search begins
+  // Sync local state when URL search param changes (e.g., navigation).
+  //
+  // Searching deliberately leaves the filters alone. It used to clear them —
+  // and not just in state: it overwrote every stored filter, so typing one
+  // letter threw away the sort and filters the operator had set, for good.
+  // Clearing filters stays a thing the operator asks for, with the button.
   useEffect(() => {
     setLocalQuery(searchQuery)
-    if (searchQuery) {
-      handleClearAllFilters()
-    }
-  }, [searchQuery, handleClearAllFilters])
+  }, [searchQuery])
 
   // Auto-focus search input on mount
   useEffect(() => {

@@ -2,6 +2,7 @@ import { register, unregisterAll } from '@tauri-apps/plugin-global-shortcut'
 import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
+import { useIsAppFrontmost } from './useIsAppFrontmost'
 import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
 import { isGlobalRecordingActive } from '../utils'
 
@@ -97,6 +98,10 @@ export function useGlobalAppShortcuts({
     onSidebarNavigation,
     onPageShortcut,
   ])
+
+  // Navigation shortcuts are only held while Church Hub is the app in front —
+  // see the registration loops below.
+  const isFrontmost = useIsAppFrontmost()
 
   // Use JSON stringified config as dependency to avoid object reference issues
   const shortcutsJson = JSON.stringify(shortcuts)
@@ -250,13 +255,22 @@ export function useGlobalAppShortcuts({
           }
         }
 
-        // Register sidebar navigation shortcuts
+        // Register sidebar navigation shortcuts.
+        //
+        // These are held OS-wide, so while another application is in front they
+        // would swallow the key there and then drag Church Hub over it — a bare
+        // F6 would stop reaching the editor the user is typing in. They only
+        // move around inside Church Hub, so they are worth nothing while the
+        // user is elsewhere: register them only while the app is in front, and
+        // hand the keys straight back to the other application otherwise.
+        // Presentation and OBS shortcuts above stay global on purpose — running
+        // the service from another window is exactly what they are for.
         for (const {
           shortcut,
           route,
           focusSearchOnNavigate,
           displayName,
-        } of sidebarItems) {
+        } of isFrontmost ? sidebarItems : []) {
           if (!shortcut) continue
           if (isCancelled) return
 
@@ -293,7 +307,9 @@ export function useGlobalAppShortcuts({
         // Register page-scoped shortcuts: one registration per key, whatever
         // number of pages bound it. A key a global action already owns is
         // left to that action — the settings refuse such a conflict anyway.
-        for (const shortcut of new Set(pageKeys)) {
+        // Same frontmost rule as the sidebar shortcuts above: a page shortcut
+        // opens a page inside Church Hub, so it has no meaning in another app.
+        for (const shortcut of new Set(isFrontmost ? pageKeys : [])) {
           if (!shortcut || registeredShortcuts.has(shortcut)) continue
           if (isCancelled) return
 
@@ -341,5 +357,6 @@ export function useGlobalAppShortcuts({
     sidebarShortcutsJson,
     pageShortcutsJson,
     isRecording,
+    isFrontmost,
   ])
 }

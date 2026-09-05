@@ -30,6 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
+import { usePersistedChoice } from '~/hooks/usePersistedChoice'
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
@@ -55,13 +56,19 @@ import type { AddToScheduleInput, ScheduleItem } from '../types'
  */
 const SELECTED_SCHEDULE_STORAGE_KEY = 'songPage.selectedScheduleId'
 
+const SUNG_FILTERS = ['all', 'pending', 'sung'] as const
+
+/** Per-variant key for the sung filter, remembered across restarts. */
+const SUNG_FILTER_STORAGE_KEY = {
+  songs: 'programPanel.sungFilter',
+  verses: 'programPanel.versesSungFilter',
+} as const
+
 /** Per-variant key for the "also show the other kind" switch. */
 const SHOW_OTHER_STORAGE_KEY = {
   songs: 'programPanel.showVerses',
   verses: 'programPanel.showSongs',
 } as const
-
-type SungFilter = 'all' | 'pending' | 'sung'
 
 /**
  * The program the Programe panel currently has selected. Exported so a page
@@ -144,7 +151,11 @@ export function SchedulePanel({
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
     readSelectedScheduleId,
   )
-  const [sungFilter, setSungFilter] = useState<SungFilter>('all')
+  const [sungFilter, setSungFilter] = usePersistedChoice(
+    SUNG_FILTER_STORAGE_KEY[variant],
+    SUNG_FILTERS,
+    'all',
+  )
   // "Vezi versete" on the song page / "Vezi cantari" on the Bible page: when
   // on, the other kind is listed too and clicking it jumps to that module.
   const [showOther, setShowOther] = useState<boolean>(() => {
@@ -177,12 +188,19 @@ export function SchedulePanel({
   // Default to the most recently updated program the first time the panel is
   // used, and recover if the remembered one was deleted elsewhere.
   useEffect(() => {
-    if (schedules.length === 0) return
+    // Wait for the real list: an empty one while loading is not an answer.
+    if (schedulesLoading) return
+    if (schedules.length === 0) {
+      // The last program is gone (or there never was one) — drop the
+      // remembered id so the header stops offering actions on it.
+      if (selectedScheduleId !== null) setSelectedScheduleId(null)
+      return
+    }
     const stillExists = schedules.some((s) => s.id === selectedScheduleId)
     if (!stillExists) {
       setSelectedScheduleId(schedules[0]?.id ?? null)
     }
-  }, [schedules, selectedScheduleId])
+  }, [schedules, schedulesLoading, selectedScheduleId])
 
   useEffect(() => {
     try {
@@ -493,41 +511,49 @@ export function SchedulePanel({
             </span>
           )}
         </div>
-        {selectedScheduleId && (
+        {(selectedScheduleId || onAddAllBookmarks) && (
           <div className="flex items-center gap-1">
             {/* Adds the song the page has in focus — the open song, or the
                 highlighted row in the search list. */}
-            <button
-              type="button"
-              onClick={() => {
-                if (variant === 'verses') {
-                  addPassageToSelected()
-                } else if (candidateSong) {
-                  addSongToSelected(candidateSong)
+            {selectedScheduleId && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (variant === 'verses') {
+                    addPassageToSelected()
+                  } else if (candidateSong) {
+                    addSongToSelected(candidateSong)
+                  }
+                }}
+                disabled={
+                  (variant === 'verses' ? !candidatePassage : !candidateSong) ||
+                  addItemMutation.isPending
                 }
-              }}
-              disabled={
-                (variant === 'verses' ? !candidatePassage : !candidateSong) ||
-                addItemMutation.isPending
-              }
-              data-testid="schedule-add-candidate-song"
-              title={
-                variant === 'verses'
-                  ? candidatePassage
-                    ? t('panel.addVerse', { reference: candidatePassage.label })
-                    : t('panel.addVerseDisabled')
-                  : candidateSong
-                    ? t('panel.addSong', { title: candidateSong.title })
-                    : t('panel.addSongDisabled')
-              }
-              className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-40 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
-            >
-              {addItemMutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Plus className="w-3.5 h-3.5" />
-              )}
-            </button>
+                data-testid="schedule-add-candidate-song"
+                title={
+                  variant === 'verses'
+                    ? candidatePassage
+                      ? t('panel.addVerse', {
+                          reference: candidatePassage.label,
+                        })
+                      : t('panel.addVerseDisabled')
+                    : candidateSong
+                      ? t('panel.addSong', { title: candidateSong.title })
+                      : t('panel.addSongDisabled')
+                }
+                className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-40 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
+              >
+                {addItemMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Plus className="w-3.5 h-3.5" />
+                )}
+              </button>
+            )}
+            {/* Making a program out of the marked songs is the one action here
+                that does not need a program selected — the modal creates one
+                on the spot — so it stays up before the first program exists,
+                which is exactly when the operator needs it. */}
             {onAddAllBookmarks && (
               <button
                 type="button"
@@ -539,7 +565,7 @@ export function SchedulePanel({
                 <CalendarPlus className="w-3.5 h-3.5" />
               </button>
             )}
-            {onOpenSchedule && (
+            {selectedScheduleId && onOpenSchedule && (
               <button
                 type="button"
                 onClick={() => onOpenSchedule(selectedScheduleId)}
@@ -549,15 +575,17 @@ export function SchedulePanel({
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setPendingDelete(true)}
-              data-testid="schedule-delete"
-              title={t('panel.deleteSchedule')}
-              className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            {selectedScheduleId && (
+              <button
+                type="button"
+                onClick={() => setPendingDelete(true)}
+                data-testid="schedule-delete"
+                title={t('panel.deleteSchedule')}
+                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
       </div>

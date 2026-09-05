@@ -1032,7 +1032,11 @@ function SongPreviewPage() {
               onSelectScheduleSong={handleScheduleSongClick}
               onSelectSchedulePassage={handleSchedulePassageClick}
               onOpenSchedule={handleOpenSchedule}
-              onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
+              onAddAllBookmarksToSchedule={
+                bookmarks.length > 0
+                  ? handleAddAllBookmarksToSchedule
+                  : undefined
+              }
               canViewSongVersions={canViewSongVersions}
               canAddSongVersion={canAddSongVersion}
               canEditSongVersion={canEditSongVersion}
@@ -1201,7 +1205,11 @@ function SongPreviewPage() {
                 onSelectScheduleSong={handleScheduleSongClick}
                 onSelectSchedulePassage={handleSchedulePassageClick}
                 onOpenSchedule={handleOpenSchedule}
-                onAddAllBookmarksToSchedule={handleAddAllBookmarksToSchedule}
+                onAddAllBookmarksToSchedule={
+                  bookmarks.length > 0
+                    ? handleAddAllBookmarksToSchedule
+                    : undefined
+                }
                 canViewSongVersions={canViewSongVersions}
                 canAddSongVersion={canAddSongVersion}
                 canEditSongVersion={canEditSongVersion}
