@@ -7,6 +7,7 @@ import {
   windowDesktopSize,
 } from './desktopUnits'
 import { setWindowFullscreen } from './fullscreen'
+import { isAppFrontmost } from './isAppFrontmost'
 import {
   findMonitorByName,
   getDefaultProjectionMonitor,
@@ -16,6 +17,7 @@ import {
   monitorInLogicalUnits,
   type ScreenMonitor,
 } from './monitors'
+import { reclaimFocusSeries } from './reclaimFocusSeries'
 import { upsertScreen } from '../service/screens'
 import type { Screen } from '../types'
 
@@ -514,6 +516,15 @@ async function openInNativeWindow(
             }
           })()
 
+      // Whether Church Hub owned the keyboard at the moment the window was
+      // asked for. A screen can reopen on its own (a remote, a footswitch,
+      // another client changing the presentation), and when that happens with
+      // the operator working in another application, none of the focus
+      // restoration below may run — it would drag Church Hub back over them.
+      const wasFrontmostBeforeOpen = mainWindowToRefocus
+        ? await isAppFrontmost()
+        : false
+
       // Create new native window
       windowGenerations.set(windowLabel, generation)
       const webview = new WebviewWindow(windowLabel, windowOptions)
@@ -652,7 +663,7 @@ async function openInNativeWindow(
         // monitor we leave the screen in front (visible) instead. With a
         // second monitor the projection is on the other screen, so refocusing
         // the control window is harmless and keyboard input keeps working.
-        if (mainWindowToRefocus) {
+        if (mainWindowToRefocus && wasFrontmostBeforeOpen) {
           const isMultiMonitor = await (async () => {
             try {
               const { availableMonitors } = await import(
@@ -680,13 +691,15 @@ async function openInNativeWindow(
                 )
               }
             }
-            await reclaimFocus()
             // The OS can hand focus back to the new window again once it
             // finishes appearing / the fullscreen transition animates
-            // (≈1s on macOS), so re-assert a few more times across that window.
-            for (const delay of FOCUS_RECLAIM_DELAYS_MS) {
-              setTimeout(reclaimFocus, delay)
-            }
+            // (≈1s on macOS), so re-assert a few more times across that
+            // window — but only while Church Hub is still frontmost, so
+            // switching to another app in those seconds ends the series.
+            const cancelReclaim = reclaimFocusSeries(
+              reclaimFocus,
+              FOCUS_RECLAIM_DELAYS_MS,
+            )
             // And whenever the new window does take the keyboard while it is
             // still settling in — the end of the fullscreen transition lands
             // after every timer above — hand it straight back. The operator
@@ -698,9 +711,12 @@ async function openInNativeWindow(
                 stopHandback()
                 return
               }
-              void reclaimFocus()
+              reclaimFocusSeries(reclaimFocus, [])
             })
-            setTimeout(stopHandback, FOCUS_HANDBACK_WINDOW_MS)
+            setTimeout(() => {
+              cancelReclaim()
+              stopHandback()
+            }, FOCUS_HANDBACK_WINDOW_MS)
           }
         }
       })
@@ -883,9 +899,10 @@ export async function openAllActiveScreens(screens: Screen[]): Promise<void> {
  */
 export async function reopenMissingActiveScreens(
   screens: Screen[],
-): Promise<void> {
-  if (!isTauri()) return
+): Promise<number> {
+  if (!isTauri()) return 0
 
+  let reopened = 0
   try {
     const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow')
     const activeScreens = screens.filter((s) => s.isActive)
@@ -898,6 +915,7 @@ export async function reopenMissingActiveScreens(
       // focus: false so the user keeps interacting with the control room
       // while a closed display window auto-reopens behind the scenes.
       await openDisplayWindow(screen, 'native', false)
+      reopened += 1
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
   } catch (error) {
@@ -907,6 +925,7 @@ export async function reopenMissingActiveScreens(
       error,
     )
   }
+  return reopened
 }
 
 /**
@@ -921,6 +940,10 @@ export async function reopenMissingActiveScreens(
  * refocusing control is invisible to the audience and keeps the keyboard live.
  * (Mirrors the same guard in `openInNativeWindow`.) A few re-asserts win the
  * focus race against a window that finishes appearing slightly later.
+ *
+ * FRONTMOST ONLY — each re-assert checks that Church Hub still owns the
+ * keyboard, so an operator who switches to another application is never
+ * dragged back (`reclaimFocusSeries`).
  */
 export async function reclaimControlWindowFocus(): Promise<void> {
   if (!isTauri()) return
@@ -939,10 +962,7 @@ export async function reclaimControlWindowFocus(): Promise<void> {
         // best-effort; the window may be mid-transition
       }
     }
-    await reclaim()
-    for (const delay of FOCUS_RECLAIM_DELAYS_MS) {
-      setTimeout(reclaim, delay)
-    }
+    reclaimFocusSeries(reclaim, FOCUS_RECLAIM_DELAYS_MS)
   } catch {
     // best-effort focus restoration; never throw into the presentation flow
   }
