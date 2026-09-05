@@ -30,6 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
+import { usePersistedChoice } from '~/hooks/usePersistedChoice'
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
@@ -55,13 +56,19 @@ import type { AddToScheduleInput, ScheduleItem } from '../types'
  */
 const SELECTED_SCHEDULE_STORAGE_KEY = 'songPage.selectedScheduleId'
 
+const SUNG_FILTERS = ['all', 'pending', 'sung'] as const
+
+/** Per-variant key for the sung filter, remembered across restarts. */
+const SUNG_FILTER_STORAGE_KEY = {
+  songs: 'programPanel.sungFilter',
+  verses: 'programPanel.versesSungFilter',
+} as const
+
 /** Per-variant key for the "also show the other kind" switch. */
 const SHOW_OTHER_STORAGE_KEY = {
   songs: 'programPanel.showVerses',
   verses: 'programPanel.showSongs',
 } as const
-
-type SungFilter = 'all' | 'pending' | 'sung'
 
 /**
  * The program the Programe panel currently has selected. Exported so a page
@@ -144,7 +151,11 @@ export function SchedulePanel({
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
     readSelectedScheduleId,
   )
-  const [sungFilter, setSungFilter] = useState<SungFilter>('all')
+  const [sungFilter, setSungFilter] = usePersistedChoice(
+    SUNG_FILTER_STORAGE_KEY[variant],
+    SUNG_FILTERS,
+    'all',
+  )
   // "Vezi versete" on the song page / "Vezi cantari" on the Bible page: when
   // on, the other kind is listed too and clicking it jumps to that module.
   const [showOther, setShowOther] = useState<boolean>(() => {

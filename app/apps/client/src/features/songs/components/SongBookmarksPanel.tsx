@@ -33,6 +33,7 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePersistedChoice } from '~/hooks/usePersistedChoice'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import {
@@ -319,6 +320,9 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
   )
 }
 
+const SUNG_FILTERS = ['all', 'sung', 'pending'] as const
+const SUNG_FILTER_STORAGE_KEY = 'songBookmarks.sungFilter'
+
 interface SongBookmarksPanelProps {
   onSelectSong: (bookmark: SongBookmark) => void
   activeSongId?: number
@@ -365,8 +369,12 @@ export function SongBookmarksPanel({
   const removeNoteMutation = useRemoveBookmarkNote()
   const exportMutation = useExportBookmarksAsText()
   const [searchQuery, setSearchQuery] = useState('')
-  // Filter the song bookmarks by their "already sung" state.
-  const [sungFilter, setSungFilter] = useState<'all' | 'sung' | 'pending'>(
+  // Filter the song bookmarks by their "already sung" state. Remembered: an
+  // operator working through a service leaves this on "pending", and a restart
+  // mid-service must not put the sung songs back in front of them.
+  const [sungFilter, setSungFilter] = usePersistedChoice(
+    SUNG_FILTER_STORAGE_KEY,
+    SUNG_FILTERS,
     'all',
   )
   const searchInputRef = useRef<HTMLInputElement>(null)
