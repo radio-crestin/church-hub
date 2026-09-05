@@ -44,6 +44,9 @@ const CHANGELOG_JSON = join(
 // Conventional-commit types that are pure internal noise — never surfaced.
 const EXCLUDED_TYPES = new Set(['ci', 'test'])
 
+/** Chore subjects that are the release itself rather than part of it. */
+const RELEASE_PLUMBING = /^(?:bump|sync|regenerate|update) (?:version|changelog)\b/i
+
 interface ChangeEntry {
   scope: string | null
   message: string
@@ -101,8 +104,11 @@ function parseSubject(
 
   if (!message) return null
 
-  // Drop release/version-bump commits and internal-only types.
-  if (type === 'chore' && /bump version/i.test(message)) return null
+  // Drop release plumbing and internal-only types. Bumping the version,
+  // syncing it back from CI and regenerating this file are how a release is
+  // cut — they are not something that happens *in* the release, and listing
+  // them tells a reader nothing about what changed in the app.
+  if (type === 'chore' && RELEASE_PLUMBING.test(message)) return null
   if (type && EXCLUDED_TYPES.has(type)) return null
 
   if (type === 'feat') return { bucket: 'features', entry: { scope, message } }
