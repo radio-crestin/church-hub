@@ -2,6 +2,16 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.95 — 2026-09-05
+
+### 🐛 Bug Fixes
+
+- **app**: stop stealing focus, restore Marcaje → program, and keep song-list preferences
+
+### 🔧 Changes
+
+- sync version to v0.1.94 [skip ci]
+
 ## v0.1.94 — 2026-08-23
 
 ### 🐛 Bug Fixes

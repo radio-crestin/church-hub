@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.1.95",
+    "date": "2026-09-05T20:59:27+02:00",
+    "features": [],
+    "bugFixes": [
+      {
+        "scope": "app",
+        "message": "stop stealing focus, restore Marcaje → program, and keep song-list preferences"
+      }
+    ],
+    "changes": [
+      {
+        "scope": null,
+        "message": "sync version to v0.1.94 [skip ci]"
+      }
+    ]
+  },
+  {
     "version": "0.1.94",
     "date": "2026-08-23T16:50:07+02:00",
     "features": [],
