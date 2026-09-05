@@ -1,9 +1,13 @@
 [
   {
     "version": "0.1.95",
-    "date": "2026-09-05T21:01:10+02:00",
+    "date": "2026-09-05T21:19:43+02:00",
     "features": [],
     "bugFixes": [
+      {
+        "scope": "changelog",
+        "message": "keep release plumbing out of the version log"
+      },
       {
         "scope": "app",
         "message": "stop stealing focus, restore Marcaje → program, and keep song-list preferences"
