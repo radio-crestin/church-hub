@@ -6,6 +6,7 @@
 
 ### 🐛 Bug Fixes
 
+- **changelog**: keep release plumbing out of the version log
 - **app**: stop stealing focus, restore Marcaje → program, and keep song-list preferences
 
 ## v0.1.94 — 2026-08-23
