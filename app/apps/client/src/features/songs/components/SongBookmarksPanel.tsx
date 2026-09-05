@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   Bookmark,
+  CalendarPlus,
   Check,
   ChevronDown,
   Download,
@@ -335,6 +336,12 @@ interface SongBookmarksPanelProps {
    */
   isCollapsed?: boolean
   onToggleCollapse?: () => void
+  /**
+   * Hands every bookmarked song to a program. The same action sits in the
+   * Programe header, but this is where the operator is looking: they have just
+   * finished marking the songs for the service.
+   */
+  onAddAllToSchedule?: (songIds: number[]) => void
 }
 
 export function SongBookmarksPanel({
@@ -343,6 +350,7 @@ export function SongBookmarksPanel({
   acceptsSongDrop = false,
   isCollapsed = false,
   onToggleCollapse,
+  onAddAllToSchedule,
 }: SongBookmarksPanelProps) {
   const { t } = useTranslation('songs')
   const { data: bookmarks = [], isLoading } = useSongBookmarks()
@@ -661,6 +669,19 @@ export function SongBookmarksPanel({
             >
               <Download className="w-3.5 h-3.5" />
             </button>
+            {onAddAllToSchedule && (
+              <button
+                type="button"
+                onClick={() =>
+                  onAddAllToSchedule(bookmarks.map((b) => b.songId))
+                }
+                data-testid="bookmarks-add-all-to-schedule"
+                title={t('actions.addToSchedule')}
+                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => clearBookmarksMutation.mutate()}

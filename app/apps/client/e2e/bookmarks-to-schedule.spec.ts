@@ -1,4 +1,9 @@
-import { type APIRequestContext, expect, test } from '@playwright/test'
+import {
+  type APIRequestContext,
+  expect,
+  type Page,
+  test,
+} from '@playwright/test'
 
 /**
  * Turning the marked songs (Marcaje) into a program.
@@ -33,6 +38,35 @@ async function scheduleTitles(request: APIRequestContext) {
   return data
 }
 
+/** Drives the modal the two entry points share: name a new program, save. */
+async function createProgramFromModal(page: Page, title: string) {
+  const modal = page.getByTestId('add-song-to-schedule-modal')
+  await expect(modal).toBeVisible({ timeout: 10000 })
+  await modal.getByTestId('add-song-to-schedule-new').click()
+  const draft = modal.getByTestId('schedule-draft-row')
+  await expect(draft).toBeVisible()
+  await draft.locator('input').fill(title)
+  await modal.getByTestId('add-song-to-schedule-save').click()
+  await expect(modal).toBeHidden({ timeout: 10000 })
+}
+
+/** The program that test made, once the server has it. */
+async function pollCreatedProgram(request: APIRequestContext, title: string) {
+  let created: { id: number; title: string; songCount: number } | undefined
+  await expect
+    .poll(
+      async () => {
+        created = (await scheduleTitles(request)).find(
+          (schedule) => schedule.title === title,
+        )
+        return created?.songCount ?? 0
+      },
+      { timeout: 10000 },
+    )
+    .toBe(2)
+  return created
+}
+
 test.describe.configure({ mode: 'serial' })
 
 test.describe('Marcaje to a program', () => {
@@ -64,27 +98,43 @@ test.describe('Marcaje to a program', () => {
       await expect(addAll).toBeVisible({ timeout: 10000 })
       await addAll.click()
 
-      const modal = page.getByTestId('add-song-to-schedule-modal')
-      await expect(modal).toBeVisible({ timeout: 10000 })
-      await modal.getByTestId('add-song-to-schedule-new').click()
-      const draft = modal.getByTestId('schedule-draft-row')
-      await expect(draft).toBeVisible()
-      await draft.locator('input').fill(programTitle)
-      await modal.getByTestId('add-song-to-schedule-save').click()
-      await expect(modal).toBeHidden({ timeout: 10000 })
+      await createProgramFromModal(page, programTitle)
+      createdId = (await pollCreatedProgram(request, programTitle))?.id ?? null
+    } finally {
+      if (createdId) await request.delete(`/api/schedules/${createdId}`)
+      await request.delete('/api/song-bookmarks')
+      await request.delete(`/api/songs/${first.id}`)
+      await request.delete(`/api/songs/${second.id}`)
+    }
+  })
 
-      await expect
-        .poll(
-          async () => {
-            const created = (await scheduleTitles(request)).find(
-              (schedule) => schedule.title === programTitle,
-            )
-            createdId = created?.id ?? null
-            return created?.songCount ?? 0
-          },
-          { timeout: 10000 },
-        )
-        .toBe(2)
+  test('makes the program from the Marcaje header too', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const programTitle = `E2E Marcaje Program ${uniq}`
+    const first = await createSong(request, `E2E Marked D ${uniq}`)
+    const second = await createSong(request, `E2E Marked E ${uniq}`)
+    let createdId: number | null = null
+
+    try {
+      await deleteAllSchedules(request)
+      await request.delete('/api/song-bookmarks')
+      for (const song of [first, second]) {
+        await request.post('/api/song-bookmarks', { data: { songId: song.id } })
+      }
+
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/songs')
+      await page.waitForLoadState('networkidle')
+
+      const addAll = page.getByTestId('bookmarks-add-all-to-schedule')
+      await expect(addAll).toBeVisible({ timeout: 10000 })
+      await addAll.click()
+
+      await createProgramFromModal(page, programTitle)
+      createdId = (await pollCreatedProgram(request, programTitle))?.id ?? null
     } finally {
       if (createdId) await request.delete(`/api/schedules/${createdId}`)
       await request.delete('/api/song-bookmarks')
@@ -117,6 +167,9 @@ test.describe('Marcaje to a program', () => {
       await expect(page.getByTestId('schedule-add-all-bookmarks')).toBeVisible({
         timeout: 10000,
       })
+      await expect(
+        page.getByTestId('bookmarks-add-all-to-schedule'),
+      ).toBeVisible()
       await expect(page.getByTestId('schedule-delete')).toBeHidden()
       await expect(page.getByTestId('schedule-add-candidate-song')).toBeHidden()
     } finally {

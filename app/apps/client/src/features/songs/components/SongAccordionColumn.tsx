@@ -137,6 +137,7 @@ export function SongAccordionColumn({
       >
         <SongBookmarksPanel
           onSelectSong={onSelectBookmarkSong}
+          onAddAllToSchedule={onAddAllBookmarksToSchedule}
           activeSongId={song.id}
           isCollapsed={!bookmarksOpen}
           onToggleCollapse={onToggleBookmarks}

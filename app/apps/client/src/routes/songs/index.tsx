@@ -452,6 +452,7 @@ function SongsPage() {
             >
               <SongBookmarksPanel
                 onSelectSong={handleBookmarkSongClick}
+                onAddAllToSchedule={handleAddAllToSchedule}
                 acceptsSongDrop
                 isCollapsed={!bookmarksOpen}
                 onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
