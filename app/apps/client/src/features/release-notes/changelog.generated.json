@@ -1,7 +1,7 @@
 [
   {
     "version": "0.1.95",
-    "date": "2026-09-05T20:59:27+02:00",
+    "date": "2026-09-05T21:01:10+02:00",
     "features": [],
     "bugFixes": [
       {
@@ -9,12 +9,7 @@
         "message": "stop stealing focus, restore Marcaje → program, and keep song-list preferences"
       }
     ],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.94 [skip ci]"
-      }
-    ]
+    "changes": []
   },
   {
     "version": "0.1.94",
@@ -26,12 +21,7 @@
         "message": "keep the keyboard live after Present, and make page shortcuts mean their page"
       }
     ],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.93 [skip ci]"
-      }
-    ]
+    "changes": []
   },
   {
     "version": "0.1.93",
@@ -43,12 +33,7 @@
         "message": "install behind a native progress window and bring the app back"
       }
     ],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.92 [skip ci]"
-      }
-    ]
+    "changes": []
   },
   {
     "version": "0.1.92",
@@ -60,12 +45,7 @@
       }
     ],
     "bugFixes": [],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.91 [skip ci]"
-      }
-    ]
+    "changes": []
   },
   {
     "version": "0.1.91",
@@ -76,10 +56,6 @@
       {
         "scope": null,
         "message": "presentation, songs, screens: multi-monitor placement, per-slide styling, stage navigation fixes"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.90 [skip ci]"
       }
     ]
   },
@@ -98,16 +74,7 @@
         "message": "stop sync-version-back from moving main's version backwards"
       }
     ],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.89 [skip ci]"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.88 [skip ci]"
-      }
-    ]
+    "changes": []
   },
   {
     "version": "0.1.89",
@@ -139,12 +106,7 @@
       }
     ],
     "bugFixes": [],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.87 [skip ci]"
-      }
-    ]
+    "changes": []
   },
   {
     "version": "0.1.87",
@@ -238,10 +200,6 @@
       {
         "scope": "schedules",
         "message": "one large add-item modal with a virtualized song search"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.85 [skip ci]"
       }
     ]
   },
@@ -257,10 +215,6 @@
     ],
     "changes": [
       {
-        "scope": null,
-        "message": "sync version to v0.1.84 [skip ci]"
-      },
-      {
         "scope": "bible",
         "message": "remove unused bookName prop from VersesList"
       }
@@ -275,10 +229,6 @@
       {
         "scope": null,
         "message": "real-time Google Drive library sync, last-slide layout parity, first-run layout defaults"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.83 [skip ci]"
       }
     ]
   },
@@ -296,10 +246,6 @@
       {
         "scope": null,
         "message": "configurable retention, Drive storage quota + warning, and backup contents inspection"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.82 [skip ci]"
       }
     ]
   },
@@ -317,10 +263,6 @@
       {
         "scope": null,
         "message": "sung markers, bookmark filter, slide notes + Drive OAuth via worker"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.81 [skip ci]"
       }
     ]
   },
@@ -333,10 +275,6 @@
       {
         "scope": null,
         "message": "Google Drive database backup & restore (+ song-editor fixes, release wiring)"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.80 [skip ci]"
       }
     ]
   },
@@ -349,10 +287,6 @@
       {
         "scope": null,
         "message": "PowerPoint-style stage editing on the song page"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.79 [skip ci]"
       }
     ]
   },
@@ -365,10 +299,6 @@
       {
         "scope": null,
         "message": "Preview mode — stage slides before projecting"
-      },
-      {
-        "scope": null,
-        "message": "sync version to v0.1.78 [skip ci]"
       }
     ]
   },
@@ -387,12 +317,7 @@
         "message": "update discovery heading selector after screen rename"
       }
     ],
-    "changes": [
-      {
-        "scope": null,
-        "message": "sync version to v0.1.77 [skip ci]"
-      }
-    ]
+    "changes": []
   },
   {
     "version": "0.1.77",
