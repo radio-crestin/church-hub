@@ -533,4 +533,122 @@ test.describe('Programe panel presents and advances the program', () => {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
     }
   })
+
+  test('the song list follows the projector onto the song it just presented', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E List Follow ${uniq}`, 2)
+    const schedule = await createSchedule(request, `E2E List Follow ${uniq}`)
+
+    try {
+      const translations = await request.get('/api/bible/translations')
+      const translation = (await translations.json()).data?.[0]
+      expect(translation).toBeTruthy()
+
+      // song (2 slides) → passage (1 verse). Flat run: 0 and 1 are the slides,
+      // 2 is the verse.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+      const passage = await request.post(
+        `/api/schedules/${schedule.id}/items`,
+        {
+          data: {
+            biblePassage: {
+              translationId: translation.id,
+              translationAbbreviation: translation.abbreviation,
+              bookCode: 'JHN',
+              bookName: 'Ioan',
+              startChapter: 3,
+              startVerse: 16,
+              endChapter: 3,
+              endVerse: 16,
+            },
+          },
+        },
+      )
+      expect(passage.status()).toBe(201)
+
+      // The panel has to be open on BOTH pages: the list is where the row is
+      // clicked, the song page is where the live ring is then read.
+      //
+      // The remembered last-visited song is load-bearing, not decoration: the
+      // list's one-shot "open on the presented song" effect only spends itself
+      // when it has something to act on, and a list opened with nothing
+      // remembered would still be armed — it would then follow the projector
+      // on its own and hide a regression here. Seeding it puts the test in the
+      // operator's real position: the list has already settled, and the only
+      // thing that can take them to the song is the row click itself.
+      await page.addInitScript(
+        ({ scheduleId, songId }: { scheduleId: number; songId: number }) => {
+          window.localStorage.setItem('songs-list:schedules-open', 'true')
+          window.localStorage.setItem('song-detail:schedules-open', 'true')
+          window.localStorage.setItem(
+            'songPage.selectedScheduleId',
+            String(scheduleId),
+          )
+          window.localStorage.setItem(
+            'church-hub-last-visited',
+            JSON.stringify({ songs: { songId } }),
+          )
+        },
+        { scheduleId: schedule.id, songId: song.id },
+      )
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/songs')
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+
+      // Clicking the row body on the LIST projects the song AND opens it, so
+      // the operator lands on the slide rail rather than being left behind on
+      // the list with the program already running.
+      await panel.getByTestId('schedule-song-present').click()
+      await expect(page).toHaveURL(new RegExp(`/songs/${song.id}(\\?|$)`), {
+        timeout: 10000,
+      })
+
+      // The row's orange ring is gated on the page deriving schedule mode
+      // (SchedulePanel only trusts the projector's step while the live content
+      // carries the selected program), so this IS the schedule-mode assertion.
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 0,
+        rowTestId: 'schedule-song-item',
+        stepTestId: 'song-slide-0',
+      })
+
+      // And the arrows now walk the PROGRAM, not just this song: past its last
+      // slide they cross into the passage that follows it.
+      await page.keyboard.press('ArrowRight')
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 1,
+        rowTestId: 'schedule-song-item',
+        stepTestId: 'song-slide-1',
+      })
+      await page.keyboard.press('ArrowRight')
+      await expectLiveStep(request, page, panel, {
+        type: 'bible_passage',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 2,
+        rowTestId: 'schedule-verse-item',
+        stepTestId: 'schedule-sub-item-2',
+      })
+      const liveRail = page.getByTestId('schedule-live-item-panel')
+      await expect(liveRail).toBeVisible({ timeout: 10000 })
+      await expect(
+        liveRail.getByTestId('schedule-live-item-title'),
+      ).toContainText('Ioan 3:16')
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
 })
