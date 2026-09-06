@@ -41,9 +41,8 @@ let pingInterval: ReturnType<typeof setInterval> | null = null
 let pollInterval: ReturnType<typeof setInterval> | null = null
 let listenerIdCounter = 0
 let availableLanguages: AvailableLanguage[] = []
-let listenerCountsCallback:
-  | ((counts: Record<string, number>) => void)
-  | null = null
+let listenerCountsCallback: ((counts: Record<string, number>) => void) | null =
+  null
 
 function generateSecret(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'

@@ -89,9 +89,10 @@ describe('resolveSongSlideContentType', () => {
 
 describe('extractTrailingAmin', () => {
   it('extracts a standalone trailing "Amin!" paragraph', () => {
-    expect(
-      extractTrailingAmin('<p>Slăvit să fie El</p><p>Amin!</p>'),
-    ).toEqual({ mainText: '<p>Slăvit să fie El</p>', amen: 'Amin!' })
+    expect(extractTrailingAmin('<p>Slăvit să fie El</p><p>Amin!</p>')).toEqual({
+      mainText: '<p>Slăvit să fie El</p>',
+      amen: 'Amin!',
+    })
   })
 
   it('extracts a trailing <br>-separated amin inside the last paragraph', () => {
@@ -102,15 +103,16 @@ describe('extractTrailingAmin', () => {
   })
 
   it('extracts a multi-word amin line and keeps its text', () => {
-    expect(
-      extractTrailingAmin('<p>versul</p><p>Amin, Amin!</p>'),
-    ).toEqual({ mainText: '<p>versul</p>', amen: 'Amin, Amin!' })
+    expect(extractTrailingAmin('<p>versul</p><p>Amin, Amin!</p>')).toEqual({
+      mainText: '<p>versul</p>',
+      amen: 'Amin, Amin!',
+    })
   })
 
   it('ignores trailing empty paragraphs before the amin', () => {
-    expect(
-      extractTrailingAmin('<p>versul</p><p>Amin!</p><p><br></p>'),
-    ).toEqual({ mainText: '<p>versul</p>', amen: 'Amin!' })
+    expect(extractTrailingAmin('<p>versul</p><p>Amin!</p><p><br></p>')).toEqual(
+      { mainText: '<p>versul</p>', amen: 'Amin!' },
+    )
   })
 
   it('handles a slide whose only line is an amin', () => {
@@ -150,7 +152,10 @@ describe('resolveSongSlideBody', () => {
   it('keeps an inline (non-trailing) amin in the lyrics without an element', () => {
     expect(
       resolveSongSlideBody(true, '<p>Amin slăvit</p><p>versul final</p>'),
-    ).toEqual({ mainText: '<p>Amin slăvit</p><p>versul final</p>', amen: undefined })
+    ).toEqual({
+      mainText: '<p>Amin slăvit</p><p>versul final</p>',
+      amen: undefined,
+    })
   })
 
   it('an "Amin" that ends the last sentence stays in the lyrics untouched', () => {
@@ -192,7 +197,11 @@ describe('resolveSongSlideBody', () => {
 
   it('a custom amin label overrides an extracted trailing amin line', () => {
     expect(
-      resolveSongSlideBody(true, '<p>Slăvit să fie El</p><p>Amin!</p>', 'Amin.'),
+      resolveSongSlideBody(
+        true,
+        '<p>Slăvit să fie El</p><p>Amin!</p>',
+        'Amin.',
+      ),
     ).toEqual({ mainText: '<p>Slăvit să fie El</p>', amen: 'Amin.' })
   })
 
