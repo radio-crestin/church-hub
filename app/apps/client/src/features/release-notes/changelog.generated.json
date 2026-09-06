@@ -1,7 +1,7 @@
 [
   {
     "version": "0.1.96",
-    "date": "2026-09-06T20:30:46+03:00",
+    "date": "2026-09-06T20:32:34+03:00",
     "features": [
       {
         "scope": "schedules",
@@ -1882,19 +1882,259 @@
     "version": "0.1.44",
     "date": "2026-02-02T13:22:25+02:00",
     "features": [],
-    "bugFixes": [
-      {
-        "scope": null,
-        "message": "install native audio libs in CI and simplify server test jobs"
-      }
-    ],
+    "bugFixes": [],
     "changes": []
   },
   {
     "version": "0.1.43",
-    "date": "2026-02-02T13:17:33+02:00",
-    "features": [],
+    "date": "2026-03-15T15:39:55+02:00",
+    "features": [
+      {
+        "scope": null,
+        "message": "add granular shortcut settings to Songs and Bible page settings"
+      },
+      {
+        "scope": null,
+        "message": "add bookmarks panel to songs pages"
+      },
+      {
+        "scope": null,
+        "message": "add global edit mode for song slides with inline editing, reorder, delete, add, and preview editing"
+      },
+      {
+        "scope": null,
+        "message": "add indigo-themed scrollbars and mobile load buttons for Bible verses"
+      },
+      {
+        "scope": null,
+        "message": "add OBS scene-based config overrides to screen designer"
+      },
+      {
+        "scope": null,
+        "message": "add bookmarked songs list with toggle, filter, and full CRUD API"
+      },
+      {
+        "scope": null,
+        "message": "add inline slide editing from song preview"
+      },
+      {
+        "scope": null,
+        "message": "add Bible history search, smart add-to-schedule, and queue caching"
+      },
+      {
+        "scope": null,
+        "message": "add key line to PPTs, edit key line from schedule, last played indicator, and edit-as-text improvements"
+      },
+      {
+        "scope": null,
+        "message": "add song sorting, duplicate title disambiguation, and mobile search improvements"
+      }
+    ],
     "bugFixes": [
+      {
+        "scope": null,
+        "message": "increase API test timeout to prevent macOS CI failures"
+      },
+      {
+        "scope": null,
+        "message": "Bible verse list snapping back to searched verse on chapter transition"
+      },
+      {
+        "scope": null,
+        "message": "add error logging to migration runner and getScreenWithConfigs"
+      },
+      {
+        "scope": null,
+        "message": "handle missing OS plugin in update checker and add window set-icon ACL"
+      },
+      {
+        "scope": null,
+        "message": "wrap MIDI device enumeration in checkDeviceStatusAndReconnect"
+      },
+      {
+        "scope": null,
+        "message": "gracefully handle missing MIDI subsystem (ALSA) in CI"
+      },
+      {
+        "scope": null,
+        "message": "pre-create draft release before build to avoid permission errors"
+      },
+      {
+        "scope": null,
+        "message": "move contents:write permission to workflow level for release creation"
+      },
+      {
+        "scope": null,
+        "message": "run tests on main push, skip when tag triggers build-release"
+      },
+      {
+        "scope": null,
+        "message": "use in-memory fixture DB for bible search tests in CI"
+      },
+      {
+        "scope": null,
+        "message": "skip bible search tests when DB file is unavailable in CI and trigger tests on tags only"
+      },
+      {
+        "scope": null,
+        "message": "strip non-numeric pre-release from Tauri version for MSI compat"
+      },
+      {
+        "scope": null,
+        "message": "add retry logic to Bible E2E search for CI FTS index timing"
+      },
+      {
+        "scope": null,
+        "message": "correct E2E test regex for Bible search results in English locale"
+      },
+      {
+        "scope": null,
+        "message": "smooth bookmark drag-and-drop and improve song editor save UX"
+      },
+      {
+        "scope": null,
+        "message": "constrain songs page layout and add global scrollbar theming"
+      },
+      {
+        "scope": null,
+        "message": "merge adjacent search highlights into continuous phrases"
+      },
+      {
+        "scope": null,
+        "message": "prevent restore effect from overriding search result navigation"
+      },
+      {
+        "scope": null,
+        "message": "improve search scoring so content-only phrase matches rank high"
+      },
+      {
+        "scope": null,
+        "message": "preserve word boundaries in title sanitization and match hymn numbers with leading zeros"
+      },
+      {
+        "scope": null,
+        "message": "cap song search score at maximum 100"
+      },
+      {
+        "scope": null,
+        "message": "handle punctuation in song search query parsing and indexing"
+      },
+      {
+        "scope": null,
+        "message": "show song list instead of last opened song when returning from another page"
+      },
+      {
+        "scope": null,
+        "message": "display error in UI when mpv fails to play a file"
+      },
+      {
+        "scope": null,
+        "message": "kill stale mpv processes on startup to prevent zombie accumulation"
+      },
+      {
+        "scope": null,
+        "message": "repair concurrency limiter and invalid Drizzle query in music service"
+      },
+      {
+        "scope": null,
+        "message": "prevent music player crashes by isolating mpv process group"
+      },
+      {
+        "scope": null,
+        "message": "hide format help when schedule has items, add reference section to Edit as Text"
+      },
+      {
+        "scope": null,
+        "message": "auto-collapse previous section on navigation, simplify Edit as Text modal"
+      },
+      {
+        "scope": null,
+        "message": "save button exits edit mode after pending saves complete, add discard button"
+      },
+      {
+        "scope": null,
+        "message": "improve edit button toggle styling and add discard/save actions"
+      },
+      {
+        "scope": null,
+        "message": "sync slide edits to preview in real-time and skip animations on content updates"
+      },
+      {
+        "scope": null,
+        "message": "move Add Slide below slides, open Edit as Text in modal, and polish button colors"
+      },
+      {
+        "scope": null,
+        "message": "improve edit mode toolbar layout, real-time slide sync, and textarea overflow"
+      },
+      {
+        "scope": null,
+        "message": "redesign song edit mode with DnD reordering and inline editing in slides panel"
+      },
+      {
+        "scope": null,
+        "message": "make Bible and Song pages fill viewport height with neutral scrollbars"
+      },
+      {
+        "scope": null,
+        "message": "resolve 6 bugs - search filters, bible freeze, song navigation, chapter transitions, music player, webview links"
+      },
+      {
+        "scope": null,
+        "message": "improve music player reliability and add tests"
+      },
+      {
+        "scope": null,
+        "message": "align song action buttons to left on mobile"
+      },
+      {
+        "scope": null,
+        "message": "make mobile header scroll with content instead of staying fixed"
+      },
+      {
+        "scope": null,
+        "message": "revert mobile header to fixed position with proper padding"
+      },
+      {
+        "scope": null,
+        "message": "use flex-col on mobile layout so header stacks above content"
+      },
+      {
+        "scope": null,
+        "message": "improve mobile layout for songs pages"
+      },
+      {
+        "scope": null,
+        "message": "update bun lockfile and embedded migrations for CI"
+      },
+      {
+        "scope": null,
+        "message": "enhance song search scoring and hymn number lookup"
+      },
+      {
+        "scope": null,
+        "message": "add content comparison for PPTX import duplicates"
+      },
+      {
+        "scope": null,
+        "message": "resolve Bible chapter transition sidebar, flicker, and secondary text bugs"
+      },
+      {
+        "scope": null,
+        "message": "open webview external links in system browser"
+      },
+      {
+        "scope": null,
+        "message": "prevent content flash during hide animation"
+      },
+      {
+        "scope": null,
+        "message": "remember search query and scroll position on songs page"
+      },
+      {
+        "scope": null,
+        "message": "install native audio libs in CI and simplify server test jobs"
+      },
       {
         "scope": null,
         "message": "make audify import lazy so server starts without native audio libs"
@@ -1907,6 +2147,22 @@
     "changes": [
       {
         "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "up"
+      },
+      {
+        "scope": null,
+        "message": "various bug fixes"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
         "message": "Update api.test.ts"
       }
     ]
@@ -1915,13 +2171,285 @@
     "version": "0.1.42",
     "date": "2026-02-01T20:48:18+02:00",
     "features": [],
+    "bugFixes": [],
+    "changes": []
+  },
+  {
+    "version": "0.1.41",
+    "date": "2026-03-15T15:12:57+02:00",
+    "features": [
+      {
+        "scope": null,
+        "message": "add bookmarks panel to songs pages"
+      },
+      {
+        "scope": null,
+        "message": "add global edit mode for song slides with inline editing, reorder, delete, add, and preview editing"
+      },
+      {
+        "scope": null,
+        "message": "add indigo-themed scrollbars and mobile load buttons for Bible verses"
+      },
+      {
+        "scope": null,
+        "message": "add OBS scene-based config overrides to screen designer"
+      },
+      {
+        "scope": null,
+        "message": "add bookmarked songs list with toggle, filter, and full CRUD API"
+      },
+      {
+        "scope": null,
+        "message": "add inline slide editing from song preview"
+      },
+      {
+        "scope": null,
+        "message": "add Bible history search, smart add-to-schedule, and queue caching"
+      },
+      {
+        "scope": null,
+        "message": "add key line to PPTs, edit key line from schedule, last played indicator, and edit-as-text improvements"
+      },
+      {
+        "scope": null,
+        "message": "add song sorting, duplicate title disambiguation, and mobile search improvements"
+      }
+    ],
     "bugFixes": [
+      {
+        "scope": null,
+        "message": "Bible verse list snapping back to searched verse on chapter transition"
+      },
+      {
+        "scope": null,
+        "message": "add error logging to migration runner and getScreenWithConfigs"
+      },
+      {
+        "scope": null,
+        "message": "handle missing OS plugin in update checker and add window set-icon ACL"
+      },
+      {
+        "scope": null,
+        "message": "wrap MIDI device enumeration in checkDeviceStatusAndReconnect"
+      },
+      {
+        "scope": null,
+        "message": "gracefully handle missing MIDI subsystem (ALSA) in CI"
+      },
+      {
+        "scope": null,
+        "message": "pre-create draft release before build to avoid permission errors"
+      },
+      {
+        "scope": null,
+        "message": "move contents:write permission to workflow level for release creation"
+      },
+      {
+        "scope": null,
+        "message": "run tests on main push, skip when tag triggers build-release"
+      },
+      {
+        "scope": null,
+        "message": "use in-memory fixture DB for bible search tests in CI"
+      },
+      {
+        "scope": null,
+        "message": "skip bible search tests when DB file is unavailable in CI and trigger tests on tags only"
+      },
+      {
+        "scope": null,
+        "message": "strip non-numeric pre-release from Tauri version for MSI compat"
+      },
+      {
+        "scope": null,
+        "message": "add retry logic to Bible E2E search for CI FTS index timing"
+      },
+      {
+        "scope": null,
+        "message": "correct E2E test regex for Bible search results in English locale"
+      },
+      {
+        "scope": null,
+        "message": "smooth bookmark drag-and-drop and improve song editor save UX"
+      },
+      {
+        "scope": null,
+        "message": "constrain songs page layout and add global scrollbar theming"
+      },
+      {
+        "scope": null,
+        "message": "merge adjacent search highlights into continuous phrases"
+      },
+      {
+        "scope": null,
+        "message": "prevent restore effect from overriding search result navigation"
+      },
+      {
+        "scope": null,
+        "message": "improve search scoring so content-only phrase matches rank high"
+      },
+      {
+        "scope": null,
+        "message": "preserve word boundaries in title sanitization and match hymn numbers with leading zeros"
+      },
+      {
+        "scope": null,
+        "message": "cap song search score at maximum 100"
+      },
+      {
+        "scope": null,
+        "message": "handle punctuation in song search query parsing and indexing"
+      },
+      {
+        "scope": null,
+        "message": "show song list instead of last opened song when returning from another page"
+      },
+      {
+        "scope": null,
+        "message": "display error in UI when mpv fails to play a file"
+      },
+      {
+        "scope": null,
+        "message": "kill stale mpv processes on startup to prevent zombie accumulation"
+      },
+      {
+        "scope": null,
+        "message": "repair concurrency limiter and invalid Drizzle query in music service"
+      },
+      {
+        "scope": null,
+        "message": "prevent music player crashes by isolating mpv process group"
+      },
+      {
+        "scope": null,
+        "message": "hide format help when schedule has items, add reference section to Edit as Text"
+      },
+      {
+        "scope": null,
+        "message": "auto-collapse previous section on navigation, simplify Edit as Text modal"
+      },
+      {
+        "scope": null,
+        "message": "save button exits edit mode after pending saves complete, add discard button"
+      },
+      {
+        "scope": null,
+        "message": "improve edit button toggle styling and add discard/save actions"
+      },
+      {
+        "scope": null,
+        "message": "sync slide edits to preview in real-time and skip animations on content updates"
+      },
+      {
+        "scope": null,
+        "message": "move Add Slide below slides, open Edit as Text in modal, and polish button colors"
+      },
+      {
+        "scope": null,
+        "message": "improve edit mode toolbar layout, real-time slide sync, and textarea overflow"
+      },
+      {
+        "scope": null,
+        "message": "redesign song edit mode with DnD reordering and inline editing in slides panel"
+      },
+      {
+        "scope": null,
+        "message": "make Bible and Song pages fill viewport height with neutral scrollbars"
+      },
+      {
+        "scope": null,
+        "message": "resolve 6 bugs - search filters, bible freeze, song navigation, chapter transitions, music player, webview links"
+      },
+      {
+        "scope": null,
+        "message": "improve music player reliability and add tests"
+      },
+      {
+        "scope": null,
+        "message": "align song action buttons to left on mobile"
+      },
+      {
+        "scope": null,
+        "message": "make mobile header scroll with content instead of staying fixed"
+      },
+      {
+        "scope": null,
+        "message": "revert mobile header to fixed position with proper padding"
+      },
+      {
+        "scope": null,
+        "message": "use flex-col on mobile layout so header stacks above content"
+      },
+      {
+        "scope": null,
+        "message": "improve mobile layout for songs pages"
+      },
+      {
+        "scope": null,
+        "message": "update bun lockfile and embedded migrations for CI"
+      },
+      {
+        "scope": null,
+        "message": "enhance song search scoring and hymn number lookup"
+      },
+      {
+        "scope": null,
+        "message": "add content comparison for PPTX import duplicates"
+      },
+      {
+        "scope": null,
+        "message": "resolve Bible chapter transition sidebar, flicker, and secondary text bugs"
+      },
+      {
+        "scope": null,
+        "message": "open webview external links in system browser"
+      },
+      {
+        "scope": null,
+        "message": "prevent content flash during hide animation"
+      },
+      {
+        "scope": null,
+        "message": "remember search query and scroll position on songs page"
+      },
+      {
+        "scope": null,
+        "message": "install native audio libs in CI and simplify server test jobs"
+      },
+      {
+        "scope": null,
+        "message": "make audify import lazy so server starts without native audio libs"
+      },
+      {
+        "scope": null,
+        "message": "increase test timeouts for server and e2e tests"
+      },
       {
         "scope": null,
         "message": "display correct broadcast URL after starting livestream"
       }
     ],
     "changes": [
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "up"
+      },
+      {
+        "scope": null,
+        "message": "various bug fixes"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "Update api.test.ts"
+      },
       {
         "scope": null,
         "message": "fix search"
@@ -1933,15 +2461,7 @@
       {
         "scope": null,
         "message": "add livestrean"
-      }
-    ]
-  },
-  {
-    "version": "0.1.41",
-    "date": "2026-01-31T13:23:27+02:00",
-    "features": [],
-    "bugFixes": [],
-    "changes": [
+      },
       {
         "scope": null,
         "message": "fix updates"
@@ -4588,6 +5108,438 @@
       {
         "scope": "screen-editor",
         "message": "add missing text style options (minFontSize, lineHeight, shadow)"
+      },
+      {
+        "scope": "database",
+        "message": "add import functionality with validation and backup"
+      },
+      {
+        "scope": "settings",
+        "message": "add database management with info and export functionality"
+      },
+      {
+        "scope": "bible",
+        "message": "add auto-navigation and sync with temporary Bible content"
+      },
+      {
+        "scope": "songs",
+        "message": "add auto-navigation to presented song on page open"
+      },
+      {
+        "scope": "presentation",
+        "message": "add skipTaskbar option to hide display windows from dock"
+      },
+      {
+        "scope": "songs",
+        "message": "add \"Add to Schedule\" button to song preview page header"
+      },
+      {
+        "scope": "songs",
+        "message": "update preview header with back button and song title"
+      },
+      {
+        "scope": "songs",
+        "message": "move edit button to header row with purple styling"
+      },
+      {
+        "scope": "presentation",
+        "message": "add temporary content support to LivePreview component"
+      },
+      {
+        "scope": "presentation",
+        "message": "add temporary content presentation mechanism"
+      },
+      {
+        "scope": "presentation",
+        "message": "use screen name in window titles instead of display ID"
+      },
+      {
+        "scope": "songs",
+        "message": "add placeholder to Musical Key input field"
+      },
+      {
+        "scope": "combobox",
+        "message": "add React Portal support to dropdown rendering"
+      },
+      {
+        "scope": "presentation",
+        "message": "add fullscreen controls and auto-maximize handling"
+      },
+      {
+        "scope": "build",
+        "message": "add embedded migrations and server startup health checks"
+      },
+      {
+        "scope": "system-token",
+        "message": "add system token management UI with localhost-only API routes"
+      },
+      {
+        "scope": "settings",
+        "message": "add API documentation link in settings page"
+      },
+      {
+        "scope": "auth",
+        "message": "add system token API for external app access"
+      },
+      {
+        "scope": "livestream",
+        "message": "add tooltip component and improve BroadcastInfo UI"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "integrate MIDI device selector into settings UI"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "allow startLive/stopLive to share the same shortcut"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "add recording context and MIDI shortcut support"
+      },
+      {
+        "scope": "livestream",
+        "message": "return re-auth status in YouTube auth check"
+      },
+      {
+        "scope": "livestream",
+        "message": "show toast notification when YouTube session expires"
+      },
+      {
+        "scope": "livestream",
+        "message": "add YouTube OAuth error handling with re-auth detection"
+      },
+      {
+        "scope": "livestream",
+        "message": "add stream start/stop scene configuration"
+      },
+      {
+        "scope": "livestream",
+        "message": "add YouTube broadcast readiness check with progress tracking"
+      },
+      {
+        "scope": "livestream",
+        "message": "refactor scene management with settings modal and drag-and-drop reordering"
+      },
+      {
+        "scope": "livestream",
+        "message": "enable auto-reconnect for manual OBS connections"
+      },
+      {
+        "scope": "livestream",
+        "message": "always initialize OBS auto-reconnect at startup"
+      },
+      {
+        "scope": "livestream",
+        "message": "add OBS WebSocket auto-reconnect with exponential backoff"
+      },
+      {
+        "scope": "livestream",
+        "message": "wire up OBS callbacks for real-time scene updates"
+      },
+      {
+        "scope": "presentation",
+        "message": "display next Bible verse as preview"
+      },
+      {
+        "scope": "api",
+        "message": "add GET /api/bible/next-verse endpoint"
+      },
+      {
+        "scope": "bible",
+        "message": "add getNextBook and getNextVerse service functions"
+      },
+      {
+        "scope": "presentation",
+        "message": "add comprehensive next slide preview for all content types"
+      },
+      {
+        "scope": "bibles",
+        "message": "export and seed books and verses in Bible fixtures"
+      },
+      {
+        "scope": "db",
+        "message": "add seeding for songs, bibles, categories, and settings on startup"
+      },
+      {
+        "scope": "db",
+        "message": "add automatic seeding of default screens on app installation"
+      },
+      {
+        "scope": "presentation",
+        "message": "add visibleWhenHidden property to control element visibility in hidden mode"
+      },
+      {
+        "scope": "presentation",
+        "message": "add title and content style configuration for next slide element"
+      },
+      {
+        "scope": "presentation",
+        "message": "integrate batch update API in screen manager for atomic saves"
+      },
+      {
+        "scope": "presentation",
+        "message": "add batch update API endpoint for atomic screen config saves"
+      },
+      {
+        "scope": "screen-preview",
+        "message": "add background styling to preview container"
+      },
+      {
+        "scope": "constraint-controls",
+        "message": "add unit conversion and improve constraint UI"
+      },
+      {
+        "scope": "presentation",
+        "message": "add value indicators with units to constraint anchor points"
+      },
+      {
+        "scope": "presentation",
+        "message": "auto-open active screens on startup"
+      },
+      {
+        "scope": "webview",
+        "message": "upgrade Chrome user agent and improve video playback performance"
+      },
+      {
+        "scope": "bible",
+        "message": "separate verse selection from presentation"
+      },
+      {
+        "scope": "bible",
+        "message": "implement interactive 3-panel presentation UI with navigation, queue, and controls"
+      },
+      {
+        "scope": "db",
+        "message": "implement modular migration engine with version tracking"
+      },
+      {
+        "scope": "song-import",
+        "message": "standardize song title sanitization across client and server"
+      },
+      {
+        "scope": "songs",
+        "message": "add source file path display to song editor UI"
+      },
+      {
+        "scope": "song-import",
+        "message": "extract title from first slide and clean non-alphanumeric characters"
+      },
+      {
+        "scope": "server",
+        "message": "add token-based user authentication endpoint"
+      },
+      {
+        "scope": "server",
+        "message": "validate permissions on protected API endpoints"
+      },
+      {
+        "scope": "client",
+        "message": "protect routes with permission guards"
+      },
+      {
+        "scope": "i18n",
+        "message": "add permission error messages for access denied pages"
+      },
+      {
+        "scope": "ui",
+        "message": "create PagePermissionGuard component for route protection"
+      },
+      {
+        "scope": "song-export",
+        "message": "add complete import/export feature with OpenSong XML support"
+      },
+      {
+        "scope": "song-import",
+        "message": "add support for PPT files in ZIP archives with server-side conversion"
+      },
+      {
+        "scope": "song-import",
+        "message": "add PPT to PPTX conversion support with LibreOffice"
+      },
+      {
+        "scope": "search",
+        "message": "enhance relevance with fuzzy highlighting, rarity boost, and noise filtering"
+      },
+      {
+        "scope": "search",
+        "message": "add diacritic-insensitive highlighting with word boundary matching"
+      },
+      {
+        "scope": "search",
+        "message": "enhance fuzzy match highlighting with extended candidate pool"
+      },
+      {
+        "scope": "ui/categories",
+        "message": "add CategoryManager component with drag-drop sorting"
+      },
+      {
+        "scope": "api",
+        "message": "add category reorder endpoint and integrate priority into search"
+      },
+      {
+        "scope": "categories",
+        "message": "add priority field to song categories"
+      },
+      {
+        "scope": "search",
+        "message": "add trigram fuzzy search for substring matching"
+      },
+      {
+        "scope": "song-import",
+        "message": "add import options for title extraction and duplicate handling"
+      },
+      {
+        "scope": "songs",
+        "message": "improve search ranking with field-weighted scoring and tiered query matching"
+      },
+      {
+        "scope": "songs",
+        "message": "add error modal when no valid songs found during file import"
+      },
+      {
+        "scope": "songs",
+        "message": "add search persistence and limit song list to 50 rows"
+      },
+      {
+        "scope": "song-import",
+        "message": "add progress indicator and increase batch size to 200"
+      },
+      {
+        "scope": "song-import",
+        "message": "add batch import with progress tracking and OpenSong support"
+      },
+      {
+        "scope": "sidebar",
+        "message": "make sidebar mobile-responsive with hamburger menu and drawer"
+      },
+      {
+        "scope": "pptx-import",
+        "message": "directly create songs on PPTX import without dialog"
+      },
+      {
+        "scope": "songs",
+        "message": "add PPTX import button with file dialog integration"
+      },
+      {
+        "scope": "pptx-import",
+        "message": "add PPTX file import with file association and drag-drop"
+      },
+      {
+        "scope": "presentation",
+        "message": "add dynamic preview border with display state indicator"
+      },
+      {
+        "scope": "presentation",
+        "message": "enhance control room with status indicator and immediate preview"
+      },
+      {
+        "scope": "queue",
+        "message": "add menu options for inserting songs and slides at specific positions"
+      },
+      {
+        "scope": "queue",
+        "message": "make song titles clickable to select first slide"
+      },
+      {
+        "scope": "queue",
+        "message": "add editing support for standalone slides"
+      },
+      {
+        "scope": "queue",
+        "message": "add song editing and slide insertion to control room"
+      },
+      {
+        "scope": "sidebar",
+        "message": "rename present feature to control room and update icon"
+      },
+      {
+        "scope": "presentations-programs",
+        "message": "implement comprehensive programs and presentation management system"
+      },
+      {
+        "scope": "routes/songs",
+        "message": "add dedicated songs management page"
+      },
+      {
+        "scope": "routes/settings",
+        "message": "add authorized devices section to settings page"
+      },
+      {
+        "scope": "client/devices",
+        "message": "implement device management UI and hooks"
+      },
+      {
+        "scope": "server",
+        "message": "integrate device authentication endpoints and middleware"
+      },
+      {
+        "scope": "openapi",
+        "message": "add OpenAPI specification and Scalar documentation"
+      },
+      {
+        "scope": "middleware",
+        "message": "add device authentication and permission validation"
+      },
+      {
+        "scope": "service/devices",
+        "message": "implement device CRUD and token management service"
+      },
+      {
+        "scope": "db",
+        "message": "add device and device permissions database schema"
+      },
+      {
+        "scope": "songs",
+        "message": "add editor component, management hooks, and toast/modal UI utilities"
+      },
+      {
+        "scope": "ui",
+        "message": "add reusable modal and toast components"
+      },
+      {
+        "scope": "routing",
+        "message": "restructure app routes and add toast provider to layout"
+      },
+      {
+        "scope": "ui",
+        "message": "update sidebar navigation to include songs and schedules"
+      },
+      {
+        "scope": "i18n",
+        "message": "add common button labels and presentation namespace"
+      },
+      {
+        "scope": "presentation",
+        "message": "add presentation mode feature for schedules"
+      },
+      {
+        "scope": "schedules",
+        "message": "implement schedule editor with drag-and-drop reordering"
+      },
+      {
+        "scope": "i18n",
+        "message": "add schedules translations for English and Romanian"
+      },
+      {
+        "scope": "schedules",
+        "message": "add schedules UI components"
+      },
+      {
+        "scope": "schedules",
+        "message": "add client service and hooks for schedules management"
+      },
+      {
+        "scope": "schedules",
+        "message": "add server-side schedules service with CRUD operations and item management"
+      },
+      {
+        "scope": "songs",
+        "message": "auto-extract title from first line for new songs"
+      },
+      {
+        "scope": "songs",
+        "message": "add paste handler to convert empty lines to slide breaks"
       }
     ],
     "bugFixes": [
@@ -4666,6 +5618,310 @@
       {
         "scope": "screen-content",
         "message": "use TextContent for next slide section rendering"
+      },
+      {
+        "scope": "database",
+        "message": "validate SQLite files by checking header instead of PRAGMA integrity_check"
+      },
+      {
+        "scope": "database",
+        "message": "properly extract PRAGMA integrity_check result value"
+      },
+      {
+        "scope": "presentation",
+        "message": "add automatic WebSocket reconnection on error"
+      },
+      {
+        "scope": "presentation",
+        "message": "clear displayed slide on server startup alongside queue"
+      },
+      {
+        "scope": "navigation",
+        "message": "prevent continuous auto-navigation on Songs and Bible pages"
+      },
+      {
+        "scope": "presentation",
+        "message": "clear queue on server startup to ensure clean state"
+      },
+      {
+        "scope": "screen-editor",
+        "message": "add missing preview texts state and actions to editor hook"
+      },
+      {
+        "scope": "song-import",
+        "message": "add Tauri context check before invoking desktop commands"
+      },
+      {
+        "scope": "presentation",
+        "message": "fix React reconciliation with stable segment keys and synchronous processing"
+      },
+      {
+        "scope": "build",
+        "message": "fix production build sidecar bundling and websocket connections"
+      },
+      {
+        "scope": "midi",
+        "message": "load native module lazily and handle unavailability gracefully"
+      },
+      {
+        "scope": "server",
+        "message": "use proper application support directories for data storage"
+      },
+      {
+        "scope": "ci",
+        "message": "switch from pnpm to bun for dependency management"
+      },
+      {
+        "scope": "ci",
+        "message": "correct pnpm cache dependency path"
+      },
+      {
+        "scope": "livestream",
+        "message": "prevent multiple concurrent starts from keyboard shortcuts"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "allow canceling livestream start and improve start state detection"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "support multiple actions per MIDI shortcut"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "prevent double-triggering start/stop with state checks"
+      },
+      {
+        "scope": "bible",
+        "message": "allow Enter key to present searched verse in reference search"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "add isLive state checks to livestream toggle handlers"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "simplify recording ref access pattern"
+      },
+      {
+        "scope": "keyboard-shortcuts",
+        "message": "prevent stale closure in MIDI and global shortcuts callbacks"
+      },
+      {
+        "scope": "livestream",
+        "message": "add missing log utility function to routes"
+      },
+      {
+        "scope": "livestream",
+        "message": "restore client_secret to YouTube OAuth token exchange"
+      },
+      {
+        "scope": "livestream",
+        "message": "remove unnecessary client_secret from PKCE OAuth flow"
+      },
+      {
+        "scope": "livestream",
+        "message": "replace YouTube broadcast ready polling with countdown delay"
+      },
+      {
+        "scope": "queue",
+        "message": "position active item at second position in scroll container"
+      },
+      {
+        "scope": "livestream",
+        "message": "prevent duplicate OBS reconnect scheduling and add error recovery"
+      },
+      {
+        "scope": "livestream",
+        "message": "defer OBS auto-connect until WebSocket server is ready"
+      },
+      {
+        "scope": "presentation",
+        "message": "strip HTML and translation abbreviations from slide preview"
+      },
+      {
+        "scope": "bible-verses",
+        "message": "ensure verse scrolls into view when navigating to new chapter"
+      },
+      {
+        "scope": "fixtures",
+        "message": "fix database path resolution and regenerate screen defaults"
+      },
+      {
+        "scope": "presentation",
+        "message": "show hidden elements as ghosted in editor canvas for re-selection"
+      },
+      {
+        "scope": "presentation",
+        "message": "hide elements in editor canvas when hidden property is set"
+      },
+      {
+        "scope": "presentation",
+        "message": "simplify element visibility control by renaming visibleWhenHidden to hidden"
+      },
+      {
+        "scope": "screens",
+        "message": "combine where conditions with and() to prevent overwriting"
+      },
+      {
+        "scope": "presentation",
+        "message": "improve race condition handling with version counter tracking instead of timeouts"
+      },
+      {
+        "scope": "screen-editor",
+        "message": "prevent race condition in element property saves"
+      },
+      {
+        "scope": "presentation",
+        "message": "add screen dependency to ResizeObserver effect"
+      },
+      {
+        "scope": "screen-editor",
+        "message": "accept constraints instead of position in element update handler"
+      },
+      {
+        "scope": "presentation",
+        "message": "standardize screen rendering positioning with pre-scaled pixel coordinates"
+      },
+      {
+        "scope": "presentation",
+        "message": "use screen config dimensions and scale for text elements"
+      },
+      {
+        "scope": "constraint-controls",
+        "message": "resolve stale closure in drag and resize handlers"
+      },
+      {
+        "scope": "presentation",
+        "message": "use constraints-based positioning and fix config overwrites"
+      },
+      {
+        "scope": "queue",
+        "message": "decode HTML entities in slide preview text"
+      },
+      {
+        "scope": "song-import",
+        "message": "preserve en-dashes and em-dashes in sanitized titles"
+      },
+      {
+        "scope": "sanitization",
+        "message": "remove leading numbers from song titles"
+      },
+      {
+        "scope": "song-import",
+        "message": "filter special characters from extracted slide titles"
+      },
+      {
+        "scope": "server",
+        "message": "add timeout to token verification to prevent hanging"
+      },
+      {
+        "scope": "server",
+        "message": "detect all server IPs for local admin access"
+      },
+      {
+        "scope": "client",
+        "message": "use dynamic hostname in fetcher and display windows"
+      },
+      {
+        "scope": "server",
+        "message": "listen on all network interfaces for LAN access"
+      },
+      {
+        "scope": "i18n",
+        "message": "correct export progress wording in settings translations"
+      },
+      {
+        "scope": "song-export",
+        "message": "add write permissions and improve progress modal timing"
+      },
+      {
+        "scope": "search",
+        "message": "fall back to original terms when all search terms filtered as noise"
+      },
+      {
+        "scope": "search",
+        "message": "increase fuzzy substring threshold and prioritize FTS results"
+      },
+      {
+        "scope": "search",
+        "message": "enable fuzzy substring matching for spelling variations"
+      },
+      {
+        "scope": "songs",
+        "message": "improve search input responsiveness with local state"
+      },
+      {
+        "scope": "pptx-import",
+        "message": "handle embedded newlines in PPTX text elements"
+      },
+      {
+        "scope": "songs",
+        "message": "use Tauri readFile for local PPTX file reading"
+      },
+      {
+        "scope": "pptx-import",
+        "message": "fix drag and drop event capture using document-level listeners"
+      },
+      {
+        "scope": "presentation",
+        "message": "remove animation delay for instant preview state feedback"
+      },
+      {
+        "scope": "presentation",
+        "message": "relocate show/hide button and fix restore after hide"
+      },
+      {
+        "scope": "songs",
+        "message": "escape FTS5 special characters and enable diacritic-insensitive search"
+      },
+      {
+        "scope": "editor",
+        "message": "disable autocorrect to prevent unwanted dots on space"
+      },
+      {
+        "scope": "songs",
+        "message": "center SongPickerModal dialog"
+      },
+      {
+        "scope": "presentation/keyboard-shortcuts",
+        "message": "disable shortcuts in modals and contenteditable elements"
+      },
+      {
+        "scope": "presentation/broadcast",
+        "message": "refresh displays when currently shown slide is updated"
+      },
+      {
+        "scope": "presentation",
+        "message": "add cache-busting headers to queue fetch calls"
+      },
+      {
+        "scope": "control-room",
+        "message": "support standalone slide navigation and fix queue item highlighting"
+      },
+      {
+        "scope": "songs",
+        "message": "populate search index after migrations and on deletion"
+      },
+      {
+        "scope": "db",
+        "message": "remove orphaned foreign key column before dropping presentation_queue"
+      },
+      {
+        "scope": "deps",
+        "message": "downgrade @dnd-kit/sortable to v9.0.0 to resolve breaking changes in v10"
+      },
+      {
+        "scope": "client",
+        "message": "add missing config file with getApiUrl"
+      },
+      {
+        "scope": "songs",
+        "message": "add clipboardTextSerializer to control newlines in copy/paste"
+      },
+      {
+        "scope": "songs",
+        "message": "prevent paste handler from blocking regular paste operations"
       }
     ],
     "changes": [
@@ -4776,6 +6032,370 @@
       {
         "scope": null,
         "message": "Update TODO.md"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "generate fixtures"
+      },
+      {
+        "scope": "highlight-colors",
+        "message": "remove poorly implemented feature from codebase"
+      },
+      {
+        "scope": null,
+        "message": "Revert \"fix(presentation): fix React reconciliation with stable segment keys and synchronous processing\""
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "presentation",
+        "message": "hide loading messages on screen display routes"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "songs",
+        "message": "remove duplicate headers from song panel components"
+      },
+      {
+        "scope": "songs",
+        "message": "use indigo color for edit button instead of purple"
+      },
+      {
+        "scope": "songs",
+        "message": "reorganize song preview and presentation flow"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "Update TODO.md"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "server",
+        "message": "fix imports and line endings in utility files"
+      },
+      {
+        "scope": "server",
+        "message": "fix migrations and script formatting"
+      },
+      {
+        "scope": "client",
+        "message": "fix import ordering and line formatting in router"
+      },
+      {
+        "scope": "project",
+        "message": "ignore application logs directory"
+      },
+      {
+        "scope": "ci",
+        "message": "add macOS quarantine workaround to release notes"
+      },
+      {
+        "scope": null,
+        "message": "update bun.lock"
+      },
+      {
+        "scope": "ci",
+        "message": "simplify build matrix to Windows x64 and macOS ARM64 only"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "settings",
+        "message": "combine API Documentation and System Token into single card"
+      },
+      {
+        "scope": "settings",
+        "message": "move system token section after API documentation"
+      },
+      {
+        "scope": null,
+        "message": "remove .playwright-mcp from git tracking"
+      },
+      {
+        "scope": null,
+        "message": "add secrets folder to gitignore"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "livestream",
+        "message": "add error messages for YouTube authentication issues"
+      },
+      {
+        "scope": "livestream",
+        "message": "move stream start progress UI from StreamControls to BroadcastInfo"
+      },
+      {
+        "scope": "livestream",
+        "message": "simplify YouTube setup modal"
+      },
+      {
+        "scope": "livestream",
+        "message": "replace local templates with YouTube past broadcasts"
+      },
+      {
+        "scope": "queue",
+        "message": "extract scrolling logic into reusable hook"
+      },
+      {
+        "scope": null,
+        "message": "livestream page"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "add fixtures"
+      },
+      {
+        "scope": "fixtures",
+        "message": "consolidate dump script to handle multiple fixture types"
+      },
+      {
+        "scope": "scripts",
+        "message": "add fixtures:screens script for generating screen fixtures"
+      },
+      {
+        "scope": "seeds",
+        "message": "extract screen configurations to JSON fixtures for easier maintenance"
+      },
+      {
+        "scope": "presentation",
+        "message": "remove client-side migration utilities for legacy position formats"
+      },
+      {
+        "scope": "presentation",
+        "message": "synchronize types and default configs to constraints-based positioning"
+      },
+      {
+        "scope": "presentation",
+        "message": "move background styling to fullscreen container"
+      },
+      {
+        "scope": "presentation",
+        "message": "unify text rendering with TextContent and AnimatedElement"
+      },
+      {
+        "scope": "presentation",
+        "message": "unify screen rendering with ScreenContent component"
+      },
+      {
+        "scope": "presentation",
+        "message": "migrate from displays to screens API"
+      },
+      {
+        "scope": "constraint-controls",
+        "message": "make constraint values editable directly on diagram"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "various fixes"
+      },
+      {
+        "scope": "ui",
+        "message": "replace native select elements with Combobox component"
+      },
+      {
+        "scope": null,
+        "message": "various fixes"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "bible",
+        "message": "replace 3-panel layout with 2-panel resizable layout"
+      },
+      {
+        "scope": null,
+        "message": "migrate to drizzle orm"
+      },
+      {
+        "scope": null,
+        "message": "add Bible page"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "client",
+        "message": "use dynamic hostname for API URLs"
+      },
+      {
+        "scope": "auth",
+        "message": "migrate from device-based to user-based authentication with RBAC"
+      },
+      {
+        "scope": null,
+        "message": "up"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "search",
+        "message": "implement two-phase search ranking with simplified FTS5 queries"
+      },
+      {
+        "scope": "songs",
+        "message": "improve search relevance with N-1 and N-2 term AND queries"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "openapi",
+        "message": "add comprehensive api documentation for all endpoints"
+      },
+      {
+        "scope": "search",
+        "message": "optimize song search with subquery and minimum score filtering"
+      },
+      {
+        "scope": "presentation",
+        "message": "remove dynamic border from preview component"
+      },
+      {
+        "scope": "presentation",
+        "message": "change displayed state border color to white"
+      },
+      {
+        "scope": "presentation",
+        "message": "update hidden state border color to white"
+      },
+      {
+        "scope": "presentation",
+        "message": "add border to show/hide buttons in control center"
+      },
+      {
+        "scope": "presentation",
+        "message": "implement isHidden flag for show/hide state management"
+      },
+      {
+        "scope": "presentation",
+        "message": "move preview toggle button to header"
+      },
+      {
+        "scope": "queue",
+        "message": "replace context menu submenu with dialog for Insert After"
+      },
+      {
+        "scope": "queue",
+        "message": "convert Add button to dialog with 3 options"
+      },
+      {
+        "scope": "queue",
+        "message": "use filled buttons for Add and Clear Queue actions"
+      },
+      {
+        "scope": "routing",
+        "message": "redirect homepage to control room"
+      },
+      {
+        "scope": "sidebar",
+        "message": "update present menu icon from Film to SquarePlay"
+      },
+      {
+        "scope": "ui",
+        "message": "simplify navigation and remove program selector"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
+      },
+      {
+        "scope": "settings",
+        "message": "integrate application description with page title"
+      },
+      {
+        "scope": "settings",
+        "message": "move application settings section to top of page"
+      },
+      {
+        "scope": "presentation",
+        "message": "move display management to settings page"
+      },
+      {
+        "scope": null,
+        "message": "add all"
+      },
+      {
+        "scope": null,
+        "message": "add project documentation and task tracking"
+      },
+      {
+        "scope": "deps",
+        "message": "update dependencies and generated files"
+      },
+      {
+        "scope": "settings",
+        "message": "add device management translations"
+      },
+      {
+        "scope": null,
+        "message": "reformat code with consistent quotes and import organization"
+      },
+      {
+        "scope": "service",
+        "message": "export device service from service barrel"
+      },
+      {
+        "scope": null,
+        "message": "various improvements"
       }
     ]
   },
