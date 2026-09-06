@@ -76,5 +76,18 @@
     "conflictBadge": "Conflict",
     "updatedTooltip": "Actualizat de pe alt dispozitiv",
     "conflictTooltip": "Conflict de versiuni — modificarea locală a fost înlocuită de o versiune mai nouă de pe alt dispozitiv"
+  },
+  "workspace": {
+    "movePanel": "Mută {{panel}} — trage peste marginea altui panou",
+    "resetLayout": "Resetează aranjarea",
+    "editLayout": "Editează aranjarea",
+    "editLayoutDescription": "Trage panourile paginii în ordinea dorită",
+    "editingHint": "Trage un panou de mâner peste marginea altui panou",
+    "doneEditing": "Gata",
+    "newPosition": "Poziția nouă",
+    "layout": "Aranjare"
+  },
+  "actionsMenu": {
+    "trigger": "Mai multe"
   }
 }

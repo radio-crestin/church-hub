@@ -151,5 +151,11 @@
       }
     },
     "exportEmpty": "Nothing to export yet"
+  },
+  "actionsMenu": {
+    "trigger": "More",
+    "bookmarkDescription": "Bookmark the verse you currently have open",
+    "addToScheduleDescription": "Add the open verse to the selected program",
+    "addToSchedule": "Add verse to program"
   }
 }

@@ -42,19 +42,11 @@
     "searchPlaceholder": "Search in program...",
     "songCount_one": "{{count}} song",
     "songCount_other": "{{count}} songs",
-    "filterAll": "All",
-    "filterPending": "Remaining",
-    "filterSung": "Sung",
-    "showVerses": "Also show verses",
-    "showSongs": "Also show songs",
     "addVerse": "Add {{reference}} to this program",
     "addVerseDisabled": "Open a verse first",
     "verseAdded": "{{reference}} added to the program",
     "markRead": "Mark as read",
     "markNotRead": "Mark as not read",
-    "verseCount_one": "{{count}} verse",
-    "verseCount_other": "{{count}} verses",
-    "filterRead": "Read",
     "markSung": "Mark as sung",
     "markNotSung": "Mark as not sung",
     "removeFromSchedule": "Remove from program",
@@ -70,7 +62,15 @@
     "noSchedules": "No programs yet",
     "noSchedulesDescription": "Create a program from the Programs page to see its songs here.",
     "emptySchedule": "This program has no songs",
-    "noResults": "No matching songs"
+    "noResults": "No matching songs",
+    "openSearch": "Search in this program",
+    "closeSearch": "Close search",
+    "stopLiveItem": "Stop showing the program",
+    "itemsTitle": "Program items",
+    "previewTitle": "Preview",
+    "presentItem": "Show this on screen",
+    "openSong": "Open the song",
+    "openPassage": "Open the passage"
   },
   "search": {
     "placeholder": "Search schedules...",
@@ -240,7 +240,12 @@
     "preview": "{{count}} items detected",
     "preview_one": "{{count}} item detected",
     "preview_other": "{{count}} items detected",
-    "errors": "{{count}} errors found",
+    "errors": {
+      "noBibleTranslation": "No Bible translation configured",
+      "invalidBibleReference": "Invalid Bible reference",
+      "invalidVtFormat": "Invalid format. Use: Name - Reference",
+      "versesNotFound": "Verses not found in database"
+    },
     "errors_one": "{{count}} error found",
     "errors_other": "{{count}} errors found",
     "save": "Apply Changes",
@@ -267,12 +272,6 @@
       "partialSuccess_other": "{{count}} items skipped due to missing verses"
     },
     "lineError": "Line {{line}}: {{message}}",
-    "validationErrors": "Please fix the following issues:",
-    "errors": {
-      "noBibleTranslation": "No Bible translation configured",
-      "invalidBibleReference": "Invalid Bible reference",
-      "invalidVtFormat": "Invalid format. Use: Name - Reference",
-      "versesNotFound": "Verses not found in database"
-    }
+    "validationErrors": "Please fix the following issues:"
   }
 }

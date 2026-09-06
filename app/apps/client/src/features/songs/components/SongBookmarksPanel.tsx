@@ -599,7 +599,7 @@ export function SongBookmarksPanel({
       data-testid="bookmarks-drop-zone"
       className={`bg-white dark:bg-gray-800 rounded-lg border flex flex-col overflow-hidden h-full transition-colors ${
         isSongOver
-          ? 'border-amber-400 dark:border-amber-500 ring-2 ring-amber-400/40'
+          ? 'border-amber-400 dark:border-amber-500 ring-2 ring-inset ring-amber-400/40'
           : 'border-gray-200 dark:border-gray-700'
       } ${songJustLanded ? 'song-drop-land' : ''}`}
     >
@@ -620,6 +620,7 @@ export function SongBookmarksPanel({
                   ? t('bookmarks.expand', 'Expand')
                   : t('bookmarks.collapse', 'Collapse')
               }
+              data-testid="bookmarks-collapse-toggle"
               className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
             >
               <ChevronDown

@@ -42,19 +42,11 @@
     "searchPlaceholder": "Cauta in program...",
     "songCount_one": "{{count}} cantare",
     "songCount_other": "{{count}} cantari",
-    "filterAll": "Toate",
-    "filterPending": "Ramase",
-    "filterSung": "Cantate",
-    "showVerses": "Vezi si versete",
-    "showSongs": "Vezi si cantari",
     "addVerse": "Adauga {{reference}} in acest program",
     "addVerseDisabled": "Deschide mai intai un verset",
     "verseAdded": "{{reference}} a fost adaugat in program",
     "markRead": "Marcheaza drept citit",
     "markNotRead": "Marcheaza drept necitit",
-    "verseCount_one": "{{count}} verset",
-    "verseCount_other": "{{count}} versete",
-    "filterRead": "Citite",
     "markSung": "Marcheaza drept cantata",
     "markNotSung": "Marcheaza drept necantata",
     "removeFromSchedule": "Elimina din program",
@@ -70,7 +62,15 @@
     "noSchedules": "Niciun program creat",
     "noSchedulesDescription": "Creeaza un program din pagina Programe pentru a-i vedea cantarile aici.",
     "emptySchedule": "Acest program nu are cantari",
-    "noResults": "Nicio cantare gasita"
+    "noResults": "Nicio cantare gasita",
+    "openSearch": "Cauta in acest program",
+    "closeSearch": "Inchide cautarea",
+    "stopLiveItem": "Opreste afisarea programului",
+    "itemsTitle": "Elementele programului",
+    "previewTitle": "Previzualizare",
+    "presentItem": "Afiseaza pe ecran",
+    "openSong": "Deschide cantarea",
+    "openPassage": "Deschide pasajul"
   },
   "search": {
     "placeholder": "Cauta programe...",
@@ -240,7 +240,12 @@
     "preview": "{{count}} elemente detectate",
     "preview_one": "{{count}} element detectat",
     "preview_other": "{{count}} elemente detectate",
-    "errors": "{{count}} erori gasite",
+    "errors": {
+      "noBibleTranslation": "Nicio traducere biblica configurata",
+      "invalidBibleReference": "Referinta biblica invalida",
+      "invalidVtFormat": "Format invalid. Foloseste: Nume - Referinta",
+      "versesNotFound": "Versetele nu au fost gasite in baza de date"
+    },
     "errors_one": "{{count}} eroare gasita",
     "errors_other": "{{count}} erori gasite",
     "save": "Aplica Modificarile",
@@ -267,12 +272,6 @@
       "partialSuccess_other": "{{count}} elemente omise din cauza versetelor lipsa"
     },
     "lineError": "Linia {{line}}: {{message}}",
-    "validationErrors": "Corectati urmatoarele probleme:",
-    "errors": {
-      "noBibleTranslation": "Nicio traducere biblica configurata",
-      "invalidBibleReference": "Referinta biblica invalida",
-      "invalidVtFormat": "Format invalid. Foloseste: Nume - Referinta",
-      "versesNotFound": "Versetele nu au fost gasite in baza de date"
-    }
+    "validationErrors": "Corectati urmatoarele probleme:"
   }
 }

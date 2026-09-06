@@ -1,8 +1,8 @@
 {
   "title": "Cântări",
   "layout": {
-    "hidePanel": "Ascunde panoul lateral",
-    "showPanel": "Afișează panoul lateral"
+    "controlPanel": "Panou de control",
+    "stage": "Scenă"
   },
   "actions": {
     "create": "Cântare nouă",
@@ -356,5 +356,14 @@
     "percentSimilar": "{{percent}}% similar",
     "currentBadge": "Curentă",
     "noSuggestions": "Nu s-au găsit alte versiuni ale acestei cântări."
+  },
+  "actionsMenu": {
+    "trigger": "Mai multe",
+    "bookmarkDescription": "Ține cântarea în Marcaje pentru acces rapid",
+    "addToScheduleDescription": "Adaugă cântarea într-unul dintre programe",
+    "setKeyLineDescription": "Setează gama afișată pe cântare",
+    "saveToFileDescription": "Exportă cântarea într-un fișier pe calculator",
+    "toggleLayoutDescription": "Comută între editorul clasic și cel PowerPoint",
+    "editDescription": "Deschide editorul pentru versuri și slide-uri"
   }
 }
