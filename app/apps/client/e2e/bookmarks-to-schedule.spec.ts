@@ -171,7 +171,6 @@ test.describe('Marcaje to a program', () => {
         page.getByTestId('bookmarks-add-all-to-schedule'),
       ).toBeVisible()
       await expect(page.getByTestId('schedule-delete')).toBeHidden()
-      await expect(page.getByTestId('schedule-add-candidate-song')).toBeHidden()
     } finally {
       await request.delete('/api/song-bookmarks')
       await request.delete(`/api/songs/${song.id}`)

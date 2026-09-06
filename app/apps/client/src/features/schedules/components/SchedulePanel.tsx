@@ -20,8 +20,6 @@ import {
   CalendarPlus,
   ChevronDown,
   ExternalLink,
-  Loader2,
-  Plus,
   Search,
   Trash2,
 } from 'lucide-react'
@@ -119,6 +117,8 @@ interface SchedulePanelProps {
  * program editor's business, so those rows ride along at their fixed positions.
  */
 export function SchedulePanel({
+  // Songs vs verses only steered the header's green one-click add, which is
+  // gone; kept until it is decided whether the distinction comes back.
   variant = 'songs',
   activeSongId,
   activeReference = null,
@@ -126,6 +126,9 @@ export function SchedulePanel({
   onSongPresented,
   onSelectPassage,
   onOpenSchedule,
+  // Left in place while the header's green one-click add is gone: the prop is
+  // still passed by every host, and whether it comes back is not this
+  // component's call.
   candidateSong = null,
   candidatePassage = null,
   acceptsSongDrop = false,
@@ -382,7 +385,12 @@ export function SchedulePanel({
     [selectedScheduleId, addItemMutation, showToast, t],
   )
 
-  /** Appends the Bible page's current passage to the selected program. */
+  /**
+   * Appends the Bible page's current passage to the selected program. Nothing
+   * calls this since the header's green one-click add was removed; it is kept
+   * rather than deleted until that is deliberately decided.
+   */
+  // biome-ignore lint/correctness/noUnusedVariables: kept pending a decision on the removed quick-add
   const addPassageToSelected = useCallback(() => {
     if (!selectedScheduleId || !candidatePassage) {
       showToast(t('panel.selectScheduleFirst'), 'error')
@@ -581,43 +589,6 @@ export function SchedulePanel({
         </div>
         {(selectedScheduleId || onAddAllBookmarks) && (
           <div className="flex items-center gap-1">
-            {/* Adds the song the page has in focus — the open song, or the
-                highlighted row in the search list. */}
-            {selectedScheduleId && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (variant === 'verses') {
-                    addPassageToSelected()
-                  } else if (candidateSong) {
-                    addSongToSelected(candidateSong)
-                  }
-                }}
-                disabled={
-                  (variant === 'verses' ? !candidatePassage : !candidateSong) ||
-                  addItemMutation.isPending
-                }
-                data-testid="schedule-add-candidate-song"
-                title={
-                  variant === 'verses'
-                    ? candidatePassage
-                      ? t('panel.addVerse', {
-                          reference: candidatePassage.label,
-                        })
-                      : t('panel.addVerseDisabled')
-                    : candidateSong
-                      ? t('panel.addSong', { title: candidateSong.title })
-                      : t('panel.addSongDisabled')
-                }
-                className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-40 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 transition-colors"
-              >
-                {addItemMutation.isPending ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Plus className="w-3.5 h-3.5" />
-                )}
-              </button>
-            )}
             {selectedScheduleId && canEditProgram ? (
               <ScheduleItemEditors
                 ref={editorsRef}

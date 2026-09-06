@@ -108,7 +108,11 @@ export interface UpsertScheduleInput {
  * Single entry for Versete Tineri input
  */
 export interface VerseteTineriEntryInput {
-  personName: string
+  /**
+   * Optional: a passage added straight from the Bible has nobody attached to
+   * it. Stored as '' when absent.
+   */
+  personName?: string
   translationId: number
   bookCode: string
   bookName: string
@@ -174,6 +178,18 @@ export interface ScheduleSearchResult {
 /**
  * Input for replacing all items in a schedule
  */
+export interface LegacyBiblePassageInput {
+  /** Display reference, e.g. "Ioan 3:16 - RCCV". */
+  reference: string | null
+  translationAbbreviation: string | null
+  verses: Array<{
+    verseId: number
+    reference: string
+    text: string
+    sortOrder: number
+  }>
+}
+
 export interface ReplaceScheduleItemsInput {
   items: Array<{
     type: 'song' | 'slide'
@@ -193,6 +209,12 @@ export interface ReplaceScheduleItemsInput {
     }
     // Versete Tineri entries
     verseteTineriEntries?: VerseteTineriEntryInput[]
+    /**
+     * A legacy `bible_passage` item read back from an exported program file.
+     * The server resolves it against the Bible and stores it as one
+     * "Versete Biblice" slide.
+     */
+    legacyBiblePassage?: LegacyBiblePassageInput
     // Scene fields
     obsSceneName?: string
   }>

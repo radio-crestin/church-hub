@@ -19,7 +19,6 @@ export interface ImportResult {
 async function convertItem(
   item: ExportedScheduleItem,
   skippedSongs: string[],
-  skippedBiblePassages: string[],
 ): Promise<ReplaceScheduleItemsInput['items'][number] | null> {
   if (item.itemType === 'song' && item.song) {
     // Look up song by title
@@ -40,10 +39,23 @@ async function convertItem(
   }
 
   if (item.itemType === 'bible_passage' && item.biblePassage) {
-    // Bible passages require verse lookup which is complex
-    // For now, skip them and notify the user
-    skippedBiblePassages.push(item.biblePassage.reference)
-    return null
+    // Programs exported before the two Bible item types were merged still
+    // carry `bible_passage` items. The server resolves them against the local
+    // Bible and stores the merged "Versete Biblice" shape; anything it cannot
+    // resolve comes back in `skippedItems` instead of being guessed at.
+    return {
+      type: 'slide',
+      legacyBiblePassage: {
+        reference: item.biblePassage.reference,
+        translationAbbreviation: item.biblePassage.translationAbbreviation,
+        verses: item.biblePassage.verses.map((verse) => ({
+          verseId: verse.verseId,
+          reference: verse.reference,
+          text: verse.text,
+          sortOrder: verse.sortOrder,
+        })),
+      },
+    }
   }
 
   if (item.itemType === 'slide') {
@@ -105,11 +117,7 @@ export function useImportScheduleItems() {
         // Convert items
         const convertedItems: ReplaceScheduleItemsInput['items'] = []
         for (const item of sortedItems) {
-          const converted = await convertItem(
-            item,
-            skippedSongs,
-            skippedBiblePassages,
-          )
+          const converted = await convertItem(item, skippedSongs)
           if (converted) {
             convertedItems.push(converted)
           }
@@ -138,9 +146,15 @@ export function useImportScheduleItems() {
           }
         }
 
+        for (const skipped of result.skippedItems ?? []) {
+          if (skipped.type === 'bible_passage') {
+            skippedBiblePassages.push(skipped.reference)
+          }
+        }
+
         return {
           success: true,
-          itemCount: convertedItems.length,
+          itemCount: convertedItems.length - skippedBiblePassages.length,
           skippedSongs,
           skippedBiblePassages,
         }

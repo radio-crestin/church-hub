@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  BookOpen,
   Camera,
   Check,
   FileText,
@@ -27,6 +26,10 @@ interface AddScheduleItemModalProps {
   onOpenChange: (open: boolean) => void
   /** Resolves a picked song; the modal closes once it settles. */
   onAddSong: (songId: number) => void | Promise<void>
+  /**
+   * Kept for the callers that still wire it up, but no longer reachable from
+   * this menu: "Bible Passage" is not a creatable item type any more.
+   */
   onAddBiblePassage: () => void
   onAddSlide: (template: SlideTemplate) => void
   onAddScene?: () => void
@@ -58,7 +61,6 @@ export function AddScheduleItemModal({
   isOpen,
   onOpenChange,
   onAddSong,
-  onAddBiblePassage,
   onAddSlide,
   onAddScene,
   compactTrigger = false,
@@ -135,33 +137,19 @@ export function AddScheduleItemModal({
     }
   }, [previewSongId, isAdding, onAddSong, handleClose])
 
+  // Order is the menu: Song, Bible Verses, Announcement, OBS Scene. The old
+  // "Bible Passage" item type is no longer creatable — `versete_tineri` is the
+  // single Bible option now, so its key stays put while only the label moves to
+  // "Versete Biblice".
   const options: MenuOption[] = [
     {
       key: 'song',
       icon: Music,
       iconClass: 'text-indigo-600 dark:text-indigo-400',
       bgClass: 'bg-indigo-100 dark:bg-indigo-900/30',
-      titleKey: 'addMenu.searchSong',
-      descriptionKey: 'addMenu.searchSongDescription',
+      titleKey: 'addMenu.song',
+      descriptionKey: 'addMenu.songDescription',
       onSelect: () => setStep('song'),
-    },
-    {
-      key: 'biblePassage',
-      icon: BookOpen,
-      iconClass: 'text-teal-600 dark:text-teal-400',
-      bgClass: 'bg-teal-100 dark:bg-teal-900/30',
-      titleKey: 'addMenu.biblePassage',
-      descriptionKey: 'addMenu.biblePassageDescription',
-      onSelect: () => handHandoff(onAddBiblePassage),
-    },
-    {
-      key: 'announcement',
-      icon: Megaphone,
-      iconClass: 'text-orange-600 dark:text-orange-400',
-      bgClass: 'bg-orange-100 dark:bg-orange-900/30',
-      titleKey: 'addMenu.announcement',
-      descriptionKey: 'addMenu.announcementDescription',
-      onSelect: () => handHandoff(() => onAddSlide('announcement')),
     },
     {
       key: 'verseteTineri',
@@ -171,6 +159,15 @@ export function AddScheduleItemModal({
       titleKey: 'addMenu.verseteTineri',
       descriptionKey: 'addMenu.verseteTineriDescription',
       onSelect: () => handHandoff(() => onAddSlide('versete_tineri')),
+    },
+    {
+      key: 'announcement',
+      icon: Megaphone,
+      iconClass: 'text-orange-600 dark:text-orange-400',
+      bgClass: 'bg-orange-100 dark:bg-orange-900/30',
+      titleKey: 'addMenu.announcement',
+      descriptionKey: 'addMenu.announcementDescription',
+      onSelect: () => handHandoff(() => onAddSlide('announcement')),
     },
     ...(onAddScene
       ? [

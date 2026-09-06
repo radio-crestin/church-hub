@@ -36,7 +36,7 @@
       "bible": "Bible Verse",
       "bible_passage": "Bible Passage",
       "announcement": "Announcement",
-      "versete_tineri": "Versete Tineri",
+      "versete_tineri": "Bible Verses",
       "empty": "Empty / Clock",
       "screen_share": "Screen Share"
     },
@@ -349,6 +349,6 @@
   },
   "contentTypes": {
     "announcement": "Announcement",
-    "verseteTineri": "Versete Tineri"
+    "verseteTineri": "Bible Verses"
   }
 }

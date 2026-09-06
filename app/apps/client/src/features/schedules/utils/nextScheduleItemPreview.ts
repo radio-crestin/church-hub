@@ -1,6 +1,17 @@
 import type { NextItemPreview } from '~/features/presentation'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import i18n from '~/i18n/config'
 import type { ScheduleItem } from '../types'
+
+/**
+ * The item-type name shown on the stage strip. This is plain (non-React) code,
+ * so it reads the shared i18next instance directly instead of a `t` from a
+ * hook — the labels reuse the add-menu's names so the program calls an item the
+ * same thing wherever the operator meets it.
+ */
+function typeLabel(key: string): string {
+  return i18n.t(key, { ns: 'common' })
+}
 
 /**
  * Slide/announcement HTML as plain, line-broken text for the "what comes next"
@@ -43,7 +54,7 @@ export function getNextScheduleItemPreview(
     return {
       contentType: 'song',
       preview: toPlainPreview(firstSlide.content),
-      label: 'Cântare',
+      label: typeLabel('addMenu.song'),
       title: nextItem.song?.title ?? '',
     }
   }
@@ -63,7 +74,7 @@ export function getNextScheduleItemPreview(
     return {
       contentType: 'bible_passage',
       preview: reference,
-      label: 'Pasaj Biblic',
+      label: typeLabel('addMenu.biblePassage'),
     }
   }
 
@@ -76,14 +87,14 @@ export function getNextScheduleItemPreview(
         preview: entries
           .map((e) => `${e.personName} (${e.reference})`)
           .join(', '),
-        label: 'Versete Tineri',
+        label: typeLabel('addMenu.verseteTineri'),
       }
     }
     if (nextItem.slideType === 'announcement') {
       return {
         contentType: 'announcement',
         preview: toPlainPreview(nextItem.slideContent || ''),
-        label: 'Anunț',
+        label: typeLabel('addMenu.announcement'),
       }
     }
   }

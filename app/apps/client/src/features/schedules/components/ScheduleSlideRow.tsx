@@ -68,7 +68,13 @@ export function ScheduleSlideRow({
         label:
           item.verseteTineriEntries.length > 0
             ? item.verseteTineriEntries
-                .map((entry) => `${entry.personName} – ${entry.reference}`)
+                // The name is optional now, so a reading with nobody attached
+                // shows just its reference rather than a dangling dash.
+                .map((entry) =>
+                  entry.personName.trim()
+                    ? `${entry.personName} – ${entry.reference}`
+                    : entry.reference,
+                )
                 .join(', ')
             : t('presenter.verseteTineri'),
         testId: 'schedule-versete-tineri-item',

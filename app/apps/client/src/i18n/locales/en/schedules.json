@@ -29,7 +29,7 @@
     "edit": "Edit",
     "editSong": "Edit song",
     "announcement": "Announcement",
-    "verseteTineri": "Youth Verses",
+    "verseteTineri": "Bible Verses",
     "items": "{{count}} items",
     "items_one": "{{count}} item",
     "items_other": "{{count}} items"
@@ -144,7 +144,7 @@
     }
   },
   "verseteTineri": {
-    "title": "Youth Verses",
+    "title": "Bible Verses",
     "addEntry": "Add Entry",
     "noEntries": "No entries yet",
     "entriesCount_one": "{{count}} entry",

@@ -2,6 +2,8 @@
   "addMenu": {
     "button": "Adaugă",
     "title": "Adaugă Element",
+    "song": "Cântare",
+    "songDescription": "Adaugă o cântare din bibliotecă",
     "searchSong": "Caută Cântare",
     "searchSongDescription": "Găsește și adaugă o cântare din bibliotecă",
     "bibleVerse": "Verset Biblic",
@@ -10,8 +12,8 @@
     "biblePassageDescription": "Adaugă un pasaj biblic cu mai multe versete",
     "announcement": "Anunț",
     "announcementDescription": "Adaugă un slide de anunț",
-    "verseteTineri": "Versete Tineri",
-    "verseteTineriDescription": "Adaugă versete tineri cu nume",
+    "verseteTineri": "Versete Biblice",
+    "verseteTineriDescription": "Adaugă versete biblice cu nume",
     "scene": "Scenă OBS",
     "sceneDescription": "Comută la o scenă OBS",
     "importSchedule": {
