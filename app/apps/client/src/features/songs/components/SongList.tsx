@@ -382,6 +382,12 @@ export function SongList({
   const handleToggleBookmark = useCallback(
     (songId: number) => {
       const existing = bookmarks.filter((b) => b.songId === songId)
+      // A negative id is a row the optimistic add hasn't heard back from the
+      // server for yet — the only id it could be removed by. Toggling again
+      // before that round trip lands would fire a DELETE for an id the
+      // server has never seen, so treat it as a no-op; the button already
+      // reads correctly from the optimistic state.
+      if (existing.some((b) => b.id < 0)) return
       if (existing.length > 0) {
         for (const bookmark of existing) {
           removeBookmarkMutation.mutate(bookmark.id)

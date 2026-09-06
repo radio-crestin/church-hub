@@ -540,6 +540,11 @@ function SongPreviewPage() {
    * button that looks like an on/off switch.
    */
   const handleToggleBookmark = useCallback(() => {
+    // A negative id is a row the optimistic add hasn't heard back from the
+    // server for yet — pressing again before that round trip lands would
+    // fire a DELETE for an id the server has never seen, so no-op instead;
+    // the icon is already showing the right (optimistic) state.
+    if (songBookmarks.some((b) => b.id < 0)) return
     if (isBookmarked) {
       for (const bookmark of songBookmarks) {
         removeBookmarkMutation.mutate(bookmark.id)

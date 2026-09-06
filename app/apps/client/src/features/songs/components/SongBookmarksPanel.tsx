@@ -510,6 +510,12 @@ export function SongBookmarksPanel({
 
   const handleRemoveBookmark = useCallback(
     (bookmarkId: number) => {
+      // A negative id is a row an optimistic add hasn't heard back from the
+      // server for yet (e.g. just dropped in). Removing it here before that
+      // round trip lands would fire a DELETE for an id the server has never
+      // seen, so no-op instead — the row already reads as gone once the real
+      // add mutation's own toggle removes it.
+      if (bookmarkId < 0) return
       removeBookmarkMutation.mutate(bookmarkId)
     },
     [removeBookmarkMutation],
