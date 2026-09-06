@@ -751,7 +751,7 @@ export function SchedulePresenter({
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={handleStartEditTitle}
               >
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                   {schedule.title}
                 </h1>
                 <Pencil

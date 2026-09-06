@@ -386,7 +386,7 @@ export function SongEditor({
             </button>
             <h1
               data-testid="song-editor-title"
-              className="text-xl font-bold text-gray-900 dark:text-white truncate"
+              className="text-2xl font-bold text-gray-900 dark:text-white truncate"
             >
               {isLoading ? (
                 <span className="inline-block w-48 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
