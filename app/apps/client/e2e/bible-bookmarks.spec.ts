@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
+import { actionsMenuItem, selectAction } from './helpers/actions-menu'
+
 /**
  * Bible bookmarks: the list itself, and moving it in and out as text.
  *
@@ -40,9 +42,13 @@ test.describe('Bible bookmarks', () => {
       .first()
       .click()
 
-    await expect(page.getByTestId('bible-bookmark-toggle')).toBeEnabled({
-      timeout: 10000,
-    })
+    const bookmarkRow = await actionsMenuItem(
+      page,
+      'bible-actions-menu',
+      'bible-bookmark-toggle',
+    )
+    await expect(bookmarkRow).toBeEnabled({ timeout: 10000 })
+    await page.keyboard.press('Escape')
   }
 
   test.beforeEach(async ({ page }) => {
@@ -59,19 +65,26 @@ test.describe('Bible bookmarks', () => {
     await openBibleWithBookmarks(page)
     await selectVerse(page, 'Ioan', '3')
 
-    const toggle = page.getByTestId('bible-bookmark-toggle')
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    // The toggle sits in the page actions menu now, so each press means
+    // opening the menu again — the menu closes as soon as a row is chosen.
+    const toggle = () =>
+      actionsMenuItem(page, 'bible-actions-menu', 'bible-bookmark-toggle')
 
-    await toggle.click()
+    await expect(await toggle()).toHaveAttribute('aria-checked', 'false')
+    await page.keyboard.press('Escape')
 
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await selectAction(page, 'bible-actions-menu', 'bible-bookmark-toggle')
+
+    await expect(await toggle()).toHaveAttribute('aria-checked', 'true')
+    await page.keyboard.press('Escape')
     await expect(page.getByTestId('bible-bookmark-item')).toHaveCount(1)
 
-    // Turning it off again empties the list, so a second click cannot leave a
+    // Turning it off again empties the list, so a second press cannot leave a
     // stray duplicate behind.
-    await toggle.click()
+    await selectAction(page, 'bible-actions-menu', 'bible-bookmark-toggle')
 
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await expect(await toggle()).toHaveAttribute('aria-checked', 'false')
+    await page.keyboard.press('Escape')
     await expect(page.getByTestId('bible-bookmark-item')).toHaveCount(0)
   })
 
