@@ -805,79 +805,49 @@ test.describe('Programe panel - reordering a mixed list', () => {
   })
 })
 
-test.describe('Song list drag handles', () => {
-  test('every row carries a grip, in browse and in search results', async ({
+test.describe('Song list row actions', () => {
+  test('every row carries both buttons, in browse and in search results', async ({
     page,
     request,
   }) => {
     const uniq = Date.now()
-    const song = await createSong(request, `E2E Grip Song ${uniq}`)
+    const song = await createSong(request, `E2E RowActions Song ${uniq}`)
 
     try {
       await page.setViewportSize({ width: 1400, height: 900 })
       await page.goto('/songs?fromSong=true')
       await page.waitForLoadState('networkidle')
 
-      // Browsing: the grip is rendered on the cards.
+      // Browsing: both actions sit on the cards.
       const cards = page.getByTestId('song-card')
       await expect(cards.first()).toBeVisible({ timeout: 10000 })
       await expect(
-        cards.first().getByTestId('song-card-drag-handle'),
-      ).toBeAttached()
+        cards.first().getByTestId('song-card-bookmark'),
+      ).toBeVisible()
+      await expect(
+        cards.first().getByTestId('song-card-add-to-schedule'),
+      ).toBeVisible()
 
-      // Searching: the suggestions carry it too.
+      // Searching: the results carry them too.
       await page
         .getByTestId('song-search-input')
         .or(page.getByPlaceholder(/caut|search/i))
         .first()
-        .fill(`E2E Grip Song ${uniq}`)
+        .fill(`E2E RowActions Song ${uniq}`)
 
       const hit = page
         .getByTestId('song-card')
-        .filter({ hasText: `E2E Grip Song ${uniq}` })
+        .filter({ hasText: `E2E RowActions Song ${uniq}` })
       await expect(hit).toBeVisible({ timeout: 10000 })
-      await expect(hit.getByTestId('song-card-drag-handle')).toBeAttached()
-    } finally {
-      await request.delete(`/api/songs/${song.id}`).catch(() => {})
-    }
-  })
 
-  test('dragging a song from the list never raises the file-import overlay', async ({
-    page,
-    request,
-  }) => {
-    const uniq = Date.now()
-    const song = await createSong(request, `E2E NoOverlay ${uniq}`)
-
-    try {
-      await page.addInitScript(() => {
-        window.localStorage.setItem('songs-list:bookmarks-open', 'true')
-      })
-      await page.setViewportSize({ width: 1400, height: 900 })
-      await page.goto('/songs?fromSong=true')
-      await page.waitForLoadState('networkidle')
-
-      const card = page.getByTestId('song-card').first()
-      await expect(card).toBeVisible({ timeout: 10000 })
-
-      // Drive a real drag from the grip onto the Marcaje panel and hold it
-      // there: the overlay must never appear at any point.
-      const grip = card.getByTestId('song-card-drag-handle')
-      const zone = page.getByTestId('bookmarks-drop-zone')
-      const from = await grip.boundingBox()
-      const to = await zone.boundingBox()
-      if (!from || !to) throw new Error('drag targets not laid out')
-
-      const overlay = page.locator('text=/powerpoint|pptx/i')
-
-      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-      await page.mouse.down()
-      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-        steps: 12,
-      })
-      await expect(overlay).toHaveCount(0)
-      await page.mouse.up()
-      await expect(overlay).toHaveCount(0)
+      // Icon-only, but each still announces what it does.
+      await expect(hit.getByTestId('song-card-bookmark')).toHaveAttribute(
+        'aria-label',
+        /.+/,
+      )
+      await expect(
+        hit.getByTestId('song-card-add-to-schedule'),
+      ).toHaveAttribute('aria-label', /.+/)
     } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
@@ -1040,18 +1010,22 @@ test.describe('Add-item modal - song preview', () => {
   })
 })
 
-test.describe('Dragging a song onto the panels', () => {
-  test('a song dragged onto Marcaje is bookmarked and stays in the list', async ({
+test.describe('Marking a song and adding it to a program from the list', () => {
+  test('the bookmark button marks a song, and pressing it again clears it', async ({
     page,
     request,
   }) => {
     const uniq = Date.now()
-    const title = `E2E DropMark ${uniq}`
+    const title = `E2E MarkBtn ${uniq}`
     const song = await createSong(request, title)
 
-    try {
-      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
+    const countBookmarks = async () => {
+      const res = await request.get('/api/song-bookmarks')
+      const { data } = await res.json()
+      return data.filter((b: { songId: number }) => b.songId === song.id).length
+    }
 
+    try {
       await page.addInitScript(() => {
         window.localStorage.setItem('songs-list:bookmarks-open', 'true')
         window.localStorage.setItem('songList.sortBy', 'newest')
@@ -1063,62 +1037,46 @@ test.describe('Dragging a song onto the panels', () => {
       const card = page.getByTestId('song-card').filter({ hasText: title })
       await expect(card).toBeVisible({ timeout: 10000 })
 
-      const grip = card.getByTestId('song-card-drag-handle')
-      await expect(grip).toBeVisible()
+      const mark = card.getByTestId('song-card-bookmark')
+      await expect(mark).toBeVisible()
+      await expect(mark).toHaveAttribute('aria-pressed', 'false')
 
-      const zone = page.getByTestId('bookmarks-drop-zone')
-      const from = await grip.boundingBox()
-      const to = await zone.boundingBox()
-      if (!from || !to) throw new Error('drag targets not laid out')
-
-      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-      await page.mouse.down()
-      await page.mouse.move(
-        from.x + from.width / 2 + 15,
-        from.y + from.height / 2,
-      )
-
-      // The song visibly travels with the cursor...
-      const ghost = page.getByTestId('song-drag-ghost')
-      await expect(ghost).toBeVisible()
-      await expect(ghost).toContainText(title)
-
-      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-        steps: 12,
-      })
-      await page.mouse.up()
-
-      // ...and is gone once it lands.
-      await expect(ghost).toHaveCount(0)
+      await mark.click()
 
       // It reached the server...
-      await expect
-        .poll(
-          async () => {
-            const res = await request.get('/api/song-bookmarks')
-            const { data } = await res.json()
-            return data.some((b: { songId: number }) => b.songId === song.id)
-          },
-          { timeout: 10000 },
-        )
-        .toBe(true)
+      await expect.poll(countBookmarks, { timeout: 10000 }).toBe(1)
 
-      // ...and the song is still in the list it was dragged from.
+      // ...the row says so, it shows up in Marcaje, and the song stays in the
+      // list it was marked from.
+      await expect(mark).toHaveAttribute('aria-pressed', 'true')
+      await expect(
+        page.getByTestId('bookmark-item').filter({ hasText: title }),
+      ).toBeVisible({ timeout: 10000 })
       await expect(card).toBeVisible()
+
+      // A strict toggle: pressing it again clears the mark.
+      await mark.click()
+      await expect.poll(countBookmarks, { timeout: 10000 }).toBe(0)
+      await expect(mark).toHaveAttribute('aria-pressed', 'false')
     } finally {
-      await request.delete(`/api/song-bookmarks/${song.id}`).catch(() => {})
+      const listed = await request.get('/api/song-bookmarks')
+      for (const b of (await listed.json()).data) {
+        if (b.songId === song.id) {
+          await request.delete(`/api/song-bookmarks/${b.id}`).catch(() => {})
+        }
+      }
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
   })
 
-  test('a song dragged onto Programe is appended to the selected program', async ({
+  test('the program button appends the song to the picked program', async ({
     page,
     request,
   }) => {
     const uniq = Date.now()
-    const title = `E2E DropProg ${uniq}`
+    const title = `E2E ProgBtn ${uniq}`
     const song = await createSong(request, title)
-    const schedule = await createSchedule(request, `E2E DropProg Prog ${uniq}`)
+    const schedule = await createSchedule(request, `E2E ProgBtn Prog ${uniq}`)
 
     try {
       await page.addInitScript((scheduleId: number) => {
@@ -1136,23 +1094,7 @@ test.describe('Dragging a song onto the panels', () => {
       const card = page.getByTestId('song-card').filter({ hasText: title })
       await expect(card).toBeVisible({ timeout: 10000 })
 
-      const zone = page.getByTestId('schedule-songs-panel')
-      await expect(zone).toBeVisible()
-
-      const from = await card.getByTestId('song-card-drag-handle').boundingBox()
-      const to = await zone.boundingBox()
-      if (!from || !to) throw new Error('drag targets not laid out')
-
-      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-      await page.mouse.down()
-      await page.mouse.move(
-        from.x + from.width / 2 + 15,
-        from.y + from.height / 2,
-      )
-      await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-        steps: 12,
-      })
-      await page.mouse.up()
+      await card.getByTestId('song-card-add-to-schedule').click()
 
       await expect
         .poll(
@@ -1165,6 +1107,8 @@ test.describe('Dragging a song onto the panels', () => {
         )
         .toEqual([song.id])
 
+      // One press, no dialog in the way, and the song stays in the list.
+      await expect(page.getByTestId('add-song-to-schedule-modal')).toBeHidden()
       await expect(card).toBeVisible()
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
@@ -1172,35 +1116,73 @@ test.describe('Dragging a song onto the panels', () => {
     }
   })
 
-  test('every row carries a visible grip, not just the first', async ({
+  test('with no program picked the button opens the picker instead of dead-ending', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const title = `E2E PickProg ${uniq}`
+    const song = await createSong(request, title)
+
+    try {
+      // A phone: the Programe panel is desktop-only, so there is nothing on
+      // screen that could have picked a program. The button still has to
+      // finish the job.
+      await page.addInitScript(() => {
+        window.localStorage.removeItem('songPage.selectedScheduleId')
+        window.localStorage.setItem('songList.sortBy', 'newest')
+      })
+      await page.setViewportSize({ width: 500, height: 900 })
+      await page.goto(`/songs?fromSong=true&q=${encodeURIComponent(title)}`)
+      await page.waitForLoadState('networkidle')
+
+      const card = page.getByTestId('song-card').filter({ hasText: title })
+      await expect(card).toBeVisible({ timeout: 10000 })
+      await expect(page.getByTestId('schedule-songs-panel')).toHaveCount(0)
+
+      await card.getByTestId('song-card-add-to-schedule').click()
+
+      const modal = page.getByTestId('add-song-to-schedule-modal')
+      await expect(modal).toBeVisible({ timeout: 10000 })
+      await modal.getByTestId('add-song-to-schedule-cancel').click()
+      await expect(modal).toBeHidden()
+    } finally {
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('every row shows both buttons, not just the first', async ({
     page,
     request,
   }) => {
     const uniq = Date.now()
     const songs = await Promise.all([
-      createSong(request, `E2E Grips A ${uniq}`),
-      createSong(request, `E2E Grips B ${uniq}`),
-      createSong(request, `E2E Grips C ${uniq}`),
+      createSong(request, `E2E RowBtns A ${uniq}`),
+      createSong(request, `E2E RowBtns B ${uniq}`),
+      createSong(request, `E2E RowBtns C ${uniq}`),
     ])
 
     try {
       await page.setViewportSize({ width: 1400, height: 900 })
       await page.goto(
-        `/songs?fromSong=true&q=${encodeURIComponent(`E2E Grips`)}`,
+        `/songs?fromSong=true&q=${encodeURIComponent(`E2E RowBtns`)}`,
       )
       await page.waitForLoadState('networkidle')
 
       const cards = page.getByTestId('song-card')
       await expect(cards.first()).toBeVisible({ timeout: 10000 })
 
-      // Every rendered row, not just the first: the grip is the affordance
-      // that says these rows can be dragged at all, so it must be visible
-      // without hovering.
+      // Every rendered row, not just the first, and without hovering: a phone
+      // has no hover, and these are the two actions the operator reaches for
+      // while running a service.
       const count = await cards.count()
       expect(count).toBeGreaterThanOrEqual(3)
       for (let i = 0; i < count; i++) {
         await expect(
-          cards.nth(i).getByTestId('song-card-drag-handle'),
+          cards.nth(i).getByTestId('song-card-bookmark'),
+        ).toBeVisible()
+        await expect(
+          cards.nth(i).getByTestId('song-card-add-to-schedule'),
         ).toBeVisible()
       }
     } finally {
@@ -1273,7 +1255,7 @@ test.describe('The same song more than once', () => {
     }
   })
 
-  test('a song can be added to the same program twice by dragging it twice', async ({
+  test('a song can be added to the same program twice by pressing the button twice', async ({
     page,
     request,
   }) => {
@@ -1296,26 +1278,10 @@ test.describe('The same song more than once', () => {
 
       const card = page.getByTestId('song-card').filter({ hasText: title })
       await expect(card).toBeVisible({ timeout: 10000 })
-      const zone = page.getByTestId('schedule-songs-panel')
-      await expect(zone).toBeVisible()
+      const addToProgram = card.getByTestId('song-card-add-to-schedule')
 
       for (let attempt = 0; attempt < 2; attempt++) {
-        const from = await card
-          .getByTestId('song-card-drag-handle')
-          .boundingBox()
-        const to = await zone.boundingBox()
-        if (!from || !to) throw new Error('drag targets not laid out')
-
-        await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-        await page.mouse.down()
-        await page.mouse.move(
-          from.x + from.width / 2 + 15,
-          from.y + from.height / 2,
-        )
-        await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-          steps: 12,
-        })
-        await page.mouse.up()
+        await addToProgram.click()
 
         await expect
           .poll(

@@ -534,9 +534,10 @@ function SongPreviewPage() {
 
   /**
    * The toolbar icon reads as "this song is in Marcaje", so it stays a strict
-   * toggle: pressing it when bookmarked clears every copy. Extra copies are
-   * added deliberately — by dragging the song onto the panel — not by pressing
-   * a button that looks like an on/off switch.
+   * toggle: pressing it when bookmarked clears every copy. The song list's own
+   * per-row bookmark button follows the same rule; extra copies of one song are
+   * an explicit Marcaje-panel operation, never a side effect of pressing a
+   * button that looks like an on/off switch.
    */
   const handleToggleBookmark = useCallback(() => {
     if (isBookmarked) {
@@ -995,7 +996,7 @@ function SongPreviewPage() {
                 className="hidden sm:inline-block"
               />
             </button>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
               {song.title}
             </h1>
           </div>
