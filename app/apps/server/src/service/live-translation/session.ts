@@ -5,10 +5,7 @@ import {
   stopAudioCapture,
   stopAudioPlayback,
 } from './audio-io'
-import {
-  createEngineSession,
-  type EngineSession,
-} from './engines'
+import { createEngineSession, type EngineSession } from './engines'
 import type {
   LiveTranslationConfig,
   LiveTranslationState,
@@ -116,8 +113,7 @@ function appendOrCreateEntry(
   type: 'source' | 'translation',
   target?: TranslationTarget,
 ): void {
-  const last =
-    currentState.transcription[currentState.transcription.length - 1]
+  const last = currentState.transcription[currentState.transcription.length - 1]
 
   const sameBucket =
     last &&

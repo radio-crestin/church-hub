@@ -1,5 +1,6 @@
 import { and, eq, gte, max, sql } from 'drizzle-orm'
 
+import { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
 import { getScheduleItemById } from './getSchedules'
 import { updateScheduleSearchIndex } from './search'
 import type { AddToScheduleInput, ScheduleItem } from './types'
@@ -51,17 +52,23 @@ export function addItemToSchedule(
   input: AddToScheduleInput,
 ): ScheduleItem | null {
   try {
+    // A Bible passage is no longer an item type of its own: it is stored as one
+    // "Versete Biblice" slide holding the whole passage, with no person name.
+    // The legacy bible_passage branch below stays for the data still on disk.
+    const verseteTineriEntries =
+      input.verseteTineriEntries ??
+      (input.biblePassage
+        ? [biblePassageToVerseteTineriEntry(input.biblePassage)]
+        : undefined)
+
     const isSong = input.songId !== undefined
     const isBiblePassage = input.biblePassage !== undefined
-    const isVerseteTineri =
-      input.slideType === 'versete_tineri' &&
-      input.verseteTineriEntries !== undefined
+    const isVerseteTineri = verseteTineriEntries !== undefined
     const isScene =
       input.slideType === 'scene' && input.obsSceneName !== undefined
 
     let itemTypeStr = 'slide'
     if (isSong) itemTypeStr = 'song'
-    else if (isBiblePassage) itemTypeStr = 'bible_passage'
     else if (isVerseteTineri) itemTypeStr = 'versete_tineri'
     else if (isScene) itemTypeStr = 'scene'
 
@@ -127,6 +134,107 @@ export function addItemToSchedule(
         .returning({ id: scheduleItems.id })
         .get()
       itemId = result.id
+    } else if (isVerseteTineri) {
+      // Handle Versete Tineri slide with entries
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: 'slide',
+          slideType: 'versete_tineri',
+          slideContent: null, // Content is stored in entries
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
+
+      // Process versete tineri entries and collect data for batch insert
+      const entries = verseteTineriEntries
+      const entryValues: Array<{
+        scheduleItemId: number
+        personName: string
+        translationId: number
+        bookCode: string
+        bookName: string
+        reference: string
+        text: string
+        startChapter: number
+        startVerse: number
+        endChapter: number
+        endVerse: number
+        sortOrder: number
+      }> = []
+
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i]
+
+        // Fetch verses for this entry
+        const verses =
+          entry.startChapter === entry.endChapter
+            ? getVerseRange(
+                entry.translationId,
+                entry.bookCode,
+                entry.startChapter,
+                entry.startVerse,
+                entry.endVerse,
+              )
+            : getVersesAcrossChapters(
+                entry.translationId,
+                entry.bookCode,
+                entry.startChapter,
+                entry.startVerse,
+                entry.endChapter,
+                entry.endVerse,
+              )
+
+        if (verses.length === 0) {
+          log(
+            'warning',
+            `No verses found for entry ${i}: ${entry.bookName} ${entry.startChapter}:${entry.startVerse}`,
+          )
+          continue
+        }
+
+        // Combine verse text
+        const combinedText = verses.map((v) => v.text).join(' ')
+
+        // Format reference
+        const reference = formatPassageReference(
+          entry.bookName,
+          entry.startChapter,
+          entry.startVerse,
+          entry.endChapter,
+          entry.endVerse,
+        )
+
+        entryValues.push({
+          scheduleItemId: itemId,
+          personName: entry.personName ?? '',
+          translationId: entry.translationId,
+          bookCode: entry.bookCode,
+          bookName: entry.bookName,
+          reference,
+          text: combinedText,
+          startChapter: entry.startChapter,
+          startVerse: entry.startVerse,
+          endChapter: entry.endChapter,
+          endVerse: entry.endVerse,
+          sortOrder: entryValues.length, // Use current length as sort order
+        })
+      }
+
+      // Batch insert all entries in a single query
+      if (entryValues.length > 0) {
+        db.insert(scheduleVerseteTineriEntries).values(entryValues).run()
+      }
+
+      log(
+        'info',
+        `Versete Tineri added with ${entryValues.length} entries (batch)`,
+      )
     } else if (isBiblePassage) {
       // Handle Bible passage item
       const passage = input.biblePassage!
@@ -192,107 +300,6 @@ export function addItemToSchedule(
       }
 
       log('info', `Bible passage added with ${verses.length} verses (batch)`)
-    } else if (isVerseteTineri) {
-      // Handle Versete Tineri slide with entries
-      const result = db
-        .insert(scheduleItems)
-        .values({
-          scheduleId: input.scheduleId,
-          itemType: 'slide',
-          slideType: 'versete_tineri',
-          slideContent: null, // Content is stored in entries
-          sortOrder: targetOrder,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returning({ id: scheduleItems.id })
-        .get()
-      itemId = result.id
-
-      // Process versete tineri entries and collect data for batch insert
-      const entries = input.verseteTineriEntries!
-      const entryValues: Array<{
-        scheduleItemId: number
-        personName: string
-        translationId: number
-        bookCode: string
-        bookName: string
-        reference: string
-        text: string
-        startChapter: number
-        startVerse: number
-        endChapter: number
-        endVerse: number
-        sortOrder: number
-      }> = []
-
-      for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i]
-
-        // Fetch verses for this entry
-        const verses =
-          entry.startChapter === entry.endChapter
-            ? getVerseRange(
-                entry.translationId,
-                entry.bookCode,
-                entry.startChapter,
-                entry.startVerse,
-                entry.endVerse,
-              )
-            : getVersesAcrossChapters(
-                entry.translationId,
-                entry.bookCode,
-                entry.startChapter,
-                entry.startVerse,
-                entry.endChapter,
-                entry.endVerse,
-              )
-
-        if (verses.length === 0) {
-          log(
-            'warning',
-            `No verses found for entry ${i}: ${entry.bookName} ${entry.startChapter}:${entry.startVerse}`,
-          )
-          continue
-        }
-
-        // Combine verse text
-        const combinedText = verses.map((v) => v.text).join(' ')
-
-        // Format reference
-        const reference = formatPassageReference(
-          entry.bookName,
-          entry.startChapter,
-          entry.startVerse,
-          entry.endChapter,
-          entry.endVerse,
-        )
-
-        entryValues.push({
-          scheduleItemId: itemId,
-          personName: entry.personName,
-          translationId: entry.translationId,
-          bookCode: entry.bookCode,
-          bookName: entry.bookName,
-          reference,
-          text: combinedText,
-          startChapter: entry.startChapter,
-          startVerse: entry.startVerse,
-          endChapter: entry.endChapter,
-          endVerse: entry.endVerse,
-          sortOrder: entryValues.length, // Use current length as sort order
-        })
-      }
-
-      // Batch insert all entries in a single query
-      if (entryValues.length > 0) {
-        db.insert(scheduleVerseteTineriEntries).values(entryValues).run()
-      }
-
-      log(
-        'info',
-        `Versete Tineri added with ${entryValues.length} entries (batch)`,
-      )
     } else if (isScene) {
       // Handle Scene slide (OBS scene switch)
       const result = db

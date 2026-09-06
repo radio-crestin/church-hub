@@ -224,7 +224,7 @@ export function updateScheduleSlide(
         db.insert(scheduleVerseteTineriEntries)
           .values({
             scheduleItemId: input.id,
-            personName: entry.personName,
+            personName: entry.personName ?? '',
             translationId: entry.translationId,
             bookCode: entry.bookCode,
             bookName: entry.bookName,

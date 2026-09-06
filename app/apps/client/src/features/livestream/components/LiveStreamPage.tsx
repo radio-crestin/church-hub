@@ -1,4 +1,3 @@
-import { Radio } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { BroadcastInfo } from './BroadcastInfo'
@@ -17,8 +16,7 @@ export function LiveStreamPage() {
   return (
     <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
       <div className="flex items-center gap-3 mb-3 lg:mb-4 flex-shrink-0">
-        <Radio className="w-6 h-6 text-red-600 dark:text-red-400" />
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {t('title')}
         </h1>
       </div>

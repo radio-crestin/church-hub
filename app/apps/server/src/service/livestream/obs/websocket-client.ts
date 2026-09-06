@@ -182,7 +182,10 @@ export class OBSWebSocketClient {
         // Connection failures during reconnect are expected when OBS is not running
         const errMsg = String(error)
         if (errMsg.includes('Failed to connect')) {
-          log('debug', `OBS not reachable, will retry (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+          log(
+            'debug',
+            `OBS not reachable, will retry (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
+          )
         } else {
           log('error', `Reconnect attempt failed: ${error}`)
         }
@@ -302,7 +305,10 @@ export class OBSWebSocketClient {
           // Use debug level for connection failures (OBS not running is normal)
           const isConnectionRefused = errorInfo.includes('Failed to connect')
           if (isConnectionRefused) {
-            log('debug', `WebSocket connection failed (OBS not running): ${errorInfo}`)
+            log(
+              'debug',
+              `WebSocket connection failed (OBS not running): ${errorInfo}`,
+            )
           } else {
             log('error', `WebSocket error: ${errorInfo}`)
           }

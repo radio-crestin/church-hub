@@ -1,7 +1,7 @@
+import { Link } from '@tanstack/react-router'
 import { Check, Copy, Globe, Settings } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from '@tanstack/react-router'
 
 import { getApiUrl } from '~/config'
 import { LANGUAGES, type TranslationTarget } from '../hooks/useLiveTranslation'

@@ -1,5 +1,7 @@
 export { addItemToSchedule } from './addItemToSchedule'
+export { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
 export { deleteSchedule } from './deleteSchedule'
+export { formatPassageReference } from './formatPassageReference'
 export {
   getScheduleById,
   getScheduleItemById,
@@ -14,6 +16,12 @@ export type {
   ReplaceScheduleItemsResult,
 } from './replaceScheduleItems'
 export { replaceScheduleItems } from './replaceScheduleItems'
+export type {
+  LegacyBiblePassage,
+  LegacyBiblePassageResolution,
+  ResolvedLegacyBiblePassage,
+} from './resolveLegacyBiblePassage'
+export { resolveLegacyBiblePassage } from './resolveLegacyBiblePassage'
 export {
   rebuildScheduleSearchIndex,
   removeFromScheduleSearchIndex,

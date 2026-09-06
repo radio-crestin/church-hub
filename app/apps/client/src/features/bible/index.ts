@@ -1,5 +1,6 @@
 // Components
 export {
+  BibleBookmarksPanel,
   BibleControlPanel,
   BibleHistoryItem,
   BibleHistoryPanel,
@@ -8,6 +9,7 @@ export {
   BibleTranslationsManager,
   BooksList,
   ChaptersGrid,
+  ImportBibleBookmarksModal,
   MultiTranslationVerse,
   TranslationItemCard,
   VerseCard,
@@ -22,30 +24,57 @@ export type {
 } from './hooks'
 // Hooks
 export {
+  BIBLE_BOOKMARK_NOTES_QUERY_KEY,
+  BIBLE_BOOKMARKS_QUERY_KEY,
   BIBLE_HISTORY_QUERY_KEY,
   MAX_TRANSLATIONS,
   SELECTED_BIBLE_TRANSLATIONS_QUERY_KEY,
   TRANSLATIONS_QUERY_KEY,
+  useAddBibleBookmark,
+  useAddBibleBookmarkNote,
   useAddToHistory,
+  useBibleBookmarkNotes,
+  useBibleBookmarks,
   useBibleHistory,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
   useBooks,
   useChapters,
+  useClearBibleBookmarks,
   useClearHistory,
   useDefaultBibleTranslation,
   useDeleteTranslation,
+  useExportBibleBookmarksAsText,
+  useImportBibleBookmarksFromText,
   useImportTranslation,
   useMultiTranslationVerse,
+  useRemoveBibleBookmark,
+  useRemoveBibleBookmarkNote,
+  useReorderBibleBookmarkItems,
   useSearchBible,
   useSelectedBibleTranslations,
   useTranslations,
+  useUpdateBibleBookmarkNote,
   useVerse,
   useVerses,
 } from './hooks'
 // Service
+export type {
+  BibleBookmark,
+  BibleBookmarkImportError,
+  BibleBookmarkImportResult,
+  BibleBookmarkItemRef,
+  BibleBookmarkNote,
+  BibleBookmarkStyleRange,
+} from './service'
 export {
+  addBookmark,
+  addBookmarkNote,
+  clearBookmarks,
   deleteTranslation,
+  exportBookmarksAsText,
+  getBookmarkNotes,
+  getBookmarks,
   getBooks,
   getChapters,
   getTranslationById,
@@ -53,8 +82,13 @@ export {
   getVerseById,
   getVerseByReference,
   getVerses,
+  importBookmarksFromText,
   importTranslation,
+  removeBookmark,
+  removeBookmarkNote,
+  reorderBookmarkItems,
   searchBible,
+  updateBookmarkNote,
 } from './service'
 // Types
 export type {

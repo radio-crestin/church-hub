@@ -135,8 +135,7 @@ export function SongKeyPage() {
       {/* Header */}
       <div className="flex items-center justify-between px-3 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Music className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
             {t('title')}
           </h1>
         </div>

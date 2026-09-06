@@ -11,12 +11,10 @@ import {
   CalendarPlus,
   Download,
   Eye,
-  GripVertical,
   Loader2,
+  MoreHorizontal,
   Music,
   Music2,
-  PanelRightClose,
-  PanelRightOpen,
   Pencil,
   Projector,
   Tag,
@@ -40,6 +38,10 @@ import type { ScheduleItem } from '~/features/schedules'
 import {
   AddSongToScheduleModal,
   getSchedulePassageTarget,
+  ScheduleLiveItemPanel,
+  SchedulePanel,
+  useScheduleFlatNavigation,
+  useSelectedScheduleId,
 } from '~/features/schedules'
 import {
   type ExportFormat,
@@ -53,10 +55,11 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
-  SongAccordionColumn,
+  SongBookmarksPanel,
   SongControlPanel,
   SongSlidesPanel,
   SongStageBoard,
+  SongVersionsPanel,
 } from '~/features/songs/components'
 import {
   useAddBookmark,
@@ -74,10 +77,13 @@ import {
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useMarkEntitySeen } from '~/features/sync'
-import { useDividerPosition } from '~/hooks/useDividerPosition'
+import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
+import { useEditLayoutAction, Workspace } from '~/features/workspace'
+import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
 import { usePermissions } from '~/provider/permissions-provider'
-import { DIVIDER_KEYS, SONG_DETAIL_DEFAULTS } from '~/service/layout'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import type { ActionMenuItem } from '~/ui/menu'
+import { ActionMenu } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 
@@ -85,6 +91,27 @@ interface SongSearchParams {
   q?: string
   reset?: number
   aiSearchId?: number
+}
+
+/**
+ * Where each panel starts out on the classic song page: verses on the left, the
+ * control panel (with the live preview) in the middle, and the side panels
+ * stacked on the right. Operators drag them anywhere from there.
+ */
+const CLASSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
+  columns: [
+    { id: 'col-1', panelIds: ['slides'] },
+    { id: 'col-2', panelIds: ['control'] },
+    { id: 'col-3', panelIds: ['bookmarks', 'schedules', 'versions'] },
+  ],
+}
+
+/** PowerPoint layout: the stage board takes the room, side panels ride along. */
+const POWERPOINT_WORKSPACE_LAYOUT: WorkspaceLayout = {
+  columns: [
+    { id: 'col-1', panelIds: ['stage'] },
+    { id: 'col-2', panelIds: ['bookmarks', 'schedules', 'versions'] },
+  ],
 }
 
 export const Route = createFileRoute('/songs/$songId/')({
@@ -114,6 +141,7 @@ export const Route = createFileRoute('/songs/$songId/')({
 
 function SongPreviewPage() {
   const { t } = useTranslation('songs')
+  const { t: tSchedules } = useTranslation('schedules')
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
@@ -159,6 +187,14 @@ function SongPreviewPage() {
   const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
   const { data: presentationState } = usePresentationState()
+  // The Programe panel in the right column owns the program selection; when the
+  // projector is showing a step of THAT program, this page's next/prev has to
+  // walk the program rather than just this song.
+  const selectedScheduleId = useSelectedScheduleId()
+  const scheduleNav = useScheduleFlatNavigation({
+    scheduleId: canViewSchedules ? selectedScheduleId : null,
+  })
+  const isScheduleLive = scheduleNav.isScheduleLive
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
   const upsertSong = useUpsertSong()
@@ -167,13 +203,6 @@ function SongPreviewPage() {
   const { data: bookmarks = [] } = useSongBookmarks()
   const { showToast } = useToast()
 
-  // Default layout: Slides 30% / Stage (Control Panel) 40% / Accordion 30%.
-  // The Stage gets the biggest slice so the slide preview can breathe, and
-  // Slides + Accordion start equal — the operator can drag from there.
-  const [dividerPosition, setDividerPosition] = useDividerPosition(
-    DIVIDER_KEYS.songDetailLeft,
-    SONG_DETAIL_DEFAULTS.left,
-  )
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =
     useState(false)
@@ -188,98 +217,24 @@ function SongPreviewPage() {
   // staged (indigo) but not yet projected.
   const { previewMode, togglePreviewMode } = usePreviewMode()
   const [stagedSlideIndex, setStagedSlideIndex] = useState<number | null>(null)
-  // Within the right-of-slides area, the Stage takes ~57% so that (combined
-  // with the 30% Slides on the left) it lands at ~40% of the full page and
-  // the Accordion at ~30% — matching Slides exactly.
-  const [rightDividerPosition, setRightDividerPosition] = useDividerPosition(
-    DIVIDER_KEYS.songDetailRight,
-    SONG_DETAIL_DEFAULTS.right,
+  // Right-column panel state. Persisted per device so the operator's last
+  // choice (which sections are expanded) carries over to the next song they
+  // open. Where those panels *sit* is owned by the workspace, not by this page.
+  const [bookmarksOpen, setBookmarksOpen] = usePersistedBoolean(
+    'song-detail:bookmarks-open',
+    true,
   )
-  // PowerPoint layout: the Stage board takes ~74% and the Marcaje/Versiuni
-  // column the rest. Only applied on large screens; they stack on mobile.
-  const [ppDividerPosition, setPpDividerPosition] = useDividerPosition(
-    DIVIDER_KEYS.songDetailPowerpoint,
-    74,
-  )
-  // Right-column accordion state. Persisted across sessions via localStorage
-  // so the operator's last choice (Versions vs Marcaje expanded) carries over
-  // to the next song they open.
-  const [bookmarksOpen, setBookmarksOpenRaw] = useState<boolean>(() => {
-    try {
-      const raw = localStorage.getItem('song-detail:bookmarks-open')
-      return raw === null ? true : raw === 'true'
-    } catch {
-      return true
-    }
-  })
   // Programe starts collapsed: it is an opt-in third section, and expanding it
   // by default would shrink the two panels operators already rely on.
-  const [schedulesOpen, setSchedulesOpenRaw] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('song-detail:schedules-open') === 'true'
-    } catch {
-      return false
-    }
-  })
-  const [versionsOpen, setVersionsOpenRaw] = useState<boolean>(() => {
-    try {
-      const raw = localStorage.getItem('song-detail:versions-open')
-      return raw === null ? true : raw === 'true'
-    } catch {
-      return true
-    }
-  })
-  const setSchedulesOpen = useCallback((next: boolean) => {
-    setSchedulesOpenRaw(next)
-    try {
-      localStorage.setItem('song-detail:schedules-open', String(next))
-    } catch {
-      // Ignore quota errors — non-critical UI state.
-    }
-  }, [])
-  const setBookmarksOpen = useCallback((next: boolean) => {
-    setBookmarksOpenRaw(next)
-    try {
-      localStorage.setItem('song-detail:bookmarks-open', String(next))
-    } catch {
-      // Ignore quota errors — non-critical UI state.
-    }
-  }, [])
-  const setVersionsOpen = useCallback((next: boolean) => {
-    setVersionsOpenRaw(next)
-    try {
-      localStorage.setItem('song-detail:versions-open', String(next))
-    } catch {
-      // Ignore quota errors — non-critical UI state.
-    }
-  }, [])
-  // Whether the entire right column (Marcaje + Versiuni) is shown. When hidden
-  // the Control panel takes the full width of its area, leaving only a slim
-  // rail to bring the column back. Desktop-only; persisted across sessions.
-  const [accordionColumnVisible, setAccordionColumnVisibleRaw] =
-    useState<boolean>(() => {
-      try {
-        const raw = localStorage.getItem('song-detail:accordion-column-visible')
-        return raw === null ? true : raw === 'true'
-      } catch {
-        return true
-      }
-    })
-  const setAccordionColumnVisible = useCallback((next: boolean) => {
-    setAccordionColumnVisibleRaw(next)
-    try {
-      localStorage.setItem('song-detail:accordion-column-visible', String(next))
-    } catch {
-      // Ignore quota errors — non-critical UI state.
-    }
-  }, [])
+  const [schedulesOpen, setSchedulesOpen] = usePersistedBoolean(
+    'song-detail:schedules-open',
+    false,
+  )
+  const [versionsOpen, setVersionsOpen] = usePersistedBoolean(
+    'song-detail:versions-open',
+    true,
+  )
   const [pendingExit, setPendingExit] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const rightPanelRef = useRef<HTMLDivElement>(null)
-  const ppContainerRef = useRef<HTMLDivElement>(null)
-  const isDragging = useRef(false)
-  const isRightDragging = useRef(false)
-  const isPpDragging = useRef(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
@@ -389,6 +344,49 @@ function SongPreviewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewMode, numericId])
 
+  /**
+   * This song's place in the selected program, if it has one. A song can sit in
+   * a program twice, so the occurrence already on the projector wins — that is
+   * the one the operator is working through.
+   */
+  const scheduleItemForSong = useMemo(() => {
+    if (!selectedScheduleId) return null
+    const liveItem = scheduleNav.flatItems[scheduleNav.currentFlatIndex]?.item
+    if (liveItem?.itemType === 'song' && liveItem.songId === numericId) {
+      return liveItem
+    }
+    return (
+      scheduleNav.items.find(
+        (item) => item.itemType === 'song' && item.songId === numericId,
+      ) ?? null
+    )
+  }, [
+    selectedScheduleId,
+    scheduleNav.flatItems,
+    scheduleNav.currentFlatIndex,
+    scheduleNav.items,
+    numericId,
+  ])
+
+  /**
+   * Projects one slide of this song. When the song belongs to the selected
+   * program the slide goes up *as a step of that program*, so the cursor lands
+   * in the program and next carries on into whatever follows the song.
+   */
+  const presentSlide = useCallback(
+    async (index: number) => {
+      if (scheduleItemForSong) {
+        await scheduleNav.presentSongSlide(scheduleItemForSong, index)
+        return
+      }
+      await presentTemporarySong.mutateAsync({
+        songId: numericId,
+        slideIndex: index,
+      })
+    },
+    [scheduleItemForSong, scheduleNav, numericId, presentTemporarySong],
+  )
+
   const handleSlideClick = useCallback(
     async (_slide: SongSlide, index: number) => {
       // Preview mode: a single click only stages the slide locally — UNLESS
@@ -400,36 +398,27 @@ function SongPreviewPage() {
         return
       }
       setStagedSlideIndex(null)
-      await presentTemporarySong.mutateAsync({
-        songId: numericId,
-        slideIndex: index,
-      })
+      await presentSlide(index)
     },
-    [previewMode, isThisSongLive, numericId, presentTemporarySong],
+    [previewMode, isThisSongLive, presentSlide],
   )
 
   // Preview mode: double-click projects the slide immediately. Keep the stage
   // showing it until the projection lands, then clear (live now mirrors it).
   const handleSlideProject = useCallback(
     async (_slide: SongSlide, index: number) => {
-      await presentTemporarySong.mutateAsync({
-        songId: numericId,
-        slideIndex: index,
-      })
+      await presentSlide(index)
       setStagedSlideIndex(null)
     },
-    [numericId, presentTemporarySong],
+    [presentSlide],
   )
 
   // Project the currently staged slide (Afișează button).
   const handleProjectStaged = useCallback(async () => {
     if (stagedSlideIndex === null) return
-    await presentTemporarySong.mutateAsync({
-      songId: numericId,
-      slideIndex: stagedSlideIndex,
-    })
+    await presentSlide(stagedSlideIndex)
     setStagedSlideIndex(null)
-  }, [stagedSlideIndex, numericId, presentTemporarySong])
+  }, [stagedSlideIndex, presentSlide])
 
   const handleGoBack = useCallback(() => {
     // Clear last visited so returning from another page shows the list
@@ -448,6 +437,12 @@ function SongPreviewPage() {
   }, [navigate, searchQuery, numericId, aiSearchId])
 
   const handlePrevSlide = useCallback(async () => {
+    // Walking a program: step back through the program's own running order, so
+    // the first slide of a song reaches the last verse of what came before it.
+    if (isScheduleLive) {
+      await scheduleNav.goPrev()
+      return
+    }
     // Don't gate on the client's (possibly-lagging) slide index — a fast
     // next→prev on a presenter remote would otherwise no-op because the local
     // index hasn't caught up yet. The server clamps prev at the first slide
@@ -455,14 +450,20 @@ function SongPreviewPage() {
     if (presentedSlideIndex !== null) {
       await navigateTemporary.mutateAsync({ direction: 'prev' })
     }
-  }, [presentedSlideIndex, navigateTemporary])
+  }, [isScheduleLive, scheduleNav, presentedSlideIndex, navigateTemporary])
 
   const handleNextSlide = useCallback(async () => {
+    // Walking a program: past the song's last slide comes the next program
+    // item, not the end of the presentation.
+    if (isScheduleLive) {
+      await scheduleNav.goNext()
+      return
+    }
     // Allow navigation even on last slide - server will end presentation
     if (presentedSlideIndex !== null) {
       await navigateTemporary.mutateAsync({ direction: 'next' })
     }
-  }, [presentedSlideIndex, navigateTemporary])
+  }, [isScheduleLive, scheduleNav, presentedSlideIndex, navigateTemporary])
 
   const handleHidePresentation = useCallback(async () => {
     // With Preview mode on, keep the (previously) live slide staged so the
@@ -533,11 +534,17 @@ function SongPreviewPage() {
 
   /**
    * The toolbar icon reads as "this song is in Marcaje", so it stays a strict
-   * toggle: pressing it when bookmarked clears every copy. Extra copies are
-   * added deliberately — by dragging the song onto the panel — not by pressing
-   * a button that looks like an on/off switch.
+   * toggle: pressing it when bookmarked clears every copy. The song list's own
+   * per-row bookmark button follows the same rule; extra copies of one song are
+   * an explicit Marcaje-panel operation, never a side effect of pressing a
+   * button that looks like an on/off switch.
    */
   const handleToggleBookmark = useCallback(() => {
+    // A negative id is a row the optimistic add hasn't heard back from the
+    // server for yet — pressing again before that round trip lands would
+    // fire a DELETE for an id the server has never seen, so no-op instead;
+    // the icon is already showing the right (optimistic) state.
+    if (songBookmarks.some((b) => b.id < 0)) return
     if (isBookmarked) {
       for (const bookmark of songBookmarks) {
         removeBookmarkMutation.mutate(bookmark.id)
@@ -608,18 +615,9 @@ function SongPreviewPage() {
       selectedSlideIndex >= 0 &&
       selectedSlideIndex < expandedSlidesCount
     ) {
-      await presentTemporarySong.mutateAsync({
-        songId: numericId,
-        slideIndex: selectedSlideIndex,
-      })
+      await presentSlide(selectedSlideIndex)
     }
-  }, [
-    song,
-    selectedSlideIndex,
-    expandedSlidesCount,
-    presentTemporarySong,
-    numericId,
-  ])
+  }, [song, selectedSlideIndex, expandedSlidesCount, presentSlide])
 
   // In PowerPoint mode the stage board owns keyboard navigation (arrows must
   // move the canvas selection too), so the classic-page handlers stand down to
@@ -627,11 +625,14 @@ function SongPreviewPage() {
   const classicKeyboard = editorLayout !== 'powerpoint'
 
   // Keyboard shortcuts for when a slide is presented
+  // Also armed while a step of the selected program is live even though it is
+  // not this song — that is exactly when next has to cross into the next item.
   useSongKeyboardShortcuts({
     onNextSlide: handleNextSlide,
     onPreviousSlide: handlePrevSlide,
     onHidePresentation: handleHidePresentation,
-    enabled: classicKeyboard && presentedSlideIndex !== null,
+    enabled:
+      classicKeyboard && (presentedSlideIndex !== null || isScheduleLive),
   })
 
   // Keyboard navigation for slide selection when nothing is presented
@@ -641,7 +642,7 @@ function SongPreviewPage() {
     onSelectSlide: setSelectedSlideIndex,
     onPresentSlide: handlePresentSelectedSlide,
     onGoBack: handleGoBack,
-    enabled: classicKeyboard && presentedSlideIndex === null,
+    enabled: classicKeyboard && presentedSlideIndex === null && !isScheduleLive,
   })
 
   // The page's own "show the selected slide" shortcut (Settings → Shortcuts →
@@ -651,94 +652,6 @@ function SongPreviewPage() {
     'showSlide',
     handlePresentSelectedSlide,
     classicKeyboard,
-  )
-
-  // Divider drag handlers
-  const handleDividerMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      isDragging.current = true
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!isDragging.current || !containerRef.current) return
-        const containerRect = containerRef.current.getBoundingClientRect()
-        const newPosition =
-          ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
-        setDividerPosition(Math.min(80, Math.max(20, newPosition)))
-      }
-
-      const handleMouseUp = () => {
-        isDragging.current = false
-        document.body.style.cursor = ''
-        document.body.style.userSelect = ''
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-      }
-
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-    },
-    [setDividerPosition],
-  )
-
-  const handleRightDividerMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      isRightDragging.current = true
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!isRightDragging.current || !rightPanelRef.current) return
-        const rect = rightPanelRef.current.getBoundingClientRect()
-        const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
-        const clamped = Math.min(70, Math.max(20, newPos))
-        setRightDividerPosition(clamped)
-      }
-
-      const handleMouseUp = () => {
-        isRightDragging.current = false
-        document.body.style.cursor = ''
-        document.body.style.userSelect = ''
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-      }
-
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-    },
-    [setRightDividerPosition],
-  )
-
-  // PowerPoint layout: resize between the Stage board and the accordion column.
-  const handlePpDividerMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      isPpDragging.current = true
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!isPpDragging.current || !ppContainerRef.current) return
-        const rect = ppContainerRef.current.getBoundingClientRect()
-        const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
-        setPpDividerPosition(Math.min(85, Math.max(50, newPos)))
-      }
-
-      const handleMouseUp = () => {
-        isPpDragging.current = false
-        document.body.style.cursor = ''
-        document.body.style.userSelect = ''
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-      }
-
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-    },
-    [setPpDividerPosition],
   )
 
   const handleBookmarkSongClick = useCallback(
@@ -799,6 +712,15 @@ function SongPreviewPage() {
     [navigate],
   )
 
+  // The two editor layouts keep their arrangements apart, so the action follows
+  // whichever workspace is on screen. It has to be built up here with the other
+  // hooks: the loading branch below returns before the rest of the page runs.
+  const editLayoutAction = useEditLayoutAction(
+    editorLayout === 'powerpoint' && canEditSong
+      ? 'song-detail-powerpoint'
+      : 'song-detail',
+  )
+
   if (isLoading || !song) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -807,15 +729,255 @@ function SongPreviewPage() {
     )
   }
 
-  const canNavigatePrev =
-    presentedSlideIndex !== null && presentedSlideIndex > 0
+  const canNavigatePrev = isScheduleLive
+    ? scheduleNav.canNavigatePrev
+    : presentedSlideIndex !== null && presentedSlideIndex > 0
   // Allow navigating next even on last slide - server will end presentation
-  const canNavigateNext = presentedSlideIndex !== null
+  const canNavigateNext = isScheduleLive
+    ? scheduleNav.canNavigateNext
+    : presentedSlideIndex !== null
 
-  // The right column can be hidden entirely on desktop to give the Slides and
-  // Stage columns more room. On mobile it always renders (Versiuni is the only
-  // visible section there).
-  const showAccordionColumn = !isLargeScreen || accordionColumnVisible
+  /**
+   * While a program step is live the left rail follows the projector rather
+   * than this song — except when the live step IS a slide of this song, where
+   * the song's own list already shows it (and keeps its edit mode and font
+   * controls).
+   */
+  const liveProgramItem = isScheduleLive
+    ? scheduleNav.flatItems[scheduleNav.currentFlatIndex]?.item
+    : undefined
+  const showsLiveProgramItem =
+    !!liveProgramItem &&
+    !(
+      liveProgramItem.itemType === 'song' &&
+      liveProgramItem.songId === numericId
+    )
+
+  const isPowerpointLayout = editorLayout === 'powerpoint' && canEditSong
+
+  // Marcaje / Programe / Versiuni. Bookmarks and Programe are desktop-only —
+  // the page is too tight for them on a phone — while Versiuni rides along
+  // everywhere. An unavailable panel keeps its stored slot for when it returns.
+  const sidePanels: WorkspacePanel[] = [
+    {
+      id: 'bookmarks',
+      title: t('bookmarks.title'),
+      available: isLargeScreen,
+      collapsed: !bookmarksOpen,
+      render: () => (
+        <SongBookmarksPanel
+          onSelectSong={handleBookmarkSongClick}
+          onAddAllToSchedule={
+            bookmarks.length > 0 ? handleAddAllBookmarksToSchedule : undefined
+          }
+          activeSongId={song.id}
+          isCollapsed={!bookmarksOpen}
+          onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+        />
+      ),
+    },
+    {
+      id: 'schedules',
+      title: tSchedules('panel.title'),
+      available: canViewSchedules && isLargeScreen,
+      collapsed: !schedulesOpen,
+      render: () => (
+        <SchedulePanel
+          activeSongId={song.id}
+          onSelectSong={handleScheduleSongClick}
+          onSelectPassage={handleSchedulePassageClick}
+          onOpenSchedule={handleOpenSchedule}
+          candidateSong={{ id: song.id, title: song.title }}
+          onAddAllBookmarks={
+            bookmarks.length > 0 ? handleAddAllBookmarksToSchedule : undefined
+          }
+          isCollapsed={!schedulesOpen}
+          onToggleCollapse={() => setSchedulesOpen(!schedulesOpen)}
+        />
+      ),
+    },
+    {
+      id: 'versions',
+      title: t('versions.title'),
+      available: canViewSongVersions,
+      collapsed: !versionsOpen,
+      render: () => (
+        <SongVersionsPanel
+          songId={song.id}
+          songTitle={song.title}
+          currentSong={{
+            hymnNumber: song.hymnNumber,
+            author: song.author,
+            keyLine: song.keyLine,
+            categoryName: song.category?.name ?? null,
+          }}
+          canAdd={canAddSongVersion}
+          canEdit={canEditSongVersion}
+          canDelete={canDeleteSongVersion}
+          isCollapsed={!versionsOpen}
+          onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
+          attentionBadge={
+            undismissedSuggestionCount > 0
+              ? `+${undismissedSuggestionCount}`
+              : null
+          }
+        />
+      ),
+    },
+  ]
+
+  // The control panel comes first in this list only because that is the order
+  // panels stack in on a phone; on desktop the workspace layout decides.
+  const workspacePanels: WorkspacePanel[] = isPowerpointLayout
+    ? [
+        {
+          id: 'stage',
+          title: t('layout.stage'),
+          render: () => <SongStageBoard song={song} />,
+        },
+        ...sidePanels,
+      ]
+    : [
+        {
+          id: 'control',
+          title: t('layout.controlPanel'),
+          render: () => (
+            <SongControlPanel
+              songId={numericId}
+              onPrevSlide={handlePrevSlide}
+              onNextSlide={handleNextSlide}
+              canNavigatePrev={canNavigatePrev}
+              canNavigateNext={canNavigateNext}
+              previewMode={previewMode}
+              onTogglePreviewMode={togglePreviewMode}
+              previewContent={stagedPreviewContent}
+              canProject={
+                previewMode &&
+                stagedSlideIndex !== null &&
+                stagedSlideIndex !== presentedSlideIndex
+              }
+              onProject={handleProjectStaged}
+              isProjecting={presentTemporarySong.isPending}
+              onHide={handleHidePresentation}
+              isHiding={clearTemporary.isPending}
+            />
+          ),
+        },
+        {
+          id: 'slides',
+          title: t('preview.slides'),
+          render: () => (
+            <div
+              className={`overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 ${
+                isLargeScreen ? 'relative h-full' : ''
+              }`}
+            >
+              <div className={isLargeScreen ? 'absolute inset-0 p-4' : 'p-3'}>
+                {showsLiveProgramItem ? (
+                  <ScheduleLiveItemPanel nav={scheduleNav} />
+                ) : (
+                  <SongSlidesPanel
+                    song={song}
+                    presentedSlideIndex={presentedSlideIndex}
+                    selectedSlideIndex={selectedSlideIndex}
+                    isLoading={isLoading}
+                    isEditMode={isEditMode}
+                    onToggleEditMode={handleToggleEditMode}
+                    canEdit={canEditSong}
+                    onSave={handleSave}
+                    onSlideClick={handleSlideClick}
+                    isSaving={pendingExit || isMutating}
+                    onApplyText={handleEditAsTextApply}
+                    previewMode={previewMode}
+                    stagedSlideIndex={stagedSlideIndex}
+                    onSlideDoubleClick={handleSlideProject}
+                  />
+                )}
+              </div>
+            </div>
+          ),
+        },
+        ...sidePanels,
+      ]
+
+  /**
+   * Every page-level action lives behind one labelled menu. Icon-only buttons
+   * forced people to guess (or hover) what each one did; a menu row carries the
+   * icon, a real label and a one-line hint, so the same actions stay one click
+   * away without a wall of coloured squares.
+   */
+  const actionMenuItems: ActionMenuItem[] = [
+    {
+      id: 'bookmark',
+      label: isBookmarked ? t('bookmarks.remove') : t('bookmarks.add'),
+      description: t('actionsMenu.bookmarkDescription'),
+      icon: isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />,
+      iconClassName: isBookmarked
+        ? 'bg-amber-500 text-white'
+        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+      active: isBookmarked,
+      onSelect: handleToggleBookmark,
+      testId: 'song-bookmark-toggle',
+    },
+    {
+      id: 'add-to-schedule',
+      label: t('actions.addToSchedule'),
+      description: t('actionsMenu.addToScheduleDescription'),
+      icon: <CalendarPlus size={18} />,
+      iconClassName:
+        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+      onSelect: () => setShowAddToScheduleModal(true),
+      testId: 'song-add-to-schedule',
+    },
+    {
+      id: 'key-line',
+      label: t('actions.setKeyLine'),
+      description: t('actionsMenu.setKeyLineDescription'),
+      icon: <Music size={18} />,
+      onSelect: handleOpenKeyLineDialog,
+      testId: 'song-set-key-line',
+    },
+    {
+      id: 'save-to-file',
+      label: t('actions.saveToFile'),
+      description: t('actionsMenu.saveToFileDescription'),
+      icon: <Download size={18} />,
+      disabled: isSaving,
+      onSelect: handleOpenExportModal,
+      testId: 'song-save-to-file',
+    },
+    ...(canEditSong
+      ? [
+          {
+            id: 'toggle-layout',
+            label: t('stageEditor.toggleLayout'),
+            description: t('actionsMenu.toggleLayoutDescription'),
+            icon: <Projector size={18} />,
+            iconClassName:
+              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+            active: editorLayout === 'powerpoint',
+            onSelect: () =>
+              setEditorLayout(
+                editorLayout === 'powerpoint' ? 'normal' : 'powerpoint',
+              ),
+            testId: 'song-toggle-layout',
+          },
+          {
+            id: 'edit',
+            label: t('preview.edit'),
+            description: t('actionsMenu.editDescription'),
+            icon: <Pencil size={18} />,
+            iconClassName:
+              'bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white',
+            onSelect: handleEdit,
+            testId: 'song-edit',
+          },
+        ]
+      : []),
+    // Panels only form movable columns on a large screen; on a phone they are
+    // a plain stack, so there is nothing to rearrange.
+    ...(isLargeScreen ? [editLayoutAction] : []),
+  ]
 
   return (
     <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
@@ -839,7 +1001,7 @@ function SongPreviewPage() {
                 className="hidden sm:inline-block"
               />
             </button>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
               {song.title}
             </h1>
           </div>
@@ -881,355 +1043,31 @@ function SongPreviewPage() {
             )}
           </div>
         </div>
-        {/* Action buttons */}
+        {/* Every page action lives in one labelled menu — see actionMenuItems. */}
         <div className="flex items-center gap-2 sm:justify-end shrink-0">
-          <button
-            type="button"
-            data-testid="song-bookmark-toggle"
-            aria-pressed={isBookmarked}
-            onClick={handleToggleBookmark}
-            className={`p-2 rounded-lg transition-colors inline-flex items-center justify-center ${
-              isBookmarked
-                ? 'bg-amber-500 text-white hover:bg-amber-600'
-                : 'bg-gray-600 text-white hover:bg-gray-700'
-            }`}
-            title={isBookmarked ? t('bookmarks.remove') : t('bookmarks.add')}
-          >
-            {isBookmarked ? (
-              <BookmarkCheck size={20} />
-            ) : (
-              <Bookmark size={20} />
-            )}
-          </button>
-          {/* Programe sits right next to Marcaje: both answer "where does this
-              song belong?", so they read as a pair. */}
-          <button
-            type="button"
-            onClick={() => setShowAddToScheduleModal(true)}
-            data-testid="song-add-to-schedule"
-            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors inline-flex items-center justify-center"
-            title={t('actions.addToSchedule')}
-          >
-            <CalendarPlus size={20} />
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenKeyLineDialog}
-            className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors inline-flex items-center justify-center"
-            title={t('actions.setKeyLine')}
-          >
-            <Music size={20} />
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenExportModal}
-            disabled={isSaving}
-            className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
-            title={t('actions.saveToFile')}
-          >
-            <Download size={20} />
-          </button>
-          {canEditSong && (
-            <button
-              type="button"
-              onClick={() =>
-                setEditorLayout(
-                  editorLayout === 'powerpoint' ? 'normal' : 'powerpoint',
-                )
-              }
-              className={`p-2 rounded-lg transition-colors inline-flex items-center justify-center ${
-                editorLayout === 'powerpoint'
-                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
-                  : 'bg-gray-600 text-white hover:bg-gray-700'
-              }`}
-              title={t('stageEditor.toggleLayout')}
-              aria-pressed={editorLayout === 'powerpoint'}
-            >
-              <Projector size={20} />
-            </button>
-          )}
-          {canEditSong && (
-            <button
-              type="button"
-              onClick={handleEdit}
-              className="p-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors inline-flex items-center justify-center"
-              title={t('preview.edit')}
-            >
-              <Pencil size={20} />
-            </button>
-          )}
+          <ActionMenu
+            items={actionMenuItems}
+            label={t('actionsMenu.trigger')}
+            triggerIcon={<MoreHorizontal size={16} />}
+            testId="song-actions-menu"
+          />
         </div>
       </div>
 
-      {editorLayout === 'powerpoint' && song && canEditSong ? (
-        /* PowerPoint layout: edit slides directly on the song page, with the
-           same collapsible Marcaje/Versiuni column as the classic layout. */
-        <div
-          ref={ppContainerRef}
-          className="flex flex-col lg:flex-row flex-1 min-h-0 gap-3 lg:gap-1"
-        >
-          <div
-            className="order-1 flex min-w-0 min-h-0"
-            style={
-              isLargeScreen && showAccordionColumn
-                ? { width: `calc(${ppDividerPosition}% - 8px)` }
-                : { flex: 1, minWidth: 0 }
-            }
-          >
-            <SongStageBoard song={song} />
-          </div>
-
-          {/* Boundary bar — show/hide toggle for the column plus the drag grip
-              that resizes it. Desktop only. */}
-          <div className="hidden lg:flex lg:order-2 w-6 shrink-0 flex-col items-center">
-            <button
-              type="button"
-              onClick={() => setAccordionColumnVisible(!accordionColumnVisible)}
-              aria-expanded={accordionColumnVisible}
-              aria-label={
-                accordionColumnVisible
-                  ? t('layout.hidePanel')
-                  : t('layout.showPanel')
-              }
-              title={
-                accordionColumnVisible
-                  ? t('layout.hidePanel')
-                  : t('layout.showPanel')
-              }
-              data-testid="pp-accordion-toggle"
-              className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-indigo-100 hover:text-indigo-500 dark:hover:bg-indigo-900/30"
-            >
-              {accordionColumnVisible ? (
-                <PanelRightClose size={16} />
-              ) : (
-                <PanelRightOpen size={16} />
-              )}
-            </button>
-            {accordionColumnVisible ? (
-              <div
-                className="group mt-1 flex flex-1 w-full cursor-col-resize items-center justify-center rounded transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
-                onMouseDown={handlePpDividerMouseDown}
-              >
-                <GripVertical
-                  size={16}
-                  className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-                />
-              </div>
-            ) : null}
-          </div>
-
-          {showAccordionColumn ? (
-            <SongAccordionColumn
-              isLargeScreen={isLargeScreen}
-              song={song}
-              bookmarksOpen={bookmarksOpen}
-              schedulesOpen={schedulesOpen}
-              versionsOpen={versionsOpen}
-              onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
-              onToggleSchedules={() => setSchedulesOpen(!schedulesOpen)}
-              onToggleVersions={() => setVersionsOpen(!versionsOpen)}
-              onSelectBookmarkSong={handleBookmarkSongClick}
-              onSelectScheduleSong={handleScheduleSongClick}
-              onSelectSchedulePassage={handleSchedulePassageClick}
-              onOpenSchedule={handleOpenSchedule}
-              onAddAllBookmarksToSchedule={
-                bookmarks.length > 0
-                  ? handleAddAllBookmarksToSchedule
-                  : undefined
-              }
-              canViewSongVersions={canViewSongVersions}
-              canAddSongVersion={canAddSongVersion}
-              canEditSongVersion={canEditSongVersion}
-              canDeleteSongVersion={canDeleteSongVersion}
-              canViewSchedules={canViewSchedules}
-              attentionBadge={
-                undismissedSuggestionCount > 0
-                  ? `+${undismissedSuggestionCount}`
-                  : null
-              }
-              className="order-3"
-              style={
-                isLargeScreen
-                  ? { width: `calc(${100 - ppDividerPosition}% - 12px)` }
-                  : undefined
-              }
-            />
-          ) : null}
-        </div>
-      ) : (
-        <div
-          ref={containerRef}
-          className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-1"
-        >
-          {/* Left Panel - Slides List (shows last on mobile) */}
-          <div
-            className="order-2 lg:order-1 lg:min-h-0 lg:self-stretch lg:flex-initial overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 lg:relative"
-            style={
-              isLargeScreen
-                ? { width: `calc(${dividerPosition}% - 8px)` }
-                : undefined
-            }
-          >
-            <div className="p-3 lg:p-4 lg:absolute lg:inset-0">
-              <SongSlidesPanel
-                song={song}
-                presentedSlideIndex={presentedSlideIndex}
-                selectedSlideIndex={selectedSlideIndex}
-                isLoading={isLoading}
-                isEditMode={isEditMode}
-                onToggleEditMode={handleToggleEditMode}
-                canEdit={canEditSong}
-                onSave={handleSave}
-                onSlideClick={handleSlideClick}
-                isSaving={pendingExit || isMutating}
-                onApplyText={handleEditAsTextApply}
-                previewMode={previewMode}
-                stagedSlideIndex={stagedSlideIndex}
-                onSlideDoubleClick={handleSlideProject}
-              />
-            </div>
-          </div>
-
-          {/* Draggable Divider */}
-          <div
-            className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-            onMouseDown={handleDividerMouseDown}
-          >
-            <GripVertical
-              size={16}
-              className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-            />
-          </div>
-
-          {/* Right Panel — Control alone in the middle column, the right
-            column stacks Marcaje + Versiuni as collapsible sections so
-            both stay visible by default and neither is hidden under a
-            tab. The right divider only controls the Control vs accordion
-            split; the accordion sections balance themselves via flex. */}
-          <div
-            ref={rightPanelRef}
-            className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0 flex flex-col lg:flex-row"
-            style={
-              isLargeScreen
-                ? { width: `calc(${100 - dividerPosition}% - 8px)` }
-                : undefined
-            }
-          >
-            {/* Control Panel column (now owns the full height of its column).
-              When the right column is hidden it grows to fill the row, leaving
-              only the slim rail below for bringing the column back. */}
-            <div
-              className="h-full overflow-hidden"
-              style={
-                isLargeScreen && accordionColumnVisible
-                  ? { width: `calc(${rightDividerPosition}% - 12px)` }
-                  : { flex: 1, minWidth: 0 }
-              }
-            >
-              <SongControlPanel
-                songId={numericId}
-                onPrevSlide={handlePrevSlide}
-                onNextSlide={handleNextSlide}
-                canNavigatePrev={canNavigatePrev}
-                canNavigateNext={canNavigateNext}
-                previewMode={previewMode}
-                onTogglePreviewMode={togglePreviewMode}
-                previewContent={stagedPreviewContent}
-                canProject={
-                  previewMode &&
-                  stagedSlideIndex !== null &&
-                  stagedSlideIndex !== presentedSlideIndex
-                }
-                onProject={handleProjectStaged}
-                isProjecting={presentTemporarySong.isPending}
-                onHide={handleHidePresentation}
-                isHiding={clearTemporary.isPending}
-              />
-            </div>
-
-            {/* Boundary bar — hosts the show/hide toggle for the whole right
-              column plus the drag grip that resizes it. Desktop only; the bar
-              stays put when collapsed so the rail toggle is always reachable. */}
-            <div className="hidden lg:flex w-6 shrink-0 flex-col items-center">
-              <button
-                type="button"
-                onClick={() =>
-                  setAccordionColumnVisible(!accordionColumnVisible)
-                }
-                aria-expanded={accordionColumnVisible}
-                aria-label={
-                  accordionColumnVisible
-                    ? t('layout.hidePanel')
-                    : t('layout.showPanel')
-                }
-                title={
-                  accordionColumnVisible
-                    ? t('layout.hidePanel')
-                    : t('layout.showPanel')
-                }
-                className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-400 transition-colors hover:bg-indigo-100 hover:text-indigo-500 dark:hover:bg-indigo-900/30"
-              >
-                {accordionColumnVisible ? (
-                  <PanelRightClose size={16} />
-                ) : (
-                  <PanelRightOpen size={16} />
-                )}
-              </button>
-              {accordionColumnVisible ? (
-                <div
-                  className="group mt-1 flex flex-1 w-full cursor-col-resize items-center justify-center rounded transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
-                  onMouseDown={handleRightDividerMouseDown}
-                >
-                  <GripVertical
-                    size={16}
-                    className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-                  />
-                </div>
-              ) : null}
-            </div>
-
-            {/* Accordion column — Marcaje on top, Versiuni below. Bookmarks are
-              hidden on mobile (the page is too tight); Versions ride along on
-              mobile. Hidden entirely on desktop when the operator collapses it. */}
-            {showAccordionColumn ? (
-              <SongAccordionColumn
-                isLargeScreen={isLargeScreen}
-                song={song}
-                bookmarksOpen={bookmarksOpen}
-                schedulesOpen={schedulesOpen}
-                versionsOpen={versionsOpen}
-                onToggleBookmarks={() => setBookmarksOpen(!bookmarksOpen)}
-                onToggleSchedules={() => setSchedulesOpen(!schedulesOpen)}
-                onToggleVersions={() => setVersionsOpen(!versionsOpen)}
-                onSelectBookmarkSong={handleBookmarkSongClick}
-                onSelectScheduleSong={handleScheduleSongClick}
-                onSelectSchedulePassage={handleSchedulePassageClick}
-                onOpenSchedule={handleOpenSchedule}
-                onAddAllBookmarksToSchedule={
-                  bookmarks.length > 0
-                    ? handleAddAllBookmarksToSchedule
-                    : undefined
-                }
-                canViewSongVersions={canViewSongVersions}
-                canAddSongVersion={canAddSongVersion}
-                canEditSongVersion={canEditSongVersion}
-                canDeleteSongVersion={canDeleteSongVersion}
-                canViewSchedules={canViewSchedules}
-                attentionBadge={
-                  undismissedSuggestionCount > 0
-                    ? `+${undismissedSuggestionCount}`
-                    : null
-                }
-                style={
-                  isLargeScreen
-                    ? { width: `calc(${100 - rightDividerPosition}% - 12px)` }
-                    : undefined
-                }
-              />
-            ) : null}
-          </div>
-        </div>
-      )}
+      <Workspace
+        id={isPowerpointLayout ? 'song-detail-powerpoint' : 'song-detail'}
+        panels={workspacePanels}
+        defaultLayout={
+          isPowerpointLayout
+            ? POWERPOINT_WORKSPACE_LAYOUT
+            : CLASSIC_WORKSPACE_LAYOUT
+        }
+        defaultColumnSizes={
+          isPowerpointLayout ? ['74%', '26%'] : ['30%', '40%', '30%']
+        }
+        stacked={!isLargeScreen}
+        className="flex-1 lg:min-h-0"
+      />
 
       <AddSongToScheduleModal
         isOpen={showAddToScheduleModal}

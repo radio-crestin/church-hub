@@ -1,30 +1,44 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { BookOpen, Check, GripVertical, X as XIcon } from 'lucide-react'
+import { ExternalLink, GripVertical, Pencil, X as XIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
+import { ScheduleSungToggle } from './ScheduleSungToggle'
 import type { ScheduleItem } from '../types'
 
 interface ScheduleVerseRowProps {
   item: ScheduleItem
   /** Highlights the passage currently open on the Bible page. */
   isActive: boolean
+  /** The program is showing a verse of this passage right now. */
+  isLive?: boolean
   isSortable: boolean
+  /** Scroll anchor, attached to the live row so the panel can follow along. */
+  rowRef?: React.RefObject<HTMLDivElement | null>
+  /** Projects this passage from its first verse. */
+  onPresent?: () => void
   onSelect: () => void
+  /** Opens the program page's editor for this item. */
+  onEdit?: () => void
   onRemove: () => void
   onToggleSung: () => void
 }
 
 /**
- * One bible passage of a schedule. The verse counterpart of `ScheduleSongRow`,
- * kept structurally identical — done-marker, title line, metadata, X — so the
- * Programe panel reads the same whether it is listing songs or verses.
+ * One Bible passage of a program. The verse counterpart of `ScheduleSongRow`,
+ * kept structurally identical — done-marker, reference, project-on-click, open,
+ * remove — so the Programe panel reads the same whatever it is listing.
  */
 export function ScheduleVerseRow({
   item,
   isActive,
+  isLive = false,
   isSortable,
+  rowRef,
+  onPresent,
   onSelect,
+  onEdit,
   onRemove,
   onToggleSung,
 }: ScheduleVerseRowProps) {
@@ -47,28 +61,38 @@ export function ScheduleVerseRow({
     position: isDragging ? 'relative' : undefined,
   }
 
+  const getRowClass = () => {
+    if (isDragging) {
+      return 'opacity-80 shadow-lg border-teal-400 dark:border-teal-500 bg-teal-50 dark:bg-teal-900/20'
+    }
+    if (isLive) {
+      return 'border-orange-400 bg-orange-50 ring-2 ring-inset ring-orange-500 dark:border-orange-500 dark:bg-orange-900/30'
+    }
+    if (isActive) {
+      return 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+    }
+    if (item.isSung) {
+      return 'border-green-200 dark:border-green-800/60 bg-green-50/50 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700'
+    }
+    return 'border-gray-200 dark:border-gray-700 hover:border-teal-300 dark:hover:border-teal-600 bg-white dark:bg-gray-800 hover:bg-teal-50/50 dark:hover:bg-teal-900/10'
+  }
+
   // The stored reference already carries the translation suffix
   // ("Ioan 3:16 - VDCC"); strip it so the badge can show it separately.
   const reference =
     item.biblePassageReference?.split(' - ')[0] ??
     item.biblePassageVerses[0]?.reference ??
     ''
-  const preview = item.biblePassageVerses[0]?.text ?? ''
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node)
+        if (rowRef) rowRef.current = node
+      }}
       style={style}
       data-testid="schedule-verse-item"
-      className={`flex items-center gap-1 rounded-lg border transition-colors ${
-        isDragging
-          ? 'opacity-80 shadow-lg border-teal-400 dark:border-teal-500 bg-teal-50 dark:bg-teal-900/20'
-          : isActive
-            ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-            : item.isSung
-              ? 'border-green-200 dark:border-green-800/60 bg-green-50/50 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700'
-              : 'border-gray-200 dark:border-gray-700 hover:border-teal-300 dark:hover:border-teal-600 bg-white dark:bg-gray-800 hover:bg-teal-50/50 dark:hover:bg-teal-900/10'
-      }`}
+      className={`flex items-center gap-1 rounded-lg border transition-colors ${getRowClass()}`}
     >
       {isSortable ? (
         <div
@@ -86,32 +110,22 @@ export function ScheduleVerseRow({
         <span className="w-1.5" />
       )}
 
-      <button
-        type="button"
-        onClick={onToggleSung}
-        aria-pressed={item.isSung}
-        title={item.isSung ? t('panel.markNotRead') : t('panel.markRead')}
-        data-testid="schedule-verse-read-toggle"
-        className={`flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
-          item.isSung
-            ? 'border-green-500 bg-green-500 text-white'
-            : 'border-gray-300 dark:border-gray-600 text-transparent hover:border-green-400 hover:text-green-400'
-        }`}
-      >
-        <Check size={12} strokeWidth={3} />
-      </button>
+      <ScheduleSungToggle
+        isSung={item.isSung}
+        onToggle={onToggleSung}
+        variant="read"
+        testId="schedule-verse-read-toggle"
+      />
 
       <button
         type="button"
-        onClick={onSelect}
-        data-testid="schedule-verse-open"
+        onClick={onPresent}
+        title={t('panel.presentItem')}
+        data-testid="schedule-verse-present"
         className="flex-1 min-w-0 text-left py-1.5 pr-1 pl-1"
       >
         <div className="flex items-center gap-1.5 min-w-0">
-          <BookOpen
-            size={12}
-            className="shrink-0 text-teal-600 dark:text-teal-400"
-          />
+          <ScheduleItemTypeIcon item={item} size="sm" />
           <span className="text-sm font-medium truncate text-gray-900 dark:text-white">
             {reference}
           </span>
@@ -121,17 +135,35 @@ export function ScheduleVerseRow({
             </span>
           )}
         </div>
-        {preview && (
-          <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
-            {preview}
-          </div>
-        )}
-        {item.biblePassageVerses.length > 1 && (
-          <div className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
-            {t('panel.verseCount', { count: item.biblePassageVerses.length })}
-          </div>
-        )}
       </button>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-teal-500 dark:hover:text-teal-400 rounded hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+        title={t('panel.openPassage')}
+        data-testid="schedule-verse-open"
+      >
+        <ExternalLink size={14} />
+      </button>
+
+      {onEdit ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit()
+          }}
+          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          title={t('contextMenu.edit')}
+          data-testid="schedule-verse-edit"
+        >
+          <Pencil size={14} />
+        </button>
+      ) : null}
 
       <button
         type="button"

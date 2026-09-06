@@ -1,8 +1,8 @@
 {
   "title": "Songs",
   "layout": {
-    "hidePanel": "Hide side panel",
-    "showPanel": "Show side panel"
+    "controlPanel": "Control panel",
+    "stage": "Stage"
   },
   "actions": {
     "create": "New Song",
@@ -356,5 +356,14 @@
     "percentSimilar": "{{percent}}% similar",
     "currentBadge": "Current",
     "noSuggestions": "No other versions of this song were found."
+  },
+  "actionsMenu": {
+    "trigger": "More",
+    "bookmarkDescription": "Keep this song in Marcaje for quick access",
+    "addToScheduleDescription": "Put this song into one of your programs",
+    "setKeyLineDescription": "Set the key shown on the song",
+    "saveToFileDescription": "Export this song as a file on your computer",
+    "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
+    "editDescription": "Open the editor to change lyrics and slides"
   }
 }

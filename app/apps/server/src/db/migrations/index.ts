@@ -21,6 +21,7 @@ import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
+import { mergeBiblePassagesIntoVerseteTineri } from './merge-bible-passages-into-versete-tineri'
 import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
@@ -340,6 +341,16 @@ export function runMigrations(
     'add_schedule_item_sung',
     'Running add schedule_item sung migration',
     () => addScheduleItemSung(rawDb),
+  )
+
+  // Merge the legacy `bible_passage` schedule items into the surviving
+  // "Versete Biblice" shape (one versete_tineri slide holding the whole
+  // passage). Must run after the Bible translations are seeded, because the
+  // conversion reads the verses back out of the Bible tables.
+  runStep(
+    'merge_bible_passages_into_versete_tineri',
+    'Running merge bible passages migration',
+    () => mergeBiblePassagesIntoVerseteTineri(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and

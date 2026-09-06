@@ -171,6 +171,21 @@ import {
   warmupSearchIndex as warmupBibleSearchIndex,
 } from './service/bible'
 import {
+  addBookmark as addBibleBookmark,
+  addBookmarkNote as addBibleBookmarkNote,
+  type BibleBookmarkItemRef,
+  type BibleBookmarkStyleRange,
+  clearBookmarks as clearBibleBookmarks,
+  exportBookmarksAsText as exportBibleBookmarksAsText,
+  getBookmarkNotes as getBibleBookmarkNotes,
+  getBookmarks as getBibleBookmarks,
+  importBookmarksFromText as importBibleBookmarksFromText,
+  removeBookmark as removeBibleBookmark,
+  removeBookmarkNote as removeBibleBookmarkNote,
+  reorderBookmarkItems as reorderBibleBookmarkItems,
+  updateBookmarkNote as updateBibleBookmarkNote,
+} from './service/bible-bookmarks'
+import {
   type AddToHistoryInput,
   addToHistory,
   clearHistory,
@@ -253,6 +268,7 @@ import {
   refreshPresentedSongSlides,
   removeSlideHighlight,
   type ScreenGlobalSettings,
+  setSlideHighlights,
   showSlide,
   stopPresentation,
   type TextStyleRange,
@@ -4573,6 +4589,47 @@ async function startRealServer(): Promise<void> {
         }
       }
 
+      // PUT /api/presentation/highlights - Replace every highlight at once
+      if (
+        req.method === 'PUT' &&
+        url.pathname === '/api/presentation/highlights'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { ranges: TextStyleRange[] }
+
+          if (!Array.isArray(body.ranges)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Ranges are required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const highlights = setSlideHighlights(body.ranges)
+          broadcastSlideHighlights(highlights)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: highlights }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // DELETE /api/presentation/highlights/:id - Remove a specific highlight
       if (
         req.method === 'DELETE' &&
@@ -7480,6 +7537,350 @@ async function startRealServer(): Promise<void> {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // ============================================================
+      // Bible Bookmarks API Endpoints
+      // ============================================================
+
+      // GET /api/bible-bookmarks - Get all bookmarked verses
+      if (req.method === 'GET' && url.pathname === '/api/bible-bookmarks') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const items = getBibleBookmarks()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: items }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible-bookmarks/export - Render bookmarks as plain text
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/bible-bookmarks/export'
+      ) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const text = exportBibleBookmarksAsText()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: text }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/bible-bookmarks/import - Append bookmarks parsed from text
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/bible-bookmarks/import'
+      ) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            text: string
+            translationId?: number
+          }
+
+          if (typeof body.text !== 'string') {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Text is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = importBibleBookmarksFromText(
+            body.text,
+            body.translationId,
+          )
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/bible-bookmarks/reorder-items - Reorder verses and notes
+      if (
+        req.method === 'PUT' &&
+        url.pathname === '/api/bible-bookmarks/reorder-items'
+      ) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { items: BibleBookmarkItemRef[] }
+
+          if (!Array.isArray(body.items)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Items are required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = reorderBibleBookmarkItems(body.items)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ success: result.success }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/bible-bookmarks - Bookmark a verse
+      if (req.method === 'POST' && url.pathname === '/api/bible-bookmarks') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            verseId: number
+            styleRanges?: BibleBookmarkStyleRange[]
+          }
+
+          if (typeof body.verseId !== 'number') {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Verse ID is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = addBibleBookmark(body.verseId, body.styleRanges)
+
+          if ('error' in result) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result.data }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/bible-bookmarks/:id - Remove one bookmark row
+      if (req.method === 'DELETE') {
+        const bookmarkMatch = url.pathname.match(
+          /^\/api\/bible-bookmarks\/(\d+)$/,
+        )
+        if (bookmarkMatch) {
+          const permError = checkPermission('bible.view')
+          if (permError) return permError
+
+          const result = removeBibleBookmark(Number(bookmarkMatch[1]))
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ success: result.success }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // DELETE /api/bible-bookmarks - Clear the whole list
+      if (req.method === 'DELETE' && url.pathname === '/api/bible-bookmarks') {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const result = clearBibleBookmarks()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ success: result.success }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/bible-bookmark-notes - Get all notes
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/bible-bookmark-notes'
+      ) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        const items = getBibleBookmarkNotes()
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: items }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/bible-bookmark-notes - Add a note
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/bible-bookmark-notes'
+      ) {
+        const permError = checkPermission('bible.view')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { content: string }
+
+          if (typeof body.content !== 'string' || !body.content.trim()) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Content is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = addBibleBookmarkNote(body.content.trim())
+
+          if ('error' in result) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: result.error }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result.data }), {
+              status: 201,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // PUT /api/bible-bookmark-notes/:id - Rewrite a note
+      if (req.method === 'PUT') {
+        const noteMatch = url.pathname.match(
+          /^\/api\/bible-bookmark-notes\/(\d+)$/,
+        )
+        if (noteMatch) {
+          const permError = checkPermission('bible.view')
+          if (permError) return permError
+
+          try {
+            const body = (await req.json()) as { content: string }
+
+            if (typeof body.content !== 'string' || !body.content.trim()) {
+              return handleCors(
+                req,
+                new Response(JSON.stringify({ error: 'Content is required' }), {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                }),
+              )
+            }
+
+            const result = updateBibleBookmarkNote(
+              Number(noteMatch[1]),
+              body.content.trim(),
+            )
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ success: result.success }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          } catch {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+        }
+      }
+
+      // DELETE /api/bible-bookmark-notes/:id - Delete a note
+      if (req.method === 'DELETE') {
+        const noteMatch = url.pathname.match(
+          /^\/api\/bible-bookmark-notes\/(\d+)$/,
+        )
+        if (noteMatch) {
+          const permError = checkPermission('bible.view')
+          if (permError) return permError
+
+          const result = removeBibleBookmarkNote(Number(noteMatch[1]))
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ success: result.success }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
       }
 
       // ============================================================

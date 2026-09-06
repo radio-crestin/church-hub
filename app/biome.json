@@ -16,7 +16,11 @@
       "!src-tauri/src",
       "!**/src/routeTree.gen.ts",
       "!**/db/fixtures/*.json",
-      "!**/playwright-report/**"
+      "!**/playwright-report/**",
+      "!**/.omc",
+      "!**/graphify-out",
+      "!**/test-results",
+      "!**/playwright-report"
     ]
   },
   "formatter": {
@@ -94,9 +98,15 @@
               "./node_modules/**",
               ":PACKAGE:",
               ":BLANK_LINE:",
-              ["@/**"],
-              ["~/**"],
-              ["./**"]
+              [
+                "@/**"
+              ],
+              [
+                "~/**"
+              ],
+              [
+                "./**"
+              ]
             ]
           }
         }

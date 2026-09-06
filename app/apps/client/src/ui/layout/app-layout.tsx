@@ -82,7 +82,10 @@ export function AppLayout({ children }: AppLayoutProps) {
               </button>
             </div>
           </header>
-          <div className="p-3 pb-16 sm:p-4 sm:pb-16 md:p-6 md:pb-6 flex-1 lg:min-h-0">
+          {/* The top padding is deliberately tighter than the sides: in the
+              desktop window the OS title bar already sits above this, so a
+              full p-6 up top reads as dead space before the page title. */}
+          <div className="p-3 pt-2 pb-16 sm:p-4 sm:pt-2 sm:pb-16 md:p-6 md:pt-3 md:pb-6 flex-1 lg:min-h-0">
             {children}
           </div>
         </div>

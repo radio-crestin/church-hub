@@ -27,12 +27,7 @@ test.describe('Song bookmarks sung state + filter', () => {
     await request.post('/api/song-bookmarks', { data: { songId: songB.id } })
 
     try {
-      await page.addInitScript(() => {
-        window.localStorage.setItem(
-          'song-detail:accordion-column-visible',
-          'true',
-        )
-      })
+      await page.addInitScript(() => {})
       await page.setViewportSize({ width: 1400, height: 900 })
       await page.goto(`/songs/${songA.id}`)
       await page.waitForLoadState('networkidle')
