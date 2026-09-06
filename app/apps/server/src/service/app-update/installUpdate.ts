@@ -132,7 +132,9 @@ start "" "${launchPath}"
  * the window's process id it is known here without the client having to supply
  * anything (`@tauri-apps/plugin-process` exposes only `exit`/`relaunch`).
  */
-export async function installUpdate(filePath: string): Promise<OperationResult> {
+export async function installUpdate(
+  filePath: string,
+): Promise<OperationResult> {
   const appPid = process.pid
   const installed = resolveInstalledApp()
   if (!installed) {

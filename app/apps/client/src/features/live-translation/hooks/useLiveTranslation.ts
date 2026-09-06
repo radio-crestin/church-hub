@@ -87,7 +87,7 @@ const OPENAI_VOICES = [
   'verse',
 ] as const
 
-export { LANGUAGES, GEMINI_VOICES, OPENAI_VOICES }
+export { GEMINI_VOICES, LANGUAGES, OPENAI_VOICES }
 
 export function voicesForEngine(engine: TranslationEngine): readonly string[] {
   return engine === 'gemini' ? GEMINI_VOICES : OPENAI_VOICES
@@ -375,9 +375,7 @@ export function useLiveTranslation() {
   }, [])
 
   const apiKey =
-    settings.engine === 'gemini'
-      ? settings.geminiApiKey
-      : settings.openaiApiKey
+    settings.engine === 'gemini' ? settings.geminiApiKey : settings.openaiApiKey
 
   const canStart =
     apiKey.length > 0 && settings.targets.length > 0 && !state.isActive

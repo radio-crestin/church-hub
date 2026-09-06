@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'bun:test'
-
 import { migrateSettings } from '../migrate-settings'
 
 describe('migrateSettings', () => {

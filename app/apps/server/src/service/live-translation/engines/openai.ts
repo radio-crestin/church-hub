@@ -1,6 +1,10 @@
+import type {
+  EngineHandlers,
+  EngineSession,
+  EngineSessionConfig,
+} from './types'
 import { log } from '../../../utils/fileLogger'
 import { buildSystemPrompt } from '../types'
-import type { EngineHandlers, EngineSession, EngineSessionConfig } from './types'
 
 const logger = {
   debug: (msg: string, data?: unknown) =>
@@ -24,7 +28,9 @@ const TARGET_SAMPLE_RATE = 24000
 function upsample16to24(pcm16khz: Buffer): Buffer {
   const inSamples = Math.floor(pcm16khz.length / 2)
   if (inSamples === 0) return Buffer.alloc(0)
-  const outSamples = Math.ceil((inSamples * TARGET_SAMPLE_RATE) / INPUT_SAMPLE_RATE)
+  const outSamples = Math.ceil(
+    (inSamples * TARGET_SAMPLE_RATE) / INPUT_SAMPLE_RATE,
+  )
   const out = Buffer.alloc(outSamples * 2)
   const ratio = INPUT_SAMPLE_RATE / TARGET_SAMPLE_RATE
   for (let i = 0; i < outSamples; i++) {

@@ -72,8 +72,7 @@ export async function upsertBackupConfig(
       intervalHours: patch.intervalHours ?? DEFAULT_CONFIG.intervalHours,
       maxBackups: patch.maxBackups ?? DEFAULT_CONFIG.maxBackups,
       lastBackupAt: lastBackupAt ?? null,
-      localBackupPath:
-        patch.localBackupPath ?? DEFAULT_CONFIG.localBackupPath,
+      localBackupPath: patch.localBackupPath ?? DEFAULT_CONFIG.localBackupPath,
       lastLocalBackupAt: lastLocalBackupAt ?? null,
     })
   } else {
