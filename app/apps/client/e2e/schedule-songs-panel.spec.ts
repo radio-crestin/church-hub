@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { selectAction } from './helpers/actions-menu'
+
 /**
  * The Programe work on the song page:
  *  1. The per-schedule "already sung" marker (API contract + scoping).
@@ -130,7 +132,7 @@ test.describe('Schedule item sung marker - API', () => {
 })
 
 test.describe('Programe panel on the song page', () => {
-  test('lists the program songs, filters them and marks one sung', async ({
+  test('lists the program songs, searches them and marks one sung', async ({
     page,
     request,
   }) => {
@@ -148,10 +150,6 @@ test.describe('Programe panel on the song page', () => {
       })
 
       await page.addInitScript((scheduleId: number) => {
-        window.localStorage.setItem(
-          'song-detail:accordion-column-visible',
-          'true',
-        )
         window.localStorage.setItem('song-detail:schedules-open', 'true')
         window.localStorage.setItem(
           'songPage.selectedScheduleId',
@@ -189,16 +187,17 @@ test.describe('Programe panel on the song page', () => {
         )
         .toBe(true)
 
-      // The three tabs split the list the same way Marcaje does.
-      await panel.getByTestId('schedule-filter-sung').click()
+      // Search hides behind the header magnifier and narrows the list; closing
+      // it clears the query and brings everything back.
+      await panel.getByTestId('schedule-search-toggle').click()
+      await panel
+        .getByTestId('schedule-search-input')
+        .fill(`E2E Panel A ${uniq}`)
       await expect(rowA).toBeVisible()
       await expect(rowB).toHaveCount(0)
 
-      await panel.getByTestId('schedule-filter-pending').click()
-      await expect(rowB).toBeVisible()
-      await expect(rowA).toHaveCount(0)
-
-      await panel.getByTestId('schedule-filter-all').click()
+      await panel.getByTestId('schedule-search-toggle').click()
+      await expect(panel.getByTestId('schedule-search-input')).toHaveCount(0)
       await expect(rowA).toBeVisible()
       await expect(rowB).toBeVisible()
 
@@ -221,7 +220,7 @@ test.describe('Programe panel on the song page', () => {
     }
   })
 
-  test('songs can be dragged into a new order, leaving other item types put', async ({
+  test('rows can be dragged into a new order, every kind included', async ({
     page,
     request,
   }) => {
@@ -231,8 +230,8 @@ test.describe('Programe panel on the song page', () => {
     const schedule = await createSchedule(request, `E2E Drag Prog ${uniq}`)
 
     try {
-      // song A, an announcement, song B — the announcement sits between them so
-      // the test proves reordering songs does not disturb other item types.
+      // song A, an announcement, song B — the announcement sits between them,
+      // and moves with the rest: the panel reorders the whole program now.
       await request.post(`/api/schedules/${schedule.id}/items`, {
         data: { songId: songA.id },
       })
@@ -244,10 +243,6 @@ test.describe('Programe panel on the song page', () => {
       })
 
       await page.addInitScript((scheduleId: number) => {
-        window.localStorage.setItem(
-          'song-detail:accordion-column-visible',
-          'true',
-        )
         window.localStorage.setItem('song-detail:schedules-open', 'true')
         window.localStorage.setItem(
           'songPage.selectedScheduleId',
@@ -287,7 +282,8 @@ test.describe('Programe panel on the song page', () => {
         timeout: 10000,
       })
 
-      // The new order persists, and the announcement is still the middle item.
+      // The new order persists. Song A landed after song B, so the rows that
+      // were between them shuffled up — a program is one running order.
       await expect
         .poll(
           async () => {
@@ -300,7 +296,7 @@ test.describe('Programe panel on the song page', () => {
           },
           { timeout: 10000 },
         )
-        .toEqual([songB.id, 'slide', songA.id])
+        .toEqual(['slide', songB.id, songA.id])
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
       await request.delete(`/api/songs/${songA.id}`).catch(() => {})
@@ -325,7 +321,7 @@ test.describe('Programe modal from the song toolbar', () => {
       await page.waitForLoadState('networkidle')
 
       // Cancel must not touch anything.
-      await page.getByTestId('song-add-to-schedule').click()
+      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
       const modal = page.getByTestId('add-song-to-schedule-modal')
       await expect(modal).toBeVisible({ timeout: 10000 })
 
@@ -344,7 +340,7 @@ test.describe('Programe modal from the song toolbar', () => {
       expect((await afterCancel.json()).data.items.length).toBe(0)
 
       // Now tick both programs and save.
-      await page.getByTestId('song-add-to-schedule').click()
+      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
       await expect(modal).toBeVisible()
 
       await modal.getByTestId('add-song-to-schedule-search').fill(`${uniq}`)
@@ -392,7 +388,7 @@ test.describe('Programe modal from the song toolbar', () => {
       await page.goto(`/songs/${song.id}`)
       await page.waitForLoadState('networkidle')
 
-      await page.getByTestId('song-add-to-schedule').click()
+      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
       const modal = page.getByTestId('add-song-to-schedule-modal')
       await expect(modal).toBeVisible({ timeout: 10000 })
 
@@ -439,7 +435,7 @@ test.describe('Programe modal from the song toolbar', () => {
       await page.goto(`/songs/${song.id}`)
       await page.waitForLoadState('networkidle')
 
-      await page.getByTestId('song-add-to-schedule').click()
+      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
       const modal = page.getByTestId('add-song-to-schedule-modal')
       await expect(modal).toBeVisible({ timeout: 10000 })
 
@@ -659,7 +655,7 @@ test.describe('Programe panel on the Bible page', () => {
       .toBe('false')
   })
 
-  test('the cross-module switch reveals the other kind of item', async ({
+  test('songs in the program are listed on the Bible page too', async ({
     page,
     request,
   }) => {
@@ -675,7 +671,6 @@ test.describe('Programe panel on the Bible page', () => {
       await page.addInitScript((scheduleId: number) => {
         window.localStorage.setItem('bible-history-collapsed', 'false')
         window.localStorage.setItem('bible:programs-open', 'true')
-        window.localStorage.setItem('programPanel.showSongs', 'false')
         window.localStorage.setItem(
           'songPage.selectedScheduleId',
           String(scheduleId),
@@ -688,11 +683,7 @@ test.describe('Programe panel on the Bible page', () => {
       const panel = page.getByTestId('schedule-songs-panel')
       await expect(panel).toBeVisible({ timeout: 10000 })
 
-      // Off: the Bible panel shows verses only, so this song is hidden.
-      await expect(panel.getByTestId('schedule-song-item')).toHaveCount(0)
-
-      await panel.getByTestId('schedule-show-other-toggle').click()
-
+      // The panel is the whole program now, whichever module it sits in.
       const songRow = panel
         .getByTestId('schedule-song-item')
         .filter({ hasText: `E2E Cross Song ${uniq}` })
@@ -711,7 +702,7 @@ test.describe('Programe panel on the Bible page', () => {
 })
 
 test.describe('Programe panel - reordering a mixed list', () => {
-  test('songs and verses reorder against each other, other item types stay put', async ({
+  test('every kind reorders against every other kind', async ({
     page,
     request,
   }) => {
@@ -724,8 +715,8 @@ test.describe('Programe panel - reordering a mixed list', () => {
       const translation = (await translations.json()).data?.[0]
       test.skip(!translation, 'no bible translation seeded')
 
-      // song, announcement, passage — the announcement sits between the two
-      // rows the panel lists, and must not move.
+      // song, announcement, passage — all three are listed, and all three can
+      // be dragged past one another.
       await request.post(`/api/schedules/${schedule.id}/items`, {
         data: { songId: song.id },
       })
@@ -752,13 +743,7 @@ test.describe('Programe panel - reordering a mixed list', () => {
       test.skip(passage.status() !== 201, 'passage could not be created')
 
       await page.addInitScript((scheduleId: number) => {
-        window.localStorage.setItem(
-          'song-detail:accordion-column-visible',
-          'true',
-        )
         window.localStorage.setItem('song-detail:schedules-open', 'true')
-        // Song page + "also show verses" on: the list is mixed.
-        window.localStorage.setItem('programPanel.showVerses', 'true')
         window.localStorage.setItem(
           'songPage.selectedScheduleId',
           String(scheduleId),
@@ -773,8 +758,14 @@ test.describe('Programe panel - reordering a mixed list', () => {
 
       const songRow = panel.getByTestId('schedule-song-item')
       const verseRow = panel.getByTestId('schedule-verse-item')
+      const announcementRow = panel.getByTestId('schedule-announcement-item')
       await expect(songRow).toHaveCount(1, { timeout: 10000 })
       await expect(verseRow).toHaveCount(1)
+      // The announcement is listed too, with a grip of its own.
+      await expect(announcementRow).toHaveCount(1)
+      await expect(
+        announcementRow.getByTestId('schedule-slide-drag-handle'),
+      ).toBeVisible()
 
       // Drag handles are available even though the list mixes both kinds.
       const handle = songRow.first().getByTestId('schedule-song-drag-handle')
@@ -795,8 +786,8 @@ test.describe('Programe panel - reordering a mixed list', () => {
       })
       await page.mouse.up()
 
-      // The passage now precedes the song, and the announcement — which this
-      // panel never lists — is still the middle item.
+      // The song was dropped onto the passage at the end, so it lands last and
+      // everything it passed shuffles up.
       await expect
         .poll(
           async () => {
@@ -806,7 +797,7 @@ test.describe('Programe panel - reordering a mixed list', () => {
           },
           { timeout: 10000 },
         )
-        .toEqual(['bible_passage', 'slide', 'song'])
+        .toEqual(['slide', 'bible_passage', 'song'])
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
       await request.delete(`/api/songs/${song.id}`).catch(() => {})

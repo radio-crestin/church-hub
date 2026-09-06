@@ -246,11 +246,6 @@ test.describe('Song editing layout preference', () => {
     try {
       await page.addInitScript(() => {
         window.localStorage.setItem('song-editor-layout', 'powerpoint')
-        // Ensure the column starts visible regardless of prior device state.
-        window.localStorage.setItem(
-          'song-detail:accordion-column-visible',
-          'true',
-        )
       })
       await page.setViewportSize({ width: 1400, height: 900 })
       await page.goto(`/songs/${created.id}`)
@@ -262,11 +257,9 @@ test.describe('Song editing layout preference', () => {
         timeout: 10000,
       })
 
-      // The whole column collapses/expands from the rail toggle.
-      await page.getByTestId('pp-accordion-toggle').click()
-      await expect(page.getByTestId('version-current-row')).toHaveCount(0)
-      await page.getByTestId('pp-accordion-toggle').click()
-      await expect(page.getByTestId('version-current-row')).toBeVisible()
+      // The column is part of the workspace now: it is moved and sized by
+      // dragging, and every panel carries the workspace move handle.
+      await expect(page.getByTestId('workspace-move-versions')).toBeAttached()
     } finally {
       await request.delete(`/api/songs/${created.id}`)
     }
