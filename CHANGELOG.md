@@ -2,6 +2,40 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.96 — 2026-09-06
+
+### 🚀 Features
+
+- **schedules**: one Bible item in a program, named Versete Biblice
+- **schedules**: a program row opens the song it just projected
+- **songs**: mark and add-to-program buttons instead of a drag grip
+- **songs,bible**: slide rail, page actions, and workspace wiring
+- **schedules**: one mixed program list, search, and a live-item panel
+- **ui**: labelled actions menu to replace bare icon rows
+- **workspace**: rearrangeable, resizable panel layout
+- **bible**: export the history for the last session or the whole list
+- **bible**: bookmarks keep the highlighting drawn on the verse
+- **bible**: bookmark panel, toggle button, and import/export UI
+- **bible**: bookmark verses, and move the list in and out as plain text
+
+### 🐛 Bug Fixes
+
+- **macos**: the dock icon now sits on the same grid as its neighbours
+- **workspace**: the move handle belongs to edit mode, and only one grip shows
+- **ui**: even out the discover header, and calm the song row
+- **ui**: tighter page top, and drop the song-discovery count badge
+- **songs**: stop the editor header squeezing the song title to nothing
+- **bible**: stop saved-highlight lookup from churning the present callback
+- **bible**: keep the bookmark export button on screen at all times
+
+### 🔧 Changes
+
+- **ui**: one page title everywhere, without the decorative icon
+- **songs**: the bookmark button answers the press immediately
+- **format**: apply biome import order and wrapping
+- **tooling**: ignore graphify/omc output and drop hardcoded home paths
+- **api**: describe the Bible bookmark endpoints in OpenAPI
+
 ## v0.1.95 — 2026-09-05
 
 ### 🐛 Bug Fixes
@@ -704,171 +738,37 @@ _No notable changes._
 
 ## v0.1.44 — 2026-02-02
 
-_No notable changes._
+### 🐛 Bug Fixes
 
-## v0.1.43 — 2026-03-15
+- install native audio libs in CI and simplify server test jobs
 
-### 🚀 Features
-
-- add granular shortcut settings to Songs and Bible page settings
-- add bookmarks panel to songs pages
-- add global edit mode for song slides with inline editing, reorder, delete, add, and preview editing
-- add indigo-themed scrollbars and mobile load buttons for Bible verses
-- add OBS scene-based config overrides to screen designer
-- add bookmarked songs list with toggle, filter, and full CRUD API
-- add inline slide editing from song preview
-- add Bible history search, smart add-to-schedule, and queue caching
-- add key line to PPTs, edit key line from schedule, last played indicator, and edit-as-text improvements
-- add song sorting, duplicate title disambiguation, and mobile search improvements
+## v0.1.43 — 2026-02-02
 
 ### 🐛 Bug Fixes
 
-- increase API test timeout to prevent macOS CI failures
-- Bible verse list snapping back to searched verse on chapter transition
-- add error logging to migration runner and getScreenWithConfigs
-- handle missing OS plugin in update checker and add window set-icon ACL
-- wrap MIDI device enumeration in checkDeviceStatusAndReconnect
-- gracefully handle missing MIDI subsystem (ALSA) in CI
-- pre-create draft release before build to avoid permission errors
-- move contents:write permission to workflow level for release creation
-- run tests on main push, skip when tag triggers build-release
-- use in-memory fixture DB for bible search tests in CI
-- skip bible search tests when DB file is unavailable in CI and trigger tests on tags only
-- strip non-numeric pre-release from Tauri version for MSI compat
-- add retry logic to Bible E2E search for CI FTS index timing
-- correct E2E test regex for Bible search results in English locale
-- smooth bookmark drag-and-drop and improve song editor save UX
-- constrain songs page layout and add global scrollbar theming
-- merge adjacent search highlights into continuous phrases
-- prevent restore effect from overriding search result navigation
-- improve search scoring so content-only phrase matches rank high
-- preserve word boundaries in title sanitization and match hymn numbers with leading zeros
-- cap song search score at maximum 100
-- handle punctuation in song search query parsing and indexing
-- show song list instead of last opened song when returning from another page
-- display error in UI when mpv fails to play a file
-- kill stale mpv processes on startup to prevent zombie accumulation
-- repair concurrency limiter and invalid Drizzle query in music service
-- prevent music player crashes by isolating mpv process group
-- hide format help when schedule has items, add reference section to Edit as Text
-- auto-collapse previous section on navigation, simplify Edit as Text modal
-- save button exits edit mode after pending saves complete, add discard button
-- improve edit button toggle styling and add discard/save actions
-- sync slide edits to preview in real-time and skip animations on content updates
-- move Add Slide below slides, open Edit as Text in modal, and polish button colors
-- improve edit mode toolbar layout, real-time slide sync, and textarea overflow
-- redesign song edit mode with DnD reordering and inline editing in slides panel
-- make Bible and Song pages fill viewport height with neutral scrollbars
-- resolve 6 bugs - search filters, bible freeze, song navigation, chapter transitions, music player, webview links
-- improve music player reliability and add tests
-- align song action buttons to left on mobile
-- make mobile header scroll with content instead of staying fixed
-- revert mobile header to fixed position with proper padding
-- use flex-col on mobile layout so header stacks above content
-- improve mobile layout for songs pages
-- update bun lockfile and embedded migrations for CI
-- enhance song search scoring and hymn number lookup
-- add content comparison for PPTX import duplicates
-- resolve Bible chapter transition sidebar, flicker, and secondary text bugs
-- open webview external links in system browser
-- prevent content flash during hide animation
-- remember search query and scroll position on songs page
-- install native audio libs in CI and simplify server test jobs
 - make audify import lazy so server starts without native audio libs
 - increase test timeouts for server and e2e tests
 
 ### 🔧 Changes
 
-- various improvements
-- up
-- various bug fixes
-- various improvements
 - Update api.test.ts
 
 ## v0.1.42 — 2026-02-01
 
-_No notable changes._
-
-## v0.1.41 — 2026-03-15
-
-### 🚀 Features
-
-- add bookmarks panel to songs pages
-- add global edit mode for song slides with inline editing, reorder, delete, add, and preview editing
-- add indigo-themed scrollbars and mobile load buttons for Bible verses
-- add OBS scene-based config overrides to screen designer
-- add bookmarked songs list with toggle, filter, and full CRUD API
-- add inline slide editing from song preview
-- add Bible history search, smart add-to-schedule, and queue caching
-- add key line to PPTs, edit key line from schedule, last played indicator, and edit-as-text improvements
-- add song sorting, duplicate title disambiguation, and mobile search improvements
-
 ### 🐛 Bug Fixes
 
-- Bible verse list snapping back to searched verse on chapter transition
-- add error logging to migration runner and getScreenWithConfigs
-- handle missing OS plugin in update checker and add window set-icon ACL
-- wrap MIDI device enumeration in checkDeviceStatusAndReconnect
-- gracefully handle missing MIDI subsystem (ALSA) in CI
-- pre-create draft release before build to avoid permission errors
-- move contents:write permission to workflow level for release creation
-- run tests on main push, skip when tag triggers build-release
-- use in-memory fixture DB for bible search tests in CI
-- skip bible search tests when DB file is unavailable in CI and trigger tests on tags only
-- strip non-numeric pre-release from Tauri version for MSI compat
-- add retry logic to Bible E2E search for CI FTS index timing
-- correct E2E test regex for Bible search results in English locale
-- smooth bookmark drag-and-drop and improve song editor save UX
-- constrain songs page layout and add global scrollbar theming
-- merge adjacent search highlights into continuous phrases
-- prevent restore effect from overriding search result navigation
-- improve search scoring so content-only phrase matches rank high
-- preserve word boundaries in title sanitization and match hymn numbers with leading zeros
-- cap song search score at maximum 100
-- handle punctuation in song search query parsing and indexing
-- show song list instead of last opened song when returning from another page
-- display error in UI when mpv fails to play a file
-- kill stale mpv processes on startup to prevent zombie accumulation
-- repair concurrency limiter and invalid Drizzle query in music service
-- prevent music player crashes by isolating mpv process group
-- hide format help when schedule has items, add reference section to Edit as Text
-- auto-collapse previous section on navigation, simplify Edit as Text modal
-- save button exits edit mode after pending saves complete, add discard button
-- improve edit button toggle styling and add discard/save actions
-- sync slide edits to preview in real-time and skip animations on content updates
-- move Add Slide below slides, open Edit as Text in modal, and polish button colors
-- improve edit mode toolbar layout, real-time slide sync, and textarea overflow
-- redesign song edit mode with DnD reordering and inline editing in slides panel
-- make Bible and Song pages fill viewport height with neutral scrollbars
-- resolve 6 bugs - search filters, bible freeze, song navigation, chapter transitions, music player, webview links
-- improve music player reliability and add tests
-- align song action buttons to left on mobile
-- make mobile header scroll with content instead of staying fixed
-- revert mobile header to fixed position with proper padding
-- use flex-col on mobile layout so header stacks above content
-- improve mobile layout for songs pages
-- update bun lockfile and embedded migrations for CI
-- enhance song search scoring and hymn number lookup
-- add content comparison for PPTX import duplicates
-- resolve Bible chapter transition sidebar, flicker, and secondary text bugs
-- open webview external links in system browser
-- prevent content flash during hide animation
-- remember search query and scroll position on songs page
-- install native audio libs in CI and simplify server test jobs
-- make audify import lazy so server starts without native audio libs
-- increase test timeouts for server and e2e tests
 - display correct broadcast URL after starting livestream
 
 ### 🔧 Changes
 
-- various improvements
-- up
-- various bug fixes
-- various improvements
-- Update api.test.ts
 - fix search
 - various improvements
 - add livestrean
+
+## v0.1.41 — 2026-01-31
+
+### 🔧 Changes
+
 - fix updates
 - various fixes
 
@@ -1701,114 +1601,6 @@ _No notable changes._
 - **screen-editor**: implement StyledText component with full TextStyle support
 - **screen-editor**: add full text style options to next slide section
 - **screen-editor**: add missing text style options (minFontSize, lineHeight, shadow)
-- **database**: add import functionality with validation and backup
-- **settings**: add database management with info and export functionality
-- **bible**: add auto-navigation and sync with temporary Bible content
-- **songs**: add auto-navigation to presented song on page open
-- **presentation**: add skipTaskbar option to hide display windows from dock
-- **songs**: add "Add to Schedule" button to song preview page header
-- **songs**: update preview header with back button and song title
-- **songs**: move edit button to header row with purple styling
-- **presentation**: add temporary content support to LivePreview component
-- **presentation**: add temporary content presentation mechanism
-- **presentation**: use screen name in window titles instead of display ID
-- **songs**: add placeholder to Musical Key input field
-- **combobox**: add React Portal support to dropdown rendering
-- **presentation**: add fullscreen controls and auto-maximize handling
-- **build**: add embedded migrations and server startup health checks
-- **system-token**: add system token management UI with localhost-only API routes
-- **settings**: add API documentation link in settings page
-- **auth**: add system token API for external app access
-- **livestream**: add tooltip component and improve BroadcastInfo UI
-- **keyboard-shortcuts**: integrate MIDI device selector into settings UI
-- **keyboard-shortcuts**: allow startLive/stopLive to share the same shortcut
-- **keyboard-shortcuts**: add recording context and MIDI shortcut support
-- **livestream**: return re-auth status in YouTube auth check
-- **livestream**: show toast notification when YouTube session expires
-- **livestream**: add YouTube OAuth error handling with re-auth detection
-- **livestream**: add stream start/stop scene configuration
-- **livestream**: add YouTube broadcast readiness check with progress tracking
-- **livestream**: refactor scene management with settings modal and drag-and-drop reordering
-- **livestream**: enable auto-reconnect for manual OBS connections
-- **livestream**: always initialize OBS auto-reconnect at startup
-- **livestream**: add OBS WebSocket auto-reconnect with exponential backoff
-- **livestream**: wire up OBS callbacks for real-time scene updates
-- **presentation**: display next Bible verse as preview
-- **api**: add GET /api/bible/next-verse endpoint
-- **bible**: add getNextBook and getNextVerse service functions
-- **presentation**: add comprehensive next slide preview for all content types
-- **bibles**: export and seed books and verses in Bible fixtures
-- **db**: add seeding for songs, bibles, categories, and settings on startup
-- **db**: add automatic seeding of default screens on app installation
-- **presentation**: add visibleWhenHidden property to control element visibility in hidden mode
-- **presentation**: add title and content style configuration for next slide element
-- **presentation**: integrate batch update API in screen manager for atomic saves
-- **presentation**: add batch update API endpoint for atomic screen config saves
-- **screen-preview**: add background styling to preview container
-- **constraint-controls**: add unit conversion and improve constraint UI
-- **presentation**: add value indicators with units to constraint anchor points
-- **presentation**: auto-open active screens on startup
-- **webview**: upgrade Chrome user agent and improve video playback performance
-- **bible**: separate verse selection from presentation
-- **bible**: implement interactive 3-panel presentation UI with navigation, queue, and controls
-- **db**: implement modular migration engine with version tracking
-- **song-import**: standardize song title sanitization across client and server
-- **songs**: add source file path display to song editor UI
-- **song-import**: extract title from first slide and clean non-alphanumeric characters
-- **server**: add token-based user authentication endpoint
-- **server**: validate permissions on protected API endpoints
-- **client**: protect routes with permission guards
-- **i18n**: add permission error messages for access denied pages
-- **ui**: create PagePermissionGuard component for route protection
-- **song-export**: add complete import/export feature with OpenSong XML support
-- **song-import**: add support for PPT files in ZIP archives with server-side conversion
-- **song-import**: add PPT to PPTX conversion support with LibreOffice
-- **search**: enhance relevance with fuzzy highlighting, rarity boost, and noise filtering
-- **search**: add diacritic-insensitive highlighting with word boundary matching
-- **search**: enhance fuzzy match highlighting with extended candidate pool
-- **ui/categories**: add CategoryManager component with drag-drop sorting
-- **api**: add category reorder endpoint and integrate priority into search
-- **categories**: add priority field to song categories
-- **search**: add trigram fuzzy search for substring matching
-- **song-import**: add import options for title extraction and duplicate handling
-- **songs**: improve search ranking with field-weighted scoring and tiered query matching
-- **songs**: add error modal when no valid songs found during file import
-- **songs**: add search persistence and limit song list to 50 rows
-- **song-import**: add progress indicator and increase batch size to 200
-- **song-import**: add batch import with progress tracking and OpenSong support
-- **sidebar**: make sidebar mobile-responsive with hamburger menu and drawer
-- **pptx-import**: directly create songs on PPTX import without dialog
-- **songs**: add PPTX import button with file dialog integration
-- **pptx-import**: add PPTX file import with file association and drag-drop
-- **presentation**: add dynamic preview border with display state indicator
-- **presentation**: enhance control room with status indicator and immediate preview
-- **queue**: add menu options for inserting songs and slides at specific positions
-- **queue**: make song titles clickable to select first slide
-- **queue**: add editing support for standalone slides
-- **queue**: add song editing and slide insertion to control room
-- **sidebar**: rename present feature to control room and update icon
-- **presentations-programs**: implement comprehensive programs and presentation management system
-- **routes/songs**: add dedicated songs management page
-- **routes/settings**: add authorized devices section to settings page
-- **client/devices**: implement device management UI and hooks
-- **server**: integrate device authentication endpoints and middleware
-- **openapi**: add OpenAPI specification and Scalar documentation
-- **middleware**: add device authentication and permission validation
-- **service/devices**: implement device CRUD and token management service
-- **db**: add device and device permissions database schema
-- **songs**: add editor component, management hooks, and toast/modal UI utilities
-- **ui**: add reusable modal and toast components
-- **routing**: restructure app routes and add toast provider to layout
-- **ui**: update sidebar navigation to include songs and schedules
-- **i18n**: add common button labels and presentation namespace
-- **presentation**: add presentation mode feature for schedules
-- **schedules**: implement schedule editor with drag-and-drop reordering
-- **i18n**: add schedules translations for English and Romanian
-- **schedules**: add schedules UI components
-- **schedules**: add client service and hooks for schedules management
-- **schedules**: add server-side schedules service with CRUD operations and item management
-- **songs**: auto-extract title from first line for new songs
-- **songs**: add paste handler to convert empty lines to slide breaks
 
 ### 🐛 Bug Fixes
 
@@ -1831,82 +1623,6 @@ _No notable changes._
 - **build**: correct ios build script flags
 - **next-slide**: display nothing instead of dash when no content
 - **screen-content**: use TextContent for next slide section rendering
-- **database**: validate SQLite files by checking header instead of PRAGMA integrity_check
-- **database**: properly extract PRAGMA integrity_check result value
-- **presentation**: add automatic WebSocket reconnection on error
-- **presentation**: clear displayed slide on server startup alongside queue
-- **navigation**: prevent continuous auto-navigation on Songs and Bible pages
-- **presentation**: clear queue on server startup to ensure clean state
-- **screen-editor**: add missing preview texts state and actions to editor hook
-- **song-import**: add Tauri context check before invoking desktop commands
-- **presentation**: fix React reconciliation with stable segment keys and synchronous processing
-- **build**: fix production build sidecar bundling and websocket connections
-- **midi**: load native module lazily and handle unavailability gracefully
-- **server**: use proper application support directories for data storage
-- **ci**: switch from pnpm to bun for dependency management
-- **ci**: correct pnpm cache dependency path
-- **livestream**: prevent multiple concurrent starts from keyboard shortcuts
-- **keyboard-shortcuts**: allow canceling livestream start and improve start state detection
-- **keyboard-shortcuts**: support multiple actions per MIDI shortcut
-- **keyboard-shortcuts**: prevent double-triggering start/stop with state checks
-- **bible**: allow Enter key to present searched verse in reference search
-- **keyboard-shortcuts**: add isLive state checks to livestream toggle handlers
-- **keyboard-shortcuts**: simplify recording ref access pattern
-- **keyboard-shortcuts**: prevent stale closure in MIDI and global shortcuts callbacks
-- **livestream**: add missing log utility function to routes
-- **livestream**: restore client_secret to YouTube OAuth token exchange
-- **livestream**: remove unnecessary client_secret from PKCE OAuth flow
-- **livestream**: replace YouTube broadcast ready polling with countdown delay
-- **queue**: position active item at second position in scroll container
-- **livestream**: prevent duplicate OBS reconnect scheduling and add error recovery
-- **livestream**: defer OBS auto-connect until WebSocket server is ready
-- **presentation**: strip HTML and translation abbreviations from slide preview
-- **bible-verses**: ensure verse scrolls into view when navigating to new chapter
-- **fixtures**: fix database path resolution and regenerate screen defaults
-- **presentation**: show hidden elements as ghosted in editor canvas for re-selection
-- **presentation**: hide elements in editor canvas when hidden property is set
-- **presentation**: simplify element visibility control by renaming visibleWhenHidden to hidden
-- **screens**: combine where conditions with and() to prevent overwriting
-- **presentation**: improve race condition handling with version counter tracking instead of timeouts
-- **screen-editor**: prevent race condition in element property saves
-- **presentation**: add screen dependency to ResizeObserver effect
-- **screen-editor**: accept constraints instead of position in element update handler
-- **presentation**: standardize screen rendering positioning with pre-scaled pixel coordinates
-- **presentation**: use screen config dimensions and scale for text elements
-- **constraint-controls**: resolve stale closure in drag and resize handlers
-- **presentation**: use constraints-based positioning and fix config overwrites
-- **queue**: decode HTML entities in slide preview text
-- **song-import**: preserve en-dashes and em-dashes in sanitized titles
-- **sanitization**: remove leading numbers from song titles
-- **song-import**: filter special characters from extracted slide titles
-- **server**: add timeout to token verification to prevent hanging
-- **server**: detect all server IPs for local admin access
-- **client**: use dynamic hostname in fetcher and display windows
-- **server**: listen on all network interfaces for LAN access
-- **i18n**: correct export progress wording in settings translations
-- **song-export**: add write permissions and improve progress modal timing
-- **search**: fall back to original terms when all search terms filtered as noise
-- **search**: increase fuzzy substring threshold and prioritize FTS results
-- **search**: enable fuzzy substring matching for spelling variations
-- **songs**: improve search input responsiveness with local state
-- **pptx-import**: handle embedded newlines in PPTX text elements
-- **songs**: use Tauri readFile for local PPTX file reading
-- **pptx-import**: fix drag and drop event capture using document-level listeners
-- **presentation**: remove animation delay for instant preview state feedback
-- **presentation**: relocate show/hide button and fix restore after hide
-- **songs**: escape FTS5 special characters and enable diacritic-insensitive search
-- **editor**: disable autocorrect to prevent unwanted dots on space
-- **songs**: center SongPickerModal dialog
-- **presentation/keyboard-shortcuts**: disable shortcuts in modals and contenteditable elements
-- **presentation/broadcast**: refresh displays when currently shown slide is updated
-- **presentation**: add cache-busting headers to queue fetch calls
-- **control-room**: support standalone slide navigation and fix queue item highlighting
-- **songs**: populate search index after migrations and on deletion
-- **db**: remove orphaned foreign key column before dropping presentation_queue
-- **deps**: downgrade @dnd-kit/sortable to v9.0.0 to resolve breaking changes in v10
-- **client**: add missing config file with getApiUrl
-- **songs**: add clipboardTextSerializer to control newlines in copy/paste
-- **songs**: prevent paste handler from blocking regular paste operations
 
 ### 🔧 Changes
 
@@ -1937,97 +1653,6 @@ _No notable changes._
 - various fixes
 - various fixes
 - Update TODO.md
-- various improvements
-- various improvements
-- generate fixtures
-- **highlight-colors**: remove poorly implemented feature from codebase
-- Revert "fix(presentation): fix React reconciliation with stable segment keys and synchronous processing"
-- various improvements
-- various improvements
-- **presentation**: hide loading messages on screen display routes
-- various improvements
-- **songs**: remove duplicate headers from song panel components
-- **songs**: use indigo color for edit button instead of purple
-- **songs**: reorganize song preview and presentation flow
-- various improvements
-- Update TODO.md
-- various improvements
-- **server**: fix imports and line endings in utility files
-- **server**: fix migrations and script formatting
-- **client**: fix import ordering and line formatting in router
-- **project**: ignore application logs directory
-- **ci**: add macOS quarantine workaround to release notes
-- update bun.lock
-- **ci**: simplify build matrix to Windows x64 and macOS ARM64 only
-- various improvements
-- **settings**: combine API Documentation and System Token into single card
-- **settings**: move system token section after API documentation
-- remove .playwright-mcp from git tracking
-- add secrets folder to gitignore
-- various improvements
-- **livestream**: add error messages for YouTube authentication issues
-- **livestream**: move stream start progress UI from StreamControls to BroadcastInfo
-- **livestream**: simplify YouTube setup modal
-- **livestream**: replace local templates with YouTube past broadcasts
-- **queue**: extract scrolling logic into reusable hook
-- livestream page
-- various improvements
-- add fixtures
-- **fixtures**: consolidate dump script to handle multiple fixture types
-- **scripts**: add fixtures:screens script for generating screen fixtures
-- **seeds**: extract screen configurations to JSON fixtures for easier maintenance
-- **presentation**: remove client-side migration utilities for legacy position formats
-- **presentation**: synchronize types and default configs to constraints-based positioning
-- **presentation**: move background styling to fullscreen container
-- **presentation**: unify text rendering with TextContent and AnimatedElement
-- **presentation**: unify screen rendering with ScreenContent component
-- **presentation**: migrate from displays to screens API
-- **constraint-controls**: make constraint values editable directly on diagram
-- various improvements
-- various improvements
-- various fixes
-- **ui**: replace native select elements with Combobox component
-- various fixes
-- various improvements
-- various improvements
-- various improvements
-- various improvements
-- **bible**: replace 3-panel layout with 2-panel resizable layout
-- migrate to drizzle orm
-- add Bible page
-- various improvements
-- **client**: use dynamic hostname for API URLs
-- **auth**: migrate from device-based to user-based authentication with RBAC
-- up
-- various improvements
-- **search**: implement two-phase search ranking with simplified FTS5 queries
-- **songs**: improve search relevance with N-1 and N-2 term AND queries
-- various improvements
-- **openapi**: add comprehensive api documentation for all endpoints
-- **search**: optimize song search with subquery and minimum score filtering
-- **presentation**: remove dynamic border from preview component
-- **presentation**: change displayed state border color to white
-- **presentation**: update hidden state border color to white
-- **presentation**: add border to show/hide buttons in control center
-- **presentation**: implement isHidden flag for show/hide state management
-- **presentation**: move preview toggle button to header
-- **queue**: replace context menu submenu with dialog for Insert After
-- **queue**: convert Add button to dialog with 3 options
-- **queue**: use filled buttons for Add and Clear Queue actions
-- **routing**: redirect homepage to control room
-- **sidebar**: update present menu icon from Film to SquarePlay
-- **ui**: simplify navigation and remove program selector
-- various improvements
-- **settings**: integrate application description with page title
-- **settings**: move application settings section to top of page
-- **presentation**: move display management to settings page
-- add all
-- add project documentation and task tracking
-- **deps**: update dependencies and generated files
-- **settings**: add device management translations
-- reformat code with consistent quotes and import organization
-- **service**: export device service from service barrel
-- various improvements
 
 ## v0.1.7 — 2025-12-25
 
