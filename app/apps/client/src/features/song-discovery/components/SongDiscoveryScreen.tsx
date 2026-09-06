@@ -312,8 +312,10 @@ export function SongDiscoveryScreen({ onBack }: SongDiscoveryScreenProps) {
     !isBusy && candidates.length > 0 && stagingItems.length === 0
   const showResults = stagingItems.length > 0
 
+  // No padding of its own: the app layout already pads every page, and
+  // doubling it left a visible gap above the title.
   return (
-    <div className="flex h-full flex-col gap-4 p-4 lg:p-6">
+    <div className="flex h-full flex-col gap-4">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         {onBack && (
@@ -330,7 +332,7 @@ export function SongDiscoveryScreen({ onBack }: SongDiscoveryScreenProps) {
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="truncate text-xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
           <p className="truncate text-sm text-gray-500 dark:text-gray-400">

@@ -1,8 +1,6 @@
 import {
   Bookmark,
-  BookmarkCheck,
   CalendarPlus,
-  ChevronRight,
   Eye,
   Music2,
   Sparkles,
@@ -181,7 +179,6 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
               />
             )}
           </div>
-          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0 ml-2" />
         </button>
 
         {/* Marcaje / Programe, one press each. Always rendered rather than
@@ -199,15 +196,16 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 onClick={onToggleBookmark}
                 className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
                   isBookmarked
-                    ? 'bg-amber-500 text-white hover:bg-amber-600'
+                    ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300'
                     : 'text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:text-gray-500 dark:hover:bg-amber-900/30 dark:hover:text-amber-300'
                 }`}
               >
-                {isBookmarked ? (
-                  <BookmarkCheck className="w-4 h-4" />
-                ) : (
-                  <Bookmark className="w-4 h-4" />
-                )}
+                {/* Marked reads as a filled-in bookmark, not a coloured tile:
+                    the row is a list item, not a toolbar. */}
+                <Bookmark
+                  className="w-4 h-4"
+                  fill={isBookmarked ? 'currentColor' : 'none'}
+                />
               </button>
             )}
             {onAddToSchedule && (
