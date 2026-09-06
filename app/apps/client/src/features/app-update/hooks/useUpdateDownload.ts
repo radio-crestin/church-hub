@@ -8,6 +8,7 @@ import {
   installUpdate,
   startUpdateDownload,
   type UpdateDownloadState,
+  type UpdateInstallerLabels,
 } from '../services/updateDownloadService'
 
 const STATUS_KEY = ['app-update', 'download-status']
@@ -69,8 +70,8 @@ export function useUpdateDownload(
    * to disappear before it replaces anything, then relaunches — so from the
    * operator's side the app simply restarts on the new version.
    */
-  const install = useCallback(async () => {
-    const result = await installUpdate()
+  const install = useCallback(async (labels: UpdateInstallerLabels) => {
+    const result = await installUpdate(labels)
     if (!result.success) return result
 
     if (isTauri()) {

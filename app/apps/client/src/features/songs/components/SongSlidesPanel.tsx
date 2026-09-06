@@ -14,6 +14,7 @@ import { SlideCounter } from './SlideCounter'
 import { type SongSlideRailItem, SongSlideRailList } from './SongSlideRailList'
 import { useDividerPosition } from '../../../hooks/useDividerPosition'
 import { useFollowPresentedScroll } from '../../../hooks/useFollowPresentedScroll'
+import { isTypingTarget } from '../../../utils/isTypingTarget'
 import type { SongSlide, SongWithSlides } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
 import {
@@ -181,6 +182,19 @@ export function SongSlidesPanel({
     highlightedRef,
     isEditMode ? null : presentedSlideIndex,
   )
+
+  // Hand the keyboard to the live slide as well. Presenting opens the
+  // projection window, which takes the keyboard as it appears; what the
+  // control window gets back has to land on something in the page, or the
+  // next arrow key goes nowhere until the operator clicks a slide. Never
+  // taken from a field the operator is typing in.
+  useEffect(() => {
+    const element = highlightedRef.current
+    if (isEditMode || !element) return
+    if (isTypingTarget(document.activeElement)) return
+    element.focus({ preventScroll: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presentedSlideIndex, isEditMode])
 
   // Auto-scroll to selected slide (view mode)
   useEffect(() => {

@@ -1,5 +1,9 @@
 export { emitFocusSearchEvent, useFocusSearchEvent } from './focusSearchEvent'
 export {
+  emitPageShortcutEvent,
+  usePageShortcutEvent,
+} from './pageShortcutEvent'
+export {
   isGlobalRecordingActive,
   setGlobalRecordingState,
   useGlobalRecordingState,

@@ -49,6 +49,19 @@ export interface NativeWindowSettings {
 /**
  * Settings for a sidebar item (shortcuts, navigation behavior)
  */
+/**
+ * Presentation actions a page can bind its own keys to. They fire only while
+ * that page is open, so "F5" can show the selected slide on Songs and the
+ * selected verse on Bible without the two ever getting in each other's way.
+ */
+export type PageShortcutAction = 'showSlide' | 'nextSlide' | 'prevSlide'
+
+export const PAGE_SHORTCUT_ACTIONS: PageShortcutAction[] = [
+  'showSlide',
+  'nextSlide',
+  'prevSlide',
+]
+
 export interface SidebarItemSettings {
   /** Keyboard/MIDI shortcuts that navigate to this page */
   shortcuts: string[]
@@ -56,6 +69,12 @@ export interface SidebarItemSettings {
   focusSearchOnNavigate: boolean
   /** Keyboard/MIDI shortcuts that navigate to this page AND focus the search input */
   focusSearchShortcuts?: string[]
+  /**
+   * Keyboard shortcuts for presentation actions that only work while this
+   * page is open (keyboard only — MIDI is dispatched by the server, which
+   * does not know which page is showing).
+   */
+  pageShortcuts?: Partial<Record<PageShortcutAction, string[]>>
   /** Native window settings (Tauri only) */
   nativeWindow?: NativeWindowSettings
   /** Icon color for the sidebar item (predefined colors) */

@@ -2,6 +2,7 @@ import { register, unregisterAll } from '@tauri-apps/plugin-global-shortcut'
 import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
+import { useIsAppFrontmost } from './useIsAppFrontmost'
 import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
 import { isGlobalRecordingActive } from '../utils'
 
@@ -27,6 +28,12 @@ interface UseGlobalAppShortcutsOptions {
   shortcuts: GlobalShortcutsConfig
   sceneShortcuts: SceneShortcut[]
   sidebarShortcuts: SidebarShortcut[]
+  /**
+   * Keys that pages bound to their own presentation actions. Registered once
+   * each, however many pages share them; the handler gets the key and decides
+   * what it means from the page that is open.
+   */
+  pageShortcuts?: string[]
   onStartLive: () => void
   onStopLive: () => void
   onShowSlide: () => void
@@ -34,6 +41,7 @@ interface UseGlobalAppShortcutsOptions {
   onPrevSlide: () => void
   onSceneSwitch: (sceneName: string) => void
   onSidebarNavigation: (route: string, focusSearch: boolean) => void
+  onPageShortcut?: (shortcut: string) => void
   /** Ref to check if a ShortcutRecorder is currently recording */
   isRecordingRef?: React.RefObject<boolean>
   /** Whether any ShortcutRecorder is currently recording (reactive state) */
@@ -44,6 +52,7 @@ export function useGlobalAppShortcuts({
   shortcuts,
   sceneShortcuts,
   sidebarShortcuts,
+  pageShortcuts = [],
   onStartLive,
   onStopLive,
   onShowSlide,
@@ -51,6 +60,7 @@ export function useGlobalAppShortcuts({
   onPrevSlide,
   onSceneSwitch,
   onSidebarNavigation,
+  onPageShortcut,
   isRecordingRef,
   isRecording = false,
 }: UseGlobalAppShortcutsOptions) {
@@ -63,6 +73,7 @@ export function useGlobalAppShortcuts({
     onPrevSlide,
     onSceneSwitch,
     onSidebarNavigation,
+    onPageShortcut,
   })
 
   // Keep handlers ref updated
@@ -75,6 +86,7 @@ export function useGlobalAppShortcuts({
       onPrevSlide,
       onSceneSwitch,
       onSidebarNavigation,
+      onPageShortcut,
     }
   }, [
     onStartLive,
@@ -84,12 +96,18 @@ export function useGlobalAppShortcuts({
     onPrevSlide,
     onSceneSwitch,
     onSidebarNavigation,
+    onPageShortcut,
   ])
+
+  // Navigation shortcuts are only held while Church Hub is the app in front —
+  // see the registration loops below.
+  const isFrontmost = useIsAppFrontmost()
 
   // Use JSON stringified config as dependency to avoid object reference issues
   const shortcutsJson = JSON.stringify(shortcuts)
   const sceneShortcutsJson = JSON.stringify(sceneShortcuts)
   const sidebarShortcutsJson = JSON.stringify(sidebarShortcuts)
+  const pageShortcutsJson = JSON.stringify(pageShortcuts)
 
   useEffect(() => {
     // Skip if not running in Tauri (global shortcuts require Tauri)
@@ -115,6 +133,7 @@ export function useGlobalAppShortcuts({
       const config: GlobalShortcutsConfig = JSON.parse(shortcutsJson)
       const scenes: SceneShortcut[] = JSON.parse(sceneShortcutsJson)
       const sidebarItems: SidebarShortcut[] = JSON.parse(sidebarShortcutsJson)
+      const pageKeys: string[] = JSON.parse(pageShortcutsJson)
 
       try {
         // Unregister all existing shortcuts first
@@ -236,13 +255,22 @@ export function useGlobalAppShortcuts({
           }
         }
 
-        // Register sidebar navigation shortcuts
+        // Register sidebar navigation shortcuts.
+        //
+        // These are held OS-wide, so while another application is in front they
+        // would swallow the key there and then drag Church Hub over it — a bare
+        // F6 would stop reaching the editor the user is typing in. They only
+        // move around inside Church Hub, so they are worth nothing while the
+        // user is elsewhere: register them only while the app is in front, and
+        // hand the keys straight back to the other application otherwise.
+        // Presentation and OBS shortcuts above stay global on purpose — running
+        // the service from another window is exactly what they are for.
         for (const {
           shortcut,
           route,
           focusSearchOnNavigate,
           displayName,
-        } of sidebarItems) {
+        } of isFrontmost ? sidebarItems : []) {
           if (!shortcut) continue
           if (isCancelled) return
 
@@ -276,6 +304,35 @@ export function useGlobalAppShortcuts({
           }
         }
 
+        // Register page-scoped shortcuts: one registration per key, whatever
+        // number of pages bound it. A key a global action already owns is
+        // left to that action — the settings refuse such a conflict anyway.
+        // Same frontmost rule as the sidebar shortcuts above: a page shortcut
+        // opens a page inside Church Hub, so it has no meaning in another app.
+        for (const shortcut of new Set(isFrontmost ? pageKeys : [])) {
+          if (!shortcut || registeredShortcuts.has(shortcut)) continue
+          if (isCancelled) return
+
+          try {
+            await register(shortcut, (event) => {
+              if (event.state === 'Pressed') {
+                if (isGlobalRecordingActive() || isRecordingRef?.current) {
+                  logger.debug(
+                    `Skipping page shortcut ${shortcut} - recording in progress`,
+                  )
+                  return
+                }
+                logger.info(`Page shortcut triggered: ${shortcut}`)
+                handlersRef.current.onPageShortcut?.(shortcut)
+              }
+            })
+            registeredShortcuts.add(shortcut)
+            logger.info(`Registered page shortcut: ${shortcut}`)
+          } catch (error) {
+            logger.error(`Failed to register page shortcut ${shortcut}:`, error)
+          }
+        }
+
         logger.info('All shortcuts registered successfully')
       } catch (error) {
         logger.error('Failed to register shortcuts:', error)
@@ -294,5 +351,12 @@ export function useGlobalAppShortcuts({
         })
       }
     }
-  }, [shortcutsJson, sceneShortcutsJson, sidebarShortcutsJson, isRecording])
+  }, [
+    shortcutsJson,
+    sceneShortcutsJson,
+    sidebarShortcutsJson,
+    pageShortcutsJson,
+    isRecording,
+    isFrontmost,
+  ])
 }

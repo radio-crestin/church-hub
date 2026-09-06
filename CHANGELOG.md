@@ -2,22 +2,36 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.95 — 2026-09-05
+
+### 🐛 Bug Fixes
+
+- **changelog**: keep release plumbing out of the version log
+- **app**: stop stealing focus, restore Marcaje → program, and keep song-list preferences
+
+## v0.1.94 — 2026-08-23
+
+### 🐛 Bug Fixes
+
+- **presentation**: keep the keyboard live after Present, and make page shortcuts mean their page
+
+## v0.1.93 — 2026-08-23
+
+### 🐛 Bug Fixes
+
+- **app-update**: install behind a native progress window and bring the app back
+
 ## v0.1.92 — 2026-08-23
 
 ### 🚀 Features
 
 - **songs**: search finds a word in every spelling, title first, and the updates page shows a release-notes card with honest download errors
 
-### 🔧 Changes
-
-- sync version to v0.1.91 [skip ci]
-
 ## v0.1.91 — 2026-08-23
 
 ### 🔧 Changes
 
 - presentation, songs, screens: multi-monitor placement, per-slide styling, stage navigation fixes
-- sync version to v0.1.90 [skip ci]
 
 ## v0.1.90 — 2026-08-01
 
@@ -28,11 +42,6 @@
 ### 🐛 Bug Fixes
 
 - **ci**: stop sync-version-back from moving main's version backwards
-
-### 🔧 Changes
-
-- sync version to v0.1.89 [skip ci]
-- sync version to v0.1.88 [skip ci]
 
 ## v0.1.89 — 2026-08-01
 
@@ -47,10 +56,6 @@
 ### 🚀 Features
 
 - **app-update**: a real updates page instead of a pop-up and a link to GitHub
-
-### 🔧 Changes
-
-- sync version to v0.1.87 [skip ci]
 
 ## v0.1.87 — 2026-08-01
 
@@ -89,7 +94,6 @@
 ### 🔧 Changes
 
 - **schedules**: one large add-item modal with a virtualized song search
-- sync version to v0.1.85 [skip ci]
 
 ## v0.1.85 — 2026-07-22
 
@@ -99,7 +103,6 @@
 
 ### 🔧 Changes
 
-- sync version to v0.1.84 [skip ci]
 - **bible**: remove unused bookName prop from VersesList
 
 ## v0.1.84 — 2026-07-19
@@ -107,7 +110,6 @@
 ### 🔧 Changes
 
 - real-time Google Drive library sync, last-slide layout parity, first-run layout defaults
-- sync version to v0.1.83 [skip ci]
 
 ## v0.1.83 — 2026-07-16
 
@@ -118,7 +120,6 @@
 ### 🔧 Changes
 
 - configurable retention, Drive storage quota + warning, and backup contents inspection
-- sync version to v0.1.82 [skip ci]
 
 ## v0.1.82 — 2026-07-12
 
@@ -129,28 +130,24 @@
 ### 🔧 Changes
 
 - sung markers, bookmark filter, slide notes + Drive OAuth via worker
-- sync version to v0.1.81 [skip ci]
 
 ## v0.1.81 — 2026-07-12
 
 ### 🔧 Changes
 
 - Google Drive database backup & restore (+ song-editor fixes, release wiring)
-- sync version to v0.1.80 [skip ci]
 
 ## v0.1.80 — 2026-07-08
 
 ### 🔧 Changes
 
 - PowerPoint-style stage editing on the song page
-- sync version to v0.1.79 [skip ci]
 
 ## v0.1.79 — 2026-06-18
 
 ### 🔧 Changes
 
 - Preview mode — stage slides before projecting
-- sync version to v0.1.78 [skip ci]
 
 ## v0.1.78 — 2026-06-14
 
@@ -161,10 +158,6 @@
 ### 🐛 Bug Fixes
 
 - **e2e**: update discovery heading selector after screen rename
-
-### 🔧 Changes
-
-- sync version to v0.1.77 [skip ci]
 
 ## v0.1.77 — 2026-06-11
 

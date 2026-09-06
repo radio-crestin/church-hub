@@ -1,15 +1,17 @@
-import { Keyboard, Plus } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Keyboard } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getDefaultSidebarItemSettings } from '~/features/sidebar-config/constants'
 import { useSidebarConfig } from '~/features/sidebar-config/hooks/useSidebarConfig'
-import type {
-  BuiltInMenuItem,
-  BuiltInMenuItemId,
-  SidebarItemSettings,
+import {
+  type BuiltInMenuItem,
+  type BuiltInMenuItemId,
+  PAGE_SHORTCUT_ACTIONS,
+  type PageShortcutAction,
+  type SidebarItemSettings,
 } from '~/features/sidebar-config/types'
-import { ShortcutRecorder } from './ShortcutRecorder'
+import { ShortcutListSection } from './ShortcutListSection'
 import { useAppShortcuts } from '../hooks'
 import type { GlobalShortcutActionId } from '../types'
 import { VALID_ACTION_IDS } from '../utils'
@@ -19,28 +21,46 @@ interface PageShortcutsSettingsProps {
   pageId: BuiltInMenuItemId
   /** Render the internal "Keyboard Shortcuts" heading (default true). */
   showHeading?: boolean
-  /** Include the global "Display Selected Slide" section (default true). */
-  includeShowSlide?: boolean
 }
 
+type PageShortcutLists = Record<PageShortcutAction, string[]>
+
+/** The shortcut-bearing part of a page's settings, comparable as a string. */
+function snapshotOf(settings: SidebarItemSettings): string {
+  return JSON.stringify({
+    shortcuts: settings.shortcuts,
+    focusSearchShortcuts: settings.focusSearchShortcuts ?? [],
+    pageShortcuts: {
+      showSlide: settings.pageShortcuts?.showSlide ?? [],
+      nextSlide: settings.pageShortcuts?.nextSlide ?? [],
+      prevSlide: settings.pageShortcuts?.prevSlide ?? [],
+    },
+  })
+}
+
+const emptyPageLists = (): PageShortcutLists => ({
+  showSlide: [],
+  nextSlide: [],
+  prevSlide: [],
+})
+
 /**
- * Granular shortcut settings for a page (switch, focus search, display slide).
+ * Shortcut settings for one page: switch to it, focus its search, and its own
+ * presentation keys (show the selected slide/verse, next, previous) — which
+ * work only while that page is open, so two pages may bind the same key.
  * Hosted in the consolidated Shortcuts settings page.
  */
 export function PageShortcutsSettings({
   pageId,
   showHeading = true,
-  includeShowSlide = true,
 }: PageShortcutsSettingsProps) {
   const { t } = useTranslation('settings')
   const { config, updateConfig } = useSidebarConfig()
-  const { shortcuts: globalShortcuts, updateActionShortcuts } =
-    useAppShortcuts()
+  const { shortcuts: globalShortcuts } = useAppShortcuts()
 
-  // Local state for the three shortcut types
   const [switchShortcuts, setSwitchShortcuts] = useState<string[]>([])
   const [focusSearchShortcuts, setFocusSearchShortcuts] = useState<string[]>([])
-  const [showSlideShortcuts, setShowSlideShortcuts] = useState<string[]>([])
+  const [pageLists, setPageLists] = useState<PageShortcutLists>(emptyPageLists)
 
   // Find the sidebar item for this page
   const sidebarItem = useMemo(() => {
@@ -52,11 +72,17 @@ export function PageShortcutsSettings({
     )
   }, [config, pageId])
 
-  // Load initial values from config
+  // What this component last wrote. Its own save comes straight back through
+  // the config — without empty rows, which are only ever local — and must not
+  // wipe the row the operator is about to record into.
+  const lastSavedRef = useRef<string | null>(null)
+
+  // Load values from config (initially, and whenever it changes elsewhere)
   useEffect(() => {
     if (!sidebarItem) return
     const settings =
       sidebarItem.settings ?? getDefaultSidebarItemSettings(pageId)
+    if (lastSavedRef.current === snapshotOf(settings)) return
 
     setSwitchShortcuts([...settings.shortcuts])
     // Migrate legacy: if focusSearchOnNavigate was true and no focusSearchShortcuts,
@@ -70,23 +96,36 @@ export function PageShortcutsSettings({
     } else {
       setFocusSearchShortcuts([...(settings.focusSearchShortcuts ?? [])])
     }
+    const lists = emptyPageLists()
+    for (const action of PAGE_SHORTCUT_ACTIONS) {
+      lists[action] = [...(settings.pageShortcuts?.[action] ?? [])]
+    }
+    setPageLists(lists)
+  }, [sidebarItem, pageId])
 
-    // Load showSlide shortcuts from global config
-    const showSlideConfig = globalShortcuts.actions.showSlide
-    setShowSlideShortcuts([...(showSlideConfig?.shortcuts ?? [])])
-  }, [sidebarItem, pageId, globalShortcuts.actions.showSlide])
+  const clean = (list: string[]) => list.filter((s) => s.trim())
 
-  // Save sidebar item shortcuts (switch + focus search)
-  const saveSidebarShortcuts = useCallback(
-    (newSwitch: string[], newFocusSearch: string[]) => {
+  // Persist everything this page owns in one go.
+  const save = useCallback(
+    (
+      nextSwitch: string[],
+      nextFocusSearch: string[],
+      nextPageLists: PageShortcutLists,
+    ) => {
       if (!config || !sidebarItem) return
 
       const settings: SidebarItemSettings = {
         ...(sidebarItem.settings ?? getDefaultSidebarItemSettings(pageId)),
-        shortcuts: newSwitch.filter((s) => s.trim()),
+        shortcuts: clean(nextSwitch),
         focusSearchOnNavigate: false,
-        focusSearchShortcuts: newFocusSearch.filter((s) => s.trim()),
+        focusSearchShortcuts: clean(nextFocusSearch),
+        pageShortcuts: {
+          showSlide: clean(nextPageLists.showSlide),
+          nextSlide: clean(nextPageLists.nextSlide),
+          prevSlide: clean(nextPageLists.prevSlide),
+        },
       }
+      lastSavedRef.current = snapshotOf(settings)
 
       const updatedItems = config.items.map((item) =>
         item.id === sidebarItem.id ? { ...item, settings } : item,
@@ -97,16 +136,46 @@ export function PageShortcutsSettings({
     [config, sidebarItem, pageId, updateConfig],
   )
 
-  // Validate shortcut for conflicts
+  const handleSwitchChange = useCallback(
+    (next: string[]) => {
+      setSwitchShortcuts(next)
+      save(next, focusSearchShortcuts, pageLists)
+    },
+    [save, focusSearchShortcuts, pageLists],
+  )
+
+  const handleFocusSearchChange = useCallback(
+    (next: string[]) => {
+      setFocusSearchShortcuts(next)
+      save(switchShortcuts, next, pageLists)
+    },
+    [save, switchShortcuts, pageLists],
+  )
+
+  const handlePageListChange = useCallback(
+    (action: PageShortcutAction, next: string[]) => {
+      const nextLists = { ...pageLists, [action]: next }
+      setPageLists(nextLists)
+      save(switchShortcuts, focusSearchShortcuts, nextLists)
+    },
+    [save, switchShortcuts, focusSearchShortcuts, pageLists],
+  )
+
+  /**
+   * A key may not be bound twice on this page, nor clash with a global
+   * action (which fires everywhere and would win). It MAY be the same key
+   * another page uses for its own actions — which page is open decides.
+   * Switching to the page and focusing its search are allowed to share a key.
+   */
   const getShortcutError = useCallback(
     (
       shortcut: string,
       index: number,
       sourceList: string[],
+      sourceName: 'switch' | 'focusSearch' | PageShortcutAction,
     ): string | undefined => {
       if (!shortcut) return undefined
 
-      // Check for duplicates within the same list
       const duplicateIndex = sourceList.findIndex(
         (s, i) => i !== index && s === shortcut,
       )
@@ -114,233 +183,112 @@ export function PageShortcutsSettings({
         return t('sections.sidebarItem.shortcuts.duplicateError')
       }
 
-      // Check against global shortcuts (skip showSlide since it's displayed separately)
+      const otherLists: Array<
+        ['switch' | 'focusSearch' | PageShortcutAction, string[]]
+      > = [
+        ['switch', switchShortcuts],
+        ['focusSearch', focusSearchShortcuts],
+        ...PAGE_SHORTCUT_ACTIONS.map(
+          (action) =>
+            [action, pageLists[action]] as [PageShortcutAction, string[]],
+        ),
+      ]
+      const navigation = new Set(['switch', 'focusSearch'])
+      for (const [name, list] of otherLists) {
+        if (name === sourceName) continue
+        if (navigation.has(name) && navigation.has(sourceName)) continue
+        if (list.includes(shortcut)) {
+          return t('sections.sidebarItem.shortcuts.duplicateError')
+        }
+      }
+
       for (const [actionId, actionConfig] of Object.entries(
         globalShortcuts.actions,
       )) {
         if (!VALID_ACTION_IDS.includes(actionId as GlobalShortcutActionId))
           continue
-        if (actionId === 'showSlide') continue // Allow since we show it here
         if (actionConfig.shortcuts.includes(shortcut)) {
           return t('sections.sidebarItem.shortcuts.conflictGlobal', {
-            action: actionId,
+            action: t(`sections.shortcuts.actions.${actionId}.label`),
           })
         }
       }
 
       return undefined
     },
-    [globalShortcuts, t],
+    [switchShortcuts, focusSearchShortcuts, pageLists, globalShortcuts, t],
   )
 
-  // Switch shortcut handlers
-  const handleAddSwitch = useCallback(() => {
-    setSwitchShortcuts((prev) => [...prev, ''])
-  }, [])
-
-  const handleUpdateSwitch = useCallback(
-    (index: number, value: string) => {
-      setSwitchShortcuts((prev) => {
-        const updated = [...prev]
-        updated[index] = value
-        saveSidebarShortcuts(updated, focusSearchShortcuts)
-        return updated
-      })
-    },
-    [focusSearchShortcuts, saveSidebarShortcuts],
-  )
-
-  const handleRemoveSwitch = useCallback(
-    (index: number) => {
-      setSwitchShortcuts((prev) => {
-        const updated = prev.filter((_, i) => i !== index)
-        saveSidebarShortcuts(updated, focusSearchShortcuts)
-        return updated
-      })
-    },
-    [focusSearchShortcuts, saveSidebarShortcuts],
-  )
-
-  // Focus search shortcut handlers
-  const handleAddFocusSearch = useCallback(() => {
-    setFocusSearchShortcuts((prev) => [...prev, ''])
-  }, [])
-
-  const handleUpdateFocusSearch = useCallback(
-    (index: number, value: string) => {
-      setFocusSearchShortcuts((prev) => {
-        const updated = [...prev]
-        updated[index] = value
-        saveSidebarShortcuts(switchShortcuts, updated)
-        return updated
-      })
-    },
-    [switchShortcuts, saveSidebarShortcuts],
-  )
-
-  const handleRemoveFocusSearch = useCallback(
-    (index: number) => {
-      setFocusSearchShortcuts((prev) => {
-        const updated = prev.filter((_, i) => i !== index)
-        saveSidebarShortcuts(switchShortcuts, updated)
-        return updated
-      })
-    },
-    [switchShortcuts, saveSidebarShortcuts],
-  )
-
-  // Show slide shortcut handlers
-  const handleAddShowSlide = useCallback(() => {
-    setShowSlideShortcuts((prev) => [...prev, ''])
-  }, [])
-
-  const handleUpdateShowSlide = useCallback(
-    (index: number, value: string) => {
-      setShowSlideShortcuts((prev) => {
-        const updated = [...prev]
-        updated[index] = value
-        updateActionShortcuts('showSlide', {
-          shortcuts: updated.filter((s) => s.trim()),
-          enabled: true,
-        })
-        return updated
-      })
-    },
-    [updateActionShortcuts],
-  )
-
-  const handleRemoveShowSlide = useCallback(
-    (index: number) => {
-      setShowSlideShortcuts((prev) => {
-        const updated = prev.filter((_, i) => i !== index)
-        updateActionShortcuts('showSlide', {
-          shortcuts: updated.filter((s) => s.trim()),
-          enabled: true,
-        })
-        return updated
-      })
-    },
-    [updateActionShortcuts],
-  )
+  const pageLabel = (
+    action: PageShortcutAction,
+    field: 'title' | 'description',
+  ) =>
+    t(`sections.sidebarItem.shortcuts.page.${pageId}.${action}.${field}`, {
+      defaultValue: t(
+        `sections.sidebarItem.shortcuts.page.default.${action}.${field}`,
+      ),
+    })
 
   return (
     <div className="space-y-4">
       {showHeading && (
-        <div className="flex items-center gap-2 mb-2">
-          <Keyboard className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        <div className="mb-2 flex items-center gap-2">
+          <Keyboard className="h-5 w-5 text-gray-600 dark:text-gray-400" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('sections.sidebarItem.shortcuts.title')}
           </h3>
         </div>
       )}
 
-      {/* Switch to Page Shortcuts */}
-      <div className="space-y-2">
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-            {t('sections.sidebarItem.shortcuts.switchTitle')}
-          </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {t('sections.sidebarItem.shortcuts.switchDescription')}
-          </p>
-        </div>
+      <ShortcutListSection
+        title={t('sections.sidebarItem.shortcuts.switchTitle')}
+        description={t('sections.sidebarItem.shortcuts.switchDescription')}
+        shortcuts={switchShortcuts}
+        onChange={handleSwitchChange}
+        getError={(s, i, list) => getShortcutError(s, i, list, 'switch')}
+        testId={`page-shortcuts-${pageId}-switch`}
+      />
 
-        <div className="space-y-2">
-          {switchShortcuts.map((shortcut, index) => (
-            <ShortcutRecorder
-              key={`switch-${index}`}
-              value={shortcut}
-              onChange={(value) => handleUpdateSwitch(index, value)}
-              onRemove={() => handleRemoveSwitch(index)}
-              error={getShortcutError(shortcut, index, switchShortcuts)}
-              namespace="settings"
-            />
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleAddSwitch}
-          className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
-        >
-          <Plus size={16} />
-          {t('sections.shortcuts.addShortcut')}
-        </button>
+      <div className="border-gray-200 border-t pt-2 dark:border-gray-700">
+        <ShortcutListSection
+          title={t('sections.sidebarItem.shortcuts.focusSearchTitle')}
+          description={t(
+            'sections.sidebarItem.shortcuts.focusSearchDescription',
+          )}
+          shortcuts={focusSearchShortcuts}
+          onChange={handleFocusSearchChange}
+          getError={(s, i, list) => getShortcutError(s, i, list, 'focusSearch')}
+          testId={`page-shortcuts-${pageId}-focus-search`}
+        />
       </div>
 
-      {/* Focus Search Shortcuts */}
-      <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-            {t('sections.sidebarItem.shortcuts.focusSearchTitle')}
-          </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {t('sections.sidebarItem.shortcuts.focusSearchDescription')}
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          {focusSearchShortcuts.map((shortcut, index) => (
-            <ShortcutRecorder
-              key={`focus-${index}`}
-              value={shortcut}
-              onChange={(value) => handleUpdateFocusSearch(index, value)}
-              onRemove={() => handleRemoveFocusSearch(index)}
-              error={getShortcutError(shortcut, index, focusSearchShortcuts)}
-              namespace="settings"
-            />
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={handleAddFocusSearch}
-          className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
-        >
-          <Plus size={16} />
-          {t('sections.shortcuts.addShortcut')}
-        </button>
-      </div>
-
-      {/* Display Selected Slide Shortcuts */}
-      {includeShowSlide && (
-        <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <div>
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('sections.sidebarItem.shortcuts.showSlideTitle')}
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              {t('sections.sidebarItem.shortcuts.showSlideDescription')}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {showSlideShortcuts.map((shortcut, index) => (
-              <ShortcutRecorder
-                key={`show-${index}`}
-                value={shortcut}
-                onChange={(value) => handleUpdateShowSlide(index, value)}
-                onRemove={() => handleRemoveShowSlide(index)}
-                error={getShortcutError(shortcut, index, showSlideShortcuts)}
-                namespace="settings"
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleAddShowSlide}
-            className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
-          >
-            <Plus size={16} />
-            {t('sections.shortcuts.addShortcut')}
-          </button>
-        </div>
-      )}
-
-      <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+      <p className="text-gray-400 text-xs italic dark:text-gray-500">
         {t('sections.sidebarItem.shortcuts.sameShortcutHint')}
       </p>
+
+      {/* Presentation keys that only work while this page is open */}
+      <div className="space-y-4 border-gray-200 border-t pt-3 dark:border-gray-700">
+        <div>
+          <h4 className="font-semibold text-gray-900 text-sm dark:text-white">
+            {t('sections.sidebarItem.shortcuts.page.title')}
+          </h4>
+          <p className="mt-0.5 text-gray-500 text-xs dark:text-gray-400">
+            {t('sections.sidebarItem.shortcuts.page.description')}
+          </p>
+        </div>
+        {PAGE_SHORTCUT_ACTIONS.map((action) => (
+          <ShortcutListSection
+            key={action}
+            title={pageLabel(action, 'title')}
+            description={pageLabel(action, 'description')}
+            shortcuts={pageLists[action]}
+            onChange={(next) => handlePageListChange(action, next)}
+            getError={(s, i, list) => getShortcutError(s, i, list, action)}
+            allowMidi={false}
+            testId={`page-shortcuts-${pageId}-${action}`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
