@@ -6,8 +6,8 @@ import {
   ChevronsUpDown,
   Download,
   FileText,
-  GripVertical,
   Loader2,
+  MoreHorizontal,
   Pencil,
   Trash2,
   Upload,
@@ -16,19 +16,8 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useOBSScenes } from '~/features/livestream/hooks/useOBSScenes'
 import { clearSectionLastVisited } from '~/features/navigation'
-import {
-  type ContentType,
-  useClearTemporaryContent,
-  usePresentationState,
-  usePresentTemporaryAnnouncement,
-  usePresentTemporaryBiblePassage,
-  usePresentTemporaryScene,
-  usePresentTemporarySong,
-  usePresentTemporaryVerseteTineri,
-  useWebSocket,
-} from '~/features/presentation'
+import { useClearTemporaryContent, useWebSocket } from '~/features/presentation'
 import {
   type ChurchProgramData,
   type ScheduleExportFormat,
@@ -43,11 +32,10 @@ import {
 } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { getSongById } from '~/features/songs/service'
-import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
-import { useDividerPosition } from '~/hooks/useDividerPosition'
-import { DIVIDER_KEYS } from '~/service/layout'
+import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
+import { useEditLayoutAction, Workspace } from '~/features/workspace'
+import { ActionMenu } from '~/ui/menu'
 import { useToast } from '~/ui/toast'
-import { createLogger } from '~/utils/logger'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
@@ -58,14 +46,26 @@ import { SchedulePreviewPanel } from './SchedulePreviewPanel'
 import {
   useAddItemToSchedule,
   useDeleteSchedule,
+  useMarkScheduleItemSung,
   useReorderScheduleItems,
   useSchedule,
+  useScheduleFlatNavigation,
   useScheduleKeyboardShortcuts,
   useUpsertSchedule,
 } from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
-const logger = createLogger('schedules:presenter')
+/**
+ * A program opens as the item list beside the live preview. Dragging the
+ * preview onto the list's bottom edge stacks them instead — whichever suits
+ * the operator's screen.
+ */
+const SCHEDULE_WORKSPACE_LAYOUT: WorkspaceLayout = {
+  columns: [
+    { id: 'col-1', panelIds: ['items'] },
+    { id: 'col-2', panelIds: ['preview'] },
+  ],
+}
 
 interface SchedulePresenterProps {
   scheduleId: number
@@ -82,6 +82,8 @@ export function SchedulePresenter({
   urlItemIndex,
 }: SchedulePresenterProps) {
   const { t } = useTranslation('schedules')
+  const { t: tCommon } = useTranslation('common')
+  const editLayoutAction = useEditLayoutAction('schedule-presenter')
   const { showToast } = useToast()
   const navigate = useNavigate()
 
@@ -110,30 +112,18 @@ export function SchedulePresenter({
     clearSectionLastVisited('schedules')
     onBack()
   }, [onBack])
-  const { data: presentationState } = usePresentationState()
-  const presentTemporarySong = usePresentTemporarySong()
-  const presentTemporaryBiblePassage = usePresentTemporaryBiblePassage()
-  const presentTemporaryVerseteTineri = usePresentTemporaryVerseteTineri()
-  const presentTemporaryAnnouncement = usePresentTemporaryAnnouncement()
-  const presentTemporaryScene = usePresentTemporaryScene()
   const clearTemporary = useClearTemporaryContent()
-  const { switchSceneAsync } = useOBSScenes()
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
   const { loadSchedule, isPending: isLoadingFile } = useLoadScheduleFromFile()
   const { importItems, isPending: isImporting } = useImportScheduleItems()
   const upsertSchedule = useUpsertSchedule()
   const deleteSchedule = useDeleteSchedule()
   const reorderItems = useReorderScheduleItems()
+  const markSung = useMarkScheduleItemSung()
   const addItemMutation = useAddItemToSchedule()
 
   // Layout state
-  const [dividerPosition, setDividerPosition] = useDividerPosition(
-    DIVIDER_KEYS.scheduleList,
-    40,
-  )
   const [isLargeScreen, setIsLargeScreen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const isDragging = useRef(false)
 
   // URL sync tracking - prevents loops when URL changes
   const lastUrlItemIndexRef = useRef<number | undefined>(undefined)
@@ -214,214 +204,43 @@ export function SchedulePresenter({
   // Get all schedule items
   const items = useMemo(() => schedule?.items ?? [], [schedule?.items])
 
-  // Helper to calculate next item preview for a given schedule item
-  const getNextItemPreview = useCallback(
-    (
-      currentItem: ScheduleItem,
-    ):
-      | {
-          contentType: ContentType
-          preview: string
-          label?: string
-          title?: string
-        }
-      | undefined => {
-      const currentIndex = items.findIndex((i) => i.id === currentItem.id)
-      if (currentIndex === -1 || currentIndex >= items.length - 1) {
-        return undefined
-      }
-
-      const nextItem = items[currentIndex + 1]
-
-      if (nextItem.itemType === 'song') {
-        const expandedSlides = expandSongSlidesWithChoruses(nextItem.slides)
-        const firstSlide = expandedSlides[0]
-        if (!firstSlide) return undefined
-        // Strip HTML tags and preserve line breaks
-        const preview = firstSlide.content
-          .replace(/<br\s*\/?>/gi, '\n')
-          .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-          .replace(/<\/(p|div|h[1-6])>/gi, '\n')
-          .replace(/<[^>]*>/g, '')
-          .replace(/\n{3,}/g, '\n\n')
-          .trim()
-        return {
-          contentType: 'song',
-          preview,
-          label: 'Cântare',
-          title: nextItem.songTitle || '',
-        }
-      }
-
-      if (nextItem.itemType === 'bible_passage') {
-        const firstVerse = nextItem.biblePassageVerses[0]
-        const lastVerse =
-          nextItem.biblePassageVerses[nextItem.biblePassageVerses.length - 1]
-        if (!firstVerse) return undefined
-        // Build reference range (e.g., "Matei 5:1-12" or "Ioan 3:16")
-        const startRef = firstVerse.reference
-        const endRef = lastVerse?.reference
-        const reference =
-          startRef === endRef || !endRef
-            ? startRef
-            : `${startRef} - ${endRef.split(' ').pop()}`
-        return {
-          contentType: 'bible_passage',
-          preview: reference,
-          label: 'Pasaj Biblic',
-        }
-      }
-
-      if (nextItem.itemType === 'slide') {
-        if (nextItem.slideType === 'versete_tineri') {
-          // Format: names with references in parentheses, separated by commas
-          const entries = nextItem.verseteTineriEntries
-          if (entries.length === 0) return undefined
-          const preview = entries
-            .map((e) => `${e.personName} (${e.reference})`)
-            .join(', ')
-          return {
-            contentType: 'versete_tineri',
-            preview,
-            label: 'Versete Tineri',
-          }
-        }
-        if (nextItem.slideType === 'announcement') {
-          // Strip HTML tags for announcement preview
-          const preview = (nextItem.slideContent || '')
-            .replace(/<br\s*\/?>/gi, '\n')
-            .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-            .replace(/<\/(p|div|h[1-6])>/gi, '\n')
-            .replace(/<[^>]*>/g, '')
-            .replace(/\n{3,}/g, '\n\n')
-            .trim()
-          return {
-            contentType: 'announcement',
-            preview,
-            label: 'Anunț',
-          }
-        }
-      }
-
-      return undefined
+  // URL sync — the program page deep-links a step through ?itemIndex=. The nav
+  // hook hands us the step that is about to go live so the URL can follow it.
+  const handleBeforeNavigate = useCallback(
+    (flatIndex: number) => {
+      isInternalNavigationRef.current = true
+      lastUrlItemIndexRef.current = flatIndex
+      navigate({
+        to: '/schedules/$scheduleId',
+        params: { scheduleId: String(scheduleId) },
+        search: { itemIndex: flatIndex },
+        replace: true,
+      })
     },
-    [items],
+    [navigate, scheduleId],
   )
 
-  // Calculate flattened list of presentable items for navigation
-  const flatItems = useMemo(() => {
-    const result: Array<{
-      item: ScheduleItem
-      type: 'slide' | 'verse' | 'entry' | 'announcement' | 'scene'
-      index: number
-    }> = []
+  const {
+    flatItems,
+    currentFlatIndex,
+    canNavigatePrev,
+    canNavigateNext,
+    presentSongSlide,
+    presentPassageVerse,
+    presentVerseteEntry,
+    presentAnnouncement,
+    presentScene,
+    presentFlatIndex,
+    goNext,
+    goPrev,
+  } = useScheduleFlatNavigation({
+    scheduleId,
+    items,
+    onBeforeNavigate: handleBeforeNavigate,
+  })
 
-    items.forEach((item) => {
-      if (item.itemType === 'song') {
-        const expandedSlides = expandSongSlidesWithChoruses(item.slides)
-        expandedSlides.forEach((_, idx) => {
-          result.push({ item, type: 'slide', index: idx })
-        })
-      } else if (item.itemType === 'bible_passage') {
-        item.biblePassageVerses.forEach((_, idx) => {
-          result.push({ item, type: 'verse', index: idx })
-        })
-      } else if (item.itemType === 'slide') {
-        if (item.slideType === 'versete_tineri') {
-          item.verseteTineriEntries.forEach((_, idx) => {
-            result.push({ item, type: 'entry', index: idx })
-          })
-        } else if (item.slideType === 'scene') {
-          result.push({ item, type: 'scene', index: 0 })
-        } else {
-          result.push({ item, type: 'announcement', index: 0 })
-        }
-      }
-    })
-
-    return result
-  }, [items])
-
-  // Get current presentation info - includes scheduleItemIndex for accurate matching
-  const presentedInfo = useMemo(() => {
-    const temp = presentationState?.temporaryContent
-    if (!temp) return null
-
-    // Extract scheduleItemIndex from all content types (it's stored in the presentation state)
-    const scheduleItemIndex = temp.data.scheduleItemIndex ?? -1
-
-    if (temp.type === 'song') {
-      return {
-        type: 'song' as const,
-        songId: temp.data.songId,
-        slideIndex: temp.data.currentSlideIndex,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'bible_passage') {
-      return {
-        type: 'bible_passage' as const,
-        currentVerseIndex: temp.data.currentVerseIndex,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'versete_tineri') {
-      return {
-        type: 'versete_tineri' as const,
-        currentEntryIndex: temp.data.currentEntryIndex,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'announcement') {
-      return {
-        type: 'announcement' as const,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'scene') {
-      return {
-        type: 'scene' as const,
-        obsSceneName: temp.data.obsSceneName,
-        scheduleItemIndex,
-      }
-    }
-
-    return null
-  }, [presentationState?.temporaryContent])
-
-  // Find current position in flat list - use scheduleItemIndex directly for accurate matching
-  const currentFlatIndex = useMemo(() => {
-    if (!presentedInfo) return -1
-    // scheduleItemIndex is the exact position in flatItems, works for all content types
-    return presentedInfo.scheduleItemIndex
-  }, [presentedInfo])
-
-  const canNavigatePrev = currentFlatIndex > 0
-  // Can navigate next if there are more slides, OR if we're on the last slide with content (to hide)
-  const isOnLastSlide =
-    currentFlatIndex >= 0 && currentFlatIndex === flatItems.length - 1
-  const hasContent = !!presentationState?.temporaryContent
-  const canNavigateNext =
-    (currentFlatIndex >= 0 && currentFlatIndex < flatItems.length - 1) ||
-    (isOnLastSlide && hasContent)
-
-  // Helper to find flat item index for a given item and its sub-index
-  const getFlatItemIndex = useCallback(
-    (item: ScheduleItem, subIndex: number): number => {
-      return flatItems.findIndex(
-        (fi) => fi.item.id === item.id && fi.index === subIndex,
-      )
-    },
-    [flatItems],
-  )
-
-  // URL sync effect - navigate to item when URL changes externally
+  // Someone arrived on (or navigated to) a ?itemIndex= URL — put that step up.
   useEffect(() => {
-    // Skip if URL hasn't changed or it's from internal navigation
     if (
       urlItemIndex === lastUrlItemIndexRef.current ||
       isInternalNavigationRef.current
@@ -432,49 +251,10 @@ export function SchedulePresenter({
 
     lastUrlItemIndexRef.current = urlItemIndex
 
-    // If we have a valid URL item index, navigate to it
     if (urlItemIndex !== undefined && flatItems.length > 0) {
-      const targetItem = flatItems[urlItemIndex]
-      if (targetItem) {
-        // Navigate to this item (the navigateToFlatItem will be defined below)
-        // We need to call the appropriate handler based on item type
-        const { item, index } = targetItem
-        if (item.itemType === 'song' && item.songId) {
-          const nextItemPreview = getNextItemPreview(item)
-          presentTemporarySong.mutate({
-            songId: item.songId,
-            slideIndex: index,
-            nextItemPreview,
-            scheduleId,
-            scheduleItemIndex: urlItemIndex,
-          })
-        } else if (item.itemType === 'bible_passage') {
-          // Bible passage navigation is handled differently, trigger a re-render
-          // by setting the item directly - this will be handled in handleVerseClick
-        } else if (
-          item.itemType === 'slide' &&
-          item.slideType === 'announcement'
-        ) {
-          const nextItemPreview = getNextItemPreview(item)
-          presentTemporaryAnnouncement.mutate({
-            content: item.slideContent || '',
-            nextItemPreview,
-            scheduleId,
-            scheduleItemIndex: urlItemIndex,
-          })
-        }
-        // Note: For bible_passage, versete_tineri, and scene, the existing
-        // handlers will be called through item click events
-      }
+      void presentFlatIndex(urlItemIndex)
     }
-  }, [
-    urlItemIndex,
-    flatItems,
-    scheduleId,
-    getNextItemPreview,
-    presentTemporarySong,
-    presentTemporaryAnnouncement,
-  ])
+  }, [urlItemIndex, flatItems.length, presentFlatIndex])
 
   // Title editing handlers
   const handleStartEditTitle = useCallback(() => {
@@ -527,374 +307,15 @@ export function SchedulePresenter({
     [handleSaveTitle, handleCancelEditTitle],
   )
 
-  // Handle slide click from items panel
-  const handleSlideClick = useCallback(
-    async (item: ScheduleItem, slideIndex: number) => {
-      if (item.itemType === 'song' && item.songId) {
-        // Calculate next item preview (for displaying when at last slide)
-        const nextItemPreview = getNextItemPreview(item)
-        const flatIndex = getFlatItemIndex(item, slideIndex)
-
-        // Mark as internal navigation to prevent URL sync loop
-        isInternalNavigationRef.current = true
-        lastUrlItemIndexRef.current = flatIndex
-
-        // Update URL with current item index
-        navigate({
-          to: '/schedules/$scheduleId',
-          params: { scheduleId: String(scheduleId) },
-          search: { itemIndex: flatIndex },
-          replace: true,
-        })
-
-        await presentTemporarySong.mutateAsync({
-          songId: item.songId,
-          slideIndex,
-          nextItemPreview,
-          scheduleId,
-          scheduleItemIndex: flatIndex,
-        })
-      }
-    },
-    [
-      presentTemporarySong,
-      getNextItemPreview,
-      getFlatItemIndex,
-      scheduleId,
-      navigate,
-    ],
-  )
-
-  // Handle verse click (bible passage)
-  const handleVerseClick = useCallback(
-    async (item: ScheduleItem, verseIndex: number) => {
-      if (
-        item.itemType !== 'bible_passage' ||
-        !item.biblePassageVerses.length
-      ) {
-        return
-      }
-
-      // Parse reference to extract chapter and verse info
-      // Reference format: "BookName Chapter:Verse" e.g. "Genesis 1:1" or "Matei 5:3"
-      const parseReference = (ref: string) => {
-        const match = ref.match(/(.+?)\s+(\d+):(\d+)/)
-        if (match) {
-          return {
-            bookName: match[1],
-            chapter: Number.parseInt(match[2], 10),
-            verse: Number.parseInt(match[3], 10),
-          }
-        }
-        return { bookName: '', chapter: 1, verse: 1 }
-      }
-
-      const firstVerse = item.biblePassageVerses[0]
-      const lastVerse =
-        item.biblePassageVerses[item.biblePassageVerses.length - 1]
-      const parsedFirst = parseReference(firstVerse.reference)
-      const parsedLast = parseReference(lastVerse.reference)
-
-      // Transform verses to presentation format
-      const verses = item.biblePassageVerses.map((v) => {
-        const parsed = parseReference(v.reference)
-        return {
-          verseId: v.verseId,
-          verse: parsed.verse,
-          text: v.text,
-        }
-      })
-
-      // Calculate next item preview (for displaying when at last verse)
-      const nextItemPreview = getNextItemPreview(item)
-      const flatIndex = getFlatItemIndex(item, verseIndex)
-
-      // Mark as internal navigation to prevent URL sync loop
-      isInternalNavigationRef.current = true
-      lastUrlItemIndexRef.current = flatIndex
-
-      // Update URL with current item index
-      navigate({
-        to: '/schedules/$scheduleId',
-        params: { scheduleId: String(scheduleId) },
-        search: { itemIndex: flatIndex },
-        replace: true,
-      })
-
-      await presentTemporaryBiblePassage.mutateAsync({
-        translationId: 0, // Not stored in schedule, use 0
-        translationAbbreviation: item.biblePassageTranslation || '',
-        bookCode: '', // Not stored in schedule
-        bookName: parsedFirst.bookName,
-        startChapter: parsedFirst.chapter,
-        startVerse: parsedFirst.verse,
-        endChapter: parsedLast.chapter,
-        endVerse: parsedLast.verse,
-        verses,
-        currentVerseIndex: verseIndex,
-        nextItemPreview,
-        scheduleId,
-        scheduleItemIndex: flatIndex,
-      })
-    },
-    [
-      presentTemporaryBiblePassage,
-      getNextItemPreview,
-      getFlatItemIndex,
-      scheduleId,
-      navigate,
-    ],
-  )
-
-  // Handle entry click (versete tineri)
-  const handleEntryClick = useCallback(
-    async (item: ScheduleItem, entryIndex: number) => {
-      if (
-        item.itemType !== 'slide' ||
-        item.slideType !== 'versete_tineri' ||
-        !item.verseteTineriEntries.length
-      ) {
-        return
-      }
-
-      // Transform entries to presentation format
-      const entries = item.verseteTineriEntries.map((e) => ({
-        id: e.id,
-        personName: e.personName,
-        reference: e.reference,
-        bookCode: e.bookCode,
-        bookName: e.bookName,
-        startChapter: e.startChapter,
-        startVerse: e.startVerse,
-        endChapter: e.endChapter,
-        endVerse: e.endVerse,
-        text: e.text,
-        sortOrder: e.sortOrder,
-      }))
-
-      // Calculate next item preview (for displaying when at last entry)
-      const nextItemPreview = getNextItemPreview(item)
-      const flatIndex = getFlatItemIndex(item, entryIndex)
-
-      // Mark as internal navigation to prevent URL sync loop
-      isInternalNavigationRef.current = true
-      lastUrlItemIndexRef.current = flatIndex
-
-      // Update URL with current item index
-      navigate({
-        to: '/schedules/$scheduleId',
-        params: { scheduleId: String(scheduleId) },
-        search: { itemIndex: flatIndex },
-        replace: true,
-      })
-
-      await presentTemporaryVerseteTineri.mutateAsync({
-        entries,
-        currentEntryIndex: entryIndex,
-        nextItemPreview,
-        scheduleId,
-        scheduleItemIndex: flatIndex,
-      })
-    },
-    [
-      presentTemporaryVerseteTineri,
-      getNextItemPreview,
-      getFlatItemIndex,
-      scheduleId,
-      navigate,
-    ],
-  )
-
-  // Handle announcement click
-  const handleAnnouncementClick = useCallback(
-    async (item: ScheduleItem) => {
-      if (
-        item.itemType !== 'slide' ||
-        item.slideType !== 'announcement' ||
-        !item.slideContent
-      ) {
-        return
-      }
-
-      // Calculate next item preview
-      const nextItemPreview = getNextItemPreview(item)
-      const flatIndex = getFlatItemIndex(item, 0)
-
-      // Mark as internal navigation to prevent URL sync loop
-      isInternalNavigationRef.current = true
-      lastUrlItemIndexRef.current = flatIndex
-
-      // Update URL with current item index
-      navigate({
-        to: '/schedules/$scheduleId',
-        params: { scheduleId: String(scheduleId) },
-        search: { itemIndex: flatIndex },
-        replace: true,
-      })
-
-      await presentTemporaryAnnouncement.mutateAsync({
-        content: item.slideContent,
-        nextItemPreview,
-        scheduleId,
-        scheduleItemIndex: flatIndex,
-      })
-    },
-    [
-      presentTemporaryAnnouncement,
-      getNextItemPreview,
-      getFlatItemIndex,
-      scheduleId,
-      navigate,
-    ],
-  )
-
-  // Handle scene click (OBS scene switch)
-  const handleSceneClick = useCallback(
-    async (item: ScheduleItem) => {
-      if (
-        item.itemType !== 'slide' ||
-        item.slideType !== 'scene' ||
-        !item.obsSceneName
-      ) {
-        return
-      }
-
-      // Calculate next item preview
-      const nextItemPreview = getNextItemPreview(item)
-      const flatIndex = getFlatItemIndex(item, 0)
-
-      // Mark as internal navigation to prevent URL sync loop
-      isInternalNavigationRef.current = true
-      lastUrlItemIndexRef.current = flatIndex
-
-      // Update URL with current item index
-      navigate({
-        to: '/schedules/$scheduleId',
-        params: { scheduleId: String(scheduleId) },
-        search: { itemIndex: flatIndex },
-        replace: true,
-      })
-
-      // Switch the OBS scene first
-      try {
-        await switchSceneAsync(item.obsSceneName)
-      } catch (error) {
-        // Scene switch may fail if OBS is not connected, but we still show the empty slide
-        logger.warn('Failed to switch OBS scene:', error)
-      }
-
-      // Present the scene (shows empty slide)
-      await presentTemporaryScene.mutateAsync({
-        obsSceneName: item.obsSceneName,
-        nextItemPreview,
-        scheduleId,
-        scheduleItemIndex: flatIndex,
-      })
-    },
-    [
-      presentTemporaryScene,
-      getNextItemPreview,
-      getFlatItemIndex,
-      scheduleId,
-      navigate,
-      switchSceneAsync,
-    ],
-  )
-
-  // Helper to navigate to a specific flat item
-  const navigateToFlatItem = useCallback(
-    async (flatItem: (typeof flatItems)[0], flatIndex: number) => {
-      const { item, index } = flatItem
-
-      if (item.itemType === 'song' && item.songId) {
-        // Calculate next item preview (for displaying when at last slide)
-        const nextItemPreview = getNextItemPreview(item)
-
-        // Mark as internal navigation to prevent URL sync loop
-        isInternalNavigationRef.current = true
-        lastUrlItemIndexRef.current = flatIndex
-
-        // Update URL with current item index
-        navigate({
-          to: '/schedules/$scheduleId',
-          params: { scheduleId: String(scheduleId) },
-          search: { itemIndex: flatIndex },
-          replace: true,
-        })
-
-        await presentTemporarySong.mutateAsync({
-          songId: item.songId,
-          slideIndex: index,
-          nextItemPreview,
-          scheduleId,
-          scheduleItemIndex: flatIndex,
-        })
-      } else if (item.itemType === 'bible_passage') {
-        await handleVerseClick(item, index)
-      } else if (
-        item.itemType === 'slide' &&
-        item.slideType === 'versete_tineri'
-      ) {
-        await handleEntryClick(item, index)
-      } else if (
-        item.itemType === 'slide' &&
-        item.slideType === 'announcement'
-      ) {
-        await handleAnnouncementClick(item)
-      } else if (item.itemType === 'slide' && item.slideType === 'scene') {
-        await handleSceneClick(item)
-      }
-    },
-    [
-      presentTemporarySong,
-      getNextItemPreview,
-      scheduleId,
-      navigate,
-      handleVerseClick,
-      handleEntryClick,
-      handleAnnouncementClick,
-      handleSceneClick,
-    ],
-  )
-
-  // Navigation handlers - support all slide types
-  const handlePrevSlide = useCallback(async () => {
-    if (currentFlatIndex <= 0) {
-      return
-    }
-
-    const prevIndex = currentFlatIndex - 1
-    const prevItem = flatItems[prevIndex]
-    await navigateToFlatItem(prevItem, prevIndex)
-  }, [currentFlatIndex, flatItems, navigateToFlatItem])
-
-  const handleNextSlide = useCallback(async () => {
-    // If nothing is presented, start with first item
-    if (currentFlatIndex < 0) {
-      if (flatItems.length > 0) {
-        await navigateToFlatItem(flatItems[0], 0)
-      }
-      return
-    }
-
-    // If on the last slide, hide the presentation
-    if (currentFlatIndex >= flatItems.length - 1) {
-      if (presentationState?.temporaryContent) {
-        await clearTemporary.mutateAsync()
-      }
-      return
-    }
-
-    const nextIndex = currentFlatIndex + 1
-    const nextItem = flatItems[nextIndex]
-    await navigateToFlatItem(nextItem, nextIndex)
-  }, [
-    currentFlatIndex,
-    flatItems,
-    navigateToFlatItem,
-    presentationState?.temporaryContent,
-    clearTemporary,
-  ])
+  // The items panel talks in (item, sub-index); the nav hook owns the rest —
+  // the flat index, the next-item preview and the URL sync.
+  const handleSlideClick = presentSongSlide
+  const handleVerseClick = presentPassageVerse
+  const handleEntryClick = presentVerseteEntry
+  const handleAnnouncementClick = presentAnnouncement
+  const handleSceneClick = presentScene
+  const handlePrevSlide = goPrev
+  const handleNextSlide = goNext
 
   // Keyboard shortcuts for schedule navigation
   // Uses global keyboard context with PAGE priority to take precedence over
@@ -967,6 +388,18 @@ export function SchedulePresenter({
       })
     },
     [items, scheduleId, reorderItems],
+  )
+
+  /** Ticks a program item off — songs, readings, announcements, scenes alike. */
+  const handleToggleSung = useCallback(
+    (item: ScheduleItem) => {
+      markSung.mutate({
+        scheduleId,
+        itemId: item.id,
+        isSung: !item.isSung,
+      })
+    },
+    [markSung, scheduleId],
   )
 
   // Edit song handler (double-click)
@@ -1171,34 +604,6 @@ export function SchedulePresenter({
   }, [scheduleId, importData, importItems, showToast, t, refetch])
 
   // Divider drag handlers
-  const handleDividerMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      isDragging.current = true
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!isDragging.current || !containerRef.current) return
-        const containerRect = containerRef.current.getBoundingClientRect()
-        const newPosition =
-          ((moveEvent.clientX - containerRect.left) / containerRect.width) * 100
-        setDividerPosition(Math.min(80, Math.max(20, newPosition)))
-      }
-
-      const handleMouseUp = () => {
-        isDragging.current = false
-        document.body.style.cursor = ''
-        document.body.style.userSelect = ''
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-      }
-
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-    },
-    [setDividerPosition],
-  )
 
   if (isLoading || !schedule) {
     return (
@@ -1207,6 +612,96 @@ export function SchedulePresenter({
       </div>
     )
   }
+
+  // The item list and the live preview are both movable: an operator who wants
+  // the preview under the list rather than beside it just drags it there.
+  const workspacePanels: WorkspacePanel[] = [
+    {
+      id: 'preview',
+      title: t('panel.previewTitle'),
+      render: () => (
+        <SchedulePreviewPanel
+          canNavigatePrev={canNavigatePrev}
+          canNavigateNext={canNavigateNext || currentFlatIndex < 0}
+          onPrevSlide={handlePrevSlide}
+          onNextSlide={handleNextSlide}
+        />
+      ),
+    },
+    {
+      id: 'items',
+      title: t('panel.itemsTitle'),
+      render: () => (
+        <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex items-center justify-between border-b border-gray-200 p-3 pb-2 lg:p-4 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => {
+                if (allExpanded) {
+                  setCollapseAllTrigger((prev) => prev + 1)
+                } else {
+                  setExpandAllTrigger((prev) => prev + 1)
+                }
+                setAllExpanded((prev) => !prev)
+              }}
+              className="rounded-lg bg-gray-100 p-2 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              title={
+                allExpanded ? t('actions.collapseAll') : t('actions.expandAll')
+              }
+            >
+              {allExpanded ? (
+                <ChevronsDownUp size={16} />
+              ) : (
+                <ChevronsUpDown size={16} />
+              )}
+            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setShowEditAsText(true)}
+                className="flex items-center gap-2 rounded-lg bg-amber-400 p-2 text-sm text-gray-900 transition-colors hover:bg-amber-500 sm:px-3 sm:py-1.5 dark:bg-amber-400 dark:hover:bg-amber-500"
+              >
+                <FileText size={16} />
+                <span className="hidden sm:inline">
+                  {t('actions.editAsText')}
+                </span>
+              </button>
+              <AddScheduleItemModal
+                isOpen={showAddMenu}
+                onOpenChange={setShowAddMenu}
+                onAddSong={handleSongSelected}
+                onAddBiblePassage={handleAddBiblePassage}
+                onAddSlide={handleAddSlide}
+                onAddScene={handleAddScene}
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden p-3 pt-2 lg:min-h-0 lg:p-4">
+            <ScheduleItemsPanel
+              scheduleId={scheduleId}
+              items={items}
+              isLoading={isLoading}
+              onSlideClick={handleSlideClick}
+              onVerseClick={handleVerseClick}
+              onEntryClick={handleEntryClick}
+              onAnnouncementClick={handleAnnouncementClick}
+              onSceneClick={handleSceneClick}
+              onReorder={handleReorder}
+              onEditSong={handleEditSong}
+              onNavigateToSong={handleNavigateToSong}
+              onDeleteItem={handleDeleteItem}
+              onEditItem={handleEditItem}
+              onChangeSong={handleChangeSong}
+              onEditKeyLine={handleEditKeyLine}
+              onToggleSung={handleToggleSung}
+              expandAllTrigger={expandAllTrigger}
+              collapseAllTrigger={collapseAllTrigger}
+            />
+          </div>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
@@ -1306,119 +801,25 @@ export function SchedulePresenter({
           >
             <Trash2 className="w-4 h-4" />
           </button>
+          {/* Panels only form movable columns on a large screen. */}
+          <ActionMenu
+            items={isLargeScreen ? [editLayoutAction] : []}
+            label={tCommon('actionsMenu.trigger')}
+            triggerIcon={<MoreHorizontal size={16} />}
+            testId="schedule-presenter-actions-menu"
+          />
         </div>
       </div>
 
       {/* Main Content - Two Panel Layout */}
-      <div
-        ref={containerRef}
-        className="flex flex-col lg:flex-row lg:flex-1 lg:min-h-0 gap-3 lg:gap-1"
-      >
-        {/* Left Panel - Schedule Items List */}
-        <div
-          className="order-2 lg:order-1 lg:min-h-0 lg:h-full lg:flex-initial overflow-hidden flex flex-col bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-          style={
-            isLargeScreen
-              ? { width: `calc(${dividerPosition}% - 8px)` }
-              : undefined
-          }
-        >
-          {/* Left Panel Header */}
-          <div className="flex items-center justify-between p-3 lg:p-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-            <button
-              type="button"
-              onClick={() => {
-                if (allExpanded) {
-                  setCollapseAllTrigger((prev) => prev + 1)
-                } else {
-                  setExpandAllTrigger((prev) => prev + 1)
-                }
-                setAllExpanded((prev) => !prev)
-              }}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-colors"
-              title={
-                allExpanded ? t('actions.collapseAll') : t('actions.expandAll')
-              }
-            >
-              {allExpanded ? (
-                <ChevronsDownUp size={16} />
-              ) : (
-                <ChevronsUpDown size={16} />
-              )}
-            </button>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setShowEditAsText(true)}
-                className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-gray-900 bg-amber-400 hover:bg-amber-500 dark:bg-amber-400 dark:hover:bg-amber-500 rounded-lg transition-colors"
-              >
-                <FileText size={16} />
-                <span className="hidden sm:inline">
-                  {t('actions.editAsText')}
-                </span>
-              </button>
-              <AddScheduleItemModal
-                isOpen={showAddMenu}
-                onOpenChange={setShowAddMenu}
-                onAddSong={handleSongSelected}
-                onAddBiblePassage={handleAddBiblePassage}
-                onAddSlide={handleAddSlide}
-                onAddScene={handleAddScene}
-              />
-            </div>
-          </div>
-          {/* Left Panel Content */}
-          <div className="flex-1 lg:min-h-0 overflow-hidden p-3 lg:p-4 pt-2">
-            <ScheduleItemsPanel
-              scheduleId={scheduleId}
-              items={items}
-              isLoading={isLoading}
-              onSlideClick={handleSlideClick}
-              onVerseClick={handleVerseClick}
-              onEntryClick={handleEntryClick}
-              onAnnouncementClick={handleAnnouncementClick}
-              onSceneClick={handleSceneClick}
-              onReorder={handleReorder}
-              onEditSong={handleEditSong}
-              onNavigateToSong={handleNavigateToSong}
-              onDeleteItem={handleDeleteItem}
-              onEditItem={handleEditItem}
-              onChangeSong={handleChangeSong}
-              onEditKeyLine={handleEditKeyLine}
-              expandAllTrigger={expandAllTrigger}
-              collapseAllTrigger={collapseAllTrigger}
-            />
-          </div>
-        </div>
-
-        {/* Draggable Divider */}
-        <div
-          className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-          onMouseDown={handleDividerMouseDown}
-        >
-          <GripVertical
-            size={16}
-            className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-          />
-        </div>
-
-        {/* Right Panel - Preview */}
-        <div
-          className="order-1 lg:order-3 lg:min-h-0 lg:flex-1 overflow-hidden shrink-0"
-          style={
-            isLargeScreen
-              ? { width: `calc(${100 - dividerPosition}% - 8px)` }
-              : undefined
-          }
-        >
-          <SchedulePreviewPanel
-            canNavigatePrev={canNavigatePrev}
-            canNavigateNext={canNavigateNext || currentFlatIndex < 0}
-            onPrevSlide={handlePrevSlide}
-            onNextSlide={handleNextSlide}
-          />
-        </div>
-      </div>
+      <Workspace
+        id="schedule-presenter"
+        panels={workspacePanels}
+        defaultLayout={SCHEDULE_WORKSPACE_LAYOUT}
+        defaultColumnSizes={['40%', '60%']}
+        stacked={!isLargeScreen}
+        className="lg:flex-1 lg:min-h-0"
+      />
 
       {/* Song Picker Modal — only for replacing an existing song; adding a new
           one happens inside AddScheduleItemModal. */}

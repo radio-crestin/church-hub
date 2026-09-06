@@ -1,37 +1,51 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Check, GripVertical, X as XIcon } from 'lucide-react'
+import { ExternalLink, GripVertical, Pencil, X as XIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
+import { ScheduleSungToggle } from './ScheduleSungToggle'
 import type { ScheduleItem } from '../types'
 
 interface ScheduleSongRowProps {
   item: ScheduleItem
   /** Highlights the song currently open on the song page. */
   isActive: boolean
+  /** The program is showing a slide of this song right now. */
+  isLive?: boolean
   /**
    * Drag-to-reorder is only meaningful on the unfiltered list, so the handle is
-   * hidden while a search or a sung filter is narrowing the panel — same rule
-   * the Marcaje list follows.
+   * hidden while a search is narrowing the panel — same rule the Marcaje list
+   * follows.
    */
   isSortable: boolean
+  /** Scroll anchor, attached to the live row so the panel can follow along. */
+  rowRef?: React.RefObject<HTMLDivElement | null>
+  /** Projects this song from its first slide. */
+  onPresent?: () => void
   onSelect: () => void
+  /** Opens the program page's editor for this item. */
+  onEdit?: () => void
   onRemove: () => void
   onToggleSung: () => void
 }
 
 /**
- * One song of a schedule, rendered with the same affordances as a Marcaje row:
- * a drag handle, a sung checkmark, the title with its category / key line /
- * tags, and an X to drop it from the program. Kept visually identical to
- * `SortableBookmarkItem` on purpose — the operator reads both lists the same
- * way.
+ * One song of a program: a compact row that projects the song when clicked.
+ *
+ * Deliberately title-only. Which verse goes up is chosen on the left of the
+ * page — the slide rail — so this list stays a readable running order rather
+ * than a second, competing verse picker.
  */
 export function ScheduleSongRow({
   item,
   isActive,
+  isLive = false,
   isSortable,
+  rowRef,
+  onPresent,
   onSelect,
+  onEdit,
   onRemove,
   onToggleSung,
 }: ScheduleSongRowProps) {
@@ -54,23 +68,34 @@ export function ScheduleSongRow({
     position: isDragging ? 'relative' : undefined,
   }
 
+  const getRowClass = () => {
+    if (isDragging) {
+      return 'opacity-80 shadow-lg border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+    }
+    if (isLive) {
+      return 'border-orange-400 bg-orange-50 ring-2 ring-inset ring-orange-500 dark:border-orange-500 dark:bg-orange-900/30'
+    }
+    if (isActive) {
+      return 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+    }
+    if (item.isSung) {
+      return 'border-green-200 dark:border-green-800/60 bg-green-50/50 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700'
+    }
+    return 'border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600 bg-white dark:bg-gray-800 hover:bg-orange-50/50 dark:hover:bg-orange-900/10'
+  }
+
   const song = item.song
   if (!song) return null
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node)
+        if (rowRef) rowRef.current = node
+      }}
       style={style}
       data-testid="schedule-song-item"
-      className={`flex items-center gap-1 rounded-lg border transition-colors ${
-        isDragging
-          ? 'opacity-80 shadow-lg border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-          : isActive
-            ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-            : item.isSung
-              ? 'border-green-200 dark:border-green-800/60 bg-green-50/50 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700'
-              : 'border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600 bg-white dark:bg-gray-800 hover:bg-orange-50/50 dark:hover:bg-orange-900/10'
-      }`}
+      className={`flex items-center gap-1 rounded-lg border transition-colors ${getRowClass()}`}
     >
       {isSortable ? (
         <div
@@ -88,60 +113,56 @@ export function ScheduleSongRow({
         <span className="w-1.5" />
       )}
 
+      <ScheduleSungToggle
+        isSung={item.isSung}
+        onToggle={onToggleSung}
+        testId="schedule-song-sung-toggle"
+      />
+
+      {/* The row body projects. Title only: category, key line and tags belong
+          to the song, not to its place in the program. */}
       <button
         type="button"
-        onClick={onToggleSung}
-        aria-pressed={item.isSung}
-        title={item.isSung ? t('panel.markNotSung') : t('panel.markSung')}
-        data-testid="schedule-song-sung-toggle"
-        className={`flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
-          item.isSung
-            ? 'border-green-500 bg-green-500 text-white'
-            : 'border-gray-300 dark:border-gray-600 text-transparent hover:border-green-400 hover:text-green-400'
-        }`}
+        onClick={onPresent}
+        title={t('panel.presentItem')}
+        data-testid="schedule-song-present"
+        className="flex-1 min-w-0 text-left py-1.5 pr-1 pl-1"
       >
-        <Check size={12} strokeWidth={3} />
+        <div className="flex min-w-0 items-center gap-1.5">
+          <ScheduleItemTypeIcon item={item} size="sm" />
+          <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
+            {song.title}
+          </span>
+        </div>
       </button>
 
       <button
         type="button"
-        onClick={onSelect}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect()
+        }}
+        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+        title={t('panel.openSong')}
         data-testid="schedule-song-open"
-        className="flex-1 min-w-0 text-left py-1.5 pr-1 pl-1"
       >
-        <div className="text-sm font-medium truncate text-gray-900 dark:text-white">
-          {song.title}
-        </div>
-        {(song.categoryName || item.keyLine) && (
-          <div className="flex items-center gap-2 mt-0.5">
-            {song.categoryName && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {song.categoryName}
-              </span>
-            )}
-            {item.keyLine && (
-              <span
-                className="text-xs text-amber-600 dark:text-amber-400 shrink-0"
-                data-testid="schedule-song-key-line"
-              >
-                {item.keyLine}
-              </span>
-            )}
-          </div>
-        )}
-        {song.tagNames?.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 mt-1">
-            {song.tagNames.map((name) => (
-              <span
-                key={name}
-                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium leading-none bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded"
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-        )}
+        <ExternalLink size={14} />
       </button>
+
+      {onEdit ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit()
+          }}
+          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          title={t('contextMenu.edit')}
+          data-testid="schedule-song-edit"
+        >
+          <Pencil size={14} />
+        </button>
+      ) : null}
 
       <button
         type="button"

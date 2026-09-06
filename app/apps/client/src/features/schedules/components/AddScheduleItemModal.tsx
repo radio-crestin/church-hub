@@ -30,6 +30,8 @@ interface AddScheduleItemModalProps {
   onAddBiblePassage: () => void
   onAddSlide: (template: SlideTemplate) => void
   onAddScene?: () => void
+  /** Icon-only trigger, for hosts too narrow for the label (the Programe panel). */
+  compactTrigger?: boolean
 }
 
 interface MenuOption {
@@ -59,6 +61,7 @@ export function AddScheduleItemModal({
   onAddBiblePassage,
   onAddSlide,
   onAddScene,
+  compactTrigger = false,
 }: AddScheduleItemModalProps) {
   const { t } = useTranslation('common')
   const { t: tSchedules } = useTranslation('schedules')
@@ -196,10 +199,16 @@ export function AddScheduleItemModal({
           type="button"
           onClick={() => onOpenChange(true)}
           data-testid="schedule-add-item"
-          className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+          className={
+            compactTrigger
+              ? 'p-1.5 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors'
+              : 'flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors'
+          }
         >
-          <Plus size={16} />
-          <span className="hidden sm:inline">{t('addMenu.button')}</span>
+          <Plus size={compactTrigger ? 14 : 16} />
+          {compactTrigger ? null : (
+            <span className="hidden sm:inline">{t('addMenu.button')}</span>
+          )}
         </button>
       </Tooltip>
 

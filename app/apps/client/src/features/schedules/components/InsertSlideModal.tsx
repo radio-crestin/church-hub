@@ -296,6 +296,7 @@ export function InsertSlideModal({
   return (
     <dialog
       ref={dialogRef}
+      data-testid="insert-slide-modal"
       onCancel={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
@@ -411,7 +412,10 @@ export function InsertSlideModal({
                 </button>
               </div>
               <div className="border border-gray-200 dark:border-gray-700 rounded-b-lg overflow-hidden">
-                <EditorContent editor={editor} />
+                <EditorContent
+                  editor={editor}
+                  data-testid="insert-slide-content"
+                />
               </div>
             </div>
           )}
@@ -431,6 +435,7 @@ export function InsertSlideModal({
           <button
             type="button"
             onClick={handleSave}
+            data-testid="insert-slide-save"
             disabled={
               isPending ||
               (selectedTemplate === 'versete_tineri'
