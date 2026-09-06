@@ -164,4 +164,20 @@ export const presentationSchemas = {
       requestTimestamp: { type: 'integer' },
     },
   },
+  TextStyleRange: {
+    type: 'object',
+    description:
+      'One run of styling over the slide text, as character offsets into it',
+    required: ['id', 'start', 'end'],
+    properties: {
+      id: { type: 'string', description: 'Client-generated UUID' },
+      start: { type: 'integer', description: 'Character offset, inclusive' },
+      end: { type: 'integer', description: 'Character offset, exclusive' },
+      highlight: { type: 'string', example: '#FFFF00' },
+      bold: { type: 'boolean' },
+      italic: { type: 'boolean' },
+      underline: { type: 'boolean' },
+      fontScale: { type: 'number' },
+    },
+  },
 }

@@ -34,7 +34,7 @@ export function SettingsLayout() {
           } min-h-0 w-full shrink-0 flex-col border-b border-gray-200 bg-white md:flex md:w-56 md:border-b-0 md:border-r lg:w-60 dark:border-gray-800 dark:bg-gray-900`}
         >
           <div className="shrink-0 px-4 pb-3 pt-4">
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               {t('title')}
             </h1>
           </div>

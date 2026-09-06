@@ -211,6 +211,27 @@
       "when": 1768800000000,
       "tag": "0029_add_songs_source_filename_index",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1768900000000,
+      "tag": "0030_add_bible_bookmarks",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1769000000000,
+      "tag": "0031_add_bible_bookmark_style_ranges",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1769100000000,
+      "tag": "0032_versete_tineri_person_name_optional",
+      "breakpoints": true
     }
   ]
 }

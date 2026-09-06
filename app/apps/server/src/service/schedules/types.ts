@@ -146,7 +146,11 @@ export interface UpsertScheduleInput {
  * Single entry for Versete Tineri input
  */
 export interface VerseteTineriEntryInput {
-  personName: string
+  /**
+   * Optional: a passage added straight from the Bible has nobody attached to
+   * it. Stored as '' when absent.
+   */
+  personName?: string
   translationId: number
   bookCode: string
   bookName: string

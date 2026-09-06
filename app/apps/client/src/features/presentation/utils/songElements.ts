@@ -104,7 +104,9 @@ export function extractTrailingAmin(
   }
 
   // Case B: the last paragraph ends with a <br>-separated amin line.
-  const brSplit = lastInner.match(/^([\s\S]*)<br\s*\/?>\s*((?:(?!<br)[\s\S])*)$/i)
+  const brSplit = lastInner.match(
+    /^([\s\S]*)<br\s*\/?>\s*((?:(?!<br)[\s\S])*)$/i,
+  )
   if (brSplit) {
     const head = brSplit[1]
     const tailText = htmlToPlainText(brSplit[2])

@@ -16,26 +16,27 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   AlertTriangle,
-  Book,
-  Camera,
   ChevronDown,
   ChevronRight,
-  FileText,
   GripVertical,
   Loader2,
-  Megaphone,
   MoreVertical,
-  Music,
-  User,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
-import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
-import { stripHtmlTags } from '~/features/songs/utils/stripHtmlTags'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
+import { ScheduleItemSubItems } from './ScheduleItemSubItems'
+import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
+import { ScheduleSungToggle } from './ScheduleSungToggle'
+import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
 import type { ScheduleItem } from '../types'
+import {
+  derivePresentedScheduleInfo,
+  type PresentedScheduleInfo,
+} from '../utils/presentedScheduleInfo'
+import { buildItemStartFlatIndex } from '../utils/scheduleFlatItems'
 
 interface ScheduleItemsPanelProps {
   scheduleId: number
@@ -53,6 +54,8 @@ interface ScheduleItemsPanelProps {
   onEditItem?: (item: ScheduleItem) => void
   onChangeSong?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
+  /** Flips an item's done-marker. Every kind carries one. */
+  onToggleSung?: (item: ScheduleItem) => void
   expandAllTrigger?: number
   collapseAllTrigger?: number
 }
@@ -60,18 +63,6 @@ interface ScheduleItemsPanelProps {
 interface ContextMenuState {
   item: ScheduleItem | null
   position: { x: number; y: number }
-}
-
-/**
- * Decode HTML entities to their corresponding characters
- */
-
-/**
- * Strip HTML tags and extract plain text content
- */
-
-interface ExpandedState {
-  [key: string]: boolean
 }
 
 export function ScheduleItemsPanel({
@@ -90,47 +81,18 @@ export function ScheduleItemsPanel({
   onEditItem,
   onChangeSong,
   onEditKeyLine,
+  onToggleSung,
   expandAllTrigger,
   collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
   const { t } = useTranslation('schedules')
   const { data: presentationState } = usePresentationState()
-  const highlightedRef = useRef<HTMLButtonElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     item: null,
     position: { x: 0, y: 0 },
   })
-
-  // Track which items are expanded - persist to localStorage per schedule
-  const storageKey = `schedule-items-expanded-${scheduleId}`
-  const [expanded, setExpanded] = useState<ExpandedState>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey)
-      if (saved) {
-        return JSON.parse(saved)
-      }
-    } catch {
-      // ignore parse errors
-    }
-    // Default: all collapsed
-    const initial: ExpandedState = {}
-    items.forEach((item) => {
-      initial[`${item.id}`] = false
-    })
-    return initial
-  })
-
-  // Persist expanded state to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(expanded))
-    } catch {
-      // ignore storage errors
-    }
-  }, [expanded, storageKey])
 
   // DnD sensors
   const sensors = useSensors(
@@ -144,222 +106,28 @@ export function ScheduleItemsPanel({
     }),
   )
 
-  // Update expanded state when items change
-  useEffect(() => {
-    setExpanded((prev) => {
-      const next: ExpandedState = {}
-      items.forEach((item) => {
-        // Keep existing state or default to collapsed for new items
-        next[`${item.id}`] = prev[`${item.id}`] ?? false
-      })
-      return next
-    })
-  }, [items])
-
-  // Expand all items when trigger changes
-  useEffect(() => {
-    if (expandAllTrigger !== undefined && expandAllTrigger > 0) {
-      setExpanded(() => {
-        const next: ExpandedState = {}
-        items.forEach((item) => {
-          next[`${item.id}`] = true
-        })
-        return next
-      })
-    }
-  }, [expandAllTrigger, items])
-
-  // Collapse all items when trigger changes
-  useEffect(() => {
-    if (collapseAllTrigger !== undefined && collapseAllTrigger > 0) {
-      setExpanded(() => {
-        const next: ExpandedState = {}
-        items.forEach((item) => {
-          next[`${item.id}`] = false
-        })
-        return next
-      })
-    }
-  }, [collapseAllTrigger, items])
-
-  // Determine what's currently presented - includes scheduleItemIndex for accurate matching
+  // Only content *this* program put on the projector belongs in this list.
   const presentedInfo = useMemo(() => {
-    const temp = presentationState?.temporaryContent
-    if (!temp) return null
+    const info = derivePresentedScheduleInfo(
+      presentationState?.temporaryContent,
+    )
+    return info && info.scheduleId === scheduleId ? info : null
+  }, [presentationState?.temporaryContent, scheduleId])
 
-    // Extract scheduleItemIndex from all content types
-    const scheduleItemIndex = temp.data.scheduleItemIndex ?? -1
+  const itemStartFlatIndex = useMemo(
+    () => buildItemStartFlatIndex(items),
+    [items],
+  )
 
-    if (temp.type === 'song') {
-      return {
-        type: 'song' as const,
-        songId: temp.data.songId,
-        slideIndex: temp.data.currentSlideIndex,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'bible_passage') {
-      return {
-        type: 'bible_passage' as const,
-        currentVerseIndex: temp.data.currentVerseIndex,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'versete_tineri') {
-      return {
-        type: 'versete_tineri' as const,
-        currentEntryIndex: temp.data.currentEntryIndex,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'announcement') {
-      return {
-        type: 'announcement' as const,
-        scheduleItemIndex,
-      }
-    }
-
-    if (temp.type === 'scene') {
-      return {
-        type: 'scene' as const,
-        obsSceneName: temp.data.obsSceneName,
-        scheduleItemIndex,
-      }
-    }
-
-    return null
-  }, [presentationState?.temporaryContent])
-
-  // Compute starting flat index for each item - used for accurate sub-item highlighting
-  const itemStartFlatIndex = useMemo(() => {
-    const map: Record<number, number> = {}
-    let flatIndex = 0
-
-    items.forEach((item) => {
-      map[item.id] = flatIndex
-
-      if (item.itemType === 'song') {
-        const expandedSlides = expandSongSlidesWithChoruses(item.slides)
-        flatIndex += expandedSlides.length
-      } else if (item.itemType === 'bible_passage') {
-        flatIndex += item.biblePassageVerses.length
-      } else if (item.itemType === 'slide') {
-        if (item.slideType === 'versete_tineri') {
-          flatIndex += item.verseteTineriEntries.length
-        } else {
-          // announcement, scene - single flat item
-          flatIndex += 1
-        }
-      }
+  const { isExpanded, toggleExpanded, highlightedRef, containerRef } =
+    useScheduleItemExpansion({
+      storageKey: `schedule-items-expanded-${scheduleId}`,
+      items,
+      presentedInfo,
+      itemStartFlatIndex,
+      expandAllTrigger,
+      collapseAllTrigger,
     })
-
-    return map
-  }, [items])
-
-  // Auto-expand the presented item and collapse all others
-  // Uses scheduleItemIndex to find the exact item being presented
-  useEffect(() => {
-    if (!presentedInfo || presentedInfo.scheduleItemIndex < 0) return
-
-    // Find the item whose flat index range contains the presented scheduleItemIndex
-    const presentedItem = items.find((item) => {
-      const startIndex = itemStartFlatIndex[item.id]
-      if (startIndex === undefined) return false
-
-      let itemLength = 1
-      if (item.itemType === 'song') {
-        itemLength = expandSongSlidesWithChoruses(item.slides).length
-      } else if (item.itemType === 'bible_passage') {
-        itemLength = item.biblePassageVerses.length
-      } else if (
-        item.itemType === 'slide' &&
-        item.slideType === 'versete_tineri'
-      ) {
-        itemLength = item.verseteTineriEntries.length
-      }
-
-      const endIndex = startIndex + itemLength - 1
-      return (
-        presentedInfo.scheduleItemIndex >= startIndex &&
-        presentedInfo.scheduleItemIndex <= endIndex
-      )
-    })
-
-    if (presentedItem) {
-      setExpanded(() => {
-        const next: ExpandedState = {}
-        items.forEach((item) => {
-          next[`${item.id}`] = item.id === presentedItem.id
-        })
-        return next
-      })
-    }
-  }, [presentedInfo, items, itemStartFlatIndex])
-
-  // Auto-scroll to position the previous slide at the top of the container
-  useEffect(() => {
-    if (highlightedRef.current && containerRef.current) {
-      // Small delay to ensure DOM is ready after auto-expand
-      const timeoutId = setTimeout(() => {
-        const container = containerRef.current
-        const element = highlightedRef.current
-        if (!container || !element) return
-
-        // Find the previous element (slide before the highlighted one)
-        let previousElement =
-          element.previousElementSibling as HTMLElement | null
-
-        // If no previous sibling, find the item header
-        // Structure: <item-wrapper><header><expanded-content><slides...>
-        if (!previousElement) {
-          const expandedContent = element.parentElement
-          if (expandedContent) {
-            // The header is the previous sibling of expanded content
-            previousElement =
-              expandedContent.previousElementSibling as HTMLElement
-          }
-        }
-
-        const containerRect = container.getBoundingClientRect()
-
-        if (previousElement) {
-          // Scroll the previous element to the top
-          const prevElementRect = previousElement.getBoundingClientRect()
-          const elementOffsetFromContainer =
-            prevElementRect.top - containerRect.top
-          const targetScrollTop =
-            container.scrollTop + elementOffsetFromContainer
-
-          container.scrollTo({
-            top: Math.max(0, targetScrollTop),
-            behavior: 'smooth',
-          })
-        } else {
-          // No previous element (first slide), scroll current to top
-          const elementRect = element.getBoundingClientRect()
-          const elementOffsetFromContainer = elementRect.top - containerRect.top
-          const targetScrollTop =
-            container.scrollTop + elementOffsetFromContainer
-
-          container.scrollTo({
-            top: Math.max(0, targetScrollTop),
-            behavior: 'smooth',
-          })
-        }
-      }, 100)
-      return () => clearTimeout(timeoutId)
-    }
-  }, [presentedInfo, items])
-
-  const toggleExpanded = useCallback((itemId: number) => {
-    setExpanded((prev) => ({
-      ...prev,
-      [`${itemId}`]: !prev[`${itemId}`],
-    }))
-  }, [])
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -475,34 +243,29 @@ export function ScheduleItemsPanel({
         >
           <div
             ref={containerRef}
-            className="flex-1 min-h-0 space-y-2 overflow-hidden lg:overflow-y-auto px-0.5 py-0.5"
+            className="flex-1 min-h-0 space-y-2 overflow-hidden lg:overflow-y-auto p-1"
           >
-            {items.map((item) => {
-              const isExpanded = expanded[`${item.id}`] ?? true
-
-              return (
-                <SortableItemWrapper
-                  key={item.id}
-                  item={item}
-                  isExpanded={isExpanded}
-                  presentedInfo={presentedInfo}
-                  itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
-                  highlightedRef={highlightedRef}
-                  onHeaderClick={handleHeaderClick}
-                  onAuxClick={handleAuxClick}
-                  onDoubleClick={handleDoubleClick}
-                  onContextMenu={handleContextMenu}
-                  onSlideClick={onSlideClick}
-                  onVerseClick={onVerseClick}
-                  onEntryClick={onEntryClick}
-                  onAnnouncementClick={onAnnouncementClick}
-                  onSceneClick={onSceneClick}
-                  onEditSong={onEditSong}
-                  onNavigateToSong={onNavigateToSong}
-                  t={t}
-                />
-              )
-            })}
+            {items.map((item) => (
+              <SortableItemWrapper
+                key={item.id}
+                item={item}
+                isExpanded={isExpanded(item.id)}
+                presentedInfo={presentedInfo}
+                itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
+                highlightedRef={highlightedRef}
+                onHeaderClick={handleHeaderClick}
+                onAuxClick={handleAuxClick}
+                onDoubleClick={handleDoubleClick}
+                onContextMenu={handleContextMenu}
+                onSlideClick={onSlideClick}
+                onVerseClick={onVerseClick}
+                onEntryClick={onEntryClick}
+                onAnnouncementClick={onAnnouncementClick}
+                onSceneClick={onSceneClick}
+                onToggleSung={onToggleSung}
+                t={t}
+              />
+            ))}
           </div>
         </SortableContext>
       </DndContext>
@@ -523,33 +286,11 @@ export function ScheduleItemsPanel({
   )
 }
 
-// Presented info type - includes scheduleItemIndex for accurate matching
-type PresentedInfo =
-  | {
-      type: 'song'
-      songId: number
-      slideIndex: number
-      scheduleItemIndex: number
-    }
-  | {
-      type: 'bible_passage'
-      currentVerseIndex: number
-      scheduleItemIndex: number
-    }
-  | {
-      type: 'versete_tineri'
-      currentEntryIndex: number
-      scheduleItemIndex: number
-    }
-  | { type: 'announcement'; scheduleItemIndex: number }
-  | { type: 'scene'; obsSceneName: string; scheduleItemIndex: number }
-  | null
-
 // Sortable item wrapper with drag handle
 interface SortableItemWrapperProps {
   item: ScheduleItem
   isExpanded: boolean
-  presentedInfo: PresentedInfo
+  presentedInfo: PresentedScheduleInfo | null
   itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
   onHeaderClick: (e: React.MouseEvent, item: ScheduleItem) => void
@@ -561,8 +302,7 @@ interface SortableItemWrapperProps {
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
-  onEditSong?: (songId: number) => void
-  onNavigateToSong?: (songId: number) => void
+  onToggleSung?: (item: ScheduleItem) => void
   t: (key: string) => string
 }
 
@@ -581,8 +321,7 @@ function SortableItemWrapper({
   onEntryClick,
   onAnnouncementClick,
   onSceneClick,
-  onEditSong,
-  onNavigateToSong,
+  onToggleSung,
   t,
 }: SortableItemWrapperProps) {
   const {
@@ -640,6 +379,16 @@ function SortableItemWrapper({
           />
         </div>
 
+        {/* Done-marker — every kind of item can be ticked off a program. */}
+        {onToggleSung ? (
+          <ScheduleSungToggle
+            isSung={item.isSung}
+            onToggle={() => onToggleSung(item)}
+            variant={item.itemType === 'bible_passage' ? 'read' : 'sung'}
+            testId="schedule-item-sung-toggle"
+          />
+        ) : null}
+
         {/* Expand/Collapse Icon */}
         <div className="flex-shrink-0">
           {isExpanded ? (
@@ -655,38 +404,7 @@ function SortableItemWrapper({
           )}
         </div>
 
-        {/* Item Icon */}
-        {item.itemType === 'song' && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-            <Music size={16} className="text-indigo-600 dark:text-indigo-400" />
-          </div>
-        )}
-        {item.itemType === 'slide' && item.slideType === 'announcement' && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-            <Megaphone
-              size={16}
-              className="text-orange-600 dark:text-orange-400"
-            />
-          </div>
-        )}
-        {item.itemType === 'slide' && item.slideType === 'versete_tineri' && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <User size={16} className="text-green-600 dark:text-green-400" />
-          </div>
-        )}
-        {item.itemType === 'bible_passage' && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-            <Book size={16} className="text-teal-600 dark:text-teal-400" />
-          </div>
-        )}
-        {item.itemType === 'slide' && item.slideType === 'scene' && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-            <Camera
-              size={16}
-              className="text-violet-600 dark:text-violet-400"
-            />
-          </div>
-        )}
+        <ScheduleItemTypeIcon item={item} />
 
         {/* Item Title & Info */}
         <div className="flex-1 min-w-0 text-left">
@@ -699,7 +417,13 @@ function SortableItemWrapper({
               item.slideType === 'versete_tineri' &&
               (!isExpanded && item.verseteTineriEntries.length > 0
                 ? item.verseteTineriEntries
-                    .map((e) => `${e.personName} – ${e.reference}`)
+                    // A reading with nobody attached shows just its reference,
+                    // not a dangling dash — the name is optional.
+                    .map((e) =>
+                      e.personName.trim()
+                        ? `${e.personName} – ${e.reference}`
+                        : e.reference,
+                    )
                     .join(', ')
                 : t('presenter.verseteTineri'))}
             {item.itemType === 'slide' &&
@@ -712,19 +436,15 @@ function SortableItemWrapper({
                   <AlertTriangle
                     size={12}
                     className="text-amber-500 flex-shrink-0"
-                    title={t('warnings.invalidReference')}
+                    aria-label={t('warnings.invalidReference')}
                   />
                 )}
               </span>
             )}
           </div>
+          {/* Song rows deliberately carry no second line: the title plus the
+              slides underneath is the whole story while running a program. */}
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            {item.itemType === 'song' && (
-              <>
-                {item.slides.length} slides
-                {item.song?.categoryName && ` • ${item.song.categoryName}`}
-              </>
-            )}
             {item.itemType === 'bible_passage' && (
               <>
                 {item.biblePassageVerses.length} verses •{' '}
@@ -780,466 +500,22 @@ function SortableItemWrapper({
         </button>
       </div>
 
-      {/* Expanded Content */}
+      {/* Expanded Content — the item's presentable steps */}
       {isExpanded && (
-        <div className="px-3 pb-3 flex flex-col gap-1">
-          {/* Song Slides */}
-          {item.itemType === 'song' && (
-            <SongSlides
-              item={item}
-              presentedInfo={presentedInfo}
-              itemStartFlatIndex={itemStartFlatIndex}
-              highlightedRef={highlightedRef}
-              onSlideClick={onSlideClick}
-            />
-          )}
-
-          {/* Bible Passage Verses */}
-          {item.itemType === 'bible_passage' && (
-            <BiblePassageVerses
-              item={item}
-              presentedInfo={presentedInfo}
-              itemStartFlatIndex={itemStartFlatIndex}
-              highlightedRef={highlightedRef}
-              onVerseClick={onVerseClick}
-            />
-          )}
-
-          {/* Versete Tineri Entries */}
-          {item.itemType === 'slide' && item.slideType === 'versete_tineri' && (
-            <VerseteTineriEntries
-              item={item}
-              presentedInfo={presentedInfo}
-              itemStartFlatIndex={itemStartFlatIndex}
-              highlightedRef={highlightedRef}
-              onEntryClick={onEntryClick}
-            />
-          )}
-
-          {/* Announcement Slide */}
-          {item.itemType === 'slide' && item.slideType === 'announcement' && (
-            <AnnouncementSlide
-              item={item}
-              presentedInfo={presentedInfo}
-              highlightedRef={highlightedRef}
-              onAnnouncementClick={onAnnouncementClick}
-            />
-          )}
-
-          {/* Scene Slide */}
-          {item.itemType === 'slide' && item.slideType === 'scene' && (
-            <SceneSlide
-              item={item}
-              presentedInfo={presentedInfo}
-              highlightedRef={highlightedRef}
-              onSceneClick={onSceneClick}
-            />
-          )}
+        <div className="px-3 pb-3 pt-1 flex flex-col gap-1">
+          <ScheduleItemSubItems
+            item={item}
+            presentedInfo={presentedInfo}
+            itemStartFlatIndex={itemStartFlatIndex}
+            highlightedRef={highlightedRef}
+            onSlideClick={onSlideClick}
+            onVerseClick={onVerseClick}
+            onEntryClick={onEntryClick}
+            onAnnouncementClick={onAnnouncementClick}
+            onSceneClick={onSceneClick}
+          />
         </div>
       )}
     </div>
-  )
-}
-
-// Song Slides sub-component
-interface SongSlidesProps {
-  item: ScheduleItem
-  presentedInfo: PresentedInfo
-  itemStartFlatIndex: number
-  highlightedRef: React.RefObject<HTMLButtonElement | null>
-  onSlideClick: (item: ScheduleItem, slideIndex: number) => void
-}
-
-function SongSlides({
-  item,
-  presentedInfo,
-  itemStartFlatIndex,
-  highlightedRef,
-  onSlideClick,
-}: SongSlidesProps) {
-  const { t } = useTranslation('schedules')
-
-  // Expand slides with dynamic chorus insertion
-  const expandedSlides = useMemo(
-    () => expandSongSlidesWithChoruses(item.slides),
-    [item.slides],
-  )
-
-  // Empty state for songs with no slides
-  if (expandedSlides.length === 0) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
-        <AlertTriangle
-          size={16}
-          className="text-amber-600 dark:text-amber-400 flex-shrink-0"
-        />
-        <span className="text-sm text-amber-700 dark:text-amber-300">
-          {t('warnings.noSlides')}
-        </span>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      {expandedSlides.map((slide, index) => {
-        // Use scheduleItemIndex for accurate matching - only highlight if this specific slide is presented
-        const isPresented =
-          presentedInfo?.type === 'song' &&
-          presentedInfo.scheduleItemIndex === itemStartFlatIndex + index
-
-        const plainText = stripHtmlTags(slide.content)
-
-        return (
-          <button
-            key={`${slide.id}-${index}`}
-            ref={isPresented ? highlightedRef : null}
-            type="button"
-            onClick={() => onSlideClick(item, index)}
-            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-              isPresented
-                ? 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
-            }`}
-          >
-            <div className="flex items-start gap-2">
-              <span
-                className={`font-semibold text-sm min-w-[24px] ${
-                  isPresented
-                    ? 'text-green-700 dark:text-green-300'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {index + 1}
-              </span>
-              <span
-                className={`text-sm whitespace-pre-line ${
-                  isPresented
-                    ? 'text-green-900 dark:text-green-100'
-                    : 'text-gray-600 dark:text-gray-400'
-                }`}
-              >
-                {plainText}
-              </span>
-            </div>
-            {slide.label && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-8 mt-1 block">
-                {slide.label}
-              </span>
-            )}
-          </button>
-        )
-      })}
-    </>
-  )
-}
-
-// Bible Passage Verses sub-component
-interface BiblePassageVersesProps {
-  item: ScheduleItem
-  presentedInfo: PresentedInfo
-  itemStartFlatIndex: number
-  highlightedRef: React.RefObject<HTMLButtonElement | null>
-  onVerseClick: (item: ScheduleItem, verseIndex: number) => void
-}
-
-function BiblePassageVerses({
-  item,
-  presentedInfo,
-  itemStartFlatIndex,
-  highlightedRef,
-  onVerseClick,
-}: BiblePassageVersesProps) {
-  const { t } = useTranslation('schedules')
-
-  // Empty state for bible passages with no verses
-  if (item.biblePassageVerses.length === 0) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
-        <AlertTriangle
-          size={16}
-          className="text-amber-600 dark:text-amber-400 flex-shrink-0"
-        />
-        <span className="text-sm text-amber-700 dark:text-amber-300">
-          {t('warnings.noVerses')}
-        </span>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      {item.biblePassageVerses.map((verse, index) => {
-        // Use scheduleItemIndex for accurate matching - only highlight if this specific verse is presented
-        const isPresented =
-          presentedInfo?.type === 'bible_passage' &&
-          presentedInfo.scheduleItemIndex === itemStartFlatIndex + index
-
-        return (
-          <button
-            key={verse.id}
-            ref={isPresented ? highlightedRef : null}
-            type="button"
-            onClick={() => onVerseClick(item, index)}
-            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-              isPresented
-                ? 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
-            }`}
-          >
-            <div className="flex items-start gap-2">
-              <span
-                className={`font-semibold text-sm min-w-[24px] ${
-                  isPresented
-                    ? 'text-green-700 dark:text-green-300'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {index + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <span
-                  className={`text-xs font-medium ${
-                    isPresented
-                      ? 'text-green-700 dark:text-green-300'
-                      : 'text-indigo-600 dark:text-indigo-400'
-                  }`}
-                >
-                  {verse.reference}
-                </span>
-                <span
-                  className={`text-sm line-clamp-2 block ${
-                    isPresented
-                      ? 'text-green-900 dark:text-green-100'
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  {verse.text}
-                </span>
-              </div>
-            </div>
-          </button>
-        )
-      })}
-    </>
-  )
-}
-
-// Versete Tineri Entries sub-component
-interface VerseteTineriEntriesProps {
-  item: ScheduleItem
-  presentedInfo: PresentedInfo
-  itemStartFlatIndex: number
-  highlightedRef: React.RefObject<HTMLButtonElement | null>
-  onEntryClick: (item: ScheduleItem, entryIndex: number) => void
-}
-
-function VerseteTineriEntries({
-  item,
-  presentedInfo,
-  itemStartFlatIndex,
-  highlightedRef,
-  onEntryClick,
-}: VerseteTineriEntriesProps) {
-  const { t } = useTranslation('schedules')
-
-  // Empty state for versete tineri with no entries
-  if (item.verseteTineriEntries.length === 0) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
-        <AlertTriangle
-          size={16}
-          className="text-amber-600 dark:text-amber-400 flex-shrink-0"
-        />
-        <span className="text-sm text-amber-700 dark:text-amber-300">
-          {t('warnings.noEntries')}
-        </span>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      {item.verseteTineriEntries.map((entry, index) => {
-        // Use scheduleItemIndex for accurate matching - only highlight if this specific entry is presented
-        const isPresented =
-          presentedInfo?.type === 'versete_tineri' &&
-          presentedInfo.scheduleItemIndex === itemStartFlatIndex + index
-
-        return (
-          <button
-            key={entry.id}
-            ref={isPresented ? highlightedRef : null}
-            type="button"
-            onClick={() => onEntryClick(item, index)}
-            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-              isPresented
-                ? 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
-            }`}
-          >
-            <div className="flex items-start gap-2">
-              <span
-                className={`font-semibold text-sm min-w-[24px] ${
-                  isPresented
-                    ? 'text-green-700 dark:text-green-300'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}
-              >
-                {index + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <User
-                    size={12}
-                    className={
-                      isPresented
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-gray-400'
-                    }
-                  />
-                  <span
-                    className={`text-xs font-medium ${
-                      isPresented
-                        ? 'text-green-800 dark:text-green-200'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    {entry.personName}
-                  </span>
-                </div>
-                <span
-                  className={`text-xs flex items-center gap-1 ${
-                    isPresented
-                      ? 'text-green-700 dark:text-green-300'
-                      : 'text-indigo-600 dark:text-indigo-400'
-                  }`}
-                >
-                  {entry.reference}
-                  {!entry.text && (
-                    <AlertTriangle
-                      size={10}
-                      className="text-amber-500 flex-shrink-0"
-                      title={t('warnings.invalidReference')}
-                    />
-                  )}
-                </span>
-                <span
-                  className={`text-sm line-clamp-2 block ${
-                    isPresented
-                      ? 'text-green-900 dark:text-green-100'
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}
-                >
-                  {entry.text}
-                </span>
-              </div>
-            </div>
-          </button>
-        )
-      })}
-    </>
-  )
-}
-
-// Announcement Slide sub-component
-interface AnnouncementSlideProps {
-  item: ScheduleItem
-  presentedInfo: PresentedInfo
-  highlightedRef: React.RefObject<HTMLButtonElement | null>
-  onAnnouncementClick: (item: ScheduleItem) => void
-}
-
-function AnnouncementSlide({
-  item,
-  presentedInfo,
-  highlightedRef,
-  onAnnouncementClick,
-}: AnnouncementSlideProps) {
-  const plainText = stripHtmlTags(item.slideContent || '')
-  const isPresented = presentedInfo?.type === 'announcement'
-
-  return (
-    <button
-      ref={isPresented ? highlightedRef : null}
-      type="button"
-      onClick={() => onAnnouncementClick(item)}
-      className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-        isPresented
-          ? 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
-      }`}
-    >
-      <div className="flex items-start gap-2">
-        <FileText
-          size={16}
-          className={`flex-shrink-0 mt-0.5 ${
-            isPresented ? 'text-green-600 dark:text-green-400' : 'text-gray-400'
-          }`}
-        />
-        <span
-          className={`text-sm line-clamp-3 ${
-            isPresented
-              ? 'text-green-900 dark:text-green-100'
-              : 'text-gray-600 dark:text-gray-400'
-          }`}
-        >
-          {plainText}
-        </span>
-      </div>
-    </button>
-  )
-}
-
-// Scene Slide sub-component
-interface SceneSlideProps {
-  item: ScheduleItem
-  presentedInfo: PresentedInfo
-  highlightedRef: React.RefObject<HTMLButtonElement | null>
-  onSceneClick?: (item: ScheduleItem) => void
-}
-
-function SceneSlide({
-  item,
-  presentedInfo,
-  highlightedRef,
-  onSceneClick,
-}: SceneSlideProps) {
-  const { t } = useTranslation('schedules')
-  const isPresented =
-    presentedInfo?.type === 'scene' &&
-    presentedInfo.obsSceneName === item.obsSceneName
-
-  return (
-    <button
-      ref={isPresented ? highlightedRef : null}
-      type="button"
-      onClick={() => onSceneClick?.(item)}
-      className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-        isPresented
-          ? 'bg-violet-100 dark:bg-violet-900/50 ring-2 ring-violet-500'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <Camera
-          size={16}
-          className={`flex-shrink-0 ${
-            isPresented
-              ? 'text-violet-600 dark:text-violet-400'
-              : 'text-gray-400'
-          }`}
-        />
-        <span
-          className={`text-sm ${
-            isPresented
-              ? 'text-violet-900 dark:text-violet-100'
-              : 'text-gray-600 dark:text-gray-400'
-          }`}
-        >
-          {t('slideTemplates.scene')}: {item.slideContent || item.obsSceneName}
-        </span>
-      </div>
-    </button>
   )
 }

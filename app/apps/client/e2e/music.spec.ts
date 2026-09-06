@@ -145,20 +145,18 @@ test.describe('Music Player Layout (desktop)', () => {
   }) => {
     await page.goto('/music')
     await page.waitForLoadState('networkidle')
-    // Wait for the desktop player wrapper (hidden lg:flex lg:flex-col) to render.
-    // There are two players in the DOM (mobile + desktop); only the desktop one
-    // carries the inline width/maxWidth cap we are asserting on.
-    await page.waitForFunction(() => {
-      const w = [
-        ...document.querySelectorAll<HTMLElement>('div[style*="width: calc"]'),
-      ].find((el) => el.className.includes('hidden lg:flex lg:flex-col'))
-      return !!w && w.getBoundingClientRect().width > 0
-    })
+    // The desktop player is a workspace panel; its inner wrapper still carries
+    // the max-width cap we are asserting on.
+    const playerPanel = page.getByTestId('workspace-panel-player')
+    await expect(playerPanel).toBeVisible({ timeout: 15000 })
 
     const metrics = await page.evaluate(() => {
-      const wrapper = [
-        ...document.querySelectorAll<HTMLElement>('div[style*="width: calc"]'),
-      ].find((el) => el.className.includes('hidden lg:flex lg:flex-col'))
+      const panel = document.querySelector<HTMLElement>(
+        '[data-testid="workspace-panel-player"]',
+      )
+      const wrapper = panel?.querySelector<HTMLElement>(
+        'div[style*="max-width"]',
+      )
       if (!wrapper) return null
       const rect = wrapper.getBoundingClientRect()
       const scroller = [

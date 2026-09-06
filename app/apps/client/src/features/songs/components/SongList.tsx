@@ -14,9 +14,11 @@ import type { SongFiltersState } from './SongFiltersDropdown'
 import { SongFiltersDropdown } from './SongFiltersDropdown'
 import { VirtualSongList } from './VirtualSongList'
 import {
+  useAddBookmark,
   useAISearchSongs,
   useAllSongsAlphabetical,
   useCategories,
+  useRemoveBookmark,
   useSaveSearchHistory,
   useSearchKeyboardNavigation,
   useSearchSongs,
@@ -58,11 +60,16 @@ interface SongListProps {
    */
   onSelectedSongChange?: (song: { id: number; title: string } | null) => void
   /**
-   * Lets song cards be dragged onto the Marcaje / Programe panels beside the
-   * list. Off by default so pickers and embedded lists keep plain click
-   * behaviour.
+   * Gives every row its Marcaje / Programe buttons. Off by default so pickers
+   * and embedded lists keep plain click behaviour.
    */
-  songsDraggable?: boolean
+  showRowActions?: boolean
+  /**
+   * Adds a song to a program. Supplied by the page rather than resolved here:
+   * the schedules feature already imports from songs, so reaching back the
+   * other way would close an import cycle.
+   */
+  onAddSongToSchedule?: (song: { id: number; title: string }) => void
 }
 
 export function SongList({
@@ -79,7 +86,8 @@ export function SongList({
   urlPath,
   onAISearchSaved,
   onSelectedSongChange,
-  songsDraggable = false,
+  showRowActions = false,
+  onAddSongToSchedule,
 }: SongListProps) {
   const { t } = useTranslation('songs')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -363,6 +371,33 @@ export function SongList({
   )
   const { data: songTags } = useTags()
   const { data: bookmarks = [] } = useSongBookmarks()
+  const addBookmarkMutation = useAddBookmark()
+  const removeBookmarkMutation = useRemoveBookmark()
+
+  /**
+   * The row's bookmark icon reads as "this song is in Marcaje", so it stays a
+   * strict toggle: pressing it when bookmarked clears every copy. Same rule the
+   * song page's own toggle follows.
+   */
+  const handleToggleBookmark = useCallback(
+    (songId: number) => {
+      const existing = bookmarks.filter((b) => b.songId === songId)
+      // A negative id is a row the optimistic add hasn't heard back from the
+      // server for yet — the only id it could be removed by. Toggling again
+      // before that round trip lands would fire a DELETE for an id the
+      // server has never seen, so treat it as a no-op; the button already
+      // reads correctly from the optimistic state.
+      if (existing.some((b) => b.id < 0)) return
+      if (existing.length > 0) {
+        for (const bookmark of existing) {
+          removeBookmarkMutation.mutate(bookmark.id)
+        }
+        return
+      }
+      addBookmarkMutation.mutate(songId)
+    },
+    [bookmarks, addBookmarkMutation, removeBookmarkMutation],
+  )
 
   // AI Search
   const { isEnabled: aiSearchAvailable } = useSongsAISearchSettings()
@@ -727,8 +762,21 @@ export function SongList({
         isSelected={selectedIndex === index}
         showCategoryInTitle={duplicateTitles.has(song.title.toLowerCase())}
         syncChangeKind={syncUpdatesMap.get(song.id)}
-        isDraggable={songsDraggable}
-        dragHandleTitle={t('dragToPanel')}
+        isBookmarked={bookmarkedSongIds.has(song.id)}
+        onToggleBookmark={
+          showRowActions ? () => handleToggleBookmark(song.id) : undefined
+        }
+        onAddToSchedule={
+          showRowActions && onAddSongToSchedule
+            ? () => onAddSongToSchedule({ id: song.id, title: song.title })
+            : undefined
+        }
+        bookmarkLabel={
+          bookmarkedSongIds.has(song.id)
+            ? t('bookmarks.remove')
+            : t('bookmarks.add')
+        }
+        addToScheduleLabel={t('actions.addToSchedule')}
       />
     ),
     [
@@ -738,7 +786,10 @@ export function SongList({
       selectedIndex,
       duplicateTitles,
       syncUpdatesMap,
-      songsDraggable,
+      showRowActions,
+      onAddSongToSchedule,
+      bookmarkedSongIds,
+      handleToggleBookmark,
       t,
     ],
   )

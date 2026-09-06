@@ -1,13 +1,18 @@
 import { eq } from 'drizzle-orm'
 
+import { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
 import { getScheduleById } from './getSchedules'
+import {
+  type LegacyBiblePassage,
+  resolveLegacyBiblePassage,
+} from './resolveLegacyBiblePassage'
 import { updateScheduleSearchIndex } from './search'
 import type {
   OperationResult,
   SlideTemplate,
   VerseteTineriEntryInput,
 } from './types'
-import { getDatabase } from '../../db'
+import { getDatabase, getRawDatabase } from '../../db'
 import {
   scheduleBiblePassageVerses,
   scheduleItems,
@@ -69,6 +74,13 @@ export interface ReplaceItemInput {
   }
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]
+  /**
+   * A legacy `bible_passage` item coming back from an exported program file:
+   * only a display reference, a translation abbreviation and the stored verse
+   * rows. Resolved against the local Bible and stored as one "Versete Biblice"
+   * slide, exactly as the database migration does.
+   */
+  legacyBiblePassage?: LegacyBiblePassage
   // Scene fields
   obsSceneName?: string
 }
@@ -161,6 +173,14 @@ export function replaceScheduleItems(
     for (let i = 0; i < input.items.length; i++) {
       const item = input.items[i]
 
+      // A Bible passage is no longer an item type of its own: it becomes one
+      // "Versete Biblice" slide holding the whole passage, with no person name.
+      const vtEntries =
+        item.verseteTineriEntries ??
+        (item.biblePassage
+          ? [biblePassageToVerseteTineriEntry(item.biblePassage)]
+          : undefined)
+
       if (item.type === 'song' && item.songId) {
         db.insert(scheduleItems)
           .values({
@@ -172,6 +192,169 @@ export function replaceScheduleItems(
             updatedAt: now,
           })
           .run()
+      } else if (vtEntries) {
+        // Handle Versete Tineri slide with entries
+        const result = db
+          .insert(scheduleItems)
+          .values({
+            scheduleId: input.scheduleId,
+            itemType: 'slide',
+            slideType: 'versete_tineri',
+            slideContent: null,
+            sortOrder: i,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ id: scheduleItems.id })
+          .get()
+        const itemId = result.id
+
+        // Collect versete tineri entries for batch insert
+        const entries = vtEntries
+        for (let j = 0; j < entries.length; j++) {
+          const entry = entries[j]
+
+          const entryRef = formatPassageReference(
+            entry.bookName,
+            entry.startChapter,
+            entry.startVerse,
+            entry.endChapter,
+            entry.endVerse,
+          )
+
+          // Validate that start and end verses exist
+          const startVerseExists = getVerse(
+            entry.translationId,
+            entry.bookCode,
+            entry.startChapter,
+            entry.startVerse,
+          )
+          const endVerseExists = getVerse(
+            entry.translationId,
+            entry.bookCode,
+            entry.endChapter,
+            entry.endVerse,
+          )
+
+          if (!startVerseExists || !endVerseExists) {
+            const missingPart = !startVerseExists
+              ? `${entry.startChapter}:${entry.startVerse}`
+              : `${entry.endChapter}:${entry.endVerse}`
+            log(
+              'warning',
+              `Invalid verse in VT entry ${j}: ${entryRef} (${missingPart} does not exist)`,
+            )
+            skippedItems.push({
+              index: i,
+              type: 'versete_tineri_entry',
+              reference: entry.personName
+                ? `${entry.personName} - ${entryRef}`
+                : entryRef,
+              reason: 'verses_not_found',
+            })
+            continue
+          }
+
+          // Fetch verses for this entry
+          const verses =
+            entry.startChapter === entry.endChapter
+              ? getVerseRange(
+                  entry.translationId,
+                  entry.bookCode,
+                  entry.startChapter,
+                  entry.startVerse,
+                  entry.endVerse,
+                )
+              : getVersesAcrossChapters(
+                  entry.translationId,
+                  entry.bookCode,
+                  entry.startChapter,
+                  entry.startVerse,
+                  entry.endChapter,
+                  entry.endVerse,
+                )
+
+          if (verses.length === 0) {
+            log('warning', `No verses found for entry ${j}: ${entryRef}`)
+            skippedItems.push({
+              index: i,
+              type: 'versete_tineri_entry',
+              reference: entry.personName
+                ? `${entry.personName} - ${entryRef}`
+                : entryRef,
+              reason: 'verses_not_found',
+            })
+            continue
+          }
+
+          // Combine verse text
+          const combinedText = verses.map((v) => v.text).join(' ')
+
+          allVtEntryInserts.push({
+            scheduleItemId: itemId,
+            personName: entry.personName ?? '',
+            translationId: entry.translationId,
+            bookCode: entry.bookCode,
+            bookName: entry.bookName,
+            reference: entryRef,
+            text: combinedText,
+            startChapter: entry.startChapter,
+            startVerse: entry.startVerse,
+            endChapter: entry.endChapter,
+            endVerse: entry.endVerse,
+            sortOrder: j,
+          })
+        }
+
+        log('debug', `Versete Tineri prepared with ${entries.length} entries`)
+      } else if (item.legacyBiblePassage) {
+        // A legacy `bible_passage` item from an exported program: resolve it
+        // against the local Bible and store the merged shape, exactly as the
+        // database migration does. Unresolvable passages are reported, never
+        // guessed at.
+        const resolution = resolveLegacyBiblePassage(
+          getRawDatabase(),
+          item.legacyBiblePassage,
+        )
+
+        if (!resolution.ok) {
+          log(
+            'warning',
+            `Legacy bible passage could not be resolved: ${item.legacyBiblePassage.reference ?? ''} (${resolution.reason})`,
+          )
+          skippedItems.push({
+            index: i,
+            type: 'bible_passage',
+            reference: item.legacyBiblePassage.reference ?? '',
+            reason: resolution.reason,
+          })
+          continue
+        }
+
+        const result = db
+          .insert(scheduleItems)
+          .values({
+            scheduleId: input.scheduleId,
+            itemType: 'slide',
+            slideType: 'versete_tineri',
+            slideContent: null,
+            sortOrder: i,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning({ id: scheduleItems.id })
+          .get()
+
+        allVtEntryInserts.push({
+          scheduleItemId: result.id,
+          ...resolution.entry,
+          sortOrder: 0,
+        })
+
+        log(
+          'debug',
+          `Legacy bible passage merged: ${resolution.entry.reference}`,
+        )
       } else if (item.biblePassage) {
         // Handle Bible passage item
         const passage = item.biblePassage
@@ -273,120 +456,6 @@ export function replaceScheduleItems(
         }
 
         log('debug', `Bible passage prepared with ${verses.length} verses`)
-      } else if (
-        item.slideType === 'versete_tineri' &&
-        item.verseteTineriEntries
-      ) {
-        // Handle Versete Tineri slide with entries
-        const result = db
-          .insert(scheduleItems)
-          .values({
-            scheduleId: input.scheduleId,
-            itemType: 'slide',
-            slideType: 'versete_tineri',
-            slideContent: null,
-            sortOrder: i,
-            createdAt: now,
-            updatedAt: now,
-          })
-          .returning({ id: scheduleItems.id })
-          .get()
-        const itemId = result.id
-
-        // Collect versete tineri entries for batch insert
-        const entries = item.verseteTineriEntries
-        for (let j = 0; j < entries.length; j++) {
-          const entry = entries[j]
-
-          const entryRef = formatPassageReference(
-            entry.bookName,
-            entry.startChapter,
-            entry.startVerse,
-            entry.endChapter,
-            entry.endVerse,
-          )
-
-          // Validate that start and end verses exist
-          const startVerseExists = getVerse(
-            entry.translationId,
-            entry.bookCode,
-            entry.startChapter,
-            entry.startVerse,
-          )
-          const endVerseExists = getVerse(
-            entry.translationId,
-            entry.bookCode,
-            entry.endChapter,
-            entry.endVerse,
-          )
-
-          if (!startVerseExists || !endVerseExists) {
-            const missingPart = !startVerseExists
-              ? `${entry.startChapter}:${entry.startVerse}`
-              : `${entry.endChapter}:${entry.endVerse}`
-            log(
-              'warning',
-              `Invalid verse in VT entry ${j}: ${entryRef} (${missingPart} does not exist)`,
-            )
-            skippedItems.push({
-              index: i,
-              type: 'versete_tineri_entry',
-              reference: `${entry.personName} - ${entryRef}`,
-              reason: 'verses_not_found',
-            })
-            continue
-          }
-
-          // Fetch verses for this entry
-          const verses =
-            entry.startChapter === entry.endChapter
-              ? getVerseRange(
-                  entry.translationId,
-                  entry.bookCode,
-                  entry.startChapter,
-                  entry.startVerse,
-                  entry.endVerse,
-                )
-              : getVersesAcrossChapters(
-                  entry.translationId,
-                  entry.bookCode,
-                  entry.startChapter,
-                  entry.startVerse,
-                  entry.endChapter,
-                  entry.endVerse,
-                )
-
-          if (verses.length === 0) {
-            log('warning', `No verses found for entry ${j}: ${entryRef}`)
-            skippedItems.push({
-              index: i,
-              type: 'versete_tineri_entry',
-              reference: `${entry.personName} - ${entryRef}`,
-              reason: 'verses_not_found',
-            })
-            continue
-          }
-
-          // Combine verse text
-          const combinedText = verses.map((v) => v.text).join(' ')
-
-          allVtEntryInserts.push({
-            scheduleItemId: itemId,
-            personName: entry.personName,
-            translationId: entry.translationId,
-            bookCode: entry.bookCode,
-            bookName: entry.bookName,
-            reference: entryRef,
-            text: combinedText,
-            startChapter: entry.startChapter,
-            startVerse: entry.startVerse,
-            endChapter: entry.endChapter,
-            endVerse: entry.endVerse,
-            sortOrder: j,
-          })
-        }
-
-        log('debug', `Versete Tineri prepared with ${entries.length} entries`)
       } else if (item.slideType === 'scene' && item.obsSceneName) {
         // Handle Scene slide (OBS scene switch)
         db.insert(scheduleItems)

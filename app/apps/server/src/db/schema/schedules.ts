@@ -96,7 +96,9 @@ export const scheduleVerseteTineriEntries = sqliteTable(
     scheduleItemId: integer('schedule_item_id')
       .notNull()
       .references(() => scheduleItems.id, { onDelete: 'cascade' }),
-    personName: text('person_name').notNull(),
+    // Optional: a passage added straight from the Bible carries no person.
+    // Kept NOT NULL with a '' default so every read site sees a plain string.
+    personName: text('person_name').notNull().default(''),
     translationId: integer('translation_id').notNull(),
     bookCode: text('book_code').notNull(),
     bookName: text('book_name').notNull(),

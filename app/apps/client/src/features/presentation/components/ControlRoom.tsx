@@ -5,7 +5,6 @@ import {
   Loader2,
   MonitorOff,
   MonitorPlay,
-  MonitorUp,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -122,8 +121,7 @@ export function ControlRoom() {
       {/* Navigation Bar */}
       <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <MonitorUp className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('presentation:controlRoom.title')}
           </h1>
         </div>

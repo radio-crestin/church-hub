@@ -1,8 +1,12 @@
 import { GoogleGenAI, Modality } from '@google/genai'
 
+import type {
+  EngineHandlers,
+  EngineSession,
+  EngineSessionConfig,
+} from './types'
 import { log } from '../../../utils/fileLogger'
 import { buildSystemPrompt } from '../types'
-import type { EngineHandlers, EngineSession, EngineSessionConfig } from './types'
 
 const logger = {
   debug: (msg: string, data?: unknown) =>

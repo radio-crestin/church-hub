@@ -34,7 +34,6 @@ import type {
   IconColor,
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
-import { useSongDiscovery } from '../../features/song-discovery'
 import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
 
@@ -58,8 +57,6 @@ export function Sidebar({
   const setIsMobileMenuOpen = onMobileMenuChange ?? setInternalMobileMenuOpen
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
   const feedbackUnreadCount = useFeedbackUnreadCount()
-  // New-songs badge on the Songs item, driven by the background catalog sync.
-  const { badgeCount: newSongsCount } = useSongDiscovery()
   const location = useLocation()
   // Defensive: /screen/* renders fullscreen via app-layout and never
   // mounts the sidebar. If something ever does mount it here (HMR race,
@@ -323,7 +320,6 @@ export function Sidebar({
               iconColor={getItemIconColor(item.id)}
               customIconUrl={item.customIconUrl}
               faviconBgColor={item.faviconBgColor}
-              badgeCount={item.to === '/songs' ? newSongsCount : undefined}
             />
           ))}
 

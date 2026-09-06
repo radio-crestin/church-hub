@@ -5,7 +5,13 @@ import {
   Loader2,
   LocateFixed,
 } from 'lucide-react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { KeyboardShortcutBadge } from '~/ui/kbd'
@@ -238,7 +244,9 @@ export function VersesList({
       }
       if (currentChapterFirstVerseRef.current) {
         const verseElement = currentChapterFirstVerseRef.current
-        const chapterContainer = verseElement.closest('.mb-4') as HTMLElement | null
+        const chapterContainer = verseElement.closest(
+          '[data-chapter-group]',
+        ) as HTMLElement | null
         if (chapterContainer) {
           scrollElementToStart(chapterContainer)
           return isInView(verseElement)
@@ -398,7 +406,8 @@ export function VersesList({
 
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 overflow-y-auto lg:scrollbar-thin px-0.5 py-0.5"
+        data-testid="bible-verses-scroll"
+        className="flex-1 min-h-0 overflow-y-auto lg:scrollbar-thin px-1 pb-1"
       >
         {/* Mobile: load previous button */}
         {canLoadPrevious && (
@@ -437,9 +446,10 @@ export function VersesList({
             return (
               <div
                 key={`${chapterData.bookId}-${chapterData.chapter}`}
-                className="mb-4"
+                data-chapter-group
+                className="pb-4"
               >
-                <div className="sticky -top-0.5 z-10 px-3 py-1 bg-white dark:bg-gray-800">
+                <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-white dark:bg-gray-800">
                   <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                     {label}
                   </span>
@@ -454,10 +464,11 @@ export function VersesList({
           return (
             <div
               key={`${chapterData.bookId}-${chapterData.chapter}`}
-              className="mb-4"
+              data-chapter-group
+              className="pb-4"
             >
               {/* Sticky chapter label */}
-              <div className="sticky -top-0.5 z-10 px-3 py-1 bg-white dark:bg-gray-800">
+              <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-white dark:bg-gray-800">
                 <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                   {label}
                 </span>
@@ -475,10 +486,10 @@ export function VersesList({
 
                   const getButtonClass = () => {
                     if (isPresented) {
-                      return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
+                      return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-inset ring-green-500'
                     }
                     if (isSearched) {
-                      return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
+                      return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-inset ring-indigo-500'
                     }
                     return 'hover:bg-gray-100 dark:hover:bg-gray-700'
                   }
@@ -520,6 +531,7 @@ export function VersesList({
                       <button
                         ref={getButtonRef()}
                         type="button"
+                        data-verse={verse.verse}
                         tabIndex={-1}
                         onClick={() =>
                           handleVerseClick(

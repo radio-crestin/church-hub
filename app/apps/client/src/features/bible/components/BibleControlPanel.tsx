@@ -4,10 +4,7 @@ import {
   Eraser,
   Eye,
   EyeOff,
-  History,
   Loader2,
-  PanelRightClose,
-  PanelRightOpen,
 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -30,8 +27,6 @@ interface BibleControlPanelProps {
   onPrevVerse: () => void
   onNextVerse: () => void
   canNavigate: boolean
-  onToggleHistory?: () => void
-  isHistoryCollapsed?: boolean
   onHide: () => Promise<void>
   isHiding?: boolean
 }
@@ -40,8 +35,6 @@ export function BibleControlPanel({
   onPrevVerse,
   onNextVerse,
   canNavigate,
-  onToggleHistory,
-  isHistoryCollapsed,
   onHide,
   isHiding = false,
 }: BibleControlPanelProps) {
@@ -84,8 +77,11 @@ export function BibleControlPanel({
 
   return (
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2">
+      {/* Header — the title chip is the only elastic part: it shrinks and
+          ellipsises so the LIVE badge and the hide button never get pushed out
+          of the panel, however long the song title or passage reference is. */}
+      <div className="flex items-center justify-between gap-2 p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {state?.temporaryContent && (
             <ContentTypeButton temporaryContent={state.temporaryContent} />
           )}
@@ -94,7 +90,7 @@ export function BibleControlPanel({
               type="button"
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors shrink-0"
               title={t('controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
@@ -105,22 +101,7 @@ export function BibleControlPanel({
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {onToggleHistory && (
-            <button
-              type="button"
-              onClick={onToggleHistory}
-              className="hidden lg:flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title={t('history.title')}
-            >
-              {isHistoryCollapsed ? (
-                <PanelRightOpen size={16} />
-              ) : (
-                <PanelRightClose size={16} />
-              )}
-              <History size={14} />
-            </button>
-          )}
+        <div className="flex items-center gap-2 shrink-0">
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
               !isHidden

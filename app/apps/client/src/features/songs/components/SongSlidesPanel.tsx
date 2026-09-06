@@ -11,7 +11,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SlideCounter } from './SlideCounter'
+import { type SongSlideRailItem, SongSlideRailList } from './SongSlideRailList'
 import { useDividerPosition } from '../../../hooks/useDividerPosition'
+import { useFollowPresentedScroll } from '../../../hooks/useFollowPresentedScroll'
 import { isTypingTarget } from '../../../utils/isTypingTarget'
 import type { SongSlide, SongWithSlides } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
@@ -20,7 +22,6 @@ import {
   markdownToSlides,
   slidesToMarkdown,
 } from '../utils/slidesMarkdown'
-import { stripHtmlTags } from '../utils/stripHtmlTags'
 
 interface SongSlidesPanelProps {
   song: SongWithSlides
@@ -66,8 +67,6 @@ function computeSlideBlocks(
 
 const TEXTAREA_LINE_HEIGHT_PX = 20
 const TEXTAREA_PADDING_TOP_PX = 8
-
-const SCROLL_OFFSET_TOP = 100
 
 // Reader-controlled font size for the view-mode lyrics list. The base matches
 // Tailwind's `text-sm` (0.875rem); the operator can scale it up/down so the
@@ -157,26 +156,44 @@ export function SongSlidesPanel({
     })
   }, [expandedSlides])
 
-  // Auto-scroll to presented slide (view mode)
+  // In preview mode the indigo highlight marks the staged slide (which can
+  // coexist with a different live/green slide). Outside preview mode it marks
+  // the keyboard-selected slide.
+  const highlightedIndex = previewMode
+    ? stagedSlideIndex
+    : presentedSlideIndex === null
+      ? selectedSlideIndex
+      : null
+
+  const railItems = useMemo<SongSlideRailItem[]>(
+    () =>
+      expandedSlides.map((slide, index) => ({
+        key: `${slide.id}-${index}`,
+        content: slide.content,
+        label: slide.label,
+        isDuplicate: !isOriginalSlide[index],
+      })),
+    [expandedSlides, isOriginalSlide],
+  )
+
+  // Follows the projector exactly like the program page's list does.
+  useFollowPresentedScroll(
+    containerRef,
+    highlightedRef,
+    isEditMode ? null : presentedSlideIndex,
+  )
+
+  // Hand the keyboard to the live slide as well. Presenting opens the
+  // projection window, which takes the keyboard as it appears; what the
+  // control window gets back has to land on something in the page, or the
+  // next arrow key goes nowhere until the operator clicks a slide. Never
+  // taken from a field the operator is typing in.
   useEffect(() => {
-    if (!isEditMode && highlightedRef.current && containerRef.current) {
-      const container = containerRef.current
-      const element = highlightedRef.current
-      const elementRect = element.getBoundingClientRect()
-      const containerRect = container.getBoundingClientRect()
-      const elementTop =
-        elementRect.top - containerRect.top + container.scrollTop
-      const targetScrollTop = Math.max(0, elementTop - SCROLL_OFFSET_TOP)
-      container.scrollTo({ top: targetScrollTop, behavior: 'smooth' })
-      // Hand the keyboard to the live slide as well. Presenting opens the
-      // projection window, which takes the keyboard as it appears; what the
-      // control window gets back has to land on something in the page, or the
-      // next arrow key goes nowhere until the operator clicks a slide. Never
-      // taken from a field the operator is typing in.
-      if (!isTypingTarget(document.activeElement)) {
-        element.focus({ preventScroll: true })
-      }
-    }
+    const element = highlightedRef.current
+    if (isEditMode || !element) return
+    if (isTypingTarget(document.activeElement)) return
+    element.focus({ preventScroll: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presentedSlideIndex, isEditMode])
 
   // Auto-scroll to selected slide (view mode)
@@ -338,7 +355,7 @@ export function SongSlidesPanel({
       {/* Slides */}
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 overflow-hidden lg:overflow-y-auto scrollbar-thin pl-0.5 pr-2 py-0.5"
+        className="flex-1 min-h-0 overflow-hidden lg:overflow-y-auto scrollbar-thin py-1 pl-1 pr-2"
       >
         {isEditMode ? (
           <div className="flex flex-col gap-2 h-full">
@@ -406,96 +423,20 @@ export function SongSlidesPanel({
             </p>
           </div>
         ) : (
-          <div className="space-y-1">
-            {expandedSlides.map((slide, index) => {
-              const isPresented = index === presentedSlideIndex
-              // In preview mode the indigo highlight marks the staged slide
-              // (which can coexist with a different live/green slide). Outside
-              // preview mode it marks the keyboard-selected slide.
-              const isStaged =
-                previewMode &&
-                stagedSlideIndex !== null &&
-                index === stagedSlideIndex &&
-                !isPresented
-              const isSelected =
-                !previewMode &&
-                index === selectedSlideIndex &&
-                presentedSlideIndex === null
-              const isHighlighted = isStaged || isSelected
-              const isDuplicate = !isOriginalSlide[index]
-              const plainText = stripHtmlTags(slide.content)
-
-              const getButtonClass = () => {
-                if (isPresented)
-                  return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-green-500'
-                if (isHighlighted)
-                  return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
-                return 'hover:bg-gray-100 dark:hover:bg-gray-700'
-              }
-
-              const getNumberClass = () => {
-                if (isPresented) return 'text-green-700 dark:text-green-300'
-                if (isHighlighted) return 'text-indigo-700 dark:text-indigo-300'
-                return 'text-gray-500 dark:text-gray-400'
-              }
-
-              const getTextClass = () => {
-                if (isPresented) return 'text-green-900 dark:text-green-100'
-                if (isHighlighted) return 'text-indigo-900 dark:text-indigo-100'
-                return 'text-gray-700 dark:text-gray-200'
-              }
-
-              const getRef = () => {
-                if (isPresented) return highlightedRef
-                if (isHighlighted) return selectedRef
-                return null
-              }
-
-              return (
-                <button
-                  key={`${slide.id}-${index}`}
-                  ref={getRef()}
-                  type="button"
-                  data-testid={`song-slide-${index}`}
-                  aria-current={isPresented ? 'true' : undefined}
-                  onClick={() => !isPresented && onSlideClick(slide, index)}
-                  onDoubleClick={() =>
-                    previewMode &&
-                    !isPresented &&
-                    onSlideDoubleClick?.(slide, index)
-                  }
-                  className={`w-full text-left px-2 py-2 rounded-lg transition-colors group ${getButtonClass()} ${
-                    isDuplicate ? 'opacity-60' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <span
-                      style={slideTextStyle}
-                      className={`font-semibold min-w-[24px] ${getNumberClass()}`}
-                    >
-                      {index + 1}
-                    </span>
-                    <span
-                      style={slideTextStyle}
-                      className={`whitespace-pre-line flex-1 ${getTextClass()}`}
-                    >
-                      {plainText}
-                    </span>
-                    {isDuplicate && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500 italic shrink-0">
-                        {t('preview.chorusRepeat')}
-                      </span>
-                    )}
-                  </div>
-                  {slide.label && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500 ml-8 mt-1 block">
-                      {slide.label}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          <SongSlideRailList
+            items={railItems}
+            presentedIndex={presentedSlideIndex}
+            highlightedIndex={highlightedIndex}
+            textStyle={slideTextStyle}
+            presentedRef={highlightedRef}
+            highlightedRef={selectedRef}
+            onSlideClick={(index) => onSlideClick(expandedSlides[index], index)}
+            onSlideDoubleClick={
+              previewMode
+                ? (index) => onSlideDoubleClick?.(expandedSlides[index], index)
+                : undefined
+            }
+          />
         )}
       </div>
     </div>

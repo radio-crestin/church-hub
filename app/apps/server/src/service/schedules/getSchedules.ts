@@ -434,8 +434,9 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
             id: record.songId!,
             title: record.songTitle!,
             categoryName: record.categoryName,
-            tagNames: (getTagsBySongIds([record.songId!]).get(record.songId!) ??
-              []).map((tag) => tag.name),
+            tagNames: (
+              getTagsBySongIds([record.songId!]).get(record.songId!) ?? []
+            ).map((tag) => tag.name),
           }
         : null,
       slides,

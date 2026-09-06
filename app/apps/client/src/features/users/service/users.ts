@@ -1,8 +1,5 @@
 import { getApiUrl, isMobile, isTauri } from '~/config'
-import {
-  clearStoredUserToken,
-  setStoredUserToken,
-} from '~/service/api-url'
+import { clearStoredUserToken, setStoredUserToken } from '~/service/api-url'
 import { fetcher } from '../../../utils/fetcher'
 
 /**
@@ -14,6 +11,7 @@ import { fetcher } from '../../../utils/fetcher'
 function isDesktopTauri(): boolean {
   return isTauri() && !isMobile()
 }
+
 import type {
   CreateUserInput,
   CreateUserResult,

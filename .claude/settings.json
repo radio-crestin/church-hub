@@ -63,7 +63,7 @@
       "Bash(pkill -f \"apps/server/src/index\")",
       "Bash(bun /tmp/probe3.ts)",
       "Bash(bun /tmp/probe4.ts)",
-      "Read(//Users/baghiuc/Documents/**)",
+      "Read(~/Documents/**)",
       "Bash(bunx vitest *)",
       "Bash(git commit -m 'fix\\(songs/useDirtyState\\): add tagIds to test fixture so dirty-state checks don'\\\\''t crash *)",
       "Bash(cat service/index.ts)",
@@ -92,7 +92,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/baghiuc/.local/bin/graphify hook-guard search"
+            "command": "PATH=\"$HOME/.local/bin:$PATH\"; command -v graphify >/dev/null 2>&1 && graphify hook-guard search || true"
           }
         ]
       },
@@ -101,7 +101,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/baghiuc/.local/bin/graphify hook-guard read"
+            "command": "PATH=\"$HOME/.local/bin:$PATH\"; command -v graphify >/dev/null 2>&1 && graphify hook-guard read || true"
           }
         ]
       }

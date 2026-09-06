@@ -18,6 +18,7 @@
 - Keep main task context minimal with only critical insights
 - Always add user-facing strings to i18n translation files (apps/client/src/i18n/locales/) instead of hardcoding them. Use the appropriate namespace (common, settings, sidebar, etc.) and ensure translations exist for all supported languages (English and Romanian)
 - Always write e2e tests for each new feature
+- ALWAYS test in the browser with Playwright (http://localhost:3000) — never by launching or clicking through the Tauri desktop app (see "Testing" below)
 
 ## DON'T:
 - Don't overuse try-catch blocks that mask bugs (use minimally, log errors properly)
@@ -35,8 +36,21 @@
 - you can test the app accessing http://localhost:3000/ (both client and API are served from this port)
 - API docs are available at http://localhost:3000/api/docs
 - do not launch the client/server as it's already running
+- do not launch, build, or manually click through the Tauri desktop app to verify a change — use Playwright against http://localhost:3000 instead
 - make sure that any api is integrated into openapi and in scalar docs
 - the app must be cross platform (windows, macos and linux)
+
+
+# Testing — REQUIRED: Playwright, not the Tauri app
+
+All manual and automated verification of the app happens in a **browser driven by Playwright**, against the already-running dev server at http://localhost:3000. The Tauri desktop shell is NOT a testing surface.
+
+- Never run `npm run tauri:dev` / `tauri:build` (or ask the user to click around the desktop app) just to check that a change works. The dev server is already running — drive it with Playwright.
+- Write or extend an e2e spec in `app/apps/client/e2e/` for every feature and bug fix, and run it to prove the change works. A passing spec is the acceptance signal, not "it looked fine".
+- Run e2e locally serially so results match CI: `--workers=1 --retries=2`.
+- For quick exploratory checks (is the button there? does the panel open?), use the Playwright MCP tools against http://localhost:3000 rather than the desktop app.
+- Screenshots and traces go to the session scratchpad directory, never into the repo.
+- The only time the Tauri artifact is exercised is the CI release-build smoke test (see below) — that is a packaging check, not feature testing.
 
 # Cross-platform compatibility — REQUIRED
 

@@ -10,6 +10,10 @@ import type {
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import {
+  type ResolvedLegacyBiblePassage,
+  resolveLegacyBiblePassage,
+} from '../schedules/resolveLegacyBiblePassage'
+import {
   removeFromScheduleSearchIndex,
   updateScheduleSearchIndex,
 } from '../schedules/search'
@@ -192,14 +196,40 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
         `Schedule "${schedule.title}": song ${item.songUuid} missing locally, keeping item without song link`,
       )
     }
+
+    // A remote library can still carry legacy `bible_passage` items. They are
+    // converted to the merged "Versete Biblice" shape on the way in, exactly as
+    // the database migration does. A passage that cannot be resolved against
+    // the local Bible is stored unchanged rather than mangled — the read paths
+    // still understand the old shape.
+    let itemType = item.itemType
+    let slideType = item.slideType
+    let mergedEntry: ResolvedLegacyBiblePassage | null = null
+    if (item.itemType === 'bible_passage') {
+      const resolution = resolveLegacyBiblePassage(db, {
+        reference: item.biblePassageReference,
+        translationAbbreviation: item.biblePassageTranslation,
+        verses: item.bibleVerses,
+      })
+      if (resolution.ok) {
+        itemType = 'slide'
+        slideType = 'versete_tineri'
+        mergedEntry = resolution.entry
+      } else {
+        logger.warning(
+          `Schedule "${schedule.title}": bible passage "${item.biblePassageReference ?? ''}" could not be merged (${resolution.reason}), keeping it as-is`,
+        )
+      }
+    }
+
     const inserted = insertItem.get(
       scheduleId,
-      item.itemType,
+      itemType,
       songId,
-      item.slideType,
+      slideType,
       item.slideContent,
-      item.biblePassageReference,
-      item.biblePassageTranslation,
+      mergedEntry ? null : item.biblePassageReference,
+      mergedEntry ? null : item.biblePassageTranslation,
       item.obsSceneName,
       item.sortOrder,
       schedule.updatedAt,
@@ -207,7 +237,24 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
     )
     if (!inserted) continue
 
-    for (const verse of item.bibleVerses) {
+    if (mergedEntry) {
+      insertVt.run(
+        inserted.id,
+        mergedEntry.personName,
+        mergedEntry.translationId,
+        mergedEntry.bookCode,
+        mergedEntry.bookName,
+        mergedEntry.reference,
+        mergedEntry.text,
+        mergedEntry.startChapter,
+        mergedEntry.startVerse,
+        mergedEntry.endChapter,
+        mergedEntry.endVerse,
+        0,
+      )
+    }
+
+    for (const verse of mergedEntry ? [] : item.bibleVerses) {
       // The verse row references the local bible DB; skip verses whose id does
       // not exist here (different bible data set) — reference/text are kept on
       // matching installs, which is the overwhelmingly common case.
@@ -228,7 +275,7 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
     for (const entry of item.verseteTineri) {
       insertVt.run(
         inserted.id,
-        entry.personName,
+        entry.personName ?? '',
         entry.translationId,
         entry.bookCode,
         entry.bookName,

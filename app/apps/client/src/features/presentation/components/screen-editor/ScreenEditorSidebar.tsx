@@ -1922,7 +1922,10 @@ export function ScreenEditorSidebar({
                       // Persist the custom "Amin" text to the config (it drives
                       // both the editor preview and the projected output).
                       if (selectedElement.type === 'amen') {
-                        updateConfig(['amen', 'text'], e.target.value || undefined)
+                        updateConfig(
+                          ['amen', 'text'],
+                          e.target.value || undefined,
+                        )
                         return
                       }
                       if (!onSetPreviewText) return
