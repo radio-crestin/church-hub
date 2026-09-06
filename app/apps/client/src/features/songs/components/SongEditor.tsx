@@ -361,12 +361,22 @@ export function SongEditor({
       </aside>
 
       <div className="min-w-0 flex-1 space-y-6 [scrollbar-gutter:stable] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Header. The two asides steal 300-640px, so the room this row gets
+            has nothing to do with the viewport width — a 1366px laptop leaves
+            it ~600px. It is therefore a query container: the action labels
+            (and the extra button padding they need) only appear once the row
+            itself is wide enough for them AND a readable title. Below that the
+            buttons stay as icons with their `title` tooltips, which keeps the
+            <h1> from being squeezed to zero width. */}
+        <div
+          data-testid="song-editor-header"
+          className="@container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <button
               type="button"
               onClick={onBack}
+              data-testid="song-editor-back"
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
             >
               <ArrowLeft
@@ -374,7 +384,10 @@ export function SongEditor({
                 className="text-gray-600 dark:text-gray-400"
               />
             </button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+            <h1
+              data-testid="song-editor-title"
+              className="text-xl font-bold text-gray-900 dark:text-white truncate"
+            >
               {isLoading ? (
                 <span className="inline-block w-48 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
               ) : isNew ? (
@@ -384,18 +397,21 @@ export function SongEditor({
               )}
             </h1>
           </div>
-          <div className="flex items-center gap-2 justify-end shrink-0">
+          <div
+            data-testid="song-editor-header-actions"
+            className="flex items-center gap-2 justify-end shrink-0"
+          >
             {!isNew && songId && (
               <>
                 <button
                   type="button"
                   onClick={handleAddToScheduleClick}
                   disabled={isLoading}
-                  className="p-2 sm:px-4 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+                  className="px-2 py-2 @3xl:px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                   title={t('songs:actions.addToSchedule')}
                 >
                   <CalendarPlus size={20} />
-                  <span className="hidden sm:inline">
+                  <span className="hidden @3xl:inline">
                     {t('songs:actions.addToSchedule')}
                   </span>
                 </button>
@@ -403,11 +419,11 @@ export function SongEditor({
                   type="button"
                   onClick={handlePresentNow}
                   disabled={isLoading || presentTemporarySong.isPending}
-                  className="p-2 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+                  className="px-2 py-2 @3xl:px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                   title={t('queue:actions.presentNow')}
                 >
                   <Play size={20} />
-                  <span className="hidden sm:inline">
+                  <span className="hidden @3xl:inline">
                     {t('queue:actions.presentNow')}
                   </span>
                 </button>
@@ -431,8 +447,9 @@ export function SongEditor({
             <button
               type="button"
               onClick={() => onSave()}
+              data-testid="song-editor-save"
               disabled={isSaving || isLoading || !title.trim() || !isDirty}
-              className="p-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+              className="px-2 py-2 @3xl:px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
               title={t('songs:actions.save')}
             >
               {isSaving ? (
@@ -440,7 +457,7 @@ export function SongEditor({
               ) : (
                 <Save size={20} />
               )}
-              <span className="hidden sm:inline">
+              <span className="hidden @3xl:inline">
                 {t('songs:actions.save')}
               </span>
             </button>
