@@ -11,6 +11,8 @@ import {
   AddSongToScheduleModal,
   getSchedulePassageTarget,
   SchedulePanel,
+  useAddItemToSchedule,
+  useSelectedScheduleId,
 } from '~/features/schedules'
 import { DiscoverButton } from '~/features/song-discovery'
 import { SongBookmarksPanel, SongList } from '~/features/songs/components'
@@ -22,6 +24,7 @@ import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
 import { ActionMenu } from '~/ui/menu'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { PermissionGate } from '~/ui/PermissionGate'
+import { useToast } from '~/ui/toast'
 
 /**
  * The songs page opens as the list beside the Marcaje / Programe stack. From
@@ -86,6 +89,11 @@ function SongsPage() {
   } = useSearch({
     from: '/songs/',
   })
+  const { showToast } = useToast()
+  const addItemToScheduleMutation = useAddItemToSchedule()
+  // The program the Programe panel has picked — what a row's "add to program"
+  // button targets when there is one.
+  const selectedScheduleId = useSelectedScheduleId()
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [focusTrigger, setFocusTrigger] = useState(0)
@@ -197,16 +205,23 @@ function SongsPage() {
       return
     }
 
-    // Priority 2: Navigate to last visited song (if no song is being presented)
+    // Priority 2: highlight the last visited song — never navigate to it.
+    // The remembered song is a highlight, not a navigation trigger: it's
+    // passed through as `selectedSongId`, which SongList only turns into a
+    // scroll/selection once it finds that id in the *currently rendered*
+    // list (see initialSelectedSongId in SongList.tsx). If the song isn't
+    // loaded (or no longer exists), it's silently ignored instead of
+    // forcing the page to open a song the operator didn't ask for.
     const lastVisited = getSongsLastVisited()
     if (lastVisited?.songId) {
       hasNavigatedOnOpen.current = true
       navigate({
-        to: '/songs/$songId',
-        params: { songId: String(lastVisited.songId) },
+        to: '/songs/',
         search: {
           q: lastVisited.searchQuery || searchQuery || undefined,
+          selectedSongId: lastVisited.songId,
         },
+        replace: true,
       })
     }
   }, [presentationState, navigate, searchQuery, fromSong])
@@ -254,6 +269,36 @@ function SongsPage() {
     setBookmarkSongIds(songIds)
     setShowAddToScheduleModal(true)
   }, [])
+
+  /**
+   * The song row's "add to program" button.
+   *
+   * With a program already picked in the Programe panel it lands in one press,
+   * exactly where the old drag put it. With none picked it opens the program
+   * picker instead of complaining: the panel that would let you pick is
+   * desktop-only, so a "pick a program first" toast would dead-end on a phone.
+   */
+  const handleAddSongToSchedule = useCallback(
+    (song: { id: number; title: string }) => {
+      if (!selectedScheduleId) {
+        setBookmarkSongIds([song.id])
+        setShowAddToScheduleModal(true)
+        return
+      }
+      addItemToScheduleMutation.mutate(
+        { scheduleId: selectedScheduleId, input: { songId: song.id } },
+        {
+          onSuccess: () =>
+            showToast(
+              tSchedules('panel.songAdded', { title: song.title }),
+              'success',
+            ),
+          onError: () => showToast(tSchedules('messages.error'), 'error'),
+        },
+      )
+    },
+    [selectedScheduleId, addItemToScheduleMutation, showToast, tSchedules],
+  )
 
   const handleOpenSchedule = useCallback(
     (scheduleId: number) => {
@@ -314,7 +359,8 @@ function SongsPage() {
   }, [presentedSongId, navigate, searchQuery])
 
   // Marcaje and Programe are desktop-only: the list needs the whole width on a
-  // phone. Both accept songs dragged straight out of the list.
+  // phone. Songs reach them from the buttons on each row, which work at every
+  // width.
   const workspacePanels: WorkspacePanel[] = [
     {
       id: 'list',
@@ -332,7 +378,8 @@ function SongsPage() {
           urlPath={urlPath ?? undefined}
           onAISearchSaved={handleAISearchSaved}
           onSelectedSongChange={setSelectedSong}
-          songsDraggable
+          showRowActions
+          onAddSongToSchedule={handleAddSongToSchedule}
         />
       ),
     },
