@@ -87,6 +87,7 @@ export function SongSlideRailList({
             ref={getRef()}
             type="button"
             data-testid={`${testIdPrefix}-${index}`}
+            aria-current={isPresented ? 'true' : undefined}
             onClick={() => !isPresented && onSlideClick(index)}
             onDoubleClick={() => !isPresented && onSlideDoubleClick?.(index)}
             className={`w-full text-left px-2 py-2 rounded-lg transition-colors group ${getButtonClass()} ${

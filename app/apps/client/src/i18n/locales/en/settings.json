@@ -158,13 +158,57 @@
         "switchDescription": "Shortcut to navigate to this page",
         "focusSearchTitle": "Focus Search",
         "focusSearchDescription": "Shortcut to navigate to this page and focus the search input",
-        "showSlideTitle": "Display Selected Slide",
-        "showSlideDescription": "Shortcut to display the currently selected slide on screen",
         "sameShortcutHint": "You can use the same shortcut for switching to the page and focusing search.",
         "duplicateError": "Shortcut already exists",
         "conflictGlobal": "Already used by global action \"{{action}}\"",
         "conflictScene": "Already used by scene \"{{scene}}\"",
-        "conflictSidebar": "Already used by \"{{item}}\""
+        "conflictSidebar": "Already used by \"{{item}}\"",
+        "page": {
+          "title": "Only on this page",
+          "description": "These keys work only while this page is open, so the same key can do something else on another page. Keyboard only — MIDI buttons are global.",
+          "default": {
+            "showSlide": {
+              "title": "Show the selected item",
+              "description": "Put the selected item on screen"
+            },
+            "nextSlide": {
+              "title": "Next",
+              "description": "Go to the next item on screen"
+            },
+            "prevSlide": {
+              "title": "Previous",
+              "description": "Go to the previous item on screen"
+            }
+          },
+          "songs": {
+            "showSlide": {
+              "title": "Show the selected slide",
+              "description": "Put the selected slide of the open song on screen"
+            },
+            "nextSlide": {
+              "title": "Next slide",
+              "description": "Go to the next slide of the song on screen"
+            },
+            "prevSlide": {
+              "title": "Previous slide",
+              "description": "Go to the previous slide of the song on screen"
+            }
+          },
+          "bible": {
+            "showSlide": {
+              "title": "Show the selected verse",
+              "description": "Put the selected verse on screen"
+            },
+            "nextSlide": {
+              "title": "Next verse",
+              "description": "Go to the next verse on screen"
+            },
+            "prevSlide": {
+              "title": "Previous verse",
+              "description": "Go to the previous verse on screen"
+            }
+          }
+        }
       },
       "visibility": {
         "label": "Visible in Sidebar",
@@ -200,7 +244,7 @@
         "livestream": "Livestream",
         "livestreamDescription": "Start and stop the live stream with a key or MIDI button.",
         "pages": "Pages",
-        "pagesDescription": "Jump to a page and focus its search."
+        "pagesDescription": "Switch to a page, focus its search, and keys that only work while that page is open."
       },
       "actions": {
         "startLive": {
@@ -1245,6 +1289,15 @@
           "filesystem": "The installer could not be saved to the download folder. Choose another folder below and try again.",
           "unknown": "The download failed."
         }
+      },
+      "installer": {
+        "title": "Church Hub",
+        "closing": "Closing the app…",
+        "installing": "Installing version {{version}}…",
+        "launching": "Starting the new version…",
+        "hint": "The app reopens by itself when this is done.",
+        "failed": "The update could not be installed: {{reason}}",
+        "openManually": "Open Church Hub yourself; the downloaded installer is in the downloads folder."
       }
     },
     "about": {

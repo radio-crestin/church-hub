@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePageShortcutEvent } from '~/features/keyboard-shortcuts/utils'
 import {
   useClearTemporaryContent,
   useNavigateTemporary,
@@ -265,10 +266,20 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     [flushSave, displayIndexByPosition, presentSong, song.id],
   )
 
+  // The page's own "show the selected slide" shortcut (Settings → Shortcuts →
+  // Songs): project the slide on the canvas, like its green button.
+  const activeIndexRef = useRef(0)
+  const handleShowActiveSlide = useCallback(() => {
+    if (slides.length === 0) return
+    handleProjectSlide(activeIndexRef.current)
+  }, [slides.length, handleProjectSlide])
+  usePageShortcutEvent('songs', 'showSlide', handleShowActiveSlide)
+
   // Speaker note for the slide currently on the canvas. Clamp the index so a
   // deletion can't point past the end of the list.
   const activeIndex =
     slides.length === 0 ? 0 : Math.min(activeSlideIndex, slides.length - 1)
+  activeIndexRef.current = activeIndex
   const activeNote = slides[activeIndex]?.notes ?? ''
   const handleNoteChange = useCallback(
     (value: string) => {

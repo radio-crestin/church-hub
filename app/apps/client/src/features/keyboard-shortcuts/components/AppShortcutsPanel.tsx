@@ -54,11 +54,7 @@ export function AppShortcutsPanel() {
           <p className="mb-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
             {t('sections.shortcuts.groups.pagesDescription')}
           </p>
-          <PageShortcutsSettings
-            pageId={pageId}
-            showHeading={false}
-            includeShowSlide={false}
-          />
+          <PageShortcutsSettings pageId={pageId} showHeading={false} />
         </section>
       ))}
     </div>

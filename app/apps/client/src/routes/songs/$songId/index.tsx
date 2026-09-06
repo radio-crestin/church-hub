@@ -22,6 +22,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePageShortcutEvent } from '~/features/keyboard-shortcuts/utils'
 import {
   clearSectionLastVisited,
   setSongsLastVisited,
@@ -638,6 +639,15 @@ function SongPreviewPage() {
     enabled: classicKeyboard && presentedSlideIndex === null && !isScheduleLive,
   })
 
+  // The page's own "show the selected slide" shortcut (Settings → Shortcuts →
+  // Songs). In PowerPoint mode the stage board answers it instead.
+  usePageShortcutEvent(
+    'songs',
+    'showSlide',
+    handlePresentSelectedSlide,
+    classicKeyboard,
+  )
+
   const handleBookmarkSongClick = useCallback(
     (bookmark: { songId: number }) => {
       navigate({
@@ -751,6 +761,9 @@ function SongPreviewPage() {
       render: () => (
         <SongBookmarksPanel
           onSelectSong={handleBookmarkSongClick}
+          onAddAllToSchedule={
+            bookmarks.length > 0 ? handleAddAllBookmarksToSchedule : undefined
+          }
           activeSongId={song.id}
           isCollapsed={!bookmarksOpen}
           onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
@@ -769,7 +782,9 @@ function SongPreviewPage() {
           onSelectPassage={handleSchedulePassageClick}
           onOpenSchedule={handleOpenSchedule}
           candidateSong={{ id: song.id, title: song.title }}
-          onAddAllBookmarks={handleAddAllBookmarksToSchedule}
+          onAddAllBookmarks={
+            bookmarks.length > 0 ? handleAddAllBookmarksToSchedule : undefined
+          }
           isCollapsed={!schedulesOpen}
           onToggleCollapse={() => setSchedulesOpen(!schedulesOpen)}
         />

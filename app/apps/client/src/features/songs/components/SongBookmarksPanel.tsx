@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   Bookmark,
+  CalendarPlus,
   Check,
   ChevronDown,
   Download,
@@ -32,6 +33,7 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePersistedChoice } from '~/hooks/usePersistedChoice'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import {
@@ -318,6 +320,9 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
   )
 }
 
+const SUNG_FILTERS = ['all', 'sung', 'pending'] as const
+const SUNG_FILTER_STORAGE_KEY = 'songBookmarks.sungFilter'
+
 interface SongBookmarksPanelProps {
   onSelectSong: (bookmark: SongBookmark) => void
   activeSongId?: number
@@ -335,6 +340,12 @@ interface SongBookmarksPanelProps {
    */
   isCollapsed?: boolean
   onToggleCollapse?: () => void
+  /**
+   * Hands every bookmarked song to a program. The same action sits in the
+   * Programe header, but this is where the operator is looking: they have just
+   * finished marking the songs for the service.
+   */
+  onAddAllToSchedule?: (songIds: number[]) => void
 }
 
 export function SongBookmarksPanel({
@@ -343,6 +354,7 @@ export function SongBookmarksPanel({
   acceptsSongDrop = false,
   isCollapsed = false,
   onToggleCollapse,
+  onAddAllToSchedule,
 }: SongBookmarksPanelProps) {
   const { t } = useTranslation('songs')
   const { data: bookmarks = [], isLoading } = useSongBookmarks()
@@ -357,8 +369,12 @@ export function SongBookmarksPanel({
   const removeNoteMutation = useRemoveBookmarkNote()
   const exportMutation = useExportBookmarksAsText()
   const [searchQuery, setSearchQuery] = useState('')
-  // Filter the song bookmarks by their "already sung" state.
-  const [sungFilter, setSungFilter] = useState<'all' | 'sung' | 'pending'>(
+  // Filter the song bookmarks by their "already sung" state. Remembered: an
+  // operator working through a service leaves this on "pending", and a restart
+  // mid-service must not put the sung songs back in front of them.
+  const [sungFilter, setSungFilter] = usePersistedChoice(
+    SUNG_FILTER_STORAGE_KEY,
+    SUNG_FILTERS,
     'all',
   )
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -662,6 +678,19 @@ export function SongBookmarksPanel({
             >
               <Download className="w-3.5 h-3.5" />
             </button>
+            {onAddAllToSchedule && (
+              <button
+                type="button"
+                onClick={() =>
+                  onAddAllToSchedule(bookmarks.map((b) => b.songId))
+                }
+                data-testid="bookmarks-add-all-to-schedule"
+                title={t('actions.addToSchedule')}
+                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => clearBookmarksMutation.mutate()}

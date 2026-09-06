@@ -243,7 +243,24 @@ export function UpdatePanel() {
                 <button
                   type="button"
                   onClick={() => {
-                    void install().then((result) => {
+                    const labels = {
+                      title: t('sections.updates.installer.title'),
+                      closing: t('sections.updates.installer.closing'),
+                      installing: t('sections.updates.installer.installing', {
+                        version,
+                      }),
+                      launching: t('sections.updates.installer.launching'),
+                      hint: t('sections.updates.installer.hint'),
+                      failed: t('sections.updates.installer.failed', {
+                        // Left for the installer to fill in.
+                        reason: '{{reason}}',
+                        interpolation: { escapeValue: false },
+                      }),
+                      openManually: t(
+                        'sections.updates.installer.openManually',
+                      ),
+                    }
+                    void install(labels).then((result) => {
                       if (!result.success) {
                         showToast(
                           t('sections.updates.available.installFailed', {

@@ -2163,7 +2163,21 @@ async function startRealServer(): Promise<void> {
           )
         }
 
-        const result = await installUpdate(current.filePath)
+        // The installer window runs after the app has quit, so the client
+        // hands over what it should say, in the operator's language.
+        let labels: Record<string, string> = {}
+        try {
+          const body = (await req.json()) as { labels?: Record<string, string> }
+          labels = body.labels ?? {}
+        } catch {
+          // No body: the helper falls back to its English texts.
+        }
+
+        const result = await installUpdate(
+          current.filePath,
+          current.version ?? '',
+          labels,
+        )
         return handleCors(
           req,
           new Response(

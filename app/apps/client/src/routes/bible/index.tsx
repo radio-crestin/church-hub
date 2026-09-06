@@ -38,13 +38,17 @@ import {
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
-import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
+import {
+  useFocusSearchEvent,
+  usePageShortcutEvent,
+} from '~/features/keyboard-shortcuts/utils'
 import { getBibleLastVisited, setBibleLastVisited } from '~/features/navigation'
 import {
   useClearSlide,
   useNavigateTemporary,
   usePresentationState,
   usePresentTemporaryBible,
+  useShowSlide,
 } from '~/features/presentation'
 import {
   useSetSlideHighlights,
@@ -162,6 +166,7 @@ function BiblePage() {
   const { data: primaryBooks = [] } = useBooks(primaryTranslation?.id)
   const presentTemporaryBible = usePresentTemporaryBible()
   const clearSlide = useClearSlide()
+  const showSlide = useShowSlide()
   const navigateTemporary = useNavigateTemporary()
   const addToHistory = useAddToHistory()
   const addItemToSchedule = useAddItemToSchedule()
@@ -1189,6 +1194,31 @@ function BiblePage() {
       }
     }
   }, [navigation, verses, presentVerseToScreen, urlSelectOnly, navigate])
+
+  // The page's own "show the selected verse" shortcut (Settings → Shortcuts →
+  // Bible): the verse the search landed on, or the highlighted one; when that
+  // is already what is live, just bring it back on screen.
+  const handleShowSelectedVerse = useCallback(() => {
+    const { searchedIndex, presentedIndex } = navigation.state
+    if (searchedIndex !== null && searchedIndex !== presentedIndex) {
+      void handlePresentSearched()
+      return
+    }
+    const index = searchedIndex ?? presentedIndex
+    const verse = index !== null ? verses[index] : undefined
+    if (verse && index !== null && index !== presentedIndex) {
+      void presentVerseToScreen(verse, index)
+      return
+    }
+    showSlide.mutate()
+  }, [
+    navigation.state,
+    verses,
+    handlePresentSearched,
+    presentVerseToScreen,
+    showSlide,
+  ])
+  usePageShortcutEvent('bible', 'showSlide', handleShowSelectedVerse)
 
   // Handle go back - use browser history when navigated internally, hierarchical when external
   const handleGoBack = useCallback(() => {

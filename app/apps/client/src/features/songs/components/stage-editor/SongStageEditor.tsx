@@ -8,6 +8,7 @@ import type { TemporaryContent } from '~/features/presentation'
 import { usePreviewScreen } from '~/features/presentation'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { ConfirmModal } from '~/ui/modal'
+import { isTypingTarget } from '~/utils/isTypingTarget'
 import { SlideFilmstrip } from './SlideFilmstrip'
 import { StageCanvas } from './StageCanvas'
 import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
@@ -227,19 +228,26 @@ export function SongStageEditor({
     }
   }, [activeIndex, slides.length])
 
-  // Navigating while live also hands the keyboard to the active thumbnail.
+  // Presenting or navigating hands the keyboard to the active thumbnail.
   // Presenting opens the projection window, which takes the keyboard as it
   // appears; what the control window gets back has to land on something in
   // the page, or the next arrow key goes nowhere until the operator clicks a
   // slide. The thumbnail is a plain button, so the shortcut handlers see its
   // keys like any other.
+  //
+  // Keyed on the projected slide as well as on navigation: "Present" and the
+  // green per-slide button change what is live before the local navigation
+  // counter (if any) catches up, and the first projection of a session is
+  // exactly when the projection window appears and takes the keyboard.
+  // Never taken from a field the operator is typing in.
   useEffect(() => {
-    if (navSeq === 0 || !navStateRef.current.isPresenting) return
+    if (navSeq === 0 && presentedSlideId == null) return
+    if (isTypingTarget(document.activeElement)) return
     const thumbnail = filmstripScrollRef.current?.querySelector<HTMLElement>(
       `[data-slide-index="${activeIndex}"] [data-testid="stage-thumbnail"]`,
     )
     thumbnail?.focus({ preventScroll: true })
-  }, [navSeq, activeIndex])
+  }, [navSeq, activeIndex, presentedSlideId])
 
   const previewContent = useMemo<TemporaryContent>(
     () => ({
