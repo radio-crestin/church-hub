@@ -406,6 +406,7 @@ function SongsPage() {
       render: () => (
         <SchedulePanel
           onSelectSong={handleScheduleSongClick}
+          onSongPresented={handleScheduleSongClick}
           onSelectPassage={handleSchedulePassageClick}
           onOpenSchedule={handleOpenSchedule}
           candidateSong={selectedSong}

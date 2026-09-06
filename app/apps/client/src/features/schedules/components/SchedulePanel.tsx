@@ -71,6 +71,14 @@ interface SchedulePanelProps {
   /** Highlights the passage currently open on the Bible page. */
   activeReference?: string | null
   onSelectSong?: (songId: number) => void
+  /**
+   * Fires after a song row projects its first slide. The song list uses it to
+   * follow the projector onto that song's page, so the operator lands on the
+   * slide rail instead of being left on the list with the program running.
+   * Deliberately separate from `onSelectSong`: the Bible page shares this
+   * panel and must stay put when a row is clicked.
+   */
+  onSongPresented?: (songId: number) => void
   /** Opens a passage on the Bible page at its exact verse. */
   onSelectPassage?: (item: ScheduleItem) => void
   /** Opens the full program page. */
@@ -115,6 +123,7 @@ export function SchedulePanel({
   activeSongId,
   activeReference = null,
   onSelectSong,
+  onSongPresented,
   onSelectPassage,
   onOpenSchedule,
   candidateSong = null,
@@ -307,7 +316,13 @@ export function SchedulePanel({
    */
   const presentItem = useCallback(
     (item: ScheduleItem) => {
-      if (item.itemType === 'song') return presentSongSlide(item, 0)
+      if (item.itemType === 'song') {
+        const presented = presentSongSlide(item, 0)
+        // The projector already carries this program's id, so the song page
+        // derives schedule mode on arrival — nothing else has to be handed over.
+        if (item.songId) onSongPresented?.(item.songId)
+        return presented
+      }
       if (item.itemType === 'bible_passage') return presentPassageVerse(item, 0)
       if (item.slideType === 'versete_tineri') {
         return presentVerseteEntry(item, 0)
@@ -316,6 +331,7 @@ export function SchedulePanel({
       return presentAnnouncement(item)
     },
     [
+      onSongPresented,
       presentAnnouncement,
       presentPassageVerse,
       presentScene,
