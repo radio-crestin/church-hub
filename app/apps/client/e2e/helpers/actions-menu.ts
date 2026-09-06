@@ -11,12 +11,38 @@ export async function openActionsMenu(
 ): Promise<Locator> {
   const trigger = page.getByTestId(triggerTestId)
   await expect(trigger).toBeVisible({ timeout: 15000 })
-  if ((await trigger.getAttribute('aria-expanded')) !== 'true') {
-    await trigger.click()
-  }
   const panel = page.getByTestId(`${triggerTestId}-panel`)
-  await expect(panel).toBeVisible()
-  return panel
+
+  if ((await trigger.getAttribute('aria-expanded')) === 'true') {
+    await expect(panel).toBeVisible()
+    return panel
+  }
+
+  // dnd-kit's pointer sensor (see e.g. SongBookmarksPanel's useSensor call)
+  // installs a document-level, capture-phase `click` listener the moment a
+  // drag starts, and only tears it down ~50ms AFTER the drop
+  // (AbstractPointerSensor#detach uses `setTimeout(removeAll, 50)`). That
+  // listener stops propagation, which is deliberate: it swallows the
+  // synthetic click a browser fires from the drag's own mousedown/mouseup.
+  // But it also swallows a *real* click on this trigger if it lands in that
+  // window - which a script can do (e.g. right after `page.mouse.up()`) even
+  // though a human moving the mouse to the trigger can't. When that happens
+  // the click never reaches ActionMenu's onClick, so aria-expanded stays
+  // false and the panel never mounts. Retry the click a few times with short
+  // waits rather than failing outright - this costs nothing when the first
+  // click lands cleanly (the common case), and only pays the retry cost
+  // right after a drag.
+  for (let attempt = 1; ; attempt++) {
+    if ((await trigger.getAttribute('aria-expanded')) !== 'true') {
+      await trigger.click()
+    }
+    try {
+      await expect(panel).toBeVisible({ timeout: 200 })
+      return panel
+    } catch (error) {
+      if (attempt >= 5) throw error
+    }
+  }
 }
 
 /** Opens the menu and hands back one of its rows. */
