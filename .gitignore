@@ -113,3 +113,9 @@ app/test-results/
 
 # Local working notes for the current branch
 context.md
+
+# graphify / omc tool output
+.omc/
+graphify-out/
+*.graphify-bak
+test-results/
