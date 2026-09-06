@@ -487,7 +487,7 @@ test.describe('Add-item modal on the program page', () => {
       // The back arrow returns to the menu, so a change of mind is one click.
       await modal.getByTestId('add-schedule-item-back').click()
       await expect(
-        modal.getByTestId('add-schedule-item-biblePassage'),
+        modal.getByTestId('add-schedule-item-verseteTineri'),
       ).toBeVisible()
 
       // Forward again, search, and pick the song.
@@ -564,7 +564,7 @@ test.describe('Add-item modal on the program page', () => {
  * to — the other module's content.
  */
 test.describe('Programe panel on the Bible page', () => {
-  test('lists the program verses and marks one read', async ({
+  test('lists the program readings and marks one read', async ({
     page,
     request,
   }) => {
@@ -608,12 +608,12 @@ test.describe('Programe panel on the Bible page', () => {
       const panel = page.getByTestId('schedule-songs-panel')
       await expect(panel).toBeVisible({ timeout: 10000 })
 
-      const row = panel.getByTestId('schedule-verse-item').first()
+      const row = panel.getByTestId('schedule-versete-tineri-item').first()
       await expect(row).toBeVisible({ timeout: 10000 })
       await expect(row).toContainText('Ioan 3:16')
 
       // The read marker is the same per-program marker songs use.
-      await row.getByTestId('schedule-verse-read-toggle').click()
+      await row.getByTestId('schedule-slide-sung-toggle').click()
       await expect
         .poll(
           async () => {
@@ -757,7 +757,7 @@ test.describe('Programe panel - reordering a mixed list', () => {
       await expect(panel).toBeVisible({ timeout: 10000 })
 
       const songRow = panel.getByTestId('schedule-song-item')
-      const verseRow = panel.getByTestId('schedule-verse-item')
+      const verseRow = panel.getByTestId('schedule-versete-tineri-item')
       const announcementRow = panel.getByTestId('schedule-announcement-item')
       await expect(songRow).toHaveCount(1, { timeout: 10000 })
       await expect(verseRow).toHaveCount(1)
@@ -793,11 +793,16 @@ test.describe('Programe panel - reordering a mixed list', () => {
           async () => {
             const res = await request.get(`/api/schedules/${schedule.id}`)
             const { data } = await res.json()
-            return data.items.map((i: { itemType: string }) => i.itemType)
+            // A passage is a `versete_tineri` slide now, so the item type
+            // alone no longer tells the announcement and the reading apart.
+            return data.items.map(
+              (i: { itemType: string; slideType: string | null }) =>
+                i.slideType ?? i.itemType,
+            )
           },
           { timeout: 10000 },
         )
-        .toEqual(['slide', 'bible_passage', 'song'])
+        .toEqual(['announcement', 'versete_tineri', 'song'])
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
@@ -923,7 +928,7 @@ test.describe('Add-item modal on the program page - rendering', () => {
       await expect(modal.getByTestId('song-picker-search')).toBeVisible()
       await modal.getByTestId('add-schedule-item-back').click()
       await expect(
-        modal.getByTestId('add-schedule-item-biblePassage'),
+        modal.getByTestId('add-schedule-item-verseteTineri'),
       ).toBeVisible()
       const backBox = await modal.boundingBox()
       expect(backBox?.height ?? 0).toBeGreaterThan(200)

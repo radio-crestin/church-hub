@@ -29,7 +29,7 @@
     "edit": "Editeaza",
     "editSong": "Editeaza cantarea",
     "announcement": "Anunt",
-    "verseteTineri": "Versete Tineri",
+    "verseteTineri": "Versete Biblice",
     "items": "{{count}} elemente",
     "items_one": "{{count}} element",
     "items_other": "{{count}} elemente"
@@ -144,7 +144,7 @@
     }
   },
   "verseteTineri": {
-    "title": "Versete Tineri",
+    "title": "Versete Biblice",
     "addEntry": "Adauga Intrare",
     "noEntries": "Nicio intrare inca",
     "entriesCount_one": "{{count}} intrare",

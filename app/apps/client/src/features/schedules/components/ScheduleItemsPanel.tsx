@@ -417,7 +417,13 @@ function SortableItemWrapper({
               item.slideType === 'versete_tineri' &&
               (!isExpanded && item.verseteTineriEntries.length > 0
                 ? item.verseteTineriEntries
-                    .map((e) => `${e.personName} – ${e.reference}`)
+                    // A reading with nobody attached shows just its reference,
+                    // not a dangling dash — the name is optional.
+                    .map((e) =>
+                      e.personName.trim()
+                        ? `${e.personName} – ${e.reference}`
+                        : e.reference,
+                    )
                     .join(', ')
                 : t('presenter.verseteTineri'))}
             {item.itemType === 'slide' &&

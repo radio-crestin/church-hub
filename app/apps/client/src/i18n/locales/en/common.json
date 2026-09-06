@@ -2,6 +2,8 @@
   "addMenu": {
     "button": "Add",
     "title": "Add Item",
+    "song": "Song",
+    "songDescription": "Add a song from the library",
     "searchSong": "Search Song",
     "searchSongDescription": "Find and add a song from the library",
     "bibleVerse": "Bible Verse",
@@ -10,8 +12,8 @@
     "biblePassageDescription": "Add a Bible passage with multiple verses",
     "announcement": "Announcement",
     "announcementDescription": "Add an announcement slide",
-    "verseteTineri": "Youth Verses",
-    "verseteTineriDescription": "Add youth verses with names",
+    "verseteTineri": "Bible Verses",
+    "verseteTineriDescription": "Add Bible verses with names",
     "scene": "OBS Scene",
     "sceneDescription": "Switch to an OBS scene",
     "importSchedule": {

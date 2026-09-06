@@ -115,8 +115,9 @@ test.describe('Programe panel presents and advances the program', () => {
       // means the seed is broken, and silently skipping would hide it.
       expect(translation).toBeTruthy()
 
-      // song (2 slides) → passage (1 verse) → announcement.
-      // Flat run: 0 = slide 1, 1 = slide 2, 2 = the verse, 3 = the announcement.
+      // song (2 slides) → passage → announcement. A passage is ONE step: the
+      // whole reading is a single Versete Biblice slide.
+      // Flat run: 0 = slide 1, 1 = slide 2, 2 = the passage, 3 = the announcement.
       await request.post(`/api/schedules/${schedule.id}/items`, {
         data: { songId: song.id },
       })
@@ -161,7 +162,9 @@ test.describe('Programe panel presents and advances the program', () => {
       await expect(panel.getByTestId('schedule-song-item')).toBeVisible({
         timeout: 10000,
       })
-      await expect(panel.getByTestId('schedule-verse-item')).toBeVisible()
+      await expect(
+        panel.getByTestId('schedule-versete-tineri-item'),
+      ).toBeVisible()
       await expect(
         panel.getByTestId('schedule-announcement-item'),
       ).toBeVisible()
@@ -193,10 +196,10 @@ test.describe('Programe panel presents and advances the program', () => {
       // Next crosses out of the song into the passage that follows it.
       await page.keyboard.press('ArrowRight')
       await expectLiveStep(request, page, panel, {
-        type: 'bible_passage',
+        type: 'versete_tineri',
         scheduleId: schedule.id,
         scheduleItemIndex: 2,
-        rowTestId: 'schedule-verse-item',
+        rowTestId: 'schedule-versete-tineri-item',
         stepTestId: 'schedule-sub-item-2',
       })
 
@@ -204,9 +207,9 @@ test.describe('Programe panel presents and advances the program', () => {
       // the passage — and ONLY the passage — with the live verse ringed.
       const liveRail = page.getByTestId('schedule-live-item-panel')
       await expect(liveRail).toBeVisible({ timeout: 10000 })
-      await expect(
-        liveRail.getByTestId('schedule-live-item-title'),
-      ).toContainText('Ioan 3:16')
+      await expect(liveRail.getByTestId('schedule-sub-item-2')).toContainText(
+        'Ioan 3:16',
+      )
       await expect(liveRail.getByTestId('schedule-sub-item-2')).toHaveClass(
         /ring-green-500/,
       )
@@ -226,10 +229,10 @@ test.describe('Programe panel presents and advances the program', () => {
       // And back again, into the passage the announcement followed.
       await page.keyboard.press('ArrowLeft')
       await expectLiveStep(request, page, panel, {
-        type: 'bible_passage',
+        type: 'versete_tineri',
         scheduleId: schedule.id,
         scheduleItemIndex: 2,
-        rowTestId: 'schedule-verse-item',
+        rowTestId: 'schedule-versete-tineri-item',
         stepTestId: 'schedule-sub-item-2',
       })
 
@@ -256,8 +259,11 @@ test.describe('Programe panel presents and advances the program', () => {
           async () => {
             const res = await request.get(`/api/schedules/${schedule.id}`)
             const { data } = await res.json()
+            // The passage is a `versete_tineri` slide too, so the marker has
+            // to be read off the announcement itself.
             return data.items.find(
-              (i: { itemType: string }) => i.itemType === 'slide',
+              (i: { itemType: string; slideType: string | null }) =>
+                i.itemType === 'slide' && i.slideType === 'announcement',
             )?.isSung
           },
           { timeout: 10000 },
@@ -286,7 +292,8 @@ test.describe('Programe panel presents and advances the program', () => {
             const res = await request.get(`/api/schedules/${schedule.id}`)
             const { data } = await res.json()
             return data.items.find(
-              (i: { itemType: string }) => i.itemType === 'slide',
+              (i: { itemType: string; slideType: string | null }) =>
+                i.itemType === 'slide' && i.slideType === 'announcement',
             )?.slideContent
           },
           { timeout: 10000 },
@@ -308,20 +315,8 @@ test.describe('Programe panel presents and advances the program', () => {
         )
         .toBe(2)
 
-      // The panel can also grow the program: the quick "+" appends the song the
-      // page has open, and the full add menu is the program page's own.
-      await panel.getByTestId('schedule-add-candidate-song').click()
-      await expect
-        .poll(
-          async () => {
-            const res = await request.get(`/api/schedules/${schedule.id}`)
-            const { data } = await res.json()
-            return data.items.length
-          },
-          { timeout: 10000 },
-        )
-        .toBe(3)
-
+      // The panel grows the program through the add menu — the only "+" in the
+      // header now that the green one-click add is gone.
       await panel.getByTestId('schedule-add-item').click()
       await expect(page.getByTestId('add-schedule-item-modal')).toBeVisible({
         timeout: 10000,
@@ -346,8 +341,8 @@ test.describe('Programe panel presents and advances the program', () => {
       const translation = (await translations.json()).data?.[0]
       expect(translation).toBeTruthy()
 
-      // song (2 slides) → passage (1 verse). Flat run: 0 and 1 are the slides,
-      // 2 is the verse.
+      // song (2 slides) → passage. Flat run: 0 and 1 are the slides, 2 is the
+      // passage, which is a single step.
       await request.post(`/api/schedules/${schedule.id}/items`, {
         data: { songId: song.id },
       })
@@ -420,16 +415,16 @@ test.describe('Programe panel presents and advances the program', () => {
       })
       await page.keyboard.press('ArrowRight')
       await expectLiveStep(request, page, panel, {
-        type: 'bible_passage',
+        type: 'versete_tineri',
         scheduleId: schedule.id,
         scheduleItemIndex: 2,
-        rowTestId: 'schedule-verse-item',
+        rowTestId: 'schedule-versete-tineri-item',
       })
 
       // Scripture is a program step too, so the rail stays — now showing the
-      // passage's verses rather than the song's slides.
+      // passage rather than the song's slides.
       await expect(liveRail).toBeVisible()
-      await expect(liveRail.getByTestId('schedule-live-item-title')).toHaveText(
+      await expect(liveRail.getByTestId('schedule-sub-item-2')).toContainText(
         /Ioan/,
       )
 
@@ -465,7 +460,7 @@ test.describe('Programe panel presents and advances the program', () => {
       // means the seed is broken, and silently skipping would hide it.
       expect(translation).toBeTruthy()
 
-      // passage (1 verse) → announcement. Flat run: 0 = the verse, 1 = the
+      // passage → announcement. Flat run: 0 = the passage (one step), 1 = the
       // announcement.
       const passage = await request.post(
         `/api/schedules/${schedule.id}/items`,
@@ -504,18 +499,20 @@ test.describe('Programe panel presents and advances the program', () => {
       const panel = page.getByTestId('schedule-songs-panel')
       await expect(panel).toBeVisible({ timeout: 10000 })
 
-      const verseRow = panel.getByTestId('schedule-verse-item').first()
-      await expect(verseRow).toBeVisible({ timeout: 10000 })
+      const passageRow = panel
+        .getByTestId('schedule-versete-tineri-item')
+        .first()
+      await expect(passageRow).toBeVisible({ timeout: 10000 })
 
       // Compact rows here too — no inline verse list to expand.
       await expect(panel.getByTestId('schedule-item-expand')).toHaveCount(0)
 
-      await verseRow.getByTestId('schedule-verse-present').click()
+      await passageRow.getByTestId('schedule-slide-present').click()
       await expectLiveStep(request, page, panel, {
-        type: 'bible_passage',
+        type: 'versete_tineri',
         scheduleId: schedule.id,
         scheduleItemIndex: 0,
-        rowTestId: 'schedule-verse-item',
+        rowTestId: 'schedule-versete-tineri-item',
       })
 
       // On the Bible page the panel is the running order and next/prev is how
@@ -547,8 +544,8 @@ test.describe('Programe panel presents and advances the program', () => {
       const translation = (await translations.json()).data?.[0]
       expect(translation).toBeTruthy()
 
-      // song (2 slides) → passage (1 verse). Flat run: 0 and 1 are the slides,
-      // 2 is the verse.
+      // song (2 slides) → passage. Flat run: 0 and 1 are the slides, 2 is the
+      // passage, which is a single step.
       await request.post(`/api/schedules/${schedule.id}/items`, {
         data: { songId: song.id },
       })
@@ -634,17 +631,17 @@ test.describe('Programe panel presents and advances the program', () => {
       })
       await page.keyboard.press('ArrowRight')
       await expectLiveStep(request, page, panel, {
-        type: 'bible_passage',
+        type: 'versete_tineri',
         scheduleId: schedule.id,
         scheduleItemIndex: 2,
-        rowTestId: 'schedule-verse-item',
+        rowTestId: 'schedule-versete-tineri-item',
         stepTestId: 'schedule-sub-item-2',
       })
       const liveRail = page.getByTestId('schedule-live-item-panel')
       await expect(liveRail).toBeVisible({ timeout: 10000 })
-      await expect(
-        liveRail.getByTestId('schedule-live-item-title'),
-      ).toContainText('Ioan 3:16')
+      await expect(liveRail.getByTestId('schedule-sub-item-2')).toContainText(
+        'Ioan 3:16',
+      )
     } finally {
       await request.post('/api/presentation/clear-temporary').catch(() => {})
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})

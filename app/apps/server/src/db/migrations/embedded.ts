@@ -239,6 +239,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0031_add_bible_bookmark_style_ranges',
       breakpoints: true,
     },
+    {
+      idx: 32,
+      version: '6',
+      when: 1769100000000,
+      tag: '0032_versete_tineri_person_name_optional',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -402,5 +409,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0031_add_bible_bookmark_style_ranges',
     sql: 'ALTER TABLE `bible_bookmarks` ADD `style_ranges` text;\n',
     when: 1769000000000,
+  },
+  {
+    tag: '0032_versete_tineri_person_name_optional',
+    sql: '-- Person name becomes optional on "Versete Biblice" entries.\n--\n-- The two Bible item types in a program (bible_passage and the versete_tineri\n-- slide) are merged into one, and the surviving shape is versete_tineri. A\n-- passage added straight from the Bible has no person attached to it, so\n-- person_name can no longer be required.\n--\n-- SQLite cannot relax a NOT NULL in place, so the table is rebuilt. The column\n-- stays NOT NULL with a \'\' default (same trick as schedules.uuid) rather than\n-- becoming nullable: every read site keeps a plain string and no ?? spreads\n-- through the app.\n--\n-- The data conversion of existing bible_passage items lives in\n-- src/db/migrations/merge-bible-passages-into-versete-tineri.ts, which can log\n-- the rows it cannot convert instead of silently mangling them.\n--\n-- Rebuilding the table drops its sync change-tracking triggers; addSync runs\n-- last on every boot and recreates them (src/db/migrations/add-sync.ts).\nCREATE TABLE IF NOT EXISTS schedule_versete_tineri_entries_new (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  schedule_item_id INTEGER NOT NULL REFERENCES schedule_items(id) ON DELETE CASCADE,\n  person_name TEXT NOT NULL DEFAULT \'\',\n  translation_id INTEGER NOT NULL,\n  book_code TEXT NOT NULL,\n  book_name TEXT NOT NULL,\n  reference TEXT NOT NULL,\n  text TEXT NOT NULL,\n  start_chapter INTEGER NOT NULL,\n  start_verse INTEGER NOT NULL,\n  end_chapter INTEGER NOT NULL,\n  end_verse INTEGER NOT NULL,\n  sort_order INTEGER NOT NULL DEFAULT 0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch())\n);\n--> statement-breakpoint\nINSERT INTO schedule_versete_tineri_entries_new (\n  id, schedule_item_id, person_name, translation_id, book_code, book_name,\n  reference, text, start_chapter, start_verse, end_chapter, end_verse,\n  sort_order, created_at\n)\nSELECT\n  id, schedule_item_id, person_name, translation_id, book_code, book_name,\n  reference, text, start_chapter, start_verse, end_chapter, end_verse,\n  sort_order, created_at\nFROM schedule_versete_tineri_entries;\n--> statement-breakpoint\nDROP TABLE schedule_versete_tineri_entries;\n--> statement-breakpoint\nALTER TABLE schedule_versete_tineri_entries_new RENAME TO schedule_versete_tineri_entries;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_item_id ON schedule_versete_tineri_entries(schedule_item_id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_schedule_versete_tineri_entries_sort_order ON schedule_versete_tineri_entries(sort_order);\n',
+    when: 1769100000000,
   },
 ]
