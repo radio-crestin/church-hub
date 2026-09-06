@@ -14,14 +14,13 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { useQueryClient } from '@tanstack/react-query'
 import {
-  BookOpen,
   CalendarDays,
   CalendarPlus,
   ChevronDown,
   ExternalLink,
   Loader2,
-  Music,
   Plus,
   Search,
   Trash2,
@@ -30,11 +29,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
+import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
+import { usePermissions } from '~/provider/permissions-provider'
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
+import {
+  ScheduleItemEditors,
+  type ScheduleItemEditorsHandle,
+} from './ScheduleItemEditors'
+import { ScheduleSlideRow } from './ScheduleSlideRow'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import { ScheduleVerseRow } from './ScheduleVerseRow'
 import {
@@ -44,40 +50,15 @@ import {
   useRemoveItemFromSchedule,
   useReorderScheduleItems,
   useSchedule,
+  useScheduleFlatNavigation,
   useSchedules,
 } from '../hooks'
+import {
+  readSelectedScheduleId,
+  writeSelectedScheduleId,
+} from '../service/selectedSchedule'
 import type { AddToScheduleInput, ScheduleItem } from '../types'
-
-/**
- * Remembers the operator's last picked program. Deliberately one key for every
- * page: picking a program on the song page and walking into the Bible page
- * should land on the same program.
- */
-const SELECTED_SCHEDULE_STORAGE_KEY = 'songPage.selectedScheduleId'
-
-/** Per-variant key for the "also show the other kind" switch. */
-const SHOW_OTHER_STORAGE_KEY = {
-  songs: 'programPanel.showVerses',
-  verses: 'programPanel.showSongs',
-} as const
-
-type SungFilter = 'all' | 'pending' | 'sung'
-
-/**
- * The program the Programe panel currently has selected. Exported so a page
- * toolbar can act on the same selection without mirroring it into its own
- * state — the panel is the single owner and persists it.
- */
-export function readSelectedScheduleId(): number | null {
-  try {
-    const stored = localStorage.getItem(SELECTED_SCHEDULE_STORAGE_KEY)
-    if (!stored) return null
-    const parsed = Number(stored)
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
-  } catch {
-    return null
-  }
-}
+import { countScheduleItemSteps } from '../utils/scheduleFlatItems'
 
 interface SchedulePanelProps {
   /**
@@ -115,14 +96,19 @@ interface SchedulePanelProps {
 }
 
 /**
- * The song page's "Programe" section: pick one of the operator's programs from
- * a searchable dropdown and work through its songs without leaving the song.
+ * The "Programe" section on the song and Bible pages: pick one of the
+ * operator's programs and run it from right there, without walking over to the
+ * program page.
  *
- * Deliberately mirrors the Marcaje panel — same row design, same
- * all/pending/sung segmented filter, same click-to-open and X-to-remove — so
- * the two lists in this column read as one system. Non-song items (bible
- * passages, announcements, scenes) are filtered out; this panel is about
- * singing through a program.
+ * It is the program page's item list in miniature — every kind of item shows
+ * up, each expands to its presentable steps, clicking a step projects it, and
+ * the live step is ringed green — wrapped in the panel affordances the two
+ * pages already had: the sung/read markers, the all/remaining/sung tabs, the
+ * search box, drag-to-reorder, and the add/open/delete buttons.
+ *
+ * Reordering and filtering deliberately stay a songs-and-passages affair: an
+ * announcement has no "already sung" state and its place in the program is the
+ * program editor's business, so those rows ride along at their fixed positions.
  */
 export function SchedulePanel({
   variant = 'songs',
@@ -140,22 +126,25 @@ export function SchedulePanel({
 }: SchedulePanelProps) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
+  // Adding and editing rewrite the program itself, so they follow the same
+  // permission the program page's own editors do.
+  const queryClient = useQueryClient()
+  const { hasPermission } = usePermissions()
+  const canEditProgram = hasPermission('programs.edit')
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
     readSelectedScheduleId,
   )
-  const [sungFilter, setSungFilter] = useState<SungFilter>('all')
-  // "Vezi versete" on the song page / "Vezi cantari" on the Bible page: when
-  // on, the other kind is listed too and clicking it jumps to that module.
-  const [showOther, setShowOther] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(SHOW_OTHER_STORAGE_KEY[variant]) === 'true'
-    } catch {
-      return false
-    }
-  })
   const [searchQuery, setSearchQuery] = useState('')
+  // The search box is a drawer behind the header's magnifier: the panel is
+  // narrow and the program list is what the operator came for.
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  // Scroll anchors for whichever row the projector is inside.
+  const liveRowRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  // The program page's own add/edit dialogs, borrowed by this panel.
+  const editorsRef = useRef<ScheduleItemEditorsHandle>(null)
 
   const removeItemMutation = useRemoveItemFromSchedule()
   const markSungMutation = useMarkScheduleItemSung()
@@ -185,31 +174,39 @@ export function SchedulePanel({
   }, [schedules, selectedScheduleId])
 
   useEffect(() => {
-    try {
-      if (selectedScheduleId) {
-        localStorage.setItem(
-          SELECTED_SCHEDULE_STORAGE_KEY,
-          String(selectedScheduleId),
-        )
-      } else {
-        localStorage.removeItem(SELECTED_SCHEDULE_STORAGE_KEY)
-      }
-    } catch {
-      // localStorage unavailable (private mode) — selection just won't persist.
-    }
+    // Persisted through the shared store so the page around this panel — whose
+    // next/prev has to know which program is live — hears about it at once.
+    writeSelectedScheduleId(selectedScheduleId)
   }, [selectedScheduleId])
 
+  // Focus the search field the moment its drawer opens.
   useEffect(() => {
-    try {
-      localStorage.setItem(SHOW_OTHER_STORAGE_KEY[variant], String(showOther))
-    } catch {
-      // localStorage unavailable — the switch just won't persist.
-    }
-  }, [variant, showOther])
+    if (isSearchOpen) searchInputRef.current?.focus()
+  }, [isSearchOpen])
 
   const { data: schedule, isLoading: scheduleLoading } = useSchedule(
     selectedScheduleId ?? undefined,
   )
+
+  const allItems = useMemo(() => schedule?.items ?? [], [schedule?.items])
+
+  // Presenting from this panel goes through the same flat run the program page
+  // walks, so the cursor and the "what's next" preview match exactly.
+  const {
+    itemStartFlatIndex,
+    presentedInfo,
+    isScheduleLive,
+    presentSongSlide,
+    presentPassageVerse,
+    presentVerseteEntry,
+    presentAnnouncement,
+    presentScene,
+  } = useScheduleFlatNavigation({
+    scheduleId: selectedScheduleId,
+    items: allItems,
+  })
+
+  const panelPresentedInfo = isScheduleLive ? presentedInfo : null
 
   const scheduleOptions = useMemo<ComboboxOption[]>(
     () =>
@@ -226,44 +223,38 @@ export function SchedulePanel({
     [schedules, t],
   )
 
-  const primaryType = variant === 'songs' ? 'song' : 'bible_passage'
-  const otherType = variant === 'songs' ? 'bible_passage' : 'song'
-
-  // Announcements, Versete Tineri and OBS scenes never appear here — this
-  // panel is about working through a program's songs and readings.
-  const serverSongItems = useMemo(
-    () =>
-      (schedule?.items ?? []).filter(
-        (item) =>
-          item.itemType === primaryType ||
-          (showOther && item.itemType === otherType),
-      ),
-    [schedule, primaryType, otherType, showOther],
-  )
-  const songItems = localOrder ?? serverSongItems
+  // The whole program is listed, and the whole program reorders: a service is
+  // one running order, so an announcement moves between two songs exactly the
+  // way a song moves between two announcements.
+  const orderedItems = localOrder ?? allItems
 
   useEffect(() => {
     setLocalOrder(null)
-  }, [serverSongItems])
+  }, [allItems])
 
-  const sungCount = useMemo(
-    () => songItems.filter((item) => item.isSung).length,
-    [songItems],
-  )
-  const pendingCount = songItems.length - sungCount
+  const isSearching = searchQuery.trim().length > 0
 
-  const filteredItems = useMemo(() => {
+  const displayItems = useMemo(() => {
     // Folded on both sides so "cantare" finds "cântare" and vice versa.
     const q = normalizeForSearch(searchQuery.trim())
-    return songItems.filter((item) => {
-      if (sungFilter === 'sung' && !item.isSung) return false
-      if (sungFilter === 'pending' && item.isSung) return false
-      if (!q) return true
+    if (!q) return orderedItems
+    return orderedItems.filter((item) => {
       if (item.itemType === 'bible_passage') {
         return (
           normalizeForSearch(item.biblePassageReference ?? '').includes(q) ||
           item.biblePassageVerses.some((verse) =>
             normalizeForSearch(verse.text).includes(q),
+          )
+        )
+      }
+      if (item.itemType === 'slide') {
+        return (
+          normalizeForSearch(item.slideContent ?? '').includes(q) ||
+          normalizeForSearch(item.obsSceneName ?? '').includes(q) ||
+          item.verseteTineriEntries.some(
+            (entry) =>
+              normalizeForSearch(entry.personName).includes(q) ||
+              normalizeForSearch(entry.reference).includes(q),
           )
         )
       }
@@ -276,7 +267,55 @@ export function SchedulePanel({
         )
       )
     })
-  }, [songItems, searchQuery, sungFilter])
+  }, [orderedItems, searchQuery])
+
+  /** The program item the projector is inside right now, if any. */
+  const liveItemId = useMemo(() => {
+    if (!panelPresentedInfo || panelPresentedInfo.scheduleItemIndex < 0) {
+      return null
+    }
+    const found = allItems.find((item) => {
+      const start = itemStartFlatIndex[item.id]
+      if (start === undefined) return false
+      const end = start + countScheduleItemSteps(item) - 1
+      return (
+        panelPresentedInfo.scheduleItemIndex >= start &&
+        panelPresentedInfo.scheduleItemIndex <= end
+      )
+    })
+    return found?.id ?? null
+  }, [allItems, itemStartFlatIndex, panelPresentedInfo])
+
+  // Keep the live row — and the one after it — in view as the program moves on.
+  useFollowPresentedScroll(
+    listRef,
+    liveRowRef,
+    panelPresentedInfo?.scheduleItemIndex ?? -1,
+  )
+
+  /**
+   * Puts a program item on screen from its FIRST step. Which verse or slide
+   * within it goes up next is chosen on the left of the page, or with the
+   * next/prev arrows — this list is the running order, not a verse picker.
+   */
+  const presentItem = useCallback(
+    (item: ScheduleItem) => {
+      if (item.itemType === 'song') return presentSongSlide(item, 0)
+      if (item.itemType === 'bible_passage') return presentPassageVerse(item, 0)
+      if (item.slideType === 'versete_tineri') {
+        return presentVerseteEntry(item, 0)
+      }
+      if (item.slideType === 'scene') return presentScene(item)
+      return presentAnnouncement(item)
+    },
+    [
+      presentAnnouncement,
+      presentPassageVerse,
+      presentScene,
+      presentSongSlide,
+      presentVerseteEntry,
+    ],
+  )
 
   const handleToggleSung = useCallback(
     (itemId: number, isSung: boolean) => {
@@ -362,56 +401,44 @@ export function SchedulePanel({
       if (!over || active.id === over.id || !selectedScheduleId) return
 
       // Dragging happens inside whatever the operator is looking at, so the
-      // move is computed on the visible rows. With no filter on, filteredItems
-      // is the whole list and this is the plain case.
-      const oldIndex = filteredItems.findIndex((item) => item.id === active.id)
-      const newIndex = filteredItems.findIndex((item) => item.id === over.id)
+      // move is computed on the visible rows. With no search on, displayItems
+      // is the whole program and this is the plain case.
+      const oldIndex = displayItems.findIndex((item) => item.id === active.id)
+      const newIndex = displayItems.findIndex((item) => item.id === over.id)
       if (oldIndex === -1 || newIndex === -1) return
 
-      const reorderedVisible = arrayMove(filteredItems, oldIndex, newIndex)
-      const visibleIds = new Set(filteredItems.map((item) => item.id))
+      const reorderedVisible = arrayMove(displayItems, oldIndex, newIndex)
+      const visibleIds = new Set(displayItems.map((item) => item.id))
 
       // The reordered rows are poured back into the slots those same rows
-      // already occupied. Rows hidden by the filter keep their exact position,
-      // so reordering the "Ramase" tab never disturbs the sung songs sitting
-      // between them.
-      const pourInto = (order: ScheduleItem[]): ScheduleItem[] => {
-        let cursor = 0
-        return order.map((item) =>
-          visibleIds.has(item.id) ? (reorderedVisible[cursor++] ?? item) : item,
-        )
-      }
+      // already occupied, so rows a search is hiding keep their exact place in
+      // the program instead of drifting to the end.
+      let cursor = 0
+      const nextOrder = orderedItems.map((item) =>
+        visibleIds.has(item.id) ? (reorderedVisible[cursor++] ?? item) : item,
+      )
 
-      setLocalOrder(pourInto(songItems))
+      setLocalOrder(nextOrder)
 
       // The endpoint rewrites sort_order from the index of every id it is
-      // given, so it needs the program's FULL running order — not just the
-      // rows shown here. Whatever this panel does not list (announcements,
-      // Versete Tineri, OBS scenes — and songs or passages when the
-      // cross-module switch is off) keeps the exact position the operator gave
-      // it in the program editor.
-      //
-      // Keying on the visible ids rather than on item kind is what lets this
-      // work unchanged for a mixed list: with the switch on, songs and passages
-      // share one slot set and reorder freely against each other.
-      const itemIds = pourInto(schedule?.items ?? []).map((item) => item.id)
-
+      // given, so it gets the program's full running order.
       reorderItemsMutation.mutate({
         scheduleId: selectedScheduleId,
-        input: { itemIds },
+        input: { itemIds: nextOrder.map((item) => item.id) },
       })
     },
-    [
-      filteredItems,
-      songItems,
-      schedule,
-      selectedScheduleId,
-      reorderItemsMutation,
-    ],
+    [displayItems, orderedItems, selectedScheduleId, reorderItemsMutation],
   )
 
-  const renderRow = useCallback(
+  const isLoading =
+    schedulesLoading || (!!selectedScheduleId && scheduleLoading)
+
+  /** One compact program row, by kind. Clicking it puts the item on screen. */
+  const renderItem = useCallback(
     (item: ScheduleItem, sortable: boolean) => {
+      const isLive = liveItemId === item.id
+      const rowRef = isLive ? liveRowRef : undefined
+
       if (item.itemType === 'bible_passage') {
         return (
           <ScheduleVerseRow
@@ -421,38 +448,74 @@ export function SchedulePanel({
               !!activeReference &&
               item.biblePassageReference?.startsWith(activeReference) === true
             }
+            isLive={isLive}
             isSortable={sortable}
+            rowRef={rowRef}
+            onPresent={() => presentItem(item)}
+            onEdit={
+              canEditProgram
+                ? () => editorsRef.current?.editItem(item)
+                : undefined
+            }
             onSelect={() => onSelectPassage?.(item)}
             onRemove={() => handleRemove(item.id)}
             onToggleSung={() => handleToggleSung(item.id, item.isSung)}
           />
         )
       }
+
+      if (item.itemType === 'song') {
+        return (
+          <ScheduleSongRow
+            key={item.id}
+            item={item}
+            isActive={activeSongId === item.songId}
+            isLive={isLive}
+            isSortable={sortable}
+            rowRef={rowRef}
+            onPresent={() => presentItem(item)}
+            onEdit={
+              canEditProgram
+                ? () => editorsRef.current?.editItem(item)
+                : undefined
+            }
+            onSelect={() => item.songId && onSelectSong?.(item.songId)}
+            onRemove={() => handleRemove(item.id)}
+            onToggleSung={() => handleToggleSung(item.id, item.isSung)}
+          />
+        )
+      }
+
       return (
-        <ScheduleSongRow
+        <ScheduleSlideRow
           key={item.id}
           item={item}
-          isActive={activeSongId === item.songId}
+          isLive={isLive}
           isSortable={sortable}
-          onSelect={() => item.songId && onSelectSong?.(item.songId)}
-          onRemove={() => handleRemove(item.id)}
+          rowRef={rowRef}
+          onPresent={() => presentItem(item)}
           onToggleSung={() => handleToggleSung(item.id, item.isSung)}
+          onEdit={
+            canEditProgram
+              ? () => editorsRef.current?.editItem(item)
+              : undefined
+          }
+          onRemove={canEditProgram ? () => handleRemove(item.id) : undefined}
         />
       )
     },
     [
       activeReference,
       activeSongId,
-      onSelectPassage,
-      onSelectSong,
       handleRemove,
       handleToggleSung,
+      canEditProgram,
+      liveItemId,
+      onSelectPassage,
+      onSelectSong,
+      presentItem,
     ],
   )
-
-  const isSearching = searchQuery.trim().length > 0
-  const isLoading =
-    schedulesLoading || (!!selectedScheduleId && scheduleLoading)
 
   return (
     <div
@@ -486,10 +549,10 @@ export function SchedulePanel({
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
             {t('panel.title')}
           </span>
-          {songItems.length > 0 && (
+          {orderedItems.length > 0 && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({isSearching ? `${filteredItems.length}/` : ''}
-              {songItems.length})
+              ({isSearching ? `${displayItems.length}/` : ''}
+              {orderedItems.length})
             </span>
           )}
         </div>
@@ -527,6 +590,44 @@ export function SchedulePanel({
               ) : (
                 <Plus className="w-3.5 h-3.5" />
               )}
+            </button>
+            {canEditProgram ? (
+              <ScheduleItemEditors
+                ref={editorsRef}
+                scheduleId={selectedScheduleId}
+                onChanged={() =>
+                  queryClient.invalidateQueries({
+                    queryKey: ['schedule', selectedScheduleId],
+                  })
+                }
+                compactTrigger
+              />
+            ) : null}
+            {/* Search lives behind this magnifier: the panel is narrow, and the
+                running order is what the operator came here to read. */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsSearchOpen((open) => {
+                  if (open) setSearchQuery('')
+                  return !open
+                })
+              }}
+              aria-expanded={isSearchOpen}
+              aria-label={
+                isSearchOpen ? t('panel.closeSearch') : t('panel.openSearch')
+              }
+              title={
+                isSearchOpen ? t('panel.closeSearch') : t('panel.openSearch')
+              }
+              data-testid="schedule-search-toggle"
+              className={`p-1.5 rounded-md transition-colors ${
+                isSearchOpen
+                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
+                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
             </button>
             {onAddAllBookmarks && (
               <button
@@ -581,86 +682,7 @@ export function SchedulePanel({
             />
           </div>
 
-          {/* Cross-module switch: shows the program's other content kind and
-              makes each row jump to the module that owns it. */}
-          <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowOther((value) => !value)}
-              aria-pressed={showOther}
-              data-testid="schedule-show-other-toggle"
-              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                showOther
-                  ? 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
-                  : 'bg-gray-50 text-gray-500 hover:text-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-            >
-              <span
-                className={`relative inline-flex h-3.5 w-6 shrink-0 items-center rounded-full transition-colors ${
-                  showOther ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <span
-                  className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform ${
-                    showOther ? 'translate-x-3' : 'translate-x-0.5'
-                  }`}
-                />
-              </span>
-              {variant === 'songs' ? (
-                <BookOpen className="h-3.5 w-3.5 shrink-0" />
-              ) : (
-                <Music className="h-3.5 w-3.5 shrink-0" />
-              )}
-              <span className="truncate">
-                {variant === 'songs'
-                  ? t('panel.showVerses')
-                  : t('panel.showSongs')}
-              </span>
-            </button>
-          </div>
-
-          {songItems.length > 0 && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <div
-                className="flex items-center gap-1 rounded-md bg-gray-100 p-0.5 dark:bg-gray-900"
-                data-testid="schedule-sung-filter"
-              >
-                {(
-                  [
-                    {
-                      key: 'all',
-                      label: t('panel.filterAll'),
-                      n: songItems.length,
-                    },
-                    {
-                      key: 'pending',
-                      label: t('panel.filterPending'),
-                      n: pendingCount,
-                    },
-                    { key: 'sung', label: t('panel.filterSung'), n: sungCount },
-                  ] as const
-                ).map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setSungFilter(opt.key)}
-                    aria-pressed={sungFilter === opt.key}
-                    data-testid={`schedule-filter-${opt.key}`}
-                    className={`flex-1 rounded px-2 py-1 text-[11px] font-medium transition-colors ${
-                      sungFilter === opt.key
-                        ? 'bg-white text-orange-700 shadow-sm dark:bg-gray-700 dark:text-orange-300'
-                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    {opt.label}
-                    <span className="ml-1 opacity-60">{opt.n}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {songItems.length > 3 && (
+          {isSearchOpen && (
             <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -669,7 +691,15 @@ export function SchedulePanel({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.stopPropagation()
+                      setSearchQuery('')
+                      setIsSearchOpen(false)
+                    }
+                  }}
                   placeholder={t('panel.searchPlaceholder')}
+                  data-testid="schedule-search-input"
                   className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                 />
                 {searchQuery && (
@@ -684,7 +714,10 @@ export function SchedulePanel({
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
+          <div
+            ref={listRef}
+            className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
+          >
             {isLoading ? (
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 ...
@@ -699,17 +732,19 @@ export function SchedulePanel({
                   {t('panel.noSchedulesDescription')}
                 </p>
               </div>
-            ) : songItems.length === 0 ? (
-              <div className="px-4 py-6 text-center">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('panel.emptySchedule')}
-                </p>
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                {t('panel.noResults')}
-              </div>
+            ) : displayItems.length === 0 ? (
+              isSearching ? (
+                <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  {t('panel.noResults')}
+                </div>
+              ) : (
+                <div className="px-4 py-6 text-center">
+                  <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('panel.emptySchedule')}
+                  </p>
+                </div>
+              )
             ) : (
               <DndContext
                 sensors={sensors}
@@ -718,11 +753,11 @@ export function SchedulePanel({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={filteredItems.map((item) => item.id)}
+                  items={displayItems.map((item) => item.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="p-2 flex flex-col gap-1.5">
-                    {filteredItems.map((item) => renderRow(item, true))}
+                    {displayItems.map((item) => renderItem(item, !isSearching))}
                   </div>
                 </SortableContext>
               </DndContext>
