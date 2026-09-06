@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
-import { Eye, GripVertical, Plus } from 'lucide-react'
+import { Eye, MoreHorizontal, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -16,9 +16,24 @@ import { DiscoverButton } from '~/features/song-discovery'
 import { SongBookmarksPanel, SongList } from '~/features/songs/components'
 import { useSearchHistoryById, useSongBookmarks } from '~/features/songs/hooks'
 import { openSongWindow } from '~/features/songs/utils/openSongWindow'
-import { useMarcajeBoundary } from '~/hooks/useMarcajeBoundary'
+import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
+import { useEditLayoutAction, Workspace } from '~/features/workspace'
+import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
+import { ActionMenu } from '~/ui/menu'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { PermissionGate } from '~/ui/PermissionGate'
+
+/**
+ * The songs page opens as the list beside the Marcaje / Programe stack. From
+ * there the operator can drag either panel anywhere — under the list, into its
+ * own column, or above the other.
+ */
+const SONGS_WORKSPACE_LAYOUT: WorkspaceLayout = {
+  columns: [
+    { id: 'col-1', panelIds: ['list'] },
+    { id: 'col-2', panelIds: ['bookmarks', 'schedules'] },
+  ],
+}
 
 interface SongsSearchParams {
   q?: string
@@ -58,6 +73,8 @@ export const Route = createFileRoute('/songs/')({
 
 function SongsPage() {
   const { t } = useTranslation('songs')
+  const { t: tCommon } = useTranslation('common')
+  const { t: tSchedules } = useTranslation('schedules')
   const navigate = useNavigate()
   const {
     q: searchQuery = '',
@@ -80,45 +97,15 @@ function SongsPage() {
   } | null>(null)
   // Both side panels are collapsible here, exactly as on the song page, and
   // remember their state across visits.
-  const [bookmarksOpen, setBookmarksOpenRaw] = useState<boolean>(() => {
-    try {
-      const raw = localStorage.getItem('songs-list:bookmarks-open')
-      return raw === null ? true : raw === 'true'
-    } catch {
-      return true
-    }
-  })
-  const [schedulesOpen, setSchedulesOpenRaw] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('songs-list:schedules-open') === 'true'
-    } catch {
-      return false
-    }
-  })
-  const setBookmarksOpen = useCallback((next: boolean) => {
-    setBookmarksOpenRaw(next)
-    try {
-      localStorage.setItem('songs-list:bookmarks-open', String(next))
-    } catch {
-      // Ignore quota errors — non-critical UI state.
-    }
-  }, [])
-  const setSchedulesOpen = useCallback((next: boolean) => {
-    setSchedulesOpenRaw(next)
-    try {
-      localStorage.setItem('songs-list:schedules-open', String(next))
-    } catch {
-      // Ignore quota errors — non-critical UI state.
-    }
-  }, [])
-  // The List | Marcaje split mirrors the song-detail page exactly: the Marcaje
-  // panel starts at the same horizontal position there as here, and dragging
-  // this divider moves the song page's Stage|Marcaje divider in lock-step (the
-  // song-detail Slides + Stage dividers are the shared source of truth).
-  const [dividerPosition, setDividerPosition] = useMarcajeBoundary()
+  const [bookmarksOpen, setBookmarksOpen] = usePersistedBoolean(
+    'songs-list:bookmarks-open',
+    true,
+  )
+  const [schedulesOpen, setSchedulesOpen] = usePersistedBoolean(
+    'songs-list:schedules-open',
+    false,
+  )
   const [isLargeScreen, setIsLargeScreen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const isDragging = useRef(false)
 
   // Build URL path for search history storage
   const urlPath = useMemo(() => {
@@ -252,35 +239,6 @@ function SongsPage() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  const handleDividerMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      isDragging.current = true
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        if (!isDragging.current || !containerRef.current) return
-        const rect = containerRef.current.getBoundingClientRect()
-        const newPos = ((moveEvent.clientX - rect.left) / rect.width) * 100
-        const clamped = Math.min(85, Math.max(50, newPos))
-        setDividerPosition(clamped)
-      }
-
-      const handleMouseUp = () => {
-        isDragging.current = false
-        document.body.style.cursor = ''
-        document.body.style.userSelect = ''
-        document.removeEventListener('mousemove', handleMouseMove)
-        document.removeEventListener('mouseup', handleMouseUp)
-      }
-
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-    },
-    [setDividerPosition],
-  )
-
   const handleBookmarkSongClick = useCallback(
     (bookmark: { songId: number }) => {
       navigate({
@@ -355,6 +313,69 @@ function SongsPage() {
     }
   }, [presentedSongId, navigate, searchQuery])
 
+  // Marcaje and Programe are desktop-only: the list needs the whole width on a
+  // phone. Both accept songs dragged straight out of the list.
+  const workspacePanels: WorkspacePanel[] = [
+    {
+      id: 'list',
+      title: t('title'),
+      render: () => (
+        <SongList
+          onSongClick={handleSongClick}
+          onSongMiddleClick={openSongWindow}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          initialSelectedSongId={selectedSongId}
+          focusTrigger={focusTrigger}
+          initialAIResults={initialAIResults}
+          aiSearchId={aiSearchId}
+          urlPath={urlPath ?? undefined}
+          onAISearchSaved={handleAISearchSaved}
+          onSelectedSongChange={setSelectedSong}
+          songsDraggable
+        />
+      ),
+    },
+    {
+      id: 'bookmarks',
+      title: t('bookmarks.title'),
+      available: isLargeScreen,
+      collapsed: !bookmarksOpen,
+      render: () => (
+        <SongBookmarksPanel
+          onSelectSong={handleBookmarkSongClick}
+          acceptsSongDrop
+          isCollapsed={!bookmarksOpen}
+          onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+        />
+      ),
+    },
+    {
+      id: 'schedules',
+      title: tSchedules('panel.title'),
+      available: isLargeScreen,
+      collapsed: !schedulesOpen,
+      render: () => (
+        <SchedulePanel
+          onSelectSong={handleScheduleSongClick}
+          onSelectPassage={handleSchedulePassageClick}
+          onOpenSchedule={handleOpenSchedule}
+          candidateSong={selectedSong}
+          acceptsSongDrop
+          onAddAllBookmarks={
+            bookmarks.length > 0
+              ? () => handleAddAllToSchedule(bookmarks.map((b) => b.songId))
+              : undefined
+          }
+          isCollapsed={!schedulesOpen}
+          onToggleCollapse={() => setSchedulesOpen(!schedulesOpen)}
+        />
+      ),
+    },
+  ]
+
+  const editLayoutAction = useEditLayoutAction('songs-list')
+
   return (
     <PagePermissionGuard permission="songs.view">
       <div className="flex flex-col min-h-0 lg:h-[calc(100vh-3rem)] lg:overflow-hidden">
@@ -397,87 +418,24 @@ function SongsPage() {
                 <span className="hidden sm:inline">{t('actions.create')}</span>
               </button>
             </PermissionGate>
+            {/* Panels only form movable columns on a large screen. */}
+            <ActionMenu
+              items={isLargeScreen ? [editLayoutAction] : []}
+              label={tCommon('actionsMenu.trigger')}
+              triggerIcon={<MoreHorizontal size={16} />}
+              testId="songs-actions-menu"
+            />
           </div>
         </div>
 
-        <div ref={containerRef} className="flex-1 min-h-0 flex flex-row">
-          {/* Song List */}
-          <div
-            className="min-h-0 h-full overflow-hidden"
-            style={
-              isLargeScreen
-                ? { width: `calc(${dividerPosition}% - 4px)` }
-                : { flex: 1, minWidth: 0 }
-            }
-          >
-            <SongList
-              onSongClick={handleSongClick}
-              onSongMiddleClick={openSongWindow}
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchChange}
-              initialSelectedSongId={selectedSongId}
-              focusTrigger={focusTrigger}
-              initialAIResults={initialAIResults}
-              aiSearchId={aiSearchId}
-              urlPath={urlPath ?? undefined}
-              onAISearchSaved={handleAISearchSaved}
-              onSelectedSongChange={setSelectedSong}
-              songsDraggable
-            />
-          </div>
-
-          {/* Draggable Divider */}
-          <div
-            className="hidden lg:flex items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group"
-            onMouseDown={handleDividerMouseDown}
-          >
-            <GripVertical
-              size={16}
-              className="text-gray-400 group-hover:text-indigo-500 transition-colors"
-            />
-          </div>
-
-          {/* Marcaje + Programe, stacked and independently collapsible.
-              Songs can be dragged from the list onto either one. */}
-          <div
-            className="overflow-hidden h-full hidden lg:flex flex-col gap-2"
-            style={
-              isLargeScreen
-                ? { width: `calc(${100 - dividerPosition}% - 4px)` }
-                : undefined
-            }
-          >
-            <div
-              className={`min-h-0 ${bookmarksOpen ? 'flex-1' : 'flex-none'}`}
-            >
-              <SongBookmarksPanel
-                onSelectSong={handleBookmarkSongClick}
-                acceptsSongDrop
-                isCollapsed={!bookmarksOpen}
-                onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
-              />
-            </div>
-            <div
-              className={`min-h-0 ${schedulesOpen ? 'flex-1' : 'flex-none'}`}
-            >
-              <SchedulePanel
-                onSelectSong={handleScheduleSongClick}
-                onSelectPassage={handleSchedulePassageClick}
-                onOpenSchedule={handleOpenSchedule}
-                candidateSong={selectedSong}
-                acceptsSongDrop
-                onAddAllBookmarks={
-                  bookmarks.length > 0
-                    ? () =>
-                        handleAddAllToSchedule(bookmarks.map((b) => b.songId))
-                    : undefined
-                }
-                isCollapsed={!schedulesOpen}
-                onToggleCollapse={() => setSchedulesOpen(!schedulesOpen)}
-              />
-            </div>
-          </div>
-        </div>
+        <Workspace
+          id="songs-list"
+          panels={workspacePanels}
+          defaultLayout={SONGS_WORKSPACE_LAYOUT}
+          defaultColumnSizes={['70%', '30%']}
+          stacked={!isLargeScreen}
+          className="flex-1 min-h-0"
+        />
 
         <AddSongToScheduleModal
           isOpen={showAddToScheduleModal}

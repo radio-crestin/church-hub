@@ -76,5 +76,18 @@
     "conflictBadge": "Conflict",
     "updatedTooltip": "Updated on another device",
     "conflictTooltip": "Version conflict — your local edit was replaced by a newer version from another device"
+  },
+  "workspace": {
+    "movePanel": "Move {{panel}} — drag onto another panel's edge",
+    "resetLayout": "Reset layout",
+    "layout": "Layout",
+    "editLayout": "Edit layout",
+    "editLayoutDescription": "Drag the panels of this page into the order you want",
+    "editingHint": "Drag a panel by its handle onto another panel's edge",
+    "doneEditing": "Done",
+    "newPosition": "New position"
+  },
+  "actionsMenu": {
+    "trigger": "More"
   }
 }
