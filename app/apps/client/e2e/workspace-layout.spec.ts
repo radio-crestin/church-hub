@@ -16,12 +16,16 @@ import { selectAction } from './helpers/actions-menu'
  * its header when its own collapse chevron is closed — and re-opening it puts
  * it back at the height it had, however long ago it was closed.
  *
- * Handles only fade in on hover, which nobody discovers on their own, so the
- * page menu has an "Edit layout" row that turns every handle on at once and
- * opens a toolbar with the way back to the default arrangement.
+ * Move handles are not part of the ordinary page at all: hovering a panel
+ * reveals nothing. The page menu's "Edit layout" row is the only way in — it
+ * mounts exactly one handle per panel and opens a toolbar with the way back to
+ * the default arrangement.
  */
 
 const LAYOUT_KEY = 'workspace.song-detail.layout'
+
+/** Every panel's move handle, whichever panel it belongs to. */
+const MOVE_HANDLES = '[data-testid^="workspace-move-"]'
 
 // The workspace only renders as columns on large (lg) screens.
 test.use({ viewport: { width: 1440, height: 900 } })
@@ -46,6 +50,29 @@ async function panelBox(page: Page, panelId: string) {
   const box = await page.getByTestId(`workspace-panel-${panelId}`).boundingBox()
   if (!box) throw new Error(`panel ${panelId} is not visible`)
   return box
+}
+
+type Box = { x: number; y: number; width: number; height: number }
+
+/** Bounding boxes of every element matching `selector`, skipping hidden ones. */
+async function boxesOf(page: Page, selector: string): Promise<Box[]> {
+  const elements = await page.locator(selector).all()
+  const boxes: Box[] = []
+  for (const element of elements) {
+    const box = await element.boundingBox()
+    if (box) boxes.push(box)
+  }
+  return boxes
+}
+
+/** `true` when two rectangles share any area at all. */
+function overlaps(a: Box, b: Box): boolean {
+  return (
+    a.x < b.x + b.width &&
+    b.x < a.x + a.width &&
+    a.y < b.y + b.height &&
+    b.y < a.y + a.height
+  )
 }
 
 /** Drags from one point to another with enough steps for dnd-kit to track it. */
@@ -142,8 +169,11 @@ test.describe('Workspace layout', () => {
       timeout: 15000,
     })
 
-    const bookmarks = page.getByTestId('workspace-panel-bookmarks')
-    await bookmarks.hover()
+    // Handles only exist while the layout is being edited, so that is where
+    // every move starts.
+    await selectAction(page, 'song-actions-menu', 'workspace-edit-layout')
+    await expect(page.getByTestId('workspace-edit-toolbar')).toBeVisible()
+
     const grip = await page
       .getByTestId('workspace-move-bookmarks')
       .boundingBox()
@@ -235,11 +265,11 @@ test.describe('Workspace layout', () => {
       timeout: 15000,
     })
 
-    // Out of edit mode the handles are there but invisible until hovered.
-    await expect(page.getByTestId('workspace-move-slides')).toHaveCSS(
-      'opacity',
-      '0',
-    )
+    // Out of edit mode there is no move affordance anywhere on the page — and
+    // hovering a panel, which used to fade one in, must not conjure one either.
+    await expect(page.locator(MOVE_HANDLES)).toHaveCount(0)
+    await page.getByTestId('workspace-panel-slides').hover()
+    await expect(page.locator(MOVE_HANDLES)).toHaveCount(0)
     await expect(page.getByTestId('workspace-edit-toolbar')).toHaveCount(0)
 
     await selectAction(page, 'song-actions-menu', 'workspace-edit-layout')
@@ -255,10 +285,43 @@ test.describe('Workspace layout', () => {
     // Done puts the page back the way it was.
     await page.getByTestId('workspace-done-editing').click()
     await expect(page.getByTestId('workspace-edit-toolbar')).toHaveCount(0)
-    await expect(page.getByTestId('workspace-move-slides')).toHaveCSS(
-      'opacity',
-      '0',
-    )
+    await expect(page.locator(MOVE_HANDLES)).toHaveCount(0)
+  })
+
+  test('every panel gets exactly one handle, and it never sits on a divider', async ({
+    page,
+  }) => {
+    await page.goto(`/songs/${songId}`)
+    await expect(page.getByTestId('workspace-panel-slides')).toBeVisible({
+      timeout: 15000,
+    })
+
+    await selectAction(page, 'song-actions-menu', 'workspace-edit-layout')
+    await expect(page.getByTestId('workspace-edit-toolbar')).toBeVisible()
+
+    // One handle per panel, and no strays: a second grip drawn on top of the
+    // first is exactly what an operator reads as a doubled control.
+    const panelIds = ['slides', 'control', 'bookmarks', 'schedules', 'versions']
+    for (const panelId of panelIds) {
+      await expect(page.getByTestId(`workspace-move-${panelId}`)).toHaveCount(1)
+    }
+    await expect(page.locator(MOVE_HANDLES)).toHaveCount(panelIds.length)
+
+    // The other way two grips end up stacked at a panel's top edge: the panel's
+    // own handle straddling the resize divider it shares that edge with. The
+    // divider draws a grip of its own, so the two must not overlap.
+    const handles = await boxesOf(page, MOVE_HANDLES)
+    const dividers = await boxesOf(page, '[role="separator"]')
+    expect(handles).toHaveLength(panelIds.length)
+    expect(dividers.length).toBeGreaterThan(0)
+    for (const handle of handles) {
+      for (const divider of dividers) {
+        expect(
+          overlaps(handle, divider),
+          `move handle ${JSON.stringify(handle)} overlaps divider ${JSON.stringify(divider)}`,
+        ).toBe(false)
+      }
+    }
   })
 
   test('a dragged panel shows where it will land while the others flow around it', async ({

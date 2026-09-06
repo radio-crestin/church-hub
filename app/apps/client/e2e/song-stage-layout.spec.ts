@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { selectAction } from './helpers/actions-menu'
+
 /**
  * "Editing layout" preference: operators can choose between the normal song page
  * (slides edited in the left panel) and the PowerPoint layout, where slides are
@@ -258,7 +260,9 @@ test.describe('Song editing layout preference', () => {
       })
 
       // The column is part of the workspace now: it is moved and sized by
-      // dragging, and every panel carries the workspace move handle.
+      // dragging. The handle that moves it only exists while the layout is
+      // being edited, so ask for it there.
+      await selectAction(page, 'song-actions-menu', 'workspace-edit-layout')
       await expect(page.getByTestId('workspace-move-versions')).toBeAttached()
     } finally {
       await request.delete(`/api/songs/${created.id}`)
