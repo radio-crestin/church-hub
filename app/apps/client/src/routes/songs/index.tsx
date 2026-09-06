@@ -429,7 +429,7 @@ function SongsPage() {
     <PagePermissionGuard permission="songs.view">
       <div className="flex flex-col min-h-0 lg:h-[calc(100vh-3rem)] lg:overflow-hidden">
         <div className="flex-shrink-0 flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
           <div className="flex items-center gap-2">

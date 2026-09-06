@@ -1540,8 +1540,7 @@ function BiblePage() {
     <PagePermissionGuard permission="bible.view">
       <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
         <div className="flex items-center gap-3 mb-3 lg:mb-4 flex-shrink-0">
-          <Book className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
           {/* Same single labelled menu as the song page, so both pages expose

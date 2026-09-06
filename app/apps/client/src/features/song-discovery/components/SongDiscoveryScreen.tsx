@@ -328,11 +328,8 @@ export function SongDiscoveryScreen({ onBack }: SongDiscoveryScreenProps) {
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
-          <Sparkles className="h-5 w-5" />
-        </div>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold text-gray-900 dark:text-white">
+          <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
           <p className="truncate text-sm text-gray-500 dark:text-gray-400">

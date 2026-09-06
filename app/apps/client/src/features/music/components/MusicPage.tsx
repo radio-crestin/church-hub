@@ -1,4 +1,4 @@
-import { MoreHorizontal, Music } from 'lucide-react'
+import { MoreHorizontal } from 'lucide-react'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -153,8 +153,7 @@ export function MusicPage() {
     <div className="flex-1 flex flex-col overflow-x-hidden lg:h-full lg:min-h-0 lg:overflow-hidden">
       <div className="flex items-center justify-between mb-4 flex-shrink-0 gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Music className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400 shrink-0" />
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
             {t('title')}
           </h1>
         </div>

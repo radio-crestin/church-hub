@@ -87,7 +87,7 @@ function SchedulesPage() {
     <PagePermissionGuard permission="programs.view">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('title')}
           </h1>
           <div className="flex items-center gap-2">
