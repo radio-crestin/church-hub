@@ -13,15 +13,13 @@ const SPARKLES_MASK =
 
 /**
  * Header entry point to the discovery screen. The border and the star share one
- * animated gradient (it drifts faster while the background catalog check runs),
- * and a red count badge appears once new songs are found.
+ * animated gradient (it drifts faster while the background catalog check runs).
  */
 export function DiscoverButton() {
   const { t } = useTranslation('songDiscovery')
   const navigate = useNavigate()
-  const { isChecking, badgeCount } = useSongDiscovery()
+  const { isChecking } = useSongDiscovery()
 
-  const hasNew = badgeCount > 0
   const gradient = `discover-gradient${isChecking ? ' discover-gradient-active' : ''}`
 
   return (
@@ -48,11 +46,6 @@ export function DiscoverButton() {
           )}
         </span>
       </span>
-      {hasNew && (
-        <span className="absolute -right-1.5 -top-1.5 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white ring-2 ring-white dark:ring-gray-900">
-          {badgeCount > 99 ? '99+' : badgeCount}
-        </span>
-      )}
     </button>
   )
 }
