@@ -23,12 +23,17 @@ interface WorkspacePanelFrameProps {
 
 /**
  * Wraps one panel with everything that makes it movable: a grab handle (centred
- * on the panel's top edge, where no panel puts its own controls) and the drop
- * zones that appear on every *other* panel while a drag is running.
+ * just inside the panel's top edge, where no panel puts its own controls) and
+ * the drop zones that appear on every *other* panel while a drag is running.
  *
- * The handle only fades in on hover normally, so it stays out of the way; in
- * layout-editing mode every panel shows its handle at once and is outlined, so
- * the operator can see at a glance what can be moved.
+ * The handle belongs to layout-editing mode and exists only there. Rearranging
+ * is a deliberate trip through the page menu, not something a stray hover can
+ * start, so outside that mode a panel offers no move affordance at all — the
+ * grip is not merely faded out, it is not in the page.
+ *
+ * It sits *inside* the panel rather than straddling its top edge because that
+ * edge already belongs to the row divider, which draws a grip of its own: a
+ * handle hanging over it read as one control accidentally painted twice.
  */
 export function WorkspacePanelFrame({
   panel,
@@ -65,7 +70,7 @@ export function WorkspacePanelFrame({
       ref={setNodeRef}
       data-testid={`workspace-panel-${panel.id}`}
       data-editing={editing ? 'true' : undefined}
-      className={`group/wsp relative h-full min-h-0 min-w-0 ${
+      className={`relative h-full min-h-0 min-w-0 ${
         editing && !isDragging
           ? 'rounded-lg outline-2 outline-dashed outline-indigo-400/70 -outline-offset-2'
           : ''
@@ -87,22 +92,20 @@ export function WorkspacePanelFrame({
         )}
       </div>
 
-      <button
-        type="button"
-        ref={setActivatorNodeRef}
-        {...listeners}
-        {...attributes}
-        data-testid={`workspace-move-${panel.id}`}
-        title={t('workspace.movePanel', { panel: panel.title })}
-        aria-label={t('workspace.movePanel', { panel: panel.title })}
-        className={`absolute -top-1 left-1/2 z-20 hidden h-4 w-10 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border transition-opacity focus-visible:opacity-100 active:cursor-grabbing lg:flex ${
-          editing
-            ? 'border-indigo-400 bg-indigo-500 text-white opacity-100 hover:bg-indigo-600 dark:border-indigo-500'
-            : 'border-gray-200 bg-white text-gray-400 opacity-0 group-hover/wsp:opacity-100 hover:text-indigo-500 dark:border-gray-600 dark:bg-gray-800'
-        }`}
-      >
-        <GripHorizontal size={12} />
-      </button>
+      {editing ? (
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          {...listeners}
+          {...attributes}
+          data-testid={`workspace-move-${panel.id}`}
+          title={t('workspace.movePanel', { panel: panel.title })}
+          aria-label={t('workspace.movePanel', { panel: panel.title })}
+          className="absolute top-1.5 left-1/2 z-20 hidden h-4 w-10 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border border-indigo-400 bg-indigo-500 text-white transition-colors hover:bg-indigo-600 active:cursor-grabbing lg:flex dark:border-indigo-500"
+        >
+          <GripHorizontal size={12} />
+        </button>
+      ) : null}
 
       {isDragActive && !isDragging ? (
         <WorkspaceDropZones columnId={columnId} panelId={panel.id} />

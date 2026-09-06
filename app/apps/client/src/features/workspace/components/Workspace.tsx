@@ -48,7 +48,7 @@ interface WorkspaceProps {
 /**
  * A page's resizable, rearrangeable panel area.
  *
- * Panels can be dragged by the handle on their top edge and dropped above or
+ * Panels can be dragged by the handle near their top edge and dropped above or
  * below any other panel to reorder, or onto a panel's left/right edge to split
  * off a new column — so the same set of views can be laid out as three columns,
  * as a column with something stacked under the preview, or any mix of the two.
@@ -57,8 +57,9 @@ interface WorkspaceProps {
  * While a drag is running the page shows the arrangement it *would* have: the
  * other panels flow into their new places straight away and the dragged panel's
  * slot is drawn as an outline, so dropping holds no surprises. The "Edit
- * layout" action in the page's menu turns every handle on at once for operators
- * who would never find them by hovering.
+ * layout" action in the page's menu is what puts the handles on the panels at
+ * all: outside that mode the page has no move affordance, so an ordinary hover
+ * can never start a rearrangement the operator did not ask for.
  */
 export function Workspace({
   id,
