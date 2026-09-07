@@ -21,13 +21,25 @@ async function panelHeight(page: Page, panelId: string): Promise<number> {
   return box?.height ?? 0
 }
 
-/** Seeds the per-device preferences these tests depend on. */
+/**
+ * Seeds the per-device preferences these tests depend on — once, on the first
+ * page load of the test.
+ *
+ * `addInitScript` runs before every navigation, so seeding on each one would
+ * overwrite whatever the operator changed on the way and make it impossible to
+ * observe a preference surviving a walk to another song. A sessionStorage guard
+ * keeps it to the first load; each test gets its own context, so each test
+ * still starts from the state it asked for.
+ */
 async function seedPreferences(
   page: Page,
   options: { bookmarksOpen: boolean; rememberedBookmarksHeight?: number },
 ) {
   await page.addInitScript(
     ({ heightsKey, bookmarksOpen, rememberedBookmarksHeight }) => {
+      if (window.sessionStorage.getItem('e2e-column-seeded')) return
+      window.sessionStorage.setItem('e2e-column-seeded', '1')
+
       for (const key of Object.keys(window.localStorage)) {
         if (key.startsWith('workspace.song-detail')) {
           window.localStorage.removeItem(key)
@@ -139,25 +151,28 @@ test.describe('Side-panel column stays reachable', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await seedPreferences(page, { bookmarksOpen: true })
     await page.goto(`/songs/${songId}`)
-    await expect(page.getByTestId('workspace-panel-schedules')).toBeVisible({
+    await expect(page.getByTestId('workspace-panel-bookmarks')).toBeVisible({
       timeout: 15000,
     })
+    expect(await panelHeight(page, 'bookmarks')).toBeGreaterThan(100)
 
-    // Shut Programe on this song.
-    await page.getByTestId('schedule-collapse-toggle').click()
+    // Shut Marcaje on this song. Marcaje rather than Programe because it is
+    // not behind a permission, so the test stays about the preference.
+    await page.getByTestId('bookmarks-collapse-toggle').click()
     await expect
-      .poll(async () => await panelHeight(page, 'schedules'), { timeout: 5000 })
+      .poll(async () => await panelHeight(page, 'bookmarks'), { timeout: 5000 })
       .toBeLessThan(90)
 
     // Walking to another song must not reopen it: the operator set this up
     // once, and it holds for every song they visit next.
     await page.goto(`/songs/${otherSongId}`)
-    await expect(page.getByTestId('workspace-panel-schedules')).toBeVisible({
+    await expect(page.getByTestId('workspace-panel-versions')).toBeVisible({
       timeout: 15000,
     })
-    expect(await panelHeight(page, 'schedules')).toBeLessThan(90)
-    // The two that were left open are still open.
-    expect(await panelHeight(page, 'bookmarks')).toBeGreaterThan(100)
+    expect(await panelHeight(page, 'bookmarks')).toBeLessThan(90)
+    // Still reachable, not gone: its header is what is left.
+    await expect(page.getByTestId('bookmarks-collapse-toggle')).toBeVisible()
+    // And the one left open is still open.
     expect(await panelHeight(page, 'versions')).toBeGreaterThan(100)
   })
 })
