@@ -51,6 +51,8 @@
     "style": {
       "increaseFontSize": "Increase text size",
       "decreaseFontSize": "Decrease text size",
+      "fontSize": "Font size",
+      "fontSizePresets": "Pick a font size",
       "bold": "Bold",
       "italic": "Italic",
       "underline": "Underline",

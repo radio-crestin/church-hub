@@ -1,4 +1,7 @@
-import { elementAtOffset } from '../../../presentation/utils/slideTextOffsets'
+import {
+  elementAtOffset,
+  elementsInRange,
+} from '../../../presentation/utils/slideTextOffsets'
 
 /**
  * The font size the operator is looking at, expressed in the screen's own
@@ -35,6 +38,39 @@ export function measureSlideFontSize(
   if (!Number.isFinite(rendered)) return null
 
   return rendered / scale
+}
+
+/**
+ * Every distinct size in the selection, smallest first, in canvas units.
+ *
+ * A selection can cross runs the operator sized separately, and the size field
+ * has to say so rather than pick one of them: one entry means the whole
+ * selection is that size, several mean it is mixed and the field shows the
+ * smallest with a `+`, the way an operator reads a size box that cannot answer
+ * with a single number.
+ */
+export function measureSlideFontSizes(
+  canvasWidth: number,
+  selection: { start: number; end: number } | null,
+): number[] {
+  const editor = slideEditor()
+  const scale = canvasScale(canvasWidth)
+  if (!editor || scale === null) return []
+
+  const runs = selection
+    ? elementsInRange(editor, selection.start, selection.end)
+    : []
+  // No styled run under the selection means it is all at the slide's own size.
+  const measured = runs.length > 0 ? runs : [editor]
+
+  const sizes: number[] = []
+  for (const element of measured) {
+    const rendered = Number.parseFloat(getComputedStyle(element).fontSize)
+    if (!Number.isFinite(rendered)) continue
+    const size = Math.round(rendered / scale)
+    if (!sizes.includes(size)) sizes.push(size)
+  }
+  return sizes.sort((a, b) => a - b)
 }
 
 /**

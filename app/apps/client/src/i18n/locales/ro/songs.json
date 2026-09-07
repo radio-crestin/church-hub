@@ -51,6 +51,8 @@
     "style": {
       "increaseFontSize": "Mărește textul",
       "decreaseFontSize": "Micșorează textul",
+      "fontSize": "Dimensiunea textului",
+      "fontSizePresets": "Alege o dimensiune",
       "bold": "Îngroșat",
       "italic": "Cursiv",
       "underline": "Subliniat",
