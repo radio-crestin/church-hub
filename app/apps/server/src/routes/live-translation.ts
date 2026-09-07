@@ -64,10 +64,7 @@ setAudioOutputCallback((targetId, pcmData) => {
 // Last-broadcast snapshot per target — lets us send true deltas to listeners
 // instead of full-entry snapshots, so the listener can append and decide on
 // its own when to roll over to a new line.
-const lastBroadcastByTarget = new Map<
-  string,
-  { entryId: string; text: string }
->()
+const lastBroadcastByTarget = new Map<string, { entryId: string; text: string }>()
 
 setTranscriptionCallback((entry, action) => {
   broadcastTranslationTranscription(entry, action)
@@ -253,8 +250,7 @@ function handleStart(req: Request): Response {
       }
 
       const outputModality: OutputModality =
-        body.outputModality === 'text_only' ||
-        body.outputModality === 'audio_text'
+        body.outputModality === 'text_only' || body.outputModality === 'audio_text'
           ? body.outputModality
           : saved.outputModality
 
@@ -267,9 +263,10 @@ function handleStart(req: Request): Response {
           body.primaryTargetId || saved.primaryTargetId || targets[0]?.id,
         geminiApiKey,
         openaiApiKey,
-        inputDeviceId: body.inputDeviceId ?? saved.inputDeviceId ?? undefined,
+        inputDeviceId:
+          body.inputDeviceId ?? (saved.inputDeviceId ?? undefined),
         outputDeviceId:
-          body.outputDeviceId ?? saved.outputDeviceId ?? undefined,
+          body.outputDeviceId ?? (saved.outputDeviceId ?? undefined),
         outputMode: body.outputMode ?? saved.outputMode ?? 'device',
       }
 

@@ -1,10 +1,12 @@
 import { hostname } from 'node:os'
+
 import { PostHog } from 'posthog-node'
 
 const DEFAULT_TOKEN = 'phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK'
 const DEFAULT_HOST = 'https://eu.i.posthog.com'
 
-const token = process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN || DEFAULT_TOKEN
+const token =
+  process.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN || DEFAULT_TOKEN
 const host = process.env.VITE_PUBLIC_POSTHOG_HOST || DEFAULT_HOST
 
 const distinctId = (() => {

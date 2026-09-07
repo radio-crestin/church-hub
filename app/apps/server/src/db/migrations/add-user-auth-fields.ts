@@ -1,5 +1,4 @@
 import { createHash, randomBytes } from 'node:crypto'
-
 import type { Database } from 'bun:sqlite'
 
 const DEBUG = process.env.DEBUG === 'true'
