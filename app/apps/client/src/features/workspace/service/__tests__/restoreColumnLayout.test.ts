@@ -3,80 +3,82 @@ import { describe, expect, it } from 'vitest'
 import { restoreColumnLayout } from '../restoreColumnLayout'
 
 describe('restoreColumnLayout', () => {
-  it('gives the row its remembered height when the column can afford it', () => {
+  it('fills the column when every other row is shut', () => {
+    // Marcaje opening while Programe and Versiuni are closed: it gets
+    // everything the two headers do not need.
     const layout = restoreColumnLayout({
-      current: { bookmarks: 10, schedules: 45, versions: 45 },
+      current: { bookmarks: 6, schedules: 6, versions: 6 },
       panelId: 'bookmarks',
-      remembered: 50,
+      collapsedShare: 6,
+      collapsedPanelIds: new Set(['schedules', 'versions']),
+      minOpenShare: 10,
+    })
+    expect(layout.bookmarks).toBe(88)
+    expect(layout.schedules).toBe(6)
+    expect(layout.versions).toBe(6)
+  })
+
+  it('splits the column in half when one other row is open', () => {
+    const layout = restoreColumnLayout({
+      current: { bookmarks: 6, schedules: 88, versions: 6 },
+      panelId: 'bookmarks',
+      collapsedShare: 6,
+      collapsedPanelIds: new Set(['versions']),
+      minOpenShare: 10,
+    })
+    expect(layout.bookmarks).toBe(47)
+    expect(layout.schedules).toBe(47)
+    expect(layout.versions).toBe(6)
+  })
+
+  it('gives three open rows a third each', () => {
+    const layout = restoreColumnLayout({
+      current: { a: 6, b: 47, c: 47 },
+      panelId: 'a',
+      collapsedShare: 6,
       collapsedPanelIds: new Set(),
-      minOpenShare: 15,
+      minOpenShare: 10,
+    })
+    expect(layout.a).toBeCloseTo(33.33)
+    expect(layout.b).toBeCloseTo(33.33)
+    expect(layout.c).toBeCloseTo(33.33)
+  })
+
+  it('treats the row being opened as open, whatever it was a moment ago', () => {
+    // The chevron has flipped but the group has not caught up yet.
+    const layout = restoreColumnLayout({
+      current: { bookmarks: 6, schedules: 94 },
+      panelId: 'bookmarks',
+      collapsedShare: 6,
+      collapsedPanelIds: new Set(['bookmarks']),
+      minOpenShare: 10,
     })
     expect(layout.bookmarks).toBe(50)
-    expect(layout.schedules + layout.versions).toBeCloseTo(50)
+    expect(layout.schedules).toBe(50)
   })
 
-  it('never lets a remembered height push a neighbour off the column', () => {
+  it('never gives an open row less than its floor', () => {
     const layout = restoreColumnLayout({
-      current: { bookmarks: 10, schedules: 45, versions: 45 },
-      panelId: 'bookmarks',
-      // The height that used to collapse both neighbours to nothing.
-      remembered: 95,
-      collapsedPanelIds: new Set(),
-      minOpenShare: 15,
-    })
-    expect(layout.bookmarks).toBe(70)
-    expect(layout.schedules).toBeGreaterThanOrEqual(15)
-    expect(layout.versions).toBeGreaterThanOrEqual(15)
-  })
-
-  it('leaves collapsed rows pinned to the header share they already have', () => {
-    const layout = restoreColumnLayout({
-      current: { bookmarks: 10, schedules: 6, versions: 84 },
-      panelId: 'bookmarks',
-      remembered: 90,
-      collapsedPanelIds: new Set(['schedules']),
-      minOpenShare: 15,
-    })
-    expect(layout.schedules).toBe(6)
-    expect(layout.bookmarks).toBe(79)
-    expect(layout.versions).toBe(15)
-  })
-
-  it('keeps the proportions the open rows already had', () => {
-    const layout = restoreColumnLayout({
-      current: { a: 10, b: 60, c: 30 },
+      current: { a: 30, b: 30, c: 40 },
       panelId: 'a',
-      remembered: 40,
-      collapsedPanelIds: new Set(),
-      minOpenShare: 10,
-    })
-    expect(layout.a).toBe(40)
-    // b was twice c, and stays twice c inside the 60 that is left.
-    expect(layout.b).toBeCloseTo(40)
-    expect(layout.c).toBeCloseTo(20)
-  })
-
-  it('shares the room evenly when every other row has been dragged shut', () => {
-    const layout = restoreColumnLayout({
-      current: { a: 100, b: 0, c: 0 },
-      panelId: 'a',
-      remembered: 60,
-      collapsedPanelIds: new Set(),
-      minOpenShare: 10,
-    })
-    expect(layout.a).toBe(60)
-    expect(layout.b).toBeCloseTo(20)
-    expect(layout.c).toBeCloseTo(20)
-  })
-
-  it('still leaves the expanded row a floor when the column is crowded', () => {
-    const layout = restoreColumnLayout({
-      current: { a: 0, b: 50, c: 50 },
-      panelId: 'a',
-      remembered: 5,
+      collapsedShare: 6,
       collapsedPanelIds: new Set(),
       minOpenShare: 40,
     })
     expect(layout.a).toBe(40)
+    expect(layout.b).toBe(40)
+    expect(layout.c).toBe(40)
+  })
+
+  it('leaves a single-row column alone', () => {
+    expect(
+      restoreColumnLayout({
+        current: { only: 100 },
+        panelId: 'only',
+        collapsedShare: 6,
+        collapsedPanelIds: new Set(),
+        minOpenShare: 10,
+      }),
+    ).toEqual({ only: 100 })
   })
 })

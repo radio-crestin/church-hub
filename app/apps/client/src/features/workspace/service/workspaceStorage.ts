@@ -57,54 +57,10 @@ export function writeWorkspaceLayout(
 export function clearWorkspaceLayout(workspaceId: string): void {
   try {
     window.localStorage.removeItem(layoutStorageKey(workspaceId))
-    window.localStorage.removeItem(heightsStorageKey(workspaceId))
+    // Written by older versions, which brought a row back at whatever height
+    // it once had. Nothing reads it now, but a reset should still sweep it up.
+    window.localStorage.removeItem(`workspace.${workspaceId}.heights`)
   } catch {
     // Ignore availability errors.
-  }
-}
-
-/**
- * localStorage key holding the height each panel returns to when it is
- * expanded again. Kept apart from the group's own size storage, which only
- * ever knows the sizes rows have *right now* — and a collapsed row's height is
- * its header, not the height the operator wants back.
- */
-export function heightsStorageKey(workspaceId: string): string {
-  return `workspace.${workspaceId}.heights`
-}
-
-/** Remembered open heights, as percentages of the column, keyed by panel id. */
-export function readPanelHeights(workspaceId: string): Record<string, number> {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = window.localStorage.getItem(heightsStorageKey(workspaceId))
-    if (!raw) return {}
-    const parsed = JSON.parse(raw) as Record<string, unknown>
-    const heights: Record<string, number> = {}
-    for (const [panelId, height] of Object.entries(parsed ?? {})) {
-      if (typeof height === 'number' && height > 0 && height <= 100) {
-        heights[panelId] = height
-      }
-    }
-    return heights
-  } catch {
-    // Corrupt or unavailable storage — the panel falls back to its default size.
-    return {}
-  }
-}
-
-/** Records the height `panelId` should come back to, as a percentage (0..100). */
-export function writePanelHeight(
-  workspaceId: string,
-  panelId: string,
-  height: number,
-): void {
-  try {
-    window.localStorage.setItem(
-      heightsStorageKey(workspaceId),
-      JSON.stringify({ ...readPanelHeights(workspaceId), [panelId]: height }),
-    )
-  } catch {
-    // Ignore quota/availability errors.
   }
 }

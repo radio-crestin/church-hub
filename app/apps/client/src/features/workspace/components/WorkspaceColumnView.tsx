@@ -4,7 +4,7 @@ import { Group, useDefaultLayout, useGroupRef } from 'react-resizable-panels'
 import { WorkspaceColumnPanel } from './WorkspaceColumnPanel'
 import { WorkspaceSeparator } from './WorkspaceSeparator'
 import { restoreColumnLayout } from '../service/restoreColumnLayout'
-import { readPanelHeights, sizesStorageKey } from '../service/workspaceStorage'
+import { sizesStorageKey } from '../service/workspaceStorage'
 import type { WorkspaceColumn, WorkspacePanel } from '../types'
 
 /**
@@ -43,9 +43,10 @@ interface WorkspaceColumnViewProps {
  *     panels would be squeezed until none of them showed anything. The group is
  *     given a floor — the height its rows actually need — and the column
  *     scrolls past it instead of compressing them;
- *   - expanding a row lays out the *whole* column at once. Resizing just the
- *     one row takes the space from its immediate neighbour, which is how a row
- *     remembered at 95% used to collapse the panel beneath it to nothing.
+ *   - opening a row lays out the *whole* column at once: the shut rows keep
+ *     their header and every open row shares what is left equally. Resizing
+ *     just the one row would take the space from whichever row happens to sit
+ *     next to it, and could still push that one off the screen.
  */
 export function WorkspaceColumnView({
   workspaceId,
@@ -110,9 +111,6 @@ export function WorkspaceColumnView({
     )
     if (!opened) return
 
-    const remembered = readPanelHeights(workspaceId)[opened]
-    if (remembered === undefined) return
-
     // The row expands itself first (it owns its own `Panel` handle); laying the
     // column out has to wait for that to land.
     const frame = requestAnimationFrame(() => {
@@ -123,11 +121,13 @@ export function WorkspaceColumnView({
         height > 0
           ? Math.min(MAX_OPEN_SHARE_PERCENT, (OPEN_ROW_MIN_PX / height) * 100)
           : MAX_OPEN_SHARE_PERCENT
+      const collapsedShare =
+        height > 0 ? (COLLAPSED_ROW_MIN_PX / height) * 100 : minOpenShare
       group.setLayout(
         restoreColumnLayout({
           current: group.getLayout(),
           panelId: opened,
-          remembered,
+          collapsedShare,
           collapsedPanelIds: new Set(
             Object.keys(collapsedById).filter((id) => collapsedById[id]),
           ),
@@ -157,7 +157,6 @@ export function WorkspaceColumnView({
           <Fragment key={panel.id}>
             {index > 0 ? <WorkspaceSeparator orientation="vertical" /> : null}
             <WorkspaceColumnPanel
-              workspaceId={workspaceId}
               panel={panel}
               columnId={column.id}
               draggingPanelId={draggingPanelId}
