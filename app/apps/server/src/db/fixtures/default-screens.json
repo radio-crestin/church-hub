@@ -1563,6 +1563,24 @@
             "duration": 0,
             "delay": 0,
             "easing": "ease-in"
+          },
+          "slideTransition": {
+            "type": "none",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransitionIn": {
+            "type": "none",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransitionOut": {
+            "type": "none",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-in"
           }
         },
         "clock": {
@@ -2526,6 +2544,12 @@
             "duration": 0,
             "delay": 0,
             "easing": "ease-out"
+          },
+          "slideTransition": {
+            "type": "none",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
           }
         },
         "clock": {
@@ -3480,6 +3504,12 @@
             "easing": "ease-in"
           },
           "slideTransitionIn": {
+            "type": "none",
+            "duration": 0,
+            "delay": 0,
+            "easing": "ease-out"
+          },
+          "slideTransition": {
             "type": "none",
             "duration": 0,
             "delay": 0,
