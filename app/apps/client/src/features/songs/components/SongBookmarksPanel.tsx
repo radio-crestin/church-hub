@@ -51,6 +51,7 @@ import {
 } from '../hooks'
 import { useSongDropZone } from '../hooks/useSongDropZone'
 import type { BookmarkNote, SongBookmark } from '../service'
+import { startSongDrag } from '../utils/songDragController'
 
 // Unified item type for the bookmark list
 interface BookmarkListItem {
@@ -96,6 +97,27 @@ function SortableBookmarkItem({
     position: isDragging ? 'relative' : undefined,
   }
 
+  // The grip reorders the list; the row itself is what an operator carries
+  // over to a program. Once that gesture has armed, the click the browser
+  // sends when the pointer comes back up is not a click on the song.
+  const draggedOut = useRef(false)
+  const handleTitlePointerDown = (event: React.PointerEvent) => {
+    startSongDrag(
+      event,
+      { id: bookmark.songId, title: bookmark.songTitle },
+      () => {
+        draggedOut.current = true
+      },
+    )
+  }
+  const handleTitleClick = () => {
+    if (draggedOut.current) {
+      draggedOut.current = false
+      return
+    }
+    onSelect()
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -139,7 +161,10 @@ function SortableBookmarkItem({
 
       <button
         type="button"
-        onClick={onSelect}
+        onClick={handleTitleClick}
+        onPointerDown={handleTitlePointerDown}
+        data-testid="bookmark-song-drag"
+        title={t('bookmarks.dragToProgram')}
         className="flex-1 min-w-0 text-left py-1.5 pr-1"
       >
         <div className="text-sm font-medium truncate text-gray-900 dark:text-white">

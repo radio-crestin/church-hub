@@ -189,6 +189,7 @@
     "collapse": "Collapse",
     "markSung": "Mark as sung",
     "markNotSung": "Mark as not sung",
+    "dragToProgram": "Drag onto a program to add it",
     "filterAll": "All",
     "filterPending": "Pending",
     "filterSung": "Sung"

@@ -92,15 +92,25 @@ function zoneAt(x: number, y: number): string | null {
 }
 
 /**
- * Starts a drag. Call from `pointerdown` on the grip.
+ * Starts a drag. Call from `pointerdown` on the row or grip being dragged.
  *
  * The gesture only becomes a drag after the pointer travels a few pixels, so a
- * plain click on the grip still does nothing.
+ * plain click on the source still does nothing — and `onArmed` fires the
+ * moment it stops being a click, so the source can swallow the click the
+ * browser would otherwise send once the pointer comes back up.
  */
 export function startSongDrag(
   event: React.PointerEvent,
   song: SongDragPayload,
+  onArmed?: () => void,
 ): void {
+  // A touch drag would be the panel's scroll gesture, and every panel that
+  // accepts a dropped song is large-screen only anyway — arming on a swipe
+  // would trade a scrollable list for a drag nobody asked for.
+  if (event.pointerType === 'touch') return
+  // Only the primary button drags; a right-click is the context menu's.
+  if (event.button !== 0) return
+
   const startX = event.clientX
   const startY = event.clientY
   const pointerId = event.pointerId
@@ -114,6 +124,7 @@ export function startSongDrag(
         Math.abs(moveEvent.clientY - startY)
       if (travelled < 6) return
       armed = true
+      onArmed?.()
       // Suppress the text selection the pointer would otherwise paint while
       // the ghost is being dragged across the page.
       document.body.style.userSelect = 'none'
