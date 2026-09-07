@@ -1,17 +1,41 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { backfillAlternateTitles } from '~/features/songs/service'
 import { PROVIDERS } from '../providers'
 import {
   countNewCandidates,
   fetchCatalogSignature,
 } from '../service/discoveryApi'
+import { alternateTitleEntries } from '../utils/alternateTitleEntries'
+import { shouldRecoverTitles } from '../utils/shouldRecoverTitles'
 
 const ENABLED_KEY = 'song-discovery-enabled'
 const LAST_CHECKED_KEY = 'song-discovery-last-checked'
 const SIGNATURE_KEY = 'song-discovery-signature'
 const NEW_COUNT_KEY = 'song-discovery-new-count'
 const DISMISSED_SIGNATURE_KEY = 'song-discovery-dismissed-signature'
+/**
+ * The catalogue the songs' real names were last taken from.
+ *
+ * A library imported with "use the first verse as the title" is filed under
+ * each song's opening line, and the name the source gave it was lost. The
+ * catalogue still carries it, so whenever this key does not match the
+ * catalogue in front of us the names are recovered from it — which is what
+ * makes the first launch after an update do the recovery even though the
+ * catalogue itself has not changed since the last check.
+ */
+const TITLES_SIGNATURE_KEY = 'song-discovery-titles-signature'
+/**
+ * When recovering those names was last attempted, successfully or not.
+ *
+ * Without it a recovery that keeps failing — no permission, a server that is
+ * down — would pull the multi-MB catalogue down again on every single launch,
+ * which is exactly the bandwidth the signature check exists to save. A failed
+ * attempt waits out the same daily gap the rest of the sync uses before trying
+ * again, so it still heals itself without costing anything.
+ */
+const TITLES_ATTEMPTED_KEY = 'song-discovery-titles-attempted'
 
 /** Minimum gap between real catalog checks — the user asked for a daily cadence. */
 const MIN_CHECK_GAP_MS = 1000 * 60 * 60 * 24
@@ -121,7 +145,18 @@ export function useSongDiscoverySync(
         const lastChecked = readNumber(LAST_CHECKED_KEY)
         const dueByTime = Date.now() - lastChecked >= MIN_CHECK_GAP_MS
 
-        if (!force) {
+        // The songs' real names have never been taken from this catalogue, so
+        // it is worth downloading even when nothing about it has changed —
+        // once a day at most, however often the program is opened.
+        const titlesDue = shouldRecoverTitles({
+          recoveredSignature: localStorage.getItem(TITLES_SIGNATURE_KEY),
+          nextSignature,
+          attemptedAt: readNumber(TITLES_ATTEMPTED_KEY),
+          now: Date.now(),
+          gapMs: MIN_CHECK_GAP_MS,
+        })
+
+        if (!force && !titlesDue) {
           // Reliable "unchanged" via the HTTP validator → cheap skip, no download.
           if (nextSignature && nextSignature === storedSignature) {
             localStorage.setItem(LAST_CHECKED_KEY, String(Date.now()))
@@ -138,6 +173,23 @@ export function useSongDiscoverySync(
 
         const candidates = await provider.fetchCatalog()
         const count = await countNewCandidates(candidates)
+
+        // Give the library back the names the catalogue knows its songs by, so
+        // searching finds them by the name anyone would actually type. It runs
+        // off the catalogue that was just downloaded — no second trip — and the
+        // server leaves alone every song that already carries the name, so this
+        // settles into a no-op after the first pass.
+        // Recorded before the attempt, not after: a run that dies partway
+        // through still counts as one, so a failing recovery cannot turn every
+        // launch into another download.
+        localStorage.setItem(TITLES_ATTEMPTED_KEY, String(Date.now()))
+        try {
+          await backfillAlternateTitles(alternateTitleEntries(candidates))
+          localStorage.setItem(TITLES_SIGNATURE_KEY, nextSignature)
+        } catch {
+          // Left for the next check rather than failing the whole sync: the
+          // count above is what the operator is waiting on.
+        }
 
         // Prime the discover screen's cache so opening it doesn't re-download.
         queryClient.setQueryData(['discovery-catalog', provider.id], candidates)
