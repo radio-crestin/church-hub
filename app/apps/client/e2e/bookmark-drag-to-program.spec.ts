@@ -174,3 +174,120 @@ test.describe('Drag a marked song into a program', () => {
     }
   })
 })
+
+/**
+ * The song list rows are draggable too.
+ *
+ * The grip that used to start this was replaced by two labelled buttons, which
+ * left `startSongDrag` with no caller at all — the drop zones on Marcaje and
+ * Programe were live and nothing could reach them. The row itself is the drag
+ * source now, so both ways of getting a song into a panel are available: carry
+ * it, or press the button.
+ */
+test.describe('Drag a song out of the list', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.addInitScript(() => {
+      window.localStorage.setItem('songs-list:bookmarks-open', 'true')
+      window.localStorage.setItem('songs-list:schedules-open', 'true')
+    })
+  })
+
+  test('a row carried onto Programe lands in the selected program', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E List Drag ${uniq}`)
+    const program = await createProgram(request, `E2E List Drag Prog ${uniq}`)
+
+    try {
+      await page.goto(`/songs?q=${encodeURIComponent(song.title)}`)
+      const row = page.getByTestId('song-card-open').filter({
+        hasText: song.title,
+      })
+      await expect(row).toBeVisible({ timeout: 15000 })
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible()
+
+      await dragOnto(page, row, panel)
+
+      await expect
+        .poll(async () => await programSongIds(request, program.id), {
+          timeout: 10000,
+        })
+        .toContain(song.id)
+      // Carrying the row must not also open the song.
+      await expect(page).toHaveURL(/\/songs(\?|$)/)
+    } finally {
+      await request.delete(`/api/schedules/${program.id}`)
+      await request.delete(`/api/songs/${song.id}`)
+    }
+  })
+
+  test('a row carried onto Marcaje marks the song', async ({
+    page,
+    request,
+  }) => {
+    const song = await createSong(request, `E2E List Drag Mark ${Date.now()}`)
+
+    try {
+      await request.delete('/api/song-bookmarks')
+      await page.goto(`/songs?q=${encodeURIComponent(song.title)}`)
+      const row = page.getByTestId('song-card-open').filter({
+        hasText: song.title,
+      })
+      await expect(row).toBeVisible({ timeout: 15000 })
+      const panel = page.getByTestId('bookmarks-drop-zone')
+      await expect(panel).toBeVisible()
+
+      await dragOnto(page, row, panel)
+
+      await expect
+        .poll(
+          async () => {
+            const response = await request.get('/api/song-bookmarks')
+            const { data } = await response.json()
+            return (data as Array<{ songId: number }>).map((b) => b.songId)
+          },
+          { timeout: 10000 },
+        )
+        .toContain(song.id)
+    } finally {
+      await request.delete('/api/song-bookmarks')
+      await request.delete(`/api/songs/${song.id}`)
+    }
+  })
+
+  test('the two row buttons are still there and still work', async ({
+    page,
+    request,
+  }) => {
+    const song = await createSong(request, `E2E List Buttons ${Date.now()}`)
+
+    try {
+      await request.delete('/api/song-bookmarks')
+      await page.goto(`/songs?q=${encodeURIComponent(song.title)}`)
+      const card = page.getByTestId('song-card').filter({ hasText: song.title })
+      await expect(card).toBeVisible({ timeout: 15000 })
+
+      await expect(card.getByTestId('song-card-bookmark')).toBeVisible()
+      await expect(card.getByTestId('song-card-add-to-schedule')).toBeVisible()
+
+      await card.getByTestId('song-card-bookmark').click()
+      await expect
+        .poll(
+          async () => {
+            const response = await request.get('/api/song-bookmarks')
+            const { data } = await response.json()
+            return (data as Array<{ songId: number }>).map((b) => b.songId)
+          },
+          { timeout: 10000 },
+        )
+        .toContain(song.id)
+    } finally {
+      await request.delete('/api/song-bookmarks')
+      await request.delete(`/api/songs/${song.id}`)
+    }
+  })
+})

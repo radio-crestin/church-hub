@@ -6,10 +6,11 @@ import {
   Sparkles,
   Tag,
 } from 'lucide-react'
-import { forwardRef } from 'react'
+import { forwardRef, useRef } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
+import { startSongDrag } from '../utils/songDragController'
 
 interface SongCardProps {
   song: {
@@ -63,6 +64,9 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
     },
     ref,
   ) {
+    // Set the moment a press on the row becomes a drag, so the click the
+    // browser sends afterwards does not also open the song.
+    const draggedOut = useRef(false)
     const hasHighlight = song.highlightedTitle?.includes('<mark>')
     const categorySuffix =
       showCategoryInTitle && song.categoryName ? ` (${song.categoryName})` : ''
@@ -84,7 +88,19 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
         <button
           type="button"
           data-testid="song-card-open"
+          onPointerDown={(e) =>
+            startSongDrag(e, { id: song.id, title: song.title }, () => {
+              draggedOut.current = true
+            })
+          }
           onClick={(e) => {
+            // The row is also what an operator carries over to Marcaje or a
+            // program. Once that gesture has armed, the click the browser
+            // sends when the pointer comes back up is not a click on the song.
+            if (draggedOut.current) {
+              draggedOut.current = false
+              return
+            }
             // CMD+click (Mac) or Ctrl+click (Windows/Linux) opens in new window
             if ((e.metaKey || e.ctrlKey) && onMiddleClick) {
               e.preventDefault()
