@@ -1,6 +1,8 @@
 import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
+import { parseAlternateTitles } from './parseAlternateTitles'
+import { serializeAlternateTitles } from './serializeAlternateTitles'
 import {
   cleanupGroupsAfterSongDelete,
   getGroupIdsForSongs,
@@ -81,6 +83,7 @@ function toSong(record: typeof songs.$inferSelect): Song {
     categoryId: record.categoryId,
     songGroupId: record.songGroupId,
     sourceFilename: record.sourceFilename,
+    alternateTitles: parseAlternateTitles(record.alternateTitles),
     author: record.author,
     copyright: record.copyright,
     ccli: record.ccli,
@@ -279,6 +282,7 @@ export function getSongsPaginated(
       categoryId: record.category_id,
       songGroupId: record.song_group_id,
       sourceFilename: record.source_filename,
+      alternateTitles: parseAlternateTitles(record.alternate_titles),
       author: record.author,
       copyright: record.copyright,
       ccli: record.ccli,
@@ -460,6 +464,13 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         title,
         updatedAt: now,
       }
+      // Stored as JSON so a song can carry any number of names; an explicit
+      // empty array clears them, while omitting the field leaves them alone.
+      if (input.alternateTitles !== undefined) {
+        updateData.alternateTitles = serializeAlternateTitles(
+          input.alternateTitles,
+        )
+      }
       for (const field of optionalFields) {
         if (input[field] !== undefined) {
           updateData[field] = input[field]
@@ -490,6 +501,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
         .insert(songs)
         .values({
           title,
+          alternateTitles: serializeAlternateTitles(input.alternateTitles),
           categoryId: input.categoryId ?? null,
           sourceFilename: input.sourceFilename ?? null,
           author: input.author ?? null,
@@ -768,17 +780,18 @@ export function batchImportSongs(
 
     const insertSongStmt = rawDb.query(`
       INSERT INTO songs (
-        title, category_id, source_filename,
+        title, alternate_titles, category_id, source_filename,
         author, copyright, ccli, tempo, time_signature,
         theme, alt_theme, hymn_number, key_line, presentation_order,
         created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
     `)
 
     const updateSongStmt = rawDb.query(`
       UPDATE songs SET
+        alternate_titles = ?,
         category_id = ?,
         source_filename = ?,
         author = ?,
@@ -821,6 +834,7 @@ export function batchImportSongs(
 
         if (existing && overwriteDuplicates) {
           updateSongStmt.run(
+            serializeAlternateTitles(input.alternateTitles),
             categoryId,
             input.sourceFilename ?? null,
             input.author ?? null,
@@ -861,6 +875,7 @@ export function batchImportSongs(
 
         const result = insertSongStmt.get(
           title,
+          serializeAlternateTitles(input.alternateTitles),
           categoryId,
           input.sourceFilename ?? null,
           input.author ?? null,

@@ -1,4 +1,9 @@
 export {
+  type AlternateTitleEntry,
+  type AlternateTitlesBackfill,
+  backfillAlternateTitles,
+} from './alternateTitles'
+export {
   addBookmarkNote,
   type BookmarkItemRef,
   type BookmarkNote,

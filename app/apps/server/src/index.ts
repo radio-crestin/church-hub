@@ -118,7 +118,6 @@ import {
 } from './service'
 import { aiBibleSearch } from './service/ai-bible-search'
 import { aiSearchSongs } from './service/ai-search'
-import { correctLyrics } from './service/lyrics-correction'
 import {
   getOrCreateSystemToken,
   getSystemToken,
@@ -208,6 +207,7 @@ import {
   initializeOBSCallbacks,
 } from './service/livestream/obs'
 import { clearLogs, openLogsFolder, readRecentLogs } from './service/logs'
+import { correctLyrics } from './service/lyrics-correction'
 import {
   initializeMIDI,
   setAllLEDs,
@@ -324,6 +324,7 @@ import {
 } from './service/song-bookmarks'
 import {
   type BatchImportSongInput,
+  backfillAlternateTitles,
   batchImportSongs,
   batchUpdateSearchIndex,
   clearSearchCache,
@@ -4893,6 +4894,78 @@ async function startRealServer(): Promise<void> {
         } catch (error) {
           const message =
             error instanceof Error ? error.message : 'AI search failed'
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: message }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/songs/alternate-titles - Give songs back the names their
+      // source knows them by (see backfillAlternateTitles)
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/songs/alternate-titles'
+      ) {
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as {
+            entries?: Array<{ sourceFilename?: string; titles?: string[] }>
+          }
+
+          if (!Array.isArray(body.entries)) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'entries is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+          // Same ceiling the discovery match endpoint uses: the client chunks
+          // a whole catalogue, and one request should stay one transaction.
+          if (body.entries.length > 500) {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({ error: 'Too many entries (max 500)' }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+
+          const entries = body.entries
+            .filter(
+              (entry): entry is { sourceFilename: string; titles: string[] } =>
+                typeof entry?.sourceFilename === 'string' &&
+                Array.isArray(entry.titles),
+            )
+            .map((entry) => ({
+              sourceFilename: entry.sourceFilename,
+              titles: entry.titles.filter(
+                (title): title is string => typeof title === 'string',
+              ),
+            }))
+
+          const result = backfillAlternateTitles(entries)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : 'Backfill failed'
           return handleCors(
             req,
             new Response(JSON.stringify({ error: message }), {

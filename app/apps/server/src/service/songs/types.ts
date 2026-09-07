@@ -24,6 +24,8 @@ export interface SongCategoryRecord {
 export interface SongRecord {
   id: number
   title: string
+  /** JSON array of the other names this song goes by, or null. */
+  alternate_titles: string | null
   category_id: number | null
   song_group_id: number | null
   source_filename: string | null
@@ -94,6 +96,12 @@ export interface SongTag {
 export interface Song {
   id: number
   title: string
+  /**
+   * Other names this song goes by — usually the title its source gave it,
+   * kept when the import filed the song under its first verse instead. They
+   * are searched in the same band as the title.
+   */
+  alternateTitles: string[]
   categoryId: number | null
   /**
    * Group this song belongs to (null = standalone / its own canonical
@@ -229,6 +237,13 @@ export interface SlideInput {
 export interface UpsertSongInput {
   id?: number
   title: string
+  /**
+   * Other names this song goes by. A library imported with "use the first
+   * verse as the title" files a song under its opening line, so the name the
+   * source gave it is kept here and indexed alongside the title. Omitted
+   * leaves the stored set untouched; an empty array clears it.
+   */
+  alternateTitles?: string[] | null
   categoryId?: number | null
   sourceFilename?: string | null
   author?: string | null
@@ -310,6 +325,11 @@ export interface OperationResult {
  */
 export interface BatchImportSongInput {
   title: string
+  /**
+   * Other names this song goes by — most often the title the source file gave
+   * it, when the import filed the song under its first verse instead.
+   */
+  alternateTitles?: string[] | null
   categoryId?: number | null
   sourceFilename?: string | null
   author?: string | null

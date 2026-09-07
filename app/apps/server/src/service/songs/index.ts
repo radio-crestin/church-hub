@@ -1,5 +1,11 @@
 // Types
 
+// Alternate titles (the names a song is also known by)
+export {
+  type AlternateTitleEntry,
+  type BackfillAlternateTitlesResult,
+  backfillAlternateTitles,
+} from './backfillAlternateTitles'
 // Categories
 export {
   deleteCategory,
