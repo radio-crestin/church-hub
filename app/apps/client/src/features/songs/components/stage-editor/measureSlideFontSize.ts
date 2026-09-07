@@ -1,3 +1,5 @@
+import { elementAtOffset } from '../../../presentation/utils/slideTextOffsets'
+
 /**
  * The font size the operator is looking at, expressed in the screen's own
  * canvas units — the same units the screen settings use.
@@ -64,28 +66,4 @@ function canvasScale(canvasWidth: number): number | null {
   const scale = box.clientWidth / canvasWidth
   if (!Number.isFinite(scale) || scale <= 0) return null
   return scale
-}
-
-/** The element rendering the character at `offset` in the editor's text. */
-function elementAtOffset(
-  editor: HTMLElement,
-  offset: number,
-): HTMLElement | null {
-  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT)
-  let seen = 0
-  let current: Node | null = walker.nextNode()
-
-  while (current) {
-    const length = current.textContent?.length ?? 0
-    // A boundary sitting at the very end of a node belongs to the next one —
-    // `offset` is the first character of the selection, not the gap before it.
-    if (seen + length > offset) {
-      const parent = current.parentNode
-      return parent instanceof HTMLElement ? parent : null
-    }
-    seen += length
-    current = walker.nextNode()
-  }
-
-  return null
 }

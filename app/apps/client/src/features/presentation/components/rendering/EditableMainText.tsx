@@ -8,6 +8,10 @@ import { sanitizePastedText } from './utils/sanitizePastedText'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
 import type { TextStyle, TextStyleRange } from '../../types'
 import { applyStylesToText } from '../../utils/applyStylesToText'
+import {
+  domPositionAtOffset,
+  offsetAtDomPosition,
+} from '../../utils/slideTextOffsets'
 
 /** Character offsets of the current selection inside `root`. */
 function selectionOffsets(
@@ -18,22 +22,15 @@ function selectionOffsets(
   const range = selection.getRangeAt(0)
   if (!root.contains(range.commonAncestorContainer)) return null
 
-  const offsetOf = (node: Node, nodeOffset: number): number => {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-    let offset = 0
-    let current: Node | null = walker.nextNode()
-    while (current) {
-      if (current === node) return offset + nodeOffset
-      offset += current.textContent?.length ?? 0
-      current = walker.nextNode()
-    }
-    return offset
-  }
+  const start = offsetAtDomPosition(
+    root,
+    range.startContainer,
+    range.startOffset,
+  )
+  const end = offsetAtDomPosition(root, range.endContainer, range.endOffset)
+  if (start === null || end === null) return null
 
-  return {
-    start: offsetOf(range.startContainer, range.startOffset),
-    end: offsetOf(range.endContainer, range.endOffset),
-  }
+  return { start, end }
 }
 
 /** Puts the caret/selection back where it was after the DOM has been re-seeded. */
@@ -41,22 +38,8 @@ function restoreSelection(
   root: HTMLElement,
   offsets: { start: number; end: number },
 ): void {
-  const locate = (target: number): { node: Node; offset: number } | null => {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-    let seen = 0
-    let current: Node | null = walker.nextNode()
-    while (current) {
-      const length = current.textContent?.length ?? 0
-      if (seen + length >= target)
-        return { node: current, offset: target - seen }
-      seen += length
-      current = walker.nextNode()
-    }
-    return current ? { node: current, offset: 0 } : null
-  }
-
-  const start = locate(offsets.start)
-  const end = locate(offsets.end)
+  const start = domPositionAtOffset(root, offsets.start)
+  const end = domPositionAtOffset(root, offsets.end)
   if (!start || !end) return
 
   const range = document.createRange()
