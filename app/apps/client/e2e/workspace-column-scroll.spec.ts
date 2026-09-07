@@ -175,4 +175,88 @@ test.describe('Side-panel column stays reachable', () => {
     // And the one left open is still open.
     expect(await panelHeight(page, 'versions')).toBeGreaterThan(100)
   })
+
+  test('a panel dragged shut keeps its header, the way a closed one does', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await seedPreferences(page, { bookmarksOpen: true })
+    await page.goto(`/songs/${songId}`)
+    await expect(page.getByTestId('workspace-panel-schedules')).toBeVisible({
+      timeout: 15000,
+    })
+
+    const column = page.getByTestId('workspace-column-col-3')
+    const box = await column.boundingBox()
+    if (!box) throw new Error('the side-panel column is not on screen')
+
+    // The divider between Marcaje and Programe, dragged as far down as it
+    // goes — the gesture an operator uses to give Marcaje the whole column.
+    const divider = column.locator('[role="separator"]').first()
+    const handle = await divider.boundingBox()
+    if (!handle) throw new Error('no divider between the panels')
+
+    await page.mouse.move(
+      handle.x + handle.width / 2,
+      handle.y + handle.height / 2,
+    )
+    await page.mouse.down()
+    await page.mouse.move(
+      handle.x + handle.width / 2,
+      box.y + box.height + 200,
+      {
+        steps: 25,
+      },
+    )
+    await page.mouse.up()
+
+    // Programe is shut, but it is still there: its header — and the chevron
+    // that opens it again — stay on screen. Dragging must not be a way to
+    // lose a panel.
+    await expect
+      .poll(async () => await panelHeight(page, 'schedules'), { timeout: 5000 })
+      .toBeLessThan(90)
+    expect(await panelHeight(page, 'schedules')).toBeGreaterThan(20)
+    await expect(page.getByTestId('schedule-collapse-toggle')).toBeVisible()
+  })
+
+  test('the same holds for the bottom panel of the column', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await seedPreferences(page, { bookmarksOpen: true })
+    await page.goto(`/songs/${songId}`)
+    await expect(page.getByTestId('workspace-panel-versions')).toBeVisible({
+      timeout: 15000,
+    })
+
+    const column = page.getByTestId('workspace-column-col-3')
+    const box = await column.boundingBox()
+    if (!box) throw new Error('the side-panel column is not on screen')
+
+    // The divider between Programe and Versiuni.
+    const divider = column.locator('[role="separator"]').nth(1)
+    const handle = await divider.boundingBox()
+    if (!handle) throw new Error('no divider above the versions panel')
+
+    await page.mouse.move(
+      handle.x + handle.width / 2,
+      handle.y + handle.height / 2,
+    )
+    await page.mouse.down()
+    await page.mouse.move(
+      handle.x + handle.width / 2,
+      box.y + box.height + 200,
+      {
+        steps: 25,
+      },
+    )
+    await page.mouse.up()
+
+    await expect
+      .poll(async () => await panelHeight(page, 'versions'), { timeout: 5000 })
+      .toBeLessThan(90)
+    expect(await panelHeight(page, 'versions')).toBeGreaterThan(20)
+    await expect(page.getByTestId('versions-collapse-toggle')).toBeVisible()
+  })
 })

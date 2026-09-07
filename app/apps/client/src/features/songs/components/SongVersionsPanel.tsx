@@ -399,7 +399,10 @@ export function SongVersionsPanel({
     <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       {/* Header — mirrors SongBookmarksPanel: chevron (optional) + icon +
           title + count + attention badge + CTA on the right. */}
-      <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+      <div
+        data-panel-header
+        className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700"
+      >
         <div className="flex min-w-0 items-center gap-2">
           {onToggleCollapse ? (
             <button

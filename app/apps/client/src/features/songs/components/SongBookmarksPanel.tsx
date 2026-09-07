@@ -655,7 +655,10 @@ export function SongBookmarksPanel({
           have to wrap it in a CollapsibleSection (which used to stack a
           redundant title bar above this one). Action buttons stay visible
           even when collapsed so the operator can still Add/Export/Clear. */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div
+        data-panel-header
+        className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+      >
         <div className="flex items-center gap-2 min-w-0">
           {onToggleCollapse ? (
             <button

@@ -40,6 +40,12 @@ export function WorkspaceColumnPanel({
 }: WorkspaceColumnPanelProps) {
   const panelRef = usePanelRef()
   const collapsed = panel.collapsed === true
+  // A panel that declares a collapsed state has a chevron and a header to fall
+  // back to, so dragging its divider all the way stops at that header rather
+  // than taking the panel off the screen. Panels that declare none — the
+  // verses, the control panel, the stage — keep the drag as their way of being
+  // hidden outright, since they have no header left behind to bring them back.
+  const stopsAtHeader = panel.collapsed !== undefined
   // Measured from the panel's own header, so a taller header is never clipped.
   const [headerHeight, setHeaderHeight] = useState<number>()
   const previousCollapsed = useRef<boolean | undefined>(undefined)
@@ -89,7 +95,9 @@ export function WorkspaceColumnPanel({
       panelRef={panelRef}
       className="min-h-0 min-w-0"
       collapsible
-      collapsedSize={collapsed ? (headerHeight ?? ASSUMED_HEADER_PX) : '0%'}
+      collapsedSize={
+        collapsed || stopsAtHeader ? (headerHeight ?? ASSUMED_HEADER_PX) : '0%'
+      }
       minSize={panel.minSize ?? '10%'}
       defaultSize={panel.defaultSize}
       onResize={handleResize}
