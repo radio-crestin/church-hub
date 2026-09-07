@@ -42,6 +42,69 @@ export const songsPaths = {
       },
     },
   },
+  '/api/songs/correct-lyrics': {
+    post: {
+      tags: ['Songs'],
+      summary: 'Proof-read a passage of lyrics',
+      description:
+        'Corrects missing Romanian diacritics, obvious misspellings, capitalisation and proper names in a passage of lyrics, without rewriting it. The line structure is preserved: the answer always has the same number of lines as the request. Uses the provider configured for AI song search.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['text'],
+              properties: {
+                text: {
+                  type: 'string',
+                  description:
+                    'The passage to proof-read, lines separated by newlines',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'The corrected passage',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      text: {
+                        type: 'string',
+                        description:
+                          'The corrected passage, with the same line structure',
+                      },
+                      changed: {
+                        type: 'boolean',
+                        description: 'False when nothing needed correcting',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'Text is required',
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+        '500': {
+          description: 'AI is not configured, or the correction failed',
+        },
+      },
+    },
+  },
   '/api/songs/ai-search': {
     post: {
       tags: ['Songs'],

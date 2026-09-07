@@ -24,6 +24,10 @@ export {
   upsertCategory,
 } from './categories'
 export {
+  correctLyrics,
+  type LyricsCorrection,
+} from './lyricsCorrection'
+export {
   getGroupForSong,
   getSimilarSongs,
   getSongGroup,

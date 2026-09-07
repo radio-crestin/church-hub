@@ -6,12 +6,15 @@ import {
   AlignRight,
   Bold,
   Italic,
+  Loader2,
   RotateCcw,
   Underline,
+  WandSparkles,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useToast } from '~/ui/toast'
 import { FontSizeField } from './FontSizeField'
 import { getSlideSelection } from './getSlideSelection'
 import {
@@ -22,8 +25,9 @@ import {
 import { readSlideText } from './readSlideText'
 import { TextTransformMenu } from './TextTransformMenu'
 import { type TextTransform, transformSlideText } from './transformSlideText'
-import { writeSlideText } from './writeSlideText'
+import { useCorrectLyrics } from '../../hooks'
 import type { SlideStyleOverride, SlideStyleRange } from '../../types'
+import { remapStyleRanges } from '../../utils/remapStyleRanges'
 import { updateSlideStyleRange } from '../../utils/updateSlideStyleRange'
 
 /**
@@ -100,6 +104,8 @@ export function SlideStyleToolbar({
   disabled = false,
 }: SlideStyleToolbarProps) {
   const { t } = useTranslation('songs')
+  const { showToast } = useToast()
+  const correction = useCorrectLyrics()
 
   // What the operator has selected right now, tracked so the controls report
   // the selection's own formatting the way PowerPoint's ribbon does.
@@ -264,14 +270,51 @@ export function SlideStyleToolbar({
       if (text === null) return
       const next = transformSlideText(text, selection, transform)
       if (next === text) return
-      // The canvas first — it does not re-seed itself while the same slide is
-      // open, and rewriting it in place is what keeps the styled runs and the
-      // operator's selection where they are.
-      writeSlideText(next)
       onTextChange(next.replace(/\u00a0/g, ' '))
     },
     [selection, onTextChange],
   )
+
+  /**
+   * Proof-reads the selected verses: missing diacritics, obvious misspellings,
+   * capitalisation and proper names. Correction, never rewriting — the server
+   * refuses an answer that changed the line structure.
+   *
+   * The correction can be a different length from what it replaced, so the
+   * slide's style runs are aligned onto the new text rather than left pointing
+   * at offsets that have moved.
+   */
+  const applyCorrection = useCallback(async () => {
+    if (!selection || !onTextChange) return
+    const text = readSlideText()
+    if (text === null) return
+
+    const passage = text.slice(selection.start, selection.end)
+    if (!passage.trim()) return
+
+    try {
+      const { text: corrected } = await correction.mutateAsync(passage)
+      const next =
+        text.slice(0, selection.start) + corrected + text.slice(selection.end)
+      if (next === text) {
+        showToast(t('stageEditor.style.correctNothingToDo'), 'info')
+        return
+      }
+
+      const ranges = override?.ranges
+      if (ranges && ranges.length > 0) {
+        onChange({ ...override, ranges: remapStyleRanges(ranges, text, next) })
+      }
+      onTextChange(next.replace(/\u00a0/g, ' '))
+    } catch (error) {
+      showToast(
+        error instanceof Error && error.message
+          ? error.message
+          : t('stageEditor.style.correctFailed'),
+        'error',
+      )
+    }
+  }, [selection, onTextChange, onChange, override, correction, showToast, t])
 
   const setAlignment = useCallback(
     (alignment: Alignment) => {
@@ -363,6 +406,25 @@ export function SlideStyleToolbar({
         onTransform={applyTransform}
         disabled={disabled || !onTextChange || !selection}
       />
+
+      <button
+        type="button"
+        data-testid="slide-style-correct"
+        onMouseDown={keepSelection}
+        onClick={applyCorrection}
+        disabled={
+          disabled || !onTextChange || !selection || correction.isPending
+        }
+        title={t('stageEditor.style.correct')}
+        aria-label={t('stageEditor.style.correct')}
+        className={buttonClass(false)}
+      >
+        {correction.isPending ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          <WandSparkles size={16} />
+        )}
+      </button>
 
       <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
 

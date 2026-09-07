@@ -69,6 +69,13 @@ interface EditableMainTextProps {
    * so typing never resets the caret.
    */
   editKey: string
+  /**
+   * Bumped by the host when it rewrites the slide's text from somewhere other
+   * than this editor. The editor deliberately leaves its own DOM alone while
+   * the same slide is being typed in — that is what holds the caret still — so
+   * an outside rewrite would otherwise never reach the canvas.
+   */
+  textVersion?: number
   /** Placeholder shown when the slide is empty */
   placeholder?: string
   /** Called with the plain-text value (newline-separated lines) on every edit */
@@ -94,6 +101,7 @@ export function EditableMainText({
   left,
   top,
   editKey,
+  textVersion = 0,
   placeholder,
   onEdit,
   styleRanges,
@@ -102,6 +110,9 @@ export function EditableMainText({
   const editRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
   const seededKeyRef = useRef<string | null>(null)
+  // The text the editor is showing right now, so an outside rewrite can be told
+  // apart from the round-trip of the operator's own typing.
+  const domTextRef = useRef<string | null>(null)
   // The last run of text the operator actually selected here. Formatting is
   // applied from the toolbar, which takes focus away and collapses the live
   // selection, so this is what puts the selection back after the styled markup
@@ -189,6 +200,18 @@ export function EditableMainText({
     [styleRanges],
   )
 
+  // An outside rewrite is announced by a bumped `textVersion`, but the content
+  // it produced is rebuilt asynchronously and lands a render later. Seeding on
+  // the bump alone would therefore write the text the slide had *before* the
+  // rewrite and then consider itself done, so the flag is held until the new
+  // text actually turns up.
+  const lastVersionRef = useRef(textVersion)
+  const pendingRewriteRef = useRef(false)
+  if (lastVersionRef.current !== textVersion) {
+    lastVersionRef.current = textVersion
+    pendingRewriteRef.current = true
+  }
+
   // Seed the editable text when switching to a different slide, or when the
   // slide's inline styling changes. While the same slide is merely being typed
   // in we leave the DOM alone so the caret is preserved; on a styling change we
@@ -198,7 +221,9 @@ export function EditableMainText({
     if (!editor) return
 
     const seedKey = `${editKey}|${rangesKey}`
-    if (seededKeyRef.current !== seedKey) {
+    const outsideRewrite =
+      pendingRewriteRef.current && normalizedText !== domTextRef.current
+    if (seededKeyRef.current !== seedKey || outsideRewrite) {
       const sameSlide = seededKeyRef.current?.startsWith(`${editKey}|`) === true
       const live = selectionOffsets(editor)
       // A collapsed caret means the toolbar took focus; the run the operator
@@ -215,11 +240,13 @@ export function EditableMainText({
         editor.innerText = normalizedText
       }
       seededKeyRef.current = seedKey
+      domTextRef.current = normalizedText
+      pendingRewriteRef.current = false
 
       if (selection) restoreSelection(editor, selection)
     }
     fit()
-  }, [editKey, rangesKey, normalizedText, styledHtml, fit])
+  }, [editKey, rangesKey, textVersion, normalizedText, styledHtml, fit])
 
   // A new slide starts with no remembered selection of its own.
   useEffect(() => {
@@ -228,6 +255,7 @@ export function EditableMainText({
 
   const handleInput = useCallback(() => {
     if (!editRef.current) return
+    domTextRef.current = editRef.current.innerText
     fit()
     onEdit(editRef.current.innerText.replace(/\u00a0/g, ' '))
   }, [fit, onEdit])

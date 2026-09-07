@@ -118,6 +118,7 @@ import {
 } from './service'
 import { aiBibleSearch } from './service/ai-bible-search'
 import { aiSearchSongs } from './service/ai-search'
+import { correctLyrics } from './service/lyrics-correction'
 import {
   getOrCreateSystemToken,
   getSystemToken,
@@ -4892,6 +4893,53 @@ async function startRealServer(): Promise<void> {
         } catch (error) {
           const message =
             error instanceof Error ? error.message : 'AI search failed'
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: message }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
+      // POST /api/songs/correct-lyrics - Proof-read a passage of lyrics
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/songs/correct-lyrics'
+      ) {
+        // Rewriting a song's words is an edit, so it takes the edit permission
+        // rather than the one that merely reads them.
+        const permError = checkPermission('songs.edit')
+        if (permError) return permError
+
+        try {
+          const body = (await req.json()) as { text?: string }
+
+          if (!body.text?.trim()) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: 'Text is required' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const result = await correctLyrics(body.text)
+
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+              },
+            }),
+          )
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : 'Correction failed'
           return handleCors(
             req,
             new Response(JSON.stringify({ error: message }), {

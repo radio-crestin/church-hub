@@ -294,6 +294,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   // Rewriting the active slide's text from the formatting bar — re-casing a
   // selection is an edit like any other, so it goes through the slide draft and
   // the same debounced autosave.
+  const [textVersion, setTextVersion] = useState(0)
   const handleTextChange = useCallback(
     (plainText: string) => {
       setSlides((prev) =>
@@ -303,6 +304,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
             : s,
         ),
       )
+      // The in-place editor leaves its own DOM alone while the same slide is
+      // open, so it has to be told this text did not come from typing.
+      setTextVersion((version) => version + 1)
     },
     [activeIndex],
   )
@@ -381,6 +385,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           onActiveSlideChange={setActiveSlideIndex}
           onSlidesChange={setSlides}
           fillHeight
+          textVersion={textVersion}
           canvasToolbar={
             <SlideStyleToolbar
               override={activeStyleOverrides}

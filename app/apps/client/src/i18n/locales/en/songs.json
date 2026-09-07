@@ -63,6 +63,9 @@
         "sentence": "Sentence case",
         "lineStart": "Capitalise Each Line"
       },
+      "correct": "Auto-correct the selected lyrics",
+      "correctNothingToDo": "Nothing needed correcting",
+      "correctFailed": "The correction failed",
       "alignLeft": "Align to the start",
       "alignCenter": "Align to the middle",
       "alignRight": "Align to the end",
