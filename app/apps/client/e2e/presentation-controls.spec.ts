@@ -68,7 +68,18 @@ test.describe('Presentation Controls', () => {
 
   test('LIVE indicator is inactive when nothing is presented', async ({
     page,
+    request,
   }) => {
+    // Establish the state the assertion is about. Without this the test only
+    // reads whatever the specs before it happened to leave behind, and fails on
+    // any ordering that leaves the projection showing.
+    //
+    // `clear` rather than `stop`: the indicator tracks whether the projection
+    // is hidden, and stopping the content leaves it unhidden — red over an
+    // empty screen.
+    await request.post('/api/presentation/stop')
+    await request.post('/api/presentation/clear')
+
     await page.goto('/present')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
