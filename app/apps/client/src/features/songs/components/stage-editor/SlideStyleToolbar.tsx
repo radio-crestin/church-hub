@@ -19,6 +19,10 @@ import {
   measureSlideFontSize,
   measureSlideFontSizes,
 } from './measureSlideFontSize'
+import { readSlideText } from './readSlideText'
+import { TextTransformMenu } from './TextTransformMenu'
+import { type TextTransform, transformSlideText } from './transformSlideText'
+import { writeSlideText } from './writeSlideText'
 import type { SlideStyleOverride, SlideStyleRange } from '../../types'
 import { updateSlideStyleRange } from '../../utils/updateSlideStyleRange'
 
@@ -42,6 +46,11 @@ interface SlideStyleToolbarProps {
   canvasWidth: number
   /** Called with the new styling, or null to fall back to the screen defaults. */
   onChange: (override: SlideStyleOverride | null) => void
+  /**
+   * Called with the slide's new text. Absent when the host does not let this
+   * bar rewrite the slide, which leaves the text actions out.
+   */
+  onTextChange?: (text: string) => void
   disabled?: boolean
 }
 
@@ -87,6 +96,7 @@ export function SlideStyleToolbar({
   override,
   canvasWidth,
   onChange,
+  onTextChange,
   disabled = false,
 }: SlideStyleToolbarProps) {
   const { t } = useTranslation('songs')
@@ -241,6 +251,28 @@ export function SlideStyleToolbar({
     [override, onChange, selection, markState],
   )
 
+  /**
+   * Re-cases the selected words. The text is read back from the canvas rather
+   * than from the slide draft, because that is the string the selection's
+   * offsets were counted against — and the transforms keep its length, so the
+   * styling stays on the words it was put on.
+   */
+  const applyTransform = useCallback(
+    (transform: TextTransform) => {
+      if (!selection || !onTextChange) return
+      const text = readSlideText()
+      if (text === null) return
+      const next = transformSlideText(text, selection, transform)
+      if (next === text) return
+      // The canvas first — it does not re-seed itself while the same slide is
+      // open, and rewriting it in place is what keeps the styled runs and the
+      // operator's selection where they are.
+      writeSlideText(next)
+      onTextChange(next.replace(/\u00a0/g, ' '))
+    },
+    [selection, onTextChange],
+  )
+
   const setAlignment = useCallback(
     (alignment: Alignment) => {
       onChange({ ...override, alignment })
@@ -326,6 +358,11 @@ export function SlideStyleToolbar({
           <Icon size={16} />
         </button>
       ))}
+
+      <TextTransformMenu
+        onTransform={applyTransform}
+        disabled={disabled || !onTextChange || !selection}
+      />
 
       <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
 

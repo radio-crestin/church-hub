@@ -56,6 +56,13 @@
       "bold": "Bold",
       "italic": "Italic",
       "underline": "Underline",
+      "changeCase": "Change case",
+      "case": {
+        "lower": "lowercase",
+        "upper": "UPPERCASE",
+        "sentence": "Sentence case",
+        "lineStart": "Capitalise Each Line"
+      },
       "alignLeft": "Align to the start",
       "alignCenter": "Align to the middle",
       "alignRight": "Align to the end",

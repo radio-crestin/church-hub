@@ -56,6 +56,13 @@
       "bold": "Îngroșat",
       "italic": "Cursiv",
       "underline": "Subliniat",
+      "changeCase": "Schimbă majusculele",
+      "case": {
+        "lower": "toate literele mici",
+        "upper": "TOATE LITERELE MARI",
+        "sentence": "Doar prima literă majusculă",
+        "lineStart": "Prima literă majusculă din fiecare rând"
+      },
       "alignLeft": "Aliniază la început",
       "alignCenter": "Aliniază la mijloc",
       "alignRight": "Aliniază la sfârșit",

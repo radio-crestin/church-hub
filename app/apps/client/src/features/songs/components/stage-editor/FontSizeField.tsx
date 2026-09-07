@@ -1,7 +1,9 @@
 import { ChevronDown } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+
+import { useToolbarMenu } from './useToolbarMenu'
 
 /**
  * The sizes the dropdown offers. The usual print ladder — the field stays
@@ -39,15 +41,14 @@ export function FontSizeField({
 }: FontSizeFieldProps) {
   const { t } = useTranslation('songs')
   const [draft, setDraft] = useState<string | null>(null)
-  const [menuAt, setMenuAt] = useState<{ top: number; left: number } | null>(
-    null,
-  )
-  const fieldRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  // The list is portalled to the body, so it is not inside `fieldRef` — the
-  // outside-click closer has to be told about it or a press on a size would
-  // unmount the list before the click could land on it.
-  const menuRef = useRef<HTMLUListElement>(null)
+  const {
+    anchorRef: fieldRef,
+    panelRef: menuRef,
+    at: menuAt,
+    close: closeMenu,
+    toggle: toggleMenu,
+  } = useToolbarMenu<HTMLDivElement, HTMLUListElement>()
 
   const smallest = sizes[0]
   const isMixed = sizes.length > 1
@@ -64,31 +65,6 @@ export function FontSizeField({
     if (!Number.isFinite(parsed) || parsed <= 0) return
     onApply(parsed)
   }
-
-  const openMenu = () => {
-    const box = fieldRef.current?.getBoundingClientRect()
-    if (!box) return
-    setMenuAt({ top: box.bottom + 4, left: box.left })
-  }
-
-  useEffect(() => {
-    if (!menuAt) return
-    const close = (event: MouseEvent) => {
-      const target = event.target as Node
-      if (fieldRef.current?.contains(target)) return
-      if (menuRef.current?.contains(target)) return
-      setMenuAt(null)
-    }
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuAt(null)
-    }
-    document.addEventListener('mousedown', close)
-    document.addEventListener('keydown', onEscape)
-    return () => {
-      document.removeEventListener('mousedown', close)
-      document.removeEventListener('keydown', onEscape)
-    }
-  }, [menuAt])
 
   return (
     <div ref={fieldRef} className="relative flex items-center">
@@ -128,7 +104,7 @@ export function FontSizeField({
         data-testid="slide-style-font-size-menu"
         // Opening the list must not take the selection the size would apply to.
         onMouseDown={(event) => event.preventDefault()}
-        onClick={() => (menuAt ? setMenuAt(null) : openMenu())}
+        onClick={toggleMenu}
         disabled={disabled}
         aria-label={t('stageEditor.style.fontSizePresets')}
         title={t('stageEditor.style.fontSizePresets')}
@@ -152,7 +128,7 @@ export function FontSizeField({
                   data-testid={`slide-style-font-size-${preset}`}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
-                    setMenuAt(null)
+                    closeMenu()
                     setDraft(null)
                     onApply(preset)
                   }}
