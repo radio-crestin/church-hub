@@ -2322,7 +2322,7 @@
       }
     },
     "nextSlideConfig": {
-      "enabled": true,
+      "enabled": false,
       "constraints": {
         "top": {
           "enabled": true,
@@ -4371,7 +4371,7 @@
       }
     },
     "nextSlideConfig": {
-      "enabled": true,
+      "enabled": false,
       "constraints": {
         "top": {
           "enabled": true,
