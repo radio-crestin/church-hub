@@ -565,6 +565,7 @@ export function SchedulePanel({
           {onToggleCollapse ? (
             <button
               type="button"
+              data-testid="schedule-collapse-toggle"
               onClick={onToggleCollapse}
               aria-expanded={!isCollapsed}
               aria-label={isCollapsed ? t('panel.expand') : t('panel.collapse')}

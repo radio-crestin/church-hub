@@ -27,8 +27,9 @@ interface WorkspaceColumnPanelProps {
  * remaining panels take the freed space instead of leaving a gap.
  *
  * Collapsing throws the row's height away — the neighbours take the space — so
- * the height it had while open is remembered here and handed straight back when
- * the operator expands it again, on this visit or on the next one.
+ * the height it had while open is recorded here on the way out. Putting it back
+ * is the column's job, not this row's: a row can only resize itself, and doing
+ * that takes the space from whichever neighbour happens to be next to it.
  */
 export function WorkspaceColumnPanel({
   workspaceId,
@@ -64,7 +65,8 @@ export function WorkspaceColumnPanel({
 
     if (collapsed) {
       // Written now rather than on every drag frame: this is the one moment the
-      // height is about to be lost.
+      // height is about to be lost, and the column reads it back from here when
+      // the row is expanded again.
       if (openHeight.current !== undefined) {
         writePanelHeight(workspaceId, panel.id, openHeight.current)
       }
@@ -76,14 +78,9 @@ export function WorkspaceColumnPanel({
     }
 
     // On mount an open row is already sized by the group's stored layout; only
-    // a real expand has a height to put back.
+    // a real expand has to be let out of its collapsed size.
     if (previous === undefined) return
     panelRef.current?.expand()
-    // A bare number would be read as pixels — the remembered height is a
-    // percentage of the column, so it has to say so.
-    if (openHeight.current !== undefined) {
-      panelRef.current?.resize(`${openHeight.current}%`)
-    }
   }, [collapsed, panel.id, panelRef, workspaceId])
 
   return (
