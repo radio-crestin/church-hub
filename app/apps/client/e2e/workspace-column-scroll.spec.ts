@@ -59,20 +59,23 @@ test.describe.configure({ mode: 'serial' })
 
 test.describe('Side-panel column stays reachable', () => {
   let songId: number
+  let otherSongId: number
 
   test.beforeAll(async ({ request }) => {
-    const response = await request.post('/api/songs', {
-      data: {
-        title: `E2E Column Scroll ${Date.now()}`,
-        slides: [{ content: 'First slide', sortOrder: 0 }],
-      },
-    })
-    expect(response.status()).toBe(201)
-    songId = (await response.json()).data.id
+    const create = async (title: string) => {
+      const response = await request.post('/api/songs', {
+        data: { title, slides: [{ content: 'First slide', sortOrder: 0 }] },
+      })
+      expect(response.status()).toBe(201)
+      return (await response.json()).data.id as number
+    }
+    songId = await create(`E2E Column Scroll A ${Date.now()}`)
+    otherSongId = await create(`E2E Column Scroll B ${Date.now()}`)
   })
 
   test.afterAll(async ({ request }) => {
     await request.delete(`/api/songs/${songId}`)
+    await request.delete(`/api/songs/${otherSongId}`)
   })
 
   test('a window too short for three panels scrolls instead of squeezing them', async ({
@@ -128,5 +131,33 @@ test.describe('Side-panel column stays reachable', () => {
     expect(await panelHeight(page, 'schedules')).toBeGreaterThanOrEqual(40)
     expect(await panelHeight(page, 'versions')).toBeGreaterThanOrEqual(40)
     await expect(page.getByTestId('schedule-collapse-toggle')).toBeInViewport()
+  })
+
+  test('which sections are open is a preference, not a per-song state', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await seedPreferences(page, { bookmarksOpen: true })
+    await page.goto(`/songs/${songId}`)
+    await expect(page.getByTestId('workspace-panel-schedules')).toBeVisible({
+      timeout: 15000,
+    })
+
+    // Shut Programe on this song.
+    await page.getByTestId('schedule-collapse-toggle').click()
+    await expect
+      .poll(async () => await panelHeight(page, 'schedules'), { timeout: 5000 })
+      .toBeLessThan(90)
+
+    // Walking to another song must not reopen it: the operator set this up
+    // once, and it holds for every song they visit next.
+    await page.goto(`/songs/${otherSongId}`)
+    await expect(page.getByTestId('workspace-panel-schedules')).toBeVisible({
+      timeout: 15000,
+    })
+    expect(await panelHeight(page, 'schedules')).toBeLessThan(90)
+    // The two that were left open are still open.
+    expect(await panelHeight(page, 'bookmarks')).toBeGreaterThan(100)
+    expect(await panelHeight(page, 'versions')).toBeGreaterThan(100)
   })
 })
