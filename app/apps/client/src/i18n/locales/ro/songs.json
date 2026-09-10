@@ -51,9 +51,21 @@
     "style": {
       "increaseFontSize": "Mărește textul",
       "decreaseFontSize": "Micșorează textul",
+      "fontSize": "Dimensiunea textului",
+      "fontSizePresets": "Alege o dimensiune",
       "bold": "Îngroșat",
       "italic": "Cursiv",
       "underline": "Subliniat",
+      "changeCase": "Schimbă majusculele",
+      "case": {
+        "lower": "toate literele mici",
+        "upper": "TOATE LITERELE MARI",
+        "sentence": "Doar prima literă majusculă",
+        "lineStart": "Prima literă majusculă din fiecare rând"
+      },
+      "correct": "Corectează automat versurile selectate",
+      "correctNothingToDo": "Nu a fost nimic de corectat",
+      "correctFailed": "Corectarea a eșuat",
       "alignLeft": "Aliniază la început",
       "alignCenter": "Aliniază la mijloc",
       "alignRight": "Aliniază la sfârșit",
@@ -189,6 +201,7 @@
     "collapse": "Restrânge",
     "markSung": "Marchează drept cântată",
     "markNotSung": "Marchează drept necântată",
+    "dragToProgram": "Trage peste un program ca să o adaugi",
     "filterAll": "Toate",
     "filterPending": "Rămase",
     "filterSung": "Cântate"

@@ -232,6 +232,13 @@
       "when": 1769100000000,
       "tag": "0032_versete_tineri_person_name_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1769200000000,
+      "tag": "0033_add_songs_alternate_titles",
+      "breakpoints": true
     }
   ]
 }

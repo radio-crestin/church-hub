@@ -203,7 +203,7 @@ test.describe('Workspace layout', () => {
     expect(Math.abs(bookmarksAfter.x - slidesAfter.x)).toBeLessThan(12)
   })
 
-  test('re-expanding a panel brings back the height it had, even after a reload', async ({
+  test('re-opening a panel gives it the space its shut neighbours are not using', async ({
     page,
   }) => {
     await page.goto(`/songs/${songId}`)
@@ -212,11 +212,13 @@ test.describe('Workspace layout', () => {
     })
 
     const toggle = page.getByTestId('bookmarks-collapse-toggle')
-    const expanded = await panelBox(page, 'bookmarks')
-    expect(expanded.height).toBeGreaterThan(150)
+    await expect
+      .poll(async () => (await panelBox(page, 'bookmarks')).height, {
+        timeout: 5000,
+      })
+      .toBeGreaterThan(150)
 
-    // Collapse: the neighbours take the space, so the height is gone from the
-    // layout and has to have been remembered somewhere.
+    // Closing gives the space to the neighbours.
     await toggle.click()
     await expect
       .poll(async () => (await panelBox(page, 'bookmarks')).height, {
@@ -224,14 +226,17 @@ test.describe('Workspace layout', () => {
       })
       .toBeLessThan(90)
 
+    // Opening it again takes that space back, sharing with whatever else is
+    // open rather than returning to whatever height it once had.
     await toggle.click()
     await expect
       .poll(async () => (await panelBox(page, 'bookmarks')).height, {
         timeout: 5000,
       })
-      .toBeGreaterThan(expanded.height - 12)
+      .toBeGreaterThan(150)
 
-    // And the memory outlives the page: collapse, come back tomorrow, expand.
+    // The same holds after a reload: the rule is about what is open now, so
+    // there is nothing to remember and nothing to get stale.
     await toggle.click()
     await expect
       .poll(async () => (await panelBox(page, 'bookmarks')).height, {
@@ -254,7 +259,7 @@ test.describe('Workspace layout', () => {
       .poll(async () => (await panelBox(page, 'bookmarks')).height, {
         timeout: 5000,
       })
-      .toBeGreaterThan(expanded.height - 12)
+      .toBeGreaterThan(150)
   })
 
   test('the page menu turns on layout editing and shows every handle at once', async ({

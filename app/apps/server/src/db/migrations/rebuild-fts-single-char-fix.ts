@@ -19,7 +19,10 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 //     used to index as a stray "039" that split phrases), and every
 //     hyphen/apostrophe word is also indexed in its joined spellings so
 //     "ne-ncetat", "ne'ncetat", "nencetat" and "neîncetat" find each other.
-const MIGRATION_KEY = 'rebuild_fts_word_spellings_v3'
+// v4: a song's alternate titles are indexed alongside its own title, so a
+//     library filed under each song's first verse is findable by the name the
+//     song is actually known by.
+const MIGRATION_KEY = 'rebuild_fts_word_spellings_v4'
 
 /**
  * Re-runs rebuildSearchIndex once with the current normalizeForIndex so the

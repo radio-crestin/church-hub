@@ -24,11 +24,24 @@ setup('authenticate as super admin', async ({ request }) => {
   expect(usersRes.ok()).toBeTruthy()
 
   const { data } = (await usersRes.json()) as { data: LocalUser[] }
-  const superAdmin = data.find((u) => u.isSuperAdmin) ?? data[0]
-  expect(superAdmin, 'a super admin user should exist after bootstrap').toBeTruthy()
+  const superAdmin = data.find((u) => u.isSuperAdmin)
+
+  // No falling back to whoever happens to be first. A test database that has
+  // accumulated users across runs can list a limited account ahead of the
+  // owner, and signing in as that one still succeeds — passwordless login is
+  // allowed from localhost. The session is then perfectly valid and simply
+  // cannot write, so reads keep passing while every write in the suite comes
+  // back 403: hundreds of unrelated specs fail and none of them says why.
+  expect(
+    superAdmin,
+    'no super admin in the test database — it has drifted from a fresh seed. ' +
+      'Stop any leftover server on the test port, then move ' +
+      'e2e/.test-data/app.db (with -wal and -shm) aside; it reseeds on the ' +
+      'next run.',
+  ).toBeTruthy()
 
   const loginRes = await request.post('/api/auth/login', {
-    data: { userId: superAdmin.id },
+    data: { userId: (superAdmin as LocalUser).id },
   })
   expect(loginRes.ok()).toBeTruthy()
 

@@ -108,6 +108,17 @@ export function ControlRoom() {
 
   const hasContent = hasTemporaryContent || !!state?.lastSongSlideId
 
+  // What the LIVE lamp reports: something is on the projection right now.
+  //
+  // It used to read `!isHidden` alone, which is whether the projection is
+  // *unhidden* — not the same thing. Stopping the content leaves the screen
+  // unhidden with nothing on it, so the lamp stayed red over a blank
+  // projection. `currentSongSlideId` is the slide showing at this moment
+  // (hiding moves it to `lastSongSlideId`), so together with the temporary
+  // content it is exactly what an operator is looking at.
+  const isLive =
+    !isHidden && (hasTemporaryContent || !!state?.currentSongSlideId)
+
   // Render content button based on what's being presented
   const renderContentButton = () => {
     const temporaryContent = state?.temporaryContent
@@ -165,22 +176,24 @@ export function ControlRoom() {
           <div className="flex items-center gap-2 shrink-0">
             {/* LIVE Indicator */}
             <div
+              data-testid="control-room-live"
+              data-live={isLive ? 'true' : 'false'}
               className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
-                !isHidden
+                isLive
                   ? 'bg-red-100 dark:bg-red-900/30'
                   : 'bg-gray-100 dark:bg-gray-700'
               }`}
             >
               <span
                 className={`w-2 h-2 rounded-full ${
-                  !isHidden
+                  isLive
                     ? 'bg-red-500 animate-pulse'
                     : 'bg-gray-400 dark:bg-gray-500'
                 }`}
               />
               <span
                 className={`text-xs font-semibold ${
-                  !isHidden
+                  isLive
                     ? 'text-red-600 dark:text-red-400'
                     : 'text-gray-400 dark:text-gray-500'
                 }`}

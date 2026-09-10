@@ -623,6 +623,12 @@
         "importing": "Se importă...",
         "note": "Cântările vor fi importate în categoria 'Resurse Crestine' cu primul vers ca titlu"
       },
+      "recoverTitles": {
+        "description": "Cântările importate până acum sunt salvate cu primul vers ca titlu, iar numele sub care le știe sursa s-a pierdut. Recuperează-l ca să poată fi găsite din nou după acel nume.",
+        "button": "Recuperează titlurile originale",
+        "running": "Se recuperează…",
+        "done": "{{count}} cântare(cântări) și-au recuperat titlul original"
+      },
       "toast": {
         "importSuccess": "S-au importat cu succes {{count}} cântări",
         "importFailed": "Importul a eșuat: {{error}}",

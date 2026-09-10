@@ -87,15 +87,30 @@ export function seedSongs(db: Database): void {
         (song_id, content, label, sort_order, created_at, updated_at)
         VALUES (?, ?, ?, ?, unixepoch(), unixepoch())`,
     )
-    const findSongByTitle = db.prepare<{ id: number }, [string]>(
+    // Identity is the title *and* the words, not the title alone. A hymnal
+    // genuinely holds different songs under one name — the fixture carries a
+    // dozen of them — and keying only on the title dropped every one of those
+    // after the first, silently, on every fresh install. The first slide is
+    // enough to tell them apart and keeps re-runs idempotent.
+    const findSongsByTitle = db.prepare<{ id: number }, [string]>(
       'SELECT id FROM songs WHERE title = ?',
     )
+    const firstSlideOf = db.prepare<{ content: string }, [number]>(
+      'SELECT content FROM song_slides WHERE song_id = ? ORDER BY sort_order LIMIT 1',
+    )
+    const alreadySeeded = (song: SongFixture): boolean => {
+      const opening = song.slides?.[0]?.content ?? ''
+      for (const row of findSongsByTitle.all(song.title)) {
+        if ((firstSlideOf.get(row.id)?.content ?? '') === opening) return true
+      }
+      return false
+    }
 
     let seededCount = 0
     const seedAll = db.transaction(() => {
       for (const song of songs) {
         // Skip if already present (idempotent re-runs)
-        if (findSongByTitle.get(song.title)) {
+        if (alreadySeeded(song)) {
           log('debug', `Song already exists: ${song.title}, skipping`)
           continue
         }

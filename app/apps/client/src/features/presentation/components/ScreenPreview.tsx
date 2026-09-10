@@ -18,6 +18,8 @@ interface ScreenPreviewProps {
   editPlaceholder?: string
   /** Called with the edited plain text (newline-separated lines) */
   onMainTextEdit?: (plainText: string) => void
+  /** Bumped when the slide's text is rewritten from outside the editor. */
+  textVersion?: number
 }
 
 export function ScreenPreview({
@@ -30,6 +32,7 @@ export function ScreenPreview({
   editableMainText,
   editPlaceholder,
   onMainTextEdit,
+  textVersion,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -76,6 +79,7 @@ export function ScreenPreview({
         editableMainText={editableMainText}
         editPlaceholder={editPlaceholder}
         onMainTextEdit={onMainTextEdit}
+        textVersion={textVersion}
       />
     </div>
   )

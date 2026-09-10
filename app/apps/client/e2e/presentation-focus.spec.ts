@@ -142,4 +142,38 @@ test.describe('Keyboard stays live after presenting', () => {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
   })
+
+  test('while a slide is being edited the arrows stay in the text', async ({
+    page,
+    request,
+  }) => {
+    const song = await createSong(request, `E2E Focus Editing ${Date.now()}`)
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      await page.getByTestId('stage-present').click()
+      await expect
+        .poll(() => liveSlideIndex(request), { timeout: 10000 })
+        .toBe(0)
+
+      // Click the stage to start editing. From here the arrows belong to the
+      // caret: an operator moving through the words they are correcting must
+      // not be changing what the congregation is looking at.
+      await page.locator('[data-editing]').click()
+      await expect(page.getByTestId('slide-style-toolbar')).toBeVisible()
+
+      await page.keyboard.press('ArrowRight')
+      await page.keyboard.press('ArrowDown')
+      await page.waitForTimeout(500)
+      expect(await liveSlideIndex(request)).toBe(0)
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
 })

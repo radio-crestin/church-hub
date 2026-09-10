@@ -51,9 +51,21 @@
     "style": {
       "increaseFontSize": "Increase text size",
       "decreaseFontSize": "Decrease text size",
+      "fontSize": "Font size",
+      "fontSizePresets": "Pick a font size",
       "bold": "Bold",
       "italic": "Italic",
       "underline": "Underline",
+      "changeCase": "Change case",
+      "case": {
+        "lower": "lowercase",
+        "upper": "UPPERCASE",
+        "sentence": "Sentence case",
+        "lineStart": "Capitalise Each Line"
+      },
+      "correct": "Auto-correct the selected lyrics",
+      "correctNothingToDo": "Nothing needed correcting",
+      "correctFailed": "The correction failed",
       "alignLeft": "Align to the start",
       "alignCenter": "Align to the middle",
       "alignRight": "Align to the end",
@@ -189,6 +201,7 @@
     "collapse": "Collapse",
     "markSung": "Mark as sung",
     "markNotSung": "Mark as not sung",
+    "dragToProgram": "Drag onto a program to add it",
     "filterAll": "All",
     "filterPending": "Pending",
     "filterSung": "Sung"

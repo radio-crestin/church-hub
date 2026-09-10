@@ -82,6 +82,12 @@ export interface ProcessImportResult {
 export interface BatchImportInput {
   songs: Array<{
     title: string
+    /**
+     * Other names the song goes by — the title its source file gave it, kept
+     * when the import files the song under its first verse instead so it can
+     * still be found by the name anyone would search for.
+     */
+    alternateTitles?: string[]
     slides: Array<{
       content: string
       sortOrder: number

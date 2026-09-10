@@ -11,6 +11,7 @@ export {
 } from './useBookmarkNotes'
 export { useCategories } from './useCategories'
 export { useCloneSlide } from './useCloneSlide'
+export { useCorrectLyrics } from './useCorrectLyrics'
 export { useDeleteCategory } from './useDeleteCategory'
 export { useDeleteSlide } from './useDeleteSlide'
 export { useDeleteSong } from './useDeleteSong'

@@ -50,18 +50,28 @@ export function WorkspacePanelFrame({
   const isDragActive = draggingPanelId !== null
   const collapsed = panel.collapsed === true
 
-  // While collapsed the content sizes to itself rather than filling the row, so
-  // observing it yields the header's natural height — which is what the row
-  // should shrink to.
+  // The height the row shrinks to, measured whichever state it is in — a row
+  // dragged onto its neighbour stops at its header too, not only one closed by
+  // its chevron.
+  //
+  // While collapsed the content sizes to itself, so observing it yields the
+  // header's natural height. While open the content fills the row instead, so
+  // the header itself is measured: panels that can be collapsed mark it, and
+  // one that does not falls back to the assumed height.
   const contentRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const element = contentRef.current
-    if (!collapsed || !element || !onMeasureCollapsedHeight) return
+    if (!element || !onMeasureCollapsedHeight) return
+    const measured = collapsed
+      ? element
+      : element.querySelector<HTMLElement>('[data-panel-header]')
+    if (!measured) return
+
     const report = () =>
-      onMeasureCollapsedHeight(element.getBoundingClientRect().height)
+      onMeasureCollapsedHeight(measured.getBoundingClientRect().height)
     report()
     const observer = new ResizeObserver(report)
-    observer.observe(element)
+    observer.observe(measured)
     return () => observer.disconnect()
   }, [collapsed, onMeasureCollapsedHeight])
 

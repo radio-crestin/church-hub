@@ -17,6 +17,7 @@ import {
   useBatchImportSongs,
 } from '~/features/song-import'
 import { useCategories, useUpsertCategory } from '~/features/songs/hooks'
+import { backfillAlternateTitles } from '~/features/songs/service'
 import { AlertModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { ExportOptionsModal } from './ExportOptionsModal'
@@ -55,6 +56,7 @@ export function ImportExportManager() {
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(
     null,
   )
+  const [isRecoveringTitles, setIsRecoveringTitles] = useState(false)
   const [isImportingFromResurseCrestine, setIsImportingFromResurseCrestine] =
     useState(false)
   const [defaultImportCategoryId, setDefaultImportCategoryId] = useState<
@@ -188,8 +190,18 @@ export function ImportExportManager() {
             title = s.parsed.title
           }
 
+          // Filing a song under its first verse (or its filename) throws away
+          // the name it is actually known by: "Zece mii de motive" ends up
+          // stored as "E o nouă zi, soarele răsare" and can no longer be found
+          // by the name anyone would search for. The source's own title is
+          // kept beside it, and indexed in the same band.
+          const sourceTitle = s.parsed.title?.trim()
+          const alternateTitles =
+            sourceTitle && sourceTitle !== title ? [sourceTitle] : undefined
+
           return {
             title,
+            alternateTitles,
             slides: s.parsed.slides.map((slide, idx) => ({
               content: slide.htmlContent,
               sortOrder: idx,
@@ -270,6 +282,73 @@ export function ImportExportManager() {
 
   const handleCancelExport = () => {
     setModalState({ type: 'none' })
+  }
+
+  /**
+   * Gives songs already in the library back the names Resurse Crestine knows
+   * them by.
+   *
+   * The bulk import files every song under its first verse, which threw the
+   * source's own title away — "Zece mii de motive" ends up stored as "E o nouă
+   * zi, soarele răsare" and cannot be found by the name anyone would search
+   * for. Imports keep it now; this recovers it for everything imported before,
+   * matching each catalogue file against the source filename the import
+   * recorded. Songs that already carry the name are left alone, so it can be
+   * run again whenever the catalogue changes.
+   */
+  const handleRecoverTitles = async () => {
+    setIsRecoveringTitles(true)
+    setModalState({ type: 'importProgress' })
+    setImportProgress({
+      phase: 'downloading',
+      current: 0,
+      total: null,
+      currentFile: 'Resurse Crestine archive',
+    })
+
+    try {
+      const zipData = await downloadFromUrl(
+        RESURSE_CRESTINE_URL,
+        (downloaded, total) => {
+          setImportProgress({
+            phase: 'downloading',
+            current: downloaded,
+            total,
+            currentFile: 'Resurse Crestine archive',
+          })
+        },
+      )
+
+      const catalog = await processZipFromBuffer(zipData, (progress) => {
+        setImportProgress(progress)
+      })
+
+      const entries = catalog.songs
+        .filter((song) => !!song.sourceFilename && !!song.parsed.title?.trim())
+        .map((song) => ({
+          sourceFilename: song.sourceFilename as string,
+          titles: [song.parsed.title.trim()],
+        }))
+
+      const result = await backfillAlternateTitles(entries)
+      setImportProgress(null)
+      setModalState({ type: 'none' })
+      showToast(
+        t('sections.importExport.recoverTitles.done', {
+          count: result.updated,
+        }),
+        'success',
+      )
+    } catch (error) {
+      setImportProgress(null)
+      setModalState({ type: 'none' })
+      showToast(
+        t('sections.importExport.toast.importFailed', { error: String(error) }),
+        'error',
+      )
+    } finally {
+      setIsRecoveringTitles(false)
+    }
   }
 
   const handleImportFromResurseCrestine = async () => {
@@ -415,6 +494,22 @@ export function ImportExportManager() {
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
             {t('sections.importExport.resurseCrestine.note')}
           </p>
+          <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+              {t('sections.importExport.recoverTitles.description')}
+            </p>
+            <button
+              type="button"
+              data-testid="recover-original-titles"
+              onClick={handleRecoverTitles}
+              disabled={isRecoveringTitles || isImportingFromResurseCrestine}
+              className="w-full rounded-lg border border-indigo-600 px-4 py-2 font-medium text-indigo-600 transition-colors hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+            >
+              {isRecoveringTitles
+                ? t('sections.importExport.recoverTitles.running')
+                : t('sections.importExport.recoverTitles.button')}
+            </button>
+          </div>
         </div>
 
         {/* Export Section */}

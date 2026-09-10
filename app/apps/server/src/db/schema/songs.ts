@@ -64,6 +64,16 @@ export const songs = sqliteTable(
     // Global identity for Drive library sync (see add-sync migration).
     uuid: text('uuid').notNull().default(''),
     title: text('title').notNull(),
+    /**
+     * Other names the same song goes by, as a JSON array of strings.
+     *
+     * A library imported with "use the first verse as the title" stores the
+     * first line of the lyrics as `title`, which is often not what the song is
+     * actually called — "Zece mii de motive" is filed under "E o nouă zi,
+     * soarele răsare". The name the source gave it is kept here so the song can
+     * still be found by it; it is indexed alongside `title`, in the same band.
+     */
+    alternateTitles: text('alternate_titles'),
     categoryId: integer('category_id').references(() => songCategories.id, {
       onDelete: 'set null',
     }),
