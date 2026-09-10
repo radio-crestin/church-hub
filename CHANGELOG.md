@@ -2,6 +2,12 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.97 — 2026-09-10
+
+### 🔧 Changes
+
+- songs, workspace, screens: find a song by its real name, and a stage editor that does what it says
+
 ## v0.1.96 — 2026-09-06
 
 ### 🚀 Features
