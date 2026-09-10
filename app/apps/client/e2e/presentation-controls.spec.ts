@@ -32,55 +32,53 @@ test.describe('Presentation Controls', () => {
     page,
     request,
   }) => {
-    // Present a song first
-    const songsRes = await request.get(
-      '/api/songs/search?query=&limit=1&offset=0',
-    )
-    if (!songsRes.ok()) {
-      test.skip()
-      return
-    }
-    const songsBody = await songsRes.json()
-    const songs = songsBody.data?.songs || songsBody.data
-    if (!songs || songs.length === 0) {
-      test.skip()
-      return
-    }
-
-    await request.post('/api/presentation/temporary-song', {
-      data: { songId: songs[0].id },
+    const created = await request.post('/api/songs', {
+      data: {
+        title: `E2E Live Lamp ${Date.now()}`,
+        slides: [{ content: 'First slide', sortOrder: 0 }],
+      },
     })
+    expect(created.status()).toBe(201)
+    const songId = (await created.json()).data.id as number
 
-    await page.goto('/present')
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
+    try {
+      await request.post('/api/presentation/temporary-song', {
+        data: { songId, slideIndex: 0 },
+      })
 
-    // Look for the LIVE indicator text
-    const liveIndicator = page.getByText('LIVE').first()
-    await expect(liveIndicator).toBeVisible({ timeout: 10000 })
+      await page.goto('/present')
+      await page.waitForLoadState('networkidle')
 
-    // The LIVE indicator should have the active (red) styling
-    const liveParent = liveIndicator.locator('..')
-    const classList = await liveParent.evaluate((el) => el.className)
-    // When presenting, should have red styling
-    expect(classList).toContain('red')
+      await expect(page.getByTestId('control-room-live')).toHaveAttribute(
+        'data-live',
+        'true',
+        { timeout: 10000 },
+      )
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/songs/${songId}`).catch(() => {})
+    }
   })
 
   test('LIVE indicator is inactive when nothing is presented', async ({
     page,
+    request,
   }) => {
+    // Establish the state the assertion is about rather than reading whatever
+    // the specs before it left behind.
+    await request.post('/api/presentation/stop')
+
     await page.goto('/present')
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
 
-    // LIVE indicator should exist but be in inactive state (gray)
-    const liveIndicator = page.getByText('LIVE').first()
-    if (await liveIndicator.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const liveParent = liveIndicator.locator('..')
-      const classList = await liveParent.evaluate((el) => el.className)
-      // When not presenting, should have gray styling
-      expect(classList).toContain('gray')
-    }
+    // Stopping leaves the projection unhidden with nothing on it. The lamp
+    // reports what is on the screen, not whether the screen is hidden, so an
+    // empty projection reads as not live.
+    await expect(page.getByTestId('control-room-live')).toHaveAttribute(
+      'data-live',
+      'false',
+      { timeout: 10000 },
+    )
   })
 
   test('hide button clears the presentation', async ({ page, request }) => {

@@ -560,11 +560,15 @@ export function SchedulePanel({
     >
       {/* Header — same shape as Marcaje/Versiuni so the column reads as one
           stack of accordion sections. */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div
+        data-panel-header
+        className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+      >
         <div className="flex items-center gap-2 min-w-0">
           {onToggleCollapse ? (
             <button
               type="button"
+              data-testid="schedule-collapse-toggle"
               onClick={onToggleCollapse}
               aria-expanded={!isCollapsed}
               aria-label={isCollapsed ? t('panel.expand') : t('panel.collapse')}

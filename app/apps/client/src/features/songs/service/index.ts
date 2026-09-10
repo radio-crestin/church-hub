@@ -1,4 +1,9 @@
 export {
+  type AlternateTitleEntry,
+  type AlternateTitlesBackfill,
+  backfillAlternateTitles,
+} from './alternateTitles'
+export {
   addBookmarkNote,
   type BookmarkItemRef,
   type BookmarkNote,
@@ -23,6 +28,10 @@ export {
   reorderCategories,
   upsertCategory,
 } from './categories'
+export {
+  correctLyrics,
+  type LyricsCorrection,
+} from './lyricsCorrection'
 export {
   getGroupForSong,
   getSimilarSongs,

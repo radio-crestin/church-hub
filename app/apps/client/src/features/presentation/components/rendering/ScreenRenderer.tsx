@@ -555,6 +555,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
           clearSlide.mutate()
           return
         default:
+          // A presenter remote's "start" button sends F5, and this window's
+          // browser default for it is a reload — the projection blanks and
+          // comes back mid-service. The control window has the same guard
+          // injected into it; the projection windows never got one, so every
+          // function key is swallowed here too rather than firing a default
+          // the operator cannot see (reload, address bar, help).
+          if (/^F([1-9]|1[01])$/.test(e.key)) e.preventDefault()
           return
       }
     }
@@ -562,6 +569,29 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [toggleFullscreen, clearSlide, navigateTemporary, hasNavigableContent])
+
+  // Take the keyboard for the page itself.
+  //
+  // The projection window is created and shown by the shell, and on Windows a
+  // freshly created WebView2 window is focused without its web content being
+  // focused with it: the window looks like it has the keyboard, but no
+  // `keydown` ever reaches the document, so the arrows and the remote appear
+  // dead until someone clicks inside. Focusing the projection's own root — on
+  // mount and every time the window is raised again — is what makes the
+  // window that holds the OS focus able to act on it.
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  // A callback ref rather than an effect: the renderer shows a loading frame
+  // first, so an effect on mount would run while there is no root to focus and
+  // never come back to it.
+  const attachRoot = useCallback((node: HTMLDivElement | null) => {
+    rootRef.current = node
+    node?.focus({ preventScroll: true })
+  }, [])
+  useEffect(() => {
+    const takeKeyboard = () => rootRef.current?.focus({ preventScroll: true })
+    window.addEventListener('focus', takeKeyboard)
+    return () => window.removeEventListener('focus', takeKeyboard)
+  }, [])
 
   // Clock tick for real-time updates (must be before any early returns)
   const [, setClockTick] = useState(0)
@@ -610,7 +640,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
   return (
     <div
-      className="w-screen h-screen overflow-hidden cursor-default"
+      ref={attachRoot}
+      // Focusable, but never a tab stop: this exists so the projection's own
+      // document can hold the keyboard, not so anything here can be tabbed to.
+      tabIndex={-1}
+      data-testid="screen-renderer-root"
+      className="w-screen h-screen overflow-hidden cursor-default outline-none"
       style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
       onDoubleClick={isNativeDisplayWindow ? toggleFullscreen : undefined}
       onMouseMove={handleMouseMove}

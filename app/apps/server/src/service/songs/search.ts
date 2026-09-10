@@ -1,4 +1,5 @@
 import { getHiddenCategoryIds } from './categories'
+import { joinSearchTitles, parseAlternateTitles } from './parseAlternateTitles'
 import { decodeHtmlEntities } from './text/decodeHtmlEntities'
 import { elisionVariants } from './text/elisionVariants'
 import { findHighlightRanges, wrapRanges } from './text/findHighlightRanges'
@@ -296,13 +297,14 @@ export function updateSearchIndex(songId: number): void {
 
     // Get song title and category name
     const songQuery = db.query(`
-      SELECT s.title, sc.name as category_name
+      SELECT s.title, s.alternate_titles, sc.name as category_name
       FROM songs s
       LEFT JOIN song_categories sc ON s.category_id = sc.id
       WHERE s.id = ?
     `)
     const song = songQuery.get(songId) as {
       title: string
+      alternate_titles: string | null
       category_name: string | null
     } | null
 
@@ -319,7 +321,9 @@ export function updateSearchIndex(songId: number): void {
     const combinedContent = slides.map((s) => s.content).join(' ')
 
     // Normalize text for indexing (replace hyphens with spaces for better matching)
-    const normalizedTitle = normalizeForIndex(song.title)
+    const normalizedTitle = normalizeForIndex(
+      joinSearchTitles(song.title, song.alternate_titles),
+    )
     const normalizedCategory = normalizeForIndex(song.category_name ?? '')
     const normalizedContent = normalizeForIndex(combinedContent)
 
@@ -412,6 +416,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       SELECT
         s.id,
         s.title,
+        s.alternate_titles,
         COALESCE(sc.name, '') as category_name,
         COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
       FROM songs s
@@ -426,6 +431,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       .all(...songIds) as Array<{
       id: number
       title: string
+      alternate_titles: string | null
       category_name: string
       content: string
     }>
@@ -457,7 +463,9 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       // Insert each song with normalized content
       const ftsStart = performance.now()
       for (const song of songs) {
-        const normalizedTitle = normalizeForIndex(song.title)
+        const normalizedTitle = normalizeForIndex(
+          joinSearchTitles(song.title, song.alternate_titles),
+        )
         const normalizedCategory = normalizeForIndex(song.category_name)
         const normalizedContent = normalizeForIndex(song.content)
 
@@ -526,6 +534,7 @@ export function rebuildSearchIndex(): void {
       SELECT
         s.id,
         s.title,
+        s.alternate_titles,
         COALESCE(sc.name, '') as category_name,
         COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
       FROM songs s
@@ -539,6 +548,7 @@ export function rebuildSearchIndex(): void {
       .all() as Array<{
       id: number
       title: string
+      alternate_titles: string | null
       category_name: string
       content: string
     }>
@@ -566,7 +576,9 @@ export function rebuildSearchIndex(): void {
 
       // Insert each song with normalized content
       for (const song of songs) {
-        const normalizedTitle = normalizeForIndex(song.title)
+        const normalizedTitle = normalizeForIndex(
+          joinSearchTitles(song.title, song.alternate_titles),
+        )
         const normalizedCategory = normalizeForIndex(song.category_name)
         const normalizedContent = normalizeForIndex(song.content)
 
@@ -1371,6 +1383,7 @@ export function searchSongs(
       SELECT
         s.id,
         s.title,
+        s.alternate_titles,
         s.category_id,
         sc.name as category_name,
         COALESCE(sc.priority, 1) as category_priority,
@@ -1390,6 +1403,7 @@ export function searchSongs(
     type CandidateRow = {
       id: number
       title: string
+      alternate_titles: string | null
       category_id: number | null
       category_name: string | null
       category_priority: number
@@ -1447,6 +1461,7 @@ export function searchSongs(
           SELECT
             s.id,
             s.title,
+            s.alternate_titles,
             s.category_id,
             sc.name as category_name,
             COALESCE(sc.priority, 1) as category_priority,
@@ -1480,6 +1495,7 @@ export function searchSongs(
       {
         id: number
         title: string
+        alternate_titles: string | null
         category_id: number | null
         category_name: string | null
         category_priority: number
@@ -1505,7 +1521,13 @@ export function searchSongs(
       if (!candidateMap.has(r.id)) {
         candidateMap.set(r.id, {
           ...r,
-          fts_title: removeDiacritics(r.title).toLowerCase(),
+          // The trigram table carries no separate title column to score
+          // against, so the same set of names the standard index holds is
+          // rebuilt here — otherwise a fuzzy hit on an alternate title would
+          // be scored as if the song had no such name.
+          fts_title: removeDiacritics(
+            joinSearchTitles(r.title, r.alternate_titles),
+          ).toLowerCase(),
           original_content: '',
           fromTrigram: true,
         })
@@ -1558,8 +1580,16 @@ export function searchSongs(
           calculateTitleScoreNormalized(r.fts_title, terms),
         ),
       )
+      // The bonus is for typing a name exactly as it is spelled, whichever of
+      // the song's names that is: a library filed under each song's first verse
+      // is found by the name the song is actually known by, and must not rank
+      // below one that merely happens to carry the phrase in its own title.
+      const spelledExactly = [
+        r.title,
+        ...parseAlternateTitles(r.alternate_titles),
+      ].some((name) => foldForScore(name).includes(typedPhrase))
       const titleScore =
-        baseTitleScore > 0 && foldForScore(r.title).includes(typedPhrase)
+        baseTitleScore > 0 && spelledExactly
           ? baseTitleScore + EXACT_SPELLING_BONUS
           : baseTitleScore
 

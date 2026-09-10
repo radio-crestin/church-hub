@@ -6,18 +6,28 @@ import {
   AlignRight,
   Bold,
   Italic,
+  Loader2,
   RotateCcw,
   Underline,
+  WandSparkles,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useToast } from '~/ui/toast'
+import { FontSizeField } from './FontSizeField'
 import { getSlideSelection } from './getSlideSelection'
 import {
   measureSlideFontHeadroom,
   measureSlideFontSize,
+  measureSlideFontSizes,
 } from './measureSlideFontSize'
+import { readSlideText } from './readSlideText'
+import { TextTransformMenu } from './TextTransformMenu'
+import { type TextTransform, transformSlideText } from './transformSlideText'
+import { useCorrectLyrics } from '../../hooks'
 import type { SlideStyleOverride, SlideStyleRange } from '../../types'
+import { remapStyleRanges } from '../../utils/remapStyleRanges'
 import { updateSlideStyleRange } from '../../utils/updateSlideStyleRange'
 
 /**
@@ -40,6 +50,11 @@ interface SlideStyleToolbarProps {
   canvasWidth: number
   /** Called with the new styling, or null to fall back to the screen defaults. */
   onChange: (override: SlideStyleOverride | null) => void
+  /**
+   * Called with the slide's new text. Absent when the host does not let this
+   * bar rewrite the slide, which leaves the text actions out.
+   */
+  onTextChange?: (text: string) => void
   disabled?: boolean
 }
 
@@ -85,9 +100,12 @@ export function SlideStyleToolbar({
   override,
   canvasWidth,
   onChange,
+  onTextChange,
   disabled = false,
 }: SlideStyleToolbarProps) {
   const { t } = useTranslation('songs')
+  const { showToast } = useToast()
+  const correction = useCorrectLyrics()
 
   // What the operator has selected right now, tracked so the controls report
   // the selection's own formatting the way PowerPoint's ribbon does.
@@ -127,6 +145,9 @@ export function SlideStyleToolbar({
   // happens to be now, so a selection crossing runs of different sizes comes
   // out at one size — the one typed — instead of each run moving by a ratio.
   const [slideSize, setSlideSize] = useState(0)
+  // Every distinct size the selection covers, smallest first. One entry is a
+  // uniform selection; several are what the size field reports as `40+`.
+  const [selectionSizes, setSelectionSizes] = useState<number[]>([])
   // How much bigger the text can get before it leaves the screen. The renderer
   // measures it against the markup it lays out, so it accounts for an enlarged
   // run as well as for the slide's own scale.
@@ -141,6 +162,7 @@ export function SlideStyleToolbar({
         if (measured !== null) setEffectiveSize(clampSize(measured))
         const slide = measureSlideFontSize(canvasWidth, null)
         if (slide !== null) setSlideSize(slide)
+        setSelectionSizes(measureSlideFontSizes(canvasWidth, selection))
         setHeadroom(measureSlideFontHeadroom())
       })
     }
@@ -174,13 +196,18 @@ export function SlideStyleToolbar({
       ? Math.min(FONT_MAX, Math.floor(effectiveSize * headroom))
       : FONT_MAX
 
+  const hasMixedSizes = selectionSizes.length > 1
+
   const applySize = useCallback(
     (size: number) => {
       if (effectiveSize <= 0) return
       const target = clampSize(size, maxSize)
       // Nothing to do, and nothing to store: asking for the size that is already
       // rendered would multiply the scale by one and re-render for no reason.
-      if (target === effectiveSize) return
+      // A selection crossing several sizes is the exception — it still has to be
+      // flattened onto the one the operator asked for, even when the run the
+      // selection starts in is already that size.
+      if (target === effectiveSize && !hasMixedSizes) return
 
       if (selection) {
         // The run is sized against the slide, not against itself: the whole
@@ -209,6 +236,7 @@ export function SlideStyleToolbar({
       slideSize,
       effectiveSize,
       maxSize,
+      hasMixedSizes,
     ],
   )
 
@@ -228,6 +256,65 @@ export function SlideStyleToolbar({
     },
     [override, onChange, selection, markState],
   )
+
+  /**
+   * Re-cases the selected words. The text is read back from the canvas rather
+   * than from the slide draft, because that is the string the selection's
+   * offsets were counted against — and the transforms keep its length, so the
+   * styling stays on the words it was put on.
+   */
+  const applyTransform = useCallback(
+    (transform: TextTransform) => {
+      if (!selection || !onTextChange) return
+      const text = readSlideText()
+      if (text === null) return
+      const next = transformSlideText(text, selection, transform)
+      if (next === text) return
+      onTextChange(next.replace(/\u00a0/g, ' '))
+    },
+    [selection, onTextChange],
+  )
+
+  /**
+   * Proof-reads the selected verses: missing diacritics, obvious misspellings,
+   * capitalisation and proper names. Correction, never rewriting — the server
+   * refuses an answer that changed the line structure.
+   *
+   * The correction can be a different length from what it replaced, so the
+   * slide's style runs are aligned onto the new text rather than left pointing
+   * at offsets that have moved.
+   */
+  const applyCorrection = useCallback(async () => {
+    if (!selection || !onTextChange) return
+    const text = readSlideText()
+    if (text === null) return
+
+    const passage = text.slice(selection.start, selection.end)
+    if (!passage.trim()) return
+
+    try {
+      const { text: corrected } = await correction.mutateAsync(passage)
+      const next =
+        text.slice(0, selection.start) + corrected + text.slice(selection.end)
+      if (next === text) {
+        showToast(t('stageEditor.style.correctNothingToDo'), 'info')
+        return
+      }
+
+      const ranges = override?.ranges
+      if (ranges && ranges.length > 0) {
+        onChange({ ...override, ranges: remapStyleRanges(ranges, text, next) })
+      }
+      onTextChange(next.replace(/\u00a0/g, ' '))
+    } catch (error) {
+      showToast(
+        error instanceof Error && error.message
+          ? error.message
+          : t('stageEditor.style.correctFailed'),
+        'error',
+      )
+    }
+  }, [selection, onTextChange, onChange, override, correction, showToast, t])
 
   const setAlignment = useCallback(
     (alignment: Alignment) => {
@@ -284,6 +371,12 @@ export function SlideStyleToolbar({
         <AArrowUp size={18} />
       </button>
 
+      <FontSizeField
+        sizes={selectionSizes}
+        onApply={applySize}
+        disabled={disabled}
+      />
+
       <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
 
       {(
@@ -308,6 +401,30 @@ export function SlideStyleToolbar({
           <Icon size={16} />
         </button>
       ))}
+
+      <TextTransformMenu
+        onTransform={applyTransform}
+        disabled={disabled || !onTextChange || !selection}
+      />
+
+      <button
+        type="button"
+        data-testid="slide-style-correct"
+        onMouseDown={keepSelection}
+        onClick={applyCorrection}
+        disabled={
+          disabled || !onTextChange || !selection || correction.isPending
+        }
+        title={t('stageEditor.style.correct')}
+        aria-label={t('stageEditor.style.correct')}
+        className={buttonClass(false)}
+      >
+        {correction.isPending ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          <WandSparkles size={16} />
+        )}
+      </button>
 
       <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
 

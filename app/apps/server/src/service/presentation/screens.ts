@@ -572,10 +572,15 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
     if (nextSlideRecord) {
       nextSlideConfig = parseNextSlideConfig(nextSlideRecord.config)
     } else {
-      // Create default config - enabled by default only for stage screens
+      // No stored config: the screen has never had a "next slide" section, so
+      // it does not get one now. It used to turn itself on for stage screens,
+      // which meant upgrading to a version that added the section switched it
+      // on for people who had never asked for it — the shape of their screen
+      // changed under them between one release and the next. The defaults are
+      // still handed back so the editor has something to show, but off.
       nextSlideConfig = {
         ...getDefaultNextSlideConfig(),
-        enabled: screen.type === 'stage',
+        enabled: false,
       }
     }
 
@@ -752,11 +757,13 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         .run()
     }
 
-    // Create default next slide config for all screen types
-    // Stage screens have it enabled by default, others have it disabled
+    // Every screen gets the section described but switched off. Turning it on
+    // for stage screens meant a projection grew a "Urmeaza:" strip nobody had
+    // asked for — on a new screen, and on an existing one the first time a
+    // release added the section. Whoever wants it turns it on.
     const nextSlideConfig = {
       ...getDefaultNextSlideConfig(),
-      enabled: screenType === 'stage',
+      enabled: false,
     }
     db.insert(screenNextSlideConfigs)
       .values({

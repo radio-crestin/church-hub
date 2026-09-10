@@ -25,6 +25,12 @@ export interface WorkspacePanel {
   /**
    * `true` when the panel's own collapse chevron is closed. The row then
    * shrinks to its header height and gives the space to its neighbours.
+   *
+   * Declaring this at all — `true` or `false` — is what tells the workspace
+   * the panel has a header worth keeping: its row stops at that header when a
+   * divider is dragged onto it, instead of disappearing. Mark the header
+   * element with `data-panel-header` so it can be measured. A panel that
+   * leaves this undefined is hidden outright by the same drag.
    */
   collapsed?: boolean
 }

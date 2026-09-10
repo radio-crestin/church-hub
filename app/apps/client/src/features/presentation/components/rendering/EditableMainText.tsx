@@ -8,6 +8,10 @@ import { sanitizePastedText } from './utils/sanitizePastedText'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
 import type { TextStyle, TextStyleRange } from '../../types'
 import { applyStylesToText } from '../../utils/applyStylesToText'
+import {
+  domPositionAtOffset,
+  offsetAtDomPosition,
+} from '../../utils/slideTextOffsets'
 
 /** Character offsets of the current selection inside `root`. */
 function selectionOffsets(
@@ -18,22 +22,15 @@ function selectionOffsets(
   const range = selection.getRangeAt(0)
   if (!root.contains(range.commonAncestorContainer)) return null
 
-  const offsetOf = (node: Node, nodeOffset: number): number => {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-    let offset = 0
-    let current: Node | null = walker.nextNode()
-    while (current) {
-      if (current === node) return offset + nodeOffset
-      offset += current.textContent?.length ?? 0
-      current = walker.nextNode()
-    }
-    return offset
-  }
+  const start = offsetAtDomPosition(
+    root,
+    range.startContainer,
+    range.startOffset,
+  )
+  const end = offsetAtDomPosition(root, range.endContainer, range.endOffset)
+  if (start === null || end === null) return null
 
-  return {
-    start: offsetOf(range.startContainer, range.startOffset),
-    end: offsetOf(range.endContainer, range.endOffset),
-  }
+  return { start, end }
 }
 
 /** Puts the caret/selection back where it was after the DOM has been re-seeded. */
@@ -41,22 +38,8 @@ function restoreSelection(
   root: HTMLElement,
   offsets: { start: number; end: number },
 ): void {
-  const locate = (target: number): { node: Node; offset: number } | null => {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-    let seen = 0
-    let current: Node | null = walker.nextNode()
-    while (current) {
-      const length = current.textContent?.length ?? 0
-      if (seen + length >= target)
-        return { node: current, offset: target - seen }
-      seen += length
-      current = walker.nextNode()
-    }
-    return current ? { node: current, offset: 0 } : null
-  }
-
-  const start = locate(offsets.start)
-  const end = locate(offsets.end)
+  const start = domPositionAtOffset(root, offsets.start)
+  const end = domPositionAtOffset(root, offsets.end)
   if (!start || !end) return
 
   const range = document.createRange()
@@ -86,6 +69,13 @@ interface EditableMainTextProps {
    * so typing never resets the caret.
    */
   editKey: string
+  /**
+   * Bumped by the host when it rewrites the slide's text from somewhere other
+   * than this editor. The editor deliberately leaves its own DOM alone while
+   * the same slide is being typed in — that is what holds the caret still — so
+   * an outside rewrite would otherwise never reach the canvas.
+   */
+  textVersion?: number
   /** Placeholder shown when the slide is empty */
   placeholder?: string
   /** Called with the plain-text value (newline-separated lines) on every edit */
@@ -111,6 +101,7 @@ export function EditableMainText({
   left,
   top,
   editKey,
+  textVersion = 0,
   placeholder,
   onEdit,
   styleRanges,
@@ -119,6 +110,9 @@ export function EditableMainText({
   const editRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
   const seededKeyRef = useRef<string | null>(null)
+  // The text the editor is showing right now, so an outside rewrite can be told
+  // apart from the round-trip of the operator's own typing.
+  const domTextRef = useRef<string | null>(null)
   // The last run of text the operator actually selected here. Formatting is
   // applied from the toolbar, which takes focus away and collapses the live
   // selection, so this is what puts the selection back after the styled markup
@@ -206,6 +200,18 @@ export function EditableMainText({
     [styleRanges],
   )
 
+  // An outside rewrite is announced by a bumped `textVersion`, but the content
+  // it produced is rebuilt asynchronously and lands a render later. Seeding on
+  // the bump alone would therefore write the text the slide had *before* the
+  // rewrite and then consider itself done, so the flag is held until the new
+  // text actually turns up.
+  const lastVersionRef = useRef(textVersion)
+  const pendingRewriteRef = useRef(false)
+  if (lastVersionRef.current !== textVersion) {
+    lastVersionRef.current = textVersion
+    pendingRewriteRef.current = true
+  }
+
   // Seed the editable text when switching to a different slide, or when the
   // slide's inline styling changes. While the same slide is merely being typed
   // in we leave the DOM alone so the caret is preserved; on a styling change we
@@ -215,7 +221,9 @@ export function EditableMainText({
     if (!editor) return
 
     const seedKey = `${editKey}|${rangesKey}`
-    if (seededKeyRef.current !== seedKey) {
+    const outsideRewrite =
+      pendingRewriteRef.current && normalizedText !== domTextRef.current
+    if (seededKeyRef.current !== seedKey || outsideRewrite) {
       const sameSlide = seededKeyRef.current?.startsWith(`${editKey}|`) === true
       const live = selectionOffsets(editor)
       // A collapsed caret means the toolbar took focus; the run the operator
@@ -232,11 +240,13 @@ export function EditableMainText({
         editor.innerText = normalizedText
       }
       seededKeyRef.current = seedKey
+      domTextRef.current = normalizedText
+      pendingRewriteRef.current = false
 
       if (selection) restoreSelection(editor, selection)
     }
     fit()
-  }, [editKey, rangesKey, normalizedText, styledHtml, fit])
+  }, [editKey, rangesKey, textVersion, normalizedText, styledHtml, fit])
 
   // A new slide starts with no remembered selection of its own.
   useEffect(() => {
@@ -245,6 +255,7 @@ export function EditableMainText({
 
   const handleInput = useCallback(() => {
     if (!editRef.current) return
+    domTextRef.current = editRef.current.innerText
     fit()
     onEdit(editRef.current.innerText.replace(/\u00a0/g, ' '))
   }, [fit, onEdit])

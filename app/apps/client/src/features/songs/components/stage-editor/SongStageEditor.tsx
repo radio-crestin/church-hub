@@ -50,6 +50,11 @@ interface SongStageEditorProps {
    * the in-place editor is mounted.
    */
   canvasToolbar?: React.ReactNode
+  /**
+   * Bumped when the slide's text is rewritten from the formatting bar rather
+   * than typed, so the in-place editor takes the new text.
+   */
+  textVersion?: number
   canvasFooter?: React.ReactNode
   /** Rendered at the very bottom of the canvas column, below the stage/nav
    * zone (e.g. the speaker-notes panel pinned to the column footer). */
@@ -83,6 +88,7 @@ export function SongStageEditor({
   onProjectSlide,
   onActiveSlideChange,
   canvasToolbar,
+  textVersion,
   canvasFooter,
   columnFooter,
   fillHeight = false,
@@ -415,6 +421,7 @@ export function SongStageEditor({
               fitHeight
               editingToolbar={canvasToolbar}
               onEditText={handleEditText}
+              textVersion={textVersion}
             />
             {canvasFooter}
           </div>
@@ -428,6 +435,7 @@ export function SongStageEditor({
                 clickToEdit={clickToEdit}
                 editingToolbar={canvasToolbar}
                 onEditText={handleEditText}
+                textVersion={textVersion}
               />
             </div>
             {canvasFooter}

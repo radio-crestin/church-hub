@@ -42,6 +42,143 @@ export const songsPaths = {
       },
     },
   },
+  '/api/songs/alternate-titles': {
+    post: {
+      tags: ['Songs'],
+      summary: 'Give songs back the names their source knows them by',
+      description:
+        'Adds alternate titles to songs already in the library, matching each entry on the source filename the import recorded. A library imported with "use the first verse as the title" stores each song under its opening line and loses the name it is actually known by; this recovers it so the song can be found by that name again. Songs that already carry the name are left alone, so the call is safe to repeat. Touched songs are re-indexed for search.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['entries'],
+              properties: {
+                entries: {
+                  type: 'array',
+                  maxItems: 500,
+                  items: {
+                    type: 'object',
+                    required: ['sourceFilename', 'titles'],
+                    properties: {
+                      sourceFilename: {
+                        type: 'string',
+                        description:
+                          'The source file the song was imported from',
+                      },
+                      titles: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Names the source knows that song by',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'How much of the library the entries reached',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      matched: {
+                        type: 'integer',
+                        description:
+                          'Entries that found at least one song in the library',
+                      },
+                      updated: {
+                        type: 'integer',
+                        description:
+                          'Songs that gained a name they did not already have',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': { description: 'entries is missing, or over 500 of them' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+      },
+    },
+  },
+  '/api/songs/correct-lyrics': {
+    post: {
+      tags: ['Songs'],
+      summary: 'Proof-read a passage of lyrics',
+      description:
+        'Corrects missing Romanian diacritics, obvious misspellings, capitalisation and proper names in a passage of lyrics, without rewriting it. The line structure is preserved: the answer always has the same number of lines as the request. Uses the provider configured for AI song search.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['text'],
+              properties: {
+                text: {
+                  type: 'string',
+                  description:
+                    'The passage to proof-read, lines separated by newlines',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'The corrected passage',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      text: {
+                        type: 'string',
+                        description:
+                          'The corrected passage, with the same line structure',
+                      },
+                      changed: {
+                        type: 'boolean',
+                        description: 'False when nothing needed correcting',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'Text is required',
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+        '500': {
+          description: 'AI is not configured, or the correction failed',
+        },
+      },
+    },
+  },
   '/api/songs/ai-search': {
     post: {
       tags: ['Songs'],

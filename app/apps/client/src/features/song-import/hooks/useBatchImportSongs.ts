@@ -49,6 +49,7 @@ export function useBatchImportSongs() {
           body: JSON.stringify({
             songs: batch.map((song) => ({
               title: song.title,
+              alternateTitles: song.alternateTitles,
               categoryId: input.categoryId,
               sourceFilename: song.sourceFilename,
               slides: song.slides,

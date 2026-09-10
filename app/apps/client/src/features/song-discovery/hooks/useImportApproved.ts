@@ -4,8 +4,16 @@ import type { StagingItem } from '../types'
 /** Maps an approved staging item's edited draft to a batch-import song. */
 function draftToBatchSong(item: StagingItem) {
   const { draft, candidate } = item
+  // An operator can rename a candidate on its way in, and the provider itself
+  // falls back to the first lyric line when the file's title is junk. Either
+  // way the name the source gave the song is worth keeping: it is what someone
+  // searching for the song is most likely to type.
+  const sourceTitle = candidate.parsed.title?.trim()
+  const title = draft.title.trim()
   return {
-    title: draft.title.trim(),
+    title,
+    alternateTitles:
+      sourceTitle && sourceTitle !== title ? [sourceTitle] : undefined,
     slides: draft.slides.map((slide, idx) => ({
       content: slide.content,
       sortOrder: idx,

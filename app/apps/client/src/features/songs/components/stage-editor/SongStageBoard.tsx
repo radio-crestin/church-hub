@@ -24,6 +24,7 @@ import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
 import type { SlideStyleOverride, SongSlide, SongWithSlides } from '../../types'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
+import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
 import { SlideCounter } from '../SlideCounter'
 import { type LocalSlide } from '../SongSlideList'
 
@@ -290,6 +291,26 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     [activeIndex],
   )
 
+  // Rewriting the active slide's text from the formatting bar — re-casing a
+  // selection is an edit like any other, so it goes through the slide draft and
+  // the same debounced autosave.
+  const [textVersion, setTextVersion] = useState(0)
+  const handleTextChange = useCallback(
+    (plainText: string) => {
+      setSlides((prev) =>
+        prev.map((s, i) =>
+          i === activeIndex
+            ? { ...s, content: plainTextToSlideHtml(plainText) }
+            : s,
+        ),
+      )
+      // The in-place editor leaves its own DOM alone while the same slide is
+      // open, so it has to be told this text did not come from typing.
+      setTextVersion((version) => version + 1)
+    },
+    [activeIndex],
+  )
+
   // Per-slide text styling. It rides along with the slide draft, so the same
   // debounced autosave that persists an edited lyric persists the styling.
   const activeStyleOverrides = slides[activeIndex]?.styleOverrides ?? null
@@ -364,11 +385,13 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           onActiveSlideChange={setActiveSlideIndex}
           onSlidesChange={setSlides}
           fillHeight
+          textVersion={textVersion}
           canvasToolbar={
             <SlideStyleToolbar
               override={activeStyleOverrides}
               canvasWidth={canvasWidth}
               onChange={handleStyleChange}
+              onTextChange={handleTextChange}
               disabled={slides.length === 0}
             />
           }

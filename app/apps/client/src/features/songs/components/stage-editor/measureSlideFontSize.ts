@@ -1,3 +1,8 @@
+import {
+  elementAtOffset,
+  elementsInRange,
+} from '../../../presentation/utils/slideTextOffsets'
+
 /**
  * The font size the operator is looking at, expressed in the screen's own
  * canvas units — the same units the screen settings use.
@@ -36,6 +41,39 @@ export function measureSlideFontSize(
 }
 
 /**
+ * Every distinct size in the selection, smallest first, in canvas units.
+ *
+ * A selection can cross runs the operator sized separately, and the size field
+ * has to say so rather than pick one of them: one entry means the whole
+ * selection is that size, several mean it is mixed and the field shows the
+ * smallest with a `+`, the way an operator reads a size box that cannot answer
+ * with a single number.
+ */
+export function measureSlideFontSizes(
+  canvasWidth: number,
+  selection: { start: number; end: number } | null,
+): number[] {
+  const editor = slideEditor()
+  const scale = canvasScale(canvasWidth)
+  if (!editor || scale === null) return []
+
+  const runs = selection
+    ? elementsInRange(editor, selection.start, selection.end)
+    : []
+  // No styled run under the selection means it is all at the slide's own size.
+  const measured = runs.length > 0 ? runs : [editor]
+
+  const sizes: number[] = []
+  for (const element of measured) {
+    const rendered = Number.parseFloat(getComputedStyle(element).fontSize)
+    if (!Number.isFinite(rendered)) continue
+    const size = Math.round(rendered / scale)
+    if (!sizes.includes(size)) sizes.push(size)
+  }
+  return sizes.sort((a, b) => a - b)
+}
+
+/**
  * How much larger the slide's text can still get before it runs off the box —
  * 1 when it already fills it. Measured by the renderer, which is the only place
  * that knows how the styled markup lays out, and read back from the element it
@@ -64,28 +102,4 @@ function canvasScale(canvasWidth: number): number | null {
   const scale = box.clientWidth / canvasWidth
   if (!Number.isFinite(scale) || scale <= 0) return null
   return scale
-}
-
-/** The element rendering the character at `offset` in the editor's text. */
-function elementAtOffset(
-  editor: HTMLElement,
-  offset: number,
-): HTMLElement | null {
-  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT)
-  let seen = 0
-  let current: Node | null = walker.nextNode()
-
-  while (current) {
-    const length = current.textContent?.length ?? 0
-    // A boundary sitting at the very end of a node belongs to the next one —
-    // `offset` is the first character of the selection, not the gap before it.
-    if (seen + length > offset) {
-      const parent = current.parentNode
-      return parent instanceof HTMLElement ? parent : null
-    }
-    seen += length
-    current = walker.nextNode()
-  }
-
-  return null
 }

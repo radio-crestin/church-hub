@@ -30,6 +30,12 @@ interface StageCanvasProps {
    */
   editingToolbar?: React.ReactNode
   onEditText: (plainText: string) => void
+  /**
+   * Bumped when the slide's text is rewritten from the formatting bar rather
+   * than typed. The in-place editor leaves its own DOM alone while the same
+   * slide is open, so this is what tells it to take the new text.
+   */
+  textVersion?: number
 }
 
 /** Stable identity of the slide currently shown, so we can detect a switch. */
@@ -58,6 +64,7 @@ export function StageCanvas({
   fitHeight = false,
   editingToolbar,
   onEditText,
+  textVersion,
 }: StageCanvasProps) {
   const { t } = useTranslation('songs')
 
@@ -194,6 +201,7 @@ export function StageCanvas({
             editableMainText={showEditor}
             editPlaceholder={t('stageEditor.emptySlidePlaceholder')}
             onMainTextEdit={onEditText}
+            textVersion={textVersion}
           />
         </div>
       </div>

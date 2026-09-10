@@ -788,6 +788,10 @@ function SongPreviewPage() {
           onSelectPassage={handleSchedulePassageClick}
           onOpenSchedule={handleOpenSchedule}
           candidateSong={{ id: song.id, title: song.title }}
+          // Marcaje sits right above this panel here too, so a song can be
+          // carried from one into the selected program without leaving the
+          // page.
+          acceptsSongDrop
           onAddAllBookmarks={
             bookmarks.length > 0 ? handleAddAllBookmarksToSchedule : undefined
           }

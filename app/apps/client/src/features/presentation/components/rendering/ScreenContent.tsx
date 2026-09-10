@@ -48,6 +48,8 @@ interface ScreenContentProps {
   editPlaceholder?: string
   /** Called with the edited plain text (newline-separated lines) */
   onMainTextEdit?: (plainText: string) => void
+  /** Bumped when the slide's text is rewritten from outside the editor. */
+  textVersion?: number
 }
 
 export function ScreenContent({
@@ -63,6 +65,7 @@ export function ScreenContent({
   editableMainText = false,
   editPlaceholder,
   onMainTextEdit,
+  textVersion,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
 
@@ -184,6 +187,7 @@ export function ScreenContent({
           left={scaledBounds.x}
           top={scaledBounds.y}
           editKey={contentKey}
+          textVersion={textVersion}
           placeholder={editPlaceholder}
           onEdit={onMainTextEdit}
           styleRanges={mainRanges}
