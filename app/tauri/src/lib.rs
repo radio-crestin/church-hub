@@ -10,6 +10,8 @@ pub mod audio;
 #[cfg(desktop)]
 pub mod server;
 #[cfg(desktop)]
+pub mod updater;
+#[cfg(desktop)]
 pub mod webview;
 
 use commands::{clear_pending_import, get_pending_import, get_server_config};
@@ -148,6 +150,16 @@ pub fn run() {
         let t = Instant::now();
         let b = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
         println!("[startup] plugin_shortcut: {:?}", t.elapsed());
+        b
+    };
+
+    // In-app updates: endpoint, public key and Windows install mode come
+    // from `plugins.updater` in tauri.conf.json.
+    #[cfg(desktop)]
+    let builder = {
+        let t = Instant::now();
+        let b = builder.plugin(tauri_plugin_updater::Builder::new().build());
+        println!("[startup] plugin_updater: {:?}", t.elapsed());
         b
     };
 
@@ -303,6 +315,10 @@ pub fn run() {
             shutting_down: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         };
         app.manage(app_state);
+
+        // Did the previous run's update land? Answered from the marker it
+        // left, before anything else can ask.
+        updater::init(app);
 
         // Initialize zoom state for tracking zoom levels per webview
         let zoom_state = ZoomState {
@@ -547,7 +563,10 @@ pub fn run() {
         zoom_in,
         zoom_out,
         reset_zoom,
-        restart_server
+        restart_server,
+        updater::prepare_update_install,
+        updater::abort_update_install,
+        updater::take_update_outcome
     ]);
 
     // Mobile: only basic commands (no webview management)

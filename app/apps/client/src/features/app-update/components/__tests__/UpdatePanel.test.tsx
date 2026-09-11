@@ -14,12 +14,7 @@ vi.mock('../../hooks/useAppUpdate', () => ({
 vi.mock('../../hooks/useUpdateDownload', () => ({
   useUpdateDownload: () => mockUseUpdateDownload(),
 }))
-vi.mock('../../services/updateDownloadService', () => ({
-  getUpdateConfig: vi.fn().mockResolvedValue(null),
-  setUpdateDownloadDir: vi.fn(),
-}))
 vi.mock('~/utils/isTauri', () => ({ isTauri: () => true }))
-vi.mock('~/ui/toast', () => ({ useToast: () => ({ showToast: vi.fn() }) }))
 vi.mock('~/features/release-notes', async (importOriginal) => ({
   ...(await importOriginal<typeof import('~/features/release-notes')>()),
   useReleaseNotes: () => mockUseReleaseNotes(),
@@ -35,7 +30,14 @@ const RELEASE_BODY = [
 
 function downloadState(overrides: Record<string, unknown> = {}) {
   return {
-    state: null,
+    state: {
+      phase: 'idle',
+      version: '0.1.92',
+      receivedBytes: 0,
+      totalBytes: null,
+      error: null,
+      errorCode: null,
+    },
     progress: null,
     isDownloading: false,
     isReady: false,
@@ -44,7 +46,7 @@ function downloadState(overrides: Record<string, unknown> = {}) {
     errorCode: null,
     startDownload: vi.fn(),
     isStarting: false,
-    dismissError: vi.fn().mockResolvedValue(undefined),
+    dismissError: vi.fn(),
     install: vi.fn(),
     ...overrides,
   }
@@ -70,9 +72,8 @@ beforeEach(() => {
       releaseUrl:
         'https://github.com/radio-crestin/church-hub/releases/tag/v0.1.92',
       releaseNotes: RELEASE_BODY,
-      downloadUrl:
-        'https://example.invalid/church-hub-macos-arm64-v-0.1.92.dmg',
       publishedAt: '2026-08-23T10:00:00Z',
+      installable: true,
     },
     isLoading: false,
     checkNow: vi.fn(),
@@ -111,22 +112,53 @@ describe('UpdatePanel', () => {
     )
   })
 
-  it('points a filesystem failure at the folder, not the connection', () => {
+  it('says a signature failure is about the file, not the connection', () => {
     mockUseUpdateDownload.mockReturnValue(
       downloadState({
-        error: 'EACCES: permission denied',
-        errorCode: 'filesystem',
+        error: 'signature verification failed',
+        errorCode: 'signature',
       }),
     )
     renderPanel()
 
     const alert = screen.getByTestId('update-error')
-    expect(alert).toHaveTextContent(/folder/)
+    expect(alert).toHaveTextContent(/signature|semnătur/i)
     expect(alert).not.toHaveTextContent(/internet|connection|conexiune/i)
   })
 
+  it('offers install, not download, once the build is on hand', () => {
+    mockUseUpdateDownload.mockReturnValue(
+      downloadState({
+        isReady: true,
+        state: {
+          phase: 'ready',
+          version: '0.1.92',
+          receivedBytes: 50_000_000,
+          totalBytes: 50_000_000,
+          error: null,
+          errorCode: null,
+        },
+      }),
+    )
+    renderPanel()
+
+    expect(screen.getByTestId('update-install')).toBeEnabled()
+    expect(screen.queryByTestId('update-download')).not.toBeInTheDocument()
+  })
+
+  it('explains that a browser tab cannot install', () => {
+    mockUseAppUpdate.mockReturnValue({
+      ...mockUseAppUpdate(),
+      updateInfo: { ...mockUseAppUpdate().updateInfo, installable: false },
+    })
+    renderPanel()
+
+    expect(screen.getByTestId('update-unavailable')).toBeInTheDocument()
+    expect(screen.queryByTestId('update-download')).not.toBeInTheDocument()
+  })
+
   it('dismisses a failure once the operator leaves the page', () => {
-    const dismissError = vi.fn().mockResolvedValue(undefined)
+    const dismissError = vi.fn()
     mockUseUpdateDownload.mockReturnValue(
       downloadState({ error: 'HTTP 503', errorCode: 'http', dismissError }),
     )

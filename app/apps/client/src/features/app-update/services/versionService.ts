@@ -1,17 +1,11 @@
 import { getVersion } from '@tauri-apps/api/app'
-import { arch, type } from '@tauri-apps/plugin-os'
+import { check, type Update } from '@tauri-apps/plugin-updater'
 
-const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+import { compareVersions } from '~/features/release-notes'
+import { isTauri } from '~/utils/isTauri'
 
 const GITHUB_REPO = 'radio-crestin/church-hub'
 const GITHUB_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases`
-
-export interface GithubAsset {
-  name: string
-  browser_download_url: string
-  size: number
-  content_type: string
-}
 
 export interface GithubRelease {
   tag_name: string
@@ -21,7 +15,6 @@ export interface GithubRelease {
   published_at: string
   draft: boolean
   prerelease: boolean
-  assets: GithubAsset[]
 }
 
 export interface UpdateInfo {
@@ -30,15 +23,25 @@ export interface UpdateInfo {
   hasUpdate: boolean
   releaseUrl: string
   releaseNotes: string
-  downloadUrl: string | null
   publishedAt: string
+  /**
+   * True when the updater holds a signed build for this machine. Only ever
+   * in the desktop app: a browser tab can read about a release, not apply it.
+   */
+  installable: boolean
+}
+
+export interface UpdateCheck {
+  info: UpdateInfo
+  /** The updater's handle for downloading and installing, when installable. */
+  update: Update | null
 }
 
 /**
  * Fetches the current app version
  */
 export async function getCurrentVersion(): Promise<string> {
-  if (isTauri) {
+  if (isTauri()) {
     try {
       return await getVersion()
     } catch {
@@ -48,137 +51,108 @@ export async function getCurrentVersion(): Promise<string> {
   return __appVersion
 }
 
-/**
- * Matches the release asset for this machine.
- *
- * A release carries the same build under two names: Tauri's raw bundle
- * (`church-hub_0.1.85_aarch64.dmg`) and the workflow's renamed copy
- * (`church-hub-macos-arm64-v-0.1.85.dmg`). These patterns target the renamed
- * ones — they are what the release notes link to, they carry the version, and
- * they are stable against Tauri changing its bundle naming.
- */
-function getAssetPattern(): RegExp | null {
-  if (!isTauri) return null
+function releaseUrlFor(version: string): string {
+  return `https://github.com/${GITHUB_REPO}/releases/tag/v${version}`
+}
 
-  let osType: string
-  let osArch: string
-  try {
-    osType = type()
-    osArch = arch()
-  } catch {
-    return null
+function upToDate(currentVersion: string): UpdateInfo {
+  return {
+    currentVersion,
+    latestVersion: currentVersion,
+    hasUpdate: false,
+    releaseUrl: `https://github.com/${GITHUB_REPO}/releases`,
+    releaseNotes: '',
+    publishedAt: '',
+    installable: false,
   }
-
-  if (osType === 'macos') {
-    return osArch === 'aarch64'
-      ? /church-hub-macos-arm64-.*\.dmg$/i
-      : /church-hub-macos-x64-.*\.dmg$/i
-  }
-
-  if (osType === 'windows') {
-    return osArch === 'aarch64'
-      ? /church-hub-windows-arm64-.*\.exe$/i
-      : /church-hub-windows-x64-.*\.exe$/i
-  }
-
-  // Linux is not built by the release workflow yet; nothing to offer.
-  return null
 }
 
 /**
- * Finds the appropriate download URL for the current platform
+ * Desktop: the updater plugin reads the signed manifest of the latest
+ * published release (`latest.json`), compares versions as semver in Rust
+ * and hands back a handle for the download when a newer build exists for
+ * this machine. Nothing here touches the GitHub API, so there is no rate
+ * limit to run into.
  */
-function findDownloadUrl(assets: GithubAsset[]): string | null {
-  const pattern = getAssetPattern()
-  if (!pattern) return null
-
-  const asset = assets.find((a) => pattern.test(a.name))
-  return asset?.browser_download_url ?? null
-}
-
-/**
- * Compares two version strings (semver format)
- * Returns true if version2 is newer than version1
- */
-function isNewerVersion(current: string, latest: string): boolean {
-  // Remove 'v' prefix if present
-  const v1 = current.replace(/^v/, '')
-  const v2 = latest.replace(/^v/, '')
-
-  const parts1 = v1.split('.').map(Number)
-  const parts2 = v2.split('.').map(Number)
-
-  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-    const p1 = parts1[i] || 0
-    const p2 = parts2[i] || 0
-
-    if (p2 > p1) return true
-    if (p2 < p1) return false
+async function checkWithUpdater(): Promise<UpdateCheck> {
+  const update = await check()
+  if (!update) {
+    return { info: upToDate(await getCurrentVersion()), update: null }
   }
 
-  return false
+  // The manifest's own timestamp is what the workflow wrote; the plugin's
+  // formatted copy is the fallback.
+  const publishedAt =
+    typeof update.rawJson.pub_date === 'string'
+      ? update.rawJson.pub_date
+      : (update.date ?? '')
+
+  return {
+    info: {
+      currentVersion: update.currentVersion,
+      latestVersion: update.version,
+      hasUpdate: true,
+      releaseUrl: releaseUrlFor(update.version),
+      releaseNotes: update.body ?? '',
+      publishedAt,
+      installable: true,
+    },
+    update,
+  }
 }
 
 /**
- * Fetches the latest release from GitHub and checks for updates
+ * Browser: a tab controlling the app from another machine cannot install
+ * anything, but it can still say a newer release exists. The GitHub API is
+ * used because it answers cross-origin requests; the release download URLs
+ * do not.
  */
-export async function checkForUpdates(): Promise<UpdateInfo> {
+async function checkWithGithub(currentVersion: string): Promise<UpdateInfo> {
+  const response = await fetch(GITHUB_RELEASES_URL, {
+    headers: { Accept: 'application/vnd.github.v3+json' },
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to fetch releases: ${response.statusText}`)
+  }
+
+  const releases: GithubRelease[] = await response.json()
+  const latestRelease = releases.find((r) => !r.draft && !r.prerelease)
+  if (!latestRelease) return upToDate(currentVersion)
+
+  const latestVersion = latestRelease.tag_name.replace(/^v/, '')
+  return {
+    currentVersion,
+    latestVersion,
+    hasUpdate: compareVersions(latestVersion, currentVersion) > 0,
+    releaseUrl: latestRelease.html_url,
+    releaseNotes: latestRelease.body,
+    publishedAt: latestRelease.published_at,
+    installable: false,
+  }
+}
+
+/**
+ * Checks for a newer release. A failed check reads as "up to date" rather
+ * than an error: the check runs on its own every hour, and a machine that
+ * is offline for a while should not keep announcing a problem.
+ */
+export async function checkForUpdates(): Promise<UpdateCheck> {
+  if (isTauri()) {
+    try {
+      return await checkWithUpdater()
+    } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: Error logging for debugging update check failures
+      console.error('Failed to check for updates:', error)
+      return { info: upToDate(await getCurrentVersion()), update: null }
+    }
+  }
+
   const currentVersion = await getCurrentVersion()
-  const releasesPageUrl = `https://github.com/${GITHUB_REPO}/releases`
-
   try {
-    const response = await fetch(GITHUB_RELEASES_URL, {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch releases: ${response.statusText}`)
-    }
-
-    const releases: GithubRelease[] = await response.json()
-
-    // Find the latest non-draft, non-prerelease release
-    const latestRelease = releases.find((r) => !r.draft && !r.prerelease)
-
-    if (!latestRelease) {
-      // No releases available yet
-      return {
-        currentVersion,
-        latestVersion: currentVersion,
-        hasUpdate: false,
-        releaseUrl: releasesPageUrl,
-        releaseNotes: '',
-        downloadUrl: null,
-        publishedAt: '',
-      }
-    }
-
-    const latestVersion = latestRelease.tag_name.replace(/^v/, '')
-    const hasUpdate = isNewerVersion(currentVersion, latestVersion)
-    const downloadUrl = findDownloadUrl(latestRelease.assets)
-
-    return {
-      currentVersion,
-      latestVersion,
-      hasUpdate,
-      releaseUrl: latestRelease.html_url,
-      releaseNotes: latestRelease.body,
-      downloadUrl,
-      publishedAt: latestRelease.published_at,
-    }
+    return { info: await checkWithGithub(currentVersion), update: null }
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: Error logging for debugging update check failures
     console.error('Failed to check for updates:', error)
-    return {
-      currentVersion,
-      latestVersion: currentVersion,
-      hasUpdate: false,
-      releaseUrl: releasesPageUrl,
-      releaseNotes: '',
-      downloadUrl: null,
-      publishedAt: '',
-    }
+    return { info: upToDate(currentVersion), update: null }
   }
 }

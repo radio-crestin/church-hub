@@ -125,6 +125,17 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      # Every update is verified against the public key compiled into the
+      # app (plugins.updater.pubkey in tauri.conf.json), so a release built
+      # without the matching private key is one no installed copy would ever
+      # accept. Better to stop here than to publish it.
+      - name: Check the updater signing key is configured
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set. Add the updater private key (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD) to the repository secrets."
+            exit 1
+          fi
+
       # Upsert the GitHub release. Previously this called `gh release
       # create` unconditionally, which failed (exit 1) when a draft for
       # the tag already existed — the typical shape when the operator
@@ -266,24 +277,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # The tag's version is used as is, pre-release suffix included: the
+      # updater compares versions as semver, so a build tagged 0.1.98-beta.1
+      # must call itself that, or it would offer itself 0.1.98-beta.2 as an
+      # older release. (The MSI, which only accepted numeric versions and used
+      # to force the suffix off, is no longer built.)
       - name: Extract version from tag
         id: version
         shell: bash
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          # MSI requires numeric-only pre-release identifiers
-          # Strip non-numeric pre-release (e.g., "0.1.46-beta.2" -> "0.1.46")
-          TAURI_VERSION=$(echo "$VERSION" | sed 's/-[^0-9].*//')
           ARTIFACT_NAME="${{ matrix.artifact_base }}-v-${VERSION}.${{ matrix.artifact_ext }}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tauri_version=$TAURI_VERSION" >> $GITHUB_OUTPUT
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION (tauri: $TAURI_VERSION, artifact: $ARTIFACT_NAME)"
+          echo "Building version: $VERSION (artifact: $ARTIFACT_NAME)"
 
       - name: Update version in tauri.conf.json
         shell: bash
         env:
-          TAURI_VERSION: ${{ steps.version.outputs.tauri_version }}
+          TAURI_VERSION: ${{ steps.version.outputs.version }}
         run: |
           cd app/tauri
           if [[ "$RUNNER_OS" == "Windows" ]]; then
@@ -404,6 +416,9 @@ jobs:
           releaseName: 'Church Hub v__VERSION__'
           releaseDraft: true
           prerelease: false
+          # latest.json is assembled once all three builds are uploaded (see
+          # the updater-manifest job); letting each matrix job write its own
+          # copy would have them overwrite each other.
           includeUpdaterJson: false
 
       - name: Debug - List all bundle outputs
@@ -412,9 +427,21 @@ jobs:
           echo "=== Listing all bundle directories ==="
           find app/tauri/target -type d -name "bundle" 2>/dev/null | while read dir; do
             echo "Found bundle dir: $dir"
-            find "$dir" -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.msi" \) 2>/dev/null
+            find "$dir" -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.tar.gz" -o -name "*.sig" \) 2>/dev/null
           done
           echo "=== Done ==="
+
+      # The updater refuses anything unsigned, so a build that produced no
+      # signature must not reach the release.
+      - name: Verify the updater signature was produced
+        shell: bash
+        run: |
+          SIG=$(find app/tauri/target -type f \( -name "*.app.tar.gz.sig" -o -name "*-setup.exe.sig" \) 2>/dev/null | head -1)
+          if [ -z "$SIG" ]; then
+            echo "::error::No updater signature (.sig) was produced — is TAURI_SIGNING_PRIVATE_KEY set and does it match plugins.updater.pubkey?"
+            exit 1
+          fi
+          echo "Signature: $SIG"
 
       - name: Create versioned artifact (macOS)
         if: matrix.platform == 'macos-latest'
@@ -458,6 +485,76 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # The updater manifest. Installed apps fetch
+  # `releases/latest/download/latest.json`, which only resolves once the
+  # release is published — so a draft is never offered — and pick the entry
+  # for their platform: the download URL of the signed artifact plus its
+  # minisign signature. Written once, after all three builds, from the assets
+  # already on the release.
+  updater-manifest:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Assemble and upload latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VERSION=${TAG#v}
+          mkdir -p sigs
+          gh release download "$TAG" --repo "$REPO" --dir sigs --pattern '*.sig'
+          ls -la sigs
+
+          # The signed asset for a platform, found by its tail rather than
+          # spelled out: tauri-action names the macOS updater archives
+          # `church-hub_aarch64.app.tar.gz` today and is moving to
+          # `church-hub_<version>_aarch64.app.tar.gz`; either way the
+          # signature file sits next to it under the same name plus `.sig`.
+          asset_for() {
+            local match
+            match=$(ls sigs | grep -E "$1" | head -1)
+            if [ -z "$match" ]; then
+              echo "::error::No signature matching $1 on release $TAG (have: $(ls sigs | tr '\n' ' '))"
+              exit 1
+            fi
+            echo "${match%.sig}"
+          }
+          MAC_ARM=$(asset_for '_aarch64\.app\.tar\.gz\.sig$')
+          MAC_X64=$(asset_for '_x64\.app\.tar\.gz\.sig$')
+          WIN=$(asset_for '_x64-setup\.exe\.sig$')
+          BASE="https://github.com/$REPO/releases/download/$TAG"
+
+          # Release notes: the same body the app already shows for a version.
+          gh release view "$TAG" --repo "$REPO" --json body -q .body > notes.md
+
+          jq -n \
+            --arg version "$VERSION" \
+            --rawfile notes notes.md \
+            --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg mac_arm_url "$BASE/$MAC_ARM" \
+            --arg mac_arm_sig "$(cat "sigs/$MAC_ARM.sig")" \
+            --arg mac_x64_url "$BASE/$MAC_X64" \
+            --arg mac_x64_sig "$(cat "sigs/$MAC_X64.sig")" \
+            --arg win_url "$BASE/$WIN" \
+            --arg win_sig "$(cat "sigs/$WIN.sig")" \
+            '{
+              version: $version,
+              notes: $notes,
+              pub_date: $pub_date,
+              platforms: {
+                "darwin-aarch64": { url: $mac_arm_url, signature: $mac_arm_sig },
+                "darwin-x86_64": { url: $mac_x64_url, signature: $mac_x64_sig },
+                "windows-x86_64": { url: $win_url, signature: $win_sig }
+              }
+            }' > latest.json
+          cat latest.json
+          gh release upload "$TAG" latest.json --repo "$REPO" --clobber
+
   # Keep `main` in lock-step with whatever was just released. Without this,
   # `app/tauri/tauri.conf.json` on `main` drifts behind the tag (the build job
   # only patches the version inside the CI checkout, never commits it back), so
@@ -465,7 +562,7 @@ jobs:
   # check is wrong. Runs for every release — whether the tag was cut via
   # scripts/release.sh (then this is a no-op) or straight from the GitHub UI.
   sync-version-back:
-    needs: [build]
+    needs: [build, updater-manifest]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -486,8 +583,7 @@ jobs:
         shell: bash
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          # Match the build job: strip non-numeric pre-release identifiers.
-          TAURI_VERSION=$(echo "$VERSION" | sed 's/-[^0-9].*//')
+          TAURI_VERSION=$VERSION
 
           # Never move main backwards. This job runs at the very end of a build,
           # so a release cut while an earlier one was still building would

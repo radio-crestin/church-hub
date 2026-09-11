@@ -17,7 +17,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 
-fn logs_dir() -> Option<PathBuf> {
+/// The per-user data directory, the same one the sidecar's `paths.ts`
+/// resolves: database, logs and the update marker all live under it.
+pub fn data_dir() -> Option<PathBuf> {
     let home = dirs::home_dir()?;
     let dir = if cfg!(target_os = "macos") {
         home.join("Library")
@@ -32,7 +34,11 @@ fn logs_dir() -> Option<PathBuf> {
             .unwrap_or_else(|| home.join(".config"))
             .join("church-hub")
     };
-    Some(dir.join("logs"))
+    Some(dir)
+}
+
+fn logs_dir() -> Option<PathBuf> {
+    Some(data_dir()?.join("logs"))
 }
 
 fn current_log_path() -> Option<PathBuf> {
