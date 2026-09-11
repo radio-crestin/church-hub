@@ -482,15 +482,19 @@ jobs:
         with:
           files: ${{ steps.version.outputs.artifact_name }}
           tag_name: v${{ steps.version.outputs.version }}
+          # Without this the action publishes the draft as soon as the first
+          # platform's artifact is up — before the other builds and before
+          # latest.json exist. The updater-manifest job publishes instead.
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # The updater manifest. Installed apps fetch
-  # `releases/latest/download/latest.json`, which only resolves once the
-  # release is published — so a draft is never offered — and pick the entry
-  # for their platform: the download URL of the signed artifact plus its
-  # minisign signature. Written once, after all three builds, from the assets
-  # already on the release.
+  # The updater manifest, then the release itself. Installed apps fetch
+  # `releases/latest/download/latest.json` and pick the entry for their
+  # platform: the download URL of the signed artifact plus its minisign
+  # signature. Written once, after all three builds, from the assets already
+  # on the release — and only then is the draft published, so `latest` never
+  # points at a release whose manifest or installers are still missing.
   updater-manifest:
     needs: [build]
     runs-on: ubuntu-latest
@@ -554,6 +558,22 @@ jobs:
             }' > latest.json
           cat latest.json
           gh release upload "$TAG" latest.json --repo "$REPO" --clobber
+
+      - name: Publish the release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for name in "church-hub-macos-arm64-v-${TAG#v}.dmg" "church-hub-macos-x64-v-${TAG#v}.dmg" "church-hub-windows-x64-v-${TAG#v}.exe" latest.json; do
+            if ! gh release view "$TAG" --repo "$REPO" --json assets -q '.assets[].name' | grep -qx "$name"; then
+              echo "::error::Release $TAG is missing $name; leaving it as a draft."
+              exit 1
+            fi
+          done
+          gh release edit "$TAG" --repo "$REPO" --draft=false --latest
+          echo "Published $TAG"
 
   # Keep `main` in lock-step with whatever was just released. Without this,
   # `app/tauri/tauri.conf.json` on `main` drifts behind the tag (the build job

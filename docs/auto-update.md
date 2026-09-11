@@ -61,9 +61,11 @@ the per-user data directory (`%APPDATA%\church-hub` on Windows,
   `tauri-action` names the archives does not break it, and writes
   `latest.json` with the download URLs and signatures for `darwin-aarch64`,
   `darwin-x86_64` and `windows-x86_64`, plus the release body as `notes`.
-- Publishing the draft is still a manual step. Until then
-  `releases/latest/download/latest.json` points at the previous release and
-  nobody is offered the new one.
+- The same job then publishes the release, after checking that both DMGs,
+  the setup exe and `latest.json` are on it. Nothing publishes earlier: the
+  artifact upload step keeps the draft (`draft: true`), so `latest` never
+  points at a release whose manifest is still missing. A build that fails
+  leaves a draft behind, which can be deleted or re-run.
 
 ## The signing key
 
