@@ -277,6 +277,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # The tag's version is used as is, pre-release suffix included: the
+      # updater compares versions as semver, so a build tagged 0.1.98-beta.1
+      # must call itself that, or it would offer itself 0.1.98-beta.2 as an
+      # older release. (The MSI, which only accepted numeric versions and used
+      # to force the suffix off, is no longer built.)
       - name: Extract version from tag
         id: version
         shell: bash
