@@ -23,6 +23,7 @@ import {
   ChevronDown,
   Download,
   GripVertical,
+  MonitorPlay,
   Pencil,
   Plus,
   Search,
@@ -33,9 +34,12 @@ import {
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePresentTemporarySong } from '~/features/presentation'
 import { usePersistedChoice } from '~/hooks/usePersistedChoice'
+import { usePermissions } from '~/provider/permissions-provider'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
+import { SongEditorModal } from './SongEditorModal'
 import {
   useAddBookmark,
   useAddBookmarkNote,
@@ -66,6 +70,10 @@ interface SortableBookmarkItemProps {
   bookmark: SongBookmark
   isActive: boolean
   onSelect: () => void
+  /** Opens the song editor. Absent when the operator may not edit songs. */
+  onEdit?: () => void
+  /** Projects the song on its own, from its first slide. */
+  onPresent: () => void
   onRemove: () => void
   onToggleSung: () => void
 }
@@ -74,6 +82,8 @@ function SortableBookmarkItem({
   bookmark,
   isActive,
   onSelect,
+  onEdit,
+  onPresent,
   onRemove,
   onToggleSung,
 }: SortableBookmarkItemProps) {
@@ -201,6 +211,34 @@ function SortableBookmarkItem({
         )}
       </button>
 
+      {onEdit ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit()
+          }}
+          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          title={t('bookmarks.editSong')}
+          data-testid="bookmark-song-edit"
+        >
+          <Pencil size={14} />
+        </button>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onPresent()
+        }}
+        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+        title={t('bookmarks.present')}
+        data-testid="bookmark-song-present"
+      >
+        <MonitorPlay size={14} />
+      </button>
+
       <button
         type="button"
         onClick={(e) => {
@@ -208,7 +246,8 @@ function SortableBookmarkItem({
           onRemove()
         }}
         className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-        title="Remove"
+        title={t('bookmarks.remove')}
+        data-testid="bookmark-song-remove"
       >
         <XIcon size={14} />
       </button>
@@ -371,6 +410,12 @@ interface SongBookmarksPanelProps {
    * finished marking the songs for the service.
    */
   onAddAllToSchedule?: (songIds: number[]) => void
+  /**
+   * Follows the projector after a row's present button fires. The song list
+   * uses it to walk to the song that just went up, the way the Programe panel
+   * already does — elsewhere the operator is left where they were.
+   */
+  onSongPresented?: (songId: number) => void
 }
 
 export function SongBookmarksPanel({
@@ -380,6 +425,7 @@ export function SongBookmarksPanel({
   isCollapsed = false,
   onToggleCollapse,
   onAddAllToSchedule,
+  onSongPresented,
 }: SongBookmarksPanelProps) {
   const { t } = useTranslation('songs')
   const { data: bookmarks = [], isLoading } = useSongBookmarks()
@@ -393,6 +439,10 @@ export function SongBookmarksPanel({
   const updateNoteMutation = useUpdateBookmarkNote()
   const removeNoteMutation = useRemoveBookmarkNote()
   const exportMutation = useExportBookmarksAsText()
+  const presentSongMutation = usePresentTemporarySong()
+  const { hasPermission } = usePermissions()
+  const canEditSong = hasPermission('songs.edit')
+  const [editingSongId, setEditingSongId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   // Filter the song bookmarks by their "already sung" state. Remembered: an
   // operator working through a service leaves this on "pending", and a restart
@@ -614,6 +664,13 @@ export function SongBookmarksPanel({
 
   const isSearching = searchQuery.trim().length > 0
 
+  // Marcaje carries no program context, so the song goes up on its own from
+  // its first slide — no schedule id, no next-item preview.
+  const handlePresentSong = (songId: number) => {
+    presentSongMutation.mutate({ songId, slideIndex: 0 })
+    onSongPresented?.(songId)
+  }
+
   const renderItem = (item: BookmarkListItem) => {
     if (item.type === 'note' && item.note) {
       return (
@@ -632,6 +689,12 @@ export function SongBookmarksPanel({
           bookmark={item.bookmark}
           isActive={activeSongId === item.bookmark.songId}
           onSelect={() => onSelectSong(item.bookmark!)}
+          onEdit={
+            canEditSong
+              ? () => setEditingSongId(item.bookmark!.songId)
+              : undefined
+          }
+          onPresent={() => handlePresentSong(item.bookmark!.songId)}
           onRemove={() => handleRemoveBookmark(item.bookmark!.id)}
           onToggleSung={() => handleToggleSung(item.bookmark!)}
         />
@@ -893,6 +956,14 @@ export function SongBookmarksPanel({
             )}
           </div>
         </>
+      )}
+
+      {editingSongId !== null && (
+        <SongEditorModal
+          isOpen
+          songId={editingSongId}
+          onClose={() => setEditingSongId(null)}
+        />
       )}
     </div>
   )
