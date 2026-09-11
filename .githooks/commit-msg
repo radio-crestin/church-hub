@@ -1,0 +1,21 @@
+#!/bin/sh
+# commit-msg hook — commits carry only their human author.
+#
+# Removes any AI attribution line from the message about to be committed:
+#   Co-Authored-By: ... / Co-authored-by: ...
+#   Generated with Claude Code (with or without the robot emoji or a link)
+#   Claude-Session: ...
+# and trims the blank lines left behind. The commit itself goes through.
+#
+# Active once per clone after:  git config core.hooksPath .githooks
+
+set -eu
+
+msg_file="$1"
+tmp_file="$(mktemp)"
+trap 'rm -f "$tmp_file"' EXIT
+
+grep -viE '^[[:space:]]*(co-authored-by:|.*generated with.*claude code|claude-session:)' "$msg_file" > "$tmp_file" || true
+
+# Drop trailing blank lines so the message does not end in whitespace.
+awk '{ lines[NR] = $0 } END { last = NR; while (last > 0 && lines[last] ~ /^[[:space:]]*$/) last--; for (i = 1; i <= last; i++) print lines[i] }' "$tmp_file" > "$msg_file"
