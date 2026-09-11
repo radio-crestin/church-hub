@@ -596,6 +596,7 @@ export function SongEditor({
               })
             }
             candidateSong={songId ? { id: songId, title } : null}
+            showSongRowActions={false}
           />
         </div>
       </aside>

@@ -48,6 +48,13 @@ interface SongDetailsSectionProps {
   onMetadataChange: (field: keyof SongMetadata, value: string | null) => void
   /** Unique prefix for input IDs to avoid conflicts when used in modals */
   idPrefix?: string
+  /**
+   * Where the category and tag dropdowns render. Inside a native `<dialog>`
+   * opened with `showModal()` the default (`document.body`) is painted below
+   * the dialog's top layer and cannot be clicked at all, so a modal host must
+   * hand its own dialog element down here.
+   */
+  portalContainer?: HTMLElement | null
 }
 
 export function SongDetailsSection({
@@ -64,6 +71,7 @@ export function SongDetailsSection({
   onTagsChange,
   onMetadataChange,
   idPrefix = '',
+  portalContainer,
 }: SongDetailsSectionProps) {
   const { t } = useTranslation(['songs'])
   const [showDetails, setShowDetails] = useState(false)
@@ -137,7 +145,11 @@ export function SongDetailsSection({
           {isLoading ? (
             <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
           ) : (
-            <CategoryPicker value={categoryId} onChange={onCategoryChange} />
+            <CategoryPicker
+              value={categoryId}
+              onChange={onCategoryChange}
+              portalContainer={portalContainer}
+            />
           )}
         </div>
 
@@ -152,7 +164,11 @@ export function SongDetailsSection({
           {isLoading ? (
             <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
           ) : (
-            <TagPicker value={tagIds} onChange={onTagsChange} />
+            <TagPicker
+              value={tagIds}
+              onChange={onTagsChange}
+              portalContainer={portalContainer}
+            />
           )}
         </div>
 

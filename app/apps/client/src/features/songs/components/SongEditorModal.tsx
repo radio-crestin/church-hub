@@ -28,6 +28,11 @@ export function SongEditorModal({
   const { t } = useTranslation(['songs', 'common'])
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  // The dropdowns inside this dialog must portal INTO it: `showModal()` puts
+  // the dialog in the browser's top layer, above every z-index in the body.
+  // State rather than the ref alone, so the first render with a real node
+  // re-renders the children that need it.
+  const [dialogEl, setDialogEl] = useState<HTMLDialogElement | null>(null)
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   const { data: song, isLoading } = useSong(songId)
@@ -213,10 +218,14 @@ export function SongEditorModal({
 
   return (
     <dialog
-      ref={dialogRef}
+      ref={(node) => {
+        dialogRef.current = node
+        setDialogEl(node)
+      }}
       onCancel={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
+      data-testid="song-editor-modal"
       className="fixed inset-0 m-auto w-full max-w-4xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50 z-50"
     >
       <div className="flex flex-col max-h-[90vh]">
@@ -253,6 +262,7 @@ export function SongEditorModal({
             onTagsChange={setTagIds}
             onMetadataChange={handleMetadataChange}
             idPrefix="modal-"
+            portalContainer={dialogEl}
           />
 
           {/* Slides Section */}
@@ -277,6 +287,7 @@ export function SongEditorModal({
             type="button"
             onClick={handleSave}
             disabled={upsertMutation.isPending || showLoading || !title.trim()}
+            data-testid="song-editor-modal-save"
             className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {upsertMutation.isPending ? (

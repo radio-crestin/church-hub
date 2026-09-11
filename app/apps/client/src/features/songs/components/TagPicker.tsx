@@ -153,6 +153,7 @@ export function TagPicker({
           type="button"
           onClick={() => !disabled && setIsOpen((v) => !v)}
           disabled={disabled}
+          data-testid="tag-picker-trigger"
           className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-dashed border-gray-300 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
         >
           <Plus className="w-3 h-3" />
@@ -164,6 +165,7 @@ export function TagPicker({
         createPortal(
           <div
             ref={dropdownRef}
+            data-testid="tag-picker-dropdown"
             className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
@@ -182,6 +184,11 @@ export function TagPicker({
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') {
+                      // Inside a native <dialog> an unhandled Escape cancels
+                      // the dialog, so dismissing this dropdown would throw
+                      // away the whole edit. Escape closes the dropdown only.
+                      e.preventDefault()
+                      e.stopPropagation()
                       setIsOpen(false)
                       setSearch('')
                     } else if (
@@ -221,6 +228,7 @@ export function TagPicker({
                   <button
                     key={tag.id}
                     type="button"
+                    data-testid="tag-picker-option"
                     onClick={() => toggle(tag.id)}
                     className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
                       isSelected
