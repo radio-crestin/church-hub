@@ -64,3 +64,19 @@
   ; Notify shell of changes
   !insertmacro CH_UPDATEFILEASSOC
 !macroend
+
+; Pre-install hook - make sure the sidecar is gone before files are replaced.
+; The app stops it before handing over to the installer; this covers a
+; sidecar that outlived the app anyway. Tauri's own check only looks for
+; church-hub.exe, and a locked church-hub-sidecar.exe would be skipped
+; silently by the installer, leaving a new app next to an old sidecar.
+!macro NSIS_HOOK_PREINSTALL
+  nsis_tauri_utils::FindProcessCurrentUser "church-hub-sidecar.exe"
+  Pop $R0
+  ${If} $R0 = 0
+    DetailPrint "Stopping church-hub-sidecar.exe"
+    nsis_tauri_utils::KillProcessCurrentUser "church-hub-sidecar.exe"
+    Pop $R0
+    Sleep 500
+  ${EndIf}
+!macroend
