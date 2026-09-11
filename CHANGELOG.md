@@ -2,6 +2,10 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.99 — 2026-09-11
+
+_No notable changes._
+
 ## v0.1.98 — 2026-09-11
 
 ### 🚀 Features
