@@ -25,10 +25,7 @@ export function UpdateNotification({ isCollapsed }: UpdateNotificationProps) {
   const navigate = useNavigate()
   const { updateInfo, isDismissed, dismissUpdate } = useAppUpdate()
 
-  const { isReady, isDownloading, progress } = useUpdateDownload(
-    updateInfo?.downloadUrl ?? null,
-    updateInfo?.latestVersion ?? null,
-  )
+  const { isReady, isDownloading, progress } = useUpdateDownload()
 
   // A dev instance never polls, so `hasUpdate` can only be true there after
   // the operator pressed "Check now" — at which point hiding the badge would
