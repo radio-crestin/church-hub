@@ -18,3 +18,6 @@ app/apps/server/src/db/migrations/embedded.ts text eol=lf
 
 # Native modules are binary — never apply text/EOL conversion to them.
 *.node binary
+# Shell scripts and git hooks must stay LF: a CRLF shebang line does not run on macOS or Linux.
+*.sh text eol=lf
+.githooks/** text eol=lf
