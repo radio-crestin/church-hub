@@ -183,6 +183,8 @@
   "bookmarks": {
     "add": "Bookmark",
     "remove": "Remove Bookmark",
+    "editSong": "Edit the song",
+    "present": "Show this on screen",
     "title": "Bookmarks",
     "searchPlaceholder": "Search bookmarks...",
     "noResults": "No matching bookmarks",

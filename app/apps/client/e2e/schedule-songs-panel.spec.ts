@@ -220,6 +220,156 @@ test.describe('Programe panel on the song page', () => {
     }
   })
 
+  test('a song row carries its category, key line and tags, and projects from its own button', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const categoryName = `E2E Meta Cat ${uniq}`
+    const tagName = `E2E Meta Tag ${uniq}`
+    const keyLine = 'Sol / Re'
+    const title = `E2E Meta Song ${uniq}`
+
+    const categoryRes = await request.post('/api/categories', {
+      data: { name: categoryName },
+    })
+    const category = (await categoryRes.json()).data
+    const tagRes = await request.post('/api/song-tags', {
+      data: { name: tagName },
+    })
+    const tag = (await tagRes.json()).data
+    const songRes = await request.post('/api/songs', {
+      data: {
+        title,
+        categoryId: category.id,
+        keyLine,
+        tagIds: [tag.id],
+        slides: [{ content: title, sortOrder: 0 }],
+      },
+    })
+    const song = (await songRes.json()).data
+    const schedule = await createSchedule(request, `E2E Meta Prog ${uniq}`)
+
+    try {
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      const row = panel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: title })
+      await expect(row).toBeVisible({ timeout: 10000 })
+
+      // The row reads like a Marcaje row: title, category, key line, tags.
+      await expect(row).toContainText(categoryName)
+      await expect(row.getByTestId('schedule-song-key-line')).toHaveText(
+        keyLine,
+      )
+      await expect(row).toContainText(tagName)
+
+      // Clicking the row only walks to the song. Nothing reaches the screen,
+      // so reading through a program never projects by accident.
+      await request.post('/api/presentation/clear-temporary')
+      await row.getByTestId('schedule-song-open').click()
+      await page.waitForTimeout(1000)
+      const afterOpen = await request.get('/api/presentation/state')
+      expect((await afterOpen.json()).data?.temporaryContent).toBeFalsy()
+
+      // Projecting is the monitor button's job alone.
+      await row.getByTestId('schedule-song-present').click()
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get('/api/presentation/state')
+            const { data } = await res.json()
+            return data?.temporaryContent?.data?.scheduleId
+          },
+          { timeout: 10000 },
+        )
+        .toBe(schedule.id)
+
+      // The pencil opens the song editor modal, same as on the program page.
+      await row.getByTestId('schedule-song-edit').click()
+      await expect(page.getByTestId('song-editor-modal')).toBeVisible({
+        timeout: 10000,
+      })
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+      await request.delete(`/api/song-tags/${tag.id}`).catch(() => {})
+      await request.delete(`/api/categories/${category.id}`).catch(() => {})
+    }
+  })
+
+  test('the song editor drops the row buttons, the song page keeps them', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Editor Row ${uniq}`)
+    const schedule = await createSchedule(request, `E2E Editor Prog ${uniq}`)
+
+    try {
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1600, height: 900 })
+
+      // The editor's third column is reference material while writing a song:
+      // the row is there, its buttons are not.
+      await page.goto(`/songs/${song.id}/edit`)
+      await page.waitForLoadState('networkidle')
+
+      const editorPanel = page.getByTestId('schedule-songs-panel')
+      const editorRow = editorPanel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: `E2E Editor Row ${uniq}` })
+      await expect(editorRow).toBeVisible({ timeout: 10000 })
+      await expect(editorRow.getByTestId('schedule-song-edit')).toHaveCount(0)
+      await expect(editorRow.getByTestId('schedule-song-present')).toHaveCount(
+        0,
+      )
+
+      // The same panel on the song page is untouched.
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const songPageRow = page
+        .getByTestId('schedule-songs-panel')
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: `E2E Editor Row ${uniq}` })
+      await expect(songPageRow).toBeVisible({ timeout: 10000 })
+      await expect(songPageRow.getByTestId('schedule-song-edit')).toHaveCount(1)
+      await expect(
+        songPageRow.getByTestId('schedule-song-present'),
+      ).toHaveCount(1)
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
   test('rows can be dragged into a new order, every kind included', async ({
     page,
     request,

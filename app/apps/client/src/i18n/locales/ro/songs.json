@@ -183,6 +183,8 @@
   "bookmarks": {
     "add": "Marchează",
     "remove": "Șterge marcajul",
+    "editSong": "Editează cântarea",
+    "present": "Afișează pe ecran",
     "title": "Marcaje",
     "searchPlaceholder": "Caută în marcaje...",
     "noResults": "Niciun marcaj găsit",

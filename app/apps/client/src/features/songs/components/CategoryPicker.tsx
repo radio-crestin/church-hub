@@ -53,6 +53,7 @@ export function CategoryPicker({
       createNewLabel={t('category.create')}
       disabled={disabled}
       portalContainer={portalContainer}
+      testId="category-picker"
     />
   )
 }

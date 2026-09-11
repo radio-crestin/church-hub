@@ -29,6 +29,9 @@ export interface ComboboxProps {
   allowDelete?: boolean
   className?: string
   portalContainer?: HTMLElement | null
+  /** Roots the test ids of the trigger (`<testId>`), the dropdown
+   * (`<testId>-dropdown`) and each option (`<testId>-option`). */
+  testId?: string
 }
 
 export function Combobox({
@@ -44,6 +47,7 @@ export function Combobox({
   allowDelete = false,
   className = '',
   portalContainer,
+  testId,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -161,6 +165,11 @@ export function Combobox({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
+      // Inside a native <dialog> an unhandled Escape cancels the dialog, so
+      // dismissing this dropdown would throw away the whole edit. Escape
+      // closes the dropdown only.
+      e.preventDefault()
+      e.stopPropagation()
       setIsOpen(false)
       setSearch('')
     } else if (e.key === 'Enter' && showCreateOption) {
@@ -176,6 +185,7 @@ export function Combobox({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        data-testid={testId}
         className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <span
@@ -200,6 +210,7 @@ export function Combobox({
         createPortal(
           <div
             ref={dropdownRef}
+            data-testid={testId ? `${testId}-dropdown` : undefined}
             className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
@@ -254,6 +265,7 @@ export function Combobox({
                 filteredOptions.map((option) => (
                   <div
                     key={option.value}
+                    data-testid={testId ? `${testId}-option` : undefined}
                     className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 group ${
                       option.value === value
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
