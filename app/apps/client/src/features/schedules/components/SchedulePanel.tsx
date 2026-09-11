@@ -97,6 +97,14 @@ interface SchedulePanelProps {
    * Marcaje header because it is a program action, not a bookmark one.
    */
   onAddAllBookmarks?: () => void
+  /**
+   * Whether a song row carries its edit and present buttons. The song editor
+   * shows this panel beside the song being written, where the running order is
+   * reference material: editing a second song or projecting from there is not
+   * what that screen is for, and either would pull the operator out of an
+   * unsaved edit. Every other host keeps them.
+   */
+  showSongRowActions?: boolean
   isCollapsed?: boolean
   onToggleCollapse?: () => void
 }
@@ -133,6 +141,7 @@ export function SchedulePanel({
   candidatePassage = null,
   acceptsSongDrop = false,
   onAddAllBookmarks,
+  showSongRowActions = true,
   isCollapsed = false,
   onToggleCollapse,
 }: SchedulePanelProps) {
@@ -504,9 +513,9 @@ export function SchedulePanel({
             isLive={isLive}
             isSortable={sortable}
             rowRef={rowRef}
-            onPresent={() => presentItem(item)}
+            onPresent={showSongRowActions ? () => presentItem(item) : undefined}
             onEdit={
-              canEditProgram
+              canEditProgram && showSongRowActions
                 ? () => editorsRef.current?.editItem(item)
                 : undefined
             }
@@ -545,6 +554,7 @@ export function SchedulePanel({
       onSelectPassage,
       onSelectSong,
       presentItem,
+      showSongRowActions,
     ],
   )
 

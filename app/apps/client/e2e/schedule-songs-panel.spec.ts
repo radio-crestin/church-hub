@@ -314,6 +314,62 @@ test.describe('Programe panel on the song page', () => {
     }
   })
 
+  test('the song editor drops the row buttons, the song page keeps them', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Editor Row ${uniq}`)
+    const schedule = await createSchedule(request, `E2E Editor Prog ${uniq}`)
+
+    try {
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1600, height: 900 })
+
+      // The editor's third column is reference material while writing a song:
+      // the row is there, its buttons are not.
+      await page.goto(`/songs/${song.id}/edit`)
+      await page.waitForLoadState('networkidle')
+
+      const editorPanel = page.getByTestId('schedule-songs-panel')
+      const editorRow = editorPanel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: `E2E Editor Row ${uniq}` })
+      await expect(editorRow).toBeVisible({ timeout: 10000 })
+      await expect(editorRow.getByTestId('schedule-song-edit')).toHaveCount(0)
+      await expect(editorRow.getByTestId('schedule-song-present')).toHaveCount(
+        0,
+      )
+
+      // The same panel on the song page is untouched.
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const songPageRow = page
+        .getByTestId('schedule-songs-panel')
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: `E2E Editor Row ${uniq}` })
+      await expect(songPageRow).toBeVisible({ timeout: 10000 })
+      await expect(songPageRow.getByTestId('schedule-song-edit')).toHaveCount(1)
+      await expect(
+        songPageRow.getByTestId('schedule-song-present'),
+      ).toHaveCount(1)
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
   test('rows can be dragged into a new order, every kind included', async ({
     page,
     request,
