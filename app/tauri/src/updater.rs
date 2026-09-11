@@ -185,6 +185,12 @@ pub async fn abort_update_install(app: AppHandle) -> Result<(), String> {
     {
         let (port, running) = sidecar_status(&app);
         if !running {
+            // The install may have failed because the old sidecar was still
+            // holding the port; starting a new one into that would only add
+            // a second failure. Give it the same grace again, then say so.
+            wait_for_port_release(port)
+                .await
+                .map_err(|err| format!("cannot restart the server: {err}"))?;
             crate::server::start_server(&app, port)?;
             crate::server::wait_for_server_ready_async(port, SIDECAR_START_TIMEOUT_SECS).await?;
         }

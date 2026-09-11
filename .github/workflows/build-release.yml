@@ -510,13 +510,23 @@ jobs:
           gh release download "$TAG" --repo "$REPO" --dir sigs --pattern '*.sig'
           ls -la sigs
 
-          sig() {
-            if [ ! -f "sigs/$1" ]; then
-              echo "::error::Missing signature asset $1 on release $TAG"
+          # The signed asset for a platform, found by its tail rather than
+          # spelled out: tauri-action names the macOS updater archives
+          # `church-hub_aarch64.app.tar.gz` today and is moving to
+          # `church-hub_<version>_aarch64.app.tar.gz`; either way the
+          # signature file sits next to it under the same name plus `.sig`.
+          asset_for() {
+            local match
+            match=$(ls sigs | grep -E "$1" | head -1)
+            if [ -z "$match" ]; then
+              echo "::error::No signature matching $1 on release $TAG (have: $(ls sigs | tr '\n' ' '))"
               exit 1
             fi
-            cat "sigs/$1"
+            echo "${match%.sig}"
           }
+          MAC_ARM=$(asset_for '_aarch64\.app\.tar\.gz\.sig$')
+          MAC_X64=$(asset_for '_x64\.app\.tar\.gz\.sig$')
+          WIN=$(asset_for '_x64-setup\.exe\.sig$')
           BASE="https://github.com/$REPO/releases/download/$TAG"
 
           # Release notes: the same body the app already shows for a version.
@@ -526,12 +536,12 @@ jobs:
             --arg version "$VERSION" \
             --rawfile notes notes.md \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg mac_arm_url "$BASE/church-hub_aarch64.app.tar.gz" \
-            --arg mac_arm_sig "$(sig church-hub_aarch64.app.tar.gz.sig)" \
-            --arg mac_x64_url "$BASE/church-hub_x64.app.tar.gz" \
-            --arg mac_x64_sig "$(sig church-hub_x64.app.tar.gz.sig)" \
-            --arg win_url "$BASE/church-hub_${VERSION}_x64-setup.exe" \
-            --arg win_sig "$(sig church-hub_${VERSION}_x64-setup.exe.sig)" \
+            --arg mac_arm_url "$BASE/$MAC_ARM" \
+            --arg mac_arm_sig "$(cat "sigs/$MAC_ARM.sig")" \
+            --arg mac_x64_url "$BASE/$MAC_X64" \
+            --arg mac_x64_sig "$(cat "sigs/$MAC_X64.sig")" \
+            --arg win_url "$BASE/$WIN" \
+            --arg win_sig "$(cat "sigs/$WIN.sig")" \
             '{
               version: $version,
               notes: $notes,

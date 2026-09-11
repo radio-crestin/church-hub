@@ -55,10 +55,12 @@ the per-user data directory (`%APPDATA%\church-hub` on Windows,
 - The `create-release` job refuses to run when `TAURI_SIGNING_PRIVATE_KEY`
   is not set, and each build job fails if no `.sig` was produced. An unsigned
   release would be one no installed copy could update to.
-- The `updater-manifest` job runs once all three builds are up. It reads the
-  `.sig` files from the release and writes `latest.json` with the download
-  URLs and signatures for `darwin-aarch64`, `darwin-x86_64` and
-  `windows-x86_64`, plus the release body as `notes`.
+- The `updater-manifest` job runs once all three builds are up. It finds
+  the `.sig` files on the release by their tails (`_aarch64.app.tar.gz.sig`,
+  `_x64.app.tar.gz.sig`, `_x64-setup.exe.sig`), so a change in how
+  `tauri-action` names the archives does not break it, and writes
+  `latest.json` with the download URLs and signatures for `darwin-aarch64`,
+  `darwin-x86_64` and `windows-x86_64`, plus the release body as `notes`.
 - Publishing the draft is still a manual step. Until then
   `releases/latest/download/latest.json` points at the previous release and
   nobody is offered the new one.

@@ -70,12 +70,21 @@
 ; sidecar that outlived the app anyway. Tauri's own check only looks for
 ; church-hub.exe, and a locked church-hub-sidecar.exe would be skipped
 ; silently by the installer, leaving a new app next to an old sidecar.
+; Same per-user / per-machine split as Tauri's own CheckIfAppIsRunning.
 !macro NSIS_HOOK_PREINSTALL
-  nsis_tauri_utils::FindProcessCurrentUser "church-hub-sidecar.exe"
+  !if "${INSTALLMODE}" == "currentUser"
+    nsis_tauri_utils::FindProcessCurrentUser "church-hub-sidecar.exe"
+  !else
+    nsis_tauri_utils::FindProcess "church-hub-sidecar.exe"
+  !endif
   Pop $R0
   ${If} $R0 = 0
     DetailPrint "Stopping church-hub-sidecar.exe"
-    nsis_tauri_utils::KillProcessCurrentUser "church-hub-sidecar.exe"
+    !if "${INSTALLMODE}" == "currentUser"
+      nsis_tauri_utils::KillProcessCurrentUser "church-hub-sidecar.exe"
+    !else
+      nsis_tauri_utils::KillProcess "church-hub-sidecar.exe"
+    !endif
     Pop $R0
     Sleep 500
   ${EndIf}
