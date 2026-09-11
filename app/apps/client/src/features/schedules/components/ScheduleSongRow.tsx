@@ -1,6 +1,12 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ExternalLink, GripVertical, Pencil, X as XIcon } from 'lucide-react'
+import {
+  ExternalLink,
+  GripVertical,
+  MonitorPlay,
+  Pencil,
+  X as XIcon,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
@@ -31,11 +37,13 @@ interface ScheduleSongRowProps {
 }
 
 /**
- * One song of a program: a compact row that projects the song when clicked.
+ * One song of a program: a row that projects the song when clicked.
  *
- * Deliberately title-only. Which verse goes up is chosen on the left of the
- * page — the slide rail — so this list stays a readable running order rather
- * than a second, competing verse picker.
+ * It carries the same identifying details as a Marcaje row — title, category,
+ * key line and tags — so a song reads the same wherever it is listed. Which
+ * verse goes up is still chosen on the left of the page — the slide rail — so
+ * this list stays a readable running order rather than a second, competing
+ * verse picker.
  */
 export function ScheduleSongRow({
   item,
@@ -119,8 +127,8 @@ export function ScheduleSongRow({
         testId="schedule-song-sung-toggle"
       />
 
-      {/* The row body projects. Title only: category, key line and tags belong
-          to the song, not to its place in the program. */}
+      {/* The row body projects. It mirrors the Marcaje row: title, then the
+          song's category and key line, then its tags. */}
       <button
         type="button"
         onClick={onPresent}
@@ -134,6 +142,35 @@ export function ScheduleSongRow({
             {song.title}
           </span>
         </div>
+        {(song.categoryName || item.keyLine) && (
+          <div className="mt-0.5 flex items-center gap-2">
+            {song.categoryName && (
+              <span className="truncate text-xs text-gray-500 dark:text-gray-400">
+                {song.categoryName}
+              </span>
+            )}
+            {item.keyLine && (
+              <span
+                className="shrink-0 text-xs text-amber-600 dark:text-amber-400"
+                data-testid="schedule-song-key-line"
+              >
+                {item.keyLine}
+              </span>
+            )}
+          </div>
+        )}
+        {song.tagNames.length > 0 && (
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            {song.tagNames.map((name) => (
+              <span
+                key={name}
+                className="inline-flex items-center rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
       </button>
 
       <button
@@ -161,6 +198,21 @@ export function ScheduleSongRow({
           data-testid="schedule-song-edit"
         >
           <Pencil size={14} />
+        </button>
+      ) : null}
+
+      {onPresent ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onPresent()
+          }}
+          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+          title={t('panel.presentItem')}
+          data-testid="schedule-song-present-action"
+        >
+          <MonitorPlay size={14} />
         </button>
       ) : null}
 

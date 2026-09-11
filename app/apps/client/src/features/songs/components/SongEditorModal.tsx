@@ -217,6 +217,7 @@ export function SongEditorModal({
       onCancel={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
+      data-testid="song-editor-modal"
       className="fixed inset-0 m-auto w-full max-w-4xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50 z-50"
     >
       <div className="flex flex-col max-h-[90vh]">
