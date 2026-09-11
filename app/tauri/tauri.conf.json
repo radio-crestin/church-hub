@@ -36,7 +36,8 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["app", "dmg", "nsis"],
+    "createUpdaterArtifacts": true,
     "externalBin": ["bin/church-hub-sidecar"],
     "resources": {
       "../apps/client/dist": "client-dist",
@@ -77,6 +78,17 @@
     "windows": {
       "nsis": {
         "installerHooks": "./windows/hooks.nsh"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/radio-crestin/church-hub/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEExNjc3MEQyREQ4MUUyMzMKUldRejRvSGQwbkJub1pqdE9IQkxvaUFZWTBQZG1KN0JlT1Arb1g2M05rU1dMR296R3orZW1jMkEK",
+      "windows": {
+        "installMode": "passive"
       }
     }
   }

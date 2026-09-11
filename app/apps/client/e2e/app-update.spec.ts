@@ -1,167 +1,15 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 
 /**
- * In-app updates: the download folder setting, the reuse of an artifact that is
- * already on disk, and the guards around installing.
+ * In-app updates, as far as a browser can see them.
  *
- * The download itself needs a published release asset, and the install replaces
- * the running application — neither is reproducible here, so those are verified
- * manually (see the PR test plan). What is covered is the contract everything
- * else stands on.
+ * Downloading, signature verification and the install itself happen in the
+ * desktop app through the Tauri updater — they replace the running
+ * application, which is not something a browser tab can do or reproduce
+ * here. What is covered is the page everything else stands on: the version
+ * it shows, a check that keeps working, a new release rendered as release
+ * notes, and the honest "cannot install from here" a browser gets.
  */
-test.describe('App update - config', () => {
-  test.afterAll(async ({ request }) => {
-    await request.put('/api/app-update/config', { data: { downloadDir: null } })
-  })
-
-  test('defaults to the system Downloads folder', async ({ request }) => {
-    await request.put('/api/app-update/config', { data: { downloadDir: null } })
-
-    const res = await request.get('/api/app-update/config')
-    expect(res.status()).toBe(200)
-    const { data } = await res.json()
-
-    expect(data.downloadDir).toBeNull()
-    expect(data.effectiveDownloadDir).toBe(data.defaultDir)
-    expect(data.defaultDir).toMatch(/Downloads$/)
-  })
-
-  test('a chosen folder is used and can be cleared', async ({ request }) => {
-    const dir = mkdtempSync(join(tmpdir(), 'church-hub-update-'))
-    try {
-      const set = await request.put('/api/app-update/config', {
-        data: { downloadDir: dir },
-      })
-      expect(set.status()).toBe(200)
-      expect((await set.json()).data.effectiveDownloadDir).toBe(dir)
-
-      const read = await request.get('/api/app-update/config')
-      expect((await read.json()).data.downloadDir).toBe(dir)
-
-      const cleared = await request.put('/api/app-update/config', {
-        data: { downloadDir: null },
-      })
-      const clearedData = (await cleared.json()).data
-      expect(clearedData.downloadDir).toBeNull()
-      expect(clearedData.effectiveDownloadDir).toBe(clearedData.defaultDir)
-    } finally {
-      rmSync(dir, { recursive: true, force: true })
-    }
-  })
-
-  test('a relative folder is ignored in favour of the default', async ({
-    request,
-  }) => {
-    // The sidecar writes the download; a relative path would resolve against a
-    // working directory the operator never sees.
-    await request.put('/api/app-update/config', {
-      data: { downloadDir: 'relative/updates' },
-    })
-    const res = await request.get('/api/app-update/config')
-    const { data } = await res.json()
-    expect(data.downloadDir).toBe('relative/updates')
-    expect(data.effectiveDownloadDir).toBe(data.defaultDir)
-  })
-})
-
-test.describe('App update - download state', () => {
-  let dir: string
-
-  test.beforeEach(async ({ request }) => {
-    dir = mkdtempSync(join(tmpdir(), 'church-hub-update-'))
-    await request.put('/api/app-update/config', { data: { downloadDir: dir } })
-  })
-
-  test.afterEach(async ({ request }) => {
-    await request.put('/api/app-update/config', { data: { downloadDir: null } })
-    rmSync(dir, { recursive: true, force: true })
-  })
-
-  test('starts idle', async ({ request }) => {
-    const res = await request.get('/api/app-update/status')
-    expect(res.status()).toBe(200)
-    const { data } = await res.json()
-    expect(['idle', 'ready', 'error']).toContain(data.phase)
-  })
-
-  test('an artifact already in the folder is offered for install, not re-downloaded', async ({
-    request,
-  }) => {
-    // Simulate a download from an earlier session.
-    const fileName = 'church-hub-macos-arm64-v-9.9.9.dmg'
-    writeFileSync(join(dir, fileName), 'pretend installer')
-
-    const res = await request.get(
-      `/api/app-update/status?url=${encodeURIComponent(
-        `https://example.invalid/releases/${fileName}`,
-      )}&version=9.9.9`,
-    )
-    expect(res.status()).toBe(200)
-    const { data } = await res.json()
-
-    expect(data.phase).toBe('ready')
-    expect(data.version).toBe('9.9.9')
-    expect(data.fileName).toBe(fileName)
-    expect(data.filePath).toBe(join(dir, fileName))
-    expect(data.receivedBytes).toBeGreaterThan(0)
-  })
-
-  test('download requires a url', async ({ request }) => {
-    const res = await request.post('/api/app-update/download', { data: {} })
-    expect(res.status()).toBe(400)
-    expect((await res.json()).error).toBe('Missing url')
-  })
-
-  test('a failed download says why, and cancel clears it', async ({
-    request,
-  }) => {
-    // Nothing listens on this port, so every attempt is refused; the sidecar
-    // retries a network failure before giving up, hence the wait.
-    const deadUrl = 'http://127.0.0.1:9/church-hub-test-v-9.9.9.dmg'
-    const started = await request.post('/api/app-update/download', {
-      data: { url: deadUrl, version: '9.9.9' },
-    })
-    expect(started.status()).toBe(200)
-    expect((await started.json()).data.phase).toBe('downloading')
-
-    await expect
-      .poll(
-        async () => {
-          const res = await request.get('/api/app-update/status')
-          return (await res.json()).data.phase
-        },
-        { timeout: 15000 },
-      )
-      .toBe('error')
-
-    const failed = (await (await request.get('/api/app-update/status')).json())
-      .data
-    expect(failed.errorCode).toBe('network')
-    expect(failed.error).toBeTruthy()
-
-    // Seen once, then gone — it must not greet the next visit as a new failure.
-    const cleared = await request.post('/api/app-update/cancel')
-    expect(cleared.status()).toBe(200)
-    expect((await cleared.json()).data).toMatchObject({
-      phase: 'idle',
-      error: null,
-      errorCode: null,
-    })
-  })
-
-  test('install refuses when nothing has been downloaded', async ({
-    request,
-  }) => {
-    // Nothing downloaded in this fresh folder, so there is nothing to install.
-    const res = await request.post('/api/app-update/install')
-    expect(res.status()).toBe(400)
-    expect((await res.json()).error).toBe('no_downloaded_artifact')
-  })
-})
-
 test.describe('App update - page', () => {
   test('the updates page shows the version and a working check button', async ({
     page,
@@ -172,8 +20,12 @@ test.describe('App update - page', () => {
     const panel = page.getByTestId('update-panel')
     await expect(panel).toBeVisible({ timeout: 10000 })
 
-    // Current version and the download folder are always shown.
-    await expect(panel.getByTestId('update-download-dir')).toBeVisible()
+    // The running version, and what pressing Install does — the restart
+    // must not come as a surprise.
+    await expect(panel.getByTestId('update-current-version')).toHaveText(
+      /^v\d+\.\d+\.\d+/,
+    )
+    await expect(panel.getByTestId('update-how-it-works')).toBeVisible()
 
     const check = panel.getByTestId('update-check-now')
     await expect(check).toBeVisible()
@@ -263,8 +115,10 @@ test.describe('App update - page', () => {
     expect(text).not.toContain('**')
     expect(text).not.toContain('Direct Downloads')
 
-    // A browser tab has no installer to fetch; it says so and links to GitHub.
+    // A browser tab has no signed installer to fetch; it says so and links
+    // to GitHub instead of offering a download it could not apply.
     await expect(card.getByTestId('update-unavailable')).toBeVisible()
+    await expect(card.getByTestId('update-download')).toHaveCount(0)
     await expect(card.getByRole('link', { name: /GitHub/ })).toHaveAttribute(
       'href',
       /releases\/tag\/v99\.0\.0/,
@@ -273,6 +127,59 @@ test.describe('App update - page', () => {
     await card.screenshot({
       path: `${process.env.UPDATE_SHOT_DIR ?? 'test-results'}/update-card.png`,
     })
+  })
+
+  test('a pre-release of the running version is not offered as an update', async ({
+    page,
+  }) => {
+    // The comparator is semver: a beta of the current version is older than
+    // the current version, however the naive digit-by-digit reading saw it.
+    const currentVersion = await page.evaluate(() => window.__appVersion)
+    await page.route('https://api.github.com/**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            tag_name: `v${currentVersion}-beta.2`,
+            name: 'beta',
+            body: "## What's Changed\n\n- nothing yet",
+            html_url: 'https://github.com/radio-crestin/church-hub/releases',
+            published_at: '2026-08-23T10:00:00Z',
+            draft: false,
+            prerelease: false,
+            assets: [],
+          },
+        ]),
+      }),
+    )
+
+    await page.goto('/settings/updates')
+    const panel = page.getByTestId('update-panel')
+    await expect(panel).toBeVisible({ timeout: 10000 })
+
+    const check = panel.getByTestId('update-check-now')
+    await check.click()
+    await expect(check).toBeEnabled({ timeout: 15000 })
+    await expect(panel.getByTestId('update-new-version')).toHaveCount(0)
+    await expect(panel.getByTestId('update-available')).toHaveCount(0)
+  })
+
+  test('the old sidecar update API is gone', async ({ request }) => {
+    // Downloads and installs go through the Tauri updater in the shell now;
+    // nothing should still answer on the sidecar. In development an unknown
+    // path falls through to Vite's HTML, in production to a plain 404 —
+    // either way, no JSON.
+    for (const path of [
+      '/api/app-update/status',
+      '/api/app-update/config',
+      '/api/app-update/download',
+    ]) {
+      const res = await request.get(path)
+      expect(res.headers()['content-type'] ?? '', path).not.toContain(
+        'application/json',
+      )
+    }
   })
 
   test('no update dialog opens over the app', async ({ page }) => {

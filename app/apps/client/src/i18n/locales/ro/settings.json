@@ -1263,16 +1263,7 @@
     },
     "updates": {
       "title": "Actualizări",
-      "description": "Unde se descarcă versiunile noi și cum se actualizează aplicația.",
-      "folder": {
-        "title": "Folderul descărcărilor",
-        "description": "Versiunile noi se descarcă aici. Implicit este folderul Downloads.",
-        "choose": "Alege folder",
-        "reset": "Folosește implicit",
-        "usingDefault": "Se folosește folderul Downloads al sistemului.",
-        "saved": "Folderul descărcărilor a fost salvat",
-        "failed": "Folderul descărcărilor nu a putut fi salvat"
-      },
+      "description": "Cum găsește, verifică și instalează aplicația versiunile noi.",
       "whatsNew": "Ce e nou în v{{version}}",
       "status": {
         "title": "Versiune",
@@ -1287,25 +1278,21 @@
         "downloading": "Se descarcă...",
         "readyToInstall": "Gata de instalare",
         "install": "Instalează și repornește",
-        "installFailed": "Instalarea nu a putut porni ({{reason}}). O instanță de dezvoltare nu se poate înlocui pe sine — încearcă dintr-o versiune instalată.",
         "installing": "Se instalează...",
         "unavailable": "Nu s-a putut determina ce installer se potrivește acestei mașini, deci nu există ce descărca automat.",
         "openRelease": "Deschide release-ul pe GitHub",
         "errors": {
           "network": "Nu s-a putut ajunge la GitHub pentru a descărca programul de instalare. Verifică dacă acest calculator este conectat la internet (și că niciun proxy sau firewall nu blochează), apoi încearcă din nou.",
           "http": "GitHub nu a livrat programul de instalare. Așteaptă puțin și încearcă din nou.",
-          "filesystem": "Programul de instalare nu a putut fi salvat în folderul de descărcare. Alege alt folder mai jos și încearcă din nou.",
-          "unknown": "Descărcarea a eșuat."
+          "unknown": "Descărcarea a eșuat.",
+          "signature": "Fișierul descărcat nu a trecut verificarea semnăturii, așa că nu a fost instalat. Încearcă din nou; dacă se repetă, ia release-ul de pe GitHub.",
+          "install": "Actualizarea nu a putut fi instalată și versiunea curentă rulează în continuare. Încearcă din nou sau instalează release-ul de pe GitHub. O instanță de dezvoltare nu se poate înlocui pe sine."
         }
       },
-      "installer": {
-        "title": "Church Hub",
-        "closing": "Se închide aplicația…",
-        "installing": "Se instalează versiunea {{version}}…",
-        "launching": "Se pornește noua versiune…",
-        "hint": "Aplicația se redeschide singură când e gata.",
-        "failed": "Actualizarea nu a putut fi instalată: {{reason}}",
-        "openManually": "Deschide Church Hub manual; programul de instalare descărcat este în folderul de descărcări."
+      "howItWorks": "Instalarea închide Church Hub, îl înlocuiește cu noua versiune și îl redeschide singură. Cântările, programele și setările rămân. Pe Windows poate apărea scurt o fereastră de progres; nu trebuie apăsat nimic.",
+      "outcome": {
+        "updated": "Actualizat la v{{version}}",
+        "failed": "Actualizarea la v{{version}} nu s-a finalizat — rulează în continuare v{{current}}. Detalii în loguri."
       }
     },
     "about": {

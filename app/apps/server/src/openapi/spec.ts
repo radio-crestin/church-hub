@@ -4,7 +4,6 @@
 
 import { responses, securitySchemes } from './components'
 import {
-  appUpdatePaths,
   authPaths,
   backupPaths,
   bibleBookmarksPaths,
@@ -85,7 +84,6 @@ export const openApiSpec = {
     ...logsPaths,
     ...settingsPaths,
     ...databasePaths,
-    ...appUpdatePaths,
     ...backupPaths,
     ...syncPaths,
     ...devicesPaths,

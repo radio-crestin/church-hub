@@ -1261,16 +1261,7 @@
     },
     "updates": {
       "title": "Updates",
-      "description": "Where new versions are downloaded, and how the app updates itself.",
-      "folder": {
-        "title": "Download folder",
-        "description": "New versions are downloaded here. Defaults to your Downloads folder.",
-        "choose": "Choose folder",
-        "reset": "Use default",
-        "usingDefault": "Using the system Downloads folder.",
-        "saved": "Download folder saved",
-        "failed": "Could not save the download folder"
-      },
+      "description": "How the app finds, checks and installs new versions.",
       "whatsNew": "What's new in v{{version}}",
       "status": {
         "title": "Version",
@@ -1285,25 +1276,21 @@
         "downloading": "Downloading...",
         "readyToInstall": "Ready to install",
         "install": "Install and restart",
-        "installFailed": "The install could not start ({{reason}}). A development instance cannot replace itself — try it from an installed build.",
         "installing": "Installing...",
         "unavailable": "Could not work out which installer fits this machine, so there is nothing to download automatically.",
         "openRelease": "Open the release on GitHub",
         "errors": {
           "network": "Could not reach GitHub to fetch the installer. Check that this computer is online (and that no proxy or firewall is in the way), then try again.",
           "http": "GitHub did not hand over the installer. Wait a moment and try again.",
-          "filesystem": "The installer could not be saved to the download folder. Choose another folder below and try again.",
-          "unknown": "The download failed."
+          "unknown": "The download failed.",
+          "signature": "The downloaded file did not pass the signature check, so it was not installed. Try again; if it keeps failing, get the release from GitHub.",
+          "install": "The update could not be installed and the current version is still running. Try again, or install the release from GitHub. A development instance cannot replace itself."
         }
       },
-      "installer": {
-        "title": "Church Hub",
-        "closing": "Closing the app…",
-        "installing": "Installing version {{version}}…",
-        "launching": "Starting the new version…",
-        "hint": "The app reopens by itself when this is done.",
-        "failed": "The update could not be installed: {{reason}}",
-        "openManually": "Open Church Hub yourself; the downloaded installer is in the downloads folder."
+      "howItWorks": "Installing closes Church Hub, replaces it with the new version and opens it again by itself. Your songs, schedules and settings are kept. On Windows a short progress window may appear; nothing needs to be clicked.",
+      "outcome": {
+        "updated": "Updated to v{{version}}",
+        "failed": "The update to v{{version}} did not complete — still running v{{current}}. See the logs for details."
       }
     },
     "about": {

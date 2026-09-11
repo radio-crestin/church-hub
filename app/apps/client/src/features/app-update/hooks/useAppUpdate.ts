@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import { useToast } from '~/ui/toast'
+import { isTauri } from '~/utils/isTauri'
+import { takeUpdateOutcome } from '../services/takeUpdateOutcome'
+import { setPendingUpdate } from '../services/updateStore'
 import type { UpdateInfo } from '../services/versionService'
 import { checkForUpdates, getCurrentVersion } from '../services/versionService'
 
@@ -19,21 +24,23 @@ interface UseAppUpdateResult {
   isDismissed: boolean
   isDevInstance: boolean
   /**
-   * Runs the check. Pressing the button in the UI always reaches GitHub, even
-   * on a dev instance — see `checkNow` for why.
+   * Runs the check. Pressing the button in the UI always reaches the release
+   * feed, even on a dev instance — see `checkNow` for why.
    */
   checkNow: () => Promise<void>
   dismissUpdate: () => void
 }
 
 export function useAppUpdate(): UseAppUpdateResult {
+  const { t } = useTranslation('settings')
+  const { showToast } = useToast()
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isDismissed, setIsDismissed] = useState(false)
 
   /**
-   * Fills in the current version without contacting GitHub. Used for the
+   * Fills in the current version without contacting anything. Used for the
    * automatic check on a dev instance, where polling would only burn the
    * unauthenticated rate limit for a build that has nothing to upgrade to.
    */
@@ -45,15 +52,15 @@ export function useAppUpdate(): UseAppUpdateResult {
       hasUpdate: false,
       releaseUrl: '',
       releaseNotes: '',
-      downloadUrl: null,
       publishedAt: '',
+      installable: false,
     })
     setError(null)
     setIsLoading(false)
   }, [])
 
   /**
-   * Checks GitHub for a newer release.
+   * Checks for a newer release.
    *
    * This runs on a dev instance too. Automatic polling is still skipped there
    * — see the effect below — but a button labelled "Check now" that silently
@@ -64,7 +71,8 @@ export function useAppUpdate(): UseAppUpdateResult {
     setIsLoading(true)
     setError(null)
     try {
-      const info = await checkForUpdates()
+      const { info, update } = await checkForUpdates()
+      setPendingUpdate(update)
       setUpdateInfo(info)
 
       // Check if this version was dismissed
@@ -87,7 +95,7 @@ export function useAppUpdate(): UseAppUpdateResult {
   }, [updateInfo?.latestVersion])
 
   // On mount a dev instance only shows its own version; the operator can still
-  // press "Check now" to reach GitHub deliberately.
+  // press "Check now" to reach the release feed deliberately.
   useEffect(() => {
     if (IS_DEV_INSTANCE) {
       void showLocalVersionOnly()
@@ -105,6 +113,32 @@ export function useAppUpdate(): UseAppUpdateResult {
 
     return () => clearInterval(intervalId)
   }, [checkNow])
+
+  // The installer runs after the app has quit, so the only way to know how
+  // it went is to ask on the next launch. The answer is handed out once, so
+  // the toast shows once however many components use this hook.
+  useEffect(() => {
+    if (!isTauri() || IS_DEV_INSTANCE) return
+    void takeUpdateOutcome().then((outcome) => {
+      if (!outcome) return
+      if (outcome.status === 'updated') {
+        showToast(
+          t('sections.updates.outcome.updated', { version: outcome.to }),
+          'success',
+          { duration: 6000 },
+        )
+        return
+      }
+      showToast(
+        t('sections.updates.outcome.failed', {
+          version: outcome.to,
+          current: outcome.current,
+        }),
+        'error',
+        { duration: 12000 },
+      )
+    })
+  }, [showToast, t])
 
   return {
     updateInfo,

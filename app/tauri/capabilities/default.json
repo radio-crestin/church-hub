@@ -35,6 +35,7 @@
     "process:default",
     "process:allow-exit",
     "process:allow-restart",
+    "updater:default",
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
