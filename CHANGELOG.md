@@ -2,6 +2,16 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.98 — 2026-09-11
+
+### 🚀 Features
+
+- **songs**: edit and present on every song row, and a fixed editor modal
+
+### 🔧 Changes
+
+- install new versions through the Tauri updater, signed and without a wizard
+
 ## v0.1.97 — 2026-09-10
 
 ### 🔧 Changes
