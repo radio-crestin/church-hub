@@ -279,8 +279,16 @@ test.describe('Programe panel on the song page', () => {
       )
       await expect(row).toContainText(tagName)
 
-      // The dedicated button projects the song, as the row body already did.
-      await row.getByTestId('schedule-song-present-action').click()
+      // Clicking the row only walks to the song. Nothing reaches the screen,
+      // so reading through a program never projects by accident.
+      await request.post('/api/presentation/clear-temporary')
+      await row.getByTestId('schedule-song-open').click()
+      await page.waitForTimeout(1000)
+      const afterOpen = await request.get('/api/presentation/state')
+      expect((await afterOpen.json()).data?.temporaryContent).toBeFalsy()
+
+      // Projecting is the monitor button's job alone.
+      await row.getByTestId('schedule-song-present').click()
       await expect
         .poll(
           async () => {

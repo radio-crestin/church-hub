@@ -1,12 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-  ExternalLink,
-  GripVertical,
-  MonitorPlay,
-  Pencil,
-  X as XIcon,
-} from 'lucide-react'
+import { GripVertical, MonitorPlay, Pencil, X as XIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
@@ -37,13 +31,17 @@ interface ScheduleSongRowProps {
 }
 
 /**
- * One song of a program: a row that projects the song when clicked.
+ * One song of a program: a row that opens the song when clicked.
  *
  * It carries the same identifying details as a Marcaje row — title, category,
  * key line and tags — so a song reads the same wherever it is listed. Which
  * verse goes up is still chosen on the left of the page — the slide rail — so
  * this list stays a readable running order rather than a second, competing
  * verse picker.
+ *
+ * Opening and projecting are kept apart on purpose: walking the running order
+ * to read a song must not put it on the screen, so the body only navigates and
+ * the monitor button is the single way to project.
  */
 export function ScheduleSongRow({
   item,
@@ -127,13 +125,13 @@ export function ScheduleSongRow({
         testId="schedule-song-sung-toggle"
       />
 
-      {/* The row body projects. It mirrors the Marcaje row: title, then the
-          song's category and key line, then its tags. */}
+      {/* The row body opens the song. It mirrors the Marcaje row: title, then
+          the song's category and key line, then its tags. */}
       <button
         type="button"
-        onClick={onPresent}
-        title={t('panel.presentItem')}
-        data-testid="schedule-song-present"
+        onClick={onSelect}
+        title={t('panel.openSong')}
+        data-testid="schedule-song-open"
         className="flex-1 min-w-0 text-left py-1.5 pr-1 pl-1"
       >
         <div className="flex min-w-0 items-center gap-1.5">
@@ -173,19 +171,6 @@ export function ScheduleSongRow({
         )}
       </button>
 
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect()
-        }}
-        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-        title={t('panel.openSong')}
-        data-testid="schedule-song-open"
-      >
-        <ExternalLink size={14} />
-      </button>
-
       {onEdit ? (
         <button
           type="button"
@@ -210,7 +195,7 @@ export function ScheduleSongRow({
           }}
           className="flex-shrink-0 p-1.5 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
           title={t('panel.presentItem')}
-          data-testid="schedule-song-present-action"
+          data-testid="schedule-song-present"
         >
           <MonitorPlay size={14} />
         </button>
