@@ -2,6 +2,17 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.100 — 2026-09-11
+
+### 🚀 Features
+
+- **brand**: new open-book logo across the app, the installers and the web
+
+### 🔧 Changes
+
+- spell out the no-AI-co-author commit rule in CLAUDE.md
+- commits carry only their human author
+
 ## v0.1.99 — 2026-09-11
 
 _No notable changes._

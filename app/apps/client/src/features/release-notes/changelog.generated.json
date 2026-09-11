@@ -1,5 +1,26 @@
 [
   {
+    "version": "0.1.100",
+    "date": "2026-09-11T17:07:35+02:00",
+    "features": [
+      {
+        "scope": "brand",
+        "message": "new open-book logo across the app, the installers and the web"
+      }
+    ],
+    "bugFixes": [],
+    "changes": [
+      {
+        "scope": null,
+        "message": "spell out the no-AI-co-author commit rule in CLAUDE.md"
+      },
+      {
+        "scope": null,
+        "message": "commits carry only their human author"
+      }
+    ]
+  },
+  {
     "version": "0.1.99",
     "date": "2026-09-11T15:01:46+02:00",
     "features": [],
