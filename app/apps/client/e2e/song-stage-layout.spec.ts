@@ -763,6 +763,53 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('text typed while an autosave is running is saved too', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Autosave Typing ${Date.now()}`,
+        slides: [{ content: 'Start', sortOrder: 0 }],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(1, {
+        timeout: 10000,
+      })
+
+      // Typing steadily for a few seconds spans several autosaves, so most of
+      // the text arrives while one of them is on its way to the server.
+      await page.locator('[data-editing]').click()
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+      await page.keyboard.type(
+        ' and every word typed after it, one key at a time, for a while',
+        { delay: 60 },
+      )
+
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[0].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('one key at a time, for a while')
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('pasting text keeps the copied form without extra whitespace', async ({
     page,
     request,

@@ -66,6 +66,11 @@ function serialize(slides: LocalSlide[]): string {
   )
 }
 
+/** `serialize` plus the slide ids: tells one stored version of the song from another. */
+function signature(slides: LocalSlide[]): string {
+  return `${JSON.stringify(slides.map((s) => s.id))}${serialize(slides)}`
+}
+
 /**
  * PowerPoint-layout editing surface shown directly on the song page. Owns the
  * editable slide draft, autosaves changes (slides-only — the server preserves
@@ -87,20 +92,18 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const [savedSerialized, setSavedSerialized] = useState(() =>
     serialize(mapSlides(song)),
   )
+  // Bumped when the draft's text is rewritten from outside the in-place editor
+  // (the formatting bar, a save made elsewhere). The editor leaves its own DOM
+  // alone while the same slide is open, so it has to be told.
+  const [textVersion, setTextVersion] = useState(0)
   // Which slide the canvas is on — drives the speaker-notes panel below it.
   const [activeSlideIndex, setActiveSlideIndex] = useState(0)
 
-  // Re-seed the draft only when navigating to a different song, never on the
-  // refetch that follows an autosave (that would clobber in-progress edits).
+  // The song the draft belongs to, and the signature of the slides the server
+  // was last known to hold for it: what the draft was seeded from, or what the
+  // board's own latest save stored.
   const loadedSongIdRef = useRef(song.id)
-  useEffect(() => {
-    if (loadedSongIdRef.current !== song.id) {
-      loadedSongIdRef.current = song.id
-      const fresh = mapSlides(song)
-      setSlides(fresh)
-      setSavedSerialized(serialize(fresh))
-    }
-  }, [song])
+  const serverSignatureRef = useRef<string | null>(null)
 
   const currentSerialized = serialize(slides)
   const isDirty = currentSerialized !== savedSerialized
@@ -111,11 +114,14 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const slidesRef = useRef(slides)
   slidesRef.current = slides
   const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve())
+  // Saves running or waiting their turn.
+  const pendingSavesRef = useRef(0)
   const save = useCallback(() => {
+    const songId = song.id
     const run = async () => {
       const sent = slidesRef.current
       const result = await upsert.mutateAsync({
-        id: song.id,
+        id: songId,
         title: song.title,
         slides: sent.map((s, idx) => ({
           id: typeof s.id === 'number' ? s.id : undefined,
@@ -127,8 +133,12 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           styleOverrides: s.styleOverrides ?? null,
         })),
       })
+      // The operator moved to another song while this one was saving; the
+      // draft now belongs to that song.
+      if (loadedSongIdRef.current !== songId) return
       if (result.success && result.data) {
         const savedSlides = result.data.slides
+        serverSignatureRef.current = signature(mapSlides(result.data))
         // The ref is what the next queued save reads, and it may run before
         // this state update has rendered.
         slidesRef.current = adoptSavedSlideIds(
@@ -140,7 +150,10 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       }
       setSavedSerialized(serialize(sent))
     }
-    const queued = saveQueueRef.current.then(run)
+    pendingSavesRef.current += 1
+    const queued = saveQueueRef.current.then(run).finally(() => {
+      pendingSavesRef.current -= 1
+    })
     // A failed save still reaches its caller; the queue itself moves on.
     saveQueueRef.current = queued.catch(() => undefined)
     return queued
@@ -163,7 +176,37 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     await saveRef.current()
   }, [])
 
-  // Debounced autosave: persist slides shortly after the last edit.
+  // Takes in what the server now holds for the song: a different song opened
+  // on the page, or a save of this one made elsewhere — the Edit page, the
+  // editor modal behind the Marcaje/Programe pencils, another device. Seeding
+  // the draft only once left the stage on the old lyrics, and its next
+  // autosave wrote them back over that save. The board's own saves come back
+  // matching `serverSignatureRef` and change nothing. While a save is running
+  // or waiting, or the operator has edits not saved yet, the draft stays: it is
+  // what gets written next.
+  useEffect(() => {
+    const fresh = mapSlides(song)
+    const freshSignature = signature(fresh)
+    if (loadedSongIdRef.current === song.id) {
+      // First run: the draft was seeded from exactly this data.
+      if (serverSignatureRef.current === null) {
+        serverSignatureRef.current = freshSignature
+        return
+      }
+      if (freshSignature === serverSignatureRef.current) return
+      if (pendingSavesRef.current > 0 || isDirtyRef.current) return
+    }
+    loadedSongIdRef.current = song.id
+    serverSignatureRef.current = freshSignature
+    setSlides(fresh)
+    setSavedSerialized(serialize(fresh))
+    setTextVersion((version) => version + 1)
+  }, [song])
+
+  // Debounced autosave: persist slides shortly after the last edit. Also keyed
+  // on what was last saved: text typed while a save was running leaves the
+  // draft dirty throughout, and would otherwise wait for the next navigation —
+  // blocking saves made elsewhere from reaching the stage until then.
   useEffect(() => {
     if (!isDirty) return
     const timer = setTimeout(
@@ -173,7 +216,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       isPresentingRef.current ? LIVE_AUTOSAVE_DELAY_MS : AUTOSAVE_DELAY_MS,
     )
     return () => clearTimeout(timer)
-  }, [isDirty])
+  }, [isDirty, savedSerialized])
 
   // Live presentation position for THIS song (index is into the server's
   // expanded slide list; null when this song isn't the one being projected).
@@ -346,7 +389,6 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   // Rewriting the active slide's text from the formatting bar — re-casing a
   // selection is an edit like any other, so it goes through the slide draft and
   // the same debounced autosave.
-  const [textVersion, setTextVersion] = useState(0)
   const handleTextChange = useCallback(
     (plainText: string) => {
       setSlides((prev) =>
