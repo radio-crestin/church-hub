@@ -7,7 +7,6 @@ import {
   Download,
   FileText,
   Loader2,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Upload,
@@ -842,7 +841,6 @@ export function SchedulePresenter({
           <ActionMenu
             items={menuItems}
             label={tCommon('actionsMenu.trigger')}
-            triggerIcon={<MoreHorizontal size={16} />}
             testId="schedule-presenter-actions-menu"
           />
         </div>

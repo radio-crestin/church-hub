@@ -1,4 +1,3 @@
-import { MoreHorizontal } from 'lucide-react'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -163,7 +162,6 @@ export function MusicPage() {
           <ActionMenu
             items={isLargeScreen ? [editLayoutAction] : []}
             label={tCommon('actionsMenu.trigger')}
-            triggerIcon={<MoreHorizontal size={16} />}
             testId="music-actions-menu"
           />
         </div>

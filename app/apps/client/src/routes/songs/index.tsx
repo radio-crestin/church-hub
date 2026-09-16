@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
-import { Eye, MoreHorizontal, Plus } from 'lucide-react'
+import { Eye, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -472,7 +472,6 @@ function SongsPage() {
             <ActionMenu
               items={isLargeScreen ? [editLayoutAction] : []}
               label={tCommon('actionsMenu.trigger')}
-              triggerIcon={<MoreHorizontal size={16} />}
               testId="songs-actions-menu"
             />
           </div>

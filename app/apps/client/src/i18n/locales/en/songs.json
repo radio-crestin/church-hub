@@ -374,9 +374,7 @@
   },
   "actionsMenu": {
     "trigger": "More",
-    "bookmarkDescription": "Keep this song in Marcaje for quick access",
     "addToScheduleDescription": "Put this song into one of your programs",
-    "setKeyLineDescription": "Set the key shown on the song",
     "saveToFileDescription": "Export this song as a file on your computer",
     "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
     "editDescription": "Open the editor to change lyrics and slides"

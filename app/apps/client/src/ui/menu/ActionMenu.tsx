@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, MoreVertical } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -23,9 +23,8 @@ export interface ActionMenuItem {
 
 interface ActionMenuProps {
   items: ActionMenuItem[]
-  /** Visible trigger label, e.g. "Actions". */
+  /** Accessible name of the icon-only trigger and its tooltip, e.g. "More". */
   label: string
-  triggerIcon?: React.ReactNode
   testId?: string
   className?: string
   /** Which trigger edge the panel lines up with. */
@@ -48,7 +47,6 @@ function getPortalContainer(element: HTMLElement | null): HTMLElement {
 export function ActionMenu({
   items,
   label,
-  triggerIcon,
   testId,
   className,
   align = 'end',
@@ -298,19 +296,17 @@ export function ActionMenu({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
+        aria-label={label}
+        title={label}
         onClick={() => (isOpen ? close(false) : open(-1))}
         onKeyDown={handleTriggerKeyDown}
-        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+        className={`inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
           isOpen
             ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-700 dark:text-indigo-200'
             : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
         }`}
       >
-        {triggerIcon}
-        <span>{label}</span>
-        <ChevronDown
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+        <MoreVertical size={16} />
       </button>
       {isOpen && createPortal(panel, getPortalContainer(buttonRef.current))}
     </div>

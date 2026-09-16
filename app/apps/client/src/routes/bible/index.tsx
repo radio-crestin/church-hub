@@ -10,7 +10,6 @@ import {
   BookmarkCheck,
   CalendarPlus,
   Loader2,
-  MoreHorizontal,
   Settings,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -1549,7 +1548,6 @@ function BiblePage() {
             <ActionMenu
               items={bibleActionItems}
               label={t('actionsMenu.trigger')}
-              triggerIcon={<MoreHorizontal size={16} />}
               testId="bible-actions-menu"
             />
           </div>

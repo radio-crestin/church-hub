@@ -374,9 +374,7 @@
   },
   "actionsMenu": {
     "trigger": "Mai multe",
-    "bookmarkDescription": "Ține cântarea în Marcaje pentru acces rapid",
     "addToScheduleDescription": "Adaugă cântarea într-unul dintre programe",
-    "setKeyLineDescription": "Setează gama afișată pe cântare",
     "saveToFileDescription": "Exportă cântarea într-un fișier pe calculator",
     "toggleLayoutDescription": "Comută între editorul clasic și cel PowerPoint",
     "editDescription": "Deschide editorul pentru versuri și slide-uri"

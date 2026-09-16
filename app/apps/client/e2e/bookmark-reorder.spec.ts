@@ -5,8 +5,6 @@ import {
   test,
 } from '@playwright/test'
 
-import { actionsMenuItem } from './helpers/actions-menu'
-
 /**
  * Reordering bookmarks:
  * - the reordered songs must stay in the list (an optimistic update once wiped
@@ -118,14 +116,11 @@ test.describe('Bookmark reordering', () => {
         .poll(() => orderOfMine(request, songIds), { timeout: 10000 })
         .not.toEqual(songIds)
       expect(await orderOfMine(request, songIds)).toHaveLength(3)
-      // The bookmark toggle now lives inside the page actions menu, so its
-      // on/off state reads from aria-checked on the menu row.
-      const bookmarkRow = await actionsMenuItem(
-        page,
-        'song-actions-menu',
-        'song-bookmark-toggle',
+      // The bookmark toggle beside the page menu still reads as marked.
+      await expect(page.getByTestId('song-bookmark-toggle')).toHaveAttribute(
+        'aria-pressed',
+        'true',
       )
-      await expect(bookmarkRow).toHaveAttribute('aria-checked', 'true')
     } finally {
       await cleanup(request, songs)
     }
