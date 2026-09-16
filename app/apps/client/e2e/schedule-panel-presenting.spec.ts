@@ -648,4 +648,177 @@ test.describe('Programe panel presents and advances the program', () => {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
   })
+
+  test('the song page Next and Prev buttons walk a live program', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Control Program ${uniq}`, 2)
+    const schedule = await createSchedule(
+      request,
+      `E2E Control Program ${uniq}`,
+    )
+
+    try {
+      // song (2 slides) → announcement. Flat run: 0 and 1 are the slides, 2 is
+      // the announcement.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { slideType: 'announcement', slideContent: `Anunt ${uniq}` },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'normal')
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+
+      // The song belongs to the selected program, so its first slide goes up
+      // as the program's first step.
+      await page.getByTestId('song-slide-0').click()
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 0,
+        rowTestId: 'schedule-song-item',
+        stepTestId: 'song-slide-0',
+      })
+
+      // The buttons walk the program, like the arrow keys: the cursor moves
+      // with every slide, and past the song's last one comes the announcement
+      // (regression: the buttons moved only the song and left the program's
+      // cursor behind, so Next on the last slide ended the presentation).
+      const next = page.getByTestId('song-control-next')
+      await next.click()
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 1,
+        rowTestId: 'schedule-song-item',
+        stepTestId: 'song-slide-1',
+      })
+      await next.click()
+      await expectLiveStep(request, page, panel, {
+        type: 'announcement',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 2,
+        rowTestId: 'schedule-announcement-item',
+      })
+
+      await page.getByTestId('song-control-prev').click()
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 1,
+        rowTestId: 'schedule-song-item',
+        stepTestId: 'song-slide-1',
+      })
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('the PowerPoint stage keeps a live program on course', async ({
+    page,
+    context,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Stage Program ${uniq}`, 3)
+    const schedule = await createSchedule(request, `E2E Stage Program ${uniq}`)
+
+    try {
+      // song (3 slides) → announcement. Flat run: 0-2 are the slides, 3 is the
+      // announcement.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { slideType: 'announcement', slideContent: `Anunt ${uniq}` },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+
+      await panel.getByTestId('schedule-song-present').click()
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 0,
+        rowTestId: 'schedule-song-item',
+      })
+
+      // The stage's green button puts slide 2 up as a step of the program, so
+      // the program keeps its place (regression: it went up as a lone song and
+      // the program lost track of what was on screen).
+      await page.getByTestId('thumb-project').nth(1).click()
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 1,
+        rowTestId: 'schedule-song-item',
+      })
+
+      // The program page carries on from there with slide 3 — not from the top.
+      const programPage = await context.newPage()
+      await programPage.goto(`/schedules/${schedule.id}`)
+      await programPage.waitForLoadState('networkidle')
+      await expect(programPage.getByTestId('schedule-sub-item-1')).toHaveClass(
+        /ring-green-500/,
+        { timeout: 10000 },
+      )
+      await programPage.keyboard.press('ArrowRight')
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 2,
+        rowTestId: 'schedule-song-item',
+      })
+      await programPage.close()
+
+      // The stage's own Next walks the program too: past the song's last slide
+      // comes the announcement, and the stage stays on the slide it showed.
+      await thumbs.nth(1).click()
+      await page.getByTestId('stage-next').click()
+      await expectLiveStep(request, page, panel, {
+        type: 'announcement',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 3,
+        rowTestId: 'schedule-announcement-item',
+      })
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
 })

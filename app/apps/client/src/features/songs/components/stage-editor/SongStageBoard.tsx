@@ -14,9 +14,9 @@ import {
   useClearTemporaryContent,
   useNavigateTemporary,
   usePresentationState,
-  usePresentTemporarySong,
   usePreviewScreen,
 } from '~/features/presentation'
+import type { ScheduleFlatNavigation } from '~/features/schedules'
 import { SlideNotesPanel } from './SlideNotesPanel'
 import { SlideStyleToolbar } from './SlideStyleToolbar'
 import { SongStageEditor } from './SongStageEditor'
@@ -31,6 +31,17 @@ import { type LocalSlide } from '../SongSlideList'
 
 interface SongStageBoardProps {
   song: SongWithSlides
+  /**
+   * The program selected in the Programe panel. While one of its steps is on
+   * the projector, Next/Prev walk the program rather than just this song.
+   */
+  scheduleNav: ScheduleFlatNavigation
+  /**
+   * Projects a slide of this song by its (chorus-expanded) index — as a step of
+   * the selected program when the song belongs to it, the way the classic page
+   * does, so the program keeps its place.
+   */
+  onPresentSlide: (slideIndex: number) => Promise<void>
 }
 
 const AUTOSAVE_DELAY_MS = 1000
@@ -76,10 +87,13 @@ function signature(slides: LocalSlide[]): string {
  * editable slide draft, autosaves changes (slides-only — the server preserves
  * the rest of the song's metadata), and lets the operator present from the start.
  */
-export function SongStageBoard({ song }: SongStageBoardProps) {
+export function SongStageBoard({
+  song,
+  scheduleNav,
+  onPresentSlide,
+}: SongStageBoardProps) {
   const { t } = useTranslation(['songs', 'bible'])
   const upsert = useUpsertSong()
-  const presentSong = usePresentTemporarySong()
   const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
   const { data: presentationState } = usePresentationState()
@@ -236,34 +250,53 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   // Read by the autosave timer, which is scheduled before this is known.
   const isPresentingRef = useRef(isPresenting)
   isPresentingRef.current = isPresenting
+  // While a step of the selected program is live, Prev/Next walk the program.
   // When presenting, Prev/Next drive the live show (Next is allowed on the last
   // slide — the server ends the presentation). When NOT presenting they browse
   // the slides on the canvas, so keep them usable as long as there's more than
   // one slide (the editor clamps at the ends).
-  const canNavigatePrev = isPresenting
-    ? presentedSlideIndex > 0
-    : slides.length > 1
-  const canNavigateNext = isPresenting || slides.length > 1
+  const isProgramLive = scheduleNav.isScheduleLive
+  const canNavigatePrev = isProgramLive
+    ? scheduleNav.canNavigatePrev
+    : isPresenting
+      ? presentedSlideIndex > 0
+      : slides.length > 1
+  const canNavigateNext = isProgramLive
+    ? scheduleNav.canNavigateNext
+    : isPresenting || slides.length > 1
 
   // Bumped on each navigation (Present/Next/Prev). The stage editor watches this
   // to move its canvas selection — snapping to the live slide while presenting,
   // or stepping by `navDir` when nothing is projected. Projecting a single slide
   // (green thumbnail button) deliberately does NOT bump it, so it never moves
-  // the slide being edited. `navDir` records the last direction (+1/-1).
+  // the slide being edited. `navDir` records the last direction (+1/-1), or 0
+  // when the program moved the projector: the canvas follows it while it is on
+  // this song and otherwise stays where it is.
   const [nav, setNav] = useState({ seq: 0, dir: 1 })
   const bumpNav = useCallback(
     (dir: number) => setNav((n) => ({ seq: n.seq + 1, dir })),
     [],
   )
 
+  const [isStartingPresentation, setIsStartingPresentation] = useState(false)
   const handlePresent = useCallback(async () => {
-    await flushSave()
-    await presentSong.mutateAsync({ songId: song.id, slideIndex: 0 })
-    bumpNav(1)
-  }, [flushSave, presentSong, song.id, bumpNav])
+    setIsStartingPresentation(true)
+    try {
+      await flushSave()
+      await onPresentSlide(0)
+      bumpNav(1)
+    } finally {
+      setIsStartingPresentation(false)
+    }
+  }, [flushSave, onPresentSlide, bumpNav])
 
   const handlePrev = useCallback(async () => {
     await flushSave()
+    if (isProgramLive) {
+      await scheduleNav.goPrev()
+      bumpNav(0)
+      return
+    }
     if (isPresenting) {
       // Server clamps prev at the first slide (never closes), so don't gate on
       // the local slide index — a fast next→prev on a presenter remote would
@@ -273,14 +306,36 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       return
     }
     if (slides.length > 1) bumpNav(-1)
-  }, [flushSave, isPresenting, navigateTemporary, bumpNav, slides.length])
+  }, [
+    flushSave,
+    isProgramLive,
+    scheduleNav,
+    isPresenting,
+    navigateTemporary,
+    bumpNav,
+    slides.length,
+  ])
 
   const handleNext = useCallback(async () => {
     if (!canNavigateNext) return
     await flushSave()
+    if (isProgramLive) {
+      // Past this song's last slide comes the program's next item.
+      await scheduleNav.goNext()
+      bumpNav(0)
+      return
+    }
     if (isPresenting) await navigateTemporary.mutateAsync({ direction: 'next' })
     bumpNav(1)
-  }, [flushSave, canNavigateNext, isPresenting, navigateTemporary, bumpNav])
+  }, [
+    flushSave,
+    canNavigateNext,
+    isProgramLive,
+    scheduleNav,
+    isPresenting,
+    navigateTemporary,
+    bumpNav,
+  ])
 
   // Prev/Next pressed while a slide is being edited. Letting the press take the
   // focus ends edit mode on mousedown, the formatting bar goes away and the
@@ -355,11 +410,9 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const handleProjectSlide = useCallback(
     (index: number) => {
       const slideIndex = displayIndexByPosition.get(index) ?? index
-      void flushSave().then(() =>
-        presentSong.mutateAsync({ songId: song.id, slideIndex }),
-      )
+      void flushSave().then(() => onPresentSlide(slideIndex))
     },
-    [flushSave, displayIndexByPosition, presentSong, song.id],
+    [flushSave, displayIndexByPosition, onPresentSlide],
   )
 
   // The page's own "show the selected slide" shortcut (Settings → Shortcuts →
@@ -454,7 +507,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           <button
             type="button"
             onClick={handlePresent}
-            disabled={presentSong.isPending}
+            disabled={isStartingPresentation}
             className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
             data-testid="stage-present"
           >

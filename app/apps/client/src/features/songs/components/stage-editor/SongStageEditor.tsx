@@ -28,8 +28,9 @@ interface SongStageEditorProps {
   /** Bumped by the parent on each navigation (Present/Next/Prev, button or
    * keyboard). The canvas selection reacts to a change in this counter. */
   navSeq?: number
-  /** Direction of the last navigation: +1 for Next, -1 for Prev. Used to step
-   * the selection when nothing is being projected. */
+  /** Direction of the last navigation: +1 for Next, -1 for Prev, 0 when it only
+   * moved the projector. Used to step the selection when nothing is being
+   * projected. */
   navDir?: number
   /** Whether this song is currently live. When true a navigation snaps the
    * selection to the projected slide; when false it steps it by `navDir`. */

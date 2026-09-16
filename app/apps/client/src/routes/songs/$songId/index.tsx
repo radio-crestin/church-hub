@@ -836,7 +836,13 @@ function SongPreviewPage() {
         {
           id: 'stage',
           title: t('layout.stage'),
-          render: () => <SongStageBoard song={song} />,
+          render: () => (
+            <SongStageBoard
+              song={song}
+              scheduleNav={scheduleNav}
+              onPresentSlide={presentSlide}
+            />
+          ),
         },
         ...sidePanels,
       ]
@@ -851,6 +857,7 @@ function SongPreviewPage() {
               onNextSlide={handleNextSlide}
               canNavigatePrev={canNavigatePrev}
               canNavigateNext={canNavigateNext}
+              isNavigating={navigateTemporary.isPending}
               previewMode={previewMode}
               onTogglePreviewMode={togglePreviewMode}
               previewContent={stagedPreviewContent}
