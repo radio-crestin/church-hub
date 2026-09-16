@@ -51,6 +51,19 @@ export function useWorkspaceLayout(
   const [layout, setLayout] = useState<WorkspaceLayout>(() =>
     reconcileWorkspaceLayout(readWorkspaceLayout(workspaceId), fallback, ids),
   )
+  const [layoutWorkspaceId, setLayoutWorkspaceId] = useState(workspaceId)
+
+  // A page can swap which workspace it shows without unmounting (the song page
+  // switching between its classic and PowerPoint layouts). The arrangement on
+  // screen belongs to the old id, so it is replaced with the new id's stored one
+  // during render: reconciling the old panel order against the new panel set
+  // would pile every unseen panel into the last column.
+  if (layoutWorkspaceId !== workspaceId) {
+    setLayoutWorkspaceId(workspaceId)
+    setLayout(
+      reconcileWorkspaceLayout(readWorkspaceLayout(workspaceId), fallback, ids),
+    )
+  }
 
   useEffect(() => {
     setLayout((current) => {

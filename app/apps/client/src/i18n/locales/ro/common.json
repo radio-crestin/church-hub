@@ -87,7 +87,9 @@
     "editingHint": "Trage un panou de mâner peste marginea altui panou",
     "doneEditing": "Gata",
     "newPosition": "Poziția nouă",
-    "layout": "Aranjare"
+    "layout": "Aranjare",
+    "hideColumn": "Ascunde coloana laterală",
+    "showColumn": "Arată coloana laterală"
   },
   "actionsMenu": {
     "trigger": "Mai multe"
