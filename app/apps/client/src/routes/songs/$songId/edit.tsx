@@ -113,12 +113,17 @@ function SongEditorPage() {
       setCategoryId(song.categoryId)
       const loadedTagIds = song.tags.map((tag) => tag.id)
       setTagIds(loadedTagIds)
+      // Notes and styling are edited on the stage, not here, but they ride
+      // along: a save rewrites every slide it sends, and one sent without them
+      // is stored without them.
       const mappedSlides = song.slides.map((s) => ({
         id: s.id,
         content: s.content,
         chords: s.chords,
         sortOrder: s.sortOrder,
         label: s.label,
+        notes: s.notes,
+        styleOverrides: s.styleOverrides,
       }))
       setSlides(mappedSlides)
 
@@ -169,6 +174,8 @@ function SongEditorPage() {
         chords: s.chords,
         sortOrder: idx,
         label: s.label,
+        notes: s.notes,
+        styleOverrides: s.styleOverrides,
       })),
       // Include metadata fields
       author: metadata.author,
@@ -194,6 +201,8 @@ function SongEditorPage() {
         chords: s.chords,
         sortOrder: s.sortOrder,
         label: s.label,
+        notes: s.notes,
+        styleOverrides: s.styleOverrides,
       }))
       const savedMetadata: SongMetadata = {
         author: result.data.author,

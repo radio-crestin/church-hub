@@ -56,6 +56,9 @@ export function SongEditorModal({
       setTitle(song.title)
       setCategoryId(song.categoryId)
       setTagIds(song.tags.map((tag) => tag.id))
+      // Notes and styling are edited on the stage, not here, but they ride
+      // along: a save rewrites every slide it sends, and one sent without them
+      // is stored without them.
       setSlides(
         song.slides.map((s) => ({
           id: s.id,
@@ -63,6 +66,8 @@ export function SongEditorModal({
           chords: s.chords,
           sortOrder: s.sortOrder,
           label: s.label,
+          notes: s.notes,
+          styleOverrides: s.styleOverrides,
         })),
       )
       setMetadata({
@@ -112,6 +117,8 @@ export function SongEditorModal({
         chords: s.chords,
         sortOrder: idx,
         label: s.label,
+        notes: s.notes,
+        styleOverrides: s.styleOverrides,
       })),
       // Include all metadata fields to preserve them during save
       author: metadata.author,
@@ -137,6 +144,8 @@ export function SongEditorModal({
           chords: s.chords,
           sortOrder: s.sortOrder,
           label: s.label,
+          notes: s.notes,
+          styleOverrides: s.styleOverrides,
         })),
       )
       setMetadata({
