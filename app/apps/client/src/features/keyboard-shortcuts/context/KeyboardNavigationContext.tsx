@@ -8,6 +8,7 @@ import {
 } from 'react'
 
 import { createLogger } from '~/utils/logger'
+import { isSlideEditorPageKey } from '../utils/isSlideEditorPageKey'
 
 const logger = createLogger('keyboard-navigation')
 
@@ -116,11 +117,13 @@ export function KeyboardNavigationProvider({
         }
       }
 
-      // Skip if user is in a contenteditable element (except Escape)
+      // Skip if user is in a contenteditable element (except Escape, and a
+      // presenter remote's page keys pressed in a slide editor)
       if (
         event.target instanceof HTMLElement &&
         event.target.isContentEditable &&
-        event.key !== 'Escape'
+        event.key !== 'Escape' &&
+        !isSlideEditorPageKey(event)
       ) {
         return
       }

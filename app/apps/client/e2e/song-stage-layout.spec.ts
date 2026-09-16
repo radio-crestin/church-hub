@@ -888,6 +888,79 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('PageDown/PageUp move the live slide on from inside the slide editor', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Remote Editing ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+
+      const stage = page.locator('[data-editing]')
+      const editable = page.getByTestId('slide-canvas-editable')
+      await stage.click()
+      await expect(editable).toBeVisible()
+
+      // Arrow keys still belong to the text: they move the caret.
+      await page.keyboard.press('Home')
+      await page.keyboard.press('ArrowRight')
+      await page.keyboard.type('X')
+      await expect(editable).toContainText('FXirst slide')
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+      expect(await liveSlideIndex(request)).toBe(0)
+
+      // A presenter remote's page keys mean "next slide" even mid-edit, and
+      // leave edit mode the way the Next button does.
+      await page.keyboard.press('PageDown')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[0].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('FXirst slide')
+
+      await stage.click()
+      await expect(editable).toBeVisible()
+      await page.keyboard.press('PageUp')
+      await expect.poll(() => liveSlideIndex(request)).toBe(0)
+      await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('presenter remote keys (PageDown/PageUp/Space) move the stage', async ({
     page,
     request,
