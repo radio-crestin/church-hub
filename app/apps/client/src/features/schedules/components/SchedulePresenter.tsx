@@ -34,7 +34,8 @@ import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import { getSongById } from '~/features/songs/service'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
 import { useEditLayoutAction, Workspace } from '~/features/workspace'
-import { ActionMenu } from '~/ui/menu'
+import { usePermissions } from '~/provider/permissions-provider'
+import { ActionMenu, type ActionMenuItem } from '~/ui/menu'
 import { useToast } from '~/ui/toast'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
@@ -84,6 +85,10 @@ export function SchedulePresenter({
   const { t } = useTranslation('schedules')
   const { t: tCommon } = useTranslation('common')
   const editLayoutAction = useEditLayoutAction('schedule-presenter')
+  // Renaming rewrites the program, so it follows the same permission as the
+  // program panel's editors.
+  const { hasPermission } = usePermissions()
+  const canEditProgram = hasPermission('programs.edit')
   const { showToast } = useToast()
   const navigate = useNavigate()
 
@@ -703,6 +708,25 @@ export function SchedulePresenter({
     },
   ]
 
+  // Panels only form movable columns on a large screen; renaming works anywhere.
+  const menuItems: ActionMenuItem[] = [
+    ...(canEditProgram
+      ? [
+          {
+            id: 'rename-schedule',
+            label: t('actions.rename'),
+            description: t('actions.renameDescription'),
+            icon: <Pencil size={18} />,
+            iconClassName:
+              'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+            onSelect: handleStartEditTitle,
+            testId: 'schedule-rename-action',
+          },
+        ]
+      : []),
+    ...(isLargeScreen ? [editLayoutAction] : []),
+  ]
+
   return (
     <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
       {/* Header */}
@@ -724,12 +748,17 @@ export function SchedulePresenter({
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
                   onKeyDown={handleTitleKeyDown}
+                  aria-label={t('modal.scheduleName')}
+                  data-testid="schedule-title-input"
                   className="flex-1 px-2 py-1 text-xl font-bold bg-white dark:bg-gray-900 border border-indigo-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
                 />
                 <button
                   type="button"
                   onClick={handleSaveTitle}
                   disabled={upsertSchedule.isPending}
+                  aria-label={t('actions.save')}
+                  title={t('actions.save')}
+                  data-testid="schedule-title-save"
                   className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
                 >
                   {upsertSchedule.isPending ? (
@@ -741,24 +770,33 @@ export function SchedulePresenter({
                 <button
                   type="button"
                   onClick={handleCancelEditTitle}
+                  aria-label={t('actions.cancel')}
+                  title={t('actions.cancel')}
                   className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
                   <X size={18} />
                 </button>
               </div>
             ) : (
-              <div
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={handleStartEditTitle}
-              >
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-                  {schedule.title}
-                </h1>
-                <Pencil
-                  size={16}
-                  className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                />
-              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {canEditProgram ? (
+                  <button
+                    type="button"
+                    onClick={handleStartEditTitle}
+                    aria-label={t('actions.renameNamed', {
+                      title: schedule.title,
+                    })}
+                    title={t('actions.rename')}
+                    data-testid="schedule-title-edit"
+                    className="flex max-w-full items-center gap-2 rounded-lg text-left hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  >
+                    <span className="truncate">{schedule.title}</span>
+                    <Pencil size={16} className="text-gray-400 shrink-0" />
+                  </button>
+                ) : (
+                  <span className="block truncate">{schedule.title}</span>
+                )}
+              </h1>
             )}
           </div>
         </div>
@@ -801,9 +839,8 @@ export function SchedulePresenter({
           >
             <Trash2 className="w-4 h-4" />
           </button>
-          {/* Panels only form movable columns on a large screen. */}
           <ActionMenu
-            items={isLargeScreen ? [editLayoutAction] : []}
+            items={menuItems}
             label={tCommon('actionsMenu.trigger')}
             triggerIcon={<MoreHorizontal size={16} />}
             testId="schedule-presenter-actions-menu"

@@ -13,7 +13,10 @@
     "editAsText": "Edit as Text",
     "cancel": "Cancel",
     "expandAll": "Expand all",
-    "collapseAll": "Collapse all"
+    "collapseAll": "Collapse all",
+    "rename": "Rename",
+    "renameNamed": "Rename program {{title}}",
+    "renameDescription": "Change the name of this program"
   },
   "editor": {
     "title": "Title",
@@ -70,7 +73,8 @@
     "previewTitle": "Preview",
     "presentItem": "Show this on screen",
     "openSong": "Open the song",
-    "openPassage": "Open the passage"
+    "openPassage": "Open the passage",
+    "renameSchedule": "Rename this program"
   },
   "search": {
     "placeholder": "Search schedules...",
@@ -176,7 +180,8 @@
     "searchSchedules": "Search programs...",
     "addedToSchedules_one": "Song added to {{count}} program",
     "addedToSchedules_other": "Song added to {{count}} programs",
-    "goToSchedule": "Edit"
+    "goToSchedule": "Edit",
+    "renameTitle": "Rename program"
   },
   "export": {
     "formatTitle": "Export Format",

@@ -20,6 +20,7 @@ import {
   CalendarPlus,
   ChevronDown,
   ExternalLink,
+  Pencil,
   Search,
   Trash2,
 } from 'lucide-react'
@@ -34,6 +35,7 @@ import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
+import { RenameScheduleModal } from './RenameScheduleModal'
 import {
   ScheduleItemEditors,
   type ScheduleItemEditorsHandle,
@@ -55,7 +57,7 @@ import {
   readSelectedScheduleId,
   writeSelectedScheduleId,
 } from '../service/selectedSchedule'
-import type { AddToScheduleInput, ScheduleItem } from '../types'
+import type { AddToScheduleInput, Schedule, ScheduleItem } from '../types'
 import { countScheduleItemSteps } from '../utils/scheduleFlatItems'
 
 interface SchedulePanelProps {
@@ -173,6 +175,9 @@ export function SchedulePanel({
   const addItemMutation = useAddItemToSchedule()
   const deleteScheduleMutation = useDeleteSchedule()
   const [pendingDelete, setPendingDelete] = useState(false)
+  const [renamingSchedule, setRenamingSchedule] = useState<Schedule | null>(
+    null,
+  )
   // Local order override so a drag lands instantly instead of waiting for the
   // refetch — cleared as soon as server data catches up.
   const [localOrder, setLocalOrder] = useState<ScheduleItem[] | null>(null)
@@ -668,6 +673,18 @@ export function SchedulePanel({
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             )}
+            {schedule && canEditProgram ? (
+              <button
+                type="button"
+                onClick={() => setRenamingSchedule(schedule)}
+                data-testid="schedule-rename"
+                aria-label={t('panel.renameSchedule')}
+                title={t('panel.renameSchedule')}
+                className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            ) : null}
             {selectedScheduleId && (
               <button
                 type="button"
@@ -800,6 +817,11 @@ export function SchedulePanel({
         variant="danger"
         onConfirm={handleDeleteSchedule}
         onCancel={() => setPendingDelete(false)}
+      />
+
+      <RenameScheduleModal
+        schedule={renamingSchedule}
+        onClose={() => setRenamingSchedule(null)}
       />
     </div>
   )
