@@ -23,6 +23,7 @@ import { SongStageEditor } from './SongStageEditor'
 import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
 import type { SlideStyleOverride, SongSlide, SongWithSlides } from '../../types'
+import { adoptSavedSlideIds } from '../../utils/adoptSavedSlideIds'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
 import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
 import { SlideCounter } from '../SlideCounter'
@@ -104,22 +105,46 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
   const currentSerialized = serialize(slides)
   const isDirty = currentSerialized !== savedSerialized
 
-  const save = useCallback(async () => {
-    await upsert.mutateAsync({
-      id: song.id,
-      title: song.title,
-      slides: slides.map((s, idx) => ({
-        id: typeof s.id === 'number' ? s.id : undefined,
-        content: s.content,
-        chords: s.chords,
-        sortOrder: idx,
-        label: s.label,
-        notes: s.notes,
-        styleOverrides: s.styleOverrides ?? null,
-      })),
-    })
-    setSavedSerialized(currentSerialized)
-  }, [upsert, song.id, song.title, slides, currentSerialized])
+  // Saves run one after another, each sending the draft as it stands when its
+  // turn comes. Two overlapping saves would both send a new slide without an
+  // id, and the second would replace the row the first had just created.
+  const slidesRef = useRef(slides)
+  slidesRef.current = slides
+  const saveQueueRef = useRef<Promise<unknown>>(Promise.resolve())
+  const save = useCallback(() => {
+    const run = async () => {
+      const sent = slidesRef.current
+      const result = await upsert.mutateAsync({
+        id: song.id,
+        title: song.title,
+        slides: sent.map((s, idx) => ({
+          id: typeof s.id === 'number' ? s.id : undefined,
+          content: s.content,
+          chords: s.chords,
+          sortOrder: idx,
+          label: s.label,
+          notes: s.notes,
+          styleOverrides: s.styleOverrides ?? null,
+        })),
+      })
+      if (result.success && result.data) {
+        const savedSlides = result.data.slides
+        // The ref is what the next queued save reads, and it may run before
+        // this state update has rendered.
+        slidesRef.current = adoptSavedSlideIds(
+          slidesRef.current,
+          sent,
+          savedSlides,
+        )
+        setSlides((prev) => adoptSavedSlideIds(prev, sent, savedSlides))
+      }
+      setSavedSerialized(serialize(sent))
+    }
+    const queued = saveQueueRef.current.then(run)
+    // A failed save still reaches its caller; the queue itself moves on.
+    saveQueueRef.current = queued.catch(() => undefined)
+    return queued
+  }, [upsert, song.id, song.title])
 
   /**
    * Persists pending edits right now instead of waiting out the autosave.
@@ -214,6 +239,18 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     bumpNav(1)
   }, [flushSave, canNavigateNext, isPresenting, navigateTemporary, bumpNav])
 
+  // Prev/Next pressed while a slide is being edited. Letting the press take the
+  // focus ends edit mode on mousedown, the formatting bar goes away and the
+  // stage reflows, so the button moves out from under the pointer and the click
+  // never lands. The focus stays put instead; the slide change the click makes
+  // ends editing anyway.
+  const keepSlideEditorFocus = useCallback((event: React.MouseEvent) => {
+    const editing = document.activeElement?.closest(
+      '[data-testid="slide-canvas-editable"], [data-testid="slide-style-toolbar"]',
+    )
+    if (editing) event.preventDefault()
+  }, [])
+
   const handleHide = useCallback(() => {
     void clearTemporary.mutateAsync()
   }, [clearTemporary])
@@ -234,9 +271,10 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
     onHidePresentation: handleEscape,
   })
 
-  // Map each slide's position to its expanded display index (the server inserts
-  // choruses after verses), so a thumbnail can be projected at the right index.
-  const displayIndexByPosition = useMemo(() => {
+  // The song as the projector runs it (the server inserts choruses after
+  // verses), built from the draft by position so every slide has a place in it
+  // whether or not it has a stored id yet.
+  const expandedSlides = useMemo(() => {
     const expandable: SongSlide[] = slides.map((s, i) => ({
       id: typeof s.id === 'number' ? s.id : -(i + 1),
       songId: song.id,
@@ -249,12 +287,26 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
       createdAt: 0,
       updatedAt: 0,
     }))
+    return expandSongSlidesWithChoruses(expandable)
+  }, [slides, song.id])
+
+  // Map each slide's position to its expanded display index, so a thumbnail
+  // can be projected at the right index.
+  const displayIndexByPosition = useMemo(() => {
     const map = new Map<number, number>()
-    for (const es of expandSongSlidesWithChoruses(expandable)) {
+    for (const es of expandedSlides) {
       if (!map.has(es.originalIndex)) map.set(es.originalIndex, es.displayIndex)
     }
     return map
-  }, [slides, song.id])
+  }, [expandedSlides])
+
+  // And back: the position of the slide the projector is showing. Navigation
+  // snaps the stage here, by position rather than by id, so it lands on the
+  // right thumbnail even when the draft and the projector disagree on an id.
+  const presentedSlidePosition =
+    presentedSlideIndex === null
+      ? null
+      : (expandedSlides[presentedSlideIndex]?.originalIndex ?? null)
 
   // Project a slide to the screen without moving the slide being edited.
   const handleProjectSlide = useCallback(
@@ -377,6 +429,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
           keyLine={song.keyLine}
           songId={song.id}
           presentedSlideId={presentedSlideId}
+          presentedSlidePosition={presentedSlidePosition}
           navSeq={nav.seq}
           navDir={nav.dir}
           isPresenting={isPresenting}
@@ -409,6 +462,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
               </div>
               <button
                 type="button"
+                onMouseDown={keepSlideEditorFocus}
                 onClick={handlePrev}
                 disabled={!canNavigatePrev || navigateTemporary.isPending}
                 className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
@@ -419,6 +473,7 @@ export function SongStageBoard({ song }: SongStageBoardProps) {
               </button>
               <button
                 type="button"
+                onMouseDown={keepSlideEditorFocus}
                 onClick={handleNext}
                 disabled={!canNavigateNext || navigateTemporary.isPending}
                 className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"

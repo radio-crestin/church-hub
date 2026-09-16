@@ -166,6 +166,7 @@ export function SlideThumbnail({
           <span
             role="button"
             tabIndex={-1}
+            data-testid="thumb-clone"
             onClick={(e) => {
               e.stopPropagation()
               onClone()

@@ -23,6 +23,8 @@ interface SongStageEditorProps {
   keyLine: string | null
   songId: number | null
   presentedSlideId?: number | null
+  /** Position in `slides` of the slide on the projector, or null. */
+  presentedSlidePosition?: number | null
   /** Bumped by the parent on each navigation (Present/Next/Prev, button or
    * keyboard). The canvas selection reacts to a change in this counter. */
   navSeq?: number
@@ -80,6 +82,7 @@ export function SongStageEditor({
   keyLine,
   songId,
   presentedSlideId,
+  presentedSlidePosition = null,
   navSeq = 0,
   navDir = 1,
   isPresenting = false,
@@ -155,20 +158,29 @@ export function SongStageEditor({
   // the live projected slide so the stage stays in sync with the output screen;
   // when nothing is live we step the selection by `navDir` so Next/Prev browse
   // the slides on the canvas. We key off `navSeq` (only bumped on navigation),
-  // NOT the projected id, so projecting a single slide via the green button
+  // NOT the projected slide, so projecting a single slide via the green button
   // still leaves the edited slide untouched.
-  const navStateRef = useRef({ slides, presentedSlideId, isPresenting, navDir })
-  navStateRef.current = { slides, presentedSlideId, isPresenting, navDir }
+  const navStateRef = useRef({
+    slides,
+    presentedSlidePosition,
+    isPresenting,
+    navDir,
+  })
+  navStateRef.current = { slides, presentedSlidePosition, isPresenting, navDir }
   useEffect(() => {
     if (navSeq === 0) return
     const {
       slides: sl,
-      presentedSlideId: pid,
+      presentedSlidePosition: livePosition,
       isPresenting: live,
       navDir: dir,
     } = navStateRef.current
     if (live) {
-      if (pid != null) setActiveId(pid)
+      // By position, not by id: an id the draft does not know would select
+      // nothing, and the stage used to drop back to the first slide. With no
+      // live slide to find, the selection stays where it is.
+      const liveSlide = livePosition === null ? undefined : sl[livePosition]
+      if (liveSlide) setActiveId(liveSlide.id)
       return
     }
     setActiveId((prev) => {
@@ -182,11 +194,24 @@ export function SongStageEditor({
   // The canvas always shows the SELECTED slide (the one "you're on"), in both
   // modes — projecting a different slide doesn't move it, and switching to Edit
   // keeps you on this slide. Projection is separate (green button / Present).
+  const lastActiveIndexRef = useRef(0)
   const activeIndex = useMemo(() => {
+    if (slides.length === 0) return -1
     const idx = slides.findIndex((s) => s.id === activeId)
     if (idx >= 0) return idx
-    return slides.length > 0 ? 0 : -1
+    // The selected id went away without the operator picking another slide —
+    // a save swapped a new slide's temporary id for its stored one. The slide
+    // is still in the same place, so stay there rather than on the first one.
+    return Math.min(lastActiveIndexRef.current, slides.length - 1)
   }, [slides, activeId])
+  if (activeIndex >= 0) lastActiveIndexRef.current = activeIndex
+
+  // Point the selection at that slide's current id, so later lookups by id
+  // (Next/Prev stepping while nothing is live) still find it.
+  useEffect(() => {
+    const slide = slides[activeIndex]
+    if (slide && slide.id !== activeId) setActiveId(slide.id)
+  }, [slides, activeIndex, activeId])
 
   const effectiveIndex = activeIndex < 0 ? 0 : activeIndex
   const effectiveSongId = songId ?? 0
