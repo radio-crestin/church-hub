@@ -25,9 +25,17 @@ const EMPTY_STYLE_RANGES: TextStyleRange[] = []
 // is given; the box inside is the largest one of the screen's proportions that
 // fits the frame, centred. Where the parent has no fixed height (song, Bible and
 // program panels) the frame simply follows the width.
+//
+// The box is taken out of flow on purpose. In flow, WebKit (the macOS desktop
+// app) resolves its `h-full` against the frame's width-derived height before
+// `max-h-full` caps it, so where the space is wider than the screen the box
+// grows past the frame and its bottom is cut off — the last lines of the
+// lyrics with it. Positioned against the frame, the height is the frame's
+// final one in every engine. Centred with auto margins, not a transform, so
+// the fixed-position context menu inside stays anchored to the viewport.
 const FRAME_CLASS = 'relative w-full max-h-full min-h-0'
 const BOX_CLASS =
-  'relative h-full max-w-full mx-auto rounded-lg overflow-hidden shadow-lg'
+  'absolute inset-0 m-auto h-full max-w-full rounded-lg overflow-hidden shadow-lg'
 
 interface LivePreviewProps {
   /**
