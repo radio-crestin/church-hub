@@ -9,6 +9,7 @@ import { EditableMainText } from './EditableMainText'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
+import { hasVisibleText } from './utils/hasVisibleText'
 import {
   calculatePixelBounds,
   clampBoundsToScreen,
@@ -581,24 +582,31 @@ export function ScreenContent({
   const renderClockOverride = () => {
     if (!clockOverride) return null
 
-    const { style, showSeconds, bounds } = getClockOverrideLayout(
+    const { style, showSeconds, bounds, opacity } = getClockOverrideLayout(
       clockOverride,
       screen.globalSettings.clockConfig,
       canvasWidth,
       canvasHeight,
+      hasVisibleText(config, contentData, isVisible),
     )
     const scaledBounds = scaleBounds(bounds)
 
+    // The wrapper only fades the clock; its box stays positioned against the
+    // screen, and the fade keeps pace with the text fading in and out over it.
     return (
-      <ClockText
+      <div
         key="clockOverride"
-        showSeconds={showSeconds}
-        style={{ ...style, maxFontSize: style.maxFontSize * fontScale }}
-        width={scaledBounds.width}
-        height={scaledBounds.height}
-        left={scaledBounds.x}
-        top={scaledBounds.y}
-      />
+        style={{ opacity, transition: 'opacity 300ms ease-out' }}
+      >
+        <ClockText
+          showSeconds={showSeconds}
+          style={{ ...style, maxFontSize: style.maxFontSize * fontScale }}
+          width={scaledBounds.width}
+          height={scaledBounds.height}
+          left={scaledBounds.x}
+          top={scaledBounds.y}
+        />
+      </div>
     )
   }
 
@@ -854,6 +862,9 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
+      {/* First, so the content's text is drawn over it; the screen background
+          belongs to the parent and stays below */}
+      {renderClockOverride()}
       {renderMainText()}
       {renderContentText()}
       {renderReferenceText()}
@@ -863,8 +874,6 @@ export function ScreenContent({
       {!clockOverride && renderClock()}
       {renderNextSlideSection()}
       {renderScreenSharePreview()}
-      {/* Last, so nothing on the slide can cover the clock that must stay in view */}
-      {renderClockOverride()}
       {activeChord && (
         <ChordDiagram
           chord={activeChord}

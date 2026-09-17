@@ -6,15 +6,19 @@ import {
 } from '@playwright/test'
 
 /**
- * The Control Room keeps a large Times New Roman clock in its preview whatever
- * the preview screen's clock settings are — also where the operators hid the
- * clock on the screen — and shows only that one. Every other preview still
- * mirrors the screen's own clock. The screen settings are rewritten in the
- * browser only, so nothing here changes the real screens or presents anything.
+ * The Control Room keeps a large bold Times New Roman clock in its preview
+ * whatever the preview screen's clock settings are — also where the operators
+ * hid the clock on the screen — and shows only that one. Text on screen is
+ * drawn over it, and it fades while there is any. Every other preview still
+ * mirrors the screen's own clock. The screen settings and the presentation
+ * state are rewritten in the browser only, so nothing here changes the real
+ * screens or what is live.
  */
 
 const CONTROL_ROOM_CLOCK_SIZE = 140
+const CLOCK_BEHIND_TEXT_OPACITY = 0.35
 const TIME_TEXT = /^\d{1,2}:\d{2}(:\d{2})?$/
+const LYRIC = 'E2E lyric that runs across the whole screen'
 
 type ScreenClock = 'hidden' | 'visible'
 
@@ -46,12 +50,14 @@ async function getPreviewScreen(
  * Serves the preview screen with its clock either hidden or shown in a small
  * system-ui style. Either way the clock is enabled for every content type, so
  * whatever the server happens to be presenting, only the clock settings decide
- * what the preview shows.
+ * what the preview shows. `lyricsFillScreen` stretches the lyrics over the
+ * whole screen, so they are certain to cross the clock.
  */
 async function serveScreenClock(
   page: Page,
   screenId: number,
   clock: ScreenClock,
+  { lyricsFillScreen = false } = {},
 ) {
   await page.route(`**/api/screens/${screenId}`, async (route) => {
     if (route.request().method() !== 'GET') return route.continue()
@@ -69,15 +75,74 @@ async function serveScreenClock(
       },
     }
     for (const config of Object.values(
-      screen.contentConfigs as Record<string, { clockEnabled?: boolean }>,
+      screen.contentConfigs as Record<
+        string,
+        { clockEnabled?: boolean; mainText?: { constraints: unknown } }
+      >,
     )) {
       config.clockEnabled = true
+      if (lyricsFillScreen && config.mainText) {
+        const edge = { enabled: true, value: 0, unit: '%' }
+        config.mainText.constraints = {
+          top: edge,
+          right: edge,
+          bottom: edge,
+          left: edge,
+        }
+      }
     }
     await route.fulfill({ response, json: body })
   })
 }
 
-/** Every clock drawn in the live preview, with its rendered font. */
+/**
+ * Serves a presentation state with a song slide on screen, or with nothing on
+ * it. Writes are refused: the slide change this fakes would otherwise have the
+ * page clear the live highlights.
+ */
+async function servePresentation(page: Page, onScreen: 'song' | 'nothing') {
+  await page.route('**/api/presentation/**', async (route) => {
+    const request = route.request()
+    if (request.method() !== 'GET') return route.abort()
+    if (!new URL(request.url()).pathname.endsWith('/presentation/state')) {
+      return route.continue()
+    }
+    const response = await route.fetch()
+    const body = await response.json()
+    const song = onScreen === 'song'
+    body.data = {
+      ...body.data,
+      currentSongSlideId: null,
+      lastSongSlideId: null,
+      isPresenting: song,
+      isHidden: !song,
+      slideHighlights: [],
+      temporaryContent: song
+        ? {
+            type: 'song',
+            data: {
+              songId: 1,
+              title: 'E2E Clock Song',
+              slides: [
+                {
+                  id: 1,
+                  sortOrder: 0,
+                  content: Array(4).fill(LYRIC).join('\n'),
+                },
+              ],
+              currentSlideIndex: 0,
+            },
+          }
+        : null,
+      // Newer than anything the server broadcasts, so the live state the
+      // WebSocket sends never replaces this one.
+      updatedAt: Date.now() + 10 ** 10,
+    }
+    await route.fulfill({ response, json: body })
+  })
+}
+
+/** Every clock drawn in the live preview, with its rendered font and opacity. */
 async function readPreviewClocks(page: Page) {
   const preview = page.getByTestId('live-preview')
   await expect(preview).toBeVisible({ timeout: 15000 })
@@ -98,9 +163,19 @@ async function readPreviewClocks(page: Page) {
           const text = document.createRange()
           text.selectNodeContents(node)
           const bounds = text.getBoundingClientRect()
+          let opacity = 1
+          for (
+            let layer: HTMLElement | null = node;
+            layer && layer !== element;
+            layer = layer.parentElement
+          ) {
+            opacity *= Number(getComputedStyle(layer).opacity)
+          }
           return {
             fontFamily: style.fontFamily,
             fontSize: Number.parseFloat(style.fontSize),
+            fontWeight: Number(style.fontWeight),
+            opacity,
             previewWidth: box.width,
             insidePreview:
               bounds.left >= box.left - 1 &&
@@ -138,6 +213,7 @@ test.describe('Control Room clock', () => {
 
         expect(previewClock.fontFamily).toMatch(/^"?Times New Roman"?,/)
         expect(previewClock.fontFamily).toContain('Liberation Serif')
+        expect(previewClock.fontWeight).toBeGreaterThanOrEqual(700)
         expect(previewClock.insidePreview).toBe(true)
 
         // 140px on the screen, scaled to the preview like the rest of the
@@ -157,6 +233,74 @@ test.describe('Control Room clock', () => {
       })
     }
   }
+
+  test('sits behind the lyrics and fades while a song slide is on screen', async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const screen = await getPreviewScreen(request)
+    await serveScreenClock(page, screen.id, 'hidden', {
+      lyricsFillScreen: true,
+    })
+    await servePresentation(page, 'song')
+
+    await page.goto('/present')
+
+    await expect
+      .poll(async () => (await readPreviewClocks(page))[0]?.opacity, {
+        timeout: 10000,
+      })
+      .toBeCloseTo(CLOCK_BEHIND_TEXT_OPACITY, 2)
+
+    // Where the lyrics cross the clock, the lyrics are what is on top.
+    await expect
+      .poll(
+        () =>
+          page.getByTestId('live-preview').evaluate(
+            (element, { lyric, timePattern }) => {
+              const time = new RegExp(timePattern)
+              const divs = [...element.querySelectorAll<HTMLElement>('div')]
+              // Each text keeps a hidden measuring copy inside its own layer.
+              const layerOf = (matches: (text: string) => boolean) =>
+                divs.find(
+                  (node) =>
+                    node.getAttribute('aria-hidden') === 'true' &&
+                    matches(node.textContent?.trim() ?? ''),
+                )?.parentElement
+              const lyricLayer = layerOf((text) => text.includes(lyric))
+              const clockLayer = layerOf((text) => time.test(text))
+              if (!lyricLayer || !clockLayer) return 'layers not drawn yet'
+
+              const clock = clockLayer.getBoundingClientRect()
+              const hit = document.elementFromPoint(
+                clock.right - clock.height / 2,
+                clock.top + clock.height / 2,
+              )
+              if (clockLayer.contains(hit)) return 'clock'
+              return lyricLayer.contains(hit) ? 'lyrics' : 'something else'
+            },
+            { lyric: LYRIC, timePattern: TIME_TEXT.source },
+          ),
+        { timeout: 10000 },
+      )
+      .toBe('lyrics')
+  })
+
+  test('stays solid with nothing on screen', async ({ page, request }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const screen = await getPreviewScreen(request)
+    await serveScreenClock(page, screen.id, 'hidden')
+    await servePresentation(page, 'nothing')
+
+    await page.goto('/present')
+
+    await expect
+      .poll(async () => (await readPreviewClocks(page))[0]?.opacity, {
+        timeout: 10000,
+      })
+      .toBe(1)
+  })
 })
 
 test.describe('Song page preview clock', () => {
