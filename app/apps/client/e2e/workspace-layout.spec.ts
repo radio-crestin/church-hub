@@ -9,12 +9,12 @@ import { selectAction } from './helpers/actions-menu'
  * through the database — rearranging on one computer never changes another's:
  *
  *   - `workspace.<id>.layout`    — which panel sits in which column;
- *   - `workspace.<id>.sizes.*`   — how wide each column and how tall each row is;
- *   - `workspace.<id>.heights`   — the height a collapsed panel goes back to.
+ *   - `workspace.<id>.sizes.*`   — how wide each column and how tall each row is.
  *
  * A panel is hidden by dragging its divider onto the edge, and shrinks to just
- * its header when its own collapse chevron is closed — and re-opening it puts
- * it back at the height it had, however long ago it was closed.
+ * its header when its own collapse chevron is closed. Opening or shutting a
+ * panel lays its whole column out again: shut panels keep their header and the
+ * open ones share the rest (see workspace-panel-collapse.spec.ts).
  *
  * Move handles are not part of the ordinary page at all: hovering a panel
  * reveals nothing. The page menu's "Edit layout" row is the only way in — it
