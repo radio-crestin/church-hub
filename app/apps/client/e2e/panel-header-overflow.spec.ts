@@ -218,9 +218,7 @@ test.describe('Panel header actions overflow into a More menu', () => {
       await expect(page.getByTestId('rename-schedule-input')).toHaveValue(
         scheduleTitle,
       )
-      // Closed from the backdrop: Escape in a dialog on this page also walks
-      // back to the song list, which is not what is under test here.
-      await page.mouse.click(20, 450)
+      await page.keyboard.press('Escape')
       await expect(renameModal).toBeHidden()
 
       // Marcaje: exporting from the menu still downloads the list.

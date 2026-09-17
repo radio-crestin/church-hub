@@ -8,6 +8,7 @@ import {
 } from 'react'
 
 import { createLogger } from '~/utils/logger'
+import { isDialogKey } from '../utils/isDialogKey'
 import {
   type HandledNavigationKey,
   isEchoedNavigationKey,
@@ -166,9 +167,11 @@ export function KeyboardNavigationProvider({
         return
       }
 
-      // Skip if any dialog/modal is open (native dialog element)
-      const openDialog = document.querySelector('dialog[open]')
-      if (openDialog && event.key !== 'Escape') {
+      // A dialog owns the keyboard, Escape included: left unhandled, Escape
+      // cancels the dialog, while a page handler taking it would go back to the
+      // list or hide the projection behind the dialog — and its preventDefault
+      // would keep the dialog open.
+      if (isDialogKey(event)) {
         return
       }
 
