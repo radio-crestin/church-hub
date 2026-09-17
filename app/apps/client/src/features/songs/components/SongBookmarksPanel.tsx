@@ -37,6 +37,7 @@ import { useTranslation } from 'react-i18next'
 import { usePresentTemporarySong } from '~/features/presentation'
 import { usePersistedChoice } from '~/hooks/usePersistedChoice'
 import { usePermissions } from '~/provider/permissions-provider'
+import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { SongEditorModal } from './SongEditorModal'
@@ -703,6 +704,108 @@ export function SongBookmarksPanel({
     return null
   }
 
+  const startAddingNote = () => {
+    setIsAddingNote(true)
+    setTimeout(() => newNoteInputRef.current?.focus(), 0)
+  }
+  const addAllToSchedule = onAddAllToSchedule
+    ? () => onAddAllToSchedule(bookmarks.map((b) => b.songId))
+    : null
+
+  // The header's actions in the order they sit. A column too narrow for all of
+  // them tucks the ones at the end under "More", clearing the list first.
+  const headerActions: OverflowAction[] =
+    totalCount > 0
+      ? [
+          {
+            id: 'add-note',
+            label: t('bookmarks.addNote'),
+            icon: <Plus size={18} />,
+            iconClassName:
+              'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+            onSelect: startAddingNote,
+            testId: 'bookmarks-add-note-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={startAddingNote}
+                data-testid="bookmarks-add-note"
+                className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
+                title={t('bookmarks.addNote')}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+          {
+            id: 'export',
+            label: t('bookmarks.exportAsText'),
+            icon: <Download size={18} />,
+            disabled: exportMutation.isPending,
+            onSelect: handleExport,
+            testId: 'bookmarks-export-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={exportMutation.isPending}
+                data-testid="bookmarks-export"
+                className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                title={t('bookmarks.exportAsText')}
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+          ...(addAllToSchedule
+            ? [
+                {
+                  id: 'add-all-to-schedule',
+                  label: t('actions.addToSchedule'),
+                  icon: <CalendarPlus size={18} />,
+                  iconClassName:
+                    'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                  onSelect: addAllToSchedule,
+                  testId: 'bookmarks-add-all-to-schedule-menu',
+                  inline: (
+                    <button
+                      type="button"
+                      onClick={addAllToSchedule}
+                      data-testid="bookmarks-add-all-to-schedule"
+                      title={t('actions.addToSchedule')}
+                      className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+                    >
+                      <CalendarPlus className="w-3.5 h-3.5" />
+                    </button>
+                  ),
+                },
+              ]
+            : []),
+          {
+            id: 'clear',
+            label: t('bookmarks.clear'),
+            icon: <Trash2 size={18} />,
+            iconClassName:
+              'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+            disabled: clearBookmarksMutation.isPending,
+            onSelect: () => clearBookmarksMutation.mutate(),
+            testId: 'bookmarks-clear-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={() => clearBookmarksMutation.mutate()}
+                disabled={clearBookmarksMutation.isPending}
+                data-testid="bookmarks-clear"
+                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                title={t('bookmarks.clear')}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []
+
   return (
     <div
       ref={songDropRef}
@@ -720,85 +823,47 @@ export function SongBookmarksPanel({
           even when collapsed so the operator can still Add/Export/Clear. */}
       <div
         data-panel-header
-        className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+        className="flex items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          {onToggleCollapse ? (
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              aria-expanded={!isCollapsed}
-              aria-label={
-                isCollapsed
-                  ? t('bookmarks.expand', 'Expand')
-                  : t('bookmarks.collapse', 'Collapse')
-              }
-              data-testid="bookmarks-collapse-toggle"
-              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-            >
-              <ChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
-              />
-            </button>
-          ) : null}
-          <Bookmark className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-            {t('bookmarks.title')}
-          </span>
-          {totalCount > 0 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({isSearching ? `${filteredItems.length}/` : ''}
-              {totalCount})
-            </span>
-          )}
-        </div>
-        {totalCount > 0 && (
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                setIsAddingNote(true)
-                setTimeout(() => newNoteInputRef.current?.focus(), 0)
-              }}
-              className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
-              title={t('bookmarks.addNote')}
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={exportMutation.isPending}
-              className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-              title={t('bookmarks.exportAsText')}
-            >
-              <Download className="w-3.5 h-3.5" />
-            </button>
-            {onAddAllToSchedule && (
-              <button
-                type="button"
-                onClick={() =>
-                  onAddAllToSchedule(bookmarks.map((b) => b.songId))
-                }
-                data-testid="bookmarks-add-all-to-schedule"
-                title={t('actions.addToSchedule')}
-                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => clearBookmarksMutation.mutate()}
-              disabled={clearBookmarksMutation.isPending}
-              className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
-              title={t('bookmarks.clear')}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+        <OverflowActions
+          testId="bookmarks-header-more"
+          actions={headerActions}
+          leading={
+            <>
+              {onToggleCollapse ? (
+                <button
+                  type="button"
+                  onClick={onToggleCollapse}
+                  aria-expanded={!isCollapsed}
+                  aria-label={
+                    isCollapsed
+                      ? t('bookmarks.expand', 'Expand')
+                      : t('bookmarks.collapse', 'Collapse')
+                  }
+                  data-testid="bookmarks-collapse-toggle"
+                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                  />
+                </button>
+              ) : null}
+              <Bookmark className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
+              {/* One truncating line, so a narrow column cuts the count
+                  before it cuts into the title. */}
+              <span className="min-w-0 truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('bookmarks.title')}
+                {totalCount > 0 && (
+                  <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                    ({isSearching ? `${filteredItems.length}/` : ''}
+                    {totalCount})
+                  </span>
+                )}
+              </span>
+            </>
+          }
+        />
       </div>
 
       {/* Body — hidden in the collapsed accordion state. Kept as a fragment

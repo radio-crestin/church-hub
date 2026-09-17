@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ExternalLink,
   Pencil,
+  Plus,
   Search,
   Trash2,
 } from 'lucide-react'
@@ -31,9 +32,11 @@ import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { usePermissions } from '~/provider/permissions-provider'
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
+import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
+import { Tooltip } from '~/ui/tooltip/Tooltip'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { RenameScheduleModal } from './RenameScheduleModal'
 import {
@@ -148,6 +151,7 @@ export function SchedulePanel({
   onToggleCollapse,
 }: SchedulePanelProps) {
   const { t } = useTranslation('schedules')
+  const { t: tCommon } = useTranslation('common')
   const { showToast } = useToast()
   // Adding and editing rewrite the program itself, so they follow the same
   // permission the program page's own editors do.
@@ -563,6 +567,180 @@ export function SchedulePanel({
     ],
   )
 
+  const toggleSearch = () => {
+    setIsSearchOpen((open) => {
+      if (open) setSearchQuery('')
+      return !open
+    })
+  }
+  const searchLabel = isSearchOpen
+    ? t('panel.closeSearch')
+    : t('panel.openSearch')
+
+  // The header's actions in the order they sit. A column too narrow for all of
+  // them tucks the ones at the end under "More", so the least-used (delete)
+  // goes first and adding to the program is the last to leave the row.
+  const headerActions: OverflowAction[] = [
+    ...(selectedScheduleId && canEditProgram
+      ? [
+          {
+            id: 'add-item',
+            label: tCommon('addMenu.title'),
+            icon: <Plus size={18} />,
+            iconClassName:
+              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+            onSelect: () => editorsRef.current?.addItem(),
+            testId: 'schedule-add-item-menu',
+            inline: (
+              <Tooltip content={tCommon('addMenu.button')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => editorsRef.current?.addItem()}
+                  data-testid="schedule-add-item"
+                  aria-label={tCommon('addMenu.button')}
+                  className="p-1.5 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
+            ),
+          },
+        ]
+      : []),
+    // Search lives behind this magnifier: the panel is narrow, and the running
+    // order is what the operator came here to read.
+    ...(selectedScheduleId
+      ? [
+          {
+            id: 'search',
+            label: t('panel.openSearch'),
+            icon: <Search size={18} />,
+            iconClassName:
+              'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+            active: isSearchOpen,
+            onSelect: toggleSearch,
+            testId: 'schedule-search-toggle-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={toggleSearch}
+                aria-expanded={isSearchOpen}
+                aria-label={searchLabel}
+                title={searchLabel}
+                data-testid="schedule-search-toggle"
+                className={`p-1.5 rounded-md transition-colors ${
+                  isSearchOpen
+                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
+                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
+    // Making a program out of the marked songs is the one action here that does
+    // not need a program selected — the modal creates one on the spot — so it
+    // stays up before the first program exists, which is exactly when the
+    // operator needs it.
+    ...(onAddAllBookmarks
+      ? [
+          {
+            id: 'add-all-bookmarks',
+            label: t('panel.addAllBookmarks'),
+            icon: <CalendarPlus size={18} />,
+            iconClassName:
+              'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+            onSelect: onAddAllBookmarks,
+            testId: 'schedule-add-all-bookmarks-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={onAddAllBookmarks}
+                data-testid="schedule-add-all-bookmarks"
+                title={t('panel.addAllBookmarks')}
+                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
+    ...(selectedScheduleId && onOpenSchedule
+      ? [
+          {
+            id: 'open',
+            label: t('panel.openSchedule'),
+            icon: <ExternalLink size={18} />,
+            iconClassName:
+              'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+            onSelect: () => onOpenSchedule(selectedScheduleId),
+            testId: 'schedule-open-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={() => onOpenSchedule(selectedScheduleId)}
+                data-testid="schedule-open"
+                className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
+                title={t('panel.openSchedule')}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
+    ...(schedule && canEditProgram
+      ? [
+          {
+            id: 'rename',
+            label: t('panel.renameSchedule'),
+            icon: <Pencil size={18} />,
+            onSelect: () => setRenamingSchedule(schedule),
+            testId: 'schedule-rename-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={() => setRenamingSchedule(schedule)}
+                data-testid="schedule-rename"
+                aria-label={t('panel.renameSchedule')}
+                title={t('panel.renameSchedule')}
+                className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
+    ...(selectedScheduleId
+      ? [
+          {
+            id: 'delete',
+            label: t('panel.deleteSchedule'),
+            icon: <Trash2 size={18} />,
+            iconClassName:
+              'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+            onSelect: () => setPendingDelete(true),
+            testId: 'schedule-delete-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={() => setPendingDelete(true)}
+                data-testid="schedule-delete"
+                title={t('panel.deleteSchedule')}
+                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
+  ]
+
   return (
     <div
       ref={songDropRef}
@@ -577,128 +755,45 @@ export function SchedulePanel({
           stack of accordion sections. */}
       <div
         data-panel-header
-        className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+        className="flex items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
       >
-        <div className="flex items-center gap-2 min-w-0">
-          {onToggleCollapse ? (
-            <button
-              type="button"
-              data-testid="schedule-collapse-toggle"
-              onClick={onToggleCollapse}
-              aria-expanded={!isCollapsed}
-              aria-label={isCollapsed ? t('panel.expand') : t('panel.collapse')}
-              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-            >
-              <ChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
-              />
-            </button>
-          ) : null}
-          <CalendarDays className="w-4 h-4 text-orange-500 dark:text-orange-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-            {t('panel.title')}
-          </span>
-          {orderedItems.length > 0 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({isSearching ? `${displayItems.length}/` : ''}
-              {orderedItems.length})
-            </span>
-          )}
-        </div>
-        {(selectedScheduleId || onAddAllBookmarks) && (
-          <div className="flex items-center gap-1">
-            {selectedScheduleId && canEditProgram ? (
-              <ScheduleItemEditors
-                ref={editorsRef}
-                scheduleId={selectedScheduleId}
-                onChanged={() =>
-                  queryClient.invalidateQueries({
-                    queryKey: ['schedule', selectedScheduleId],
-                  })
-                }
-                compactTrigger
-              />
-            ) : null}
-            {/* Search lives behind this magnifier: the panel is narrow, and the
-                running order is what the operator came here to read. */}
-            {selectedScheduleId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSearchOpen((open) => {
-                    if (open) setSearchQuery('')
-                    return !open
-                  })
-                }}
-                aria-expanded={isSearchOpen}
-                aria-label={
-                  isSearchOpen ? t('panel.closeSearch') : t('panel.openSearch')
-                }
-                title={
-                  isSearchOpen ? t('panel.closeSearch') : t('panel.openSearch')
-                }
-                data-testid="schedule-search-toggle"
-                className={`p-1.5 rounded-md transition-colors ${
-                  isSearchOpen
-                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
-                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {/* Making a program out of the marked songs is the one action here
-                that does not need a program selected — the modal creates one
-                on the spot — so it stays up before the first program exists,
-                which is exactly when the operator needs it. */}
-            {onAddAllBookmarks && (
-              <button
-                type="button"
-                onClick={onAddAllBookmarks}
-                data-testid="schedule-add-all-bookmarks"
-                title={t('panel.addAllBookmarks')}
-                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {selectedScheduleId && onOpenSchedule && (
-              <button
-                type="button"
-                onClick={() => onOpenSchedule(selectedScheduleId)}
-                data-testid="schedule-open"
-                className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
-                title={t('panel.openSchedule')}
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {schedule && canEditProgram ? (
-              <button
-                type="button"
-                onClick={() => setRenamingSchedule(schedule)}
-                data-testid="schedule-rename"
-                aria-label={t('panel.renameSchedule')}
-                title={t('panel.renameSchedule')}
-                className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            ) : null}
-            {selectedScheduleId && (
-              <button
-                type="button"
-                onClick={() => setPendingDelete(true)}
-                data-testid="schedule-delete"
-                title={t('panel.deleteSchedule')}
-                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        )}
+        <OverflowActions
+          testId="schedule-header-more"
+          actions={headerActions}
+          leading={
+            <>
+              {onToggleCollapse ? (
+                <button
+                  type="button"
+                  data-testid="schedule-collapse-toggle"
+                  onClick={onToggleCollapse}
+                  aria-expanded={!isCollapsed}
+                  aria-label={
+                    isCollapsed ? t('panel.expand') : t('panel.collapse')
+                  }
+                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                  />
+                </button>
+              ) : null}
+              <CalendarDays className="w-4 h-4 shrink-0 text-orange-500 dark:text-orange-400" />
+              {/* One truncating line, so a narrow column cuts the count
+                  before it cuts into the title. */}
+              <span className="min-w-0 truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('panel.title')}
+                {orderedItems.length > 0 && (
+                  <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                    ({isSearching ? `${displayItems.length}/` : ''}
+                    {orderedItems.length})
+                  </span>
+                )}
+              </span>
+            </>
+          }
+        />
       </div>
 
       {isCollapsed ? null : (
@@ -824,6 +919,20 @@ export function SchedulePanel({
         schedule={renamingSchedule}
         onClose={() => setRenamingSchedule(null)}
       />
+
+      {/* The add and edit dialogs live here, not beside the header's "+":
+          that button can be hidden in "More", and they must still open. */}
+      {selectedScheduleId && canEditProgram ? (
+        <ScheduleItemEditors
+          ref={editorsRef}
+          scheduleId={selectedScheduleId}
+          onChanged={() =>
+            queryClient.invalidateQueries({
+              queryKey: ['schedule', selectedScheduleId],
+            })
+          }
+        />
+      ) : null}
     </div>
   )
 }
