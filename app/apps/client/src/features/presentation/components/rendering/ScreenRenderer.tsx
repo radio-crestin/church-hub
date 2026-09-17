@@ -25,9 +25,21 @@ const DISCONNECT_HIDE_THRESHOLD = 5
 
 interface ScreenRendererProps {
   screenId: number
+  /**
+   * The program whose step is on the projector, if any. The arrows walk it —
+   * past the last slide into the item after — as the control window's do,
+   * rather than only moving within the item on screen.
+   */
+  liveProgram?: {
+    goNext: () => Promise<void>
+    goPrev: () => Promise<void>
+  } | null
 }
 
-export function ScreenRenderer({ screenId }: ScreenRendererProps) {
+export function ScreenRenderer({
+  screenId,
+  liveProgram = null,
+}: ScreenRendererProps) {
   const { debugInfo: wsDebugInfo, send: wsSend } = useWebSocket()
   const navigate = useNavigate()
 
@@ -514,10 +526,12 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
   // (or a presenter remote) presses while THIS window has the keyboard are
   // wired here: on a single monitor the projection is what has focus after
   // it opens, and after "Present" the control window is not always handed the
-  // keyboard back. Arrows / PageUp / PageDown / Space drive the same server
-  // navigation the control window uses, so the slide advances whichever of
-  // the two windows the keystroke lands in. Escape hides; "b" / "." (the
-  // remote's black-screen button) hide too while something is live.
+  // keyboard back. Arrows / PageUp / PageDown / Space move on the way the
+  // control window's Next/Prev do, so the slide advances whichever of the two
+  // windows the keystroke lands in: through the live program when one is up
+  // (one step per press, in order — see enqueueProgramNavigation), otherwise
+  // within the item on screen. Escape hides; "b" / "." (the remote's
+  // black-screen button) hide too while something is live.
   const hasNavigableContent =
     !!presentationState?.currentSongSlideId ||
     !!presentationState?.temporaryContent
@@ -537,14 +551,16 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
         case 'PageDown':
         case ' ':
           e.preventDefault()
-          if (hasNavigableContent)
+          if (liveProgram) void liveProgram.goNext()
+          else if (hasNavigableContent)
             navigateTemporary.mutate({ direction: 'next' })
           return
         case 'ArrowLeft':
         case 'ArrowUp':
         case 'PageUp':
           e.preventDefault()
-          if (hasNavigableContent)
+          if (liveProgram) void liveProgram.goPrev()
+          else if (hasNavigableContent)
             navigateTemporary.mutate({ direction: 'prev' })
           return
         case 'b':
@@ -568,7 +584,13 @@ export function ScreenRenderer({ screenId }: ScreenRendererProps) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [toggleFullscreen, clearSlide, navigateTemporary, hasNavigableContent])
+  }, [
+    toggleFullscreen,
+    clearSlide,
+    navigateTemporary,
+    hasNavigableContent,
+    liveProgram,
+  ])
 
   // Take the keyboard for the page itself.
   //
