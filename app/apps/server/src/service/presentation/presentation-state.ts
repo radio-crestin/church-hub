@@ -2,6 +2,7 @@ import { eq, sql } from 'drizzle-orm'
 
 import { expandSongSlidesWithChoruses } from './expand-song-slides'
 import { clearSlideHighlights, parseSlideHighlights } from './highlights'
+import { stepScheduleItemIndex } from './step-schedule-item-index'
 import type {
   PresentationState,
   PresentTemporaryAnnouncementInput,
@@ -878,6 +879,11 @@ function navigateTemporarySong(
     data: {
       ...data,
       currentSlideIndex: newIndex,
+      scheduleItemIndex: stepScheduleItemIndex(
+        data.scheduleItemIndex,
+        data.currentSlideIndex,
+        newIndex,
+      ),
     },
   }
 
@@ -917,6 +923,11 @@ function navigateTemporaryBiblePassage(
     data: {
       ...data,
       currentVerseIndex: newIndex,
+      scheduleItemIndex: stepScheduleItemIndex(
+        data.scheduleItemIndex,
+        data.currentVerseIndex,
+        newIndex,
+      ),
     },
   }
 
@@ -956,6 +967,11 @@ function navigateTemporaryVerseteTineri(
     data: {
       ...data,
       currentEntryIndex: newIndex,
+      scheduleItemIndex: stepScheduleItemIndex(
+        data.scheduleItemIndex,
+        data.currentEntryIndex,
+        newIndex,
+      ),
     },
   }
 

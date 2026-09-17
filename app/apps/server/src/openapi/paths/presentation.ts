@@ -248,7 +248,7 @@ export const presentationPaths = {
       tags: ['Presentation'],
       summary: 'Navigate within temporary content',
       description:
-        'Navigate to next or previous item within temporary content (verse or song slide)',
+        'Navigate to next or previous item within temporary content (verse or song slide). Content presented as a program step moves its scheduleItemIndex along with it, so the program keeps its place.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
