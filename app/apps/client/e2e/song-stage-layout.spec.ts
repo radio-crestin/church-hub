@@ -1282,4 +1282,84 @@ test.describe('Song editing layout preference', () => {
       await request.delete(`/api/songs/${created.id}`)
     }
   })
+
+  test('the stage follows the live slide moved from anywhere, but not while a slide is edited', async ({
+    page,
+    request,
+  }) => {
+    const screens = await (await request.get('/api/screens')).json()
+    const screenId = (screens.data as Array<{ id: number }>)[0]?.id
+    test.skip(!screenId, 'no screens configured')
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Stage Follows ${Date.now()}`,
+        slides: [
+          { content: 'Slide one', sortOrder: 0 },
+          { content: 'Slide two', sortOrder: 1 },
+          { content: 'Slide three', sortOrder: 2 },
+          { content: 'Slide four', sortOrder: 3 },
+          { content: 'Slide five', sortOrder: 4 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+    /** Moves the projector the way another device or MIDI does. */
+    const moveProjector = (direction: 'next' | 'prev') =>
+      request.post('/api/presentation/navigate-temporary', {
+        data: { direction, requestTimestamp: Date.now() },
+      })
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(5, { timeout: 10000 })
+
+      // Put up from somewhere else, then moved on from somewhere else: the
+      // stage keeps up with the projector without this page doing anything.
+      await request.post('/api/presentation/temporary-song', {
+        data: { songId: created.id, slideIndex: 0 },
+      })
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+      await moveProjector('next')
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      // The projection window's own arrows.
+      const projection = await page.context().newPage()
+      await projection.goto(`/screen/${screenId}`)
+      await projection.waitForLoadState('networkidle')
+      await projection.keyboard.press('ArrowRight')
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await projection.close()
+
+      // A slide being edited stays put: only the live marker moves on.
+      const stage = page.locator('[data-editing]')
+      await stage.click()
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+      await moveProjector('next')
+      await expect(
+        thumbs.nth(3).getByTestId('stage-thumbnail-live'),
+      ).toBeVisible()
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+
+      // Once editing is over, the next move is followed again.
+      await page.evaluate(() => (document.activeElement as HTMLElement).blur())
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+      await moveProjector('next')
+      await expect.poll(() => liveSlideIndex(request)).toBe(4)
+      await expect(thumbs.nth(4)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
 })

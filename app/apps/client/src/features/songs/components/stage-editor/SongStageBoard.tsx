@@ -279,6 +279,23 @@ export function SongStageBoard({
     [],
   )
 
+  // The slide this board put up itself with a thumbnail's green button (or the
+  // show-slide shortcut), by its index on the projector. That projection leaves
+  // the canvas on the slide the operator is working on, so the move it makes
+  // is not one to follow.
+  const projectedHereRef = useRef<number | null>(null)
+  // Bumped whenever the projector lands on another slide of this song by any
+  // other way: its window's arrows, MIDI, the program page, another device.
+  // Without it the canvas stayed put until this page's own next navigation.
+  // This page's Next/Prev bump it too, and snap to the same slide anyway.
+  const [followSeq, setFollowSeq] = useState(0)
+  useEffect(() => {
+    const projectedHere = projectedHereRef.current === presentedSlideIndex
+    projectedHereRef.current = null
+    if (presentedSlideIndex === null || projectedHere) return
+    setFollowSeq((seq) => seq + 1)
+  }, [presentedSlideIndex])
+
   const [isStartingPresentation, setIsStartingPresentation] = useState(false)
   const handlePresent = useCallback(async () => {
     setIsStartingPresentation(true)
@@ -411,6 +428,7 @@ export function SongStageBoard({
   const handleProjectSlide = useCallback(
     (index: number) => {
       const slideIndex = displayIndexByPosition.get(index) ?? index
+      projectedHereRef.current = slideIndex
       void flushSave().then(() => onPresentSlide(slideIndex))
     },
     [flushSave, displayIndexByPosition, onPresentSlide],
@@ -529,6 +547,7 @@ export function SongStageBoard({
           navSeq={nav.seq}
           navDir={nav.dir}
           isPresenting={isPresenting}
+          followSeq={followSeq}
           clickToEdit
           onProjectSlide={handleProjectSlide}
           onActiveSlideChange={setActiveSlideIndex}

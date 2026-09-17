@@ -141,7 +141,10 @@ export function SlideThumbnail({
           </span>
         )}
         {isPresented && (
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 ring-2 ring-white/70" />
+          <span
+            data-testid="stage-thumbnail-live"
+            className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 ring-2 ring-white/70"
+          />
         )}
 
         {/* Project this slide to the screen — independent of the edited slide */}

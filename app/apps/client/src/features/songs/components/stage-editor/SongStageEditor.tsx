@@ -35,6 +35,11 @@ interface SongStageEditorProps {
   /** Whether this song is currently live. When true a navigation snaps the
    * selection to the projected slide; when false it steps it by `navDir`. */
   isPresenting?: boolean
+  /** Bumped by the parent when the projector moved to another slide of this
+   * song without this page's navigation — the projection window, MIDI, the
+   * program page, another device. The canvas follows it unless a slide is
+   * being edited. */
+  followSeq?: number
   /** When false the canvas is read-only (presentation/navigation mode). */
   editable?: boolean
   /** PowerPoint-style implicit editing: click the stage to edit, and leave edit
@@ -87,6 +92,7 @@ export function SongStageEditor({
   navSeq = 0,
   navDir = 1,
   isPresenting = false,
+  followSeq = 0,
   editable = true,
   clickToEdit = false,
   onProjectSlide,
@@ -160,7 +166,8 @@ export function SongStageEditor({
   // when nothing is live we step the selection by `navDir` so Next/Prev browse
   // the slides on the canvas. We key off `navSeq` (only bumped on navigation),
   // NOT the projected slide, so projecting a single slide via the green button
-  // still leaves the edited slide untouched.
+  // still leaves the edited slide untouched. Moves of the projector made
+  // elsewhere are followed separately (`followSeq`, below).
   const navStateRef = useRef({
     slides,
     presentedSlidePosition,
@@ -168,20 +175,20 @@ export function SongStageEditor({
     navDir,
   })
   navStateRef.current = { slides, presentedSlidePosition, isPresenting, navDir }
+  // By position, not by id: an id the draft does not know would select
+  // nothing, and the stage used to drop back to the first slide. With no live
+  // slide to find, the selection stays where it is.
+  const selectLiveSlide = useCallback(() => {
+    const { slides: sl, presentedSlidePosition: livePosition } =
+      navStateRef.current
+    const liveSlide = livePosition === null ? undefined : sl[livePosition]
+    if (liveSlide) setActiveId(liveSlide.id)
+  }, [])
   useEffect(() => {
     if (navSeq === 0) return
-    const {
-      slides: sl,
-      presentedSlidePosition: livePosition,
-      isPresenting: live,
-      navDir: dir,
-    } = navStateRef.current
+    const { slides: sl, isPresenting: live, navDir: dir } = navStateRef.current
     if (live) {
-      // By position, not by id: an id the draft does not know would select
-      // nothing, and the stage used to drop back to the first slide. With no
-      // live slide to find, the selection stays where it is.
-      const liveSlide = livePosition === null ? undefined : sl[livePosition]
-      if (liveSlide) setActiveId(liveSlide.id)
+      selectLiveSlide()
       return
     }
     setActiveId((prev) => {
@@ -191,6 +198,23 @@ export function SongStageEditor({
       return sl[target]?.id ?? prev
     })
   }, [navSeq])
+
+  // The projector moved on without this page — its window's arrows, MIDI, the
+  // program page, another device — and the canvas goes with it, as it does
+  // with the page's own Next/Prev. Except onto a slide being edited: moving the
+  // canvas would close the editor under the operator's caret. Only the live
+  // marker in the filmstrip moves then, and the canvas follows again from the
+  // next move after editing ends — catching up the moment editing ends would
+  // also fire when it ends by clicking another slide, flashing the live one
+  // before the slide clicked.
+  const isEditingRef = useRef(false)
+  const handleEditingChange = useCallback((editing: boolean) => {
+    isEditingRef.current = editing
+  }, [])
+  useEffect(() => {
+    if (followSeq === 0 || isEditingRef.current) return
+    selectLiveSlide()
+  }, [followSeq, selectLiveSlide])
 
   // The canvas always shows the SELECTED slide (the one "you're on"), in both
   // modes — projecting a different slide doesn't move it, and switching to Edit
@@ -448,6 +472,7 @@ export function SongStageEditor({
               editingToolbar={canvasToolbar}
               onEditText={handleEditText}
               textVersion={textVersion}
+              onEditingChange={handleEditingChange}
             />
             {canvasFooter}
           </div>
@@ -462,6 +487,7 @@ export function SongStageEditor({
                 editingToolbar={canvasToolbar}
                 onEditText={handleEditText}
                 textVersion={textVersion}
+                onEditingChange={handleEditingChange}
               />
             </div>
             {canvasFooter}
