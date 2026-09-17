@@ -38,8 +38,9 @@ interface SongStageBoardProps {
   scheduleNav: ScheduleFlatNavigation
   /**
    * Projects a slide of this song by its (chorus-expanded) index — as a step of
-   * the selected program when the song belongs to it, the way the classic page
-   * does, so the program keeps its place.
+   * the selected program while that program is on the projector and holds the
+   * song, so it keeps its place; on its own otherwise. Same rule as the classic
+   * page.
    */
   onPresentSlide: (slideIndex: number) => Promise<void>
 }

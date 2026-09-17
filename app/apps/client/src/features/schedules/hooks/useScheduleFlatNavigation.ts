@@ -3,6 +3,8 @@ import { useCallback, useMemo } from 'react'
 
 import { switchOBSScene } from '~/features/livestream/service'
 import {
+  type PresentationState,
+  presentationStateQueryKey,
   useClearTemporaryContent,
   usePresentationState,
   usePresentTemporaryAnnouncement,
@@ -14,6 +16,8 @@ import {
 import { createLogger } from '~/utils/logger'
 import { useSchedule } from './useSchedule'
 import type { ScheduleItem } from '../types'
+import { enqueueProgramNavigation } from '../utils/enqueueProgramNavigation'
+import { liveScheduleFlatIndex } from '../utils/liveScheduleFlatIndex'
 import { getNextScheduleItemPreview } from '../utils/nextScheduleItemPreview'
 import {
   derivePresentedScheduleInfo,
@@ -134,17 +138,12 @@ export function useScheduleFlatNavigation({
   )
 
   // Only claim the cursor when the live content actually came from this
-  // program: a song presented straight from the song page carries no
-  // scheduleId, and must not light up a row here.
-  const isScheduleLive =
-    !!presentedInfo &&
-    !!scheduleId &&
-    presentedInfo.scheduleId === scheduleId &&
-    presentedInfo.scheduleItemIndex >= 0
-
-  const currentFlatIndex = isScheduleLive
-    ? (presentedInfo?.scheduleItemIndex ?? -1)
-    : -1
+  // program.
+  const currentFlatIndex = liveScheduleFlatIndex(
+    presentationState?.temporaryContent,
+    scheduleId,
+  )
+  const isScheduleLive = currentFlatIndex >= 0
 
   const canNavigatePrev = currentFlatIndex > 0
   // Next is still allowed on the last step: it hides the projection, which is
@@ -394,33 +393,56 @@ export function useScheduleFlatNavigation({
     [flatItems, navigateToFlatItem],
   )
 
-  const goPrev = useCallback(async () => {
-    if (currentFlatIndex <= 0) return
-    await presentFlatIndex(currentFlatIndex - 1)
-  }, [currentFlatIndex, presentFlatIndex])
+  // Next/prev step from the program's position as it stands when their turn
+  // comes, not when the key was pressed: presses still on their way would
+  // otherwise all be applied to the same step (see enqueueProgramNavigation).
+  const readLiveFlatIndex = useCallback(
+    () =>
+      liveScheduleFlatIndex(
+        queryClient.getQueryData<PresentationState>(presentationStateQueryKey)
+          ?.temporaryContent,
+        scheduleId,
+      ),
+    [queryClient, scheduleId],
+  )
 
-  const goNext = useCallback(async () => {
-    // Nothing live yet — start the program from the top.
-    if (currentFlatIndex < 0) {
-      await presentFlatIndex(0)
-      return
-    }
+  const goPrev = useCallback(
+    () =>
+      enqueueProgramNavigation(async () => {
+        const flatIndex = readLiveFlatIndex()
+        if (flatIndex <= 0) return
+        await presentFlatIndex(flatIndex - 1)
+      }),
+    [readLiveFlatIndex, presentFlatIndex],
+  )
 
-    // Past the last step there is nothing left to show; hide the projection.
-    if (currentFlatIndex >= flatItems.length - 1) {
-      if (presentationState?.temporaryContent) {
-        await clearTemporary.mutateAsync()
+  const goNext = useCallback(() => {
+    // Whether this press starts the program or moves a program already running.
+    const startsProgram = currentFlatIndex < 0
+    return enqueueProgramNavigation(async () => {
+      const flatIndex = readLiveFlatIndex()
+      if (flatIndex < 0) {
+        // Nothing live yet — start the program from the top. A press made
+        // while the program ran finds it ended by the press before it, and
+        // must not start it over.
+        if (startsProgram) await presentFlatIndex(0)
+        return
       }
-      return
-    }
 
-    await presentFlatIndex(currentFlatIndex + 1)
+      // Past the last step there is nothing left to show; hide the projection.
+      if (flatIndex >= flatItems.length - 1) {
+        await clearTemporary.mutateAsync()
+        return
+      }
+
+      await presentFlatIndex(flatIndex + 1)
+    })
   }, [
     clearTemporary,
     currentFlatIndex,
     flatItems.length,
     presentFlatIndex,
-    presentationState?.temporaryContent,
+    readLiveFlatIndex,
   ])
 
   return {

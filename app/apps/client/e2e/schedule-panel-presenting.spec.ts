@@ -59,6 +59,25 @@ async function readLiveStep(
   }
 }
 
+/** The live song's slide and program position, or null when no song is up. */
+async function readLiveSong(
+  request: import('@playwright/test').APIRequestContext,
+): Promise<{
+  currentSlideIndex: number
+  scheduleId: number | undefined
+  scheduleItemIndex: number | undefined
+} | null> {
+  const res = await request.get('/api/presentation/state')
+  const { data } = await res.json()
+  const content = data?.temporaryContent
+  if (content?.type !== 'song') return null
+  return {
+    currentSlideIndex: content.data.currentSlideIndex,
+    scheduleId: content.data.scheduleId,
+    scheduleItemIndex: content.data.scheduleItemIndex,
+  }
+}
+
 /**
  * Asserts the program step that is live, on the server AND in the panel.
  *
@@ -687,9 +706,28 @@ test.describe('Programe panel presents and advances the program', () => {
       const panel = page.getByTestId('schedule-songs-panel')
       await expect(panel).toBeVisible({ timeout: 10000 })
 
-      // The song belongs to the selected program, so its first slide goes up
-      // as the program's first step.
+      // The program is selected but not on the projector, so a slide clicked on
+      // the song page is the song on its own: no program step, no live row
+      // (regression: it went up as the program's first step and lit the row).
       await page.getByTestId('song-slide-0').click()
+      await expect
+        .poll(() => readLiveStep(request), { timeout: 10000 })
+        .toEqual({
+          type: 'song',
+          scheduleId: undefined,
+          scheduleItemIndex: undefined,
+        })
+      await expect(page.getByTestId('song-slide-0')).toHaveClass(
+        /ring-green-500/,
+        { timeout: 10000 },
+      )
+      await expect(panel.getByTestId('schedule-song-item')).not.toHaveClass(
+        /ring-orange-500/,
+      )
+
+      // Started from its row, the program is live, and its first slide is the
+      // program's first step.
+      await panel.getByTestId('schedule-song-present').click()
       await expectLiveStep(request, page, panel, {
         type: 'song',
         scheduleId: schedule.id,
@@ -854,6 +892,30 @@ test.describe('Programe panel presents and advances the program', () => {
       const thumbs = page.getByTestId('stage-thumbnail')
       await expect(thumbs).toHaveCount(3, { timeout: 10000 })
 
+      // Present with the program selected but idle is the song on its own:
+      // no program step and no live row, and a quick run of key presses moves
+      // the song one slide per press (regression: it went up as the program's
+      // step, and presses made before the projector answered were lost).
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+      await page.keyboard.press('ArrowDown')
+      await page.keyboard.press('ArrowDown')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 2,
+          scheduleId: undefined,
+          scheduleItemIndex: undefined,
+        })
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await expect(page.getByTestId('stage-hide')).toBeVisible()
+      await expect(panel.getByTestId('schedule-song-item')).not.toHaveClass(
+        /ring-orange-500/,
+      )
+
+      // Started from its row, the program is on the projector.
       await panel.getByTestId('schedule-song-present').click()
       await expectLiveStep(request, page, panel, {
         type: 'song',
@@ -901,6 +963,204 @@ test.describe('Programe panel presents and advances the program', () => {
         rowTestId: 'schedule-announcement-item',
       })
       await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test("a live program's row stays on the song the projector shows", async ({
+    page,
+    context,
+    request,
+  }) => {
+    const screens = await (await request.get('/api/screens')).json()
+    const screenId = (screens.data as Array<{ id: number }>)[0]?.id
+    test.skip(!screenId, 'no screens configured')
+
+    const uniq = Date.now()
+    const first = await createSong(request, `E2E Row First ${uniq}`, 3)
+    const second = await createSong(request, `E2E Row Second ${uniq}`, 3)
+    const schedule = await createSchedule(request, `E2E Row Prog ${uniq}`)
+
+    try {
+      // Two songs of three slides. Flat run: 0-2 the first song, 3-5 the second.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: first.id },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: second.id },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${second.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      const firstRow = panel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: first.title })
+      const secondRow = panel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: second.title })
+      await expect(secondRow).toBeVisible({ timeout: 10000 })
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+
+      await secondRow.getByTestId('schedule-song-present').click()
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 0,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 3,
+        })
+
+      // Down on the projection window, which answers the keys itself once it
+      // holds the keyboard: the song moves on, and so does its program step.
+      const projection = await context.newPage()
+      await projection.goto(`/screen/${screenId}`)
+      await projection.waitForLoadState('networkidle')
+      await projection.keyboard.press('ArrowDown')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toMatchObject({ currentSlideIndex: 1, scheduleItemIndex: 4 })
+      await projection.keyboard.press('ArrowDown')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 2,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 5,
+        })
+
+      // The program page rings the verse the projector shows.
+      const programPage = await context.newPage()
+      await programPage.goto(`/schedules/${schedule.id}`)
+      await programPage.waitForLoadState('networkidle')
+      await expect(programPage.getByTestId('schedule-sub-item-5')).toHaveClass(
+        /ring-green-500/,
+        { timeout: 10000 },
+      )
+      await programPage.close()
+      await projection.close()
+
+      // Back up to the second song's first slide from the stage: the program
+      // walks back through that song, and its row keeps the live ring
+      // (regression: the first Up jumped to the first song's last slide, whose
+      // row took the ring, and the stage lost its Hide button).
+      await page.bringToFront()
+      await page.keyboard.press('ArrowUp')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toMatchObject({ currentSlideIndex: 1, scheduleItemIndex: 4 })
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+      await page.keyboard.press('ArrowUp')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 0,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 3,
+        })
+      await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'true')
+      await expect(secondRow).toHaveClass(/ring-orange-500/)
+      await expect(firstRow).not.toHaveClass(/ring-orange-500/)
+      await expect(page.getByTestId('stage-hide')).toBeVisible()
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${first.id}`).catch(() => {})
+      await request.delete(`/api/songs/${second.id}`).catch(() => {})
+    }
+  })
+
+  test('each key press walks a live program exactly one step, in order', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Rapid Program ${uniq}`, 10)
+    const schedule = await createSchedule(request, `E2E Rapid Program ${uniq}`)
+
+    try {
+      // song (10 slides) → announcement. Flat run: 0-9 the slides, 10 the
+      // announcement.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { slideType: 'announcement', slideContent: `Anunt ${uniq}` },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(10, { timeout: 10000 })
+
+      // Every program step the page asks the projector for, in order.
+      const requestedSteps: number[] = []
+      page.on('request', (sent) => {
+        if (!sent.url().endsWith('/api/presentation/temporary-song')) return
+        requestedSteps.push(sent.postDataJSON().scheduleItemIndex)
+      })
+
+      await panel.getByTestId('schedule-song-present').click()
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 0,
+        rowTestId: 'schedule-song-item',
+      })
+
+      // Pressed faster than the projector answers, like a held key.
+      for (let press = 0; press < 4; press++) {
+        await page.keyboard.press('ArrowDown')
+      }
+      // A configured shortcut on a key the page binds too can arrive both ways
+      // for one press — as the key, and as the shortcut under whichever name it
+      // was stored with. Still one step each (regression: "Down" stored for
+      // the arrow did not match the page's "ArrowDown" and moved two).
+      for (let press = 0; press < 2; press++) {
+        await page.keyboard.press('PageDown')
+        await pressNavigationShortcut(page, 'next', 'PageDown')
+      }
+      await page.keyboard.press('ArrowDown')
+      await pressNavigationShortcut(page, 'next', 'Down')
+      await page.keyboard.press('ControlOrMeta+ArrowRight')
+      await pressNavigationShortcut(page, 'next', 'CmdOrCtrl+Right')
+
+      await expect
+        .poll(() => readLiveStep(request), { timeout: 10000 })
+        .toEqual({
+          type: 'song',
+          scheduleId: schedule.id,
+          scheduleItemIndex: 8,
+        })
+      await expect(thumbs.nth(8)).toHaveAttribute('aria-current', 'true')
+      expect(requestedSteps).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
+      await expect(page.getByTestId('stage-hide')).toBeVisible()
     } finally {
       await request.post('/api/presentation/clear-temporary').catch(() => {})
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})

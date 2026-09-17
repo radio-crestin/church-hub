@@ -1,4 +1,5 @@
 export { generateScheduleText } from './generateScheduleText'
+export { liveProgramItemForSong } from './liveProgramItemForSong'
 export { getNextScheduleItemPreview } from './nextScheduleItemPreview'
 export type {
   ParsedItemType,

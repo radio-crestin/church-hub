@@ -29,6 +29,25 @@ describe('isEchoedNavigationKey', () => {
     ).toBe(true)
   })
 
+  it('knows the key under another name the shell accepts', () => {
+    expect(
+      isEchoedNavigationKey(
+        { shortcut: 'ArrowDown', source: 'keyboard', at: 1000 },
+        { shortcut: 'Down', source: 'shortcut', at: 1010 },
+      ),
+    ).toBe(true)
+    expect(
+      isEchoedNavigationKey(
+        { shortcut: 'CmdOrCtrl+Right', source: 'shortcut', at: 1000 },
+        {
+          shortcut: 'CommandOrControl+ArrowRight',
+          source: 'keyboard',
+          at: 1010,
+        },
+      ),
+    ).toBe(true)
+  })
+
   it('takes a second press by the same route as a real press', () => {
     expect(
       isEchoedNavigationKey(pageKey, {

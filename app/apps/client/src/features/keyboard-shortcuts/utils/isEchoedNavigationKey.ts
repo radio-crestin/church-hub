@@ -1,3 +1,5 @@
+import { canonicalShortcut } from './canonicalShortcut'
+
 /**
  * How long apart the two arrivals of one key press can be. Both come from the
  * same physical press, so they land within a few milliseconds of each other;
@@ -7,7 +9,10 @@ export const NAVIGATION_ECHO_WINDOW_MS = 200
 
 /** A key the navigation handlers acted on, and the route it arrived by. */
 export interface HandledNavigationKey {
-  /** The key as shortcuts are stored ("PageDown", "CommandOrControl+Right"). */
+  /**
+   * The key as a shortcut string ("PageDown", "CommandOrControl+ArrowRight").
+   * Either spelling the shell accepts will do ("Down" or "ArrowDown").
+   */
   shortcut: string
   /** A key press in the page, or a configured shortcut the shell caught. */
   source: 'keyboard' | 'shortcut'
@@ -30,7 +35,8 @@ export function isEchoedNavigationKey(
 ): boolean {
   return (
     previous !== null &&
-    previous.shortcut === current.shortcut &&
+    canonicalShortcut(previous.shortcut) ===
+      canonicalShortcut(current.shortcut) &&
     previous.source !== current.source &&
     current.at - previous.at < NAVIGATION_ECHO_WINDOW_MS
   )

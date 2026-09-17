@@ -37,6 +37,7 @@ import type { ScheduleItem } from '~/features/schedules'
 import {
   AddSongToScheduleModal,
   getSchedulePassageTarget,
+  liveProgramItemForSong,
   ScheduleLiveItemPanel,
   SchedulePanel,
   useScheduleFlatNavigation,
@@ -344,38 +345,16 @@ function SongPreviewPage() {
   }, [previewMode, numericId])
 
   /**
-   * This song's place in the selected program, if it has one. A song can sit in
-   * a program twice, so the occurrence already on the projector wins — that is
-   * the one the operator is working through.
-   */
-  const scheduleItemForSong = useMemo(() => {
-    if (!selectedScheduleId) return null
-    const liveItem = scheduleNav.flatItems[scheduleNav.currentFlatIndex]?.item
-    if (liveItem?.itemType === 'song' && liveItem.songId === numericId) {
-      return liveItem
-    }
-    return (
-      scheduleNav.items.find(
-        (item) => item.itemType === 'song' && item.songId === numericId,
-      ) ?? null
-    )
-  }, [
-    selectedScheduleId,
-    scheduleNav.flatItems,
-    scheduleNav.currentFlatIndex,
-    scheduleNav.items,
-    numericId,
-  ])
-
-  /**
-   * Projects one slide of this song. When the song belongs to the selected
-   * program the slide goes up *as a step of that program*, so the cursor lands
-   * in the program and next carries on into whatever follows the song.
+   * Projects one slide of this song. While the selected program is on the
+   * projector and holds this song, the slide goes up *as a step of that
+   * program*, so the program keeps its place and next carries on into whatever
+   * follows the song. Otherwise the song goes up on its own.
    */
   const presentSlide = useCallback(
     async (index: number) => {
-      if (scheduleItemForSong) {
-        await scheduleNav.presentSongSlide(scheduleItemForSong, index)
+      const programItem = liveProgramItemForSong(scheduleNav, numericId)
+      if (programItem) {
+        await scheduleNav.presentSongSlide(programItem, index)
         return
       }
       await presentTemporarySong.mutateAsync({
@@ -383,7 +362,7 @@ function SongPreviewPage() {
         slideIndex: index,
       })
     },
-    [scheduleItemForSong, scheduleNav, numericId, presentTemporarySong],
+    [scheduleNav, numericId, presentTemporarySong],
   )
 
   const handleSlideClick = useCallback(
