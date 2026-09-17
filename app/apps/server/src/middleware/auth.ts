@@ -25,17 +25,19 @@ const READ_ONLY_LOCALHOST_PERMISSIONS: Permission[] = ALL_PERMISSIONS.filter(
  * Builds the `user_auth` Set-Cookie header value with attributes that
  * actually persist in every engine we target:
  *
- * - On desktop the UI is cross-site with this server (`tauri.localhost` /
- *   `tauri:` ↔ `localhost`), so the localhost cookie needs `SameSite=None`
- *   to be sent on those requests.
- * - Chromium (Windows WebView2, Chrome, Edge, CI) refuses `SameSite=None`
- *   without `Secure`, and treats plain-http localhost as trustworthy, so it
- *   gets `None; Secure`.
- * - WebKit (macOS WKWebView, Linux webkitgtk, Safari) is the inverse: it
- *   REJECTS `Secure` cookies delivered over plain http — with NO localhost
- *   exemption — but accepts `SameSite=None` without `Secure`. Sending
- *   `Secure` to WebKit means the cookie is silently dropped and login never
- *   sticks (the account picker just reloads).
+ * - Chromium (Windows WebView2, Chrome, Edge, CI) gets `None; Secure`. On
+ *   Windows the desktop UI (`tauri.localhost`) is cross-site with this server,
+ *   Chromium refuses `SameSite=None` without `Secure`, and it treats plain-http
+ *   localhost as trustworthy.
+ * - WebKit (Safari, macOS WKWebView, Linux webkitgtk/Epiphany) gets `Lax`.
+ *   Every WebKit REJECTS `Secure` over plain http — no localhost exemption —
+ *   and Linux WebKit (libsoup) also rejects `SameSite=None` without `Secure`,
+ *   so no `None` cookie survives there: login returned 200 yet the next
+ *   /api/auth/me was signed out and the login gate spun forever. `Lax` is
+ *   kept by both. It takes nothing from the desktop app: macOS WebKit sends,
+ *   replaces and clears a `Lax` cookie between two origins on the same host
+ *   (`localhost:*`) just as it does a `None` one, keeps neither across sites,
+ *   and the desktop authenticates with its `X-User-Auth` token anyway.
  * - Remote/LAN servers serve UI and API same-origin, where `Lax` is correct
  *   and `Secure` would equally be rejected over plain http.
  */
@@ -55,9 +57,8 @@ export function buildUserAuthCookie(
     !ua.includes('Chromium')
 
   const parts = [`user_auth=${token}`, 'HttpOnly']
-  if (isLocal) {
-    parts.push('SameSite=None')
-    if (!isNonChromiumWebKit) parts.push('Secure')
+  if (isLocal && !isNonChromiumWebKit) {
+    parts.push('SameSite=None', 'Secure')
   } else {
     parts.push('SameSite=Lax')
   }

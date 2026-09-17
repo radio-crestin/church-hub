@@ -18,7 +18,7 @@ const ROOT_DIR = dirname(fileURLToPath(import.meta.url))
 // once and saves the cookie here; every test reuses it so both the `page`
 // and `request` fixtures are authenticated.
 export const STORAGE_STATE = join(ROOT_DIR, 'e2e/.auth/super-admin.json')
-/** The same session for WebKit, which keeps no `Secure` cookie on plain http. */
+/** The same account signed in as WebKit, which gets its own cookie attributes. */
 export const WEBKIT_STORAGE_STATE = join(
   ROOT_DIR,
   'e2e/.auth/super-admin-webkit.json',

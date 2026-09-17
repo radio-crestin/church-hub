@@ -1,6 +1,11 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
-import { expect, test as setup } from '@playwright/test'
+import {
+  request as apiRequest,
+  devices,
+  expect,
+  test as setup,
+} from '@playwright/test'
 
 import { STORAGE_STATE, WEBKIT_STORAGE_STATE } from '../playwright.config'
 
@@ -19,7 +24,7 @@ interface LocalUser {
  * The super admin is created passwordless on a fresh database, and passwordless
  * login is allowed from localhost — so this works without any seeded password.
  */
-setup('authenticate as super admin', async ({ request }) => {
+setup('authenticate as super admin', async ({ request, baseURL }) => {
   const usersRes = await request.get('/api/auth/local-users')
   expect(usersRes.ok()).toBeTruthy()
 
@@ -46,17 +51,20 @@ setup('authenticate as super admin', async ({ request }) => {
   expect(loginRes.ok()).toBeTruthy()
 
   mkdirSync(dirname(STORAGE_STATE), { recursive: true })
-  const state = await request.storageState({ path: STORAGE_STATE })
+  await request.storageState({ path: STORAGE_STATE })
 
-  // The session cookie is `Secure`. Chromium sends it to http://localhost,
-  // which it counts as a secure context; WebKit does not, so a WebKit page
-  // would sign in afresh and never keep the cookie it is given. The WebKit
-  // project gets the same session without the flag.
-  writeFileSync(
-    WEBKIT_STORAGE_STATE,
-    JSON.stringify({
-      ...state,
-      cookies: state.cookies.map((cookie) => ({ ...cookie, secure: false })),
-    }),
-  )
+  // The server gives WebKit a different cookie than Chromium (see
+  // buildUserAuthCookie), so the WebKit project signs in as WebKit does and
+  // keeps exactly the cookie a WebKit page would be given. A cookie WebKit
+  // refuses then fails the WebKit specs instead of hiding behind a copy.
+  const webkitRequest = await apiRequest.newContext({
+    baseURL,
+    userAgent: devices['Desktop Safari'].userAgent,
+  })
+  const webkitLoginRes = await webkitRequest.post('/api/auth/login', {
+    data: { userId: (superAdmin as LocalUser).id },
+  })
+  expect(webkitLoginRes.ok()).toBeTruthy()
+  await webkitRequest.storageState({ path: WEBKIT_STORAGE_STATE })
+  await webkitRequest.dispose()
 })

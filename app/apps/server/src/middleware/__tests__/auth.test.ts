@@ -1,5 +1,10 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { adminOnlyMiddleware, authMiddleware, parseCookies } from '../auth'
+import {
+  adminOnlyMiddleware,
+  authMiddleware,
+  buildUserAuthCookie,
+  parseCookies,
+} from '../auth'
 
 // Mock dependencies
 mock.module('../../service/app-sessions', () => ({
@@ -67,6 +72,51 @@ describe('parseCookies', () => {
   it('handles empty cookie value', () => {
     const result = parseCookies('key=')
     expect(result).toEqual({ key: '' })
+  })
+})
+
+describe('buildUserAuthCookie', () => {
+  const CHROME_UA =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'
+  const SAFARI_UA =
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15'
+  const WEBKITGTK_UA =
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko)'
+
+  function cookieFor(host: string, userAgent: string): string {
+    return buildUserAuthCookie(
+      createRequest(`http://${host}/api/auth/login`, {
+        Host: host,
+        'User-Agent': userAgent,
+      }),
+      'tok',
+      60,
+    )
+  }
+
+  it('gives Chromium on localhost a cross-site cookie', () => {
+    expect(cookieFor('localhost:3000', CHROME_UA)).toBe(
+      'user_auth=tok; HttpOnly; SameSite=None; Secure; Max-Age=60; Path=/',
+    )
+  })
+
+  // Linux WebKit keeps neither `Secure` nor `SameSite=None` without it over
+  // plain http, so anything but `Lax` signs every WebKit page out on login.
+  it.each([
+    SAFARI_UA,
+    WEBKITGTK_UA,
+  ])('gives WebKit on localhost a Lax cookie without Secure (%s)', (userAgent) => {
+    expect(cookieFor('localhost:3000', userAgent)).toBe(
+      'user_auth=tok; HttpOnly; SameSite=Lax; Max-Age=60; Path=/',
+    )
+  })
+
+  it('gives a LAN host a Lax cookie scoped to that host in every engine', () => {
+    for (const userAgent of [CHROME_UA, SAFARI_UA]) {
+      expect(cookieFor('192.168.1.20:3000', userAgent)).toBe(
+        'user_auth=tok; HttpOnly; SameSite=Lax; Max-Age=60; Path=/; Domain=192.168.1.20',
+      )
+    }
   })
 })
 
