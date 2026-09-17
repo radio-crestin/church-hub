@@ -21,6 +21,14 @@ const DEFAULT_HIGHLIGHT_COLOR = '#FFFF00'
 // Stable empty array to prevent unnecessary re-renders when no highlights exist
 const EMPTY_STYLE_RANGES: TextStyleRange[] = []
 
+// The frame spans the full width and at most the full height of the space it
+// is given; the box inside is the largest one of the screen's proportions that
+// fits the frame, centred. Where the parent has no fixed height (song, Bible and
+// program panels) the frame simply follows the width.
+const FRAME_CLASS = 'relative w-full max-h-full min-h-0'
+const BOX_CLASS =
+  'relative h-full max-w-full mx-auto rounded-lg overflow-hidden shadow-lg'
+
 interface LivePreviewProps {
   /**
    * Local preview override (Preview mode). When set, the stage shows this
@@ -161,41 +169,57 @@ export function LivePreview({ previewContent = null }: LivePreviewProps) {
     )
   }, [slideHighlights, presentationState?.slideHighlights])
 
+  // Keep the preview in the projected screen's own proportions (16:9 until the
+  // screen's size is known), so elements land where they do on the screen.
+  const screenWidth = screen?.width ?? previewScreen?.width
+  const screenHeight = screen?.height ?? previewScreen?.height
+  const aspectRatio =
+    screenWidth && screenHeight ? `${screenWidth} / ${screenHeight}` : '16 / 9'
+
   // Loading state
   if (!screen) {
     return (
-      <div className="relative h-full max-w-full aspect-video rounded-lg overflow-hidden shadow-lg bg-gray-800 flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Loading...</div>
+      <div className={FRAME_CLASS} style={{ aspectRatio }}>
+        <div
+          className={`${BOX_CLASS} bg-gray-800 flex items-center justify-center`}
+          style={{ aspectRatio }}
+        >
+          <div className="text-gray-400 text-sm">Loading...</div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div
-      ref={previewContainerRef}
-      className="relative h-full max-w-full aspect-video rounded-lg overflow-hidden shadow-lg"
-      onContextMenu={handleContextMenu}
-    >
-      <ScreenPreview
-        screen={screen}
-        contentType={contentType}
-        contentData={contentData}
-        contentKey={contentKey}
-        isVisible={isVisible}
-        styleRanges={styleRanges}
-      />
-      {contextMenu.visible && (
-        <TextStyleContextMenu
-          position={{ x: contextMenu.x, y: contextMenu.y }}
-          onClose={handleCloseContextMenu}
-          onHighlight={handleHighlight}
-          onBold={handleBold}
-          onUnderline={handleUnderline}
-          onRemoveStyle={handleRemoveStyle}
-          showRemove={!!contextMenu.clickedHighlightId}
-          highlightColor={DEFAULT_HIGHLIGHT_COLOR}
+    <div className={FRAME_CLASS} style={{ aspectRatio }}>
+      <div
+        ref={previewContainerRef}
+        data-testid="live-preview"
+        className={BOX_CLASS}
+        style={{ aspectRatio }}
+        onContextMenu={handleContextMenu}
+      >
+        <ScreenPreview
+          screen={screen}
+          contentType={contentType}
+          contentData={contentData}
+          contentKey={contentKey}
+          isVisible={isVisible}
+          styleRanges={styleRanges}
         />
-      )}
+        {contextMenu.visible && (
+          <TextStyleContextMenu
+            position={{ x: contextMenu.x, y: contextMenu.y }}
+            onClose={handleCloseContextMenu}
+            onHighlight={handleHighlight}
+            onBold={handleBold}
+            onUnderline={handleUnderline}
+            onRemoveStyle={handleRemoveStyle}
+            showRemove={!!contextMenu.clickedHighlightId}
+            highlightColor={DEFAULT_HIGHLIGHT_COLOR}
+          />
+        )}
+      </div>
     </div>
   )
 }
