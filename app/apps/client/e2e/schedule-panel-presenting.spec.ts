@@ -1168,3 +1168,319 @@ test.describe('Programe panel presents and advances the program', () => {
     }
   })
 })
+
+/**
+ * Presents one slide of a song from the song page while its program is idle —
+ * which puts the song up on its own, as no step of the program.
+ */
+async function presentSongOnItsOwn(
+  request: import('@playwright/test').APIRequestContext,
+  page: import('@playwright/test').Page,
+  songId: number,
+  slideIndex: number,
+): Promise<void> {
+  // A live program would claim the song as its step; idle, it cannot.
+  await request.post('/api/presentation/clear-temporary')
+  await page.goto(`/songs/${songId}`)
+  await page.waitForLoadState('networkidle')
+  await page.getByTestId(`song-slide-${slideIndex}`).click()
+  await expect
+    .poll(() => readLiveSong(request), { timeout: 10000 })
+    .toEqual({
+      currentSlideIndex: slideIndex,
+      scheduleId: undefined,
+      scheduleItemIndex: undefined,
+    })
+}
+
+/**
+ * Opens the program page and waits until it shows the song on the projector,
+ * so Next and Prev are judged against what is on screen.
+ */
+async function openProgramPage(
+  page: import('@playwright/test').Page,
+  scheduleId: number,
+  liveSongTitle: string,
+): Promise<void> {
+  await page.goto(`/schedules/${scheduleId}`)
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByTitle(liveSongTitle, { exact: true })).toBeVisible({
+    timeout: 10000,
+  })
+}
+
+test.describe("a program's Next and Prev carry on from the song on screen", () => {
+  /**
+   * Two songs of three slides, then an announcement. Flat run: 0-2 the first
+   * song, 3-5 the second, 6 the announcement.
+   */
+  async function createProgram(
+    request: import('@playwright/test').APIRequestContext,
+    label: string,
+  ) {
+    const uniq = Date.now()
+    const first = await createSong(request, `E2E ${label} First ${uniq}`, 3)
+    const second = await createSong(request, `E2E ${label} Second ${uniq}`, 3)
+    const schedule = await createSchedule(request, `E2E ${label} ${uniq}`)
+    await request.post(`/api/schedules/${schedule.id}/items`, {
+      data: { songId: first.id },
+    })
+    await request.post(`/api/schedules/${schedule.id}/items`, {
+      data: { songId: second.id },
+    })
+    await request.post(`/api/schedules/${schedule.id}/items`, {
+      data: { slideType: 'announcement', slideContent: `Anunt ${uniq}` },
+    })
+    return { first, second, schedule }
+  }
+
+  async function removeProgram(
+    request: import('@playwright/test').APIRequestContext,
+    program: Awaited<ReturnType<typeof createProgram>>,
+  ) {
+    await request.post('/api/presentation/clear-temporary').catch(() => {})
+    await request
+      .delete(`/api/schedules/${program.schedule.id}`)
+      .catch(() => {})
+    await request.delete(`/api/songs/${program.first.id}`).catch(() => {})
+    await request.delete(`/api/songs/${program.second.id}`).catch(() => {})
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 900 })
+  })
+
+  test("the program page's Next and Prev buttons move on from the song on screen", async ({
+    page,
+    request,
+  }) => {
+    const program = await createProgram(request, 'Prog Buttons')
+    const { second, schedule } = program
+
+    try {
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'normal')
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+
+      await presentSongOnItsOwn(request, page, second.id, 0)
+      // Presenting it did not start the program: its row stays unlit.
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(
+        panel
+          .getByTestId('schedule-song-item')
+          .filter({ hasText: second.title }),
+      ).not.toHaveClass(/ring-orange-500/)
+
+      // Next is the second song's next slide, as a step of the program, and the
+      // program lights it (regression: the first song's first slide went up).
+      await openProgramPage(page, schedule.id, second.title)
+      await page.getByTestId('schedule-preview-next').click()
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 1,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 4,
+        })
+      await expect(page.getByTestId('schedule-sub-item-4')).toHaveClass(
+        /ring-green-500/,
+        { timeout: 10000 },
+      )
+
+      // From the song's last slide, Next is the item after the song.
+      await presentSongOnItsOwn(request, page, second.id, 2)
+      await openProgramPage(page, schedule.id, second.title)
+      await page.getByTestId('schedule-preview-next').click()
+      await expect
+        .poll(() => readLiveStep(request), { timeout: 10000 })
+        .toEqual({
+          type: 'announcement',
+          scheduleId: schedule.id,
+          scheduleItemIndex: 6,
+        })
+
+      // Prev from the song's first slide is the last slide of the song before
+      // it (regression: Prev stayed disabled).
+      await presentSongOnItsOwn(request, page, second.id, 0)
+      await openProgramPage(page, schedule.id, second.title)
+      const prev = page.getByTestId('schedule-preview-prev')
+      await expect(prev).toBeEnabled()
+      await prev.click()
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 2,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 2,
+        })
+      await expect(page.getByTestId('schedule-sub-item-2')).toHaveClass(
+        /ring-green-500/,
+        { timeout: 10000 },
+      )
+    } finally {
+      await removeProgram(request, program)
+    }
+  })
+
+  test("the program page's keys and shortcuts move on from the song on screen", async ({
+    page,
+    request,
+  }) => {
+    const program = await createProgram(request, 'Prog Keys')
+    const { second, schedule } = program
+
+    try {
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'normal')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+
+      // A key (or a presenter remote's page key) goes on to the song's next
+      // slide as a program step (regression: it did nothing).
+      await presentSongOnItsOwn(request, page, second.id, 1)
+      await openProgramPage(page, schedule.id, second.title)
+      await page.keyboard.press('ArrowRight')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 2,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 5,
+        })
+      await expect(page.getByTestId('schedule-sub-item-5')).toHaveClass(
+        /ring-green-500/,
+        { timeout: 10000 },
+      )
+
+      // A configured Next shortcut does the same.
+      await presentSongOnItsOwn(request, page, second.id, 0)
+      await openProgramPage(page, schedule.id, second.title)
+      await pressNavigationShortcut(page, 'next', 'F2')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 1,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 4,
+        })
+
+      // Back from the song's first slide is the song before it.
+      await presentSongOnItsOwn(request, page, second.id, 0)
+      await openProgramPage(page, schedule.id, second.title)
+      await page.keyboard.press('ArrowLeft')
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 2,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 2,
+        })
+    } finally {
+      await removeProgram(request, program)
+    }
+  })
+
+  test('a song the program holds twice carries on where the program had reached', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const opening = await createSong(request, `E2E Twice Opening ${uniq}`, 3)
+    const middle = await createSong(request, `E2E Twice Middle ${uniq}`, 3)
+    const schedule = await createSchedule(request, `E2E Twice ${uniq}`)
+
+    try {
+      // The same song opens and closes the service. Flat run: 0-2 the opening
+      // song, 3-5 the middle one, 6-8 the opening song again.
+      for (const songId of [opening.id, middle.id, opening.id]) {
+        await request.post(`/api/schedules/${schedule.id}/items`, {
+          data: { songId },
+        })
+      }
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'normal')
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.goto(`/songs/${middle.id}`)
+      await page.waitForLoadState('networkidle')
+      const panel = page.getByTestId('schedule-songs-panel')
+      const middleRow = panel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: middle.title })
+      await expect(middleRow).toBeVisible({ timeout: 10000 })
+
+      // The program runs up to the middle song, then the projection is
+      // cleared — the program is idle, but it had got that far.
+      await middleRow.getByTestId('schedule-song-present').click()
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 0,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 3,
+        })
+      await expect(middleRow).toHaveClass(/ring-orange-500/, {
+        timeout: 10000,
+      })
+      await request.post('/api/presentation/clear-temporary')
+      await expect(middleRow).not.toHaveClass(/ring-orange-500/, {
+        timeout: 10000,
+      })
+
+      // Without leaving the app: the closing song goes up on its own, then
+      // the program page is opened.
+      await panel
+        .getByTestId('schedule-song-item')
+        .filter({ hasText: opening.title })
+        .last()
+        .getByTestId('schedule-song-open')
+        .click()
+      await expect(page).toHaveURL(new RegExp(`/songs/${opening.id}`))
+      await page.getByTestId('song-slide-0').click()
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 0,
+          scheduleId: undefined,
+          scheduleItemIndex: undefined,
+        })
+      await panel.getByTestId('schedule-open').click()
+      await expect(page).toHaveURL(new RegExp(`/schedules/${schedule.id}`))
+      await expect(page.getByTitle(opening.title, { exact: true })).toBeVisible(
+        { timeout: 10000 },
+      )
+
+      // Next continues the closing occurrence, past where the program was.
+      await page.getByTestId('schedule-preview-next').click()
+      await expect
+        .poll(() => readLiveSong(request), { timeout: 10000 })
+        .toEqual({
+          currentSlideIndex: 1,
+          scheduleId: schedule.id,
+          scheduleItemIndex: 7,
+        })
+      await expect(page.getByTestId('schedule-sub-item-7')).toHaveClass(
+        /ring-green-500/,
+        { timeout: 10000 },
+      )
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${opening.id}`).catch(() => {})
+      await request.delete(`/api/songs/${middle.id}`).catch(() => {})
+    }
+  })
+})

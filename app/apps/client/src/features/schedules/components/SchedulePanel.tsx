@@ -667,6 +667,7 @@ export function SchedulePanel({
               <button
                 type="button"
                 onClick={() => onOpenSchedule(selectedScheduleId)}
+                data-testid="schedule-open"
                 className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
                 title={t('panel.openSchedule')}
               >
