@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ActionMenu, type ActionMenuItem } from './ActionMenu'
 import { countFittingActions } from './countFittingActions'
+import { measureContentWidth } from './measureContentWidth'
 
 /** A header action: an inline control while it fits, a menu row once it does not. */
 export interface OverflowAction extends ActionMenuItem {
@@ -20,16 +21,22 @@ interface OverflowActionsProps {
 }
 
 /**
- * The title gives up its room first, but only down to this: enough for the
- * chevron, the panel icon and the first few letters. Past it, actions move
- * into "More" instead. Only the trigger itself may still squeeze the title
- * below it, because an unreachable menu would be worse than a short title.
+ * How far the first action may cut the title: enough for the chevron, the
+ * panel icon and the first few letters. Past it, that action moves into
+ * "More" too. Only the trigger itself may still squeeze the title below it,
+ * because an unreachable menu would be worse than a short title.
  */
 const LEADING_MIN_WIDTH = 88
 
 /**
  * A panel header row whose actions gather under a "More" (⋮) menu as the
  * column narrows — rightmost first — and come back out as it widens.
+ *
+ * The title and its count are what tell the operator which panel this is and
+ * how full it is, so they stay whole for as long as any action but the first
+ * is still in the row: those leave for "More" before the title is cut. The
+ * first action is the panel's main one ("+"), and only it may trim the title,
+ * down to `LEADING_MIN_WIDTH`, to stay in the row.
  *
  * Actions that do not fit stay mounted but hidden, so anything they own
  * (state, refs) survives the trip into the menu. Each action's width is
@@ -43,6 +50,7 @@ export function OverflowActions({
 }: OverflowActionsProps) {
   const { t } = useTranslation('common')
   const rowRef = useRef<HTMLDivElement>(null)
+  const leadingRef = useRef<HTMLDivElement>(null)
   const actionsRef = useRef<HTMLDivElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
   const actionElements = useRef(new Map<string, HTMLDivElement>())
@@ -57,8 +65,9 @@ export function OverflowActions({
   useLayoutEffect(() => {
     const measure = () => {
       const row = rowRef.current
+      const leadingRow = leadingRef.current
       const actionsRow = actionsRef.current
-      if (!row || !actionsRow) return
+      if (!row || !leadingRow || !actionsRow) return
 
       const rowWidth = row.getBoundingClientRect().width
       // A hidden ancestor (a panel the screen is too narrow for) leaves
@@ -86,18 +95,27 @@ export function OverflowActions({
       const widths = actions.map(
         (action) => actionWidths.current.get(action.id) ?? 0,
       )
-      const next = countFittingActions({
-        actionWidths: widths,
-        // Before the trigger's first appearance, assume it is as wide as the
-        // header buttons it sits among; it is re-measured once it shows.
-        moreWidth: moreWidth.current ?? Math.max(0, ...widths),
-        available:
-          rowWidth -
-          LEADING_MIN_WIDTH -
-          Number.parseFloat(getComputedStyle(row).columnGap),
-        gap: Number.parseFloat(getComputedStyle(actionsRow).columnGap),
-      })
-      setVisibleCount(next)
+      const rowGap = Number.parseFloat(getComputedStyle(row).columnGap)
+      const fitBeside = (leadingWidth: number) =>
+        countFittingActions({
+          actionWidths: widths,
+          // Before the trigger's first appearance, assume it is as wide as the
+          // header buttons it sits among; it is re-measured once it shows.
+          moreWidth: moreWidth.current ?? Math.max(0, ...widths),
+          available: rowWidth - leadingWidth - rowGap,
+          gap: Number.parseFloat(getComputedStyle(actionsRow).columnGap),
+        })
+      // Beside the whole title first; the first action alone may then cut it.
+      const wholeTitle = Math.max(
+        measureContentWidth(leadingRow),
+        LEADING_MIN_WIDTH,
+      )
+      setVisibleCount(
+        Math.max(
+          fitBeside(wholeTitle),
+          Math.min(1, fitBeside(LEADING_MIN_WIDTH)),
+        ),
+      )
     }
 
     measureRef.current = measure
@@ -123,7 +141,9 @@ export function OverflowActions({
 
   return (
     <div ref={rowRef} className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="flex min-w-0 flex-1 items-center gap-2">{leading}</div>
+      <div ref={leadingRef} className="flex min-w-0 flex-1 items-center gap-2">
+        {leading}
+      </div>
       <div ref={actionsRef} className="flex shrink-0 items-center gap-1">
         {actions.map((action, index) => (
           <div

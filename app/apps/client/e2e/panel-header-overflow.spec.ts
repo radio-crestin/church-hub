@@ -11,9 +11,11 @@ import { openActionsMenu } from './helpers/actions-menu'
 /**
  * The Marcaje and Programe headers carry a row of small action buttons. When
  * the side column gets too narrow for all of them, the rightmost ones move
- * into a "More" (⋮) menu — the title truncates first, but keeps its icon and a
- * few letters — and they come back out as the column widens again. Every
- * action still works from the menu, including the ones that open a dialog.
+ * into a "More" (⋮) menu, and they come back out as the column widens again.
+ * The title and its count stay whole while those actions leave; only the first
+ * action may cut the title to keep its place, and never past its icon and a few
+ * letters. Every action still works from the menu, including the ones that
+ * open a dialog.
  */
 
 test.use({ viewport: { width: 1440, height: 900 } })
@@ -102,6 +104,13 @@ async function expectAllInline(panel: Locator, ids: string[], more: string) {
     await expect(panel.getByTestId(id)).toBeVisible()
   }
   await expect(panel.getByTestId(more)).toHaveCount(0)
+}
+
+/** How many pixels of the header title's text its box cuts off. */
+async function titleCutOff(panel: Locator) {
+  return panel
+    .locator('[data-panel-header] .truncate')
+    .evaluate((title) => title.scrollWidth - title.clientWidth)
 }
 
 test.describe('Panel header actions overflow into a More menu', () => {
@@ -267,5 +276,94 @@ test.describe('Panel header actions overflow into a More menu', () => {
     } finally {
       await cleanup(request, ids)
     }
+  })
+  test.describe('at the default column widths of a 1280px window', () => {
+    test.use({ viewport: { width: 1280, height: 800 } })
+
+    test('Programe and Marcaje show their whole title and count, moving actions to More instead', async ({
+      page,
+      request,
+    }) => {
+      const uniq = Date.now()
+      const ids: { songId?: number; scheduleId?: number } = {}
+
+      try {
+        const songResponse = await request.post('/api/songs', {
+          data: {
+            title: `E2E Header Title ${uniq}`,
+            slides: [{ content: 'Verse', sortOrder: 0 }],
+          },
+        })
+        expect(songResponse.status()).toBe(201)
+        ids.songId = (await songResponse.json()).data.id
+
+        const scheduleResponse = await request.post('/api/schedules', {
+          data: { title: `E2E Header Title Program ${uniq}` },
+        })
+        expect(scheduleResponse.ok()).toBeTruthy()
+        ids.scheduleId = (await scheduleResponse.json()).data.id
+        // A two-digit count, the widest a running order usually gets.
+        for (let index = 0; index < 12; index++) {
+          const itemResponse = await request.post(
+            `/api/schedules/${ids.scheduleId}/items`,
+            { data: { songId: ids.songId } },
+          )
+          expect(itemResponse.ok()).toBeTruthy()
+        }
+        // A bookmark, so both headers carry their full set of actions.
+        const bookmarkResponse = await request.post('/api/song-bookmarks', {
+          data: { songId: ids.songId },
+        })
+        expect(bookmarkResponse.ok()).toBeTruthy()
+
+        await page.addInitScript((scheduleId: number) => {
+          for (const key of Object.keys(window.localStorage)) {
+            if (key.startsWith('workspace.song-detail')) {
+              window.localStorage.removeItem(key)
+            }
+          }
+          window.localStorage.setItem('song-editor-layout', 'normal')
+          window.localStorage.setItem('song-detail:bookmarks-open', 'true')
+          window.localStorage.setItem('song-detail:schedules-open', 'true')
+          window.localStorage.setItem(
+            'songPage.selectedScheduleId',
+            String(scheduleId),
+          )
+        }, ids.scheduleId as number)
+        await page.goto(`/songs/${ids.songId}`)
+
+        const schedules = page.getByTestId('schedule-songs-panel')
+        const bookmarks = page.getByTestId('bookmarks-drop-zone')
+        await expect(
+          schedules.locator('[data-panel-header] .truncate'),
+        ).toContainText('(12)', { timeout: 15000 })
+
+        await expect.poll(() => titleCutOff(schedules)).toBeLessThanOrEqual(0)
+        await expect.poll(() => titleCutOff(bookmarks)).toBeLessThanOrEqual(0)
+
+        // Still the same row: "+" stays in the header, and every action that
+        // left it is one row of the More menu, in order.
+        await expect(schedules.getByTestId('schedule-add-item')).toBeVisible()
+        const inline: string[] = []
+        for (const id of SCHEDULE_ACTIONS) {
+          if (await schedules.getByTestId(id).isVisible()) inline.push(id)
+        }
+        expect(inline).toEqual(SCHEDULE_ACTIONS.slice(0, inline.length))
+        if (inline.length < SCHEDULE_ACTIONS.length) {
+          const menu = await openActionsMenu(page, 'schedule-header-more')
+          const menuIds = await menu
+            .locator('[data-testid]')
+            .evaluateAll((rows) =>
+              rows.map((row) => (row as HTMLElement).dataset.testid),
+            )
+          expect(menuIds).toEqual(
+            SCHEDULE_ACTIONS.slice(inline.length).map((id) => `${id}-menu`),
+          )
+          await page.keyboard.press('Escape')
+        }
+      } finally {
+        await cleanup(request, ids)
+      }
+    })
   })
 })
