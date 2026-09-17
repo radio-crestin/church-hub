@@ -13,7 +13,7 @@ import {
   useSlideHighlights,
 } from '../hooks/useSlideHighlights'
 import { useTextSelection } from '../hooks/useTextSelection'
-import type { TemporaryContent, TextStyleRange } from '../types'
+import type { ClockOverride, TemporaryContent, TextStyleRange } from '../types'
 
 // Default highlight color
 const DEFAULT_HIGHLIGHT_COLOR = '#FFFF00'
@@ -36,9 +36,18 @@ interface LivePreviewProps {
    * screens. Omitted everywhere except the song-detail control panel.
    */
   previewContent?: TemporaryContent | null
+  /**
+   * A clock shown in place of the preview screen's own one, on every content
+   * type. Only the Control Room sets it; everywhere else the preview mirrors
+   * the screen's clock exactly.
+   */
+  clockOverride?: ClockOverride
 }
 
-export function LivePreview({ previewContent = null }: LivePreviewProps) {
+export function LivePreview({
+  previewContent = null,
+  clockOverride,
+}: LivePreviewProps) {
   // Note: WebSocket connection is established by parent ControlRoom component
   // Don't call useWebSocket() here as it causes re-renders from debug info state updates
 
@@ -206,6 +215,7 @@ export function LivePreview({ previewContent = null }: LivePreviewProps) {
           contentKey={contentKey}
           isVisible={isVisible}
           styleRanges={styleRanges}
+          clockOverride={clockOverride}
         />
         {contextMenu.visible && (
           <TextStyleContextMenu

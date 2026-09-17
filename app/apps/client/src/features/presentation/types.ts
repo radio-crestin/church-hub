@@ -516,6 +516,18 @@ export interface ClockElementConfig {
 }
 
 /**
+ * A clock an operator-side preview shows in place of the screen's own one,
+ * whatever the screen's clock settings say. It is never stored and never
+ * reaches a projection: the Control Room uses it to keep a large clock in view
+ * even where the operators have hidden the clock on the screen itself.
+ */
+export interface ClockOverride {
+  fontFamily: string
+  /** In screen pixels, so it scales with the preview like every other element */
+  fontSize: number
+}
+
+/**
  * Reference text element configuration (for bible verses)
  */
 export interface ReferenceTextConfig {

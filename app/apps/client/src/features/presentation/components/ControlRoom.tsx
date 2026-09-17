@@ -27,6 +27,15 @@ import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '../hooks/useSlideHighlights'
+import type { ClockOverride } from '../types'
+
+// The operators read the time from the Control Room, so its clock is large and
+// always shown — also where a church hid the clock on the projected screen,
+// whose settings stay exactly as they chose them.
+const CONTROL_ROOM_CLOCK: ClockOverride = {
+  fontFamily: 'Times New Roman',
+  fontSize: 140,
+}
 
 export function ControlRoom() {
   const { t } = useTranslation(['presentation', 'common'])
@@ -260,7 +269,7 @@ export function ControlRoom() {
 
         <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
           <div className="w-full h-full flex items-center justify-center">
-            <LivePreview />
+            <LivePreview clockOverride={CONTROL_ROOM_CLOCK} />
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { ClockText } from './ClockText'
 import { EditableMainText } from './EditableMainText'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
+import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
 import {
   calculatePixelBounds,
   clampBoundsToScreen,
@@ -15,6 +16,7 @@ import {
 } from './utils/styleUtils'
 import type {
   BibleContentConfig,
+  ClockOverride,
   ContentType,
   ContentTypeConfig,
   ScreenWithConfigs,
@@ -50,6 +52,12 @@ interface ScreenContentProps {
   onMainTextEdit?: (plainText: string) => void
   /** Bumped when the slide's text is rewritten from outside the editor. */
   textVersion?: number
+  /**
+   * Replaces the screen's clock with this one, shown on every content type
+   * even where the screen hides its clock. Only the Control Room passes it;
+   * projections always render the screen's own clock settings.
+   */
+  clockOverride?: ClockOverride
 }
 
 export function ScreenContent({
@@ -66,6 +74,7 @@ export function ScreenContent({
   editPlaceholder,
   onMainTextEdit,
   textVersion,
+  clockOverride,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
 
@@ -568,6 +577,31 @@ export function ScreenContent({
     )
   }
 
+  // One clock instead of the screen's, so a preview never shows two of them.
+  const renderClockOverride = () => {
+    if (!clockOverride) return null
+
+    const { style, showSeconds, bounds } = getClockOverrideLayout(
+      clockOverride,
+      screen.globalSettings.clockConfig,
+      canvasWidth,
+      canvasHeight,
+    )
+    const scaledBounds = scaleBounds(bounds)
+
+    return (
+      <ClockText
+        key="clockOverride"
+        showSeconds={showSeconds}
+        style={{ ...style, maxFontSize: style.maxFontSize * fontScale }}
+        width={scaledBounds.width}
+        height={scaledBounds.height}
+        left={scaledBounds.x}
+        top={scaledBounds.y}
+      />
+    )
+  }
+
   // Render next slide section (not animated)
   const renderNextSlideSection = () => {
     if (!screen.nextSlideConfig?.enabled) return null
@@ -826,9 +860,11 @@ export function ScreenContent({
       {renderSongKey()}
       {renderAmen()}
       {renderPersonLabel()}
-      {renderClock()}
+      {!clockOverride && renderClock()}
       {renderNextSlideSection()}
       {renderScreenSharePreview()}
+      {/* Last, so nothing on the slide can cover the clock that must stay in view */}
+      {renderClockOverride()}
       {activeChord && (
         <ChordDiagram
           chord={activeChord}
