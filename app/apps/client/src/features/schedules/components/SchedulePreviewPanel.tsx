@@ -169,6 +169,7 @@ export function SchedulePreviewPanel({
             type="button"
             onClick={handlePrev}
             disabled={!canNavigatePrev || clearTemporary.isPending}
+            data-testid="schedule-preview-prev"
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.prev')}
           >
@@ -180,6 +181,7 @@ export function SchedulePreviewPanel({
             type="button"
             onClick={handleNext}
             disabled={!canNavigateNext || clearTemporary.isPending}
+            data-testid="schedule-preview-next"
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.next')}
           >

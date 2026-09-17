@@ -1,6 +1,8 @@
 import type { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+import type { Window } from '@tauri-apps/api/window'
 
 import { isAppFrontmost } from '~/utils/isAppFrontmost'
+import { createLogger } from '~/utils/logger'
 import {
   setWindowDesktopPosition,
   setWindowDesktopSize,
@@ -55,6 +57,16 @@ const FOCUS_RECLAIM_DELAYS_MS = [200, 500, 900, 1500, 2500]
  * is treated as the window manager's doing rather than the operator's.
  */
 const FOCUS_HANDBACK_WINDOW_MS = 4000
+
+/**
+ * How long a projection window may take to be placed before handing the
+ * keyboard back is given up on. Placement normally ends within a couple of
+ * seconds; this only stops a window whose placement never finished from
+ * pulling the keyboard away every time the operator clicks it later.
+ */
+const FOCUS_HANDBACK_SETUP_LIMIT_MS = 10000
+
+const focusLogger = createLogger('app:focus')
 
 /** How long `closeDisplayWindow` waits for the window to actually go away. */
 const CLOSE_POLL_MS = 50
@@ -378,6 +390,110 @@ export async function openInBrowser(url: string): Promise<void> {
   }
 }
 
+/** Whether more than one display is connected. */
+async function hasSecondMonitor(): Promise<boolean> {
+  try {
+    const { availableMonitors } = await import('@tauri-apps/api/window')
+    return (await availableMonitors()).length > 1
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Asks for the keyboard back for the control window, and logs the ask and how
+ * it went.
+ */
+async function refocusControlWindow(
+  control: Window,
+  reason: string,
+): Promise<void> {
+  // Queued ahead of the ask, so it reports the state the ask was made in.
+  const wasFocused = control.isFocused().catch(() => null)
+  focusLogger.debug(
+    `Reclaiming the keyboard for the control window: ${reason}`,
+    {
+      documentHasFocus: document.hasFocus(),
+    },
+  )
+  try {
+    await control.setFocus()
+    // The window being key is not the whole story: the keys go to whatever is
+    // first responder inside it, and asking the page for focus is what makes
+    // sure that is the page.
+    window.focus()
+    focusLogger.debug(`Reclaimed the keyboard: ${reason}`, {
+      isFocusedBefore: await wasFocused,
+      documentHasFocus: document.hasFocus(),
+    })
+  } catch (error) {
+    focusLogger.warn(`Could not reclaim the keyboard: ${reason}`, error)
+  }
+}
+
+/**
+ * Hands the keyboard straight back to the control window each time a new
+ * projection window takes it while it is still coming up.
+ *
+ * Listening starts as soon as the window is asked for, not once it has been
+ * placed: placing it is what takes the keyboard. Windows activates a window it
+ * makes fullscreen, and on macOS going fullscreen or being shown makes the
+ * window key — whatever `focus: false` said at creation.
+ *
+ * The event is itself the proof that Church Hub has the keyboard — one of its
+ * own windows just took it — so frontmost is not asked again. Asking would
+ * answer no on Linux and Windows, where a window's `isFocused()` cannot be
+ * relied on, and the keyboard would stay with the projection.
+ *
+ * `settled` starts the countdown once the window is up: past it, the projection
+ * taking the keyboard is the operator clicking it, and it keeps it.
+ */
+function handBackKeyboardWhileSettling(
+  webview: WebviewWindow,
+  control: Window,
+  isCurrentWindow: () => boolean,
+): { settled: () => void; stop: () => void } {
+  let stopped = false
+  let stopListening: (() => void) | null = null
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const stop = (): void => {
+    if (stopped) return
+    stopped = true
+    clearTimeout(timer)
+    stopListening?.()
+    stopListening = null
+    focusLogger.debug(`Stopped handing the keyboard back from ${webview.label}`)
+  }
+
+  timer = setTimeout(
+    stop,
+    FOCUS_HANDBACK_SETUP_LIMIT_MS + FOCUS_HANDBACK_WINDOW_MS,
+  )
+
+  void webview
+    .listen('tauri://focus', () => {
+      if (stopped || !isCurrentWindow()) return
+      void refocusControlWindow(
+        control,
+        `${webview.label} took the keyboard while coming up`,
+      )
+    })
+    .then((unlisten) => {
+      if (stopped) unlisten()
+      else stopListening = unlisten
+    })
+
+  return {
+    settled: () => {
+      if (stopped) return
+      clearTimeout(timer)
+      timer = setTimeout(stop, FOCUS_HANDBACK_WINDOW_MS)
+    },
+    stop,
+  }
+}
+
 /**
  * Opens the display in a native Tauri window.
  *
@@ -525,6 +641,26 @@ async function openInNativeWindow(
         ? await isAppFrontmost()
         : false
 
+      // Keep keyboard focus on the control window so the operator can keep
+      // navigating verses (keyboard / presenter remote) while the screen
+      // shows — the projector window must not steal focus.
+      //
+      // BUT only when the screen has its own monitor. setFocus() also RAISES
+      // the control window; on a single monitor that would cover the
+      // projection and the song would seem to "not display". With one
+      // monitor we leave the screen in front (visible) instead. With a
+      // second monitor the projection is on the other screen, so refocusing
+      // the control window is harmless and keyboard input keeps working.
+      const isMultiMonitor =
+        mainWindowToRefocus && wasFrontmostBeforeOpen
+          ? await hasSecondMonitor()
+          : false
+      focusLogger.debug(`Opening ${windowLabel}: keyboard hand-back decision`, {
+        focus,
+        wasFrontmostBeforeOpen,
+        isMultiMonitor,
+      })
+
       // Create new native window
       windowGenerations.set(windowLabel, generation)
       const webview = new WebviewWindow(windowLabel, windowOptions)
@@ -533,6 +669,17 @@ async function openInNativeWindow(
         '[openInNativeWindow] WebviewWindow constructor called, webview:',
         webview,
       )
+
+      // Before anything places the window: placing it is what takes the
+      // keyboard.
+      const keyboardHandback =
+        mainWindowToRefocus && isMultiMonitor
+          ? handBackKeyboardWhileSettling(
+              webview,
+              mainWindowToRefocus,
+              () => windowGenerations.get(windowLabel) === generation,
+            )
+          : null
 
       // Set up event listeners
       webview.once('tauri://created', async () => {
@@ -549,6 +696,7 @@ async function openInNativeWindow(
         if (!win) {
           // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
           console.error('[openInNativeWindow] Could not get window by label')
+          keyboardHandback?.stop()
           return
         }
 
@@ -653,77 +801,34 @@ async function openInNativeWindow(
           for (const stop of unlisten) stop()
         })
 
-        // Keep keyboard focus on the control window so the operator can keep
-        // navigating verses (keyboard / presenter remote) while the screen
-        // shows — the projector window must not steal focus.
-        //
-        // BUT only when the screen has its own monitor. setFocus() also RAISES
-        // the control window; on a single monitor that would cover the
-        // projection and the song would seem to "not display". With one
-        // monitor we leave the screen in front (visible) instead. With a
-        // second monitor the projection is on the other screen, so refocusing
-        // the control window is harmless and keyboard input keeps working.
-        if (mainWindowToRefocus && wasFrontmostBeforeOpen) {
-          const isMultiMonitor = await (async () => {
-            try {
-              const { availableMonitors } = await import(
-                '@tauri-apps/api/window'
-              )
-              return (await availableMonitors()).length > 1
-            } catch {
-              return false
-            }
-          })()
-
-          if (isMultiMonitor) {
-            const reclaimFocus = async () => {
-              try {
-                await mainWindowToRefocus.setFocus()
-                // The window being key is not the whole story: the keys go to
-                // whatever is first responder inside it, and asking the page
-                // for focus is what makes sure that is the page.
-                window.focus()
-              } catch (error) {
-                // biome-ignore lint/suspicious/noConsole: Tauri focus restoration
-                console.warn(
-                  '[openInNativeWindow] Failed to restore focus to main window:',
-                  error,
-                )
-              }
-            }
-            // The OS can hand focus back to the new window again once it
-            // finishes appearing / the fullscreen transition animates
-            // (≈1s on macOS), so re-assert a few more times across that
-            // window — but only while Church Hub is still frontmost, so
-            // switching to another app in those seconds ends the series.
-            const cancelReclaim = reclaimFocusSeries(
-              reclaimFocus,
-              FOCUS_RECLAIM_DELAYS_MS,
-            )
-            // And whenever the new window does take the keyboard while it is
-            // still settling in — the end of the fullscreen transition lands
-            // after every timer above — hand it straight back. The operator
-            // is not clicking the projection in its first seconds; they are
-            // at the keyboard, about to go to the next slide.
-            const settledAt = Date.now() + FOCUS_HANDBACK_WINDOW_MS
-            const stopHandback = await webview.listen('tauri://focus', () => {
-              if (Date.now() > settledAt) {
-                stopHandback()
-                return
-              }
-              reclaimFocusSeries(reclaimFocus, [])
-            })
-            setTimeout(() => {
-              cancelReclaim()
-              stopHandback()
-            }, FOCUS_HANDBACK_WINDOW_MS)
-          }
+        if (mainWindowToRefocus && keyboardHandback) {
+          // The OS can hand focus back to the new window again once it
+          // finishes appearing / the fullscreen transition animates
+          // (≈1s on macOS), so re-assert a few more times across that
+          // window — but only while Church Hub is still frontmost, so
+          // switching to another app in those seconds ends the series.
+          const cancelReclaim = reclaimFocusSeries(
+            () =>
+              refocusControlWindow(
+                mainWindowToRefocus,
+                `${windowLabel} came up`,
+              ),
+            FOCUS_RECLAIM_DELAYS_MS,
+          )
+          // Whenever the new window takes the keyboard while it is still
+          // settling in — the end of the fullscreen transition lands after
+          // every timer above — it is handed straight back, for a few seconds
+          // more. The operator is not clicking the projection in its first
+          // seconds; they are at the keyboard, about to go to the next slide.
+          keyboardHandback.settled()
+          setTimeout(cancelReclaim, FOCUS_HANDBACK_WINDOW_MS)
         }
       })
 
       webview.once('tauri://error', (e) => {
         // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
         console.error('[openInNativeWindow] tauri://error event:', e)
+        keyboardHandback?.stop()
       })
 
       // biome-ignore lint/suspicious/noConsole: Critical debugging for Tauri window creation
@@ -948,22 +1053,21 @@ export async function reopenMissingActiveScreens(
 export async function reclaimControlWindowFocus(): Promise<void> {
   if (!isTauri()) return
   try {
-    const { getCurrentWindow, availableMonitors } = await import(
-      '@tauri-apps/api/window'
-    )
-    if ((await availableMonitors()).length <= 1) return
-
-    const control = getCurrentWindow()
-    const reclaim = async () => {
-      try {
-        await control.setFocus()
-        window.focus()
-      } catch {
-        // best-effort; the window may be mid-transition
-      }
+    if (!(await hasSecondMonitor())) {
+      focusLogger.debug(
+        'Single monitor: the keyboard stays with the projection after presenting',
+      )
+      return
     }
-    reclaimFocusSeries(reclaim, FOCUS_RECLAIM_DELAYS_MS)
-  } catch {
+
+    const { getCurrentWindow } = await import('@tauri-apps/api/window')
+    const control = getCurrentWindow()
+    reclaimFocusSeries(
+      () => refocusControlWindow(control, 'a screen reopened on presenting'),
+      FOCUS_RECLAIM_DELAYS_MS,
+    )
+  } catch (error) {
     // best-effort focus restoration; never throw into the presentation flow
+    focusLogger.warn('Could not start reclaiming the keyboard', error)
   }
 }

@@ -87,7 +87,9 @@
     "editLayoutDescription": "Drag the panels of this page into the order you want",
     "editingHint": "Drag a panel by its handle onto another panel's edge",
     "doneEditing": "Done",
-    "newPosition": "New position"
+    "newPosition": "New position",
+    "hideColumn": "Hide side column",
+    "showColumn": "Show side column"
   },
   "actionsMenu": {
     "trigger": "More"

@@ -20,6 +20,7 @@ import type { ScheduleItem } from '~/features/schedules'
 import {
   AddSongToScheduleModal,
   getSchedulePassageTarget,
+  liveProgramItemForSong,
   ScheduleLiveItemPanel,
   SchedulePanel,
   useScheduleFlatNavigation,
@@ -157,39 +158,20 @@ export function SongEditor({
   }, [presentationState, songId])
 
   /**
-   * This song's place in the selected program, if it has one. The occurrence
-   * already on the projector wins, so a song listed twice keeps its place.
+   * Projects one verse from the rail — as a step of the selected program while
+   * that program is on the projector and holds this song, on its own otherwise.
    */
-  const scheduleItemForSong = useMemo(() => {
-    if (!songId || !selectedScheduleId) return null
-    const liveItem = scheduleNav.flatItems[scheduleNav.currentFlatIndex]?.item
-    if (liveItem?.itemType === 'song' && liveItem.songId === songId) {
-      return liveItem
-    }
-    return (
-      scheduleNav.items.find(
-        (item) => item.itemType === 'song' && item.songId === songId,
-      ) ?? null
-    )
-  }, [
-    songId,
-    selectedScheduleId,
-    scheduleNav.flatItems,
-    scheduleNav.currentFlatIndex,
-    scheduleNav.items,
-  ])
-
-  /** Projects one verse from the rail, as a program step where that applies. */
   const handlePresentRailSlide = useCallback(
     async (index: number) => {
       if (!songId) return
-      if (scheduleItemForSong) {
-        await scheduleNav.presentSongSlide(scheduleItemForSong, index)
+      const programItem = liveProgramItemForSong(scheduleNav, songId)
+      if (programItem) {
+        await scheduleNav.presentSongSlide(programItem, index)
         return
       }
       await presentTemporarySong.mutateAsync({ songId, slideIndex: index })
     },
-    [songId, scheduleItemForSong, scheduleNav, presentTemporarySong],
+    [songId, scheduleNav, presentTemporarySong],
   )
 
   const handleRailPrev = useCallback(async () => {

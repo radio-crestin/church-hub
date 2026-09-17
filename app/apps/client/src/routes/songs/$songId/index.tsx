@@ -12,7 +12,6 @@ import {
   Download,
   Eye,
   Loader2,
-  MoreHorizontal,
   Music,
   Music2,
   Pencil,
@@ -38,6 +37,7 @@ import type { ScheduleItem } from '~/features/schedules'
 import {
   AddSongToScheduleModal,
   getSchedulePassageTarget,
+  liveProgramItemForSong,
   ScheduleLiveItemPanel,
   SchedulePanel,
   useScheduleFlatNavigation,
@@ -345,38 +345,16 @@ function SongPreviewPage() {
   }, [previewMode, numericId])
 
   /**
-   * This song's place in the selected program, if it has one. A song can sit in
-   * a program twice, so the occurrence already on the projector wins — that is
-   * the one the operator is working through.
-   */
-  const scheduleItemForSong = useMemo(() => {
-    if (!selectedScheduleId) return null
-    const liveItem = scheduleNav.flatItems[scheduleNav.currentFlatIndex]?.item
-    if (liveItem?.itemType === 'song' && liveItem.songId === numericId) {
-      return liveItem
-    }
-    return (
-      scheduleNav.items.find(
-        (item) => item.itemType === 'song' && item.songId === numericId,
-      ) ?? null
-    )
-  }, [
-    selectedScheduleId,
-    scheduleNav.flatItems,
-    scheduleNav.currentFlatIndex,
-    scheduleNav.items,
-    numericId,
-  ])
-
-  /**
-   * Projects one slide of this song. When the song belongs to the selected
-   * program the slide goes up *as a step of that program*, so the cursor lands
-   * in the program and next carries on into whatever follows the song.
+   * Projects one slide of this song. While the selected program is on the
+   * projector and holds this song, the slide goes up *as a step of that
+   * program*, so the program keeps its place and next carries on into whatever
+   * follows the song. Otherwise the song goes up on its own.
    */
   const presentSlide = useCallback(
     async (index: number) => {
-      if (scheduleItemForSong) {
-        await scheduleNav.presentSongSlide(scheduleItemForSong, index)
+      const programItem = liveProgramItemForSong(scheduleNav, numericId)
+      if (programItem) {
+        await scheduleNav.presentSongSlide(programItem, index)
         return
       }
       await presentTemporarySong.mutateAsync({
@@ -384,7 +362,7 @@ function SongPreviewPage() {
         slideIndex: index,
       })
     },
-    [scheduleItemForSong, scheduleNav, numericId, presentTemporarySong],
+    [scheduleNav, numericId, presentTemporarySong],
   )
 
   const handleSlideClick = useCallback(
@@ -837,7 +815,13 @@ function SongPreviewPage() {
         {
           id: 'stage',
           title: t('layout.stage'),
-          render: () => <SongStageBoard song={song} />,
+          render: () => (
+            <SongStageBoard
+              song={song}
+              scheduleNav={scheduleNav}
+              onPresentSlide={presentSlide}
+            />
+          ),
         },
         ...sidePanels,
       ]
@@ -852,6 +836,7 @@ function SongPreviewPage() {
               onNextSlide={handleNextSlide}
               canNavigatePrev={canNavigatePrev}
               canNavigateNext={canNavigateNext}
+              isNavigating={navigateTemporary.isPending}
               previewMode={previewMode}
               onTogglePreviewMode={togglePreviewMode}
               previewContent={stagedPreviewContent}
@@ -905,42 +890,13 @@ function SongPreviewPage() {
       ]
 
   /**
-   * Every page-level action lives behind one labelled menu. Icon-only buttons
-   * forced people to guess (or hover) what each one did; a menu row carries the
-   * icon, a real label and a one-line hint, so the same actions stay one click
-   * away without a wall of coloured squares.
+   * Page-level actions live behind one labelled menu: a menu row carries the
+   * icon, a real label and a one-line hint, so they stay one click away without
+   * a wall of coloured squares. Marking the song, adding it to a program and
+   * setting its key are used during a service, so those sit beside the menu
+   * instead.
    */
   const actionMenuItems: ActionMenuItem[] = [
-    {
-      id: 'bookmark',
-      label: isBookmarked ? t('bookmarks.remove') : t('bookmarks.add'),
-      description: t('actionsMenu.bookmarkDescription'),
-      icon: isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />,
-      iconClassName: isBookmarked
-        ? 'bg-amber-500 text-white'
-        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-      active: isBookmarked,
-      onSelect: handleToggleBookmark,
-      testId: 'song-bookmark-toggle',
-    },
-    {
-      id: 'add-to-schedule',
-      label: t('actions.addToSchedule'),
-      description: t('actionsMenu.addToScheduleDescription'),
-      icon: <CalendarPlus size={18} />,
-      iconClassName:
-        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-      onSelect: () => setShowAddToScheduleModal(true),
-      testId: 'song-add-to-schedule',
-    },
-    {
-      id: 'key-line',
-      label: t('actions.setKeyLine'),
-      description: t('actionsMenu.setKeyLineDescription'),
-      icon: <Music size={18} />,
-      onSelect: handleOpenKeyLineDialog,
-      testId: 'song-set-key-line',
-    },
     {
       id: 'save-to-file',
       label: t('actions.saveToFile'),
@@ -1047,12 +1003,52 @@ function SongPreviewPage() {
             )}
           </div>
         </div>
-        {/* Every page action lives in one labelled menu — see actionMenuItems. */}
+        {/* The in-service actions, then the menu — see actionMenuItems. */}
         <div className="flex items-center gap-2 sm:justify-end shrink-0">
+          <button
+            type="button"
+            onClick={handleToggleBookmark}
+            aria-pressed={isBookmarked}
+            aria-label={
+              isBookmarked ? t('bookmarks.remove') : t('bookmarks.add')
+            }
+            title={isBookmarked ? t('bookmarks.remove') : t('bookmarks.add')}
+            data-testid="song-bookmark-toggle"
+            className={`inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              isBookmarked
+                ? 'bg-amber-500 border-amber-500 text-white hover:bg-amber-600'
+                : 'bg-white border-gray-300 text-amber-600 hover:bg-amber-50 dark:bg-gray-800 dark:border-gray-600 dark:text-amber-400 dark:hover:bg-gray-700'
+            }`}
+          >
+            {isBookmarked ? (
+              <BookmarkCheck size={16} />
+            ) : (
+              <Bookmark size={16} />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddToScheduleModal(true)}
+            aria-label={t('actions.addToSchedule')}
+            title={t('actions.addToSchedule')}
+            data-testid="song-add-to-schedule"
+            className="inline-flex items-center justify-center p-2 rounded-lg border bg-white border-gray-300 text-green-600 hover:bg-green-50 dark:bg-gray-800 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <CalendarPlus size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenKeyLineDialog}
+            aria-label={t('actions.setKeyLine')}
+            title={t('actions.setKeyLine')}
+            data-testid="song-set-key-line"
+            className="inline-flex items-center justify-center p-2 rounded-lg border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <Music size={16} />
+          </button>
           <ActionMenu
             items={actionMenuItems}
             label={t('actionsMenu.trigger')}
-            triggerIcon={<MoreHorizontal size={16} />}
             testId="song-actions-menu"
           />
         </div>

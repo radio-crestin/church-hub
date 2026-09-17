@@ -1,4 +1,7 @@
 import { isAppFrontmost } from '~/utils/isAppFrontmost'
+import { createLogger } from '~/utils/logger'
+
+const logger = createLogger('app:focus')
 
 /**
  * Re-asserts keyboard focus now and again after each delay, for as long as
@@ -28,9 +31,13 @@ export function reclaimFocusSeries(
   const step = async (): Promise<void> => {
     if (cancelled) return
     if (!(await isAppFrontmost())) {
+      logger.debug('Focus series: Church Hub is not frontmost; dropping it')
       cancel()
       return
     }
+    // Cancelled while the check was out: the caller has moved on.
+    if (cancelled) return
+    logger.debug('Focus series: re-asserting focus')
     await reclaim()
   }
 

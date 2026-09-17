@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { DisplayTheme } from '../types'
+import { getFontFamilyStack } from '../utils/getFontFamilyStack'
 
 interface SlideRendererProps {
   content: string
@@ -101,7 +102,7 @@ export function SlideRenderer({ content, theme }: SlideRendererProps) {
         className="slide-text text-center"
         style={{
           color: theme.textColor || '#ffffff',
-          fontFamily: theme.fontFamily || 'system-ui',
+          fontFamily: getFontFamilyStack(theme.fontFamily || 'system-ui'),
           fontSize: `${fontSize}px`,
           lineHeight: 1.3,
           wordWrap: 'break-word',

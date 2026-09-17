@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { localizeChordName } from '~/features/songs/utils/localizeChordName'
+import { getFontFamilyStack } from '../../utils/getFontFamilyStack'
 
 interface ChordMapping {
   wordIndex: number
@@ -127,7 +128,7 @@ export function ChordsOverlay({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        fontFamily,
+        fontFamily: getFontFamilyStack(fontFamily),
         color,
         pointerEvents: 'auto',
       }}

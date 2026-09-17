@@ -196,7 +196,9 @@ describe('styleUtils', () => {
         shadow: true,
       })
 
-      expect(result.fontFamily).toBe('Arial')
+      expect(result.fontFamily).toBe(
+        "Arial, Helvetica, 'Liberation Sans', Arimo, sans-serif",
+      )
       expect(result.color).toBe('#FFFFFF')
       expect(result.fontWeight).toBe('bold')
       expect(result.fontStyle).toBe('italic')

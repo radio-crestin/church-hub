@@ -1,4 +1,10 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
@@ -36,6 +42,8 @@ interface StageCanvasProps {
    * slide is open, so this is what tells it to take the new text.
    */
   textVersion?: number
+  /** Told when the in-place editor opens and closes (`clickToEdit` only). */
+  onEditingChange?: (editing: boolean) => void
 }
 
 /** Stable identity of the slide currently shown, so we can detect a switch. */
@@ -65,6 +73,7 @@ export function StageCanvas({
   editingToolbar,
   onEditText,
   textVersion,
+  onEditingChange,
 }: StageCanvasProps) {
   const { t } = useTranslation('songs')
 
@@ -147,6 +156,9 @@ export function StageCanvas({
   )
 
   const framed = clickToEdit && editing
+  useEffect(() => {
+    onEditingChange?.(framed)
+  }, [framed, onEditingChange])
 
   // Vertical space to reserve inside the stage zone below the black box: the
   // nav row + this frame's padding/border, plus the edit-hint line while

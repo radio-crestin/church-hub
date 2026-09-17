@@ -23,15 +23,23 @@ interface SongStageEditorProps {
   keyLine: string | null
   songId: number | null
   presentedSlideId?: number | null
+  /** Position in `slides` of the slide on the projector, or null. */
+  presentedSlidePosition?: number | null
   /** Bumped by the parent on each navigation (Present/Next/Prev, button or
    * keyboard). The canvas selection reacts to a change in this counter. */
   navSeq?: number
-  /** Direction of the last navigation: +1 for Next, -1 for Prev. Used to step
-   * the selection when nothing is being projected. */
+  /** Direction of the last navigation: +1 for Next, -1 for Prev, 0 when it only
+   * moved the projector. Used to step the selection when nothing is being
+   * projected. */
   navDir?: number
   /** Whether this song is currently live. When true a navigation snaps the
    * selection to the projected slide; when false it steps it by `navDir`. */
   isPresenting?: boolean
+  /** Bumped by the parent when the projector moved to another slide of this
+   * song without this page's navigation — the projection window, MIDI, the
+   * program page, another device. The canvas follows it unless a slide is
+   * being edited. */
+  followSeq?: number
   /** When false the canvas is read-only (presentation/navigation mode). */
   editable?: boolean
   /** PowerPoint-style implicit editing: click the stage to edit, and leave edit
@@ -80,9 +88,11 @@ export function SongStageEditor({
   keyLine,
   songId,
   presentedSlideId,
+  presentedSlidePosition = null,
   navSeq = 0,
   navDir = 1,
   isPresenting = false,
+  followSeq = 0,
   editable = true,
   clickToEdit = false,
   onProjectSlide,
@@ -155,20 +165,30 @@ export function SongStageEditor({
   // the live projected slide so the stage stays in sync with the output screen;
   // when nothing is live we step the selection by `navDir` so Next/Prev browse
   // the slides on the canvas. We key off `navSeq` (only bumped on navigation),
-  // NOT the projected id, so projecting a single slide via the green button
-  // still leaves the edited slide untouched.
-  const navStateRef = useRef({ slides, presentedSlideId, isPresenting, navDir })
-  navStateRef.current = { slides, presentedSlideId, isPresenting, navDir }
+  // NOT the projected slide, so projecting a single slide via the green button
+  // still leaves the edited slide untouched. Moves of the projector made
+  // elsewhere are followed separately (`followSeq`, below).
+  const navStateRef = useRef({
+    slides,
+    presentedSlidePosition,
+    isPresenting,
+    navDir,
+  })
+  navStateRef.current = { slides, presentedSlidePosition, isPresenting, navDir }
+  // By position, not by id: an id the draft does not know would select
+  // nothing, and the stage used to drop back to the first slide. With no live
+  // slide to find, the selection stays where it is.
+  const selectLiveSlide = useCallback(() => {
+    const { slides: sl, presentedSlidePosition: livePosition } =
+      navStateRef.current
+    const liveSlide = livePosition === null ? undefined : sl[livePosition]
+    if (liveSlide) setActiveId(liveSlide.id)
+  }, [])
   useEffect(() => {
     if (navSeq === 0) return
-    const {
-      slides: sl,
-      presentedSlideId: pid,
-      isPresenting: live,
-      navDir: dir,
-    } = navStateRef.current
+    const { slides: sl, isPresenting: live, navDir: dir } = navStateRef.current
     if (live) {
-      if (pid != null) setActiveId(pid)
+      selectLiveSlide()
       return
     }
     setActiveId((prev) => {
@@ -179,14 +199,44 @@ export function SongStageEditor({
     })
   }, [navSeq])
 
+  // The projector moved on without this page — its window's arrows, MIDI, the
+  // program page, another device — and the canvas goes with it, as it does
+  // with the page's own Next/Prev. Except onto a slide being edited: moving the
+  // canvas would close the editor under the operator's caret. Only the live
+  // marker in the filmstrip moves then, and the canvas follows again from the
+  // next move after editing ends — catching up the moment editing ends would
+  // also fire when it ends by clicking another slide, flashing the live one
+  // before the slide clicked.
+  const isEditingRef = useRef(false)
+  const handleEditingChange = useCallback((editing: boolean) => {
+    isEditingRef.current = editing
+  }, [])
+  useEffect(() => {
+    if (followSeq === 0 || isEditingRef.current) return
+    selectLiveSlide()
+  }, [followSeq, selectLiveSlide])
+
   // The canvas always shows the SELECTED slide (the one "you're on"), in both
   // modes — projecting a different slide doesn't move it, and switching to Edit
   // keeps you on this slide. Projection is separate (green button / Present).
+  const lastActiveIndexRef = useRef(0)
   const activeIndex = useMemo(() => {
+    if (slides.length === 0) return -1
     const idx = slides.findIndex((s) => s.id === activeId)
     if (idx >= 0) return idx
-    return slides.length > 0 ? 0 : -1
+    // The selected id went away without the operator picking another slide —
+    // a save swapped a new slide's temporary id for its stored one. The slide
+    // is still in the same place, so stay there rather than on the first one.
+    return Math.min(lastActiveIndexRef.current, slides.length - 1)
   }, [slides, activeId])
+  if (activeIndex >= 0) lastActiveIndexRef.current = activeIndex
+
+  // Point the selection at that slide's current id, so later lookups by id
+  // (Next/Prev stepping while nothing is live) still find it.
+  useEffect(() => {
+    const slide = slides[activeIndex]
+    if (slide && slide.id !== activeId) setActiveId(slide.id)
+  }, [slides, activeIndex, activeId])
 
   const effectiveIndex = activeIndex < 0 ? 0 : activeIndex
   const effectiveSongId = songId ?? 0
@@ -405,14 +455,22 @@ export function SongStageEditor({
           the space above the column footer: the stage fits (letterboxed) and is
           top-aligned with the nav hugging its bottom, so collapsing the notes
           leaves the stage put (it just grows) rather than re-centring. The
-          notes panel is pinned to the column footer below the zone. */}
+          notes panel is pinned to the column footer below the zone.
+
+          Only a large screen gives the column a height to fill. Below lg the
+          panels stack and the page scrolls, so a zone contained in both axes
+          had nothing to take its height from and collapsed to 0, the nav and
+          notes spilling over the thumbnails. There the zone contains only its
+          width: its height is the stage's at that width, and with no container
+          for the block axis `cqh` falls back to the viewport's height, so a
+          phone held sideways still gets a stage that fits on screen. */}
       <div
         className={`order-1 lg:order-3 lg:flex-1 lg:min-w-0 flex flex-col ${
           fillHeight ? 'lg:min-h-0' : ''
         }`}
       >
         {fillHeight ? (
-          <div className="flex min-h-0 flex-1 flex-col items-center [container-type:size]">
+          <div className="flex flex-col items-center [container-type:inline-size] lg:min-h-0 lg:flex-1 lg:[container-type:size]">
             <StageCanvas
               screen={screen}
               previewContent={previewContent}
@@ -422,6 +480,7 @@ export function SongStageEditor({
               editingToolbar={canvasToolbar}
               onEditText={handleEditText}
               textVersion={textVersion}
+              onEditingChange={handleEditingChange}
             />
             {canvasFooter}
           </div>
@@ -436,6 +495,7 @@ export function SongStageEditor({
                 editingToolbar={canvasToolbar}
                 onEditText={handleEditText}
                 textVersion={textVersion}
+                onEditingChange={handleEditingChange}
               />
             </div>
             {canvasFooter}

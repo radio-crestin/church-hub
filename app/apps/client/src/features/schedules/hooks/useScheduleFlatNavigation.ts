@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { switchOBSScene } from '~/features/livestream/service'
 import {
+  type PresentationState,
+  presentationStateQueryKey,
   useClearTemporaryContent,
   usePresentationState,
   usePresentTemporaryAnnouncement,
@@ -13,12 +15,19 @@ import {
 } from '~/features/presentation'
 import { createLogger } from '~/utils/logger'
 import { useSchedule } from './useSchedule'
+import {
+  readProgramPosition,
+  rememberProgramPosition,
+} from '../service/lastProgramPosition'
 import type { ScheduleItem } from '../types'
+import { enqueueProgramNavigation } from '../utils/enqueueProgramNavigation'
+import { liveScheduleFlatIndex } from '../utils/liveScheduleFlatIndex'
 import { getNextScheduleItemPreview } from '../utils/nextScheduleItemPreview'
 import {
   derivePresentedScheduleInfo,
   type PresentedScheduleInfo,
 } from '../utils/presentedScheduleInfo'
+import { programNavigationFlatIndex } from '../utils/programNavigationFlatIndex'
 import {
   buildItemStartFlatIndex,
   buildScheduleFlatItems,
@@ -56,6 +65,11 @@ export interface ScheduleFlatNavigation {
   isScheduleLive: boolean
   /** Position of the live content in `flatItems`, or -1. */
   currentFlatIndex: number
+  /**
+   * Whether this program's Prev/Next have a step to move to — from the live
+   * step, or, with the program idle, from the step showing what is on screen
+   * (see `programNavigationFlatIndex`).
+   */
   canNavigatePrev: boolean
   canNavigateNext: boolean
   isLoading: boolean
@@ -134,26 +148,39 @@ export function useScheduleFlatNavigation({
   )
 
   // Only claim the cursor when the live content actually came from this
-  // program: a song presented straight from the song page carries no
-  // scheduleId, and must not light up a row here.
-  const isScheduleLive =
-    !!presentedInfo &&
-    !!scheduleId &&
-    presentedInfo.scheduleId === scheduleId &&
-    presentedInfo.scheduleItemIndex >= 0
+  // program.
+  const currentFlatIndex = liveScheduleFlatIndex(
+    presentationState?.temporaryContent,
+    scheduleId,
+  )
+  const isScheduleLive = currentFlatIndex >= 0
 
-  const currentFlatIndex = isScheduleLive
-    ? (presentedInfo?.scheduleItemIndex ?? -1)
-    : -1
+  // Kept for when the program goes idle: a song it holds twice, put up on its
+  // own afterwards, is taken as the occurrence the program had reached.
+  useEffect(() => {
+    if (scheduleId && isScheduleLive) {
+      rememberProgramPosition(scheduleId, currentFlatIndex)
+    }
+  }, [scheduleId, isScheduleLive, currentFlatIndex])
 
-  const canNavigatePrev = currentFlatIndex > 0
+  // Where Next/Prev move from. Unlike the cursor above, a song or verse
+  // presented on its own counts when the program holds it — without lighting a
+  // row, since presenting it did not start the program.
+  const navigationFlatIndex = programNavigationFlatIndex(
+    presentationState?.temporaryContent,
+    scheduleId,
+    flatItems,
+    readProgramPosition(scheduleId),
+  )
+
+  const canNavigatePrev = navigationFlatIndex > 0
   // Next is still allowed on the last step: it hides the projection, which is
   // how a service ends.
   const isOnLastStep =
-    currentFlatIndex >= 0 && currentFlatIndex === flatItems.length - 1
+    navigationFlatIndex >= 0 && navigationFlatIndex === flatItems.length - 1
   const hasContent = !!presentationState?.temporaryContent
   const canNavigateNext =
-    (currentFlatIndex >= 0 && currentFlatIndex < flatItems.length - 1) ||
+    (navigationFlatIndex >= 0 && navigationFlatIndex < flatItems.length - 1) ||
     (isOnLastStep && hasContent)
 
   const getFlatItemIndex = useCallback(
@@ -394,33 +421,60 @@ export function useScheduleFlatNavigation({
     [flatItems, navigateToFlatItem],
   )
 
-  const goPrev = useCallback(async () => {
-    if (currentFlatIndex <= 0) return
-    await presentFlatIndex(currentFlatIndex - 1)
-  }, [currentFlatIndex, presentFlatIndex])
+  // Next/prev step from the program's position as it stands when their turn
+  // comes, not when the key was pressed: presses still on their way would
+  // otherwise all be applied to the same step (see enqueueProgramNavigation).
+  // A song on screen that the program holds is that position too, and the step
+  // presented from it makes the program live there.
+  const readNavigationFlatIndex = useCallback(
+    () =>
+      programNavigationFlatIndex(
+        queryClient.getQueryData<PresentationState>(presentationStateQueryKey)
+          ?.temporaryContent,
+        scheduleId,
+        flatItems,
+        readProgramPosition(scheduleId),
+      ),
+    [flatItems, queryClient, scheduleId],
+  )
 
-  const goNext = useCallback(async () => {
-    // Nothing live yet — start the program from the top.
-    if (currentFlatIndex < 0) {
-      await presentFlatIndex(0)
-      return
-    }
+  const goPrev = useCallback(
+    () =>
+      enqueueProgramNavigation(async () => {
+        const flatIndex = readNavigationFlatIndex()
+        if (flatIndex <= 0) return
+        await presentFlatIndex(flatIndex - 1)
+      }),
+    [readNavigationFlatIndex, presentFlatIndex],
+  )
 
-    // Past the last step there is nothing left to show; hide the projection.
-    if (currentFlatIndex >= flatItems.length - 1) {
-      if (presentationState?.temporaryContent) {
-        await clearTemporary.mutateAsync()
+  const goNext = useCallback(() => {
+    // Whether this press starts the program: nothing of it is on the projector.
+    const startsProgram = navigationFlatIndex < 0
+    return enqueueProgramNavigation(async () => {
+      const flatIndex = readNavigationFlatIndex()
+      if (flatIndex < 0) {
+        // Nothing of the program up yet — start it from the top. A press made
+        // while the program ran finds it ended by the press before it, and
+        // must not start it over.
+        if (startsProgram) await presentFlatIndex(0)
+        return
       }
-      return
-    }
 
-    await presentFlatIndex(currentFlatIndex + 1)
+      // Past the last step there is nothing left to show; hide the projection.
+      if (flatIndex >= flatItems.length - 1) {
+        await clearTemporary.mutateAsync()
+        return
+      }
+
+      await presentFlatIndex(flatIndex + 1)
+    })
   }, [
     clearTemporary,
-    currentFlatIndex,
     flatItems.length,
+    navigationFlatIndex,
     presentFlatIndex,
-    presentationState?.temporaryContent,
+    readNavigationFlatIndex,
   ])
 
   return {

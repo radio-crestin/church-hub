@@ -34,6 +34,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { applyStylesToText } from '~/features/presentation/utils/applyStylesToText'
+import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
@@ -486,99 +487,158 @@ export function BibleBookmarksPanel({
     return null
   }
 
+  const startAddingNote = () => {
+    setIsAddingNote(true)
+    setTimeout(() => newNoteInputRef.current?.focus(), 0)
+  }
+  const exportLabel =
+    totalCount === 0 ? t('bookmarks.exportEmpty') : t('bookmarks.exportAsText')
+
+  // The header's actions in the order they sit. A column too narrow for all of
+  // them tucks the ones at the end under "More", clearing the list first.
+  // Import is not gated on `totalCount > 0`, because an empty list is exactly
+  // when someone wants to paste one in.
+  const headerActions: OverflowAction[] = [
+    ...(totalCount > 0
+      ? [
+          {
+            id: 'add-note',
+            label: t('bookmarks.addNote'),
+            icon: <Plus size={18} />,
+            iconClassName:
+              'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+            onSelect: startAddingNote,
+            testId: 'bible-bookmarks-add-note-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={startAddingNote}
+                data-testid="bible-bookmarks-add-note"
+                className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
+                title={t('bookmarks.addNote')}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
+    {
+      id: 'import',
+      label: t('bookmarks.importFromText'),
+      icon: <Upload size={18} />,
+      onSelect: () => setIsImportOpen(true),
+      testId: 'bible-bookmarks-import-menu',
+      inline: (
+        <button
+          type="button"
+          onClick={() => setIsImportOpen(true)}
+          data-testid="bible-bookmarks-import"
+          className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors"
+          title={t('bookmarks.importFromText')}
+        >
+          <Upload className="w-3.5 h-3.5" />
+        </button>
+      ),
+    },
+    // Export sits next to Import and stays whatever the list holds, so the pair
+    // never appears to come and go; it is disabled rather than hidden when
+    // there is nothing to write out.
+    {
+      id: 'export',
+      label: exportLabel,
+      icon: <Download size={18} />,
+      disabled: totalCount === 0 || exportMutation.isPending,
+      onSelect: handleExport,
+      testId: 'bible-bookmarks-export-menu',
+      inline: (
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={totalCount === 0 || exportMutation.isPending}
+          data-testid="bible-bookmarks-export"
+          className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+          title={exportLabel}
+        >
+          <Download className="w-3.5 h-3.5" />
+        </button>
+      ),
+    },
+    ...(totalCount > 0
+      ? [
+          {
+            id: 'clear',
+            label: t('bookmarks.clear'),
+            icon: <Trash2 size={18} />,
+            iconClassName:
+              'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+            disabled: clearBookmarksMutation.isPending,
+            onSelect: () => clearBookmarksMutation.mutate(),
+            testId: 'bible-bookmarks-clear-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={() => clearBookmarksMutation.mutate()}
+                disabled={clearBookmarksMutation.isPending}
+                data-testid="bible-bookmarks-clear"
+                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                title={t('bookmarks.clear')}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
+  ]
+
   return (
     <div
       data-testid="bible-bookmarks-panel"
       className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full"
     >
-      {/* Header — action buttons stay visible even when collapsed so the
-          operator can still Add/Import/Export/Clear. Import sits outside the
-          `totalCount > 0` group because an empty list is exactly when someone
-          wants to paste one in. */}
-      <div className="flex flex-wrap items-center justify-between gap-y-1 px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        {/* The title keeps a floor width so it never collapses to an initial;
-            when the four actions cannot also fit, they wrap to a second row
-            instead of squeezing it. */}
-        <div className="flex min-w-[5.5rem] flex-1 items-center gap-2">
-          {onToggleCollapse ? (
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              aria-expanded={!isCollapsed}
-              aria-label={
-                isCollapsed ? t('bookmarks.expand') : t('bookmarks.collapse')
-              }
-              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-            >
-              <ChevronDown
-                size={14}
-                className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
-              />
-            </button>
-          ) : null}
-          <Bookmark className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-            {t('bookmarks.title')}
-          </span>
-          {totalCount > 0 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({isSearching ? `${filteredItems.length}/` : ''}
-              {totalCount})
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          {totalCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsAddingNote(true)
-                setTimeout(() => newNoteInputRef.current?.focus(), 0)
-              }}
-              className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
-              title={t('bookmarks.addNote')}
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setIsImportOpen(true)}
-            data-testid="bible-bookmarks-import"
-            className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors"
-            title={t('bookmarks.importFromText')}
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
-          {/* Export sits next to Import and stays on screen whatever the list
-              holds, so the pair never appears to come and go; it is disabled
-              rather than hidden when there is nothing to write out. */}
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={totalCount === 0 || exportMutation.isPending}
-            data-testid="bible-bookmarks-export"
-            className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-            title={
-              totalCount === 0
-                ? t('bookmarks.exportEmpty')
-                : t('bookmarks.exportAsText')
-            }
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-          {totalCount > 0 && (
-            <button
-              type="button"
-              onClick={() => clearBookmarksMutation.mutate()}
-              disabled={clearBookmarksMutation.isPending}
-              className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
-              title={t('bookmarks.clear')}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+      {/* Header — action buttons stay reachable even when collapsed so the
+          operator can still Add/Import/Export/Clear; in a narrow column the
+          ones that do not fit move into its "More" menu. */}
+      <div className="flex items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <OverflowActions
+          testId="bible-bookmarks-header-more"
+          actions={headerActions}
+          leading={
+            <>
+              {onToggleCollapse ? (
+                <button
+                  type="button"
+                  onClick={onToggleCollapse}
+                  aria-expanded={!isCollapsed}
+                  aria-label={
+                    isCollapsed
+                      ? t('bookmarks.expand')
+                      : t('bookmarks.collapse')
+                  }
+                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                >
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                  />
+                </button>
+              ) : null}
+              <Bookmark className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
+              {/* One truncating line, so a narrow column cuts the count
+                  before it cuts into the title. */}
+              <span className="min-w-0 truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('bookmarks.title')}
+                {totalCount > 0 && (
+                  <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                    ({isSearching ? `${filteredItems.length}/` : ''}
+                    {totalCount})
+                  </span>
+                )}
+              </span>
+            </>
+          }
+        />
       </div>
 
       {/* Body — hidden in the collapsed accordion state. Kept as a fragment so

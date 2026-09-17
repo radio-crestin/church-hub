@@ -8,8 +8,8 @@ import { useMIDIOptional } from '../midi/context'
 import { isMIDIShortcut, midiMessageToShortcutString } from '../midi/utils'
 import {
   formatShortcutForDisplay,
-  isModifierKey,
   setGlobalRecordingState,
+  shortcutFromKeyboardEvent,
 } from '../utils'
 
 interface ShortcutRecorderProps {
@@ -85,25 +85,9 @@ export function ShortcutRecorder({
       // Use ref to get current recording state (avoids stale closure)
       if (!isRecordingRef.current) return
 
-      const parts: string[] = []
-
-      if (e.metaKey || e.ctrlKey) {
-        parts.push('CommandOrControl')
-      }
-      if (e.altKey) {
-        parts.push('Alt')
-      }
-      if (e.shiftKey) {
-        parts.push('Shift')
-      }
-
-      if (!isModifierKey(e.key)) {
-        const key = e.key.length === 1 ? e.key.toUpperCase() : e.key
-        parts.push(key)
-      }
-
-      if (parts.length > 0 && !isModifierKey(e.key)) {
-        onChangeRef.current(parts.join('+'))
+      const shortcut = shortcutFromKeyboardEvent(e)
+      if (shortcut) {
+        onChangeRef.current(shortcut)
         setIsRecording(false)
         recording?.stopRecording()
       }

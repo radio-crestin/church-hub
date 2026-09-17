@@ -11,6 +11,8 @@ import { useAddItemToSchedule } from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 export interface ScheduleItemEditorsHandle {
+  /** Opens the "add to program" menu. */
+  addItem: () => void
   /** Opens the right editor for this item, by kind. */
   editItem: (item: ScheduleItem) => void
 }
@@ -19,8 +21,6 @@ interface ScheduleItemEditorsProps {
   scheduleId: number
   /** Called after anything is added or saved, so the caller can refetch. */
   onChanged?: () => void
-  /** Icon-only trigger, for the narrow Programe panel header. */
-  compactTrigger?: boolean
 }
 
 /**
@@ -32,16 +32,15 @@ interface ScheduleItemEditorsProps {
  * would drift: an announcement edited from the song page must behave exactly
  * like one edited from the program page.
  *
- * Renders the add trigger in place; editing is driven imperatively through the
- * ref, because the trigger for that is a button on each row.
+ * Renders no trigger of its own: adding and editing are driven imperatively
+ * through the ref, because their triggers live with the host — the header's
+ * "+" (or its row in the header's "More" menu) and a button on each row. The
+ * dialogs must stay mounted while that "+" is tucked away in the menu.
  */
 export const ScheduleItemEditors = forwardRef<
   ScheduleItemEditorsHandle,
   ScheduleItemEditorsProps
->(function ScheduleItemEditors(
-  { scheduleId, onChanged, compactTrigger = false },
-  ref,
-) {
+>(function ScheduleItemEditors({ scheduleId, onChanged }, ref) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const addItemMutation = useAddItemToSchedule()
@@ -62,6 +61,7 @@ export const ScheduleItemEditors = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
+      addItem: () => setShowAddMenu(true),
       editItem: (item: ScheduleItem) => {
         if (item.itemType === 'song' && item.songId) {
           setEditingSongId(item.songId)
@@ -110,7 +110,7 @@ export const ScheduleItemEditors = forwardRef<
           setShowSlideModal(true)
         }}
         onAddScene={() => setShowScenePicker(true)}
-        compactTrigger={compactTrigger}
+        showTrigger={false}
       />
 
       <InsertSlideModal

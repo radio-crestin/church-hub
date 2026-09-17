@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from 'react'
 import { ScreenContent } from './rendering/ScreenContent'
 import type { ContentData } from './rendering/types'
 import { getBackgroundCSS } from './rendering/utils/styleUtils'
-import type { ContentType, ScreenWithConfigs, TextStyleRange } from '../types'
+import type {
+  ClockOverride,
+  ContentType,
+  ScreenWithConfigs,
+  TextStyleRange,
+} from '../types'
 
 interface ScreenPreviewProps {
   screen: ScreenWithConfigs
@@ -20,6 +25,8 @@ interface ScreenPreviewProps {
   onMainTextEdit?: (plainText: string) => void
   /** Bumped when the slide's text is rewritten from outside the editor. */
   textVersion?: number
+  /** Control Room: show this clock instead of the screen's (see ScreenContent) */
+  clockOverride?: ClockOverride
 }
 
 export function ScreenPreview({
@@ -33,6 +40,7 @@ export function ScreenPreview({
   editPlaceholder,
   onMainTextEdit,
   textVersion,
+  clockOverride,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -80,6 +88,7 @@ export function ScreenPreview({
         editPlaceholder={editPlaceholder}
         onMainTextEdit={onMainTextEdit}
         textVersion={textVersion}
+        clockOverride={clockOverride}
       />
     </div>
   )

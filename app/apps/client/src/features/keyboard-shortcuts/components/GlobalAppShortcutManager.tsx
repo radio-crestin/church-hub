@@ -16,6 +16,10 @@ import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
 import { useMIDILEDFeedback } from '../midi/hooks'
 import { focusMainWindow } from '../utils/focusMainWindow'
 import { emitFocusSearchEvent } from '../utils/focusSearchEvent'
+import {
+  emitNavigationShortcut,
+  type NavigationDirection,
+} from '../utils/navigationShortcutEvent'
 import { emitPageShortcutEvent } from '../utils/pageShortcutEvent'
 import { useGlobalRecordingState } from '../utils/recordingState'
 
@@ -125,15 +129,36 @@ export function GlobalAppShortcutManager() {
     showSlide.mutate()
   }, [showSlide])
 
-  const handleNextSlide = useCallback(() => {
-    logger.debug('Navigating to next slide via shortcut')
-    navigateTemporary.mutate({ direction: 'next' })
-  }, [navigateTemporary])
+  // A Next/Previous shortcut does what the open page does with its own
+  // Next/Prev: the song stage follows and saves its draft, a live program
+  // keeps its place. Moving the projector directly was all it used to do, and
+  // is now only what happens if nothing in the page takes the shortcut.
+  const navigateByShortcut = useCallback(
+    (direction: NavigationDirection, shortcut: string) => {
+      if (emitNavigationShortcut(direction, shortcut)) return
+      logger.debug(
+        `Shortcut ${shortcut} (${direction}) not taken by the page; moving the projector`,
+      )
+      navigateTemporary.mutate({ direction })
+    },
+    [navigateTemporary],
+  )
 
-  const handlePrevSlide = useCallback(() => {
-    logger.debug('Navigating to previous slide via shortcut')
-    navigateTemporary.mutate({ direction: 'prev' })
-  }, [navigateTemporary])
+  const handleNextSlide = useCallback(
+    (shortcut: string) => {
+      logger.debug('Navigating to next slide via shortcut')
+      navigateByShortcut('next', shortcut)
+    },
+    [navigateByShortcut],
+  )
+
+  const handlePrevSlide = useCallback(
+    (shortcut: string) => {
+      logger.debug('Navigating to previous slide via shortcut')
+      navigateByShortcut('prev', shortcut)
+    },
+    [navigateByShortcut],
+  )
 
   const handleSceneSwitch = useCallback(
     (sceneName: string) => {
@@ -191,16 +216,16 @@ export function GlobalAppShortcutManager() {
         `Page shortcut ${shortcut} -> ${entry.pageId}.${entry.action}`,
       )
       if (entry.action === 'nextSlide') {
-        navigateTemporary.mutate({ direction: 'next' })
+        navigateByShortcut('next', shortcut)
         return
       }
       if (entry.action === 'prevSlide') {
-        navigateTemporary.mutate({ direction: 'prev' })
+        navigateByShortcut('prev', shortcut)
         return
       }
       emitPageShortcutEvent(entry.pageId, entry.action)
     },
-    [location.pathname, pageShortcuts, navigateTemporary],
+    [location.pathname, pageShortcuts, navigateByShortcut],
   )
 
   // Register keyboard shortcuts

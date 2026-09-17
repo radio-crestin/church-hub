@@ -11,11 +11,25 @@ import {
   useShowSlide,
 } from './index'
 
+interface UseKeyboardShortcutsOptions {
+  /**
+   * The program whose step is on the projector, if any. Next/prev walk it —
+   * across into the item after the one on screen — rather than only moving
+   * within that item.
+   */
+  liveProgram?: {
+    goNext: () => Promise<void>
+    goPrev: () => Promise<void>
+  } | null
+}
+
 /**
  * Global keyboard shortcuts for presentation navigation
  * Registered at PRESENTATION priority (lowest) so page-specific handlers take precedence
  */
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts({
+  liveProgram = null,
+}: UseKeyboardShortcutsOptions = {}) {
   const { data: state } = usePresentationState()
   const navigateTemporary = useNavigateTemporary()
   const clearSlide = useClearSlide()
@@ -33,7 +47,9 @@ export function useKeyboardShortcuts() {
         case ' ':
         case 'PageDown':
           event.preventDefault()
-          if (hasNavigableContent) {
+          if (liveProgram) {
+            void liveProgram.goNext()
+          } else if (hasNavigableContent) {
             navigateTemporary.mutate({ direction: 'next' })
           }
           return true
@@ -42,7 +58,9 @@ export function useKeyboardShortcuts() {
         case 'ArrowUp':
         case 'PageUp':
           event.preventDefault()
-          if (hasNavigableContent) {
+          if (liveProgram) {
+            void liveProgram.goPrev()
+          } else if (hasNavigableContent) {
             navigateTemporary.mutate({ direction: 'prev' })
           }
           return true
@@ -86,7 +104,13 @@ export function useKeyboardShortcuts() {
           return false
       }
     },
-    [hasNavigableContent, navigateTemporary, clearSlide, showSlide],
+    [
+      liveProgram,
+      hasNavigableContent,
+      navigateTemporary,
+      clearSlide,
+      showSlide,
+    ],
   )
 
   // Register with PRESENTATION priority (lowest) - page-specific handlers take precedence

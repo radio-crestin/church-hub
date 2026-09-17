@@ -1,3 +1,15 @@
+import { measureTextHeight } from './measureTextHeight'
+
+/**
+ * Fitted sizes are whole multiples of 1/FIT_STEPS_PER_PX px. Whole pixels are
+ * too coarse for a scaled-down preview: at a fifth of the screen's size one
+ * pixel is five on the screen, so the preview's text came out up to a pixel
+ * smaller than the projection's, scaled — visibly so in a small preview, and
+ * enough to break its lines differently. Both engines lay text out at
+ * fractional sizes, so a tenth of a pixel keeps every preview to scale.
+ */
+export const FIT_STEPS_PER_PX = 10
+
 /**
  * Calculate font size to fit text in a container using binary search.
  * Sets the element to the target width and finds the largest font that fits in
@@ -36,21 +48,22 @@ export function calculateFontSize(
   element.style.visibility = 'hidden'
   element.textContent = text
 
-  // Binary search for the largest font size that fits
-  let low = minFontSize
-  let high = maxFontSize
+  // Binary search, in fit steps, for the largest font size that fits
+  let low = Math.ceil(minFontSize * FIT_STEPS_PER_PX)
+  let high = Math.floor(maxFontSize * FIT_STEPS_PER_PX)
   let bestFit = minFontSize
 
   while (low <= high) {
     const mid = Math.floor((low + high) / 2)
-    element.style.fontSize = `${mid}px`
+    const size = mid / FIT_STEPS_PER_PX
+    element.style.fontSize = `${size}px`
 
     // Measure height at this font size
-    const contentHeight = element.scrollHeight
+    const contentHeight = measureTextHeight(element)
 
     if (contentHeight <= maxHeight) {
       // This font size fits, try larger
-      bestFit = mid
+      bestFit = size
       low = mid + 1
     } else {
       // Too big, try smaller

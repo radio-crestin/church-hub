@@ -1,8 +1,8 @@
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { expect, test as setup } from '@playwright/test'
 
-import { STORAGE_STATE } from '../playwright.config'
+import { STORAGE_STATE, WEBKIT_STORAGE_STATE } from '../playwright.config'
 
 interface LocalUser {
   id: number
@@ -46,5 +46,17 @@ setup('authenticate as super admin', async ({ request }) => {
   expect(loginRes.ok()).toBeTruthy()
 
   mkdirSync(dirname(STORAGE_STATE), { recursive: true })
-  await request.storageState({ path: STORAGE_STATE })
+  const state = await request.storageState({ path: STORAGE_STATE })
+
+  // The session cookie is `Secure`. Chromium sends it to http://localhost,
+  // which it counts as a secure context; WebKit does not, so a WebKit page
+  // would sign in afresh and never keep the cookie it is given. The WebKit
+  // project gets the same session without the flag.
+  writeFileSync(
+    WEBKIT_STORAGE_STATE,
+    JSON.stringify({
+      ...state,
+      cookies: state.cookies.map((cookie) => ({ ...cookie, secure: false })),
+    }),
+  )
 })

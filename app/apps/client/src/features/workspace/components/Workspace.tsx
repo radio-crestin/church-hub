@@ -13,7 +13,12 @@ import {
 import { snapCenterToCursor } from '@dnd-kit/modifiers'
 import { GripHorizontal } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { Group, Panel, useDefaultLayout } from 'react-resizable-panels'
+import {
+  Group,
+  Panel,
+  useDefaultLayout,
+  usePanelRef,
+} from 'react-resizable-panels'
 
 import { WorkspaceColumnView } from './WorkspaceColumnView'
 import { WorkspaceEditToolbar } from './WorkspaceEditToolbar'
@@ -114,6 +119,17 @@ export function Workspace({
     storage: typeof window === 'undefined' ? undefined : window.localStorage,
   })
 
+  // The last column (the side panels on most pages) can be hidden and brought
+  // back from the divider before it, not only by dragging that divider home.
+  const lastColumnRef = usePanelRef()
+  const [lastColumnCollapsed, setLastColumnCollapsed] = useState(false)
+  const toggleLastColumn = () => {
+    const panel = lastColumnRef.current
+    if (!panel) return
+    if (panel.isCollapsed()) panel.expand()
+    else panel.collapse()
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   )
@@ -121,8 +137,20 @@ export function Workspace({
   if (stacked) {
     return (
       <div className={`flex flex-col gap-3 ${className}`}>
+        {/* Panels are written to fill a desktop slot (`h-full`, `flex-1
+            min-h-0`), and a stack the page gives a fixed height would size
+            them by it: one filling the whole stack, the rest squeezed until
+            they clip. A slot that neither shrinks nor has a height of its own
+            leaves each panel at the height its content needs, and the page
+            scrolls instead. */}
         {available.map((panel) => (
-          <Fragment key={panel.id}>{panel.render()}</Fragment>
+          <div
+            key={panel.id}
+            data-testid={`workspace-panel-${panel.id}`}
+            className="min-w-0 shrink-0"
+          >
+            {panel.render()}
+          </div>
         ))}
       </div>
     )
@@ -167,6 +195,9 @@ export function Workspace({
 
   const group = (
     <Group
+      // A new workspace id is a different arrangement: its columns and stored
+      // sizes are mounted afresh rather than resized from the previous one's.
+      key={id}
       id={`${id}-columns`}
       orientation="horizontal"
       className={
@@ -175,27 +206,48 @@ export function Workspace({
       defaultLayout={columnSizes}
       onLayoutChanged={onLayoutChanged}
     >
-      {columns.map((column, index) => (
-        <Fragment key={column.id}>
-          {index > 0 ? <WorkspaceSeparator orientation="horizontal" /> : null}
-          <Panel
-            id={column.id}
-            className="min-h-0 min-w-0"
-            collapsible
-            collapsedSize="0%"
-            minSize="10%"
-            defaultSize={defaultColumnSizes?.[index]}
-          >
-            <WorkspaceColumnView
-              workspaceId={id}
-              column={column}
-              panelsById={panelsById}
-              draggingPanelId={draggingPanelId}
-              editing={editing}
-            />
-          </Panel>
-        </Fragment>
-      ))}
+      {columns.map((column, index) => {
+        const isLastColumn = index > 0 && index === columns.length - 1
+        return (
+          <Fragment key={column.id}>
+            {index > 0 ? (
+              <WorkspaceSeparator
+                orientation="horizontal"
+                columnToggle={
+                  isLastColumn
+                    ? {
+                        collapsed: lastColumnCollapsed,
+                        onToggle: toggleLastColumn,
+                      }
+                    : undefined
+                }
+              />
+            ) : null}
+            <Panel
+              id={column.id}
+              className="min-h-0 min-w-0"
+              collapsible
+              collapsedSize="0%"
+              minSize="10%"
+              defaultSize={defaultColumnSizes?.[index]}
+              panelRef={isLastColumn ? lastColumnRef : undefined}
+              onResize={
+                isLastColumn
+                  ? (size) => setLastColumnCollapsed(size.asPercentage === 0)
+                  : undefined
+              }
+            >
+              <WorkspaceColumnView
+                workspaceId={id}
+                column={column}
+                panelsById={panelsById}
+                draggingPanelId={draggingPanelId}
+                editing={editing}
+              />
+            </Panel>
+          </Fragment>
+        )
+      })}
     </Group>
   )
 

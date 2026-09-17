@@ -13,7 +13,10 @@
     "editAsText": "Editeaza ca Text",
     "cancel": "Anuleaza",
     "expandAll": "Extinde tot",
-    "collapseAll": "Restrange tot"
+    "collapseAll": "Restrange tot",
+    "rename": "Redenumeste",
+    "renameNamed": "Redenumeste programul {{title}}",
+    "renameDescription": "Schimba numele acestui program"
   },
   "editor": {
     "title": "Titlu",
@@ -70,7 +73,8 @@
     "previewTitle": "Previzualizare",
     "presentItem": "Afiseaza pe ecran",
     "openSong": "Deschide cantarea",
-    "openPassage": "Deschide pasajul"
+    "openPassage": "Deschide pasajul",
+    "renameSchedule": "Redenumeste acest program"
   },
   "search": {
     "placeholder": "Cauta programe...",
@@ -176,7 +180,8 @@
     "searchSchedules": "Cauta programe...",
     "addedToSchedules_one": "Cantarea a fost adaugata in {{count}} program",
     "addedToSchedules_other": "Cantarea a fost adaugata in {{count}} programe",
-    "goToSchedule": "Editeaza"
+    "goToSchedule": "Editeaza",
+    "renameTitle": "Redenumeste programul"
   },
   "export": {
     "formatTitle": "Format de Export",

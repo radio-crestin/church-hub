@@ -8,6 +8,9 @@ import { ClockText } from './ClockText'
 import { EditableMainText } from './EditableMainText'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
+import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
+import { hasVisibleText } from './utils/hasVisibleText'
+import { scaleTextStyle } from './utils/scaleTextStyle'
 import {
   calculatePixelBounds,
   clampBoundsToScreen,
@@ -15,6 +18,7 @@ import {
 } from './utils/styleUtils'
 import type {
   BibleContentConfig,
+  ClockOverride,
   ContentType,
   ContentTypeConfig,
   ScreenWithConfigs,
@@ -50,6 +54,12 @@ interface ScreenContentProps {
   onMainTextEdit?: (plainText: string) => void
   /** Bumped when the slide's text is rewritten from outside the editor. */
   textVersion?: number
+  /**
+   * Replaces the screen's clock with this one, shown on every content type
+   * even where the screen hides its clock. Only the Control Room passes it;
+   * projections always render the screen's own clock settings.
+   */
+  clockOverride?: ClockOverride
 }
 
 export function ScreenContent({
@@ -66,6 +76,7 @@ export function ScreenContent({
   editPlaceholder,
   onMainTextEdit,
   textVersion,
+  clockOverride,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
 
@@ -178,10 +189,7 @@ export function ScreenContent({
         <EditableMainText
           key="mainText-edit"
           content={contentData?.mainText ?? ''}
-          style={{
-            ...mainStyle,
-            maxFontSize: mainStyle.maxFontSize * fontScale,
-          }}
+          style={scaleTextStyle(mainStyle, fontScale)}
           width={scaledBounds.width}
           height={scaledBounds.height}
           left={scaledBounds.x}
@@ -230,10 +238,7 @@ export function ScreenContent({
         content={contentData?.mainText ?? ''}
         contentKey={`mainText-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...mainStyle,
-          maxFontSize: mainStyle.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(mainStyle, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -290,10 +295,7 @@ export function ScreenContent({
         content={displayContent}
         contentKey={`contentText-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...ct.style,
-          maxFontSize: ct.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(ct.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -338,10 +340,7 @@ export function ScreenContent({
         content={contentData?.referenceText ?? ''}
         contentKey={`referenceText-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...rt.style,
-          maxFontSize: rt.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(rt.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -390,10 +389,7 @@ export function ScreenContent({
         content={contentData?.songKey ?? ''}
         contentKey={`songKey-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...sk.style,
-          maxFontSize: sk.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(sk.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -433,10 +429,7 @@ export function ScreenContent({
         content={contentData?.amen ?? ''}
         contentKey={`amen-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...am.style,
-          maxFontSize: am.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(am.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -472,10 +465,7 @@ export function ScreenContent({
         content={contentData?.personLabel ?? ''}
         contentKey={`personLabel-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...pl.style,
-          maxFontSize: pl.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(pl.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -556,15 +546,44 @@ export function ScreenContent({
       <ClockText
         key="clock"
         showSeconds={clockConfig.showSeconds}
-        style={{
-          ...clockConfig.style,
-          maxFontSize: clockConfig.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(clockConfig.style, fontScale)}
         width={scaledWidth}
         height={scaledHeight}
         left={scaledX}
         top={scaledY}
       />
+    )
+  }
+
+  // One clock instead of the screen's, so a preview never shows two of them.
+  const renderClockOverride = () => {
+    if (!clockOverride) return null
+
+    const { style, showSeconds, bounds, opacity } = getClockOverrideLayout(
+      clockOverride,
+      screen.globalSettings.clockConfig,
+      canvasWidth,
+      canvasHeight,
+      hasVisibleText(config, contentData, isVisible),
+    )
+    const scaledBounds = scaleBounds(bounds)
+
+    // The wrapper only fades the clock; its box stays positioned against the
+    // screen, and the fade keeps pace with the text fading in and out over it.
+    return (
+      <div
+        key="clockOverride"
+        style={{ opacity, transition: 'opacity 300ms ease-out' }}
+      >
+        <ClockText
+          showSeconds={showSeconds}
+          style={scaleTextStyle(style, fontScale)}
+          width={scaledBounds.width}
+          height={scaledBounds.height}
+          left={scaledBounds.x}
+          top={scaledBounds.y}
+        />
+      </div>
     )
   }
 
@@ -730,9 +749,7 @@ export function ScreenContent({
             <TextContent
               content={getLabelText()}
               style={{
-                ...ns.labelStyle,
-                maxFontSize: ns.labelStyle.maxFontSize * fontScale,
-                minFontSize: (ns.labelStyle.minFontSize ?? 12) * fontScale,
+                ...scaleTextStyle(ns.labelStyle, fontScale),
                 // Always compress label since it may include title
                 compressLines: true,
                 lineSeparator: ns.labelStyle.lineSeparator ?? 'space',
@@ -749,16 +766,12 @@ export function ScreenContent({
           <TextContent
             content={getContentText()}
             style={{
-              ...ns.contentStyle,
-              // Use 1.5x bigger font for versete_tineri
-              maxFontSize:
-                ns.contentStyle.maxFontSize *
+              ...scaleTextStyle(
+                ns.contentStyle,
+                // Use 1.5x bigger font for versete_tineri
                 fontScale *
-                (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
-              minFontSize:
-                (ns.contentStyle.minFontSize ?? 12) *
-                fontScale *
-                (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
+                  (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
+              ),
               compressLines: shouldCompress,
               lineSeparator: ns.contentStyle.lineSeparator ?? 'space',
             }}
@@ -820,13 +833,16 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
+      {/* First, so the content's text is drawn over it; the screen background
+          belongs to the parent and stays below */}
+      {renderClockOverride()}
       {renderMainText()}
       {renderContentText()}
       {renderReferenceText()}
       {renderSongKey()}
       {renderAmen()}
       {renderPersonLabel()}
-      {renderClock()}
+      {!clockOverride && renderClock()}
       {renderNextSlideSection()}
       {renderScreenSharePreview()}
       {activeChord && (

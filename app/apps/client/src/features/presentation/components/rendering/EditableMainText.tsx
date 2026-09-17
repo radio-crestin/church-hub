@@ -346,6 +346,9 @@ export function EditableMainText({
       <div
         ref={editRef}
         data-testid="slide-canvas-editable"
+        // A presenter remote's page keys change slides even from in here (see
+        // isSlideEditorPageKey): pressing "next" means the edit is done.
+        data-slide-navigation=""
         role="textbox"
         aria-multiline="true"
         contentEditable

@@ -1,6 +1,18 @@
-import { expect, test } from '@playwright/test'
+import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { selectAction } from './helpers/actions-menu'
+import { pressNavigationShortcut } from './helpers/navigation-shortcut'
+
+/** The slide the server is projecting for the live song, or null. */
+async function liveSlideIndex(
+  request: APIRequestContext,
+): Promise<number | null> {
+  const response = await request.get('/api/presentation/state')
+  const { data } = await response.json()
+  return data.temporaryContent?.type === 'song'
+    ? (data.temporaryContent.data.currentSlideIndex as number)
+    : null
+}
 
 /**
  * "Editing layout" preference: operators can choose between the normal song page
@@ -752,6 +764,53 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('text typed while an autosave is running is saved too', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Autosave Typing ${Date.now()}`,
+        slides: [{ content: 'Start', sortOrder: 0 }],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(1, {
+        timeout: 10000,
+      })
+
+      // Typing steadily for a few seconds spans several autosaves, so most of
+      // the text arrives while one of them is on its way to the server.
+      await page.locator('[data-editing]').click()
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+      await page.keyboard.type(
+        ' and every word typed after it, one key at a time, for a while',
+        { delay: 60 },
+      )
+
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[0].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('one key at a time, for a while')
+    } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('pasting text keeps the copied form without extra whitespace', async ({
     page,
     request,
@@ -830,6 +889,202 @@ test.describe('Song editing layout preference', () => {
     }
   })
 
+  test('configured Next/Prev shortcuts move the stage with the live slide', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Shortcut Stage ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+
+      // The shortcut does what the stage's own Next does: the projector moves
+      // and the canvas follows (regression: only the projector moved).
+      await pressNavigationShortcut(page, 'next', 'F2')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      // Mid-edit too: the edit is saved and edit mode ends, as with the button.
+      const stage = page.locator('[data-editing]')
+      await stage.click()
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+      await page.keyboard.type(' edited')
+      await pressNavigationShortcut(page, 'next', 'F2')
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[1].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('edited')
+
+      await pressNavigationShortcut(page, 'prev', 'F1')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('a shortcut on the same key the page binds moves one slide, not two', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Shortcut Echo ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+          { content: 'Fourth slide', sortOrder: 3 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(4, { timeout: 10000 })
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+
+      // PageDown configured as the Next shortcut works on its own…
+      await pressNavigationShortcut(page, 'next', 'PageDown')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+
+      // …and one press that reaches the page as a key AND arrives as the
+      // shortcut moves a single slide, whichever route comes first.
+      await page.waitForTimeout(500)
+      await page.keyboard.press('PageDown')
+      await pressNavigationShortcut(page, 'next', 'PageDown')
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+      await page.waitForTimeout(500)
+      expect(await liveSlideIndex(request)).toBe(2)
+
+      await pressNavigationShortcut(page, 'prev', 'PageUp')
+      await page.keyboard.press('PageUp')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await page.waitForTimeout(500)
+      expect(await liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('PageDown/PageUp move the live slide on from inside the slide editor', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Remote Editing ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+
+      const stage = page.locator('[data-editing]')
+      const editable = page.getByTestId('slide-canvas-editable')
+      await stage.click()
+      await expect(editable).toBeVisible()
+
+      // Arrow keys still belong to the text: they move the caret.
+      await page.keyboard.press('Home')
+      await page.keyboard.press('ArrowRight')
+      await page.keyboard.type('X')
+      await expect(editable).toContainText('FXirst slide')
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+      expect(await liveSlideIndex(request)).toBe(0)
+
+      // A presenter remote's page keys mean "next slide" even mid-edit, and
+      // leave edit mode the way the Next button does.
+      await page.keyboard.press('PageDown')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[0].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('FXirst slide')
+
+      await stage.click()
+      await expect(editable).toBeVisible()
+      await page.keyboard.press('PageUp')
+      await expect.poll(() => liveSlideIndex(request)).toBe(0)
+      await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
   test('presenter remote keys (PageDown/PageUp/Space) move the stage', async ({
     page,
     request,
@@ -875,6 +1130,235 @@ test.describe('Song editing layout preference', () => {
 
       await page.getByTestId('stage-hide').click()
     } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('a slide duplicated on the stage is followed by Next once it is saved', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Clone Follow ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+    const savedSlides = async () => {
+      const res = await request.get(`/api/songs/${created.id}`)
+      const { data } = await res.json()
+      return data.slides as Array<{ id: number; content: string }>
+    }
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+
+      // The copy lands third and only has a real id once the autosave stores
+      // it — the stage has to adopt that id without losing the selection.
+      await thumbs.nth(1).hover()
+      await thumbs.nth(1).getByTestId('thumb-clone').click()
+      await expect(thumbs).toHaveCount(4)
+      await expect
+        .poll(async () => (await savedSlides()).length, { timeout: 10000 })
+        .toBe(4)
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      const idsAfterSave = (await savedSlides()).map((slide) => slide.id)
+
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+      const next = page.getByTestId('stage-next')
+      await next.click()
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await next.click()
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+
+      // The projector is on the copy, so the stage must be too — not back on
+      // the first slide (regression: the copy's unsaved id never matched).
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'false')
+
+      // Editing the copy again updates its row instead of replacing it.
+      const stage = page.locator('[data-editing]')
+      await stage.click()
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+      await page.keyboard.type(' again')
+      await expect
+        .poll(async () => (await savedSlides())[2]?.content ?? '', {
+          timeout: 10000,
+        })
+        .toContain('again')
+      expect((await savedSlides()).map((slide) => slide.id)).toEqual(
+        idsAfterSave,
+      )
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('Next and Prev work on the first click while a slide is being edited', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Next While Editing ${Date.now()}`,
+        slides: [
+          { content: 'Slide one', sortOrder: 0 },
+          { content: 'Slide two', sortOrder: 1 },
+          { content: 'Slide three', sortOrder: 2 },
+          { content: 'Slide four', sortOrder: 3 },
+          { content: 'Slide five', sortOrder: 4 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(5, { timeout: 10000 })
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+
+      // The operator fixes slide 4 while slide 2 is on the projector.
+      await thumbs.nth(3).click()
+      await page.getByTestId('thumb-project').nth(1).click()
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      const stage = page.locator('[data-editing]')
+      await stage.click()
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+      await page.keyboard.type(' edited')
+
+      // Next means the edit is done: one click moves the projector and the
+      // stage on (regression: leaving edit mode shifted the button away from
+      // the pointer and swallowed the click).
+      await page.getByTestId('stage-next').click()
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[3].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('edited')
+
+      await stage.click()
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+      await page.getByTestId('stage-prev').click()
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('the stage follows the live slide moved from anywhere, but not while a slide is edited', async ({
+    page,
+    request,
+  }) => {
+    const screens = await (await request.get('/api/screens')).json()
+    const screenId = (screens.data as Array<{ id: number }>)[0]?.id
+    test.skip(!screenId, 'no screens configured')
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Stage Follows ${Date.now()}`,
+        slides: [
+          { content: 'Slide one', sortOrder: 0 },
+          { content: 'Slide two', sortOrder: 1 },
+          { content: 'Slide three', sortOrder: 2 },
+          { content: 'Slide four', sortOrder: 3 },
+          { content: 'Slide five', sortOrder: 4 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+    /** Moves the projector the way another device or MIDI does. */
+    const moveProjector = (direction: 'next' | 'prev') =>
+      request.post('/api/presentation/navigate-temporary', {
+        data: { direction, requestTimestamp: Date.now() },
+      })
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(5, { timeout: 10000 })
+
+      // Put up from somewhere else, then moved on from somewhere else: the
+      // stage keeps up with the projector without this page doing anything.
+      await request.post('/api/presentation/temporary-song', {
+        data: { songId: created.id, slideIndex: 0 },
+      })
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+      await moveProjector('next')
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      // The projection window's own arrows.
+      const projection = await page.context().newPage()
+      await projection.goto(`/screen/${screenId}`)
+      await projection.waitForLoadState('networkidle')
+      await projection.keyboard.press('ArrowRight')
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await projection.close()
+
+      // A slide being edited stays put: only the live marker moves on.
+      const stage = page.locator('[data-editing]')
+      await stage.click()
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+      await moveProjector('next')
+      await expect(
+        thumbs.nth(3).getByTestId('stage-thumbnail-live'),
+      ).toBeVisible()
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'true')
+
+      // Once editing is over, the next move is followed again.
+      await page.evaluate(() => (document.activeElement as HTMLElement).blur())
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+      await moveProjector('next')
+      await expect.poll(() => liveSlideIndex(request)).toBe(4)
+      await expect(thumbs.nth(4)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
       await request.delete(`/api/songs/${created.id}`)
     }
   })

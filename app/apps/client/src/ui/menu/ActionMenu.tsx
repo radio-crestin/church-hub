@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, MoreVertical } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -23,16 +23,21 @@ export interface ActionMenuItem {
 
 interface ActionMenuProps {
   items: ActionMenuItem[]
-  /** Visible trigger label, e.g. "Actions". */
+  /** Accessible name of the icon-only trigger and its tooltip, e.g. "More". */
   label: string
-  triggerIcon?: React.ReactNode
   testId?: string
   className?: string
   /** Which trigger edge the panel lines up with. */
   align?: 'start' | 'end'
+  /**
+   * `compact` is the size of the small icon buttons in a panel header, so a
+   * header that gains the trigger keeps its height.
+   */
+  size?: 'default' | 'compact'
 }
 
 const PANEL_MIN_WIDTH = 264
+const PANEL_MAX_WIDTH = 320
 const ESTIMATED_ROW_HEIGHT = 56
 
 /** Menus opened from inside a <dialog> must portal into it or they render behind. */
@@ -48,10 +53,10 @@ function getPortalContainer(element: HTMLElement | null): HTMLElement {
 export function ActionMenu({
   items,
   label,
-  triggerIcon,
   testId,
   className,
   align = 'end',
+  size = 'default',
 }: ActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -87,14 +92,18 @@ export function ActionMenu({
     const spaceBelow = window.innerHeight - rect.bottom
     const openUpward = spaceBelow < panelHeight && rect.top > spaceBelow
     const minWidth = Math.max(PANEL_MIN_WIDTH, rect.width)
+    // The panel is as wide as its rows (up to a cap), so a long label makes it
+    // wider than the minimum. It is already mounted when this runs, and its
+    // width does not depend on where it sits, so line up by the real one.
+    const panelWidth = Math.max(minWidth, panelRef.current?.offsetWidth ?? 0)
 
     // Keep the panel on screen on narrow viewports instead of letting it
     // overflow past the right edge.
     const preferredLeft =
       align === 'end'
-        ? rect.right + window.scrollX - minWidth
+        ? rect.right + window.scrollX - panelWidth
         : rect.left + window.scrollX
-    const maxLeft = window.scrollX + window.innerWidth - minWidth - 8
+    const maxLeft = window.scrollX + window.innerWidth - panelWidth - 8
     const left = Math.max(window.scrollX + 8, Math.min(preferredLeft, maxLeft))
 
     setPosition(
@@ -241,7 +250,8 @@ export function ActionMenu({
         bottom: position.bottom,
         left: position.left,
         minWidth: position.minWidth,
-        maxWidth: 'calc(100vw - 1rem)',
+        width: 'max-content',
+        maxWidth: `min(calc(100vw - 1rem), ${PANEL_MAX_WIDTH}px)`,
       }}
     >
       {items.map((item, index) => (
@@ -269,7 +279,9 @@ export function ActionMenu({
             {item.icon}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-gray-900 dark:text-white truncate">
+            {/* Wraps rather than truncates, so a long label still reads whole
+                within the panel's capped width. */}
+            <span className="block text-sm font-medium text-gray-900 dark:text-white">
               {item.label}
             </span>
             {item.description && (
@@ -298,19 +310,25 @@ export function ActionMenu({
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
+        aria-label={label}
+        title={label}
         onClick={() => (isOpen ? close(false) : open(-1))}
         onKeyDown={handleTriggerKeyDown}
-        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-          isOpen
-            ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-700 dark:text-indigo-200'
-            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
-        }`}
+        className={
+          size === 'compact'
+            ? `inline-flex items-center justify-center p-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                isOpen
+                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
+              }`
+            : `inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                isOpen
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-700 dark:text-indigo-200'
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
+              }`
+        }
       >
-        {triggerIcon}
-        <span>{label}</span>
-        <ChevronDown
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+        <MoreVertical size={size === 'compact' ? 14 : 16} />
       </button>
       {isOpen && createPortal(panel, getPortalContainer(buttonRef.current))}
     </div>

@@ -5,6 +5,7 @@ import {
   useWebSocket,
   WebSocketDebugPanel,
 } from '~/features/presentation'
+import { useLiveProgramNavigation } from '~/features/schedules'
 import { useDebugMode } from '~/hooks/useDebugMode'
 
 export const Route = createFileRoute('/screen/$screenId')({
@@ -16,6 +17,10 @@ function ScreenPage() {
   const id = Number.parseInt(screenId, 10)
   const { isDebugMode } = useDebugMode()
   const { debugInfo } = useWebSocket()
+  // The projection window runs none of the control window's layout, so the
+  // program its arrows walk is looked up here, as the control window's own
+  // keyboard fallback does (AppLayout).
+  const liveProgram = useLiveProgramNavigation()
 
   if (Number.isNaN(id) || id <= 0) {
     return (
@@ -27,7 +32,7 @@ function ScreenPage() {
 
   return (
     <>
-      <ScreenRenderer screenId={id} />
+      <ScreenRenderer screenId={id} liveProgram={liveProgram} />
       {isDebugMode && <WebSocketDebugPanel debugInfo={debugInfo} />}
     </>
   )

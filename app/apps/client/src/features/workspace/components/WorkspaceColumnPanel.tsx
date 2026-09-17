@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Panel, usePanelRef } from 'react-resizable-panels'
+import { useCallback, useState } from 'react'
+import { Panel } from 'react-resizable-panels'
 
 import { WorkspacePanelFrame } from './WorkspacePanelFrame'
 import type { WorkspacePanel } from '../types'
@@ -13,6 +13,8 @@ interface WorkspaceColumnPanelProps {
   draggingPanelId: string | null
   /** `true` while the page is in layout-editing mode. */
   editing: boolean
+  /** Reports the height of this row's header, which the column pins it to. */
+  onMeasureHeader: (panelId: string, height: number) => void
 }
 
 /**
@@ -24,18 +26,17 @@ interface WorkspaceColumnPanelProps {
  * own collapse chevron pins the row to exactly its header height so the
  * remaining panels take the freed space instead of leaving a gap.
  *
- * Sizing the column when a row opens is the column's job, not this row's: a
- * row can only resize itself, and doing that takes the space from whichever
- * neighbour happens to sit next to it.
+ * Sizing the column when a row opens or shuts is the column's job, not this
+ * row's: a row can only resize itself, and doing that trades space with
+ * whichever neighbour happens to sit next to it — even one that is shut too.
  */
 export function WorkspaceColumnPanel({
   panel,
   columnId,
   draggingPanelId,
   editing,
+  onMeasureHeader,
 }: WorkspaceColumnPanelProps) {
-  const panelRef = usePanelRef()
-  const collapsed = panel.collapsed === true
   // A panel that declares a collapsed state has a chevron and a header to fall
   // back to, so dragging its divider all the way stops at that header rather
   // than taking the panel off the screen. Panels that declare none — the
@@ -44,36 +45,21 @@ export function WorkspaceColumnPanel({
   const stopsAtHeader = panel.collapsed !== undefined
   // Measured from the panel's own header, so a taller header is never clipped.
   const [headerHeight, setHeaderHeight] = useState<number>()
-  const previousCollapsed = useRef<boolean | undefined>(undefined)
-
-  useEffect(() => {
-    const previous = previousCollapsed.current
-    if (previous === collapsed) return
-    previousCollapsed.current = collapsed
-
-    if (collapsed) {
-      // A row that has just been dropped (or previewed) into another column
-      // mounts fresh, and its new group has not registered it yet — collapsing
-      // it in this pass would throw. One frame later the group knows about it.
-      const frame = requestAnimationFrame(() => panelRef.current?.collapse())
-      return () => cancelAnimationFrame(frame)
-    }
-
-    // On mount an open row is already sized by the group's stored layout; only
-    // a real expand has to be let out of its collapsed size.
-    if (previous === undefined) return
-    panelRef.current?.expand()
-  }, [collapsed, panel.id, panelRef])
+  const panelId = panel.id
+  const measureHeader = useCallback(
+    (height: number) => {
+      setHeaderHeight(height)
+      onMeasureHeader(panelId, height)
+    },
+    [onMeasureHeader, panelId],
+  )
 
   return (
     <Panel
       id={panel.id}
-      panelRef={panelRef}
       className="min-h-0 min-w-0"
       collapsible
-      collapsedSize={
-        collapsed || stopsAtHeader ? (headerHeight ?? ASSUMED_HEADER_PX) : '0%'
-      }
+      collapsedSize={stopsAtHeader ? (headerHeight ?? ASSUMED_HEADER_PX) : '0%'}
       minSize={panel.minSize ?? '10%'}
       defaultSize={panel.defaultSize}
     >
@@ -82,7 +68,7 @@ export function WorkspaceColumnPanel({
         columnId={columnId}
         draggingPanelId={draggingPanelId}
         editing={editing}
-        onMeasureCollapsedHeight={setHeaderHeight}
+        onMeasureCollapsedHeight={measureHeader}
       />
     </Panel>
   )

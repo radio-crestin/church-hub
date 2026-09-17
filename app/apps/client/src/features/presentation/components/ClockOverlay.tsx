@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { getFontFamilyStack } from '../utils/getFontFamilyStack'
+
 interface ClockOverlayProps {
   textColor?: string
   fontFamily?: string
@@ -49,7 +51,7 @@ export function ClockOverlay({
   return (
     <div
       className="absolute top-6 right-6"
-      style={{ color: textColor, fontFamily }}
+      style={{ color: textColor, fontFamily: getFontFamilyStack(fontFamily) }}
     >
       <div className="text-4xl font-medium">{formatTime(time)}</div>
     </div>

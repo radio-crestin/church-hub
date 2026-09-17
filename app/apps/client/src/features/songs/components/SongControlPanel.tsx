@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next'
 import {
   ContentTypeButton,
   LivePreview,
-  useNavigateTemporary,
   usePresentationState,
   useWebSocket,
 } from '~/features/presentation'
@@ -26,10 +25,15 @@ import { Switch } from '~/ui/switch/Switch'
 
 interface SongControlPanelProps {
   songId: number
+  /**
+   * Owned by the route, which knows whether the projector is walking a program
+   * (next crosses into the item after the song) or just this song.
+   */
   onPrevSlide: () => void
   onNextSlide: () => void
   canNavigatePrev: boolean
   canNavigateNext: boolean
+  isNavigating?: boolean
   /** Preview mode: stage a slide locally before projecting it. */
   previewMode: boolean
   onTogglePreviewMode: () => void
@@ -52,6 +56,7 @@ export function SongControlPanel({
   onNextSlide,
   canNavigatePrev,
   canNavigateNext,
+  isNavigating = false,
   previewMode,
   onTogglePreviewMode,
   previewContent,
@@ -66,7 +71,6 @@ export function SongControlPanel({
   useWebSocket()
 
   const { data: state } = usePresentationState()
-  const navigateTemporary = useNavigateTemporary()
 
   // Highlight management
   const { data: highlights } = useSlideHighlights()
@@ -80,22 +84,6 @@ export function SongControlPanel({
 
   const isHidden = state?.isHidden ?? true
   const isLive = !isHidden && isTemporarySongActive
-
-  const handlePrev = async () => {
-    if (isTemporarySongActive) {
-      await navigateTemporary.mutateAsync({ direction: 'prev' })
-    } else {
-      onPrevSlide()
-    }
-  }
-
-  const handleNext = async () => {
-    if (isTemporarySongActive) {
-      await navigateTemporary.mutateAsync({ direction: 'next' })
-    } else {
-      onNextSlide()
-    }
-  }
 
   return (
     <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -245,12 +233,11 @@ export function SongControlPanel({
         <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">
           <button
             type="button"
-            onClick={handlePrev}
-            disabled={
-              !canNavigatePrev || navigateTemporary.isPending || isHiding
-            }
+            onClick={onPrevSlide}
+            disabled={!canNavigatePrev || isNavigating || isHiding}
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.prev')}
+            data-testid="song-control-prev"
           >
             <ChevronLeft size={20} />
             <span className="text-base">{t('bible:controls.prev')}</span>
@@ -258,12 +245,11 @@ export function SongControlPanel({
 
           <button
             type="button"
-            onClick={handleNext}
-            disabled={
-              !canNavigateNext || navigateTemporary.isPending || isHiding
-            }
+            onClick={onNextSlide}
+            disabled={!canNavigateNext || isNavigating || isHiding}
             className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             title={t('bible:controls.next')}
+            data-testid="song-control-next"
           >
             <span className="text-base">{t('bible:controls.next')}</span>
             <ChevronRight size={20} />
