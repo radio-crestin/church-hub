@@ -137,8 +137,20 @@ export function Workspace({
   if (stacked) {
     return (
       <div className={`flex flex-col gap-3 ${className}`}>
+        {/* Panels are written to fill a desktop slot (`h-full`, `flex-1
+            min-h-0`), and a stack the page gives a fixed height would size
+            them by it: one filling the whole stack, the rest squeezed until
+            they clip. A slot that neither shrinks nor has a height of its own
+            leaves each panel at the height its content needs, and the page
+            scrolls instead. */}
         {available.map((panel) => (
-          <Fragment key={panel.id}>{panel.render()}</Fragment>
+          <div
+            key={panel.id}
+            data-testid={`workspace-panel-${panel.id}`}
+            className="min-w-0 shrink-0"
+          >
+            {panel.render()}
+          </div>
         ))}
       </div>
     )
