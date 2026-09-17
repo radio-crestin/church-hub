@@ -1,7 +1,5 @@
 import { expect, test } from '@playwright/test'
 
-import { selectAction } from './helpers/actions-menu'
-
 /**
  * The Programe work on the song page:
  *  1. The per-schedule "already sung" marker (API contract + scoping).
@@ -471,7 +469,7 @@ test.describe('Programe modal from the song toolbar', () => {
       await page.waitForLoadState('networkidle')
 
       // Cancel must not touch anything.
-      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
+      await page.getByTestId('song-add-to-schedule').click()
       const modal = page.getByTestId('add-song-to-schedule-modal')
       await expect(modal).toBeVisible({ timeout: 10000 })
 
@@ -490,7 +488,7 @@ test.describe('Programe modal from the song toolbar', () => {
       expect((await afterCancel.json()).data.items.length).toBe(0)
 
       // Now tick both programs and save.
-      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
+      await page.getByTestId('song-add-to-schedule').click()
       await expect(modal).toBeVisible()
 
       await modal.getByTestId('add-song-to-schedule-search').fill(`${uniq}`)
@@ -538,7 +536,7 @@ test.describe('Programe modal from the song toolbar', () => {
       await page.goto(`/songs/${song.id}`)
       await page.waitForLoadState('networkidle')
 
-      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
+      await page.getByTestId('song-add-to-schedule').click()
       const modal = page.getByTestId('add-song-to-schedule-modal')
       await expect(modal).toBeVisible({ timeout: 10000 })
 
@@ -585,7 +583,7 @@ test.describe('Programe modal from the song toolbar', () => {
       await page.goto(`/songs/${song.id}`)
       await page.waitForLoadState('networkidle')
 
-      await selectAction(page, 'song-actions-menu', 'song-add-to-schedule')
+      await page.getByTestId('song-add-to-schedule').click()
       const modal = page.getByTestId('add-song-to-schedule-modal')
       await expect(modal).toBeVisible({ timeout: 10000 })
 

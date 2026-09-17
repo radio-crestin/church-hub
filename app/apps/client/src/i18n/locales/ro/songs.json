@@ -374,7 +374,6 @@
   },
   "actionsMenu": {
     "trigger": "Mai multe",
-    "addToScheduleDescription": "Adaugă cântarea într-unul dintre programe",
     "saveToFileDescription": "Exportă cântarea într-un fișier pe calculator",
     "toggleLayoutDescription": "Comută între editorul clasic și cel PowerPoint",
     "editDescription": "Deschide editorul pentru versuri și slide-uri"

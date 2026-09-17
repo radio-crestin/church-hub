@@ -374,7 +374,6 @@
   },
   "actionsMenu": {
     "trigger": "More",
-    "addToScheduleDescription": "Put this song into one of your programs",
     "saveToFileDescription": "Export this song as a file on your computer",
     "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
     "editDescription": "Open the editor to change lyrics and slides"

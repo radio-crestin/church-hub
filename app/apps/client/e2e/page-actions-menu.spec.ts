@@ -12,14 +12,20 @@ import { actionsMenuItem, openActionsMenu } from './helpers/actions-menu'
  * icons. Those are now one "More" button (three vertical dots) opening a
  * labelled menu, so what matters is that every action is still reachable,
  * still named, and still reports its on/off state. On the song page, marking
- * the song and setting its key stay beside the menu as named icon buttons.
+ * the song, adding it to a program and setting its key stay beside the menu
+ * as named icon buttons, in that order.
  */
 
 const SONG_ACTION_ITEMS = [
-  'song-add-to-schedule',
   'song-save-to-file',
   'song-toggle-layout',
   'song-edit',
+] as const
+
+const SONG_HEADER_BUTTONS = [
+  'song-bookmark-toggle',
+  'song-add-to-schedule',
+  'song-set-key-line',
 ] as const
 
 async function createSong(
@@ -70,7 +76,7 @@ test.describe('Page actions menu', () => {
       }
 
       // Marking the song and setting its key sit beside the menu, not in it.
-      for (const testId of ['song-bookmark-toggle', 'song-set-key-line']) {
+      for (const testId of SONG_HEADER_BUTTONS) {
         await expect(panel.getByTestId(testId)).toHaveCount(0)
       }
 
@@ -79,7 +85,7 @@ test.describe('Page actions menu', () => {
       for (const testId of SONG_ACTION_ITEMS) {
         await expect(page.getByTestId(testId)).toHaveCount(0)
       }
-      for (const testId of ['song-bookmark-toggle', 'song-set-key-line']) {
+      for (const testId of SONG_HEADER_BUTTONS) {
         const button = page.getByTestId(testId)
         await expect(button).toBeVisible()
         await expect(button).toHaveAttribute('aria-label', /.+/)
@@ -104,10 +110,10 @@ test.describe('Page actions menu', () => {
 
       const panel = page.getByTestId('song-actions-menu-panel')
       await expect(panel).toBeVisible()
-      await expect(panel.getByTestId('song-add-to-schedule')).toBeFocused()
+      await expect(panel.getByTestId('song-save-to-file')).toBeFocused()
 
       await page.keyboard.press('ArrowDown')
-      await expect(panel.getByTestId('song-save-to-file')).toBeFocused()
+      await expect(panel.getByTestId('song-toggle-layout')).toBeFocused()
 
       await page.keyboard.press('Escape')
       await expect(panel).toBeHidden()
@@ -126,18 +132,13 @@ test.describe('Page actions menu', () => {
     try {
       await openSong(page, song.id)
 
-      const row = await actionsMenuItem(
-        page,
-        'song-actions-menu',
-        'song-add-to-schedule',
-      )
+      const row = await actionsMenuItem(page, 'song-actions-menu', 'song-edit')
       await row.click()
 
       await expect(page.getByTestId('song-actions-menu-panel')).toBeHidden()
-      await expect(page.getByTestId('add-song-to-schedule-modal')).toBeVisible({
+      await expect(page).toHaveURL(new RegExp(`/songs/${song.id}/edit`), {
         timeout: 10000,
       })
-      await page.getByTestId('add-song-to-schedule-cancel').click()
     } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }
@@ -161,6 +162,33 @@ test.describe('Page actions menu', () => {
       // Put it back so the shared bookmark list is left as it was found.
       await bookmark.click()
       await expect(bookmark).toHaveAttribute('aria-pressed', 'false')
+    } finally {
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('the add-to-program button sits between the bookmark and key buttons', async ({
+    page,
+    request,
+  }) => {
+    const song = await createSong(request, `E2E Actions Program ${Date.now()}`)
+
+    try {
+      await openSong(page, song.id)
+
+      const lefts: number[] = []
+      for (const testId of SONG_HEADER_BUTTONS) {
+        const box = await page.getByTestId(testId).boundingBox()
+        if (!box) throw new Error(`${testId} is not visible`)
+        lefts.push(box.x)
+      }
+      expect(lefts).toEqual([...lefts].sort((a, b) => a - b))
+
+      await page.getByTestId('song-add-to-schedule').click()
+      await expect(page.getByTestId('add-song-to-schedule-modal')).toBeVisible({
+        timeout: 10000,
+      })
+      await page.getByTestId('add-song-to-schedule-cancel').click()
     } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }

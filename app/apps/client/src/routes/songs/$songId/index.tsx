@@ -892,20 +892,11 @@ function SongPreviewPage() {
   /**
    * Page-level actions live behind one labelled menu: a menu row carries the
    * icon, a real label and a one-line hint, so they stay one click away without
-   * a wall of coloured squares. Marking the song and setting its key are used
-   * during a service, so those two sit beside the menu instead.
+   * a wall of coloured squares. Marking the song, adding it to a program and
+   * setting its key are used during a service, so those sit beside the menu
+   * instead.
    */
   const actionMenuItems: ActionMenuItem[] = [
-    {
-      id: 'add-to-schedule',
-      label: t('actions.addToSchedule'),
-      description: t('actionsMenu.addToScheduleDescription'),
-      icon: <CalendarPlus size={18} />,
-      iconClassName:
-        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-      onSelect: () => setShowAddToScheduleModal(true),
-      testId: 'song-add-to-schedule',
-    },
     {
       id: 'save-to-file',
       label: t('actions.saveToFile'),
@@ -1012,7 +1003,7 @@ function SongPreviewPage() {
             )}
           </div>
         </div>
-        {/* The two in-service actions, then the menu — see actionMenuItems. */}
+        {/* The in-service actions, then the menu — see actionMenuItems. */}
         <div className="flex items-center gap-2 sm:justify-end shrink-0">
           <button
             type="button"
@@ -1034,6 +1025,16 @@ function SongPreviewPage() {
             ) : (
               <Bookmark size={16} />
             )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddToScheduleModal(true)}
+            aria-label={t('actions.addToSchedule')}
+            title={t('actions.addToSchedule')}
+            data-testid="song-add-to-schedule"
+            className="inline-flex items-center justify-center p-2 rounded-lg border bg-white border-gray-300 text-green-600 hover:bg-green-50 dark:bg-gray-800 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <CalendarPlus size={16} />
           </button>
           <button
             type="button"
