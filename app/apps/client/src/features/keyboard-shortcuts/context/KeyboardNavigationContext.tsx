@@ -8,7 +8,13 @@ import {
 } from 'react'
 
 import { createLogger } from '~/utils/logger'
+import {
+  type HandledNavigationKey,
+  isEchoedNavigationKey,
+} from '../utils/isEchoedNavigationKey'
 import { isSlideEditorPageKey } from '../utils/isSlideEditorPageKey'
+import { listenForNavigationShortcuts } from '../utils/navigationShortcutEvent'
+import { shortcutFromKeyboardEvent } from '../utils/shortcutFromKeyboardEvent'
 
 const logger = createLogger('keyboard-navigation')
 
@@ -70,6 +76,8 @@ export function KeyboardNavigationProvider({
   children,
 }: KeyboardNavigationProviderProps) {
   const handlersRef = useRef<Map<string, RegisteredHandler>>(new Map())
+  // The last key the handlers acted on, to tell an echo from a real press.
+  const lastHandledKeyRef = useRef<HandledNavigationKey | null>(null)
 
   // Register a new handler
   const registerHandler = useCallback(
@@ -104,6 +112,36 @@ export function KeyboardNavigationProvider({
 
   // Single global keyboard event listener
   useEffect(() => {
+    // Offers the event to the enabled handlers, highest priority first, until
+    // one of them handles it. Returns whether one did.
+    const runHandlers = (event: KeyboardEvent): boolean => {
+      const enabledHandlers = Array.from(handlersRef.current.values())
+        .filter((h) => h.enabled)
+        .sort((a, b) => b.priority - a.priority)
+
+      if (enabledHandlers.length === 0) {
+        return false
+      }
+
+      logger.debug(
+        `Keyboard event: ${event.key}, enabled handlers: ${enabledHandlers.map((h) => `${h.id}(${h.priority})`).join(', ')}`,
+      )
+
+      // Call handlers in priority order, stop if one returns true (handled)
+      for (const handler of enabledHandlers) {
+        try {
+          const handled = handler.handler(event)
+          if (handled === true) {
+            logger.debug(`Event handled by: ${handler.id}`)
+            return true
+          }
+        } catch (error) {
+          logger.error(`Error in keyboard handler ${handler.id}:`, { error })
+        }
+      }
+      return false
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       // Skip if user is typing in an input field
       if (
@@ -134,36 +172,56 @@ export function KeyboardNavigationProvider({
         return
       }
 
-      // Get all enabled handlers sorted by priority (highest first)
-      const enabledHandlers = Array.from(handlersRef.current.values())
-        .filter((h) => h.enabled)
-        .sort((a, b) => b.priority - a.priority)
-
-      if (enabledHandlers.length === 0) {
+      const key: HandledNavigationKey = {
+        shortcut: shortcutFromKeyboardEvent(event),
+        source: 'keyboard',
+        at: Date.now(),
+      }
+      if (isEchoedNavigationKey(lastHandledKeyRef.current, key)) {
+        logger.debug(`Ignoring ${key.shortcut}: the shortcut already moved on`)
+        event.preventDefault()
+        event.stopPropagation()
         return
       }
 
-      logger.debug(
-        `Keyboard event: ${event.key}, enabled handlers: ${enabledHandlers.map((h) => `${h.id}(${h.priority})`).join(', ')}`,
-      )
-
-      // Call handlers in priority order, stop if one returns true (handled)
-      for (const handler of enabledHandlers) {
-        try {
-          const handled = handler.handler(event)
-          if (handled === true) {
-            logger.debug(`Event handled by: ${handler.id}`)
-            event.stopPropagation()
-            return
-          }
-        } catch (error) {
-          logger.error(`Error in keyboard handler ${handler.id}:`, { error })
-        }
+      if (runHandlers(event)) {
+        lastHandledKeyRef.current = key
+        event.stopPropagation()
       }
     }
 
+    // A configured Next/Previous shortcut does what the open page does with its
+    // own Next/Prev, so it is offered to the handlers as the page keys a
+    // presenter remote sends, which every navigation handler binds to exactly
+    // that. The page's rules for typing fields and open dialogs do not apply:
+    // the shortcut is held OS-wide and never typed into anything.
+    const stopListening = listenForNavigationShortcuts(
+      ({ direction, shortcut }) => {
+        const key: HandledNavigationKey = {
+          shortcut,
+          source: 'shortcut',
+          at: Date.now(),
+        }
+        if (isEchoedNavigationKey(lastHandledKeyRef.current, key)) {
+          logger.debug(`Ignoring shortcut ${shortcut}: the page key moved on`)
+          return true
+        }
+
+        const pageKey = new KeyboardEvent('keydown', {
+          key: direction === 'next' ? 'PageDown' : 'PageUp',
+          cancelable: true,
+        })
+        if (!runHandlers(pageKey)) return false
+        lastHandledKeyRef.current = key
+        return true
+      },
+    )
+
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      stopListening()
+    }
   }, [])
 
   const value = useMemo(

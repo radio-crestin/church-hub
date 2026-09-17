@@ -1,6 +1,7 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { selectAction } from './helpers/actions-menu'
+import { pressNavigationShortcut } from './helpers/navigation-shortcut'
 
 /** The slide the server is projecting for the live song, or null. */
 async function liveSlideIndex(
@@ -884,6 +885,129 @@ test.describe('Song editing layout preference', () => {
       expect(content).not.toMatch(/ <\/p>/) // no trailing space inside a line
       expect(content).not.toContain('<p></p><p></p>') // no run of blank lines
     } finally {
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('configured Next/Prev shortcuts move the stage with the live slide', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Shortcut Stage ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(3, { timeout: 10000 })
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+
+      // The shortcut does what the stage's own Next does: the projector moves
+      // and the canvas follows (regression: only the projector moved).
+      await pressNavigationShortcut(page, 'next', 'F2')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+
+      // Mid-edit too: the edit is saved and edit mode ends, as with the button.
+      const stage = page.locator('[data-editing]')
+      await stage.click()
+      await expect(page.getByTestId('slide-canvas-editable')).toBeVisible()
+      await page.keyboard.type(' edited')
+      await pressNavigationShortcut(page, 'next', 'F2')
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+      await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
+      await expect(stage).toHaveAttribute('data-editing', 'false')
+      await expect
+        .poll(
+          async () => {
+            const res = await request.get(`/api/songs/${created.id}`)
+            const { data } = await res.json()
+            return data.slides[1].content as string
+          },
+          { timeout: 10000 },
+        )
+        .toContain('edited')
+
+      await pressNavigationShortcut(page, 'prev', 'F1')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
+      await request.delete(`/api/songs/${created.id}`)
+    }
+  })
+
+  test('a shortcut on the same key the page binds moves one slide, not two', async ({
+    page,
+    request,
+  }) => {
+    const createResponse = await request.post('/api/songs', {
+      data: {
+        title: `E2E Shortcut Echo ${Date.now()}`,
+        slides: [
+          { content: 'First slide', sortOrder: 0 },
+          { content: 'Second slide', sortOrder: 1 },
+          { content: 'Third slide', sortOrder: 2 },
+          { content: 'Fourth slide', sortOrder: 3 },
+        ],
+      },
+    })
+    expect(createResponse.status()).toBe(201)
+    const { data: created } = await createResponse.json()
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${created.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const thumbs = page.getByTestId('stage-thumbnail')
+      await expect(thumbs).toHaveCount(4, { timeout: 10000 })
+      await page.getByTestId('stage-present').click()
+      await expect(page.getByTestId('stage-hide')).toBeVisible({
+        timeout: 10000,
+      })
+
+      // PageDown configured as the Next shortcut works on its own…
+      await pressNavigationShortcut(page, 'next', 'PageDown')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+
+      // …and one press that reaches the page as a key AND arrives as the
+      // shortcut moves a single slide, whichever route comes first.
+      await page.waitForTimeout(500)
+      await page.keyboard.press('PageDown')
+      await pressNavigationShortcut(page, 'next', 'PageDown')
+      await expect.poll(() => liveSlideIndex(request)).toBe(2)
+      await page.waitForTimeout(500)
+      expect(await liveSlideIndex(request)).toBe(2)
+
+      await pressNavigationShortcut(page, 'prev', 'PageUp')
+      await page.keyboard.press('PageUp')
+      await expect.poll(() => liveSlideIndex(request)).toBe(1)
+      await page.waitForTimeout(500)
+      expect(await liveSlideIndex(request)).toBe(1)
+      await expect(thumbs.nth(1)).toHaveAttribute('aria-current', 'true')
+    } finally {
+      await request.post('/api/presentation/clear-temporary')
       await request.delete(`/api/songs/${created.id}`)
     }
   })

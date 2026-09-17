@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { pressNavigationShortcut } from './helpers/navigation-shortcut'
+
 /**
  * The Programe panel on the Songs and Bible pages runs a program the same way
  * the program page does: every kind of item shows up, each opens to its
@@ -725,6 +727,90 @@ test.describe('Programe panel presents and advances the program', () => {
         rowTestId: 'schedule-song-item',
         stepTestId: 'song-slide-1',
       })
+    } finally {
+      await request.post('/api/presentation/clear-temporary').catch(() => {})
+      await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})
+      await request.delete(`/api/songs/${song.id}`).catch(() => {})
+    }
+  })
+
+  test('configured Next/Prev shortcuts walk the live program', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const song = await createSong(request, `E2E Shortcut Program ${uniq}`, 2)
+    const schedule = await createSchedule(
+      request,
+      `E2E Shortcut Program ${uniq}`,
+    )
+
+    try {
+      // song (2 slides) → announcement. Flat run: 0 and 1 are the slides, 2 is
+      // the announcement.
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { songId: song.id },
+      })
+      await request.post(`/api/schedules/${schedule.id}/items`, {
+        data: { slideType: 'announcement', slideContent: `Anunt ${uniq}` },
+      })
+
+      await page.addInitScript((scheduleId: number) => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+        window.localStorage.setItem('song-detail:schedules-open', 'true')
+        window.localStorage.setItem(
+          'songPage.selectedScheduleId',
+          String(scheduleId),
+        )
+      }, schedule.id)
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto(`/songs/${song.id}`)
+      await page.waitForLoadState('networkidle')
+
+      const panel = page.getByTestId('schedule-songs-panel')
+      await expect(panel).toBeVisible({ timeout: 10000 })
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(2, {
+        timeout: 10000,
+      })
+
+      await panel.getByTestId('schedule-song-present').click()
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 0,
+        rowTestId: 'schedule-song-item',
+      })
+
+      // On the song page the shortcut is the stage's Next: it walks the
+      // program, and past the song's last slide comes the announcement
+      // (regression: the shortcut moved only the song and ended it there).
+      await pressNavigationShortcut(page, 'next', 'F2')
+      await expectLiveStep(request, page, panel, {
+        type: 'song',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 1,
+        rowTestId: 'schedule-song-item',
+      })
+      await pressNavigationShortcut(page, 'next', 'F2')
+      await expectLiveStep(request, page, panel, {
+        type: 'announcement',
+        scheduleId: schedule.id,
+        scheduleItemIndex: 2,
+        rowTestId: 'schedule-announcement-item',
+      })
+
+      // A page with no running order of its own walks the live program too,
+      // back into the song's last slide.
+      await page.goto('/settings')
+      await page.waitForLoadState('networkidle')
+      await pressNavigationShortcut(page, 'prev', 'F1')
+      await expect
+        .poll(() => readLiveStep(request), { timeout: 10000 })
+        .toEqual({
+          type: 'song',
+          scheduleId: schedule.id,
+          scheduleItemIndex: 1,
+        })
     } finally {
       await request.post('/api/presentation/clear-temporary').catch(() => {})
       await request.delete(`/api/schedules/${schedule.id}`).catch(() => {})

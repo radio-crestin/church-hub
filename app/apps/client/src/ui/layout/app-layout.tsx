@@ -9,6 +9,7 @@ import {
   useWebSocket,
   WebSocketDebugPanel,
 } from '~/features/presentation'
+import { useLiveProgramNavigation } from '~/features/schedules'
 import { WebviewRouteManager } from '~/features/sidebar-config/components/WebviewRouteManager'
 import { useDebugMode } from '~/hooks/useDebugMode'
 import { Sidebar } from '../sidebar/sidebar'
@@ -29,8 +30,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isStandalone =
     search?.standalone === 'true' || search?.standalone === true
 
-  // Enable global keyboard shortcuts for presentation navigation
-  useKeyboardShortcuts()
+  // Enable global keyboard shortcuts for presentation navigation. Pages with
+  // no running order of their own still walk a live program.
+  const liveProgram = useLiveProgramNavigation()
+  useKeyboardShortcuts({ liveProgram })
 
   // Auto-clear highlights when slide changes (works globally)
   useAutoClearHighlights()

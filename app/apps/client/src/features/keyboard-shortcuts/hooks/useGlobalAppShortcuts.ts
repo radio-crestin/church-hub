@@ -37,8 +37,9 @@ interface UseGlobalAppShortcutsOptions {
   onStartLive: () => void
   onStopLive: () => void
   onShowSlide: () => void
-  onNextSlide: () => void
-  onPrevSlide: () => void
+  /** Called with the key that was pressed, e.g. "F2". */
+  onNextSlide: (shortcut: string) => void
+  onPrevSlide: (shortcut: string) => void
   onSceneSwitch: (sceneName: string) => void
   onSidebarNavigation: (route: string, focusSearch: boolean) => void
   onPageShortcut?: (shortcut: string) => void
@@ -143,12 +144,15 @@ export function useGlobalAppShortcuts({
         if (isCancelled) return
 
         // Register global app shortcuts
-        const actionHandlers: Record<GlobalShortcutActionId, () => void> = {
+        const actionHandlers: Record<
+          GlobalShortcutActionId,
+          (shortcut: string) => void
+        > = {
           startLive: () => handlersRef.current.onStartLive(),
           stopLive: () => handlersRef.current.onStopLive(),
           showSlide: () => handlersRef.current.onShowSlide(),
-          nextSlide: () => handlersRef.current.onNextSlide(),
-          prevSlide: () => handlersRef.current.onPrevSlide(),
+          nextSlide: (shortcut) => handlersRef.current.onNextSlide(shortcut),
+          prevSlide: (shortcut) => handlersRef.current.onPrevSlide(shortcut),
         }
 
         // Track registered shortcuts to avoid duplicates
@@ -206,7 +210,7 @@ export function useGlobalAppShortcuts({
                     logger.info(
                       `App shortcut triggered: ${shortcut} -> ${actionId}`,
                     )
-                    effectiveHandler()
+                    effectiveHandler(shortcut)
                   }
                 })
                 registeredShortcuts.add(shortcut)

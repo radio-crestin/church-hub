@@ -26,7 +26,7 @@ const frontmost = vi.mocked(useIsAppFrontmost)
 
 const noop = () => {}
 
-function renderShortcuts() {
+function renderShortcuts(onNextSlide: (shortcut: string) => void = noop) {
   return renderHook(() =>
     useGlobalAppShortcuts({
       shortcuts: {
@@ -50,7 +50,7 @@ function renderShortcuts() {
       onStartLive: noop,
       onStopLive: noop,
       onShowSlide: noop,
-      onNextSlide: noop,
+      onNextSlide,
       onPrevSlide: noop,
       onSceneSwitch: noop,
       onSidebarNavigation: noop,
@@ -87,5 +87,20 @@ describe('useGlobalAppShortcuts', () => {
     await waitFor(() => expect(registeredKeys()).toContain('F2'))
     expect(registeredKeys()).not.toContain('F6')
     expect(registeredKeys()).not.toContain('F9')
+  })
+
+  it('tells the Next handler which key was pressed', async () => {
+    frontmost.mockReturnValue(true)
+    const onNextSlide = vi.fn()
+    renderShortcuts(onNextSlide)
+
+    await waitFor(() => expect(registeredKeys()).toContain('F2'))
+    const call = registerMock.mock.calls.find(([key]) => key === 'F2')
+    const onPressed = call?.[1] as (event: { state: string }) => void
+    onPressed({ state: 'Pressed' })
+
+    // The key travels on, so a page can tell this press apart from the same
+    // key reaching it directly (see isEchoedNavigationKey).
+    expect(onNextSlide).toHaveBeenCalledWith('F2')
   })
 })
