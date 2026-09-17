@@ -10,6 +10,7 @@ import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
 import { hasVisibleText } from './utils/hasVisibleText'
+import { scaleTextStyle } from './utils/scaleTextStyle'
 import {
   calculatePixelBounds,
   clampBoundsToScreen,
@@ -188,10 +189,7 @@ export function ScreenContent({
         <EditableMainText
           key="mainText-edit"
           content={contentData?.mainText ?? ''}
-          style={{
-            ...mainStyle,
-            maxFontSize: mainStyle.maxFontSize * fontScale,
-          }}
+          style={scaleTextStyle(mainStyle, fontScale)}
           width={scaledBounds.width}
           height={scaledBounds.height}
           left={scaledBounds.x}
@@ -240,10 +238,7 @@ export function ScreenContent({
         content={contentData?.mainText ?? ''}
         contentKey={`mainText-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...mainStyle,
-          maxFontSize: mainStyle.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(mainStyle, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -300,10 +295,7 @@ export function ScreenContent({
         content={displayContent}
         contentKey={`contentText-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...ct.style,
-          maxFontSize: ct.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(ct.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -348,10 +340,7 @@ export function ScreenContent({
         content={contentData?.referenceText ?? ''}
         contentKey={`referenceText-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...rt.style,
-          maxFontSize: rt.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(rt.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -400,10 +389,7 @@ export function ScreenContent({
         content={contentData?.songKey ?? ''}
         contentKey={`songKey-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...sk.style,
-          maxFontSize: sk.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(sk.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -443,10 +429,7 @@ export function ScreenContent({
         content={contentData?.amen ?? ''}
         contentKey={`amen-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...am.style,
-          maxFontSize: am.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(am.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -482,10 +465,7 @@ export function ScreenContent({
         content={contentData?.personLabel ?? ''}
         contentKey={`personLabel-${contentKey}`}
         isVisible={elementVisible}
-        style={{
-          ...pl.style,
-          maxFontSize: pl.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(pl.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
@@ -566,10 +546,7 @@ export function ScreenContent({
       <ClockText
         key="clock"
         showSeconds={clockConfig.showSeconds}
-        style={{
-          ...clockConfig.style,
-          maxFontSize: clockConfig.style.maxFontSize * fontScale,
-        }}
+        style={scaleTextStyle(clockConfig.style, fontScale)}
         width={scaledWidth}
         height={scaledHeight}
         left={scaledX}
@@ -600,7 +577,7 @@ export function ScreenContent({
       >
         <ClockText
           showSeconds={showSeconds}
-          style={{ ...style, maxFontSize: style.maxFontSize * fontScale }}
+          style={scaleTextStyle(style, fontScale)}
           width={scaledBounds.width}
           height={scaledBounds.height}
           left={scaledBounds.x}
@@ -772,9 +749,7 @@ export function ScreenContent({
             <TextContent
               content={getLabelText()}
               style={{
-                ...ns.labelStyle,
-                maxFontSize: ns.labelStyle.maxFontSize * fontScale,
-                minFontSize: (ns.labelStyle.minFontSize ?? 12) * fontScale,
+                ...scaleTextStyle(ns.labelStyle, fontScale),
                 // Always compress label since it may include title
                 compressLines: true,
                 lineSeparator: ns.labelStyle.lineSeparator ?? 'space',
@@ -791,16 +766,12 @@ export function ScreenContent({
           <TextContent
             content={getContentText()}
             style={{
-              ...ns.contentStyle,
-              // Use 1.5x bigger font for versete_tineri
-              maxFontSize:
-                ns.contentStyle.maxFontSize *
+              ...scaleTextStyle(
+                ns.contentStyle,
+                // Use 1.5x bigger font for versete_tineri
                 fontScale *
-                (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
-              minFontSize:
-                (ns.contentStyle.minFontSize ?? 12) *
-                fontScale *
-                (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
+                  (nextSlideData?.contentType === 'versete_tineri' ? 1.5 : 1),
+              ),
               compressLines: shouldCompress,
               lineSeparator: ns.contentStyle.lineSeparator ?? 'space',
             }}

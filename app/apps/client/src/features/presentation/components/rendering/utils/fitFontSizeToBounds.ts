@@ -1,3 +1,6 @@
+import { FIT_STEPS_PER_PX } from './calculateFontSize'
+import { measureTextHeight } from './measureTextHeight'
+
 /**
  * Largest font size at or below `desired` that keeps the slide's text inside its
  * box.
@@ -55,20 +58,20 @@ export function fitFontSizeToBounds(
 
   const fits = (size: number): boolean => {
     element.style.fontSize = `${size}px`
-    return element.scrollHeight <= maxHeight
+    return measureTextHeight(element) <= maxHeight
   }
 
   let bestFit = desired
   if (!fits(desired)) {
     // Binary search the same way the plain-text fit does, so a bounded size and
     // a fitted one are always the same kind of number.
-    let low = Math.ceil(minFontSize)
-    let high = Math.floor(desired)
+    let low = Math.ceil(minFontSize * FIT_STEPS_PER_PX)
+    let high = Math.floor(desired * FIT_STEPS_PER_PX)
     bestFit = minFontSize
     while (low <= high) {
       const mid = Math.floor((low + high) / 2)
-      if (fits(mid)) {
-        bestFit = mid
+      if (fits(mid / FIT_STEPS_PER_PX)) {
+        bestFit = mid / FIT_STEPS_PER_PX
         low = mid + 1
       } else {
         high = mid - 1
