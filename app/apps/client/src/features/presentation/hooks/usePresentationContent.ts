@@ -811,6 +811,13 @@ export function usePresentationContent({
     presentationState?.updatedAt,
     // Include temporaryContent to ensure re-render when navigating temporary songs/bible
     presentationState?.temporaryContent,
+    // The content is built from the screen's settings (the configured "Amin"
+    // label, whether the key line shows, which layout a slide gets). The screen
+    // often loads after the presentation state — always in the previews, which
+    // look the screen up from the screen list first — so without this the
+    // content keeps whatever it was built with before the settings arrived and
+    // a preview disagrees with the projection until the next slide change.
+    screen,
     isExitAnimating,
     // Refetch when a song is updated via WebSocket
     songUpdateTimestamp,
