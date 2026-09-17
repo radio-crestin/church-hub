@@ -1,5 +1,21 @@
 [
   {
+    "version": "0.1.101",
+    "date": "2026-09-17T12:56:31+02:00",
+    "features": [],
+    "bugFixes": [
+      {
+        "scope": "auth",
+        "message": "WebKit keeps the localhost session cookie on Linux too"
+      },
+      {
+        "scope": "songs",
+        "message": "song page, programs and presenting fixes from a live-service test pass"
+      }
+    ],
+    "changes": []
+  },
+  {
     "version": "0.1.100",
     "date": "2026-09-11T17:08:25+02:00",
     "features": [

@@ -2,6 +2,13 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.101 — 2026-09-17
+
+### 🐛 Bug Fixes
+
+- **auth**: WebKit keeps the localhost session cookie on Linux too
+- **songs**: song page, programs and presenting fixes from a live-service test pass
+
 ## v0.1.100 — 2026-09-11
 
 ### 🚀 Features
