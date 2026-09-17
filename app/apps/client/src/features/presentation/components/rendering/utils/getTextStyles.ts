@@ -1,4 +1,5 @@
 import type { TextStyle } from '../../../types'
+import { getFontFamilyStack } from '../../../utils/getFontFamilyStack'
 
 /**
  * Convert a TextStyle into CSS properties. Shared by the read-only renderer
@@ -7,7 +8,7 @@ import type { TextStyle } from '../../../types'
  */
 export function getTextStyles(style: TextStyle): React.CSSProperties {
   const css: React.CSSProperties = {
-    fontFamily: style.fontFamily,
+    fontFamily: getFontFamilyStack(style.fontFamily),
     color: style.color,
     fontWeight: style.bold ? 'bold' : 'normal',
     fontStyle: style.italic ? 'italic' : 'normal',

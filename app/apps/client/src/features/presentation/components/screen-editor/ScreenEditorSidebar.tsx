@@ -45,6 +45,7 @@ import type {
   TextStyle,
 } from '../../types'
 import { getDefaultBackground } from '../../utils/defaultConfigs'
+import { FONT_FAMILY_OPTIONS } from '../../utils/fontFamilyOptions'
 
 interface ScreenEditorSidebarProps {
   screen: ScreenWithConfigs
@@ -97,15 +98,6 @@ function Section({
     </div>
   )
 }
-
-// Font family options
-const FONT_FAMILIES = [
-  { value: 'system-ui', label: 'System Default' },
-  { value: 'Arial', label: 'Arial' },
-  { value: 'Georgia', label: 'Georgia' },
-  { value: 'Times New Roman', label: 'Times New Roman' },
-  { value: 'Verdana', label: 'Verdana' },
-]
 
 // Animation type options
 const ANIMATION_TYPES = [
@@ -490,7 +482,7 @@ export function ScreenEditorSidebar({
                     onChange={(value) => {
                       updateElementStyle({ fontFamily: value })
                     }}
-                    options={FONT_FAMILIES}
+                    options={FONT_FAMILY_OPTIONS}
                     className="w-full"
                     portalContainer={portalContainer}
                   />
@@ -842,7 +834,7 @@ export function ScreenEditorSidebar({
                           fontFamily: value,
                         })
                       }}
-                      options={FONT_FAMILIES}
+                      options={FONT_FAMILY_OPTIONS}
                       className="w-full"
                       portalContainer={portalContainer}
                     />
@@ -1204,7 +1196,7 @@ export function ScreenEditorSidebar({
                           fontFamily: value,
                         })
                       }}
-                      options={FONT_FAMILIES}
+                      options={FONT_FAMILY_OPTIONS}
                       className="w-full"
                       portalContainer={portalContainer}
                     />

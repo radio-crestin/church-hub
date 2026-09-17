@@ -9,6 +9,7 @@ import type {
   SizeWithUnits,
   TextStyle,
 } from '../../../types'
+import { getFontFamilyStack } from '../../../utils/getFontFamilyStack'
 
 interface ScreenDimensions {
   width: number
@@ -78,7 +79,7 @@ export function calculatePixelSize(
 
 export function getTextStyleCSS(style: TextStyle): React.CSSProperties {
   return {
-    fontFamily: style.fontFamily,
+    fontFamily: getFontFamilyStack(style.fontFamily),
     color: style.color,
     fontWeight: style.bold ? 'bold' : 'normal',
     fontStyle: style.italic ? 'italic' : 'normal',
