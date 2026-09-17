@@ -11,7 +11,9 @@ import {
  * content needs there. Panels are written to fill a desktop column slot
  * (`h-full`, `flex-1 min-h-0`), and a stack sized by the page used to squeeze
  * them into it: the control panel lost its Prev/Next buttons, the slides list
- * was cut in half and the PowerPoint stage spilled over Versiuni.
+ * was cut in half and the PowerPoint stage spilled over Versiuni. Nor did the
+ * stage's canvas have a height of its own there: it drew nothing, and Prev/Next
+ * and the notes lay over the first slide's thumbnail.
  *
  * Nothing here presents: the Prev/Next buttons are only hit-tested.
  */
@@ -132,6 +134,23 @@ async function expectReachable(page: Page, testId: string) {
     .toBe(true)
 }
 
+interface Box {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** Whether two boxes share any area. Edges meeting to within a pixel do not. */
+function overlaps(a: Box, b: Box): boolean {
+  return (
+    a.x < b.x + b.width - 1 &&
+    b.x < a.x + a.width - 1 &&
+    a.y < b.y + b.height - 1 &&
+    b.y < a.y + a.height - 1
+  )
+}
+
 for (const viewport of VIEWPORTS) {
   test.describe(`Stacked workspace at ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport })
@@ -167,6 +186,65 @@ for (const viewport of VIEWPORTS) {
           timeout: 15000,
         })
         await expectUnclippedStack(page, ['stage', 'versions'])
+      } finally {
+        await removeFixture(request, fixture)
+      }
+    })
+
+    test('the PowerPoint stage draws its canvas clear of the controls and slides', async ({
+      page,
+      request,
+    }) => {
+      const fixture: Fixture = {}
+      try {
+        await createFixture(request, fixture)
+
+        await page.addInitScript(() =>
+          window.localStorage.setItem('song-editor-layout', 'powerpoint'),
+        )
+        await page.goto(`/songs/${fixture.songId}`)
+        const thumbnails = page.getByTestId('stage-thumbnail')
+        await expect(thumbnails).toHaveCount(8, { timeout: 15000 })
+
+        // The stage draws the slide at 16:9, as wide as the panel allows.
+        const canvas = page.getByTestId('slide-canvas-box')
+        await expect
+          .poll(async () => (await canvas.boundingBox())?.height ?? 0, {
+            timeout: 10000,
+          })
+          .toBeGreaterThan(0)
+        const canvasBox = (await canvas.boundingBox()) as Box
+        const stageBox = (await page
+          .getByTestId('workspace-panel-stage')
+          .boundingBox()) as Box
+        expect(canvasBox.width / canvasBox.height).toBeCloseTo(16 / 9, 2)
+        expect(canvasBox.width).toBeGreaterThan(stageBox.width * 0.9)
+
+        const parts = {
+          canvas,
+          counter: page.getByTestId('slide-counter'),
+          prev: page.getByTestId('stage-prev'),
+          next: page.getByTestId('stage-next'),
+          notes: page.getByTestId('slide-notes-panel'),
+          firstSlide: thumbnails.first(),
+        }
+        const boxes = await Promise.all(
+          Object.entries(parts).map(async ([name, locator]) => ({
+            name,
+            box: (await locator.boundingBox()) as Box,
+          })),
+        )
+        const overlapping = boxes.flatMap((a, index) =>
+          boxes
+            .slice(index + 1)
+            .filter((b) => overlaps(a.box, b.box))
+            .map((b) => `${a.name} over ${b.name}`),
+        )
+        expect(overlapping).toEqual([])
+
+        // Selecting a slide (which never projects) puts it on the canvas.
+        await thumbnails.nth(2).click()
+        await expect(canvas).toContainText('Verse 3')
       } finally {
         await removeFixture(request, fixture)
       }

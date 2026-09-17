@@ -566,9 +566,12 @@ export function SongStageBoard({
           canvasFooter={
             /* Presentation navigation hugs the bottom of the stage — advance/
                retreat the live slide. The slide counter is pinned left and the
-               session clock right, on the same row. */
-            <div className="relative flex w-full items-center justify-center gap-3 pt-3 shrink-0">
-              <div className="absolute left-0 top-1/2 -translate-y-1/2">
+               session clock right, on the same row. Pinned beside centred
+               buttons they need a stage about 30rem wide; on a narrower one (a
+               phone) they covered the buttons' ends, so there they line up
+               with the buttons and the clock wraps below. */
+            <div className="relative flex w-full flex-wrap items-center justify-center gap-3 pt-3 shrink-0">
+              <div className="empty:hidden @min-[30rem]:absolute @min-[30rem]:left-0 @min-[30rem]:top-1/2 @min-[30rem]:-translate-y-1/2">
                 <SlideCounter
                   currentIndex={activeIndex}
                   total={slides.length}
@@ -597,7 +600,7 @@ export function SongStageBoard({
                 <span className="text-sm">{t('bible:controls.next')}</span>
                 <ChevronRight size={20} />
               </button>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              <div className="empty:hidden @min-[30rem]:absolute @min-[30rem]:right-0 @min-[30rem]:top-1/2 @min-[30rem]:-translate-y-1/2">
                 <StageTimer />
               </div>
             </div>

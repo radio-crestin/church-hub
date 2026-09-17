@@ -71,10 +71,12 @@ export default defineConfig({
     // The macOS desktop app draws with WebKit, which has laid the previews out
     // differently from Chromium before (a preview box taller than its frame,
     // cutting the lyrics off). The specs that hold the previews to the
-    // projection run there too.
+    // projection run there too, and so does the one for stacked panels, whose
+    // stage canvas is sized by a container query.
     {
       name: 'webkit',
-      testMatch: /(live-preview-aspect|preview-matches-projection)\.spec\.ts/,
+      testMatch:
+        /(live-preview-aspect|preview-matches-projection|stacked-layout)\.spec\.ts/,
       use: { ...devices['Desktop Safari'], storageState: WEBKIT_STORAGE_STATE },
       dependencies: ['setup'],
     },

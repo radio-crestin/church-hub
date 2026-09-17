@@ -455,14 +455,22 @@ export function SongStageEditor({
           the space above the column footer: the stage fits (letterboxed) and is
           top-aligned with the nav hugging its bottom, so collapsing the notes
           leaves the stage put (it just grows) rather than re-centring. The
-          notes panel is pinned to the column footer below the zone. */}
+          notes panel is pinned to the column footer below the zone.
+
+          Only a large screen gives the column a height to fill. Below lg the
+          panels stack and the page scrolls, so a zone contained in both axes
+          had nothing to take its height from and collapsed to 0, the nav and
+          notes spilling over the thumbnails. There the zone contains only its
+          width: its height is the stage's at that width, and with no container
+          for the block axis `cqh` falls back to the viewport's height, so a
+          phone held sideways still gets a stage that fits on screen. */}
       <div
         className={`order-1 lg:order-3 lg:flex-1 lg:min-w-0 flex flex-col ${
           fillHeight ? 'lg:min-h-0' : ''
         }`}
       >
         {fillHeight ? (
-          <div className="flex min-h-0 flex-1 flex-col items-center [container-type:size]">
+          <div className="flex flex-col items-center [container-type:inline-size] lg:min-h-0 lg:flex-1 lg:[container-type:size]">
             <StageCanvas
               screen={screen}
               previewContent={previewContent}
