@@ -18,6 +18,11 @@ const ROOT_DIR = dirname(fileURLToPath(import.meta.url))
 // once and saves the cookie here; every test reuses it so both the `page`
 // and `request` fixtures are authenticated.
 export const STORAGE_STATE = join(ROOT_DIR, 'e2e/.auth/super-admin.json')
+/** The same session for WebKit, which keeps no `Secure` cookie on plain http. */
+export const WEBKIT_STORAGE_STATE = join(
+  ROOT_DIR,
+  'e2e/.auth/super-admin-webkit.json',
+)
 
 const TEST_PORT = process.env.TEST_PORT ?? '3000'
 const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
@@ -61,6 +66,16 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
+      dependencies: ['setup'],
+    },
+    // The macOS desktop app draws with WebKit, which has laid the previews out
+    // differently from Chromium before (a preview box taller than its frame,
+    // cutting the lyrics off). The specs that hold the previews to the
+    // projection run there too.
+    {
+      name: 'webkit',
+      testMatch: /(live-preview-aspect|preview-matches-projection)\.spec\.ts/,
+      use: { ...devices['Desktop Safari'], storageState: WEBKIT_STORAGE_STATE },
       dependencies: ['setup'],
     },
   ],

@@ -8,8 +8,10 @@ import {
 /**
  * The live preview mirrors the preview screen, so it must keep that screen's
  * proportions at every width: on a phone the Control Room used to stretch it
- * into a tall box, which moved and clipped elements such as the clock. The
- * projected text must also carry fallbacks for fonts Linux lacks.
+ * into a tall box, which moved and clipped elements such as the clock. Where
+ * the space is wider than the screen, the height limits the box instead; there
+ * WebKit (the macOS desktop app) grew it past its frame and cut its bottom off.
+ * The projected text must also carry fallbacks for fonts Linux lacks.
  */
 
 interface ScreenSummary {
@@ -77,6 +79,9 @@ test.describe('Live preview sizing', () => {
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 1440, height: 900 },
+    // Wider than the screen's proportions: the height limits the box.
+    { width: 1920, height: 1080 },
+    { width: 1600, height: 800 },
   ]) {
     test(`Control Room preview keeps the screen's aspect ratio at ${viewport.width}x${viewport.height}`, async ({
       page,
@@ -87,15 +92,16 @@ test.describe('Live preview sizing', () => {
 
       await page.goto('/present')
 
-      // Within 1%: sub-pixel rounding stays far below that, while the old
-      // stretched box was 1.8% off even on a desktop.
+      // Within 0.2%: sub-pixel rounding stays far below that, while the old
+      // stretched box was 1.8% off even on a desktop, and WebKit's overgrown
+      // one 0.7%.
       await expect
         .poll(
           async () =>
             Math.abs((await measurePreview(page)).ratio / screenRatio - 1),
           { timeout: 10000 },
         )
-        .toBeLessThan(0.01)
+        .toBeLessThan(0.002)
 
       const { clippedBy, insideViewport } = await measurePreview(page)
       expect(clippedBy).toEqual([])

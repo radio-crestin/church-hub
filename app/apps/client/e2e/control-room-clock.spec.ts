@@ -217,7 +217,7 @@ test.describe('Control Room clock', () => {
         expect(previewClock.insidePreview).toBe(true)
 
         // 140px on the screen, scaled to the preview like the rest of the
-        // slide. The fit settles on whole pixels, well within 5%.
+        // slide. The fit settles to a tenth of a pixel, well within 5%.
         await expect
           .poll(
             async () => {
