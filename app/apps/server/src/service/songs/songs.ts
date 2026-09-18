@@ -2,7 +2,9 @@ import { asc, eq, inArray } from 'drizzle-orm'
 
 import { getCategoryById } from './categories'
 import { parseAlternateTitles } from './parseAlternateTitles'
+import { parseSongBackground } from './parseSongBackground'
 import { serializeAlternateTitles } from './serializeAlternateTitles'
+import { serializeSongBackground } from './serializeSongBackground'
 import {
   cleanupGroupsAfterSongDelete,
   getGroupIdsForSongs,
@@ -94,6 +96,7 @@ function toSong(record: typeof songs.$inferSelect): Song {
     hymnNumber: record.hymnNumber,
     keyLine: record.keyLine,
     presentationOrder: record.presentationOrder,
+    background: parseSongBackground(record.background),
     presentationCount: record.presentationCount,
     lastPresentedAt: record.lastPresentedAt
       ? Math.floor(record.lastPresentedAt.getTime() / 1000)
@@ -255,6 +258,7 @@ export function getSongsPaginated(
       category_id: number | null
       song_group_id: number | null
       source_filename: string | null
+      alternate_titles: string | null
       author: string | null
       copyright: string | null
       ccli: string | null
@@ -265,6 +269,7 @@ export function getSongsPaginated(
       hymn_number: string | null
       key_line: string | null
       presentation_order: string | null
+      background: string | null
       presentation_count: number
       last_presented_at: number | null
       last_manual_edit: number | null
@@ -293,6 +298,7 @@ export function getSongsPaginated(
       hymnNumber: record.hymn_number,
       keyLine: record.key_line,
       presentationOrder: record.presentation_order,
+      background: parseSongBackground(record.background),
       presentationCount: record.presentation_count,
       lastPresentedAt: record.last_presented_at,
       lastManualEdit: record.last_manual_edit,
@@ -471,6 +477,11 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
           input.alternateTitles,
         )
       }
+      // Stored as JSON; null clears the override (back to the screen's
+      // background), omitting the field leaves the stored one alone.
+      if (input.background !== undefined) {
+        updateData.background = serializeSongBackground(input.background)
+      }
       for (const field of optionalFields) {
         if (input[field] !== undefined) {
           updateData[field] = input[field]
@@ -514,6 +525,7 @@ export function upsertSong(input: UpsertSongInput): SongWithSlides | null {
           hymnNumber: input.hymnNumber ?? null,
           keyLine: input.keyLine ?? null,
           presentationOrder: input.presentationOrder ?? null,
+          background: serializeSongBackground(input.background),
           lastManualEdit,
           createdAt: now,
           updatedAt: now,

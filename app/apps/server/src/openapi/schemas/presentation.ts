@@ -98,6 +98,14 @@ export const presentationSchemas = {
     properties: {
       songId: { type: 'integer' },
       title: { type: 'string' },
+      background: {
+        oneOf: [
+          { $ref: '#/components/schemas/ScreenBackgroundConfig' },
+          { type: 'null' },
+        ],
+        description:
+          "The song's own background, shown instead of the screen's background while it is live; null/absent = use the screen's background. Refreshed when the song is saved while presented.",
+      },
       slides: {
         type: 'array',
         items: { $ref: '#/components/schemas/TemporarySongSlide' },

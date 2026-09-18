@@ -19,6 +19,7 @@ import type {
 import { getDatabase, getRawDatabase } from '../../db'
 import { presentationState, songSlides, songs } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
+import { parseSongBackground } from '../songs/parseSongBackground'
 import { parseStyleOverrides } from '../songs/song-slides'
 
 const logger = createLogger('presentation-state')
@@ -404,7 +405,12 @@ export function presentTemporarySong(
 
     // Fetch song details
     const song = db
-      .select({ id: songs.id, title: songs.title, keyLine: songs.keyLine })
+      .select({
+        id: songs.id,
+        title: songs.title,
+        keyLine: songs.keyLine,
+        background: songs.background,
+      })
       .from(songs)
       .where(eq(songs.id, input.songId))
       .get()
@@ -449,6 +455,7 @@ export function presentTemporarySong(
         songId: song.id,
         title: song.title,
         keyLine: song.keyLine,
+        background: parseSongBackground(song.background),
         slides: expandedSlides.map((s, idx) => {
           let chords = null
           // Find the original slide to get chords (expanded slides reference original IDs)
@@ -1240,9 +1247,10 @@ export function refreshPresentedSongSlides(
 
     const db = getDatabase()
 
-    // Fetch the song's keyLine
+    // Fetch the song's keyLine and background override — both are rendered
+    // on the projection, so an edit to either must reach the live snapshot.
     const song = db
-      .select({ keyLine: songs.keyLine })
+      .select({ keyLine: songs.keyLine, background: songs.background })
       .from(songs)
       .where(eq(songs.id, songId))
       .get()
@@ -1307,6 +1315,7 @@ export function refreshPresentedSongSlides(
         }),
         currentSlideIndex,
         keyLine: song?.keyLine ?? null,
+        background: parseSongBackground(song?.background),
       },
     }
 

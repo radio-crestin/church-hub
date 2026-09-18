@@ -1,3 +1,5 @@
+import type { ScreenBackgroundConfig } from '../presentation/types'
+
 /**
  * Chord annotation mapping a word position to a chord name
  */
@@ -39,6 +41,8 @@ export interface SongRecord {
   hymn_number: string | null
   key_line: string | null
   presentation_order: string | null
+  /** JSON `ScreenBackgroundConfig` overriding the screen background, or null. */
+  background: string | null
   presentation_count: number
   last_presented_at: number | null
   last_manual_edit: number | null
@@ -120,6 +124,11 @@ export interface Song {
   hymnNumber: string | null
   keyLine: string | null
   presentationOrder: string | null
+  /**
+   * Background shown behind this song's slides instead of the screen's own,
+   * or null to use the screen's background.
+   */
+  background: ScreenBackgroundConfig | null
   presentationCount: number
   lastPresentedAt: number | null
   lastManualEdit: number | null
@@ -256,6 +265,11 @@ export interface UpsertSongInput {
   hymnNumber?: string | null
   keyLine?: string | null
   presentationOrder?: string | null
+  /**
+   * Background override for this song. An object sets it, null clears it
+   * (back to the screen's background), omitted leaves the stored one alone.
+   */
+  background?: ScreenBackgroundConfig | null
   presentationCount?: number
   slides?: SlideInput[]
   /**

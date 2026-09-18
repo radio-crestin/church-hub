@@ -366,6 +366,7 @@ import {
   upsertSong,
   upsertSongSlide,
   upsertTag,
+  validateSongBackground,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
 import {
@@ -5227,6 +5228,17 @@ async function startRealServer(): Promise<void> {
             return handleCors(
               req,
               new Response(JSON.stringify({ error: 'Missing title' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
+          const backgroundError = validateSongBackground(body.background)
+          if (backgroundError) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: backgroundError }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' },
               }),

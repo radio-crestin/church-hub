@@ -39,6 +39,14 @@ export const songSchemas = {
       hymnNumber: { type: 'string', nullable: true },
       keyLine: { type: 'string', nullable: true },
       presentationOrder: { type: 'string', nullable: true },
+      background: {
+        oneOf: [
+          { $ref: '#/components/schemas/ScreenBackgroundConfig' },
+          { type: 'null' },
+        ],
+        description:
+          "Background shown behind this song's slides instead of the screen's own; null = use the screen's background. Image/video URLs are relative `/api/media/backgrounds/<id>` paths.",
+      },
       presentationCount: {
         type: 'integer',
         description: 'Number of times the song was presented',
@@ -163,6 +171,14 @@ export const songSchemas = {
       hymnNumber: { type: 'string', nullable: true },
       keyLine: { type: 'string', nullable: true },
       presentationOrder: { type: 'string', nullable: true },
+      background: {
+        oneOf: [
+          { $ref: '#/components/schemas/ScreenBackgroundConfig' },
+          { type: 'null' },
+        ],
+        description:
+          "Per-song background override. An object sets it, null clears it (back to the screen's background), omitting the field leaves it unchanged. `type` must be transparent, color, image or video; `opacity` a number in [0, 1]; `color`/`imageUrl`/`videoUrl` strings — otherwise 400.",
+      },
       slides: {
         type: 'array',
         items: {
