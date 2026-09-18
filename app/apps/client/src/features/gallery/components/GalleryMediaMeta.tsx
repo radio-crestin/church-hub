@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import type { BackgroundMedia } from '~/features/background-media/service/types'
-import { formatFileSize } from '../utils/formatFileSize'
+import { formatFileSize } from '~/utils/formatFileSize'
 
 interface GalleryMediaMetaProps {
   media: BackgroundMedia

@@ -37,7 +37,7 @@ export function GalleryPage() {
     refetch,
   } = useBackgroundMediaList()
   const deleteMutation = useDeleteBackgroundMedia()
-  const { uploadFiles, progress } = useGalleryUpload()
+  const { uploadFiles, progress, heavyGifWarning } = useGalleryUpload()
   const [filter, setFilter] = useState<GalleryFilter>('all')
   const [previewMedia, setPreviewMedia] = useState<BackgroundMedia | null>(null)
   const [pendingDelete, setPendingDelete] = useState<BackgroundMedia | null>(
@@ -167,6 +167,8 @@ export function GalleryPage() {
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
+
+      {heavyGifWarning}
     </div>
   )
 }

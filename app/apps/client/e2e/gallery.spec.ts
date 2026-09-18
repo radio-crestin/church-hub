@@ -8,12 +8,18 @@ import {
 
 import {
   type BackgroundMedia,
+  decodedImageSize,
   deleteMediaExcept,
+  HEAVY_GIF,
+  heavyGifDetails,
+  LIGHT_GIF,
   label,
   listMedia,
   listMediaIds,
   message,
   PNG,
+  recordUploads,
+  STATIC_GIF,
   uploadMedia,
   WEBM_FIXTURE,
 } from './helpers/background-media'
@@ -49,6 +55,17 @@ async function filterBy(page: Page, filter: keyof typeof FILTER_TEST_IDS) {
 
 async function countOfKind(request: APIRequestContext, kind: Kind) {
   return (await listMedia(request)).filter((item) => item.kind === kind).length
+}
+
+/** The summary toast of a gallery upload. */
+function uploadedToast(page: Page, count: number) {
+  return page.getByText(
+    message(
+      'gallery',
+      (lng) => `upload.success_${new Intl.PluralRules(lng).select(count)}`,
+      () => ({ count }),
+    ),
+  )
 }
 
 async function openGallery(page: Page) {
@@ -122,15 +139,7 @@ test.describe('Gallery', () => {
         })),
       ),
     ).toBeVisible()
-    await expect(
-      page.getByText(
-        message(
-          'gallery',
-          (lng) => `upload.success_${new Intl.PluralRules(lng).select(2)}`,
-          () => ({ count: 2 }),
-        ),
-      ),
-    ).toBeVisible({ timeout: 15000 })
+    await expect(uploadedToast(page, 2)).toBeVisible({ timeout: 15000 })
 
     let uploads: BackgroundMedia[] = []
     await expect
@@ -274,6 +283,108 @@ test.describe('Gallery', () => {
     if ((await listMediaIds(request)).length === 0) {
       await expect(page.getByTestId('gallery-empty')).toBeVisible()
     }
+  })
+
+  test('a heavy animated GIF asks first: Cancel uploads nothing, Upload anyway uploads the whole pick', async ({
+    page,
+    request,
+  }) => {
+    const suffix = Date.now()
+    const gifName = `e2e-heavy-${suffix}.gif`
+    const pngName = `e2e-heavy-${suffix}.png`
+    const before = await listMediaIds(request)
+    await openGallery(page)
+    const uploads = recordUploads(page)
+
+    const pick = () =>
+      page.getByTestId('gallery-upload-input').setInputFiles([
+        { name: gifName, mimeType: 'image/gif', buffer: HEAVY_GIF },
+        { name: pngName, mimeType: 'image/png', buffer: PNG },
+      ])
+    const warning = page.getByTestId('heavy-gif-warning')
+    const items = warning.getByTestId('heavy-gif-warning-item')
+
+    // Only the GIF is listed, with its size and frame count.
+    await pick()
+    await expect(warning).toBeVisible()
+    await expect(warning.getByRole('heading')).toHaveText(
+      label('presentation', 'screens.background.heavyGif.title_one'),
+    )
+    await expect(items).toHaveCount(1)
+    await expect(items.first()).toContainText(gifName)
+    await expect(
+      items.first().getByText(heavyGifDetails(HEAVY_GIF, 15)),
+    ).toBeVisible()
+
+    // Cancel: neither file is sent.
+    await warning
+      .getByRole('button', { name: label('common', 'buttons.cancel') })
+      .click()
+    await expect(warning).toBeHidden()
+    await expect(page.getByTestId('gallery-upload-button')).toBeEnabled()
+    expect(await listMediaIds(request)).toEqual(before)
+    expect(uploads).toEqual([])
+
+    // Upload anyway: both are.
+    await pick()
+    await expect(items).toHaveCount(1)
+    await warning
+      .getByRole('button', {
+        name: label('presentation', 'screens.background.heavyGif.confirm'),
+      })
+      .click()
+    await expect(warning).toBeHidden()
+    await expect(uploadedToast(page, 2)).toBeVisible({ timeout: 15000 })
+    expect(uploads).toHaveLength(2)
+
+    let added: BackgroundMedia[] = []
+    await expect
+      .poll(async () => {
+        added = (await listMedia(request)).filter(
+          (item) => !before.includes(item.id),
+        )
+        return added.map((item) => item.mimeType).sort()
+      })
+      .toEqual(['image/gif', 'image/png'])
+    const gif = added.find(
+      (item) => item.mimeType === 'image/gif',
+    ) as BackgroundMedia
+    expect(gif.size).toBe(HEAVY_GIF.length)
+    await expect(galleryItem(page, gif.id)).toBeVisible()
+    // The browser takes the fixture for what it claims to be.
+    expect(await decodedImageSize(page, gif.url)).toEqual({
+      width: 1500,
+      height: 1500,
+    })
+  })
+
+  test('a static GIF, a light animated GIF and a PNG upload without a warning', async ({
+    page,
+    request,
+  }) => {
+    const suffix = Date.now()
+    const before = await listMediaIds(request)
+    await openGallery(page)
+
+    await page.getByTestId('gallery-upload-input').setInputFiles([
+      {
+        name: `e2e-static-${suffix}.gif`,
+        mimeType: 'image/gif',
+        buffer: STATIC_GIF,
+      },
+      {
+        name: `e2e-light-${suffix}.gif`,
+        mimeType: 'image/gif',
+        buffer: LIGHT_GIF,
+      },
+      { name: `e2e-plain-${suffix}.png`, mimeType: 'image/png', buffer: PNG },
+    ])
+
+    await expect(uploadedToast(page, 3)).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('heavy-gif-warning')).toBeHidden()
+    await expect
+      .poll(async () => (await listMediaIds(request)).length)
+      .toBe(before.length + 3)
   })
 
   test('fits a phone screen without scrolling sideways', async ({

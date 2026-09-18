@@ -164,6 +164,15 @@
       "songTypesHint": "Songs use three layouts. Set the same background for {{song}}, {{firstSlide}} and {{lastSlide}}.",
       "switchedType": "The background type is now “{{type}}”, to match the uploaded file.",
       "noViewPermission": "You don't have permission to see the uploaded images and videos.",
+      "heavyGif": {
+        "title_one": "Large animated GIF",
+        "title_other": "Large animated GIFs",
+        "message_one": "This GIF may play choppy or freeze on the screens: long animated GIFs are heavy to play. For a smooth background, convert it to an MP4 (H.264) or WebM video — for example with a GIF-to-MP4 converter — and upload the video instead.",
+        "message_other": "These GIFs may play choppy or freeze on the screens: long animated GIFs are heavy to play. For a smooth background, convert them to MP4 (H.264) or WebM videos — for example with a GIF-to-MP4 converter — and upload the videos instead.",
+        "details_one": "{{size}} · {{count}} frame",
+        "details_other": "{{size}} · {{count}} frames",
+        "confirm": "Upload anyway"
+      },
       "errors": {
         "unsupportedType": "This file type isn't supported. Use a JPG, PNG, WebP or GIF image, or an MP4 or WebM video.",
         "fileTooLarge": "This file is too large. Images can be up to 50 MB and videos up to 1 GB.",

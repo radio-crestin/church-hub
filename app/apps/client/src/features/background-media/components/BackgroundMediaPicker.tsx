@@ -10,6 +10,7 @@ import { BackgroundMediaTile } from './BackgroundMediaTile'
 import { BackgroundMediaUploadButton } from './BackgroundMediaUploadButton'
 import {
   useBackgroundMediaList,
+  useConfirmHeavyGifUpload,
   useDeleteBackgroundMedia,
   useUploadBackgroundMedia,
 } from '../hooks'
@@ -58,6 +59,7 @@ export function BackgroundMediaPicker({
   } = useBackgroundMediaList({ enabled: canView })
   const uploadMutation = useUploadBackgroundMedia()
   const deleteMutation = useDeleteBackgroundMedia()
+  const { confirmUpload, modal: heavyGifWarning } = useConfirmHeavyGifUpload()
   const [pendingDelete, setPendingDelete] = useState<BackgroundMedia | null>(
     null,
   )
@@ -71,12 +73,13 @@ export function BackgroundMediaPicker({
 
   const items = media.filter((item) => item.kind === kind)
 
-  const handleFileSelected = (file: File) => {
+  const handleFileSelected = async (file: File) => {
     const refusal = validateBackgroundMediaFile(file)
     if (refusal) {
       showToast(t(`screens.background.errors.${refusal}`), 'error')
       return
     }
+    if (!(await confirmUpload([file]))) return
 
     uploadMutation.mutate(file, {
       onSuccess: (uploaded) => onChangeRef.current(uploaded),
@@ -126,7 +129,7 @@ export function BackgroundMediaPicker({
       {canEdit && (
         <BackgroundMediaUploadButton
           isUploading={uploadMutation.isPending}
-          onFileSelected={handleFileSelected}
+          onFileSelected={(file) => void handleFileSelected(file)}
         />
       )}
 
@@ -174,6 +177,8 @@ export function BackgroundMediaPicker({
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
+
+      {heavyGifWarning}
     </div>
   )
 }

@@ -76,4 +76,19 @@ describe('ConfirmModal', () => {
       screen.getByRole('button', { name: 'Dismiss', hidden: true }),
     ).toBeInTheDocument()
   })
+
+  test('renders extra content under the message and the test id', () => {
+    render(
+      <ConfirmModal {...defaultProps} testId="confirm-files">
+        <ul>
+          <li>first.gif</li>
+        </ul>
+      </ConfirmModal>,
+    )
+
+    const dialog = screen.getByTestId('confirm-files')
+    expect(dialog.tagName).toBe('DIALOG')
+    expect(dialog.textContent).toContain('Are you sure you want to proceed?')
+    expect(screen.getByText('first.gif').tagName).toBe('LI')
+  })
 })

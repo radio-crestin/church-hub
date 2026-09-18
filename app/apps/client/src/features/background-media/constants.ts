@@ -30,3 +30,16 @@ export const BACKGROUND_MEDIA_EXTENSION_TYPES: Record<string, string> = {
   mp4: 'video/mp4',
   webm: 'video/webm',
 }
+
+/**
+ * When an animated GIF is heavy enough to play choppy or freeze on a screen
+ * (WebKit, the desktop app's webview, stalls on long GIFs), so the upload asks
+ * for confirmation first. It must have at least this many frames…
+ */
+export const HEAVY_GIF_MIN_FRAMES = 2
+
+/** …and be larger than this file size… */
+export const HEAVY_GIF_MAX_FILE_BYTES = 5 * MIB
+
+/** …or decode to more than this (frames × width × height × 4 bytes). */
+export const HEAVY_GIF_MAX_DECODED_BYTES = 100 * MIB

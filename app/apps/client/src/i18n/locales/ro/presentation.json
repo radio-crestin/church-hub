@@ -164,6 +164,18 @@
       "songTypesHint": "Cântecele au trei aranjamente. Setează același fundal pentru {{song}}, {{firstSlide}} și {{lastSlide}}.",
       "switchedType": "Tipul fundalului este acum „{{type}}”, potrivit fișierului încărcat.",
       "noViewPermission": "Nu ai permisiunea de a vedea imaginile și videoclipurile încărcate.",
+      "heavyGif": {
+        "title_one": "GIF animat mare",
+        "title_few": "GIF-uri animate mari",
+        "title_other": "GIF-uri animate mari",
+        "message_one": "Acest GIF poate rula sacadat sau se poate bloca pe ecrane: GIF-urile animate lungi sunt greu de redat. Pentru un fundal fluid, convertește-l într-un videoclip MP4 (H.264) sau WebM — de exemplu cu un convertor GIF în MP4 — și încarcă videoclipul în locul lui.",
+        "message_few": "Aceste GIF-uri pot rula sacadat sau se pot bloca pe ecrane: GIF-urile animate lungi sunt greu de redat. Pentru un fundal fluid, convertește-le în videoclipuri MP4 (H.264) sau WebM — de exemplu cu un convertor GIF în MP4 — și încarcă videoclipurile în locul lor.",
+        "message_other": "Aceste GIF-uri pot rula sacadat sau se pot bloca pe ecrane: GIF-urile animate lungi sunt greu de redat. Pentru un fundal fluid, convertește-le în videoclipuri MP4 (H.264) sau WebM — de exemplu cu un convertor GIF în MP4 — și încarcă videoclipurile în locul lor.",
+        "details_one": "{{size}} · {{count}} cadru",
+        "details_few": "{{size}} · {{count}} cadre",
+        "details_other": "{{size}} · {{count}} de cadre",
+        "confirm": "Încarcă oricum"
+      },
       "errors": {
         "unsupportedType": "Acest tip de fișier nu este acceptat. Folosește o imagine JPG, PNG, WebP sau GIF ori un videoclip MP4 sau WebM.",
         "fileTooLarge": "Fișierul este prea mare. Imaginile pot avea până la 50 MB, iar videoclipurile până la 1 GB.",

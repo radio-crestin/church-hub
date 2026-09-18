@@ -42,6 +42,86 @@ export const PNG = Buffer.from(
   'base64',
 )
 
+/**
+ * A GIF89a of `frames` 1×1 frames (0.1 s each, looping) on a
+ * `width`×`height` logical screen — browsers decode every frame at the full
+ * screen size, so a large screen makes a heavy animation out of a few bytes.
+ */
+function animatedGif(width: number, height: number, frames: number): Buffer {
+  const uint16 = (value: number) => [value & 0xff, value >> 8]
+  const ascii = (text: string) => [...text].map((char) => char.charCodeAt(0))
+  const bytes = [
+    ...ascii('GIF89a'),
+    ...uint16(width),
+    ...uint16(height),
+    // A 2-colour global table (black, white).
+    0x80,
+    0,
+    0,
+    ...[0, 0, 0, 0xff, 0xff, 0xff],
+    // NETSCAPE2.0: loop forever.
+    ...[0x21, 0xff, 11, ...ascii('NETSCAPE2.0'), 3, 1, 0, 0, 0],
+  ]
+  for (let frame = 0; frame < frames; frame++) {
+    bytes.push(0x21, 0xf9, 4, 0x04, ...uint16(10), 0, 0)
+    bytes.push(0x2c, ...uint16(0), ...uint16(0), ...uint16(1), ...uint16(1), 0)
+    // LZW data of one pixel.
+    bytes.push(2, 2, 0x44, 0x01, 0)
+  }
+  bytes.push(0x3b)
+  return Buffer.from(bytes)
+}
+
+/**
+ * 15 frames of 1500×1500: ~129 MiB decoded (over the 100 MiB limit) in a few
+ * hundred bytes — the upload warns before sending it.
+ */
+export const HEAVY_GIF = animatedGif(1500, 1500, 15)
+
+/** A short, small animation: uploads without a warning. */
+export const LIGHT_GIF = animatedGif(20, 20, 3)
+
+/** A single-frame GIF: never warned about, whatever its size. */
+export const STATIC_GIF = animatedGif(1500, 1500, 1)
+
+/** Matches a line of the heavy GIF warning: "384 B · 15 frames". */
+export function heavyGifDetails(gif: Buffer, frames: number): RegExp {
+  return message(
+    'presentation',
+    (lng) =>
+      `screens.background.heavyGif.details_${new Intl.PluralRules(lng).select(frames)}`,
+    // Under 1 KB the size reads the same in every language.
+    () => ({ size: `${gif.length} B`, count: frames }),
+  )
+}
+
+/**
+ * Collects the uploads the page sends from now on, to show a cancelled
+ * upload sent nothing.
+ */
+export function recordUploads(page: Page): string[] {
+  const uploads: string[] = []
+  page.on('request', (req) => {
+    if (req.url().includes(MEDIA_API) && req.method() === 'POST') {
+      uploads.push(req.url())
+    }
+  })
+  return uploads
+}
+
+/** The size the browser decodes an uploaded image at. */
+export function decodedImageSize(
+  page: Page,
+  url: string,
+): Promise<{ width: number; height: number }> {
+  return page.evaluate(async (src) => {
+    const image = new Image()
+    image.src = src
+    await image.decode()
+    return { width: image.naturalWidth, height: image.naturalHeight }
+  }, url)
+}
+
 export type BackgroundType =
   | 'inherit'
   | 'transparent'

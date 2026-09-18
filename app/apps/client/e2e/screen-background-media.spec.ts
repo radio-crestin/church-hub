@@ -6,12 +6,15 @@ import {
   backgroundTypeLabel,
   chooseBackgroundType,
   deleteMediaExcept,
+  HEAVY_GIF,
+  heavyGifDetails,
   JPEG_FIXTURE,
   label,
   listMediaIds,
   MEDIA_API,
   message,
   PNG,
+  recordUploads,
   setScreenSongBackground,
   uploadMedia,
   uploadThroughPicker,
@@ -584,5 +587,67 @@ test.describe('Screen background media', () => {
       new RegExp(`${video.url}$`),
     )
     await expect(page.getByTestId('screen-background-image')).toHaveCount(0)
+  })
+
+  test('the editor warns before uploading a heavy animated GIF, and Cancel keeps the background', async ({
+    page,
+    request,
+  }) => {
+    const media = await uploadMedia(request, PNG, 'image/png', 'kept.png')
+    await setScreenSongBackground(request, screenId, {
+      type: 'image',
+      imageUrl: media.url,
+      color: '#000000',
+      opacity: 1,
+    })
+    await openScreenEditor(page, screenId)
+    const canvasImage = page.getByTestId('screen-background-image')
+    const tile = page.locator(
+      `[data-testid="background-media-item"][data-media-id="${media.id}"]`,
+    )
+    await expect(canvasImage).toHaveAttribute(
+      'style',
+      backgroundImageStyle(media.url),
+    )
+    await expect(tile).toHaveAttribute('data-selected', 'true')
+    const before = await listMediaIds(request)
+    const uploads = recordUploads(page)
+
+    await page.getByTestId('background-media-upload-input').setInputFiles({
+      name: 'e2e-heavy-background.gif',
+      mimeType: 'image/gif',
+      buffer: HEAVY_GIF,
+    })
+    const warning = page.getByTestId('heavy-gif-warning')
+    await expect(warning).toBeVisible()
+    const items = warning.getByTestId('heavy-gif-warning-item')
+    await expect(items).toHaveCount(1)
+    await expect(items.first()).toContainText('e2e-heavy-background.gif')
+    await expect(
+      items.first().getByText(heavyGifDetails(HEAVY_GIF, 15)),
+    ).toBeVisible()
+
+    await warning
+      .getByRole('button', { name: label('common', 'buttons.cancel') })
+      .click()
+    await expect(warning).toBeHidden()
+
+    // Nothing was sent and the background still shows the same image.
+    await expect(
+      page.getByTestId('background-media-upload-button'),
+    ).toBeEnabled()
+    expect(await listMediaIds(request)).toEqual(before)
+    expect(uploads).toEqual([])
+    await expect(tile).toHaveAttribute('data-selected', 'true')
+    await expect(
+      page.locator(
+        '[data-testid="background-media-item"][data-selected="true"]',
+      ),
+    ).toHaveCount(1)
+    await expect(canvasImage).toHaveAttribute(
+      'style',
+      backgroundImageStyle(media.url),
+    )
+    await expect(page.getByTestId('screen-editor-save')).toBeDisabled()
   })
 })
