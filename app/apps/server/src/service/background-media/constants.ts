@@ -1,4 +1,8 @@
-import type { BackgroundMediaKind, BackgroundMediaType } from './types'
+import type {
+  BackgroundMediaKind,
+  BackgroundMediaType,
+  DefaultBackgroundMedia,
+} from './types'
 
 const MIB = 1024 * 1024
 
@@ -37,3 +41,24 @@ export const BACKGROUND_MEDIA_MAX_REQUEST_BODY_BYTES =
  */
 export const BACKGROUND_MEDIA_ID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|gif|mp4|webm)$/
+
+/**
+ * Folder of the backgrounds shipped with the app, inside the bundled resources
+ * (`tauri/resources/default-backgrounds` in the repo).
+ */
+export const DEFAULT_BACKGROUND_MEDIA_RESOURCE_DIR = 'default-backgrounds'
+
+/**
+ * Backgrounds every install gets in its gallery. Each is copied once under a
+ * fixed id, so a copy is never duplicated and one the user deleted is never
+ * brought back.
+ */
+export const DEFAULT_BACKGROUND_MEDIA: readonly DefaultBackgroundMedia[] = [
+  {
+    fileName: 'purple-abstract-waves.mp4',
+    id: 'bea7e008-f3d1-4f28-b428-d8ced373f17a.mp4',
+  },
+]
+
+/** `app_settings` key set once the default backgrounds have been copied. */
+export const DEFAULT_BACKGROUND_MEDIA_MARKER_KEY = 'default_background_media_v1'

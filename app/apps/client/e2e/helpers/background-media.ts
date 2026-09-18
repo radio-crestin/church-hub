@@ -22,6 +22,26 @@ type Language = (typeof LANGUAGES)[number]
 
 export const MEDIA_API = '/api/media/backgrounds'
 
+/**
+ * The background video shipped with the app, which the server copies into
+ * every gallery on its first start (DEFAULT_BACKGROUND_MEDIA on the server).
+ * Tests must never delete it: it is only added once per database.
+ */
+export const BUILT_IN_VIDEO = {
+  id: 'bea7e008-f3d1-4f28-b428-d8ced373f17a.mp4',
+  file: path.join(
+    helpersDir,
+    '..',
+    '..',
+    '..',
+    '..',
+    'tauri',
+    'resources',
+    'default-backgrounds',
+    'purple-abstract-waves.mp4',
+  ),
+}
+
 /** The layouts a song is drawn with on a screen. */
 export const SONG_CONTENT_TYPES = [
   'song',
@@ -168,14 +188,16 @@ export async function listMediaIds(
 
 /**
  * Deletes every upload not in `keep` — including one whose test failed before
- * noting its id.
+ * noting its id. The built-in video is always kept.
  */
 export async function deleteMediaExcept(
   request: APIRequestContext,
   keep: ReadonlySet<string>,
 ): Promise<void> {
   for (const id of await listMediaIds(request)) {
-    if (!keep.has(id)) await request.delete(`${MEDIA_API}/${id}`)
+    if (!keep.has(id) && id !== BUILT_IN_VIDEO.id) {
+      await request.delete(`${MEDIA_API}/${id}`)
+    }
   }
 }
 

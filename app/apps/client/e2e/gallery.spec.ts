@@ -8,6 +8,7 @@ import {
 
 import {
   type BackgroundMedia,
+  BUILT_IN_VIDEO,
   decodedImageSize,
   deleteMediaExcept,
   HEAVY_GIF,
@@ -16,6 +17,7 @@ import {
   label,
   listMedia,
   listMediaIds,
+  MEDIA_API,
   message,
   PNG,
   recordUploads,
@@ -25,9 +27,10 @@ import {
 } from './helpers/background-media'
 
 /**
- * The gallery lists every uploaded background image and video: several files
- * upload at once (a refused one gets its own error and the rest carry on),
- * tabs filter by kind, an item opens at full size, and it can be deleted.
+ * The gallery lists every uploaded background image and video, plus the video
+ * shipped with the app: several files upload at once (a refused one gets its
+ * own error and the rest carry on), tabs filter by kind, an item opens at full
+ * size, and it can be deleted.
  */
 
 type Kind = BackgroundMedia['kind']
@@ -86,6 +89,49 @@ test.describe('Gallery', () => {
     await deleteMediaExcept(request, preexistingMediaIds)
   })
 
+  test('the video shipped with the app is in the gallery from the first start', async ({
+    page,
+    request,
+  }) => {
+    const bundled = fs.readFileSync(BUILT_IN_VIDEO.file)
+    const url = `${MEDIA_API}/${BUILT_IN_VIDEO.id}`
+    const video = (await listMedia(request)).find(
+      (item) => item.id === BUILT_IN_VIDEO.id,
+    )
+    expect(video).toMatchObject({
+      kind: 'video',
+      mimeType: 'video/mp4',
+      size: bundled.length,
+      url,
+    })
+
+    // An MP4 whose index comes first, so playback starts before the whole
+    // file has loaded.
+    const ftypSize = bundled.readUInt32BE(0)
+    expect(bundled.toString('latin1', 4, 8)).toBe('ftyp')
+    expect(bundled.toString('latin1', ftypSize + 4, ftypSize + 8)).toBe('moov')
+
+    // Served as the bundled file. Playwright's Chromium has no H.264 decoder,
+    // so it is checked as a file rather than played.
+    const head = await request.head(url)
+    expect(head.status()).toBe(200)
+    expect(head.headers()['content-type']).toBe('video/mp4')
+    expect(head.headers()['content-length']).toBe(String(bundled.length))
+    const start = await request.get(url, { headers: { Range: 'bytes=0-63' } })
+    expect(start.status()).toBe(206)
+    expect(Buffer.compare(await start.body(), bundled.subarray(0, 64))).toBe(0)
+
+    await openGallery(page)
+    await expect(galleryItem(page, BUILT_IN_VIDEO.id)).toHaveAttribute(
+      'data-kind',
+      'video',
+    )
+    await filterBy(page, 'video')
+    await expect(galleryItem(page, BUILT_IN_VIDEO.id)).toBeVisible()
+    await filterBy(page, 'image')
+    await expect(galleryItem(page, BUILT_IN_VIDEO.id)).toHaveCount(0)
+  })
+
   test('the sidebar opens the gallery, which uploads several files at once and filters them by kind', async ({
     page,
     request,
@@ -108,13 +154,6 @@ test.describe('Gallery', () => {
       'aria-pressed',
       'true',
     )
-    if (before.size === 0) {
-      await expect(
-        page
-          .getByTestId('gallery-empty')
-          .getByText(label('gallery', 'empty.all')),
-      ).toBeVisible()
-    }
 
     // One pick: an image, a text file and a video.
     await page.getByTestId('gallery-upload-input').setInputFiles([
@@ -252,18 +291,6 @@ test.describe('Gallery', () => {
     await openGallery(page)
     await expect(galleryItem(page, image.id)).toBeVisible()
 
-    // No uploaded video: the Videos tab says so.
-    if ((await countOfKind(request, 'video')) === 0) {
-      await filterBy(page, 'video')
-      await expect(
-        page
-          .getByTestId('gallery-empty')
-          .getByText(label('gallery', 'empty.video')),
-      ).toBeVisible()
-      await expect(page.getByTestId('gallery-item')).toHaveCount(0)
-      await filterBy(page, 'all')
-    }
-
     await galleryItem(page, image.id).getByTestId('gallery-item-delete').click()
     const dialog = page.locator('dialog[open]')
     await expect(dialog.getByRole('heading')).toHaveText(
@@ -280,8 +307,17 @@ test.describe('Gallery', () => {
     await expect(dialog).toHaveCount(0)
     await expect(galleryItem(page, image.id)).toHaveCount(0)
     expect(await listMediaIds(request)).not.toContain(image.id)
-    if ((await listMediaIds(request)).length === 0) {
-      await expect(page.getByTestId('gallery-empty')).toBeVisible()
+
+    // With no image left the Images tab says so (the built-in video keeps
+    // the gallery as a whole from ever being empty).
+    if ((await countOfKind(request, 'image')) === 0) {
+      await filterBy(page, 'image')
+      await expect(
+        page
+          .getByTestId('gallery-empty')
+          .getByText(label('gallery', 'empty.image')),
+      ).toBeVisible()
+      await expect(page.getByTestId('gallery-item')).toHaveCount(0)
     }
   })
 

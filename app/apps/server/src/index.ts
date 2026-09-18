@@ -124,7 +124,10 @@ import {
   getSystemToken,
   regenerateSystemToken,
 } from './service/app-sessions'
-import { BACKGROUND_MEDIA_MAX_REQUEST_BODY_BYTES } from './service/background-media'
+import {
+  BACKGROUND_MEDIA_MAX_REQUEST_BODY_BYTES,
+  seedDefaultBackgroundMedia,
+} from './service/background-media'
 import {
   clearDriveAuth,
   completeDriveAuth,
@@ -793,7 +796,8 @@ async function runFtsRebuild(): Promise<void> {
 
 /**
  * Final pre-serve work: warm the FTS caches, reset presentation state, ensure a
- * fallback Bible exists, mint the system token and wire OBS callbacks. Extracted
+ * fallback Bible exists, add the bundled default backgrounds to the gallery,
+ * mint the system token and wire OBS callbacks. Extracted
  * from {@link main} so a throw here is attributed to the `finalizing` phase.
  */
 async function runFinalizeBoot(): Promise<void> {
@@ -812,6 +816,12 @@ async function runFinalizeBoot(): Promise<void> {
   t = performance.now()
   await ensureRCCVExists()
   logTiming('ensure_rccv_exists', t)
+
+  // Add the backgrounds shipped with the app to the media gallery (once per
+  // install; a default the user deletes is not added back)
+  t = performance.now()
+  await seedDefaultBackgroundMedia()
+  logTiming('seed_default_background_media', t)
 
   // Initialize system API token
   t = performance.now()

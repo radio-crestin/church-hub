@@ -11,11 +11,13 @@ export { getBackgroundMediaDir } from './getBackgroundMediaDir'
 export { listBackgroundMedia } from './listBackgroundMedia'
 export { parseRangeHeader } from './parseRangeHeader'
 export { saveBackgroundMedia } from './saveBackgroundMedia'
+export { seedDefaultBackgroundMedia } from './seedDefaultBackgroundMedia'
 export { serveBackgroundMedia } from './serveBackgroundMedia'
 export type {
   BackgroundMedia,
   BackgroundMediaKind,
   BackgroundMediaType,
   ByteRangeResult,
+  DefaultBackgroundMedia,
   SaveBackgroundMediaInput,
 } from './types'

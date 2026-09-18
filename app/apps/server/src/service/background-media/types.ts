@@ -20,6 +20,14 @@ export interface BackgroundMedia {
   createdAt: number
 }
 
+/** A background shipped with the app and copied into every install's gallery. */
+export interface DefaultBackgroundMedia {
+  /** File name inside the bundled `default-backgrounds` resource folder. */
+  fileName: string
+  /** Fixed media id it is stored under, so it is never copied twice. */
+  id: string
+}
+
 export interface SaveBackgroundMediaInput {
   body: ReadableStream<Uint8Array> | null
   /** Raw `Content-Type` header value (parameters are ignored). */
