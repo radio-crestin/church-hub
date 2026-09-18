@@ -30,7 +30,8 @@ export interface ComboboxProps {
   className?: string
   portalContainer?: HTMLElement | null
   /** Roots the test ids of the trigger (`<testId>`), the dropdown
-   * (`<testId>-dropdown`) and each option (`<testId>-option`). */
+   * (`<testId>-dropdown`) and each option (`<testId>-option`, carrying its
+   * value in `data-value`). */
   testId?: string
 }
 
@@ -266,6 +267,7 @@ export function Combobox({
                   <div
                     key={option.value}
                     data-testid={testId ? `${testId}-option` : undefined}
+                    data-value={option.value}
                     className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 group ${
                       option.value === value
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'

@@ -13,6 +13,9 @@ export interface BackgroundMedia {
   createdAt: number
 }
 
+/** What a picker reports: the chosen file's kind and URL ('' when cleared). */
+export type BackgroundMediaSelection = Pick<BackgroundMedia, 'kind' | 'url'>
+
 /** Why an upload was refused — each maps to `screens.background.errors.<code>` */
 export type BackgroundMediaErrorCode =
   | 'unsupportedType'

@@ -5,5 +5,6 @@ export type {
   BackgroundMedia,
   BackgroundMediaErrorCode,
   BackgroundMediaKind,
+  BackgroundMediaSelection,
 } from './types'
 export { uploadBackgroundMedia } from './uploadBackgroundMedia'

@@ -8,7 +8,8 @@ interface BackgroundMediaTileProps {
   media: BackgroundMedia
   isSelected: boolean
   onSelect: () => void
-  onDelete: () => void
+  /** Omitted when the user may not delete media: the trash button is hidden */
+  onDelete?: () => void
 }
 
 /** One uploaded file in the picker grid: click to use it, trash to delete it. */
@@ -41,16 +42,18 @@ export function BackgroundMediaTile({
       >
         <BackgroundMediaThumbnail media={media} />
       </button>
-      <button
-        type="button"
-        data-testid="background-media-delete"
-        onClick={onDelete}
-        aria-label={t('screens.background.delete')}
-        title={t('screens.background.delete')}
-        className="absolute top-1 right-1 rounded bg-black/60 p-1 text-white transition-colors hover:bg-red-600"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      {onDelete && (
+        <button
+          type="button"
+          data-testid="background-media-delete"
+          onClick={onDelete}
+          aria-label={t('screens.background.delete')}
+          title={t('screens.background.delete')}
+          className="absolute top-1 right-1 rounded bg-black/60 p-1 text-white transition-colors hover:bg-red-600"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   )
 }

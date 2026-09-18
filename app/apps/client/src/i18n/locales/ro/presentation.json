@@ -136,6 +136,7 @@
     "background": {
       "type": "Tip",
       "types": {
+        "inherit": "Implicit (setările ecranului)",
         "transparent": "Transparent",
         "color": "Culoare Solidă",
         "image": "Imagine",
@@ -145,7 +146,8 @@
       "opacity": "Opacitate",
       "upload": {
         "image": "Încarcă o imagine",
-        "video": "Încarcă un videoclip"
+        "video": "Încarcă un videoclip",
+        "any": "Încarcă o imagine sau un videoclip"
       },
       "uploading": "Se încarcă…",
       "select": "Folosește ca fundal",
@@ -157,10 +159,11 @@
         "video": "Nu ai încărcat încă niciun videoclip."
       },
       "hint": {
-        "image": "JPG, PNG, WebP sau GIF, de până la 50 MB.",
-        "video": "MP4 (H.264) sau WebM, de până la 1 GB — acestea rulează pe Windows, macOS și Linux."
+        "any": "Imagini: JPG, PNG, WebP sau GIF, de până la 50 MB. Videoclipuri: MP4 (H.264) sau WebM, de până la 1 GB — acestea rulează pe Windows, macOS și Linux."
       },
       "songTypesHint": "Cântecele au trei aranjamente. Setează același fundal pentru {{song}}, {{firstSlide}} și {{lastSlide}}.",
+      "switchedType": "Tipul fundalului este acum „{{type}}”, potrivit fișierului încărcat.",
+      "noViewPermission": "Nu ai permisiunea de a vedea imaginile și videoclipurile încărcate.",
       "errors": {
         "unsupportedType": "Acest tip de fișier nu este acceptat. Folosește o imagine JPG, PNG, WebP sau GIF ori un videoclip MP4 sau WebM.",
         "fileTooLarge": "Fișierul este prea mare. Imaginile pot avea până la 50 MB, iar videoclipurile până la 1 GB.",

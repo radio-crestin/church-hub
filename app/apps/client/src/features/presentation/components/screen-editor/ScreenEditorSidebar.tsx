@@ -13,13 +13,14 @@ import {
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { BackgroundEditor } from '~/features/background-media'
 import { Button } from '~/ui/button/Button'
 import { Checkbox } from '~/ui/checkbox/Checkbox'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { Input } from '~/ui/input/Input'
 import { Label } from '~/ui/label/Label'
 import { Slider } from '~/ui/slider/Slider'
-import { BackgroundSettings } from './BackgroundSettings'
+import { BackgroundSongTypesHint } from './BackgroundSongTypesHint'
 import { ConstraintControls } from './ConstraintControls'
 import type {
   PreviewTextKey,
@@ -1995,13 +1996,16 @@ export function ScreenEditorSidebar({
 
           {/* Background */}
           <Section title={t('screens.panels.background')} icon={Palette}>
-            <BackgroundSettings
-              background={config.background}
-              contentType={contentType}
-              onChange={(background) =>
-                onUpdateContentConfig(contentType, { ...config, background })
-              }
+            <BackgroundEditor
+              value={config.background}
+              onChange={(background) => {
+                // Never null here: only `allowInherit` offers clearing it.
+                if (background) {
+                  onUpdateContentConfig(contentType, { ...config, background })
+                }
+              }}
               portalContainer={portalContainer}
+              hint={<BackgroundSongTypesHint contentType={contentType} />}
             />
           </Section>
 

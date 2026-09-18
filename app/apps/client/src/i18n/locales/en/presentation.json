@@ -136,6 +136,7 @@
     "background": {
       "type": "Type",
       "types": {
+        "inherit": "Default (screen settings)",
         "transparent": "Transparent",
         "color": "Solid Color",
         "image": "Image",
@@ -145,7 +146,8 @@
       "opacity": "Opacity",
       "upload": {
         "image": "Upload image",
-        "video": "Upload video"
+        "video": "Upload video",
+        "any": "Upload image or video"
       },
       "uploading": "Uploading…",
       "select": "Use as background",
@@ -157,10 +159,11 @@
         "video": "No videos uploaded yet."
       },
       "hint": {
-        "image": "JPG, PNG, WebP or GIF, up to 50 MB.",
-        "video": "MP4 (H.264) or WebM, up to 1 GB — these play on Windows, macOS and Linux."
+        "any": "Images: JPG, PNG, WebP or GIF, up to 50 MB. Videos: MP4 (H.264) or WebM, up to 1 GB — these play on Windows, macOS and Linux."
       },
       "songTypesHint": "Songs use three layouts. Set the same background for {{song}}, {{firstSlide}} and {{lastSlide}}.",
+      "switchedType": "The background type is now “{{type}}”, to match the uploaded file.",
+      "noViewPermission": "You don't have permission to see the uploaded images and videos.",
       "errors": {
         "unsupportedType": "This file type isn't supported. Use a JPG, PNG, WebP or GIF image, or an MP4 or WebM video.",
         "fileTooLarge": "This file is too large. Images can be up to 50 MB and videos up to 1 GB.",

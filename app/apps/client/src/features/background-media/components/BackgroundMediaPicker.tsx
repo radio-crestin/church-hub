@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { usePermissions } from '~/provider/permissions-provider'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { createLogger } from '~/utils/logger'
@@ -15,6 +16,7 @@ import {
 import {
   type BackgroundMedia,
   type BackgroundMediaKind,
+  type BackgroundMediaSelection,
   BackgroundMediaUploadError,
 } from '../service'
 import { validateBackgroundMediaFile } from '../utils/validateBackgroundMediaFile'
@@ -22,16 +24,22 @@ import { validateBackgroundMediaFile } from '../utils/validateBackgroundMediaFil
 const logger = createLogger('app:background-media')
 
 interface BackgroundMediaPickerProps {
+  /** Which uploads the grid lists */
   kind: BackgroundMediaKind
   /** The stored URL of the chosen file */
   value?: string
-  /** Called with the chosen file's URL ('' when the chosen file is deleted) */
-  onChange: (url: string) => void
+  /**
+   * Called with the chosen file. An upload may be of the other kind (a JPG
+   * picked while choosing a video): the caller switches to its `kind`.
+   * When the chosen file is deleted it is called with an empty `url`.
+   */
+  onChange: (selection: BackgroundMediaSelection) => void
 }
 
 /**
  * Lists the uploaded images or videos, uploads new ones (selecting each as it
- * arrives) and deletes them.
+ * arrives, whichever its kind) and deletes them. Uploading and deleting need
+ * `displays.edit`, listing needs `displays.view` — as the server enforces.
  */
 export function BackgroundMediaPicker({
   kind,
@@ -40,7 +48,14 @@ export function BackgroundMediaPicker({
 }: BackgroundMediaPickerProps) {
   const { t } = useTranslation('presentation')
   const { showToast } = useToast()
-  const { data: media = [], isLoading, isError } = useBackgroundMediaList()
+  const { hasPermission } = usePermissions()
+  const canView = hasPermission('displays.view')
+  const canEdit = hasPermission('displays.edit')
+  const {
+    data: media = [],
+    isLoading,
+    isError,
+  } = useBackgroundMediaList({ enabled: canView })
   const uploadMutation = useUploadBackgroundMedia()
   const deleteMutation = useDeleteBackgroundMedia()
   const [pendingDelete, setPendingDelete] = useState<BackgroundMedia | null>(
@@ -57,14 +72,14 @@ export function BackgroundMediaPicker({
   const items = media.filter((item) => item.kind === kind)
 
   const handleFileSelected = (file: File) => {
-    const refusal = validateBackgroundMediaFile(file, kind)
+    const refusal = validateBackgroundMediaFile(file)
     if (refusal) {
       showToast(t(`screens.background.errors.${refusal}`), 'error')
       return
     }
 
     uploadMutation.mutate(file, {
-      onSuccess: (uploaded) => onChangeRef.current(uploaded.url),
+      onSuccess: (uploaded) => onChangeRef.current(uploaded),
       onError: (error) => {
         logger.error(`Upload of ${file.name} failed`, error)
         const code =
@@ -84,7 +99,9 @@ export function BackgroundMediaPicker({
     deleteMutation.mutate(target.id, {
       // Don't leave the screen pointing at a file that no longer exists.
       onSuccess: () => {
-        if (target.url === value) onChangeRef.current('')
+        if (target.url === value) {
+          onChangeRef.current({ kind: target.kind, url: '' })
+        }
       },
       onError: (error) => {
         logger.error(`Delete of ${target.id} failed`, error)
@@ -93,13 +110,25 @@ export function BackgroundMediaPicker({
     })
   }
 
+  if (!canView) {
+    return (
+      <p
+        data-testid="background-media-no-permission"
+        className="text-xs text-gray-500 dark:text-gray-400"
+      >
+        {t('screens.background.noViewPermission')}
+      </p>
+    )
+  }
+
   return (
     <div data-testid="background-media-picker" className="space-y-2">
-      <BackgroundMediaUploadButton
-        kind={kind}
-        isUploading={uploadMutation.isPending}
-        onFileSelected={handleFileSelected}
-      />
+      {canEdit && (
+        <BackgroundMediaUploadButton
+          isUploading={uploadMutation.isPending}
+          onFileSelected={handleFileSelected}
+        />
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-3">
@@ -123,16 +152,18 @@ export function BackgroundMediaPicker({
               key={item.id}
               media={item}
               isSelected={item.url === value}
-              onSelect={() => onChange(item.url)}
-              onDelete={() => setPendingDelete(item)}
+              onSelect={() => onChange(item)}
+              onDelete={canEdit ? () => setPendingDelete(item) : undefined}
             />
           ))}
         </div>
       )}
 
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t(`screens.background.hint.${kind}`)}
-      </p>
+      {canEdit && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {t('screens.background.hint.any')}
+        </p>
+      )}
 
       <ConfirmModal
         isOpen={pendingDelete !== null}

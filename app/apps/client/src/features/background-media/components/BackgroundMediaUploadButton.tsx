@@ -7,7 +7,8 @@ import type { BackgroundMediaKind } from '../service'
 import { getBackgroundMediaAccept } from '../utils/getBackgroundMediaAccept'
 
 interface BackgroundMediaUploadButtonProps {
-  kind: BackgroundMediaKind
+  /** Restricts the dialog to images or videos; omitted, it takes either */
+  kind?: BackgroundMediaKind
   isUploading: boolean
   onFileSelected: (file: File) => void
 }
@@ -49,7 +50,7 @@ export function BackgroundMediaUploadButton({
         )}
         {isUploading
           ? t('screens.background.uploading')
-          : t(`screens.background.upload.${kind}`)}
+          : t(`screens.background.upload.${kind ?? 'any'}`)}
       </Button>
       <input
         ref={inputRef}
