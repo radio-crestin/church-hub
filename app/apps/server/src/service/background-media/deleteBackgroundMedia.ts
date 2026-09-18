@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs'
 import { unlink } from 'node:fs/promises'
 
 import { BackgroundMediaError } from './BackgroundMediaError'
@@ -9,15 +8,19 @@ const logger = createLogger('background-media')
 
 /**
  * Deletes an uploaded background. Throws {@link BackgroundMediaError} 400 for
- * a malformed id and 404 when the file does not exist. Screen configs that
- * still reference its URL are not touched.
+ * a malformed id and 404 when the file does not exist (also when a concurrent
+ * delete removed it first). Screen configs that still reference its URL are
+ * not touched.
  */
 export async function deleteBackgroundMedia(id: string): Promise<void> {
   const path = resolveBackgroundMediaPath(id)
-  if (!existsSync(path)) {
-    throw new BackgroundMediaError(404, 'Background media not found')
+  try {
+    await unlink(path)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw new BackgroundMediaError(404, 'Background media not found')
+    }
+    throw error
   }
-
-  await unlink(path)
   logger.info(`Deleted background media ${id}`)
 }
