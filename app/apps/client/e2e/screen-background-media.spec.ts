@@ -1,0 +1,579 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import {
+  type APIRequestContext,
+  expect,
+  type Locator,
+  type Page,
+  test,
+} from '@playwright/test'
+
+/**
+ * Screen backgrounds can be an uploaded image or video: the server stores and
+ * serves the file (with Range support), the screen editor uploads / picks /
+ * deletes it, and the projection draws it in a layer BELOW the lyrics — a
+ * video keeps playing (same element) while the slides change.
+ */
+
+const currentDir = path.dirname(fileURLToPath(import.meta.url))
+// A 3 s, 160×90 VP8 loop. Playwright's Chromium has no H.264 decoder, so the
+// video that must actually play is WebM.
+const WEBM_FIXTURE = path.join(currentDir, 'fixtures', 'background-loop.webm')
+
+// A 1×1 PNG.
+const PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+)
+
+const LOCALES_DIR = path.join(currentDir, '..', 'src', 'i18n', 'locales')
+
+const MEDIA_API = '/api/media/backgrounds'
+const SONG_CONTENT_TYPES = ['song', 'song_first_slide', 'song_last_slide']
+const ROOT = '[data-testid="screen-renderer-root"]'
+const SONG_KEY = 'Do Major'
+
+interface BackgroundMedia {
+  id: string
+  kind: 'image' | 'video'
+  mimeType: string
+  size: number
+  url: string
+  createdAt: number
+}
+
+async function uploadMedia(
+  request: APIRequestContext,
+  body: Buffer,
+  mimeType: string,
+  name: string,
+): Promise<BackgroundMedia> {
+  const res = await request.post(
+    `${MEDIA_API}?name=${encodeURIComponent(name)}`,
+    { headers: { 'Content-Type': mimeType }, data: body },
+  )
+  expect(res.status()).toBe(201)
+  return (await res.json()).data as BackgroundMedia
+}
+
+async function listMediaIds(request: APIRequestContext): Promise<string[]> {
+  const res = await request.get(MEDIA_API)
+  expect(res.status()).toBe(200)
+  return ((await res.json()).data as BackgroundMedia[]).map((m) => m.id)
+}
+
+/**
+ * Matches a UI label exactly, in either shipped language: the seeded test
+ * database stores `language=ro`, while a fresh one starts in English.
+ */
+function label(namespace: string, key: string): RegExp {
+  const texts = ['en', 'ro'].map((language) => {
+    const file = path.join(LOCALES_DIR, language, `${namespace}.json`)
+    const json = JSON.parse(fs.readFileSync(file, 'utf8'))
+    const text = key
+      .split('.')
+      .reduce((node, part) => node?.[part], json) as unknown
+    if (typeof text !== 'string') {
+      throw new Error(`Missing ${language} translation ${namespace}:${key}`)
+    }
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  })
+  return new RegExp(`^(${texts.join('|')})$`)
+}
+
+/** A line of lyrics on the projection (not its hidden measuring copy). */
+function lyric(page: Page, text: string) {
+  return page
+    .locator(ROOT)
+    .getByText(text, { exact: true })
+    .and(page.locator(':not([aria-hidden="true"])'))
+}
+
+/** Sets the same background on the three configs a song is drawn with. */
+async function setSongBackground(
+  request: APIRequestContext,
+  screenId: number,
+  background: Record<string, unknown>,
+) {
+  const { data: screen } = await (
+    await request.get(`/api/screens/${screenId}`)
+  ).json()
+  for (const contentType of SONG_CONTENT_TYPES) {
+    const res = await request.put(
+      `/api/screens/${screenId}/config/${contentType}`,
+      {
+        data: {
+          config: { ...screen.contentConfigs[contentType], background },
+        },
+      },
+    )
+    expect(res.status()).toBe(200)
+  }
+}
+
+/** Opens the full-screen editor of one screen from Settings → Screens. */
+async function openScreenEditor(page: Page, screenId: number) {
+  await page.goto('/settings/screens')
+  const card = page.locator(
+    `[data-testid="screen-card"][data-screen-id="${screenId}"]`,
+  )
+  await card
+    .getByRole('button', {
+      name: label('settings', 'sections.screens.actions.edit'),
+    })
+    .click()
+  await expect(page.getByTestId('screen-editor-save')).toBeVisible({
+    timeout: 10000,
+  })
+
+  // Song layout, with no element selected so the sidebar shows the screen's
+  // own settings (Background among them).
+  await page.getByTestId('screen-editor-content-type').click()
+  const song = label('presentation', 'screens.contentTypes.song')
+  await page
+    .getByTestId('screen-editor-content-type-option')
+    .filter({ hasText: song })
+    .locator('button')
+    .first()
+    .click()
+  await expect(page.getByTestId('screen-editor-content-type')).toHaveText(song)
+  await expect(page.getByTestId('background-song-types-hint')).toBeVisible()
+}
+
+async function chooseBackgroundType(page: Page, type: 'image' | 'video') {
+  const typeLabel = label('presentation', `screens.background.types.${type}`)
+  await page.getByTestId('background-type-select').click()
+  await page
+    .getByTestId('background-type-select-option')
+    .filter({ hasText: typeLabel })
+    .locator('button')
+    .first()
+    .click()
+  await expect(page.getByTestId('background-type-select')).toHaveText(typeLabel)
+  await expect(page.getByTestId('background-media-picker')).toBeVisible()
+}
+
+/**
+ * Uploads through the picker's hidden file input and returns the new file's
+ * media entry. The id is read from the tile the picker selects on arrival,
+ * not from the response body (Chromium may evict it from the inspector cache).
+ */
+async function uploadThroughPicker(
+  page: Page,
+  request: APIRequestContext,
+  files: Parameters<Locator['setInputFiles']>[0],
+): Promise<BackgroundMedia> {
+  const before = new Set(await listMediaIds(request))
+  const upload = page.waitForResponse(
+    (res) => res.url().includes(MEDIA_API) && res.request().method() === 'POST',
+  )
+  await page.getByTestId('background-media-upload-input').setInputFiles(files)
+  expect((await upload).status()).toBe(201)
+
+  // The screen may already use an earlier upload: wait until the new file is
+  // the one (and only one) selected.
+  const selectedIds = () =>
+    page
+      .locator('[data-testid="background-media-item"][data-selected="true"]')
+      .evaluateAll((tiles) =>
+        tiles.map((tile) => tile.getAttribute('data-media-id') ?? ''),
+      )
+  let id = ''
+  await expect
+    .poll(
+      async () => {
+        const ids = await selectedIds()
+        id = ids[0] ?? ''
+        return ids.length === 1 && !before.has(id)
+      },
+      { message: 'the new upload is the only selected tile' },
+    )
+    .toBe(true)
+
+  const { data } = await (await request.get(MEDIA_API)).json()
+  const media = (data as BackgroundMedia[]).find((item) => item.id === id)
+  expect(media).toBeDefined()
+  return media as BackgroundMedia
+}
+
+/** Frames the <video> has presented so far — grows across loops. */
+function presentedFrames(page: Page): Promise<number> {
+  return page
+    .locator(`${ROOT} [data-testid="screen-background-video"]`)
+    .evaluate(
+      (el) =>
+        (el as HTMLVideoElement).getVideoPlaybackQuality().totalVideoFrames,
+    )
+}
+
+test.describe('Screen background media', () => {
+  let screenId: number
+  let songId: number
+  // Uploads that existed before this file ran; everything else is removed
+  // afterwards, including an upload whose test failed before noting its id.
+  let preexistingMediaIds = new Set<string>()
+  const suffix = Date.now()
+  const lyrics = [
+    `Background verse one ${suffix}`,
+    `Background verse two ${suffix}`,
+    `Background verse three ${suffix}`,
+  ]
+
+  test.beforeAll(async ({ request }) => {
+    preexistingMediaIds = new Set(await listMediaIds(request))
+
+    const screenRes = await request.post('/api/screens', {
+      data: { name: `E2E Background Media ${suffix}`, type: 'primary' },
+    })
+    expect([200, 201]).toContain(screenRes.status())
+    screenId = (await screenRes.json()).data.id
+
+    // The key makes slide 1 use "Song (first slide)" and slide 2 plain "Song",
+    // so moving between them also switches the content config.
+    const songRes = await request.post('/api/songs', {
+      data: {
+        title: `E2E Background Media ${suffix}`,
+        keyLine: SONG_KEY,
+        slides: lyrics.map((content, sortOrder) => ({ content, sortOrder })),
+      },
+    })
+    expect(songRes.status()).toBe(201)
+    songId = (await songRes.json()).data.id
+  })
+
+  test.afterEach(async ({ request }) => {
+    await request.post('/api/presentation/stop')
+  })
+
+  test.afterAll(async ({ request }) => {
+    await request.post('/api/presentation/stop')
+    for (const id of await listMediaIds(request)) {
+      if (!preexistingMediaIds.has(id)) {
+        await request.delete(`${MEDIA_API}/${id}`)
+      }
+    }
+    if (screenId) await request.delete(`/api/screens/${screenId}`)
+    if (songId) await request.delete(`/api/songs/${songId}`)
+  })
+
+  test('API stores, lists, serves (with ranges) and deletes an upload', async ({
+    request,
+  }) => {
+    const media = await uploadMedia(request, PNG, 'image/png', 'e2e bg.png')
+
+    expect(media.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.png$/,
+    )
+    expect(media).toMatchObject({
+      kind: 'image',
+      mimeType: 'image/png',
+      size: PNG.length,
+      url: `${MEDIA_API}/${media.id}`,
+    })
+    expect(typeof media.createdAt).toBe('number')
+
+    // Newest first.
+    expect((await listMediaIds(request))[0]).toBe(media.id)
+
+    const full = await request.get(media.url)
+    expect(full.status()).toBe(200)
+    expect(full.headers()['content-type']).toBe('image/png')
+    expect(full.headers()['accept-ranges']).toBe('bytes')
+    expect(Buffer.compare(await full.body(), PNG)).toBe(0)
+
+    const head = await request.head(media.url)
+    expect(head.status()).toBe(200)
+    expect(head.headers()['content-length']).toBe(String(PNG.length))
+
+    const partial = await request.get(media.url, {
+      headers: { Range: 'bytes=0-9' },
+    })
+    expect(partial.status()).toBe(206)
+    expect(partial.headers()['content-range']).toBe(`bytes 0-9/${PNG.length}`)
+    const partialBody = await partial.body()
+    expect(partialBody.length).toBe(10)
+    expect(Buffer.compare(partialBody, PNG.subarray(0, 10))).toBe(0)
+
+    const unsatisfiable = await request.get(media.url, {
+      headers: { Range: `bytes=${PNG.length + 10}-` },
+    })
+    expect(unsatisfiable.status()).toBe(416)
+    expect(unsatisfiable.headers()['content-range']).toBe(
+      `bytes */${PNG.length}`,
+    )
+
+    const unsupported = await request.post(`${MEDIA_API}?name=notes.txt`, {
+      headers: { 'Content-Type': 'text/plain' },
+      data: Buffer.from('not an image'),
+    })
+    expect(unsupported.status()).toBe(415)
+
+    // Ids are validated before touching the disk: no traversal, no guessing.
+    for (const badId of ['..%2F..%2Fapp.db', '..%2Fapp.db', 'not-a-uuid.png']) {
+      const res = await request.get(`${MEDIA_API}/${badId}`)
+      expect([400, 404]).toContain(res.status())
+      expect((await res.body()).toString('latin1')).not.toContain(
+        'SQLite format',
+      )
+    }
+    expect(
+      (
+        await request.get(
+          `${MEDIA_API}/00000000-0000-4000-8000-000000000000.png`,
+        )
+      ).status(),
+    ).toBe(404)
+
+    const deleted = await request.delete(media.url)
+    expect(deleted.status()).toBe(200)
+    expect((await deleted.json()).data).toEqual({ success: true })
+
+    expect((await request.get(media.url)).status()).toBe(404)
+    expect(await listMediaIds(request)).not.toContain(media.id)
+  })
+
+  test('the editor uploads an image, selects it and saves it with its opacity', async ({
+    page,
+    request,
+  }) => {
+    await openScreenEditor(page, screenId)
+    await chooseBackgroundType(page, 'image')
+
+    // The new upload is selected right away and drawn on the canvas.
+    const media = await uploadThroughPicker(page, request, {
+      name: 'e2e-editor-background.png',
+      mimeType: 'image/png',
+      buffer: PNG,
+    })
+    expect(media).toMatchObject({ kind: 'image', size: PNG.length })
+    const canvasImage = page.getByTestId('screen-background-image')
+    await expect(canvasImage).toHaveCount(1)
+    await expect(canvasImage).toHaveAttribute(
+      'style',
+      new RegExp(`background-image: url\\(".*${media.url}"\\)`),
+    )
+
+    // 100% → 70% with the keyboard, as a user would.
+    const opacity = page.getByTestId('background-opacity')
+    await opacity.focus()
+    for (let i = 0; i < 30; i++) await opacity.press('ArrowLeft')
+    await expect(opacity).toHaveValue('70')
+    await expect(canvasImage).toHaveCSS('opacity', '0.7')
+
+    const saveResponse = page.waitForResponse(
+      (res) =>
+        res.url().endsWith(`/api/screens/${screenId}/batch-config`) &&
+        res.request().method() === 'PUT',
+    )
+    await page.getByTestId('screen-editor-save').click()
+    expect((await saveResponse).ok()).toBeTruthy()
+    await expect(page.getByTestId('screen-editor-save')).toBeDisabled()
+
+    const { data: screen } = await (
+      await request.get(`/api/screens/${screenId}`)
+    ).json()
+    const background = screen.contentConfigs.song.background
+    expect(background.type).toBe('image')
+    expect(background.imageUrl).toBe(`${MEDIA_API}/${media.id}`)
+    expect(background.imageUrl.startsWith(`${MEDIA_API}/`)).toBe(true)
+    expect(background.opacity).toBe(0.7)
+  })
+
+  test('the projection draws an image background under the lyrics', async ({
+    page,
+    request,
+  }) => {
+    const media = await uploadMedia(request, PNG, 'image/png', 'display.png')
+    await setSongBackground(request, screenId, {
+      type: 'image',
+      imageUrl: media.url,
+      color: '#000000',
+      opacity: 0.5,
+    })
+
+    const present = await request.post('/api/presentation/temporary-song', {
+      data: { songId, slideIndex: 0 },
+    })
+    expect(present.ok()).toBeTruthy()
+
+    await page.goto(`/screen/${screenId}`)
+    const root = page.locator(ROOT)
+    const background = root.getByTestId('screen-background')
+    await expect(background).toHaveAttribute('data-background-type', 'image')
+    const image = background.getByTestId('screen-background-image')
+    await expect(image).toHaveAttribute(
+      'style',
+      new RegExp(`background-image: url\\(".*${media.url}"\\)`),
+    )
+    await expect(image).toHaveCSS('opacity', '0.5')
+
+    const verse = lyric(page, lyrics[0])
+    await expect(verse).toBeVisible({ timeout: 10000 })
+    // The boot overlay fades out over the page before it is removed.
+    await expect(page.locator('#loading-screen')).toHaveCount(0)
+
+    // Opacity dims the background only — never the lyrics above it.
+    await expect(root).toHaveCSS('opacity', '1')
+
+    // Paint order: with hit-testing turned on for every element (the
+    // background layer is pointer-events: none), the topmost element at the
+    // centre of the lyrics must be the lyrics, not the background.
+    await page.addStyleTag({
+      content: `${ROOT}, ${ROOT} * { pointer-events: auto !important; }`,
+    })
+    const box = await verse.boundingBox()
+    expect(box).not.toBeNull()
+    const hit = await verse.evaluate(
+      (text, point) => {
+        const topmost = document.elementFromPoint(point.x, point.y)
+        return {
+          inBackground: !!topmost?.closest('[data-testid="screen-background"]'),
+          onText:
+            !!topmost && (text.contains(topmost) || topmost.contains(text)),
+        }
+      },
+      {
+        x: (box?.x ?? 0) + (box?.width ?? 0) / 2,
+        y: (box?.y ?? 0) + (box?.height ?? 0) / 2,
+      },
+    )
+    expect(hit).toEqual({ inBackground: false, onText: true })
+  })
+
+  test('a video background plays and keeps playing across slides', async ({
+    page,
+    request,
+  }) => {
+    const media = await uploadMedia(
+      request,
+      fs.readFileSync(WEBM_FIXTURE),
+      'video/webm',
+      'background-loop.webm',
+    )
+    expect(media.kind).toBe('video')
+    await setSongBackground(request, screenId, {
+      type: 'video',
+      videoUrl: media.url,
+      color: '#000000',
+      opacity: 1,
+    })
+
+    const present = await request.post('/api/presentation/temporary-song', {
+      data: { songId, slideIndex: 0 },
+    })
+    expect(present.ok()).toBeTruthy()
+
+    await page.goto(`/screen/${screenId}`)
+    const root = page.locator(ROOT)
+    await expect(lyric(page, lyrics[0])).toBeVisible({
+      timeout: 10000,
+    })
+    // The key is only drawn by the "Song (first slide)" layout.
+    await expect(lyric(page, SONG_KEY)).toBeVisible()
+    await expect(root.getByTestId('screen-background')).toHaveAttribute(
+      'data-background-type',
+      'video',
+    )
+    const video = root.getByTestId('screen-background-video')
+    await expect(video).toHaveCount(1)
+
+    const props = await video.evaluate((el) => {
+      const v = el as HTMLVideoElement
+      return {
+        loop: v.loop,
+        muted: v.muted,
+        autoplay: v.autoplay,
+        src: v.src,
+      }
+    })
+    expect(props).toEqual({
+      loop: true,
+      muted: true,
+      autoplay: true,
+      src: new URL(media.url, page.url()).href,
+    })
+
+    // It really decodes and plays.
+    await expect
+      .poll(() => video.evaluate((el) => (el as HTMLVideoElement).readyState), {
+        timeout: 10000,
+      })
+      .toBeGreaterThanOrEqual(2)
+    const framesBefore = await presentedFrames(page)
+    await expect
+      .poll(() => presentedFrames(page), { timeout: 10000 })
+      .toBeGreaterThan(framesBefore + 5)
+
+    // Tag the element, change slide (first-slide layout → song layout, both
+    // with the same video) and check the very same element is still playing.
+    await video.evaluate((el) => {
+      ;(window as unknown as { __e2eBgVideo: Element }).__e2eBgVideo = el
+    })
+    const next = await request.post('/api/presentation/navigate-temporary', {
+      data: { direction: 'next', requestTimestamp: Date.now() },
+    })
+    expect(next.ok()).toBeTruthy()
+    expect(
+      (await next.json()).data.temporaryContent.data.currentSlideIndex,
+    ).toBe(1)
+    await expect(lyric(page, lyrics[1])).toBeVisible({
+      timeout: 10000,
+    })
+    await expect(lyric(page, lyrics[0])).toHaveCount(0)
+    await expect(lyric(page, SONG_KEY)).toHaveCount(0)
+
+    const framesAfterNavigation = await presentedFrames(page)
+    await expect
+      .poll(() => presentedFrames(page), { timeout: 10000 })
+      .toBeGreaterThan(framesAfterNavigation + 5)
+    const state = await video.evaluate((el) => ({
+      sameElement:
+        el === (window as unknown as { __e2eBgVideo: Element }).__e2eBgVideo,
+      paused: (el as HTMLVideoElement).paused,
+    }))
+    expect(state).toEqual({ sameElement: true, paused: false })
+  })
+
+  test('the editor uploads a video and deletes it through the confirm dialog', async ({
+    page,
+    request,
+  }) => {
+    await openScreenEditor(page, screenId)
+    await chooseBackgroundType(page, 'video')
+
+    const media = await uploadThroughPicker(page, request, WEBM_FIXTURE)
+    expect(media).toMatchObject({ kind: 'video', mimeType: 'video/webm' })
+
+    const tile = page.locator(
+      `[data-testid="background-media-item"][data-media-id="${media.id}"]`,
+    )
+    await expect(page.getByTestId('screen-background-video')).toHaveAttribute(
+      'src',
+      new RegExp(`${media.url}$`),
+    )
+
+    await tile.getByTestId('background-media-delete').click()
+    const dialog = page.locator('dialog[open]')
+    await expect(dialog.getByRole('heading')).toHaveText(
+      label('presentation', 'screens.background.deleteConfirmTitle'),
+    )
+    const deleteResponse = page.waitForResponse(
+      (res) =>
+        res.url().endsWith(`${MEDIA_API}/${media.id}`) &&
+        res.request().method() === 'DELETE',
+    )
+    await dialog
+      .getByRole('button', {
+        name: label('presentation', 'screens.background.delete'),
+      })
+      .click()
+    expect((await deleteResponse).status()).toBe(200)
+
+    await expect(tile).toHaveCount(0)
+    await expect(dialog).toHaveCount(0)
+    // The screen no longer points at the deleted file.
+    await expect(page.getByTestId('screen-background-video')).toHaveCount(0)
+    expect(await listMediaIds(request)).not.toContain(media.id)
+  })
+})
