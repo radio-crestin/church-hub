@@ -2,7 +2,9 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { ScreenBackgroundConfig } from '~/features/presentation/types'
 import { CategoryPicker } from './CategoryPicker'
+import { SongBackgroundField } from './SongBackgroundField'
 import { TagPicker } from './TagPicker'
 
 export interface SongMetadata {
@@ -46,6 +48,9 @@ interface SongDetailsSectionProps {
   onCategoryChange: (categoryId: number | null) => void
   onTagsChange: (tagIds: number[]) => void
   onMetadataChange: (field: keyof SongMetadata, value: string | null) => void
+  /** The song's own background; edited only where `onBackgroundChange` is given */
+  background?: ScreenBackgroundConfig | null
+  onBackgroundChange?: (background: ScreenBackgroundConfig | null) => void
   /** Unique prefix for input IDs to avoid conflicts when used in modals */
   idPrefix?: string
   /**
@@ -70,6 +75,8 @@ export function SongDetailsSection({
   onCategoryChange,
   onTagsChange,
   onMetadataChange,
+  background = null,
+  onBackgroundChange,
   idPrefix = '',
   portalContainer,
 }: SongDetailsSectionProps) {
@@ -171,6 +178,18 @@ export function SongDetailsSection({
             />
           )}
         </div>
+
+        {/* Background (the song's own, over the screens' song backgrounds) */}
+        {onBackgroundChange &&
+          (isLoading ? (
+            <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+          ) : (
+            <SongBackgroundField
+              value={background}
+              onChange={onBackgroundChange}
+              portalContainer={portalContainer}
+            />
+          ))}
 
         {/* Collapsible Details Section */}
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">

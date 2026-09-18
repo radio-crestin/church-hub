@@ -1,5 +1,5 @@
 import type { SlideStyleOverride } from '~/features/songs/types'
-import type { ContentType } from '../../types'
+import type { ContentType, ScreenBackgroundConfig } from '../../types'
 
 export interface ChordMapping {
   wordIndex: number
@@ -16,6 +16,8 @@ export interface ContentData {
   amen?: string // "Amin", populated only on the last slide
   /** Per-slide text styling merged over the screen's own style. */
   styleOverrides?: SlideStyleOverride | null
+  /** The song's own background (see `resolveScreenBackground`). */
+  songBackground?: ScreenBackgroundConfig | null
 }
 
 export interface VerseteTineriSummaryEntry {

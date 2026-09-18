@@ -17,6 +17,7 @@ import { useSlideHighlights } from '../../hooks/useSlideHighlights'
 import type { ScreenShareContentConfig, ScreenWithConfigs } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
+import { resolveScreenBackground } from '../../utils/resolveScreenBackground'
 
 const logger = createLogger('ScreenRenderer')
 
@@ -648,11 +649,14 @@ export function ScreenRenderer({
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
   )
 
-  // Get background from screen config for fullscreen display
+  // The song's own background or the screen's one for the content shown.
   // When disconnected and hidden, use empty state background
   const effectiveContentType = isDisconnectedAndHidden ? 'empty' : contentType
-  const config = screen.contentConfigs[effectiveContentType]
-  const bg = config?.background || screen.contentConfigs.empty?.background
+  const bg = resolveScreenBackground({
+    screen,
+    contentType: effectiveContentType,
+    contentData,
+  })
 
   // Get styleRanges from useSlideHighlights hook for real-time WebSocket updates
   const styleRanges = slideHighlights ?? []

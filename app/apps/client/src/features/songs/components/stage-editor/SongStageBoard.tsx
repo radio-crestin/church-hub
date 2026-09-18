@@ -26,6 +26,7 @@ import type { SlideStyleOverride, SongSlide, SongWithSlides } from '../../types'
 import { adoptSavedSlideIds } from '../../utils/adoptSavedSlideIds'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
 import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
+import { PreviewBackgroundToggle } from '../PreviewBackgroundToggle'
 import { SlideCounter } from '../SlideCounter'
 import { type LocalSlide } from '../SongSlideList'
 
@@ -43,6 +44,9 @@ interface SongStageBoardProps {
    * page.
    */
   onPresentSlide: (slideIndex: number) => Promise<void>
+  /** Plain black behind the stage's lyrics (never on the screens). */
+  hideBackground: boolean
+  onToggleHideBackground: () => void
 }
 
 const AUTOSAVE_DELAY_MS = 1000
@@ -92,6 +96,8 @@ export function SongStageBoard({
   song,
   scheduleNav,
   onPresentSlide,
+  hideBackground,
+  onToggleHideBackground,
 }: SongStageBoardProps) {
   const { t } = useTranslation(['songs', 'bible'])
   const upsert = useUpsertSong()
@@ -511,6 +517,10 @@ export function SongStageBoard({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <PreviewBackgroundToggle
+            hidden={hideBackground}
+            onToggle={onToggleHideBackground}
+          />
           {isPresenting && (
             <button
               type="button"
@@ -542,6 +552,8 @@ export function SongStageBoard({
           title={song.title}
           keyLine={song.keyLine}
           songId={song.id}
+          background={song.background}
+          hideBackground={hideBackground}
           presentedSlideId={presentedSlideId}
           presentedSlidePosition={presentedSlidePosition}
           navSeq={nav.seq}

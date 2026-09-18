@@ -30,7 +30,11 @@
     "undo": "Anulează",
     "redo": "Refă",
     "viewForm": "Formular",
-    "viewStage": "Slide-uri"
+    "viewStage": "Slide-uri",
+    "background": {
+      "title": "Fundal",
+      "helper": "Apare în spatele versurilor acestei cântări pe ecranele pentru audiență și pe cele Kiosk. Monitoarele de scenă și transmisia live își păstrează fundalul propriu."
+    }
   },
   "stageEditor": {
     "editHint": "Apasă pe versuri pentru a le edita direct pe slide",
@@ -272,7 +276,9 @@
     "previewMode": "Previzualizare",
     "previewModeHint": "Mod previzualizare: pregătește un slide înainte de a-l afișa",
     "project": "Afișează",
-    "projectHint": "Afișează slide-ul pregătit"
+    "projectHint": "Afișează slide-ul pregătit",
+    "background": "Fundal",
+    "hideBackground": "Ascunde fundalul în previzualizare"
   },
   "metadata": {
     "detailsSection": "Detalii",

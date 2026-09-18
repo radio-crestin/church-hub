@@ -6,9 +6,18 @@ import type { ContentData } from './rendering/types'
 import type {
   ClockOverride,
   ContentType,
+  ScreenBackgroundConfig,
   ScreenWithConfigs,
   TextStyleRange,
 } from '../types'
+import { resolveScreenBackground } from '../utils/resolveScreenBackground'
+
+/** What a preview draws instead of the background when it is hidden. */
+const HIDDEN_BACKGROUND: ScreenBackgroundConfig = {
+  type: 'color',
+  color: '#000000',
+  opacity: 1,
+}
 
 interface ScreenPreviewProps {
   screen: ScreenWithConfigs
@@ -29,6 +38,11 @@ interface ScreenPreviewProps {
   clockOverride?: ClockOverride
   /** false shows a still frame of a video background (e.g. slide thumbnails) */
   playVideo?: boolean
+  /**
+   * Plain black instead of the background, so the lyrics are easy to read in
+   * an operator's preview. Never set for a projected screen.
+   */
+  hideBackground?: boolean
 }
 
 export function ScreenPreview({
@@ -44,6 +58,7 @@ export function ScreenPreview({
   textVersion,
   clockOverride,
   playVideo = true,
+  hideBackground = false,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -68,9 +83,9 @@ export function ScreenPreview({
     }
   }, [])
 
-  // Get background from screen config
-  const config = screen.contentConfigs[contentType]
-  const bg = config?.background || screen.contentConfigs.empty?.background
+  const bg = hideBackground
+    ? HIDDEN_BACKGROUND
+    : resolveScreenBackground({ screen, contentType, contentData })
 
   return (
     <div ref={containerRef} className="absolute inset-0 overflow-hidden">

@@ -22,6 +22,7 @@ import {
 import type { TemporaryContent } from '~/features/presentation/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { Switch } from '~/ui/switch/Switch'
+import { PreviewBackgroundToggle } from './PreviewBackgroundToggle'
 
 interface SongControlPanelProps {
   songId: number
@@ -48,6 +49,9 @@ interface SongControlPanelProps {
    *  retain the staged text in the local stage after hiding. */
   onHide: () => void
   isHiding?: boolean
+  /** Plain black behind the lyrics in the preview (never on the screens). */
+  hideBackground: boolean
+  onToggleHideBackground: () => void
 }
 
 export function SongControlPanel({
@@ -65,6 +69,8 @@ export function SongControlPanel({
   isProjecting = false,
   onHide,
   isHiding = false,
+  hideBackground,
+  onToggleHideBackground,
 }: SongControlPanelProps) {
   const { t } = useTranslation(['songs', 'bible'])
 
@@ -154,21 +160,27 @@ export function SongControlPanel({
 
         {/* Controls group */}
         <div className="flex items-center justify-between gap-3 lg:justify-end shrink-0">
-          {/* Preview mode toggle — when ON, clicking a verse stages it here
-              first (Afișează / double-click projects). */}
-          <label
-            className="flex items-center gap-2 cursor-pointer select-none shrink-0"
-            title={t('preview.previewModeHint')}
-          >
-            <Switch
-              id="song-preview-mode"
-              checked={previewMode}
-              onCheckedChange={onTogglePreviewMode}
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Preview mode toggle — when ON, clicking a verse stages it here
+                first (Afișează / double-click projects). */}
+            <label
+              className="flex items-center gap-2 cursor-pointer select-none shrink-0"
+              title={t('preview.previewModeHint')}
+            >
+              <Switch
+                id="song-preview-mode"
+                checked={previewMode}
+                onCheckedChange={onTogglePreviewMode}
+              />
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                {t('preview.previewMode')}
+              </span>
+            </label>
+            <PreviewBackgroundToggle
+              hidden={hideBackground}
+              onToggle={onToggleHideBackground}
             />
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {t('preview.previewMode')}
-            </span>
-          </label>
+          </div>
 
           {isLive ? (
             <button
@@ -227,7 +239,10 @@ export function SongControlPanel({
             from the aspect ratio, instead of stretching to the full column
             height. */}
         <div className="w-full flex-shrink-0">
-          <LivePreview previewContent={previewContent} />
+          <LivePreview
+            previewContent={previewContent}
+            hideBackground={hideBackground}
+          />
         </div>
 
         <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">

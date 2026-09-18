@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
 
+import type { ScreenBackgroundConfig } from '~/features/presentation/types'
 import type { SongMetadata } from '../components/SongDetailsSection'
 import type { LocalSlide } from '../components/SongSlideList'
 
@@ -9,6 +10,7 @@ interface SongState {
   tagIds: number[]
   slides: LocalSlide[]
   metadata?: SongMetadata
+  background?: ScreenBackgroundConfig | null
 }
 
 function areTagIdsEqual(a: number[], b: number[]): boolean {
@@ -44,6 +46,21 @@ function areMetadataEqual(
   )
 }
 
+function areBackgroundsEqual(
+  a: ScreenBackgroundConfig | null | undefined,
+  b: ScreenBackgroundConfig | null | undefined,
+): boolean {
+  if (!a || !b) return !a && !b
+
+  return (
+    a.type === b.type &&
+    a.color === b.color &&
+    a.imageUrl === b.imageUrl &&
+    a.videoUrl === b.videoUrl &&
+    a.opacity === b.opacity
+  )
+}
+
 function areStatesEqual(a: SongState, b: SongState): boolean {
   if (a.title !== b.title) return false
   if (a.categoryId !== b.categoryId) return false
@@ -63,6 +80,7 @@ function areStatesEqual(a: SongState, b: SongState): boolean {
   }
 
   if (!areMetadataEqual(a.metadata, b.metadata)) return false
+  if (!areBackgroundsEqual(a.background, b.background)) return false
 
   return true
 }
@@ -83,6 +101,7 @@ export function useDirtyState() {
         label: s.label ?? null,
       })),
       metadata: state.metadata ? { ...state.metadata } : undefined,
+      background: state.background ? { ...state.background } : null,
     }
   }, [])
 
@@ -104,6 +123,7 @@ export function useDirtyState() {
       metadata: currentState.metadata
         ? { ...currentState.metadata }
         : undefined,
+      background: currentState.background ?? null,
     }
 
     return !areStatesEqual(normalizedCurrent, savedStateRef.current)

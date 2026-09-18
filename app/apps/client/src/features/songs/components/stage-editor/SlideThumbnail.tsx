@@ -5,6 +5,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
+  ScreenBackgroundConfig,
   ScreenWithConfigs,
   TemporaryContent,
 } from '~/features/presentation'
@@ -16,6 +17,10 @@ interface SlideThumbnailProps {
   songId: number
   title: string
   keyLine: string | null
+  /** The song's own background, drawn as the projection would. */
+  background: ScreenBackgroundConfig | null
+  /** Plain black instead of any background (the song page's toggle). */
+  hideBackground?: boolean
   slides: LocalSlide[]
   index: number
   isActive: boolean
@@ -37,6 +42,8 @@ export function SlideThumbnail({
   songId,
   title,
   keyLine,
+  background,
+  hideBackground = false,
   slides,
   index,
   isActive,
@@ -73,9 +80,10 @@ export function SlideThumbnail({
           styleOverrides: s.styleOverrides ?? null,
         })),
         currentSlideIndex: index,
+        background,
       },
     }),
-    [songId, title, keyLine, slides, index],
+    [songId, title, keyLine, slides, index, background],
   )
 
   const { contentType, contentData, contentKey, isVisible } =
@@ -135,6 +143,7 @@ export function SlideThumbnail({
           contentKey={contentKey}
           isVisible={isVisible}
           playVideo={false}
+          hideBackground={hideBackground}
         />
         {label && (
           <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-black/60 text-white">

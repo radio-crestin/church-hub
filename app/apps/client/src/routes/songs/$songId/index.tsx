@@ -234,6 +234,16 @@ function SongPreviewPage() {
     'song-detail:versions-open',
     true,
   )
+  // Plain black behind the lyrics in this page's previews (both layouts), so
+  // they are easy to read. Never changes what the screens show.
+  const [hidePreviewBackground, setHidePreviewBackground] = usePersistedBoolean(
+    'song-detail:hide-background',
+    false,
+  )
+  const toggleHidePreviewBackground = useCallback(
+    () => setHidePreviewBackground(!hidePreviewBackground),
+    [hidePreviewBackground, setHidePreviewBackground],
+  )
   const [pendingExit, setPendingExit] = useState(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
@@ -280,6 +290,7 @@ function SongPreviewPage() {
           styleOverrides: s.styleOverrides,
         })),
         currentSlideIndex: stagedSlideIndex,
+        background: song.background,
       },
     }
   }, [previewMode, stagedSlideIndex, song, expandedSlides])
@@ -820,6 +831,8 @@ function SongPreviewPage() {
               song={song}
               scheduleNav={scheduleNav}
               onPresentSlide={presentSlide}
+              hideBackground={hidePreviewBackground}
+              onToggleHideBackground={toggleHidePreviewBackground}
             />
           ),
         },
@@ -849,6 +862,8 @@ function SongPreviewPage() {
               isProjecting={presentTemporarySong.isPending}
               onHide={handleHidePresentation}
               isHiding={clearTemporary.isPending}
+              hideBackground={hidePreviewBackground}
+              onToggleHideBackground={toggleHidePreviewBackground}
             />
           ),
         },
