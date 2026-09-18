@@ -277,7 +277,6 @@
     "previewModeHint": "Preview mode: stage a slide before projecting it",
     "project": "Project",
     "projectHint": "Project the staged slide",
-    "background": "Background",
     "hideBackground": "Hide background in preview"
   },
   "metadata": {
@@ -381,6 +380,7 @@
   "actionsMenu": {
     "trigger": "More",
     "saveToFileDescription": "Export this song as a file on your computer",
+    "hideBackgroundDescription": "Plain black behind the lyrics here; the screens keep the background",
     "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
     "editDescription": "Open the editor to change lyrics and slides"
   }

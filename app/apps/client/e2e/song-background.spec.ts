@@ -7,6 +7,11 @@ import {
 } from '@playwright/test'
 
 import {
+  actionsMenuItem,
+  openActionsMenu,
+  selectAction,
+} from './helpers/actions-menu'
+import {
   backgroundImageStyle,
   chooseBackgroundType,
   deleteMediaExcept,
@@ -23,16 +28,25 @@ import {
  * A song can carry its own background (edited in the song editor). While one
  * of its slides is live it replaces the song background of audience (primary)
  * and kiosk screens — stage monitors and the live stream keep theirs — and an
- * edit reaches the projection without presenting the song again. The song
- * page can hide it in its previews only ("Background" toggle, remembered per
- * device); the screens keep showing it.
+ * edit reaches the projection without presenting the song again. When the
+ * song's slides draw an image or a video, the song page's "More" menu can hide
+ * it in the page's previews only ("Hide background in preview", remembered per
+ * device); the screens keep showing it. Without media the option is left out.
  */
 
 const ROOT = '[data-testid="screen-renderer-root"]'
 /** The screens' own song background, so it can't be mistaken for the default. */
 const SCREEN_COLOR = '#123456'
 const SCREEN_COLOR_CSS = 'rgb(18, 52, 86)'
+/** A song's own colour background. */
+const SONG_COLOR = '#654321'
+const SONG_COLOR_CSS = 'rgb(101, 67, 33)'
 const BLACK_CSS = 'rgb(0, 0, 0)'
+
+const ACTIONS_MENU = 'song-actions-menu'
+const HIDE_BACKGROUND_ITEM = 'song-preview-hide-background'
+/** Where the song page keeps the "Hide background in preview" choice. */
+const HIDE_BACKGROUND_KEY = 'song-detail:hide-background'
 
 /** A line of lyrics on the projection (not its hidden measuring copy). */
 function lyric(page: Page, text: string) {
@@ -103,6 +117,116 @@ async function expectColorBackground(
   await expect(background).toHaveAttribute('data-background-type', 'color')
   await expect(background).toHaveCSS('background-color', color)
   await expect(background.getByTestId('screen-background-image')).toHaveCount(0)
+}
+
+type BackgroundCheck = (
+  background: ReturnType<Page['locator']>,
+) => Promise<void>
+
+/**
+ * Runs a check on every background of the PowerPoint layout: the canvas and
+ * each filmstrip thumbnail.
+ */
+function stageBackgroundCheck(page: Page, slideCount: number) {
+  const canvas = page
+    .getByTestId('slide-canvas-box')
+    .filter({ visible: true })
+    .getByTestId('screen-background')
+  const thumbnails = page
+    .getByTestId('stage-thumbnail')
+    .getByTestId('screen-background')
+
+  return async (check: BackgroundCheck) => {
+    await check(canvas)
+    for (let i = 0; i < slideCount; i++) {
+      await check(thumbnails.nth(i))
+    }
+  }
+}
+
+/** Closes the "More" menu with its trigger (Escape would also leave the page if it missed). */
+async function closeActionsMenu(page: Page) {
+  await page.getByTestId(ACTIONS_MENU).click()
+  await expect(page.getByTestId(`${ACTIONS_MENU}-panel`)).toBeHidden()
+}
+
+/** Opens "More", checks the tick of "Hide background in preview", closes it. */
+async function expectHideBackgroundChecked(page: Page, checked: boolean) {
+  const item = await actionsMenuItem(page, ACTIONS_MENU, HIDE_BACKGROUND_ITEM)
+  await expect(item).toHaveAttribute('role', 'menuitemcheckbox')
+  await expect(item).toHaveAttribute('aria-checked', String(checked))
+  await closeActionsMenu(page)
+}
+
+/** Opens "More" and checks it has no "Hide background in preview" row. */
+async function expectNoHideBackgroundOption(page: Page) {
+  const panel = await openActionsMenu(page, ACTIONS_MENU)
+  await expect(panel.getByTestId('song-save-to-file')).toBeVisible()
+  await expect(page.getByTestId(HIDE_BACKGROUND_ITEM)).toHaveCount(0)
+  await closeActionsMenu(page)
+}
+
+/** Flips "Hide background in preview" from the "More" menu. */
+async function toggleHideBackground(page: Page) {
+  await selectAction(page, ACTIONS_MENU, HIDE_BACKGROUND_ITEM)
+}
+
+async function storedHideBackground(page: Page) {
+  return page.evaluate(
+    (key) => window.localStorage.getItem(key),
+    HIDE_BACKGROUND_KEY,
+  )
+}
+
+interface ScreenSummary {
+  id: number
+  name: string
+  type: string
+  isPreviewScreen: boolean
+}
+
+async function listScreens(
+  request: APIRequestContext,
+): Promise<ScreenSummary[]> {
+  const res = await request.get('/api/screens')
+  expect(res.ok()).toBeTruthy()
+  return (await res.json()).data
+}
+
+/** Sets or clears a screen's preview flag (setting it clears every other). */
+async function flagPreviewScreen(
+  request: APIRequestContext,
+  screen: ScreenSummary,
+  isPreviewScreen: boolean,
+) {
+  const res = await request.post('/api/screens', {
+    data: {
+      id: screen.id,
+      name: screen.name,
+      type: screen.type,
+      isPreviewScreen,
+    },
+  })
+  expect(res.ok()).toBeTruthy()
+}
+
+/**
+ * Makes a screen the one the song page's previews draw with, and returns how
+ * to hand the flag back to the screen that had it.
+ */
+async function takePreviewScreen(
+  request: APIRequestContext,
+  screenId: number,
+): Promise<() => Promise<void>> {
+  const screens = await listScreens(request)
+  const screen = screens.find((s) => s.id === screenId)
+  expect(screen, `screen ${screenId} exists`).toBeTruthy()
+  const previous = screens.find((s) => s.isPreviewScreen)
+  await flagPreviewScreen(request, screen as ScreenSummary, true)
+  return () =>
+    previous
+      ? flagPreviewScreen(request, previous, true)
+      : flagPreviewScreen(request, screen as ScreenSummary, false)
 }
 
 /** Saves the song editor and waits for the song page it returns to. */
@@ -302,7 +426,7 @@ test.describe('Song background', () => {
     })
   })
 
-  test('the song page can hide the background in its preview, not on the screens', async ({
+  test('the "More" menu hides the background in the preview, not on the screens', async ({
     context,
     page,
     request,
@@ -321,11 +445,12 @@ test.describe('Song background', () => {
       .getByTestId('live-preview')
       .getByTestId('screen-background')
     await expectImageBackground(preview, media.url)
+    // Only in the menu now, not in the control panel's toolbar.
+    await expect(page.getByTestId(HIDE_BACKGROUND_ITEM)).toHaveCount(0)
 
-    const toggle = page.getByTestId('song-preview-hide-background')
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
-    await toggle.click()
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await expectHideBackgroundChecked(page, false)
+    await toggleHideBackground(page)
+    await expectHideBackgroundChecked(page, true)
     await expectColorBackground(preview, BLACK_CSS)
 
     // The screens still show it.
@@ -335,17 +460,15 @@ test.describe('Song background', () => {
 
     // Remembered on this device.
     await page.reload()
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true', {
-      timeout: 15000,
-    })
     await expectColorBackground(preview, BLACK_CSS)
+    await expectHideBackgroundChecked(page, true)
 
-    await toggle.click()
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await toggleHideBackground(page)
+    await expectHideBackgroundChecked(page, false)
     await expectImageBackground(preview, media.url)
   })
 
-  test('in the PowerPoint layout the toggle hides the background on the canvas and thumbnails', async ({
+  test('in the PowerPoint layout the "More" menu hides the background on the canvas and thumbnails', async ({
     page,
     request,
   }) => {
@@ -364,36 +487,133 @@ test.describe('Song background', () => {
 
     const thumbnails = page.getByTestId('stage-thumbnail')
     await expect(thumbnails).toHaveCount(lyrics.length, { timeout: 15000 })
-    const canvas = page
-      .getByTestId('slide-canvas-box')
-      .filter({ visible: true })
-      .getByTestId('screen-background')
-    const thumbnailBackgrounds = thumbnails.getByTestId('screen-background')
-
-    const expectEverywhere = async (
-      check: (background: ReturnType<Page['locator']>) => Promise<void>,
-    ) => {
-      await check(canvas)
-      for (let i = 0; i < lyrics.length; i++) {
-        await check(thumbnailBackgrounds.nth(i))
-      }
-    }
+    const expectEverywhere = stageBackgroundCheck(page, lyrics.length)
 
     await expectEverywhere((bg) => expectImageBackground(bg, media.url))
+    // Only in the menu now, not in the stage toolbar.
+    await expect(page.getByTestId(HIDE_BACKGROUND_ITEM)).toHaveCount(0)
 
-    const toggle = page.getByTestId('song-preview-hide-background')
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
-    await toggle.click()
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await expectHideBackgroundChecked(page, false)
+    await toggleHideBackground(page)
     await expectEverywhere((bg) => expectColorBackground(bg, BLACK_CSS))
+    await expectHideBackgroundChecked(page, true)
 
     await page.reload()
     await expect(thumbnails).toHaveCount(lyrics.length, { timeout: 15000 })
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
     await expectEverywhere((bg) => expectColorBackground(bg, BLACK_CSS))
+    await expectHideBackgroundChecked(page, true)
 
-    await toggle.click()
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await toggleHideBackground(page)
     await expectEverywhere((bg) => expectImageBackground(bg, media.url))
+    await expectHideBackgroundChecked(page, false)
+  })
+
+  test('without an image or video the option is left out and the previews keep the colour', async ({
+    page,
+    request,
+  }) => {
+    // The previews draw with the preview screen: make it this spec's primary
+    // screen, whose song backgrounds are a known colour.
+    const restorePreviewScreen = await takePreviewScreen(
+      request,
+      primaryScreenId,
+    )
+    try {
+      await presentSong(request, song.id)
+
+      // Hidden on an earlier song that had an image.
+      await page.goto(`/songs/${song.id}`)
+      await page.evaluate(
+        (key) => window.localStorage.setItem(key, 'true'),
+        HIDE_BACKGROUND_KEY,
+      )
+      await page.reload()
+      const preview = page
+        .getByTestId('live-preview')
+        .getByTestId('screen-background')
+
+      // No background of its own: the screen's colour, not black.
+      await expectColorBackground(preview, SCREEN_COLOR_CSS)
+      await expectNoHideBackgroundOption(page)
+
+      // Its own colour.
+      await setSongBackground(request, song, {
+        type: 'color',
+        color: SONG_COLOR,
+        opacity: 1,
+      })
+      await page.reload()
+      await expectColorBackground(preview, SONG_COLOR_CSS)
+      await expectNoHideBackgroundOption(page)
+
+      // The PowerPoint layout's canvas and thumbnails too.
+      await page.evaluate(() =>
+        window.localStorage.setItem('song-editor-layout', 'powerpoint'),
+      )
+      await page.reload()
+      await expect(page.getByTestId('stage-thumbnail')).toHaveCount(
+        lyrics.length,
+        { timeout: 15000 },
+      )
+      await stageBackgroundCheck(
+        page,
+        lyrics.length,
+      )((bg) => expectColorBackground(bg, SONG_COLOR_CSS))
+      await expectNoHideBackgroundOption(page)
+
+      // The choice itself is kept, and applies again once there is an image.
+      expect(await storedHideBackground(page)).toBe('true')
+      const media = await uploadMedia(request, PNG, 'image/png', 'back.png')
+      await setSongBackground(request, song, {
+        type: 'image',
+        imageUrl: media.url,
+        color: '#000000',
+        opacity: 1,
+      })
+      await page.evaluate(() =>
+        window.localStorage.setItem('song-editor-layout', 'normal'),
+      )
+      await page.reload()
+      await expectColorBackground(preview, BLACK_CSS)
+      await expectHideBackgroundChecked(page, true)
+    } finally {
+      await restorePreviewScreen()
+    }
+  })
+
+  test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 }, hasTouch: true })
+
+    test('the "More" menu fits the screen and its option works by touch', async ({
+      page,
+      request,
+    }) => {
+      const media = await uploadMedia(request, PNG, 'image/png', 'phone.png')
+      await setSongBackground(request, song, {
+        type: 'image',
+        imageUrl: media.url,
+        color: '#000000',
+        opacity: 1,
+      })
+      await presentSong(request, song.id)
+
+      await page.goto(`/songs/${song.id}`)
+      const preview = page
+        .getByTestId('live-preview')
+        .getByTestId('screen-background')
+      await expectImageBackground(preview, media.url)
+
+      await page.getByTestId(ACTIONS_MENU).tap()
+      const panel = page.getByTestId(`${ACTIONS_MENU}-panel`)
+      await expect(panel).toBeVisible()
+      const box = await panel.boundingBox()
+      expect(box).not.toBeNull()
+      expect(box?.x ?? -1).toBeGreaterThanOrEqual(0)
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390)
+
+      await panel.getByTestId(HIDE_BACKGROUND_ITEM).tap()
+      await expect(panel).toBeHidden()
+      await expectColorBackground(preview, BLACK_CSS)
+    })
   })
 })

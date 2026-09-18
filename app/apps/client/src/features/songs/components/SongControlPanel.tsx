@@ -22,7 +22,6 @@ import {
 import type { TemporaryContent } from '~/features/presentation/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { Switch } from '~/ui/switch/Switch'
-import { PreviewBackgroundToggle } from './PreviewBackgroundToggle'
 
 interface SongControlPanelProps {
   songId: number
@@ -49,9 +48,11 @@ interface SongControlPanelProps {
    *  retain the staged text in the local stage after hiding. */
   onHide: () => void
   isHiding?: boolean
-  /** Plain black behind the lyrics in the preview (never on the screens). */
+  /**
+   * Plain black behind the lyrics in the preview (never on the screens). Set
+   * from the song page's "More" menu.
+   */
   hideBackground: boolean
-  onToggleHideBackground: () => void
 }
 
 export function SongControlPanel({
@@ -70,7 +71,6 @@ export function SongControlPanel({
   onHide,
   isHiding = false,
   hideBackground,
-  onToggleHideBackground,
 }: SongControlPanelProps) {
   const { t } = useTranslation(['songs', 'bible'])
 
@@ -160,27 +160,21 @@ export function SongControlPanel({
 
         {/* Controls group */}
         <div className="flex items-center justify-between gap-3 lg:justify-end shrink-0">
-          <div className="flex items-center gap-3 shrink-0">
-            {/* Preview mode toggle — when ON, clicking a verse stages it here
-                first (Afișează / double-click projects). */}
-            <label
-              className="flex items-center gap-2 cursor-pointer select-none shrink-0"
-              title={t('preview.previewModeHint')}
-            >
-              <Switch
-                id="song-preview-mode"
-                checked={previewMode}
-                onCheckedChange={onTogglePreviewMode}
-              />
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {t('preview.previewMode')}
-              </span>
-            </label>
-            <PreviewBackgroundToggle
-              hidden={hideBackground}
-              onToggle={onToggleHideBackground}
+          {/* Preview mode toggle — when ON, clicking a verse stages it here
+              first (Afișează / double-click projects). */}
+          <label
+            className="flex items-center gap-2 cursor-pointer select-none shrink-0"
+            title={t('preview.previewModeHint')}
+          >
+            <Switch
+              id="song-preview-mode"
+              checked={previewMode}
+              onCheckedChange={onTogglePreviewMode}
             />
-          </div>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              {t('preview.previewMode')}
+            </span>
+          </label>
 
           {isLive ? (
             <button
