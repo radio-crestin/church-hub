@@ -1,13 +1,22 @@
 import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { expect, type Page, test } from '@playwright/test'
+
 import {
-  type APIRequestContext,
-  expect,
-  type Locator,
-  type Page,
-  test,
-} from '@playwright/test'
+  backgroundImageStyle,
+  backgroundTypeLabel,
+  chooseBackgroundType,
+  deleteMediaExcept,
+  JPEG_FIXTURE,
+  label,
+  listMediaIds,
+  MEDIA_API,
+  message,
+  PNG,
+  setScreenSongBackground,
+  uploadMedia,
+  uploadThroughPicker,
+  WEBM_FIXTURE,
+} from './helpers/background-media'
 
 /**
  * Screen backgrounds can be an uploaded image or video: the server stores and
@@ -16,71 +25,8 @@ import {
  * video keeps playing (same element) while the slides change.
  */
 
-const currentDir = path.dirname(fileURLToPath(import.meta.url))
-// A 3 s, 160×90 VP8 loop. Playwright's Chromium has no H.264 decoder, so the
-// video that must actually play is WebM.
-const WEBM_FIXTURE = path.join(currentDir, 'fixtures', 'background-loop.webm')
-
-// A 1×1 PNG.
-const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-  'base64',
-)
-
-const LOCALES_DIR = path.join(currentDir, '..', 'src', 'i18n', 'locales')
-
-const MEDIA_API = '/api/media/backgrounds'
-const SONG_CONTENT_TYPES = ['song', 'song_first_slide', 'song_last_slide']
 const ROOT = '[data-testid="screen-renderer-root"]'
 const SONG_KEY = 'Do Major'
-
-interface BackgroundMedia {
-  id: string
-  kind: 'image' | 'video'
-  mimeType: string
-  size: number
-  url: string
-  createdAt: number
-}
-
-async function uploadMedia(
-  request: APIRequestContext,
-  body: Buffer,
-  mimeType: string,
-  name: string,
-): Promise<BackgroundMedia> {
-  const res = await request.post(
-    `${MEDIA_API}?name=${encodeURIComponent(name)}`,
-    { headers: { 'Content-Type': mimeType }, data: body },
-  )
-  expect(res.status()).toBe(201)
-  return (await res.json()).data as BackgroundMedia
-}
-
-async function listMediaIds(request: APIRequestContext): Promise<string[]> {
-  const res = await request.get(MEDIA_API)
-  expect(res.status()).toBe(200)
-  return ((await res.json()).data as BackgroundMedia[]).map((m) => m.id)
-}
-
-/**
- * Matches a UI label exactly, in either shipped language: the seeded test
- * database stores `language=ro`, while a fresh one starts in English.
- */
-function label(namespace: string, key: string): RegExp {
-  const texts = ['en', 'ro'].map((language) => {
-    const file = path.join(LOCALES_DIR, language, `${namespace}.json`)
-    const json = JSON.parse(fs.readFileSync(file, 'utf8'))
-    const text = key
-      .split('.')
-      .reduce((node, part) => node?.[part], json) as unknown
-    if (typeof text !== 'string') {
-      throw new Error(`Missing ${language} translation ${namespace}:${key}`)
-    }
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  })
-  return new RegExp(`^(${texts.join('|')})$`)
-}
 
 /** A line of lyrics on the projection (not its hidden measuring copy). */
 function lyric(page: Page, text: string) {
@@ -88,28 +34,6 @@ function lyric(page: Page, text: string) {
     .locator(ROOT)
     .getByText(text, { exact: true })
     .and(page.locator(':not([aria-hidden="true"])'))
-}
-
-/** Sets the same background on the three configs a song is drawn with. */
-async function setSongBackground(
-  request: APIRequestContext,
-  screenId: number,
-  background: Record<string, unknown>,
-) {
-  const { data: screen } = await (
-    await request.get(`/api/screens/${screenId}`)
-  ).json()
-  for (const contentType of SONG_CONTENT_TYPES) {
-    const res = await request.put(
-      `/api/screens/${screenId}/config/${contentType}`,
-      {
-        data: {
-          config: { ...screen.contentConfigs[contentType], background },
-        },
-      },
-    )
-    expect(res.status()).toBe(200)
-  }
 }
 
 /** Opens the full-screen editor of one screen from Settings → Screens. */
@@ -139,62 +63,6 @@ async function openScreenEditor(page: Page, screenId: number) {
     .click()
   await expect(page.getByTestId('screen-editor-content-type')).toHaveText(song)
   await expect(page.getByTestId('background-song-types-hint')).toBeVisible()
-}
-
-async function chooseBackgroundType(page: Page, type: 'image' | 'video') {
-  const typeLabel = label('presentation', `screens.background.types.${type}`)
-  await page.getByTestId('background-type-select').click()
-  await page
-    .getByTestId('background-type-select-option')
-    .filter({ hasText: typeLabel })
-    .locator('button')
-    .first()
-    .click()
-  await expect(page.getByTestId('background-type-select')).toHaveText(typeLabel)
-  await expect(page.getByTestId('background-media-picker')).toBeVisible()
-}
-
-/**
- * Uploads through the picker's hidden file input and returns the new file's
- * media entry. The id is read from the tile the picker selects on arrival,
- * not from the response body (Chromium may evict it from the inspector cache).
- */
-async function uploadThroughPicker(
-  page: Page,
-  request: APIRequestContext,
-  files: Parameters<Locator['setInputFiles']>[0],
-): Promise<BackgroundMedia> {
-  const before = new Set(await listMediaIds(request))
-  const upload = page.waitForResponse(
-    (res) => res.url().includes(MEDIA_API) && res.request().method() === 'POST',
-  )
-  await page.getByTestId('background-media-upload-input').setInputFiles(files)
-  expect((await upload).status()).toBe(201)
-
-  // The screen may already use an earlier upload: wait until the new file is
-  // the one (and only one) selected.
-  const selectedIds = () =>
-    page
-      .locator('[data-testid="background-media-item"][data-selected="true"]')
-      .evaluateAll((tiles) =>
-        tiles.map((tile) => tile.getAttribute('data-media-id') ?? ''),
-      )
-  let id = ''
-  await expect
-    .poll(
-      async () => {
-        const ids = await selectedIds()
-        id = ids[0] ?? ''
-        return ids.length === 1 && !before.has(id)
-      },
-      { message: 'the new upload is the only selected tile' },
-    )
-    .toBe(true)
-
-  const { data } = await (await request.get(MEDIA_API)).json()
-  const media = (data as BackgroundMedia[]).find((item) => item.id === id)
-  expect(media).toBeDefined()
-  return media as BackgroundMedia
 }
 
 /** Frames the <video> has presented so far — grows across loops. */
@@ -248,11 +116,7 @@ test.describe('Screen background media', () => {
 
   test.afterAll(async ({ request }) => {
     await request.post('/api/presentation/stop')
-    for (const id of await listMediaIds(request)) {
-      if (!preexistingMediaIds.has(id)) {
-        await request.delete(`${MEDIA_API}/${id}`)
-      }
-    }
+    await deleteMediaExcept(request, preexistingMediaIds)
     if (screenId) await request.delete(`/api/screens/${screenId}`)
     if (songId) await request.delete(`/api/songs/${songId}`)
   })
@@ -351,7 +215,7 @@ test.describe('Screen background media', () => {
     await expect(canvasImage).toHaveCount(1)
     await expect(canvasImage).toHaveAttribute(
       'style',
-      new RegExp(`background-image: url\\(".*${media.url}"\\)`),
+      backgroundImageStyle(media.url),
     )
 
     // 100% → 70% with the keyboard, as a user would.
@@ -385,7 +249,7 @@ test.describe('Screen background media', () => {
     request,
   }) => {
     const media = await uploadMedia(request, PNG, 'image/png', 'display.png')
-    await setSongBackground(request, screenId, {
+    await setScreenSongBackground(request, screenId, {
       type: 'image',
       imageUrl: media.url,
       color: '#000000',
@@ -404,7 +268,7 @@ test.describe('Screen background media', () => {
     const image = background.getByTestId('screen-background-image')
     await expect(image).toHaveAttribute(
       'style',
-      new RegExp(`background-image: url\\(".*${media.url}"\\)`),
+      backgroundImageStyle(media.url),
     )
     await expect(image).toHaveCSS('opacity', '0.5')
 
@@ -452,7 +316,7 @@ test.describe('Screen background media', () => {
       'background-loop.webm',
     )
     expect(media.kind).toBe('video')
-    await setSongBackground(request, screenId, {
+    await setScreenSongBackground(request, screenId, {
       type: 'video',
       videoUrl: media.url,
       color: '#000000',
@@ -575,5 +439,58 @@ test.describe('Screen background media', () => {
     // The screen no longer points at the deleted file.
     await expect(page.getByTestId('screen-background-video')).toHaveCount(0)
     expect(await listMediaIds(request)).not.toContain(media.id)
+  })
+
+  test('an upload of the other kind switches the background type to it', async ({
+    page,
+    request,
+  }) => {
+    await openScreenEditor(page, screenId)
+    const typeSelect = page.getByTestId('background-type-select')
+    const tile = (id: string) =>
+      page.locator(
+        `[data-testid="background-media-item"][data-media-id="${id}"]`,
+      )
+
+    // A JPG picked while choosing a video: the type follows the file.
+    await chooseBackgroundType(page, 'video')
+    const image = await uploadThroughPicker(page, request, JPEG_FIXTURE)
+    expect(image).toMatchObject({ kind: 'image', mimeType: 'image/jpeg' })
+    await expect(typeSelect).toHaveText(
+      label('presentation', 'screens.background.types.image'),
+    )
+    await expect(tile(image.id)).toHaveAttribute('data-selected', 'true')
+    await expect(
+      page.getByText(
+        message('presentation', 'screens.background.switchedType', (lng) => ({
+          type: backgroundTypeLabel('image', lng),
+        })),
+      ),
+    ).toBeVisible()
+    await expect(page.getByTestId('screen-background-image')).toHaveAttribute(
+      'style',
+      backgroundImageStyle(image.url),
+    )
+
+    // And a WebM picked while choosing an image switches it back to Video.
+    const video = await uploadThroughPicker(page, request, WEBM_FIXTURE)
+    expect(video).toMatchObject({ kind: 'video', mimeType: 'video/webm' })
+    await expect(typeSelect).toHaveText(
+      label('presentation', 'screens.background.types.video'),
+    )
+    await expect(tile(video.id)).toHaveAttribute('data-selected', 'true')
+    await expect(tile(image.id)).toHaveCount(0)
+    await expect(
+      page.getByText(
+        message('presentation', 'screens.background.switchedType', (lng) => ({
+          type: backgroundTypeLabel('video', lng),
+        })),
+      ),
+    ).toBeVisible()
+    await expect(page.getByTestId('screen-background-video')).toHaveAttribute(
+      'src',
+      new RegExp(`${video.url}$`),
+    )
+    await expect(page.getByTestId('screen-background-image')).toHaveCount(0)
   })
 })
