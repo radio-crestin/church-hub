@@ -142,9 +142,32 @@
         "video": "Video"
       },
       "color": "Culoare",
-      "imageUrl": "URL Imagine",
-      "videoUrl": "URL Video",
-      "opacity": "Opacitate"
+      "opacity": "Opacitate",
+      "upload": {
+        "image": "Încarcă o imagine",
+        "video": "Încarcă un videoclip"
+      },
+      "uploading": "Se încarcă…",
+      "select": "Folosește ca fundal",
+      "delete": "Șterge",
+      "deleteConfirmTitle": "Ștergi acest fișier?",
+      "deleteConfirm": "Fișierul este eliminat din aplicație. Ecranele care îl folosesc încă vor afișa culoarea de bază.",
+      "empty": {
+        "image": "Nu ai încărcat încă nicio imagine.",
+        "video": "Nu ai încărcat încă niciun videoclip."
+      },
+      "hint": {
+        "image": "JPG, PNG, WebP sau GIF, de până la 50 MB.",
+        "video": "MP4 (H.264) sau WebM, de până la 1 GB — acestea rulează pe Windows, macOS și Linux."
+      },
+      "songTypesHint": "Cântecele au trei aranjamente. Setează același fundal pentru {{song}}, {{firstSlide}} și {{lastSlide}}.",
+      "errors": {
+        "unsupportedType": "Acest tip de fișier nu este acceptat. Folosește o imagine JPG, PNG, WebP sau GIF ori un videoclip MP4 sau WebM.",
+        "fileTooLarge": "Fișierul este prea mare. Imaginile pot avea până la 50 MB, iar videoclipurile până la 1 GB.",
+        "uploadFailed": "Încărcarea a eșuat. Încearcă din nou.",
+        "deleteFailed": "Fișierul nu a putut fi șters. Încearcă din nou.",
+        "loadFailed": "Lista fișierelor încărcate nu a putut fi afișată."
+      }
     },
     "general": {
       "screenSize": "Dimensiune Ecran",

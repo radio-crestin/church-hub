@@ -10,6 +10,8 @@ interface SliderProps {
   className?: string
   showValue?: boolean
   formatValue?: (value: number) => string
+  /** Test id of the range input */
+  testId?: string
 }
 
 export const Slider = forwardRef<HTMLInputElement, SliderProps>(
@@ -24,6 +26,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
       className = '',
       showValue = true,
       formatValue,
+      testId,
     },
     ref,
   ) => {
@@ -34,6 +37,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
         <input
           ref={ref}
           type="range"
+          data-testid={testId}
           value={value[0]}
           onChange={(e) => onValueChange?.([parseFloat(e.target.value)])}
           min={min}

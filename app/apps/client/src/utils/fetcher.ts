@@ -1,7 +1,8 @@
 import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
 import { isMobile } from '~/config'
-import { getStoredApiUrl, getStoredUserToken } from '~/service/api-url'
+import { getStoredApiUrl } from '~/service/api-url'
+import { getAuthHeaders } from '~/utils/getAuthHeaders'
 import { createLogger } from '~/utils/logger'
 
 const logger = createLogger('app:fetcher')
@@ -52,24 +53,9 @@ export async function fetcher<T>(
   url: string,
   options?: RequestInit & ClientOptions & { timeout?: number },
 ): Promise<T> {
-  // Auth token for Tauri (mobile + desktop). In a browser the same-origin
-  // cookie is used, so no explicit header is needed.
-  const userToken = isTauri ? getStoredUserToken() : null
-
   const headers: Record<string, string> = {
     ...((options?.headers as Record<string, string>) ?? {}),
-  }
-
-  // Mobile uses the Tauri HTTP plugin, which can set the `Cookie` header.
-  // Desktop uses `window.fetch`, which forbids the `Cookie` header — and macOS
-  // WKWebView won't store the cross-site `Secure` cookie anyway — so send the
-  // token in `X-User-Auth` (read as a fallback by the server auth middleware).
-  if (userToken) {
-    if (isMobile()) {
-      headers['Cookie'] = `user_auth=${userToken}`
-    } else {
-      headers['X-User-Auth'] = userToken
-    }
+    ...getAuthHeaders(),
   }
 
   const fullUrl = `${getApiBaseUrl()}${url}`

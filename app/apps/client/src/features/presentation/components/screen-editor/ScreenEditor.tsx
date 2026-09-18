@@ -374,6 +374,7 @@ export function ScreenEditor({
               options={contentTypeOptions}
               className="w-44 sm:w-56"
               portalContainer={portalContainer}
+              testId="screen-editor-content-type"
             />
           </div>
 
@@ -409,6 +410,7 @@ export function ScreenEditor({
               variant="primary"
               onClick={handleSave}
               disabled={!state.isDirty}
+              data-testid="screen-editor-save"
             >
               <Save className="w-4 h-4 mr-2" />
               Save
