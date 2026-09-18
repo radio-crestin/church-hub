@@ -1,4 +1,5 @@
 export { authPaths } from './auth'
+export { backgroundMediaPaths } from './background-media'
 export { backupPaths } from './backup'
 export { biblePaths } from './bible'
 export { bibleBookmarksPaths } from './bible-bookmarks'

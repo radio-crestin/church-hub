@@ -88,6 +88,7 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
@@ -123,6 +124,7 @@ import {
   getSystemToken,
   regenerateSystemToken,
 } from './service/app-sessions'
+import { BACKGROUND_MEDIA_MAX_REQUEST_BODY_BYTES } from './service/background-media'
 import {
   clearDriveAuth,
   completeDriveAuth,
@@ -919,6 +921,10 @@ async function startRealServer(): Promise<void> {
     port: process.env['PORT'] ?? 3000,
     hostname: '0.0.0.0',
     reusePort: true,
+    // Bun's 128 MiB default would reject background video uploads (up to
+    // 1 GiB) with a bare 413 before the route runs. Uploads are streamed to
+    // disk and the route enforces the real per-kind limits itself.
+    maxRequestBodySize: BACKGROUND_MEDIA_MAX_REQUEST_BODY_BYTES,
     error(error) {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[SERVER ERROR] Fetch handler error:', error)
@@ -8297,6 +8303,15 @@ async function startRealServer(): Promise<void> {
       // Music routes (folders, files, playlists)
       const musicResponse = await handleMusicRoutes(req, url, handleCors)
       if (musicResponse) return musicResponse
+
+      // Background media routes (screen background image/video uploads)
+      const backgroundMediaResponse = await handleBackgroundMediaRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (backgroundMediaResponse) return backgroundMediaResponse
 
       // Serve client app (static files in production, proxy to Vite in development)
       if (canServeStaticFiles && clientDistPath) {
