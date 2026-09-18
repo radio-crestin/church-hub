@@ -1,0 +1,48 @@
+{
+  "title": "Gallery",
+  "description": "Every image and video you have uploaded, in one place.",
+  "usageNote": "Use these files as screen backgrounds (Settings › Screens) or as a song's background (song editor).",
+  "filters": {
+    "label": "Filter by type",
+    "all": "All",
+    "images": "Images",
+    "videos": "Videos"
+  },
+  "kinds": {
+    "image": "Image",
+    "video": "Video"
+  },
+  "upload": {
+    "button": "Upload files",
+    "progress": "Uploading {{current}} of {{total}}…",
+    "success_one": "{{count}} file uploaded",
+    "success_other": "{{count}} files uploaded",
+    "errors": {
+      "unsupportedType": "{{name}}: this file type isn't supported. Use a JPG, PNG, WebP or GIF image, or an MP4 or WebM video.",
+      "fileTooLarge": "{{name}} is too large. Images can be up to 50 MB and videos up to 1 GB.",
+      "uploadFailed": "{{name}} could not be uploaded. Please try again."
+    }
+  },
+  "item": {
+    "preview": "Preview",
+    "delete": "Delete"
+  },
+  "preview": {
+    "close": "Close"
+  },
+  "delete": {
+    "confirmTitle": "Delete this file?",
+    "confirmMessage": "The file is removed from the app. Screens and songs that use it as a background will no longer show it.",
+    "confirm": "Delete",
+    "failed": "The file could not be deleted. Please try again."
+  },
+  "empty": {
+    "all": "No files uploaded yet",
+    "image": "No images uploaded yet",
+    "video": "No videos uploaded yet",
+    "hint": "MP4 (H.264) or WebM videos work on every platform; images can be JPG, PNG, WebP or GIF."
+  },
+  "errors": {
+    "loadFailed": "The uploaded files could not be loaded."
+  }
+}

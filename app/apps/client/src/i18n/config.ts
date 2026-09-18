@@ -6,6 +6,7 @@ import { initReactI18next } from 'react-i18next'
 import bibleEN from './locales/en/bible.json'
 import bibleBooksEN from './locales/en/bibleBooks.json'
 import commonEN from './locales/en/common.json'
+import galleryEN from './locales/en/gallery.json'
 import livestreamEN from './locales/en/livestream.json'
 import liveTranslationEN from './locales/en/liveTranslation.json'
 import musicEN from './locales/en/music.json'
@@ -22,6 +23,7 @@ import usersEN from './locales/en/users.json'
 import bibleRO from './locales/ro/bible.json'
 import bibleBooksRO from './locales/ro/bibleBooks.json'
 import commonRO from './locales/ro/common.json'
+import galleryRO from './locales/ro/gallery.json'
 import livestreamRO from './locales/ro/livestream.json'
 import liveTranslationRO from './locales/ro/liveTranslation.json'
 import musicRO from './locales/ro/music.json'
@@ -42,6 +44,7 @@ export const resources = {
     bible: bibleEN,
     bibleBooks: bibleBooksEN,
     common: commonEN,
+    gallery: galleryEN,
     livestream: livestreamEN,
     music: musicEN,
     presentation: presentationEN,
@@ -60,6 +63,7 @@ export const resources = {
     bible: bibleRO,
     bibleBooks: bibleBooksRO,
     common: commonRO,
+    gallery: galleryRO,
     livestream: livestreamRO,
     music: musicRO,
     presentation: presentationRO,
@@ -88,6 +92,7 @@ i18n
       'bible',
       'bibleBooks',
       'common',
+      'gallery',
       'livestream',
       'music',
       'presentation',
