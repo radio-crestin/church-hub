@@ -75,6 +75,45 @@ function presentedFrames(page: Page): Promise<number> {
     )
 }
 
+/**
+ * DOM mutations inside the projection's background layer over `ms` — none
+ * while nothing changes: the renderer re-renders every second (clock tick,
+ * socket traffic), and any of that reaching the layer would restart a GIF or
+ * reload the video.
+ */
+function backgroundLayerMutations(page: Page, ms: number): Promise<number> {
+  return page.locator(`${ROOT} [data-testid="screen-background"]`).evaluate(
+    (layer, duration) =>
+      new Promise<number>((resolve) => {
+        let count = 0
+        const observer = new MutationObserver((records) => {
+          count += records.length
+        })
+        observer.observe(layer, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+        })
+        setTimeout(() => {
+          observer.disconnect()
+          resolve(count)
+        }, duration)
+      }),
+    ms,
+  )
+}
+
+/** Whether a canvas shows something other than black (same-origin only). */
+function canvasHasPicture(canvas: HTMLCanvasElement): boolean {
+  const context = canvas.getContext('2d')
+  if (!context || canvas.width === 0) return false
+  const { data } = context.getImageData(0, 0, canvas.width, canvas.height)
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] + data[i + 1] + data[i + 2] > 60) return true
+  }
+  return false
+}
+
 test.describe('Screen background media', () => {
   let screenId: number
   let songId: number
@@ -369,6 +408,9 @@ test.describe('Screen background media', () => {
       .poll(() => presentedFrames(page), { timeout: 10000 })
       .toBeGreaterThan(framesBefore + 5)
 
+    // Left alone for a few clock ticks, nothing touches the playing video.
+    expect(await backgroundLayerMutations(page, 2500)).toBe(0)
+
     // Tag the element, change slide (first-slide layout → song layout, both
     // with the same video) and check the very same element is still playing.
     await video.evaluate((el) => {
@@ -397,6 +439,56 @@ test.describe('Screen background media', () => {
       paused: (el as HTMLVideoElement).paused,
     }))
     expect(state).toEqual({ sameElement: true, paused: false })
+  })
+
+  test('slide thumbnails share one still of a video instead of a player each', async ({
+    page,
+    request,
+  }) => {
+    const media = await uploadMedia(
+      request,
+      fs.readFileSync(WEBM_FIXTURE),
+      'video/webm',
+      'thumbnail-still.webm',
+    )
+    const { data: song } = await (
+      await request.get(`/api/songs/${songId}`)
+    ).json()
+    const background = {
+      type: 'video',
+      videoUrl: media.url,
+      color: '#000000',
+      opacity: 1,
+    }
+    const saved = await request.post('/api/songs', {
+      data: { id: songId, title: song.title, background },
+    })
+    expect(saved.status()).toBe(200)
+
+    try {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('song-editor-layout', 'powerpoint')
+      })
+      await page.goto(`/songs/${songId}`)
+      const thumbnails = page.getByTestId('stage-thumbnail')
+      await expect(thumbnails).toHaveCount(lyrics.length, { timeout: 15000 })
+
+      // Every <video> is a whole media player (download, decoder, buffers):
+      // the filmstrip must not start one per slide just to show a frame.
+      await expect(thumbnails.locator('video')).toHaveCount(0)
+      const stills = thumbnails.getByTestId('screen-background-video-still')
+      await expect(stills).toHaveCount(lyrics.length)
+      for (let i = 0; i < lyrics.length; i++) {
+        await expect(stills.nth(i)).toHaveAttribute('data-ready', 'true', {
+          timeout: 10000,
+        })
+        expect(await stills.nth(i).evaluate(canvasHasPicture)).toBe(true)
+      }
+    } finally {
+      await request.post('/api/songs', {
+        data: { id: songId, title: song.title, background: null },
+      })
+    }
   })
 
   test('the editor uploads a video and deletes it through the confirm dialog', async ({

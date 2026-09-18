@@ -1,4 +1,5 @@
 import { resolveMediaUrl } from '~/features/background-media/utils/resolveMediaUrl'
+import { ScreenBackgroundStill } from './ScreenBackgroundStill'
 import { ScreenBackgroundVideo } from './ScreenBackgroundVideo'
 import type { ScreenBackgroundConfig } from '../../types'
 
@@ -9,7 +10,10 @@ const DEFAULT_COLOR = '#000000'
 interface ScreenBackgroundProps {
   /** undefined falls back to black, as screens always have */
   background: ScreenBackgroundConfig | undefined
-  /** false shows a still frame of a video background (thumbnails) */
+  /**
+   * false shows a still frame of a video background (thumbnails), drawn from
+   * one capture shared by every thumbnail instead of a player each
+   */
   playVideo?: boolean
 }
 
@@ -52,13 +56,13 @@ export function ScreenBackground({
             }}
           />
         )}
-        {src && type === 'video' && (
-          <ScreenBackgroundVideo
-            src={src}
-            opacity={opacity}
-            playVideo={playVideo}
-          />
-        )}
+        {src &&
+          type === 'video' &&
+          (playVideo ? (
+            <ScreenBackgroundVideo src={src} opacity={opacity} />
+          ) : (
+            <ScreenBackgroundStill src={src} opacity={opacity} />
+          ))}
       </div>
     )
   }

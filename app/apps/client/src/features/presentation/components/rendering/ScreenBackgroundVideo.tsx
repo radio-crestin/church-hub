@@ -8,8 +8,6 @@ interface ScreenBackgroundVideoProps {
   /** Resolved (absolute) video URL */
   src: string
   opacity: number
-  /** false shows a still first frame instead of playing (thumbnails) */
-  playVideo: boolean
 }
 
 /**
@@ -20,7 +18,6 @@ interface ScreenBackgroundVideoProps {
 export function ScreenBackgroundVideo({
   src,
   opacity,
-  playVideo,
 }: ScreenBackgroundVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -29,26 +26,25 @@ export function ScreenBackgroundVideo({
   // element itself and start it explicitly.
   useEffect(() => {
     const video = videoRef.current
-    if (!video || !playVideo) return
+    if (!video) return
     video.muted = true
     video.defaultMuted = true
     video.play().catch((error: unknown) => {
       logger.debug(`Background video did not start: ${src}`, error)
     })
-  }, [src, playVideo])
+  }, [src])
 
   return (
     <video
       key={src}
       ref={videoRef}
       data-testid="screen-background-video"
-      // A media fragment makes the still variant paint its first frame.
-      src={playVideo ? src : `${src}#t=0.1`}
-      autoPlay={playVideo}
-      loop={playVideo}
+      src={src}
+      autoPlay
+      loop
       muted
       playsInline
-      preload={playVideo ? 'auto' : 'metadata'}
+      preload="auto"
       aria-hidden
       className="absolute inset-0 h-full w-full object-cover"
       style={{ opacity }}
