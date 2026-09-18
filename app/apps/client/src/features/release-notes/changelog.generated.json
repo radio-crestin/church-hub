@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.1.102",
+    "date": "2026-09-18T18:59:47+02:00",
+    "features": [
+      {
+        "scope": "backgrounds",
+        "message": "image & video backgrounds, media gallery and per-song backgrounds"
+      }
+    ],
+    "bugFixes": [],
+    "changes": []
+  },
+  {
     "version": "0.1.101",
     "date": "2026-09-17T12:56:47+02:00",
     "features": [],

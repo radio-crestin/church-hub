@@ -2,6 +2,12 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.102 — 2026-09-18
+
+### 🚀 Features
+
+- **backgrounds**: image & video backgrounds, media gallery and per-song backgrounds
+
 ## v0.1.101 — 2026-09-17
 
 ### 🐛 Bug Fixes
