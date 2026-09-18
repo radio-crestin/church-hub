@@ -134,6 +134,7 @@ export function SlideThumbnail({
           contentData={contentData}
           contentKey={contentKey}
           isVisible={isVisible}
+          playVideo={false}
         />
         {label && (
           <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-black/60 text-white">

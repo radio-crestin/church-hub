@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { ScreenBackground } from './rendering/ScreenBackground'
 import { ScreenContent } from './rendering/ScreenContent'
 import type { ContentData } from './rendering/types'
-import { getBackgroundCSS } from './rendering/utils/styleUtils'
 import type {
   ClockOverride,
   ContentType,
@@ -27,6 +27,8 @@ interface ScreenPreviewProps {
   textVersion?: number
   /** Control Room: show this clock instead of the screen's (see ScreenContent) */
   clockOverride?: ClockOverride
+  /** false shows a still frame of a video background (e.g. slide thumbnails) */
+  playVideo?: boolean
 }
 
 export function ScreenPreview({
@@ -41,6 +43,7 @@ export function ScreenPreview({
   onMainTextEdit,
   textVersion,
   clockOverride,
+  playVideo = true,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -70,11 +73,9 @@ export function ScreenPreview({
   const bg = config?.background || screen.contentConfigs.empty?.background
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 overflow-hidden"
-      style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
-    >
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
+      {/* First, so the (positioned) content paints above it */}
+      <ScreenBackground background={bg} playVideo={playVideo} />
       <ScreenContent
         screen={screen}
         contentType={contentType}
