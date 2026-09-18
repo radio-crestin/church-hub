@@ -123,6 +123,11 @@ export interface TemporarySongContent {
   keyLine?: string | null // Musical key (e.g., "C Major", "Am")
   slides: TemporarySongSlide[]
   currentSlideIndex: number // 0-based index
+  /**
+   * The song's own background, shown on primary and kiosk screens instead of
+   * the screen's song background. Null/absent: the screen's background applies.
+   */
+  background?: ScreenBackgroundConfig | null
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last slide)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number

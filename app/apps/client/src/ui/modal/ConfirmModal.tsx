@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface ConfirmModalProps {
@@ -10,6 +10,9 @@ interface ConfirmModalProps {
   onConfirm: () => void
   onCancel: () => void
   variant?: 'danger' | 'default'
+  /** Extra content under the message, e.g. the items the action applies to */
+  children?: ReactNode
+  testId?: string
 }
 
 export function ConfirmModal({
@@ -21,6 +24,8 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
   variant = 'default',
+  children,
+  testId,
 }: ConfirmModalProps) {
   const { t } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -58,6 +63,7 @@ export function ConfirmModal({
   return (
     <dialog
       ref={dialogRef}
+      data-testid={testId}
       className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
       onClose={onCancel}
       onMouseDown={handleBackdropMouseDown}
@@ -67,7 +73,10 @@ export function ConfirmModal({
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           {title}
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
+        <div className="mb-6 space-y-3">
+          <p className="text-gray-600 dark:text-gray-400">{message}</p>
+          {children}
+        </div>
         <div className="flex justify-end gap-3">
           <button
             type="button"

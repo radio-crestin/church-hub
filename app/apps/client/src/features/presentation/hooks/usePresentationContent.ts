@@ -10,6 +10,7 @@ import { calculateMaxExitAnimationDuration } from '../components/rendering/utils
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,
+  ScreenBackgroundConfig,
   ScreenConfig,
   SongContentConfig,
   SongLastSlideContentConfig,
@@ -103,6 +104,8 @@ export interface ContentData {
    * style by the renderer. Undefined means the screen settings apply as-is.
    */
   styleOverrides?: SlideStyleOverride | null
+  /** The song's own background (see `resolveScreenBackground`). */
+  songBackground?: ScreenBackgroundConfig | null
 }
 
 export interface NextSlideData {
@@ -215,6 +218,7 @@ function buildSongSlideContent(
       songKey: songKeyValue,
       amen: amenValue,
       styleOverrides: currentSlide.styleOverrides ?? null,
+      songBackground: data.background ?? null,
     },
     contentKey: `song|${data.songId}|${data.currentSlideIndex}`,
     nextSlide,

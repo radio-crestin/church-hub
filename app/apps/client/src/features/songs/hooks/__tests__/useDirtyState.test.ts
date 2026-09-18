@@ -227,6 +227,45 @@ describe('useDirtyState', () => {
     expect(result.current.isDirty(modified)).toBe(true)
   })
 
+  it('isDirty detects a background being set', () => {
+    const { result } = renderHook(() => useDirtyState())
+    result.current.setSavedState(makeState({ background: null }))
+    expect(
+      result.current.isDirty(
+        makeState({
+          background: { type: 'color', color: '#112233', opacity: 1 },
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('isDirty detects a background change and ignores key order', () => {
+    const { result } = renderHook(() => useDirtyState())
+    const saved = {
+      type: 'image' as const,
+      imageUrl: '/api/media/backgrounds/a.png',
+      opacity: 1,
+    }
+    result.current.setSavedState(makeState({ background: saved }))
+    expect(
+      result.current.isDirty(
+        makeState({
+          background: {
+            opacity: 1,
+            imageUrl: '/api/media/backgrounds/a.png',
+            type: 'image',
+          },
+        }),
+      ),
+    ).toBe(false)
+    expect(
+      result.current.isDirty(
+        makeState({ background: { ...saved, opacity: 0.5 } }),
+      ),
+    ).toBe(true)
+    expect(result.current.isDirty(makeState({ background: null }))).toBe(true)
+  })
+
   it('handles empty slides array', () => {
     const { result } = renderHook(() => useDirtyState())
     const state = makeState({ slides: [] })

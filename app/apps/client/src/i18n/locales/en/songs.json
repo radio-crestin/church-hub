@@ -30,7 +30,11 @@
     "undo": "Undo",
     "redo": "Redo",
     "viewForm": "Form",
-    "viewStage": "Slides"
+    "viewStage": "Slides",
+    "background": {
+      "title": "Background",
+      "helper": "Shown behind this song's lyrics on audience and kiosk screens. Stage monitors and the live stream keep their own background."
+    }
   },
   "stageEditor": {
     "editHint": "Click the lyrics to edit them directly on the slide",
@@ -272,7 +276,8 @@
     "previewMode": "Preview",
     "previewModeHint": "Preview mode: stage a slide before projecting it",
     "project": "Project",
-    "projectHint": "Project the staged slide"
+    "projectHint": "Project the staged slide",
+    "hideBackground": "Hide background in preview"
   },
   "metadata": {
     "detailsSection": "Details",
@@ -375,6 +380,7 @@
   "actionsMenu": {
     "trigger": "More",
     "saveToFileDescription": "Export this song as a file on your computer",
+    "hideBackgroundDescription": "Plain black behind the lyrics here; the screens keep the background",
     "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
     "editDescription": "Open the editor to change lyrics and slides"
   }

@@ -88,6 +88,7 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
@@ -123,6 +124,10 @@ import {
   getSystemToken,
   regenerateSystemToken,
 } from './service/app-sessions'
+import {
+  BACKGROUND_MEDIA_MAX_REQUEST_BODY_BYTES,
+  seedDefaultBackgroundMedia,
+} from './service/background-media'
 import {
   clearDriveAuth,
   completeDriveAuth,
@@ -364,6 +369,7 @@ import {
   upsertSong,
   upsertSongSlide,
   upsertTag,
+  validateSongBackground,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
 import {
@@ -790,7 +796,8 @@ async function runFtsRebuild(): Promise<void> {
 
 /**
  * Final pre-serve work: warm the FTS caches, reset presentation state, ensure a
- * fallback Bible exists, mint the system token and wire OBS callbacks. Extracted
+ * fallback Bible exists, add the bundled default backgrounds to the gallery,
+ * mint the system token and wire OBS callbacks. Extracted
  * from {@link main} so a throw here is attributed to the `finalizing` phase.
  */
 async function runFinalizeBoot(): Promise<void> {
@@ -809,6 +816,12 @@ async function runFinalizeBoot(): Promise<void> {
   t = performance.now()
   await ensureRCCVExists()
   logTiming('ensure_rccv_exists', t)
+
+  // Add the backgrounds shipped with the app to the media gallery (once per
+  // install; a default the user deletes is not added back)
+  t = performance.now()
+  await seedDefaultBackgroundMedia()
+  logTiming('seed_default_background_media', t)
 
   // Initialize system API token
   t = performance.now()
@@ -919,6 +932,10 @@ async function startRealServer(): Promise<void> {
     port: process.env['PORT'] ?? 3000,
     hostname: '0.0.0.0',
     reusePort: true,
+    // Bun's 128 MiB default would reject background video uploads (up to
+    // 1 GiB) with a bare 413 before the route runs. Uploads are streamed to
+    // disk and the route enforces the real per-kind limits itself.
+    maxRequestBodySize: BACKGROUND_MEDIA_MAX_REQUEST_BODY_BYTES,
     error(error) {
       // biome-ignore lint/suspicious/noConsole: error logging
       console.error('[SERVER ERROR] Fetch handler error:', error)
@@ -5227,6 +5244,17 @@ async function startRealServer(): Promise<void> {
             )
           }
 
+          const backgroundError = validateSongBackground(body.background)
+          if (backgroundError) {
+            return handleCors(
+              req,
+              new Response(JSON.stringify({ error: backgroundError }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              }),
+            )
+          }
+
           const song = upsertSong({ ...body, isManualEdit: true })
 
           if (!song) {
@@ -8297,6 +8325,15 @@ async function startRealServer(): Promise<void> {
       // Music routes (folders, files, playlists)
       const musicResponse = await handleMusicRoutes(req, url, handleCors)
       if (musicResponse) return musicResponse
+
+      // Background media routes (screen background image/video uploads)
+      const backgroundMediaResponse = await handleBackgroundMediaRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (backgroundMediaResponse) return backgroundMediaResponse
 
       // Serve client app (static files in production, proxy to Vite in development)
       if (canServeStaticFiles && clientDistPath) {

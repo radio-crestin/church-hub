@@ -10,6 +10,7 @@ import type {
   SizeWithUnits,
 } from '../../types'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { ScreenBackground } from '../rendering/ScreenBackground'
 import { TextContent } from '../rendering/TextContent'
 import {
   calculatePixelBounds,
@@ -1074,10 +1075,11 @@ export function ScreenEditorCanvas({
         style={{
           width: displaySize.width,
           height: displaySize.height,
-          ...getBackgroundCSS(bg),
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* First, so the (absolutely positioned) elements paint above it */}
+        <ScreenBackground background={bg} />
         {elements}
       </div>
     </div>

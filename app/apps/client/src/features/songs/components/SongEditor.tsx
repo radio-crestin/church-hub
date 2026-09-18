@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
+  type ScreenBackgroundConfig,
   useNavigateTemporary,
   usePresentationState,
   usePresentTemporarySong,
@@ -52,6 +53,8 @@ interface SongEditorProps {
   tagIds: number[]
   slides: LocalSlide[]
   metadata?: SongMetadata
+  /** The song's own background; null = the screens' own ones apply */
+  background: ScreenBackgroundConfig | null
   // Read-only tracking fields
   presentationCount?: number
   lastManualEdit?: number | null
@@ -60,6 +63,7 @@ interface SongEditorProps {
   onTagsChange: (tagIds: number[]) => void
   onSlidesChange: (slides: LocalSlide[]) => void
   onMetadataChange?: (field: keyof SongMetadata, value: string | null) => void
+  onBackgroundChange: (background: ScreenBackgroundConfig | null) => void
   onSave: () => Promise<boolean>
   onDelete?: () => void
   onBack: () => void
@@ -77,6 +81,7 @@ export function SongEditor({
   tagIds,
   slides,
   metadata = defaultSongMetadata,
+  background,
   presentationCount = 0,
   lastManualEdit,
   onTitleChange,
@@ -84,6 +89,7 @@ export function SongEditor({
   onTagsChange,
   onSlidesChange,
   onMetadataChange,
+  onBackgroundChange,
   onSave,
   onDelete,
   onBack,
@@ -460,6 +466,8 @@ export function SongEditor({
           onCategoryChange={onCategoryChange}
           onTagsChange={onTagsChange}
           onMetadataChange={handleMetadataChange}
+          background={background}
+          onBackgroundChange={onBackgroundChange}
         />
 
         {/* Slides Section */}

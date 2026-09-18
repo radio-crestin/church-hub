@@ -1,3 +1,4 @@
+export { backgroundMediaSchemas } from './background-media'
 export { bibleSchemas } from './bible'
 export { commonSchemas } from './common'
 export { deviceSchemas } from './devices'

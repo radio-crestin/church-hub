@@ -16,6 +16,8 @@ import { ScreenPreview, usePresentationContent } from '~/features/presentation'
 interface StageCanvasProps {
   screen: ScreenWithConfigs
   previewContent: TemporaryContent
+  /** Plain black instead of the background (the song page's toggle). */
+  hideBackground?: boolean
   /** Whether the current slide can be edited (false when there are no slides) */
   canEdit: boolean
   /**
@@ -67,6 +69,7 @@ function slideIdentity(content: TemporaryContent): string {
 export function StageCanvas({
   screen,
   previewContent,
+  hideBackground = false,
   canEdit,
   clickToEdit = false,
   fitHeight = false,
@@ -214,6 +217,7 @@ export function StageCanvas({
             editPlaceholder={t('stageEditor.emptySlidePlaceholder')}
             onMainTextEdit={onEditText}
             textVersion={textVersion}
+            hideBackground={hideBackground}
           />
         </div>
       </div>

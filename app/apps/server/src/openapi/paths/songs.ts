@@ -392,7 +392,7 @@ export const songsPaths = {
       tags: ['Songs'],
       summary: 'Create or update song',
       description:
-        'Creates a new song or updates an existing one if id is provided',
+        'Creates a new song or updates an existing one if id is provided. An optional `background` (ScreenBackgroundConfig) overrides the screen background for this song; null clears it, omitted leaves it unchanged. If the song is live, the presented snapshot (slides, key line, background) is refreshed.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
@@ -416,7 +416,15 @@ export const songsPaths = {
             },
           },
         },
-        '400': { $ref: '#/components/responses/BadRequest' },
+        '400': {
+          description:
+            'Missing title, invalid JSON body, or invalid `background` (unknown `type`, `opacity` not a finite number in [0, 1], or a non-string `color`/`imageUrl`/`videoUrl`)',
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/Error' },
+            },
+          },
+        },
         '401': { $ref: '#/components/responses/Unauthorized' },
       },
     },

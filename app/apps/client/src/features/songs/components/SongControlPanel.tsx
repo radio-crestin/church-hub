@@ -48,6 +48,11 @@ interface SongControlPanelProps {
    *  retain the staged text in the local stage after hiding. */
   onHide: () => void
   isHiding?: boolean
+  /**
+   * Plain black behind the lyrics in the preview (never on the screens). Set
+   * from the song page's "More" menu.
+   */
+  hideBackground: boolean
 }
 
 export function SongControlPanel({
@@ -65,6 +70,7 @@ export function SongControlPanel({
   isProjecting = false,
   onHide,
   isHiding = false,
+  hideBackground,
 }: SongControlPanelProps) {
   const { t } = useTranslation(['songs', 'bible'])
 
@@ -227,7 +233,10 @@ export function SongControlPanel({
             from the aspect ratio, instead of stretching to the full column
             height. */}
         <div className="w-full flex-shrink-0">
-          <LivePreview previewContent={previewContent} />
+          <LivePreview
+            previewContent={previewContent}
+            hideBackground={hideBackground}
+          />
         </div>
 
         <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">

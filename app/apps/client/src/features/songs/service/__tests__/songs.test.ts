@@ -37,6 +37,7 @@ const fakeSong = {
   presentationCount: 0,
   lastPresentedAt: null,
   lastManualEdit: null,
+  background: null,
   createdAt: 0,
   updatedAt: 0,
 }

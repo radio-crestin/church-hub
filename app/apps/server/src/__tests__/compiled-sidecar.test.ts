@@ -4,13 +4,27 @@
  * dependency uses dynamic require (e.g. `require('cf'+'b')` in
  * `ppt-to-text`) and gets silently dropped from the bundle.
  *
+ * The binary is laid out like the desktop bundle — on macOS inside
+ * `<App>.app/Contents/MacOS/` with the resources in `Contents/Resources/`, on
+ * Windows/Linux with the resources next to it — so resource lookups are
+ * exercised the way the shipped app does them. Its database lives in the
+ * temp folder, never in a real app-data or dev database.
+ *
  * Skipped by default — compiling the binary takes ~30s. Opt in via
  *   RUN_COMPILE_TESTS=1 bun test
  */
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  statSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { type Subprocess, spawn } from 'bun'
+
 import {
   afterAll,
   beforeAll,
@@ -19,6 +33,10 @@ import {
   setDefaultTimeout,
   test,
 } from 'bun:test'
+import {
+  DEFAULT_BACKGROUND_MEDIA,
+  DEFAULT_BACKGROUND_MEDIA_RESOURCE_DIR,
+} from '../service/background-media/constants'
 
 const SHOULD_RUN = process.env.RUN_COMPILE_TESTS === '1'
 const describeFn = SHOULD_RUN ? describe : describe.skip
@@ -32,11 +50,35 @@ const TEST_PORT = 3098
 // unambiguous and routes through the bound interface.
 const BASE_URL = `http://127.0.0.1:${TEST_PORT}`
 
+// The checked-in resources the desktop bundle ships (tauri.conf.json).
+const BUNDLED_BACKGROUNDS_DIR = resolve(
+  import.meta.dir,
+  '..',
+  '..',
+  '..',
+  '..',
+  'tauri',
+  'resources',
+  DEFAULT_BACKGROUND_MEDIA_RESOURCE_DIR,
+)
+
 let proc: Subprocess | null = null
 let stderrChunks = ''
 let stdoutChunks = ''
 let workDir = ''
 let binaryPath = ''
+
+/** Where the bundle puts the sidecar binary and its resources on this OS. */
+function bundleLayout(root: string): { binDir: string; resourcesDir: string } {
+  if (process.platform === 'darwin') {
+    const contents = join(root, 'church-hub.app', 'Contents')
+    return {
+      binDir: join(contents, 'MacOS'),
+      resourcesDir: join(contents, 'Resources'),
+    }
+  }
+  return { binDir: root, resourcesDir: root }
+}
 
 async function waitForServer(url: string, maxAttempts = 240): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
@@ -70,8 +112,15 @@ async function waitForServer(url: string, maxAttempts = 240): Promise<void> {
 describeFn('Compiled sidecar binary', () => {
   beforeAll(async () => {
     workDir = mkdtempSync(join(tmpdir(), 'church-hub-compile-test-'))
+    const { binDir, resourcesDir } = bundleLayout(workDir)
+    mkdirSync(binDir, { recursive: true })
+    cpSync(
+      BUNDLED_BACKGROUNDS_DIR,
+      join(resourcesDir, DEFAULT_BACKGROUND_MEDIA_RESOURCE_DIR),
+      { recursive: true },
+    )
     binaryPath = join(
-      workDir,
+      binDir,
       process.platform === 'win32' ? 'sidecar.exe' : 'sidecar',
     )
 
@@ -102,7 +151,12 @@ describeFn('Compiled sidecar binary', () => {
 
     proc = spawn({
       cmd: [binaryPath],
-      env: { ...process.env, PORT: String(TEST_PORT), TAURI_MODE: 'true' },
+      env: {
+        ...process.env,
+        PORT: String(TEST_PORT),
+        TAURI_MODE: 'true',
+        DATABASE_PATH: join(workDir, 'data', 'app.db'),
+      },
       stdout: 'pipe',
       stderr: 'pipe',
     })
@@ -159,5 +213,20 @@ describeFn('Compiled sidecar binary', () => {
 
   test('sidecar did not throw any ReferenceError', () => {
     expect(stderrChunks).not.toContain('ReferenceError')
+  })
+
+  test('sidecar finds the bundled default backgrounds and adds them to the gallery', async () => {
+    // Cookie-less localhost requests get the view permissions.
+    const res = await fetch(`${BASE_URL}/api/media/backgrounds`)
+    expect(res.status).toBe(200)
+    const { data } = (await res.json()) as {
+      data: { id: string; kind: string; size: number }[]
+    }
+    for (const { fileName, id } of DEFAULT_BACKGROUND_MEDIA) {
+      expect(data.find((item) => item.id === id)).toMatchObject({
+        kind: 'video',
+        size: statSync(join(BUNDLED_BACKGROUNDS_DIR, fileName)).size,
+      })
+    }
   })
 })

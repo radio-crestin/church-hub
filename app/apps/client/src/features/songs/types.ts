@@ -1,3 +1,5 @@
+import type { ScreenBackgroundConfig } from '~/features/presentation/types'
+
 export interface ChordMapping {
   wordIndex: number
   chord: string
@@ -47,6 +49,11 @@ export interface Song {
   presentationCount: number
   lastPresentedAt: number | null
   lastManualEdit: number | null
+  /**
+   * The song's own background on primary and kiosk screens, or null when the
+   * screens' own song backgrounds apply.
+   */
+  background: ScreenBackgroundConfig | null
   createdAt: number
   updatedAt: number
   /**
@@ -137,6 +144,8 @@ export interface UpsertSongInput {
   keyLine?: string | null
   presentationOrder?: string | null
   presentationCount?: number
+  /** The song's own background; null clears it, omitted leaves it as it is. */
+  background?: ScreenBackgroundConfig | null
   slides?: SlideInput[]
   /**
    * Replaces the song's tag assignments. When omitted the existing

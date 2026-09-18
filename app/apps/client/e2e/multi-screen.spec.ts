@@ -220,11 +220,11 @@ test.describe('Multi-Screen', () => {
     await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
-    // Verify the screen container has the configured background
-    const container = page.locator('.w-screen.h-screen').first()
-    await expect(container).toBeVisible({ timeout: 10000 })
+    // Verify the screen's background layer has the configured background
+    const background = page.getByTestId('screen-background')
+    await expect(background).toBeVisible({ timeout: 10000 })
 
-    const bgStyle = await container.evaluate((el) => el.style.backgroundColor)
+    const bgStyle = await background.evaluate((el) => el.style.backgroundColor)
     // The background should be set (either from config or default)
     expect(bgStyle).toBeTruthy()
   })

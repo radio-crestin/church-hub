@@ -13,12 +13,14 @@ import {
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { BackgroundEditor } from '~/features/background-media'
 import { Button } from '~/ui/button/Button'
 import { Checkbox } from '~/ui/checkbox/Checkbox'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { Input } from '~/ui/input/Input'
 import { Label } from '~/ui/label/Label'
 import { Slider } from '~/ui/slider/Slider'
+import { BackgroundSongTypesHint } from './BackgroundSongTypesHint'
 import { ConstraintControls } from './ConstraintControls'
 import type {
   PreviewTextKey,
@@ -36,7 +38,6 @@ import type {
   PersonLabelConfig,
   ReferenceTextConfig,
   ReferenceWrapperStyle,
-  ScreenBackgroundConfig,
   ScreenGlobalSettings,
   ScreenShareContentConfig,
   ScreenWithConfigs,
@@ -109,14 +110,6 @@ const ANIMATION_TYPES = [
   { value: 'slide-down', label: 'Slide Down' },
   { value: 'zoom', label: 'Zoom' },
   { value: 'blur', label: 'Blur' },
-]
-
-// Background type options
-const BACKGROUND_TYPES = [
-  { value: 'transparent', label: 'Transparent' },
-  { value: 'color', label: 'Solid Color' },
-  { value: 'image', label: 'Image' },
-  { value: 'video', label: 'Video' },
 ]
 
 // Line separator options
@@ -2002,93 +1995,18 @@ export function ScreenEditorSidebar({
           </Section>
 
           {/* Background */}
-          <Section title="Background" icon={Palette}>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs text-gray-500 dark:text-gray-400">
-                  Type
-                </Label>
-                <Combobox
-                  value={config.background.type}
-                  onChange={(value) => {
-                    onUpdateContentConfig(contentType, {
-                      ...config,
-                      background: {
-                        ...config.background,
-                        type: value as ScreenBackgroundConfig['type'],
-                      },
-                    })
-                  }}
-                  options={BACKGROUND_TYPES}
-                  className="w-full"
-                  portalContainer={portalContainer}
-                />
-              </div>
-              {config.background.type === 'color' && (
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    Color
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={config.background.color ?? '#000000'}
-                      onChange={(e) => {
-                        onUpdateContentConfig(contentType, {
-                          ...config,
-                          background: {
-                            ...config.background,
-                            color: e.target.value,
-                          },
-                        })
-                      }}
-                      className="w-10 h-8 rounded cursor-pointer"
-                    />
-                    <Input
-                      value={config.background.color ?? '#000000'}
-                      onChange={(e) => {
-                        onUpdateContentConfig(contentType, {
-                          ...config,
-                          background: {
-                            ...config.background,
-                            color: e.target.value,
-                          },
-                        })
-                      }}
-                      className="h-8 flex-1"
-                    />
-                  </div>
-                </div>
-              )}
-              {(config.background.type === 'image' ||
-                config.background.type === 'video') && (
-                <div>
-                  <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    URL
-                  </Label>
-                  <Input
-                    value={
-                      config.background.type === 'image'
-                        ? (config.background.imageUrl ?? '')
-                        : (config.background.videoUrl ?? '')
-                    }
-                    onChange={(e) => {
-                      onUpdateContentConfig(contentType, {
-                        ...config,
-                        background: {
-                          ...config.background,
-                          ...(config.background.type === 'image'
-                            ? { imageUrl: e.target.value }
-                            : { videoUrl: e.target.value }),
-                        },
-                      })
-                    }}
-                    placeholder="Enter URL..."
-                    className="h-8"
-                  />
-                </div>
-              )}
-            </div>
+          <Section title={t('screens.panels.background')} icon={Palette}>
+            <BackgroundEditor
+              value={config.background}
+              onChange={(background) => {
+                // Never null here: only `allowInherit` offers clearing it.
+                if (background) {
+                  onUpdateContentConfig(contentType, { ...config, background })
+                }
+              }}
+              portalContainer={portalContainer}
+              hint={<BackgroundSongTypesHint contentType={contentType} />}
+            />
           </Section>
 
           {/* Bible Options - only show for bible content types */}

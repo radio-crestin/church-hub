@@ -11,6 +11,7 @@ import {
   CalendarPlus,
   Download,
   Eye,
+  ImageOff,
   Loader2,
   Music,
   Music2,
@@ -63,6 +64,7 @@ import {
 } from '~/features/songs/components'
 import {
   useAddBookmark,
+  useHasMediaPreviewBackground,
   usePreviewMode,
   useRemoveBookmark,
   useResetPresentationCount,
@@ -234,6 +236,20 @@ function SongPreviewPage() {
     'song-detail:versions-open',
     true,
   )
+  // Plain black behind the lyrics in this page's previews (both layouts), so
+  // they are easy to read. Never changes what the screens show. Only an image
+  // or a video has anything to hide: without one the "More" menu drops the
+  // option and the previews show the colour, while the saved choice waits for
+  // the next song that has one.
+  const [hideBackgroundChoice, setHideBackgroundChoice] = usePersistedBoolean(
+    'song-detail:hide-background',
+    false,
+  )
+  const hasMediaPreviewBackground = useHasMediaPreviewBackground(
+    song?.background ?? null,
+  )
+  const hidePreviewBackground =
+    hideBackgroundChoice && hasMediaPreviewBackground
   const [pendingExit, setPendingExit] = useState(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
@@ -280,6 +296,7 @@ function SongPreviewPage() {
           styleOverrides: s.styleOverrides,
         })),
         currentSlideIndex: stagedSlideIndex,
+        background: song.background,
       },
     }
   }, [previewMode, stagedSlideIndex, song, expandedSlides])
@@ -820,6 +837,7 @@ function SongPreviewPage() {
               song={song}
               scheduleNav={scheduleNav}
               onPresentSlide={presentSlide}
+              hideBackground={hidePreviewBackground}
             />
           ),
         },
@@ -849,6 +867,7 @@ function SongPreviewPage() {
               isProjecting={presentTemporarySong.isPending}
               onHide={handleHidePresentation}
               isHiding={clearTemporary.isPending}
+              hideBackground={hidePreviewBackground}
             />
           ),
         },
@@ -906,6 +925,19 @@ function SongPreviewPage() {
       onSelect: handleOpenExportModal,
       testId: 'song-save-to-file',
     },
+    ...(hasMediaPreviewBackground
+      ? [
+          {
+            id: 'hide-background',
+            label: t('preview.hideBackground'),
+            description: t('actionsMenu.hideBackgroundDescription'),
+            icon: <ImageOff size={18} />,
+            active: hidePreviewBackground,
+            onSelect: () => setHideBackgroundChoice(!hideBackgroundChoice),
+            testId: 'song-preview-hide-background',
+          },
+        ]
+      : []),
     ...(canEditSong
       ? [
           {

@@ -1,0 +1,49 @@
+{
+  "title": "Galerie",
+  "description": "Toate imaginile și videoclipurile încărcate, într-un singur loc.",
+  "usageNote": "Poți folosi aceste fișiere ca fundal pentru ecrane (Setări › Ecrane) sau ca fundal pentru o cântare (editorul de cântări).",
+  "filters": {
+    "label": "Filtrează după tip",
+    "all": "Toate",
+    "images": "Imagini",
+    "videos": "Videoclipuri"
+  },
+  "kinds": {
+    "image": "Imagine",
+    "video": "Video"
+  },
+  "upload": {
+    "button": "Încarcă fișiere",
+    "progress": "Se încarcă {{current}} din {{total}}…",
+    "success_one": "{{count}} fișier încărcat",
+    "success_few": "{{count}} fișiere încărcate",
+    "success_other": "{{count}} de fișiere încărcate",
+    "errors": {
+      "unsupportedType": "{{name}}: acest tip de fișier nu este acceptat. Folosește o imagine JPG, PNG, WebP sau GIF ori un videoclip MP4 sau WebM.",
+      "fileTooLarge": "Fișierul {{name}} este prea mare. Imaginile pot avea până la 50 MB, iar videoclipurile până la 1 GB.",
+      "uploadFailed": "Fișierul {{name}} nu a putut fi încărcat. Încearcă din nou."
+    }
+  },
+  "item": {
+    "preview": "Previzualizează",
+    "delete": "Șterge"
+  },
+  "preview": {
+    "close": "Închide"
+  },
+  "delete": {
+    "confirmTitle": "Ștergi acest fișier?",
+    "confirmMessage": "Fișierul este eliminat din aplicație. Ecranele și cântările care îl folosesc ca fundal nu îl vor mai afișa.",
+    "confirm": "Șterge",
+    "failed": "Fișierul nu a putut fi șters. Încearcă din nou."
+  },
+  "empty": {
+    "all": "Nu ai încărcat încă niciun fișier",
+    "image": "Nu ai încărcat încă nicio imagine",
+    "video": "Nu ai încărcat încă niciun videoclip",
+    "hint": "Videoclipurile MP4 (H.264) sau WebM merg pe orice platformă; imaginile pot fi JPG, PNG, WebP sau GIF."
+  },
+  "errors": {
+    "loadFailed": "Fișierele încărcate nu au putut fi afișate."
+  }
+}

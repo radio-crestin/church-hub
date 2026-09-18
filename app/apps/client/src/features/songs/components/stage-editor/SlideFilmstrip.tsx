@@ -15,7 +15,10 @@ import {
 import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import type { ScreenWithConfigs } from '~/features/presentation'
+import type {
+  ScreenBackgroundConfig,
+  ScreenWithConfigs,
+} from '~/features/presentation'
 import { SlideThumbnail } from './SlideThumbnail'
 import type { LocalSlide } from '../SongSlideList'
 
@@ -24,6 +27,10 @@ interface SlideFilmstripProps {
   songId: number
   title: string
   keyLine: string | null
+  /** The song's own background, drawn as the projection would. */
+  background: ScreenBackgroundConfig | null
+  /** Plain black instead of any background (the song page's toggle). */
+  hideBackground?: boolean
   slides: LocalSlide[]
   activeIndex: number
   presentedSlideId?: number | null
@@ -45,6 +52,8 @@ export function SlideFilmstrip({
   songId,
   title,
   keyLine,
+  background,
+  hideBackground,
   slides,
   activeIndex,
   presentedSlideId,
@@ -83,6 +92,8 @@ export function SlideFilmstrip({
                 songId={songId}
                 title={title}
                 keyLine={keyLine}
+                background={background}
+                hideBackground={hideBackground}
                 slides={slides}
                 index={index}
                 isActive={index === activeIndex}

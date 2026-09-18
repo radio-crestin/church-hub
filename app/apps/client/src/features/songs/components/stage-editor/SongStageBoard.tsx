@@ -43,6 +43,11 @@ interface SongStageBoardProps {
    * page.
    */
   onPresentSlide: (slideIndex: number) => Promise<void>
+  /**
+   * Plain black behind the stage's lyrics (never on the screens). Set from the
+   * song page's "More" menu.
+   */
+  hideBackground: boolean
 }
 
 const AUTOSAVE_DELAY_MS = 1000
@@ -92,6 +97,7 @@ export function SongStageBoard({
   song,
   scheduleNav,
   onPresentSlide,
+  hideBackground,
 }: SongStageBoardProps) {
   const { t } = useTranslation(['songs', 'bible'])
   const upsert = useUpsertSong()
@@ -542,6 +548,8 @@ export function SongStageBoard({
           title={song.title}
           keyLine={song.keyLine}
           songId={song.id}
+          background={song.background}
+          hideBackground={hideBackground}
           presentedSlideId={presentedSlideId}
           presentedSlidePosition={presentedSlidePosition}
           navSeq={nav.seq}

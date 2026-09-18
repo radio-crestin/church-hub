@@ -5,6 +5,7 @@
 import { responses, securitySchemes } from './components'
 import {
   authPaths,
+  backgroundMediaPaths,
   backupPaths,
   bibleBookmarksPaths,
   biblePaths,
@@ -26,6 +27,7 @@ import {
   usersPaths,
 } from './paths'
 import {
+  backgroundMediaSchemas,
   bibleSchemas,
   commonSchemas,
   deviceSchemas,
@@ -74,6 +76,10 @@ export const openApiSpec = {
       name: 'Screens',
       description: 'Screen configuration and rendering settings',
     },
+    {
+      name: 'Background Media',
+      description: 'Uploaded background images and videos for screens',
+    },
     { name: 'Presentation', description: 'Presentation state control' },
     { name: 'Conversion', description: 'File format conversion utilities' },
     { name: 'Feedback', description: 'User feedback submission' },
@@ -96,6 +102,7 @@ export const openApiSpec = {
     ...bibleBookmarksPaths,
     ...schedulesPaths,
     ...screensPaths,
+    ...backgroundMediaPaths,
     ...presentationPaths,
     ...presentationHighlightsPaths,
     ...conversionPaths,
@@ -110,6 +117,7 @@ export const openApiSpec = {
       ...bibleSchemas,
       ...scheduleSchemas,
       ...screenSchemas,
+      ...backgroundMediaSchemas,
       ...presentationSchemas,
       ...userSchemas,
     },

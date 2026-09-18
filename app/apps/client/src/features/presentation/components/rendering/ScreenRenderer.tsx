@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
+import { ScreenBackground } from './ScreenBackground'
 import { ScreenContent } from './ScreenContent'
 import { ScreenShareReceiver } from './ScreenShareReceiver'
-import { getBackgroundCSS } from './utils'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
@@ -17,6 +17,7 @@ import { useSlideHighlights } from '../../hooks/useSlideHighlights'
 import type { ScreenShareContentConfig, ScreenWithConfigs } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
+import { resolveScreenBackground } from '../../utils/resolveScreenBackground'
 
 const logger = createLogger('ScreenRenderer')
 
@@ -648,11 +649,14 @@ export function ScreenRenderer({
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
   )
 
-  // Get background from screen config for fullscreen display
+  // The song's own background or the screen's one for the content shown.
   // When disconnected and hidden, use empty state background
   const effectiveContentType = isDisconnectedAndHidden ? 'empty' : contentType
-  const config = screen.contentConfigs[effectiveContentType]
-  const bg = config?.background || screen.contentConfigs.empty?.background
+  const bg = resolveScreenBackground({
+    screen,
+    contentType: effectiveContentType,
+    contentData,
+  })
 
   // Get styleRanges from useSlideHighlights hook for real-time WebSocket updates
   const styleRanges = slideHighlights ?? []
@@ -667,19 +671,22 @@ export function ScreenRenderer({
       // document can hold the keyboard, not so anything here can be tabbed to.
       tabIndex={-1}
       data-testid="screen-renderer-root"
-      className="w-screen h-screen overflow-hidden cursor-default outline-none"
-      style={bg ? getBackgroundCSS(bg) : { backgroundColor: '#000000' }}
+      className="relative w-screen h-screen overflow-hidden cursor-default outline-none"
       onDoubleClick={isNativeDisplayWindow ? toggleFullscreen : undefined}
       onMouseMove={handleMouseMove}
       onTouchStart={handleTouchStart}
       onClick={handleClick}
     >
-      {/* Safe area wrapper - adds padding on mobile to avoid status bar */}
+      {/* First, so everything after it paints above the background */}
+      <ScreenBackground background={bg} />
+
+      {/* Safe area wrapper - adds padding on mobile to avoid status bar.
+          Positioned so its whole subtree stacks above the background layer. */}
       <div
         className={
           isMobileDevice
-            ? 'w-full h-full safe-area-inset box-border flex flex-col'
-            : 'w-full h-full'
+            ? 'relative w-full h-full safe-area-inset box-border flex flex-col'
+            : 'relative w-full h-full'
         }
       >
         {/* Floating toolbar */}

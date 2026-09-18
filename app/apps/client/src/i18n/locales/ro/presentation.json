@@ -136,15 +136,53 @@
     "background": {
       "type": "Tip",
       "types": {
+        "inherit": "Implicit (setările ecranului)",
         "transparent": "Transparent",
         "color": "Culoare Solidă",
         "image": "Imagine",
         "video": "Video"
       },
       "color": "Culoare",
-      "imageUrl": "URL Imagine",
-      "videoUrl": "URL Video",
-      "opacity": "Opacitate"
+      "opacity": "Opacitate",
+      "upload": {
+        "image": "Încarcă o imagine",
+        "video": "Încarcă un videoclip",
+        "any": "Încarcă o imagine sau un videoclip"
+      },
+      "uploading": "Se încarcă…",
+      "select": "Folosește ca fundal",
+      "delete": "Șterge",
+      "deleteConfirmTitle": "Ștergi acest fișier?",
+      "deleteConfirm": "Fișierul este eliminat din aplicație. Ecranele care îl folosesc încă vor afișa culoarea de bază.",
+      "empty": {
+        "image": "Nu ai încărcat încă nicio imagine.",
+        "video": "Nu ai încărcat încă niciun videoclip."
+      },
+      "hint": {
+        "any": "Imagini: JPG, PNG, WebP sau GIF, de până la 50 MB. Videoclipuri: MP4 (H.264) sau WebM, de până la 1 GB — acestea rulează pe Windows, macOS și Linux."
+      },
+      "songTypesHint": "Cântecele au trei aranjamente. Setează același fundal pentru {{song}}, {{firstSlide}} și {{lastSlide}}.",
+      "switchedType": "Tipul fundalului este acum „{{type}}”, potrivit fișierului încărcat.",
+      "noViewPermission": "Nu ai permisiunea de a vedea imaginile și videoclipurile încărcate.",
+      "heavyGif": {
+        "title_one": "GIF animat mare",
+        "title_few": "GIF-uri animate mari",
+        "title_other": "GIF-uri animate mari",
+        "message_one": "Acest GIF poate rula sacadat sau se poate bloca pe ecrane: GIF-urile animate lungi sunt greu de redat. Pentru un fundal fluid, convertește-l într-un videoclip MP4 (H.264) sau WebM — de exemplu cu un convertor GIF în MP4 — și încarcă videoclipul în locul lui.",
+        "message_few": "Aceste GIF-uri pot rula sacadat sau se pot bloca pe ecrane: GIF-urile animate lungi sunt greu de redat. Pentru un fundal fluid, convertește-le în videoclipuri MP4 (H.264) sau WebM — de exemplu cu un convertor GIF în MP4 — și încarcă videoclipurile în locul lor.",
+        "message_other": "Aceste GIF-uri pot rula sacadat sau se pot bloca pe ecrane: GIF-urile animate lungi sunt greu de redat. Pentru un fundal fluid, convertește-le în videoclipuri MP4 (H.264) sau WebM — de exemplu cu un convertor GIF în MP4 — și încarcă videoclipurile în locul lor.",
+        "details_one": "{{size}} · {{count}} cadru",
+        "details_few": "{{size}} · {{count}} cadre",
+        "details_other": "{{size}} · {{count}} de cadre",
+        "confirm": "Încarcă oricum"
+      },
+      "errors": {
+        "unsupportedType": "Acest tip de fișier nu este acceptat. Folosește o imagine JPG, PNG, WebP sau GIF ori un videoclip MP4 sau WebM.",
+        "fileTooLarge": "Fișierul este prea mare. Imaginile pot avea până la 50 MB, iar videoclipurile până la 1 GB.",
+        "uploadFailed": "Încărcarea a eșuat. Încearcă din nou.",
+        "deleteFailed": "Fișierul nu a putut fi șters. Încearcă din nou.",
+        "loadFailed": "Lista fișierelor încărcate nu a putut fi afișată."
+      }
     },
     "general": {
       "screenSize": "Dimensiune Ecran",

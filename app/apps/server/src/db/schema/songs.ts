@@ -93,6 +93,13 @@ export const songs = sqliteTable(
     hymnNumber: text('hymn_number'),
     keyLine: text('key_line'),
     presentationOrder: text('presentation_order'),
+    /**
+     * JSON `ScreenBackgroundConfig` shown behind this song's slides instead of
+     * the screen's own background. NULL = use the screen's background. Added
+     * by the add-song-background migration; deliberately not part of Drive
+     * sync, since the uploaded media it points at stays on this instance.
+     */
+    background: text('background'),
     presentationCount: integer('presentation_count').notNull().default(0),
     lastPresentedAt: integer('last_presented_at', { mode: 'timestamp' }),
     lastManualEdit: integer('last_manual_edit', { mode: 'timestamp' }),

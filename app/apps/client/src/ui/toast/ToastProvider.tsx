@@ -1,5 +1,11 @@
 import { X } from 'lucide-react'
-import { createContext, type ReactNode, useCallback, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useRef,
+  useState,
+} from 'react'
 
 type ToastType = 'success' | 'error' | 'info'
 
@@ -32,10 +38,14 @@ interface ToastProviderProps {
 
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  // A counter, not Date.now(): toasts raised in the same millisecond (one per
+  // file of a multi-file upload) must not share a key or expire together.
+  const nextIdRef = useRef(0)
 
   const showToast = useCallback(
     (message: string, type: ToastType = 'info', options?: ToastOptions) => {
-      const id = Date.now()
+      nextIdRef.current += 1
+      const id = nextIdRef.current
       setToasts((prev) => [
         ...prev,
         { id, message, type, action: options?.action },

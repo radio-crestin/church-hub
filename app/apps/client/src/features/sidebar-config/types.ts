@@ -26,6 +26,7 @@ export type BuiltInMenuItemId =
   | 'songs'
   | 'bible'
   | 'schedules'
+  | 'gallery'
   | 'livestream'
   | 'music'
   | 'song_key'

@@ -4,7 +4,10 @@ import { GripVertical, Loader2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { TemporaryContent } from '~/features/presentation'
+import type {
+  ScreenBackgroundConfig,
+  TemporaryContent,
+} from '~/features/presentation'
 import { usePreviewScreen } from '~/features/presentation'
 import { useDividerPosition } from '~/hooks/useDividerPosition'
 import { ConfirmModal } from '~/ui/modal'
@@ -22,6 +25,10 @@ interface SongStageEditorProps {
   title: string
   keyLine: string | null
   songId: number | null
+  /** The song's own background, drawn as the projection would. */
+  background: ScreenBackgroundConfig | null
+  /** Plain black instead of any background (the song page's toggle). */
+  hideBackground?: boolean
   presentedSlideId?: number | null
   /** Position in `slides` of the slide on the projector, or null. */
   presentedSlidePosition?: number | null
@@ -87,6 +94,8 @@ export function SongStageEditor({
   title,
   keyLine,
   songId,
+  background,
+  hideBackground = false,
   presentedSlideId,
   presentedSlidePosition = null,
   navSeq = 0,
@@ -320,9 +329,10 @@ export function SongStageEditor({
           styleOverrides: s.styleOverrides ?? null,
         })),
         currentSlideIndex: effectiveIndex,
+        background,
       },
     }),
-    [effectiveSongId, title, keyLine, slides, effectiveIndex],
+    [effectiveSongId, title, keyLine, slides, effectiveIndex, background],
   )
 
   // Clicking a slide only selects it (shows it on the canvas) — it never
@@ -426,6 +436,8 @@ export function SongStageEditor({
           songId={effectiveSongId}
           title={title}
           keyLine={keyLine}
+          background={background}
+          hideBackground={hideBackground}
           slides={slides}
           activeIndex={activeIndex}
           presentedSlideId={presentedSlideId}
@@ -474,6 +486,7 @@ export function SongStageEditor({
             <StageCanvas
               screen={screen}
               previewContent={previewContent}
+              hideBackground={hideBackground}
               canEdit={editable && activeIndex >= 0}
               clickToEdit={clickToEdit}
               fitHeight
@@ -490,6 +503,7 @@ export function SongStageEditor({
               <StageCanvas
                 screen={screen}
                 previewContent={previewContent}
+                hideBackground={hideBackground}
                 canEdit={editable && activeIndex >= 0}
                 clickToEdit={clickToEdit}
                 editingToolbar={canvasToolbar}

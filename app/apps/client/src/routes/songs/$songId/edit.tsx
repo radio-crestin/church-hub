@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { ScreenBackgroundConfig } from '~/features/presentation'
 import { SongEditor, UnsavedChangesModal } from '~/features/songs/components'
 import { type LocalSlide } from '~/features/songs/components/SongSlideList'
 import {
@@ -91,6 +92,10 @@ function SongEditorPage() {
   const [tagIds, setTagIds] = useState<number[]>([])
   const [slides, setSlides] = useState<LocalSlide[]>([])
   const [metadata, setMetadata] = useState<SongMetadata>(defaultMetadata)
+  // The song's own background; null = the screens' own song backgrounds apply
+  const [background, setBackground] = useState<ScreenBackgroundConfig | null>(
+    null,
+  )
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // Track saved song ID for deferred navigation (to avoid unsaved changes modal race condition)
@@ -104,6 +109,7 @@ function SongEditorPage() {
     tagIds,
     slides,
     metadata,
+    background,
   })
 
   // Initialize local state when song is loaded
@@ -141,6 +147,7 @@ function SongEditorPage() {
         sourceFilename: song.sourceFilename,
       }
       setMetadata(loadedMetadata)
+      setBackground(song.background)
 
       // Save initial state for dirty comparison
       setSavedState({
@@ -149,6 +156,7 @@ function SongEditorPage() {
         tagIds: loadedTagIds,
         slides: mappedSlides,
         metadata: loadedMetadata,
+        background: song.background,
       })
     }
   }, [song, setSavedState])
@@ -189,6 +197,8 @@ function SongEditorPage() {
       keyLine: metadata.keyLine,
       presentationOrder: metadata.presentationOrder,
       sourceFilename: metadata.sourceFilename,
+      // null clears it, so the screens' own backgrounds apply again
+      background,
     })
 
     if (result.success && result.data) {
@@ -226,6 +236,7 @@ function SongEditorPage() {
       setTagIds(savedTagIds)
       setSlides(savedSlides)
       setMetadata(savedMetadata)
+      setBackground(result.data.background)
 
       setSavedState({
         title: result.data.title,
@@ -233,6 +244,7 @@ function SongEditorPage() {
         tagIds: savedTagIds,
         slides: savedSlides,
         metadata: savedMetadata,
+        background: result.data.background,
       })
 
       // Defer navigation until after re-render to avoid unsaved changes modal race condition
@@ -248,6 +260,7 @@ function SongEditorPage() {
     tagIds,
     slides,
     metadata,
+    background,
     numericId,
     upsertMutation,
     showToast,
@@ -331,6 +344,7 @@ function SongEditorPage() {
         tagIds={tagIds}
         slides={slides}
         metadata={metadata}
+        background={background}
         presentationCount={song?.presentationCount}
         lastManualEdit={song?.lastManualEdit}
         onTitleChange={setTitle}
@@ -338,6 +352,7 @@ function SongEditorPage() {
         onTagsChange={setTagIds}
         onSlidesChange={setSlides}
         onMetadataChange={handleMetadataChange}
+        onBackgroundChange={setBackground}
         onSave={handleSave}
         onDelete={isNew ? undefined : () => setShowDeleteModal(true)}
         onBack={handleBack}

@@ -50,11 +50,17 @@ interface LivePreviewProps {
    * the screen's clock exactly.
    */
   clockOverride?: ClockOverride
+  /**
+   * Plain black behind the text instead of the background (the song page's
+   * "Background" toggle). Only this preview changes, never the screens.
+   */
+  hideBackground?: boolean
 }
 
 export function LivePreview({
   previewContent = null,
   clockOverride,
+  hideBackground = false,
 }: LivePreviewProps) {
   // Note: WebSocket connection is established by parent ControlRoom component
   // Don't call useWebSocket() here as it causes re-renders from debug info state updates
@@ -224,6 +230,7 @@ export function LivePreview({
           isVisible={isVisible}
           styleRanges={styleRanges}
           clockOverride={clockOverride}
+          hideBackground={hideBackground}
         />
         {contextMenu.visible && (
           <TextStyleContextMenu

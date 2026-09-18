@@ -10,6 +10,7 @@ import { addPreviewScreen } from './add-preview-screen'
 import { addScheduleItemSung } from './add-schedule-item-sung'
 import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
+import { addSongBackground } from './add-song-background'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
@@ -351,6 +352,12 @@ export function runMigrations(
     'merge_bible_passages_into_versete_tineri',
     'Running merge bible passages migration',
     () => mergeBiblePassagesIntoVerseteTineri(rawDb),
+  )
+
+  // Add background column to songs (per-song background override that
+  // replaces the screen's background while the song is shown).
+  runStep('add_song_background', 'Running add song background migration', () =>
+    addSongBackground(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and
