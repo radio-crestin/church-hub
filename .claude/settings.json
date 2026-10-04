@@ -115,5 +115,8 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "better-tasks@better-tasks": true
   }
 }
