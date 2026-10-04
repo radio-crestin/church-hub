@@ -56,69 +56,61 @@ env:
   VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN || '4GDD07pVU98dgX9qHiFHNswimJuq7gD1hE6nvTHXMBY' }}
 
 jobs:
+  # The platforms to build. A job of its own because a matrix `exclude`
+  # can't drop a platform described by an `include` entry: GitHub applies
+  # `include` after `exclude` and adds the platform straight back.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      platforms: ${{ steps.plan.outputs.platforms }}
+    steps:
+      - name: Pick the platforms
+        id: plan
+        env:
+          MACOS_INTEL: ${{ inputs.macos_intel }}
+          # smoke: launch the compiled sidecar first. Not on the Intel Mac
+          #   build, cross-compiled on an ARM runner that can't run it.
+          # optional: Linux is new and not in the updater manifest yet, so a
+          #   failed Linux build must not hold back the macOS/Windows release.
+          # Linux ships an AppImage (one file for most distros), built on
+          #   22.04 to run on older glibc; tauri.conf.json only lists macOS
+          #   and Windows bundles, hence --bundles.
+          PLATFORMS: |
+            [
+              { "target": "macos-arm64", "platform": "macos-latest",
+                "rust_target": "aarch64-apple-darwin", "bun_target": "bun-darwin-arm64",
+                "sidecar_suffix": "aarch64-apple-darwin",
+                "artifact_base": "church-hub-macos-arm64", "artifact_ext": "dmg",
+                "tauri_args": "", "smoke": true, "optional": false },
+              { "target": "macos-x64", "platform": "macos-latest",
+                "rust_target": "x86_64-apple-darwin", "bun_target": "bun-darwin-x64",
+                "sidecar_suffix": "x86_64-apple-darwin",
+                "artifact_base": "church-hub-macos-x64", "artifact_ext": "dmg",
+                "tauri_args": "", "smoke": false, "optional": false },
+              { "target": "windows-x64", "platform": "windows-latest",
+                "rust_target": "x86_64-pc-windows-msvc", "bun_target": "bun-windows-x64",
+                "sidecar_suffix": "x86_64-pc-windows-msvc.exe",
+                "artifact_base": "church-hub-windows-x64", "artifact_ext": "exe",
+                "tauri_args": "", "smoke": true, "optional": false },
+              { "target": "linux-x64", "platform": "ubuntu-22.04",
+                "rust_target": "x86_64-unknown-linux-gnu", "bun_target": "bun-linux-x64",
+                "sidecar_suffix": "x86_64-unknown-linux-gnu",
+                "artifact_base": "church-hub-linux-x64", "artifact_ext": "AppImage",
+                "tauri_args": "--bundles appimage", "smoke": true, "optional": true }
+            ]
+        run: |
+          PICKED=$(jq -c --argjson intel "$MACOS_INTEL" \
+            '[.[] | select($intel or .target != "macos-x64")]' <<<"$PLATFORMS")
+          echo "platforms=$PICKED" | tee -a "$GITHUB_OUTPUT"
+
   build:
     name: Build (${{ matrix.artifact_base }})
-    # Linux is new and not part of the updater manifest yet: a failed Linux
-    # build must not hold back the macOS and Windows release.
+    needs: plan
     continue-on-error: ${{ matrix.optional }}
     strategy:
       fail-fast: false
       matrix:
-        # `exclude` only matches matrix dimensions, so the platforms are one;
-        # each `include` entry below adds its settings to that platform.
-        target: [macos-arm64, macos-x64, windows-x64, linux-x64]
-        include:
-          # macOS ARM64 (Apple Silicon)
-          - target: macos-arm64
-            platform: macos-latest
-            rust_target: aarch64-apple-darwin
-            bun_target: bun-darwin-arm64
-            sidecar_suffix: aarch64-apple-darwin
-            artifact_base: church-hub-macos-arm64
-            artifact_ext: dmg
-            tauri_args: ''
-            smoke: true
-            optional: false
-
-          # macOS x64 (Intel) - cross-compiled from ARM64 runner, so the
-          # sidecar can't be launched here for the smoke test.
-          - target: macos-x64
-            platform: macos-latest
-            rust_target: x86_64-apple-darwin
-            bun_target: bun-darwin-x64
-            sidecar_suffix: x86_64-apple-darwin
-            artifact_base: church-hub-macos-x64
-            artifact_ext: dmg
-            tauri_args: ''
-            smoke: false
-            optional: false
-
-          # Windows x64
-          - target: windows-x64
-            platform: windows-latest
-            rust_target: x86_64-pc-windows-msvc
-            bun_target: bun-windows-x64
-            sidecar_suffix: x86_64-pc-windows-msvc.exe
-            artifact_base: church-hub-windows-x64
-            artifact_ext: exe
-            tauri_args: ''
-            smoke: true
-            optional: false
-
-          # Linux x64 — AppImage, one file that runs on most distros. Built
-          # on 22.04 so it also runs on older glibc. The bundle targets in
-          # tauri.conf.json are macOS/Windows ones, so name it here.
-          - target: linux-x64
-            platform: ubuntu-22.04
-            rust_target: x86_64-unknown-linux-gnu
-            bun_target: bun-linux-x64
-            sidecar_suffix: x86_64-unknown-linux-gnu
-            artifact_base: church-hub-linux-x64
-            artifact_ext: AppImage
-            tauri_args: --bundles appimage
-            smoke: true
-            optional: true
-        exclude: ${{ fromJSON(inputs.macos_intel && '[]' || '[{"target":"macos-x64"}]') }}
+        include: ${{ fromJSON(needs.plan.outputs.platforms) }}
 
     runs-on: ${{ matrix.platform }}
 
