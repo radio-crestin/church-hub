@@ -16,6 +16,7 @@ interface ScreenFixture {
   openMode: string
   isFullscreen: boolean
   closeOnEscape?: boolean
+  alwaysOnTop?: boolean
   isPreviewScreen?: boolean
   openOnStartup?: boolean
   width: number
@@ -62,8 +63,8 @@ export function seedDefaultScreens(db: Database): void {
       // in the in-app preview — both come straight from the factory fixture.
       db.run(
         `INSERT INTO screens
-          (name, type, is_active, open_mode, is_fullscreen, close_on_escape, is_preview_screen, open_on_startup, width, height, global_settings, sort_order, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+          (name, type, is_active, open_mode, is_fullscreen, always_on_top, close_on_escape, is_preview_screen, open_on_startup, width, height, global_settings, sort_order, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
         [
           screen.name,
           screen.type,
@@ -71,6 +72,8 @@ export function seedDefaultScreens(db: Database): void {
           screen.openMode,
           // A projection screen fills its display unless the fixture opts out.
           screen.isFullscreen === false ? 0 : 1,
+          // Above other windows, so a web page can't cover the projection.
+          screen.alwaysOnTop === false ? 0 : 1,
           screen.closeOnEscape ? 1 : 0,
           screen.isPreviewScreen ? 1 : 0,
           screen.openOnStartup === false ? 0 : 1,

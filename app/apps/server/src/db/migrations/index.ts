@@ -21,6 +21,7 @@ import { addUserAuthFields } from './add-user-auth-fields'
 import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
+import { enableScreensAlwaysOnTop } from './enable-screens-always-on-top'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
 import { mergeBiblePassagesIntoVerseteTineri } from './merge-bible-passages-into-versete-tineri'
 import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
@@ -226,6 +227,13 @@ export function runMigrations(
     'add_screen_monitor',
     'Running add screen monitor_name migration',
     () => addScreenMonitor(rawDb),
+  )
+
+  // Screens are always on top by default now: switch existing ones on, once.
+  runStep(
+    'enable_screens_always_on_top',
+    'Running enable screens always-on-top migration',
+    () => enableScreensAlwaysOnTop(rawDb),
   )
 
   // Seed default screens

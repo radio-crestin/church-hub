@@ -712,7 +712,8 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
         // Projection windows are fullscreen unless the operator says otherwise.
         isFullscreen: input.isFullscreen !== false,
         monitorName: input.monitorName ?? null,
-        alwaysOnTop: input.alwaysOnTop === true,
+        // Above other windows unless the operator says otherwise (T-026).
+        alwaysOnTop: input.alwaysOnTop !== false,
         closeOnEscape: input.closeOnEscape === true,
         isPreviewScreen: input.isPreviewScreen === true,
         openOnStartup: input.openOnStartup !== false,
