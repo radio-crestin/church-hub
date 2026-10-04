@@ -25,6 +25,7 @@ const SCHEDULE_ACTIONS = [
   'schedule-add-item',
   'schedule-search-toggle',
   'schedule-add-all-bookmarks',
+  'schedule-new',
   'schedule-open',
   'schedule-rename',
   'schedule-delete',
