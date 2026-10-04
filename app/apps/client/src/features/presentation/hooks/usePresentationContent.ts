@@ -590,10 +590,14 @@ export function usePresentationContent({
           return
         }
 
+        // A scene item (e.g. "Solo") switches OBS and projects the empty
+        // slide, with that slide's own settings such as its clock. There is
+        // no "scene" slide layout to render.
         if (temp.type === 'scene') {
           if (isCancelled) return
-          setContentType('scene')
-          setContentData({ mainText: temp.data.sceneId.toString() })
+          setContentType('empty')
+          setContentData({})
+          setContentKey('')
           setNextSlideData(undefined)
           return
         }
