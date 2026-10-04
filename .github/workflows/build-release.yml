@@ -359,18 +359,22 @@ jobs:
   # local/dev builds report an old version and the in-app "you're up to date"
   # check is wrong. Runs for every release — whether the tag was cut via
   # scripts/release.sh (then this is a no-op) or straight from the GitHub UI.
+  #
+  # main's rule set requires pull requests and status checks; GitHub can't
+  # list the Actions token as a bypass, so the push goes over SSH with the
+  # RELEASE_DEPLOY_KEY deploy key, which the rule set lets through.
   sync-version-back:
     needs: [build, updater-manifest]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
