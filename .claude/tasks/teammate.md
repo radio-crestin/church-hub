@@ -17,7 +17,7 @@ Every code change follows these steps. Config or tooling tasks only when the lea
 2. **Port** = 3100 + task number (T-052 → 3152). Port 3000 is the user's dev server: never start, test against or kill it.
    - Setup: `bun install` in `app/`. Build the client with both port vars: `cd app/apps/client && VITE_API_PORT=<port> VITE_SERVER_PORT=<port> bun run build`.
    - Run e2e always with `CI=1 TEST_PORT=<port>`. Without `CI=1`, Playwright starts `dev:web`, whose `free-port.js` kills port 3000.
-   - "Executable doesn't exist … headless_shell": `npx playwright install chromium-headless-shell`.
+   - "Executable doesn't exist … headless_shell": don't download it (very slow). Add `test.use({ launchOptions: { executablePath: '<~>/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell' } })` to the spec you run, and don't commit that line.
 3. **Test.** Write or extend a spec in `app/apps/client/e2e/`. `CI=1 TEST_PORT=<port> bunx playwright test <spec> --workers=1 --retries=2` must pass.
 4. **Video**, 10–40 s, showing the fix or feature with the mouse and a note per step.
    - Temp spec `app/apps/client/e2e/_demo-<task-id>.spec.ts` (gitignored), built on `e2e/helpers/demo-recording.ts`: `DEMO_RECORDING`, `installDemoOverlay`, `showCaption`, `glideClick`.
