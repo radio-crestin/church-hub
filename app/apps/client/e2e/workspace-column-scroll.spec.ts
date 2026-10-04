@@ -1,5 +1,10 @@
 import { expect, type Page, test } from '@playwright/test'
 
+import {
+  SIDE_PANELS_TOGETHER_LAYOUT,
+  SONG_PAGE_LAYOUT_KEY,
+} from './helpers/song-page-layout'
+
 /**
  * Marcaje / Programe / Versiuni share one column, and they used to share it
  * badly: the rows split the column as percentages, so a short window squeezed
@@ -36,7 +41,13 @@ async function seedPreferences(
   options: { bookmarksOpen: boolean; rememberedBookmarksHeight?: number },
 ) {
   await page.addInitScript(
-    ({ heightsKey, bookmarksOpen, rememberedBookmarksHeight }) => {
+    ({
+      heightsKey,
+      layoutKey,
+      layout,
+      bookmarksOpen,
+      rememberedBookmarksHeight,
+    }) => {
       if (window.sessionStorage.getItem('e2e-column-seeded')) return
       window.sessionStorage.setItem('e2e-column-seeded', '1')
 
@@ -45,6 +56,7 @@ async function seedPreferences(
           window.localStorage.removeItem(key)
         }
       }
+      window.localStorage.setItem(layoutKey, JSON.stringify(layout))
       if (rememberedBookmarksHeight !== undefined) {
         window.localStorage.setItem(
           heightsKey,
@@ -61,6 +73,8 @@ async function seedPreferences(
     },
     {
       heightsKey: HEIGHTS_KEY,
+      layoutKey: SONG_PAGE_LAYOUT_KEY,
+      layout: SIDE_PANELS_TOGETHER_LAYOUT,
       bookmarksOpen: options.bookmarksOpen,
       rememberedBookmarksHeight: options.rememberedBookmarksHeight,
     },

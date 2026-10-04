@@ -83,7 +83,11 @@ import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import { useMarkEntitySeen } from '~/features/sync'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
-import { useEditLayoutAction, Workspace } from '~/features/workspace'
+import {
+  useDefaultLayoutMigration,
+  useEditLayoutAction,
+  Workspace,
+} from '~/features/workspace'
 import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
 import { usePermissions } from '~/provider/permissions-provider'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
@@ -100,10 +104,24 @@ interface SongSearchParams {
 
 /**
  * Where each panel starts out on the classic song page: verses on the left, the
- * control panel (with the live preview) in the middle, and the side panels
- * stacked on the right. Operators drag them anywhere from there.
+ * control panel (with the live preview) in the middle with the song's versions
+ * under it, and Marcaje / Programe stacked on the right. Operators drag them
+ * anywhere from there.
  */
 const CLASSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
+  columns: [
+    { id: 'col-1', panelIds: ['slides'] },
+    { id: 'col-2', panelIds: ['control', 'versions'] },
+    { id: 'col-3', panelIds: ['bookmarks', 'schedules'] },
+  ],
+}
+
+/**
+ * The classic arrangement before Versiuni moved under the preview. A device
+ * still arranged exactly like this never chose it, so it moves to the new
+ * default (see `useDefaultLayoutMigration`).
+ */
+const PREVIOUS_CLASSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
     { id: 'col-1', panelIds: ['slides'] },
     { id: 'col-2', panelIds: ['control'] },
@@ -151,6 +169,7 @@ function SongPreviewPage() {
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
   const [editorLayout, setEditorLayout] = useSongEditorLayout()
+  useDefaultLayoutMigration('song-detail', PREVIOUS_CLASSIC_WORKSPACE_LAYOUT)
   // Dedicated song-versions perms — split so an admin can grant view +
   // CRUD on versions independently of the song's CRUD rights. The boot-time
   // migration `add-song-versions-permissions` backfills these onto users
@@ -858,6 +877,7 @@ function SongPreviewPage() {
         {
           id: 'control',
           title: t('layout.controlPanel'),
+          defaultSize: '62%',
           render: () => (
             <SongControlPanel
               songId={numericId}

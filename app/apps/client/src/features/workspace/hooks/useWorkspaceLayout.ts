@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { moveWorkspacePanel } from '../service/moveWorkspacePanel'
+import { panelOrder } from '../service/panelOrder'
 import { reconcileWorkspaceLayout } from '../service/reconcileWorkspaceLayout'
 import {
   clearWorkspaceLayout,
@@ -17,11 +18,6 @@ interface UseWorkspaceLayoutResult {
   resetLayout: () => void
   /** `true` while the arrangement differs from the page default. */
   isCustomised: boolean
-}
-
-/** Comparable snapshot of *which panel sits where*, ignoring column ids. */
-function panelOrder(layout: WorkspaceLayout): string {
-  return layout.columns.map((column) => column.panelIds.join(',')).join('|')
 }
 
 /**

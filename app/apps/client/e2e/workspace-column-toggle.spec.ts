@@ -3,7 +3,7 @@ import { expect, type Page, test } from '@playwright/test'
 import { selectAction } from './helpers/actions-menu'
 
 /**
- * The song page's last column (Marcaje / Programe / Versiuni) can be hidden
+ * The song page's last column (Marcaje / Programe) can be hidden
  * from the button on its divider, handing its width to the preview, and it
  * keeps a sane arrangement when the operator switches editing layouts: the
  * classic and PowerPoint layouts each own a workspace id, and swapping ids
@@ -96,7 +96,7 @@ test.describe('Workspace last column toggle', () => {
     await selectAction(page, 'song-actions-menu', 'song-toggle-layout')
     await expect(page.getByTestId('workspace-panel-control')).toBeVisible()
     expect(await columnOf(page, 'slides')).toEqual(['slides'])
-    expect(await columnOf(page, 'control')).toEqual(['control'])
+    expect(await columnOf(page, 'control')).toEqual(['control', 'versions'])
   })
 
   test('the divider button hides and shows the side column in PowerPoint', async ({
@@ -149,7 +149,7 @@ test.describe('Workspace last column toggle', () => {
     const toggle = page.getByTestId(TOGGLE)
     const box = await toggle.boundingBox()
     if (!box) throw new Error('toggle is not visible')
-    const sideWidth = await widthOf(page, 'workspace-panel-versions')
+    const sideWidth = await widthOf(page, 'workspace-panel-bookmarks')
 
     const x = box.x + box.width / 2
     const y = box.y + box.height / 2
@@ -160,7 +160,7 @@ test.describe('Workspace last column toggle', () => {
     await page.mouse.up()
 
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(await widthOf(page, 'workspace-panel-versions')).toBeGreaterThan(
+    expect(await widthOf(page, 'workspace-panel-bookmarks')).toBeGreaterThan(
       sideWidth + 40,
     )
   })

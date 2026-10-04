@@ -1,6 +1,10 @@
 import { expect, type Page, test } from '@playwright/test'
 
 import { selectAction } from './helpers/actions-menu'
+import {
+  SIDE_PANELS_TOGETHER_LAYOUT,
+  SONG_PAGE_LAYOUT_KEY,
+} from './helpers/song-page-layout'
 
 /**
  * Marcaje / Programe / Versiuni share one column, and each shuts down to its
@@ -111,10 +115,11 @@ async function seedPreferences(
   open: Record<PanelId, boolean>,
 ) {
   await page.addInitScript(
-    ({ layout, open }) => {
+    ({ layout, open, layoutKey, sideLayout }) => {
       if (window.sessionStorage.getItem('e2e-panel-collapse-seeded')) return
       window.sessionStorage.setItem('e2e-panel-collapse-seeded', '1')
       window.localStorage.setItem('song-editor-layout', layout)
+      window.localStorage.setItem(layoutKey, JSON.stringify(sideLayout))
       window.localStorage.setItem(
         'song-detail:bookmarks-open',
         String(open.bookmarks),
@@ -128,7 +133,12 @@ async function seedPreferences(
         String(open.versions),
       )
     },
-    { layout, open },
+    {
+      layout,
+      open,
+      layoutKey: SONG_PAGE_LAYOUT_KEY,
+      sideLayout: SIDE_PANELS_TOGETHER_LAYOUT,
+    },
   )
 }
 
