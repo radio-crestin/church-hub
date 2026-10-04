@@ -14,3 +14,6 @@ todos.json
 data
 
 db.sqlite
+
+# Old Windows libmpv/ffmpeg archive (mpv was replaced by rodio); never commit archives
+/ffmpeg-*.7z

@@ -122,3 +122,6 @@ test-results/
 
 # Local review builds of the desktop app (app/scripts/review-build.ts)
 .review-build/
+
+# macOS Finder metadata
+.DS_Store
