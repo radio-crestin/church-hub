@@ -109,7 +109,7 @@ test.describe('Request a feature', () => {
     const trigger = page.getByTestId('sidebar-request-feature')
     // The test app may run in English or Romanian.
     await expect(trigger).toContainText(
-      /Request a feature|Solicită o funcționalitate/,
+      /Request a feature|Propune o funcție nouă/,
     )
     await trigger.click()
 
