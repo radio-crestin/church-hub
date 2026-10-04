@@ -3,10 +3,18 @@ name: Build desktop app
 # The one place the desktop installers are built. Called by:
 #   - build-release.yml — every v*.*.* tag (the published release)
 #   - pr-build.yml      — every pull request (a test build to download)
+#   - main-build.yml    — every push to main (keeps the shared caches warm)
+#   - by hand (Actions → Run workflow), e.g. to try the release upload on a
+#     throwaway draft release
 # Each platform compiles the sidecar, smoke-tests it (/ping must answer),
 # builds the Tauri bundle and uploads the installer, renamed to
 # church-hub-<platform>-<artifact_suffix>.<ext>, to the GitHub release
-# `release_tag` (which the caller creates first).
+# `release_tag` (which the caller creates first; empty uploads nothing).
+#
+# Caches, shared by every workflow and ref: Rust (rust-cache, one key per
+# target), bun's download cache (same key as test.yml), Tauri's bundler
+# tools. Only main saves Rust: PRs and release tags restore main's copy, so
+# PR caches never evict it from the 10 GB budget.
 
 on:
   workflow_call:
@@ -24,9 +32,9 @@ on:
         type: string
         required: true
       release_tag:
-        description: Existing GitHub release that receives the renamed installers.
+        description: Existing GitHub release that receives the renamed installers. Empty uploads nothing.
         type: string
-        required: true
+        default: ''
       tauri_release_tag:
         description: >-
           Passed to tauri-action as tagName, which then also uploads the raw
@@ -37,8 +45,35 @@ on:
         description: Also build the cross-compiled macOS x64 installer.
         type: boolean
         default: true
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit or branch to build (empty = the selected branch)
+        default: ''
+      version:
+        description: Version written into tauri.conf.json, e.g. 0.1.103
+        required: true
+      artifact_suffix:
+        description: Installer name tail
+        required: true
+      release_tag:
+        description: Existing release for the renamed installers (empty = none)
+        default: ''
+      tauri_release_tag:
+        description: Draft release for tauri-action's raw bundles (empty = none)
+        default: ''
+      macos_intel:
+        description: Also build the macOS x64 installer
+        type: boolean
+        default: true
 
 env:
+  # The shell crate is rebuilt on every run (rust-cache keeps only its
+  # dependencies), and crate-local ThinLTO was 2/3 of that: ~165 s of the
+  # macOS and ~205 s of the Windows Tauri step. Off, the crate builds about
+  # twice as fast; a thin UI shell (the work happens in the Bun sidecar)
+  # gains nothing measurable from it.
+  CARGO_PROFILE_RELEASE_LTO: 'off'
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
   CARGO_INCREMENTAL: 0
@@ -116,7 +151,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 
@@ -162,7 +197,7 @@ jobs:
             libasound2-dev libpulse-dev libjack-jackd2-dev
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -171,13 +206,14 @@ jobs:
         with:
           bun-version: latest
 
+      # Same path and key as test.yml, so all workflows share one entry. Only
+      # bun's download cache: node_modules (230 MB on macOS, 40 s to restore)
+      # links back out of it in seconds.
       - name: Cache Bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: bun-cache
         with:
-          path: |
-            ~/.bun/install/cache
-            app/node_modules
+          path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
@@ -194,6 +230,7 @@ jobs:
           cache-targets: true
           cache-on-failure: true
           shared-key: ${{ matrix.rust_target }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install dependencies
         working-directory: app
@@ -211,30 +248,15 @@ jobs:
         shell: bash
         run: bun test src/__tests__/compiled-sidecar.test.ts
 
-      - name: Cache frontend build
-        uses: actions/cache@v5
-        id: frontend-cache
-        with:
-          path: app/apps/client/dist
-          # `tauri.conf.json` is hashed too: Vite reads the version from it
-          # at build time and embeds `__appVersion` into the bundle, so a
-          # version bump must invalidate any cached dist. Without this,
-          # releases would silently ship the previous version's UI.
-          key: ${{ runner.os }}-frontend-${{ hashFiles('app/apps/client/src/**', 'app/apps/client/package.json', 'app/apps/client/vite.config.ts', 'app/apps/client/tsconfig.json', 'app/tauri/tauri.conf.json') }}
-          restore-keys: |
-            ${{ runner.os }}-frontend-
-
-      - name: Build client
-        if: steps.frontend-cache.outputs.cache-hit != 'true'
-        working-directory: app
-        run: bun run --filter client build
-
+      # No separate client build: Tauri's beforeBuildCommand (build:apps)
+      # always rebuilds the client and the native sidecar anyway. The sidecar
+      # below is for the cross-compiled Intel Mac, which build:apps can't make.
       - name: Ensure sidecar bin directory exists
         shell: bash
         run: mkdir -p app/tauri/bin
 
       - name: Cache sidecar binary
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: sidecar-cache
         with:
           path: app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}
@@ -271,9 +293,17 @@ jobs:
           fi
           echo "Sidecar binary verified successfully"
 
+      # linuxdeploy and its plugins, which the AppImage bundler downloads.
+      - name: Cache Tauri bundler tools
+        if: runner.os == 'Linux'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/tauri
+          key: ${{ runner.os }}-tauri-tools-v1
+
       - name: Build Tauri app
         id: tauri_build
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -287,7 +317,7 @@ jobs:
           # latest.json is assembled once all three builds are uploaded (see
           # the updater-manifest job); letting each matrix job write its own
           # copy would have them overwrite each other.
-          includeUpdaterJson: false
+          uploadUpdaterJson: false
 
       - name: Debug - List all bundle outputs
         shell: bash
@@ -331,6 +361,7 @@ jobs:
           ls -la "$ARTIFACT_NAME"
 
       - name: Upload versioned artifact to release
+        if: inputs.release_tag != ''
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
