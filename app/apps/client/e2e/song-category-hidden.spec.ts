@@ -147,4 +147,61 @@ test.describe('Song category hide/show', () => {
       await request.delete(`/api/categories/${catId}`).catch(() => {})
     }
   })
+  test('a large hidden category does not crowd visible songs out of search', async ({
+    request,
+  }) => {
+    // More hidden matches than search's 400 FTS candidates, each with the
+    // word in its title so they outrank the visible songs (word in lyrics).
+    const stamp = `${Date.now()}`
+    const word = `zorbex${stamp}`
+    const hiddenSongCount = 450
+    const slide = (content: string) => [{ content, sortOrder: 0 }]
+
+    const catRes = await request.post('/api/categories', {
+      data: { name: `E2E Crowd Cat ${stamp}`, priority: 1 },
+    })
+    const catId = (await catRes.json()).data.id as number
+    const songIds: number[] = []
+
+    try {
+      const hiddenImport = await request.post('/api/songs/batch', {
+        data: {
+          categoryId: catId,
+          overwriteDuplicates: false,
+          songs: Array.from({ length: hiddenSongCount }, (_, i) => ({
+            title: `${word} hidden ${i}`,
+            slides: slide(`${word} hidden lyrics ${i}`),
+          })),
+        },
+      })
+      songIds.push(...(await hiddenImport.json()).data.songIds)
+      expect(songIds).toHaveLength(hiddenSongCount)
+
+      const visibleImport = await request.post('/api/songs/batch', {
+        data: {
+          overwriteDuplicates: false,
+          songs: [1, 2].map((i) => ({
+            title: `E2E Crowd Visible ${i} ${stamp}`,
+            slides: slide(`a visible verse with ${word}`),
+          })),
+        },
+      })
+      const visibleIds = (await visibleImport.json()).data.songIds as number[]
+      songIds.push(...visibleIds)
+
+      const hideRes = await request.post('/api/categories', {
+        data: { id: catId, name: `E2E Crowd Cat ${stamp}`, isHidden: 1 },
+      })
+      expect(hideRes.ok()).toBeTruthy()
+
+      const search = await request.get(`/api/songs/search?q=${word}`)
+      const foundIds = (
+        (await search.json()).data as Array<{ id: number }>
+      ).map((song) => song.id)
+      expect(foundIds.sort()).toEqual([...visibleIds].sort())
+    } finally {
+      await request.delete('/api/songs/bulk', { data: { ids: songIds } })
+      await request.delete(`/api/categories/${catId}`).catch(() => {})
+    }
+  })
 })
