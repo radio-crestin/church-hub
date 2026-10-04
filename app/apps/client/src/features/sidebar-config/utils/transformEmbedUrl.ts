@@ -30,14 +30,29 @@ function extractYouTubeVideoId(url: string): string | null {
   return null
 }
 
+const YOUTUBE_DOMAINS = ['youtube.com', 'youtu.be', 'youtube-nocookie.com']
+
+/** The URL's host name, accepting a bare `youtube.com/...` without a scheme. */
+function getHostname(url: string): string | null {
+  for (const candidate of [url, `https://${url}`]) {
+    try {
+      return new URL(candidate).hostname.toLowerCase()
+    } catch {
+      // not a URL in this form; try the next one
+    }
+  }
+  return null
+}
+
 /**
- * Checks if a URL is a YouTube URL
+ * Checks if a URL is a YouTube URL: its host is a YouTube domain or one of
+ * its subdomains (`www.`, `m.`), never a host that only mentions one.
  */
 export function isYouTubeUrl(url: string): boolean {
-  return (
-    url.includes('youtube.com') ||
-    url.includes('youtu.be') ||
-    url.includes('youtube-nocookie.com')
+  const hostname = getHostname(url)
+  if (!hostname) return false
+  return YOUTUBE_DOMAINS.some(
+    (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
   )
 }
 
