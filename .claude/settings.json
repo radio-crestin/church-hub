@@ -118,5 +118,13 @@
   },
   "enabledPlugins": {
     "better-tasks@better-tasks": true
+  },
+  "extraKnownMarketplaces": {
+    "better-tasks": {
+      "source": {
+        "source": "github",
+        "repo": "iosifnicolae2/better-tasks"
+      }
+    }
   }
 }
