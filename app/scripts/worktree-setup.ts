@@ -16,7 +16,6 @@
  * Cross-platform: pure Node/Bun APIs, no shell path interpolation.
  */
 
-import { spawnSync } from 'node:child_process'
 import {
   constants,
   copyFileSync,
@@ -26,52 +25,18 @@ import {
   realpathSync,
   writeFileSync,
 } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 
-const PORT_BASE = 3100
+import { mainCheckoutRoot, portFor, run, step } from './worktree-common'
+
 const SIDECAR_PREFIX = 'church-hub-sidecar'
-
-function run(command: string, args: string[], cwd: string, env = process.env) {
-  const result = spawnSync(command, args, {
-    cwd,
-    env,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'inherit'],
-  })
-  if (result.status !== 0) {
-    throw new Error(
-      `${command} ${args.join(' ')} failed (exit ${result.status})`,
-    )
-  }
-  return result.stdout.trim()
-}
-
-function step(name: string, action: () => string | undefined) {
-  const started = performance.now()
-  const detail = action()
-  const seconds = ((performance.now() - started) / 1000).toFixed(1)
-  console.log(`✓ ${name} (${seconds}s)${detail ? ` — ${detail}` : ''}`)
-}
-
-function portFor(taskId: string | undefined): number {
-  const taskNumber = Number(taskId?.match(/\d+/)?.[0])
-  if (!taskNumber)
-    throw new Error(
-      'usage: bun app/scripts/worktree-setup.ts <task id, e.g. T-052>',
-    )
-  return PORT_BASE + taskNumber
-}
+const USAGE = 'usage: bun app/scripts/worktree-setup.ts <task id, e.g. T-052>'
 
 function findCheckouts() {
   const worktreeRoot = realpathSync(
     run('git', ['rev-parse', '--show-toplevel'], process.cwd()),
   )
-  const commonDir = run(
-    'git',
-    ['rev-parse', '--path-format=absolute', '--git-common-dir'],
-    process.cwd(),
-  )
-  const mainRoot = realpathSync(dirname(commonDir))
+  const mainRoot = mainCheckoutRoot(process.cwd())
   if (worktreeRoot === mainRoot) {
     throw new Error('this is the main checkout: run it inside a worktree')
   }
@@ -142,7 +107,7 @@ function buildClient(worktreeApp: string, port: number) {
   return `dist/ talks to port ${port}`
 }
 
-const port = portFor(process.argv[2])
+const port = portFor(process.argv[2], USAGE)
 const { worktreeApp, mainApp } = findCheckouts()
 step('dependencies', () => installDependencies(worktreeApp))
 step('cargo target shared', () => shareCargoTarget(worktreeApp, mainApp))
