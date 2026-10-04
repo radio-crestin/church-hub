@@ -15,6 +15,7 @@ import {
   getTranslationById,
 } from '../bible/translations'
 import { getVerse } from '../bible/verses'
+import { formatStyledMarkdown, parseStyledMarkdown } from '../bookmark-markdown'
 
 const logger = createLogger('bible-bookmarks')
 
@@ -23,7 +24,9 @@ const logger = createLogger('bible-bookmarks')
  *
  * Each line is resolved against the chosen translation so the imported rows
  * carry real verse text - a reference the translation does not contain is
- * reported back per line instead of being silently dropped.
+ * reported back per line instead of being silently dropped. A verse written
+ * as styled Markdown under its heading keeps its bold, underline and
+ * highlight when that text is the verse's own.
  */
 export function importBookmarksFromText(
   text: string,
@@ -103,7 +106,11 @@ export function importBookmarksFromText(
         }
 
         const endVerse = parsed.endVerse ?? parsed.startVerse
+        const styled = entry.markdown
+          ? parseStyledMarkdown(entry.markdown)
+          : null
         let addedFromLine = 0
+        let styleApplied = false
 
         for (
           let verseNumber = parsed.startVerse;
@@ -118,6 +125,14 @@ export function importBookmarksFromText(
           )
           if (!verse) continue
 
+          // Styles are offsets into the text they were written on, so they
+          // only carry over onto that exact verse text.
+          const keepsStyles =
+            styled !== null &&
+            parsed.startVerse === endVerse &&
+            styled.text === verse.text
+          styleApplied ||= keepsStyles
+
           tx.insert(bibleBookmarks)
             .values({
               verseId: verse.id,
@@ -131,6 +146,10 @@ export function importBookmarksFromText(
               chapter: verse.chapter,
               verse: verse.verse,
               sortOrder: sortOrder++,
+              markdown: formatStyledMarkdown(
+                verse.text,
+                keepsStyles && styled ? styled.ranges : [],
+              ),
             })
             .run()
 
@@ -143,6 +162,14 @@ export function importBookmarksFromText(
             line: entry.line,
             content: entry.content,
             reason: 'verse_not_found',
+          })
+        } else if (entry.markdown && !styleApplied) {
+          // The verse is in, but the styled text under its heading is not
+          // this verse's text, so its marks could land on the wrong words.
+          errors.push({
+            line: entry.markdownLine ?? entry.line,
+            content: entry.markdown,
+            reason: 'text_mismatch',
           })
         }
       }

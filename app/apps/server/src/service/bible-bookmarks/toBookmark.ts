@@ -1,4 +1,4 @@
-import { parseStyleRanges } from './parseStyleRanges'
+import { readBookmarkStyles } from './readBookmarkStyles'
 import type { BibleBookmark } from './types'
 import type { bibleBookmarks } from '../../db/schema'
 
@@ -8,6 +8,7 @@ import type { bibleBookmarks } from '../../db/schema'
 export function toBookmark(
   record: typeof bibleBookmarks.$inferSelect,
 ): BibleBookmark {
+  const { markdown, styleRanges } = readBookmarkStyles(record)
   return {
     id: record.id,
     verseId: record.verseId,
@@ -21,7 +22,8 @@ export function toBookmark(
     chapter: record.chapter,
     verse: record.verse,
     sortOrder: record.sortOrder,
-    styleRanges: parseStyleRanges(record.styleRanges),
+    markdown,
+    styleRanges,
     createdAt: record.createdAt.getTime(),
   }
 }

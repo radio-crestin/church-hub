@@ -1,7 +1,6 @@
-import { describe, expect, test } from 'bun:test'
-
 import { formatStyledMarkdown } from './formatStyledMarkdown'
 import { parseStyledMarkdown } from './parseStyledMarkdown'
+import { describe, expect, test } from 'bun:test'
 
 const VERSE =
   'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu.'
@@ -45,7 +44,9 @@ describe('formatStyledMarkdown', () => {
       { ...rangeOf(VERSE, 'Dumnezeu lumea'), highlight: '#FFFF00' },
     ])
 
-    expect(markdown).toContain('<u>iubit <mark>Dumnezeu</mark></u><mark> lumea</mark>')
+    expect(markdown).toContain(
+      '<u>iubit <mark>Dumnezeu</mark></u><mark> lumea</mark>',
+    )
   })
 
   test('moves the markers off the spaces at the ends of a range', () => {
@@ -55,7 +56,8 @@ describe('formatStyledMarkdown', () => {
   })
 
   test('escapes characters that would read as styling', () => {
-    const text = '2 * 3 = 6 <tag> _x_ # not a heading\n# nor this\n> nor a quote'
+    const text =
+      '2 * 3 = 6 <tag> _x_ # not a heading\n# nor this\n> nor a quote'
     const markdown = formatStyledMarkdown(text, [])
     expect(parseStyledMarkdown(markdown)).toEqual({ text, ranges: [] })
     expect(markdown).toContain('\n\\# nor this')

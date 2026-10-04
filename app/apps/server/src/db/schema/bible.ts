@@ -103,14 +103,14 @@ export const bibleBookmarks = sqliteTable(
     verse: integer('verse').notNull(),
     sortOrder: integer('sort_order').notNull().default(0),
     /**
-     * The highlights, bold and underline drawn on this verse while it was on
-     * screen, as a JSON `TextStyleRange[]`.
+     * The verse as standard Markdown, with the highlights, bold and underline
+     * drawn on it while it was on screen (see service/bookmark-markdown).
      *
      * Live highlights live in one global row and are wiped when the slide is
-     * hidden, so a bookmark keeps its own copy - the ranges are character
-     * offsets into `text` above, which is why they are stored alongside it.
+     * hidden, so a bookmark keeps its own copy. Its plain text is `text`
+     * above; null only on a row written before the column existed.
      */
-    styleRanges: text('style_ranges'),
+    markdown: text('markdown'),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),

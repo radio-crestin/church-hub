@@ -1,7 +1,7 @@
 export { addBookmark } from './addBookmark'
 export { addBookmarkNote, type BookmarkNote } from './addBookmarkNote'
 export { clearBookmarks } from './clearBookmarks'
-export { exportBookmarksAsText } from './exportBookmarks'
+export { exportBookmarksAsMarkdown } from './exportBookmarks'
 export { getBookmarkNotes } from './getBookmarkNotes'
 export { getBookmarks } from './getBookmarks'
 export { markBookmarkSung } from './markBookmarkSung'

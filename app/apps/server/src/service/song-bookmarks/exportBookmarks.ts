@@ -1,9 +1,12 @@
 import { asc, eq } from 'drizzle-orm'
 
+import { formatSongHeading } from './formatSongHeading'
 import { getBookmarkNotes } from './getBookmarkNotes'
 import { getBookmarks } from './getBookmarks'
+import { slideMarkdown } from './slideMarkdown'
 import { getDatabase } from '../../db'
 import { songSlides } from '../../db/schema'
+import { escapeMarkdown } from '../bookmark-markdown'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -13,85 +16,79 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [song-bookmarks] ${message}`)
 }
 
-export interface BookmarkExportItem {
-  type: 'song' | 'note'
-  sortOrder: number
-  content: string
-  songTitle?: string
-  songCategory?: string | null
-  songKeyLine?: string | null
-  slides?: Array<{ label: string | null; content: string }>
-}
-
-export function exportBookmarksAsText(): string {
+/**
+ * Renders the song bookmark list as standard Markdown:
+ *
+ *   ## Song title {#song-12}       the song, with its id
+ *
+ *   *Category · key line*
+ *
+ *   ### Strofa 1                   each slide, under its label
+ *
+ *   lyrics with **bold**, *italic*, <u>underline</u>
+ *
+ *   > Note                         a note
+ */
+export function exportBookmarksAsMarkdown(): string {
   try {
-    log('debug', 'Exporting bookmarks as text')
+    log('debug', 'Exporting song bookmarks as Markdown')
 
     const bookmarks = getBookmarks()
     const notes = getBookmarkNotes()
     const db = getDatabase()
 
-    // Merge bookmarks and notes by sortOrder
-    const items: Array<{
-      type: 'song' | 'note'
-      sortOrder: number
-      bookmark?: (typeof bookmarks)[0]
-      note?: (typeof notes)[0]
-    }> = [
-      ...bookmarks.map((b) => ({
-        type: 'song' as const,
-        sortOrder: b.sortOrder,
-        bookmark: b,
+    const items = [
+      ...bookmarks.map((bookmark) => ({
+        sortOrder: bookmark.sortOrder,
+        bookmark,
+        note: undefined,
       })),
-      ...notes.map((n) => ({
-        type: 'note' as const,
-        sortOrder: n.sortOrder,
-        note: n,
+      ...notes.map((note) => ({
+        sortOrder: note.sortOrder,
+        bookmark: undefined,
+        note,
       })),
     ].sort((a, b) => a.sortOrder - b.sortOrder)
 
-    const lines: string[] = []
+    const blocks: string[] = []
 
     for (const item of items) {
-      if (item.type === 'note' && item.note) {
-        lines.push(`--- ${item.note.content} ---`)
-        lines.push('')
-      } else if (item.type === 'song' && item.bookmark) {
-        const b = item.bookmark
-        lines.push(`# ${b.songTitle}`)
-        if (b.songCategoryName) {
-          lines.push(`  ${b.songCategoryName}`)
-        }
-        if (b.songKeyLine) {
-          lines.push(`  ${b.songKeyLine}`)
-        }
+      if (item.note) {
+        blocks.push(`> ${item.note.content}`)
+        continue
+      }
 
-        // Fetch slides for this song
-        const slides = db
-          .select({
-            label: songSlides.label,
-            content: songSlides.content,
-          })
-          .from(songSlides)
-          .where(eq(songSlides.songId, b.songId))
-          .orderBy(asc(songSlides.sortOrder))
-          .all()
+      const bookmark = item.bookmark
+      if (!bookmark) continue
 
-        for (const slide of slides) {
-          lines.push('')
-          if (slide.label) {
-            lines.push(`[${slide.label}]`)
-          }
-          lines.push(slide.content)
+      blocks.push(formatSongHeading(bookmark.songTitle, bookmark.songId))
+
+      const details = [bookmark.songCategoryName, bookmark.songKeyLine]
+        .filter((detail): detail is string => Boolean(detail?.trim()))
+        .map((detail) => escapeMarkdown(detail.trim()))
+      if (details.length > 0) blocks.push(`*${details.join(' · ')}*`)
+
+      const slides = db
+        .select({
+          label: songSlides.label,
+          content: songSlides.content,
+          styleOverrides: songSlides.styleOverrides,
+        })
+        .from(songSlides)
+        .where(eq(songSlides.songId, bookmark.songId))
+        .orderBy(asc(songSlides.sortOrder))
+        .all()
+
+      for (const slide of slides) {
+        if (slide.label?.trim()) {
+          blocks.push(`### ${escapeMarkdown(slide.label.trim())}`)
         }
-
-        lines.push('')
-        lines.push('---')
-        lines.push('')
+        const lyrics = slideMarkdown(slide.content, slide.styleOverrides)
+        if (lyrics) blocks.push(lyrics)
       }
     }
 
-    return lines.join('\n')
+    return blocks.length > 0 ? `${blocks.join('\n\n')}\n` : ''
   } catch (error) {
     log('error', `Failed to export bookmarks: ${error}`)
     return ''

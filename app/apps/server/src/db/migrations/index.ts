@@ -20,6 +20,7 @@ import { addSongVersionsPermissions } from './add-song-versions-permissions'
 import { addSync } from './add-sync'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
+import { convertBibleBookmarkStylesToMarkdown } from './convert-bible-bookmark-styles-to-markdown'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { enableScreensAlwaysOnTop } from './enable-screens-always-on-top'
@@ -349,6 +350,14 @@ export function runMigrations(
     'allow_duplicate_bookmarks',
     'Running allow duplicate bookmarks migration',
     () => allowDuplicateBookmarks(rawDb),
+  )
+
+  // Store Bible bookmarks as standard Markdown, carrying over the styles kept
+  // in the old style_ranges JSON before that column is dropped.
+  runStep(
+    'convert_bible_bookmark_styles_to_markdown',
+    'Running convert Bible bookmark styles to Markdown migration',
+    () => convertBibleBookmarkStylesToMarkdown(rawDb),
   )
 
   // Add is_sung/sung_at to schedule_items so a schedule tracks which of its

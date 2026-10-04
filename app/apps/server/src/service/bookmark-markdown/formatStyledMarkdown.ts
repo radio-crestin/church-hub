@@ -1,9 +1,6 @@
 import { escapeMarkdown } from './escapeMarkdown'
 import { normalizeHighlightColor } from './normalizeHighlightColor'
-import {
-  DEFAULT_HIGHLIGHT_COLOR,
-  type MarkdownStyleRange,
-} from './types'
+import { DEFAULT_HIGHLIGHT_COLOR, type MarkdownStyleRange } from './types'
 
 /** Style layers from the outermost marker to the innermost one. */
 const LAYERS = ['underline', 'highlight', 'bold', 'italic'] as const
@@ -128,7 +125,8 @@ function styleOver(
   const style = { ...UNSTYLED }
   for (const range of ranges) {
     if (range.start > start || range.end < end) continue
-    if (range.highlight) style.highlight = normalizeHighlightColor(range.highlight)
+    if (range.highlight)
+      style.highlight = normalizeHighlightColor(range.highlight)
     if (range.bold) style.bold = true
     if (range.italic) style.italic = true
     if (range.underline) style.underline = true

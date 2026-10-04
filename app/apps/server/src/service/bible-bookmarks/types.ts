@@ -2,7 +2,8 @@
  * A run of styling drawn over the verse text, by character offset.
  *
  * Mirrors the live slide's `TextStyleRange` so a saved bookmark can be poured
- * straight back onto the screen.
+ * straight back onto the screen. Offsets count from the start of the verse
+ * text, never from whatever a screen puts in front of it.
  */
 export interface BibleBookmarkStyleRange {
   id: string
@@ -34,7 +35,12 @@ export interface BibleBookmark {
   chapter: number
   verse: number
   sortOrder: number
-  /** Highlights/bold/underline saved with the verse, empty when none. */
+  /**
+   * The verse as standard Markdown with its highlights, bold and underline -
+   * what is stored, exported and imported.
+   */
+  markdown: string
+  /** The same styling read out of `markdown`, empty when none. */
   styleRanges: BibleBookmarkStyleRange[]
   createdAt: number
 }
@@ -68,6 +74,8 @@ export interface BibleBookmarkImportError {
     | 'verse_required'
     | 'verse_not_found'
     | 'no_translation'
+    /** Imported, but without the styles: the text under it is not the verse. */
+    | 'text_mismatch'
 }
 
 /**

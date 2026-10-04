@@ -122,13 +122,13 @@ export const bibleBookmarksPaths = {
   '/api/bible-bookmarks/export': {
     get: {
       tags: ['Bible'],
-      summary: 'Export bookmarks as text',
+      summary: 'Export bookmarks as Markdown',
       description:
-        'Renders the list as plain text: a reference per line, its verse text indented underneath, notes wrapped in dashes. The result can be pasted back into the import endpoint unchanged.',
+        'Renders the list as standard Markdown: each verse is a "## Ioan 3:16 - RCCV" heading with the verse text under it, its highlight, bold, italic and underline written as <mark>…</mark>, **…**, *…* and <u>…</u>; a note is a "> quote". The result can be pasted back into the import endpoint unchanged and keeps every style.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {
-          description: 'The rendered text',
+          description: 'The Markdown document',
           content: {
             'application/json': {
               schema: {
@@ -145,9 +145,9 @@ export const bibleBookmarksPaths = {
   '/api/bible-bookmarks/import': {
     post: {
       tags: ['Bible'],
-      summary: 'Import bookmarks from text',
+      summary: 'Import bookmarks from Markdown or a plain list',
       description:
-        'Parses text and appends what it finds to the existing list. References are resolved against the real translation, ranges such as "Ioan 3:16-18" expand into one bookmark per verse, and a reference may name its own translation with a trailing " - ABBR". Lines that cannot be used are reported back with their line number rather than dropped.',
+        'Parses the Markdown the export endpoint writes, or a plain list of references, and appends what it finds to the existing list. References are resolved against the real translation, ranges such as "Ioan 3:16-18" expand into one bookmark per verse, and a reference may name its own translation with a trailing " - ABBR". The styled verse under a "## reference" heading keeps its styles when it is that verse\'s text; otherwise the verse is imported unstyled and reported as text_mismatch. Notes are "> quote" or "--- note ---" lines. Lines that cannot be used are reported back with their line number rather than dropped.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,

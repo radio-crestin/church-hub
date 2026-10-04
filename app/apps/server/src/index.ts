@@ -120,7 +120,7 @@ import {
   type BibleBookmarkItemRef,
   type BibleBookmarkStyleRange,
   clearBookmarks as clearBibleBookmarks,
-  exportBookmarksAsText as exportBibleBookmarksAsText,
+  exportBookmarksAsMarkdown as exportBibleBookmarksAsMarkdown,
   getBookmarkNotes as getBibleBookmarkNotes,
   getBookmarks as getBibleBookmarks,
   importBookmarksFromText as importBibleBookmarksFromText,
@@ -257,7 +257,7 @@ import {
   addBookmarkNote,
   type BookmarkItemRef,
   clearBookmarks,
-  exportBookmarksAsText,
+  exportBookmarksAsMarkdown,
   getBookmarkNotes,
   getBookmarks,
   markBookmarkSung,
@@ -7427,7 +7427,7 @@ async function startRealServer(): Promise<void> {
         const permError = checkPermission('bible.view')
         if (permError) return permError
 
-        const text = exportBibleBookmarksAsText()
+        const text = exportBibleBookmarksAsMarkdown()
         return handleCors(
           req,
           new Response(JSON.stringify({ data: text }), {
@@ -8044,7 +8044,7 @@ async function startRealServer(): Promise<void> {
         const permError = checkPermission('songs.view')
         if (permError) return permError
 
-        const text = exportBookmarksAsText()
+        const text = exportBookmarksAsMarkdown()
         return handleCors(
           req,
           new Response(JSON.stringify({ data: text }), {

@@ -226,7 +226,12 @@ function toRanges(
 ): MarkdownStyleRange[] {
   const ranges: MarkdownStyleRange[] = []
 
-  for (const attribute of ['highlight', 'bold', 'italic', 'underline'] as const) {
+  for (const attribute of [
+    'highlight',
+    'bold',
+    'italic',
+    'underline',
+  ] as const) {
     let open: MarkdownStyleRange | null = null
     for (const segment of segments) {
       if (segment.start === segment.end) continue

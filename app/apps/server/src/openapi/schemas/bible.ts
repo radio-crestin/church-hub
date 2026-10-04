@@ -101,10 +101,17 @@ export const bibleSchemas = {
         type: 'integer',
         description: 'Position in the list shared with notes',
       },
+      markdown: {
+        type: 'string',
+        description:
+          'The verse as standard Markdown with its saved styles: <mark>highlight</mark>, **bold**, *italic*, <u>underline</u>. This is what is stored, exported and imported.',
+        example:
+          'Fiindcă atât de mult a iubit <mark>Dumnezeu</mark> <u>lumea</u>',
+      },
       styleRanges: {
         type: 'array',
         description:
-          'Highlights, bold and underline saved with the verse. Character offsets into the text above.',
+          'The same styles read out of `markdown`, as character offsets into the verse text above (never into a reference a screen puts in front of it).',
         items: { $ref: '#/components/schemas/BibleBookmarkStyleRange' },
       },
       createdAt: { type: 'integer', description: 'Unix timestamp in ms' },
@@ -173,7 +180,10 @@ export const bibleSchemas = {
                 'verse_required',
                 'verse_not_found',
                 'no_translation',
+                'text_mismatch',
               ],
+              description:
+                'text_mismatch: the verse was imported, but without the styles, because the text under its heading is not the verse text',
             },
           },
         },
