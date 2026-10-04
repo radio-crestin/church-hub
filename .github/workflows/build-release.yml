@@ -120,8 +120,13 @@ jobs:
           path: app/apps/client/test-results/
           retention-days: 7
 
+  # Who may push a v* tag is decided by the tag rule set. A re-run, though,
+  # can be started by anyone with write access, so every job that writes the
+  # release or pushes to main runs only when the person re-running it is the
+  # one who pushed the tag (github.actor stays the original pusher on a re-run).
   create-release:
     needs: [test]
+    if: github.triggering_actor == github.actor
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -255,6 +260,7 @@ jobs:
   # test build, so the release path is exercised on each pull request.
   build:
     needs: [test, create-release]
+    if: github.triggering_actor == github.actor
     permissions:
       contents: write
     uses: ./.github/workflows/build-desktop.yml
@@ -273,6 +279,7 @@ jobs:
   # points at a release whose manifest or installers are still missing.
   updater-manifest:
     needs: [build]
+    if: github.triggering_actor == github.actor
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -365,6 +372,7 @@ jobs:
   # RELEASE_DEPLOY_KEY deploy key, which the rule set lets through.
   sync-version-back:
     needs: [build, updater-manifest]
+    if: github.triggering_actor == github.actor
     runs-on: ubuntu-latest
     permissions:
       contents: read
