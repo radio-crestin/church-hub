@@ -18,6 +18,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   CalendarDays,
   CalendarPlus,
+  CalendarPlus2,
   ChevronDown,
   ExternalLink,
   Pencil,
@@ -38,6 +39,7 @@ import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
 import { Tooltip } from '~/ui/tooltip/Tooltip'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
+import { CreateScheduleModal } from './CreateScheduleModal'
 import { RenameScheduleModal } from './RenameScheduleModal'
 import {
   ScheduleItemEditors,
@@ -158,6 +160,8 @@ export function SchedulePanel({
   const queryClient = useQueryClient()
   const { hasPermission } = usePermissions()
   const canEditProgram = hasPermission('programs.edit')
+  const canCreateProgram = hasPermission('programs.create')
+  const [isCreatingSchedule, setIsCreatingSchedule] = useState(false)
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
     readSelectedScheduleId,
@@ -668,6 +672,33 @@ export function SchedulePanel({
           },
         ]
       : []),
+    // A new program, made right here and picked straight away — on Sunday
+    // morning usually today's, which the dialog makes in one click.
+    ...(canCreateProgram
+      ? [
+          {
+            id: 'new-schedule',
+            label: t('panel.newSchedule'),
+            icon: <CalendarPlus2 size={18} />,
+            iconClassName:
+              'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+            onSelect: () => setIsCreatingSchedule(true),
+            testId: 'schedule-new-menu',
+            inline: (
+              <button
+                type="button"
+                onClick={() => setIsCreatingSchedule(true)}
+                data-testid="schedule-new"
+                aria-label={t('panel.newSchedule')}
+                title={t('panel.newSchedule')}
+                className="p-1.5 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
+              >
+                <CalendarPlus2 className="w-3.5 h-3.5" />
+              </button>
+            ),
+          },
+        ]
+      : []),
     ...(selectedScheduleId && onOpenSchedule
       ? [
           {
@@ -918,6 +949,12 @@ export function SchedulePanel({
       <RenameScheduleModal
         schedule={renamingSchedule}
         onClose={() => setRenamingSchedule(null)}
+      />
+
+      <CreateScheduleModal
+        isOpen={isCreatingSchedule}
+        onClose={() => setIsCreatingSchedule(false)}
+        onCreated={setSelectedScheduleId}
       />
 
       {/* The add and edit dialogs live here, not beside the header's "+":

@@ -74,7 +74,8 @@
     "presentItem": "Afiseaza pe ecran",
     "openSong": "Deschide cantarea",
     "openPassage": "Deschide pasajul",
-    "renameSchedule": "Redenumeste acest program"
+    "renameSchedule": "Redenumeste acest program",
+    "newSchedule": "Program nou"
   },
   "search": {
     "placeholder": "Cauta programe...",
@@ -278,5 +279,9 @@
     },
     "lineError": "Linia {{line}}: {{message}}",
     "validationErrors": "Corectati urmatoarele probleme:"
+  },
+  "today": {
+    "button": "Azi",
+    "hint": "Programul de azi, {{title}}: creat dintr-un click, sau folosit cel existent"
   }
 }

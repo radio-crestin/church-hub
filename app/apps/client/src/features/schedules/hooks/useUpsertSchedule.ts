@@ -8,15 +8,18 @@ export function useUpsertSchedule() {
 
   return useMutation({
     mutationFn: (input: UpsertScheduleInput) => upsertSchedule(input),
+    // Returned, so mutateAsync resolves only once the program list holds the
+    // new program — a caller selecting it right away must find it there.
     onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['schedules'] })
-        if (result.data?.id) {
-          queryClient.invalidateQueries({
-            queryKey: ['schedule', result.data.id],
-          })
-        }
-      }
+      if (!result.success) return
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['schedules'] }),
+        result.data?.id
+          ? queryClient.invalidateQueries({
+              queryKey: ['schedule', result.data.id],
+            })
+          : undefined,
+      ])
     },
   })
 }

@@ -74,7 +74,8 @@
     "presentItem": "Show this on screen",
     "openSong": "Open the song",
     "openPassage": "Open the passage",
-    "renameSchedule": "Rename this program"
+    "renameSchedule": "Rename this program",
+    "newSchedule": "New program"
   },
   "search": {
     "placeholder": "Search schedules...",
@@ -278,5 +279,9 @@
     },
     "lineError": "Line {{line}}: {{message}}",
     "validationErrors": "Please fix the following issues:"
+  },
+  "today": {
+    "button": "Today",
+    "hint": "Program for today, {{title}}: created in one click, or reused if it already exists"
   }
 }

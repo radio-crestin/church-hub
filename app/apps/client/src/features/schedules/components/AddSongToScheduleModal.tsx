@@ -4,7 +4,13 @@ import { useTranslation } from 'react-i18next'
 
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
-import { useAddItemToSchedule, useSchedules, useUpsertSchedule } from '../hooks'
+import { TodayProgramButton } from './TodayProgramButton'
+import {
+  useAddItemToSchedule,
+  useCreateTodayProgram,
+  useSchedules,
+  useUpsertSchedule,
+} from '../hooks'
 
 /** A program the operator is creating inline, not persisted until Save. */
 interface DraftSchedule {
@@ -44,6 +50,7 @@ export function AddSongToScheduleModal({
   const { data: schedules = [], isLoading } = useSchedules()
   const addToSchedule = useAddItemToSchedule()
   const upsertSchedule = useUpsertSchedule()
+  const todayProgram = useCreateTodayProgram()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<number[]>([])
@@ -144,73 +151,95 @@ export function AddSongToScheduleModal({
     effectiveSongIds.length > 0 &&
     (selectedIds.length > 0 || namedDrafts.length > 0)
 
-  const handleSave = useCallback(async () => {
-    if (!canSave || isSaving) return
-    setIsSaving(true)
+  /**
+   * Adds the song(s) to every ticked program and every named draft, plus
+   * `extraScheduleIds` — the "Today" button's program, saved in the same click.
+   */
+  const saveTo = useCallback(
+    async (extraScheduleIds: number[] = []) => {
+      if (isSaving || effectiveSongIds.length === 0) return
+      if (!canSave && extraScheduleIds.length === 0) return
+      setIsSaving(true)
 
-    try {
-      // Create the inline programs first so their songs land in the same pass.
-      const createdIds: number[] = []
-      for (const draft of namedDrafts) {
-        const result = await upsertSchedule.mutateAsync({
-          title: draft.title.trim(),
-        })
-        if (!result.success || !result.data?.id) {
-          showToast(t('messages.error'), 'error')
-          setIsSaving(false)
-          return
-        }
-        createdIds.push(result.data.id)
-      }
-
-      const targetIds = [...selectedIds, ...createdIds]
-      for (const scheduleId of targetIds) {
-        for (const id of effectiveSongIds) {
-          const result = await addToSchedule.mutateAsync({
-            scheduleId,
-            input: { songId: id },
+      try {
+        // Create the inline programs first so their songs land in the same pass.
+        const createdIds: number[] = []
+        for (const draft of namedDrafts) {
+          const result = await upsertSchedule.mutateAsync({
+            title: draft.title.trim(),
           })
-          if (!result.success) {
+          if (!result.success || !result.data?.id) {
             showToast(t('messages.error'), 'error')
             setIsSaving(false)
             return
           }
+          createdIds.push(result.data.id)
         }
-      }
 
-      const firstTarget = targetIds[0]
-      showToast(
-        t('modal.addedToSchedules', { count: targetIds.length }),
-        'success',
-        firstTarget
-          ? {
-              duration: 5000,
-              action: {
-                label: t('modal.goToSchedule'),
-                onClick: () => onAdded?.(firstTarget),
-              },
+        const targetIds = [
+          ...new Set([...extraScheduleIds, ...selectedIds, ...createdIds]),
+        ]
+        for (const scheduleId of targetIds) {
+          for (const id of effectiveSongIds) {
+            const result = await addToSchedule.mutateAsync({
+              scheduleId,
+              input: { songId: id },
+            })
+            if (!result.success) {
+              showToast(t('messages.error'), 'error')
+              setIsSaving(false)
+              return
             }
-          : undefined,
-      )
-      setIsSaving(false)
-      handleClose()
-    } catch {
+          }
+        }
+
+        const firstTarget = targetIds[0]
+        showToast(
+          t('modal.addedToSchedules', { count: targetIds.length }),
+          'success',
+          firstTarget
+            ? {
+                duration: 5000,
+                action: {
+                  label: t('modal.goToSchedule'),
+                  onClick: () => onAdded?.(firstTarget),
+                },
+              }
+            : undefined,
+        )
+        setIsSaving(false)
+        handleClose()
+      } catch {
+        showToast(t('messages.error'), 'error')
+        setIsSaving(false)
+      }
+    },
+    [
+      canSave,
+      isSaving,
+      namedDrafts,
+      selectedIds,
+      effectiveSongIds,
+      upsertSchedule,
+      addToSchedule,
+      showToast,
+      t,
+      onAdded,
+      handleClose,
+    ],
+  )
+
+  const handleSave = useCallback(() => saveTo(), [saveTo])
+
+  /** Today's program, made (or found) and saved to in one click. */
+  const handleToday = useCallback(async () => {
+    const todayId = await todayProgram.createTodayProgram()
+    if (todayId === null) {
       showToast(t('messages.error'), 'error')
-      setIsSaving(false)
+      return
     }
-  }, [
-    canSave,
-    isSaving,
-    namedDrafts,
-    selectedIds,
-    effectiveSongIds,
-    upsertSchedule,
-    addToSchedule,
-    showToast,
-    t,
-    onAdded,
-    handleClose,
-  ])
+    await saveTo([todayId])
+  }, [todayProgram, saveTo, showToast, t])
 
   const selectedCount = selectedIds.length + namedDrafts.length
 
@@ -283,6 +312,12 @@ export function AddSongToScheduleModal({
           >
             <Plus size={18} />
           </button>
+          <TodayProgramButton
+            onClick={handleToday}
+            disabled={isSaving || effectiveSongIds.length === 0}
+            isPending={todayProgram.isPending}
+            testId="add-song-to-schedule-today"
+          />
         </div>
 
         {/* List */}

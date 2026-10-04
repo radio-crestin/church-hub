@@ -1,4 +1,5 @@
 export { useAddItemToSchedule } from './useAddItemToSchedule'
+export { useCreateTodayProgram } from './useCreateTodayProgram'
 export { useDeleteSchedule } from './useDeleteSchedule'
 export { useDirtyState } from './useDirtyState'
 export { useLiveProgramNavigation } from './useLiveProgramNavigation'
