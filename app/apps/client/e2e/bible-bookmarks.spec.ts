@@ -184,7 +184,7 @@ test.describe('Bible bookmarks', () => {
         verseId: verse.id,
         styleRanges: [
           { id: 'h1', start: 0, end: 8, highlight: '#FFFF00' },
-          { id: 'h2', start: 9, end: 13, underline: true },
+          { id: 'h2', start: 8, end: 12, underline: true },
           // Offsets past the end of this verse belong to some other slide and
           // must not be stored.
           { id: 'stale', start: 5000, end: 5100, bold: true },
@@ -195,14 +195,25 @@ test.describe('Bible bookmarks', () => {
     const list = await (await request.get('/api/bible-bookmarks')).json()
     const saved = list.data[0]
 
+    // Stored as standard Markdown; the space the highlight ran over is moved
+    // outside the marker so every Markdown reader sees it
+    expect(saved.markdown.startsWith('<mark>Fiindcă</mark> <u>atât</u>')).toBe(
+      true,
+    )
     expect(saved.styleRanges).toHaveLength(2)
     expect(saved.styleRanges[0]).toMatchObject({
-      id: 'h1',
+      start: 0,
+      end: 7,
       highlight: '#FFFF00',
     })
-    expect(saved.styleRanges[1]).toMatchObject({ id: 'h2', underline: true })
+    expect(saved.styleRanges[1]).toMatchObject({
+      start: 8,
+      end: 12,
+      underline: true,
+    })
     // The offsets still point at the words they were drawn over.
-    expect(saved.text.slice(0, 8)).toBe('Fiindcă ')
+    expect(saved.text.slice(0, 7)).toBe('Fiindcă')
+    expect(saved.text.slice(8, 12)).toBe('atât')
   })
 
   test('a bookmark saved without highlighting reports none', async ({
@@ -270,5 +281,81 @@ test.describe('Bible bookmarks', () => {
 
     const list = await (await request.get('/api/bible-bookmarks')).json()
     expect(list.data[0].translationAbbreviation).toBe(english.abbreviation)
+  })
+
+  test('the Markdown export keeps every style and imports back to it', async ({
+    request,
+  }) => {
+    const search = await (
+      await request.get('/api/bible/search?q=Ioan%203:16')
+    ).json()
+    const verse = search.data.results[0]
+    const at = (words: string) => {
+      const start = verse.text.indexOf(words)
+      return { start, end: start + words.length }
+    }
+
+    await request.post('/api/bible-bookmark-notes', {
+      data: { content: 'Chemare' },
+    })
+    await request.post('/api/bible-bookmarks', {
+      data: {
+        verseId: verse.id,
+        styleRanges: [
+          { id: 'h', ...at('Dumnezeu'), highlight: '#FFFF00' },
+          { id: 'u', ...at('lumea'), underline: true },
+          { id: 'b', ...at('singurul'), bold: true },
+        ],
+      },
+    })
+
+    const exported = (
+      await (await request.get('/api/bible-bookmarks/export')).json()
+    ).data as string
+
+    expect(exported).toContain('> Chemare')
+    expect(exported).toMatch(/^## Ioan 3:16 - \S+$/m)
+    expect(exported).toContain('<mark>Dumnezeu</mark> <u>lumea</u>')
+    expect(exported).toContain('**singurul**')
+
+    const before = (await (await request.get('/api/bible-bookmarks')).json())
+      .data[0].styleRanges
+
+    await request.delete('/api/bible-bookmarks')
+    const reimport = await (
+      await request.post('/api/bible-bookmarks/import', {
+        data: { text: exported },
+      })
+    ).json()
+    expect(reimport.data.errors).toEqual([])
+
+    const after = (await (await request.get('/api/bible-bookmarks')).json())
+      .data[0].styleRanges
+    const strip = (ranges: Array<Record<string, unknown>>) =>
+      ranges.map(({ id: _id, ...range }) => range)
+    expect(strip(after)).toEqual(strip(before))
+
+    const reexported = (
+      await (await request.get('/api/bible-bookmarks/export')).json()
+    ).data
+    expect(reexported).toBe(exported)
+  })
+
+  test('styled text that is not the verse imports the verse unstyled', async ({
+    request,
+  }) => {
+    const result = await (
+      await request.post('/api/bible-bookmarks/import', {
+        data: { text: '## Ioan 3:16\n\nUn alt **text**' },
+      })
+    ).json()
+
+    expect(result.data.imported).toBe(1)
+    expect(result.data.errors).toEqual([
+      { line: 3, content: 'Un alt **text**', reason: 'text_mismatch' },
+    ])
+
+    const list = await (await request.get('/api/bible-bookmarks')).json()
+    expect(list.data[0].styleRanges).toEqual([])
   })
 })

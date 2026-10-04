@@ -140,7 +140,11 @@ test.describe('Per-slide text styling', () => {
       await expect
         .poll(async () => editable.innerHTML(), { timeout: 5000 })
         .toContain('font-size:')
-      expect(await editable.innerHTML()).toContain('<strong')
+      // Each button re-seeds the editor on its own render, so the size can
+      // land before the bold does.
+      await expect
+        .poll(async () => editable.innerHTML(), { timeout: 5000 })
+        .toContain('<strong')
 
       // The styled run stays inline. As a flex item it would be blockified —
       // each run and each line break taking a full row, which split words and

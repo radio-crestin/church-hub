@@ -7,7 +7,7 @@ export {
   addBookmarkNote,
   type BookmarkItemRef,
   type BookmarkNote,
-  exportBookmarksAsText,
+  exportBookmarksAsMarkdown,
   getBookmarkNotes,
   removeBookmarkNote,
   reorderBookmarkItems,

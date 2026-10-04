@@ -44,7 +44,7 @@ import {
   useBibleBookmarkNotes,
   useBibleBookmarks,
   useClearBibleBookmarks,
-  useExportBibleBookmarksAsText,
+  useExportBibleBookmarksAsMarkdown,
   useRemoveBibleBookmark,
   useRemoveBibleBookmarkNote,
   useReorderBibleBookmarkItems,
@@ -330,7 +330,7 @@ export function BibleBookmarksPanel({
   const addNoteMutation = useAddBibleBookmarkNote()
   const updateNoteMutation = useUpdateBibleBookmarkNote()
   const removeNoteMutation = useRemoveBibleBookmarkNote()
-  const exportMutation = useExportBibleBookmarksAsText()
+  const exportMutation = useExportBibleBookmarksAsMarkdown()
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isAddingNote, setIsAddingNote] = useState(false)
@@ -454,7 +454,9 @@ export function BibleBookmarksPanel({
 
     await saveTextFile({
       content: text,
-      defaultFilename: `bible-bookmarks-${new Date().toISOString().split('T')[0]}.txt`,
+      defaultFilename: `bible-bookmarks-${new Date().toISOString().split('T')[0]}.md`,
+      filterName: 'Markdown',
+      extensions: ['md'],
     })
   }, [exportMutation])
 
@@ -492,7 +494,9 @@ export function BibleBookmarksPanel({
     setTimeout(() => newNoteInputRef.current?.focus(), 0)
   }
   const exportLabel =
-    totalCount === 0 ? t('bookmarks.exportEmpty') : t('bookmarks.exportAsText')
+    totalCount === 0
+      ? t('bookmarks.exportEmpty')
+      : t('bookmarks.exportAsMarkdown')
 
   // The header's actions in the order they sit. A column too narrow for all of
   // them tucks the ones at the end under "More", clearing the list first.

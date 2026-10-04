@@ -40,13 +40,14 @@ import { usePermissions } from '~/provider/permissions-provider'
 import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
+import { saveTextFile } from '~/utils/saveTextFile'
 import { SongEditorModal } from './SongEditorModal'
 import {
   useAddBookmark,
   useAddBookmarkNote,
   useBookmarkNotes,
   useClearBookmarks,
-  useExportBookmarksAsText,
+  useExportBookmarksAsMarkdown,
   useMarkBookmarkSung,
   useRemoveBookmark,
   useRemoveBookmarkNote,
@@ -439,7 +440,7 @@ export function SongBookmarksPanel({
   const addNoteMutation = useAddBookmarkNote()
   const updateNoteMutation = useUpdateBookmarkNote()
   const removeNoteMutation = useRemoveBookmarkNote()
-  const exportMutation = useExportBookmarksAsText()
+  const exportMutation = useExportBookmarksAsMarkdown()
   const presentSongMutation = usePresentTemporarySong()
   const { hasPermission } = usePermissions()
   const canEditSong = hasPermission('songs.edit')
@@ -633,34 +634,12 @@ export function SongBookmarksPanel({
     const text = await exportMutation.mutateAsync()
     if (!text) return
 
-    const defaultFilename = `bookmarks-${new Date().toISOString().split('T')[0]}.txt`
-
-    const isTauri =
-      typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-    if (isTauri) {
-      const { save } = await import('@tauri-apps/plugin-dialog')
-      const { writeTextFile } = await import('@tauri-apps/plugin-fs')
-
-      const savePath = await save({
-        defaultPath: defaultFilename,
-        filters: [{ name: 'Text File', extensions: ['txt'] }],
-      })
-
-      if (savePath) {
-        await writeTextFile(savePath, text)
-      }
-    } else {
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = defaultFilename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }
+    await saveTextFile({
+      content: text,
+      defaultFilename: `song-bookmarks-${new Date().toISOString().split('T')[0]}.md`,
+      filterName: 'Markdown',
+      extensions: ['md'],
+    })
   }, [exportMutation])
 
   const isSearching = searchQuery.trim().length > 0
@@ -739,7 +718,7 @@ export function SongBookmarksPanel({
           },
           {
             id: 'export',
-            label: t('bookmarks.exportAsText'),
+            label: t('bookmarks.exportAsMarkdown'),
             icon: <Download size={18} />,
             disabled: exportMutation.isPending,
             onSelect: handleExport,
@@ -751,7 +730,7 @@ export function SongBookmarksPanel({
                 disabled={exportMutation.isPending}
                 data-testid="bookmarks-export"
                 className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                title={t('bookmarks.exportAsText')}
+                title={t('bookmarks.exportAsMarkdown')}
               >
                 <Download className="w-3.5 h-3.5" />
               </button>

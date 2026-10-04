@@ -9,7 +9,7 @@ import {
   type BibleBookmark,
   type BibleBookmarkItemRef,
   type BibleBookmarkNote,
-  exportBookmarksAsText,
+  exportBookmarksAsMarkdown,
   getBookmarkNotes,
   importBookmarksFromText,
   removeBookmarkNote,
@@ -153,9 +153,9 @@ export function useReorderBibleBookmarkItems() {
   })
 }
 
-export function useExportBibleBookmarksAsText() {
+export function useExportBibleBookmarksAsMarkdown() {
   return useMutation({
-    mutationFn: exportBookmarksAsText,
+    mutationFn: exportBookmarksAsMarkdown,
   })
 }
 

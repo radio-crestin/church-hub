@@ -31,6 +31,7 @@ import {
   resolveSlideFontScale,
 } from '../../utils/applySlideStyleOverride'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { offsetStyleRanges } from '../../utils/offsetStyleRanges'
 import { toTextStyleRanges } from '../../utils/toTextStyleRanges'
 
 interface ScreenContentProps {
@@ -255,6 +256,7 @@ export function ScreenContent({
         }
         styleRanges={mainRanges}
         contentScale={slideFontScale}
+        styleAnchorOffset={0}
       />
     )
   }
@@ -284,9 +286,11 @@ export function ScreenContent({
           bibleConfig.referenceWrapperStyle,
         )
       : ''
-    const displayContent = shouldPrependReference
-      ? `${formattedReference} ${contentData?.contentText ?? ''}`
-      : (contentData?.contentText ?? '')
+    // Live highlights count characters in the verse itself; this screen
+    // shifts them past whatever it puts in front, so every screen marks the
+    // same words whatever its own layout.
+    const prefix = shouldPrependReference ? `${formattedReference} ` : ''
+    const displayContent = `${prefix}${contentData?.contentText ?? ''}`
 
     const elementVisible = isVisible && !!contentData?.contentText
 
@@ -310,7 +314,8 @@ export function ScreenContent({
         slideTransitionOut={
           'slideTransitionOut' in ct ? ct.slideTransitionOut : undefined
         }
-        styleRanges={styleRanges}
+        styleRanges={offsetStyleRanges(styleRanges, prefix.length)}
+        styleAnchorOffset={prefix.length}
       />
     )
   }

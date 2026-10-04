@@ -13,7 +13,7 @@ export {
   BIBLE_BOOKMARK_NOTES_QUERY_KEY,
   useAddBibleBookmarkNote,
   useBibleBookmarkNotes,
-  useExportBibleBookmarksAsText,
+  useExportBibleBookmarksAsMarkdown,
   useImportBibleBookmarksFromText,
   useRemoveBibleBookmarkNote,
   useReorderBibleBookmarkItems,

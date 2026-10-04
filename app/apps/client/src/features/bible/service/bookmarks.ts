@@ -28,7 +28,12 @@ export interface BibleBookmark {
   chapter: number
   verse: number
   sortOrder: number
-  /** Highlights/bold/underline saved with the verse, empty when none. */
+  /** The verse as standard Markdown with its saved styles. */
+  markdown: string
+  /**
+   * The same styles as character offsets into `text` (never into a reference
+   * a screen puts in front of it), empty when none.
+   */
   styleRanges: BibleBookmarkStyleRange[]
   createdAt: number
 }
@@ -53,6 +58,7 @@ export interface BibleBookmarkImportError {
     | 'verse_required'
     | 'verse_not_found'
     | 'no_translation'
+    | 'text_mismatch'
 }
 
 export interface BibleBookmarkImportResult {
@@ -165,7 +171,7 @@ export async function reorderBookmarkItems(
   return response.success ?? false
 }
 
-export async function exportBookmarksAsText(): Promise<string> {
+export async function exportBookmarksAsMarkdown(): Promise<string> {
   const response = await fetcher<{ data: string }>(
     '/api/bible-bookmarks/export',
   )

@@ -22,7 +22,7 @@ export {
   addBookmark,
   addBookmarkNote,
   clearBookmarks,
-  exportBookmarksAsText,
+  exportBookmarksAsMarkdown,
   getBookmarkNotes,
   getBookmarks,
   importBookmarksFromText,

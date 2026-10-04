@@ -199,7 +199,7 @@
     "notePlaceholder": "Enter note...",
     "editNote": "Edit note",
     "deleteNote": "Delete note",
-    "exportAsText": "Export as text",
+    "exportAsMarkdown": "Export as Markdown",
     "exportCopied": "Bookmarks copied to clipboard",
     "exportEmpty": "Nothing to export",
     "focusPresentedSong": "Go to displayed song",
