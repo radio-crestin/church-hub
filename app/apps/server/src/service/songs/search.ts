@@ -1,10 +1,10 @@
-import { getHiddenCategoryIds } from './categories'
 import { joinSearchTitles, parseAlternateTitles } from './parseAlternateTitles'
 import { decodeHtmlEntities } from './text/decodeHtmlEntities'
 import { elisionVariants } from './text/elisionVariants'
 import { findHighlightRanges, wrapRanges } from './text/findHighlightRanges'
 import { joinedWordVariants } from './text/joinedWordVariants'
 import type { SongSearchResult } from './types'
+import { visibleCategoryCondition } from './visibleCategoryCondition'
 import { getRawDatabase } from '../../db'
 import { getSetting } from '../settings'
 
@@ -1248,14 +1248,11 @@ export function searchSongs(
 
     const db = getRawDatabase()
 
-    // Songs in a hidden category must never surface in search. Exclude them
-    // from every result path below (hymn pre-phase + main phase).
-    const hiddenCategoryIds = new Set(getHiddenCategoryIds())
-    const isVisible = (r: { categoryId: number | null }): boolean =>
-      r.categoryId == null || !hiddenCategoryIds.has(r.categoryId)
-
-    // Build extra filter conditions early for hymn number pre-phase
-    const prePhaseExtraConditions: string[] = []
+    // Build extra filter conditions early for hymn number pre-phase.
+    // Songs in a hidden category never surface in search.
+    const prePhaseExtraConditions: string[] = [
+      visibleCategoryCondition('s.category_id'),
+    ]
     const prePhaseCategoryParams: number[] = []
     if (categoryIds && categoryIds.length > 0) {
       const placeholders = categoryIds.map(() => '?').join(',')
@@ -1301,7 +1298,6 @@ export function searchSongs(
           presentationCount: r.presentation_count,
           score: 100,
         }))
-        .filter(isVisible)
         .slice(0, limit)
       setInSearchCache(cacheKey, hymnFinalResults)
       return hymnFinalResults
@@ -1358,8 +1354,11 @@ export function searchSongs(
     logger.debug(`FTS query: ${ftsQuery}`)
 
     // Phase 1: Standard FTS5 search for exact/prefix matches
-    // Build additional SQL filters
-    const extraConditions: string[] = []
+    // Build additional SQL filters. Hidden categories are excluded in SQL so
+    // they never take candidate slots from visible songs.
+    const extraConditions: string[] = [
+      visibleCategoryCondition('s.category_id'),
+    ]
     let categoryParams: number[] = []
     if (categoryIds && categoryIds.length > 0) {
       const placeholders = categoryIds.map(() => '?').join(',')
@@ -1705,18 +1704,15 @@ export function searchSongs(
         score: Math.min(100, Math.round(r.boostedScore)),
       }
     })
-    // Drop any songs whose category is hidden.
-    const visibleResults = finalResults.filter(isVisible)
-
     // Cache results for future queries
-    setInSearchCache(cacheKey, visibleResults)
+    setInSearchCache(cacheKey, finalResults)
 
     const elapsed = performance.now() - startTime
     logger.debug(
-      `Search completed: "${query}" → ${visibleResults.length} results in ${elapsed.toFixed(1)}ms`,
+      `Search completed: "${query}" → ${finalResults.length} results in ${elapsed.toFixed(1)}ms`,
     )
 
-    return visibleResults
+    return finalResults
   } catch (error) {
     logger.error(`Failed to search songs with query "${query}": ${error}`)
     return []
