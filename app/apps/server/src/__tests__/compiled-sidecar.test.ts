@@ -215,6 +215,33 @@ describeFn('Compiled sidecar binary', () => {
     expect(stderrChunks).not.toContain('ReferenceError')
   })
 
+  test('sidecar finishes MIDI start-up and answers MIDI requests', async () => {
+    const res = await fetch(`${BASE_URL}/api/midi/status`)
+    expect(res.status).toBe(200)
+    expect(stderrChunks).not.toContain('panic')
+  })
+
+  // The helper must exit on its own, never boot a second server: a server
+  // started by the probe used to kill the app on its port (v0.1.60).
+  test.if(process.platform === 'darwin')(
+    'the CoreMIDI warm-up helper exits without starting a server',
+    async () => {
+      const helper = spawn({
+        cmd: [binaryPath, '--warm-up-coremidi'],
+        env: { PATH: process.env.PATH ?? '' },
+        stdout: 'pipe',
+        stderr: 'pipe',
+        timeout: 20_000,
+      })
+      const exitCode = await helper.exited
+      // 0: CoreMIDI gave a client; 2: it refused (the server then retries).
+      expect([0, 2]).toContain(exitCode)
+      expect(await new Response(helper.stdout).text()).not.toContain(
+        'Server Ready',
+      )
+    },
+  )
+
   test('sidecar finds the bundled default backgrounds and adds them to the gallery', async () => {
     // Cookie-less localhost requests get the view permissions.
     const res = await fetch(`${BASE_URL}/api/media/backgrounds`)

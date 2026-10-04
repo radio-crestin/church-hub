@@ -1,6 +1,6 @@
-import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 
+import { isCoreMidiUsable } from './isCoreMidiUsable'
 import {
   DEFAULT_MIDI_CONFIG,
   LED_VELOCITY_OFF,
@@ -9,6 +9,7 @@ import {
   type MIDIDevice,
   type MIDIInputMessage,
 } from './types'
+import { warmUpCoreMidi } from './warmUpCoreMidi'
 import { midiLogger } from '../../utils/fileLogger'
 import { getMidiNativeModulePath } from '../../utils/paths'
 
@@ -16,51 +17,26 @@ import { getMidiNativeModulePath } from '../../utils/paths'
 let easymidi: typeof import('easymidi') | null = null
 let midiAvailable = true
 let midiLoadAttempted = false
-let midiSafetyChecked = false
-let midiSafe = true
+// macOS: the native module may only load once the CoreMIDI warm-up ran
+// (initializeMIDI). Other platforms need no warm-up.
+let coreMidiWarmUpDone = process.platform !== 'darwin'
+let coreMidiWarmUp: Promise<void> | null = null
 
-/**
- * Checks if CoreMIDI is available on macOS.
- * On macOS, MIDI initialization can throw unrecoverable C++ exceptions
- * (error -304 kMIDINoCurrentSetup) that crash the entire Bun process.
- * This check uses a subprocess to safely probe MIDI availability.
- */
-function checkMidiSafety(): boolean {
-  if (midiSafetyChecked) return midiSafe
-  midiSafetyChecked = true
-
-  if (process.platform !== 'darwin') {
-    midiSafe = true
-    return true
+async function runCoreMidiWarmUp(): Promise<void> {
+  if (!(await warmUpCoreMidi())) {
+    midiLogger.warn('CoreMIDI warm-up failed, trying MIDI anyway')
   }
+  coreMidiWarmUpDone = true
+}
 
-  try {
-    // Spawn a subprocess that attempts to initialize CoreMIDI.
-    // If CoreMIDI is unavailable, the SUBPROCESS crashes instead of us.
-    //
-    // We pass `--probe-midi` (handled at the top of index.ts) instead of
-    // `-e <code>`: Bun's compiled standalone binary ignores `-e` and would
-    // otherwise re-launch the full sidecar, which `killProcessOnPort(3000)`
-    // would use to SIGKILL the parent — bricking the macOS release build
-    // on launch. (See the regression in v0.1.60 where the app exited
-    // silently 4s after Tauri started.)
-    execFileSync(process.execPath, ['--probe-midi'], {
-      timeout: 5000,
-      stdio: 'pipe',
-      // Minimal env so the probe can't accidentally trigger production
-      // bootstrap paths (DB init, port binding) if anything keys off env.
-      env: { PATH: process.env.PATH ?? '' },
-    })
-    midiSafe = true
-    midiLogger.debug('CoreMIDI safety check passed')
-  } catch {
-    midiSafe = false
-    midiLogger.warn(
-      'CoreMIDI is not available on this system — MIDI features disabled to prevent crash',
-    )
-  }
+// A request waits at most this long for the warm-up, then MIDI answers as
+// "not available yet" rather than hanging behind a stuck helper.
+const MIDI_READY_WAIT_MS = 5000
 
-  return midiSafe
+/** Resolves once MIDI start-up is done (see initializeMIDI), or after 5 s at most. */
+export function whenMIDIReady(): Promise<void> {
+  if (!coreMidiWarmUp) return Promise.resolve()
+  return Promise.race([coreMidiWarmUp, Bun.sleep(MIDI_READY_WAIT_MS)])
 }
 
 /**
@@ -288,12 +264,12 @@ function createEasymidiWrapper(nativeMidi: {
 
 function loadMidi(): boolean {
   if (midiLoadAttempted) return midiAvailable
+  if (!coreMidiWarmUpDone) return false
   midiLoadAttempted = true
 
-  // On macOS, check if CoreMIDI is available before loading the native module.
-  // The native MIDI module can throw unrecoverable C++ exceptions that crash
-  // the entire Bun process if CoreMIDI is not properly initialized.
-  if (!checkMidiSafety()) {
+  // On macOS the native module aborts the whole process when CoreMIDI refuses
+  // a client, so get one ourselves first (an error code, never a crash).
+  if (!isCoreMidiUsable()) {
     midiAvailable = false
     easymidi = null
     return false
@@ -1041,8 +1017,13 @@ export function setEnabled(enabled: boolean) {
 /**
  * Initialize MIDI service (called on server startup)
  */
-export function initializeMIDI() {
+export async function initializeMIDI() {
   midiLogger.info('Initializing MIDI service...')
+
+  if (!coreMidiWarmUpDone) {
+    coreMidiWarmUp ??= runCoreMidiWarmUp()
+    await coreMidiWarmUp
+  }
 
   // Try to load the MIDI module
   if (!loadMidi()) {
