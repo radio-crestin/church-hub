@@ -3,8 +3,8 @@ id: T-005
 title: Marcaje for songs — text-mode editing
 sprint: 2026-10-05
 urgent: false
-status: todo
-owner:
+status: doing
+owner: marcaje
 rolled: 0
 order: 3
 created: 2026-10-04

@@ -3,8 +3,8 @@ id: T-007
 title: Amin and first/last-slide animations in step with the lyrics
 sprint: 2026-10-05
 urgent: false
-status: todo
-owner:
+status: doing
+owner: slide-animations
 rolled: 0
 order: 7
 created: 2026-10-04

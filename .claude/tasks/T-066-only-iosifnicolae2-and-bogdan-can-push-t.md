@@ -2,8 +2,8 @@
 id: T-066
 title: Only iosifnicolae2 and Bogdan can push to main and trigger releases
 sprint: 2026-10-05
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: repo-access
 rolled: 0
 order: 0
@@ -20,6 +20,7 @@ branch: fix/release-rerun-guard
 pr: #97 https://github.com/radio-crestin/church-hub/pull/97
 commits: c011ce13 re-run guard (build-release) · 3bce9bd8 manual v* upload refused (build-desktop)
 video: none (CI/settings only, no UI)
+- 2026-10-05: Closed by the user. Release access limited to the church-hub-release team (iosifnicolae2 + bogdanbaghiu, his invite pending) plus the release deploy key; PR #97 merged (release re-run guard). Details in the private notes.
 
 ## PR
 - branch:

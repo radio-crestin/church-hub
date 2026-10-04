@@ -3,8 +3,8 @@ id: T-010
 title: Marcaje standard Markdown — exact styles, same export/import, per-screen rendering
 sprint: 2026-10-05
 urgent: false
-status: todo
-owner:
+status: doing
+owner: marcaje
 rolled: 0
 order: 4
 created: 2026-10-04

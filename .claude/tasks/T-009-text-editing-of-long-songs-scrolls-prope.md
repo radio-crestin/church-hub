@@ -3,8 +3,8 @@ id: T-009
 title: Text editing of long songs scrolls properly
 sprint: 2026-10-05
 urgent: false
-status: todo
-owner:
+status: doing
+owner: song-editor
 rolled: 0
 order: 2
 created: 2026-10-04

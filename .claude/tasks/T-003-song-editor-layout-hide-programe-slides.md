@@ -3,8 +3,8 @@ id: T-003
 title: Song editor layout — hide Programe, Slides on the right, text edit in place, fixed title
 sprint: 2026-10-05
 urgent: false
-status: todo
-owner:
+status: doing
+owner: song-editor
 rolled: 0
 order: 0
 created: 2026-10-04

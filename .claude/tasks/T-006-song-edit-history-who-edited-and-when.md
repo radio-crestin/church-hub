@@ -3,8 +3,8 @@ id: T-006
 title: Song edit history — who edited and when
 sprint: 2026-10-05
 urgent: false
-status: todo
-owner:
+status: doing
+owner: song-history
 rolled: 0
 order: 5
 created: 2026-10-04
