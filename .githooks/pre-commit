@@ -1,0 +1,18 @@
+#!/bin/sh
+# pre-commit hook — refuses a commit that adds a secret.
+#
+# Uses gitleaks with .gitleaks.toml when installed (brew install gitleaks,
+# scoop install gitleaks, or a release binary). Without it, falls back to
+# scripts/check-key-shapes.sh on the staged lines.
+#
+# Active once per clone after:  git config core.hooksPath .githooks
+# A false positive: add an [[allowlists]] entry in .gitleaks.toml.
+
+set -eu
+
+if command -v gitleaks >/dev/null 2>&1; then
+  exec gitleaks protect --staged --redact --no-banner --verbose
+fi
+
+echo "pre-commit: gitleaks not installed, checking key shapes only." >&2
+exec sh "$(git rev-parse --show-toplevel)/scripts/check-key-shapes.sh" --staged
