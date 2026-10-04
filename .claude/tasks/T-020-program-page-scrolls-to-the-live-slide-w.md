@@ -2,8 +2,8 @@
 id: T-020
 title: Program page scrolls to the live slide when going verse → song
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: programs
 rolled: 0
 order: -6
@@ -21,7 +21,17 @@ Chat 07/06 BCEV: «in pagina de programe, cand se trece de la un verset la o can
 - Commit: a2f98de0 (rebased onto origin/main; local main has 9 unpushed chore commits).
 - 2026-10-04: User review 2026-10-04: wants the full PR link in the review message; re-record videos with red boxes/arrows (T-053 helper) before asking again.
 
+- 2026-10-04 Re-recorded both videos with highlights. Before: the list is boxed, "Bug: live slide 1 is scrolled off the top" (main plus the old early return, temporarily). After: the live slide is boxed, "Fixed: the live slide is in view" (main). Branch rebased onto origin/main da693918. Commit is now 373a5f8e. PR body updated with the v2 videos.
+- 2026-10-04: PR lines (v3, with voice-over and red highlights; rebased onto origin/main 0247de61; commit 6dfee6a8):
+branch: fix/program-scroll-to-live-slide
+pr: #76 https://github.com/radio-crestin/church-hub/pull/76
+before: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-program-scroll-to-live-slide-v3/t020-before-v3.mp4
+after: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-program-scroll-to-live-slide-v3/t020-after-v3.mp4
+build: pending, "PR build #76" is running (get the links later with pr-build-links.sh 76 --wait)
+The before video was recorded on origin/main with the old early return put back for a moment (the ≤ v0.1.95 logic); the after video is plain main.
+- 2026-10-04: Already fixed in v0.1.96 (7f4c9fbd); PR #76 adds a regression e2e test (not merged yet).
+
 ## PR
 - Branch: fix/program-scroll-to-live-slide
 - PR: #76 https://github.com/radio-crestin/church-hub/pull/76
-- Videos: before: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-program-scroll-to-live-slide/t020-before.mp4, after: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-program-scroll-to-live-slide/t020-after.mp4
+- Videos: before: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-program-scroll-to-live-slide-v3/t020-before-v3.mp4, after: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-program-scroll-to-live-slide-v3/t020-after-v3.mp4

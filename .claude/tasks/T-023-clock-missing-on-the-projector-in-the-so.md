@@ -2,8 +2,8 @@
 id: T-023
 title: Clock missing on the projector in the Solo scene
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: projector
 rolled: 0
 order: -1
@@ -17,7 +17,12 @@ Chat 16/08 BCEV: «in scena Solo din Program, nu mai apare ceasul pe videoproiec
 - Test: `CI=1 TEST_PORT=3123 bunx playwright test e2e/scene-item-clock.spec.ts --workers=1 --retries=2`.
 - Not verified: WebKit projects (WebKit not installed locally); OBS switch with a live OBS. Seen twice: the Playwright webServer readiness check sometimes times out after 180 s even though the server is "Ready" (a rerun passes). Looks like an existing flake; not investigated.
 
+- 2026-10-04 Rebased on origin/main (commit now `eb2191b2`, force-pushed). Videos re-recorded with T-053 highlights (red box on the missing clock / on the clock) and re-uploaded at the same URLs. PR body updated.
+
+- 2026-10-04 v3: rebased on origin/main (voice-over helper, 0247de61); commit now `a6593693`, force-pushed. Videos re-recorded with voice-over and highlights, uploaded under the -v3 tag. PR body updated.
+- 2026-10-04: Scene items (Solo) now render the empty slide with its own settings, clock included. PR #79 (not merged yet).
+
 ## PR
 - Branch: fix/clock-on-scene-items
 - PR: #79 https://github.com/radio-crestin/church-hub/pull/79
-- Videos: before: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-clock-on-scene-items/T-023-before.mp4, after: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-clock-on-scene-items/T-023-after.mp4
+- Videos: before: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-clock-on-scene-items-v3/T-023-before.mp4, after: https://github.com/radio-crestin/church-hub/releases/download/pr-demos-fix-clock-on-scene-items-v3/T-023-after.mp4
