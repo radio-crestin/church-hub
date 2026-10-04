@@ -118,7 +118,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
         uses: actions/cache@v6
@@ -154,7 +154,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
         uses: actions/cache@v6
@@ -197,7 +197,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
         uses: actions/cache@v6
@@ -292,7 +292,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
         uses: actions/cache@v6

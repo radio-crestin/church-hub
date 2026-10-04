@@ -215,7 +215,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       # Same path and key as test.yml, so all workflows share one entry. Only
       # bun's download cache: node_modules (230 MB on macOS, 40 s to restore)
