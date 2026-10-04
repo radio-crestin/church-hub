@@ -8,6 +8,8 @@ import {
   sanitizeFilename,
 } from '../utils'
 
+export type SaveFormat = ExportFormat | 'pdf' | 'docx'
+
 const LAST_SAVE_PATH_KEY = 'church-hub-last-song-save-path'
 
 // Check if we're running in Tauri mode
@@ -26,7 +28,7 @@ interface FileTypeConfig {
   mimeType: string
 }
 
-function getFileTypeConfig(format: ExportFormat): FileTypeConfig {
+function getFileTypeConfig(format: SaveFormat): FileTypeConfig {
   switch (format) {
     case 'pptx':
       return {
@@ -34,6 +36,19 @@ function getFileTypeConfig(format: ExportFormat): FileTypeConfig {
         filterName: 'PowerPoint',
         mimeType:
           'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      }
+    case 'pdf':
+      return {
+        extension: 'pdf',
+        filterName: 'PDF',
+        mimeType: 'application/pdf',
+      }
+    case 'docx':
+      return {
+        extension: 'docx',
+        filterName: 'Word',
+        mimeType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       }
     case 'opensong':
     default:
@@ -104,13 +119,43 @@ async function saveWithTauri(
   return { success: true, filePath: savePath }
 }
 
+function pptxToBytes(base64Data: string): Uint8Array {
+  const binaryString = atob(base64Data)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+  return bytes
+}
+
+async function generateSongFile(
+  song: SongWithSlides,
+  format: SaveFormat,
+): Promise<Uint8Array> {
+  switch (format) {
+    case 'pptx':
+      return pptxToBytes(await generatePptxBase64(song))
+    case 'pdf': {
+      const { generatePdf } = await import('../utils/generatePdf')
+      return generatePdf(song)
+    }
+    case 'docx': {
+      const { generateDocx } = await import('../utils/generateDocx')
+      return generateDocx(song)
+    }
+    case 'opensong':
+    default:
+      return new TextEncoder().encode(generateOpenSongXml(song))
+  }
+}
+
 export function useSaveSongToFile() {
   const [isPending, setIsPending] = useState(false)
 
   const saveSong = useCallback(
     async (
       song: SongWithSlides,
-      format: ExportFormat = 'opensong',
+      format: SaveFormat = 'opensong',
     ): Promise<SaveSongResult> => {
       const sanitizedTitle = sanitizeFilename(song.title)
       const fileConfig = getFileTypeConfig(format)
@@ -118,23 +163,7 @@ export function useSaveSongToFile() {
 
       setIsPending(true)
       try {
-        let data: Uint8Array
-
-        if (format === 'pptx') {
-          // Generate PPTX as binary
-          const base64Data = await generatePptxBase64(song)
-          const binaryString = atob(base64Data)
-          const bytes = new Uint8Array(binaryString.length)
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i)
-          }
-          data = bytes
-        } else {
-          // Generate OpenSong XML
-          const xmlContent = generateOpenSongXml(song)
-          const encoder = new TextEncoder()
-          data = encoder.encode(xmlContent)
-        }
+        const data = await generateSongFile(song, format)
 
         if (isTauri) {
           // Use Tauri's native file dialog

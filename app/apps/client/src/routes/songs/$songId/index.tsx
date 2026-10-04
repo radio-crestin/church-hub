@@ -11,6 +11,7 @@ import {
   CalendarPlus,
   Download,
   Eye,
+  FileText,
   ImageOff,
   Loader2,
   Music,
@@ -47,6 +48,7 @@ import {
 import {
   type ExportFormat,
   ExportFormatModal,
+  type SaveFormat,
   useSaveSongToFile,
 } from '~/features/song-export'
 import {
@@ -588,9 +590,8 @@ function SongPreviewPage() {
     showToast(t('messages.presentationCountReset'), 'success')
   }, [song, resetPresentationCount, showToast, t])
 
-  const handleExportFormatConfirm = useCallback(
-    async (format: ExportFormat) => {
-      setShowExportFormatModal(false)
+  const saveSongAs = useCallback(
+    async (format: SaveFormat) => {
       if (!song) return
 
       const result = await saveSong(song, format)
@@ -601,6 +602,14 @@ function SongPreviewPage() {
       }
     },
     [song, saveSong, showToast, t],
+  )
+
+  const handleExportFormatConfirm = useCallback(
+    (format: ExportFormat) => {
+      setShowExportFormatModal(false)
+      return saveSongAs(format)
+    },
+    [saveSongAs],
   )
 
   // Present the selected slide
@@ -924,6 +933,24 @@ function SongPreviewPage() {
       disabled: isSaving,
       onSelect: handleOpenExportModal,
       testId: 'song-save-to-file',
+    },
+    {
+      id: 'export-pdf',
+      label: t('actions.exportPdf'),
+      description: t('actionsMenu.exportPdfDescription'),
+      icon: <FileText size={18} />,
+      disabled: isSaving,
+      onSelect: () => saveSongAs('pdf'),
+      testId: 'song-export-pdf',
+    },
+    {
+      id: 'export-docx',
+      label: t('actions.exportDocx'),
+      description: t('actionsMenu.exportDocxDescription'),
+      icon: <FileText size={18} />,
+      disabled: isSaving,
+      onSelect: () => saveSongAs('docx'),
+      testId: 'song-export-docx',
     },
     ...(hasMediaPreviewBackground
       ? [

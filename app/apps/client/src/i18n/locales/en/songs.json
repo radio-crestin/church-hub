@@ -17,6 +17,8 @@
     "cloneSlide": "Clone Slide",
     "addToSchedule": "Add to Schedule",
     "saveToFile": "Save to File",
+    "exportPdf": "Export as PDF",
+    "exportDocx": "Export as Word",
     "setKeyLine": "Set Key Line"
   },
   "editor": {
@@ -380,6 +382,8 @@
   "actionsMenu": {
     "trigger": "More",
     "saveToFileDescription": "Export this song as a file on your computer",
+    "exportPdfDescription": "Print-ready A4 page with the title and lyrics",
+    "exportDocxDescription": "Editable A4 Word document with the title and lyrics",
     "hideBackgroundDescription": "Plain black behind the lyrics here; the screens keep the background",
     "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
     "editDescription": "Open the editor to change lyrics and slides"

@@ -18,6 +18,8 @@ import { actionsMenuItem, openActionsMenu } from './helpers/actions-menu'
 
 const SONG_ACTION_ITEMS = [
   'song-save-to-file',
+  'song-export-pdf',
+  'song-export-docx',
   'song-toggle-layout',
   'song-edit',
 ] as const
@@ -113,7 +115,7 @@ test.describe('Page actions menu', () => {
       await expect(panel.getByTestId('song-save-to-file')).toBeFocused()
 
       await page.keyboard.press('ArrowDown')
-      await expect(panel.getByTestId('song-toggle-layout')).toBeFocused()
+      await expect(panel.getByTestId('song-export-pdf')).toBeFocused()
 
       await page.keyboard.press('Escape')
       await expect(panel).toBeHidden()
