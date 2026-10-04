@@ -12,6 +12,21 @@ test.describe('E2E test server isolation', () => {
     expect(webServer?.reuseExistingServer).toBe(false)
   })
 
+  // An HTTP readiness probe has no socket timeout: one unanswered request
+  // made a run wait 180 s for a server that was ready in 0.2 s (T-056).
+  test('starts on the server Ready line, not on an HTTP probe', ({}, testInfo) => {
+    const webServer = testInfo.config.webServer
+    expect(webServer?.url).toBeUndefined()
+    expect(webServer?.port).toBeUndefined()
+    expect(webServer?.wait?.stdout).toBeInstanceOf(RegExp)
+    expect('[startup] === Server Ready (total: 154.5ms) ===').toMatch(
+      webServer?.wait?.stdout as RegExp,
+    )
+    expect('[startup] Boot server listening on 3099').not.toMatch(
+      webServer?.wait?.stdout as RegExp,
+    )
+  })
+
   test('never frees port 3000 or proxies to the dev server', ({}, testInfo) => {
     expect(testInfo.config.webServer?.command).not.toContain('dev:web')
   })
