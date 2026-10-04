@@ -1,0 +1,340 @@
+name: Build desktop app
+
+# The one place the desktop installers are built. Called by:
+#   - build-release.yml — every v*.*.* tag (the published release)
+#   - pr-build.yml      — every pull request (a test build to download)
+# Each platform compiles the sidecar, smoke-tests it (/ping must answer),
+# builds the Tauri bundle and uploads the installer, renamed to
+# church-hub-<platform>-<artifact_suffix>.<ext>, to the GitHub release
+# `release_tag` (which the caller creates first).
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit to build. Empty builds the ref that triggered the caller.
+        type: string
+        default: ''
+      version:
+        description: Version written into tauri.conf.json, e.g. 0.1.103.
+        type: string
+        required: true
+      artifact_suffix:
+        description: Installer name tail, e.g. v-0.1.103 or pr-79-abc1234.
+        type: string
+        required: true
+      release_tag:
+        description: Existing GitHub release that receives the renamed installers.
+        type: string
+        required: true
+      tauri_release_tag:
+        description: >-
+          Passed to tauri-action as tagName, which then also uploads the raw
+          bundles and updater signatures there. Empty skips that upload.
+        type: string
+        default: ''
+      macos_intel:
+        description: Also build the cross-compiled macOS x64 installer.
+        type: boolean
+        default: true
+
+env:
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  RUSTUP_MAX_RETRIES: 10
+  # Public PostHog tokens — write-only client-side keys, safe to embed in
+  # the bundle. Secrets override the defaults so a fork can point to its
+  # own PostHog project without editing the workflow. These MUST be in
+  # the env at build time: Vite inlines VITE_PUBLIC_* into the client
+  # bundle, and the Tauri/Rust build reads them so the shell can ship
+  # startup events from the bundled binary.
+  VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN || 'phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK' }}
+  VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com' }}
+  VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN || '4GDD07pVU98dgX9qHiFHNswimJuq7gD1hE6nvTHXMBY' }}
+
+jobs:
+  build:
+    name: Build (${{ matrix.artifact_base }})
+    # Linux is new and not part of the updater manifest yet: a failed Linux
+    # build must not hold back the macOS and Windows release.
+    continue-on-error: ${{ matrix.optional }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS ARM64 (Apple Silicon)
+          - platform: macos-latest
+            rust_target: aarch64-apple-darwin
+            bun_target: bun-darwin-arm64
+            sidecar_suffix: aarch64-apple-darwin
+            artifact_base: church-hub-macos-arm64
+            artifact_ext: dmg
+            tauri_args: ''
+            smoke: true
+            optional: false
+
+          # macOS x64 (Intel) - cross-compiled from ARM64 runner, so the
+          # sidecar can't be launched here for the smoke test.
+          - platform: macos-latest
+            rust_target: x86_64-apple-darwin
+            bun_target: bun-darwin-x64
+            sidecar_suffix: x86_64-apple-darwin
+            artifact_base: church-hub-macos-x64
+            artifact_ext: dmg
+            tauri_args: ''
+            smoke: false
+            optional: false
+
+          # Windows x64
+          - platform: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+            bun_target: bun-windows-x64
+            sidecar_suffix: x86_64-pc-windows-msvc.exe
+            artifact_base: church-hub-windows-x64
+            artifact_ext: exe
+            tauri_args: ''
+            smoke: true
+            optional: false
+
+          # Linux x64 — AppImage, one file that runs on most distros. Built
+          # on 22.04 so it also runs on older glibc. The bundle targets in
+          # tauri.conf.json are macOS/Windows ones, so name it here.
+          - platform: ubuntu-22.04
+            rust_target: x86_64-unknown-linux-gnu
+            bun_target: bun-linux-x64
+            sidecar_suffix: x86_64-unknown-linux-gnu
+            artifact_base: church-hub-linux-x64
+            artifact_ext: AppImage
+            tauri_args: --bundles appimage
+            smoke: true
+            optional: true
+        exclude: ${{ fromJSON(inputs.macos_intel && '[]' || '[{"artifact_base":"church-hub-macos-x64"}]') }}
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+
+      # The version is used as is, pre-release suffix included: the
+      # updater compares versions as semver, so a build tagged 0.1.98-beta.1
+      # must call itself that, or it would offer itself 0.1.98-beta.2 as an
+      # older release. (The MSI, which only accepted numeric versions and used
+      # to force the suffix off, is no longer built.)
+      - name: Name the artifact
+        id: version
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+          ARTIFACT_NAME: ${{ matrix.artifact_base }}-${{ inputs.artifact_suffix }}.${{ matrix.artifact_ext }}
+        run: |
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+          echo "Building version: $VERSION (artifact: $ARTIFACT_NAME)"
+
+      - name: Update version in tauri.conf.json
+        shell: bash
+        env:
+          TAURI_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cd app/tauri
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            powershell -Command "(Get-Content tauri.conf.json) -replace '\"version\": \"[^\"]*\"', '\"version\": \"$TAURI_VERSION\"' | Set-Content tauri.conf.json"
+          else
+            sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$TAURI_VERSION\"/" tauri.conf.json
+            rm -f tauri.conf.json.bak
+          fi
+
+      # Tauri's WebKitGTK shell, the tray/shortcut plugins, rodio's ALSA
+      # output and the MIDI module's ALSA/JACK bindings.
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential file patchelf \
+            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
+            libssl-dev libxdo-dev \
+            libasound2-dev libpulse-dev libjack-jackd2-dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v5
+        id: bun-cache
+        with:
+          path: |
+            ~/.bun/install/cache
+            app/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './app/tauri -> target'
+          cache-targets: true
+          cache-on-failure: true
+          shared-key: ${{ matrix.rust_target }}
+
+      - name: Install dependencies
+        working-directory: app
+        run: bun install --frozen-lockfile
+
+      # The v0.1.60 lesson: a sidecar that passes `bun test` can still die
+      # when compiled. Launch the compiled one, laid out like the bundle,
+      # and require /ping-style readiness before spending time on Tauri.
+      - name: Smoke-test the compiled sidecar
+        if: matrix.smoke
+        working-directory: app/apps/server
+        env:
+          RUN_COMPILE_TESTS: '1'
+        timeout-minutes: 10
+        shell: bash
+        run: bun test src/__tests__/compiled-sidecar.test.ts
+
+      - name: Cache frontend build
+        uses: actions/cache@v5
+        id: frontend-cache
+        with:
+          path: app/apps/client/dist
+          # `tauri.conf.json` is hashed too: Vite reads the version from it
+          # at build time and embeds `__appVersion` into the bundle, so a
+          # version bump must invalidate any cached dist. Without this,
+          # releases would silently ship the previous version's UI.
+          key: ${{ runner.os }}-frontend-${{ hashFiles('app/apps/client/src/**', 'app/apps/client/package.json', 'app/apps/client/vite.config.ts', 'app/apps/client/tsconfig.json', 'app/tauri/tauri.conf.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
+
+      - name: Build client
+        if: steps.frontend-cache.outputs.cache-hit != 'true'
+        working-directory: app
+        run: bun run --filter client build
+
+      - name: Ensure sidecar bin directory exists
+        shell: bash
+        run: mkdir -p app/tauri/bin
+
+      - name: Cache sidecar binary
+        uses: actions/cache@v5
+        id: sidecar-cache
+        with:
+          path: app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}
+          key: ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-${{ hashFiles('app/apps/server/src/**', 'app/apps/server/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-sidecar-${{ matrix.sidecar_suffix }}-
+
+      - name: Compile server sidecar
+        if: steps.sidecar-cache.outputs.cache-hit != 'true'
+        working-directory: app/apps/server
+        shell: bash
+        run: |
+          mkdir -p ../../tauri/bin
+          OUTFILE="../../tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}"
+          echo "Compiling sidecar to: $OUTFILE"
+          bun build \
+            --compile \
+            --production \
+            --minify \
+            --minify-syntax \
+            --target ${{ matrix.bun_target }} \
+            --outfile "$OUTFILE" \
+            ./src/index.ts
+
+      - name: Verify sidecar binary
+        shell: bash
+        run: |
+          echo "Contents of tauri/bin:"
+          ls -la app/tauri/bin/
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            test -f "app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}" || exit 1
+          else
+            test -x "app/tauri/bin/church-hub-sidecar-${{ matrix.sidecar_suffix }}" || exit 1
+          fi
+          echo "Sidecar binary verified successfully"
+
+      - name: Build Tauri app
+        id: tauri_build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: app
+          tauriScript: bunx tauri
+          args: --target ${{ matrix.rust_target }} ${{ matrix.tauri_args }}
+          tagName: ${{ inputs.tauri_release_tag }}
+          releaseName: 'Church Hub v__VERSION__'
+          releaseDraft: true
+          prerelease: false
+          # latest.json is assembled once all three builds are uploaded (see
+          # the updater-manifest job); letting each matrix job write its own
+          # copy would have them overwrite each other.
+          includeUpdaterJson: false
+
+      - name: Debug - List all bundle outputs
+        shell: bash
+        run: |
+          echo "=== Listing all bundle directories ==="
+          find app/tauri/target -type d -name "bundle" 2>/dev/null | while read -r dir; do
+            echo "Found bundle dir: $dir"
+            find "$dir" -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.tar.gz" -o -name "*.sig" \) 2>/dev/null
+          done
+          echo "=== Done ==="
+
+      # The updater refuses anything unsigned, so a build that produced no
+      # signature must not reach the release.
+      - name: Verify the updater signature was produced
+        shell: bash
+        run: |
+          SIG=$(find app/tauri/target -type f \( -name "*.app.tar.gz.sig" -o -name "*-setup.exe.sig" -o -name "*.AppImage.sig" \) 2>/dev/null | head -1)
+          if [ -z "$SIG" ]; then
+            echo "::error::No updater signature (.sig) was produced — is TAURI_SIGNING_PRIVATE_KEY set and does it match plugins.updater.pubkey?"
+            exit 1
+          fi
+          echo "Signature: $SIG"
+
+      # .dmg on macOS, the NSIS *-setup.exe on Windows, the .AppImage on Linux.
+      - name: Create versioned artifact
+        shell: bash
+        env:
+          ARTIFACT_NAME: ${{ steps.version.outputs.artifact_name }}
+        run: |
+          case "$RUNNER_OS" in
+            macOS) PATTERN='*.dmg' ;;
+            Windows) PATTERN='*-setup.exe' ;;
+            Linux) PATTERN='*.AppImage' ;;
+          esac
+          FILE=$(find app/tauri/target -name "$PATTERN" -type f 2>/dev/null | head -1)
+          if [ -z "$FILE" ]; then
+            echo "::error::No $PATTERN installer found under app/tauri/target"
+            exit 1
+          fi
+          cp "$FILE" "$ARTIFACT_NAME"
+          ls -la "$ARTIFACT_NAME"
+
+      - name: Upload versioned artifact to release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.release_tag }}
+          ARTIFACT_NAME: ${{ steps.version.outputs.artifact_name }}
+        run: gh release upload "$TAG" "$ARTIFACT_NAME" --clobber --repo "$GITHUB_REPOSITORY"

@@ -1,0 +1,180 @@
+name: PR build
+run-name: PR build #${{ github.event.pull_request.number || inputs.pr }}
+
+# Every pull request gets installers to download and test: macOS (Apple
+# Silicon), Windows and Linux, built by build-desktop.yml (the release
+# build). They go to the prerelease `pr-build-<n>` and one comment on the
+# PR links them; each push rebuilds and edits that same comment.
+#
+# Cost: the repo is public, so Actions minutes are free; still, drafts,
+# fork PRs and pushes that only touch docs or .claude/ are skipped, a
+# newer push cancels the build in progress, and the cross-compiled Intel
+# Mac installer is left to releases.
+#
+# Rebuild a PR by hand (e.g. one opened before this workflow existed):
+#   gh workflow run pr-build.yml -f pr=<number>
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '.claude/**'
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number to build
+        required: true
+
+concurrency:
+  group: pr-build-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    # Fork PRs never get the signing key; drafts wait until ready.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (!github.event.pull_request.draft &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      pr: ${{ steps.resolve.outputs.pr }}
+      sha: ${{ steps.resolve.outputs.sha }}
+      suffix: ${{ steps.resolve.outputs.suffix }}
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      # The build carries the latest release's version, so the installed
+      # test build's updater sees "up to date" instead of replacing itself
+      # with the release.
+      - name: Resolve the PR head, version and release
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number || inputs.pr }}
+        run: |
+          set -euo pipefail
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::Not a PR number: $PR"; exit 1; }
+          read -r SHA HEAD_REPO < <(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" \
+            --jq '"\(.head.sha) \(.head.repo.full_name)"')
+          if [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo "::error::PR #$PR comes from $HEAD_REPO; only branches of this repository are built."
+            exit 1
+          fi
+          LATEST=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          TAG="pr-build-$PR"
+          {
+            echo "pr=$PR"
+            echo "sha=$SHA"
+            echo "suffix=pr-$PR-${SHA:0:7}"
+            echo "tag=$TAG"
+            echo "version=${LATEST#v}"
+          } | tee -a "$GITHUB_OUTPUT"
+
+          # A prerelease, not a draft: draft asset links 404 for anyone
+          # without push access, and prereleases stay out of "Latest".
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "PR #$PR test build" \
+              --notes "Installers built from pull request #$PR. The PR comment links the ones for its latest commit."
+          fi
+
+  build:
+    needs: prepare
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build-desktop.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+      version: ${{ needs.prepare.outputs.version }}
+      artifact_suffix: ${{ needs.prepare.outputs.suffix }}
+      release_tag: ${{ needs.prepare.outputs.tag }}
+      macos_intel: false
+
+  comment:
+    needs: [prepare, build]
+    # Not on cancel: the newer push's run writes the comment instead.
+    if: ${{ !cancelled() && needs.prepare.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Link the installers on the PR
+        uses: actions/github-script@v7
+        env:
+          PR: ${{ needs.prepare.outputs.pr }}
+          SHA: ${{ needs.prepare.outputs.sha }}
+          SUFFIX: ${{ needs.prepare.outputs.suffix }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const { PR, SHA, SUFFIX, TAG, VERSION, RUN_URL } = process.env
+            const repo = context.repo
+            const MARKER = '<!-- pr-build -->'
+            const platforms = [
+              { base: 'church-hub-macos-arm64', ext: 'dmg', label: 'macOS (Apple Silicon)' },
+              { base: 'church-hub-windows-x64', ext: 'exe', label: 'Windows (x64)' },
+              { base: 'church-hub-linux-x64', ext: 'AppImage', label: 'Linux (x64, AppImage)' },
+            ]
+
+            const release = await github.rest.repos.getReleaseByTag({ ...repo, tag: TAG })
+            const assets = await github.paginate(github.rest.repos.listReleaseAssets, {
+              ...repo, release_id: release.data.id, per_page: 100,
+            })
+
+            const rows = platforms.map((p) => {
+              const name = `${p.base}-${SUFFIX}.${p.ext}`
+              const asset = assets.find((a) => a.name === name)
+              const link = asset ? `[${name}](${asset.browser_download_url})` : `build failed — [log](${RUN_URL})`
+              return { ...p, asset, row: `| ${p.label} | ${link} |` }
+            })
+
+            // Older commits' installers of a platform that rebuilt fine.
+            for (const p of rows.filter((r) => r.asset)) {
+              const stale = assets.filter((a) => a.name.startsWith(`${p.base}-pr-`) && a.name !== p.asset.name)
+              for (const a of stale) {
+                await github.rest.repos.deleteReleaseAsset({ ...repo, asset_id: a.id })
+              }
+            }
+
+            const body = [
+              MARKER,
+              `### Test build of ${SHA.slice(0, 7)}`,
+              '',
+              '| Platform | Download |',
+              '|---|---|',
+              ...rows.map((r) => r.row),
+              '',
+              `Built from ${SHA} as version ${VERSION} · [build log](${RUN_URL}) · rebuilt on every push.`,
+              'It installs over Church Hub on that computer and uses the same data: back it up first if this PR changes the database.',
+              '',
+              '<details><summary>Opening the unsigned installers</summary>',
+              '',
+              '- **macOS**: open the .dmg and drag church-hub into Applications. If macOS says it is damaged or can\'t be opened, run `xattr -c /Applications/church-hub.app` in Terminal once.',
+              '- **Windows**: if SmartScreen shows "Windows protected your PC", click **More info** → **Run anyway**.',
+              '- **Linux**: `chmod +x church-hub-linux-x64-*.AppImage`, then run it.',
+              '',
+              '</details>',
+            ].join('\n')
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...repo, issue_number: Number(PR), per_page: 100,
+            })
+            const mine = comments.find((c) => c.body?.startsWith(MARKER))
+            if (mine) {
+              await github.rest.issues.updateComment({ ...repo, comment_id: mine.id, body })
+            } else {
+              await github.rest.issues.createComment({ ...repo, issue_number: Number(PR), body })
+            }
+            core.summary.addRaw(body).write()
