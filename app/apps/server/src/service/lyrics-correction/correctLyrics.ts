@@ -65,7 +65,7 @@ export async function correctLyrics(
       null,
       2,
     )}`,
-    maxTokens: Math.min(4000, 200 + text.length * 2),
+    maxOutputTokens: Math.min(4000, 200 + text.length * 2),
   })
 
   const corrected = parseCorrectedLines(answer, lines.length)
