@@ -25,6 +25,10 @@ permissions:
 
 jobs:
   build:
+    # build-desktop.yml's build job asks for contents: write (the release
+    # upload, skipped here); a caller granting less fails at startup.
+    permissions:
+      contents: write
     uses: ./.github/workflows/build-desktop.yml
     secrets: inherit
     with:
