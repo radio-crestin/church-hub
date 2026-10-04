@@ -11,9 +11,10 @@ on:
 permissions:
   contents: read
 
+# The updater signing key and the release deploy key live in the `release`
+# environment, which only v* tags may use. Only the jobs that need them
+# (create-release, the desktop builds, sync-version-back) name it.
 env:
-  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
@@ -128,6 +129,7 @@ jobs:
     needs: [test]
     if: github.triggering_actor == github.actor
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
     outputs:
@@ -145,9 +147,11 @@ jobs:
       # without the matching private key is one no installed copy would ever
       # accept. Better to stop here than to publish it.
       - name: Check the updater signing key is configured
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
           if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
-            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set. Add the updater private key (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD) to the repository secrets."
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is not set. Add the updater private key (and TAURI_SIGNING_PRIVATE_KEY_PASSWORD) to the release environment's secrets."
             exit 1
           fi
 
@@ -369,11 +373,13 @@ jobs:
   #
   # main's rule set requires pull requests and status checks; GitHub can't
   # list the Actions token as a bypass, so the push goes over SSH with the
-  # RELEASE_DEPLOY_KEY deploy key, which the rule set lets through.
+  # RELEASE_DEPLOY_KEY deploy key (a release environment secret), which the
+  # rule set lets through.
   sync-version-back:
     needs: [build, updater-manifest]
     if: github.triggering_actor == github.actor
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: read
     steps:
