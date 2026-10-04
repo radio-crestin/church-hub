@@ -5,8 +5,11 @@ on:
     tags:
       - 'v*.*.*'
 
+# Read-only by default; the jobs that write the release or push to main
+# ask for contents: write themselves. The test job, which installs and
+# runs the whole dependency tree, never holds a write token.
 permissions:
-  contents: write
+  contents: read
 
 env:
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -120,6 +123,8 @@ jobs:
   create-release:
     needs: [test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -250,6 +255,8 @@ jobs:
   # test build, so the release path is exercised on each pull request.
   build:
     needs: [test, create-release]
+    permissions:
+      contents: write
     uses: ./.github/workflows/build-desktop.yml
     secrets: inherit
     with:
@@ -267,6 +274,8 @@ jobs:
   updater-manifest:
     needs: [build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
