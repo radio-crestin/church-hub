@@ -5,16 +5,16 @@ import { createLogger } from '../../utils/logger'
 const logger = createLogger('bible-bookmarks')
 
 /**
- * Renders the bookmark list as plain text.
+ * Renders the bookmark list as standard Markdown.
  *
- * The format round-trips through importBookmarksFromText: a reference sits on
- * its own line, the verse text is indented underneath it (indentation is what
- * marks a line as text rather than a reference), and notes are wrapped in
- * dashes.
+ * The format round-trips through importBookmarksFromText: each verse is a
+ * `## reference - TRANSLATION` heading with the verse under it, its bold,
+ * underline and highlight written as `**…**`, `<u>…</u>` and `<mark>…</mark>`;
+ * a note is a `> quote`.
  */
-export function exportBookmarksAsText(): string {
+export function exportBookmarksAsMarkdown(): string {
   try {
-    logger.debug('Exporting bible bookmarks as text')
+    logger.debug('Exporting bible bookmarks as Markdown')
 
     const bookmarks = getBookmarks()
     const notes = getBookmarkNotes()
@@ -36,7 +36,7 @@ export function exportBookmarksAsText(): string {
 
     for (const item of items) {
       if (item.note) {
-        lines.push(`--- ${item.note.content} ---`)
+        lines.push(`> ${item.note.content}`)
         lines.push('')
         continue
       }
@@ -47,8 +47,9 @@ export function exportBookmarksAsText(): string {
       const suffix = bookmark.translationAbbreviation
         ? ` - ${bookmark.translationAbbreviation}`
         : ''
-      lines.push(`${bookmark.reference}${suffix}`)
-      lines.push(`    ${bookmark.text}`)
+      lines.push(`## ${bookmark.reference}${suffix}`)
+      lines.push('')
+      lines.push(bookmark.markdown)
       lines.push('')
     }
 

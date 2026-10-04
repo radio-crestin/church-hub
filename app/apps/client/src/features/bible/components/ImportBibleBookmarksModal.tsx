@@ -55,7 +55,7 @@ export function ImportBibleBookmarksModal({
     }
   }, [text, translationId, importMutation, handleClose])
 
-  /** Reads a .txt file into the textarea, in the browser and in Tauri alike. */
+  /** Reads a .md or .txt file into the textarea, in the browser and in Tauri alike. */
   const handlePickFile = useCallback(async () => {
     const isTauri =
       typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -70,7 +70,7 @@ export function ImportBibleBookmarksModal({
 
     const selected = await open({
       multiple: false,
-      filters: [{ name: 'Text File', extensions: ['txt'] }],
+      filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'txt'] }],
     })
 
     if (typeof selected === 'string') {
@@ -161,7 +161,7 @@ export function ImportBibleBookmarksModal({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".txt,text/plain"
+            accept=".md,.markdown,.txt,text/markdown,text/plain"
             onChange={handleFileInputChange}
             className="hidden"
           />
@@ -177,7 +177,10 @@ export function ImportBibleBookmarksModal({
                 <AlertTriangle className="w-4 h-4" />
                 {t('bookmarks.import.partial', {
                   imported: result.imported,
-                  skipped: result.errors.length,
+                  // A text mismatch still imports the verse, only unstyled
+                  skipped: result.errors.filter(
+                    (error) => error.reason !== 'text_mismatch',
+                  ).length,
                 })}
               </div>
               <ul className="mt-2 space-y-1">

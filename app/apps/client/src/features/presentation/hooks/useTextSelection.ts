@@ -65,6 +65,16 @@ function getCharacterOffset(
 }
 
 /**
+ * The element marked with `data-style-anchor` (see AnimatedText) that holds
+ * `node`, when it sits inside `container`.
+ */
+function styleAnchorOf(node: Node, container: HTMLElement): HTMLElement | null {
+  const element = node instanceof Element ? node : node.parentElement
+  const anchor = element?.closest<HTMLElement>('[data-style-anchor]')
+  return anchor && container.contains(anchor) ? anchor : null
+}
+
+/**
  * Hook to track text selection within a container element.
  * Returns getter functions instead of state to avoid triggering re-renders
  * when selection changes. This prevents DOM replacement which would clear
@@ -108,22 +118,24 @@ export function useTextSelection(
       return null
     }
 
-    // Calculate character offsets
-    const startOffset = getCharacterOffset(
-      container,
-      range.startContainer,
-      range.startOffset,
-    )
-    const endOffset = getCharacterOffset(
-      container,
-      range.endContainer,
-      range.endOffset,
-    )
+    // Count inside the text the selection sits in when it is marked as the
+    // one highlights belong to, minus what the screen put in front of it, so
+    // the offsets point at the same words on every screen.
+    const anchor = styleAnchorOf(range.startContainer, container)
+    const insideAnchor = anchor !== null && anchor.contains(range.endContainer)
+    const countIn = insideAnchor ? anchor : container
+    const shift = insideAnchor ? Number(anchor.dataset.styleAnchor) || 0 : 0
+
+    const startOffset =
+      getCharacterOffset(countIn, range.startContainer, range.startOffset) -
+      shift
+    const endOffset =
+      getCharacterOffset(countIn, range.endContainer, range.endOffset) - shift
 
     return {
       range: {
-        start: Math.min(startOffset, endOffset),
-        end: Math.max(startOffset, endOffset),
+        start: Math.max(0, Math.min(startOffset, endOffset)),
+        end: Math.max(0, startOffset, endOffset),
       },
       text,
     }

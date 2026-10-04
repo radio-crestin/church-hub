@@ -70,7 +70,7 @@ export async function reorderBookmarkItems(
   return response.success ?? false
 }
 
-export async function exportBookmarksAsText(): Promise<string> {
+export async function exportBookmarksAsMarkdown(): Promise<string> {
   const response = await fetcher<{ data: string }>('/api/song-bookmarks/export')
   return response.data ?? ''
 }

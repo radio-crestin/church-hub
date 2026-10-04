@@ -4,7 +4,7 @@ export { useAlphabetScroll } from './useAlphabetScroll'
 export {
   useAddBookmarkNote,
   useBookmarkNotes,
-  useExportBookmarksAsText,
+  useExportBookmarksAsMarkdown,
   useRemoveBookmarkNote,
   useReorderBookmarkItems,
   useUpdateBookmarkNote,

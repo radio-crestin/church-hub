@@ -5,7 +5,7 @@ import {
   addBookmarkNote,
   type BookmarkItemRef,
   type BookmarkNote,
-  exportBookmarksAsText,
+  exportBookmarksAsMarkdown,
   getBookmarkNotes,
   removeBookmarkNote,
   reorderBookmarkItems,
@@ -137,8 +137,8 @@ export function useReorderBookmarkItems() {
   })
 }
 
-export function useExportBookmarksAsText() {
+export function useExportBookmarksAsMarkdown() {
   return useMutation({
-    mutationFn: exportBookmarksAsText,
+    mutationFn: exportBookmarksAsMarkdown,
   })
 }

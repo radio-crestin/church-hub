@@ -112,4 +112,55 @@ describe('parseBookmarksText', () => {
     expect(result).toHaveLength(2)
     expect(result[1]).toMatchObject({ reference: 'Psalmi 23:1' })
   })
+
+  test('reads the Markdown export: heading, styled verse, quoted note', () => {
+    const text = [
+      '## Ioan 3:16 - RCCV',
+      '',
+      'Fiindcă atât de mult a iubit <mark>Dumnezeu</mark> <u>lumea</u>',
+      '',
+      '> Chemare',
+      '',
+      '## Psalmi 23:1',
+      '',
+      'Domnul este **Păstorul** meu',
+    ].join('\n')
+
+    expect(parseBookmarksText(text)).toEqual([
+      {
+        kind: 'verse',
+        line: 1,
+        content: 'Ioan 3:16 - RCCV',
+        reference: 'Ioan 3:16',
+        translationAbbreviation: 'RCCV',
+        markdown:
+          'Fiindcă atât de mult a iubit <mark>Dumnezeu</mark> <u>lumea</u>',
+        markdownLine: 3,
+      },
+      { kind: 'note', line: 5, content: 'Chemare' },
+      {
+        kind: 'verse',
+        line: 7,
+        content: 'Psalmi 23:1',
+        reference: 'Psalmi 23:1',
+        translationAbbreviation: undefined,
+        markdown: 'Domnul este **Păstorul** meu',
+        markdownLine: 9,
+      },
+    ])
+  })
+
+  test('reads bare references after a heading and its verse', () => {
+    const text = ['## Ioan 3:16', 'Fiindcă', '', 'Psalmi 23:1'].join('\n')
+
+    const result = parseBookmarksText(text)
+
+    expect(result).toHaveLength(2)
+    expect(result[1]).toMatchObject({ reference: 'Psalmi 23:1' })
+    expect(result[1]).not.toHaveProperty('markdown')
+  })
+
+  test('skips a document title', () => {
+    expect(parseBookmarksText('# Marcaje\n\nIoan 3:16')).toHaveLength(1)
+  })
 })

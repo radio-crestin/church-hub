@@ -60,6 +60,13 @@ interface AnimatedTextProps {
    * by the element height, which is most of them.
    */
   contentScale?: number
+  /**
+   * Marks this text as the one live highlights are counted in, and says how
+   * many characters the screen put in front of it (a prepended reference).
+   * Selections made here are turned into offsets into the text itself, so
+   * every screen can place them, whatever it adds around the text.
+   */
+  styleAnchorOffset?: number
 }
 
 /**
@@ -103,7 +110,8 @@ function arePropsEqual(
     prevProps.left !== nextProps.left ||
     prevProps.top !== nextProps.top ||
     prevProps.isHtml !== nextProps.isHtml ||
-    prevProps.contentScale !== nextProps.contentScale
+    prevProps.contentScale !== nextProps.contentScale ||
+    prevProps.styleAnchorOffset !== nextProps.styleAnchorOffset
   ) {
     return false
   }
@@ -164,6 +172,7 @@ const AnimatedTextInner = memo(function AnimatedText({
   slideTransitionIn,
   styleRanges,
   contentScale = 1,
+  styleAnchorOffset,
 }: AnimatedTextProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
@@ -337,12 +346,20 @@ const AnimatedTextInner = memo(function AnimatedText({
       <div ref={measureRef} style={measureStyle} aria-hidden="true" />
       {/* Visible text - use dangerouslySetInnerHTML if we have styled content */}
       {finalDisplayContent ? (
-        <div ref={textRef} style={textStyles}>
+        <div
+          ref={textRef}
+          style={textStyles}
+          data-style-anchor={styleAnchorOffset}
+        >
           {/* Wrap in span to prevent flexbox from treating inline elements as flex items */}
           <span dangerouslySetInnerHTML={{ __html: finalDisplayContent }} />
         </div>
       ) : (
-        <div ref={textRef} style={textStyles}>
+        <div
+          ref={textRef}
+          style={textStyles}
+          data-style-anchor={styleAnchorOffset}
+        >
           {displayContent}
         </div>
       )}
