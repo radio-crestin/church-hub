@@ -1,19 +1,18 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, ChevronUp, FileQuestion, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
-import { useDeleteSong, useSongs } from '../../hooks'
+import { useDeleteSong, useUncategorizedSongs } from '../../hooks'
 import { deleteUncategorizedSongs } from '../../service'
-import type { Song } from '../../types'
 
 export function UncategorizedSongsCard() {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const queryClient = useQueryClient()
-  const { data: songs } = useSongs()
+  const { data: uncategorized } = useUncategorizedSongs()
   const deleteSong = useDeleteSong()
 
   const [isExpanded, setIsExpanded] = useState(false)
@@ -24,10 +23,8 @@ export function UncategorizedSongsCard() {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false)
   const [isDeletingAll, setIsDeletingAll] = useState(false)
 
-  const uncategorizedSongs = useMemo(
-    () => songs?.filter((song: Song) => song.categoryId === null) ?? [],
-    [songs],
-  )
+  const uncategorizedSongs = uncategorized?.songs ?? []
+  const uncategorizedCount = uncategorized?.total ?? 0
 
   const handleDelete = async () => {
     if (!songToDelete) return
@@ -62,7 +59,7 @@ export function UncategorizedSongsCard() {
     }
   }
 
-  if (uncategorizedSongs.length === 0) {
+  if (uncategorizedCount === 0) {
     return null
   }
 
@@ -80,7 +77,7 @@ export function UncategorizedSongsCard() {
             </span>
             <span className="text-xs text-amber-600 dark:text-amber-400">
               {t('sections.categories.uncategorized.count', {
-                count: uncategorizedSongs.length,
+                count: uncategorizedCount,
               })}
             </span>
           </div>
@@ -159,7 +156,7 @@ export function UncategorizedSongsCard() {
           message={t(
             'sections.categories.uncategorized.modals.deleteAll.message',
             {
-              count: uncategorizedSongs.length,
+              count: uncategorizedCount,
             },
           )}
           confirmLabel={
@@ -167,7 +164,7 @@ export function UncategorizedSongsCard() {
               ? t('sections.categories.uncategorized.modals.deleteAll.deleting')
               : t(
                   'sections.categories.uncategorized.modals.deleteAll.confirm',
-                  { count: uncategorizedSongs.length },
+                  { count: uncategorizedCount },
                 )
           }
           cancelLabel={t('common:buttons.cancel', 'Cancel')}

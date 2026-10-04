@@ -137,7 +137,7 @@ export interface Song {
   /**
    * Tag names attached to this song, in display order. Only populated by
    * endpoints that need it for list rendering (e.g. paginated browse); the
-   * legacy `getAllSongs` path leaves it undefined to avoid the extra join.
+   * single-song paths leave it undefined to avoid the extra join.
    */
   tagNames?: string[]
 }

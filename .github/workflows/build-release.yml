@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install system dependencies
         run: |
@@ -40,17 +40,17 @@ jobs:
             xvfb
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -74,7 +74,7 @@ jobs:
       # engine). The browser set is part of the key: a cache saved with
       # Chromium alone would otherwise be an exact hit and skip installing it.
       - name: Cache Playwright browsers
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -102,7 +102,7 @@ jobs:
           CI: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -110,7 +110,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Playwright traces
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-traces
@@ -124,7 +124,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Extract version from tag
         id: version
@@ -269,7 +269,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Assemble and upload latest.json
         env:
@@ -357,7 +357,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -366,7 +366,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Sync version and changelog into main
         shell: bash

@@ -327,17 +327,17 @@ export const songsPaths = {
   '/api/songs': {
     get: {
       tags: ['Songs'],
-      summary: 'List all songs',
+      summary: 'List songs (paginated)',
       description:
-        'Returns all songs in the database with optional pagination and filters',
+        'Returns one page of songs. Always paginated: without `limit` the first 50 songs come back, never the whole library. Songs in a hidden category are always left out (uncategorized songs stay).',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {
           name: 'limit',
           in: 'query',
           required: false,
-          schema: { type: 'integer', default: 50 },
-          description: 'Number of songs to return (enables pagination)',
+          schema: { type: 'integer', default: 50, minimum: 1 },
+          description: 'Page size. Defaults to 50 when missing or invalid.',
         },
         {
           name: 'offset',
@@ -354,6 +354,14 @@ export const songsPaths = {
           description: 'Comma-separated list of category IDs to filter by',
         },
         {
+          name: 'tagIds',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description:
+            'Comma-separated list of tag IDs; songs with ANY of them match',
+        },
+        {
           name: 'presentedOnly',
           in: 'query',
           required: false,
@@ -367,18 +375,57 @@ export const songsPaths = {
           schema: { type: 'boolean', default: false },
           description: 'Filter to only songs that are in at least one schedule',
         },
+        {
+          name: 'hasKeyLine',
+          in: 'query',
+          required: false,
+          schema: { type: 'boolean', default: false },
+          description: 'Filter to only songs that have a key line',
+        },
+        {
+          name: 'uncategorizedOnly',
+          in: 'query',
+          required: false,
+          schema: { type: 'boolean', default: false },
+          description: 'Filter to only songs without a category',
+        },
+        {
+          name: 'sortBy',
+          in: 'query',
+          required: false,
+          schema: {
+            type: 'string',
+            enum: ['lastPlayed', 'mostPlayed', 'title', 'newest', 'oldest'],
+            default: 'lastPlayed',
+          },
+          description: 'Sort order of the page',
+        },
       ],
       responses: {
         '200': {
-          description: 'List of songs',
+          description: 'One page of songs',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
                   data: {
-                    type: 'array',
-                    items: { $ref: '#/components/schemas/Song' },
+                    type: 'object',
+                    required: ['songs', 'total', 'hasMore'],
+                    properties: {
+                      songs: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/Song' },
+                      },
+                      total: {
+                        type: 'integer',
+                        description: 'Songs matching the filters, all pages',
+                      },
+                      hasMore: {
+                        type: 'boolean',
+                        description: 'Whether a later page exists',
+                      },
+                    },
                   },
                 },
               },

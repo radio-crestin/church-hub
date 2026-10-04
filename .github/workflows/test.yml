@@ -53,7 +53,7 @@ jobs:
     steps:
       - name: Check commenter permission
         if: github.event_name == 'issue_comment'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
@@ -72,7 +72,7 @@ jobs:
         if: github.event_name == 'issue_comment'
         # The reaction is a nicety — never fail the whole CI run over it.
         continue-on-error: true
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.reactions.createForIssueComment({
@@ -84,7 +84,7 @@ jobs:
 
       - name: Resolve target SHA
         id: resolve
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             if (context.eventName === 'issue_comment') {
@@ -106,22 +106,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.gate.outputs.sha }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -142,22 +142,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.gate.outputs.sha }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -178,7 +178,7 @@ jobs:
     needs: [gate, unit-tests, server-tests]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.gate.outputs.sha }}
 
@@ -190,17 +190,17 @@ jobs:
             xvfb
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -212,7 +212,7 @@ jobs:
       # engine). The browser set is part of the key: a cache saved with
       # Chromium alone would otherwise be an exact hit and skip installing it.
       - name: Cache Playwright browsers
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -244,7 +244,7 @@ jobs:
           CI: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -252,7 +252,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Playwright traces
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-traces
@@ -274,7 +274,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.gate.outputs.sha }}
 
@@ -285,17 +285,17 @@ jobs:
           sudo apt-get install -y libpulse-dev libasound2-dev libjack-jackd2-dev
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version-file: app/package.json
 
       - name: Cache Bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
@@ -318,7 +318,7 @@ jobs:
 
       - name: Upload compiled binary on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: compiled-sidecar-${{ matrix.os }}
           path: |
@@ -336,7 +336,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Post commit statuses to PR head
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           PR_SHA: ${{ needs.gate.outputs.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

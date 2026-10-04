@@ -1,0 +1,58 @@
+name: CodeQL
+
+# Code scanning (advanced setup; the repository's default setup is off, and
+# stopped scanning in January 2026). Results go to the Security tab, where
+# alerts fixed on main close on the next scan.
+#
+# No build needed: JavaScript/TypeScript, the workflows themselves and the
+# Tauri shell's Rust are all analysed from source (build-mode none).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Mondays 04:23 UTC: new queries and advisories reach old code too.
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions, rust]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          config: |
+            paths-ignore:
+              - '**/node_modules/**'
+              - '**/dist/**'
+              - '**/target/**'
+              - 'app/apps/server/src/db/migrations/embedded.ts'
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}

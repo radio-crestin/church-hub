@@ -57,9 +57,9 @@ export {
 // Songs
 export {
   batchImportSongs,
+  DEFAULT_SONGS_PAGE_SIZE,
   deleteSong,
   deleteSongsByIds,
-  getAllSongs,
   getAllSongsWithSlides,
   getSongById,
   getSongsPaginated,

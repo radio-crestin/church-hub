@@ -110,22 +110,8 @@ function toSong(record: typeof songs.$inferSelect): Song {
   }
 }
 
-/**
- * Gets all songs
- */
-export function getAllSongs(): Song[] {
-  try {
-    logger.debug('Getting all songs')
-
-    const db = getDatabase()
-    const records = db.select().from(songs).orderBy(asc(songs.title)).all()
-
-    return records.map(toSong)
-  } catch (error) {
-    logger.error(`Failed to get all songs: ${error}`)
-    return []
-  }
-}
+/** Page size of GET /api/songs when the caller sends no `limit`. */
+export const DEFAULT_SONGS_PAGE_SIZE = 50
 
 export interface PaginatedSongsResult {
   songs: Song[]
@@ -150,6 +136,8 @@ export interface SongFilters {
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
   hasKeyLine?: boolean
+  /** Only songs without a category (`category_id IS NULL`). */
+  uncategorizedOnly?: boolean
   sortBy?: SongSortBy
 }
 
@@ -171,6 +159,7 @@ export function getSongsPaginated(
       presentedOnly,
       inSchedulesOnly,
       hasKeyLine,
+      uncategorizedOnly,
       sortBy,
     } = filters ?? {}
     logger.debug(
@@ -209,6 +198,10 @@ export function getSongsPaginated(
 
     if (hasKeyLine) {
       conditions.push(`key_line IS NOT NULL AND key_line != ''`)
+    }
+
+    if (uncategorizedOnly) {
+      conditions.push('category_id IS NULL')
     }
 
     // Always exclude songs whose category is hidden (uncategorized songs stay

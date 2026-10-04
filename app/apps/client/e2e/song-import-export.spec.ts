@@ -59,19 +59,10 @@ test.describe('Song Import/Export via API', () => {
 
     expect(response.status()).toBe(201)
     const json = await response.json()
-    expect(json).toHaveProperty('data')
+    expect(json.data.songIds).toHaveLength(2)
 
-    // Clean up: find and delete the batch imported songs
-    const songsResponse = await request.get('/api/songs')
-    const songsJson = await songsResponse.json()
-    for (const song of songsJson.data) {
-      if (
-        song.title.includes(`E2E Batch Song`) &&
-        song.title.includes(`${timestamp}`)
-      ) {
-        testSongIds.push(song.id)
-      }
-    }
+    // Clean up the batch imported songs
+    testSongIds.push(...json.data.songIds)
   })
 
   test('batch import with overwrite duplicates', async ({ request }) => {
@@ -99,13 +90,7 @@ test.describe('Song Import/Export via API', () => {
     expect(response.status()).toBe(201)
 
     // Clean up
-    const songsResponse = await request.get('/api/songs')
-    const songsJson = await songsResponse.json()
-    for (const song of songsJson.data) {
-      if (song.title === title) {
-        testSongIds.push(song.id)
-      }
-    }
+    testSongIds.push(...(await response.json()).data.songIds)
   })
 
   test('can get a song by ID', async ({ request }) => {

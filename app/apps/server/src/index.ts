@@ -327,6 +327,7 @@ import {
   cloneSongSlide,
   completeSongReplacement,
   countNewCandidates,
+  DEFAULT_SONGS_PAGE_SIZE,
   type DiscoveryCandidateInput,
   deleteCategory,
   deleteSong,
@@ -335,7 +336,6 @@ import {
   deleteTag,
   deleteUncategorizedSongs,
   getAllCategories,
-  getAllSongs,
   getAllSongsWithSlides,
   getAllTags,
   getCategoryById,
@@ -5100,7 +5100,8 @@ async function startRealServer(): Promise<void> {
         )
       }
 
-      // GET /api/songs - List all songs (with pagination support)
+      // GET /api/songs - List songs, one page at a time. Without `limit` the
+      // first DEFAULT_SONGS_PAGE_SIZE songs come back, never the whole library.
       if (req.method === 'GET' && url.pathname === '/api/songs') {
         const presentedOnlyParam = url.searchParams.get('presentedOnly')
 
@@ -5120,67 +5121,56 @@ async function startRealServer(): Promise<void> {
         const tagIdsParam = url.searchParams.get('tagIds')
         const inSchedulesOnlyParam = url.searchParams.get('inSchedulesOnly')
         const hasKeyLineParam = url.searchParams.get('hasKeyLine')
+        const uncategorizedOnlyParam = url.searchParams.get('uncategorizedOnly')
         const sortByParam = url.searchParams.get('sortBy')
 
-        // If pagination params provided, use paginated query
-        if (limitParam) {
-          const limit = parseInt(limitParam, 10) || 50
-          const offset = offsetParam ? parseInt(offsetParam, 10) || 0 : 0
-          const categoryIds = categoryIdsParam
-            ? categoryIdsParam
-                .split(',')
-                .map((id) => parseInt(id, 10))
-                .filter((id) => !isNaN(id))
-            : undefined
-          const tagIds = tagIdsParam
-            ? tagIdsParam
-                .split(',')
-                .map((id) => parseInt(id, 10))
-                .filter((id) => !isNaN(id))
-            : undefined
+        const limit =
+          (limitParam ? parseInt(limitParam, 10) : NaN) ||
+          DEFAULT_SONGS_PAGE_SIZE
+        const offset = offsetParam ? parseInt(offsetParam, 10) || 0 : 0
+        const categoryIds = categoryIdsParam
+          ? categoryIdsParam
+              .split(',')
+              .map((id) => parseInt(id, 10))
+              .filter((id) => !isNaN(id))
+          : undefined
+        const tagIds = tagIdsParam
+          ? tagIdsParam
+              .split(',')
+              .map((id) => parseInt(id, 10))
+              .filter((id) => !isNaN(id))
+          : undefined
 
-          const validSortValues = [
-            'lastPlayed',
-            'mostPlayed',
-            'title',
-            'newest',
-            'oldest',
-          ] as const
-          const sortBy =
-            sortByParam &&
-            validSortValues.includes(
-              sortByParam as (typeof validSortValues)[number],
-            )
-              ? (sortByParam as SongFilters['sortBy'])
-              : undefined
-
-          const filters: SongFilters = {
-            categoryIds:
-              categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
-            tagIds: tagIds && tagIds.length > 0 ? tagIds : undefined,
-            presentedOnly: presentedOnlyParam === 'true',
-            inSchedulesOnly: inSchedulesOnlyParam === 'true',
-            hasKeyLine: hasKeyLineParam === 'true',
-            sortBy,
-          }
-
-          const result = getSongsPaginated(limit, offset, filters)
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: result }), {
-              headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-              },
-            }),
+        const validSortValues = [
+          'lastPlayed',
+          'mostPlayed',
+          'title',
+          'newest',
+          'oldest',
+        ] as const
+        const sortBy =
+          sortByParam &&
+          validSortValues.includes(
+            sortByParam as (typeof validSortValues)[number],
           )
+            ? (sortByParam as SongFilters['sortBy'])
+            : undefined
+
+        const filters: SongFilters = {
+          categoryIds:
+            categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
+          tagIds: tagIds && tagIds.length > 0 ? tagIds : undefined,
+          presentedOnly: presentedOnlyParam === 'true',
+          inSchedulesOnly: inSchedulesOnlyParam === 'true',
+          hasKeyLine: hasKeyLineParam === 'true',
+          uncategorizedOnly: uncategorizedOnlyParam === 'true',
+          sortBy,
         }
 
-        // Legacy: return all songs without pagination
-        const songs = getAllSongs()
+        const result = getSongsPaginated(limit, offset, filters)
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: songs }), {
+          new Response(JSON.stringify({ data: result }), {
             headers: {
               'Content-Type': 'application/json',
               'Cache-Control': 'no-cache, no-store, must-revalidate',

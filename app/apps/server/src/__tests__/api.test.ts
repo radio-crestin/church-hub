@@ -144,12 +144,14 @@ describe('API Health', () => {
 })
 
 describe('Songs API', () => {
-  test('GET /api/songs returns 200 with data array', async () => {
+  test('GET /api/songs without a limit returns one page of at most 50', async () => {
     const res = await fetch(`${BASE_URL}/api/songs`)
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json).toHaveProperty('data')
-    expect(Array.isArray(json.data)).toBe(true)
+    expect(Array.isArray(json.data.songs)).toBe(true)
+    expect(json.data.songs.length).toBeLessThanOrEqual(50)
+    expect(typeof json.data.total).toBe('number')
+    expect(typeof json.data.hasMore).toBe('boolean')
   })
 
   test('GET /api/songs/search returns 200 with data array', async () => {
