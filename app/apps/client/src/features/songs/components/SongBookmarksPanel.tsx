@@ -22,6 +22,7 @@ import {
   Check,
   ChevronDown,
   Download,
+  FileText,
   GripVertical,
   MonitorPlay,
   Pencil,
@@ -41,6 +42,7 @@ import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
+import { EditSongBookmarksTextModal } from './EditSongBookmarksTextModal'
 import { SongEditorModal } from './SongEditorModal'
 import {
   useAddBookmark,
@@ -456,6 +458,7 @@ export function SongBookmarksPanel({
   )
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isAddingNote, setIsAddingNote] = useState(false)
+  const [isEditingText, setIsEditingText] = useState(false)
   const [newNoteContent, setNewNoteContent] = useState('')
   const newNoteInputRef = useRef<HTMLInputElement>(null)
   // Local order override for instant (synchronous) drag feedback
@@ -693,6 +696,27 @@ export function SongBookmarksPanel({
 
   // The header's actions in the order they sit. A column too narrow for all of
   // them tucks the ones at the end under "More", clearing the list first.
+  // Edit as text stays even on an empty list: that is when someone wants to
+  // paste one in.
+  const editTextAction: OverflowAction = {
+    id: 'edit-text',
+    label: t('bookmarks.textEdit.open'),
+    icon: <FileText size={18} />,
+    onSelect: () => setIsEditingText(true),
+    testId: 'bookmarks-edit-text-menu',
+    inline: (
+      <button
+        type="button"
+        onClick={() => setIsEditingText(true)}
+        data-testid="bookmarks-edit-text"
+        className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors"
+        title={t('bookmarks.textEdit.open')}
+      >
+        <FileText className="w-3.5 h-3.5" />
+      </button>
+    ),
+  }
+
   const headerActions: OverflowAction[] =
     totalCount > 0
       ? [
@@ -716,6 +740,7 @@ export function SongBookmarksPanel({
               </button>
             ),
           },
+          editTextAction,
           {
             id: 'export',
             label: t('bookmarks.exportAsMarkdown'),
@@ -783,7 +808,7 @@ export function SongBookmarksPanel({
             ),
           },
         ]
-      : []
+      : [editTextAction]
 
   return (
     <div
@@ -1001,6 +1026,11 @@ export function SongBookmarksPanel({
           </div>
         </>
       )}
+
+      <EditSongBookmarksTextModal
+        isOpen={isEditingText}
+        onClose={() => setIsEditingText(false)}
+      />
 
       {editingSongId !== null && (
         <SongEditorModal

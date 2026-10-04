@@ -9,6 +9,10 @@ export {
   useReorderBookmarkItems,
   useUpdateBookmarkNote,
 } from './useBookmarkNotes'
+export {
+  useLoadBookmarksText,
+  useReplaceBookmarksFromText,
+} from './useBookmarksText'
 export { useCategories } from './useCategories'
 export { useCloneSlide } from './useCloneSlide'
 export { useCorrectLyrics } from './useCorrectLyrics'

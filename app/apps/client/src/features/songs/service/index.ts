@@ -22,6 +22,12 @@ export {
   type SongBookmark,
 } from './bookmarks'
 export {
+  getBookmarksText,
+  replaceBookmarksFromText,
+  type SongBookmarksTextError,
+  type SongBookmarksTextResult,
+} from './bookmarks-text'
+export {
   deleteCategory,
   deleteUncategorizedSongs,
   getAllCategories,

@@ -210,7 +210,21 @@
     "dragToProgram": "Trage peste un program ca să o adaugi",
     "filterAll": "Toate",
     "filterPending": "Rămase",
-    "filterSung": "Cântate"
+    "filterSung": "Cântate",
+    "textEdit": {
+      "open": "Editează ca text",
+      "title": "Editează Marcajele ca text",
+      "description": "Câte o cântare pe rând, în Markdown-ul Marcajelor: \"## Titlu {#song-12}\" alege exact acea cântare, un titlu simplu găsește cântarea după nume. Începe o notă cu \">\". La salvare, lista devine exact acest text, în această ordine. Un rând gol sub titlul unei cântări începe versurile ei, ca într-un fișier exportat, și ele nu sunt citite.",
+      "placeholder": "## Cât de mare ești {#song-12}\n> Final\nHar minunat",
+      "chooseFile": "Încarcă un fișier Markdown sau text",
+      "cancel": "Anulează",
+      "save": "Salvează",
+      "notSaved": "Nu s-a salvat nimic. Aceste cântări nu au fost găsite:",
+      "line": "Rândul {{line}}:",
+      "errors": {
+        "song_not_found": "nicio cântare cu acest titlu sau id"
+      }
+    }
   },
   "noSongs": "Nu există cântări încă",
   "noSongsDescription": "Creează prima ta cântare pentru a începe",
