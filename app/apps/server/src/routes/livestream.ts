@@ -57,6 +57,7 @@ import {
   updateYouTubeConfig,
 } from '../service/livestream/youtube'
 import { loadMIDIShortcuts } from '../service/midi/shortcuts'
+import { toErrorMessage } from '../utils/toErrorMessage'
 import {
   broadcastLivestreamStatus,
   broadcastOBSConnectionStatus,
@@ -675,8 +676,7 @@ export async function handleLivestreamRoutes(
         }),
       )
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
+      const errorMessage = toErrorMessage(error)
       let userFriendlyMessage = 'Failed to connect to OBS'
 
       if (

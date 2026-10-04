@@ -268,7 +268,7 @@ interface HealthSnapshot {
   phase?: string
   message?: string
   ready?: boolean
-  error?: { phase: string; message: string; stack?: string } | null
+  error?: { phase: string; message: string } | null
 }
 
 /** Outcome of polling `/health` until the server is ready or we give up. */

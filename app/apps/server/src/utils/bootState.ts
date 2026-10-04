@@ -36,10 +36,13 @@ const PHASE_MESSAGE: Record<BootPhase, string> = {
   failed: 'Startup failed',
 }
 
+/**
+ * What `/health` reports about a failed boot. No stack trace: it is an HTTP
+ * response; the stack goes to the log file and PostHog instead.
+ */
 interface BootError {
   phase: BootPhase
   message: string
-  stack?: string
 }
 
 interface BootHealth {
@@ -79,7 +82,7 @@ export function setBootReady(): void {
  */
 export function setBootFailed(phase: BootPhase, error: unknown): void {
   const err = error instanceof Error ? error : new Error(String(error))
-  bootError = { phase, message: err.message, stack: err.stack }
+  bootError = { phase, message: err.message }
   currentPhase = 'failed'
 
   const elapsedMs = Math.round(performance.now() - startedAt)

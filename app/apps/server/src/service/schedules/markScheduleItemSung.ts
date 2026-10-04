@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm'
 import type { OperationResult } from './types'
 import { getDatabase } from '../../db'
 import { scheduleItems } from '../../db/schema'
+import { toErrorMessage } from '../../utils/toErrorMessage'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -59,6 +60,6 @@ export function markScheduleItemSung(
     return { success: true }
   } catch (error) {
     log('error', `Failed to mark schedule item sung: ${error}`)
-    return { success: false, error: String(error) }
+    return { success: false, error: toErrorMessage(error) }
   }
 }
