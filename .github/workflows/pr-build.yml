@@ -35,11 +35,16 @@ permissions:
 
 jobs:
   prepare:
-    # Fork PRs never get the signing key; drafts wait until ready.
+    # The build runs the PR's code with the updater signing key and a
+    # token that writes releases, so only for a branch of this repository
+    # (never a fork) opened by someone on the repo: anyone can open a PR
+    # from an existing branch here. Drafts wait until ready. A dispatch
+    # needs write access to run at all; the step below rejects forks too.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (!github.event.pull_request.draft &&
-       github.event.pull_request.head.repo.full_name == github.repository)
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association))
     runs-on: ubuntu-latest
     permissions:
       contents: write
