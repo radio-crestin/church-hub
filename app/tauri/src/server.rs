@@ -373,6 +373,10 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     sidecar = sidecar.env("NODE_ENV", "production");
     sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
+    // A local review build's own data folder (see logging::data_dir).
+    if let Some(dir) = option_env!("CHURCH_HUB_DATA_DIR") {
+        sidecar = sidecar.env("CHURCH_HUB_DATA_DIR", dir);
+    }
 
     // Pass PostHog config through to the sidecar so the server reports
     // to the same project as the Tauri shell and client.

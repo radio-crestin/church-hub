@@ -119,3 +119,6 @@ context.md
 graphify-out/
 *.graphify-bak
 test-results/
+
+# Local review builds of the desktop app (app/scripts/review-build.ts)
+.review-build/

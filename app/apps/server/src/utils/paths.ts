@@ -7,10 +7,13 @@ import { join } from 'node:path'
  *   - macOS: ~/Library/Application Support/church-hub
  *   - Windows: %APPDATA%/church-hub (e.g., C:\Users\<user>\AppData\Roaming\church-hub)
  *   - Linux: ~/.config/church-hub
+ * A local review build passes its own CHURCH_HUB_DATA_DIR instead
+ * (app/scripts/review-build.ts), so it never touches the real data.
  * In development, uses the monorepo data directory (app/data)
  */
 export function getDataDir(): string {
   if (process.env.TAURI_MODE === 'true') {
+    if (process.env.CHURCH_HUB_DATA_DIR) return process.env.CHURCH_HUB_DATA_DIR
     const home = homedir()
     const platform = process.platform
 
