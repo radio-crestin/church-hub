@@ -49,7 +49,7 @@ function realPath(path: string) {
 function findWorktree(mainRoot: string, target: string): Worktree {
   const targetPath = realPath(target)
   const [main, ...worktrees] = listWorktrees(mainRoot)
-  if (targetPath && targetPath === realPath(main.path))
+  if (targetPath && targetPath === realPath(main!.path))
     throw new Error('refusing to remove the main checkout')
   const found = worktrees.find(
     (worktree) =>
