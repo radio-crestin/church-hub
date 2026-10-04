@@ -22,7 +22,7 @@ use std::sync::{Mutex, OnceLock};
 /// A local review build bakes in its own (app/scripts/review-build.ts), so
 /// testing it never touches the real church data.
 pub fn data_dir() -> Option<PathBuf> {
-    if let Some(dir) = option_env!("CHURCH_HUB_DATA_DIR") {
+    if let Some(dir) = option_env!("CHURCH_HUB_DATA_DIR").filter(|dir| !dir.is_empty()) {
         return Some(PathBuf::from(dir));
     }
     let home = dirs::home_dir()?;

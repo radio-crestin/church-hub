@@ -33,6 +33,7 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -107,7 +108,28 @@ function isAlive(pid: number) {
   }
 }
 
-/** A lock folder in the Cargo target dir; a dead holder's lock is taken over. */
+/** Who holds the lock: its pid, or null while the holder is still writing it. */
+function lockHolder(lock: string): number | null {
+  try {
+    return Number(readFileSync(join(lock, 'pid'), 'utf8')) || null
+  } catch {
+    return null
+  }
+}
+
+/** A pid-less lock older than a minute: its holder died before writing the pid. */
+function isAbandoned(lock: string) {
+  try {
+    return Date.now() - statSync(lock).mtimeMs > 60_000
+  } catch {
+    return false
+  }
+}
+
+/**
+ * A lock folder in the Cargo target dir. A lock whose holder died (dead pid,
+ * or no pid written for a minute) is taken over; any other is waited for.
+ */
 function acquireLock(targetDir: string) {
   const lock = join(targetDir, '.review-build.lock')
   const started = Date.now()
@@ -119,8 +141,9 @@ function acquireLock(targetDir: string) {
       process.on('exit', () => rmSync(lock, { recursive: true, force: true }))
       return lock
     } catch {
-      const holder = Number(readFileSync(join(lock, 'pid'), 'utf8') || 0)
-      if (holder && !isAlive(holder)) {
+      const holder = lockHolder(lock)
+      const dead = holder ? !isAlive(holder) : isAbandoned(lock)
+      if (dead) {
         rmSync(lock, { recursive: true, force: true })
         continue
       }
@@ -182,9 +205,18 @@ function keepBuild(
   name: string,
 ) {
   const bundleDir = join(targetDir, 'release', 'bundle', platform.folder)
-  const built = readdirSync(bundleDir).find(
-    (file) => file.startsWith(name) && file.endsWith(platform.ext),
-  )
+  // macOS: church-hub-T-023.app; Linux/Windows add _<version>_<arch>.
+  const built = readdirSync(bundleDir)
+    .filter(
+      (file) =>
+        file.endsWith(platform.ext) &&
+        (file === `${name}${platform.ext}` || file.startsWith(`${name}_`)),
+    )
+    .sort(
+      (a, b) =>
+        statSync(join(bundleDir, b)).mtimeMs -
+        statSync(join(bundleDir, a)).mtimeMs,
+    )[0]
   if (!built) throw new Error(`no ${name}*${platform.ext} in ${bundleDir}`)
   const kept = join(out, built)
   rmSync(kept, { recursive: true, force: true })
@@ -195,14 +227,27 @@ function keepBuild(
   return kept
 }
 
-/** The tauri build rebuilt dist/ for the review port; put back the e2e one. */
-function restoreE2eClient(app: string, e2ePort: number) {
+/**
+ * The tauri build rebuilt dist/ for the review port; put back the checkout's
+ * own: a worktree's e2e port, or the main checkout's default 3000.
+ */
+function restoreClient(app: string, clientPort: number | null) {
+  const {
+    VITE_API_PORT: _reviewApiPort,
+    VITE_SERVER_PORT: _reviewServerPort,
+    ...env
+  } = process.env
+  const ports = clientPort
+    ? {
+        VITE_API_PORT: String(clientPort),
+        VITE_SERVER_PORT: String(clientPort),
+      }
+    : {}
   run(process.execPath, ['run', 'build'], join(app, 'apps', 'client'), {
-    ...process.env,
-    VITE_API_PORT: String(e2ePort),
-    VITE_SERVER_PORT: String(e2ePort),
+    ...env,
+    ...ports,
   })
-  return `dist/ talks to port ${e2ePort} again`
+  return `dist/ talks to port ${clientPort ?? 3000} again`
 }
 
 function changedFiles(root: string) {
@@ -234,22 +279,26 @@ const targetDir = cargoTargetDir(app)
 step('build lock', () => acquireLock(targetDir))
 const configFile = writeConfig(app, taskId, out)
 const dirtyBefore = changedFiles(root)
-step('tauri build', () =>
-  buildApp(app, configFile, platform.bundle, {
-    ...process.env,
-    CHURCH_HUB_SERVER_PORT: String(port),
-    CHURCH_HUB_DATA_DIR: dataDir,
-    VITE_API_PORT: String(port),
-    VITE_SERVER_PORT: String(port),
-  }),
-)
 let kept = ''
-step('kept', () => {
-  kept = keepBuild(targetDir, platform, out, name)
-  return kept
-})
-step('restored generated files', () => restoreGenerated(root, dirtyBefore))
-if (isWorktree) step('e2e client', () => restoreE2eClient(app, e2ePort))
+try {
+  step('tauri build', () =>
+    buildApp(app, configFile, platform.bundle, {
+      ...process.env,
+      CHURCH_HUB_SERVER_PORT: String(port),
+      CHURCH_HUB_DATA_DIR: dataDir,
+      VITE_API_PORT: String(port),
+      VITE_SERVER_PORT: String(port),
+    }),
+  )
+  step('kept', () => {
+    kept = keepBuild(targetDir, platform, out, name)
+    return kept
+  })
+} finally {
+  // Even when the build failed: no regenerated diff, no dist/ on the review port.
+  step('restored generated files', () => restoreGenerated(root, dirtyBefore))
+  step('client', () => restoreClient(app, isWorktree ? e2ePort : null))
+}
 
 const minutes = ((performance.now() - started) / 60000).toFixed(1)
 // biome-ignore lint/suspicious/noConsole: the script's result
