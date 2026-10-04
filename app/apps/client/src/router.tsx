@@ -255,6 +255,8 @@ function setLoadingError(
 function hideLoadingScreen() {
   const loadingEl = document.getElementById('loading-screen')
   if (loadingEl) {
+    // The app is live under it while it fades: let clicks and drags through.
+    loadingEl.style.pointerEvents = 'none'
     loadingEl.style.opacity = '0'
     loadingEl.style.transition = 'opacity 0.3s ease-out'
     setTimeout(() => loadingEl.remove(), 300)
