@@ -1,12 +1,12 @@
 ---
 id: T-009
 title: Text editing of long songs scrolls properly
-sprint: backlog
+sprint: 2026-10-05
 urgent: false
 status: todo
 owner:
 rolled: 0
-order: 6
+order: 2
 created: 2026-10-04
 ---
 ## Goal

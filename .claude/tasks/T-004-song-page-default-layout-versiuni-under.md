@@ -1,7 +1,7 @@
 ---
 id: T-004
 title: Song page default layout — Versiuni under the song preview
-sprint: backlog
+sprint: 2026-10-05
 urgent: false
 status: todo
 owner:

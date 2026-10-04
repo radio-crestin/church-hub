@@ -1,12 +1,12 @@
 ---
 id: T-005
 title: Marcaje for songs — text-mode editing
-sprint: backlog
+sprint: 2026-10-05
 urgent: false
 status: todo
 owner:
 rolled: 0
-order: 2
+order: 3
 created: 2026-10-04
 ---
 ## Goal

@@ -1,12 +1,12 @@
 ---
 id: T-010
 title: Marcaje standard Markdown — exact styles, same export/import, per-screen rendering
-sprint: backlog
+sprint: 2026-10-05
 urgent: false
 status: todo
 owner:
 rolled: 0
-order: 7
+order: 4
 created: 2026-10-04
 ---
 ## Goal

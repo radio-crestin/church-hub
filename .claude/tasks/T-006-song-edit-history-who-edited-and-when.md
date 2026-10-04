@@ -1,12 +1,12 @@
 ---
 id: T-006
 title: Song edit history — who edited and when
-sprint: backlog
+sprint: 2026-10-05
 urgent: false
 status: todo
 owner:
 rolled: 0
-order: 3
+order: 5
 created: 2026-10-04
 ---
 ## Goal

@@ -1,12 +1,12 @@
 ---
 id: T-007
 title: Amin and first/last-slide animations in step with the lyrics
-sprint: backlog
+sprint: 2026-10-05
 urgent: false
 status: todo
 owner:
 rolled: 0
-order: 4
+order: 7
 created: 2026-10-04
 ---
 ## Goal

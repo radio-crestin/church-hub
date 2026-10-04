@@ -1,12 +1,12 @@
 ---
 id: T-008
 title: Export a song as PDF / Word for printing
-sprint: backlog
+sprint: 2026-10-05
 urgent: false
 status: todo
 owner:
 rolled: 0
-order: 5
+order: 6
 created: 2026-10-04
 ---
 ## Goal
