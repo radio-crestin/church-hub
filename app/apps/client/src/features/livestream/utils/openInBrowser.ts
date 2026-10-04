@@ -1,3 +1,5 @@
+import { toSafeHttpUrl } from '~/utils/toSafeHttpUrl'
+
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 }
@@ -80,7 +82,15 @@ async function openInTauriBrowser(url: string): Promise<boolean> {
  * Opens an external URL in the system's default browser.
  * Works in both Tauri and regular browser environments.
  */
-export async function openExternalUrl(url: string): Promise<void> {
+export async function openExternalUrl(rawUrl: string): Promise<void> {
+  // Broadcast/studio links come from server messages: open only http(s).
+  const url = toSafeHttpUrl(rawUrl)
+  if (!url) {
+    // biome-ignore lint/suspicious/noConsole: Debug logging
+    console.error('[openExternalUrl] Refusing to open a non-http(s) URL')
+    return
+  }
+
   if (isTauri()) {
     const success = await openInTauriBrowser(url)
     if (!success) {
@@ -97,10 +107,16 @@ export async function openExternalUrl(url: string): Promise<void> {
  * or in a popup window when in a regular browser.
  */
 export async function openAuthUrl(
-  url: string,
+  rawUrl: string,
   options?: { popupName?: string; width?: number; height?: number },
 ): Promise<Window | null> {
   const { popupName = 'auth', width = 600, height = 700 } = options || {}
+  const url = toSafeHttpUrl(rawUrl)
+  if (!url) {
+    // biome-ignore lint/suspicious/noConsole: Debug logging
+    console.error('[openAuthUrl] Refusing to open a non-http(s) URL')
+    return null
+  }
 
   // biome-ignore lint/suspicious/noConsole: Debug logging
   console.log('[openAuthUrl] isTauri:', isTauri(), 'url:', url)
