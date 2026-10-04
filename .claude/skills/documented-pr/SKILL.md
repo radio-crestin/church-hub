@@ -12,14 +12,15 @@ You produce a PR description reviewers can act on, plus a Playwright-recorded de
 
 Every recording produced by this skill MUST use these settings; do not pare them back for any PR:
 
-All six come from the shared helper `app/apps/client/e2e/helpers/demo-recording.ts`; never inline a copy.
+All seven come from the shared helper `app/apps/client/e2e/helpers/demo-recording.ts`; never inline a copy.
 
 1. **1920×1080 viewport AND explicit `video.size`** — `test.use(DEMO_RECORDING)`. Playwright otherwise downscales to 800×600.
 2. **Cursor + caption overlay** — `installDemoOverlay(page)` in `beforeEach`. Playwright videos exclude the OS pointer.
 3. **A note per step** — `showCaption(page, '1. Open Songs')` before each gesture, so the viewer knows what they are watching.
 4. **`glideClick(page, locator)` for every click** — the cursor visibly travels to the target; a bare `locator.click()` teleports.
 5. **Seed cursor position at test start** — `await page.mouse.move(960, 540, { steps: 15 })` after the first `goto`.
-6. **Embed via `[![alt](gif)](mp4)` markdown** — `<video>` tags are stripped by GitHub's sanitizer (see next section). `record-features.sh` makes both with ffmpeg, a hard dependency.
+6. **Highlight the bug or the new feature** — `highlight(page, locator, 'Bug: …')` draws a red box around it, plus a red arrow from the label; `clearHighlights(page)` removes it before the next step. Before videos box the bug, After videos box the fix or the new feature. When the element sits in the caption's band, the caption moves to the top.
+7. **Embed via `[![alt](gif)](mp4)` markdown** — `<video>` tags are stripped by GitHub's sanitizer (see next section). `record-features.sh` makes both with ffmpeg, a hard dependency.
 
 ## Why GIF, not `<video>` — GitHub's sanitizer (verified)
 
@@ -83,8 +84,10 @@ Create `app/apps/client/e2e/_pr-demos.spec.ts` (the leading `_` marks it tempora
 import { expect, test } from '@playwright/test'
 
 import {
+  clearHighlights,
   DEMO_RECORDING,
   glideClick,
+  highlight,
   installDemoOverlay,
   showCaption,
 } from './helpers/demo-recording'
@@ -110,7 +113,9 @@ test('<sha-short> songs-search-styling', async ({ page }) => {
   await glideClick(page, search)
   await showCaption(page, '2. Type a title', 600)
   await search.type('amazing', { delay: 80 })
+  await highlight(page, search, 'Fixed: keeps its styling')
   await showCaption(page, '3. The focused input keeps its styling', 2000)
+  await clearHighlights(page)
 })
 ```
 
@@ -119,6 +124,7 @@ Guidelines:
 - **One `test()` per commit.** Name it `<short-sha> <feature-slug>` — the title becomes the output folder name, so the SHA appears in the asset URL.
 - **Drive the actual code path the commit changed.** Open the relevant page/modal, perform the user gesture that exercises the diff, pause briefly so the UI renders, then assert the visible outcome.
 - **Prefer text/role/placeholder selectors** over CSS classes — match the existing specs (`page.getByPlaceholder`, `page.getByRole`, `page.locator('text=...')`).
+- **Highlight the changed element** with `highlight(page, locator, '<short label>')` while its caption shows, then `clearHighlights(page)`. Labels stay short (2–5 words): "Bug: …", "Fixed: …", "New: …".
 - **Use `glideClick(page, locator)`** for every click so the cursor visibly glides to the target, and **`showCaption`** before each step.
 - **Seed the cursor** at the start of each test with `await page.mouse.move(x, y, { steps: 15 })` so the viewer sees it before the first interaction.
 - **Skip Tauri-only behavior.** Anything that depends on a second `WebviewWindow` (auto-reopen, close-on-escape *window* side, etc.) cannot be captured in chromium. Record what is observable from the control room (settings UI, toggle state) and note in the PR body that the second-window behavior happens off-camera.

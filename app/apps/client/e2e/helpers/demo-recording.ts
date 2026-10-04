@@ -5,7 +5,8 @@ import type { Locator, Page } from '@playwright/test'
  * cursor (Playwright videos never show the OS pointer) and on-screen notes.
  * Spread DEMO_RECORDING into test.use(), call installDemoOverlay in
  * beforeEach, then narrate each step with showCaption and click with
- * glideClick.
+ * glideClick. Point at the bug or the new feature with highlight (red box,
+ * arrow, label) and remove it with clearHighlights.
  */
 
 const DEMO_VIEWPORT = { width: 1920, height: 1080 }
@@ -46,6 +47,121 @@ export async function glideClick(page: Page, locator: Locator): Promise<void> {
     await page.waitForTimeout(200)
   }
   await locator.click()
+}
+
+/**
+ * Draws a red box around the element and, with a label, a red arrow pointing
+ * at it from that label, so the viewer sees the bug (Before) or the fix/new
+ * feature (After). Stays until clearHighlights. If the element sits where the
+ * caption is, the caption moves to the top of the frame.
+ */
+export async function highlight(
+  page: Page,
+  locator: Locator,
+  label = '',
+): Promise<void> {
+  await locator.scrollIntoViewIfNeeded()
+  const box = await locator.boundingBox()
+  if (!box) throw new Error('highlight: the element is not visible')
+  await page.evaluate(drawHighlight, { box, label })
+}
+
+/** Removes every highlight and puts the caption back at the bottom. */
+export async function clearHighlights(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    document.getElementById('__demo_highlights')?.remove()
+    document.getElementById('__demo_caption')?.classList.remove('__demo_top')
+  })
+}
+
+type Box = { x: number; y: number; width: number; height: number }
+
+function drawHighlight({ box, label }: { box: Box; label: string }) {
+  const RED = 'rgb(239, 68, 68)'
+  const PAD = 8
+  const CAPTION_ZONE = 200
+  const width = window.innerWidth
+  const height = window.innerHeight
+  const rect = {
+    left: box.x - PAD,
+    top: box.y - PAD,
+    right: box.x + box.width + PAD,
+    bottom: box.y + box.height + PAD,
+  }
+
+  const caption = document.getElementById('__demo_caption')
+  const captionOnTop = rect.bottom > height - CAPTION_ZONE
+  caption?.classList.toggle('__demo_top', captionOnTop)
+
+  let layer = document.getElementById('__demo_highlights')
+  if (!layer) {
+    layer = document.createElement('div')
+    layer.id = '__demo_highlights'
+    layer.innerHTML = `<style>
+      #__demo_highlights { position: fixed; inset: 0; pointer-events: none; z-index: 2147483644; }
+      #__demo_highlights svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+      #__demo_highlights .label {
+        position: absolute; padding: 8px 16px; border-radius: 8px;
+        background: ${RED}; color: white; font: 700 24px/1.2 system-ui, sans-serif;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); white-space: nowrap;
+      }
+      #__demo_caption.__demo_top { top: 48px; bottom: auto; }
+    </style>`
+    document.body.appendChild(layer)
+  }
+
+  const svgNs = 'http://www.w3.org/2000/svg'
+  const svg = document.createElementNS(svgNs, 'svg')
+  svg.innerHTML = `
+    <defs><marker id="__demo_arrowhead" viewBox="0 0 10 10" refX="9" refY="5"
+      markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="${RED}" /></marker></defs>
+    <rect x="${rect.left}" y="${rect.top}" width="${rect.right - rect.left}"
+      height="${rect.bottom - rect.top}" rx="8" fill="none" stroke="${RED}"
+      stroke-width="5" />`
+  layer.appendChild(svg)
+  if (!label) return
+
+  const tag = document.createElement('div')
+  tag.className = 'label'
+  tag.textContent = label
+  layer.appendChild(tag)
+  const tagWidth = tag.offsetWidth
+  const tagHeight = tag.offsetHeight
+
+  // Put the label diagonally off the element, toward the roomier side of the
+  // frame, and never inside the caption's band.
+  const toRight = (rect.left + rect.right) / 2 < width / 2
+  const below = (rect.top + rect.bottom) / 2 < height / 2
+  const minTop = captionOnTop ? CAPTION_ZONE : 16
+  const maxTop = height - tagHeight - (captionOnTop ? 16 : CAPTION_ZONE)
+  const left = Math.min(
+    Math.max(toRight ? rect.right + 60 : rect.left - 60 - tagWidth, 16),
+    width - tagWidth - 16,
+  )
+  const top = Math.min(
+    Math.max(below ? rect.bottom + 80 : rect.top - 80 - tagHeight, minTop),
+    maxTop,
+  )
+  tag.style.left = `${left}px`
+  tag.style.top = `${top}px`
+
+  // The arrow runs from the label's center to the nearest point of the box;
+  // the label is drawn over its start.
+  const fromX = left + tagWidth / 2
+  const fromY = top + tagHeight / 2
+  const toX = Math.min(Math.max(fromX, rect.left), rect.right)
+  const toY = Math.min(Math.max(fromY, rect.top), rect.bottom)
+  const arrow = document.createElementNS(svgNs, 'line')
+  arrow.setAttribute('x1', String(fromX))
+  arrow.setAttribute('y1', String(fromY))
+  arrow.setAttribute('x2', String(toX))
+  arrow.setAttribute('y2', String(toY))
+  arrow.setAttribute('stroke', RED)
+  arrow.setAttribute('stroke-width', '5')
+  arrow.setAttribute('stroke-linecap', 'round')
+  arrow.setAttribute('marker-end', 'url(#__demo_arrowhead)')
+  svg.appendChild(arrow)
 }
 
 function drawDemoOverlay() {

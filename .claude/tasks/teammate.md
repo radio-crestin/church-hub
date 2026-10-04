@@ -22,8 +22,9 @@ Every code change follows these steps. Config or tooling tasks only when the lea
 4. **Video: before and after**, 10–40 s each, same steps, with the mouse and a note per step.
    - **Before** (record it first, before you change code): the bug happening, or how it worked before the feature. Captions start with "Before:".
    - **After**: the same steps on your branch, showing the fix or the new behavior. Captions start with "After:".
+   - **Highlight** what matters in both: the bug in Before, the fix or new feature in After. `await highlight(page, locator, 'Bug: …')` draws a red box + arrow + label; `await clearHighlights(page)` before the next step.
    - Can't reproduce the bug for the before video? Say so in your report; don't fake it.
-   - Temp spec `app/apps/client/e2e/_demo-<task-id>.spec.ts` (gitignored), built on `e2e/helpers/demo-recording.ts`: `DEMO_RECORDING`, `installDemoOverlay`, `showCaption`, `glideClick`.
+   - Temp spec `app/apps/client/e2e/_demo-<task-id>.spec.ts` (gitignored), built on `e2e/helpers/demo-recording.ts`: `DEMO_RECORDING`, `installDemoOverlay`, `showCaption`, `glideClick`, `highlight`, `clearHighlights`.
    - Record: `CI=1 TEST_PORT=<port> DEMO_OUT=<scratchpad>/demos .claude/skills/documented-pr/scripts/record-features.sh app/apps/client/e2e/_demo-<task-id>.spec.ts` → `.mp4` + `.gif`.
 5. **PR.** `git push -u origin <branch>`. Upload: `DEMO_OUT=<scratchpad>/demos .claude/skills/documented-pr/scripts/upload-demos.sh pr-demos-<branch>` → asset URLs. Open the PR with `detailed-pr`, its UI/UX section embedding both, labeled **Before** / **After**: `[![before](<gif url>)](<mp4 url>)` (why not `<video>`: `documented-pr`).
 6. **Task file.** Fill its `## PR` section: branch, PR `#<n> <url>`, videos `before: <mp4 url>`, `after: <mp4 url>`. Edit it at the main-checkout path from your prompt, not the worktree copy. Not the front matter: better-tasks rewrites it and drops unknown keys.
