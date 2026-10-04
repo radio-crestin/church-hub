@@ -8,7 +8,7 @@ const execFileAsync = promisify(execFile)
 
 const MAX_ATTEMPTS = 4
 const RETRY_DELAY_MS = 500
-const HELPER_TIMEOUT_MS = 15_000
+const HELPER_TIMEOUT_MS = 5000
 
 /**
  * Makes sure the macOS MIDI server is up before this process asks it for a

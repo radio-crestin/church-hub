@@ -29,9 +29,14 @@ async function runCoreMidiWarmUp(): Promise<void> {
   coreMidiWarmUpDone = true
 }
 
-/** Resolves once MIDI start-up can no longer delay a request (see initializeMIDI). */
+// A request waits at most this long for the warm-up, then MIDI answers as
+// "not available yet" rather than hanging behind a stuck helper.
+const MIDI_READY_WAIT_MS = 5000
+
+/** Resolves once MIDI start-up is done (see initializeMIDI), or after 5 s at most. */
 export function whenMIDIReady(): Promise<void> {
-  return coreMidiWarmUp ?? Promise.resolve()
+  if (!coreMidiWarmUp) return Promise.resolve()
+  return Promise.race([coreMidiWarmUp, Bun.sleep(MIDI_READY_WAIT_MS)])
 }
 
 /**
