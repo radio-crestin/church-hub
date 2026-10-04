@@ -1,7 +1,7 @@
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
-import type { LanguageModelV1 } from 'ai'
+import type { LanguageModel } from 'ai'
 
 interface AIProviderConfig {
   provider: 'openai' | 'anthropic' | 'gemini' | 'custom'
@@ -17,7 +17,7 @@ const DEFAULT_MODELS: Record<AIProviderConfig['provider'], string> = {
   custom: 'gpt-4o',
 }
 
-export function createAiModel(config: AIProviderConfig): LanguageModelV1 {
+export function createAiModel(config: AIProviderConfig): LanguageModel {
   const modelId = config.model || DEFAULT_MODELS[config.provider]
 
   switch (config.provider) {
@@ -42,7 +42,9 @@ export function createAiModel(config: AIProviderConfig): LanguageModelV1 {
         apiKey: config.apiKey,
         baseURL: config.baseUrl || undefined,
       })
-      return openai(modelId)
+      // Chat Completions, not the Responses API @ai-sdk/openai 2 defaults
+      // to: OpenAI-compatible servers behind "custom" only speak this one.
+      return openai.chat(modelId)
     }
   }
 }

@@ -26,6 +26,7 @@ const drawImage = vi.fn()
 
 describe('ScreenBackground', () => {
   beforeEach(() => {
+    vi.restoreAllMocks()
     drawImage.mockReset()
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({

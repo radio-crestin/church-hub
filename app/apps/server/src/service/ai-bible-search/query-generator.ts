@@ -50,7 +50,7 @@ Think carefully about:
 - What words would appear in Scripture about this topic?
 - What synonyms, theological terms, and character names should be included?
 - What books of the Bible commonly address this topic?`,
-    maxTokens: 600,
+    maxOutputTokens: 600,
   })
 
   // Parse the JSON response

@@ -63,7 +63,7 @@ Focus on the ACTUAL VERSE CONTENT and its theological meaning.
 
 Verses to analyze (${candidates.length} total):
 ${JSON.stringify(candidatesSummary, null, 2)}`,
-      maxTokens: 6000,
+      maxOutputTokens: 6000,
     })
 
     // Log reasoning if available (for debugging)
