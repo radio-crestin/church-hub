@@ -24,7 +24,10 @@ export const WEBKIT_STORAGE_STATE = join(
   'e2e/.auth/super-admin-webkit.json',
 )
 
-const TEST_PORT = process.env.TEST_PORT ?? '3000'
+// Not 3000: the desktop app and the dev server live there. A run that landed
+// on the running app drove its real projector and database ("slides appear
+// with nobody presenting", T-030).
+const TEST_PORT = process.env.TEST_PORT ?? '3099'
 const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
 
 // Run tests against an isolated, freshly-seeded database so they neither
@@ -32,11 +35,14 @@ const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
 // have a password set on the super admin — which would break the test login).
 const TEST_DB_PATH = join(ROOT_DIR, 'e2e/.test-data/app.db')
 
-// In CI, serve the pre-built client directly instead of proxying to Vite
+// Serve the built client from the test server. CI builds it in its own step;
+// locally it is built here. Never `dev:web`: it frees port 3000 first, which
+// kills the desktop app or the dev server running there.
 const isCI = !!process.env.CI
+const serveBuiltClient = `cd ../.. && NODE_ENV=production CLIENT_DIST_PATH=apps/client/dist DATABASE_PATH='${TEST_DB_PATH}' PORT=${TEST_PORT} bun run apps/server/src/index.ts`
 const webServerCommand = isCI
-  ? `cd ../.. && NODE_ENV=production CLIENT_DIST_PATH=apps/client/dist DATABASE_PATH='${TEST_DB_PATH}' PORT=${TEST_PORT} bun run apps/server/src/index.ts`
-  : `cd ../.. && DATABASE_PATH='${TEST_DB_PATH}' PORT=${TEST_PORT} bun run dev:web`
+  ? serveBuiltClient
+  : `bun run build && ${serveBuiltClient}`
 
 export default defineConfig({
   testDir: './e2e',
@@ -84,7 +90,10 @@ export default defineConfig({
   webServer: {
     command: webServerCommand,
     url: TEST_BASE_URL,
-    reuseExistingServer: !isCI,
+    // Never test a server this run did not start: whatever already answers
+    // on the port (the desktop app, a dev server) has a real projector and
+    // database. Playwright stops with "<url> is already used" instead.
+    reuseExistingServer: false,
     timeout: 180000,
     stdout: 'pipe',
     stderr: 'pipe',
