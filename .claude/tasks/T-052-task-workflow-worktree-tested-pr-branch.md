@@ -2,8 +2,8 @@
 id: T-052
 title: Task workflow — worktree, tested, PR + branch on the task, demo video with cursor and notes
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: task-workflow
 rolled: 0
 order: -2
@@ -18,3 +18,4 @@ User: "update the skill for implementing a feature/task, i want it to spawn a wo
 - 2026-10-04: User: "make sure to clean up the worktree very fast and efficient when the task is finished".
 - 2026-10-04: Cache reuse: app/scripts/worktree-setup.ts (bcae0827) + rule step 2 (181c6722). Fresh worktree to passing spec 16.4 s total (setup ~5 s). cargo check 17.9 s cold → 3.4 s via a shared target dir. Playwright 1217 shell installed by hand from the complete zip, because playwright install hangs at 100% here (Homebrew Node 26).
 - 2026-10-04: Cleanup: app/scripts/worktree-cleanup.ts. Stops only the task port, then unlock, rename aside, prune, detached rm, branch deleted only if merged or pushed. Measured 0.81 s on a 2 GB locked worktree with a listener on its port; folder gone within 8 s; shared caches unchanged. Rules: teammate step 8, coordinator runs it on Accept.
+- 2026-10-04: Teammates now follow 8 steps per task: a worktree set up with shared caches (passing test in ~16 s); an e2e test; a demo video with cursor and captions; a PR; the task's ## PR section filled in; cleanup on accept (0.8 s).
