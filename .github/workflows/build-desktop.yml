@@ -5,7 +5,7 @@ name: Build desktop app
 #   - pr-build.yml      — every pull request (a test build to download)
 #   - main-build.yml    — every push to main (keeps the shared caches warm)
 #   - by hand (Actions → Run workflow), e.g. to try the release upload on a
-#     throwaway draft release
+#     throwaway draft release (never a v* one: the plan job refuses that)
 # Each platform compiles the sidecar, smoke-tests it (/ping must answer),
 # builds the Tauri bundle and uploads the installer, renamed to
 # church-hub-<platform>-<artifact_suffix>.<ext>, to the GitHub release
@@ -102,6 +102,17 @@ jobs:
     outputs:
       platforms: ${{ steps.plan.outputs.platforms }}
     steps:
+      # A v* release is built only by its tag push (build-release.yml), and
+      # the tag rule set decides who may push one. Run by hand, this workflow
+      # may upload to a test or PR release, never to a v* release.
+      - name: Refuse uploads to a v* release when run by hand
+        if: >-
+          github.event_name == 'workflow_dispatch' &&
+          (startsWith(inputs.release_tag, 'v') || startsWith(inputs.tauri_release_tag, 'v'))
+        run: |
+          echo "::error::A v* release is built only by pushing its tag. Run by hand, pick a test release."
+          exit 1
+
       - name: Pick the platforms
         id: plan
         env:
