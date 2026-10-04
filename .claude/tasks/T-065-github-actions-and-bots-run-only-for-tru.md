@@ -2,8 +2,8 @@
 id: T-065
 title: GitHub Actions and bots run only for trusted contributors
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: ci-trust
 rolled: 0
 order: -20
@@ -20,6 +20,8 @@ Prove it: a test PR/comment from a non-collaborator path is skipped (simulate vi
 
 ## Notes
 - 2026-10-04: Details are kept in the private task notes (.claude/tasks-private/, not in git).
+- 2026-10-04: User 2026-10-04: Mark as resolved (lead merges #95 when green). For the GitHub settings the user said "do it by yourself on the mac" — details of what to apply are in the private notes.
+- 2026-10-04: Workflows run only for trusted contributors; actions pinned; GitHub settings applied (details in private notes). PRs #95 and #96 merged.
 
 ## PR
 - branch:
