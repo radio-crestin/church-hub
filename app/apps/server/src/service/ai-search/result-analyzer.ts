@@ -103,7 +103,7 @@ Score each song based on how well its matching lyrics relate to this search.
 
 Songs (${candidates.length} total):
 ${JSON.stringify(candidatesSummary, null, 2)}`,
-      maxTokens: 5000,
+      maxOutputTokens: 5000,
     })
 
     // Log reasoning if available (for debugging)

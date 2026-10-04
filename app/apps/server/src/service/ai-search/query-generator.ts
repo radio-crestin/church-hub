@@ -43,7 +43,7 @@ Think carefully about:
 - What themes and concepts relate to this search?
 - What words would appear in worship songs about this topic?
 - What synonyms and related biblical terms should be included?`,
-    maxTokens: 600,
+    maxOutputTokens: 600,
   })
 
   // Parse the JSON response
