@@ -14,10 +14,7 @@ import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { UpdateNotification } from '../../features/app-update'
 import { CurrentUserButton } from '../../features/auth'
-import {
-  SendFeedbackModal,
-  useFeedbackUnreadCount,
-} from '../../features/feedback'
+import { RequestFeatureTool } from '../../features/feature-request'
 import { useKioskSettings } from '../../features/kiosk'
 import { usePresentationState } from '../../features/presentation'
 import {
@@ -55,8 +52,7 @@ export function Sidebar({
   const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false)
   const isMobileMenuOpen = externalMobileMenuOpen ?? internalMobileMenuOpen
   const setIsMobileMenuOpen = onMobileMenuChange ?? setInternalMobileMenuOpen
-  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
-  const feedbackUnreadCount = useFeedbackUnreadCount()
+  const [isFeatureRequestOpen, setIsFeatureRequestOpen] = useState(false)
   const location = useLocation()
   // Defensive: /screen/* renders fullscreen via app-layout and never
   // mounts the sidebar. If something ever does mount it here (HMR race,
@@ -347,41 +343,31 @@ export function Sidebar({
             {/* Update notification - shown above Feedback when update available */}
             <UpdateNotification isCollapsed={isCollapsed} />
 
-            {/* Feedback — opens our own send-only modal that uses the
-                PostHog conversations JS API (sendMessage). We don't open
-                PostHog's built-in chat widget because its floating
-                button keeps reappearing. Red dot appears when there are
-                unread support messages. Never rendered on /screen/* —
-                those windows are church projector output. Visibility is
-                user-controlled via Sidebar configuration in Settings. */}
+            {/* Request a feature — opens the screenshot-style tool (pick an
+                element, draw, add notes) that files a public GitHub issue.
+                Never rendered on /screen/* — those windows are church
+                projector output. Visibility is user-controlled via Sidebar
+                configuration in Settings (builtin id stays `feedback`). */}
             {!isScreenRoute && isFeedbackVisible && (
               <button
                 type="button"
-                onClick={() => setIsFeedbackModalOpen(true)}
+                data-testid="sidebar-request-feature"
+                onClick={() => {
+                  // Close the phone drawer so the app is visible to pick from.
+                  setIsMobileMenuOpen(false)
+                  setIsFeatureRequestOpen(true)
+                }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 ${isCollapsed ? 'md:justify-center' : ''}`}
                 title={
                   isCollapsed ? t('sidebar:navigation.feedback') : undefined
                 }
-                aria-label={
-                  feedbackUnreadCount > 0
-                    ? `${t('sidebar:navigation.feedback')} (${feedbackUnreadCount})`
-                    : t('sidebar:navigation.feedback')
-                }
+                aria-label={t('sidebar:navigation.feedback')}
               >
-                <span className="relative flex-shrink-0">
-                  <span className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-                    <MessageSquarePlus
-                      size={16}
-                      className="text-gray-600 dark:text-gray-400"
-                    />
-                  </span>
-                  {feedbackUnreadCount > 0 && (
-                    <span
-                      aria-label="Unread support messages"
-                      className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"
-                      data-ph-mask
-                    />
-                  )}
+                <span className="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                  <MessageSquarePlus
+                    size={16}
+                    className="text-gray-600 dark:text-gray-400"
+                  />
                 </span>
                 <span className="text-sm font-medium md:hidden">
                   {t('sidebar:navigation.feedback')}
@@ -446,13 +432,9 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Feedback modal — our own send-only form, talks to PostHog
-          conversations via the JS API. Embeds the email/WhatsApp
-          contact shortcuts directly below the form. */}
-      <SendFeedbackModal
-        isOpen={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
-      />
+      {isFeatureRequestOpen && (
+        <RequestFeatureTool onClose={() => setIsFeatureRequestOpen(false)} />
+      )}
     </>
   )
 }
