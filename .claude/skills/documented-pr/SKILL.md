@@ -12,7 +12,7 @@ You produce a PR description reviewers can act on, plus a Playwright-recorded de
 
 Every recording produced by this skill MUST use these settings; do not pare them back for any PR:
 
-All seven come from the shared helper `app/apps/client/e2e/helpers/demo-recording.ts`; never inline a copy.
+All eight come from the shared helpers `app/apps/client/e2e/helpers/demo-recording.ts` and `demo-voice.ts`; never inline a copy.
 
 1. **1920×1080 viewport AND explicit `video.size`** — `test.use(DEMO_RECORDING)`. Playwright otherwise downscales to 800×600.
 2. **Cursor + caption overlay** — `installDemoOverlay(page)` in `beforeEach`. Playwright videos exclude the OS pointer.
@@ -20,7 +20,8 @@ All seven come from the shared helper `app/apps/client/e2e/helpers/demo-recordin
 4. **`glideClick(page, locator)` for every click** — the cursor visibly travels to the target; a bare `locator.click()` teleports.
 5. **Seed cursor position at test start** — `await page.mouse.move(960, 540, { steps: 15 })` after the first `goto`.
 6. **Highlight the bug or the new feature** — `highlight(page, locator, 'Bug: …')` draws a red box around it, plus a red arrow from the label; `clearHighlights(page)` removes it before the next step. Before videos box the bug, After videos box the fix or the new feature. When the element sits in the caption's band, the caption moves to the top.
-7. **Embed via `[![alt](gif)](mp4)` markdown** — `<video>` tags are stripped by GitHub's sanitizer (see next section). `record-features.sh` makes both with ffmpeg, a hard dependency.
+7. **A voice reads every caption** — `record-features.sh` sets `DEMO_VOICE=1`; `showCaption` then has macOS `say` read the text and holds the caption until the voice ends, and the script mixes the clips into the mp4 at the caption's time. The GIF stays silent. Write captions to be heard: full words, no symbols. Another voice: `DEMO_VOICE_NAME=Ioana` (Romanian). Without `say` or ffmpeg the script stops with an error.
+8. **Embed via `[![alt](gif)](mp4)` markdown** — `<video>` tags are stripped by GitHub's sanitizer (see next section). `record-features.sh` makes both with ffmpeg, a hard dependency.
 
 ## Why GIF, not `<video>` — GitHub's sanitizer (verified)
 
@@ -142,10 +143,10 @@ The script:
 1. Wipes `app/apps/client/test-results/` so we know which files are new.
 2. Runs `npx playwright test _pr-demos.spec.ts --project=chromium` from the client dir.
 3. Copies each `test-results/<dir>/video.webm` → `$DEMO_OUT/<slug>.webm` (default `/tmp/pr-demos`).
-4. Transcodes each webm → `<slug>.mp4` (1280px · H.264 CRF 30 · faststart) and `<slug>.gif` (15 fps · 1280px wide · 192-color palette · bayer dither) using ffmpeg.
+4. Transcodes each webm → `<slug>.mp4` (1280px · H.264 CRF 30 · faststart · AAC voice track from `<slug>.voice/`) and `<slug>.gif` (15 fps · 1280px wide · 192-color palette · bayer dither) using ffmpeg.
 5. Prints the files with their sizes.
 
-Requires `ffmpeg` on the PATH. On macOS: `brew install ffmpeg`. If ffmpeg is missing, the script still emits webms and prints a warning.
+Requires macOS `say` and `ffmpeg`/`ffprobe` on the PATH (`brew install ffmpeg`); the script stops before recording if one is missing.
 
 Recording is headless by default — no popup windows, no user interaction needed. The dev server is auto-started by `playwright.config.ts` if not already up (`reuseExistingServer: !isCI`); with `CI=1` it serves the prebuilt client on `TEST_PORT` with an isolated DB.
 

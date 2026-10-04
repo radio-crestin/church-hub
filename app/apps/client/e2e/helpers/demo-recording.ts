@@ -1,11 +1,14 @@
 import type { Locator, Page } from '@playwright/test'
 
+import { speakCaption, startVoiceClock } from './demo-voice'
+
 /**
  * Helpers for the short demo video every task attaches to its PR: a visible
  * cursor (Playwright videos never show the OS pointer) and on-screen notes.
  * Spread DEMO_RECORDING into test.use(), call installDemoOverlay in
  * beforeEach, then narrate each step with showCaption and click with
- * glideClick. Point at the bug or the new feature with highlight (red box,
+ * glideClick (each caption is also read aloud when recorded by
+ * record-features.sh, see demo-voice.ts). Point at the bug or the new feature with highlight (red box,
  * arrow, label) and remove it with clearHighlights.
  */
 
@@ -19,10 +22,14 @@ export const DEMO_RECORDING = {
 
 /** Draws the cursor dot, a ripple on every click and an empty caption bar on each page load. */
 export async function installDemoOverlay(page: Page): Promise<void> {
+  startVoiceClock(page)
   await page.addInitScript(drawDemoOverlay)
 }
 
-/** Shows a note at the bottom of the frame and holds it long enough to read. */
+/**
+ * Shows a note at the bottom of the frame and holds it long enough to read,
+ * and, when recording with voice, until the voice has finished reading it.
+ */
 export async function showCaption(
   page: Page,
   text: string,
@@ -34,7 +41,10 @@ export async function showCaption(
     caption.textContent = captionText
     caption.style.opacity = captionText ? '1' : '0'
   }, text)
-  await page.waitForTimeout(holdMs)
+  const shownAt = Date.now()
+  const speechMs = await speakCaption(page, text)
+  const holdUntil = shownAt + Math.max(holdMs, speechMs + 400)
+  await page.waitForTimeout(Math.max(holdUntil - Date.now(), 0))
 }
 
 /** Moves the cursor visibly to the element before clicking, instead of teleporting. */

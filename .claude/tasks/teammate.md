@@ -19,7 +19,7 @@ Every code change follows these steps. Config or tooling tasks only when the lea
    - Cargo shares the main checkout's target dir: `cargo check`/`clippy`/`test` only, no `tauri build`/`dev`.
    - Browser reported MISSING and `playwright install` hangs at 100%: its zip in `$TMPDIR/playwright-download-*/` is complete. Unzip it into the reported location and create an empty `INSTALLATION_COMPLETE` file there.
 3. **Test.** Write or extend a spec in `app/apps/client/e2e/`. `CI=1 TEST_PORT=<port> bunx playwright test <spec> --workers=1 --retries=2` must pass.
-4. **Video: before and after**, 10–40 s each, same steps, with the mouse and a note per step.
+4. **Video: before and after**, 10–40 s each, same steps, with the mouse and a note per step; a voice reads each note (automatic, macOS `say`: write notes in full words).
    - **Before** (record it first, before you change code): the bug happening, or how it worked before the feature. Captions start with "Before:".
    - **After**: the same steps on your branch, showing the fix or the new behavior. Captions start with "After:".
    - **Highlight** what matters in both: the bug in Before, the fix or new feature in After. `await highlight(page, locator, 'Bug: …')` draws a red box + arrow + label; `await clearHighlights(page)` before the next step.
