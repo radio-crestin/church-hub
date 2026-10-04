@@ -1,3 +1,5 @@
+import type { ParsedImage } from './parseImageDataUrl'
+
 /** The element the user picked in the app, as captured by the client. */
 export interface PickedElement {
   /** Unique CSS selector, e.g. `body > div:nth-of-type(1) > button`. */
@@ -18,8 +20,8 @@ export interface FeatureRequestInput {
   osVersion: string
   appVersion: string
   element?: PickedElement
-  /** `data:image/(jpeg|png|webp);base64,...` */
-  screenshot?: string
+  /** Decoded from a `data:image/(jpeg|png|webp);base64,...` URL, max 5 MB. */
+  screenshot?: ParsedImage
   /** PostHog id the app's logs are stored under. Private, like the email. */
   supportId?: string
 }

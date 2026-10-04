@@ -1,27 +1,29 @@
 import type { Bindings } from '../types'
+import { SCREENSHOT_ROUTE_PREFIX } from './constants'
 import { createGitHubIssue } from './createGitHubIssue'
 import { formatIssueBody } from './formatIssueBody'
 import { formatWhatsAppMessage } from './formatWhatsAppMessage'
-import { parseImageDataUrl } from './parseImageDataUrl'
+import { getScreenshotStore } from './getScreenshotStore'
 import { sendWhatsAppMessage } from './sendWhatsAppMessage'
 import type { CreatedIssue, FeatureRequestInput } from './types'
-import { uploadScreenshot } from './uploadScreenshot'
 
 export interface SubmittedFeatureRequest extends CreatedIssue {
   whatsAppSent: boolean
 }
 
 /**
- * Uploads the screenshot to GitHub, opens the public issue (no email), then
- * tells the maintainer on WhatsApp (with the email and the issue link).
+ * Stores the screenshot in R2 (served by this worker, so the GitHub token
+ * never needs write access to the code), opens the public issue that
+ * embeds it (no email), then tells the maintainer on WhatsApp (with the
+ * email and the issue link).
  */
 export async function submitFeatureRequest(
   env: Bindings,
-  request: FeatureRequestInput
+  request: FeatureRequestInput,
+  publicOrigin: string
 ): Promise<SubmittedFeatureRequest> {
-  const image = request.screenshot ? parseImageDataUrl(request.screenshot) : null
-  const screenshotUrl = image
-    ? await uploadScreenshot(env.GITHUB_TOKEN, image, request.title)
+  const screenshotUrl = request.screenshot
+    ? `${publicOrigin}${SCREENSHOT_ROUTE_PREFIX}/${await getScreenshotStore(env).save(request.screenshot)}`
     : null
 
   const issue = await createGitHubIssue(

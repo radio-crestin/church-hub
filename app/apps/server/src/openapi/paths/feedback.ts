@@ -4,7 +4,7 @@ export const feedbackPaths = {
       tags: ['Feedback'],
       summary: 'Request a feature (creates a public GitHub issue)',
       description:
-        'Relays an in-app "Request a feature" report to the Church Hub Cloudflare worker. The worker commits the screenshot to the `feature-request-screenshots` branch of the repo, opens a **public** GitHub issue in radio-crestin/church-hub that embeds it (title, notes, picked element, annotated screenshot, app context — never the email) and sends the maintainer a WhatsApp message that includes the email. Returns the created issue URL, which the app opens.',
+        'Relays an in-app "Request a feature" report to the Church Hub Cloudflare worker. The worker stores the screenshot in R2 (served at a random, unguessable URL by the worker), opens a **public** GitHub issue in radio-crestin/church-hub that embeds it (title, notes, picked element, annotated screenshot, app context — never the email) and sends the maintainer a WhatsApp message that includes the email. Returns the created issue URL, which the app opens.',
       requestBody: {
         required: true,
         content: {

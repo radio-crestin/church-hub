@@ -6,6 +6,7 @@ import {
 } from './constants'
 import { FeatureRequestError } from './FeatureRequestError'
 import { isValidEmail } from './isValidEmail'
+import { parseImageDataUrl } from './parseImageDataUrl'
 import { readString } from './readString'
 import type { FeatureRequestInput, PickedElement } from './types'
 
@@ -38,7 +39,10 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
       SHORT_FIELD_MAX_LENGTH
     ),
     element: parseElement(raw.element),
-    screenshot: typeof raw.screenshot === 'string' ? raw.screenshot : undefined,
+    screenshot:
+      typeof raw.screenshot === 'string'
+        ? parseImageDataUrl(raw.screenshot)
+        : undefined,
     supportId:
       readString(raw.supportId, 'supportId', SHORT_FIELD_MAX_LENGTH, optional) ||
       undefined,

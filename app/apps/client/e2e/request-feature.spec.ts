@@ -26,7 +26,12 @@ async function mockFeatureRequestApi(page: Page): Promise<SentRequest[]> {
   await page.route('**/api/feature-requests', async (route) => {
     sent.push(route.request().postDataJSON() as SentRequest)
     await route.fulfill({
-      json: { success: true, issueUrl: ISSUE_URL, issueNumber: 999 },
+      json: {
+        success: true,
+        issueUrl: ISSUE_URL,
+        issueNumber: 999,
+        whatsAppSent: true,
+      },
     })
   })
   return sent

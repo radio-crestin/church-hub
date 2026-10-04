@@ -6,7 +6,7 @@ import { GITHUB_REPO } from './constants'
  */
 export async function githubRequest<T>(
   token: string,
-  method: 'POST' | 'PUT',
+  method: 'POST',
   repoPath: string,
   body: unknown
 ): Promise<T> {

@@ -19,9 +19,8 @@ YOUTUBE_REDIRECT_URI=http://localhost:8787/auth/youtube/callback
 # 3. Name: "ChurchHub Feedback Bot" (or similar)
 # 4. Expiration: Choose as needed (recommend 1 year or no expiration)
 # 5. Repository access: Select "Only select repositories" -> radio-crestin/church-hub
-# 6. Permissions -> Repository permissions -> Issues: Read and Write,
-#    and Contents: Read and Write (feature-request screenshots are committed
-#    to the feature-request-screenshots branch and embedded in the issue)
+# 6. Permissions -> Repository permissions -> Issues: Read and Write (only;
+#    feature-request screenshots live in R2, not in the repo)
 # 7. Click "Generate token" and copy the value
 GITHUB_TOKEN=github_pat_xxxxxxxxxxxxxxxxxxxx
 
