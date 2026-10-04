@@ -8168,14 +8168,14 @@ async function startRealServer(): Promise<void> {
       }
 
       // ============================================================
-      // Feedback API Endpoint (proxies to Cloudflare worker)
+      // Feedback logs (feature requests themselves: routes/feature-requests)
       // ============================================================
 
       // POST /api/feedback/attach-logs - Upload server + Tauri log tails to
-      // PostHog under a ticket_id created by `posthog.conversations.sendMessage`
-      // on the client. The maintainer opens the ticket in PostHog and finds
-      // the logs attached as a separate `$feedback_logs` event keyed by the
-      // same distinct_id (the ticket_id).
+      // PostHog under the user's support id (PostHog distinct_id, sent as
+      // ticketId) when they send a feature request. The maintainer gets the
+      // same id privately with the request and finds the logs as a
+      // `$feedback_report` event keyed by it.
       if (
         req.method === 'POST' &&
         url.pathname === '/api/feedback/attach-logs'

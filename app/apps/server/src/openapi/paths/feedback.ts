@@ -4,7 +4,7 @@ export const feedbackPaths = {
       tags: ['Feedback'],
       summary: 'Request a feature (creates a public GitHub issue)',
       description:
-        'Relays an in-app "Request a feature" report to the Church Hub Cloudflare worker. The worker stores the screenshot, opens a **public** GitHub issue in radio-crestin/church-hub (title, notes, picked element, screenshot, app context — never the email) and sends the maintainer a WhatsApp message that includes the email. Returns the created issue URL, which the app opens.',
+        'Relays an in-app "Request a feature" report to the Church Hub Cloudflare worker. The worker commits the screenshot to the `feature-request-screenshots` branch of the repo, opens a **public** GitHub issue in radio-crestin/church-hub that embeds it (title, notes, picked element, annotated screenshot, app context — never the email) and sends the maintainer a WhatsApp message that includes the email. Returns the created issue URL, which the app opens.',
       requestBody: {
         required: true,
         content: {
@@ -41,6 +41,11 @@ export const feedbackPaths = {
                     },
                     label: { type: 'string' },
                   },
+                },
+                supportId: {
+                  type: 'string',
+                  description:
+                    'PostHog distinct id the log tails are stored under (see /api/feedback/attach-logs). Private: WhatsApp only',
                 },
                 screenshot: {
                   type: 'string',
@@ -79,7 +84,10 @@ export const feedbackPaths = {
         },
         '401': { description: 'Not authenticated' },
         '413': { description: 'Screenshot too large' },
-        '429': { description: 'Too many requests from this network' },
+        '429': {
+          description:
+            'Too many requests from this network: 3 a minute or 50 in 24 hours (code `rate_limited`)',
+        },
         '502': { description: 'The Church Hub backend could not be reached' },
       },
     },
@@ -87,9 +95,9 @@ export const feedbackPaths = {
   '/api/feedback/attach-logs': {
     post: {
       tags: ['Feedback'],
-      summary: 'Attach server + Tauri logs to a PostHog support ticket',
+      summary: "Attach server + Tauri logs to the user's support id in PostHog",
       description:
-        "After `posthog.conversations.sendMessage()` opens a ticket on the client, this endpoint uploads the most recent server and Tauri log tails to PostHog under the same ticket_id. Maintainers triage the ticket in PostHog's conversations view and find the logs attached as a `$feedback_report` event keyed by the ticket_id.",
+        "When the user sends a feature request, this endpoint uploads the most recent server and Tauri log tails to PostHog under the user's support id (PostHog distinct id, sent as ticketId). The same id goes privately to the maintainer with the request, so the logs can be found as a `$feedback_report` event keyed by it.",
       requestBody: {
         required: true,
         content: {
@@ -100,8 +108,7 @@ export const feedbackPaths = {
               properties: {
                 ticketId: {
                   type: 'string',
-                  description:
-                    'The ticket_id returned by posthog.conversations.sendMessage on the client',
+                  description: "The user's support id (PostHog distinct id)",
                 },
                 osVersion: { type: 'string' },
                 appVersion: { type: 'string' },
