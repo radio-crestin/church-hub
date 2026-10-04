@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ElementPicker } from './ElementPicker'
@@ -12,8 +12,8 @@ import { describePickedElement } from '../utils/describePickedElement'
 import { FEATURE_REQUEST_UI_ATTRIBUTE } from '../utils/isFeatureRequestUi'
 
 type Step =
+  | { kind: 'capturing'; target: Element | null }
   | { kind: 'picking' }
-  | { kind: 'capturing' }
   | {
       kind: 'editing'
       element: PickedElement | null
@@ -24,41 +24,63 @@ interface RequestFeatureToolProps {
   onClose: () => void
 }
 
+/** Takes the screenshot, outlining the picked element when there is one. */
+async function takeScreenshot(
+  target: Element | null,
+): Promise<HTMLCanvasElement | null> {
+  try {
+    return await captureScreenshot(target?.getBoundingClientRect() ?? null)
+  } catch (error) {
+    // The request still goes out, just without a picture.
+    // biome-ignore lint/suspicious/noConsole: surface the cause for support
+    console.error('[feature-request] screenshot failed', error)
+    return null
+  }
+}
+
 /**
- * "Request a feature", run like a screenshot tool: pick an element (or the
- * whole screen), get a screenshot with it outlined, draw on it, add notes
- * and send. Mount it only while open; unmounting resets every step.
+ * "Request a feature", screenshot first: opening it photographs the screen
+ * right away, then a short two-step flow lets the user draw on it (optional)
+ * and write the request. Pointing at one part of the app is still possible
+ * from the first step. Mount it only while open; unmounting resets it all.
  */
 export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
   const { t } = useTranslation()
-  const [step, setStep] = useState<Step>({ kind: 'picking' })
-  // Kept here so "pick again" does not lose what was already typed.
+  const [step, setStep] = useState<Step>({
+    kind: 'capturing',
+    target: null,
+  })
+  // Kept here so "point at a part" does not lose what was already typed.
   const [values, setValues] = useState<RequestFeatureValues>(() => ({
     title: '',
     notes: '',
     email: getSavedEmail(),
   }))
 
-  const handlePick = async (target: Element | null) => {
-    const element = target ? describePickedElement(target) : null
-    const rect = target?.getBoundingClientRect() ?? null
-    setStep({ kind: 'capturing' })
-    let screenshot: HTMLCanvasElement | null = null
-    try {
-      screenshot = await captureScreenshot(rect)
-    } catch (error) {
-      // The request still goes out, just without a picture.
-      // biome-ignore lint/suspicious/noConsole: surface the cause for support
-      console.error('[feature-request] screenshot failed', error)
+  useEffect(() => {
+    if (step.kind !== 'capturing') return
+    const { target } = step
+    let isCancelled = false
+    void takeScreenshot(target).then((screenshot) => {
+      if (isCancelled) return
+      const element = target ? describePickedElement(target) : null
+      setStep({ kind: 'editing', element, screenshot })
+    })
+    return () => {
+      isCancelled = true
     }
-    setStep({ kind: 'editing', element, screenshot })
-  }
+  }, [step])
 
   if (step.kind === 'picking') {
-    return <ElementPicker onPick={handlePick} onCancel={onClose} />
+    return (
+      <ElementPicker
+        onPick={(target) => setStep({ kind: 'capturing', target })}
+        onCancel={onClose}
+      />
+    )
   }
 
-  if (step.kind === 'capturing') {
+  if (step.kind !== 'editing') {
     return (
       <div
         {...{ [FEATURE_REQUEST_UI_ATTRIBUTE]: '' }}
@@ -79,7 +101,7 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
       screenshot={step.screenshot}
       values={values}
       onValuesChange={setValues}
-      onRetake={() => setStep({ kind: 'picking' })}
+      onPickElement={() => setStep({ kind: 'picking' })}
       onClose={onClose}
     />
   )

@@ -14,6 +14,8 @@ interface RequestFeatureFieldsProps {
   disabled: boolean
 }
 
+const NOTES_MAX_LENGTH = 5000
+
 const inputClass =
   'w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-60'
 const labelClass =
@@ -57,12 +59,18 @@ export function RequestFeatureFields({
           value={values.notes}
           onChange={(e) => update('notes', e.target.value)}
           placeholder={t('common:featureRequest.notesPlaceholder')}
-          maxLength={5000}
+          maxLength={NOTES_MAX_LENGTH}
           rows={5}
           required
           disabled={disabled}
           className={`${inputClass} resize-y`}
         />
+        <p
+          data-testid="feature-request-notes-counter"
+          className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400"
+        >
+          {values.notes.length} / {NOTES_MAX_LENGTH}
+        </p>
       </div>
       <div>
         <label htmlFor="feature-request-email" className={labelClass}>

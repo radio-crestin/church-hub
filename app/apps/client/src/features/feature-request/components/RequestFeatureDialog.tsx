@@ -1,16 +1,13 @@
-import { X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ContactModal } from './ContactModal'
-import { PickedElementInfo } from './PickedElementInfo'
-import { PublicNotice } from './PublicNotice'
-import {
-  RequestFeatureFields,
-  type RequestFeatureValues,
-} from './RequestFeatureFields'
+import { FlowProgress } from './FlowProgress'
+import type { RequestFeatureValues } from './RequestFeatureFields'
 import { RequestFeatureSuccess } from './RequestFeatureSuccess'
-import { ScreenshotAnnotator } from './ScreenshotAnnotator'
+import { ScreenshotStep } from './ScreenshotStep'
+import { WriteStep } from './WriteStep'
 import { useSubmitFeatureRequest } from '../hooks/useSubmitFeatureRequest'
 import type { PickedElement, Stroke } from '../types'
 import { FEATURE_REQUEST_UI_ATTRIBUTE } from '../utils/isFeatureRequestUi'
@@ -20,25 +17,40 @@ interface RequestFeatureDialogProps {
   element: PickedElement | null
   values: RequestFeatureValues
   onValuesChange: (values: RequestFeatureValues) => void
-  onRetake: () => void
+  onPickElement: () => void
   onClose: () => void
 }
 
-/** Screenshot with a pen on one side, the request form on the other. */
+const primaryButton =
+  'flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-indigo-600'
+const secondaryButton =
+  'flex items-center justify-center gap-1.5 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors disabled:opacity-60'
+
+/**
+ * A short flow in a dialog. Step 1: the screenshot, with a nudge to draw on
+ * it. Step 2: write the request and send it. Without a screenshot (it could
+ * not be taken) there is only the writing step.
+ */
 export function RequestFeatureDialog({
   screenshot,
   element,
   values,
   onValuesChange,
-  onRetake,
+  onPickElement,
   onClose,
 }: RequestFeatureDialogProps) {
   const { t } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const [step, setStep] = useState<'show' | 'write'>(
+    screenshot ? 'show' : 'write',
+  )
   const [strokes, setStrokes] = useState<Stroke[]>([])
+  const [isScreenshotIncluded, setIsScreenshotIncluded] = useState(true)
   const [isContactOpen, setIsContactOpen] = useState(false)
   const { state, submit } = useSubmitFeatureRequest()
   const isSending = state.status === 'sending'
+  const sentScreenshot = isScreenshotIncluded ? screenshot : null
+  const totalSteps = screenshot ? 2 : 1
 
   useEffect(() => {
     dialogRef.current?.showModal()
@@ -52,8 +64,16 @@ export function RequestFeatureDialog({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    if (canSubmit) void submit({ values, element, screenshot, strokes })
+    if (step !== 'write' || !canSubmit) return
+    void submit({ values, element, screenshot: sentScreenshot, strokes })
   }
+
+  const errorMessage =
+    state.status === 'rateLimited'
+      ? t('common:featureRequest.rateLimited')
+      : state.status === 'error'
+        ? t('common:featureRequest.error')
+        : null
 
   return (
     <>
@@ -61,7 +81,7 @@ export function RequestFeatureDialog({
         ref={dialogRef}
         {...{ [FEATURE_REQUEST_UI_ATTRIBUTE]: '' }}
         data-testid="feature-request-dialog"
-        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 w-[calc(100%-1rem)] max-w-5xl max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain"
+        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 w-[calc(100%-1rem)] max-w-3xl max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain"
         onCancel={(event) => {
           event.preventDefault()
           if (!isSending) onClose()
@@ -87,60 +107,78 @@ export function RequestFeatureDialog({
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="grid gap-4 px-4 sm:px-6 pb-4 sm:pb-6 md:grid-cols-[minmax(0,1fr)_20rem]"
+            className="flex flex-col gap-4 px-4 sm:px-6 pb-4 sm:pb-6"
           >
-            <div className="flex flex-col gap-3 min-w-0">
-              {screenshot ? (
-                <ScreenshotAnnotator
-                  screenshot={screenshot}
-                  strokes={strokes}
-                  onStrokesChange={setStrokes}
-                  onRetake={onRetake}
-                />
-              ) : (
-                <p className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-600 dark:text-gray-400">
-                  {t('common:featureRequest.noScreenshot')}
-                </p>
-              )}
-              <PickedElementInfo element={element} />
-            </div>
+            <FlowProgress
+              current={step === 'show' ? 1 : totalSteps}
+              total={totalSteps}
+            />
 
-            <div className="flex flex-col gap-3 min-w-0">
-              <PublicNotice />
-              <RequestFeatureFields
-                values={values}
-                onChange={onValuesChange}
-                disabled={isSending}
+            {step === 'show' && screenshot ? (
+              <ScreenshotStep
+                screenshot={screenshot}
+                strokes={strokes}
+                onStrokesChange={setStrokes}
+                element={element}
+                isIncluded={isScreenshotIncluded}
+                onIncludedChange={setIsScreenshotIncluded}
+                onPickElement={onPickElement}
               />
-              {(state.status === 'error' || state.status === 'rateLimited') && (
-                <p
-                  className="text-sm text-red-600 dark:text-red-400"
-                  role="alert"
-                >
-                  {state.status === 'rateLimited'
-                    ? t('common:featureRequest.rateLimited')
-                    : t('common:featureRequest.error')}
-                </p>
-              )}
-              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
+            ) : (
+              <WriteStep
+                values={values}
+                onValuesChange={onValuesChange}
+                screenshot={sentScreenshot}
+                strokes={strokes}
+                disabled={isSending}
+                errorMessage={errorMessage}
+              />
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setIsContactOpen(true)}
+                className="px-3 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                {t('common:contact.title')}
+              </button>
+              {step === 'show' ? (
                 <button
                   type="button"
-                  onClick={() => setIsContactOpen(true)}
-                  className="px-3 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                  data-testid="feature-request-next"
+                  onClick={() => setStep('write')}
+                  className={primaryButton}
                 >
-                  {t('common:contact.title')}
+                  {t('common:featureRequest.next')}
+                  <ArrowRight size={16} />
                 </button>
-                <button
-                  type="submit"
-                  data-testid="feature-request-submit"
-                  disabled={!canSubmit}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-indigo-600"
-                >
-                  {isSending
-                    ? t('common:featureRequest.sending')
-                    : t('common:featureRequest.submit')}
-                </button>
-              </div>
+              ) : (
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
+                  {screenshot && (
+                    <button
+                      type="button"
+                      data-testid="feature-request-back"
+                      disabled={isSending}
+                      onClick={() => setStep('show')}
+                      className={secondaryButton}
+                    >
+                      <ArrowLeft size={16} />
+                      {t('common:featureRequest.back')}
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    data-testid="feature-request-submit"
+                    disabled={!canSubmit}
+                    className={primaryButton}
+                  >
+                    {isSending
+                      ? t('common:featureRequest.sending')
+                      : t('common:featureRequest.submit')}
+                  </button>
+                </div>
+              )}
             </div>
           </form>
         )}

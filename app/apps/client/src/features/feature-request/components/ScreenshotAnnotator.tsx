@@ -1,4 +1,4 @@
-import { Crosshair, Eraser, Undo2 } from 'lucide-react'
+import { Eraser, Pencil, Undo2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -12,15 +12,13 @@ interface ScreenshotAnnotatorProps {
   screenshot: HTMLCanvasElement
   strokes: Stroke[]
   onStrokesChange: (strokes: Stroke[]) => void
-  onRetake: () => void
 }
 
-/** The screenshot with a pen on top: colours, undo, clear, and pick again. */
+/** The screenshot with a pen on top: colours, undo and clear. */
 export function ScreenshotAnnotator({
   screenshot,
   strokes,
   onStrokesChange,
-  onRetake,
 }: ScreenshotAnnotatorProps) {
   const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -39,8 +37,13 @@ export function ScreenshotAnnotator({
   return (
     <div className="flex flex-col gap-2 min-w-0">
       <div className="flex flex-wrap items-center gap-1">
-        <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">
-          {t('common:featureRequest.penColor')}
+        <span
+          data-testid="feature-request-pen"
+          data-pulsing={strokes.length === 0}
+          className={`flex items-center gap-1 mr-1 px-2 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-medium ${strokes.length === 0 ? 'motion-safe:animate-pulse ring-4 ring-indigo-300 dark:ring-indigo-500/50' : ''}`}
+        >
+          <Pencil size={14} />
+          {t('common:featureRequest.pen')}
         </span>
         {PEN_COLORS.map((penColor) => (
           <button
@@ -73,15 +76,6 @@ export function ScreenshotAnnotator({
           <Eraser size={14} />
           {t('common:featureRequest.clearDrawing')}
         </button>
-        <button
-          type="button"
-          data-testid="feature-request-retake"
-          className={toolButton}
-          onClick={onRetake}
-        >
-          <Crosshair size={14} />
-          {t('common:featureRequest.retake')}
-        </button>
       </div>
       <canvas
         ref={canvasRef}
@@ -90,9 +84,6 @@ export function ScreenshotAnnotator({
         className="block mx-auto w-auto h-auto max-w-full max-h-[40vh] md:max-h-[65vh] rounded-lg border border-gray-200 dark:border-gray-700 cursor-crosshair touch-none bg-gray-100 dark:bg-gray-900"
         {...pen}
       />
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t('common:featureRequest.drawHint')}
-      </p>
     </div>
   )
 }
