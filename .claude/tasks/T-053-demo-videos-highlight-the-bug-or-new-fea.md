@@ -2,8 +2,8 @@
 id: T-053
 title: Demo videos highlight the bug or new feature with red boxes and arrows
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: demo-recording
 rolled: 0
 order: -11
@@ -29,6 +29,7 @@ Done when:
 - 2026-10-04: Step 5 of teammate.md is updated, commit 8e6e23eb on main (pushed): the GIF links to the jsDelivr mp4 URL that upload-demos.sh prints, never the release mp4. The leftover pr-demos-test/ was removed from pr-demo-videos (branch commit 403555ea); the 20 PR mp4s are still there. Older pinned links still work because they point to earlier commits. Size of pr-demo-videos: about 10.5 MB (20 mp4s). The test file was the same blob as T-019-before.mp4, so it added nothing. A plain `git clone` downloads it, because it fetches every branch. `git clone --single-branch` (or `--depth 1`, as actions/checkout does in CI) skips it. It grows by about 1 MB per PR (two mp4s).
 - 2026-10-04: User 2026-10-04: "make sure that in subtitle you don't say all the time before.. add it in the top left corner before and keep displaying it there.. also don't read that before.. and also in pr's display the videos full width one below another". So: (1) a fixed "BEFORE" / "AFTER" badge in the top-left corner for the whole video; (2) captions no longer start with "Before:"/"After:" and the voice never reads those words; (3) PR bodies show the before and after GIFs full width, stacked one below the other (not side by side). Update the helper, the documented-pr skill and teammate.md step 4; update the layout of the open PR bodies (#79–#85 that are still open) without re-recording; new videos use the badge.
 - 2026-10-04: BEFORE/AFTER badge and stacked PR videos: commit 827cdc5b on main (pushed). installDemoOverlay(page, 'before' | 'after') draws a fixed badge in the top-left corner (red BEFORE, green AFTER) on every page load. showCaption drops a leading "Before:"/"After:" from both the screen and the voice, so old specs need only the phase argument. Highlight labels stay below the badge. The documented-pr skill (defaults #2 and #8, template) and teammate.md steps 4-5 now say: badge, no Before/After in captions, videos one below the other at full width, never a table. Verified with a throwaway before+after demo on port 3153 (scratchpad demos4): the badge shows in both mp4s and persists after navigating /songs → /bible; the caption shows without the prefix. Open PRs: #77, #83, #84, #85 (#75, #76, #78-#82 are merged, left alone). Only #77 had the videos side by side in a table, now stacked (only that block changed). #83/#84/#85 were already stacked. In Chrome every demo GIF in those 4 PRs is 782 px wide in an 814 px column and in no table. The existing videos were not re-recorded, so they still have the old "Before:" captions and no badge until their owners re-record.
+- 2026-10-04: Demo videos: red highlight boxes/arrows (above dialogs too), voice-over of captions (macOS say), BEFORE/AFTER corner badge, mp4 played in browser via jsDelivr (pr-demo-videos branch), PR videos stacked full width. Skill + teammate.md updated.
 
 ## PR
 - branch:

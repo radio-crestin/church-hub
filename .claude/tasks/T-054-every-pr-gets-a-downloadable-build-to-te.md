@@ -2,8 +2,8 @@
 id: T-054
 title: Every PR gets a downloadable build to test
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: ci-builds
 rolled: 0
 order: -12
@@ -25,6 +25,18 @@ Done when:
 - 2026-10-04: Cross-platform review of 4ab5d1f5/dfd04eb6/ea0204a0: releases unaffected (port 3000, data dir, com.church-hub identifier, updater unchanged when hooks unset). Fix in review-build.ts: (1) MEDIUM ~237: client dist/ rebuilt for the review port is restored only if isWorktree and not on failure — restore always (finally); in the main checkout restore for the normal port, or the user's dev server/e2e talk to the wrong port. (2) ~118 lock race: missing pid file → treat as held, wait. (3) ~249 restoreGenerated only after success → finally. (4) keepBuild startsWith(name) can match another task (church-hub-T-02 vs T-023) or an old versioned bundle → exact match / name+'_', newest mtime. (5) Rust option_env! "" → filter empty strings (logging.rs, server.rs:376).
 - 2026-10-04: ci-builds: local review builds are done. Commits on main: 4ab5d1f5 (review-build.ts plus compile-time hooks CHURCH_HUB_SERVER_PORT and CHURCH_HUB_DATA_DIR in lib.rs, logging.rs, server.rs and paths.ts), dfd04eb6 (https dead updater endpoint, restore regenerated files, per-task output folder), ea0204a0 (teammate.md step 5 builds the local app; steps 6 and 7 report its link), c2273b27 (the output folder ignores itself), 041d7a4b (review fixes 1-5). Build time: 0.8-1.2 min each. Test of T-023: the app served on 4123 only, its data stayed in its own folder, the real app.db and logs were unchanged, and the window opened. The dev server on 3000 was not running during that test. Existing PR branches predate the hooks, so each was built as its PR head merged with origin/main, without committing. Apps: T-019 #75, T-036 #77, T-012 #78, T-026 #81, T-024 #83 and T-056 #85 sit in the owner worktree under .review-build/<task>/church-hub-<task>.app. T-020 #76, T-023 #79, T-040 #80, T-015 #82 and T-055 #84 have no worktree, so they sit in app/tauri/target/review-builds/<task>/ of the main checkout. Not verified: opening each of the 11 apps (only T-023 was opened). There is no cleanup yet for target/review-builds/.
 - 2026-10-04: User review 2026-10-04 (not resolved): "make sure to update the github actions to use latest stable actions, if you can optimize them even more to be faster then do it, re-use tauri cache and so on between environments". So: bump every action in .github/workflows to its latest stable major (checkout, setup-*, cache, upload/download-artifact, tauri-action, etc.); make PR/release/test builds faster — share the Rust/Cargo (tauri) cache, bun install cache and client build between jobs/workflows and between PR and main/release runs (e.g. Swatinem/rust-cache with shared keys, sccache, restore from main on PRs); measure before/after build times per platform and report them.
+- 2026-10-04: ci-builds: actions update and faster builds are done. Commits on main:
+- 9580ca93: checkout v7, cache v6, setup-node v7, upload-artifact v7, github-script v9, tauri-action v1. Crate LTO off. One shared bun cache. Rust cache saved only on main. New main-build.yml keeps the caches warm. Duplicate client build dropped. Linux bundler tools cached. build-desktop.yml can be run by hand.
+- c018c3db: codeql.yml.
+- 61c41231: only main's own builds write caches (fixes CodeQL's cache-poisoning alert); jobs declare their permissions.
+- 22bc8ed9: setup-bun reads app/package.json, so CI now uses Bun 1.4.2.
+- 8a77632e: main-build permissions (it failed at startup since 61c41231).
+- 28968d2b: no bun cache on Windows.
+Timings, PR build of #79 (same code, a659369), before → after: macOS 372 → 231 s, Windows 556 → 437 s, Linux 347 → 217 s, whole run 10m37s → 8m02s. Rust shell crate compile: macOS 2m52 → 1m23, Windows 3m25 → 1m59, Linux 1m45 → 1m02.
+Release path tested on a throwaway draft through build-desktop.yml by hand, all 4 platforms. The renamed installers, the .app.tar.gz, setup.exe and AppImage files and their .sig files all uploaded. The updater-manifest patterns match tauri-action v1's new names. The draft was deleted afterwards.
+The /ping smoke test passes in build-desktop on every native platform and in test.yml on all 3 OSes.
+Not verified: a real v* tag release (publish and latest.json); it runs on the next release.
+- 2026-10-04: Per-PR 3-OS installers (pr-build-<n> + PR comment), local review builds (review-build.ts, own port/data/identifier), latest stable actions, shared Bun/Rust caches (main writes, PRs/tags read), LTO off for the Tauri shell, Bun 1.4.2 from app/package.json, codeql.yml. PR build 10m37s → 8m02s. Real v* release not run yet.
 
 ## PR
 - branch:
