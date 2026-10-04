@@ -231,7 +231,7 @@ test.describe('Panel header actions overflow into a More menu', () => {
       await page.keyboard.press('Escape')
       await expect(renameModal).toBeHidden()
 
-      // Marcaje: exporting from the menu still downloads the list.
+      // Marcaje: exporting from the menu still downloads the list, as Markdown.
       const bookmarkMenu = await openActionsMenu(page, 'bookmarks-header-more')
       const bookmarkMenuIds = await bookmarkMenu
         .locator('[data-testid]')
@@ -244,7 +244,7 @@ test.describe('Panel header actions overflow into a More menu', () => {
       const download = page.waitForEvent('download')
       await bookmarkMenu.getByTestId('bookmarks-export-menu').click()
       expect((await download).suggestedFilename()).toMatch(
-        /^bookmarks-.*\.txt$/,
+        /^song-bookmarks-.*\.md$/,
       )
 
       // Narrowest: every action is in the menu, and "+" — whose dialogs used
