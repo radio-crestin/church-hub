@@ -12,7 +12,11 @@ import {
 } from '~/features/sidebar-config'
 import { createLogger } from '~/utils/logger'
 import { useShortcutRecording } from '../context'
-import { useAppShortcuts, useGlobalAppShortcuts } from '../hooks'
+import {
+  useAppShortcuts,
+  useGlobalAppShortcuts,
+  useSidebarShortcutKeys,
+} from '../hooks'
 import { useMIDILEDFeedback } from '../midi/hooks'
 import { focusMainWindow } from '../utils/focusMainWindow'
 import { emitFocusSearchEvent } from '../utils/focusSearchEvent'
@@ -245,6 +249,9 @@ export function GlobalAppShortcutManager() {
     isRecordingRef,
     isRecording: isGlobalRecording,
   })
+
+  // The same sidebar keys, when the page receives the press itself
+  useSidebarShortcutKeys(sidebarShortcuts, handleSidebarNavigation)
 
   // MIDI shortcuts are handled server-side for reliability
   // Only LED feedback is managed on the client
