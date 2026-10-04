@@ -15,3 +15,6 @@ gen
 tauri.worktree.conf.json
 
 
+
+# Worktree-only: points Cargo at the main checkout's target dir (scripts/worktree-setup.ts)
+/.cargo/config.toml
