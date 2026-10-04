@@ -12,6 +12,7 @@ import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
 import { addSongBackground } from './add-song-background'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
+import { addSongEditHistory } from './add-song-edit-history'
 import { addSongGroups } from './add-song-groups'
 import { addSongSlideNotes } from './add-song-slide-notes'
 import { addSongSlideStyleOverrides } from './add-song-slide-style-overrides'
@@ -372,6 +373,13 @@ export function runMigrations(
   // replaces the screen's background while the song is shown).
   runStep('add_song_background', 'Running add song background migration', () =>
     addSongBackground(rawDb),
+  )
+
+  // Per-song edit history (who changed what and when, with restore).
+  runStep(
+    'add_song_edit_history',
+    'Running add song edit history migration',
+    () => addSongEditHistory(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and
