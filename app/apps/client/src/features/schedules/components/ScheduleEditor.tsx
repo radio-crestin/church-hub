@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
-import { useUpsertSchedule } from '../hooks'
+import { TodayProgramButton } from './TodayProgramButton'
+import { useCreateTodayProgram, useUpsertSchedule } from '../hooks'
 
 interface ScheduleEditorProps {
   scheduleId: null // Only for new schedules
@@ -19,6 +20,7 @@ export function ScheduleEditor({
   const { showToast } = useToast()
 
   const upsertSchedule = useUpsertSchedule()
+  const todayProgram = useCreateTodayProgram()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -47,6 +49,16 @@ export function ScheduleEditor({
     } else {
       showToast(t('messages.error'), 'error')
     }
+  }
+
+  const handleToday = async () => {
+    const todayId = await todayProgram.createTodayProgram()
+    if (todayId === null) {
+      showToast(t('messages.error'), 'error')
+      return
+    }
+    showToast(t('messages.saved'), 'success')
+    onScheduleCreated?.(todayId)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -93,16 +105,24 @@ export function ScheduleEditor({
           >
             {t('editor.title', 'Title')}
           </label>
-          <input
-            id="schedule-title"
-            ref={titleInputRef}
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t('editor.titlePlaceholder')}
-            className="w-full px-3 py-2 text-base font-semibold bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              id="schedule-title"
+              ref={titleInputRef}
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t('editor.titlePlaceholder')}
+              className="flex-1 min-w-0 px-3 py-2 text-base font-semibold bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
+            />
+            <TodayProgramButton
+              onClick={handleToday}
+              disabled={upsertSchedule.isPending}
+              isPending={todayProgram.isPending}
+              testId="schedule-editor-today"
+            />
+          </div>
         </div>
         <div className="space-y-1.5">
           <label
