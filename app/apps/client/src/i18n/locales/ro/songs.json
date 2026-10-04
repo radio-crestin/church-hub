@@ -214,7 +214,7 @@
     "textEdit": {
       "open": "Editează ca text",
       "title": "Editează Marcajele ca text",
-      "description": "Câte o cântare pe rând, în Markdown-ul Marcajelor: \"## Titlu {#song-12}\" alege exact acea cântare, un titlu simplu găsește cântarea după nume. Începe o notă cu \">\". La salvare, lista devine exact acest text, în această ordine. Poți încărca și un fișier de Marcaje exportat: versurile lui sunt sărite.",
+      "description": "Câte o cântare pe rând, în formatul Markdown al Marcajelor: \"## Titlu {#song-12}\" alege exact acea cântare, iar un titlu simplu o caută după nume. Începe o notă cu \">\". La salvare, lista va conține doar ce ai scris aici, în aceeași ordine. Poți încărca și un fișier exportat din Marcaje: versurile sunt ignorate.",
       "placeholder": "## Cât de mare ești {#song-12}\n> Final\nHar minunat",
       "chooseFile": "Încarcă un fișier Markdown sau text",
       "cancel": "Anulează",
@@ -222,7 +222,7 @@
       "notSaved": "Nu s-a salvat nimic. Aceste cântări nu au fost găsite:",
       "line": "Rândul {{line}}:",
       "errors": {
-        "song_not_found": "nicio cântare cu acest titlu sau id"
+        "song_not_found": "nu există nicio cântare cu acest titlu sau ID"
       }
     }
   },
