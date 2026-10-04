@@ -20,7 +20,8 @@ export async function forwardFeatureRequest(
   rawBody: string,
 ): Promise<ForwardedResponse> {
   const backendUrl = process.env.YOUTUBE_OAUTH_SERVER || DEFAULT_BACKEND_URL
-  logger.debug(`Forwarding feature request to ${backendUrl}`)
+  // The URL comes from an env var that sits next to OAuth settings: never log it.
+  logger.debug('Forwarding feature request to the Church Hub backend')
 
   const response = await fetch(`${backendUrl}/feature-requests`, {
     method: 'POST',
