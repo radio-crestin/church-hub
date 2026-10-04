@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto'
 import { type RTCDataChannel, RTCPeerConnection } from 'werift'
 
 import { log } from '../../utils/fileLogger'
@@ -44,11 +45,12 @@ let availableLanguages: AvailableLanguage[] = []
 let listenerCountsCallback: ((counts: Record<string, number>) => void) | null =
   null
 
+/** The listener stream secret: 32 chars from a cryptographic RNG. */
 function generateSecret(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''
   for (let i = 0; i < 32; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)]
+    result += chars[randomInt(chars.length)]
   }
   return result
 }
