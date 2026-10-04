@@ -70,7 +70,10 @@ the per-user data directory (`%APPDATA%\church-hub` on Windows,
 ## The signing key
 
 The updater trusts exactly one minisign key pair. The public half is in
-`tauri.conf.json`; the private half must be in the repository secrets:
+`tauri.conf.json`; the private half must be in the secrets of the `release`
+environment (Settings → Environments → release), which only `v*` tags may
+use. PR and main builds don't get it: they skip the updater files and ship
+only the installers.
 
 | Secret | Content |
 |---|---|
