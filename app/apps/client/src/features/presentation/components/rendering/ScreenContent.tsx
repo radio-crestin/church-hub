@@ -10,6 +10,7 @@ import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
 import { hasVisibleText } from './utils/hasVisibleText'
+import { resolveSongElementConfig } from './utils/resolveSongElementConfig'
 import { scaleTextStyle } from './utils/scaleTextStyle'
 import {
   calculatePixelBounds,
@@ -359,20 +360,16 @@ export function ScreenContent({
   }
 
   // Render the song key ("gama") — shown on the first slide. contentData.songKey
-  // is only populated on the first slide, so visibility is gated automatically.
+  // is only populated on the first slide.
+  //
+  // The element stays mounted on every slide and only its text comes and goes.
+  // That way it takes the same slide-change path as the lyrics: the old key
+  // fades out with the old verse and the new one fades in with the new verse.
+  // Mounting it only when a key exists made it pop in at once and cut off the
+  // moment the slide changed, out of step with the lyrics.
   const renderSongKey = () => {
-    if (!config || !('songKey' in config) || !config.songKey) return null
-    const sk = config.songKey
-    if (sk.hidden) return null
-    // Only mount when this slide actually has a key value. The plain `song`
-    // config still carries a vestigial `songKey`, so without this guard the
-    // element would stay mounted when navigating to a slide that has no gama
-    // (e.g. slide 1 → slide 2) and play a lingering fade-out of the old key —
-    // an intermediate "first-slide" frame. Gating on the value unmounts it
-    // cleanly there, while still rendering it on the first slide and on a
-    // single-slide song (where the value is present), and still fading it out
-    // on screen hide (where the value persists and only `isVisible` changes).
-    if (!contentData?.songKey) return null
+    const sk = resolveSongElementConfig(config, songConfig, 'songKey')
+    if (!sk || sk.hidden) return null
 
     const bounds = calculatePixelBounds(
       sk.constraints,
@@ -381,14 +378,13 @@ export function ScreenContent({
       canvasHeight,
     )
     const scaledBounds = scaleBounds(bounds)
-    const elementVisible = isVisible && !!contentData?.songKey
 
     return (
       <AnimatedText
         key="songKey"
         content={contentData?.songKey ?? ''}
         contentKey={`songKey-${contentKey}`}
-        isVisible={elementVisible}
+        isVisible={isVisible}
         style={scaleTextStyle(sk.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
@@ -404,15 +400,11 @@ export function ScreenContent({
   }
 
   // Render the "Amin" element — shown on the last slide. contentData.amen is
-  // only populated on the last slide, so visibility is gated automatically.
+  // only populated on the last slide. Mounted on every slide for the same
+  // reason as the song key above.
   const renderAmen = () => {
-    if (!config || !('amen' in config) || !config.amen) return null
-    const am = config.amen
-    if (am.hidden) return null
-    // Only mount when this slide actually has an amin value — see renderSongKey
-    // above. Without this guard the vestigial `song.amen` element lingers with a
-    // fade-out when navigating away from the last slide.
-    if (!contentData?.amen) return null
+    const am = resolveSongElementConfig(config, songConfig, 'amen')
+    if (!am || am.hidden) return null
 
     const bounds = calculatePixelBounds(
       am.constraints,
@@ -421,14 +413,13 @@ export function ScreenContent({
       canvasHeight,
     )
     const scaledBounds = scaleBounds(bounds)
-    const elementVisible = isVisible && !!contentData?.amen
 
     return (
       <AnimatedText
         key="amen"
         content={contentData?.amen ?? ''}
         contentKey={`amen-${contentKey}`}
-        isVisible={elementVisible}
+        isVisible={isVisible}
         style={scaleTextStyle(am.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
