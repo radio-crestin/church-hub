@@ -228,3 +228,37 @@ export const songBookmarkNotes = sqliteTable(
   },
   (table) => [index('idx_song_bookmark_notes_sort_order').on(table.sortOrder)],
 )
+
+/**
+ * One row per saved change to a song: who made it, when, and the title and
+ * slides before and after. Local to this instance (not part of Drive sync).
+ * Created by the add-song-edit-history migration.
+ */
+export const songEditHistory = sqliteTable(
+  'song_edit_history',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    songId: integer('song_id')
+      .notNull()
+      .references(() => songs.id, { onDelete: 'cascade' }),
+    // 'created' | 'edited' | 'restored'
+    kind: text('kind').notNull(),
+    // Kept next to the id so the name survives the user being deleted or renamed.
+    editedByUserId: integer('edited_by_user_id'),
+    editedByName: text('edited_by_name').notNull(),
+    // JSON title + slides before the save; NULL for a freshly created song.
+    beforeSnapshot: text('before_snapshot'),
+    afterSnapshot: text('after_snapshot').notNull(),
+    // For 'restored' rows: the history entry whose "after" was put back.
+    restoredFromId: integer('restored_from_id'),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [
+    index('idx_song_edit_history_song_created').on(
+      table.songId,
+      table.createdAt,
+    ),
+  ],
+)

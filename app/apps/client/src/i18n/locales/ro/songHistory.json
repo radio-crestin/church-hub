@@ -1,0 +1,45 @@
+{
+  "menu": {
+    "label": "Istoric",
+    "description": "Vezi cine a editat această cântare și când"
+  },
+  "title": "Istoricul cântării",
+  "description": "Cine a modificat „{{title}}” și când",
+  "close": "Închide",
+  "empty": "Nicio modificare înregistrată încă. Fiecare modificare salvată de acum încolo va apărea aici.",
+  "kind": {
+    "created": "A creat cântarea",
+    "edited": "A editat",
+    "restored": "A restaurat o versiune anterioară"
+  },
+  "summary": {
+    "created_one": "A început cu {{count}} slide",
+    "created_few": "A început cu {{count}} slide-uri",
+    "created_other": "A început cu {{count}} de slide-uri",
+    "titleChanged": "Titlu schimbat",
+    "slidesChanged_one": "{{count}} slide modificat",
+    "slidesChanged_few": "{{count}} slide-uri modificate",
+    "slidesChanged_other": "{{count}} de slide-uri modificate",
+    "slidesAdded_one": "{{count}} slide adăugat",
+    "slidesAdded_few": "{{count}} slide-uri adăugate",
+    "slidesAdded_other": "{{count}} de slide-uri adăugate",
+    "slidesRemoved_one": "{{count}} slide șters",
+    "slidesRemoved_few": "{{count}} slide-uri șterse",
+    "slidesRemoved_other": "{{count}} de slide-uri șterse"
+  },
+  "details": {
+    "title": "Titlu",
+    "slide": "Slide {{number}}",
+    "noSlide": "(fără slide)",
+    "unavailable": "Această intrare nu a putut fi încărcată."
+  },
+  "restore": {
+    "before": "Restaurează versiunea de dinainte de această modificare",
+    "after": "Restaurează această versiune",
+    "confirmTitle": "Restaurezi această versiune?",
+    "confirmMessage": "Cântarea revine la această versiune. Versiunea de acum rămâne în istoric, deci poți anula această acțiune.",
+    "confirm": "Restaurează",
+    "success": "Versiune restaurată",
+    "error": "Nu am putut restaura această versiune"
+  }
+}

@@ -41,6 +41,7 @@ import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
+import { handleSongHistoryRoutes } from './routes/song-history'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -265,6 +266,7 @@ import {
   reorderBookmarkItems,
   updateBookmarkNote,
 } from './service/song-bookmarks'
+import { resolveSongEditor, saveSongWithHistory } from './service/song-history'
 import {
   type BatchImportSongInput,
   backfillAlternateTitles,
@@ -314,7 +316,6 @@ import {
   updateSearchIndex,
   updateSearchIndexByCategory,
   upsertCategory,
-  upsertSong,
   upsertSongSlide,
   upsertTag,
   validateSongBackground,
@@ -5194,7 +5195,10 @@ async function startRealServer(): Promise<void> {
             )
           }
 
-          const song = upsertSong({ ...body, isManualEdit: true })
+          const song = saveSongWithHistory(
+            { ...body, isManualEdit: true },
+            resolveSongEditor(_context?.userId),
+          )
 
           if (!song) {
             return handleCors(
@@ -8264,6 +8268,15 @@ async function startRealServer(): Promise<void> {
       // Music routes (folders, files, playlists)
       const musicResponse = await handleMusicRoutes(req, url, handleCors)
       if (musicResponse) return musicResponse
+
+      // Per-song edit history (list, entry detail, restore)
+      const songHistoryResponse = await handleSongHistoryRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (songHistoryResponse) return songHistoryResponse
 
       // Background media routes (screen background image/video uploads)
       const backgroundMediaResponse = await handleBackgroundMediaRoutes(
