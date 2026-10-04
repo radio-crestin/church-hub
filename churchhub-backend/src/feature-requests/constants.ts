@@ -5,5 +5,6 @@ export const SELECTOR_MAX_LENGTH = 2000
 export const SCREENSHOT_MAX_BYTES = 5 * 1024 * 1024
 export const GITHUB_REPO = 'radio-crestin/church-hub'
 export const GITHUB_ISSUE_LABEL = 'feature-request'
-export const SCREENSHOT_ROUTE_PREFIX = '/feature-requests/screenshots'
+/** Orphan branch that holds the screenshots the issues embed. */
+export const SCREENSHOT_BRANCH = 'feature-request-screenshots'
 export const DEFAULT_WAHA_SESSION = 'default'

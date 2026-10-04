@@ -39,6 +39,9 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
     ),
     element: parseElement(raw.element),
     screenshot: typeof raw.screenshot === 'string' ? raw.screenshot : undefined,
+    supportId:
+      readString(raw.supportId, 'supportId', SHORT_FIELD_MAX_LENGTH, optional) ||
+      undefined,
   }
 }
 

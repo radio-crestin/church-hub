@@ -20,6 +20,8 @@ export interface FeatureRequestInput {
   element?: PickedElement
   /** `data:image/(jpeg|png|webp);base64,...` */
   screenshot?: string
+  /** PostHog id the app's logs are stored under. Private, like the email. */
+  supportId?: string
 }
 
 export interface CreatedIssue {

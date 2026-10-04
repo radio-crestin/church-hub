@@ -3,8 +3,7 @@ import app from '../src/index'
 
 /**
  * Drives POST /feature-requests through the real Hono app with GitHub and
- * WAHA replaced by a fetch stub, an in-memory R2 bucket and a rate limiter
- * stub. Run with `bun test` from churchhub-backend/.
+ * WAHA replaced by a fetch stub and a rate limiter stub. Run with `bun test` from churchhub-backend/.
  */
 const EMAIL = 'pastor@example.com'
 const PNG_DATA_URL =
@@ -20,35 +19,12 @@ let calls: RecordedCall[]
 let realFetch: typeof fetch
 let limiterAllows: boolean
 
-function createBucket() {
-  const objects = new Map<string, { bytes: Uint8Array; contentType: string }>()
-  return {
-    objects,
-    async put(
-      key: string,
-      bytes: Uint8Array,
-      options: { httpMetadata: { contentType: string } }
-    ) {
-      objects.set(key, { bytes, contentType: options.httpMetadata.contentType })
-    },
-    async get(key: string) {
-      const object = objects.get(key)
-      if (!object) return null
-      return {
-        body: new Response(object.bytes).body,
-        httpMetadata: { contentType: object.contentType },
-      }
-    },
-  }
-}
-
 function createEnv(overrides: Record<string, unknown> = {}) {
   return {
     GITHUB_TOKEN: 'test-github-token',
     WAHA_URL: 'https://waha.test/',
     WAHA_API_KEY: 'test-waha-key',
     WAHA_CHAT_ID: '40700000000@c.us',
-    FEATURE_REQUEST_SCREENSHOTS: createBucket(),
     FEATURE_REQUEST_RATE_LIMITER: {
       limit: async () => ({ success: limiterAllows }),
     },
@@ -71,6 +47,7 @@ function validBody(overrides: Record<string, unknown> = {}) {
       label: 'Font size',
     },
     screenshot: PNG_DATA_URL,
+    supportId: 'ph-123',
     ...overrides,
   }
 }
@@ -98,6 +75,11 @@ beforeEach(() => {
       headers: (init?.headers ?? {}) as Record<string, string>,
       body: JSON.parse(String(init?.body ?? '{}')),
     })
+    if (url.includes('/contents/')) {
+      return Response.json({
+        content: { download_url: `https://raw.example/${url.split('/contents/')[1]}` },
+      })
+    }
     if (url.startsWith('https://api.github.com/')) {
       return Response.json({
         html_url: 'https://github.com/radio-crestin/church-hub/issues/42',
@@ -114,8 +96,7 @@ afterEach(() => {
 
 describe('POST /feature-requests', () => {
   test('creates a public issue without the email and notifies WhatsApp with it', async () => {
-    const env = createEnv()
-    const response = await post(validBody(), env)
+    const response = await post(validBody())
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
@@ -125,7 +106,14 @@ describe('POST /feature-requests', () => {
       whatsAppSent: true,
     })
 
-    const [github, waha] = calls
+    const [upload, github, waha] = calls
+    expect(upload.url).toMatch(
+      /^https:\/\/api\.github\.com\/repos\/radio-crestin\/church-hub\/contents\/screenshots\/\d{4}-\d{2}\/[0-9a-f-]{36}\.png$/
+    )
+    expect(upload.body.branch).toBe('feature-request-screenshots')
+    expect(upload.body.content).toBe(PNG_DATA_URL.split(',')[1])
+    expect(JSON.stringify(upload.body)).not.toContain(EMAIL)
+
     expect(github.url).toBe(
       'https://api.github.com/repos/radio-crestin/church-hub/issues'
     )
@@ -135,7 +123,7 @@ describe('POST /feature-requests', () => {
     expect(issueBody).toContain('button[data-testid="font-size"]')
     expect(issueBody).toContain('@​someone')
     expect(issueBody).toMatch(
-      /!\[Screenshot\]\(https:\/\/backend\.test\/feature-requests\/screenshots\/[0-9a-f-]{36}\.png\)/
+      /!\[Screenshot\]\(https:\/\/raw\.example\/screenshots\/\d{4}-\d{2}\/[0-9a-f-]{36}\.png\)/
     )
 
     expect(waha.url).toBe('https://waha.test/api/sendText')
@@ -147,26 +135,21 @@ describe('POST /feature-requests', () => {
     expect(text).toContain(EMAIL)
     expect(text).toContain('Please let me pick the font size.')
     expect(text).toContain('issues/42')
-
-    expect(env.FEATURE_REQUEST_SCREENSHOTS.objects.size).toBe(1)
+    expect(text).toContain('*Support ID:* ph-123')
   })
 
-  test('serves the stored screenshot for the issue', async () => {
-    const env = createEnv()
-    await post(validBody(), env)
-    const issueBody = String(calls[0].body.body)
-    const screenshotUrl = /\((https:\/\/backend\.test[^)]+)\)/.exec(issueBody)?.[1]
-
-    const response = await app.request(screenshotUrl as string, {}, env)
+  test('skips the upload when there is no screenshot', async () => {
+    const response = await post(validBody({ screenshot: undefined }))
     expect(response.status).toBe(200)
-    expect(response.headers.get('Content-Type')).toBe('image/png')
+    expect(calls.some((call) => call.url.includes('/contents/'))).toBe(false)
+    expect(String(calls[0].body.body)).not.toContain('## Screenshot')
   })
 
   test('still succeeds when WAHA is not configured', async () => {
     const response = await post(validBody(), createEnv({ WAHA_URL: undefined }))
     expect(response.status).toBe(200)
     expect((await response.json()).whatsAppSent).toBe(false)
-    expect(calls).toHaveLength(1)
+    expect(calls).toHaveLength(2)
   })
 
   test('sends Cloudflare Access headers when a service token is set', async () => {
@@ -177,8 +160,8 @@ describe('POST /feature-requests', () => {
         WAHA_ACCESS_CLIENT_SECRET: 'access-secret',
       })
     )
-    expect(calls[1].headers['CF-Access-Client-Id']).toBe('id.access')
-    expect(calls[1].headers['CF-Access-Client-Secret']).toBe('access-secret')
+    expect(calls[2].headers['CF-Access-Client-Id']).toBe('id.access')
+    expect(calls[2].headers['CF-Access-Client-Secret']).toBe('access-secret')
   })
 
   test('rejects a missing or invalid email before calling GitHub', async () => {

@@ -1,6 +1,4 @@
-export { SCREENSHOT_ROUTE_PREFIX } from './constants'
 export { FeatureRequestError } from './FeatureRequestError'
-export { getScreenshotStore } from './getScreenshotStore'
 export { parseFeatureRequest } from './parseFeatureRequest'
 export { submitFeatureRequest } from './submitFeatureRequest'
 export type { FeatureRequestInput } from './types'

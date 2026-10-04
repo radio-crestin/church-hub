@@ -13,8 +13,7 @@ export interface Bindings {
   ALLOWED_ORIGINS: string
   GITHUB_TOKEN: string
   SIGNALING_KV: KVNamespace
-  // "Request a feature": screenshots, abuse limit and WhatsApp (WAHA) notify.
-  FEATURE_REQUEST_SCREENSHOTS: R2Bucket
+  // "Request a feature": abuse limit and WhatsApp (WAHA) notice.
   FEATURE_REQUEST_RATE_LIMITER: RateLimit
   WAHA_URL?: string
   WAHA_API_KEY?: string

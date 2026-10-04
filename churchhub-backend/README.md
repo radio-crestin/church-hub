@@ -24,8 +24,7 @@ This worker provides a stateless OAuth flow using:
 | `/auth/drive/callback` | GET | Handles Google callback, returns tokens (+ account email) |
 | `/auth/drive/refresh` | POST | Refreshes a Drive access token |
 | `/health` | GET | Health check endpoint |
-| `/feature-requests` | POST | "Request a feature": stores the screenshot, opens a public GitHub issue (no email), notifies WhatsApp via WAHA (with email) |
-| `/feature-requests/screenshots/:id` | GET | Serves a stored feature-request screenshot (embedded in the issue) |
+| `/feature-requests` | POST | "Request a feature": commits the screenshot to the `feature-request-screenshots` branch, opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email) |
 
 > Drive setup: enable the **Google Drive API** in the same Google Cloud project
 > and register `https://churchub-backend.radiocrestin.ro/auth/drive/callback`
@@ -151,17 +150,20 @@ YOUTUBE_CLIENT_SECRET=your-client-secret
 YOUTUBE_REDIRECT_URI=https://churchub-backend.radiocrestin.ro/auth/youtube/callback
 COOKIE_ENCRYPTION_KEY=<generate with: openssl rand -hex 32>
 ALLOWED_ORIGINS=https://churchub-backend.radiocrestin.ro,http://localhost:3000
-GITHUB_TOKEN=<fine-grained PAT, radio-crestin/church-hub, Issues: read and write>
+GITHUB_TOKEN=<fine-grained PAT, radio-crestin/church-hub, Issues + Contents: read and write>
 # Optional WhatsApp notice for feature requests (see .dev.vars.example)
 WAHA_URL=<public WAHA base URL>
 WAHA_API_KEY=<WAHA X-Api-Key>
 WAHA_CHAT_ID=<chat id, e.g. 407...@c.us or ...@g.us>
 ```
 
-Feature-request screenshots need the R2 bucket once, before the first deploy:
+Feature-request screenshots are committed to an orphan branch of the repo,
+which must exist once before the first request:
 
 ```bash
-npx wrangler r2 bucket create church-hub-feature-requests
+git switch --orphan feature-request-screenshots
+git commit --allow-empty -m "chore: feature request screenshots"
+git push origin feature-request-screenshots
 ```
 
 Then deploy with production vars:
