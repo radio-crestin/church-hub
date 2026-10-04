@@ -1,6 +1,6 @@
-import type { ContentType } from './obs/content-types'
+import type { ContentType, LiveContentType } from './obs/content-types'
 
-export type { ContentType }
+export type { ContentType, LiveContentType }
 
 export interface OBSConnectionStatus {
   connected: boolean
@@ -38,7 +38,7 @@ export interface SceneAutomationState {
   isEnabled: boolean
   previousSceneName: string | null
   currentAutoScene: string | null
-  lastContentType: ContentType | null
+  lastContentType: LiveContentType | null
 }
 
 export interface OBSConfig {

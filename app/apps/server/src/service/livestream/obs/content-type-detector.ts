@@ -1,4 +1,4 @@
-import type { ContentType } from './content-types'
+import type { LiveContentType } from './content-types'
 import type { PresentationState } from '../../presentation/types'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -13,7 +13,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  * Detects the current content type based on presentation state
  * This is used for automatic scene switching based on what's being displayed
  */
-export function detectContentType(state: PresentationState): ContentType {
+export function detectContentType(state: PresentationState): LiveContentType {
   // If not presenting or hidden, return empty
   if (!state.isPresenting || state.isHidden) {
     log('debug', 'Not presenting or hidden, returning empty')
@@ -50,6 +50,10 @@ export function detectContentType(state: PresentationState): ContentType {
 
     if (contentType === 'versete_tineri') {
       return 'versete_tineri'
+    }
+
+    if (contentType === 'scene') {
+      return 'scene'
     }
   }
 

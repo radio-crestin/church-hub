@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 
-import type { ContentType } from './content-types'
+import type { ContentType, LiveContentType } from './content-types'
 import { broadcastOBSCurrentScene } from './index'
 import { switchScene } from './scenes'
 import { obsConnection } from './websocket-client'
@@ -48,7 +48,7 @@ export function getSceneAutomationState(): SceneAutomationState {
     isEnabled: record.isEnabled,
     previousSceneName: record.previousSceneName,
     currentAutoScene: record.currentAutoScene,
-    lastContentType: record.lastContentType as ContentType | null,
+    lastContentType: record.lastContentType as LiveContentType | null,
   }
 }
 
@@ -121,7 +121,7 @@ export function getSceneForContentType(
 function updateAutomationState(data: {
   previousSceneName?: string | null
   currentAutoScene?: string | null
-  lastContentType?: ContentType | null
+  lastContentType?: LiveContentType | null
 }): void {
   const db = getDatabase()
   db.update(sceneAutomationState)
@@ -146,7 +146,7 @@ function updateAutomationState(data: {
  * This is the main entry point called when presentation state changes
  */
 export async function handleContentTypeChange(
-  contentType: ContentType,
+  contentType: LiveContentType,
   isPresenting: boolean,
 ): Promise<void> {
   const state = getSceneAutomationState()
@@ -180,6 +180,15 @@ export async function handleContentTypeChange(
       currentAutoScene: null,
       lastContentType: null,
     })
+    return
+  }
+
+  // A program scene item has already switched OBS to its own scene. Only note
+  // that it went live: whatever follows it is then a change of content and
+  // switches to its own scene again (a song after a "Solo" scene item).
+  if (contentType === 'scene') {
+    log('info', `Program scene item live (was ${state.lastContentType})`)
+    updateAutomationState({ lastContentType: 'scene' })
     return
   }
 
