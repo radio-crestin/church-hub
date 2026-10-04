@@ -13,6 +13,8 @@ import type { MissingSongItem, ScheduleItem, SlideTemplate } from '../types'
 import { generateScheduleText } from '../utils/generateScheduleText'
 import type { ParsedScheduleItem } from '../utils/parseScheduleText'
 import { parseScheduleText } from '../utils/parseScheduleText'
+import { passageRangeToReadingFields } from '../utils/passageRangeToReadingFields'
+import { splitReadingList } from '../utils/splitReadingList'
 
 interface ValidationError {
   lineNumber: number
@@ -325,27 +327,14 @@ export function EditAsTextModal({
             books,
           })
 
-          if (
-            parsed.status === 'valid' &&
-            parsed.bookCode &&
-            parsed.bookName &&
-            parsed.startChapter &&
-            parsed.startVerse &&
-            parsed.endChapter &&
-            parsed.endVerse
-          ) {
+          if (parsed.status === 'valid') {
             // Create proper bible_passage item
             processedItems.push({
               type: 'slide', // Will be converted to bible_passage on server
               biblePassage: {
                 translationId: primaryTranslationId,
                 translationAbbreviation: translationAbbr,
-                bookCode: parsed.bookCode,
-                bookName: parsed.bookName,
-                startChapter: parsed.startChapter,
-                startVerse: parsed.startVerse,
-                endChapter: parsed.endChapter,
-                endVerse: parsed.endVerse,
+                ...passageRangeToReadingFields(parsed),
               },
             })
           } else {
@@ -370,7 +359,7 @@ export function EditAsTextModal({
           }
 
           // Split by comma to get multiple entries
-          const entries = item.content.split(',').map((e) => e.trim())
+          const entries = splitReadingList(item.content)
           const vtEntries: VerseteTineriEntryInput[] = []
           const invalidEntries: string[] = []
 
@@ -391,24 +380,11 @@ export function EditAsTextModal({
               books,
             })
 
-            if (
-              parsed.status === 'valid' &&
-              parsed.bookCode &&
-              parsed.bookName &&
-              parsed.startChapter &&
-              parsed.startVerse &&
-              parsed.endChapter &&
-              parsed.endVerse
-            ) {
+            if (parsed.status === 'valid') {
               vtEntries.push({
                 personName,
                 translationId: primaryTranslationId,
-                bookCode: parsed.bookCode,
-                bookName: parsed.bookName,
-                startChapter: parsed.startChapter,
-                startVerse: parsed.startVerse,
-                endChapter: parsed.endChapter,
-                endVerse: parsed.endVerse,
+                ...passageRangeToReadingFields(parsed),
               })
             } else {
               invalidEntries.push(entryText)

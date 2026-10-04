@@ -10,6 +10,7 @@ import {
 } from './VerseteTineriEditor'
 import { useUpdateScheduleSlide } from '../hooks'
 import type { ScheduleVerseteTineriEntry } from '../types'
+import { passageRangeToReadingFields } from '../utils/passageRangeToReadingFields'
 
 interface EditVerseteTineriModalProps {
   isOpen: boolean
@@ -88,12 +89,7 @@ export function EditVerseteTineriModal({
     const structuredEntries = validEntries.map((entry) => ({
       personName: entry.personName.trim(),
       translationId: defaultTranslation.id,
-      bookCode: entry.parsedResult!.bookCode!,
-      bookName: entry.parsedResult!.bookName!,
-      startChapter: entry.parsedResult!.startChapter!,
-      startVerse: entry.parsedResult!.startVerse!,
-      endChapter: entry.parsedResult!.endChapter!,
-      endVerse: entry.parsedResult!.endVerse!,
+      ...passageRangeToReadingFields(entry.parsedResult!),
     }))
 
     const result = await updateMutation.mutateAsync({

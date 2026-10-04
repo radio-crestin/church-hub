@@ -11,6 +11,7 @@ import {
 } from '~/features/bible'
 import { useToast } from '~/ui/toast'
 import { useAddItemToSchedule, useUpdateScheduleSlide } from '../hooks'
+import { passageRangeToReadingFields } from '../utils/passageRangeToReadingFields'
 
 interface EditingBiblePassage {
   id: number
@@ -154,12 +155,7 @@ export function BiblePassagePickerModal({
     const biblePassageData = {
       translationId: selectedTranslation.id,
       translationAbbreviation: selectedTranslation.abbreviation,
-      bookCode: parsedResult.bookCode!,
-      bookName: parsedResult.bookName!,
-      startChapter: parsedResult.startChapter!,
-      startVerse: parsedResult.startVerse!,
-      endChapter: parsedResult.endChapter!,
-      endVerse: parsedResult.endVerse!,
+      ...passageRangeToReadingFields(parsedResult),
     }
 
     if (isEditMode && editingItem) {

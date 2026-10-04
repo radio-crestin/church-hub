@@ -13,6 +13,7 @@ import {
 } from './VerseteTineriEditor'
 import { useAddItemToSchedule, useUpdateScheduleSlide } from '../hooks'
 import type { SlideTemplate } from '../types'
+import { passageRangeToReadingFields } from '../utils/passageRangeToReadingFields'
 
 interface EditingItem {
   id: number
@@ -181,12 +182,7 @@ export function InsertSlideModal({
       const structuredEntries = validEntries.map((entry) => ({
         personName: entry.personName.trim(),
         translationId: defaultTranslation.id,
-        bookCode: entry.parsedResult!.bookCode!,
-        bookName: entry.parsedResult!.bookName!,
-        startChapter: entry.parsedResult!.startChapter!,
-        startVerse: entry.parsedResult!.startVerse!,
-        endChapter: entry.parsedResult!.endChapter!,
-        endVerse: entry.parsedResult!.endVerse!,
+        ...passageRangeToReadingFields(entry.parsedResult!),
       }))
 
       if (isEditMode && editingItem) {
