@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../types'
+import { toScriptLiteral } from '../utils/toScriptLiteral'
 
 const signal = new Hono<{ Bindings: Bindings }>()
 
@@ -246,8 +247,8 @@ p.info{font-size:.75rem;color:#64748b;margin-top:1rem;min-height:1.2em}
 </div>
 <script>
 (function(){
-  var SECRET = ${JSON.stringify(secret)};
-  var BASE = ${JSON.stringify(baseUrl)};
+  var SECRET = ${toScriptLiteral(secret)};
+  var BASE = ${toScriptLiteral(baseUrl)};
   var statusEl = document.getElementById('status');
   var statusText = document.getElementById('statusText');
   var volumeBar = document.getElementById('volumeBar');

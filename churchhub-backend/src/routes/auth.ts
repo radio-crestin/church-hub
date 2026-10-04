@@ -6,6 +6,8 @@ import { encryptState, decryptState } from '../utils/crypto'
 import { generateCodeVerifier, generateCodeChallenge } from '../utils/pkce'
 import { buildAuthUrl, exchangeCodeForTokens, refreshTokens } from '../utils/oauth'
 import { isAllowedOrigin } from '../middleware/security'
+import { escapeHtml } from '../utils/escapeHtml'
+import { toScriptLiteral } from '../utils/toScriptLiteral'
 
 const auth = new Hono<{ Bindings: Bindings }>()
 
@@ -175,9 +177,9 @@ function renderPostMessageResponse(
   <script>
     if (window.opener) {
       window.opener.postMessage({
-        type: '${provider}-auth-success',
-        tokens: ${JSON.stringify(tokens)}
-      }, '${origin}');
+        type: ${toScriptLiteral(`${provider}-auth-success`)},
+        tokens: ${toScriptLiteral(tokens)}
+      }, ${toScriptLiteral(origin)});
       window.close();
     } else {
       document.body.innerHTML = '<p>Authorization successful. You can close this window.</p>';
@@ -240,13 +242,13 @@ function renderErrorResponse(
   <script>
     if (window.opener) {
       window.opener.postMessage({
-        type: '${provider}-auth-error',
-        error: '${error.replace(/'/g, "\\'")}'
-      }, '${state.origin}');
+        type: ${toScriptLiteral(`${provider}-auth-error`)},
+        error: ${toScriptLiteral(error)}
+      }, ${toScriptLiteral(state.origin)});
       window.close();
     }
   </script>
-  <p>Authorization failed: ${error}</p>
+  <p>Authorization failed: ${escapeHtml(error)}</p>
 </body>
 </html>`
     return c.html(html)
@@ -264,7 +266,7 @@ function renderErrorResponse(
   return c.html(
     `<!DOCTYPE html>
 <html>
-<body><p>Authorization failed: ${error}</p></body>
+<body><p>Authorization failed: ${escapeHtml(error)}</p></body>
 </html>`,
     400
   )
