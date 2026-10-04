@@ -172,7 +172,12 @@ export const screenSchemas = {
       isActive: { type: 'boolean' },
       openMode: { $ref: '#/components/schemas/DisplayOpenMode' },
       isFullscreen: { type: 'boolean' },
-      alwaysOnTop: { type: 'boolean' },
+      alwaysOnTop: {
+        type: 'boolean',
+        default: true,
+        description:
+          'Keep the window above other windows. New screens default to true.',
+      },
       closeOnEscape: { type: 'boolean' },
       isPreviewScreen: { type: 'boolean' },
       openOnStartup: {

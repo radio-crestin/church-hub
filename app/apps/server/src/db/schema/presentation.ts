@@ -46,6 +46,9 @@ export const screens = sqliteTable(
      * another monitor, so a closed projection comes back where it was.
      */
     monitorName: text('monitor_name'),
+    // On by default since T-026: createScreen and the seed write true, and
+    // enable-screens-always-on-top switched existing screens on once. The
+    // column default stays 0 (changing it means rebuilding the table).
     alwaysOnTop: integer('always_on_top', { mode: 'boolean' })
       .notNull()
       .default(false),
