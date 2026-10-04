@@ -1,12 +1,12 @@
 ---
 id: T-024
 title: Create a program from the Programe panel, with a one-click "today" button
-sprint: backlog
-urgent: false
-status: todo
-owner:
+sprint: 2026-09-28
+urgent: true
+status: doing
+owner: programs
 rolled: 0
-order: 21
+order: -7
 created: 2026-10-04
 ---
 ## Goal

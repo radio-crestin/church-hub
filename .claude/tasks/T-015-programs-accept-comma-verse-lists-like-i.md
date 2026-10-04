@@ -1,12 +1,12 @@
 ---
 id: T-015
 title: Programs accept comma verse lists like "Ioan 3:16,17"
-sprint: backlog
-urgent: false
-status: todo
-owner:
+sprint: 2026-09-28
+urgent: true
+status: doing
+owner: programs
 rolled: 0
-order: 12
+order: -8
 created: 2026-10-04
 ---
 ## Goal
