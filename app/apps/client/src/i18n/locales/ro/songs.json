@@ -17,6 +17,8 @@
     "cloneSlide": "Clonează slide",
     "addToSchedule": "Adaugă în program",
     "saveToFile": "Salvează în fișier",
+    "exportPdf": "Exportă ca PDF",
+    "exportDocx": "Exportă ca Word",
     "setKeyLine": "Setează gama"
   },
   "editor": {
@@ -380,6 +382,8 @@
   "actionsMenu": {
     "trigger": "Mai multe",
     "saveToFileDescription": "Exportă cântarea într-un fișier pe calculator",
+    "exportPdfDescription": "Pagină A4 gata de tipărit, cu titlul și versurile",
+    "exportDocxDescription": "Document Word A4 editabil, cu titlul și versurile",
     "hideBackgroundDescription": "Negru simplu în spatele versurilor aici; ecranele păstrează fundalul",
     "toggleLayoutDescription": "Comută între editorul clasic și cel PowerPoint",
     "editDescription": "Deschide editorul pentru versuri și slide-uri"

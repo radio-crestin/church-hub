@@ -1,3 +1,4 @@
+export { buildPrintableSong } from './buildPrintableSong'
 export {
   createExportZip,
   downloadBlob,

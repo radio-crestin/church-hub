@@ -1,2 +1,2 @@
 export { useExportSongs } from './useExportSongs'
-export { useSaveSongToFile } from './useSaveSongToFile'
+export { type SaveFormat, useSaveSongToFile } from './useSaveSongToFile'
