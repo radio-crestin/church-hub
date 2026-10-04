@@ -77,8 +77,6 @@ env:
   # twice as fast; a thin UI shell (the work happens in the Bun sidecar)
   # gains nothing measurable from it.
   CARGO_PROFILE_RELEASE_LTO: 'off'
-  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
@@ -162,10 +160,16 @@ jobs:
         include: ${{ fromJSON(needs.plan.outputs.platforms) }}
 
     runs-on: ${{ matrix.platform }}
+    # A release build (the v* tag push of build-release.yml) takes the
+    # updater signing key from the `release` environment, which only v* tags
+    # may use. Every other build (PRs, main, by hand) runs without it and
+    # leaves out the updater files; its installers work the same.
+    environment: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) && 'release' || '' }}
     # Uploads the installers to the release.
     permissions:
       contents: write
     env:
+      RELEASE_BUILD: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
       # Caches are written only by main building its own commit. A PR build
       # started by hand also runs as main but checks out the PR's code,
       # which must never end up in a cache the release and every PR restore.
@@ -316,11 +320,23 @@ jobs:
           path: ~/.cache/tauri
           key: ${{ runner.os }}-tauri-tools-v1
 
+      # Without the signing key the bundler can't sign the updater files, so
+      # a non-release build doesn't make them.
+      - name: Leave out the updater files (not a release build)
+        if: env.RELEASE_BUILD != 'true'
+        shell: bash
+        working-directory: app/tauri
+        run: |
+          jq '.bundle.createUpdaterArtifacts = false' tauri.conf.json > tauri.conf.json.tmp
+          mv tauri.conf.json.tmp tauri.conf.json
+
       - name: Build Tauri app
         id: tauri_build
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ env.RELEASE_BUILD == 'true' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.RELEASE_BUILD == 'true' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
         with:
           projectPath: app
           tauriScript: bunx tauri
@@ -347,6 +363,7 @@ jobs:
       # The updater refuses anything unsigned, so a build that produced no
       # signature must not reach the release.
       - name: Verify the updater signature was produced
+        if: env.RELEASE_BUILD == 'true'
         shell: bash
         run: |
           SIG=$(find app/tauri/target -type f \( -name "*.app.tar.gz.sig" -o -name "*-setup.exe.sig" -o -name "*.AppImage.sig" \) 2>/dev/null | head -1)
