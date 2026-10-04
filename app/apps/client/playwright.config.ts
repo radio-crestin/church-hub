@@ -28,7 +28,20 @@ export const WEBKIT_STORAGE_STATE = join(
 // on the running app drove its real projector and database ("slides appear
 // with nobody presenting", T-030).
 const TEST_PORT = process.env.TEST_PORT ?? '3099'
+// The test server frees its port on start (killProcessOnPort), so on 3000 it
+// would kill the desktop app or the dev server.
+if (TEST_PORT === '3000') {
+  throw new Error(
+    'TEST_PORT=3000 is the desktop app / dev server: pick another',
+  )
+}
 const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
+
+/**
+ * The line the server prints once the real server is bound and boot is done
+ * (`=== Server Ready` in apps/server/src/index.ts). The run starts on it.
+ */
+export const SERVER_READY_LINE = /\[startup\] === Server Ready/
 
 // Run tests against an isolated, freshly-seeded database so they neither
 // depend on nor mutate the developer's real dev DB (which may, for example,
@@ -89,10 +102,13 @@ export default defineConfig({
   ],
   webServer: {
     command: webServerCommand,
-    url: TEST_BASE_URL,
-    // Never test a server this run did not start: whatever already answers
-    // on the port (the desktop app, a dev server) has a real projector and
-    // database. Playwright stops with "<url> is already used" instead.
+    // Ready when OUR server says so, not when an HTTP probe of the URL
+    // answers: Playwright's probe (and its "port already used" pre-check) has
+    // no socket timeout, so one request that never gets an answer stalled the
+    // whole start for the full timeout while the server was long ready (T-056).
+    // Whatever else held the port is gone by then: the server frees its port
+    // before binding, so the suite never drives a server it did not start.
+    wait: { stdout: SERVER_READY_LINE },
     reuseExistingServer: false,
     timeout: 180000,
     stdout: 'pipe',
