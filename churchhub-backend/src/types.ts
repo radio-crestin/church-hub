@@ -13,6 +13,16 @@ export interface Bindings {
   ALLOWED_ORIGINS: string
   GITHUB_TOKEN: string
   SIGNALING_KV: KVNamespace
+  // "Request a feature": screenshots, abuse limit and WhatsApp (WAHA) notice.
+  FEATURE_REQUEST_SCREENSHOTS: R2Bucket
+  FEATURE_REQUEST_RATE_LIMITER: RateLimit
+  WAHA_URL?: string
+  WAHA_API_KEY?: string
+  WAHA_SESSION?: string
+  WAHA_CHAT_ID?: string
+  // Cloudflare Access service token, only when WAHA sits behind Access.
+  WAHA_ACCESS_CLIENT_ID?: string
+  WAHA_ACCESS_CLIENT_SECRET?: string
 }
 
 export interface OAuthState {

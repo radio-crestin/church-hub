@@ -19,10 +19,27 @@ enabled = true
 head_sampling_rate = 1
 invocation_logs = true
 
-# KV namespace for WebRTC signaling relay
+# KV namespace for WebRTC signaling relay; also holds the per-IP (hashed)
+# rolling 24h quota of POST /feature-requests.
 [[kv_namespaces]]
 binding = "SIGNALING_KV"
 id = "bc1b72f2df754e88a81e8e8c99ccee50"
+
+# "Request a feature" screenshots, embedded in the public GitHub issue through
+# GET /feature-requests/screenshots/:id. Create once before the first deploy:
+#   npx wrangler r2 bucket create church-hub-feature-requests
+[[r2_buckets]]
+binding = "FEATURE_REQUEST_SCREENSHOTS"
+bucket_name = "church-hub-feature-requests"
+
+# Abuse guard for POST /feature-requests: 3 requests per minute per IP.
+[[ratelimits]]
+name = "FEATURE_REQUEST_RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 3
+  period = 60
 
 # Non-sensitive environment variables
 [vars]
@@ -42,3 +59,6 @@ COOKIE_MAX_AGE = 600
 # - ALLOWED_ORIGINS (comma-separated list)
 # - YOUTUBE_REDIRECT_URI
 # - GITHUB_TOKEN (GitHub PAT with repo scope for creating issues)
+# - WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID (+ optional WAHA_SESSION,
+#   WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) for the WhatsApp
+#   notice of each feature request. Unset = WhatsApp is skipped.

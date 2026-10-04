@@ -6,7 +6,9 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "deploy:prod": "bash deploy.sh",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "hono": "^4.13.12"

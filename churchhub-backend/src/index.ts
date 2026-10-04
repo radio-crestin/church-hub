@@ -6,7 +6,7 @@ import {
   createCorsMiddleware,
 } from './middleware/security'
 import auth from './routes/auth'
-import feedback from './routes/feedback'
+import featureRequests from './routes/feature-requests'
 import health from './routes/health'
 import signal from './routes/signal'
 
@@ -26,7 +26,7 @@ app.use('*', logger())
 // Mount routes
 app.route('/', health)
 app.route('/', auth)
-app.route('/', feedback)
+app.route('/', featureRequests)
 app.route('/', signal)
 
 // 404 handler
