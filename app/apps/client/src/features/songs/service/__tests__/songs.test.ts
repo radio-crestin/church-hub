@@ -8,7 +8,6 @@ import { fetcher } from '~/utils/fetcher'
 import {
   aiSearchSongs,
   deleteSong,
-  getAllSongs,
   getSongById,
   getSongsPaginated,
   rebuildSearchIndex,
@@ -52,21 +51,6 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('getAllSongs', () => {
-  it('returns songs from API response', async () => {
-    mockFetcher.mockResolvedValue({ data: [fakeSong] })
-    const result = await getAllSongs()
-    expect(result).toEqual([fakeSong])
-    expect(mockFetcher).toHaveBeenCalledWith('/api/songs')
-  })
-
-  it('returns empty array when data is undefined', async () => {
-    mockFetcher.mockResolvedValue({})
-    const result = await getAllSongs()
-    expect(result).toEqual([])
-  })
-})
-
 describe('getSongsPaginated', () => {
   it('passes limit and offset as query params', async () => {
     mockFetcher.mockResolvedValue({
@@ -89,6 +73,7 @@ describe('getSongsPaginated', () => {
       presentedOnly: true,
       inSchedulesOnly: true,
       hasKeyLine: true,
+      uncategorizedOnly: true,
       sortBy: 'title',
     })
     const url = mockFetcher.mock.calls[0][0] as string
@@ -96,6 +81,7 @@ describe('getSongsPaginated', () => {
     expect(url).toContain('presentedOnly=true')
     expect(url).toContain('inSchedulesOnly=true')
     expect(url).toContain('hasKeyLine=true')
+    expect(url).toContain('uncategorizedOnly=true')
     expect(url).toContain('sortBy=title')
   })
 
