@@ -22,7 +22,7 @@ interface SongEditorSlideRailProps {
 }
 
 /**
- * The editor's left rail: the song's verses as they read right now, click to
+ * The editor's right rail: the song's verses as they read right now, click to
  * project, arrows to move on.
  *
  * It is driven by the editor's draft rather than by the saved song, so a verse

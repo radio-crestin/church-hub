@@ -17,16 +17,20 @@ import {
   usePresentationState,
   usePresentTemporarySong,
 } from '~/features/presentation'
-import type { ScheduleItem } from '~/features/schedules'
 import {
   AddSongToScheduleModal,
-  getSchedulePassageTarget,
   liveProgramItemForSong,
   ScheduleLiveItemPanel,
-  SchedulePanel,
   useScheduleFlatNavigation,
   useSelectedScheduleId,
 } from '~/features/schedules'
+import {
+  useEditLayoutAction,
+  Workspace,
+  type WorkspaceLayout,
+  type WorkspacePanel,
+} from '~/features/workspace'
+import { ActionMenu } from '~/ui/menu'
 import { useToast } from '~/ui/toast'
 import {
   defaultSongMetadata,
@@ -36,8 +40,21 @@ import {
 import { SongEditorSlideRail } from './SongEditorSlideRail'
 import { type LocalSlide } from './SongSlideList'
 import { SongSlidesSection } from './SongSlidesSection'
+import { useIsLargeScreen } from '../hooks/useIsLargeScreen'
 import type { SongSlide } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
+
+/**
+ * Where the editor's panels start out: the form (details and slide cards) on
+ * the left and the verse rail on the right. Operators drag and resize them
+ * from there, like the song page's panels.
+ */
+const SONG_EDITOR_WORKSPACE_LAYOUT: WorkspaceLayout = {
+  columns: [
+    { id: 'col-1', panelIds: ['form'] },
+    { id: 'col-2', panelIds: ['rail'] },
+  ],
+}
 
 type PendingAction = 'present' | 'addToSchedule' | null
 
@@ -97,6 +114,8 @@ export function SongEditor({
   const { t } = useTranslation(['songs', 'queue'])
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const isLargeScreen = useIsLargeScreen()
+  const editLayoutAction = useEditLayoutAction('song-editor')
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
@@ -105,7 +124,7 @@ export function SongEditor({
   const presentTemporarySong = usePresentTemporarySong()
   const { data: presentationState } = usePresentationState()
   const navigateTemporary = useNavigateTemporary()
-  // The Programe panel's selection is shared app-wide; while a step of that
+  // The selected program is shared app-wide; while a step of that
   // program is live, the rail's arrows walk the program instead of this song.
   const selectedScheduleId = useSelectedScheduleId()
   const scheduleNav = useScheduleFlatNavigation({
@@ -293,21 +312,6 @@ export function SongEditor({
     setPendingAction(null)
   }
 
-  /** A program's verse row was clicked — open it in the Bible module. */
-  const handleSelectSchedulePassage = (item: ScheduleItem) => {
-    const target = getSchedulePassageTarget(item)
-    if (!target) return
-    navigate({
-      to: '/bible',
-      search: {
-        bookName: target.bookName,
-        chapter: target.chapter,
-        verse: target.verse,
-        select: true,
-      },
-    })
-  }
-
   const handleSongAddedToSchedule = (scheduleId: number) => {
     navigate({
       to: '/schedules/$scheduleId',
@@ -324,12 +328,49 @@ export function SongEditor({
     }
   }
 
-  return (
-    <div className="flex gap-4">
-      {/* Verse rail — the song as it reads right now, click to project. Desktop
-          only: below `lg` the editor already fills the width. */}
-      <aside className="hidden w-72 shrink-0 lg:block xl:w-80">
-        <div className="sticky top-0 h-[calc(100vh-7rem)]">
+  const panels: WorkspacePanel[] = [
+    {
+      id: 'form',
+      title: t('songs:editor.formPanel'),
+      render: () => (
+        <div
+          className={`min-w-0 space-y-6 ${isLargeScreen ? 'h-full overflow-y-auto scrollbar-thin pr-1' : ''}`}
+        >
+          {/* Song Details */}
+          <SongDetailsSection
+            title={title}
+            categoryId={categoryId}
+            tagIds={tagIds}
+            metadata={metadata}
+            isLoading={isLoading}
+            isNew={isNew}
+            presentationCount={presentationCount}
+            lastManualEdit={lastManualEdit}
+            onTitleChange={onTitleChange}
+            onCategoryChange={onCategoryChange}
+            onTagsChange={onTagsChange}
+            onMetadataChange={handleMetadataChange}
+            background={background}
+            onBackgroundChange={onBackgroundChange}
+          />
+
+          {/* Slides Section */}
+          <SongSlidesSection
+            slides={slides}
+            presentedSlideId={presentedSlideId}
+            onSlidesChange={onSlidesChange}
+            onPresentSlide={handlePresentSlide}
+            isLoading={isLoading}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'rail',
+      title: t('songs:editor.slides'),
+      available: isLargeScreen,
+      render: () => (
+        <div className="h-full">
           {showsLiveProgramItem ? (
             <div className="h-full overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
               <ScheduleLiveItemPanel nav={scheduleNav} />
@@ -346,16 +387,27 @@ export function SongEditor({
             />
           )}
         </div>
-      </aside>
+      ),
+    },
+  ]
 
-      <div className="min-w-0 flex-1 space-y-6 [scrollbar-gutter:stable] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {/* Header. The two asides steal 300-640px, so the room this row gets
-            has nothing to do with the viewport width — a 1366px laptop leaves
-            it ~600px. It is therefore a query container: the action labels
-            (and the extra button padding they need) only appear once the row
-            itself is wide enough for them AND a readable title. Below that the
-            buttons stay as icons with their `title` tooltips, which keeps the
-            <h1> from being squeezed to zero width. */}
+  return (
+    <div className="flex flex-col gap-4 lg:h-[calc(100vh-3rem)] lg:overflow-hidden">
+      {/* Header, always in view: on a large screen the page itself does not
+          scroll (the panels below do), on a phone the page scrolls and the
+          header sticks to the top. The bleed (negative margin + matching
+          padding) covers the page padding, so nothing shows above it. The
+          verse rail takes a share of the width, so the room the row gets has
+          nothing to do with the viewport width. It is therefore a query
+          container: the action labels (and the extra button padding they need)
+          only appear once the row itself is wide enough for them AND a
+          readable title. Below that the buttons stay as icons with their
+          `title` tooltips, which keeps the <h1> from being squeezed to zero
+          width. */}
+      <div
+        data-testid="song-editor-sticky-header"
+        className="sticky top-0 z-20 -mx-3 -mt-2 shrink-0 bg-gray-50 px-3 pb-2 pt-2 sm:-mx-4 sm:px-4 md:-mx-6 md:-mt-3 md:px-6 md:pt-3 lg:static lg:m-0 lg:p-0 dark:bg-gray-950"
+      >
         <div
           data-testid="song-editor-header"
           className="@container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
@@ -449,147 +501,112 @@ export function SongEditor({
                 {t('songs:actions.save')}
               </span>
             </button>
-          </div>
-        </div>
-
-        {/* Song Details */}
-        <SongDetailsSection
-          title={title}
-          categoryId={categoryId}
-          tagIds={tagIds}
-          metadata={metadata}
-          isLoading={isLoading}
-          isNew={isNew}
-          presentationCount={presentationCount}
-          lastManualEdit={lastManualEdit}
-          onTitleChange={onTitleChange}
-          onCategoryChange={onCategoryChange}
-          onTagsChange={onTagsChange}
-          onMetadataChange={handleMetadataChange}
-          background={background}
-          onBackgroundChange={onBackgroundChange}
-        />
-
-        {/* Slides Section */}
-        <SongSlidesSection
-          slides={slides}
-          presentedSlideId={presentedSlideId}
-          onSlidesChange={onSlidesChange}
-          onPresentSlide={handlePresentSlide}
-          isLoading={isLoading}
-        />
-
-        {songId && (
-          <AddSongToScheduleModal
-            isOpen={showAddToScheduleModal}
-            songId={songId}
-            onClose={() => setShowAddToScheduleModal(false)}
-            onAdded={handleSongAddedToSchedule}
-          />
-        )}
-
-        {/* Unsaved Changes Confirmation Modal */}
-        <dialog
-          ref={unsavedChangesDialogRef}
-          className="fixed inset-0 m-auto w-full max-w-md p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
-          onClick={(e) => {
-            if (
-              e.target === unsavedChangesDialogRef.current &&
-              !isSavingBeforeAction
-            )
-              handleCancelAction()
-          }}
-        >
-          <div className="flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {isSavingBeforeAction
-                  ? t('songs:actions.save')
-                  : t('songs:modal.unsavedChangesTitle')}
-              </h2>
-              {!isSavingBeforeAction && (
-                <button
-                  type="button"
-                  onClick={handleCancelAction}
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <X size={20} className="text-gray-500" />
-                </button>
-              )}
-            </div>
-
-            {/* Content */}
-            <div className="p-4">
-              {isSavingBeforeAction ? (
-                <div className="flex flex-col items-center justify-center py-4 gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {t('songs:messages.saving')}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-gray-600 dark:text-gray-400">
-                  {t('songs:modal.unsavedBeforeActionMessage')}
-                </p>
-              )}
-            </div>
-
-            {/* Footer */}
-            {!isSavingBeforeAction && (
-              <div className="flex flex-col gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={handleSaveAndContinue}
-                  className="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
-                >
-                  {t('songs:modal.saveAndContinue')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleContinueWithoutSaving}
-                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                >
-                  {t('songs:modal.continueWithoutSaving')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancelAction}
-                  className="w-full px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-                >
-                  {t('songs:modal.cancel')}
-                </button>
-              </div>
+            {/* Panels only form movable columns on a large screen; on a phone
+                they are a plain stack, so there is nothing to rearrange. */}
+            {isLargeScreen && (
+              <ActionMenu
+                items={[editLayoutAction]}
+                label={t('songs:actionsMenu.trigger')}
+                testId="song-editor-actions-menu"
+              />
             )}
           </div>
-        </dialog>
+        </div>
       </div>
 
-      {/* Programe — the same running order every other page shows, so an
-          operator editing a song mid-service never loses their place. Widest
-          screens only: below that the editor form needs the room. */}
-      <aside className="hidden w-72 shrink-0 xl:block">
-        <div className="sticky top-0 h-[calc(100vh-7rem)]">
-          <SchedulePanel
-            activeSongId={songId ?? undefined}
-            onSelectSong={(targetSongId) =>
-              navigate({
-                to: '/songs/$songId',
-                params: { songId: String(targetSongId) },
-              })
-            }
-            onSelectPassage={handleSelectSchedulePassage}
-            onOpenSchedule={(scheduleId) =>
-              navigate({
-                to: '/schedules/$scheduleId',
-                params: { scheduleId: String(scheduleId) },
-              })
-            }
-            candidateSong={songId ? { id: songId, title } : null}
-            showSongRowActions={false}
-          />
+      <Workspace
+        id="song-editor"
+        panels={panels}
+        defaultLayout={SONG_EDITOR_WORKSPACE_LAYOUT}
+        defaultColumnSizes={['72%', '28%']}
+        stacked={!isLargeScreen}
+        className="flex-1 lg:min-h-0"
+      />
+
+      {songId && (
+        <AddSongToScheduleModal
+          isOpen={showAddToScheduleModal}
+          songId={songId}
+          onClose={() => setShowAddToScheduleModal(false)}
+          onAdded={handleSongAddedToSchedule}
+        />
+      )}
+
+      {/* Unsaved Changes Confirmation Modal */}
+      <dialog
+        ref={unsavedChangesDialogRef}
+        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+        onClick={(e) => {
+          if (
+            e.target === unsavedChangesDialogRef.current &&
+            !isSavingBeforeAction
+          )
+            handleCancelAction()
+        }}
+      >
+        <div className="flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {isSavingBeforeAction
+                ? t('songs:actions.save')
+                : t('songs:modal.unsavedChangesTitle')}
+            </h2>
+            {!isSavingBeforeAction && (
+              <button
+                type="button"
+                onClick={handleCancelAction}
+                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="p-4">
+            {isSavingBeforeAction ? (
+              <div className="flex flex-col items-center justify-center py-4 gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {t('songs:messages.saving')}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600 dark:text-gray-400">
+                {t('songs:modal.unsavedBeforeActionMessage')}
+              </p>
+            )}
+          </div>
+
+          {/* Footer */}
+          {!isSavingBeforeAction && (
+            <div className="flex flex-col gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={handleSaveAndContinue}
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+              >
+                {t('songs:modal.saveAndContinue')}
+              </button>
+              <button
+                type="button"
+                onClick={handleContinueWithoutSaving}
+                className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                {t('songs:modal.continueWithoutSaving')}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelAction}
+                className="w-full px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                {t('songs:modal.cancel')}
+              </button>
+            </div>
+          )}
         </div>
-      </aside>
+      </dialog>
     </div>
   )
 }
