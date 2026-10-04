@@ -219,8 +219,10 @@ jobs:
 
       # Same path and key as test.yml, so all workflows share one entry. Only
       # bun's download cache: node_modules (230 MB on macOS, 40 s to restore)
-      # links back out of it in seconds.
+      # links back out of it in seconds. Not on Windows: unpacking it there
+      # took 63–69 s, longer than `bun install` downloading everything (~60 s).
       - name: Restore Bun dependencies
+        if: runner.os != 'Windows'
         uses: actions/cache/restore@v6
         id: bun-cache
         with:
@@ -374,7 +376,7 @@ jobs:
       # Saved last and only by trusted runs (SAVE_CACHES); an existing key
       # is never overwritten, so a hit skips the save.
       - name: Save Bun dependencies
-        if: env.SAVE_CACHES == 'true' && steps.bun-cache.outputs.cache-hit != 'true'
+        if: runner.os != 'Windows' && env.SAVE_CACHES == 'true' && steps.bun-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: ~/.bun/install/cache

@@ -294,7 +294,9 @@ jobs:
         with:
           bun-version-file: app/package.json
 
+      # Not on Windows: unpacking the cache there is slower than downloading.
       - name: Cache Bun dependencies
+        if: runner.os != 'Windows'
         uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
