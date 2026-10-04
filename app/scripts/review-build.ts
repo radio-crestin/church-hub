@@ -17,6 +17,8 @@
  *
  * Usage, from anywhere inside the checkout (run worktree-setup.ts first):
  *   bun app/scripts/review-build.ts T-023 [--out <dir>]
+ * --out puts the app (and its data, baked in) elsewhere, e.g. in the task
+ * owner's worktree when building that branch from another checkout.
  *
  * Cross-platform: the .app on macOS, the AppImage on Linux, the NSIS
  * installer on Windows.
@@ -226,6 +228,8 @@ const started = performance.now()
 
 step('hooks', () => checkHooks(app))
 mkdirSync(dataDir, { recursive: true })
+// Ignored even on a branch whose .gitignore predates review builds.
+writeFileSync(join(out, '.gitignore'), '*\n')
 const targetDir = cargoTargetDir(app)
 step('build lock', () => acquireLock(targetDir))
 const configFile = writeConfig(app, taskId, out)
