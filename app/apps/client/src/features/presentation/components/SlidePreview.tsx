@@ -1,5 +1,7 @@
 import { Pencil } from 'lucide-react'
 
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
+
 // Slide type for announcement/custom slides
 interface Slide {
   type?: string
@@ -25,7 +27,7 @@ export function SlidePreview({
   const content = slide.content?.html || ''
 
   // Strip HTML tags for preview text
-  const previewText = content.replace(/<[^>]*>/g, '').trim() || 'Empty slide'
+  const previewText = removeHtmlTags(content).trim() || 'Empty slide'
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation()

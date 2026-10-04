@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { getDatabase, getRawDatabase } from '../../db'
 import { scheduleItems } from '../../db/schema/schedules'
 import { songs } from '../../db/schema/songs'
+import { toErrorMessage } from '../../utils/toErrorMessage'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -59,7 +60,7 @@ export function completeSongReplacement(
       scheduleItemsUpdated: result.scheduleItemsUpdated,
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = toErrorMessage(error)
     log('error', `Failed to complete song replacement: ${message}`)
     return {
       success: false,

@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 
+/** `text` with every regex metacharacter escaped, to match it literally. */
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
+}
+
 // Each settings category is a nested route under /settings. `text` is a
 // bilingual (en/ro) regex matched inside the content pane (scoped via the
 // `settings-panel` test id so sidebar labels don't produce false positives).
@@ -72,7 +77,7 @@ test.describe('Settings Page', () => {
     test(`category ${leaf.path} renders its panel`, async ({ page }) => {
       await page.goto(leaf.path)
       await page.waitForLoadState('networkidle')
-      await expect(page).toHaveURL(new RegExp(leaf.path.replace(/\//g, '\\/')))
+      await expect(page).toHaveURL(new RegExp(escapeRegExp(leaf.path)))
       const panel = page.getByTestId('settings-panel')
       await expect(panel).toBeVisible({ timeout: 10000 })
       await expect(panel).toContainText(leaf.text, { timeout: 10000 })

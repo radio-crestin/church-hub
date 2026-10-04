@@ -5,6 +5,7 @@ import type {
   ParsedVerse,
 } from './types'
 import { BOOK_ORDER } from './types'
+import { removeXmlTags } from '../../utils/removeXmlTags'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -108,13 +109,7 @@ function normalizeBookCode(osisId: string): string {
  * Cleans verse text by removing XML tags and normalizing whitespace
  */
 function cleanVerseText(text: string): string {
-  let cleaned = text
-    // Remove self-closing tags
-    .replace(/<[^>]+\/>/g, '')
-    // Remove opening tags
-    .replace(/<[^/][^>]*>/g, '')
-    // Remove closing tags
-    .replace(/<\/[^>]+>/g, '')
+  let cleaned = removeXmlTags(text)
     // Normalize whitespace
     .replace(/\s+/g, ' ')
     .trim()

@@ -7,6 +7,7 @@
 import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
 import { isMobile } from '~/config'
+import { toSafeHttpUrl } from '~/utils/toSafeHttpUrl'
 
 const API_URL_STORAGE_KEY = 'church-hub-api-url'
 const USER_AUTH_STORAGE_KEY = 'church-hub-user-auth'
@@ -39,15 +40,22 @@ export function parseAuthUrl(url: string): {
   return { baseUrl: url.replace(/\/+$/, ''), userToken: null }
 }
 
+/** `url` as an http(s) base URL without a trailing slash, or null. */
+function toSafeBaseUrl(url: string): string | null {
+  return toSafeHttpUrl(url)?.replace(/\/+$/, '') ?? null
+}
+
 /**
  * Gets the stored API URL from localStorage
- * Returns null if no URL is configured
+ * Returns null if no URL is configured, or if the stored value is not an
+ * http(s) URL (it is loaded into media elements and fetched).
  */
 export function getStoredApiUrl(): string | null {
   if (typeof window === 'undefined') return null
 
   try {
-    return localStorage.getItem(API_URL_STORAGE_KEY)
+    const storedUrl = localStorage.getItem(API_URL_STORAGE_KEY)
+    return storedUrl ? toSafeBaseUrl(storedUrl) : null
   } catch {
     return null
   }
@@ -102,9 +110,11 @@ export function setApiUrl(url: string): void {
 
   try {
     const { baseUrl, userToken } = parseAuthUrl(url)
+    const safeBaseUrl = toSafeBaseUrl(baseUrl)
+    if (!safeBaseUrl) return
 
     // Store base URL
-    localStorage.setItem(API_URL_STORAGE_KEY, baseUrl)
+    localStorage.setItem(API_URL_STORAGE_KEY, safeBaseUrl)
 
     // Store and set user token if present
     if (userToken) {

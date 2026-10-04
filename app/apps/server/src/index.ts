@@ -67,6 +67,7 @@ import {
   flushPostHog,
   shutdownPostHog,
 } from './utils/posthog'
+import { toErrorMessage } from './utils/toErrorMessage'
 
 // Fire the boot heartbeat right after PostHog import. Filtering for
 // `app_started` + `component:"server"` in the PostHog dashboard confirms
@@ -2726,7 +2727,7 @@ async function startRealServer(): Promise<void> {
           console.error('Create user error:', error)
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: String(error) }), {
+            new Response(JSON.stringify({ error: toErrorMessage(error) }), {
               status: 500,
               headers: { 'Content-Type': 'application/json' },
             }),
@@ -5289,7 +5290,7 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
-          const message = error instanceof Error ? error.message : String(error)
+          const message = toErrorMessage(error)
           return handleCors(
             req,
             new Response(JSON.stringify({ error: message }), {
@@ -6090,7 +6091,7 @@ async function startRealServer(): Promise<void> {
         } catch (error) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: String(error) }), {
+            new Response(JSON.stringify({ error: toErrorMessage(error) }), {
               status: 400,
               headers: { 'Content-Type': 'application/json' },
             }),
@@ -6142,7 +6143,7 @@ async function startRealServer(): Promise<void> {
         } catch (error) {
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: String(error) }), {
+            new Response(JSON.stringify({ error: toErrorMessage(error) }), {
               status: 400,
               headers: { 'Content-Type': 'application/json' },
             }),

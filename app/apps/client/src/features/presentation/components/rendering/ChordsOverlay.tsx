@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { localizeChordName } from '~/features/songs/utils/localizeChordName'
+import { normalizeText } from './utils/normalizeText'
 import { getFontFamilyStack } from '../../utils/getFontFamilyStack'
 
 interface ChordMapping {
@@ -38,24 +39,7 @@ interface ChordsOverlayProps {
 
 /** Extract plain text from HTML */
 function htmlToPlainText(html: string): string {
-  return html
-    .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<(p|div|h[1-6])[^>]*>/gi, '')
-    .replace(/<\/(p|div|h[1-6])>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-      String.fromCharCode(parseInt(hex, 16)),
-    )
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+  return normalizeText(html, true)
 }
 
 interface LineWithChords {

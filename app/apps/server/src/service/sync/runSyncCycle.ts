@@ -13,6 +13,7 @@ import { getSyncState, updateRemoteFileRef } from './syncStateStore'
 import type { SyncCycleResult } from './types'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
+import { toErrorMessage } from '../../utils/toErrorMessage'
 import { broadcastSyncApplied } from '../../websocket'
 import { getDriveService } from '../backup/getDriveService'
 
@@ -111,7 +112,7 @@ export async function runSyncCycle(): Promise<SyncCycleResult> {
 
     return { success: true, applied: appliedCount, pushed: uploadNeeded }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = toErrorMessage(error)
     logger.error(`Sync cycle failed: ${message}`)
     await upsertSyncConfig({ lastError: message })
     return { success: false, error: message }

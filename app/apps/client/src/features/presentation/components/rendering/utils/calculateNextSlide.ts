@@ -1,3 +1,4 @@
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import type { BibleVerse } from '../../../../bible/types'
 import type { QueueItem, VerseteTineriEntry } from '../../../../queue/types'
 import type { SongSlide } from '../../../../songs/types'
@@ -17,11 +18,11 @@ interface CalculateNextSlideParams {
  * Strips HTML tags from content while preserving line breaks
  */
 function stripHtml(html: string): string {
-  return html
+  const lines = html
     .replace(/<br\s*\/?>/gi, '\n') // Replace <br> tags with newlines
     .replace(/<\/p>\s*<p[^>]*>/gi, '\n') // Replace </p><p> with newline
     .replace(/<\/(p|div|h[1-6])>/gi, '\n') // Closing block tags to newlines
-    .replace(/<[^>]*>/g, '') // Remove all remaining HTML tags
+  return removeHtmlTags(lines)
     .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
     .trim()
 }

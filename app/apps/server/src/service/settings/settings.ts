@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm'
 import type { Setting, SettingsTable, UpsertSettingInput } from './types'
 import { getDatabase } from '../../db'
 import { appSettings, cacheMetadata, userPreferences } from '../../db/schema'
+import { toErrorMessage } from '../../utils/toErrorMessage'
 import type { OperationResult } from '../users'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -50,7 +51,7 @@ export function upsertSetting(
     return { success: true }
   } catch (error) {
     log('error', `Failed to upsert setting: ${error}`)
-    return { success: false, error: String(error) }
+    return { success: false, error: toErrorMessage(error) }
   }
 }
 
@@ -85,7 +86,7 @@ export function deleteSetting(
     return { success: true }
   } catch (error) {
     log('error', `Failed to delete setting: ${error}`)
-    return { success: false, error: String(error) }
+    return { success: false, error: toErrorMessage(error) }
   }
 }
 

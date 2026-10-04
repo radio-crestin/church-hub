@@ -26,6 +26,18 @@ describe('sidebar-config/utils/transformEmbedUrl', () => {
       expect(isYouTubeUrl('https://www.google.com')).toBe(false)
       expect(isYouTubeUrl('https://vimeo.com/123')).toBe(false)
     })
+
+    it('accepts YouTube subdomains and a missing scheme', () => {
+      expect(isYouTubeUrl('https://m.youtube.com/watch?v=abc123')).toBe(true)
+      expect(isYouTubeUrl('youtube.com/watch?v=abc123')).toBe(true)
+    })
+
+    it('returns false for hosts that only mention a YouTube domain', () => {
+      expect(isYouTubeUrl('https://evil.com/youtube.com/watch')).toBe(false)
+      expect(isYouTubeUrl('https://youtube.com.evil.com/watch')).toBe(false)
+      expect(isYouTubeUrl('https://notyoutube.com/watch')).toBe(false)
+      expect(isYouTubeUrl('https://evil.com/?r=youtu.be')).toBe(false)
+    })
   })
 
   describe('transformYouTubeToEmbed', () => {

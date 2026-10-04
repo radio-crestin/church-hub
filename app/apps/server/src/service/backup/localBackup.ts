@@ -3,6 +3,7 @@ import { isAbsolute, join } from 'node:path'
 
 import { getBackupConfig, upsertBackupConfig } from './backupConfig'
 import { buildBackupFileName, isBackupFile } from './constants'
+import { parseAppVersion } from './parseAppVersion'
 import { createLogger } from '../../utils/logger'
 import { checkpointAndExport } from '../database/database'
 
@@ -23,15 +24,6 @@ export interface LocalBackupResult {
   fileName?: string
   path?: string
   error?: string
-}
-
-/**
- * Pulls the app version out of `church-hub-backup-v0.1.85-<iso>.db`. Returns
- * null for names that don't carry one (hand-renamed files, older layouts).
- */
-function parseAppVersion(fileName: string): string | null {
-  const match = fileName.match(/-v([0-9][^-]*(?:\.[^-]+)*)-\d{4}-/)
-  return match?.[1] ?? null
 }
 
 /**
