@@ -18,6 +18,7 @@ Chat 21/05 BCEV: Â«api-ul http://localhost:3000/api/songs intoarce 10mb de dateÂ
 - Test: `CI=1 TEST_PORT=3136 bunx playwright test e2e/songs-api-pagination.spec.ts --workers=1 --retries=2`; also passed song-category-hidden, api-comprehensive, file-drop-import, songs, settings, songs-alphabet-scroll, song-key; server `bun test src/__tests__/api.test.ts -t "GET /api/songs"`; client songs service unit tests.
 - Commits: 83a0ed50 (server + OpenAPI), 81b62770 (client card + tests), 161d1a2a (song-import-export spec read the bare list; now uses batch songIds).
 - Not done / not verified: no cap on an explicit `limit` (A-Z rail asks 100000 on purpose); external API clients expecting an array from bare /api/songs would break (none in repo). Uncategorized list shows first 200 A-Z if more exist (count and Delete all cover all).
+- 2026-10-04: User review 2026-10-04: wants the full PR link in the review message; re-record videos with red boxes/arrows (T-053 helper) before asking again.
 
 ## PR
 - branch: fix/songs-api-default-page-size

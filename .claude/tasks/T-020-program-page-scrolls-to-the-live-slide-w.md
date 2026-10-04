@@ -19,6 +19,7 @@ Chat 07/06 BCEV: «in pagina de programe, cand se trece de la un verset la o can
 - Before video: recorded on a temporary build with the old early return put back (the logic from ≤ v0.1.95), not on main, because main no longer has the bug.
 - Not checked: packaged Windows app (WebView2).
 - Commit: a2f98de0 (rebased onto origin/main; local main has 9 unpushed chore commits).
+- 2026-10-04: User review 2026-10-04: wants the full PR link in the review message; re-record videos with red boxes/arrows (T-053 helper) before asking again.
 
 ## PR
 - Branch: fix/program-scroll-to-live-slide
