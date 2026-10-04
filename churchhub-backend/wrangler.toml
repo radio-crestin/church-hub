@@ -24,6 +24,22 @@ invocation_logs = true
 binding = "SIGNALING_KV"
 id = "bc1b72f2df754e88a81e8e8c99ccee50"
 
+# "Request a feature" screenshots, linked from the public GitHub issue.
+# Create once before the first deploy:
+#   npx wrangler r2 bucket create church-hub-feature-requests
+[[r2_buckets]]
+binding = "FEATURE_REQUEST_SCREENSHOTS"
+bucket_name = "church-hub-feature-requests"
+
+# Abuse guard for POST /feature-requests: 3 requests per minute per IP.
+[[ratelimits]]
+name = "FEATURE_REQUEST_RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 3
+  period = 60
+
 # Non-sensitive environment variables
 [vars]
 YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
@@ -42,3 +58,6 @@ COOKIE_MAX_AGE = 600
 # - ALLOWED_ORIGINS (comma-separated list)
 # - YOUTUBE_REDIRECT_URI
 # - GITHUB_TOKEN (GitHub PAT with repo scope for creating issues)
+# - WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID (+ optional WAHA_SESSION,
+#   WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) for the WhatsApp
+#   notice of each feature request. Unset = WhatsApp is skipped.

@@ -22,3 +22,14 @@ YOUTUBE_REDIRECT_URI=http://localhost:8787/auth/youtube/callback
 # 6. Permissions -> Repository permissions -> Issues: Read and Write
 # 7. Click "Generate token" and copy the value
 GITHUB_TOKEN=github_pat_xxxxxxxxxxxxxxxxxxxx
+
+# WhatsApp notice for each "Request a feature" submission, sent through WAHA
+# (WhatsApp HTTP API). Optional: when WAHA_URL/WAHA_API_KEY/WAHA_CHAT_ID are
+# unset, the GitHub issue is still created and WhatsApp is skipped.
+# WAHA_URL=https://waha.example.com
+# WAHA_API_KEY=your-waha-api-key
+# WAHA_SESSION=default
+# WAHA_CHAT_ID=40700000000@c.us
+# Only when WAHA is behind Cloudflare Access (service token):
+# WAHA_ACCESS_CLIENT_ID=your-access-client-id.access
+# WAHA_ACCESS_CLIENT_SECRET=your-access-client-secret
