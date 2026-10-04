@@ -10,6 +10,18 @@ afterEach(() => {
   cleanup()
 })
 
+// Node 25+ defines its own localStorage/sessionStorage globals (undefined
+// without --localstorage-file). Vitest 3 keeps Node's over jsdom's, so point
+// both back at jsdom's real Storage objects.
+const { jsdom } = globalThis as unknown as { jsdom: { window: Window } }
+for (const storage of ['localStorage', 'sessionStorage'] as const) {
+  Object.defineProperty(globalThis, storage, {
+    value: jsdom.window[storage],
+    configurable: true,
+    writable: true,
+  })
+}
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
