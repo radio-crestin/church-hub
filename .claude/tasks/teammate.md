@@ -19,10 +19,13 @@ Every code change follows these steps. Config or tooling tasks only when the lea
    - Cargo shares the main checkout's target dir: `cargo check`/`clippy`/`test` only, no `tauri build`/`dev`.
    - Browser reported MISSING and `playwright install` hangs at 100%: its zip in `$TMPDIR/playwright-download-*/` is complete. Unzip it into the reported location and create an empty `INSTALLATION_COMPLETE` file there.
 3. **Test.** Write or extend a spec in `app/apps/client/e2e/`. `CI=1 TEST_PORT=<port> bunx playwright test <spec> --workers=1 --retries=2` must pass.
-4. **Video**, 10–40 s, showing the fix or feature with the mouse and a note per step.
+4. **Video: before and after**, 10–40 s each, same steps, with the mouse and a note per step.
+   - **Before** (record it first, before you change code): the bug happening, or how it worked before the feature. Captions start with "Before:".
+   - **After**: the same steps on your branch, showing the fix or the new behavior. Captions start with "After:".
+   - Can't reproduce the bug for the before video? Say so in your report; don't fake it.
    - Temp spec `app/apps/client/e2e/_demo-<task-id>.spec.ts` (gitignored), built on `e2e/helpers/demo-recording.ts`: `DEMO_RECORDING`, `installDemoOverlay`, `showCaption`, `glideClick`.
    - Record: `CI=1 TEST_PORT=<port> DEMO_OUT=<scratchpad>/demos .claude/skills/documented-pr/scripts/record-features.sh app/apps/client/e2e/_demo-<task-id>.spec.ts` → `.mp4` + `.gif`.
-5. **PR.** `git push -u origin <branch>`. Upload: `DEMO_OUT=<scratchpad>/demos .claude/skills/documented-pr/scripts/upload-demos.sh pr-demos-<branch>` → asset URLs. Open the PR with `detailed-pr`, its UI/UX section embedding `[![demo](<gif url>)](<mp4 url>)` (why not `<video>`: `documented-pr`).
-6. **Task file.** Fill its `## PR` section: branch, PR `#<n> <url>`, video `<mp4 url>`. Edit it at the main-checkout path from your prompt, not the worktree copy. Not the front matter: better-tasks rewrites it and drops unknown keys.
-7. **Report** to the lead: branch, PR link, video link, commits.
+5. **PR.** `git push -u origin <branch>`. Upload: `DEMO_OUT=<scratchpad>/demos .claude/skills/documented-pr/scripts/upload-demos.sh pr-demos-<branch>` → asset URLs. Open the PR with `detailed-pr`, its UI/UX section embedding both, labeled **Before** / **After**: `[![before](<gif url>)](<mp4 url>)` (why not `<video>`: `documented-pr`).
+6. **Task file.** Fill its `## PR` section: branch, PR `#<n> <url>`, videos `before: <mp4 url>`, `after: <mp4 url>`. Edit it at the main-checkout path from your prompt, not the worktree copy. Not the front matter: better-tasks rewrites it and drops unknown keys.
+7. **Report** to the lead: branch, PR link, before and after video links, commits.
 8. **Cleanup** after accept, from the main checkout: `bun app/scripts/worktree-cleanup.ts <task-id> <branch>` (~1 s). It stops only your port, unlocks and removes the worktree (test DB, dist, node_modules deleted in the background), and deletes the branch only if merged or pushed. Shared caches stay.
