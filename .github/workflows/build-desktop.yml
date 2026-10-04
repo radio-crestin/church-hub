@@ -162,7 +162,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref }}
 
@@ -208,12 +208,12 @@ jobs:
             libasound2-dev libpulse-dev libjack-jackd2-dev
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: app/package.json
 
@@ -223,7 +223,7 @@ jobs:
       # took 63–69 s, longer than `bun install` downloading everything (~60 s).
       - name: Restore Bun dependencies
         if: runner.os != 'Windows'
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -232,12 +232,12 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           targets: ${{ matrix.rust_target }}
 
       - name: Rust cache
-        uses: swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: './app/tauri -> target'
           cache-targets: true
@@ -300,14 +300,14 @@ jobs:
       - name: Restore Tauri bundler tools
         if: runner.os == 'Linux'
         id: tauri-tools-cache
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/tauri
           key: ${{ runner.os }}-tauri-tools-v1
 
       - name: Build Tauri app
         id: tauri_build
-        uses: tauri-apps/tauri-action@v1
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -377,14 +377,14 @@ jobs:
       # is never overwritten, so a hit skips the save.
       - name: Save Bun dependencies
         if: runner.os != 'Windows' && env.SAVE_CACHES == 'true' && steps.bun-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ steps.bun-cache.outputs.cache-primary-key }}
 
       - name: Save Tauri bundler tools
         if: runner.os == 'Linux' && env.SAVE_CACHES == 'true' && steps.tauri-tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/tauri
           key: ${{ steps.tauri-tools-cache.outputs.cache-primary-key }}
