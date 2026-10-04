@@ -1,5 +1,5 @@
 name: PR build
-run-name: PR build #${{ github.event.pull_request.number || inputs.pr }}
+run-name: "PR build #${{ github.event.pull_request.number || inputs.pr }}"
 
 # Every pull request gets installers to download and test: macOS (Apple
 # Silicon), Windows and Linux, built by build-desktop.yml (the release
@@ -109,7 +109,7 @@ jobs:
       issues: write
     steps:
       - name: Link the installers on the PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR: ${{ needs.prepare.outputs.pr }}
           SHA: ${{ needs.prepare.outputs.sha }}

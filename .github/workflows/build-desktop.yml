@@ -64,9 +64,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # `exclude` only matches matrix dimensions, so the platforms are one;
+        # each `include` entry below adds its settings to that platform.
+        target: [macos-arm64, macos-x64, windows-x64, linux-x64]
         include:
           # macOS ARM64 (Apple Silicon)
-          - platform: macos-latest
+          - target: macos-arm64
+            platform: macos-latest
             rust_target: aarch64-apple-darwin
             bun_target: bun-darwin-arm64
             sidecar_suffix: aarch64-apple-darwin
@@ -78,7 +82,8 @@ jobs:
 
           # macOS x64 (Intel) - cross-compiled from ARM64 runner, so the
           # sidecar can't be launched here for the smoke test.
-          - platform: macos-latest
+          - target: macos-x64
+            platform: macos-latest
             rust_target: x86_64-apple-darwin
             bun_target: bun-darwin-x64
             sidecar_suffix: x86_64-apple-darwin
@@ -89,7 +94,8 @@ jobs:
             optional: false
 
           # Windows x64
-          - platform: windows-latest
+          - target: windows-x64
+            platform: windows-latest
             rust_target: x86_64-pc-windows-msvc
             bun_target: bun-windows-x64
             sidecar_suffix: x86_64-pc-windows-msvc.exe
@@ -102,7 +108,8 @@ jobs:
           # Linux x64 — AppImage, one file that runs on most distros. Built
           # on 22.04 so it also runs on older glibc. The bundle targets in
           # tauri.conf.json are macOS/Windows ones, so name it here.
-          - platform: ubuntu-22.04
+          - target: linux-x64
+            platform: ubuntu-22.04
             rust_target: x86_64-unknown-linux-gnu
             bun_target: bun-linux-x64
             sidecar_suffix: x86_64-unknown-linux-gnu
@@ -111,7 +118,7 @@ jobs:
             tauri_args: --bundles appimage
             smoke: true
             optional: true
-        exclude: ${{ fromJSON(inputs.macos_intel && '[]' || '[{"artifact_base":"church-hub-macos-x64"}]') }}
+        exclude: ${{ fromJSON(inputs.macos_intel && '[]' || '[{"target":"macos-x64"}]') }}
 
     runs-on: ${{ matrix.platform }}
 
