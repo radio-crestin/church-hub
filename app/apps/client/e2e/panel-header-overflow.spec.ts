@@ -7,6 +7,7 @@ import {
 } from '@playwright/test'
 
 import { openActionsMenu } from './helpers/actions-menu'
+import { startWithCollapsedSidebar } from './helpers/collapsed-sidebar'
 
 /**
  * The Marcaje and Programe headers carry a row of small action buttons. When
@@ -146,6 +147,7 @@ test.describe('Panel header actions overflow into a More menu', () => {
       })
       expect(bookmarkResponse.ok()).toBeTruthy()
 
+      await startWithCollapsedSidebar(page)
       await page.addInitScript((scheduleId: number) => {
         // Start from the default column widths, once per test: the page is
         // not reloaded, but a stored layout from elsewhere must not leak in.

@@ -5,6 +5,8 @@ import {
   test,
 } from '@playwright/test'
 
+import { startWithCollapsedSidebar } from './helpers/collapsed-sidebar'
+
 /**
  * Escape on the song page goes back to the song list, or hides the projection
  * while a slide is up. Pressed inside a dialog it only closes that dialog: the
@@ -54,6 +56,7 @@ async function removeFixture(request: APIRequestContext, fixture: Fixture) {
 
 /** Opens the song page with Marcaje and Programe (on the program) expanded. */
 async function openSongPage(page: Page, fixture: Fixture) {
+  await startWithCollapsedSidebar(page)
   await page.addInitScript((scheduleId: number) => {
     window.localStorage.setItem('song-editor-layout', 'normal')
     window.localStorage.setItem('song-detail:bookmarks-open', 'true')
