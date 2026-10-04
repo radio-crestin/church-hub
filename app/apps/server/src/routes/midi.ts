@@ -6,6 +6,7 @@ import {
   getAllDevices,
   getConnectionStatus,
   setEnabled,
+  whenMIDIReady,
 } from '../service/midi'
 import {
   dumpShortcutMap,
@@ -22,6 +23,12 @@ export async function handleMIDIRoutes(
   url: URL,
   handleCors: HandleCors,
 ): Promise<Response | null> {
+  if (!url.pathname.startsWith('/api/midi/')) return null
+
+  // A page loading during start-up must see the devices and reconnect the
+  // saved ones, not find MIDI missing while CoreMIDI warms up (macOS).
+  await whenMIDIReady()
+
   // GET /api/midi/devices - List available MIDI devices
   if (req.method === 'GET' && url.pathname === '/api/midi/devices') {
     try {

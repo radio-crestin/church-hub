@@ -1,61 +1,8 @@
-// --probe-midi: short-circuit handler used by the MIDI safety check.
-//
-// The parent server invokes `process.execPath --probe-midi` in a subprocess
-// to verify that touching CoreMIDI on macOS won't crash the main process.
-// On success the probe exits 0, on a native crash it dies with a signal,
-// and we MUST do this without binding to port 3000 (which would SIGKILL
-// the parent via killProcessOnPort) — that was the v0.1.60 regression
-// where the macOS release exited silently a few seconds after launch.
-//
-// `-e <code>` was the old approach but Bun's compiled standalone ignores
-// `-e` and runs the full server, hence this dedicated flag.
-if (process.argv.includes('--probe-midi')) {
-  try {
-    // biome-ignore lint/correctness/noNodejsModules: probe must be self-contained
-    const probeFs = require('node:fs') as typeof import('node:fs')
-    // biome-ignore lint/correctness/noNodejsModules: probe must be self-contained
-    const probePath = require('node:path') as typeof import('node:path')
-
-    let probeMidiPath: string | null = null
-    if (process.platform === 'darwin') {
-      // <App>/Contents/MacOS/<sidecar>  →  <App>/Contents/Resources/midi-native/midi.node
-      probeMidiPath = probePath.join(
-        process.execPath,
-        '..',
-        '..',
-        'Resources',
-        'midi-native',
-        'midi.node',
-      )
-    } else {
-      // Windows / Linux: resources sit next to the executable
-      probeMidiPath = probePath.join(
-        process.execPath,
-        '..',
-        'midi-native',
-        'midi.node',
-      )
-    }
-
-    if (probeMidiPath && probeFs.existsSync(probeMidiPath)) {
-      const probeNative = require(probeMidiPath)
-      // Constructing an Input is what actually touches CoreMIDI on darwin.
-      const probeInput = new probeNative.Input(() => {})
-      try {
-        probeInput.closePort?.()
-        probeInput.destroy?.()
-      } catch {
-        // ignore — we only care whether construction crashed
-      }
-    } else {
-      // Dev / unbundled fallback
-      require('easymidi').getInputs()
-    }
-    process.exit(0)
-  } catch {
-    process.exit(1)
-  }
-}
+// Must stay the first import: when started as the CoreMIDI warm-up helper
+// (macOS, see service/midi/warmUpCoreMidi.ts) it exits before the server
+// loads. A dedicated flag, because Bun's compiled binary ignores Node flags
+// like `-e` and would re-run the whole server (the v0.1.60 regression).
+import './service/midi/coreMidiWarmUpEntry'
 
 import { authLogger, logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
@@ -8362,9 +8309,10 @@ async function startRealServer(): Promise<void> {
   initializeOBSAutoConnect()
   logTiming('init_obs_auto_connect', t)
 
-  // Initialize MIDI service (deferred to after server is ready for faster /ping response)
+  // Initialize MIDI service (deferred to after server is ready for faster /ping
+  // response). Not awaited: on macOS it first warms up CoreMIDI in a helper.
   t = performance.now()
-  initializeMIDI()
+  void initializeMIDI()
   logTiming('init_midi', t)
 
   // Load MIDI shortcuts configuration from database
