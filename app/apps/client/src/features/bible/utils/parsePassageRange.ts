@@ -1,3 +1,6 @@
+import { formatVerseSegments } from './formatVerseSegments'
+import { mergeVerseSegments } from './mergeVerseSegments'
+import { parseVerseList, type VerseSegment } from './parseVerseList'
 import type { BibleBook } from '../types'
 
 export type PassageParseStatus =
@@ -23,6 +26,11 @@ export interface ParsedPassageRange {
   startVerse?: number
   endChapter?: number
   endVerse?: number
+  /**
+   * Set only for a verse list with a gap ("Ioan 3:16-18,20"): the runs to read,
+   * sorted and merged. startVerse/endVerse then hold the outer bounds.
+   */
+  verseSegments?: VerseSegment[]
   matchedBook?: BibleBook
   formattedReference?: string
 }
@@ -34,10 +42,72 @@ export interface ParsePassageRangeParams {
   chapters?: ChapterInfo[]
 }
 
-// Matches: "Gen 1:1", "Gen 1:1-5", "Gen 1:1-2:5", "1 Ioan 3:16"
-// Groups: [full, bookName, startChapter, startVerse, endChapter?, endVerse?]
-const PASSAGE_PATTERN =
-  /^(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+)\s*(\d+)\s*[:.,]\s*(\d+)(?:\s*[-–—]\s*(?:(\d+)\s*[:.,]\s*)?(\d+))?$/i
+const BOOK = String.raw`(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+)\s*`
+const SEPARATOR = String.raw`\s*([:.,])\s*`
+const DASH = String.raw`\s*[-–—]\s*`
+
+// Across chapters: "Gen 1:1-2:5", "Gen 1.1-2.5", "Gen 1,1-2,5".
+// Groups: [full, book, startChapter, startSep, startVerse, endChapter, endSep, endVerse]
+const CROSS_CHAPTER_PATTERN = new RegExp(
+  String.raw`^${BOOK}(\d+)${SEPARATOR}(\d+)${DASH}(\d+)${SEPARATOR}(\d+)$`,
+  'i',
+)
+
+// Inside one chapter: "Ioan 3:16", "Ioan 3:16-18", "Geneza 1,1", and comma
+// verse lists "Ioan 3:16,17" / "Ioan 3:16-18,20".
+// Groups: [full, book, chapter, separator, verseList]
+const ONE_CHAPTER_PATTERN = new RegExp(
+  String.raw`^${BOOK}(\d+)${SEPARATOR}(\d+(?:\s*[-–—,]\s*\d+)*)$`,
+  'i',
+)
+
+interface ReferenceParts {
+  bookQuery: string
+  startChapter: number
+  endChapter: number
+  /** Runs of verses as typed; one run when the passage crosses chapters. */
+  segments: VerseSegment[]
+}
+
+/**
+ * Splits a reference into book, chapters and verse runs.
+ *
+ * A comma means two things. Right after the chapter it separates chapter and
+ * verse ("Geneza 1,1"), and after a verse it starts the next verse of a list
+ * ("Ioan 3:16,17"). So "Gen 1:1-2,5" is the list 1-2 and 5, while the
+ * chapter-crossing reading needs the same separator on both ends:
+ * "Gen 1:1-2:5" or "Gen 1,1-2,5".
+ */
+function splitReference(input: string): ReferenceParts | null {
+  const cross = input.match(CROSS_CHAPTER_PATTERN)
+  if (cross) {
+    const [, book, startCh, startSep, startV, endCh, endSep, endV] = cross
+    const listComma = startSep !== ',' && endSep === ','
+    if (!listComma) {
+      return {
+        bookQuery: book.trim(),
+        startChapter: parseInt(startCh, 10),
+        endChapter: parseInt(endCh, 10),
+        segments: [
+          { startVerse: parseInt(startV, 10), endVerse: parseInt(endV, 10) },
+        ],
+      }
+    }
+  }
+
+  const single = input.match(ONE_CHAPTER_PATTERN)
+  if (!single) return null
+  const [, book, chapter, , verseList] = single
+  const segments = parseVerseList(verseList)
+  if (!segments) return null
+  const chapterNumber = parseInt(chapter, 10)
+  return {
+    bookQuery: book.trim(),
+    startChapter: chapterNumber,
+    endChapter: chapterNumber,
+    segments,
+  }
+}
 
 export function parsePassageRange(
   params: ParsePassageRangeParams,
@@ -52,26 +122,16 @@ export function parsePassageRange(
     }
   }
 
-  const match = trimmed.match(PASSAGE_PATTERN)
-  if (!match) {
+  const parts = splitReference(trimmed)
+  if (!parts) {
     return {
       status: 'invalid_format',
       errorKey: 'biblePassage.errors.invalid_format',
     }
   }
 
-  const [
-    ,
-    bookPart,
-    startChapterStr,
-    startVerseStr,
-    endChapterStr,
-    endVerseStr,
-  ] = match
-  const bookQuery = bookPart.trim()
-
   // Find matching book
-  const matchedBook = findMatchingBook(bookQuery, books)
+  const matchedBook = findMatchingBook(parts.bookQuery, books)
   if (!matchedBook) {
     return {
       status: 'book_not_found',
@@ -79,29 +139,16 @@ export function parsePassageRange(
     }
   }
 
-  const startChapter = parseInt(startChapterStr, 10)
-  const startVerse = parseInt(startVerseStr, 10)
-
-  // Determine end chapter and verse
-  let endChapter: number
-  let endVerse: number
-
-  if (endVerseStr) {
-    // Has end range
-    if (endChapterStr) {
-      // Cross-chapter range: Gen 1:1-2:5
-      endChapter = parseInt(endChapterStr, 10)
-      endVerse = parseInt(endVerseStr, 10)
-    } else {
-      // Same chapter range: Gen 1:1-5
-      endChapter = startChapter
-      endVerse = parseInt(endVerseStr, 10)
-    }
-  } else {
-    // Single verse: Gen 1:1
-    endChapter = startChapter
-    endVerse = startVerse
-  }
+  const { startChapter, endChapter } = parts
+  const isSameChapter = startChapter === endChapter
+  const runBackwards = parts.segments.some(
+    (segment) => isSameChapter && segment.endVerse < segment.startVerse,
+  )
+  const segments = isSameChapter
+    ? mergeVerseSegments(parts.segments)
+    : parts.segments
+  const startVerse = segments[0].startVerse
+  const endVerse = segments[segments.length - 1].endVerse
 
   // Validate chapter numbers
   if (startChapter < 1 || startChapter > matchedBook.chapterCount) {
@@ -120,8 +167,9 @@ export function parsePassageRange(
 
   // Validate end >= start (chronologically)
   if (
+    runBackwards ||
     endChapter < startChapter ||
-    (endChapter === startChapter && endVerse < startVerse)
+    (isSameChapter && endVerse < startVerse)
   ) {
     return {
       status: 'end_before_start',
@@ -153,14 +201,17 @@ export function parsePassageRange(
     }
   }
 
-  // Format the reference
-  const formattedReference = formatReference(
-    matchedBook.bookName,
-    startChapter,
-    startVerse,
-    endChapter,
-    endVerse,
-  )
+  // A list with a gap keeps its runs; anything else is one plain range.
+  const verseSegments = segments.length > 1 ? segments : undefined
+  const formattedReference = verseSegments
+    ? `${matchedBook.bookName} ${startChapter}:${formatVerseSegments(verseSegments)}`
+    : formatReference(
+        matchedBook.bookName,
+        startChapter,
+        startVerse,
+        endChapter,
+        endVerse,
+      )
 
   return {
     status: 'valid',
@@ -170,6 +221,7 @@ export function parsePassageRange(
     startVerse,
     endChapter,
     endVerse,
+    verseSegments,
     matchedBook,
     formattedReference,
   }
