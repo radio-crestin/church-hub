@@ -40,16 +40,17 @@ jobs:
   # All other jobs depend on this. For push / workflow_dispatch, it short-
   # circuits with the current SHA.
   #
-  # Two checks on a comment: its author_association skips the run outright
-  # for anyone outside the repo (no runner starts), then the API check asks
-  # for write access, since a read-only collaborator is a COLLABORATOR too.
+  # Two checks on a comment. Its author_association skips the run before a
+  # runner starts for anyone who never contributed (NONE, FIRST_TIMER, …).
+  # CONTRIBUTOR stays in: the payload shows a private org member as
+  # CONTRIBUTOR. The API check is the real gate: write access or fail.
   gate:
     runs-on: ubuntu-latest
     if: >-
       github.event_name != 'issue_comment' ||
       (github.event.issue.pull_request != null &&
        startsWith(github.event.comment.body, '/test') &&
-       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
+       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association))
     # Reacting to a comment that belongs to a PR is authorized via the
     # pull-requests permission — issues: write alone 403s with "Resource
     # not accessible by integration" — so both need write.

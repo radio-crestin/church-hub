@@ -37,14 +37,14 @@ jobs:
   prepare:
     # The build runs the PR's code with the updater signing key and a
     # token that writes releases, so only for a branch of this repository
-    # (never a fork) opened by someone on the repo: anyone can open a PR
-    # from an existing branch here. Drafts wait until ready. A dispatch
-    # needs write access to run at all; the step below rejects forks too.
+    # (never a fork) opened by someone with write access: anyone can open
+    # a PR from an existing branch here. Drafts wait until ready. A
+    # dispatch needs write access to run at all; the step below rejects
+    # forks too.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (!github.event.pull_request.draft &&
-       github.event.pull_request.head.repo.full_name == github.repository &&
-       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association))
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -55,6 +55,23 @@ jobs:
       tag: ${{ steps.resolve.outputs.tag }}
       version: ${{ steps.resolve.outputs.version }}
     steps:
+      # Asked of the API, not author_association: the event payload shows a
+      # private org member as CONTRIBUTOR, so that field would skip us too.
+      - name: Check the PR author has write access
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          PERMISSION=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$AUTHOR/permission" \
+            --jq .permission 2>/dev/null || echo none)
+          case "$PERMISSION" in
+            admin|maintain|write) echo "$AUTHOR has $PERMISSION access" ;;
+            *) echo "::error::$AUTHOR (permission=$PERMISSION) opened this PR; only authors with write access get a build."
+               exit 1 ;;
+          esac
+
       # The build carries the latest release's version, so the installed
       # test build's updater sees "up to date" instead of replacing itself
       # with the release.
