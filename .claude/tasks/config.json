@@ -1,0 +1,18 @@
+{
+  "//": "better-tasks settings for this project. Remove the // in front of a key to set it here; keys left out come from /config or the defaults. {id}, {slug} and {title} work in taskFileName.",
+  "// editor": "auto",
+  "worktree": true,
+  "// contextLimit": 50,
+  "// longCache": true,
+  "// statusEvery": 10,
+  "// keepAwake": true,
+  "// sprintWeeks": "1",
+  "// sprintStart": "monday",
+  "// taskPrefix": "T-",
+  "// taskPadding": 3,
+  "// taskStart": 1,
+  "// taskFileName": "{id}-{slug}.md",
+  "// tasksFolder": ".claude/tasks",
+  "// logFile": "docs/tasks.md",
+  "// sprintsFile": ".claude/tasks/sprints.md"
+}
