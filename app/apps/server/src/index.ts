@@ -4583,6 +4583,7 @@ async function startRealServer(): Promise<void> {
           stopActiveScreenShare()
           const state = presentTemporaryScene(body)
           broadcastPresentationState(state)
+          triggerSceneAutomation(state)
 
           return handleCors(
             req,

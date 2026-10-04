@@ -40,7 +40,8 @@ export interface SceneAutomationState {
   isEnabled: boolean
   previousSceneName: string | null
   currentAutoScene: string | null
-  lastContentType: ContentType | null
+  /** 'scene': a program scene item, which picks its own OBS scene. */
+  lastContentType: ContentType | 'scene' | null
 }
 
 export interface SceneShortcut {
