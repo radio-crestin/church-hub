@@ -2,8 +2,8 @@
 id: T-001
 title: Request a feature — element-picker screenshot tool → GitHub issue + WhatsApp
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: feature-request
 rolled: 0
 order: 0
@@ -20,3 +20,4 @@ Rename "Feedback" to "Request a feature". It opens like a screenshot tool: the u
 - 2026-10-04: 2026-10-04: Infra option B is committed in bringes-infrastructure branch feat/waha-api-public-access (e351ab5 whatsapp_waha 0.7.0 extraIngresses; e3250eb waha-api.bringes.io /api/sendText on the public traefik plus a DNS record). The worktree is at the scratchpad path bringes-infra-waha. Gotcha: git-crypt blocks `worktree add`, so pass `-c filter.git-crypt.smudge=cat -c filter.git-crypt.clean=cat`, and commit with BRINGES_GITCRYPT_KEY_PATH pointing at the main repo's key. Nothing was pushed or applied. Church-hub branch feat/request-a-feature: c0d5158d..ce001d0d (7 commits).
 - 2026-10-04: User: store issue screenshots in Cloudflare R2, not on a GitHub branch, so the worker's token never gets Contents write (can't edit code). Revert fa54e125's approach: R2 bucket + worker GET route serving the image, embedded in the issue. GITHUB_TOKEN back to Issues-only.
 - 2026-10-04: 2026-10-04: Screenshots are back in R2 (d4419a28): binding FEATURE_REQUEST_SCREENSHOTS, bucket church-hub-feature-requests, served at GET /feature-requests/screenshots/:uuid.ext. GITHUB_TOKEN is Issues-only and the orphan branch is gone. Only jpeg/png/webp up to 5 MB, checked during validation. Worker tests 14/14 pass, e2e 6/6 pass.
+- 2026-10-04: Closed by the user. "Request a feature" (element picker, screenshot with drawing and notes, email) is on feat/request-a-feature: a worker creates the GitHub issue (Issues-only token), screenshots go to R2, WhatsApp goes through WAHA, limit 50 per IP per day. Worker tests 14/14, e2e 6/6. Left: push the branch and open a PR; push and apply bringes-infrastructure feat/waha-api-public-access; deploy the worker with its secrets.

@@ -2,8 +2,8 @@
 id: T-051
 title: better-tasks writes valid YAML front matter for every task
 sprint: 2026-09-28
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: better-tasks-yaml
 rolled: 0
 order: -1
@@ -14,3 +14,4 @@ User: "update also /Users/iosif/Documents/Projects/better-tasks to make sure to 
 
 ## Notes
 - 2026-10-04: fixed in better-tasks 03918bf (hooks/yaml.ts: quote + escape values YAML would misread; reader unquotes; titles/owners one line) and 902ce44 (bun scripts/yaml-check.ts: Psych + Bun.YAML check). 174/174 plugin tests pass, tsc clean; 51/51 church-hub task files parse as is and rewritten, 0 would change. Not pushed; installed plugin is a GitHub marketplace copy, so it needs push + plugin update + new session.
+- 2026-10-04: Closed by the user. better-tasks now quotes and escapes front-matter values YAML would misread, and reads them back the same way. 174/174 plugin tests pass; all 51 church-hub task files parse. Not pushed yet: the installed plugin needs a push, a plugin update and a new session.
