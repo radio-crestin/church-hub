@@ -88,7 +88,10 @@ export const openApiSpec = {
     },
     { name: 'Presentation', description: 'Presentation state control' },
     { name: 'Conversion', description: 'File format conversion utilities' },
-    { name: 'Feedback', description: 'User feedback submission' },
+    {
+      name: 'Feedback',
+      description: 'Feature requests and user feedback submission',
+    },
     { name: 'Logs', description: 'Application logs access' },
   ],
   paths: {

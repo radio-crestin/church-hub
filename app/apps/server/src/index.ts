@@ -37,6 +37,7 @@ import {
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
+import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
@@ -8286,6 +8287,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (backgroundMediaResponse) return backgroundMediaResponse
+
+      // "Request a feature" (relayed to the Cloudflare worker)
+      const featureRequestResponse = await handleFeatureRequestRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (featureRequestResponse) return featureRequestResponse
 
       // Serve client app (static files in production, proxy to Vite in development)
       if (canServeStaticFiles && clientDistPath) {
