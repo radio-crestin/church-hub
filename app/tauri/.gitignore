@@ -18,3 +18,6 @@ tauri.worktree.conf.json
 
 # Worktree-only: points Cargo at the main checkout's target dir (scripts/worktree-setup.ts)
 /.cargo/config.toml
+
+# Copied per OS from the @julusian/midi prebuilds by apps/server/scripts/compile.ts
+/resources/midi-native/*.node
