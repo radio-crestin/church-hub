@@ -186,6 +186,14 @@ export const schedulesPaths = {
                 slideType: { $ref: '#/components/schemas/SlideTemplate' },
                 slideContent: { type: 'string' },
                 afterItemId: { type: 'integer' },
+                biblePassage: {
+                  $ref: '#/components/schemas/BiblePassageInput',
+                },
+                verseteTineriEntries: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/BibleReadingInput' },
+                  description: 'Readings of a "Versete Biblice" slide',
+                },
               },
             },
           },
@@ -239,10 +247,18 @@ export const schedulesPaths = {
           'application/json': {
             schema: {
               type: 'object',
-              required: ['slideType', 'slideContent'],
               properties: {
                 slideType: { $ref: '#/components/schemas/SlideTemplate' },
                 slideContent: { type: 'string' },
+                verseteTineriEntries: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/BibleReadingInput' },
+                  description:
+                    'Replaces the readings of a "Versete Biblice" slide',
+                },
+                biblePassage: {
+                  $ref: '#/components/schemas/BiblePassageInput',
+                },
               },
             },
           },

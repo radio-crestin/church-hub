@@ -1,6 +1,8 @@
 import { eq } from 'drizzle-orm'
 
 import { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
+import { formatEntryReference } from './formatEntryReference'
+import { getEntryVerses } from './getEntryVerses'
 import { getScheduleById } from './getSchedules'
 import {
   type LegacyBiblePassage,
@@ -8,6 +10,7 @@ import {
 } from './resolveLegacyBiblePassage'
 import { updateScheduleSearchIndex } from './search'
 import type {
+  BiblePassageInput,
   OperationResult,
   SlideTemplate,
   VerseteTineriEntryInput,
@@ -62,16 +65,7 @@ export interface ReplaceItemInput {
   slideType?: SlideTemplate
   slideContent?: string
   // Bible passage fields
-  biblePassage?: {
-    translationId: number
-    translationAbbreviation: string
-    bookCode: string
-    bookName: string
-    startChapter: number
-    startVerse: number
-    endChapter: number
-    endVerse: number
-  }
+  biblePassage?: BiblePassageInput
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]
   /**
@@ -214,13 +208,7 @@ export function replaceScheduleItems(
         for (let j = 0; j < entries.length; j++) {
           const entry = entries[j]
 
-          const entryRef = formatPassageReference(
-            entry.bookName,
-            entry.startChapter,
-            entry.startVerse,
-            entry.endChapter,
-            entry.endVerse,
-          )
+          const entryRef = formatEntryReference(entry)
 
           // Validate that start and end verses exist
           const startVerseExists = getVerse(
@@ -256,23 +244,7 @@ export function replaceScheduleItems(
           }
 
           // Fetch verses for this entry
-          const verses =
-            entry.startChapter === entry.endChapter
-              ? getVerseRange(
-                  entry.translationId,
-                  entry.bookCode,
-                  entry.startChapter,
-                  entry.startVerse,
-                  entry.endVerse,
-                )
-              : getVersesAcrossChapters(
-                  entry.translationId,
-                  entry.bookCode,
-                  entry.startChapter,
-                  entry.startVerse,
-                  entry.endChapter,
-                  entry.endVerse,
-                )
+          const verses = getEntryVerses(entry)
 
           if (verses.length === 0) {
             log('warning', `No verses found for entry ${j}: ${entryRef}`)

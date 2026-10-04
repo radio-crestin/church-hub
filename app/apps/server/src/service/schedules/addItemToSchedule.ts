@@ -1,6 +1,8 @@
 import { and, eq, gte, max, sql } from 'drizzle-orm'
 
 import { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
+import { formatEntryReference } from './formatEntryReference'
+import { getEntryVerses } from './getEntryVerses'
 import { getScheduleItemById } from './getSchedules'
 import { updateScheduleSearchIndex } from './search'
 import type { AddToScheduleInput, ScheduleItem } from './types'
@@ -172,23 +174,7 @@ export function addItemToSchedule(
         const entry = entries[i]
 
         // Fetch verses for this entry
-        const verses =
-          entry.startChapter === entry.endChapter
-            ? getVerseRange(
-                entry.translationId,
-                entry.bookCode,
-                entry.startChapter,
-                entry.startVerse,
-                entry.endVerse,
-              )
-            : getVersesAcrossChapters(
-                entry.translationId,
-                entry.bookCode,
-                entry.startChapter,
-                entry.startVerse,
-                entry.endChapter,
-                entry.endVerse,
-              )
+        const verses = getEntryVerses(entry)
 
         if (verses.length === 0) {
           log(
@@ -202,13 +188,7 @@ export function addItemToSchedule(
         const combinedText = verses.map((v) => v.text).join(' ')
 
         // Format reference
-        const reference = formatPassageReference(
-          entry.bookName,
-          entry.startChapter,
-          entry.startVerse,
-          entry.endChapter,
-          entry.endVerse,
-        )
+        const reference = formatEntryReference(entry)
 
         entryValues.push({
           scheduleItemId: itemId,

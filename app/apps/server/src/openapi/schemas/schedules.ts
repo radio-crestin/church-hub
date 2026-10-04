@@ -114,6 +114,57 @@ export const scheduleSchemas = {
       slideContent: { type: 'string' },
     },
   },
+  VerseSegment: {
+    type: 'object',
+    required: ['startVerse', 'endVerse'],
+    description: 'A run of verses inside one chapter, both ends included',
+    properties: {
+      startVerse: { type: 'integer' },
+      endVerse: { type: 'integer' },
+    },
+  },
+  BibleReadingInput: {
+    type: 'object',
+    required: [
+      'translationId',
+      'bookCode',
+      'bookName',
+      'startChapter',
+      'startVerse',
+      'endChapter',
+      'endVerse',
+    ],
+    description:
+      'One reading of a "Versete Biblice" slide. For a comma verse list with a gap ("Ioan 3:16-18,20") send verseSegments; startVerse/endVerse are then the outer bounds.',
+    properties: {
+      personName: { type: 'string', description: 'Who reads it (optional)' },
+      translationId: { type: 'integer' },
+      bookCode: { type: 'string', example: 'JHN' },
+      bookName: { type: 'string', example: 'Ioan' },
+      startChapter: { type: 'integer', example: 3 },
+      startVerse: { type: 'integer', example: 16 },
+      endChapter: { type: 'integer', example: 3 },
+      endVerse: { type: 'integer', example: 20 },
+      verseSegments: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/VerseSegment' },
+        description:
+          'Only inside startChapter. Example for 3:16-18,20: [{startVerse:16,endVerse:18},{startVerse:20,endVerse:20}]',
+      },
+    },
+  },
+  BiblePassageInput: {
+    allOf: [
+      { $ref: '#/components/schemas/BibleReadingInput' },
+      {
+        type: 'object',
+        required: ['translationAbbreviation'],
+        properties: { translationAbbreviation: { type: 'string' } },
+      },
+    ],
+    description:
+      'A passage picked from the Bible; stored as one "Versete Biblice" slide with no person',
+  },
   ReorderScheduleItemsInput: {
     type: 'object',
     required: ['itemIds'],
