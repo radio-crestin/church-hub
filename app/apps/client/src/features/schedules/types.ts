@@ -1,3 +1,4 @@
+import type { VerseSegment } from '../bible/utils/parseVerseList'
 import type { SongSlide } from '../songs/types'
 
 /**
@@ -120,6 +121,8 @@ export interface VerseteTineriEntryInput {
   startVerse: number
   endChapter: number
   endVerse: number
+  /** Runs of a comma verse list with a gap ("Ioan 3:16-18,20"). */
+  verseSegments?: VerseSegment[]
 }
 
 /**
@@ -140,6 +143,7 @@ export interface AddToScheduleInput {
     startVerse: number
     endChapter: number
     endVerse: number
+    verseSegments?: VerseSegment[]
   }
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]

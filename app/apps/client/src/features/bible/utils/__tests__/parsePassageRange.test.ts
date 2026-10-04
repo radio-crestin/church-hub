@@ -368,4 +368,78 @@ describe('parsePassageRange', () => {
       expect(result.endChapter).toBe(2)
     })
   })
+
+  // ---- Comma verse lists ----
+  describe('comma verse lists', () => {
+    it('reads "Ioan 3:16,17" as the plain range 3:16-17', () => {
+      const result = parse('Ioan 3:16,17')
+      expect(result.status).toBe('valid')
+      expect(result.startChapter).toBe(3)
+      expect(result.startVerse).toBe(16)
+      expect(result.endChapter).toBe(3)
+      expect(result.endVerse).toBe(17)
+      expect(result.verseSegments).toBeUndefined()
+      expect(result.formattedReference).toBe('Ioan 3:16-17')
+    })
+
+    it('keeps the runs of a list with a gap, "Ioan 3:16-18,20"', () => {
+      const result = parse('Ioan 3:16-18,20')
+      expect(result.status).toBe('valid')
+      expect(result.startVerse).toBe(16)
+      expect(result.endVerse).toBe(20)
+      expect(result.verseSegments).toEqual([
+        { startVerse: 16, endVerse: 18 },
+        { startVerse: 20, endVerse: 20 },
+      ])
+      expect(result.formattedReference).toBe('Ioan 3:16-18,20')
+    })
+
+    it('allows spaces after the commas', () => {
+      const result = parse('Ioan 3:16, 18, 20')
+      expect(result.status).toBe('valid')
+      expect(result.formattedReference).toBe('Ioan 3:16,18,20')
+    })
+
+    it('sorts and merges the runs', () => {
+      const result = parse('Ioan 3:20,16-17,18')
+      expect(result.verseSegments).toEqual([
+        { startVerse: 16, endVerse: 18 },
+        { startVerse: 20, endVerse: 20 },
+      ])
+    })
+
+    it('reads a list after a comma chapter separator, "Ioan 3,16,17"', () => {
+      const result = parse('Ioan 3,16,17')
+      expect(result.status).toBe('valid')
+      expect(result.formattedReference).toBe('Ioan 3:16-17')
+    })
+
+    it('treats "Gen 1:1-2,5" as a list, not as 1:1 to 2:5', () => {
+      const result = parse('Geneza 1:1-2,5')
+      expect(result.status).toBe('valid')
+      expect(result.endChapter).toBe(1)
+      expect(result.formattedReference).toBe('Geneza 1:1-2,5')
+    })
+
+    it('still reads "Gen 1,1-2,5" as crossing chapters', () => {
+      const result = parse('Geneza 1,1-2,5')
+      expect(result.status).toBe('valid')
+      expect(result.endChapter).toBe(2)
+      expect(result.endVerse).toBe(5)
+    })
+
+    it('rejects a run that goes backwards inside a list', () => {
+      expect(parse('Ioan 3:18-16,20').status).toBe('end_before_start')
+    })
+
+    it('rejects a list verse past the end of the chapter', () => {
+      expect(parse('Geneza 1:1,99', chaptersGen).status).toBe('invalid_verse')
+    })
+
+    it('rejects broken lists', () => {
+      expect(parse('Ioan 3:16,').status).toBe('invalid_format')
+      expect(parse('Ioan 3:16,,17').status).toBe('invalid_format')
+      expect(parse('Ioan 3:16-17-18').status).toBe('invalid_format')
+    })
+  })
 })

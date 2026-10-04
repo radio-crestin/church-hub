@@ -1,5 +1,7 @@
 import { eq } from 'drizzle-orm'
 
+import { formatEntryReference } from './formatEntryReference'
+import { getEntryVerses } from './getEntryVerses'
 import { getScheduleItemById } from './getSchedules'
 import type { ScheduleItem, UpdateScheduleSlideInput } from './types'
 import { getDatabase } from '../../db'
@@ -183,23 +185,7 @@ export function updateScheduleSlide(
         const entry = entries[i]
 
         // Fetch verses for this entry
-        const verses =
-          entry.startChapter === entry.endChapter
-            ? getVerseRange(
-                entry.translationId,
-                entry.bookCode,
-                entry.startChapter,
-                entry.startVerse,
-                entry.endVerse,
-              )
-            : getVersesAcrossChapters(
-                entry.translationId,
-                entry.bookCode,
-                entry.startChapter,
-                entry.startVerse,
-                entry.endChapter,
-                entry.endVerse,
-              )
+        const verses = getEntryVerses(entry)
 
         if (verses.length === 0) {
           log(
@@ -213,13 +199,7 @@ export function updateScheduleSlide(
         const combinedText = verses.map((v) => v.text).join(' ')
 
         // Format reference
-        const reference = formatPassageReference(
-          entry.bookName,
-          entry.startChapter,
-          entry.startVerse,
-          entry.endChapter,
-          entry.endVerse,
-        )
+        const reference = formatEntryReference(entry)
 
         db.insert(scheduleVerseteTineriEntries)
           .values({

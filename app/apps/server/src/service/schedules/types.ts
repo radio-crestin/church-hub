@@ -142,6 +142,12 @@ export interface UpsertScheduleInput {
   description?: string | null
 }
 
+/** A run of verses inside one chapter, both ends included. */
+export interface VerseSegment {
+  startVerse: number
+  endVerse: number
+}
+
 /**
  * Single entry for Versete Tineri input
  */
@@ -158,6 +164,11 @@ export interface VerseteTineriEntryInput {
   startVerse: number
   endChapter: number
   endVerse: number
+  /**
+   * A comma verse list with a gap ("Ioan 3:16-18,20"): the runs to read inside
+   * startChapter, sorted. startVerse/endVerse hold the outer bounds.
+   */
+  verseSegments?: VerseSegment[]
 }
 
 /**
@@ -179,6 +190,7 @@ export interface AddToScheduleInput {
     startVerse: number
     endChapter: number
     endVerse: number
+    verseSegments?: VerseSegment[]
   }
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]
@@ -198,6 +210,7 @@ export interface BiblePassageInput {
   startVerse: number
   endChapter: number
   endVerse: number
+  verseSegments?: VerseSegment[]
 }
 
 /**

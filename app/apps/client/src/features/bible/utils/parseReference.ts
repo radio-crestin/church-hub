@@ -21,9 +21,10 @@ export function parseReference(
   }
 
   // Try to match patterns like "ioan 3 16", "ioan 3:16", "ioan 3", "ioan"
-  // Also supports "1 ioan", "2 petru", etc.
+  // Also supports "1 ioan", "2 petru", etc. A range or comma verse list
+  // ("ioan 3:16-18", "ioan 3:16,17", "ioan 3:16-18,20") goes to its first verse.
   const referencePattern =
-    /^(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+)\s*(\d+)?(?:[\s:,](\d+))?$/i
+    /^(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+)\s*(\d+)?(?:[\s:,](\d+)(?:\s*[-–—,]\s*\d+)*)?$/i
   const match = trimmed.match(referencePattern)
 
   if (!match) {

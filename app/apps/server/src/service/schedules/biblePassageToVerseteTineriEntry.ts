@@ -23,5 +23,6 @@ export function biblePassageToVerseteTineriEntry(
     startVerse: passage.startVerse,
     endChapter: passage.endChapter,
     endVerse: passage.endVerse,
+    verseSegments: passage.verseSegments,
   }
 }

@@ -159,6 +159,27 @@ describe('parseReference', () => {
       expect(result.verse).toBe(16)
     })
 
+    it('parses "Geneza 1,1" (comma separator)', () => {
+      const result = ref('Geneza 1,1')
+      expect(result.type).toBe('verse')
+      expect(result.chapter).toBe(1)
+      expect(result.verse).toBe(1)
+    })
+
+    it.each([
+      'Ioan 3:16,17',
+      'Ioan 3:16-18,20',
+      'Ioan 3:16, 18',
+      'Ioan 3:16-18',
+      'Ioan 3,16,17',
+    ])('goes to the first verse of "%s"', (query) => {
+      const result = ref(query)
+      expect(result.type).toBe('verse')
+      expect(result.bookName).toBe('Ioan')
+      expect(result.chapter).toBe(3)
+      expect(result.verse).toBe(16)
+    })
+
     it('returns "none" when chapter exceeds limit even with verse', () => {
       expect(ref('Ioan 99 1').type).toBe('none')
     })
