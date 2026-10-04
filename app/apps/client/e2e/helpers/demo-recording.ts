@@ -5,8 +5,9 @@ import { speakCaption, startVoiceClock } from './demo-voice'
 /**
  * Helpers for the short demo video every task attaches to its PR: a visible
  * cursor (Playwright videos never show the OS pointer) and on-screen notes.
- * Spread DEMO_RECORDING into test.use(), call installDemoOverlay in
- * beforeEach, then narrate each step with showCaption and click with
+ * Spread DEMO_RECORDING into test.use(), call installDemoOverlay(page,
+ * 'before' | 'after') in beforeEach (a BEFORE / AFTER badge stays in the
+ * top-left corner, so captions never say it), then narrate each step with showCaption and click with
  * glideClick (each caption is also read aloud when recorded by
  * record-features.sh, see demo-voice.ts). Point at the bug or the new feature with highlight (red box,
  * arrow, label) and remove it with clearHighlights.
@@ -20,21 +21,32 @@ export const DEMO_RECORDING = {
   video: { mode: 'on', size: DEMO_VIEWPORT },
 } as const
 
-/** Draws the cursor dot, a ripple on every click and an empty caption bar on each page load. */
-export async function installDemoOverlay(page: Page): Promise<void> {
+/** Which video this is; shown as a badge in the top-left corner for the whole video. */
+export type DemoPhase = 'before' | 'after'
+
+/**
+ * Draws the cursor dot, a ripple on every click, an empty caption bar and,
+ * with a phase, the BEFORE / AFTER badge, on each page load.
+ */
+export async function installDemoOverlay(
+  page: Page,
+  phase?: DemoPhase,
+): Promise<void> {
   startVoiceClock(page)
-  await page.addInitScript(drawDemoOverlay)
+  await page.addInitScript(drawDemoOverlay, phase ?? null)
 }
 
 /**
  * Shows a note at the bottom of the frame and holds it long enough to read,
  * and, when recording with voice, until the voice has finished reading it.
+ * A leading "Before:" / "After:" is dropped: the badge already says it.
  */
 export async function showCaption(
   page: Page,
-  text: string,
+  caption: string,
   holdMs = 1500,
 ): Promise<void> {
+  const text = caption.replace(/^\s*(before|after)\s*:\s*/i, '')
   await page.evaluate((captionText) => {
     const caption = document.getElementById('__demo_caption')
     if (!caption) return
@@ -153,7 +165,8 @@ function drawHighlight({ box, label }: { box: Box; label: string }) {
   // frame, and never inside the caption's band.
   const toRight = (rect.left + rect.right) / 2 < width / 2
   const below = (rect.top + rect.bottom) / 2 < height / 2
-  const minTop = captionOnTop ? CAPTION_ZONE : 16
+  // 96 keeps the label below the BEFORE / AFTER badge.
+  const minTop = captionOnTop ? CAPTION_ZONE : 96
   const maxTop = height - tagHeight - (captionOnTop ? 16 : CAPTION_ZONE)
   const left = Math.min(
     Math.max(toRight ? rect.right + 60 : rect.left - 60 - tagWidth, 16),
@@ -184,7 +197,7 @@ function drawHighlight({ box, label }: { box: Box; label: string }) {
   svg.appendChild(arrow)
 }
 
-function drawDemoOverlay() {
+function drawDemoOverlay(phase: 'before' | 'after' | null) {
   function inject() {
     if (document.getElementById('__demo_cursor')) return
     const style = document.createElement('style')
@@ -213,6 +226,15 @@ function drawDemoOverlay() {
         pointer-events: none; z-index: 2147483645;
         opacity: 0; transition: opacity 0.25s ease;
       }
+      #__demo_badge {
+        position: fixed; top: 16px; left: 16px; padding: 10px 22px;
+        border-radius: 10px; color: white; letter-spacing: 0.08em;
+        font: 800 30px/1 system-ui, sans-serif;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+        pointer-events: none; z-index: 2147483646;
+      }
+      #__demo_badge.before { background: rgb(220, 38, 38); }
+      #__demo_badge.after { background: rgb(22, 163, 74); }
     `
     document.head.appendChild(style)
 
@@ -221,6 +243,13 @@ function drawDemoOverlay() {
     const caption = document.createElement('div')
     caption.id = '__demo_caption'
     document.body.append(cursor, caption)
+    if (phase) {
+      const badge = document.createElement('div')
+      badge.id = '__demo_badge'
+      badge.className = phase
+      badge.textContent = phase.toUpperCase()
+      document.body.appendChild(badge)
+    }
 
     document.addEventListener(
       'mousemove',

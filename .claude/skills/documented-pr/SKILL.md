@@ -15,13 +15,13 @@ Every recording produced by this skill MUST use these settings; do not pare them
 All eight come from the shared helpers `app/apps/client/e2e/helpers/demo-recording.ts` and `demo-voice.ts`; never inline a copy.
 
 1. **1920×1080 viewport AND explicit `video.size`** — `test.use(DEMO_RECORDING)`. Playwright otherwise downscales to 800×600.
-2. **Cursor + caption overlay** — `installDemoOverlay(page)` in `beforeEach`. Playwright videos exclude the OS pointer.
+2. **Cursor + caption overlay + BEFORE / AFTER badge** — `installDemoOverlay(page, 'before' | 'after')` in `beforeEach`. Playwright videos exclude the OS pointer. The badge stays in the top-left corner for the whole video, so captions never say "Before:" / "After:" (`showCaption` drops such a prefix, from screen and voice). Leave the phase out for a feature-only demo with no before.
 3. **A note per step** — `showCaption(page, '1. Open Songs')` before each gesture, so the viewer knows what they are watching.
 4. **`glideClick(page, locator)` for every click** — the cursor visibly travels to the target; a bare `locator.click()` teleports.
 5. **Seed cursor position at test start** — `await page.mouse.move(960, 540, { steps: 15 })` after the first `goto`.
 6. **Highlight the bug or the new feature** — `highlight(page, locator, 'Bug: …')` draws a red box around it, plus a red arrow from the label; `clearHighlights(page)` removes it before the next step. Before videos box the bug, After videos box the fix or the new feature. When the element sits in the caption's band, the caption moves to the top.
 7. **A voice reads every caption** — `record-features.sh` sets `DEMO_VOICE=1`; `showCaption` then has macOS `say` read the text and holds the caption until the voice ends, and the script mixes the clips into the mp4 at the caption's time. The GIF stays silent. Write captions to be heard: full words, no symbols. Another voice: `DEMO_VOICE_NAME=Ioana` (Romanian). Without `say` or ffmpeg the script stops with an error.
-8. **Embed via `[![alt](gif)](mp4)` markdown** — `<video>` tags are stripped by GitHub's sanitizer (see next section). `record-features.sh` makes both with ffmpeg, a hard dependency. The mp4 link must open a player, not a download: use the jsDelivr URL `upload-demos.sh` prints (see next section).
+8. **Embed via `[![alt](gif)](mp4)` markdown, one video below the other, full width** — a bold **Before** / **After** line, then its GIF on its own line; never side by side or in a table (that halves each video). `<video>` tags are stripped by GitHub's sanitizer (see next section). `record-features.sh` makes both with ffmpeg, a hard dependency. The mp4 link must open a player, not a download: use the jsDelivr URL `upload-demos.sh` prints (see next section).
 
 ## Why GIF, not `<video>` — GitHub's sanitizer (verified)
 
@@ -107,7 +107,7 @@ import {
 test.use(DEMO_RECORDING)
 
 test.beforeEach(async ({ page }) => {
-  await installDemoOverlay(page)
+  await installDemoOverlay(page, 'after') // or 'before'
 })
 
 // One test() per non-chore commit. Title format: "<sha-short> <feature-slug>".
