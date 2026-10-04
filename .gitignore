@@ -125,3 +125,6 @@ test-results/
 
 # macOS Finder metadata
 .DS_Store
+
+# Security task notes stay local, never in the public repo
+.claude/tasks-private/
