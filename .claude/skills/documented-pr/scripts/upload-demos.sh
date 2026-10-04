@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upload every video in /tmp/pr-demos/ to a GitHub prerelease.
+# Upload every mp4 and GIF in $DEMO_OUT (default /tmp/pr-demos) to a GitHub prerelease.
 # Prints a slug→url table the caller substitutes into the PR body.
 #
 # Usage: upload-demos.sh <release-tag>
@@ -9,12 +9,14 @@ set -euo pipefail
 
 tag="${1:-}"
 [ -z "$tag" ] && { echo "usage: $0 <release-tag>" >&2; exit 1; }
+# A branch like feat/x would put a slash in the asset download URL.
+tag="${tag//\//-}"
 
-src="/tmp/pr-demos"
+src="${DEMO_OUT:-/tmp/pr-demos}"
 shopt -s nullglob
-assets=("$src"/*.gif "$src"/*.webm "$src"/*.mp4)
+assets=("$src"/*.gif "$src"/*.mp4)
 if [ "${#assets[@]}" = "0" ]; then
-  echo "no demo files (.gif/.webm/.mp4) in $src — nothing to upload" >&2
+  echo "no demo files (.gif/.mp4) in $src — nothing to upload" >&2
   exit 0
 fi
 
