@@ -12,11 +12,6 @@ interface ApiResponse<T> {
   error?: string
 }
 
-export async function getAllSongs(): Promise<Song[]> {
-  const response = await fetcher<ApiResponse<Song[]>>('/api/songs')
-  return response.data ?? []
-}
-
 export interface PaginatedSongsResult {
   songs: Song[]
   total: number
@@ -36,6 +31,7 @@ export interface SongFilters {
   presentedOnly?: boolean
   inSchedulesOnly?: boolean
   hasKeyLine?: boolean
+  uncategorizedOnly?: boolean
   sortBy?: SongSortBy
 }
 
@@ -62,6 +58,9 @@ export async function getSongsPaginated(
   }
   if (filters?.hasKeyLine) {
     params.set('hasKeyLine', 'true')
+  }
+  if (filters?.uncategorizedOnly) {
+    params.set('uncategorizedOnly', 'true')
   }
   if (filters?.sortBy) {
     params.set('sortBy', filters.sortBy)

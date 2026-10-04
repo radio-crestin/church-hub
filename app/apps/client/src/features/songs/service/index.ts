@@ -49,7 +49,6 @@ export {
 export {
   aiSearchSongs,
   deleteSong,
-  getAllSongs,
   getSongById,
   getSongsPaginated,
   type PaginatedSongsResult,

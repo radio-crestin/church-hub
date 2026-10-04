@@ -15,7 +15,9 @@ async function deleteMatchingSongs(
   request: import('@playwright/test').APIRequestContext,
   titleSubstring: string,
 ) {
-  const resp = await request.get('/api/songs')
+  const resp = await request.get(
+    `/api/songs/search?q=${encodeURIComponent(titleSubstring)}`,
+  )
   const json = await resp.json()
   for (const song of json.data ?? []) {
     if (
