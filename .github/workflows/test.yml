@@ -6,6 +6,12 @@ name: Test
 # Tests run on PRs ONLY when a maintainer comments "/test" — keeps CI minutes
 # out of every push during a long-running feature branch and prevents fork PRs
 # from exercising the runners without review.
+#
+# A "/test" run executes the PR's code (maybe a fork's) in this repository's
+# context, so the jobs that run it hold a read-only token, keep no git
+# credentials and never save a cache: main and the signed release builds
+# restore those caches. Only the gate (reaction) and report-status (commit
+# statuses) write, and neither runs PR code.
 on:
   push:
     branches: [main]
@@ -17,14 +23,6 @@ on:
 
 permissions:
   contents: read
-  # The /test gate reacts to the triggering PR comment. Reacting to a
-  # comment that belongs to a PR is authorized via the pull-requests
-  # permission — issues: write alone 403s with "Resource not accessible
-  # by integration" — so both need write.
-  pull-requests: write
-  issues: write
-  statuses: write
-  checks: write
 
 env:
   NODE_VERSION: 22
@@ -41,12 +39,24 @@ jobs:
   # Gate job: validates a comment-triggered run and resolves the PR head SHA.
   # All other jobs depend on this. For push / workflow_dispatch, it short-
   # circuits with the current SHA.
+  #
+  # Two checks on a comment: its author_association skips the run outright
+  # for anyone outside the repo (no runner starts), then the API check asks
+  # for write access, since a read-only collaborator is a COLLABORATOR too.
   gate:
     runs-on: ubuntu-latest
     if: >-
       github.event_name != 'issue_comment' ||
       (github.event.issue.pull_request != null &&
-       startsWith(github.event.comment.body, '/test'))
+       startsWith(github.event.comment.body, '/test') &&
+       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
+    # Reacting to a comment that belongs to a PR is authorized via the
+    # pull-requests permission — issues: write alone 403s with "Resource
+    # not accessible by integration" — so both need write.
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     outputs:
       sha: ${{ steps.resolve.outputs.sha }}
       pr_number: ${{ steps.resolve.outputs.pr_number }}
@@ -109,6 +119,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.gate.outputs.sha }}
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -120,8 +131,8 @@ jobs:
         with:
           bun-version-file: app/package.json
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Restore Bun dependencies
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -132,6 +143,13 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
+
+      - name: Save Bun dependencies
+        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ steps.bun-cache.outputs.cache-primary-key }}
 
       - name: Run client unit tests
         working-directory: app
@@ -145,6 +163,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.gate.outputs.sha }}
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -156,8 +175,8 @@ jobs:
         with:
           bun-version-file: app/package.json
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Restore Bun dependencies
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -168,6 +187,13 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
+
+      - name: Save Bun dependencies
+        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ steps.bun-cache.outputs.cache-primary-key }}
 
       - name: Run server integration tests
         working-directory: app
@@ -181,6 +207,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.gate.outputs.sha }}
+          persist-credentials: false
 
       - name: Install system dependencies
         run: |
@@ -199,8 +226,8 @@ jobs:
         with:
           bun-version-file: app/package.json
 
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Restore Bun dependencies
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: bun-cache
         with:
           path: ~/.bun/install/cache
@@ -211,8 +238,8 @@ jobs:
       # WebKit runs the preview/projection specs (the macOS desktop app's
       # engine). The browser set is part of the key: a cache saved with
       # Chromium alone would otherwise be an exact hit and skip installing it.
-      - name: Cache Playwright browsers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Restore Playwright browsers
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -224,10 +251,24 @@ jobs:
         working-directory: app
         run: bun install --frozen-lockfile
 
+      - name: Save Bun dependencies
+        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ steps.bun-cache.outputs.cache-primary-key }}
+
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: app/apps/client
         run: npx playwright install --with-deps chromium webkit
+
+      - name: Save Playwright browsers
+        if: github.event_name != 'issue_comment' && steps.playwright-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
 
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
@@ -277,6 +318,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.gate.outputs.sha }}
+          persist-credentials: false
 
       - name: Install Linux audio + MIDI deps
         if: matrix.os == 'ubuntu-latest'
@@ -295,9 +337,10 @@ jobs:
           bun-version-file: app/package.json
 
       # Not on Windows: unpacking the cache there is slower than downloading.
-      - name: Cache Bun dependencies
+      - name: Restore Bun dependencies
         if: runner.os != 'Windows'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: bun-cache
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
@@ -307,6 +350,13 @@ jobs:
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
+
+      - name: Save Bun dependencies
+        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ steps.bun-cache.outputs.cache-primary-key }}
 
       - name: Run compiled-sidecar smoke test
         working-directory: app/apps/server
@@ -334,8 +384,12 @@ jobs:
   # so without this step the runs are only visible in the Actions tab.
   report-status:
     needs: [gate, unit-tests, server-tests, e2e-tests, release-build-smoke]
-    if: always() && github.event_name == 'issue_comment'
+    # Only after a gate that let the run through: every other comment on an
+    # issue or PR skips the gate, and used to start this job anyway.
+    if: always() && github.event_name == 'issue_comment' && needs.gate.result == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
     steps:
       - name: Post commit statuses to PR head
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
