@@ -224,12 +224,16 @@ export function BibleNavigationPanel({
     searchInputRef.current?.focus()
   }, [])
 
-  // Focus search input when focusTrigger changes (from keyboard shortcut)
+  // Focus search input when focusTrigger changes (from keyboard shortcut).
+  // Select its text too: when the box already has the focus (right after a
+  // search + Enter), focus() changes nothing, onFocus never runs, and the next
+  // reference typed would be glued to the previous one.
   useEffect(() => {
     if (focusTrigger && focusTrigger > 0) {
       // Small delay to ensure window is fully focused and state updates have settled
       const timeoutId = setTimeout(() => {
         searchInputRef.current?.focus()
+        searchInputRef.current?.select()
       }, 50)
       return () => clearTimeout(timeoutId)
     }
