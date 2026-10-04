@@ -4,10 +4,10 @@ import { expect, type Page, test } from '@playwright/test'
  * Regression guard for the song editor header row.
  *
  * The header puts the back arrow + the song title on the left and the actions
- * (Adaugă în program / Prezintă acum / delete / Salvează) on the right. The
- * page also renders two asides — the slide rail (288px at `lg`, 320px at `xl`)
- * and the Programe panel (288px at `xl`) — so the column the header lives in is
- * far narrower than the viewport: a 1366px laptop leaves it roughly 600px.
+ * (Adaugă în program / Prezintă acum / delete / Salvează) on the right, fixed
+ * at the top of the page. The page also renders the slide rail beside the form
+ * (288px at `lg`, 320px at `xl`), so a header that is narrower than the
+ * viewport must still keep its parts apart.
  *
  * The actions group is `shrink-0`, so when it did not fit the whole deficit
  * landed on the title group: the <h1> collapsed to 0px wide (invisible, because
@@ -94,8 +94,8 @@ async function assertHeaderStaysUsable(page: Page, expectedTitle: string) {
   // The title never runs into the actions group either.
   expect(headingBox.x + headingBox.width).toBeLessThanOrEqual(actionsBox.x + 1)
 
-  // And the actions (Salvează is the last one) stay inside the column rather
-  // than spilling under the Programe aside.
+  // And the actions (Salvează is the last one) stay inside the header rather
+  // than spilling past its right edge.
   expect(actionsBox.x + actionsBox.width).toBeLessThanOrEqual(
     headerBox.x + headerBox.width + 1,
   )
