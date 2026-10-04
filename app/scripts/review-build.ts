@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 /**
  * Builds the desktop app of this checkout for review on this computer and
- * keeps it in `.review-build/` next to the checkout, ready to open.
+ * keeps it in `.review-build/<task id>/` in the checkout, ready to open.
  *
  * It never meets the user's real Church Hub:
  *   - its own port, 4100 + task number (not 3000, not the e2e port 3100 + n:
  *     the app kills whatever holds its port at start),
- *   - its own data folder, `.review-build/data` (database, logs, backups),
+ *   - its own data folder, `.review-build/<task id>/data` (database, logs, backups),
  *   - its own bundle identifier, so a running Church Hub (single instance)
  *     and its window state, settings and web storage stay apart,
  *   - no updater: an update would replace it with the real release.
@@ -60,7 +60,7 @@ function parseArgs() {
   const out =
     outFlag > 0
       ? resolve(process.argv[outFlag + 1])
-      : join(root, '.review-build')
+      : join(root, '.review-build', taskId.toUpperCase())
   return {
     taskId: taskId.toUpperCase(),
     e2ePort,
@@ -147,7 +147,9 @@ function writeConfig(app: string, taskId: string, out: string) {
     },
     bundle: { createUpdaterArtifacts: false },
     plugins: {
-      updater: { endpoints: ['http://127.0.0.1:9/review-builds-never-update'] },
+      updater: {
+        endpoints: ['https://127.0.0.1:9/review-builds-never-update'],
+      },
     },
   }
   const file = join(out, 'tauri.review.conf.json')
@@ -201,6 +203,18 @@ function restoreE2eClient(app: string, e2ePort: number) {
   return `dist/ talks to port ${e2ePort} again`
 }
 
+function changedFiles(root: string) {
+  const names = run('git', ['diff', '--name-only'], root)
+  return new Set(names.split('\n').filter(Boolean))
+}
+
+/** Undo what the build regenerated (e.g. the embedded migrations), so it leaves no diff. */
+function restoreGenerated(root: string, before: Set<string>) {
+  const generated = [...changedFiles(root)].filter((file) => !before.has(file))
+  if (generated.length > 0) run('git', ['checkout', '--', ...generated], root)
+  return generated.join(', ') || 'nothing'
+}
+
 const platform = BUNDLES[process.platform]
 if (!platform) throw new Error(`no review build for ${process.platform}`)
 const { taskId, e2ePort, port, root, out } = parseArgs()
@@ -215,6 +229,7 @@ mkdirSync(dataDir, { recursive: true })
 const targetDir = cargoTargetDir(app)
 step('build lock', () => acquireLock(targetDir))
 const configFile = writeConfig(app, taskId, out)
+const dirtyBefore = changedFiles(root)
 step('tauri build', () =>
   buildApp(app, configFile, platform.bundle, {
     ...process.env,
@@ -229,6 +244,7 @@ step('kept', () => {
   kept = keepBuild(targetDir, platform, out, name)
   return kept
 })
+step('restored generated files', () => restoreGenerated(root, dirtyBefore))
 if (isWorktree) step('e2e client', () => restoreE2eClient(app, e2ePort))
 
 const minutes = ((performance.now() - started) / 60000).toFixed(1)
