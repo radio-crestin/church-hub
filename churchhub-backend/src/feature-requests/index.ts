@@ -1,3 +1,4 @@
+export { consumeDailyQuota } from './consumeDailyQuota'
 export { FeatureRequestError } from './FeatureRequestError'
 export { parseFeatureRequest } from './parseFeatureRequest'
 export { submitFeatureRequest } from './submitFeatureRequest'

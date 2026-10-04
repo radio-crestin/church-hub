@@ -1,5 +1,6 @@
-import { Hono } from 'hono'
+import { type Context, Hono } from 'hono'
 import {
+  consumeDailyQuota,
   FeatureRequestError,
   parseFeatureRequest,
   submitFeatureRequest,
@@ -13,7 +14,9 @@ const featureRequests = new Hono<{ Bindings: Bindings }>()
  * Creates a public GitHub issue from an in-app "Request a feature" report
  * (screenshot committed to the repo and embedded) and notifies the
  * maintainer on WhatsApp. Called by the app's local server (no browser
- * Origin), so CORS does not apply; a per-IP rate limit caps abuse instead.
+ * Origin), so CORS does not apply. Abuse is capped per IP instead: a short
+ * burst limit (binding) and 50 requests per rolling 24 hours (KV), both
+ * checked before anything reaches GitHub or WhatsApp.
  */
 featureRequests.post('/feature-requests', async (c) => {
   const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown'
@@ -21,12 +24,17 @@ featureRequests.post('/feature-requests', async (c) => {
     await c.env.FEATURE_REQUEST_RATE_LIMITER.limit({
       key: `feature-request:${clientIp}`,
     })
-  if (!withinLimit) {
-    return c.json({ success: false, error: 'Too many requests' }, 429)
-  }
+  if (!withinLimit) return rateLimited(c)
 
   try {
     const request = parseFeatureRequest(await c.req.json().catch(() => null))
+    const withinDailyQuota = await consumeDailyQuota(
+      c.env.SIGNALING_KV,
+      clientIp,
+      c.env.COOKIE_ENCRYPTION_KEY
+    )
+    if (!withinDailyQuota) return rateLimited(c)
+
     const issue = await submitFeatureRequest(c.env, request)
     return c.json({
       success: true,
@@ -45,5 +53,13 @@ featureRequests.post('/feature-requests', async (c) => {
     )
   }
 })
+
+/** 429 with a stable code the app turns into a translated message. */
+function rateLimited(c: Context) {
+  return c.json(
+    { success: false, code: 'rate_limited', error: 'Too many requests' },
+    429
+  )
+}
 
 export default featureRequests

@@ -3,9 +3,12 @@ import app from '../src/index'
 
 /**
  * Drives POST /feature-requests through the real Hono app with GitHub and
- * WAHA replaced by a fetch stub and a rate limiter stub. Run with `bun test` from churchhub-backend/.
+ * WAHA replaced by a fetch stub, an in-memory KV and a rate limiter stub.
+ * Run with `bun test` from churchhub-backend/.
  */
 const EMAIL = 'pastor@example.com'
+const CLIENT_IP = '203.0.113.7'
+const DAY_MS = 24 * 60 * 60 * 1000
 const PNG_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
@@ -19,9 +22,26 @@ let calls: RecordedCall[]
 let realFetch: typeof fetch
 let limiterAllows: boolean
 
+function createKv() {
+  const values = new Map<string, string>()
+  return {
+    values,
+    async get(key: string, type?: 'json') {
+      const value = values.get(key)
+      if (value === undefined) return null
+      return type === 'json' ? JSON.parse(value) : value
+    },
+    async put(key: string, value: string) {
+      values.set(key, value)
+    },
+  }
+}
+
 function createEnv(overrides: Record<string, unknown> = {}) {
   return {
     GITHUB_TOKEN: 'test-github-token',
+    COOKIE_ENCRYPTION_KEY: 'test-cookie-key',
+    SIGNALING_KV: createKv(),
     WAHA_URL: 'https://waha.test/',
     WAHA_API_KEY: 'test-waha-key',
     WAHA_CHAT_ID: '40700000000@c.us',
@@ -57,7 +77,10 @@ function post(body: unknown, env = createEnv()) {
     'https://backend.test/feature-requests',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'CF-Connecting-IP': CLIENT_IP,
+      },
       body: JSON.stringify(body),
     },
     env
@@ -178,11 +201,51 @@ describe('POST /feature-requests', () => {
     expect(calls).toHaveLength(0)
   })
 
-  test('returns 429 when the rate limit is hit', async () => {
+  test('returns 429 when the burst rate limit is hit', async () => {
     limiterAllows = false
     const response = await post(validBody())
     expect(response.status).toBe(429)
+    expect((await response.json()).code).toBe('rate_limited')
     expect(calls).toHaveLength(0)
+  })
+
+  test('allows 50 requests per IP in 24 hours, then 429 before GitHub', async () => {
+    const env = createEnv()
+    for (let i = 0; i < 50; i++) {
+      const response = await post(validBody({ screenshot: undefined }), env)
+      expect(response.status).toBe(200)
+    }
+    const callsBefore = calls.length
+
+    const response = await post(validBody(), env)
+    expect(response.status).toBe(429)
+    expect((await response.json()).code).toBe('rate_limited')
+    expect(calls).toHaveLength(callsBefore)
+
+    // Only a hashed IP is stored, never the raw one.
+    const keys = [...env.SIGNALING_KV.values.keys()]
+    expect(keys).toHaveLength(1)
+    expect(keys[0]).not.toContain(CLIENT_IP)
+    expect(env.SIGNALING_KV.values.get(keys[0])).not.toContain(CLIENT_IP)
+  })
+
+  test('the 24-hour window rolls: requests older than a day stop counting', async () => {
+    const env = createEnv()
+    await post(validBody({ screenshot: undefined }), env)
+    const [key] = [...env.SIGNALING_KV.values.keys()]
+    const now = Date.now()
+    const old = Array.from({ length: 49 }, () => now - DAY_MS - 1000)
+    const recent = Array.from({ length: 49 }, () => now - 1000)
+    env.SIGNALING_KV.values.set(key, JSON.stringify([...old, ...recent]))
+
+    expect((await post(validBody({ screenshot: undefined }), env)).status).toBe(200)
+    expect((await post(validBody({ screenshot: undefined }), env)).status).toBe(429)
+  })
+
+  test('invalid requests do not use up the daily quota', async () => {
+    const env = createEnv()
+    await post(validBody({ email: 'nope' }), env)
+    expect(env.SIGNALING_KV.values.size).toBe(0)
   })
 
   test('returns 500 when GitHub fails', async () => {

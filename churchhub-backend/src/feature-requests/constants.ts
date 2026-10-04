@@ -8,3 +8,6 @@ export const GITHUB_ISSUE_LABEL = 'feature-request'
 /** Orphan branch that holds the screenshots the issues embed. */
 export const SCREENSHOT_BRANCH = 'feature-request-screenshots'
 export const DEFAULT_WAHA_SESSION = 'default'
+/** Requests one IP may send in any rolling 24 hours. */
+export const DAILY_REQUEST_LIMIT = 50
+export const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000
