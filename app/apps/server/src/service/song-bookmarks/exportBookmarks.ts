@@ -23,7 +23,7 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
  *
  *   *Category · key line*
  *
- *   ### Strofa 1                   each slide, under its label
+ *   ### Strofa 1                   each slide, under its label (or number)
  *
  *   lyrics with **bold**, *italic*, <u>underline</u>
  *
@@ -79,13 +79,14 @@ export function exportBookmarksAsMarkdown(): string {
         .orderBy(asc(songSlides.sortOrder))
         .all()
 
-      for (const slide of slides) {
-        if (slide.label?.trim()) {
-          blocks.push(`### ${escapeMarkdown(slide.label.trim())}`)
-        }
+      // Every slide gets a heading, its label or its number, which is also
+      // what tells an import that the lines under it are lyrics.
+      slides.forEach((slide, index) => {
+        const label = slide.label?.trim() || String(index + 1)
+        blocks.push(`### ${escapeMarkdown(label)}`)
         const lyrics = slideMarkdown(slide.content, slide.styleOverrides)
         if (lyrics) blocks.push(lyrics)
-      }
+      })
     }
 
     return blocks.length > 0 ? `${blocks.join('\n\n')}\n` : ''

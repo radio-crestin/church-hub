@@ -18,6 +18,9 @@ const SONG_ID = /\s*\{#song-(\d+)\}\s*$/
 const QUOTE_NOTE = /^>\s?(.*)$/
 const DASHED_NOTE = /^-{3,}\s*(.*?)\s*-{3,}$/
 const LIST_MARKER = /^(?:[-*+]|\d+[.)])\s+/
+const SLIDE_HEADING = /^###\s/
+/** The export's `*Category · key line*` line under a song heading. */
+const DETAILS = /^\*[^*\s].*\*$/
 
 /**
  * Reads the song Marcaje as Markdown, the format the export writes and the
@@ -27,44 +30,50 @@ const LIST_MARKER = /^(?:[-*+]|\d+[.)])\s+/
  *   Har minunat                      a song by its title (`- title` too)
  *   > Final                          a note (`--- note ---` too)
  *
- * A song heading followed by a blank line starts its lyrics, as in the full
- * export; they are skipped up to the next song heading or note. Other
- * headings (`# title`, `### Strofa 1`) are skipped too. Pure text handling.
+ * The full export writes each slide under a `### Strofa 1` heading, after an
+ * optional `*Category · key line*` line: from either of those on, lines are
+ * lyrics and are skipped up to the next song heading or note. A blank line
+ * changes nothing, so a title typed after one is never lost. Other headings
+ * (`# title`) are skipped. Pure text handling.
  */
 export function parseSongBookmarksText(text: string): ParsedSongBookmarkLine[] {
   const results: ParsedSongBookmarkLine[] = []
   const lines = text.split(/\r?\n/)
-  let afterHeading = false
+  /** No song or note line since the last song heading. */
+  let underHeading = false
   let inLyrics = false
 
   for (let i = 0; i < lines.length; i++) {
     const lineNumber = i + 1
     const trimmed = lines[i].trim()
-
-    if (!trimmed) {
-      if (afterHeading) inLyrics = true
-      afterHeading = false
-      continue
-    }
+    if (!trimmed) continue
 
     const heading = trimmed.match(HEADING)
     if (heading) {
       results.push(toSong(heading[1], trimmed, lineNumber))
-      afterHeading = true
+      underHeading = true
       inLyrics = false
       continue
     }
-    afterHeading = false
 
     const note = readNote(trimmed)
     if (note !== null) {
+      underHeading = false
       inLyrics = false
       if (note) results.push({ kind: 'note', line: lineNumber, content: note })
       continue
     }
 
+    if (
+      SLIDE_HEADING.test(trimmed) ||
+      (underHeading && DETAILS.test(trimmed))
+    ) {
+      inLyrics = true
+      continue
+    }
     if (inLyrics || trimmed.startsWith('#')) continue
 
+    underHeading = false
     results.push(toSong(trimmed.replace(LIST_MARKER, ''), trimmed, lineNumber))
   }
 

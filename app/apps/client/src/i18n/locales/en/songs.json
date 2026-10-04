@@ -214,7 +214,7 @@
     "textEdit": {
       "open": "Edit as text",
       "title": "Edit Marcaje as text",
-      "description": "One song per line, in the Marcaje Markdown: \"## Title {#song-12}\" picks that exact song, a plain title finds the song by its name. Start a note with \">\". Saving makes the list exactly this text, in this order. A blank line under a song heading starts its lyrics, as in an exported file, and they are not read.",
+      "description": "One song per line, in the Marcaje Markdown: \"## Title {#song-12}\" picks that exact song, a plain title finds the song by its name. Start a note with \">\". Saving makes the list exactly this text, in this order. An exported Marcaje file can be loaded too: its lyrics are skipped.",
       "placeholder": "## Cât de mare ești {#song-12}\n> Final\nHar minunat",
       "chooseFile": "Load a Markdown or text file",
       "cancel": "Cancel",

@@ -214,7 +214,7 @@
     "textEdit": {
       "open": "Editează ca text",
       "title": "Editează Marcajele ca text",
-      "description": "Câte o cântare pe rând, în Markdown-ul Marcajelor: \"## Titlu {#song-12}\" alege exact acea cântare, un titlu simplu găsește cântarea după nume. Începe o notă cu \">\". La salvare, lista devine exact acest text, în această ordine. Un rând gol sub titlul unei cântări începe versurile ei, ca într-un fișier exportat, și ele nu sunt citite.",
+      "description": "Câte o cântare pe rând, în Markdown-ul Marcajelor: \"## Titlu {#song-12}\" alege exact acea cântare, un titlu simplu găsește cântarea după nume. Începe o notă cu \">\". La salvare, lista devine exact acest text, în această ordine. Poți încărca și un fișier de Marcaje exportat: versurile lui sunt sărite.",
       "placeholder": "## Cât de mare ești {#song-12}\n> Final\nHar minunat",
       "chooseFile": "Încarcă un fișier Markdown sau text",
       "cancel": "Anulează",

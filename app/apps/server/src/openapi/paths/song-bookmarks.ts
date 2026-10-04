@@ -31,7 +31,7 @@ export const songBookmarksPaths = {
       tags: ['Songs'],
       summary: 'Replace song bookmarks from text',
       description:
-        'Makes the song bookmark list exactly what the text says, in its order. Reads "## Title {#song-12}" (the id picks the exact song), a bare title or "- title" (matched ignoring case, diacritics and punctuation, then by alternate title), and "> note" or "--- note ---". A blank line under a song heading starts its lyrics, as in the export; they are skipped. All or nothing: if any song line matches no song, nothing changes and those lines are returned. Songs already in the list keep their row and their "sung" mark.',
+        'Makes the song bookmark list exactly what the text says, in its order. Reads "## Title {#song-12}" (the id picks the exact song), a bare title or "- title" (matched ignoring case, diacritics and punctuation, then by alternate title), and "> note" or "--- note ---". The lyrics of a full export (lines from a "### slide" heading or the "*Category*" line on) are skipped, so an exported file reads back. All or nothing: if any song line matches no song, nothing changes and those lines are returned. Songs already in the list keep their row and their "sung" mark.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,
@@ -96,7 +96,7 @@ export const songBookmarksPaths = {
       tags: ['Songs'],
       summary: 'Export song bookmarks as Markdown',
       description:
-        'Renders the song bookmark list as standard Markdown: each song is a "## Title {#song-12}" heading carrying its song id, then an italic "*Category · key line*" line, then every slide under a "### Label" heading with its lyrics and their **bold**, *italic* and <u>underline</u>. A note is a "> quote".',
+        'Renders the song bookmark list as standard Markdown: each song is a "## Title {#song-12}" heading carrying its song id, then an italic "*Category · key line*" line, then every slide under a "### Label" heading (its number when it has no label) with its lyrics and their **bold**, *italic* and <u>underline</u>. A note is a "> quote".',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {

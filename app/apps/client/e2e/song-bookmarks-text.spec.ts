@@ -65,15 +65,16 @@ test.describe('Song Marcaje as text', () => {
       `## E2E Text First ${uniq} {#song-${first.id}}\n## E2E Text Second ${uniq} {#song-${second.id}}\n`,
     )
 
-    // A note, then a song by its title typed without the diacritic.
+    // A song by its title typed without the diacritic, after a blank line,
+    // then a note.
     await textarea.fill(
-      `## E2E Text Second ${uniq} {#song-${second.id}}\n> Final\ne2e text typed ${uniq}\n`,
+      `## E2E Text Second ${uniq} {#song-${second.id}}\n\ne2e text typed ${uniq}\n> Final\n`,
     )
     await page.getByTestId('bookmarks-text-save').click()
 
     await expect(page.getByTestId('bookmarks-text-modal')).toBeHidden()
     await expect(page.getByTestId('bookmark-item')).toHaveCount(2)
-    expect(await listOrder(request)).toEqual([second.id, 'Final', typed.id])
+    expect(await listOrder(request)).toEqual([second.id, typed.id, 'Final'])
   })
 
   test('an unknown song saves nothing and is pointed out by line', async ({

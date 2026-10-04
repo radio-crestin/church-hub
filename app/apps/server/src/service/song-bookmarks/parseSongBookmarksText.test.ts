@@ -53,6 +53,8 @@ describe('parseSongBookmarksText', () => {
       '',
       '## Har minunat {#song-4}',
       '',
+      '### 1',
+      '',
       'Har minunat, ce dulce sună',
     ].join('\n')
 
@@ -60,6 +62,15 @@ describe('parseSongBookmarksText', () => {
 
     expect(result.map((entry) => entry.kind)).toEqual(['song', 'note', 'song'])
     expect(result.map((entry) => entry.line)).toEqual([1, 9, 11])
+  })
+
+  test('keeps a title typed after a blank line under a song', () => {
+    const text = '## Cât de mare ești {#song-12}\n\nHar minunat'
+
+    expect(parseSongBookmarksText(text).map((entry) => entry.kind)).toEqual([
+      'song',
+      'song',
+    ])
   })
 
   test('unescapes a title written as Markdown', () => {
