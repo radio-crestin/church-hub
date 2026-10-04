@@ -1,6 +1,6 @@
 ---
 id: T-049
-title: Mobile: Music, Settings and remaining pages
+title: Mobile — Music, Settings and remaining pages
 sprint: backlog
 urgent: false
 status: todo

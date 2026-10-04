@@ -1,6 +1,6 @@
 ---
 id: T-028
-title: Screen editor: pin or copy element positions
+title: Screen editor — pin or copy element positions
 sprint: backlog
 urgent: false
 status: todo

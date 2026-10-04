@@ -1,6 +1,6 @@
 ---
 id: T-033
-title: Control-room monitor settings: find the untranslated text
+title: Control-room monitor settings — find the untranslated text
 sprint: backlog
 urgent: false
 status: todo

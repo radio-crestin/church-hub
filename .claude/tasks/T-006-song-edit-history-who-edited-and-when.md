@@ -1,6 +1,6 @@
 ---
 id: T-006
-title: Song edit history: who edited and when
+title: Song edit history — who edited and when
 sprint: backlog
 urgent: false
 status: todo

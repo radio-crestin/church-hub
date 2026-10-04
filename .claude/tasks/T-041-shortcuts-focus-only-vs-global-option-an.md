@@ -1,6 +1,6 @@
 ---
 id: T-041
-title: Shortcuts: focus-only vs global option, and respect permissions
+title: Shortcuts — focus-only vs global option, and respect permissions
 sprint: backlog
 urgent: false
 status: todo

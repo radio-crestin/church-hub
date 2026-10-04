@@ -1,6 +1,6 @@
 ---
 id: T-038
-title: Onboarding: pick features, initial settings, first-run progress
+title: Onboarding — pick features, initial settings, first-run progress
 sprint: backlog
 urgent: false
 status: todo

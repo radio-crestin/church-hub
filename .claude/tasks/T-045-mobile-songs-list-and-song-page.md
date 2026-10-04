@@ -1,6 +1,6 @@
 ---
 id: T-045
-title: Mobile: Songs list and song page
+title: Mobile — Songs list and song page
 sprint: backlog
 urgent: false
 status: todo

@@ -1,6 +1,6 @@
 ---
 id: T-021
-title: Add-song picker: category and tag filters
+title: Add-song picker — category and tag filters
 sprint: backlog
 urgent: false
 status: todo

@@ -1,6 +1,6 @@
 ---
 id: T-048
-title: Mobile: presenting, control room and screens
+title: Mobile — presenting, control room and screens
 sprint: backlog
 urgent: false
 status: todo

@@ -1,6 +1,6 @@
 ---
 id: T-034
-title: Music page like the Songs page: playlists, search, recents, queue orders
+title: Music page like the Songs page — playlists, search, recents, queue orders
 sprint: backlog
 urgent: false
 status: todo

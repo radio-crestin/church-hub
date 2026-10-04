@@ -1,6 +1,6 @@
 ---
 id: T-037
-title: Back navigation: mouse back button and Alt+Left
+title: Back navigation — mouse back button and Alt+Left
 sprint: backlog
 urgent: false
 status: todo

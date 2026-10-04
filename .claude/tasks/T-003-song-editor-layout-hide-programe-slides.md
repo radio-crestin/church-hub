@@ -1,6 +1,6 @@
 ---
 id: T-003
-title: Song editor layout: hide Programe, Slides on the right, text edit in place, fixed title
+title: Song editor layout — hide Programe, Slides on the right, text edit in place, fixed title
 sprint: backlog
 urgent: false
 status: todo

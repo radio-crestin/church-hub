@@ -1,6 +1,6 @@
 ---
 id: T-016
-title: Programs become automations: music, autoplay, loop, start on boot, volume
+title: Programs become automations — music, autoplay, loop, start on boot, volume
 sprint: backlog
 urgent: false
 status: todo

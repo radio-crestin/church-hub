@@ -1,6 +1,6 @@
 ---
 id: T-010
-title: Marcaje standard Markdown: exact styles, same export/import, per-screen rendering
+title: Marcaje standard Markdown — exact styles, same export/import, per-screen rendering
 sprint: backlog
 urgent: false
 status: todo

@@ -1,6 +1,6 @@
 ---
 id: T-004
-title: Song page default layout: Versiuni under the song preview
+title: Song page default layout — Versiuni under the song preview
 sprint: backlog
 urgent: false
 status: todo

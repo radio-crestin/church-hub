@@ -1,6 +1,6 @@
 ---
 id: T-046
-title: Mobile: Bible page
+title: Mobile — Bible page
 sprint: backlog
 urgent: false
 status: todo

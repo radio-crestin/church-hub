@@ -1,6 +1,6 @@
 ---
 id: T-005
-title: Marcaje for songs: text-mode editing
+title: Marcaje for songs — text-mode editing
 sprint: backlog
 urgent: false
 status: todo

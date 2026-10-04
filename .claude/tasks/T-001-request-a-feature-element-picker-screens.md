@@ -1,6 +1,6 @@
 ---
 id: T-001
-title: Request a feature: element-picker screenshot tool → GitHub issue + WhatsApp
+title: Request a feature — element-picker screenshot tool → GitHub issue + WhatsApp
 sprint: 2026-09-28
 urgent: true
 status: doing
