@@ -130,8 +130,8 @@ export function SongSlidesPanel({
   const selectedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const gutterRef = useRef<HTMLDivElement>(null)
   const [textValue, setTextValue] = useState('')
-  const [scrollTop, setScrollTop] = useState(0)
   const [presentingIdx, setPresentingIdx] = useState<number | null>(null)
 
   // Sorted original slides — used to seed the textarea on entering edit mode.
@@ -225,15 +225,41 @@ export function SongSlidesPanel({
     onSave?.()
   }, [applyTextValue, onSave])
 
+  // The gutter is moved straight from the scroll event: going through React
+  // state re-rendered the whole panel on every event and the buttons trailed
+  // the text on a long song.
+  const syncGutterToTextarea = useCallback(() => {
+    const textarea = textareaRef.current
+    if (!textarea || !gutterRef.current) return
+    gutterRef.current.style.transform = `translateY(${-textarea.scrollTop}px)`
+  }, [])
+
+  // The gutter's buttons sit on top of the text, so a wheel turned over one
+  // would scroll nothing; hand it to the textarea.
+  const scrollTextareaWithWheel = useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      textareaRef.current?.scrollBy(event.deltaX, event.deltaY)
+    },
+    [],
+  )
+
   // Seed textarea from sorted slides when entering edit mode; clear on exit.
+  // The caret starts at the top so the first line is in view: left at the end
+  // (where setting a value puts it), focusing would jump a long song to its
+  // last line.
   useEffect(() => {
     if (isEditMode) {
       setTextValue(slidesToMarkdown(sortedSlides))
-      setScrollTop(0)
-      setTimeout(() => textareaRef.current?.focus(), 0)
+      setTimeout(() => {
+        const textarea = textareaRef.current
+        if (!textarea) return
+        textarea.setSelectionRange(0, 0)
+        textarea.scrollTop = 0
+        textarea.focus({ preventScroll: true })
+        syncGutterToTextarea()
+      }, 0)
     } else {
       setTextValue('')
-      setScrollTop(0)
     }
     // Only re-seed on the edit-mode boundary, not on every slide edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -359,12 +385,12 @@ export function SongSlidesPanel({
       >
         {isEditMode ? (
           <div className="flex flex-col gap-2 h-full">
-            <div className="relative flex-1 min-h-[200px]">
+            <div className="relative flex-1 min-h-[60vh] lg:min-h-[200px]">
               <textarea
                 ref={textareaRef}
                 value={textValue}
                 onChange={(e) => setTextValue(e.target.value)}
-                onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+                onScroll={syncGutterToTextarea}
                 onBlur={() => {
                   void applyTextValue()
                 }}
@@ -378,11 +404,11 @@ export function SongSlidesPanel({
                 className="absolute inset-0 w-full h-full pl-3 pr-16 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm resize-none whitespace-pre"
               />
               {/* Gutter overlay with per-block Play buttons — offset to clear the textarea scrollbar */}
-              <div className="pointer-events-none absolute right-5 top-0 bottom-0 w-11 overflow-hidden">
-                <div
-                  className="relative w-full h-full"
-                  style={{ transform: `translateY(${-scrollTop}px)` }}
-                >
+              <div
+                className="pointer-events-none absolute right-5 top-0 bottom-0 w-11 overflow-hidden"
+                onWheel={scrollTextareaWithWheel}
+              >
+                <div ref={gutterRef} className="relative w-full h-full">
                   {slideBlocks.map(({ blockIdx, line }) => {
                     const isLive = presentedSlideIndex === blockIdx
                     const isLoading = presentingIdx === blockIdx
