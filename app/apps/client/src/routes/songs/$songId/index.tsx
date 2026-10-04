@@ -49,6 +49,7 @@ import {
   ExportFormatModal,
   useSaveSongToFile,
 } from '~/features/song-export'
+import { useSongHistoryAction } from '~/features/song-history'
 import {
   KeyLineEditDialog,
   type KeyLineEditDialogHandle,
@@ -200,6 +201,7 @@ function SongPreviewPage() {
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
   const upsertSong = useUpsertSong()
+  const songHistory = useSongHistoryAction(numericId, song?.title ?? '')
   const addBookmarkMutation = useAddBookmark()
   const removeBookmarkMutation = useRemoveBookmark()
   const { data: bookmarks = [] } = useSongBookmarks()
@@ -966,6 +968,7 @@ function SongPreviewPage() {
           },
         ]
       : []),
+    ...(songHistory.menuItem ? [songHistory.menuItem] : []),
     // Panels only form movable columns on a large screen; on a phone they are
     // a plain stack, so there is nothing to rearrange.
     ...(isLargeScreen ? [editLayoutAction] : []),
@@ -1120,6 +1123,7 @@ function SongPreviewPage() {
         onCancel={() => setShowExportFormatModal(false)}
       />
 
+      {songHistory.dialog}
       <KeyLineEditDialog ref={keyLineDialogRef} />
       <CategoryEditDialog ref={categoryDialogRef} />
 

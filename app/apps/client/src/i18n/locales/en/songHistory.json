@@ -1,0 +1,41 @@
+{
+  "menu": {
+    "label": "History",
+    "description": "See who edited this song and when"
+  },
+  "title": "Song history",
+  "description": "Who changed \"{{title}}\" and when",
+  "close": "Close",
+  "empty": "No changes recorded yet. Every change you save from now on will show up here.",
+  "kind": {
+    "created": "Created the song",
+    "edited": "Edited",
+    "restored": "Restored an earlier version"
+  },
+  "summary": {
+    "created_one": "Started with {{count}} slide",
+    "created_other": "Started with {{count}} slides",
+    "titleChanged": "Title changed",
+    "slidesChanged_one": "{{count}} slide changed",
+    "slidesChanged_other": "{{count}} slides changed",
+    "slidesAdded_one": "{{count}} slide added",
+    "slidesAdded_other": "{{count}} slides added",
+    "slidesRemoved_one": "{{count}} slide removed",
+    "slidesRemoved_other": "{{count}} slides removed"
+  },
+  "details": {
+    "title": "Title",
+    "slide": "Slide {{number}}",
+    "noSlide": "(no slide)",
+    "unavailable": "This entry could not be loaded."
+  },
+  "restore": {
+    "before": "Restore the version before this change",
+    "after": "Restore this version",
+    "confirmTitle": "Restore this version?",
+    "confirmMessage": "The song goes back to this version. The version you have now is kept in the history, so you can undo this.",
+    "confirm": "Restore",
+    "success": "Version restored",
+    "error": "Could not restore this version"
+  }
+}
