@@ -27,6 +27,7 @@ import { mergeBiblePassagesIntoVerseteTineri } from './merge-bible-passages-into
 import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
+import { removeSeededSecrets } from './remove-seeded-secrets'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedSampleMusic } from './seed-music'
@@ -270,6 +271,11 @@ export function runMigrations(
   // Seed app settings (sidebar config, search synonyms, appearance, etc.)
   runStep('seed_app_settings', 'Seeding app settings', () =>
     seedAppSettings(rawDb),
+  )
+
+  // Remove secrets that older default settings seeded into installs
+  runStep('remove_seeded_secrets', 'Removing seeded secrets', () =>
+    removeSeededSecrets(rawDb),
   )
 
   // Clean up legacy shortcuts (searchSong, searchBible removed from codebase)

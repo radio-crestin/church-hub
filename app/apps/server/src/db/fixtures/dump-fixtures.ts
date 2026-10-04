@@ -10,9 +10,10 @@
  * - App settings (sidebar config, search synonyms, appearance, etc.)
  */
 
-import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { sanitizeSettingValue } from './sanitize-setting-value'
+import { writeFixture } from './write-fixture'
 import Database from 'bun:sqlite'
 import { getDatabasePath } from '../../utils/paths'
 
@@ -223,7 +224,7 @@ function dumpScreens(db: Database): void {
   }
 
   const outputPath = join(FIXTURES_DIR, 'default-screens.json')
-  writeFileSync(outputPath, JSON.stringify(fixtures, null, 2))
+  writeFixture(outputPath, fixtures)
 
   // biome-ignore lint/suspicious/noConsole: CLI script output
   console.log(`✓ Dumped ${fixtures.length} screen(s) to default-screens.json`)
@@ -246,7 +247,7 @@ function dumpSongCategories(db: Database): void {
   }))
 
   const outputPath = join(FIXTURES_DIR, 'default-song-categories.json')
-  writeFileSync(outputPath, JSON.stringify(fixtures, null, 2))
+  writeFixture(outputPath, fixtures)
 
   // biome-ignore lint/suspicious/noConsole: CLI script output
   console.log(
@@ -315,7 +316,7 @@ function dumpSongs(db: Database): void {
   }
 
   const outputPath = join(FIXTURES_DIR, 'default-songs.json')
-  writeFileSync(outputPath, JSON.stringify(fixtures, null, 2))
+  writeFixture(outputPath, fixtures)
 
   // biome-ignore lint/suspicious/noConsole: CLI script output
   console.log(`✓ Dumped ${fixtures.length} song(s) to default-songs.json`)
@@ -376,43 +377,12 @@ function dumpBibleTranslations(db: Database): void {
   }
 
   const outputPath = join(FIXTURES_DIR, 'default-bibles.json')
-  writeFileSync(outputPath, JSON.stringify(fixtures, null, 2))
+  writeFixture(outputPath, fixtures)
 
   // biome-ignore lint/suspicious/noConsole: CLI script output
   console.log(
     `✓ Dumped ${fixtures.length} bible translation(s) to default-bibles.json`,
   )
-}
-
-function sanitizeSettingValue(value: string): string {
-  try {
-    const parsed = JSON.parse(value)
-    if (typeof parsed === 'object' && parsed !== null) {
-      let redacted = false
-      // Redact any key that looks like a secret
-      for (const key of Object.keys(parsed)) {
-        const lower = key.toLowerCase()
-        if (
-          lower.includes('apikey') ||
-          lower.includes('api_key') ||
-          lower.includes('secret') ||
-          lower.includes('token') ||
-          lower.includes('password') ||
-          lower.includes('credential')
-        ) {
-          parsed[key] = null
-          redacted = true
-        }
-      }
-      if (redacted) {
-        return JSON.stringify(parsed)
-      }
-    }
-    return value
-  } catch {
-    // Not valid JSON, return as-is
-    return value
-  }
 }
 
 function dumpAppSettings(db: Database): void {
@@ -426,13 +396,13 @@ function dumpAppSettings(db: Database): void {
     return
   }
 
-  const fixtures: AppSettingFixture[] = settings.map((s) => ({
-    key: s.key,
-    value: sanitizeSettingValue(s.value),
-  }))
+  const fixtures: AppSettingFixture[] = settings.flatMap((s) => {
+    const value = sanitizeSettingValue(s.key, s.value)
+    return value === null ? [] : [{ key: s.key, value }]
+  })
 
   const outputPath = join(FIXTURES_DIR, 'default-settings.json')
-  writeFileSync(outputPath, JSON.stringify(fixtures, null, 2))
+  writeFixture(outputPath, fixtures)
 
   // biome-ignore lint/suspicious/noConsole: CLI script output
   console.log(

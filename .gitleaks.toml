@@ -1,0 +1,67 @@
+# gitleaks rules for this repo: the default rules plus AI provider keys.
+# Used by .githooks/pre-commit and CI. Full-history scan:
+#   gitleaks detect --source . --log-opts="--all" --redact
+
+[extend]
+useDefault = true
+
+# The default rules can miss these key formats inside a JSON string, so
+# match the key shapes directly, wherever they appear.
+[[rules]]
+id = "openai-project-key"
+description = "OpenAI project, service-account or admin key"
+regex = '''sk-(?:proj|svcacct|admin)-[A-Za-z0-9_\-]{40,}'''
+keywords = ["sk-proj-", "sk-svcacct-", "sk-admin-"]
+
+[[rules]]
+id = "openrouter-key"
+description = "OpenRouter API key"
+regex = '''sk-or-v1-[0-9a-f]{40,}'''
+keywords = ["sk-or-v1-"]
+
+[[rules]]
+id = "anthropic-key"
+description = "Anthropic API key"
+regex = '''sk-ant-[a-z0-9]{3,8}-[A-Za-z0-9_\-]{40,}'''
+keywords = ["sk-ant-"]
+
+[[rules]]
+id = "google-ai-key"
+description = "Google / Gemini API key"
+regex = '''AIza[0-9A-Za-z_\-]{35}'''
+keywords = ["aiza"]
+
+[[rules]]
+id = "groq-key"
+description = "Groq API key"
+regex = '''gsk_[A-Za-z0-9]{40,}'''
+keywords = ["gsk_"]
+
+[[rules]]
+id = "xai-key"
+description = "xAI API key"
+regex = '''xai-[A-Za-z0-9]{60,}'''
+keywords = ["xai-"]
+
+[[allowlists]]
+description = "PostHog client tokens: public by design, shipped in the web bundle"
+regexTarget = "line"
+regexes = ['''phc_[A-Za-z0-9]{20,}''', '''POSTHOG_[A-Z_]*TOKEN''']
+
+[[allowlists]]
+description = "Committed Rust build output"
+paths = ['''(^|/)target/(debug|release)/''']
+
+[[allowlists]]
+description = "Test mock: an API path, not a secret"
+regexTarget = "line"
+regexes = ['''apiPath === ''']
+
+[[allowlists]]
+description = "Historical commits, already handled"
+commits = [
+  "a46c1573c36d70f1574d2e33534689ff7e6acfc9",
+  "08561c3cb88d991f6c3ec6887a976baa8b13f55b",
+  "7eb1d60e7f183e97b8e3ac383c20b893ed5d78c9",
+  "b40b09c225633bd21f43377a1876e27d911fe521",
+]

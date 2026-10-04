@@ -44,10 +44,6 @@
     "value": "{\"sourceLanguage\":\"ro\",\"targetLanguage\":\"en\",\"voiceName\":\"Kore\",\"inputDeviceId\":null,\"outputDeviceId\":null,\"geminiApiKey\":null,\"outputMode\":\"device\"}"
   },
   {
-    "key": "live_translation_stream_secret",
-    "value": "q1c503inl8jdpdi9hoa21a3yjm6w7de1"
-  },
-  {
     "key": "migrate_shortcuts_cleanup_v1",
     "value": "{\"cleaned\":true,\"removedCount\":2}"
   },

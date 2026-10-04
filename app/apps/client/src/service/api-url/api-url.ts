@@ -23,8 +23,8 @@ const AUTH_URL_PATTERN = /\/api\/auth\/user\/(usr_[A-Za-z0-9_-]+)$/
 
 /**
  * Parses an auth URL to extract base URL and user token
- * Input: http://192.168.88.12:3000/api/auth/user/usr_P7qMH2S1iFKVoJxX6c6uvUp8_D36OYju
- * Returns: { baseUrl: 'http://192.168.88.12:3000', userToken: 'usr_P7qMH2S1iFKVoJxX6c6uvUp8_D36OYju' }
+ * Input: http://192.168.88.12:3000/api/auth/user/usr_exampleToken123
+ * Returns: { baseUrl: 'http://192.168.88.12:3000', userToken: 'usr_exampleToken123' }
  */
 export function parseAuthUrl(url: string): {
   baseUrl: string
