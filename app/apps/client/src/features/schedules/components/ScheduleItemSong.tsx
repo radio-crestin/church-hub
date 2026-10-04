@@ -12,6 +12,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface ScheduleItemSongProps {
@@ -158,7 +159,7 @@ export function ScheduleItemSong({
                 {idx + 1}
               </span>
               <span className="text-gray-600 dark:text-gray-400 line-clamp-1">
-                {slide.content.replace(/<[^>]*>/g, '').substring(0, 60)}
+                {removeHtmlTags(slide.content).substring(0, 60)}
                 {slide.content.length > 60 ? '...' : ''}
               </span>
             </div>

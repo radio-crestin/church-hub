@@ -1,5 +1,7 @@
 import type { SongWithSlides } from '~/features/songs/types'
 import { generateExpandedPresentationOrder } from '~/features/songs/utils/expandSongSlides'
+import { decodeHtmlEntities } from '~/utils/decodeHtmlEntities'
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 
 /**
  * Escapes XML special characters
@@ -32,18 +34,8 @@ function htmlToPlainText(html: string): string {
     .replace(/<\/p>/gi, '\n')
     .replace(/<p>/gi, '')
 
-  // Remove any remaining HTML tags
-  text = text.replace(/<[^>]+>/g, '')
-
-  // Decode HTML entities
-  text = text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
+  // Remove any remaining HTML tags, then decode HTML entities
+  text = decodeHtmlEntities(removeHtmlTags(text))
 
   // Trim trailing newlines but keep internal ones
   return text.replace(/\n+$/, '')

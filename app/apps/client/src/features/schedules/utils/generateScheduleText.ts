@@ -1,3 +1,5 @@
+import { decodeHtmlEntities } from '~/utils/decodeHtmlEntities'
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import { expandSongSlidesWithChoruses } from '../../songs/utils/expandSongSlides'
 import type { ScheduleItem } from '../types'
 
@@ -148,13 +150,7 @@ function generateReferenceSection(items: ScheduleItem[]): string[] {
  */
 function stripHtml(html: string): string {
   // Remove HTML tags and decode entities
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
+  return decodeHtmlEntities(removeHtmlTags(html, ' '))
     .replace(/\s+/g, ' ')
     .trim()
 }

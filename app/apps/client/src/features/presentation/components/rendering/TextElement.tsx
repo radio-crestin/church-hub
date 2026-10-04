@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 
 import { AnimatedElement } from './AnimatedElement'
+import { normalizeText } from './utils/normalizeText'
 import { calculatePixelBounds, getTextStyleCSS } from './utils/styleUtils'
 import { compressTextLinesWithFit } from './utils/textProcessing'
 import type {
@@ -17,33 +18,7 @@ type TextConfig = TextElementConfig | ReferenceTextConfig | PersonLabelConfig
  * This ensures auto-scaling works correctly (no margin issues from block elements).
  */
 function convertHtmlToText(html: string): string {
-  return (
-    html
-      // Replace </p><p> with newline (paragraph transitions)
-      .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-      // Replace <br> tags with newlines
-      .replace(/<br\s*\/?>/gi, '\n')
-      // Remove opening block tags
-      .replace(/<(p|div|h[1-6])[^>]*>/gi, '')
-      // Replace closing block tags with newline
-      .replace(/<\/(p|div|h[1-6])>/gi, '\n')
-      // Remove any remaining HTML tags
-      .replace(/<[^>]*>/g, '')
-      // Decode common HTML entities
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&apos;/g, "'")
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-        String.fromCharCode(parseInt(hex, 16)),
-      )
-      // Clean up multiple consecutive newlines
-      .replace(/\n{3,}/g, '\n\n')
-      .trim()
-  )
+  return normalizeText(html, true)
 }
 
 /**

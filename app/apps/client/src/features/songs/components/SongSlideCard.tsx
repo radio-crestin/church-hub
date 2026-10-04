@@ -18,6 +18,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
+import { decodeHtmlEntities } from '~/utils/decodeHtmlEntities'
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import type { ChordMapping } from '../types'
 import { localizeChordName } from '../utils/localizeChordName'
 
@@ -143,21 +145,10 @@ const COMMON_CHORDS = [
 
 /** Extract plain text words from HTML content */
 function getWordsFromHtml(html: string): string[] {
-  const text = html
+  const lines = html
     .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-      String.fromCharCode(parseInt(hex, 16)),
-    )
-    .trim()
+  const text = decodeHtmlEntities(removeHtmlTags(lines)).trim()
 
   if (!text) return []
 

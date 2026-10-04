@@ -1,6 +1,7 @@
 import type { NextItemPreview } from '~/features/presentation'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import i18n from '~/i18n/config'
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import type { ScheduleItem } from '../types'
 
 /**
@@ -20,11 +21,11 @@ function typeLabel(key: string): string {
  * markers `stripHtmlTags` attaches for the reading lists.
  */
 function toPlainPreview(html: string): string {
-  return html
+  const lines = html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
     .replace(/<\/(p|div|h[1-6])>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
+  return removeHtmlTags(lines)
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }

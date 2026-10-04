@@ -1,3 +1,5 @@
+import { decodeHtmlEntities } from '~/utils/decodeHtmlEntities'
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import type { ContentType, SongContentConfig } from '../types'
 
 /**
@@ -57,11 +59,7 @@ export function containsAminWord(text: string): boolean {
 
 /** Strip HTML tags + decode the few entities the lyrics use, to plain text. */
 function htmlToPlainText(html: string): string {
-  return html
-    .replace(/<br\s*\/?>/gi, ' ')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
+  return decodeHtmlEntities(removeHtmlTags(html.replace(/<br\s*\/?>/gi, ' ')))
     .replace(/\s+/g, ' ')
     .trim()
 }

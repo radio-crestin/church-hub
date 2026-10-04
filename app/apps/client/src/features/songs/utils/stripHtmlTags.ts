@@ -1,19 +1,6 @@
 import { attachRepetitionMarkers } from '../../../utils/attachRepetitionMarkers'
-
-/** Turns the entity escapes slide HTML carries back into their characters. */
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-      String.fromCharCode(Number.parseInt(hex, 16)),
-    )
-}
+import { decodeHtmlEntities } from '../../../utils/decodeHtmlEntities'
+import { removeHtmlTags } from '../../../utils/removeHtmlTags'
 
 /**
  * Slide HTML as plain, line-broken text.
@@ -24,10 +11,9 @@ function decodeHtmlEntities(text: string): string {
  * song preview in the add-to-program modal.
  */
 export function stripHtmlTags(html: string): string {
-  const stripped = html
+  const lines = html
     .replace(/<\/p>\s*<p>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-    .trim()
+  const stripped = removeHtmlTags(lines).trim()
   return attachRepetitionMarkers(decodeHtmlEntities(stripped))
 }

@@ -11,6 +11,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
+import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface ScheduleItemSlideProps {
@@ -42,8 +43,8 @@ export function ScheduleItemSlide({
 
   // Strip HTML and get preview
   const contentPreview = item.slideContent
-    ?.replace(/<[^>]*>/g, '')
-    .substring(0, 100)
+    ? removeHtmlTags(item.slideContent).substring(0, 100)
+    : undefined
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">

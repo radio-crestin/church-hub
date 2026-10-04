@@ -7,6 +7,8 @@ import {
 import { getTextStyleCSS } from './utils/styleUtils'
 import { compressLines } from './utils/textProcessing'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
+import { decodeHtmlEntities } from '../../../../utils/decodeHtmlEntities'
+import { removeHtmlTags } from '../../../../utils/removeHtmlTags'
 import type { TextStyle } from '../../types'
 
 /**
@@ -15,23 +17,6 @@ import type { TextStyle } from '../../types'
 interface TextSegment {
   text: string
   highlightColor?: string
-}
-
-/**
- * Decodes common HTML entities in a string.
- */
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
-      String.fromCharCode(parseInt(hex, 16)),
-    )
 }
 
 /**
@@ -72,7 +57,7 @@ function parseHtmlToSegments(html: string): TextSegment[] {
     // Add text before this mark tag (if any)
     if (match.index > lastIndex) {
       const textBefore = normalized.slice(lastIndex, match.index)
-      const cleanedText = decodeHtmlEntities(textBefore.replace(/<[^>]*>/g, ''))
+      const cleanedText = decodeHtmlEntities(removeHtmlTags(textBefore))
       if (cleanedText) {
         segments.push({ text: cleanedText })
       }
@@ -97,7 +82,7 @@ function parseHtmlToSegments(html: string): TextSegment[] {
     }
 
     // Clean the content inside mark (remove any nested HTML tags)
-    const cleanedContent = decodeHtmlEntities(content.replace(/<[^>]*>/g, ''))
+    const cleanedContent = decodeHtmlEntities(removeHtmlTags(content))
     if (cleanedContent) {
       segments.push({ text: cleanedContent, highlightColor: color })
     }
@@ -108,9 +93,7 @@ function parseHtmlToSegments(html: string): TextSegment[] {
   // Add remaining text after the last mark tag
   if (lastIndex < normalized.length) {
     const remainingText = normalized.slice(lastIndex)
-    const cleanedText = decodeHtmlEntities(
-      remainingText.replace(/<[^>]*>/g, ''),
-    )
+    const cleanedText = decodeHtmlEntities(removeHtmlTags(remainingText))
     if (cleanedText) {
       segments.push({ text: cleanedText })
     }
@@ -118,7 +101,7 @@ function parseHtmlToSegments(html: string): TextSegment[] {
 
   // If no segments were created (no mark tags found), return the whole text as one segment
   if (segments.length === 0) {
-    const cleanedText = decodeHtmlEntities(normalized.replace(/<[^>]*>/g, ''))
+    const cleanedText = decodeHtmlEntities(removeHtmlTags(normalized))
     if (cleanedText) {
       segments.push({ text: cleanedText })
     }
@@ -134,7 +117,7 @@ function parseHtmlToSegments(html: string): TextSegment[] {
  */
 function convertHtmlToText(html: string): string {
   const normalized = normalizeBlockElements(html)
-  return decodeHtmlEntities(normalized.replace(/<[^>]*>/g, ''))
+  return decodeHtmlEntities(removeHtmlTags(normalized))
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
