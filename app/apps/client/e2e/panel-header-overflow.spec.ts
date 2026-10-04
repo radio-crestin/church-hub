@@ -32,6 +32,7 @@ const SCHEDULE_ACTIONS = [
 ]
 const BOOKMARK_ACTIONS = [
   'bookmarks-add-note',
+  'bookmarks-edit-text',
   'bookmarks-export',
   'bookmarks-add-all-to-schedule',
   'bookmarks-clear',
