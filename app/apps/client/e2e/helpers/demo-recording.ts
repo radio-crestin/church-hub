@@ -52,8 +52,8 @@ export async function glideClick(page: Page, locator: Locator): Promise<void> {
 /**
  * Draws a red box around the element and, with a label, a red arrow pointing
  * at it from that label, so the viewer sees the bug (Before) or the fix/new
- * feature (After). Stays until clearHighlights. If the element sits where the
- * caption is, the caption moves to the top of the frame.
+ * feature (After). Stays until clearHighlights; drawn above modal dialogs
+ * too. If the element sits where the caption is, the caption moves to the top.
  */
 export async function highlight(
   page: Page,
@@ -97,8 +97,15 @@ function drawHighlight({ box, label }: { box: Box; label: string }) {
   if (!layer) {
     layer = document.createElement('div')
     layer.id = '__demo_highlights'
+    // A popover sits in the browser's top layer, so it can be drawn above an
+    // open modal <dialog>, which no z-index can beat.
+    layer.setAttribute('popover', 'manual')
     layer.innerHTML = `<style>
-      #__demo_highlights { position: fixed; inset: 0; pointer-events: none; z-index: 2147483644; }
+      #__demo_highlights {
+        position: fixed; inset: 0; width: 100vw; height: 100vh; max-width: none;
+        max-height: none; margin: 0; padding: 0; border: 0; overflow: visible;
+        background: transparent; pointer-events: none; z-index: 2147483644;
+      }
       #__demo_highlights svg { position: absolute; inset: 0; width: 100%; height: 100%; }
       #__demo_highlights .label {
         position: absolute; padding: 8px 16px; border-radius: 8px;
@@ -109,6 +116,9 @@ function drawHighlight({ box, label }: { box: Box; label: string }) {
     </style>`
     document.body.appendChild(layer)
   }
+  // Re-enter the top layer so the highlights stay above a dialog opened since.
+  if (layer.matches(':popover-open')) layer.hidePopover()
+  layer.showPopover()
 
   const svgNs = 'http://www.w3.org/2000/svg'
   const svg = document.createElementNS(svgNs, 'svg')

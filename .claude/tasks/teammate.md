@@ -15,7 +15,7 @@
 Every code change follows these steps. Config or tooling tasks only when the lead says so.
 1. **Branch.** You start in your own git worktree (`config.json` → `worktree: true`). First run `git switch -c feat/<slug>` (or `fix/<slug>`). Never commit on main.
 2. **Setup**: `bun app/scripts/worktree-setup.ts <task-id>` (~5 s). It reuses the main checkout's caches (bun, Cargo target, sidecar, Playwright browser) and builds the client for your port = 3100 + task number. Rebuild after client changes: `cd app/apps/client && VITE_API_PORT=<port> VITE_SERVER_PORT=<port> bun run build`.
-   - Port 3000 is the user's dev server: never start, test against or kill it. Run e2e always with `CI=1 TEST_PORT=<port>`; without `CI=1`, Playwright starts `dev:web`, whose `free-port.js` kills port 3000.
+   - Port 3000 is the user's dev server: never start, test against or kill it. Run e2e always with `CI=1 TEST_PORT=<port>`; without `CI=1`, Playwright first rebuilds the client without your port, so the page calls port 3000.
    - Cargo shares the main checkout's target dir: `cargo check`/`clippy`/`test` only, no `tauri build`/`dev`.
    - Browser reported MISSING and `playwright install` hangs at 100%: its zip in `$TMPDIR/playwright-download-*/` is complete. Unzip it into the reported location and create an empty `INSTALLATION_COMPLETE` file there.
 3. **Test.** Write or extend a spec in `app/apps/client/e2e/`. `CI=1 TEST_PORT=<port> bunx playwright test <spec> --workers=1 --retries=2` must pass.
