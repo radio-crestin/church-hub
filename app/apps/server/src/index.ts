@@ -261,10 +261,12 @@ import {
   exportBookmarksAsMarkdown,
   getBookmarkNotes,
   getBookmarks,
+  getBookmarksText,
   markBookmarkSung,
   removeBookmark,
   removeBookmarkNote,
   reorderBookmarkItems,
+  replaceBookmarksFromText,
   updateBookmarkNote,
 } from './service/song-bookmarks'
 import { resolveSongEditor, saveSongWithHistory } from './service/song-history'
@@ -8049,6 +8051,58 @@ async function startRealServer(): Promise<void> {
         return handleCors(
           req,
           new Response(JSON.stringify({ data: text }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // GET /api/song-bookmarks/text - The Marcaje list as editable Markdown
+      if (req.method === 'GET' && url.pathname === '/api/song-bookmarks/text') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getBookmarksText() }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // PUT /api/song-bookmarks/text - Replace the Marcaje list from text
+      if (req.method === 'PUT' && url.pathname === '/api/song-bookmarks/text') {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        let body: { text?: unknown }
+        try {
+          body = (await req.json()) as { text?: unknown }
+        } catch {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        if (typeof body.text !== 'string') {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Text is required' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+
+        const result = replaceBookmarksFromText(body.text)
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: result }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
           }),
