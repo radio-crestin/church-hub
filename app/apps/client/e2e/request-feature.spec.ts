@@ -210,6 +210,89 @@ test.describe('Request a feature', () => {
     expect(selectorFindsTheButton).toBe(true)
   })
 
+  test('takes the screenshot again on another page of the app', async ({
+    page,
+  }) => {
+    const sent = await mockFeatureRequestApi(page)
+    await openSongsPage(page)
+
+    const dialog = await openRequestFeature(page)
+    await drawOnScreenshot(page, dialog)
+    await goToWriting(dialog)
+    await fillRequest(dialog, 'E2E: other page', 'Seen on the settings page')
+    await dialog.getByTestId('feature-request-back').click()
+
+    // Leave the dialog, go elsewhere, and photograph that page instead.
+    await dialog.getByTestId('feature-request-roam').click()
+    const bar = page.getByTestId('feature-request-roaming')
+    await expect(bar).toBeVisible()
+    await expect(dialog).toHaveCount(0)
+    await page.locator('a[href="/settings"]').first().click()
+    await expect(page).toHaveURL(/\/settings/)
+    await expect(bar).toBeVisible()
+    await page.getByTestId('feature-request-take').click()
+
+    // Back in the flow: the new picture is undrawn, the typed text is kept.
+    await expect(dialog).toBeVisible({ timeout: 20000 })
+    await expect(bar).toHaveCount(0)
+    await expect(dialog.getByTestId('feature-request-undo')).toBeDisabled()
+    await goToWriting(dialog)
+    await expect(dialog.getByTestId('feature-request-title')).toHaveValue(
+      'E2E: other page',
+    )
+    await dialog.getByTestId('feature-request-submit').click()
+    await expect(dialog.getByTestId('feature-request-success')).toBeVisible()
+    expect(sent[0].route).toMatch(/^\/settings/)
+    expect(sent[0].screenshot).toMatch(/^data:image\/jpeg;base64,/)
+  })
+
+  test('cancelling the other-page bar returns to the same screenshot', async ({
+    page,
+  }) => {
+    await mockFeatureRequestApi(page)
+    await openSongsPage(page)
+
+    const dialog = await openRequestFeature(page)
+    await drawOnScreenshot(page, dialog)
+    await dialog.getByTestId('feature-request-roam').click()
+    await page.getByTestId('feature-request-roaming-cancel').click()
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByTestId('feature-request-undo')).toBeEnabled()
+  })
+
+  test('captures another screen or window through the system picker', async ({
+    page,
+  }) => {
+    const sent = await mockFeatureRequestApi(page)
+    // The real picker is an OS dialog: stand in a picture of "another screen".
+    await page.addInitScript(() => {
+      navigator.mediaDevices.getDisplayMedia = async () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = 640
+        canvas.height = 360
+        const context = canvas.getContext('2d')
+        if (context) {
+          context.fillStyle = '#123456'
+          context.fillRect(0, 0, 640, 360)
+        }
+        return canvas.captureStream(5)
+      }
+    })
+    await openSongsPage(page)
+
+    const dialog = await openRequestFeature(page)
+    await dialog.getByTestId('feature-request-capture-display').click()
+    await expect(dialog.getByTestId('feature-request-canvas')).toHaveJSProperty(
+      'width',
+      640,
+    )
+    await goToWriting(dialog)
+    await fillRequest(dialog, 'E2E: other screen', 'From the projector')
+    await dialog.getByTestId('feature-request-submit').click()
+    await expect(dialog.getByTestId('feature-request-success')).toBeVisible()
+    expect(sent[0].screenshot).toMatch(/^data:image\/jpeg;base64,/)
+  })
+
   test('leaves the screenshot out when the switch is turned off', async ({
     page,
   }) => {

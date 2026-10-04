@@ -17,7 +17,12 @@ interface RequestFeatureDialogProps {
   element: PickedElement | null
   values: RequestFeatureValues
   onValuesChange: (values: RequestFeatureValues) => void
+  strokes: Stroke[]
+  onStrokesChange: (strokes: Stroke[]) => void
   onPickElement: () => void
+  onRoam: () => void
+  onCaptureDisplay: () => void
+  hasCaptureError: boolean
   onClose: () => void
 }
 
@@ -36,7 +41,12 @@ export function RequestFeatureDialog({
   element,
   values,
   onValuesChange,
+  strokes,
+  onStrokesChange,
   onPickElement,
+  onRoam,
+  onCaptureDisplay,
+  hasCaptureError,
   onClose,
 }: RequestFeatureDialogProps) {
   const { t } = useTranslation()
@@ -44,7 +54,6 @@ export function RequestFeatureDialog({
   const [step, setStep] = useState<'show' | 'write'>(
     screenshot ? 'show' : 'write',
   )
-  const [strokes, setStrokes] = useState<Stroke[]>([])
   const [isScreenshotIncluded, setIsScreenshotIncluded] = useState(true)
   const [isContactOpen, setIsContactOpen] = useState(false)
   const { state, submit } = useSubmitFeatureRequest()
@@ -118,11 +127,14 @@ export function RequestFeatureDialog({
               <ScreenshotStep
                 screenshot={screenshot}
                 strokes={strokes}
-                onStrokesChange={setStrokes}
+                onStrokesChange={onStrokesChange}
                 element={element}
                 isIncluded={isScreenshotIncluded}
                 onIncludedChange={setIsScreenshotIncluded}
                 onPickElement={onPickElement}
+                onRoam={onRoam}
+                onCaptureDisplay={onCaptureDisplay}
+                hasCaptureError={hasCaptureError}
               />
             ) : (
               <WriteStep

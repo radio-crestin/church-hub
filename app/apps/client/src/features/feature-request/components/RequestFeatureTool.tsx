@@ -5,20 +5,25 @@ import { useTranslation } from 'react-i18next'
 import { ElementPicker } from './ElementPicker'
 import { RequestFeatureDialog } from './RequestFeatureDialog'
 import type { RequestFeatureValues } from './RequestFeatureFields'
+import { RoamingBar } from './RoamingBar'
 import { getSavedEmail } from '../services/savedEmail'
-import type { PickedElement } from '../types'
+import type { PickedElement, Stroke } from '../types'
+import { captureDisplay } from '../utils/captureDisplay'
 import { captureScreenshot } from '../utils/captureScreenshot'
 import { describePickedElement } from '../utils/describePickedElement'
 import { FEATURE_REQUEST_UI_ATTRIBUTE } from '../utils/isFeatureRequestUi'
 
+/** The picture the request is about, and the element it points at, if any. */
+interface Shot {
+  element: PickedElement | null
+  screenshot: HTMLCanvasElement | null
+}
+
 type Step =
   | { kind: 'capturing'; target: Element | null }
   | { kind: 'picking' }
-  | {
-      kind: 'editing'
-      element: PickedElement | null
-      screenshot: HTMLCanvasElement | null
-    }
+  | { kind: 'roaming' }
+  | { kind: 'editing' }
 
 interface RequestFeatureToolProps {
   onClose: () => void
@@ -41,21 +46,28 @@ async function takeScreenshot(
 /**
  * "Request a feature", screenshot first: opening it photographs the screen
  * right away, then a short two-step flow lets the user draw on it (optional)
- * and write the request. Pointing at one part of the app is still possible
- * from the first step. Mount it only while open; unmounting resets it all.
+ * and write the request. From the first step the screenshot can be retaken:
+ * pointing at one part of the app, on another page of the app, or on any
+ * other screen or window. Mount it only while open; unmounting resets it all.
  */
 export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
   const { t } = useTranslation()
-  const [step, setStep] = useState<Step>({
-    kind: 'capturing',
-    target: null,
-  })
-  // Kept here so "point at a part" does not lose what was already typed.
+  const [step, setStep] = useState<Step>({ kind: 'capturing', target: null })
+  const [shot, setShot] = useState<Shot>({ element: null, screenshot: null })
+  const [strokes, setStrokes] = useState<Stroke[]>([])
+  const [captureError, setCaptureError] = useState(false)
+  // Kept here so retaking the screenshot does not lose what was typed.
   const [values, setValues] = useState<RequestFeatureValues>(() => ({
     title: '',
     notes: '',
     email: getSavedEmail(),
   }))
+
+  const showNewShot = (next: Shot) => {
+    setShot(next)
+    setStrokes([])
+    setStep({ kind: 'editing' })
+  }
 
   useEffect(() => {
     if (step.kind !== 'capturing') return
@@ -64,12 +76,24 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
     void takeScreenshot(target).then((screenshot) => {
       if (isCancelled) return
       const element = target ? describePickedElement(target) : null
-      setStep({ kind: 'editing', element, screenshot })
+      showNewShot({ element, screenshot })
     })
     return () => {
       isCancelled = true
     }
   }, [step])
+
+  const handleCaptureDisplay = async () => {
+    setCaptureError(false)
+    try {
+      const screenshot = await captureDisplay()
+      if (screenshot) showNewShot({ element: null, screenshot })
+    } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: surface the cause for support
+      console.error('[feature-request] display capture failed', error)
+      setCaptureError(true)
+    }
+  }
 
   if (step.kind === 'picking') {
     return (
@@ -80,7 +104,16 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
     )
   }
 
-  if (step.kind !== 'editing') {
+  if (step.kind === 'roaming') {
+    return (
+      <RoamingBar
+        onTake={() => setStep({ kind: 'capturing', target: null })}
+        onCancel={() => setStep({ kind: 'editing' })}
+      />
+    )
+  }
+
+  if (step.kind === 'capturing') {
     return (
       <div
         {...{ [FEATURE_REQUEST_UI_ATTRIBUTE]: '' }}
@@ -97,11 +130,16 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
 
   return (
     <RequestFeatureDialog
-      element={step.element}
-      screenshot={step.screenshot}
+      element={shot.element}
+      screenshot={shot.screenshot}
+      strokes={strokes}
+      onStrokesChange={setStrokes}
       values={values}
       onValuesChange={setValues}
       onPickElement={() => setStep({ kind: 'picking' })}
+      onRoam={() => setStep({ kind: 'roaming' })}
+      onCaptureDisplay={handleCaptureDisplay}
+      hasCaptureError={captureError}
       onClose={onClose}
     />
   )

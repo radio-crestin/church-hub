@@ -1,10 +1,11 @@
-import { Crosshair, ImageOff } from 'lucide-react'
+import { Crosshair, ImageOff, Monitor, MoveRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { DrawHint } from './DrawHint'
 import { IncludeScreenshotToggle } from './IncludeScreenshotToggle'
 import { ScreenshotAnnotator } from './ScreenshotAnnotator'
 import type { PickedElement, Stroke } from '../types'
+import { canCaptureDisplay } from '../utils/captureDisplay'
 
 interface ScreenshotStepProps {
   screenshot: HTMLCanvasElement
@@ -14,7 +15,13 @@ interface ScreenshotStepProps {
   isIncluded: boolean
   onIncludedChange: (isIncluded: boolean) => void
   onPickElement: () => void
+  onRoam: () => void
+  onCaptureDisplay: () => void
+  hasCaptureError: boolean
 }
+
+const retakeButton =
+  'flex items-center gap-1 px-2 py-1.5 font-medium rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors'
 
 /** Step 1: the screenshot, big, with a nudge to draw where the idea belongs. */
 export function ScreenshotStep({
@@ -25,6 +32,9 @@ export function ScreenshotStep({
   isIncluded,
   onIncludedChange,
   onPickElement,
+  onRoam,
+  onCaptureDisplay,
+  hasCaptureError,
 }: ScreenshotStepProps) {
   const { t } = useTranslation()
   return (
@@ -54,16 +64,46 @@ export function ScreenshotStep({
         checked={isIncluded}
         onChange={onIncludedChange}
       />
-      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-        <button
-          type="button"
-          data-testid="feature-request-pick-element"
-          onClick={onPickElement}
-          className="flex items-center gap-1 px-2 py-1.5 font-medium rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-        >
-          <Crosshair size={14} />
-          {t('common:featureRequest.pickElement')}
-        </button>
+      <div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
+        <span className="font-medium">
+          {t('common:featureRequest.retakeTitle')}
+        </span>
+        <div className="flex flex-wrap items-center gap-1">
+          <button
+            type="button"
+            data-testid="feature-request-pick-element"
+            onClick={onPickElement}
+            className={retakeButton}
+          >
+            <Crosshair size={14} />
+            {t('common:featureRequest.pickElement')}
+          </button>
+          <button
+            type="button"
+            data-testid="feature-request-roam"
+            onClick={onRoam}
+            className={retakeButton}
+          >
+            <MoveRight size={14} />
+            {t('common:featureRequest.otherPage')}
+          </button>
+          {canCaptureDisplay() && (
+            <button
+              type="button"
+              data-testid="feature-request-capture-display"
+              onClick={onCaptureDisplay}
+              className={retakeButton}
+            >
+              <Monitor size={14} />
+              {t('common:featureRequest.otherScreen')}
+            </button>
+          )}
+        </div>
+        {hasCaptureError && (
+          <p role="alert" className="text-red-600 dark:text-red-400">
+            {t('common:featureRequest.captureError')}
+          </p>
+        )}
         <span data-testid="feature-request-element-label">
           {element
             ? `${t('common:featureRequest.selectedElement')}: ${element.label}`
