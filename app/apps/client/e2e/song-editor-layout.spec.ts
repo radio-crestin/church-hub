@@ -1,8 +1,11 @@
 import { expect, type Page, test } from '@playwright/test'
 
+import { selectAction } from './helpers/actions-menu'
+
 /**
  * The song editor (opened from the song page's top-right corner):
- *  - no Programe panel, the slide rail sits on the right of the form,
+ *  - no Programe panel, the slide rail sits on the right of the form and can be
+ *    resized and moved like the song page's panels,
  *  - the title row stays fixed at the top while the page scrolls,
  *  - "Editează ca text" switches the Slides section to text in place.
  */
@@ -43,23 +46,114 @@ test.describe('Song editor layout', () => {
       await page.setViewportSize({ width: 1600, height: 900 })
       await openEditor(page, song.id)
 
-      // The Programe panel used to be a second aside; only the rail is left.
-      await expect(page.locator('main aside')).toHaveCount(1)
+      // Only the form and the rail are panels; Programe is gone.
+      await expect(
+        page.locator('[data-testid^="workspace-panel-"]'),
+      ).toHaveCount(2)
       await expect(
         page.locator('main').getByText('Programe', { exact: true }),
       ).toHaveCount(0)
 
-      const rail = page.getByTestId('song-editor-slide-rail')
+      const rail = page.getByTestId('workspace-panel-rail')
       await expect(rail).toBeVisible()
+      await expect(page.getByTestId('song-editor-slide-rail')).toBeVisible()
       const railBox = await rail.boundingBox()
       const formBox = await page
-        .getByRole('button', { name: 'Editează ca text' })
+        .getByTestId('workspace-panel-form')
         .boundingBox()
       expect(railBox).not.toBeNull()
       expect(formBox).not.toBeNull()
       if (!railBox || !formBox) return
-      expect(railBox.x).toBeGreaterThan(formBox.x + formBox.width)
+      expect(railBox.x).toBeGreaterThanOrEqual(formBox.x + formBox.width - 2)
       expect(railBox.x + railBox.width).toBeLessThanOrEqual(1600)
+    } finally {
+      await request.delete(`/api/songs/${song.id}`)
+    }
+  })
+
+  test('the rail can be resized and the width is remembered', async ({
+    page,
+    request,
+  }) => {
+    const song = await createLongSong(request)
+    try {
+      await page.setViewportSize({ width: 1600, height: 900 })
+      await openEditor(page, song.id)
+
+      const rail = page.getByTestId('workspace-panel-rail')
+      const before = await rail.boundingBox()
+      const handle = await page
+        .locator('[role="separator"]')
+        .first()
+        .boundingBox()
+      expect(before).not.toBeNull()
+      expect(handle).not.toBeNull()
+      if (!before || !handle) return
+      const x = handle.x + handle.width / 2
+      const y = handle.y + handle.height / 2
+      await page.mouse.move(x, y)
+      await page.mouse.down()
+      await page.mouse.move(x - 150, y, { steps: 20 })
+      await page.mouse.up()
+
+      const widened = await rail.boundingBox()
+      expect(widened?.width ?? 0).toBeGreaterThan(before.width + 80)
+
+      await page.reload()
+      await expect(rail).toBeVisible()
+      const restored = await rail.boundingBox()
+      expect(
+        Math.abs((restored?.width ?? 0) - (widened?.width ?? 0)),
+      ).toBeLessThan(12)
+    } finally {
+      await request.delete(`/api/songs/${song.id}`)
+    }
+  })
+
+  test('Edit layout lets the rail move next to the form, and the move sticks', async ({
+    page,
+    request,
+  }) => {
+    const song = await createLongSong(request)
+    try {
+      await page.setViewportSize({ width: 1600, height: 900 })
+      await openEditor(page, song.id)
+
+      await selectAction(
+        page,
+        'song-editor-actions-menu',
+        'workspace-edit-layout',
+      )
+      const grip = await page.getByTestId('workspace-move-rail').boundingBox()
+      const form = await page.getByTestId('workspace-panel-form').boundingBox()
+      expect(grip).not.toBeNull()
+      expect(form).not.toBeNull()
+      if (!grip || !form) return
+
+      // Onto the form's left edge: the rail goes before the form.
+      await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(form.x + 12, form.y + form.height / 2, {
+        steps: 25,
+      })
+      await page.mouse.move(form.x + 10, form.y + form.height / 2, { steps: 5 })
+      await page.mouse.up()
+
+      await page.getByTestId('workspace-done-editing').click()
+      const isBeforeForm = async () => {
+        const rail = await page
+          .getByTestId('workspace-panel-rail')
+          .boundingBox()
+        const form = await page
+          .getByTestId('workspace-panel-form')
+          .boundingBox()
+        return !!rail && !!form && (rail.x < form.x - 2 || rail.y < form.y - 2)
+      }
+      expect(await isBeforeForm()).toBe(true)
+
+      await page.reload()
+      await expect(page.getByTestId('workspace-panel-rail')).toBeVisible()
+      expect(await isBeforeForm()).toBe(true)
     } finally {
       await request.delete(`/api/songs/${song.id}`)
     }

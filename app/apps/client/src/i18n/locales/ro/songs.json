@@ -27,6 +27,7 @@
     "slideNumber": "Slide {{number}}",
     "emptySlide": "Slide gol - click pentru a edita",
     "noSlides": "Nu există slide-uri încă",
+    "formPanel": "Formular cântare",
     "saveFirst": "Salvează cântarea pentru a adăuga slide-uri",
     "undo": "Anulează",
     "redo": "Refă",

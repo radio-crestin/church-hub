@@ -27,6 +27,7 @@
     "slideNumber": "Slide {{number}}",
     "emptySlide": "Empty slide - click to edit",
     "noSlides": "No slides yet",
+    "formPanel": "Song form",
     "saveFirst": "Save the song to add slides",
     "undo": "Undo",
     "redo": "Redo",
