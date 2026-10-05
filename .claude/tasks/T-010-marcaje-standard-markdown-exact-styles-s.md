@@ -38,3 +38,4 @@ Also touched (told song-editor): slide-style-overrides spec, a race that now wai
 Commits: 862b43c5, 59ece107, ca750976, 6f6d0c91 (merge main), 07328ccf.
 - 2026-10-05: 2026-10-05 build at the current head 07328cc: https://github.com/radio-crestin/church-hub/releases/download/pr-build-104/church-hub-macos-arm64-pr-104-07328cc.dmg · https://github.com/radio-crestin/church-hub/releases/download/pr-build-104/church-hub-windows-x64-pr-104-07328cc.exe · https://github.com/radio-crestin/church-hub/releases/download/pr-build-104/church-hub-linux-x64-pr-104-07328cc.AppImage
 - 2026-10-05: Closed by the user. Marcaje stored/exported/imported as standard Markdown with exact styles; marks anchored to verse words (projector underline fix). PR #104 conflicted with main at close time; merging after the rebase.
+- 2026-10-05: PR #104 merged as 5a4341c7 after the rebase on main (build b6ceb5a7, Romanian via Codex).
