@@ -37,6 +37,7 @@ import { seedDefaultScreens } from './seed-screens'
 import { seedAppSettings } from './seed-settings'
 import { seedSongCategories } from './seed-song-categories'
 import { seedSongs } from './seed-songs'
+import { stripSongFormattingTags } from './strip-song-formatting-tags'
 import type { Database } from 'bun:sqlite'
 import { type BootStep, setBootStep } from '../../utils/bootState'
 import { reportError } from '../../utils/reportError'
@@ -400,6 +401,15 @@ export function runMigrations(
   // change-tracking triggers. Must run LAST so seeded rows get their uuid
   // backfilled without being marked as dirty local edits.
   runStep('add_sync', 'Running add sync migration', () => addSync(rawDb))
+
+  // Strip <i>, <b> and similar formatting tags from every song. After
+  // add_sync on purpose: the cleaned songs are queued for the library sync,
+  // so the cloud copy and the other devices get the clean text too.
+  runStep(
+    'strip_song_formatting_tags',
+    'Running strip song formatting tags migration',
+    () => stripSongFormattingTags(rawDb),
+  )
 
   return { ftsRecreated: ftsCreated }
 }
