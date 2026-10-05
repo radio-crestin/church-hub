@@ -45,10 +45,15 @@ describe('fetcher', () => {
     return mod.fetcher
   }
 
-  function mockFetchResponse(data: unknown, status = 200) {
+  function mockFetchResponse(
+    data: unknown,
+    status = 200,
+    headers: Record<string, string> = {},
+  ) {
     fetchSpy.mockResolvedValue({
       ok: status >= 200 && status < 300,
       status,
+      headers: new Headers(headers),
       json: () => Promise.resolve(data),
     })
   }

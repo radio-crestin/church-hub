@@ -1,6 +1,7 @@
 import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
 import { isMobile } from '~/config'
+import { trackServerDatabase } from '~/features/server-identity/utils/trackServerDatabase'
 import { getStoredApiUrl } from '~/service/api-url'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
 import { createLogger } from '~/utils/logger'
@@ -93,6 +94,9 @@ export async function fetchJsonWithStatus<T>(
     })
 
     const duration = performance.now() - startTime
+
+    // Another Church Hub answered: the window reloads; never use its answer.
+    if (trackServerDatabase(res)) return new Promise(() => {})
 
     if (!res.ok) {
       logger.warn(
