@@ -16,8 +16,11 @@ pub struct ZoomState {
 
 #[tauri::command]
 pub fn get_server_config(app_state: tauri::State<AppState>) -> Result<ServerConfig, String> {
+    // Dev builds use the dev server, never a sidecar: it is never "stopped".
+    let server_stopped = cfg!(not(debug_assertions)) && app_state.server.lock().is_none();
     let server_config = ServerConfig {
         server_port: app_state.server_port,
+        server_stopped,
     };
     Ok(server_config)
 }
