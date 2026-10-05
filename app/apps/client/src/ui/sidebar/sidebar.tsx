@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
+import { useSidebarCollapsed } from './use-sidebar-collapsed'
 import { UpdateNotification } from '../../features/app-update'
 import { CurrentUserButton } from '../../features/auth'
 import { RequestFeatureTool } from '../../features/feature-request'
@@ -34,8 +35,6 @@ import type {
 import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
 
-const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
-
 interface SidebarProps {
   isMobileMenuOpen?: boolean
   onMobileMenuChange?: (open: boolean) => void
@@ -45,10 +44,7 @@ export function Sidebar({
   isMobileMenuOpen: externalMobileMenuOpen,
   onMobileMenuChange,
 }: SidebarProps = {}) {
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
-    return saved !== null ? saved === 'true' : true // Default to collapsed
-  })
+  const { isCollapsed, toggleCollapsed } = useSidebarCollapsed()
   const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false)
   const isMobileMenuOpen = externalMobileMenuOpen ?? internalMobileMenuOpen
   const setIsMobileMenuOpen = onMobileMenuChange ?? setInternalMobileMenuOpen
@@ -235,11 +231,6 @@ export function Sidebar({
     }
   }, [isMobileMenuOpen])
 
-  // Persist sidebar collapsed state to localStorage
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isCollapsed))
-  }, [isCollapsed])
-
   // Update webview bounds when sidebar collapses/expands
   useEffect(() => {
     // Small delay to let the CSS transition complete
@@ -262,6 +253,8 @@ export function Sidebar({
 
       {/* Sidebar - Desktop always visible, Mobile slide-in */}
       <aside
+        data-testid="main-sidebar"
+        data-collapsed={isCollapsed}
         className={`
           fixed md:relative z-50 md:z-auto
           flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
@@ -408,7 +401,8 @@ export function Sidebar({
         <div className="p-3 border-t border-gray-200 dark:border-gray-800">
           {/* Desktop-only collapse button */}
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={toggleCollapsed}
+            data-testid="sidebar-collapse-toggle"
             className="hidden md:flex w-full items-center gap-3 px-4 py-3 rounded-lg
               text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
               transition-colors"

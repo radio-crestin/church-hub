@@ -12,9 +12,9 @@ export function SidebarHeader({ isCollapsed }: SidebarHeaderProps) {
         style={{ width: isCollapsed ? 32 : 40, height: isCollapsed ? 32 : 40 }}
       />
       {!isCollapsed && (
-        <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+        <span className="text-lg font-bold text-gray-900 dark:text-white">
           Church Hub
-        </h1>
+        </span>
       )}
     </div>
   )
