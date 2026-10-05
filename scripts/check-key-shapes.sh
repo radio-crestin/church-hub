@@ -1,6 +1,6 @@
 #!/bin/sh
 # Finds API-key-shaped strings that gitleaks can miss.
-# Used by CI (secret-scan.yml) and by .githooks/pre-commit without gitleaks.
+# Used by .githooks/pre-commit (staged lines, after gitleaks); run by hand for the whole repo.
 #
 #   scripts/check-key-shapes.sh           every tracked file, binaries too
 #                                         (SQLite DBs, archives stored raw)
