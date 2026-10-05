@@ -82,7 +82,7 @@ function bibleConfig(layout: ScreenLayout) {
     referenceText: textElement(layout.reference, referenceStyle(layout)),
     contentText: textElement(
       layout.scripture,
-      { bold: true, lineHeight: 1.25, shadow: layout.shadow },
+      { bold: true, lineHeight: 1.3, shadow: layout.shadow },
       { padding: 20 },
     ),
     clockEnabled: layout.clockWithContent,
@@ -99,7 +99,7 @@ function announcementConfig(layout: ScreenLayout) {
       {
         fontFamily: FONTS.title,
         bold: true,
-        lineHeight: 1.25,
+        lineHeight: 1.3,
         shadow: layout.shadow,
       },
       { padding: 20 },
@@ -120,7 +120,7 @@ function verseteTineriConfig(layout: ScreenLayout) {
     referenceText: textElement(layout.youthReference, referenceStyle(layout)),
     contentText: textElement(
       layout.youthScripture,
-      { bold: true, lineHeight: 1.25, shadow: layout.shadow },
+      { bold: true, lineHeight: 1.3, shadow: layout.shadow },
       { padding: 20 },
     ),
     clockEnabled: layout.clockWithContent,

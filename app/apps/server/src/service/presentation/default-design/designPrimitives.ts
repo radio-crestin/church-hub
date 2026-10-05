@@ -73,7 +73,7 @@ export function textStyle(overrides: Record<string, unknown> = {}) {
     underline: false,
     alignment: 'center',
     verticalAlignment: 'middle',
-    lineHeight: 1.2,
+    lineHeight: 1.3,
     shadow: false,
     compressLines: false,
     lineSeparator: 'space',
