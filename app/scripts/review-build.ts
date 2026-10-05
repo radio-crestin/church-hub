@@ -6,31 +6,34 @@
  * reviewer opens (installers for other platforms only on request:
  * pr-build.yml); worktree-cleanup.ts deletes it once the task is merged.
  *
- * It never meets the user's real Church Hub:
+ * Fast, and several at once: the Rust shell is compiled once and reused
+ * (review-shell.ts); each review build only builds the task's web client and
+ * sidecar (seconds) and puts them next to a copy of the shell. Rust compiles
+ * only when the task changed app/tauri or app/tauri-plugins.
+ *
+ * It never meets the user's real Church Hub; its `review-build.json`
+ * (read by tauri/src/review.rs) gives it:
  *   - its own port, 4100 + task number (not 3000/3001, not the e2e port 3100 + n:
  *     the app kills whatever holds its port at start),
  *   - its own data folder, `.review-build/<task id>/data` (database, logs, backups),
  *   - its own bundle identifier, so a running Church Hub (single instance)
  *     and its window state, settings and web storage stay apart,
  *   - no updater: an update would replace it with the real release.
- * The port and folder are baked in at compile time (CHURCH_HUB_SERVER_PORT,
- * CHURCH_HUB_DATA_DIR); a branch without those hooks is refused.
- *
- * One build at a time: worktrees share the main checkout's Cargo target dir.
  *
  * Usage, from anywhere inside the checkout (run worktree-setup.ts first):
  *   bun app/scripts/review-build.ts T-023 [--out <dir>]
- * --out puts the app (and its data, baked in) elsewhere, e.g. in the task
- * owner's worktree when building that branch from another checkout.
+ * --out puts the app (and its data) elsewhere.
  *
- * Cross-platform: the .app on macOS, the AppImage on Linux, the NSIS
- * installer on Windows.
+ * Cross-platform, laid out as Tauri's installers do, so it finds its
+ * resources and sidecar: macOS `church-hub-T-023.app`; Windows a folder with
+ * `church-hub.exe` and the resources beside it; Linux a folder with
+ * `usr/bin/church-hub` and `usr/lib/church-hub/`.
  */
 
-import { spawnSync } from 'node:child_process'
 import {
+  constants,
+  copyFileSync,
   cpSync,
-  existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -42,9 +45,9 @@ import {
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { ensureShell, SHELL_BINARY, shellEntry } from './review-shell'
 import {
   mainCheckoutRoot,
-  portFor,
   reviewIdentifier,
   reviewPortFor,
   run,
@@ -54,211 +57,170 @@ import {
 const USAGE =
   'usage: bun app/scripts/review-build.ts <task id, e.g. T-023> [--out <dir>]'
 const REVIEW_DIR = '.review-build'
-const LOCK_WAIT_MS = 30 * 60 * 1000
-
-const BUNDLES: Record<string, { bundle: string; folder: string; ext: string }> =
-  {
-    darwin: { bundle: 'app', folder: 'macos', ext: '.app' },
-    linux: { bundle: 'appimage', folder: 'appimage', ext: '.AppImage' },
-    win32: { bundle: 'nsis', folder: 'nsis', ext: '-setup.exe' },
-  }
+const SIDECAR = 'church-hub-sidecar'
+const CLIENT_DIST = 'client-dist'
 
 function parseArgs() {
   const taskId = process.argv[2]
-  const e2ePort = portFor(taskId, USAGE)
+  const port = reviewPortFor(taskId, USAGE)
   const outFlag = process.argv.indexOf('--out')
   const root = realpathSync(
     run('git', ['rev-parse', '--show-toplevel'], process.cwd()),
   )
+  const reviewRoot = join(mainCheckoutRoot(root), REVIEW_DIR)
   const out =
     outFlag > 0
       ? resolve(process.argv[outFlag + 1])
-      : join(mainCheckoutRoot(root), REVIEW_DIR, taskId.toUpperCase())
-  return {
-    taskId: taskId.toUpperCase(),
-    e2ePort,
-    port: reviewPortFor(taskId, USAGE),
-    root,
-    out,
-  }
+      : join(reviewRoot, taskId.toUpperCase())
+  return { taskId: taskId.toUpperCase(), port, root, reviewRoot, out }
 }
 
-/** The build must carry the port and data-dir hooks, or it would use 3000 and the real data. */
-function checkHooks(app: string) {
-  const shell = readFileSync(join(app, 'tauri', 'src', 'lib.rs'), 'utf8')
-  const paths = readFileSync(
-    join(app, 'apps', 'server', 'src', 'utils', 'paths.ts'),
-    'utf8',
-  )
-  if (
-    !shell.includes('CHURCH_HUB_SERVER_PORT') ||
-    !paths.includes('CHURCH_HUB_DATA_DIR')
-  ) {
+/** Without the review shell this branch's app would use port 3000 and the real data. */
+function checkShellSupport(app: string) {
+  const manifest = readFileSync(join(app, 'tauri', 'Cargo.toml'), 'utf8')
+  if (!manifest.includes('review-shell')) {
     throw new Error(
-      'this branch predates review builds (no CHURCH_HUB_SERVER_PORT/CHURCH_HUB_DATA_DIR hooks): rebase it on main first',
+      'this branch predates the shared review shell (no `review-shell` feature in app/tauri/Cargo.toml): rebase it on main first',
     )
   }
-  return 'port and data-dir hooks present'
+  return 'review-shell feature present'
 }
 
-function cargoTargetDir(app: string) {
-  const config = join(app, 'tauri', '.cargo', 'config.toml')
-  const shared = existsSync(config)
-    ? readFileSync(config, 'utf8').match(/target-dir\s*=\s*(".*")/)?.[1]
-    : undefined
-  return shared ? (JSON.parse(shared) as string) : join(app, 'tauri', 'target')
-}
-
-function isAlive(pid: number) {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch {
-    return false
-  }
-}
-
-/** Who holds the lock: its pid, or null while the holder is still writing it. */
-function lockHolder(lock: string): number | null {
-  try {
-    return Number(readFileSync(join(lock, 'pid'), 'utf8')) || null
-  } catch {
-    return null
-  }
-}
-
-/** A pid-less lock older than a minute: its holder died before writing the pid. */
-function isAbandoned(lock: string) {
-  try {
-    return Date.now() - statSync(lock).mtimeMs > 60_000
-  } catch {
-    return false
-  }
-}
-
-/**
- * A lock folder in the Cargo target dir. A lock whose holder died (dead pid,
- * or no pid written for a minute) is taken over; any other is waited for.
- */
-function acquireLock(targetDir: string) {
-  const lock = join(targetDir, '.review-build.lock')
-  const started = Date.now()
-  mkdirSync(targetDir, { recursive: true })
-  while (true) {
-    try {
-      mkdirSync(lock)
-      writeFileSync(join(lock, 'pid'), String(process.pid))
-      process.on('exit', () => rmSync(lock, { recursive: true, force: true }))
-      return lock
-    } catch {
-      const holder = lockHolder(lock)
-      const dead = holder ? !isAlive(holder) : isAbandoned(lock)
-      if (dead) {
-        rmSync(lock, { recursive: true, force: true })
-        continue
-      }
-      if (Date.now() - started > LOCK_WAIT_MS) {
-        throw new Error(`another review build holds ${lock}`)
-      }
-      Bun.sleepSync(5000)
+/** Where things go inside the review app: Tauri's installed layout per OS. */
+function layoutOf(out: string, name: string) {
+  if (process.platform === 'darwin') {
+    const app = join(out, `${name}.app`)
+    const resources = join(app, 'Contents', 'Resources')
+    return {
+      app,
+      exeDir: join(app, 'Contents', 'MacOS'),
+      resources,
+      settingsDir: resources,
+      open: app,
     }
   }
+  const app = join(out, name)
+  if (process.platform === 'win32') {
+    return {
+      app,
+      exeDir: app,
+      resources: app,
+      settingsDir: app,
+      open: join(app, SHELL_BINARY),
+    }
+  }
+  const exeDir = join(app, 'usr', 'bin')
+  return {
+    app,
+    exeDir,
+    resources: join(app, 'usr', 'lib', 'church-hub'),
+    settingsDir: exeDir,
+    open: join(exeDir, SHELL_BINARY),
+  }
 }
 
-function writeConfig(app: string, taskId: string, out: string) {
-  const base = JSON.parse(
+type Layout = ReturnType<typeof layoutOf>
+
+function buildSidecar(app: string) {
+  run(process.execPath, ['run', '--filter', 'server', 'compile'], app)
+  return 'tauri/bin'
+}
+
+/** The task's own web client, built for the review port straight into the app. */
+function buildClient(app: string, port: number, outDir: string) {
+  run(
+    process.execPath,
+    ['x', 'vite', 'build', '--outDir', outDir, '--emptyOutDir'],
+    join(app, 'apps', 'client'),
+    {
+      ...process.env,
+      VITE_API_PORT: String(port),
+      VITE_SERVER_PORT: String(port),
+    },
+  )
+  return `talks to port ${port}`
+}
+
+function copyShell(shell: string, layout: Layout) {
+  rmSync(layout.app, { recursive: true, force: true })
+  if (process.platform === 'darwin') {
+    cpSync(join(shell, shellEntry()), layout.app, {
+      recursive: true,
+      verbatimSymlinks: true,
+    })
+  } else {
+    mkdirSync(layout.exeDir, { recursive: true })
+    copyFileSync(join(shell, SHELL_BINARY), join(layout.exeDir, SHELL_BINARY))
+  }
+  return layout.app
+}
+
+/** The newest compiled sidecar for this OS, named as Tauri's bundler names it. */
+function copySidecar(app: string, layout: Layout) {
+  const bin = join(app, 'tauri', 'bin')
+  const newest = readdirSync(bin)
+    .filter((file) => file.startsWith(`${SIDECAR}-`))
+    .sort(
+      (a, b) => statSync(join(bin, b)).mtimeMs - statSync(join(bin, a)).mtimeMs,
+    )[0]
+  if (!newest) throw new Error(`no ${SIDECAR}-* in ${bin}`)
+  const name = process.platform === 'win32' ? `${SIDECAR}.exe` : SIDECAR
+  copyFileSync(
+    join(bin, newest),
+    join(layout.exeDir, name),
+    constants.COPYFILE_FICLONE,
+  )
+  return newest
+}
+
+/** The task's bundle resources (tauri.conf.json), the web client aside. */
+function copyResources(app: string, layout: Layout) {
+  const conf = JSON.parse(
     readFileSync(join(app, 'tauri', 'tauri.conf.json'), 'utf8'),
   )
-  const config = {
-    productName: `church-hub-${taskId}`,
-    identifier: reviewIdentifier(taskId),
-    app: {
-      // A merge patch replaces arrays whole, so keep each window's settings.
-      windows: base.app.windows.map((window: { title?: string }) => ({
-        ...window,
-        title: `Church Hub ${taskId} (review build)`,
-      })),
-    },
-    bundle: { createUpdaterArtifacts: false },
-    plugins: {
-      updater: {
-        endpoints: ['https://127.0.0.1:9/review-builds-never-update'],
-      },
-    },
-  }
-  const file = join(out, 'tauri.review.conf.json')
-  writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`)
-  return file
-}
-
-function buildApp(
-  app: string,
-  configFile: string,
-  bundle: string,
-  env: NodeJS.ProcessEnv,
-) {
-  const result = spawnSync(
-    process.execPath,
-    ['x', 'tauri', 'build', '--bundles', bundle, '--config', configFile],
-    { cwd: app, env, stdio: 'inherit' },
+  const resources = conf.bundle.resources as Record<string, string>
+  const copied = Object.entries(resources).filter(
+    ([, target]) => target !== CLIENT_DIST,
   )
-  if (result.status !== 0)
-    throw new Error(`tauri build failed (exit ${result.status})`)
-  return undefined
+  for (const [source, target] of copied) {
+    cpSync(join(app, 'tauri', source), join(layout.resources, target), {
+      recursive: true,
+    })
+  }
+  return copied.map(([, target]) => target).join(', ')
 }
 
-function keepBuild(
-  targetDir: string,
-  platform: (typeof BUNDLES)[string],
-  out: string,
-  name: string,
+function writeSettings(
+  layout: Layout,
+  taskId: string,
+  port: number,
+  dataDir: string,
 ) {
-  const bundleDir = join(targetDir, 'release', 'bundle', platform.folder)
-  // macOS: church-hub-T-023.app; Linux/Windows add _<version>_<arch>.
-  const built = readdirSync(bundleDir)
-    .filter(
-      (file) =>
-        file.endsWith(platform.ext) &&
-        (file === `${name}${platform.ext}` || file.startsWith(`${name}_`)),
-    )
-    .sort(
-      (a, b) =>
-        statSync(join(bundleDir, b)).mtimeMs -
-        statSync(join(bundleDir, a)).mtimeMs,
-    )[0]
-  if (!built) throw new Error(`no ${name}*${platform.ext} in ${bundleDir}`)
-  const kept = join(out, built)
-  rmSync(kept, { recursive: true, force: true })
-  cpSync(join(bundleDir, built), kept, {
-    recursive: true,
-    verbatimSymlinks: true,
-  })
-  // The copy is the one to keep; the original would sit in the shared Cargo target for good.
-  rmSync(join(bundleDir, built), { recursive: true, force: true })
-  return kept
+  const settings = {
+    port,
+    dataDir,
+    identifier: reviewIdentifier(taskId),
+    title: `Church Hub ${taskId} (review build)`,
+    clientDist: join(layout.resources, CLIENT_DIST),
+  }
+  const file = join(layout.settingsDir, 'review-build.json')
+  writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`)
+  return `port ${port}, ${settings.identifier}`
 }
 
-/**
- * The tauri build rebuilt dist/ for the review port; put back the checkout's
- * own: a worktree's e2e port, or the main checkout's default (no baked port).
- */
-function restoreClient(app: string, clientPort: number | null) {
-  const {
-    VITE_API_PORT: _reviewApiPort,
-    VITE_SERVER_PORT: _reviewServerPort,
-    ...env
-  } = process.env
-  const ports = clientPort
-    ? {
-        VITE_API_PORT: String(clientPort),
-        VITE_SERVER_PORT: String(clientPort),
-      }
-    : {}
-  run(process.execPath, ['run', 'build'], join(app, 'apps', 'client'), {
-    ...env,
-    ...ports,
-  })
-  return `dist/ talks to port ${clientPort ?? 'default'} again`
+/** macOS reads the app's identity (web storage, single instance) from Info.plist. */
+function renameMacApp(layout: Layout, taskId: string, name: string) {
+  if (process.platform !== 'darwin') return 'not macOS'
+  const plist = join(layout.app, 'Contents', 'Info.plist')
+  const values: Record<string, string> = {
+    CFBundleIdentifier: reviewIdentifier(taskId),
+    CFBundleName: name,
+    CFBundleDisplayName: name,
+  }
+  for (const [key, value] of Object.entries(values)) {
+    run('plutil', ['-replace', key, '-string', value, plist], layout.app)
+  }
+  return reviewIdentifier(taskId)
 }
 
 function changedFiles(root: string) {
@@ -273,47 +235,43 @@ function restoreGenerated(root: string, before: Set<string>) {
   return generated.join(', ') || 'nothing'
 }
 
-const platform = BUNDLES[process.platform]
-if (!platform) throw new Error(`no review build for ${process.platform}`)
-const { taskId, e2ePort, port, root, out } = parseArgs()
+if (!['darwin', 'win32', 'linux'].includes(process.platform))
+  throw new Error(`no review build for ${process.platform}`)
+const { taskId, port, root, reviewRoot, out } = parseArgs()
 const app = join(root, 'app')
 const dataDir = join(out, 'data')
 const name = `church-hub-${taskId}`
-const isWorktree = root !== mainCheckoutRoot(root)
+const layout = layoutOf(out, name)
 const started = performance.now()
 
-step('hooks', () => checkHooks(app))
+step('review shell support', () => checkShellSupport(app))
 mkdirSync(dataDir, { recursive: true })
 // Ignored even on a branch whose .gitignore predates review builds.
 writeFileSync(join(out, '.gitignore'), '*\n')
-const targetDir = cargoTargetDir(app)
-step('build lock', () => acquireLock(targetDir))
-const configFile = writeConfig(app, taskId, out)
 const dirtyBefore = changedFiles(root)
-let kept = ''
 try {
-  step('tauri build', () =>
-    buildApp(app, configFile, platform.bundle, {
-      ...process.env,
-      CHURCH_HUB_SERVER_PORT: String(port),
-      CHURCH_HUB_DATA_DIR: dataDir,
-      VITE_API_PORT: String(port),
-      VITE_SERVER_PORT: String(port),
-    }),
-  )
-  step('kept', () => {
-    kept = keepBuild(targetDir, platform, out, name)
-    return kept
+  step('sidecar', () => buildSidecar(app))
+  let shell = ''
+  step('shell', () => {
+    const result = ensureShell(root, join(reviewRoot, '.shells'))
+    shell = result.shell
+    return `${result.built ? 'built' : 'reused'} ${result.key}`
   })
+  step('app copied', () => copyShell(shell, layout))
+  step('client', () =>
+    buildClient(app, port, join(layout.resources, CLIENT_DIST)),
+  )
+  step('sidecar copied', () => copySidecar(app, layout))
+  step('resources', () => copyResources(app, layout))
+  step('settings', () => writeSettings(layout, taskId, port, dataDir))
+  step('identity', () => renameMacApp(layout, taskId, name))
 } finally {
-  // Even when the build failed: no regenerated diff, no dist/ on the review port.
   step('restored generated files', () => restoreGenerated(root, dirtyBefore))
-  step('client', () => restoreClient(app, isWorktree ? e2ePort : null))
 }
 
-const minutes = ((performance.now() - started) / 60000).toFixed(1)
-const link = pathToFileURL(kept).href
+const seconds = ((performance.now() - started) / 1000).toFixed(0)
+const link = pathToFileURL(layout.open).href
 // biome-ignore lint/suspicious/noConsole: the script's result
 console.log(
-  `\n${taskId} review build (${minutes} min): ${kept}\nOpen: ${link}\nPort ${port}, data in ${dataDir}\nTask note: app: ${link}`,
+  `\n${taskId} review build (${seconds} s): ${layout.open}\nOpen: ${link}\nPort ${port}, data in ${dataDir}\nTask note: app: ${link}`,
 )
