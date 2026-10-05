@@ -95,7 +95,10 @@ test.describe('Program gama', () => {
     await expect(missingChip).toHaveAttribute('data-missing', 'true')
 
     await missingChip.click()
-    await page.locator('dialog[open] #keyLine').fill('Sol major')
+    await page
+      .locator('dialog[open]')
+      .getByTestId('key-line-input')
+      .fill('Sol major')
     await page.locator('dialog[open]').getByTestId('key-line-save').click()
 
     await expect(missingChip).toHaveText('Sol major')
@@ -131,7 +134,10 @@ test.describe('Program gama', () => {
     await expect(missingChip).toHaveAttribute('data-missing', 'true')
 
     await missingChip.click()
-    await page.locator('dialog[open] #keyLine').fill('La minor')
+    await page
+      .locator('dialog[open]')
+      .getByTestId('key-line-input')
+      .fill('La minor')
     await page.locator('dialog[open]').getByTestId('key-line-save').click()
 
     await expect(missingChip).toHaveText('La minor')

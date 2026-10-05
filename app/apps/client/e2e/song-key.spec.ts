@@ -43,7 +43,11 @@ test.describe('Setting a song key from the key button', () => {
     const newKey = `Zkey-${uniq}-B`
 
     const createRes = await request.post('/api/songs', {
-      data: { title, keyLine: oldKey, slides: [{ content: 'Line', sortOrder: 0 }] },
+      data: {
+        title,
+        keyLine: oldKey,
+        slides: [{ content: 'Line', sortOrder: 0 }],
+      },
     })
     expect(createRes.status()).toBe(201)
     const { data: song } = await createRes.json()
@@ -60,19 +64,17 @@ test.describe('Setting a song key from the key button', () => {
       await page.waitForLoadState('networkidle')
 
       // The bookmark row for this song shows the current key.
-      const row = page
-        .getByTestId('bookmark-item')
-        .filter({ hasText: title })
+      const row = page.getByTestId('bookmark-item').filter({ hasText: title })
       await expect(row.getByTestId('bookmark-key-line')).toHaveText(oldKey, {
         timeout: 10000,
       })
 
       // Change the key via the dedicated key button (not the edit form).
       await page.getByTestId('song-key-button').click()
-      const input = page.locator('#keyLine')
+      const input = page.locator('dialog[open]').getByTestId('key-line-input')
       await expect(input).toBeVisible({ timeout: 10000 })
       await input.fill(newKey)
-      await page.getByTestId('key-line-save').click()
+      await page.locator('dialog[open]').getByTestId('key-line-save').click()
 
       // The Marcaje panel must reflect the new key (regression: it kept the old).
       await expect(row.getByTestId('bookmark-key-line')).toHaveText(newKey, {

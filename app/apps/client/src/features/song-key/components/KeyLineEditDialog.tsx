@@ -3,6 +3,7 @@ import { ExternalLink, X } from 'lucide-react'
 import {
   forwardRef,
   useEffect,
+  useId,
   useImperativeHandle,
   useRef,
   useState,
@@ -23,6 +24,9 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
     const navigate = useNavigate()
     const dialogRef = useRef<HTMLDialogElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
+    // A page can mount several of these dialogs (song page + program panel),
+    // so the input id must be unique for the label to point at the right one.
+    const inputId = useId()
     const [song, setSong] = useState<Song | null>(null)
     const [keyLine, setKeyLine] = useState('')
     const [isOpen, setIsOpen] = useState(false)
@@ -165,14 +169,15 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
 
             <div>
               <label
-                htmlFor="keyLine"
+                htmlFor={inputId}
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 {t('dialog.keyLine')}
               </label>
               <input
                 ref={inputRef}
-                id="keyLine"
+                id={inputId}
+                data-testid="key-line-input"
                 type="text"
                 inputMode="text"
                 enterKeyHint="done"
