@@ -29,8 +29,8 @@ async function takeScreenshot(): Promise<HTMLCanvasElement | null> {
 }
 
 /**
- * "Request a feature": opening it photographs the screen, then two short
- * steps: mark up the screenshot, then say what the user would like. The screenshot can be retaken on
+ * "Feedback": opening it photographs the screen, then one short form: mark
+ * up the screenshot, say what the user would like. The screenshot can be retaken on
  * another page of the app or on any other screen or window, without losing
  * what was typed. Mount it only while open; unmounting resets it all.
  */

@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page, test } from '@playwright/test'
 
 /**
- * "Request a feature" is one screen: opening it photographs the screen; the
+ * "Feedback" (the request tool) is one screen: opening it photographs the screen; the
  * screenshot with an iPad-style markup bar is on top, an optional
  * description and an optional email below, then Send. There is no title.
  * The notes on the screenshot also go as text.
@@ -112,11 +112,13 @@ test.describe('Request a feature', () => {
     await openSongsPage(page)
 
     const trigger = page.getByTestId('sidebar-request-feature')
-    // The test app may run in English or Romanian.
-    await expect(trigger).toContainText(
-      /Request a feature|Propune o funcție nouă/,
-    )
+    // Named "Feedback" in English and Romanian alike.
+    await expect(trigger).toContainText('Feedback')
+    await expect(trigger).not.toContainText(/Propune|Request a feature/)
     const dialog = await openRequestFeature(page)
+    await expect(dialog.getByRole('heading', { level: 2 })).toHaveText(
+      'Feedback',
+    )
 
     // Markup on top with the pen ready; the description below has the focus.
     await expect(dialog.getByTestId('feature-request-notes')).toBeFocused()

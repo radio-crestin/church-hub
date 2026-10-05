@@ -50,7 +50,7 @@
     "toggleTheme": "Toggle theme"
   },
   "featureRequest": {
-    "title": "Request a feature",
+    "title": "Feedback",
     "capturing": "Taking a screenshot…",
     "notesLabel": "Describe your feature request or bug",
     "notesPlaceholder": "What would you like, or what went wrong?",
