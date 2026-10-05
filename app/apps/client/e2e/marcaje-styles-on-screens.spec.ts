@@ -7,9 +7,9 @@ import {
 
 /**
  * Marcaje styles are anchored to the verse text, not to what a screen draws
- * around it: a screen that puts the reference in front of the verse (the live
- * stream does by default) marks the same words as one that does not, and a
- * word underlined in such a preview is saved at the verse's own offsets.
+ * around it: a screen that puts the reference in front of the verse marks the
+ * same words as one that does not, and a word underlined in such a preview is
+ * saved at the verse's own offsets.
  *
  * Serial: these tests drive the one global presentation state.
  */
@@ -112,6 +112,7 @@ test.describe('Marcaje styles on every screen', () => {
     )
     expect(livestream, 'the default live stream screen exists').toBeTruthy()
 
+    await prependReferenceOn(page, livestream!.id)
     await page.goto(`/screen/${livestream!.id}`)
     // The live stream screen draws "(Ioan 3:16) Fiindcă ..."
     await expect(page.locator('[data-style-anchor]:visible')).toContainText(
