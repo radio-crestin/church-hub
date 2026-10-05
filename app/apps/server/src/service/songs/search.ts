@@ -62,6 +62,7 @@ function getSearchCacheKey(
     presentedOnly?: boolean
     inSchedulesOnly?: boolean
     hasKeyLine?: boolean
+    tagIds?: number[]
   },
 ): string {
   const categoryKey = categoryIds?.sort().join(',') ?? 'all'
@@ -69,10 +70,17 @@ function getSearchCacheKey(
     filters?.presentedOnly ? 'p' : '',
     filters?.inSchedulesOnly ? 's' : '',
     filters?.hasKeyLine ? 'k' : '',
+    filters?.tagIds?.length ? `t${[...filters.tagIds].sort().join('.')}` : '',
   ]
     .filter(Boolean)
     .join('')
   return `${query.toLowerCase().trim()}:${categoryKey}:${filterKey}`
+}
+
+/** SQL condition (one `?` per tag) matching songs that carry any of the tags. */
+function songHasAnyTagCondition(tagIds: number[]): string {
+  const placeholders = tagIds.map(() => '?').join(',')
+  return `s.id IN (SELECT song_id FROM song_tag_assignments WHERE tag_id IN (${placeholders}))`
 }
 
 function getFromSearchCache(key: string): SongSearchResult[] | null {
@@ -1224,6 +1232,7 @@ export function searchSongs(
     presentedOnly?: boolean
     inSchedulesOnly?: boolean
     hasKeyLine?: boolean
+    tagIds?: number[]
   },
 ): SongSearchResult[] {
   const limit = Math.min(Math.max(1, rawLimit), 200)
@@ -1258,6 +1267,10 @@ export function searchSongs(
       const placeholders = categoryIds.map(() => '?').join(',')
       prePhaseExtraConditions.push(`s.category_id IN (${placeholders})`)
       prePhaseCategoryParams.push(...categoryIds)
+    }
+    if (filters?.tagIds && filters.tagIds.length > 0) {
+      prePhaseExtraConditions.push(songHasAnyTagCondition(filters.tagIds))
+      prePhaseCategoryParams.push(...filters.tagIds)
     }
     if (filters?.presentedOnly) {
       prePhaseExtraConditions.push('s.presentation_count > 0')
@@ -1364,6 +1377,10 @@ export function searchSongs(
       const placeholders = categoryIds.map(() => '?').join(',')
       extraConditions.push(`s.category_id IN (${placeholders})`)
       categoryParams = categoryIds
+    }
+    if (filters?.tagIds && filters.tagIds.length > 0) {
+      extraConditions.push(songHasAnyTagCondition(filters.tagIds))
+      categoryParams = [...categoryParams, ...filters.tagIds]
     }
     if (filters?.presentedOnly) {
       extraConditions.push('s.presentation_count > 0')
