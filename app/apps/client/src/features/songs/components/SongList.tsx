@@ -5,13 +5,14 @@ import { useTranslation } from 'react-i18next'
 import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useSyncUpdatesMap } from '~/features/sync'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
-import { MultiSelectCombobox } from '~/ui/combobox'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { ClearSearchButton } from '~/ui/search'
 import { AlphabetSongScroller } from './AlphabetSongScroller'
 import { SongCard } from './SongCard'
+import { SongCategoryFilter } from './SongCategoryFilter'
 import type { SongFiltersState } from './SongFiltersDropdown'
 import { SongFiltersDropdown } from './SongFiltersDropdown'
+import { SongTagFilter } from './SongTagFilter'
 import { VirtualSongList } from './VirtualSongList'
 import {
   useAddBookmark,
@@ -358,6 +359,7 @@ export function SongList({
       presentedOnly: presentedOnly || undefined,
       inSchedulesOnly: inSchedulesOnly || undefined,
       hasKeyLine: hasKeyLine || undefined,
+      tagIds: tagIds.length > 0 ? tagIds : undefined,
     },
   )
 
@@ -1044,34 +1046,14 @@ export function SongList({
             className="hidden md:block"
             style={{ width: categoryDropdownWidth }}
           >
-            <MultiSelectCombobox
-              options={
-                visibleCategories?.map((category) => ({
-                  value: category.id,
-                  label: category.name,
-                })) ?? []
-              }
+            <SongCategoryFilter
               value={categoryIds}
               onChange={handleCategoryChange}
-              placeholder={t('search.allCategories')}
-              allSelectedLabel={t('search.allCategories')}
-              emptyMeansAll
             />
           </div>
           {(songTags?.length ?? 0) > 0 && (
             <div className="hidden md:block min-w-[140px]">
-              <MultiSelectCombobox
-                options={
-                  songTags?.map((tag) => ({
-                    value: tag.id,
-                    label: tag.name,
-                  })) ?? []
-                }
-                value={tagIds}
-                onChange={handleTagChange}
-                placeholder={t('tags.filterAll')}
-                allOptionLabel={t('tags.filterAll')}
-              />
+              <SongTagFilter value={tagIds} onChange={handleTagChange} />
             </div>
           )}
         </div>
