@@ -271,6 +271,19 @@ test.describe('API auth guards', () => {
   test('song history: an entry of another song cannot be restored', async ({
     request,
   }) => {
+    // The test database is shared by the whole suite: a song left behind
+    // (this run's or an earlier one's) would turn up in other specs' searches.
+    const SONG_PREFIX = 'Guard restore song'
+    const leftovers = (await (
+      await request.get(
+        `/api/songs/search?q=${encodeURIComponent(SONG_PREFIX)}`,
+      )
+    ).json()) as { data: { id: number; title: string }[] }
+    for (const song of leftovers.data) {
+      if (song.title.startsWith(SONG_PREFIX))
+        await request.delete(`/api/songs/${song.id}`)
+    }
+
     const create = async (title: string) => {
       const res = await request.post('/api/songs', {
         data: {
@@ -281,21 +294,27 @@ test.describe('API auth guards', () => {
       expect(res.ok()).toBe(true)
       return (await res.json()).data.id as number
     }
-    const songA = await create(`E2E Guard A ${Date.now()}`)
-    const songB = await create(`E2E Guard B ${Date.now()}`)
-    const historyOfA = (await (
-      await request.get(`/api/songs/${songA}/history`)
-    ).json()) as { data: { id: number }[] }
-    const entryOfA = historyOfA.data[0]!.id
+    const songA = await create(`${SONG_PREFIX} A`)
+    const songB = await create(`${SONG_PREFIX} B`)
+    try {
+      const historyOfA = (await (
+        await request.get(`/api/songs/${songA}/history`)
+      ).json()) as { data: { id: number }[] }
+      const entryOfA = historyOfA.data[0]!.id
 
-    const res = await request.post(
-      `/api/songs/${songB}/history/${entryOfA}/restore`,
-      { data: { side: 'after' } },
-    )
-    expect(res.ok()).toBe(false)
-    const songBAfter = (await (await request.get(`/api/songs/${songB}`)).json())
-      .data as { title: string }
-    expect(songBAfter.title).toContain('E2E Guard B')
+      const res = await request.post(
+        `/api/songs/${songB}/history/${entryOfA}/restore`,
+        { data: { side: 'after' } },
+      )
+      expect(res.ok()).toBe(false)
+      const songBAfter = (
+        await (await request.get(`/api/songs/${songB}`)).json()
+      ).data as { title: string }
+      expect(songBAfter.title).toBe(`${SONG_PREFIX} B`)
+    } finally {
+      await request.delete(`/api/songs/${songA}`)
+      await request.delete(`/api/songs/${songB}`)
+    }
   })
 
   test('the session cookie is HttpOnly and fits the engine and host', async ({

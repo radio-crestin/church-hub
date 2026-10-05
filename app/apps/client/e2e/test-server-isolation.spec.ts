@@ -38,7 +38,7 @@ test.describe('E2E test server isolation', () => {
     if (!process.env.TEST_PORT) {
       expect(['3000', '3001']).not.toContain(new URL(baseURL ?? '').port)
     }
-    expect(testInfo.config.webServer?.command).toContain(
+    expect(testInfo.config.webServer?.env?.DATABASE_PATH).toContain(
       'e2e/.test-data/app.db',
     )
     expect((await request.get('/ping')).ok()).toBe(true)
