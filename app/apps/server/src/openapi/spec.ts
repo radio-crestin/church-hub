@@ -55,7 +55,11 @@ export const openApiSpec = {
   servers: [
     {
       url: 'http://localhost:3000',
-      description: 'Local development server',
+      description: 'Installed app',
+    },
+    {
+      url: 'http://localhost:3001',
+      description: 'Development server (bun dev)',
     },
   ],
   tags: [

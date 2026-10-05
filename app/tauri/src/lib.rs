@@ -293,11 +293,12 @@ pub fn run() {
         println!("[startup] tauri_builder: {:?}", builder_start.elapsed());
         let setup_start = Instant::now();
 
-        // In dev the server runs on the port from `build.devUrl` (worktree
-        // configs override it, e.g. 3002) — hardcoding 3000 here would make
-        // `get_server_config` point the webview at the wrong server. In
-        // release the sidecar binds 3000, unless a local review build baked
-        // in its own port (app/scripts/review-build.ts).
+        // In dev the server runs on the port from `build.devUrl` (3001, so it
+        // never takes the installed app's 3000; worktree configs override it,
+        // e.g. 3002) — hardcoding a port here would make `get_server_config`
+        // point the webview at the wrong server. In release the sidecar binds
+        // 3000, unless a local review build baked in its own port
+        // (app/scripts/review-build.ts).
         #[cfg(debug_assertions)]
         let server_port: u16 = app
             .config()
@@ -305,7 +306,7 @@ pub fn run() {
             .dev_url
             .as_ref()
             .and_then(|url| url.port())
-            .unwrap_or(3000);
+            .unwrap_or(3001);
         #[cfg(not(debug_assertions))]
         let server_port: u16 = option_env!("CHURCH_HUB_SERVER_PORT")
             .and_then(|port| port.parse().ok())
