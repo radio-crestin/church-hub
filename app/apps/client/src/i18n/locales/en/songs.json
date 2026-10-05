@@ -210,7 +210,21 @@
     "dragToProgram": "Drag onto a program to add it",
     "filterAll": "All",
     "filterPending": "Pending",
-    "filterSung": "Sung"
+    "filterSung": "Sung",
+    "textEdit": {
+      "open": "Edit as text",
+      "title": "Edit Marcaje as text",
+      "description": "One song per line, in the Marcaje Markdown: \"## Title {#song-12}\" picks that exact song, a plain title finds the song by its name. Start a note with \">\". Saving makes the list exactly this text, in this order. An exported Marcaje file can be loaded too: its lyrics are skipped.",
+      "placeholder": "## Cât de mare ești {#song-12}\n> Final\nHar minunat",
+      "chooseFile": "Load a Markdown or text file",
+      "cancel": "Cancel",
+      "save": "Save",
+      "notSaved": "Nothing was saved. These songs were not found:",
+      "line": "Line {{line}}:",
+      "errors": {
+        "song_not_found": "no song with this title or id"
+      }
+    }
   },
   "noSongs": "No songs yet",
   "noSongsDescription": "Create your first song to get started",
