@@ -169,5 +169,21 @@ test.describe('Program gama', () => {
     ).toHaveText('Mi major', { timeout: 15000 })
     expect(await songKeyLine(request, f.withoutKey.id)).toBe('Mi major')
     expect(await songKeyLine(request, f.withKey.id)).toBe('Re major')
+
+    // Reopened, both the detailed and the plain view carry every gama.
+    await page
+      .getByRole('button', { name: /Edit as Text|Editeaza ca Text/ })
+      .click()
+    const reopened = page.locator('dialog[open]')
+    expect(await reopened.locator('textarea').inputValue()).toContain(
+      `${f.withoutKey.title} #${f.withoutKey.id} {Mi major}`,
+    )
+    await reopened
+      .getByRole('button', { name: /Plain View|Vizualizare Simpla/ })
+      .click()
+    const plain = reopened.locator('pre')
+    await expect(plain).toContainText(`${f.withKey.title} (Re major)`)
+    await expect(plain).toContainText(`${f.withoutKey.title} (Mi major)`)
+    await expect(plain).not.toContainText('#')
   })
 })
