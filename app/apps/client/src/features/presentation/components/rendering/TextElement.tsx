@@ -4,6 +4,7 @@ import { AnimatedElement } from './AnimatedElement'
 import { normalizeText } from './utils/normalizeText'
 import { calculatePixelBounds, getTextStyleCSS } from './utils/styleUtils'
 import { compressTextLinesWithFit } from './utils/textProcessing'
+import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type {
   PersonLabelConfig,
   ReferenceTextConfig,
@@ -107,6 +108,8 @@ interface FontCache {
   autoScale: boolean
   compressLines: boolean
   lineSeparator: string
+  /** Font, weight, slant and the fonts loaded so far: all change the fit. */
+  fontKey: string
   result: { fontSize: number; processedContent: string }
 }
 
@@ -164,6 +167,8 @@ export function TextElement({
   const autoScale = config.style.autoScale
   const compressLines = config.style.compressLines ?? false
   const lineSeparator = config.style.lineSeparator ?? 'space'
+  const fontsLoadedVersion = useFontsLoadedVersion()
+  const fontKey = `${config.style.fontFamily}|${config.style.bold}|${config.style.italic}|${fontsLoadedVersion}`
 
   // Check if we can use cached result
   const cache = cacheRef.current
@@ -176,7 +181,8 @@ export function TextElement({
     cache.minFontSize === minFontSize &&
     cache.autoScale === autoScale &&
     cache.compressLines === compressLines &&
-    cache.lineSeparator === lineSeparator
+    cache.lineSeparator === lineSeparator &&
+    cache.fontKey === fontKey
 
   // Get cached or default values for initial render
   let calculatedFontSize = canUseCache ? cache.result.fontSize : maxFontSize
@@ -214,6 +220,7 @@ export function TextElement({
       autoScale,
       compressLines,
       lineSeparator,
+      fontKey,
       result,
     }
 
@@ -235,6 +242,7 @@ export function TextElement({
     autoScale,
     compressLines,
     lineSeparator,
+    fontKey,
     scale,
     canUseCache,
   ])

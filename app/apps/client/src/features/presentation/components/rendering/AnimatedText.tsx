@@ -7,6 +7,7 @@ import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { compressLines } from './utils/textProcessing'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
+import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type {
   TextStyle,
   TextStyleRange,
@@ -176,6 +177,7 @@ const AnimatedTextInner = memo(function AnimatedText({
 }: AnimatedTextProps) {
   const textRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
+  const fontsLoadedVersion = useFontsLoadedVersion()
 
   // Normalize text content and apply line compression if enabled
   const normalizedText = useMemo(() => {
@@ -288,6 +290,8 @@ const AnimatedTextInner = memo(function AnimatedText({
     displayRanges,
     displayScale,
     shouldRender,
+    // A web font that finished loading measures differently from its fallback.
+    fontsLoadedVersion,
   ])
 
   if (!shouldRender) {
