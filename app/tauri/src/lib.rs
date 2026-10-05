@@ -3,6 +3,7 @@ pub mod domain;
 pub mod logging;
 pub mod posthog;
 pub mod report;
+pub mod review;
 
 // Desktop-only modules
 #[cfg(desktop)]
@@ -297,8 +298,8 @@ pub fn run() {
         // never takes the installed app's 3000; worktree configs override it,
         // e.g. 3002) — hardcoding a port here would make `get_server_config`
         // point the webview at the wrong server. In release the sidecar binds
-        // 3000, unless a local review build baked in its own port
-        // (app/scripts/review-build.ts).
+        // 3000, unless this is a local review build with its own port
+        // (review.rs, app/scripts/review-build.ts).
         #[cfg(debug_assertions)]
         let server_port: u16 = app
             .config()
@@ -308,9 +309,7 @@ pub fn run() {
             .and_then(|url| url.port())
             .unwrap_or(3001);
         #[cfg(not(debug_assertions))]
-        let server_port: u16 = option_env!("CHURCH_HUB_SERVER_PORT")
-            .and_then(|port| port.parse().ok())
-            .unwrap_or(3000);
+        let server_port: u16 = review::server_port().unwrap_or(3000);
 
         let t = Instant::now();
         let app_state = AppState {
@@ -582,8 +581,10 @@ pub fn run() {
     println!("[startup] builder_chain_setup: {:?}", builder_start.elapsed());
     let build_start = Instant::now();
 
+    let mut context = tauri::generate_context!();
+    review::apply(&mut context);
     let app = builder
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while running tauri application");
 
     println!("[startup] tauri_build: {:?}", build_start.elapsed());

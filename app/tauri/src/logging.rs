@@ -19,11 +19,11 @@ use std::sync::{Mutex, OnceLock};
 
 /// The per-user data directory, the same one the sidecar's `paths.ts`
 /// resolves: database, logs and the update marker all live under it.
-/// A local review build bakes in its own (app/scripts/review-build.ts), so
-/// testing it never touches the real church data.
+/// A local review build has its own (review.rs), so testing it never
+/// touches the real church data.
 pub fn data_dir() -> Option<PathBuf> {
-    if let Some(dir) = option_env!("CHURCH_HUB_DATA_DIR").filter(|dir| !dir.is_empty()) {
-        return Some(PathBuf::from(dir));
+    if let Some(dir) = crate::review::data_dir() {
+        return Some(dir);
     }
     let home = dirs::home_dir()?;
     let dir = if cfg!(target_os = "macos") {
