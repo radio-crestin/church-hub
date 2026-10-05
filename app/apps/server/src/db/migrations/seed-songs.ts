@@ -1,5 +1,8 @@
 import type { Database } from 'bun:sqlite'
-import defaultSongs from '../fixtures/default-songs.json'
+import defaultSongsFile from '../fixtures/default-songs.json' with {
+  type: 'file',
+}
+import { readFixtureFile } from '../fixtures/readFixtureFile'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -55,7 +58,7 @@ export function seedSongs(db: Database): void {
       return
     }
 
-    const songs = defaultSongs as SongFixture[]
+    const songs = readFixtureFile<SongFixture[]>(defaultSongsFile)
 
     if (!Array.isArray(songs) || songs.length === 0) {
       log('info', 'No songs fixtures available, skipping seed')
