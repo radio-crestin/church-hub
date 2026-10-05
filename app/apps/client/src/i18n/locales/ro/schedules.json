@@ -234,7 +234,7 @@
     "formatHelpLines": {
       "title": "Exemple de format:",
       "songSuffix": "C",
-      "song": "Titlu Cantare #123 [C]",
+      "song": "Titlu Cantare #123 {Gama} [C]",
       "announcement": "Text anunt [A]",
       "bibleComment": "Pasaj biblic:",
       "bible": "Ioan 3:16 [V]",

@@ -98,7 +98,9 @@ export function EditAsTextModal({
       result.push(
         trimmed
           .replace(/\s*\[(SC|S|C|A|VT|V)\]\s*$/i, '')
-          .replace(/\s+#\d+$/, ''),
+          .replace(/\s*\{\s*\}$/, '')
+          .replace(/\s*\{([^{}]*)\}$/, ' ($1)')
+          .replace(/\s+#\d+(?= \(|$)/, ''),
       )
     }
     return result.join('\n')
