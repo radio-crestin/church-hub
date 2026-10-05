@@ -409,20 +409,47 @@ test.describe('Request a feature', () => {
     expect(sent[0].screenshotNotes).toEqual([])
   })
 
-  test('fits a phone screen', async ({ page }) => {
-    await mockFeatureRequestApi(page)
-    await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/songs')
-    await page
-      .getByRole('button', { name: /Open menu|Deschide meniu/ })
-      .click({ timeout: 15000 })
-    const dialog = await openRequestFeature(page)
-    await expect(dialog.getByTestId('feature-request-toolbar')).toBeInViewport()
-    await dialog.getByTestId('feature-request-submit').scrollIntoViewIfNeeded()
-    await expect(dialog.getByTestId('feature-request-submit')).toBeInViewport()
-    const box = await dialog.boundingBox()
-    expect(box?.width ?? 0).toBeLessThanOrEqual(390)
-  })
+  for (const phone of [
+    { width: 390, height: 844 },
+    { width: 360, height: 800 },
+  ]) {
+    test(`on a ${phone.width}px phone the screenshot uses the full width`, async ({
+      page,
+    }) => {
+      await mockFeatureRequestApi(page)
+      await page.setViewportSize(phone)
+      await page.goto('/songs')
+      await page
+        .getByRole('button', { name: /Open menu|Deschide meniu/ })
+        .click({ timeout: 15000 })
+      const dialog = await openRequestFeature(page)
+      const dialogBox = await dialog.boundingBox()
+      expect(dialogBox?.width ?? 0).toBeLessThanOrEqual(phone.width)
+
+      // The form's own width: the description field spans it.
+      const formWidth =
+        (await dialog.getByTestId('feature-request-notes').boundingBox())
+          ?.width ?? 0
+      const canvas = await canvasBox(dialog)
+      const toolbar = await dialog
+        .getByTestId('feature-request-toolbar')
+        .boundingBox()
+      expect(canvas.width).toBeGreaterThanOrEqual(formWidth - 1)
+      expect(toolbar?.width ?? 0).toBeGreaterThanOrEqual(formWidth - 1)
+      // Not squashed: the picture keeps the phone's tall shape.
+      expect(canvas.height).toBeGreaterThan(canvas.width)
+
+      await expect(
+        dialog.getByTestId('feature-request-toolbar'),
+      ).toBeInViewport()
+      await dialog
+        .getByTestId('feature-request-submit')
+        .scrollIntoViewIfNeeded()
+      await expect(
+        dialog.getByTestId('feature-request-submit'),
+      ).toBeInViewport()
+    })
+  }
 
   test('remembers the email for the next request', async ({ page }) => {
     await mockFeatureRequestApi(page)

@@ -53,13 +53,15 @@ export function ScreenshotAnnotator({
   }
 
   return (
-    <div className="relative w-fit max-w-full mx-auto">
+    // Phones: full width at its own height (a phone screenshot is tall, so a
+    // height cap would shrink it to a strip). Wider screens: capped height.
+    <div className="relative w-full sm:w-fit max-w-full mx-auto">
       <canvas
         ref={canvasRef}
         data-testid="feature-request-canvas"
         data-tool={tool}
         aria-label={t('common:featureRequest.canvasLabel')}
-        className="block w-auto h-auto max-w-full max-h-[36vh] md:max-h-[44vh] rounded-lg border border-gray-200 dark:border-gray-700 touch-none bg-gray-100 dark:bg-gray-900"
+        className="block w-full h-auto sm:w-auto max-w-full sm:max-h-[40vh] md:max-h-[44vh] rounded-lg border border-gray-200 dark:border-gray-700 touch-none bg-gray-100 dark:bg-gray-900"
         style={{ cursor: getToolCursor(tool, color) }}
         {...canvasHandlers}
       />

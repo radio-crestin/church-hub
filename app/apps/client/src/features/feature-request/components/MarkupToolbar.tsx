@@ -61,7 +61,7 @@ export function MarkupToolbar({
   return (
     <div
       data-testid="feature-request-toolbar"
-      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 self-center rounded-2xl sm:rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm px-3 py-1.5"
+      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 w-full sm:w-auto sm:self-center rounded-2xl sm:rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm px-3 py-1.5"
     >
       <div className="flex items-center gap-0.5" role="group">
         {TOOLS.map(({ id, icon: Icon, labelKey }) => (
