@@ -4,6 +4,7 @@ import { GripVertical, MonitorPlay, Pencil, X as XIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
+import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import type { ScheduleItem } from '../types'
 
@@ -26,6 +27,8 @@ interface ScheduleSongRowProps {
   onSelect: () => void
   /** Opens the program page's editor for this item. */
   onEdit?: () => void
+  /** Opens the gama editor for this song. */
+  onEditKeyLine?: () => void
   onRemove: () => void
   onToggleSung: () => void
 }
@@ -52,6 +55,7 @@ export function ScheduleSongRow({
   onPresent,
   onSelect,
   onEdit,
+  onEditKeyLine,
   onRemove,
   onToggleSung,
 }: ScheduleSongRowProps) {
@@ -126,7 +130,7 @@ export function ScheduleSongRow({
       />
 
       {/* The row body opens the song. It mirrors the Marcaje row: title, then
-          the song's category and key line, then its tags. */}
+          the song's category, then its tags; the gama sits beside it. */}
       <button
         type="button"
         onClick={onSelect}
@@ -140,21 +144,9 @@ export function ScheduleSongRow({
             {song.title}
           </span>
         </div>
-        {(song.categoryName || item.keyLine) && (
-          <div className="mt-0.5 flex items-center gap-2">
-            {song.categoryName && (
-              <span className="truncate text-xs text-gray-500 dark:text-gray-400">
-                {song.categoryName}
-              </span>
-            )}
-            {item.keyLine && (
-              <span
-                className="shrink-0 text-xs text-amber-600 dark:text-amber-400"
-                data-testid="schedule-song-key-line"
-              >
-                {item.keyLine}
-              </span>
-            )}
+        {song.categoryName && (
+          <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+            {song.categoryName}
           </div>
         )}
         {song.tagNames.length > 0 && (
@@ -170,6 +162,12 @@ export function ScheduleSongRow({
           </div>
         )}
       </button>
+
+      <ScheduleKeyLineChip
+        keyLine={item.keyLine}
+        onEdit={onEditKeyLine}
+        testId="schedule-song-key-line"
+      />
 
       {onEdit ? (
         <button

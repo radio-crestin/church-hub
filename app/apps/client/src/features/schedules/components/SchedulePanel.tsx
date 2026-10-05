@@ -29,6 +29,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { KeyLineEditDialog } from '~/features/song-key'
 import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { usePermissions } from '~/provider/permissions-provider'
@@ -56,6 +57,7 @@ import {
   useReorderScheduleItems,
   useSchedule,
   useScheduleFlatNavigation,
+  useScheduleKeyLineEditor,
   useSchedules,
 } from '../hooks'
 import {
@@ -167,6 +169,7 @@ export function SchedulePanel({
   const listRef = useRef<HTMLDivElement>(null)
   // The program page's own add/edit dialogs, borrowed by this panel.
   const editorsRef = useRef<ScheduleItemEditorsHandle>(null)
+  const { keyLineDialogRef, editKeyLine } = useScheduleKeyLineEditor()
 
   const removeItemMutation = useRemoveItemFromSchedule()
   const markSungMutation = useMarkScheduleItemSung()
@@ -523,6 +526,7 @@ export function SchedulePanel({
                 ? () => editorsRef.current?.editItem(item)
                 : undefined
             }
+            onEditKeyLine={() => editKeyLine(item)}
             onSelect={() => item.songId && onSelectSong?.(item.songId)}
             onRemove={() => handleRemove(item.id)}
             onToggleSung={() => handleToggleSung(item.id, item.isSung)}
@@ -960,6 +964,7 @@ export function SchedulePanel({
           }
         />
       ) : null}
+      <KeyLineEditDialog ref={keyLineDialogRef} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 {
   "title": "Programe",
+  "keyLine": { "missing": "Fără gamă" },
   "actions": {
     "create": "Program Nou",
     "save": "Salveaza",

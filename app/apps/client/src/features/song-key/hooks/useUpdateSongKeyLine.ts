@@ -29,6 +29,8 @@ export function useUpdateSongKeyLine() {
         // The bookmarks list caches each song's keyLine, so refresh it too —
         // otherwise a bookmarked song keeps showing its old key.
         queryClient.invalidateQueries({ queryKey: SONG_BOOKMARKS_QUERY_KEY })
+        // Program items carry their song's keyLine the same way.
+        queryClient.invalidateQueries({ queryKey: ['schedule'] })
         if (result.data) {
           queryClient.invalidateQueries({ queryKey: ['song', result.data.id] })
         }
