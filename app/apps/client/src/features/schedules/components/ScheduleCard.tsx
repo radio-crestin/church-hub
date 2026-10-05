@@ -18,6 +18,7 @@ interface ScheduleCardProps {
     title: string
     description: string | null
     itemCount: number
+    /** Unix seconds. */
     createdAt?: number
     matchedContent?: string
   }
@@ -37,8 +38,9 @@ export function ScheduleCard({
 }: ScheduleCardProps) {
   const { t, i18n } = useTranslation('schedules')
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString(i18n.language, {
+  // The API sends Unix seconds, like every other timestamp it returns.
+  const formatDate = (unixSeconds: number) => {
+    return new Date(unixSeconds * 1000).toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -86,7 +88,10 @@ export function ScheduleCard({
               </span>
             </div>
             {schedule.createdAt && (
-              <div className="flex items-center gap-1">
+              <div
+                data-testid="schedule-card-date"
+                className="flex items-center gap-1"
+              >
                 <Clock className="w-3 h-3 text-gray-400" />
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatDate(schedule.createdAt)}
