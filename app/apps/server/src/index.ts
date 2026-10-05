@@ -341,6 +341,7 @@ import {
   setBootPhase,
   setBootReady,
 } from './utils/bootState'
+import { DATABASE_ID_HEADER, getDatabaseId } from './utils/databaseId'
 import { createLogger } from './utils/logger'
 import { getLogsDir } from './utils/paths'
 import { reportError } from './utils/reportError'
@@ -851,6 +852,8 @@ async function startRealServer(): Promise<void> {
     )
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     res.headers.set('Access-Control-Max-Age', '86400')
+    res.headers.set(DATABASE_ID_HEADER, getDatabaseId())
+    res.headers.set('Access-Control-Expose-Headers', DATABASE_ID_HEADER)
 
     // Persist every failed response (4xx/5xx) to the on-disk log so the Logs
     // viewer and bug reports surface what went wrong (permission denials,

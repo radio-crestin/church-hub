@@ -47,7 +47,10 @@ export const openApiSpec = {
     title: 'Church Hub API',
     version: '1.0.0',
     description:
-      'API for Church Hub application - manage songs, schedules, presentations, and device access',
+      'API for Church Hub application - manage songs, schedules, presentations, and device access.\n\n' +
+      'Every API response carries `X-Church-Hub-Database`: a short, stable id of the database that answered. ' +
+      'It stays the same across restarts and differs between Church Hub apps (installed app, dev server, review builds). ' +
+      'A client that sees it change is talking to another app, whose ids are not the ones it shows.',
   },
   servers: [
     {
