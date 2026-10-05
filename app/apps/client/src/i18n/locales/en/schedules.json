@@ -66,7 +66,7 @@
     "deleteScheduleMessage": "\"{{title}}\" and everything in it ({{count}} items) will be deleted. This cannot be undone.",
     "openSchedule": "Open program",
     "noSchedules": "No programs yet",
-    "noSchedulesDescription": "Make the first one here, or today's in one click.",
+    "noSchedulesDescription": "Make one with the green + above.",
     "emptySchedule": "This program is empty",
     "noResults": "No matching songs",
     "openSearch": "Search in this program",
@@ -80,7 +80,8 @@
     "renameSchedule": "Rename this program",
     "newSchedule": "New program",
     "createNamed": "Create program",
-    "emptyScheduleHint": "Add songs or verses, or drag a song here."
+    "emptyScheduleHint": "Add songs or verses with the buttons above, or drag a song here.",
+    "dragToReorder": "Drag to reorder"
   },
   "search": {
     "placeholder": "Search schedules...",

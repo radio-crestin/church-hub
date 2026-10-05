@@ -6,9 +6,9 @@ import {
 } from '@playwright/test'
 
 /**
- * Programs are made right in the Programe panel next to Marcaje (T-088):
- * "+" beside the program picker, a new name typed in the picker, and the
- * buttons of the empty panel.
+ * Programs are made right in the Programe panel next to Marcaje (T-088): the
+ * header's green + and a new name typed in the program picker. Empty states
+ * explain, without buttons of their own.
  */
 
 interface ProgramRow {
@@ -67,15 +67,20 @@ test.describe('make a program in the Programe panel', () => {
     await request.delete(`/api/songs/${songId}`).catch(() => {})
   })
 
-  test('"+" beside the picker makes a program and picks it', async ({
+  test('the green + in the header makes a program and picks it', async ({
     page,
     request,
   }) => {
     await makeProgram(request, `E2E Existing ${Date.now()}`)
-    const title = `E2E Picker New ${Date.now()}`
+    const title = `E2E Header New ${Date.now()}`
     await openSongPageWithPanel(page, songId)
 
-    await panel(page).getByTestId('schedule-picker-new').click()
+    // Every header button says what it does on hover.
+    const newButton = panel(page).getByTestId('schedule-new')
+    await newButton.hover()
+    await expect(page.getByText(/^(New program|Program nou)$/)).toBeVisible()
+
+    await newButton.click()
     const dialog = panel(page).getByTestId('create-schedule-modal')
     await expect(dialog).toBeVisible()
     await dialog.getByRole('textbox').fill(title)
@@ -86,12 +91,10 @@ test.describe('make a program in the Programe panel', () => {
       { timeout: 10000 },
     )
     expect(await programTitled(request, title)).toBeTruthy()
-    // A new program is empty: the panel says so and offers to add to it.
-    await expect(
-      panel(page).getByTestId('schedule-panel-empty-program'),
-    ).toBeVisible()
-    await panel(page).getByTestId('schedule-panel-add-first').click()
-    await expect(page.getByRole('dialog').first()).toBeVisible()
+    // A new program is empty: the panel says so, without its own add button.
+    const empty = panel(page).getByTestId('schedule-panel-empty-program')
+    await expect(empty).toBeVisible()
+    await expect(empty.getByRole('button')).toHaveCount(0)
   })
 
   test('a new name typed in the picker becomes a program', async ({
@@ -128,8 +131,9 @@ test.describe('make a program in the Programe panel', () => {
 
     const empty = panel(page).getByTestId('schedule-panel-no-programs')
     await expect(empty).toBeVisible()
-    await expect(empty.getByTestId('schedule-panel-first-today')).toBeVisible()
-    await empty.getByTestId('schedule-panel-first-program').click()
-    await expect(panel(page).getByTestId('create-schedule-modal')).toBeVisible()
+    // It points to the header's green + instead of offering buttons of its own.
+    await expect(empty.getByRole('button')).toHaveCount(0)
+    await expect(empty).toContainText(/green \+|verde \+/)
+    await expect(panel(page).getByTestId('schedule-new')).toBeVisible()
   })
 })

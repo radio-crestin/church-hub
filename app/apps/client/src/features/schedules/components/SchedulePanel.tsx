@@ -16,11 +16,11 @@ import {
 } from '@dnd-kit/sortable'
 import { useQueryClient } from '@tanstack/react-query'
 import {
+  Bookmark,
   CalendarDays,
-  CalendarPlus,
-  CalendarPlus2,
   ChevronDown,
   ExternalLink,
+  ListPlus,
   Pencil,
   Plus,
   Search,
@@ -588,7 +588,7 @@ export function SchedulePanel({
           {
             id: 'add-item',
             label: tCommon('addMenu.title'),
-            icon: <Plus size={18} />,
+            icon: <ListPlus size={18} />,
             iconClassName:
               'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
             onSelect: () => editorsRef.current?.addItem(),
@@ -602,7 +602,7 @@ export function SchedulePanel({
                   aria-label={tCommon('addMenu.button')}
                   className="p-1.5 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <ListPlus className="w-3.5 h-3.5" />
                 </button>
               </Tooltip>
             ),
@@ -623,21 +623,23 @@ export function SchedulePanel({
             onSelect: toggleSearch,
             testId: 'schedule-search-toggle-menu',
             inline: (
-              <button
-                type="button"
-                onClick={toggleSearch}
-                aria-expanded={isSearchOpen}
-                aria-label={searchLabel}
-                title={searchLabel}
-                data-testid="schedule-search-toggle"
-                className={`p-1.5 rounded-md transition-colors ${
-                  isSearchOpen
-                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
-                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={searchLabel} position="bottom">
+                <button
+                  type="button"
+                  onClick={toggleSearch}
+                  aria-expanded={isSearchOpen}
+                  aria-label={searchLabel}
+                  title={searchLabel}
+                  data-testid="schedule-search-toggle"
+                  className={`p-1.5 rounded-md transition-colors ${
+                    isSearchOpen
+                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
+                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -651,21 +653,24 @@ export function SchedulePanel({
           {
             id: 'add-all-bookmarks',
             label: t('panel.addAllBookmarks'),
-            icon: <CalendarPlus size={18} />,
+            icon: <Bookmark size={18} />,
             iconClassName:
               'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
             onSelect: onAddAllBookmarks,
             testId: 'schedule-add-all-bookmarks-menu',
             inline: (
-              <button
-                type="button"
-                onClick={onAddAllBookmarks}
-                data-testid="schedule-add-all-bookmarks"
-                title={t('panel.addAllBookmarks')}
-                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.addAllBookmarks')} position="bottom">
+                <button
+                  type="button"
+                  onClick={onAddAllBookmarks}
+                  data-testid="schedule-add-all-bookmarks"
+                  aria-label={t('panel.addAllBookmarks')}
+                  title={t('panel.addAllBookmarks')}
+                  className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -677,22 +682,24 @@ export function SchedulePanel({
           {
             id: 'new-schedule',
             label: t('panel.newSchedule'),
-            icon: <CalendarPlus2 size={18} />,
+            icon: <Plus size={18} />,
             iconClassName:
               'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
             onSelect: () => setIsCreatingSchedule(true),
             testId: 'schedule-new-menu',
             inline: (
-              <button
-                type="button"
-                onClick={() => setIsCreatingSchedule(true)}
-                data-testid="schedule-new"
-                aria-label={t('panel.newSchedule')}
-                title={t('panel.newSchedule')}
-                className="p-1.5 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
-              >
-                <CalendarPlus2 className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.newSchedule')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingSchedule(true)}
+                  data-testid="schedule-new"
+                  aria-label={t('panel.newSchedule')}
+                  title={t('panel.newSchedule')}
+                  className="p-1.5 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -708,15 +715,18 @@ export function SchedulePanel({
             onSelect: () => onOpenSchedule(selectedScheduleId),
             testId: 'schedule-open-menu',
             inline: (
-              <button
-                type="button"
-                onClick={() => onOpenSchedule(selectedScheduleId)}
-                data-testid="schedule-open"
-                className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
-                title={t('panel.openSchedule')}
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.openSchedule')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => onOpenSchedule(selectedScheduleId)}
+                  data-testid="schedule-open"
+                  aria-label={t('panel.openSchedule')}
+                  className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
+                  title={t('panel.openSchedule')}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -730,16 +740,18 @@ export function SchedulePanel({
             onSelect: () => setRenamingSchedule(schedule),
             testId: 'schedule-rename-menu',
             inline: (
-              <button
-                type="button"
-                onClick={() => setRenamingSchedule(schedule)}
-                data-testid="schedule-rename"
-                aria-label={t('panel.renameSchedule')}
-                title={t('panel.renameSchedule')}
-                className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.renameSchedule')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setRenamingSchedule(schedule)}
+                  data-testid="schedule-rename"
+                  aria-label={t('panel.renameSchedule')}
+                  title={t('panel.renameSchedule')}
+                  className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -755,15 +767,18 @@ export function SchedulePanel({
             onSelect: () => setPendingDelete(true),
             testId: 'schedule-delete-menu',
             inline: (
-              <button
-                type="button"
-                onClick={() => setPendingDelete(true)}
-                data-testid="schedule-delete"
-                title={t('panel.deleteSchedule')}
-                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.deleteSchedule')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setPendingDelete(true)}
+                  data-testid="schedule-delete"
+                  aria-label={t('panel.deleteSchedule')}
+                  title={t('panel.deleteSchedule')}
+                  className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -834,9 +849,7 @@ export function SchedulePanel({
               options={scheduleOptions}
               value={selectedScheduleId}
               onChange={setSelectedScheduleId}
-              onNewProgram={
-                canCreateProgram ? () => setIsCreatingSchedule(true) : undefined
-              }
+              canCreate={canCreateProgram}
             />
           </div>
 
@@ -881,14 +894,7 @@ export function SchedulePanel({
                 ...
               </div>
             ) : schedules.length === 0 ? (
-              <SchedulePanelNoPrograms
-                onNewProgram={
-                  canCreateProgram
-                    ? () => setIsCreatingSchedule(true)
-                    : undefined
-                }
-                onCreated={setSelectedScheduleId}
-              />
+              <SchedulePanelNoPrograms canCreate={canCreateProgram} />
             ) : displayItems.length === 0 ? (
               isSearching ? (
                 <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -904,20 +910,9 @@ export function SchedulePanel({
                     {t('panel.emptySchedule')}
                   </p>
                   {canEditProgram && (
-                    <>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        {t('panel.emptyScheduleHint')}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => editorsRef.current?.addItem()}
-                        data-testid="schedule-panel-add-first"
-                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-                      >
-                        <Plus size={16} />
-                        {tCommon('addMenu.button')}
-                      </button>
-                    </>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      {t('panel.emptyScheduleHint')}
+                    </p>
                   )}
                 </div>
               )
