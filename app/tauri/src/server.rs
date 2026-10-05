@@ -367,8 +367,8 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     sidecar = sidecar.env("NODE_ENV", "production");
     sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
-    // A local review build's own data folder (see logging::data_dir).
-    if let Some(dir) = option_env!("CHURCH_HUB_DATA_DIR").filter(|dir| !dir.is_empty()) {
+    // A local review build's own data folder (see review.rs).
+    if let Some(dir) = crate::review::data_dir() {
         sidecar = sidecar.env("CHURCH_HUB_DATA_DIR", dir);
     }
 
