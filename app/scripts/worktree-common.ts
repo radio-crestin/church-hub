@@ -1,6 +1,6 @@
 /**
- * Shared by worktree-setup.ts and worktree-cleanup.ts: a task's port, running
- * a command, and timing each step.
+ * Shared by the worktree scripts (setup, review build, cleanup): a task's
+ * ports and review-app identity, running a command, and timing each step.
  */
 
 import { spawnSync } from 'node:child_process'
@@ -8,12 +8,30 @@ import { realpathSync } from 'node:fs'
 import { dirname } from 'node:path'
 
 const PORT_BASE = 3100
+const REVIEW_PORT_BASE = 4100
+
+function taskNumberOf(taskId: string | undefined, usage: string): number {
+  const taskNumber = Number(taskId?.match(/\d+/)?.[0])
+  if (!taskNumber) throw new Error(usage)
+  return taskNumber
+}
 
 /** A task's own port: 3100 + its number (T-052 → 3152). */
 export function portFor(taskId: string | undefined, usage: string): number {
-  const taskNumber = Number(taskId?.match(/\d+/)?.[0])
-  if (!taskNumber) throw new Error(usage)
-  return PORT_BASE + taskNumber
+  return PORT_BASE + taskNumberOf(taskId, usage)
+}
+
+/** A task's review-app port: 4100 + its number (T-052 → 4152). */
+export function reviewPortFor(
+  taskId: string | undefined,
+  usage: string,
+): number {
+  return REVIEW_PORT_BASE + taskNumberOf(taskId, usage)
+}
+
+/** The bundle identifier of a task's review app (T-052 → com.church-hub.review.t052). */
+export function reviewIdentifier(taskId: string): string {
+  return `com.church-hub.review.${taskId.toLowerCase().replace(/[^a-z0-9]/g, '')}`
 }
 
 export function run(

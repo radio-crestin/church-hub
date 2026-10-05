@@ -1,15 +1,24 @@
 #!/usr/bin/env bun
 /**
- * Removes a finished task's worktree in about a second:
+ * Removes everything a finished task made and no longer needs. Run it after
+ * the task is accepted and its pull request merged. The local part takes about
+ * a second; the GitHub steps add a few more.
  *
- *   1. stops whatever listens on the task's port (3100 + task number, never 3000),
+ *   1. closes the task's review app and stops whatever listens on its ports
+ *      (e2e 3100 + task number, review 4100 + task number; never 3000),
  *   2. unlocks the worktree, renames it aside and prunes git's record of it,
  *   3. deletes the renamed folder (node_modules, test DB, dist, test-results)
  *      with one detached rm, so nobody waits for it,
- *   4. deletes the branch only when it is merged into main or fully pushed.
+ *   4. deletes the review build: its folder in the main checkout, bundles left
+ *      in the Cargo target and the folders the OS made for the app,
+ *   5. deletes the branch, and the worktree's empty `worktree-agent-*` base
+ *      branch, only when merged into main, fully pushed or the head of a merged PR,
+ *   6. deletes the remote branch and the PR's `pr-build-<n>` installers
+ *      release once the PR is merged (installers also once it is closed).
  *
- * Shared caches stay: bun's global cache, the Playwright browsers and the main
- * checkout's Cargo target dir (worktree-setup.ts points worktrees at it).
+ * Kept: shared caches (bun's global cache, the Playwright browsers, the main
+ * checkout's Cargo target dir that worktree-setup.ts points worktrees at) and
+ * the demo videos the PR embeds (`pr-demos-*` releases, `pr-demo-videos`).
  *
  * Usage, from the main checkout:
  *   bun app/scripts/worktree-cleanup.ts <task-id> <branch | worktree path>
@@ -21,7 +30,20 @@ import { spawn, spawnSync } from 'node:child_process'
 import { existsSync, realpathSync, renameSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 
-import { mainCheckoutRoot, portFor, run, step } from './worktree-common'
+import type { PullRequest } from './cleanup-github'
+import {
+  deletePrBuildRelease,
+  deleteRemoteBranch,
+  findPullRequest,
+} from './cleanup-github'
+import { removeReviewBuild, stopReviewApp } from './cleanup-review-build'
+import {
+  mainCheckoutRoot,
+  portFor,
+  reviewPortFor,
+  run,
+  step,
+} from './worktree-common'
 
 const USER_DEV_PORT = 3000
 const USAGE =
@@ -60,12 +82,14 @@ function findWorktree(mainRoot: string, target: string): Worktree {
   return found
 }
 
-function stopPort(mainRoot: string, port: number) {
-  if (port === USER_DEV_PORT)
+function stopPorts(mainRoot: string, ports: number[]) {
+  if (ports.includes(USER_DEV_PORT))
     throw new Error('port 3000 is the user dev server')
   const freePort = join(mainRoot, 'app', 'scripts', 'free-port.js')
-  spawnSync(process.execPath, [freePort, String(port)], { stdio: 'ignore' })
-  return `port ${port}`
+  spawnSync(process.execPath, [freePort, ...ports.map(String)], {
+    stdio: 'ignore',
+  })
+  return `port ${ports.join(', ')}`
 }
 
 function deleteInBackground(dir: string) {
@@ -111,25 +135,77 @@ function isAncestor(mainRoot: string, commit: string, of: string) {
   )
 }
 
-function deleteBranchIfSafe(mainRoot: string, branch: string | undefined) {
-  if (!branch) return 'detached HEAD, no branch'
+function tipOf(mainRoot: string, branch: string) {
+  const result = spawnSync(
+    'git',
+    ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`],
+    { cwd: mainRoot, encoding: 'utf8' },
+  )
+  return result.status === 0 ? result.stdout.trim() : undefined
+}
+
+/** Why deleting the branch loses nothing, or undefined when it might. */
+function whySafeToDelete(
+  mainRoot: string,
+  branch: string,
+  tip: string,
+  pull: PullRequest | undefined,
+) {
   const remote = `refs/remotes/origin/${branch}`
   const pushed =
     spawnSync('git', ['show-ref', '--verify', '--quiet', remote], {
       cwd: mainRoot,
     }).status === 0 && isAncestor(mainRoot, branch, remote)
-  if (!pushed && !isAncestor(mainRoot, branch, 'main')) {
-    return `kept ${branch}: not merged into main and not pushed`
-  }
+  if (pushed) return 'pushed'
+  if (isAncestor(mainRoot, branch, 'main')) return 'merged'
+  // A squash or rebase merge leaves the commits out of main; the PR head proves they were in it.
+  if (pull?.state === 'MERGED' && pull.headRefOid === tip)
+    return `PR #${pull.number} merged`
+  return undefined
+}
+
+function deleteBranchIfSafe(
+  mainRoot: string,
+  branch: string | undefined,
+  pull?: PullRequest,
+) {
+  if (!branch) return 'detached HEAD, no branch'
+  const tip = tipOf(mainRoot, branch)
+  if (!tip) return `${branch} already gone`
+  const reason = whySafeToDelete(mainRoot, branch, tip, pull)
+  if (!reason)
+    return `kept ${branch}: not merged into main, not pushed and no merged PR`
   run('git', ['branch', '-D', branch], mainRoot)
-  return `deleted ${branch} (${pushed ? 'pushed' : 'merged'})`
+  return `deleted ${branch} (${reason})`
+}
+
+/** The empty branch the worktree started on, left behind once its task moved to a feature branch. */
+function deleteBaseBranch(mainRoot: string, worktree: Worktree) {
+  const base = `worktree-${basename(worktree.path)}`
+  if (base === worktree.branch) return 'same as the task branch'
+  return deleteBranchIfSafe(mainRoot, base)
 }
 
 const port = portFor(process.argv[2], USAGE)
+const reviewPort = reviewPortFor(process.argv[2], USAGE)
+const taskId = process.argv[2]!.toUpperCase()
 const target = process.argv[3]
 if (!target) throw new Error(USAGE)
 const mainRoot = mainCheckoutRoot(process.cwd())
 const worktree = findWorktree(mainRoot, target)
-step('port stopped', () => stopPort(mainRoot, port))
+// Asked first: the branch is deleted below, and the PR proves what was merged.
+const pull = worktree.branch
+  ? findPullRequest(mainRoot, worktree.branch)
+  : undefined
+step('review app closed', () => stopReviewApp(taskId))
+step('ports stopped', () => stopPorts(mainRoot, [port, reviewPort]))
 step('worktree removed', () => removeWorktree(mainRoot, worktree))
-step('branch', () => deleteBranchIfSafe(mainRoot, worktree.branch))
+step('review build removed', () => removeReviewBuild(mainRoot, taskId))
+step('branch', () => deleteBranchIfSafe(mainRoot, worktree.branch, pull))
+step('base branch', () => deleteBaseBranch(mainRoot, worktree))
+step('remote branch', () =>
+  worktree.branch
+    ? deleteRemoteBranch(mainRoot, worktree.branch, pull)
+    : 'no branch',
+)
+step('PR installers', () => deletePrBuildRelease(mainRoot, pull))

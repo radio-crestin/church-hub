@@ -44,4 +44,4 @@ Board: /better-tasks (settings: /better-tasks config). /away turns the screens o
 ## Feature or fix tasks
 - Teammates follow the flow in teammate.md (worktree, branch, e2e, video, PR). Done = spec passes, PR open, video uploaded, task file's `## PR` filled; anything missing goes back to the teammate.
 - Accept question preview: "check: watch <video url>", "check: PR #<n>".
-- On Accept, before stopping the teammate: run its cleanup (teammate.md step 8).
+- On Accept: merge its PR (`gh pr merge --merge --admin`), then run its cleanup (teammate.md step 8), then stop the teammate. Cleanup needs the PR merged to delete the remote branch and the installers release. A task with no PR (tooling) still runs it for the worktree and branch.

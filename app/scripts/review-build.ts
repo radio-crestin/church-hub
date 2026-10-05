@@ -39,11 +39,17 @@ import {
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-import { mainCheckoutRoot, portFor, run, step } from './worktree-common'
+import {
+  mainCheckoutRoot,
+  portFor,
+  reviewIdentifier,
+  reviewPortFor,
+  run,
+  step,
+} from './worktree-common'
 
 const USAGE =
   'usage: bun app/scripts/review-build.ts <task id, e.g. T-023> [--out <dir>]'
-const REVIEW_PORT_BASE = 4100
 const LOCK_WAIT_MS = 30 * 60 * 1000
 
 const BUNDLES: Record<string, { bundle: string; folder: string; ext: string }> =
@@ -67,7 +73,7 @@ function parseArgs() {
   return {
     taskId: taskId.toUpperCase(),
     e2ePort,
-    port: REVIEW_PORT_BASE + (e2ePort - 3100),
+    port: reviewPortFor(taskId, USAGE),
     root,
     out,
   }
@@ -159,10 +165,9 @@ function writeConfig(app: string, taskId: string, out: string) {
   const base = JSON.parse(
     readFileSync(join(app, 'tauri', 'tauri.conf.json'), 'utf8'),
   )
-  const slug = taskId.toLowerCase().replace(/[^a-z0-9]/g, '')
   const config = {
     productName: `church-hub-${taskId}`,
-    identifier: `com.church-hub.review.${slug}`,
+    identifier: reviewIdentifier(taskId),
     app: {
       // A merge patch replaces arrays whole, so keep each window's settings.
       windows: base.app.windows.map((window: { title?: string }) => ({
@@ -224,6 +229,8 @@ function keepBuild(
     recursive: true,
     verbatimSymlinks: true,
   })
+  // The copy is the one to keep; the original would sit in the shared Cargo target for good.
+  rmSync(join(bundleDir, built), { recursive: true, force: true })
   return kept
 }
 
