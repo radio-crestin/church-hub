@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 
+import { useShortcutPermissionCheck } from '~/features/keyboard-shortcuts/hooks/useShortcutPermissionCheck'
 import { useSidebarConfig } from './useSidebarConfig'
 import { BUILTIN_ITEMS } from '../constants'
 import {
@@ -22,10 +23,11 @@ export interface PageShortcut {
  * may appear for several pages — that is the point: which one it means is
  * decided by the page that is open when it is pressed. MIDI bindings are
  * left out: those are dispatched by the server, which does not know which
- * page is showing.
+ * page is showing. Pages the user may not view are left out.
  */
 export function usePageShortcuts(): PageShortcut[] {
   const { config, isLoading } = useSidebarConfig()
+  const canUse = useShortcutPermissionCheck()
 
   return useMemo(() => {
     if (isLoading || !config) return []
@@ -35,7 +37,7 @@ export function usePageShortcuts(): PageShortcut[] {
       if (item.type !== 'builtin' || !item.settings?.pageShortcuts) continue
       const { builtinId } = item as BuiltInMenuItem
       const definition = BUILTIN_ITEMS[builtinId]
-      if (!definition) continue
+      if (!definition || !canUse(definition.permission)) continue
 
       for (const action of PAGE_SHORTCUT_ACTIONS) {
         for (const shortcut of item.settings.pageShortcuts[action] ?? []) {
@@ -50,5 +52,5 @@ export function usePageShortcuts(): PageShortcut[] {
       }
     }
     return shortcuts
-  }, [config, isLoading])
+  }, [config, isLoading, canUse])
 }

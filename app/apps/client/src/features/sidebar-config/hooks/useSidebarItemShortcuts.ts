@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 
+import { useShortcutPermissionCheck } from '~/features/keyboard-shortcuts/hooks/useShortcutPermissionCheck'
 import { useSidebarConfig } from './useSidebarConfig'
 import { BUILTIN_ITEMS } from '../constants'
+import { getCustomPagePermission } from '../service/sidebarConfig'
 import type { BuiltInMenuItem, CustomPageMenuItem } from '../types'
 
 export interface SidebarShortcut {
@@ -17,10 +19,12 @@ export interface SidebarShortcut {
  * Used by GlobalAppShortcutManager to register sidebar navigation shortcuts.
  *
  * Emits separate entries for switch shortcuts (focusSearchOnNavigate=false)
- * and focus-search shortcuts (focusSearchOnNavigate=true).
+ * and focus-search shortcuts (focusSearchOnNavigate=true). Pages the user may
+ * not view are left out, the same as the sidebar hides them.
  */
 export function useSidebarItemShortcuts(): SidebarShortcut[] {
   const { config, isLoading } = useSidebarConfig()
+  const canUse = useShortcutPermissionCheck()
 
   return useMemo(() => {
     if (isLoading || !config) {
@@ -39,12 +43,13 @@ export function useSidebarItemShortcuts(): SidebarShortcut[] {
       if (item.type === 'builtin') {
         const builtinItem = item as BuiltInMenuItem
         const definition = BUILTIN_ITEMS[builtinItem.builtinId]
-        if (!definition) continue
+        if (!definition || !canUse(definition.permission)) continue
 
         route = definition.to
         displayName = builtinItem.builtinId
       } else {
         const customItem = item as CustomPageMenuItem
+        if (!canUse(getCustomPagePermission(customItem.id))) continue
         route = `/custom-page/${customItem.id}`
         displayName = customItem.title
       }
@@ -85,5 +90,5 @@ export function useSidebarItemShortcuts(): SidebarShortcut[] {
     }
 
     return shortcuts
-  }, [config, isLoading])
+  }, [config, isLoading, canUse])
 }
