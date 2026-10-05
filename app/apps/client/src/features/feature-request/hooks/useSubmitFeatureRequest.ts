@@ -6,7 +6,8 @@ import { getSupportId } from '../services/getSupportId'
 import { getSystemInfo } from '../services/getSystemInfo'
 import { saveEmail } from '../services/savedEmail'
 import { submitFeatureRequest } from '../services/submitFeatureRequest'
-import type { RequestFeatureValues, Stroke } from '../types'
+import type { Annotation, RequestFeatureValues } from '../types'
+import { getScreenshotNotes } from '../utils/getScreenshotNotes'
 import { renderAnnotatedScreenshot } from '../utils/renderAnnotatedScreenshot'
 
 type SubmitState =
@@ -16,17 +17,18 @@ type SubmitState =
 interface SubmitInput {
   values: RequestFeatureValues
   screenshot: HTMLCanvasElement | null
-  strokes: Stroke[]
+  annotations: Annotation[]
 }
 
 /**
- * Sends the request (with the drawing flattened into the screenshot) and,
+ * Sends the request (drawing and notes flattened into the screenshot, the
+ * notes also as text) and,
  * once GitHub has the issue, opens it for the user.
  */
 export function useSubmitFeatureRequest() {
   const [state, setState] = useState<SubmitState>({ status: 'idle' })
 
-  const submit = async ({ values, screenshot, strokes }: SubmitInput) => {
+  const submit = async ({ values, screenshot, annotations }: SubmitInput) => {
     setState({ status: 'sending' })
     saveEmail(values.email)
     try {
@@ -36,12 +38,16 @@ export function useSubmitFeatureRequest() {
 
       const result = await submitFeatureRequest({
         notes: values.notes.trim(),
+        // The notes on the picture also go as text, so the issue is searchable.
+        screenshotNotes: getScreenshotNotes(annotations).map(
+          (note) => note.text,
+        ),
         email: values.email.trim(),
         route: window.location.pathname,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
         ...systemInfo,
         screenshot: screenshot
-          ? renderAnnotatedScreenshot(screenshot, strokes)
+          ? renderAnnotatedScreenshot(screenshot, annotations)
           : undefined,
         supportId: supportId ?? undefined,
       })

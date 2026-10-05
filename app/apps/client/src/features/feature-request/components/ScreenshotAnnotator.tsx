@@ -1,40 +1,77 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { usePenDrawing } from '../hooks/usePenDrawing'
-import type { Stroke } from '../types'
-
-const PEN_COLOR = '#ef4444'
+import { NoteInput } from './NoteInput'
+import {
+  type NoteSpot,
+  useAnnotationCanvas,
+} from '../hooks/useAnnotationCanvas'
+import type { Annotation, AnnotationTool } from '../types'
 
 interface ScreenshotAnnotatorProps {
   screenshot: HTMLCanvasElement
-  strokes: Stroke[]
-  onStrokesChange: (strokes: Stroke[]) => void
+  annotations: Annotation[]
+  onAnnotationsChange: (annotations: Annotation[]) => void
+  tool: AnnotationTool
 }
 
-/** The screenshot as a canvas the user can draw on with a red pen. */
+/** The screenshot as a canvas: draw on it, or click to place a text note. */
 export function ScreenshotAnnotator({
   screenshot,
-  strokes,
-  onStrokesChange,
+  annotations,
+  onAnnotationsChange,
+  tool,
 }: ScreenshotAnnotatorProps) {
   const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const pen = usePenDrawing(
+  const [noteSpot, setNoteSpot] = useState<NoteSpot | null>(null)
+  const canvasHandlers = useAnnotationCanvas(
     canvasRef,
     screenshot,
-    strokes,
-    onStrokesChange,
-    PEN_COLOR,
+    annotations,
+    onAnnotationsChange,
+    tool,
+    (spot) => {
+      // A click while a note is open only closes it: its blur saves it.
+      if (noteSpot) (document.activeElement as HTMLElement | null)?.blur()
+      else setNoteSpot(spot)
+    },
   )
 
+  const saveNote = (text: string) => {
+    if (noteSpot) {
+      onAnnotationsChange([
+        ...annotations,
+        { kind: 'note', ...noteSpot.canvas, text },
+      ])
+    }
+    setNoteSpot(null)
+  }
+
   return (
-    <canvas
-      ref={canvasRef}
-      data-testid="feature-request-canvas"
-      aria-label={t('common:featureRequest.drawHint')}
-      className="block mx-auto w-auto h-auto max-w-full max-h-[30vh] md:max-h-[36vh] rounded-lg border border-gray-200 dark:border-gray-700 cursor-crosshair touch-none bg-gray-100 dark:bg-gray-900"
-      {...pen}
-    />
+    <div className="relative w-fit max-w-full mx-auto">
+      <canvas
+        ref={canvasRef}
+        data-testid="feature-request-canvas"
+        data-tool={tool}
+        aria-label={t(
+          tool === 'note'
+            ? 'common:featureRequest.noteHint'
+            : 'common:featureRequest.penHint',
+        )}
+        className={`block w-auto h-auto max-w-full max-h-[45vh] md:max-h-[55vh] rounded-lg border border-gray-200 dark:border-gray-700 touch-none bg-gray-100 dark:bg-gray-900 ${tool === 'note' ? 'cursor-text' : 'cursor-crosshair'}`}
+        {...canvasHandlers}
+      />
+      {noteSpot && (
+        <NoteInput
+          key={`${noteSpot.canvas.x},${noteSpot.canvas.y}`}
+          left={noteSpot.css.x}
+          top={noteSpot.css.y}
+          boxWidth={canvasRef.current?.clientWidth ?? 0}
+          onSave={saveNote}
+          onCancel={() => setNoteSpot(null)}
+        />
+      )}
+    </div>
   )
 }

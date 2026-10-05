@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { RequestFeatureDialog } from './RequestFeatureDialog'
 import { RoamingBar } from './RoamingBar'
 import { getSavedEmail } from '../services/savedEmail'
-import type { RequestFeatureValues, Stroke } from '../types'
+import type { Annotation, RequestFeatureValues } from '../types'
 import { captureDisplay } from '../utils/captureDisplay'
 import { captureScreenshot } from '../utils/captureScreenshot'
 import { FEATURE_REQUEST_UI_ATTRIBUTE } from '../utils/isFeatureRequestUi'
@@ -29,8 +29,8 @@ async function takeScreenshot(): Promise<HTMLCanvasElement | null> {
 }
 
 /**
- * "Request a feature": opening it photographs the screen, then one short
- * form asks what the user would like. The screenshot can be retaken on
+ * "Request a feature": opening it photographs the screen, then two short
+ * steps: mark up the screenshot, then say what the user would like. The screenshot can be retaken on
  * another page of the app or on any other screen or window, without losing
  * what was typed. Mount it only while open; unmounting resets it all.
  */
@@ -38,7 +38,7 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState<Step>('capturing')
   const [screenshot, setScreenshot] = useState<HTMLCanvasElement | null>(null)
-  const [strokes, setStrokes] = useState<Stroke[]>([])
+  const [annotations, setAnnotations] = useState<Annotation[]>([])
   const [captureError, setCaptureError] = useState(false)
   const [values, setValues] = useState<RequestFeatureValues>(() => ({
     notes: '',
@@ -47,7 +47,7 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
 
   const showNewScreenshot = (next: HTMLCanvasElement | null) => {
     setScreenshot(next)
-    setStrokes([])
+    setAnnotations([])
     setStep('editing')
   }
 
@@ -107,8 +107,8 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
   return (
     <RequestFeatureDialog
       screenshot={screenshot}
-      strokes={strokes}
-      onStrokesChange={setStrokes}
+      annotations={annotations}
+      onAnnotationsChange={setAnnotations}
       values={values}
       onValuesChange={setValues}
       onRetake={retake}

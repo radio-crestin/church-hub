@@ -1,22 +1,32 @@
 import { type RefObject, useEffect, useRef } from 'react'
 
-import type { Stroke, StrokePoint } from '../types'
-import { drawStrokes } from '../utils/drawStrokes'
+import type { Annotation, AnnotationTool, Stroke, StrokePoint } from '../types'
+import { drawAnnotations } from '../utils/drawAnnotations'
+import { NOTE_COLOR } from '../utils/drawNoteLabels'
 
 // Pen width in CSS pixels; scaled so it looks the same at any canvas size.
 const PEN_WIDTH = 4
 
+/** Where a new note goes: canvas pixels, and CSS pixels inside the canvas box. */
+export interface NoteSpot {
+  canvas: StrokePoint
+  css: StrokePoint
+}
+
 /**
- * Pen drawing on a canvas that shows the screenshot. Strokes are kept in
- * canvas pixels so they line up with the full-size screenshot at export,
- * however small the canvas is shown (phones).
+ * The screenshot canvas with the user's drawing and notes on it. With the
+ * pen, dragging draws; with the note tool, a click reports the spot so the
+ * caller can ask for the note's text. Points are kept in canvas pixels so
+ * they line up with the full-size screenshot at export, however small the
+ * canvas is shown (phones).
  */
-export function usePenDrawing(
+export function useAnnotationCanvas(
   canvasRef: RefObject<HTMLCanvasElement | null>,
   screenshot: HTMLCanvasElement,
-  strokes: Stroke[],
-  onStrokesChange: (strokes: Stroke[]) => void,
-  color: string,
+  annotations: Annotation[],
+  onAnnotationsChange: (annotations: Annotation[]) => void,
+  tool: AnnotationTool,
+  onPlaceNote: (spot: NoteSpot) => void,
 ) {
   const activeStroke = useRef<Stroke | null>(null)
 
@@ -25,7 +35,10 @@ export function usePenDrawing(
     const context = canvas?.getContext('2d')
     if (!canvas || !context) return
     context.drawImage(screenshot, 0, 0)
-    drawStrokes(context, extra ? [...strokes, extra] : strokes)
+    drawAnnotations(
+      context,
+      extra ? [...annotations, { kind: 'stroke', ...extra }] : annotations,
+    )
   }
 
   useEffect(() => {
@@ -34,7 +47,7 @@ export function usePenDrawing(
     canvas.width = screenshot.width
     canvas.height = screenshot.height
     redraw()
-  }, [screenshot, strokes])
+  }, [screenshot, annotations])
 
   const toCanvasPoint = (event: React.PointerEvent): StrokePoint => {
     const canvas = event.currentTarget as HTMLCanvasElement
@@ -46,10 +59,19 @@ export function usePenDrawing(
   }
 
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
     const rect = event.currentTarget.getBoundingClientRect()
+    if (tool === 'note') {
+      // No mousedown follows, so focus stays in the note box that opens.
+      event.preventDefault()
+      onPlaceNote({
+        canvas: toCanvasPoint(event),
+        css: { x: event.clientX - rect.left, y: event.clientY - rect.top },
+      })
+      return
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
     activeStroke.current = {
-      color,
+      color: NOTE_COLOR,
       width: (PEN_WIDTH * event.currentTarget.width) / rect.width,
       points: [toCanvasPoint(event)],
     }
@@ -64,7 +86,10 @@ export function usePenDrawing(
 
   const onPointerUp = () => {
     if (!activeStroke.current) return
-    onStrokesChange([...strokes, activeStroke.current])
+    onAnnotationsChange([
+      ...annotations,
+      { kind: 'stroke', ...activeStroke.current },
+    ])
     activeStroke.current = null
   }
 

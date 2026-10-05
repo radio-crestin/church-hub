@@ -12,7 +12,7 @@ interface NotesFieldProps {
   ref?: Ref<HTMLTextAreaElement>
 }
 
-/** The one thing the user must write: what they would like. */
+/** What the user would like, in their words. Optional. */
 export function NotesField({
   value,
   onChange,
@@ -24,8 +24,8 @@ export function NotesField({
     <div>
       <label htmlFor="feature-request-notes" className={labelClass}>
         {t('common:featureRequest.notesLabel')}
-        <span aria-hidden="true" className="text-red-600 dark:text-red-400">
-          {' *'}
+        <span className="font-normal text-gray-500 dark:text-gray-400">
+          {` ${t('common:featureRequest.optional')}`}
         </span>
       </label>
       <textarea
@@ -37,7 +37,6 @@ export function NotesField({
         placeholder={t('common:featureRequest.notesPlaceholder')}
         maxLength={NOTES_MAX_LENGTH}
         rows={4}
-        required
         disabled={disabled}
         className={`${inputClass} resize-y`}
       />
