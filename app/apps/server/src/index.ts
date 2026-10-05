@@ -553,23 +553,26 @@ async function main() {
   // A stale server on the port (a crashed run) is killed first. The kill
   // looks it up with lsof/netstat (slow on Windows), so only when it is held.
   const serverPort = Number(process.env['PORT']) || 3000
+  let t = performance.now()
   if (!(await isPortFree(serverPort))) {
     killProcessOnPort(serverPort)
     await waitForPortAvailable(serverPort)
   }
+  logTiming('port_check', t)
 
   // Bind the port at once with the boot server (in a worker thread), so the
   // window's loading page reads each step from /health while the heavy init
   // below runs. If any init step throws, the boot server stays up reporting
   // the failure via /health instead of the process dying silently.
   setBootFirstRun(!existsSync(getDatabasePath()))
+  t = performance.now()
   const bootServer = await startBootServer(serverPort)
+  logTiming('boot_server_start', t)
   // biome-ignore lint/suspicious/noConsole: Startup logging
   console.log(
     `[startup] Boot server listening on ${serverPort} — serving /health while initializing`,
   )
 
-  let t = performance.now()
   let bootPhase: BootPhase = 'starting'
   try {
     // Initialize database (Drizzle ORM wrapper) and run migrations
