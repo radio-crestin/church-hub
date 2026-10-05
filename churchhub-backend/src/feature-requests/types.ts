@@ -17,7 +17,10 @@ export interface FeatureRequestInput {
   notes: string
   /** Text notes placed on the screenshot, numbered 1, 2, ... in order. */
   screenshotNotes: string[]
-  /** Private: goes only to the maintainer's WhatsApp, never to GitHub. */
+  /**
+   * Private: goes only to the maintainer's WhatsApp, never to GitHub.
+   * Empty when the user gave none.
+   */
   email: string
   route: string
   viewport: string

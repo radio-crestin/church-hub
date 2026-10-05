@@ -19,10 +19,12 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
   }
   const raw = body as Record<string, unknown>
 
-  const email = readString(raw.email, 'email', SHORT_FIELD_MAX_LENGTH)
-  if (!isValidEmail(email)) throw new FeatureRequestError('email is invalid')
-
   const optional = { required: false }
+  // Optional: without it the request simply cannot get a reply.
+  const email = readString(raw.email, 'email', SHORT_FIELD_MAX_LENGTH, optional)
+  if (email && !isValidEmail(email)) {
+    throw new FeatureRequestError('email is invalid')
+  }
   const notes = readString(raw.notes, 'notes', NOTES_MAX_LENGTH, optional)
   const screenshotNotes = readScreenshotNotes(raw.screenshotNotes)
   const screenshot =

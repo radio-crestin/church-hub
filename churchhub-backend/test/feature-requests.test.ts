@@ -247,7 +247,16 @@ describe('POST /feature-requests', () => {
     expect(calls[1].headers['CF-Access-Client-Secret']).toBe('access-secret')
   })
 
-  test('rejects a missing or invalid email before calling GitHub', async () => {
+  test('accepts a request without an email', async () => {
+    for (const email of [undefined, '', '   ']) {
+      calls = []
+      const response = await post(validBody({ email }))
+      expect(response.status).toBe(200)
+      expect(String(calls[1].body.text)).toContain('*Email:* -')
+    }
+  })
+
+  test('rejects an invalid email before calling GitHub', async () => {
     const response = await post(validBody({ email: 'not-an-email' }))
     expect(response.status).toBe(400)
     expect(calls).toHaveLength(0)

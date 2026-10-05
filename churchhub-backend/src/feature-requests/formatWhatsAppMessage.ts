@@ -12,7 +12,7 @@ export function formatWhatsAppMessage(
   const lines = [
     `*New feature request #${issue.number}*`,
     `*Title:* ${request.title}`,
-    `*Email:* ${request.email}`,
+    `*Email:* ${request.email || '-'}`,
     '',
   ]
   if (request.notes) lines.push('*Description:*', request.notes, '')
