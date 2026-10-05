@@ -440,6 +440,8 @@ export function getDefaultContentConfigs(
     songConfig.mainText.animationIn.duration = 200
     songConfig.mainText.animationOut.type = 'slide-down'
     songConfig.mainText.animationOut.duration = 150
+    // The stream audience doesn't need the song key (gama)
+    songConfig.displayKeyLine = false
 
     songFirstSlideConfig.background = transparentBg
     addShadow(songFirstSlideConfig.mainText)
