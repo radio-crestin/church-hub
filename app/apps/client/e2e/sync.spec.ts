@@ -1,13 +1,46 @@
-import { expect, test } from '@playwright/test'
+import { type APIRequestContext, expect, test } from '@playwright/test'
 
 /**
  * Google Drive library sync shares the backup feature's Drive connection, so
  * full sync round-trips need a real Google account. These tests exercise the
  * API contract and the not-connected states (what a fresh CI machine is in);
- * the actual two-device merge logic is unit tested server-side
- * (mergeLibraries.test.ts, add-sync.test.ts) and verified manually.
+ * the two-device merge itself needs Google Drive and is verified by hand.
+ * Local change tracking (what the next sync uploads) is covered below.
  */
+interface PendingEntry {
+  entityType: string
+  localId: number | null
+  title: string
+}
+
+async function pendingSong(request: APIRequestContext, songId: number) {
+  const res = await request.get('/api/sync/pending')
+  const { pending } = (await res.json()).data as { pending: PendingEntry[] }
+  return pending.find((p) => p.entityType === 'song' && p.localId === songId)
+}
+
 test.describe('Sync - API', () => {
+  test('local song changes are queued for upload; a deleted song leaves the queue', async ({
+    request,
+  }) => {
+    const title = `E2E Sync Tracked ${Date.now()}`
+    const created = await request.post('/api/songs', {
+      data: { title, slides: [{ content: 'one', sortOrder: 0, label: 'V1' }] },
+    })
+    expect(created.ok()).toBe(true)
+    const songId = (await created.json()).data.id as number
+    expect((await pendingSong(request, songId))?.title).toBe(title)
+
+    const renamed = `${title} edited`
+    await request.post('/api/songs', {
+      data: { id: songId, title: renamed },
+    })
+    expect((await pendingSong(request, songId))?.title).toBe(renamed)
+
+    expect((await request.delete(`/api/songs/${songId}`)).ok()).toBe(true)
+    expect(await pendingSong(request, songId)).toBeUndefined()
+  })
+
   test('status exposes sync + connection flags', async ({ request }) => {
     const response = await request.get('/api/sync/status')
     expect(response.status()).toBe(200)
