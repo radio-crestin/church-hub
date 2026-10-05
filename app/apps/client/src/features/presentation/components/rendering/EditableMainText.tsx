@@ -6,6 +6,7 @@ import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { sanitizePastedText } from './utils/sanitizePastedText'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
+import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type { TextStyle, TextStyleRange } from '../../types'
 import { applyStylesToText } from '../../utils/applyStylesToText'
 import {
@@ -109,6 +110,7 @@ export function EditableMainText({
 }: EditableMainTextProps) {
   const editRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
+  const fontsLoadedVersion = useFontsLoadedVersion()
   const seededKeyRef = useRef<string | null>(null)
   // The text the editor is showing right now, so an outside rewrite can be told
   // apart from the round-trip of the operator's own typing.
@@ -191,6 +193,8 @@ export function EditableMainText({
     style.minFontSize,
     contentScale,
     styledHtml,
+    // A web font that finished loading measures differently from its fallback.
+    fontsLoadedVersion,
   ])
 
   // Styled runs are re-seeded as markup, so formatting a selection shows up in

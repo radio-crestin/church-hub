@@ -9,6 +9,7 @@ import { compressLines } from './utils/textProcessing'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
 import { decodeHtmlEntities } from '../../../../utils/decodeHtmlEntities'
 import { removeHtmlTags } from '../../../../utils/removeHtmlTags'
+import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type { TextStyle } from '../../types'
 
 /**
@@ -245,6 +246,8 @@ interface FontCache {
   lineSeparator: string
   fitLineToWidth: boolean
   lineHeight: number
+  /** Font, weight, slant and the fonts loaded so far: all change the fit. */
+  fontKey: string
   result: { fontSize: number; processedSegments: TextSegment[] }
 }
 
@@ -272,6 +275,8 @@ export function TextContent({
   const lineSeparator = style.lineSeparator ?? 'space'
   const fitLineToWidth = style.fitLineToWidth ?? false
   const lineHeight = style.lineHeight ?? 1.3
+  const fontsLoadedVersion = useFontsLoadedVersion()
+  const fontKey = `${style.fontFamily}|${style.bold}|${style.italic}|${fontsLoadedVersion}`
 
   // Parse HTML to segments and apply compression synchronously during render
   // This ensures compressed content is displayed immediately, not after a layout effect
@@ -311,7 +316,8 @@ export function TextContent({
     cache.compressLines === shouldCompressLines &&
     cache.lineSeparator === lineSeparator &&
     cache.fitLineToWidth === fitLineToWidth &&
-    cache.lineHeight === lineHeight
+    cache.lineHeight === lineHeight &&
+    cache.fontKey === fontKey
 
   // Get cached or default font size for initial render
   const calculatedFontSize = canUseCache ? cache.result.fontSize : maxFontSize
@@ -368,6 +374,7 @@ export function TextContent({
       lineSeparator,
       fitLineToWidth,
       lineHeight,
+      fontKey,
       result: { fontSize, processedSegments },
     }
 
@@ -387,6 +394,7 @@ export function TextContent({
     lineSeparator,
     fitLineToWidth,
     lineHeight,
+    fontKey,
     canUseCache,
   ])
 

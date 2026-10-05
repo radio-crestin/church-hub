@@ -1,5 +1,9 @@
 import type { Database } from 'bun:sqlite'
+import { getDefaultContentConfig } from '../../service/presentation/default-design/getDefaultContentConfig'
+import { getDefaultGlobalSettings } from '../../service/presentation/default-design/getDefaultGlobalSettings'
+import { getDefaultNextSlideConfig } from '../../service/presentation/default-design/getDefaultNextSlideConfig'
 import defaultScreens from '../fixtures/default-screens.json'
+import { contentTypes } from '../schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -21,9 +25,10 @@ interface ScreenFixture {
   openOnStartup?: boolean
   width: number
   height: number
-  globalSettings: Record<string, unknown>
   sortOrder: number
-  contentConfigs: Record<string, Record<string, unknown>>
+  /** Designs: left out, the factory design (default-design/) applies. */
+  globalSettings?: Record<string, unknown>
+  contentConfigs?: Record<string, Record<string, unknown>>
   nextSlideConfig?: Record<string, unknown>
 }
 
@@ -31,9 +36,9 @@ interface ScreenFixture {
  * Seeds default screens with their configurations from fixture file.
  * Uses count check to avoid duplicates on subsequent runs.
  *
- * To update fixtures:
- * 1. Configure screens in the UI
- * 2. Run: bun run apps/server/src/db/fixtures/dump-screens.ts
+ * The fixture lists the screens; their designs come from the factory design
+ * in service/presentation/default-design/ unless the fixture carries its own
+ * (as `bun run apps/server/src/db/fixtures/dump-fixtures.ts` writes them).
  * @throws Error if seeding fails
  */
 export function seedDefaultScreens(db: Database): void {
@@ -79,7 +84,9 @@ export function seedDefaultScreens(db: Database): void {
           screen.openOnStartup === false ? 0 : 1,
           screen.width,
           screen.height,
-          JSON.stringify(screen.globalSettings),
+          JSON.stringify(
+            screen.globalSettings ?? getDefaultGlobalSettings(screen.type),
+          ),
           screen.sortOrder,
         ],
       )
@@ -95,10 +102,12 @@ export function seedDefaultScreens(db: Database): void {
         )
       }
 
-      // Create content configs for all content types
-      for (const [contentType, config] of Object.entries(
-        screen.contentConfigs,
-      )) {
+      // Content configs for all content types: the fixture's own design when
+      // it has one, else the factory design for this screen type.
+      for (const contentType of contentTypes) {
+        const config =
+          screen.contentConfigs?.[contentType] ??
+          getDefaultContentConfig(contentType, screen.type)
         db.run(
           `INSERT INTO screen_content_configs
             (screen_id, content_type, config, created_at, updated_at)
@@ -107,15 +116,17 @@ export function seedDefaultScreens(db: Database): void {
         )
       }
 
-      // Create next slide config for stage screens
-      if (screen.nextSlideConfig) {
-        db.run(
-          `INSERT INTO screen_next_slide_configs
-            (screen_id, config, created_at, updated_at)
-            VALUES (?, ?, unixepoch(), unixepoch())`,
-          [inserted.id, JSON.stringify(screen.nextSlideConfig)],
-        )
+      // The "next slide" strip, described but switched off.
+      const nextSlideConfig = screen.nextSlideConfig ?? {
+        ...getDefaultNextSlideConfig(),
+        enabled: false,
       }
+      db.run(
+        `INSERT INTO screen_next_slide_configs
+          (screen_id, config, created_at, updated_at)
+          VALUES (?, ?, unixepoch(), unixepoch())`,
+        [inserted.id, JSON.stringify(nextSlideConfig)],
+      )
 
       log('debug', `Seeded screen: ${screen.name} (${screen.type})`)
     }

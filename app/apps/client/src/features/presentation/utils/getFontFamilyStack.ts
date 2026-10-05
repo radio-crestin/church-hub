@@ -6,6 +6,17 @@
  * breaks on machines that lack the original font.
  */
 const FONT_STACKS: Record<string, string[]> = {
+  // Bundled with the app (see bundledFonts.ts): the registered variable family
+  // first, an installed copy next, then a look-alike system font.
+  montserrat: [
+    'Montserrat Variable',
+    'Montserrat',
+    'Arial',
+    'Liberation Sans',
+    'sans-serif',
+  ],
+  'fira sans': ['Fira Sans', 'Segoe UI', 'Arial', 'sans-serif'],
+  lora: ['Lora Variable', 'Lora', 'Georgia', 'Gelasio', 'serif'],
   'system-ui': [
     'system-ui',
     '-apple-system',

@@ -1,5 +1,8 @@
 import { and, asc, eq, ne, sql } from 'drizzle-orm'
 
+import { getDefaultContentConfig } from './default-design/getDefaultContentConfig'
+import { getDefaultGlobalSettings } from './default-design/getDefaultGlobalSettings'
+import { getDefaultNextSlideConfig } from './default-design/getDefaultNextSlideConfig'
 import type {
   ContentType,
   DisplayOpenMode,
@@ -24,365 +27,6 @@ import {
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('screens')
-
-// ============================================================================
-// DEFAULT CONFIGURATIONS
-// ============================================================================
-
-type PositionUnit = '%' | 'px'
-
-function constraint(enabled: boolean, value: number, unit: PositionUnit = '%') {
-  return { enabled, value, unit }
-}
-
-function constraints(top: number, left: number, unit: PositionUnit = '%') {
-  return {
-    top: constraint(true, top, unit),
-    bottom: constraint(false, 0, unit),
-    left: constraint(true, left, unit),
-    right: constraint(false, 0, unit),
-  }
-}
-
-function constraintsAll(
-  top: number | null,
-  right: number | null,
-  bottom: number | null,
-  left: number | null,
-  unit: PositionUnit = '%',
-) {
-  return {
-    top: constraint(top !== null, top ?? 0, unit),
-    right: constraint(right !== null, right ?? 0, unit),
-    bottom: constraint(bottom !== null, bottom ?? 0, unit),
-    left: constraint(left !== null, left ?? 0, unit),
-  }
-}
-
-function sizeWithUnits(
-  width: number,
-  height: number,
-  widthUnit: PositionUnit = '%',
-  heightUnit: PositionUnit = '%',
-) {
-  return { width, widthUnit, height, heightUnit }
-}
-
-function getDefaultGlobalSettings(): ScreenGlobalSettings {
-  return {
-    defaultBackground: {
-      type: 'color',
-      color: '#000000',
-      opacity: 1,
-    },
-    clockConfig: getDefaultClockConfig(),
-  }
-}
-
-function getDefaultTextStyle(overrides: Record<string, unknown> = {}) {
-  return {
-    fontFamily: 'system-ui',
-    maxFontSize: 120,
-    autoScale: true,
-    color: '#ffffff',
-    bold: false,
-    italic: false,
-    underline: false,
-    alignment: 'center',
-    verticalAlignment: 'middle',
-    lineHeight: 1.3,
-    shadow: false,
-    ...overrides,
-  }
-}
-
-function getDefaultAnimation(type: 'in' | 'out') {
-  return {
-    type: 'fade',
-    duration: type === 'in' ? 300 : 200,
-    delay: 0,
-    easing: type === 'in' ? 'ease-out' : 'ease-in',
-  }
-}
-
-function getDefaultBackground() {
-  return {
-    type: 'color' as const,
-    color: '#000000',
-    opacity: 1,
-  }
-}
-
-function getDefaultClockConfig(enabled = false) {
-  return {
-    enabled,
-    constraints: constraints(2, 85),
-    size: sizeWithUnits(10, 5),
-    style: getDefaultTextStyle({
-      maxFontSize: 32,
-      autoScale: false,
-      alignment: 'right',
-    }),
-    format: '24h' as const,
-    showSeconds: false,
-  }
-}
-
-function getDefaultSongConfig() {
-  return {
-    background: getDefaultBackground(),
-    mainText: {
-      constraints: constraints(10, 5),
-      size: sizeWithUnits(90, 80),
-      style: getDefaultTextStyle({ maxFontSize: 120 }),
-      padding: 20,
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    // Song key ("gama") — shown on the FIRST slide. Separately positionable /
-    // styleable element (like the Bible reference). Top-left by default.
-    songKey: {
-      constraints: constraints(2, 5),
-      size: sizeWithUnits(40, 6),
-      style: getDefaultTextStyle({
-        maxFontSize: 32,
-        autoScale: false,
-        alignment: 'left',
-        bold: true,
-      }),
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    // "Amin" — shown on the LAST slide. Bottom band, centered, by default.
-    amen: {
-      constraints: constraints(85, 5),
-      size: sizeWithUnits(90, 10),
-      style: getDefaultTextStyle({
-        maxFontSize: 48,
-        autoScale: false,
-        alignment: 'center',
-        italic: true,
-      }),
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    clockEnabled: false,
-  }
-}
-
-// Layout for a song's FIRST slide only ("Cântec - Primul Slide"): two elements — the
-// song key (gama) and the slide lyrics (strofa) — positioned/styled separately
-// from the rest of the song's slides (which keep the `song` config). Defaults
-// mirror the `song` config so there is no visual jump until the operator
-// repositions them. Chord/keyline display stay on the `song` config (single
-// source), so this layout has no displayChords/displayKeyLine of its own.
-function getDefaultSongFirstSlideConfig() {
-  return {
-    background: getDefaultBackground(),
-    mainText: {
-      constraints: constraints(10, 5),
-      size: sizeWithUnits(90, 80),
-      style: getDefaultTextStyle({ maxFontSize: 120 }),
-      padding: 20,
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    songKey: {
-      constraints: constraints(2, 5),
-      size: sizeWithUnits(40, 6),
-      style: getDefaultTextStyle({
-        maxFontSize: 32,
-        autoScale: false,
-        alignment: 'left',
-        bold: true,
-      }),
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    clockEnabled: false,
-  }
-}
-
-// Layout for a song's LAST slide only ("Cântec - Ultimul Slide"): two elements — the
-// slide lyrics (strofa) and the "Amin" — positioned/styled separately from the
-// rest of the song's slides (which keep the `song` config). Defaults mirror the
-// `song` config so there is no visual jump until the operator repositions them.
-function getDefaultSongLastSlideConfig() {
-  return {
-    background: getDefaultBackground(),
-    mainText: {
-      constraints: constraints(10, 5),
-      size: sizeWithUnits(90, 80),
-      style: getDefaultTextStyle({ maxFontSize: 120 }),
-      padding: 20,
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    amen: {
-      constraints: constraints(85, 5),
-      size: sizeWithUnits(90, 10),
-      style: getDefaultTextStyle({
-        maxFontSize: 48,
-        autoScale: false,
-        alignment: 'center',
-        italic: true,
-      }),
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    clockEnabled: false,
-  }
-}
-
-function getDefaultBibleConfig() {
-  return {
-    background: getDefaultBackground(),
-    referenceText: {
-      constraints: constraints(2, 5),
-      size: sizeWithUnits(80, 8),
-      style: getDefaultTextStyle({
-        maxFontSize: 36,
-        autoScale: false,
-        alignment: 'left',
-        bold: true,
-      }),
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    contentText: {
-      constraints: constraints(12, 5),
-      size: sizeWithUnits(90, 83),
-      style: getDefaultTextStyle({ maxFontSize: 100 }),
-      padding: 20,
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    clockEnabled: false,
-  }
-}
-
-function getDefaultAnnouncementConfig() {
-  return {
-    background: getDefaultBackground(),
-    mainText: {
-      constraints: constraints(10, 5),
-      size: sizeWithUnits(90, 85),
-      style: getDefaultTextStyle({ maxFontSize: 100 }),
-      padding: 20,
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    clockEnabled: false,
-  }
-}
-
-function getDefaultVerseteTineriConfig() {
-  return {
-    background: getDefaultBackground(),
-    personLabel: {
-      constraints: constraints(2, 5),
-      size: sizeWithUnits(40, 5),
-      style: getDefaultTextStyle({
-        maxFontSize: 28,
-        autoScale: false,
-        alignment: 'left',
-        italic: true,
-      }),
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    referenceText: {
-      constraints: constraints(8, 5),
-      size: sizeWithUnits(80, 8),
-      style: getDefaultTextStyle({
-        maxFontSize: 32,
-        autoScale: false,
-        alignment: 'left',
-        bold: true,
-      }),
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    contentText: {
-      constraints: constraints(18, 5),
-      size: sizeWithUnits(90, 77),
-      style: getDefaultTextStyle({ maxFontSize: 90 }),
-      padding: 20,
-      animationIn: getDefaultAnimation('in'),
-      animationOut: getDefaultAnimation('out'),
-    },
-    clockEnabled: false,
-  }
-}
-
-function getDefaultEmptyConfig() {
-  return {
-    background: getDefaultBackground(),
-    clockEnabled: true, // Clock typically enabled on empty/idle screen
-  }
-}
-
-function getDefaultScreenShareConfig() {
-  return {
-    background: getDefaultBackground(),
-    videoElement: {
-      constraints: constraintsAll(0, 0, 0, 0), // Fullscreen by default
-      size: sizeWithUnits(100, 100),
-      objectFit: 'contain' as const,
-    },
-    clockEnabled: false, // Clock typically not needed during screen share
-  }
-}
-
-function getDefaultContentConfig(
-  contentType: ContentType,
-): Record<string, unknown> {
-  switch (contentType) {
-    case 'song':
-      return getDefaultSongConfig()
-    case 'song_first_slide':
-      return getDefaultSongFirstSlideConfig()
-    case 'song_last_slide':
-      return getDefaultSongLastSlideConfig()
-    case 'bible':
-    case 'bible_passage':
-      return getDefaultBibleConfig()
-    case 'announcement':
-      return getDefaultAnnouncementConfig()
-    case 'versete_tineri':
-      return getDefaultVerseteTineriConfig()
-    case 'empty':
-      return getDefaultEmptyConfig()
-    case 'screen_share':
-      return getDefaultScreenShareConfig()
-  }
-}
-
-function getDefaultNextSlideConfig(): NextSlideSectionConfig {
-  return {
-    enabled: true,
-    constraints: constraintsAll(78, 0, 0, 0),
-    size: sizeWithUnits(100, 22),
-    labelText: 'Urmeaza:',
-    labelStyle: getDefaultTextStyle({
-      maxFontSize: 24,
-      autoScale: false,
-      alignment: 'left',
-      bold: true,
-      color: '#cccccc',
-    }) as NextSlideSectionConfig['labelStyle'],
-    contentStyle: getDefaultTextStyle({
-      maxFontSize: 32,
-      autoScale: true,
-      alignment: 'left',
-    }) as NextSlideSectionConfig['contentStyle'],
-    background: {
-      type: 'color',
-      color: '#1a1a1a',
-      opacity: 0.8,
-    },
-  }
-}
 
 // ============================================================================
 // PARSING HELPERS
@@ -557,7 +201,7 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
       if (existing) {
         configMap[type] = parseContentConfig(type, existing.config)
       } else {
-        configMap[type] = getDefaultContentConfig(type)
+        configMap[type] = getDefaultContentConfig(type, screen.type)
       }
     }
 
@@ -623,11 +267,11 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
 export function upsertScreen(input: UpsertScreenInput): Screen | null {
   try {
     const db = getDatabase()
-    const globalSettingsJson = JSON.stringify(
-      input.globalSettings ?? getDefaultGlobalSettings(),
-    )
     const openMode = input.openMode ?? 'browser'
     const screenType = input.type ?? 'primary'
+    const globalSettingsJson = JSON.stringify(
+      input.globalSettings ?? getDefaultGlobalSettings(screenType),
+    )
 
     // Get default dimensions for screen type
     const defaultDimensions = getScreenDimensions(screenType)
@@ -739,15 +383,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
 
     // Create default content configs for all content types
     for (const contentType of contentTypes) {
-      const config = getDefaultContentConfig(contentType)
-      // Adjust for stage screen
-      if (screenType === 'stage') {
-        adjustConfigForStage(config)
-      }
-      // Adjust for livestream
-      if (screenType === 'livestream') {
-        adjustConfigForLivestream(config, contentType)
-      }
+      const config = getDefaultContentConfig(contentType, screenType)
 
       db.insert(screenContentConfigs)
         .values({
@@ -793,53 +429,6 @@ function getScreenDimensions(type: ScreenType): {
     case 'livestream':
       return { width: 1080, height: 420 }
   }
-}
-
-function adjustConfigForStage(config: Record<string, unknown>) {
-  // Reduce content height to 78% to leave room for next slide section
-  if (config.mainText && typeof config.mainText === 'object') {
-    const mainText = config.mainText as Record<string, unknown>
-    if (mainText.size && typeof mainText.size === 'object') {
-      const size = mainText.size as Record<string, unknown>
-      if (typeof size.height === 'number') {
-        size.height = Math.min(size.height, 65)
-      }
-    }
-  }
-  if (config.contentText && typeof config.contentText === 'object') {
-    const contentText = config.contentText as Record<string, unknown>
-    if (contentText.size && typeof contentText.size === 'object') {
-      const size = contentText.size as Record<string, unknown>
-      if (typeof size.height === 'number') {
-        size.height = Math.min(size.height, 63)
-      }
-    }
-  }
-}
-
-function adjustConfigForLivestream(
-  config: Record<string, unknown>,
-  contentType: string,
-) {
-  // Use transparent background and add shadows
-  config.background = { type: 'transparent', opacity: 1 }
-  // The stream audience doesn't need the song key (gama)
-  if (contentType === 'song') config.displayKeyLine = false
-
-  const addShadow = (element: unknown) => {
-    if (element && typeof element === 'object') {
-      const el = element as Record<string, unknown>
-      if (el.style && typeof el.style === 'object') {
-        ;(el.style as Record<string, unknown>).shadow = true
-      }
-    }
-  }
-
-  addShadow(config.mainText)
-  addShadow(config.contentText)
-  addShadow(config.referenceText)
-  addShadow(config.personLabel)
-  addShadow(config.clock)
 }
 
 /**
@@ -1037,7 +626,7 @@ export function getContentConfig(
       return parseContentConfig(contentType, record.config)
     }
 
-    return getDefaultContentConfig(contentType)
+    return getDefaultContentConfig(contentType, getScreenById(screenId)?.type)
   } catch (error) {
     logger.error(`Failed to get content config: ${error}`)
     return getDefaultContentConfig(contentType)
