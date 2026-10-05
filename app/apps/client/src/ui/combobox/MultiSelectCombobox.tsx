@@ -107,6 +107,21 @@ export function MultiSelectCombobox({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // While open, Escape only closes the dropdown: inside a modal <dialog> it
+  // would otherwise also close (or step back) the dialog around it.
+  useEffect(() => {
+    if (!isOpen) return
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      setIsOpen(false)
+      setSearch('')
+    }
+    document.addEventListener('keydown', closeOnEscape, true)
+    return () => document.removeEventListener('keydown', closeOnEscape, true)
+  }, [isOpen])
+
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus()
