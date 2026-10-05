@@ -38,4 +38,4 @@ Rolled over:
 - none
 
 ## 2026-10-05 · Sprint 41 · Week 41 · Mon Oct 5 – Sun Oct 11
-Goal: Songs & editor polish
+Goal: Programs & Sunday-service fixes
