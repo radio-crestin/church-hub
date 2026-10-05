@@ -235,9 +235,9 @@ export function SongEditorModal({
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
       data-testid="song-editor-modal"
-      className="fixed inset-0 m-auto w-full max-w-4xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50 z-50"
+      className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-7xl h-[calc(100dvh-2rem)] max-h-none p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50 z-50"
     >
-      <div className="flex flex-col max-h-[90vh]">
+      <div className="flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
