@@ -52,13 +52,16 @@ DRIVE_REDIRECT_URI = "https://churchub-backend.radiocrestin.ro/auth/drive/callba
 COOKIE_NAME = "yt_oauth_state"
 COOKIE_MAX_AGE = 600
 
-# Secrets must be set via wrangler secret put:
+# Secrets, never [vars]: `npm run deploy:prod` uploads every .prod.vars value
+# as a Worker secret (deploy.sh, --secrets-file). Plain `wrangler deploy`
+# keeps them.
 # - YOUTUBE_CLIENT_ID     (shared by the YouTube AND Drive flows)
 # - YOUTUBE_CLIENT_SECRET (shared by the YouTube AND Drive flows)
 # - COOKIE_ENCRYPTION_KEY (generate: openssl rand -hex 32)
 # - ALLOWED_ORIGINS (comma-separated list)
 # - YOUTUBE_REDIRECT_URI
-# - GITHUB_TOKEN (GitHub PAT with repo scope for creating issues)
+# - GITHUB_TOKEN (fine-grained PAT, radio-crestin/church-hub only, Issues:
+#   read and write only; it opens the feature-request issues)
 # - WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID (+ optional WAHA_SESSION,
 #   WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) for the WhatsApp
 #   notice of each feature request. Unset = WhatsApp is skipped.

@@ -13,10 +13,15 @@ if [ ! -f "$PROD_VARS" ]; then
   exit 1
 fi
 
-# Every `wrangler deploy` REPLACES the worker's vars wholesale. Sourcing an
-# empty or incomplete .prod.vars once silently wiped ALLOWED_ORIGINS in
-# production and 403'd every OAuth flow. So we parse .prod.vars generically
-# and validate every value before shipping.
+# Every value in .prod.vars goes up as a Worker SECRET (encrypted, never
+# shown in the dashboard, the deploy output or `wrangler versions view`),
+# uploaded together with the new version through --secrets-file. They used
+# to go up as plain-text --var bindings, readable by anyone with dashboard
+# access. Sourcing an empty or incomplete .prod.vars once silently wiped
+# ALLOWED_ORIGINS in production and 403'd every OAuth flow, so we still
+# parse .prod.vars generically and validate every value before shipping.
+# Optional keys (WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID, WAHA_SESSION,
+# WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) are shipped when present.
 
 # Required minimum set: the secret Bindings from src/types.ts, i.e. the
 # runtime bindings MINUS the non-sensitive [vars] in wrangler.toml and the
@@ -34,7 +39,6 @@ REQUIRED_VARS=(
 # Placeholder markers that indicate an unfilled example value.
 PLACEHOLDER_PATTERNS='your-|changeme|change-me|xxxxx|<.*>|placeholder'
 
-declare -a DEPLOY_ARGS=()
 declare -A SEEN_VARS=()
 
 # Parse every non-comment, non-empty KEY=VALUE line.
@@ -87,7 +91,6 @@ while IFS= read -r rawline || [ -n "$rawline" ]; do
   fi
 
   SEEN_VARS["$key"]=1
-  DEPLOY_ARGS+=(--var "${key}:${value}")
 done < "$PROD_VARS"
 
 # Ensure the required minimum set is present.
@@ -103,7 +106,7 @@ if [ ${#MISSING[@]} -gt 0 ]; then
   exit 1
 fi
 
-if [ ${#DEPLOY_ARGS[@]} -eq 0 ]; then
+if [ ${#SEEN_VARS[@]} -eq 0 ]; then
   echo "ERROR: no deployable variables parsed from $PROD_VARS." >&2
   exit 1
 fi
@@ -111,7 +114,7 @@ fi
 # Allow overriding the wrangler binary for testing (defaults to `wrangler`).
 WRANGLER_CMD="${WRANGLER_CMD:-wrangler}"
 
-echo "Deploying with vars: ${!SEEN_VARS[*]}"
-$WRANGLER_CMD deploy "${DEPLOY_ARGS[@]}"
+echo "Deploying with secrets: ${!SEEN_VARS[*]}"
+$WRANGLER_CMD deploy --secrets-file "$PROD_VARS"
 
 echo "Deployed to: https://churchub-backend.radiocrestin.ro"
