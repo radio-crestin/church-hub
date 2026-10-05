@@ -9,6 +9,7 @@ import type { Annotation, RequestFeatureValues } from '../types'
 import { captureDisplay } from '../utils/captureDisplay'
 import { captureScreenshot } from '../utils/captureScreenshot'
 import { FEATURE_REQUEST_UI_ATTRIBUTE } from '../utils/isFeatureRequestUi'
+import { waitForAnimationsToSettle } from '../utils/waitForAnimationsToSettle'
 
 type Step = 'capturing' | 'roaming' | 'editing'
 
@@ -16,9 +17,13 @@ interface RequestFeatureToolProps {
   onClose: () => void
 }
 
-/** Takes the screenshot of the app page; null when it cannot be taken. */
+/**
+ * Takes the screenshot of the app page once it has stopped moving (the phone
+ * menu drawer slides away first); null when it cannot be taken.
+ */
 async function takeScreenshot(): Promise<HTMLCanvasElement | null> {
   try {
+    await waitForAnimationsToSettle()
     return await captureScreenshot()
   } catch (error) {
     // The request still goes out, just without a picture.

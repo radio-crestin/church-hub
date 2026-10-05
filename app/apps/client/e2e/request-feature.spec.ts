@@ -100,6 +100,42 @@ async function addNote(page: Page, dialog: Locator, text: string, at = 0.4) {
   await expect(input).toHaveCount(0)
 }
 
+async function viewportImage(page: Page): Promise<string> {
+  return `data:image/png;base64,${(await page.screenshot()).toString('base64')}`
+}
+
+/**
+ * Mean colour difference (0-255) of two images, both shrunk to a few pixels
+ * over the left 70% (where the phone menu drawer sits): text and small
+ * layout shifts average out, a whole drawer does not.
+ */
+function imageDifference(page: Page, first: string, second: string) {
+  return page.evaluate(
+    async ([a, b]) => {
+      const toPixels = async (url: string) => {
+        const image = new Image()
+        image.src = url
+        await image.decode()
+        const canvas = document.createElement('canvas')
+        canvas.width = 39
+        canvas.height = 84
+        const context = canvas.getContext('2d')
+        context?.drawImage(image, 0, 0, 39, 84)
+        return context?.getImageData(0, 0, 27, 84).data ?? []
+      }
+      const [pixelsA, pixelsB] = await Promise.all([toPixels(a), toPixels(b)])
+      let total = 0
+      for (let index = 0; index < pixelsA.length; index += 4) {
+        for (let channel = 0; channel < 3; channel++) {
+          total += Math.abs(pixelsA[index + channel] - pixelsB[index + channel])
+        }
+      }
+      return total / ((pixelsA.length / 4) * 3)
+    },
+    [first, second],
+  )
+}
+
 test.describe('Request a feature', () => {
   test.beforeEach(async ({ page }) => {
     await recordOpenedUrls(page)
@@ -452,6 +488,39 @@ test.describe('Request a feature', () => {
       ).toBeInViewport()
     })
   }
+
+  test('on a phone the screenshot shows the page, not the menu drawer', async ({
+    page,
+  }) => {
+    await mockFeatureRequestApi(page)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/songs')
+    await page
+      .getByRole('button', { name: /Open menu|Deschide meniu/ })
+      .click({ timeout: 15000 })
+    await expect(page.getByTestId('main-sidebar')).toBeInViewport()
+    await page.waitForTimeout(400)
+    const drawerOpen = await viewportImage(page)
+
+    // Feedback is tapped inside the drawer, which slides away.
+    const dialog = await openRequestFeature(page)
+    const captured = await dialog
+      .getByTestId('feature-request-canvas')
+      .evaluate((canvas) =>
+        (canvas as HTMLCanvasElement).toDataURL('image/png'),
+      )
+
+    // The page as it really is with the drawer closed.
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+    await expect(page.getByTestId('main-sidebar')).not.toBeInViewport()
+    const drawerClosed = await viewportImage(page)
+
+    // The screenshot must look like the closed page, clearly not the drawer.
+    const toClosed = await imageDifference(page, captured, drawerClosed)
+    const toOpen = await imageDifference(page, captured, drawerOpen)
+    expect(toClosed).toBeLessThan(toOpen * 0.75)
+  })
 
   test('remembers the email for the next request', async ({ page }) => {
     await mockFeatureRequestApi(page)
