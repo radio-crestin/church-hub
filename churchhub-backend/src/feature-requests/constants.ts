@@ -3,6 +3,11 @@ export const TITLE_MAX_LENGTH = 120
 export const DERIVED_TITLE_MAX_LENGTH = 80
 export const NOTES_MAX_LENGTH = 5000
 export const SHORT_FIELD_MAX_LENGTH = 500
+/** Text notes the user places on the screenshot. */
+export const SCREENSHOT_NOTES_MAX_COUNT = 30
+export const SCREENSHOT_NOTE_MAX_LENGTH = 300
+/** Issue title when there is neither a description nor a note. */
+export const FALLBACK_ISSUE_TITLE = 'Request from the app'
 export const SELECTOR_MAX_LENGTH = 2000
 export const SCREENSHOT_MAX_BYTES = 5 * 1024 * 1024
 /** Whole JSON body: a 5 MB screenshot is ~6.7 MB as base64, plus the text. */

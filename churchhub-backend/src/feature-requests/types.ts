@@ -13,7 +13,10 @@ export interface PickedElement {
 export interface FeatureRequestInput {
   /** Sent by older apps; otherwise the first line of the notes. */
   title: string
+  /** Optional description; empty when the user wrote none. */
   notes: string
+  /** Text notes placed on the screenshot, numbered 1, 2, ... in order. */
+  screenshotNotes: string[]
   /** Private: goes only to the maintainer's WhatsApp, never to GitHub. */
   email: string
   route: string

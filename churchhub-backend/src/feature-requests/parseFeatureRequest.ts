@@ -8,6 +8,7 @@ import { deriveIssueTitle } from './deriveIssueTitle'
 import { FeatureRequestError } from './FeatureRequestError'
 import { isValidEmail } from './isValidEmail'
 import { parseImageDataUrl } from './parseImageDataUrl'
+import { readScreenshotNotes } from './readScreenshotNotes'
 import { readString } from './readString'
 import type { FeatureRequestInput, PickedElement } from './types'
 
@@ -22,11 +23,22 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
   if (!isValidEmail(email)) throw new FeatureRequestError('email is invalid')
 
   const optional = { required: false }
-  const notes = readString(raw.notes, 'notes', NOTES_MAX_LENGTH)
+  const notes = readString(raw.notes, 'notes', NOTES_MAX_LENGTH, optional)
+  const screenshotNotes = readScreenshotNotes(raw.screenshotNotes)
+  const screenshot =
+    typeof raw.screenshot === 'string'
+      ? parseImageDataUrl(raw.screenshot)
+      : undefined
+  if (!notes && screenshotNotes.length === 0 && !screenshot) {
+    throw new FeatureRequestError(
+      'Add a description, a note or a screenshot'
+    )
+  }
   const title = readString(raw.title, 'title', TITLE_MAX_LENGTH, optional)
   return {
-    title: deriveIssueTitle(title, notes),
+    title: deriveIssueTitle(title, notes, screenshotNotes),
     notes,
+    screenshotNotes,
     email,
     route: readString(raw.route, 'route', SHORT_FIELD_MAX_LENGTH, optional),
     viewport: readString(
@@ -42,10 +54,7 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
       SHORT_FIELD_MAX_LENGTH
     ),
     element: parseElement(raw.element),
-    screenshot:
-      typeof raw.screenshot === 'string'
-        ? parseImageDataUrl(raw.screenshot)
-        : undefined,
+    screenshot,
     supportId:
       readString(raw.supportId, 'supportId', SHORT_FIELD_MAX_LENGTH, optional) ||
       undefined,
