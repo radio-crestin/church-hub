@@ -67,6 +67,7 @@ import {
   writeSelectedScheduleId,
 } from '../service/selectedSchedule'
 import type { AddToScheduleInput, Schedule, ScheduleItem } from '../types'
+import { isSamePassage } from '../utils/isSamePassage'
 import { countScheduleItemSteps } from '../utils/scheduleFlatItems'
 
 interface SchedulePanelProps {
@@ -120,8 +121,8 @@ interface SchedulePanelProps {
  * It is the program page's item list in miniature — every kind of item shows
  * up, each expands to its presentable steps, clicking a step projects it, and
  * the live step is ringed green — wrapped in the panel affordances the two
- * pages already had: the sung/read markers, the all/remaining/sung tabs, the
- * search box, drag-to-reorder, and the add/open/delete buttons.
+ * pages already had: the sung/read markers, the search box, drag-to-reorder,
+ * and the new/add/open/rename/delete buttons.
  *
  * Reordering and filtering deliberately stay a songs-and-passages affair: an
  * announcement has no "already sung" state and its place in the program is the
@@ -156,6 +157,7 @@ export function SchedulePanel({
   const { hasPermission } = usePermissions()
   const canEditProgram = hasPermission('programs.edit')
   const canCreateProgram = hasPermission('programs.create')
+  const canDeleteProgram = hasPermission('programs.delete')
   const [isCreatingSchedule, setIsCreatingSchedule] = useState(false)
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
@@ -495,7 +497,7 @@ export function SchedulePanel({
             item={item}
             isActive={
               !!activeReference &&
-              item.biblePassageReference?.startsWith(activeReference) === true
+              isSamePassage(item.biblePassageReference, activeReference)
             }
             isLive={isLive}
             isSortable={sortable}
@@ -507,7 +509,7 @@ export function SchedulePanel({
                 : undefined
             }
             onSelect={() => onSelectPassage?.(item)}
-            onRemove={() => handleRemove(item.id)}
+            onRemove={canEditProgram ? () => handleRemove(item.id) : undefined}
             onToggleSung={() => handleToggleSung(item.id, item.isSung)}
           />
         )
@@ -530,7 +532,7 @@ export function SchedulePanel({
             }
             onEditKeyLine={() => editKeyLine(item)}
             onSelect={() => item.songId && onSelectSong?.(item.songId)}
-            onRemove={() => handleRemove(item.id)}
+            onRemove={canEditProgram ? () => handleRemove(item.id) : undefined}
             onToggleSung={() => handleToggleSung(item.id, item.isSung)}
           />
         )
@@ -742,7 +744,7 @@ export function SchedulePanel({
           },
         ]
       : []),
-    ...(selectedScheduleId
+    ...(selectedScheduleId && canDeleteProgram
       ? [
           {
             id: 'delete',

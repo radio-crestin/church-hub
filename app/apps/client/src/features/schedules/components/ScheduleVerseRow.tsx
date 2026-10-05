@@ -21,7 +21,8 @@ interface ScheduleVerseRowProps {
   onSelect: () => void
   /** Opens the program page's editor for this item. */
   onEdit?: () => void
-  onRemove: () => void
+  /** Absent without permission to edit the program. */
+  onRemove?: () => void
   onToggleSung: () => void
 }
 
@@ -165,18 +166,20 @@ export function ScheduleVerseRow({
         </button>
       ) : null}
 
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onRemove()
-        }}
-        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-        title={t('panel.removeFromSchedule')}
-        data-testid="schedule-verse-remove"
-      >
-        <XIcon size={14} />
-      </button>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
+          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          title={t('panel.removeFromSchedule')}
+          data-testid="schedule-verse-remove"
+        >
+          <XIcon size={14} />
+        </button>
+      ) : null}
     </div>
   )
 }
