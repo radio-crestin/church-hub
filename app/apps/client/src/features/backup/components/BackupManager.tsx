@@ -14,7 +14,7 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { BackupContentsModal } from './BackupContentsModal'
 import { LocalBackupPanel } from './LocalBackupPanel'
 import { useBackup } from '../hooks/useBackup'
@@ -45,7 +45,7 @@ const MAX_RETAINED_BACKUPS = 50
 
 export function BackupManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const backup = useBackup()
   const [pendingRestore, setPendingRestore] = useState<BackupFile | null>(null)
   const [pendingDelete, setPendingDelete] = useState<BackupFile | null>(null)

@@ -15,7 +15,7 @@ import {
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { LinkVersionsModal } from './LinkVersionsModal'
 import { useLinkSongs } from '../hooks/useLinkSongs'
 import { useSetPrimarySong } from '../hooks/useSetPrimarySong'
@@ -130,7 +130,7 @@ function SuggestionsSection({
   showEmptyState?: boolean
 }) {
   const { t } = useTranslation('songs')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { data: suggestions = [], isLoading } = useSimilarSongs(songId)
   const linkMutation = useLinkSongs()
   // Track ids that just got accepted so the row can play a brief fade-out

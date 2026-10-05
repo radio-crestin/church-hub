@@ -14,8 +14,8 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-vi.mock('~/ui/toast', () => ({
-  useToast: () => ({ showToast }),
+vi.mock('~/ui/notifications', () => ({
+  useNotifications: () => ({ showToast }),
 }))
 
 // The picker's own behaviour (upload, list, permissions) is not under test:

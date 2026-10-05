@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Combobox } from '~/ui/combobox'
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { useDeleteTranslation } from '../hooks'
 import { useSelectedBibleTranslations } from '../hooks/useSelectedBibleTranslations'
 
@@ -16,7 +16,7 @@ export function BibleTranslationsManager({
   portalContainer,
 }: BibleTranslationsManagerProps) {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean
     translationId: number | null

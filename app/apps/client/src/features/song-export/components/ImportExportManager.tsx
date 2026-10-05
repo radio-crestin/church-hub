@@ -19,7 +19,7 @@ import {
 import { useCategories, useUpsertCategory } from '~/features/songs/hooks'
 import { backfillAlternateTitles } from '~/features/songs/service'
 import { AlertModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { ExportOptionsModal } from './ExportOptionsModal'
 import { ExportProgressModal } from './ExportProgressModal'
 import { useExportSongs } from '../hooks'
@@ -37,7 +37,7 @@ type ModalState =
 
 export function ImportExportManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const {
     batchImport,
     isPending: isImporting,

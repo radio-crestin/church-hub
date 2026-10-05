@@ -2,8 +2,8 @@ import { CalendarDays, Check, Loader2, Plus, Search, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useNotifications } from '~/ui/notifications'
 import { ClearSearchButton } from '~/ui/search'
-import { useToast } from '~/ui/toast'
 import { TodayProgramButton } from './TodayProgramButton'
 import {
   useAddItemToSchedule,
@@ -42,7 +42,7 @@ export function AddSongToScheduleModal({
   onAdded,
 }: AddSongToScheduleModalProps) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const draftInputRefs = useRef<Record<string, HTMLInputElement | null>>({})

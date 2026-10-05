@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { isTauri } from '~/utils/isTauri'
 import { useLocalBackup } from '../hooks/useLocalBackup'
 import type { LocalBackupFile } from '../service'
@@ -50,7 +50,7 @@ export function LocalBackupPanel({
   lastLocalBackupAt,
 }: LocalBackupPanelProps) {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const hasPath = !!localBackupPath
   // A folder the operator is looking inside to restore from. Separate from the
   // configured path on purpose: restoring last month's copy off a stick should

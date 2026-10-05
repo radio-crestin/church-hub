@@ -68,8 +68,8 @@ import { useEditLayoutAction, Workspace } from '~/features/workspace'
 import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
 import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
+import { useNotifications } from '~/ui/notifications'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
-import { useToast } from '~/ui/toast'
 
 /**
  * The Bible page opens as navigation | control panel | the Istoric / Marcaje /
@@ -133,7 +133,7 @@ export const Route = createFileRoute('/bible/')({
 function BiblePage() {
   const { t } = useTranslation('bible')
   const { t: tSchedules } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const navigate = useNavigate()
   const {
     reset,

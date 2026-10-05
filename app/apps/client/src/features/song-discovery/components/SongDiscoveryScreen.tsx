@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 import { defaultSongMetadata } from '~/features/songs/components/SongDetailsSection'
 import { useCategories, useUpsertCategory } from '~/features/songs/hooks'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { CandidateEditorPanel } from './CandidateEditorPanel'
 import { CandidateList } from './CandidateList'
 import { DiscoveryProgress } from './DiscoveryProgress'
@@ -84,7 +84,7 @@ function StatChip({
  */
 export function SongDiscoveryScreen({ onBack }: SongDiscoveryScreenProps) {
   const { t } = useTranslation('songDiscovery')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const queryClient = useQueryClient()
 
   // Single source today; the provider registry stays extensible for more.

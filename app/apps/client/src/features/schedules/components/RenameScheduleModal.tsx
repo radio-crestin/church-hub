@@ -2,7 +2,7 @@ import { Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { useUpsertSchedule } from '../hooks'
 import type { Schedule } from '../types'
 
@@ -17,7 +17,7 @@ export function RenameScheduleModal({
   onClose,
 }: RenameScheduleModalProps) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState('')

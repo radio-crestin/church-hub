@@ -2,12 +2,12 @@ import { Plus, Search, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useNotifications } from '~/ui/notifications'
 import { UserCard } from './UserCard'
 import { UserForm, type UserFormData } from './UserForm'
 import { UserQRModal } from './UserQRModal'
 import { ConfirmModal } from '../../../ui/modal/ConfirmModal'
 import { ClearSearchButton } from '../../../ui/search'
-import { useToast } from '../../../ui/toast'
 import {
   useCreateUser,
   useDeleteUser,
@@ -29,7 +29,7 @@ type ModalState =
 
 export function UserList() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { data: users, isLoading, error } = useUsers()
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()

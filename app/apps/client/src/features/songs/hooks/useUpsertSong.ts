@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { SONG_BOOKMARKS_QUERY_KEY } from './useSongBookmarks'
 import { upsertSong } from '../service'
 import type { UpsertSongInput } from '../types'
 
 export function useUpsertSong() {
   const queryClient = useQueryClient()
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { t } = useTranslation('songs')
 
   return useMutation({

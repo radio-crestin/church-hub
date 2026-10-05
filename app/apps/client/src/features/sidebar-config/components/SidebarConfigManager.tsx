@@ -17,7 +17,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { CustomPageFormModal } from './CustomPageFormModal'
 import { SidebarItemCard } from './SidebarItemCard'
 import {
@@ -38,7 +38,7 @@ import type {
  */
 export function SidebarConfigManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   const { config, isLoading, updateConfig } = useSidebarConfig()
 

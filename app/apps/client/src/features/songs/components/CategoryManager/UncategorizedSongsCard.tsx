@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { useDeleteSong, useUncategorizedSongs } from '../../hooks'
 import { deleteUncategorizedSongs } from '../../service'
 
 export function UncategorizedSongsCard() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const queryClient = useQueryClient()
   const { data: uncategorized } = useUncategorizedSongs()
   const deleteSong = useDeleteSong()

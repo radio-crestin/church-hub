@@ -7,7 +7,7 @@ import {
 } from '~/features/background-media/hooks'
 import { BackgroundMediaUploadError } from '~/features/background-media/service'
 import { validateBackgroundMediaFile } from '~/features/background-media/utils/validateBackgroundMediaFile'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { createLogger } from '~/utils/logger'
 import type { GalleryUploadProgress } from '../types'
 
@@ -23,7 +23,7 @@ const logger = createLogger('app:gallery')
  */
 export function useGalleryUpload() {
   const { t } = useTranslation('gallery')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { mutateAsync: upload } = useUploadBackgroundMedia()
   const { confirmUpload, modal: heavyGifWarning } = useConfirmHeavyGifUpload()
   const [progress, setProgress] = useState<GalleryUploadProgress | null>(null)

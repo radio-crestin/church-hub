@@ -9,7 +9,7 @@ import {
   useChapters,
   useDefaultBibleTranslation,
 } from '~/features/bible'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { useAddItemToSchedule, useUpdateScheduleSlide } from '../hooks'
 import { passageRangeToReadingFields } from '../utils/passageRangeToReadingFields'
 
@@ -37,7 +37,7 @@ export function BiblePassagePickerModal({
   onSaved,
 }: BiblePassagePickerModalProps) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)

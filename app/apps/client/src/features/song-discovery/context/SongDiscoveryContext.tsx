@@ -9,7 +9,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { usePermissions } from '~/provider/permissions-provider'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import {
   type UseSongDiscoverySyncResult,
   useSongDiscoverySync,
@@ -31,11 +31,11 @@ const SongDiscoveryContext = createContext<UseSongDiscoverySyncResult | null>(
  * and exposes the badge count + dismiss to the sidebar and other consumers.
  *
  * Gated on `songs.create` — users who can't import shouldn't be pinged. Must be
- * mounted inside the Router, ToastProvider and PermissionsProvider.
+ * mounted inside the Router, NotificationsProvider and PermissionsProvider.
  */
 export function SongDiscoveryProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation('songDiscovery')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const navigate = useNavigate()
   const { hasPermission } = usePermissions()
 

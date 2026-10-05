@@ -14,7 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { FontSizeField } from './FontSizeField'
 import { getSlideSelection } from './getSlideSelection'
 import {
@@ -104,7 +104,7 @@ export function SlideStyleToolbar({
   disabled = false,
 }: SlideStyleToolbarProps) {
   const { t } = useTranslation('songs')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const correction = useCorrectLyrics()
 
   // What the operator has selected right now, tracked so the controls report

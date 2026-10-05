@@ -39,7 +39,7 @@ import { PermissionsProvider } from '~/provider/permissions-provider'
 import { QueryClientProvider } from '~/provider/QueryClientProvider'
 import { ThemeProvider } from '~/provider/theme-provider'
 import { AppLayout } from '~/ui/layout/app-layout'
-import { ToastProvider } from '~/ui/toast'
+import { NotificationsProvider } from '~/ui/notifications'
 
 // Initialize i18n
 import '~/i18n/config'
@@ -131,16 +131,18 @@ function SidebarNavigationListener() {
 function ScreenLayout() {
   return (
     <ThemeProvider>
-      <QueryClientProvider>
-        <WebSocketProvider>
-          <ScreenShareProvider>
-            <KioskWakeLockManager />
-            <KioskFullscreenManager />
-            <KioskScreenDimManager />
-            <Outlet />
-          </ScreenShareProvider>
-        </WebSocketProvider>
-      </QueryClientProvider>
+      <NotificationsProvider>
+        <QueryClientProvider>
+          <WebSocketProvider>
+            <ScreenShareProvider>
+              <KioskWakeLockManager />
+              <KioskFullscreenManager />
+              <KioskScreenDimManager />
+              <Outlet />
+            </ScreenShareProvider>
+          </WebSocketProvider>
+        </QueryClientProvider>
+      </NotificationsProvider>
     </ThemeProvider>
   )
 }
@@ -151,16 +153,16 @@ function ScreenLayout() {
 function MainLayout() {
   return (
     <ThemeProvider>
-      <QueryClientProvider>
-        <WebSocketProvider>
-          <ScreenShareProvider>
-            <KioskWakeLockManager />
-            <KioskFullscreenManager />
-            <KioskScreenDimManager />
-            <PermissionsProvider>
-              <MobileConnectionGuard>
-                <I18nProvider>
-                  <ToastProvider>
+      <NotificationsProvider>
+        <QueryClientProvider>
+          <WebSocketProvider>
+            <ScreenShareProvider>
+              <KioskWakeLockManager />
+              <KioskFullscreenManager />
+              <KioskScreenDimManager />
+              <PermissionsProvider>
+                <MobileConnectionGuard>
+                  <I18nProvider>
                     <LoginGate>
                       <KeyboardNavigationProvider>
                         <MIDISettingsProvider>
@@ -189,13 +191,13 @@ function MainLayout() {
                     {isDev ? (
                       <TanStackRouterDevtools position="bottom-right" />
                     ) : null}
-                  </ToastProvider>
-                </I18nProvider>
-              </MobileConnectionGuard>
-            </PermissionsProvider>
-          </ScreenShareProvider>
-        </WebSocketProvider>
-      </QueryClientProvider>
+                  </I18nProvider>
+                </MobileConnectionGuard>
+              </PermissionsProvider>
+            </ScreenShareProvider>
+          </WebSocketProvider>
+        </QueryClientProvider>
+      </NotificationsProvider>
     </ThemeProvider>
   )
 }

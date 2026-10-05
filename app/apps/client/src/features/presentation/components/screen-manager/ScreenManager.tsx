@@ -24,7 +24,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
-import { useToast } from '~/ui/toast/useToast'
+import { useNotifications } from '~/ui/notifications'
 import { ScreenExportModal } from './ScreenExportModal'
 import { ScreenMonitorPicker } from './ScreenMonitorPicker'
 import {
@@ -53,7 +53,7 @@ const SCREEN_TYPE_COLORS: Record<ScreenType, string> = {
 
 export function ScreenManager() {
   const { t } = useTranslation(['settings', 'presentation'])
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   // Translated screen type options
   const screenTypeOptions = useMemo(

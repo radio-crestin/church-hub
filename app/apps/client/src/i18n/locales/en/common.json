@@ -125,5 +125,9 @@
   },
   "actionsMenu": {
     "trigger": "More"
+  },
+  "notifications": {
+    "dismiss": "Dismiss notification",
+    "region": "Notifications"
   }
 }

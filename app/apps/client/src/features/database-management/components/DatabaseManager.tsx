@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { fetcher } from '~/utils/fetcher'
 import { useDatabaseExport } from '../hooks/useDatabaseExport'
 import {
@@ -40,7 +40,7 @@ function formatBytes(bytes: number): string {
 
 export function DatabaseManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showImportConfirm, setShowImportConfirm] = useState(false)

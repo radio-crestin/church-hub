@@ -2,12 +2,12 @@ import { RefreshCw, Search } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { rebuildSearchIndexes } from '../service'
 
 export function SearchIndexRebuild() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [isPending, setIsPending] = useState(false)
 
   const handleRebuild = useCallback(async () => {

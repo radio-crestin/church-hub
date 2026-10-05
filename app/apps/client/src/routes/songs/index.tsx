@@ -22,9 +22,9 @@ import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
 import { useEditLayoutAction, Workspace } from '~/features/workspace'
 import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
 import { ActionMenu } from '~/ui/menu'
+import { useNotifications } from '~/ui/notifications'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { PermissionGate } from '~/ui/PermissionGate'
-import { useToast } from '~/ui/toast'
 
 /**
  * The songs page opens as the list beside the Marcaje / Programe stack. From
@@ -89,7 +89,7 @@ function SongsPage() {
   } = useSearch({
     from: '/songs/',
   })
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const addItemToScheduleMutation = useAddItemToSchedule()
   // The program the Programe panel has picked — what a row's "add to program"
   // button targets when there is one.

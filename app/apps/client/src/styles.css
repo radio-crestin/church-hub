@@ -458,3 +458,25 @@ button {
 .song-drop-row-in {
   animation: song-drop-row-in 260ms ease-out;
 }
+
+/* Notifications drop in from above (ui/notifications/NotificationCard). */
+@keyframes notification-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-notification-in {
+  animation: notification-in 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-notification-in {
+    animation: none;
+  }
+}

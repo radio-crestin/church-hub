@@ -8,8 +8,8 @@ import type {
 import { Combobox } from '~/ui/combobox/Combobox'
 import { Input } from '~/ui/input/Input'
 import { Label } from '~/ui/label/Label'
+import { useNotifications } from '~/ui/notifications'
 import { Slider } from '~/ui/slider/Slider'
-import { useToast } from '~/ui/toast'
 import { BackgroundMediaPicker } from './BackgroundMediaPicker'
 import type { BackgroundMediaSelection } from '../service'
 
@@ -59,7 +59,7 @@ export function BackgroundEditor({
   hint,
 }: BackgroundEditorProps) {
   const { t } = useTranslation('presentation')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   // Without `allowInherit` there is always a background to edit.
   const current = value ?? (allowInherit ? null : DEFAULT_BACKGROUND)

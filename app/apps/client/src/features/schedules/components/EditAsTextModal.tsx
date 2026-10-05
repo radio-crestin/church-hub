@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getSelectedBibleTranslationIds } from '~/service/bible/bible'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { MissingSongResolver } from './MissingSongResolver'
 import { getBooks, getTranslationById } from '../../bible/service/bible'
 import { parsePassageRange } from '../../bible/utils/parsePassageRange'
@@ -76,7 +76,7 @@ export function EditAsTextModal({
   onItemsUpdated,
 }: EditAsTextModalProps) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const mouseDownTargetRef = useRef<EventTarget | null>(null)

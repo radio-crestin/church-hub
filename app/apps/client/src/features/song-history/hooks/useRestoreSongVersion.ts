@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 
 import { SONG_BOOKMARKS_QUERY_KEY } from '~/features/songs/hooks/useSongBookmarks'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { songHistoryQueryKey } from './useSongHistory'
 import { restoreSongVersion } from '../service/songHistory'
 import type { RestoreSide } from '../types'
@@ -14,7 +14,7 @@ interface RestoreInput {
 
 export function useRestoreSongVersion(songId: number) {
   const queryClient = useQueryClient()
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { t } = useTranslation('songHistory')
 
   return useMutation({

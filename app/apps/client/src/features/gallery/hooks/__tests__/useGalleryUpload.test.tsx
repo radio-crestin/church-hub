@@ -10,8 +10,8 @@ const { upload, showToast } = vi.hoisted(() => ({
   showToast: vi.fn(),
 }))
 
-vi.mock('~/ui/toast', () => ({
-  useToast: () => ({ showToast }),
+vi.mock('~/ui/notifications', () => ({
+  useNotifications: () => ({ showToast }),
 }))
 
 // Uploads are only recorded; the heavy GIF check is the real one.

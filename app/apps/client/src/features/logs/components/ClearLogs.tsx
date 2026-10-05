@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePermissions } from '~/provider/permissions-provider'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { captureActivity } from '~/utils/activity-logger'
 import { clearLogs } from '../service'
 
@@ -19,7 +19,7 @@ interface ClearLogsProps {
 export function ClearLogs({ onCleared }: ClearLogsProps) {
   const { t } = useTranslation('settings')
   const { hasPermission } = usePermissions()
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [showConfirm, setShowConfirm] = useState(false)
   const [isPending, setIsPending] = useState(false)
 

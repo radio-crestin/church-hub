@@ -17,8 +17,8 @@ vi.mock('~/provider/permissions-provider', () => ({
   usePermissions: () => ({ hasPermission: () => true }),
 }))
 
-vi.mock('~/ui/toast', () => ({
-  useToast: () => ({ showToast: vi.fn() }),
+vi.mock('~/ui/notifications', () => ({
+  useNotifications: () => ({ showToast: vi.fn() }),
 }))
 
 // The server is not under test: an empty list, and uploads only recorded.

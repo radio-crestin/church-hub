@@ -2,7 +2,7 @@ import { Loader2, Save, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import {
   defaultSongMetadata,
   SongDetailsSection,
@@ -26,7 +26,7 @@ export function SongEditorModal({
   onSaved,
 }: SongEditorModalProps) {
   const { t } = useTranslation(['songs', 'common'])
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const dialogRef = useRef<HTMLDialogElement>(null)
   // The dropdowns inside this dialog must portal INTO it: `showModal()` puts
   // the dialog in the browser's top layer, above every z-index in the body.

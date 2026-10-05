@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { CategoryCard } from './CategoryCard'
 import { CategoryForm } from './CategoryForm'
 import { UncategorizedSongsCard } from './UncategorizedSongsCard'
@@ -22,7 +22,7 @@ type ModalState =
 
 export function CategoryManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { data: categories, isLoading, error } = useCategories()
   const upsertCategory = useUpsertCategory()
   const deleteCategory = useDeleteCategory()

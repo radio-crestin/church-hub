@@ -8,8 +8,8 @@ import { useSaveScheduleToFile } from '~/features/schedule-export'
 import { useImportScheduleFromFile } from '~/features/schedule-import'
 import { ScheduleList } from '~/features/schedules/components'
 import { getScheduleById } from '~/features/schedules/service/schedules'
+import { useNotifications } from '~/ui/notifications'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
-import { useToast } from '~/ui/toast'
 import { Tooltip } from '~/ui/tooltip/Tooltip'
 
 export const Route = createFileRoute('/schedules/')({
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/schedules/')({
 function SchedulesPage() {
   const { t } = useTranslation('schedules')
   const navigate = useNavigate()
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { importSchedule, isPending: isImporting } = useImportScheduleFromFile()
   const { saveSchedule } = useSaveScheduleToFile()
   const [savingScheduleId, setSavingScheduleId] = useState<number | null>(null)

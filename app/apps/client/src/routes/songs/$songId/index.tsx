@@ -94,7 +94,7 @@ import { KeyboardShortcutBadge } from '~/ui/kbd'
 import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 
 interface SongSearchParams {
   q?: string
@@ -226,7 +226,7 @@ function SongPreviewPage() {
   const addBookmarkMutation = useAddBookmark()
   const removeBookmarkMutation = useRemoveBookmark()
   const { data: bookmarks = [] } = useSongBookmarks()
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [showAddBookmarksToScheduleModal, setShowAddBookmarksToScheduleModal] =

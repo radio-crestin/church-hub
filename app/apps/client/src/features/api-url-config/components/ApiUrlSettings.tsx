@@ -10,14 +10,14 @@ import {
 } from '~/service/api-url'
 import { Button } from '~/ui/button'
 import { Input } from '~/ui/input'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 
 /**
  * Settings section for managing the API URL on mobile
  */
 export function ApiUrlSettings() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   const [url, setUrl] = useState('')
   const [originalUrl, setOriginalUrl] = useState('')

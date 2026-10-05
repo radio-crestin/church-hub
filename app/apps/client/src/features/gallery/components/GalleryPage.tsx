@@ -8,8 +8,8 @@ import {
 } from '~/features/background-media/hooks'
 import type { BackgroundMedia } from '~/features/background-media/service/types'
 import { ConfirmModal } from '~/ui/modal'
+import { useNotifications } from '~/ui/notifications'
 import { useHasPermission } from '~/ui/PermissionGate'
-import { useToast } from '~/ui/toast'
 import { createLogger } from '~/utils/logger'
 import { GalleryEmptyState } from './GalleryEmptyState'
 import { GalleryFilterTabs } from './GalleryFilterTabs'
@@ -28,7 +28,7 @@ const logger = createLogger('app:gallery')
  */
 export function GalleryPage() {
   const { t } = useTranslation('gallery')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const canEdit = useHasPermission('displays.edit')
   const {
     data: media = [],

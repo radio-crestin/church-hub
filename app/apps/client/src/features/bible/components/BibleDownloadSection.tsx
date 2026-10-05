@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { getApiUrl } from '~/config'
 import { Combobox } from '~/ui/combobox'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { useAvailableBibles, useImportTranslation } from '../hooks'
 
 interface BibleDownloadSectionProps {
@@ -15,7 +15,7 @@ export function BibleDownloadSection({
   portalContainer,
 }: BibleDownloadSectionProps) {
   const { t } = useTranslation('bible')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { mutateAsync: importTranslation, isPending } = useImportTranslation()
   const {
     data: biblesData,

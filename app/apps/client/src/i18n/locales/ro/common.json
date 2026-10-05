@@ -125,5 +125,9 @@
   },
   "actionsMenu": {
     "trigger": "Mai multe"
+  },
+  "notifications": {
+    "dismiss": "Închide notificarea",
+    "region": "Notificări"
   }
 }

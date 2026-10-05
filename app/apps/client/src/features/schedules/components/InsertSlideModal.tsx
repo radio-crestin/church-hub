@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDefaultBibleTranslation } from '~/features/bible'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import {
   type LocalVerseteTineriEntry,
   VerseteTineriEditor,
@@ -61,7 +61,7 @@ export function InsertSlideModal({
   onSaved,
 }: InsertSlideModalProps) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const wasOpenRef = useRef(false)

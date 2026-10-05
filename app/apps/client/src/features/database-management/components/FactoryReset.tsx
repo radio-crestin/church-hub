@@ -2,12 +2,12 @@ import { AlertTriangle, RotateCcw } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { useFactoryReset } from '../hooks/useFactoryReset'
 
 export function FactoryReset() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [showConfirm, setShowConfirm] = useState(false)
   const { performFactoryReset, isPending } = useFactoryReset()
 

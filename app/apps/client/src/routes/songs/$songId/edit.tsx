@@ -13,8 +13,8 @@ import {
   useUpsertSong,
 } from '~/features/songs/hooks'
 import { ConfirmModal } from '~/ui/modal'
+import { useNotifications } from '~/ui/notifications'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
-import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
   q?: string
@@ -67,7 +67,7 @@ function SongEditorPage() {
   const navigate = useNavigate()
   const { songId } = Route.useParams()
   const { q: searchQuery, reset } = useSearch({ from: '/songs/$songId/edit' })
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   // Handle reset from keyboard shortcut - redirect to song list with reset
   useEffect(() => {

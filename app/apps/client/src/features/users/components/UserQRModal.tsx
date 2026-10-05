@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { useQRCode } from '../hooks'
 import {
   getExternalInterfaces,
@@ -28,7 +28,7 @@ export function UserQRModal({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
   const [selectedInterface, setSelectedInterface] =
     useState<NetworkInterface | null>(null)

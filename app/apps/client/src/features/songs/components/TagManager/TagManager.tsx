@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { TagCard } from './TagCard'
 import { TagForm } from './TagForm'
 import { useDeleteTag, useTags, useUpsertTag } from '../../hooks'
@@ -17,7 +17,7 @@ type ModalState =
 
 export function TagManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { data: tags, isLoading, error } = useTags()
   const upsertTag = useUpsertTag()
   const deleteTag = useDeleteTag()

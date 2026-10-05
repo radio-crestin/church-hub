@@ -2,7 +2,7 @@ import { forwardRef, useCallback, useImperativeHandle, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongEditorModal } from '~/features/songs/components'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { InsertSlideModal } from './InsertSlideModal'
@@ -42,7 +42,7 @@ export const ScheduleItemEditors = forwardRef<
   ScheduleItemEditorsProps
 >(function ScheduleItemEditors({ scheduleId, onChanged }, ref) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const addItemMutation = useAddItemToSchedule()
 
   const [showAddMenu, setShowAddMenu] = useState(false)

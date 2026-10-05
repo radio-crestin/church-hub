@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import {
   getYouTubeAuthStatus,
   logoutYouTube,
@@ -17,7 +17,7 @@ const YOUTUBE_OAUTH_SERVER =
 export function useYouTubeAuth() {
   const queryClient = useQueryClient()
   const { t } = useTranslation('livestream')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const previousRequiresReauth = useRef<boolean | undefined>(undefined)

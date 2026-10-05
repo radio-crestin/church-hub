@@ -2,7 +2,7 @@ import { Copy, Eye, EyeOff, Key, RefreshCw } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { fetcher } from '~/utils/fetcher'
 
 interface SystemTokenInfo {
@@ -13,7 +13,7 @@ interface SystemTokenInfo {
 
 export function SystemTokenManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [tokenInfo, setTokenInfo] = useState<SystemTokenInfo | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showToken, setShowToken] = useState(false)

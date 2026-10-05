@@ -2,7 +2,7 @@ import { ArrowLeft, Loader2, Save } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { TodayProgramButton } from './TodayProgramButton'
 import { useCreateTodayProgram, useUpsertSchedule } from '../hooks'
 
@@ -17,7 +17,7 @@ export function ScheduleEditor({
   onScheduleCreated,
 }: ScheduleEditorProps) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   const upsertSchedule = useUpsertSchedule()
   const todayProgram = useCreateTodayProgram()

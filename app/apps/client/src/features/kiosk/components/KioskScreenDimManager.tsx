@@ -2,8 +2,8 @@ import { useState } from 'react'
 
 import { ServerConnectionModal } from '~/features/api-url-config/components/ServerConnectionModal'
 import { useWebSocket } from '~/features/presentation/hooks/useWebSocket'
-import { KioskDisconnectionMessage } from './KioskDisconnectionMessage'
 import { KioskScreenDimOverlay } from './KioskScreenDimOverlay'
+import { useKioskDisconnectionNotice } from '../hooks/useKioskDisconnectionNotice'
 import { useKioskScreenDim } from '../hooks/useKioskScreenDim'
 import { useKioskSettings } from '../hooks/useKioskSettings'
 
@@ -34,6 +34,11 @@ export function KioskScreenDimManager() {
     setIsConnectionModalOpen(true)
   }
 
+  useKioskDisconnectionNotice(
+    showDisconnectionMessage && !isOverlayVisible,
+    handleDisconnectionClick,
+  )
+
   const handleModalClose = () => {
     setIsConnectionModalOpen(false)
   }
@@ -44,9 +49,6 @@ export function KioskScreenDimManager() {
 
   return (
     <>
-      {showDisconnectionMessage && !isOverlayVisible && (
-        <KioskDisconnectionMessage onClick={handleDisconnectionClick} />
-      )}
       {isOverlayVisible && <KioskScreenDimOverlay onDismiss={dismissOverlay} />}
       <ServerConnectionModal
         isOpen={isConnectionModalOpen}

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { usePermissions } from '~/provider/permissions-provider'
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { createLogger } from '~/utils/logger'
 import { BackgroundMediaTile } from './BackgroundMediaTile'
 import { BackgroundMediaUploadButton } from './BackgroundMediaUploadButton'
@@ -48,7 +48,7 @@ export function BackgroundMediaPicker({
   onChange,
 }: BackgroundMediaPickerProps) {
   const { t } = useTranslation('presentation')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { hasPermission } = usePermissions()
   const canView = hasPermission('displays.view')
   const canEdit = hasPermission('displays.edit')

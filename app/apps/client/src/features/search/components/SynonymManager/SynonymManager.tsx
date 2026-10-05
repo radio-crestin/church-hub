@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { SynonymGroup } from '~/service/synonyms'
 import { ConfirmModal } from '~/ui/modal'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { SynonymCard } from './SynonymCard'
 import { SynonymForm } from './SynonymForm'
 import { useDeleteSynonym, useSynonyms, useUpsertSynonym } from '../../hooks'
@@ -17,7 +17,7 @@ type ModalState =
 
 export function SynonymManager() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { data: synonyms, isLoading, error } = useSynonyms()
   const upsertSynonym = useUpsertSynonym()
   const deleteSynonym = useDeleteSynonym()

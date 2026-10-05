@@ -19,7 +19,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { EditVerseteTineriModal } from './EditVerseteTineriModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScheduleItemBiblePassage } from './ScheduleItemBiblePassage'
@@ -54,7 +54,7 @@ function SortableScheduleItem({
   onInsertSlideAfter,
   onRemoveItem,
 }: SortableScheduleItemProps) {
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const { t } = useTranslation('schedules')
   const removeItemMutation = useRemoveItemFromSchedule()
 
@@ -162,7 +162,7 @@ export function ScheduleItemList({
   onRemoveItem,
 }: ScheduleItemListProps) {
   const { t } = useTranslation('schedules')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
 
   const reorderItems = useReorderScheduleItems()
   const addItem = useAddItemToSchedule()

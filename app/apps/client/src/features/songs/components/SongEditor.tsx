@@ -31,7 +31,7 @@ import {
   type WorkspacePanel,
 } from '~/features/workspace'
 import { ActionMenu } from '~/ui/menu'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import {
   defaultSongMetadata,
   SongDetailsSection,
@@ -113,7 +113,7 @@ export function SongEditor({
 }: SongEditorProps) {
   const { t } = useTranslation(['songs', 'queue'])
   const navigate = useNavigate()
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const isLargeScreen = useIsLargeScreen()
   const editLayoutAction = useEditLayoutAction('song-editor')
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)

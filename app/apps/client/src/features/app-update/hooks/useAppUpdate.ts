@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { isTauri } from '~/utils/isTauri'
 import { takeUpdateOutcome } from '../services/takeUpdateOutcome'
 import { setPendingUpdate } from '../services/updateStore'
@@ -33,7 +33,7 @@ interface UseAppUpdateResult {
 
 export function useAppUpdate(): UseAppUpdateResult {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

@@ -36,8 +36,8 @@ import { usePermissions } from '~/provider/permissions-provider'
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
+import { useNotifications } from '~/ui/notifications'
 import { ClearSearchButton } from '~/ui/search'
-import { useToast } from '~/ui/toast'
 import { Tooltip } from '~/ui/tooltip/Tooltip'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { CreateScheduleModal } from './CreateScheduleModal'
@@ -147,7 +147,7 @@ export function SchedulePanel({
 }: SchedulePanelProps) {
   const { t } = useTranslation('schedules')
   const { t: tCommon } = useTranslation('common')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   // Adding and editing rewrite the program itself, so they follow the same
   // permission the program page's own editors do.
   const queryClient = useQueryClient()

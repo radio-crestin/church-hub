@@ -31,7 +31,7 @@ import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
 import { useEditLayoutAction, Workspace } from '~/features/workspace'
 import { usePermissions } from '~/provider/permissions-provider'
 import { ActionMenu, type ActionMenuItem } from '~/ui/menu'
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
@@ -85,7 +85,7 @@ export function SchedulePresenter({
   // program panel's editors.
   const { hasPermission } = usePermissions()
   const canEditProgram = hasPermission('programs.edit')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const navigate = useNavigate()
 
   // Connect to WebSocket for real-time updates

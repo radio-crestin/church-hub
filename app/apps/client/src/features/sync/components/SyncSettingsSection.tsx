@@ -2,7 +2,7 @@ import { AlertTriangle, Clock, Loader2, RefreshCw } from 'lucide-react'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
+import { useNotifications } from '~/ui/notifications'
 import { SyncChangesList } from './SyncChangesList'
 import { SyncPendingList } from './SyncPendingList'
 import { useSyncConfig } from '../hooks/useSyncConfig'
@@ -24,7 +24,7 @@ function formatDate(ms: number | null): string {
  */
 export function SyncSettingsSection() {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const statusQuery = useSyncStatus()
   const { updateConfig, isUpdating } = useSyncConfig()
   const syncNowMutation = useSyncNow()

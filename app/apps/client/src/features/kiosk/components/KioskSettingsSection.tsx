@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useScreens } from '~/features/presentation'
 import { Button } from '~/ui/button'
 import { Combobox } from '~/ui/combobox'
+import { useNotifications } from '~/ui/notifications'
 import { Switch } from '~/ui/switch/Switch'
-import { useToast } from '~/ui/toast/useToast'
 import { KioskScreenDimOverlay } from './KioskScreenDimOverlay'
 import {
   useKioskSettings,
@@ -29,7 +29,7 @@ export function KioskSettingsSection({
   portalContainer,
 }: KioskSettingsSectionProps) {
   const { t } = useTranslation('settings')
-  const { showToast } = useToast()
+  const { showToast } = useNotifications()
   const [showDebugOverlay, setShowDebugOverlay] = useState(false)
 
   const { data: settings, isLoading } = useKioskSettings()
