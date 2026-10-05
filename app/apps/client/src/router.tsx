@@ -21,11 +21,21 @@ try {
 
 import { getApiUrl, isMobile, needsApiUrlConfiguration } from './config'
 import { ApiUrlSetup } from './features/api-url-config'
+import {
+  hideLoadingScreen,
+  setLoadingError,
+  updateLoadingMessage,
+} from './features/startup/loadingScreen'
+import {
+  pollServerHealth,
+  type StartupResult,
+} from './features/startup/pollServerHealth'
+import { startupLang, startupText } from './features/startup/startupText'
 import { routeTree } from './routeTree.gen'
 import DefaultCatchBoundary from './ui/DefaultCatchBoundary'
 import { ErrorBoundary } from './ui/error-boundary'
 import { captureActivity } from './utils/activity-logger'
-import { getServerConfig } from './utils/tauri-commands'
+import { getServerConfig, restartServer } from './utils/tauri-commands'
 
 const router = createRouter({
   routeTree,
@@ -82,337 +92,6 @@ if (typeof window !== 'undefined' && window.__htmlLoadTime) {
 const isTauriCheck =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 logClientTiming(`tauri_check (isTauri=${isTauriCheck})`)
-
-// Loading-screen helpers — the screen markup lives in index.html so it
-// paints before any module loads. These helpers nudge what the user
-// sees while we wait for the sidecar and the first React mount.
-
-// Localized bootstrap strings. This code runs BEFORE React (and therefore
-// before react-i18next) mounts, so we can't use the normal i18n hooks here —
-// we read the persisted language key directly and keep a tiny en/ro table for
-// the handful of strings the loading screen needs. Keep these in sync with the
-// `common` namespace where it makes sense.
-const startupLang: 'en' | 'ro' = (() => {
-  try {
-    return localStorage.getItem('church-hub-language') === 'ro' ? 'ro' : 'en'
-  } catch {
-    return 'en'
-  }
-})()
-
-const STARTUP_STRINGS = {
-  starting: { en: 'Starting Church Hub', ro: 'Se pornește Church Hub' },
-  connecting: { en: 'Connecting to server', ro: 'Se conectează la server' },
-  migrating: {
-    en: 'Updating the database',
-    ro: 'Se actualizează baza de date',
-  },
-  indexing: {
-    en: 'Building the search index',
-    ro: 'Se construiește indexul de căutare',
-  },
-  finalizing: { en: 'Getting things ready', ro: 'Se finalizează pregătirea' },
-  firstRunHint: {
-    en: 'Setting things up for the first time — this only happens once.',
-    ro: 'Se face configurarea inițială — se întâmplă o singură dată.',
-  },
-  longHint: {
-    en: 'This is taking longer than usual…',
-    ro: 'Durează mai mult decât de obicei…',
-  },
-  errorUnreachable: {
-    en: "Couldn't reach the local server",
-    ro: 'Nu s-a putut contacta serverul local',
-  },
-  errorRemote: {
-    en: "Couldn't reach the server",
-    ro: 'Nu s-a putut contacta serverul',
-  },
-  errorBootFailed: {
-    en: 'Church Hub could not finish starting',
-    ro: 'Church Hub nu a putut finaliza pornirea',
-  },
-  retry: { en: 'Retry', ro: 'Reîncearcă' },
-  retryHint: {
-    en: 'Tap retry below — or fully quit and reopen Church Hub.',
-    ro: 'Apasă reîncearcă mai jos — sau închide complet și redeschide Church Hub.',
-  },
-  reported: {
-    en: 'The error was reported to the team automatically.',
-    ro: 'Eroarea a fost raportată automat echipei.',
-  },
-} as const
-
-const tr = (key: keyof typeof STARTUP_STRINGS): string =>
-  STARTUP_STRINGS[key][startupLang]
-
-/** Map a server boot phase to its localized loading message. */
-function localizedPhase(phase: string | undefined): string | undefined {
-  switch (phase) {
-    case 'starting':
-      return tr('starting')
-    case 'migrating':
-      return tr('migrating')
-    case 'indexing':
-      return tr('indexing')
-    case 'finalizing':
-      return tr('finalizing')
-    default:
-      return undefined
-  }
-}
-
-function updateLoadingMessage(message: string) {
-  const el = document.getElementById('loading-message')
-  if (el) el.textContent = message
-}
-
-function updateLoadingHint(message: string) {
-  const el = document.getElementById('loading-hint')
-  if (el) el.textContent = message
-}
-
-function setLoadingError(
-  message: string,
-  onRetry: () => void,
-  detail?: string,
-): void {
-  const screen = document.getElementById('loading-screen')
-  if (!screen) return
-  const spinner = document.getElementById('loading-spinner')
-  if (spinner) spinner.style.display = 'none'
-  updateLoadingMessage(message)
-  // Hint line carries the actionable instruction; an optional detail line shows
-  // the underlying technical reason (e.g. which migration failed).
-  updateLoadingHint(tr('retryHint'))
-
-  const content = document.getElementById('loading-content')
-
-  // Technical detail (only when we have a concrete server-reported reason).
-  let detailEl = document.getElementById('loading-detail')
-  if (detail) {
-    if (!detailEl) {
-      detailEl = document.createElement('div')
-      detailEl.id = 'loading-detail'
-      detailEl.setAttribute(
-        'style',
-        'margin:0;color:#6b7280;font-size:12px;line-height:1.5;max-width:340px;word-break:break-word;',
-      )
-      content?.appendChild(detailEl)
-    }
-    detailEl.textContent = detail
-  } else if (detailEl) {
-    detailEl.textContent = ''
-  }
-
-  let retry = document.getElementById(
-    'loading-retry',
-  ) as HTMLButtonElement | null
-  if (!retry) {
-    retry = document.createElement('button')
-    retry.id = 'loading-retry'
-    retry.textContent = tr('retry')
-    retry.setAttribute(
-      'style',
-      'margin-top:16px;padding:10px 20px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;',
-    )
-    content?.appendChild(retry)
-  }
-  retry.textContent = tr('retry')
-  retry.removeAttribute('disabled')
-
-  // "Reported to the team" reassurance — we always auto-report startup
-  // failures, so tell the user they don't need to do anything else.
-  let reportedEl = document.getElementById('loading-reported')
-  if (!reportedEl) {
-    reportedEl = document.createElement('div')
-    reportedEl.id = 'loading-reported'
-    reportedEl.setAttribute(
-      'style',
-      'margin-top:8px;color:#4b5563;font-size:11px;line-height:1.5;',
-    )
-    content?.appendChild(reportedEl)
-  }
-  reportedEl.textContent = tr('reported')
-
-  retry.onclick = () => {
-    // Re-run the polling path instead of reloading the page: a full reload
-    // re-downloads the bundle and loses our diagnostics, and for a still-booting
-    // server the spinner just needs more time, not a restart.
-    retry?.setAttribute('disabled', 'true')
-    retry?.setAttribute(
-      'style',
-      `${retry?.getAttribute('style') ?? ''}opacity:0.6;cursor:wait;`,
-    )
-    const spinnerEl = document.getElementById('loading-spinner')
-    if (spinnerEl) spinnerEl.style.display = ''
-    updateLoadingHint('')
-    if (detailEl) detailEl.textContent = ''
-    if (reportedEl) reportedEl.textContent = ''
-    onRetry()
-  }
-}
-
-function hideLoadingScreen() {
-  const loadingEl = document.getElementById('loading-screen')
-  if (loadingEl) {
-    // The app is live under it while it fades: let clicks and drags through.
-    loadingEl.style.pointerEvents = 'none'
-    loadingEl.style.opacity = '0'
-    loadingEl.style.transition = 'opacity 0.3s ease-out'
-    setTimeout(() => loadingEl.remove(), 300)
-  }
-}
-
-/** Shape of the server's `/health` response (boot server + real server). */
-interface HealthSnapshot {
-  phase?: string
-  message?: string
-  ready?: boolean
-  error?: { phase: string; message: string } | null
-}
-
-/** Outcome of polling `/health` until the server is ready or we give up. */
-type StartupResult =
-  | { status: 'ready'; totalWaitMs: number; attempts: number }
-  | {
-      status: 'boot_failed'
-      phase: string
-      message: string
-      totalWaitMs: number
-      attempts: number
-    }
-  | {
-      status: 'unreachable'
-      totalWaitMs: number
-      attempts: number
-      lastError: string
-      everReachable: boolean
-    }
-
-// Never saw a single response: the sidecar process likely failed to spawn or
-// crashed before binding. Generous so a slow first launch on a cold disk isn't
-// mistaken for a crash.
-const UNREACHABLE_BUDGET_MS = 90_000
-// Saw the boot server but it never reached `ready`: a wedged migration that
-// neither completes nor throws. Surfaced as a reportable failure after this.
-const STUCK_BUDGET_MS = 300_000
-
-/**
- * Poll the server's `/health` endpoint until it reports `ready`, fails, or we
- * exhaust the budget. Unlike the old `/ping` wait, this reads the structured
- * boot phase so the loading screen shows real progress ("Updating the
- * database", "Building the search index") and — crucially — detects a hard
- * boot failure immediately instead of spinning for minutes on a timeout.
- */
-async function pollServerHealth(apiUrl: string): Promise<StartupResult> {
-  const healthUrl = `${apiUrl}/health`
-  const start = performance.now()
-  const retryDelay = isTauriCheck ? 250 : 500
-
-  let everReachable = false
-  let lastError = 'no response'
-  let attempts = 0
-  let firstRunHintShown = false
-  let longHintShown = false
-
-  for (;;) {
-    attempts++
-    const elapsed = performance.now() - start
-
-    try {
-      // Per-attempt AbortController — a stale TCP connection that hangs
-      // shouldn't burn the whole budget on a single fetch.
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 2000)
-      try {
-        const response = await fetchFn(healthUrl, {
-          method: 'GET',
-          signal: controller.signal,
-        })
-        if (response.ok) {
-          everReachable = true
-          const snap = (await response
-            .json()
-            .catch(() => null)) as HealthSnapshot | null
-
-          if (snap?.error) {
-            // biome-ignore lint/suspicious/noConsole: startup failure logging
-            console.error(
-              `[client-startup] server boot failed (phase=${snap.error.phase}): ${snap.error.message}`,
-            )
-            return {
-              status: 'boot_failed',
-              phase: snap.error.phase,
-              message: snap.error.message,
-              totalWaitMs: Math.round(elapsed),
-              attempts,
-            }
-          }
-          if (snap?.ready) {
-            // biome-ignore lint/suspicious/noConsole: startup timing logging
-            console.log(
-              `[client-startup] server ready: attempt=${attempts}, totalWait=${Math.round(elapsed)}ms`,
-            )
-            return {
-              status: 'ready',
-              totalWaitMs: Math.round(elapsed),
-              attempts,
-            }
-          }
-          // Still booting — reflect the current phase on the loading screen.
-          const phaseMessage = localizedPhase(snap?.phase) ?? snap?.message
-          if (phaseMessage) updateLoadingMessage(phaseMessage)
-        } else {
-          lastError = `HTTP ${response.status}`
-        }
-      } finally {
-        clearTimeout(timeoutId)
-      }
-    } catch (err) {
-      // Connection refused (process not up / handoff gap) or fetch timeout.
-      lastError =
-        err instanceof DOMException && err.name === 'AbortError'
-          ? 'timeout'
-          : err instanceof Error
-            ? err.message
-            : 'fetch failed'
-    }
-
-    if (!firstRunHintShown && elapsed > 1500) {
-      updateLoadingHint(tr('firstRunHint'))
-      firstRunHintShown = true
-    }
-    if (!longHintShown && elapsed > 20_000) {
-      updateLoadingHint(tr('longHint'))
-      longHintShown = true
-    }
-
-    // Give up only when we're confident this isn't just a slow-but-progressing
-    // boot: either we never reached the server at all, or it stayed reachable
-    // yet never became ready within a very generous window.
-    if (!everReachable && elapsed > UNREACHABLE_BUDGET_MS) {
-      return {
-        status: 'unreachable',
-        totalWaitMs: Math.round(elapsed),
-        attempts,
-        lastError,
-        everReachable,
-      }
-    }
-    if (everReachable && elapsed > STUCK_BUDGET_MS) {
-      return {
-        status: 'unreachable',
-        totalWaitMs: Math.round(elapsed),
-        attempts,
-        lastError: 'boot did not complete within 5 minutes',
-        everReachable,
-      }
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, retryDelay))
-  }
-}
 
 /**
  * Report a startup failure to PostHog (a filterable `startup_failed` event plus
@@ -505,12 +184,60 @@ function mountReact() {
   logClientTiming('react_render_called')
 }
 
+const retryDelayMs = isTauriCheck ? 250 : 500
+
+/** Desktop: true once the bundled server failed to start or has exited. */
+async function isServerStopped(): Promise<boolean> {
+  try {
+    return (await getServerConfig()).serverStopped === true
+  } catch {
+    return false
+  }
+}
+
+/** Shows a failed start with the one action that moves forward. */
+function showStartupFailure(
+  result: Exclude<StartupResult, { status: 'ready' }>,
+  onRetry: () => void,
+): void {
+  if (result.status === 'stopped') {
+    setLoadingError(
+      startupText('errorServerStopped'),
+      startupText('restartHint'),
+      {
+        label: startupText('restart'),
+        onClick: () => {
+          updateLoadingMessage(startupText('starting'))
+          restartServer()
+            .catch((error) =>
+              captureError(error, { source: 'startup', component: 'router' }),
+            )
+            .finally(onRetry)
+        },
+      },
+    )
+    return
+  }
+  const title =
+    result.status === 'boot_failed'
+      ? startupText('errorBootFailed')
+      : startupText('errorUnreachable')
+  const detail = result.status === 'boot_failed' ? result.message : undefined
+  setLoadingError(
+    title,
+    startupText('retryHint'),
+    { label: startupText('retry'), onClick: onRetry },
+    detail,
+  )
+}
+
 /**
- * Desktop startup: poll the local sidecar, then either mount the app or show an
- * actionable, auto-reported error. Re-entrant so the Retry button can re-run it.
+ * Desktop startup: the window is up at once; follow the local server's start
+ * on the loading page, then mount the app, or show an actionable, reported
+ * error. Re-entrant so the error's button can re-run it.
  */
 async function runDesktopStartup(): Promise<void> {
-  updateLoadingMessage(tr('starting'))
+  updateLoadingMessage(startupText('starting'))
   logClientTiming('before_getServerConfig')
   const serverConfig = await getServerConfig()
   logClientTiming('after_getServerConfig')
@@ -520,7 +247,11 @@ async function runDesktopStartup(): Promise<void> {
 
   const apiUrl = getApiUrl() as string
   logClientTiming('before_pollServerHealth')
-  const result = await pollServerHealth(apiUrl)
+  const result = await pollServerHealth(apiUrl, {
+    fetchFn,
+    retryDelayMs,
+    isServerStopped,
+  })
   logClientTiming('after_pollServerHealth')
 
   if (result.status === 'ready') {
@@ -531,12 +262,7 @@ async function runDesktopStartup(): Promise<void> {
   }
 
   reportStartupFailure(result, 'desktop')
-  const title =
-    result.status === 'boot_failed'
-      ? tr('errorBootFailed')
-      : tr('errorUnreachable')
-  const detail = result.status === 'boot_failed' ? result.message : undefined
-  setLoadingError(title, () => void runDesktopStartup(), detail)
+  showStartupFailure(result, () => void runDesktopStartup())
 }
 
 /**
@@ -558,8 +284,8 @@ async function runMobileStartup(): Promise<void> {
     return
   }
 
-  updateLoadingMessage(tr('connecting'))
-  const result = await pollServerHealth(apiUrl)
+  updateLoadingMessage(startupText('connecting'))
+  const result = await pollServerHealth(apiUrl, { fetchFn, retryDelayMs })
 
   if (result.status === 'ready') {
     hideLoadingScreen()
@@ -569,7 +295,12 @@ async function runMobileStartup(): Promise<void> {
 
   reportStartupFailure(result, 'remote')
   const detail = result.status === 'boot_failed' ? result.message : undefined
-  setLoadingError(tr('errorRemote'), () => void runMobileStartup(), detail)
+  setLoadingError(
+    startupText('errorRemote'),
+    startupText('retryHint'),
+    { label: startupText('retry'), onClick: () => void runMobileStartup() },
+    detail,
+  )
 }
 
 // See vite-env.d.ts to set type
@@ -586,8 +317,12 @@ if (typeof window !== 'undefined') {
       console.error('[router] Unexpected startup error:', error)
       captureError(error, { source: 'startup', component: 'router' })
       setLoadingError(
-        tr('errorUnreachable'),
-        () => window.location.reload(),
+        startupText('errorUnreachable'),
+        startupText('retryHint'),
+        {
+          label: startupText('retry'),
+          onClick: () => window.location.reload(),
+        },
         error instanceof Error ? error.message : String(error),
       )
     })

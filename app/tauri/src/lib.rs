@@ -390,31 +390,29 @@ pub fn run() {
             }
             println!("[startup] sidecar_spawn: {:?}", t.elapsed());
 
-            // Wait for server to be ready before showing UI
-            let t = Instant::now();
-            if let Err(err) = server::wait_for_server_ready(server_port, 30) {
-                println!("[sidecar] {err}");
-                report::error(
-                    "server-ready-timeout",
-                    &format!("server not ready: {}", err),
-                    serde_json::json!({ "port": server_port }),
-                );
-            } else {
-                logging::log_line("info", "sidecar server ready");
-            }
-            println!("[startup] server_ready_wait: {:?}", t.elapsed());
+            // Don't wait for the server here: setup blocks the event loop, so
+            // the window would stay hidden for the whole first start (seconds
+            // of database setup). The window shows at once; its loading page
+            // follows the server's /health. The wait only logs and reports.
+            tauri::async_runtime::spawn(async move {
+                let t = Instant::now();
+                match server::wait_for_server_ready_async(server_port, 30).await {
+                    Ok(()) => logging::log_line("info", "sidecar server ready"),
+                    Err(err) => {
+                        println!("[sidecar] {err}");
+                        report::error(
+                            "server-ready-timeout",
+                            &format!("server not ready: {}", err),
+                            serde_json::json!({ "port": server_port }),
+                        );
+                    }
+                }
+                println!("[startup] server_ready_wait: {:?}", t.elapsed());
+            });
         }
 
         #[cfg(debug_assertions)]
-        {
-            println!("[dev] Skipping sidecar - using dev server from beforeDevCommand");
-            // Wait for dev server to be ready
-            let t = Instant::now();
-            if let Err(err) = server::wait_for_server_ready(server_port, 30) {
-                println!("[dev] {err}");
-            }
-            println!("[startup] dev_server_ready_wait: {:?}", t.elapsed());
-        }
+        println!("[dev] Skipping sidecar - using dev server from beforeDevCommand");
 
         // Ensure the main window is visible on a connected monitor
         // (window-state plugin may restore a position from a disconnected monitor)

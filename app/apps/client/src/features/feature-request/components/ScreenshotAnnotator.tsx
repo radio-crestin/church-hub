@@ -1,89 +1,81 @@
-import { Eraser, Pencil, Undo2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { usePenDrawing } from '../hooks/usePenDrawing'
-import type { Stroke } from '../types'
-import { HIGHLIGHT_COLOR } from '../utils/drawElementHighlight'
-
-const PEN_COLORS = [HIGHLIGHT_COLOR, '#facc15', '#22c55e', '#3b82f6']
+import { NoteInput } from './NoteInput'
+import {
+  type NoteSpot,
+  useAnnotationCanvas,
+} from '../hooks/useAnnotationCanvas'
+import type { Annotation, AnnotationTool } from '../types'
+import { getToolCursor } from '../utils/getToolCursor'
 
 interface ScreenshotAnnotatorProps {
   screenshot: HTMLCanvasElement
-  strokes: Stroke[]
-  onStrokesChange: (strokes: Stroke[]) => void
+  annotations: Annotation[]
+  onAnnotationsChange: (annotations: Annotation[]) => void
+  tool: AnnotationTool
+  color: string
 }
 
-/** The screenshot with a pen on top: colours, undo and clear. */
+/** The screenshot as a canvas to mark up with the chosen tool and colour. */
 export function ScreenshotAnnotator({
   screenshot,
-  strokes,
-  onStrokesChange,
+  annotations,
+  onAnnotationsChange,
+  tool,
+  color,
 }: ScreenshotAnnotatorProps) {
   const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [color, setColor] = useState(PEN_COLORS[0])
-  const pen = usePenDrawing(
+  const [noteSpot, setNoteSpot] = useState<NoteSpot | null>(null)
+  const canvasHandlers = useAnnotationCanvas(
     canvasRef,
     screenshot,
-    strokes,
-    onStrokesChange,
+    annotations,
+    onAnnotationsChange,
+    tool,
     color,
+    (spot) => {
+      // A click while a note is open only closes it: its blur saves it.
+      if (noteSpot) (document.activeElement as HTMLElement | null)?.blur()
+      else setNoteSpot(spot)
+    },
   )
 
-  const toolButton =
-    'flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 disabled:hover:bg-transparent transition-colors'
+  const saveNote = (text: string) => {
+    if (noteSpot) {
+      onAnnotationsChange([
+        ...annotations,
+        { kind: 'note', ...noteSpot.canvas, text, color },
+      ])
+    }
+    setNoteSpot(null)
+  }
 
   return (
-    <div className="flex flex-col gap-2 min-w-0">
-      <div className="flex flex-wrap items-center gap-1">
-        <span
-          data-testid="feature-request-pen"
-          data-pulsing={strokes.length === 0}
-          className={`flex items-center gap-1 mr-1 px-2 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-medium ${strokes.length === 0 ? 'motion-safe:animate-pulse ring-4 ring-indigo-300 dark:ring-indigo-500/50' : ''}`}
-        >
-          <Pencil size={14} />
-          {t('common:featureRequest.pen')}
-        </span>
-        {PEN_COLORS.map((penColor) => (
-          <button
-            key={penColor}
-            type="button"
-            aria-label={`${t('common:featureRequest.penColor')} ${penColor}`}
-            aria-pressed={penColor === color}
-            onClick={() => setColor(penColor)}
-            className={`w-6 h-6 rounded-full border-2 ${penColor === color ? 'border-gray-900 dark:border-white' : 'border-transparent'}`}
-            style={{ backgroundColor: penColor }}
-          />
-        ))}
-        <span className="flex-1" />
-        <button
-          type="button"
-          data-testid="feature-request-undo"
-          className={toolButton}
-          disabled={strokes.length === 0}
-          onClick={() => onStrokesChange(strokes.slice(0, -1))}
-        >
-          <Undo2 size={14} />
-          {t('common:featureRequest.undo')}
-        </button>
-        <button
-          type="button"
-          className={toolButton}
-          disabled={strokes.length === 0}
-          onClick={() => onStrokesChange([])}
-        >
-          <Eraser size={14} />
-          {t('common:featureRequest.clearDrawing')}
-        </button>
-      </div>
+    // Phones: full width at its own height (a phone screenshot is tall, so a
+    // height cap would shrink it to a strip). Wider screens: capped height.
+    <div className="relative w-full sm:w-fit max-w-full mx-auto">
       <canvas
         ref={canvasRef}
         data-testid="feature-request-canvas"
-        aria-label={t('common:featureRequest.drawHint')}
-        className="block mx-auto w-auto h-auto max-w-full max-h-[40vh] md:max-h-[65vh] rounded-lg border border-gray-200 dark:border-gray-700 cursor-crosshair touch-none bg-gray-100 dark:bg-gray-900"
-        {...pen}
+        data-tool={tool}
+        aria-label={t('common:featureRequest.canvasLabel')}
+        className="block w-full h-auto sm:w-auto max-w-full sm:max-h-[40vh] md:max-h-[44vh] rounded-lg border border-gray-200 dark:border-gray-700 touch-none bg-gray-100 dark:bg-gray-900"
+        style={{ cursor: getToolCursor(tool, color) }}
+        {...canvasHandlers}
       />
+      {noteSpot && (
+        <NoteInput
+          key={`${noteSpot.canvas.x},${noteSpot.canvas.y}`}
+          left={noteSpot.css.x}
+          top={noteSpot.css.y}
+          boxWidth={canvasRef.current?.clientWidth ?? 0}
+          color={color}
+          onSave={saveNote}
+          onCancel={() => setNoteSpot(null)}
+        />
+      )}
     </div>
   )
 }

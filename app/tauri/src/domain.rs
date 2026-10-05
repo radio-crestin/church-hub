@@ -33,4 +33,7 @@ impl Drop for AppState {
 #[serde(rename_all = "camelCase")]
 pub struct ServerConfig {
     pub server_port: u16,
+    /// The bundled server process failed to start or has exited: the
+    /// loading page stops waiting and offers to restart it.
+    pub server_stopped: bool,
 }

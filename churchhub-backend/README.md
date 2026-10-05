@@ -165,7 +165,10 @@ first deploy:
 npx wrangler r2 bucket create church-hub-feature-requests
 ```
 
-Then deploy with production vars:
+Then deploy. `deploy.sh` checks `.prod.vars` (no empty or placeholder
+values, required keys present) and uploads every value as a Worker secret
+with the new version (`wrangler deploy --secrets-file`), so none of them is
+stored as a plain-text variable:
 
 ```bash
 npm run deploy:prod

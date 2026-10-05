@@ -57,13 +57,25 @@
           border-radius: 50%;
           animation: spin 0.9s linear infinite;
         "></div>
-        <div id="loading-message" style="margin: 0; color: #f3f4f6; font-size: 15px; font-weight: 500;">Starting up</div>
+        <div id="loading-message" role="status" aria-live="polite" style="margin: 0; color: #f3f4f6; font-size: 15px; font-weight: 500;">Starting up</div>
+        <div id="loading-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="display: none; width: 280px; max-width: 100%;">
+          <div style="height: 6px; border-radius: 3px; background: rgba(99, 102, 241, 0.2); overflow: hidden;">
+            <div id="loading-progress-bar" style="height: 100%; width: 0; background: #6366f1; transition: width 0.25s ease-out;"></div>
+          </div>
+          <div id="loading-progress-label" style="margin-top: 6px; color: #9ca3af; font-size: 12px; font-variant-numeric: tabular-nums;"></div>
+        </div>
+        <ol id="loading-steps" style="display: none; margin: 0; padding: 0; list-style: none; text-align: left; font-size: 13px; line-height: 1.9;"></ol>
         <div id="loading-hint" style="margin: 0; color: #9ca3af; font-size: 13px; line-height: 1.5;"></div>
       </div>
       <style>
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        #loading-steps li { display: flex; align-items: center; gap: 8px; color: #6b7280; }
+        #loading-steps li[data-state="active"] { color: #f3f4f6; font-weight: 500; }
+        #loading-steps li[data-state="done"] { color: #9ca3af; }
+        .loading-step-mark { display: inline-flex; width: 16px; justify-content: center; color: #6366f1; }
+        #loading-steps li[data-state="done"] .loading-step-mark { color: #22c55e; }
         #loading-retry:hover:not([disabled]) {
           background: #4338ca !important;
         }

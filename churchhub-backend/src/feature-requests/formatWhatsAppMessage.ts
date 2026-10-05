@@ -1,8 +1,9 @@
 import type { CreatedIssue, FeatureRequestInput } from './types'
 
 /**
- * Private WhatsApp note for the maintainer: title, notes and the email
- * (which never goes to GitHub), plus the issue link for the rest.
+ * Private WhatsApp note for the maintainer: title, description, the notes
+ * on the screenshot and the email (which never goes to GitHub), plus the
+ * issue link for the rest.
  */
 export function formatWhatsAppMessage(
   request: FeatureRequestInput,
@@ -11,12 +12,17 @@ export function formatWhatsAppMessage(
   const lines = [
     `*New feature request #${issue.number}*`,
     `*Title:* ${request.title}`,
-    `*Email:* ${request.email}`,
-    '',
-    '*Notes:*',
-    request.notes,
+    `*Email:* ${request.email || '-'}`,
     '',
   ]
+  if (request.notes) lines.push('*Description:*', request.notes, '')
+  if (request.screenshotNotes.length > 0) {
+    lines.push(
+      '*Notes on the screenshot:*',
+      ...request.screenshotNotes.map((note, index) => `${index + 1}. ${note}`),
+      ''
+    )
+  }
   if (request.element) {
     lines.push(
       `*Element:* ${request.element.label || '-'}`,

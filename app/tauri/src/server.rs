@@ -346,12 +346,6 @@ pub async fn wait_for_server_ready_async(port: u16, timeout_secs: u64) -> Result
     ))
 }
 
-/// Waits for the server to be ready by polling the /ping endpoint (sync version for setup hook)
-pub fn wait_for_server_ready(port: u16, timeout_secs: u64) -> Result<(), String> {
-    // Run the async version using Tauri's runtime
-    tauri::async_runtime::block_on(wait_for_server_ready_async(port, timeout_secs))
-}
-
 pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), String> {
     println!("[sidecar] Starting server...");
     if let Some(app_state) = app_handle.try_state::<AppState>() {

@@ -88,6 +88,31 @@ describe('bootState', () => {
     expect(captured.exceptions[0]?.err).toBeInstanceOf(Error)
   })
 
+  it('reports the step, its progress and a first run, and tells listeners', async () => {
+    const boot = await import('../bootState')
+    const heard: Array<string | null> = []
+    const unsubscribe = boot.onBootHealthChange((health) =>
+      heard.push(health.step),
+    )
+
+    boot.setBootFirstRun(true)
+    boot.setBootStep('search')
+    boot.setBootProgress(1000, 26463)
+    expect(boot.getBootHealth()).toMatchObject({
+      step: 'search',
+      progress: { done: 1000, total: 26463 },
+      firstRun: true,
+    })
+
+    // A new step starts without the previous step's progress.
+    boot.setBootStep('finishing')
+    expect(boot.getBootHealth().progress).toBeNull()
+
+    unsubscribe()
+    boot.setBootStep('database')
+    expect(heard).toEqual([null, 'search', 'search', 'finishing'])
+  })
+
   it('setBootReady flips ready to true', async () => {
     const boot = await import('../bootState')
     boot.setBootReady()

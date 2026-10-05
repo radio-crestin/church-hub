@@ -257,7 +257,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     id: 'feedback',
     icon: MessageSquarePlus,
     labelKey: 'sidebar:navigation.feedback',
-    to: '/feedback', // Special marker - opens the Request a feature tool, not a route
+    to: '/feedback', // Special marker - opens the Feedback tool, not a route
     permission: 'settings.view',
   },
   kiosk: {

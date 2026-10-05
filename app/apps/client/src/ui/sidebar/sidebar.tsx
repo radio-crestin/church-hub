@@ -336,8 +336,8 @@ export function Sidebar({
             {/* Update notification - shown above Feedback when update available */}
             <UpdateNotification isCollapsed={isCollapsed} />
 
-            {/* Request a feature — opens the screenshot-style tool (pick an
-                element, draw, add notes) that files a public GitHub issue.
+            {/* Feedback — opens the screenshot tool (mark it up, add notes)
+                that files a public GitHub issue.
                 Never rendered on /screen/* — those windows are church
                 projector output. Visibility is user-controlled via Sidebar
                 configuration in Settings (builtin id stays `feedback`). */}

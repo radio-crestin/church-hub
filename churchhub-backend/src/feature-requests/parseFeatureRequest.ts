@@ -4,9 +4,11 @@ import {
   SHORT_FIELD_MAX_LENGTH,
   TITLE_MAX_LENGTH,
 } from './constants'
+import { deriveIssueTitle } from './deriveIssueTitle'
 import { FeatureRequestError } from './FeatureRequestError'
 import { isValidEmail } from './isValidEmail'
 import { parseImageDataUrl } from './parseImageDataUrl'
+import { readScreenshotNotes } from './readScreenshotNotes'
 import { readString } from './readString'
 import type { FeatureRequestInput, PickedElement } from './types'
 
@@ -17,13 +19,28 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
   }
   const raw = body as Record<string, unknown>
 
-  const email = readString(raw.email, 'email', SHORT_FIELD_MAX_LENGTH)
-  if (!isValidEmail(email)) throw new FeatureRequestError('email is invalid')
-
   const optional = { required: false }
+  // Optional: without it the request simply cannot get a reply.
+  const email = readString(raw.email, 'email', SHORT_FIELD_MAX_LENGTH, optional)
+  if (email && !isValidEmail(email)) {
+    throw new FeatureRequestError('email is invalid')
+  }
+  const notes = readString(raw.notes, 'notes', NOTES_MAX_LENGTH, optional)
+  const screenshotNotes = readScreenshotNotes(raw.screenshotNotes)
+  const screenshot =
+    typeof raw.screenshot === 'string'
+      ? parseImageDataUrl(raw.screenshot)
+      : undefined
+  if (!notes && screenshotNotes.length === 0 && !screenshot) {
+    throw new FeatureRequestError(
+      'Add a description, a note or a screenshot'
+    )
+  }
+  const title = readString(raw.title, 'title', TITLE_MAX_LENGTH, optional)
   return {
-    title: readString(raw.title, 'title', TITLE_MAX_LENGTH),
-    notes: readString(raw.notes, 'notes', NOTES_MAX_LENGTH),
+    title: deriveIssueTitle(title, notes, screenshotNotes),
+    notes,
+    screenshotNotes,
     email,
     route: readString(raw.route, 'route', SHORT_FIELD_MAX_LENGTH, optional),
     viewport: readString(
@@ -39,10 +56,7 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
       SHORT_FIELD_MAX_LENGTH
     ),
     element: parseElement(raw.element),
-    screenshot:
-      typeof raw.screenshot === 'string'
-        ? parseImageDataUrl(raw.screenshot)
-        : undefined,
+    screenshot,
     supportId:
       readString(raw.supportId, 'supportId', SHORT_FIELD_MAX_LENGTH, optional) ||
       undefined,
