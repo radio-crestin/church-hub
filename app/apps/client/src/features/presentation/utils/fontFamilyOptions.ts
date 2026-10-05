@@ -5,6 +5,10 @@
  * fallback stack there.
  */
 export const FONT_FAMILY_OPTIONS = [
+  // Bundled with the app: identical on macOS, Windows and Linux.
+  { value: 'Source Sans 3', label: 'Source Sans 3' },
+  { value: 'Montserrat', label: 'Montserrat' },
+  { value: 'Lora', label: 'Lora' },
   { value: 'system-ui', label: 'System Default' },
   { value: 'Arial', label: 'Arial' },
   { value: 'Georgia', label: 'Georgia' },

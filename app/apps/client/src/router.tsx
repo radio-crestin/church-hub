@@ -3,6 +3,7 @@ import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './styles.css'
+import './features/presentation/utils/bundledFonts'
 
 // Initialize PostHog early for error tracking
 import { initPostHog, posthog } from './posthog'
