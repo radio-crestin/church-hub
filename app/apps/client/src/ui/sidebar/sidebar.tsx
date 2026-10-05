@@ -7,7 +7,7 @@ import {
   Settings,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SidebarHeader } from './sidebar-header'
@@ -18,6 +18,7 @@ import { CurrentUserButton } from '../../features/auth'
 import { RequestFeatureTool } from '../../features/feature-request'
 import { useKioskSettings } from '../../features/kiosk'
 import { usePresentationState } from '../../features/presentation'
+import { SidebarPrograms } from '../../features/schedules'
 import {
   hideAllCustomPageWebviews,
   updateCurrentWebviewBounds,
@@ -288,29 +289,43 @@ export function Sidebar({
         </div>
 
         <nav className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto scrollbar-thin">
-          {menuItems.map((item) => (
-            <SidebarItem
-              key={item.id}
-              pageId={item.id}
-              icon={item.icon}
-              label={item.label}
-              to={item.to}
-              isCollapsed={isCollapsed}
-              isActive={
-                location.pathname === item.to ||
-                location.pathname.startsWith(`${item.to}/`)
-              }
-              className="md:flex"
-              onClick={(e) => handleSidebarItemClick(item.to, e)}
-              shortcut={routeShortcuts[item.to as keyof typeof routeShortcuts]}
-              nativeWindowSettings={getItemNativeWindowSettings(item.id)}
-              iconName={getItemIconName(item.id)}
-              externalUrl={getItemExternalUrl(item.id)}
-              iconColor={getItemIconColor(item.id)}
-              customIconUrl={item.customIconUrl}
-              faviconBgColor={item.faviconBgColor}
-            />
-          ))}
+          {menuItems.map((item) => {
+            const renderItem = (trailing?: React.ReactNode) => (
+              <SidebarItem
+                pageId={item.id}
+                icon={item.icon}
+                label={item.label}
+                to={item.to}
+                isCollapsed={isCollapsed}
+                isActive={
+                  location.pathname === item.to ||
+                  location.pathname.startsWith(`${item.to}/`)
+                }
+                className="md:flex"
+                onClick={(e) => handleSidebarItemClick(item.to, e)}
+                shortcut={
+                  routeShortcuts[item.to as keyof typeof routeShortcuts]
+                }
+                nativeWindowSettings={getItemNativeWindowSettings(item.id)}
+                iconName={getItemIconName(item.id)}
+                externalUrl={getItemExternalUrl(item.id)}
+                iconColor={getItemIconColor(item.id)}
+                customIconUrl={item.customIconUrl}
+                faviconBgColor={item.faviconBgColor}
+                trailing={trailing}
+              />
+            )
+            // Programs are managed right here: their list sits under the entry.
+            return item.id === 'schedules' ? (
+              <SidebarPrograms
+                key={item.id}
+                isCollapsed={isCollapsed}
+                renderEntry={renderItem}
+              />
+            ) : (
+              <Fragment key={item.id}>{renderItem()}</Fragment>
+            )
+          })}
 
           {/* Bottom section - fixed at the bottom, above the collapse button */}
           <div className="mt-auto space-y-1">

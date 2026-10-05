@@ -1,6 +1,8 @@
 {
   "title": "Schedules",
-  "keyLine": { "missing": "No key" },
+  "keyLine": {
+    "missing": "No key"
+  },
   "actions": {
     "create": "New Schedule",
     "save": "Save",
@@ -284,5 +286,13 @@
   "today": {
     "button": "Today",
     "hint": "Program for today, {{title}}: created in one click, or reused if it already exists"
+  },
+  "sidebar": {
+    "showPrograms": "Show programs",
+    "hidePrograms": "Hide programs",
+    "newProgram": "New program",
+    "importProgram": "Import a program from a file",
+    "programActions": "Actions for {{title}}",
+    "emptyHint": "Programs are listed in the sidebar. Make the first one here."
   }
 }

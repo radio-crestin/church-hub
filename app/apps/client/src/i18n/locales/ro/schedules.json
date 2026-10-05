@@ -1,6 +1,8 @@
 {
   "title": "Programe",
-  "keyLine": { "missing": "Fără gamă" },
+  "keyLine": {
+    "missing": "Fără gamă"
+  },
   "actions": {
     "create": "Program Nou",
     "save": "Salveaza",
@@ -284,5 +286,13 @@
   "today": {
     "button": "Azi",
     "hint": "Programul de azi, {{title}}: creat dintr-un click, sau folosit cel existent"
+  },
+  "sidebar": {
+    "showPrograms": "Afișează programele",
+    "hidePrograms": "Ascunde programele",
+    "newProgram": "Program nou",
+    "importProgram": "Importă un program dintr-un fișier",
+    "programActions": "Acțiuni pentru {{title}}",
+    "emptyHint": "Programele apar în bara laterală. Creează aici primul program."
   }
 }

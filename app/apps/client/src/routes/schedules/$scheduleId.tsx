@@ -51,7 +51,8 @@ function ScheduleEditorPage() {
     }
   }, [isNew, numericId])
 
-  const handleBack = () => {
+  // There is no list page: /schedules opens another program.
+  const leaveProgram = () => {
     navigate({ to: '/schedules' })
   }
 
@@ -69,7 +70,7 @@ function ScheduleEditorPage() {
     return (
       <ScheduleEditor
         scheduleId={null}
-        onBack={handleBack}
+        onBack={leaveProgram}
         onScheduleCreated={handleScheduleCreated}
       />
     )
@@ -79,8 +80,7 @@ function ScheduleEditorPage() {
   return (
     <SchedulePresenter
       scheduleId={numericId!}
-      onBack={handleBack}
-      onDeleted={handleBack}
+      onNotFound={leaveProgram}
       urlItemIndex={urlItemIndex}
     />
   )

@@ -42,6 +42,8 @@ interface SidebarItemProps {
   faviconBgColor?: string
   /** Count badge shown on the icon (e.g. new songs available). 0/undefined hides it. */
   badgeCount?: number
+  /** A control beside the link (e.g. an expand toggle), kept outside the anchor. */
+  trailing?: React.ReactNode
 }
 
 export function SidebarItem({
@@ -62,6 +64,7 @@ export function SidebarItem({
   customIconUrl,
   faviconBgColor,
   badgeCount,
+  trailing,
 }: SidebarItemProps) {
   /**
    * Handle middle-click to open page in native window or new tab
@@ -244,10 +247,10 @@ export function SidebarItem({
     )
   }
 
-  return (
+  const link = (
     <Link
       to={to}
-      className={`${baseClasses} ${enabledClasses}`}
+      className={`${baseClasses} ${enabledClasses} ${trailing ? 'flex-1 min-w-0' : ''}`}
       title={isCollapsed ? label : undefined}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
@@ -256,5 +259,14 @@ export function SidebarItem({
     >
       {content}
     </Link>
+  )
+
+  if (!trailing) return link
+
+  return (
+    <div className="flex items-center gap-1">
+      {link}
+      {trailing}
+    </div>
   )
 }

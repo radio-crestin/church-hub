@@ -1,6 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
 import {
-  ArrowLeft,
   Check,
   ChevronsDownUp,
   ChevronsUpDown,
@@ -66,16 +65,15 @@ const SCHEDULE_WORKSPACE_LAYOUT: WorkspaceLayout = {
 
 interface SchedulePresenterProps {
   scheduleId: number
-  onBack: () => void
-  onDeleted?: () => void
+  /** Leaves the page when the program no longer exists. */
+  onNotFound: () => void
   /** URL param for deep-linking to a specific item */
   urlItemIndex?: number
 }
 
 export function SchedulePresenter({
   scheduleId,
-  onBack,
-  onDeleted,
+  onNotFound,
   urlItemIndex,
 }: SchedulePresenterProps) {
   const { t } = useTranslation('schedules')
@@ -104,15 +102,10 @@ export function SchedulePresenter({
       // Clear last visited to prevent navigation loop
       clearSectionLastVisited('schedules')
       showToast(t('messages.notFound'), 'error')
-      onBack()
+      onNotFound()
     }
-  }, [isLoading, schedule, isError, showToast, t, onBack])
+  }, [isLoading, schedule, isError, showToast, t, onNotFound])
 
-  // Handle back button - clear last visited so user stays on list
-  const handleBack = useCallback(() => {
-    clearSectionLastVisited('schedules')
-    onBack()
-  }, [onBack])
   const clearTemporary = useClearTemporaryContent()
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
   const { loadSchedule, isPending: isLoadingFile } = useLoadScheduleFromFile()
@@ -519,13 +512,12 @@ export function SchedulePresenter({
     if (success) {
       showToast(t('messages.deleted'), 'success')
       setShowDeleteConfirm(false)
-      onDeleted?.()
       clearSectionLastVisited('schedules')
       navigate({ to: '/schedules' })
     } else {
       showToast(t('messages.error'), 'error')
     }
-  }, [scheduleId, deleteSchedule, showToast, t, onDeleted, navigate])
+  }, [scheduleId, deleteSchedule, showToast, t, navigate])
 
   // Export handlers
   const handleOpenExportModal = useCallback(() => {
@@ -719,13 +711,6 @@ export function SchedulePresenter({
       {/* Header */}
       <div className="flex items-center justify-between mb-3 lg:mb-4 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
-          >
-            <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
-          </button>
           <div className="flex-1 min-w-0 mr-4 overflow-hidden group">
             {isEditingTitle ? (
               <div className="flex items-center gap-2">
