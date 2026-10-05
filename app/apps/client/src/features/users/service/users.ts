@@ -1,4 +1,4 @@
-import { getApiUrl, isMobile, isTauri } from '~/config'
+import { getApiUrl, getServerPort, isMobile, isTauri } from '~/config'
 import { clearStoredUserToken, setStoredUserToken } from '~/service/api-url'
 import { fetcher } from '../../../utils/fetcher'
 
@@ -321,8 +321,7 @@ export interface NetworkInterface {
  * Generates an authentication URL for a specific IP address
  */
 export function getUserAuthUrlForIp(token: string, ip: string): string {
-  const port = import.meta.env.VITE_API_PORT || '3000'
-  return `http://${ip}:${port}/api/auth/user/${encodeURIComponent(token)}`
+  return `http://${ip}:${getServerPort()}/api/auth/user/${encodeURIComponent(token)}`
 }
 
 /**

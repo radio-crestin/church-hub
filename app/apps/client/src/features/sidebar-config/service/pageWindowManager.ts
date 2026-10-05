@@ -1,3 +1,4 @@
+import { getServerPort } from '~/config'
 import { isTauri } from '~/utils/isTauri'
 import { createLogger } from '~/utils/logger'
 import {
@@ -25,8 +26,7 @@ type PageWindowStates = Record<string, PageWindowState>
  */
 function getFrontendUrl(): string {
   if (isTauri()) {
-    const port = import.meta.env.VITE_SERVER_PORT ?? 3000
-    return `http://127.0.0.1:${port}`
+    return `http://127.0.0.1:${getServerPort()}`
   }
   return window.location.origin
 }

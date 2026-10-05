@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Bug, ExternalLink } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { isLocalhost } from '~/config'
+import { getServerPort, isLocalhost } from '~/config'
 import {
   DatabaseManager,
   FactoryReset,
@@ -82,7 +82,7 @@ function DeveloperSettings() {
                   </div>
                 </div>
                 <a
-                  href="http://localhost:3000/api/docs"
+                  href={`http://localhost:${getServerPort()}/api/docs`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"

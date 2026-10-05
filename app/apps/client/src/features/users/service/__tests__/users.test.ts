@@ -24,6 +24,7 @@ vi.mock('../../../../utils/fetcher', () => ({
 }))
 vi.mock('~/config', () => ({
   getApiUrl: vi.fn(() => 'http://localhost:3000'),
+  getServerPort: vi.fn(() => 3000),
 }))
 
 import { fetcher } from '~/utils/fetcher'

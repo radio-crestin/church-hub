@@ -5,16 +5,28 @@
 import { getStoredApiUrl } from './service/api-url'
 
 /**
- * API port resolution (same precedence as utils/fetcher.ts):
- * 1. runtime port reported by the Tauri shell (covers worktree dev on 3002)
- * 2. build-time VITE_API_PORT
- * 3. default 3000
+ * Default ports: the installed app keeps 3000 (phones and remote screens are
+ * set up with it); the dev server (`bun dev`) runs on 3001, so both can run
+ * at once without one taking over the other's port (T-096).
  */
-function getApiPort(): string | number {
+const INSTALLED_APP_PORT = 3000
+const DEV_SERVER_PORT = 3001
+
+/**
+ * The port of this window's own server:
+ * 1. runtime port reported by the Tauri shell
+ * 2. build-time VITE_SERVER_PORT / VITE_API_PORT (worktrees, review builds)
+ * 3. 3001 in development, 3000 in a packaged build
+ */
+export function getServerPort(): number {
   if (typeof window !== 'undefined' && window.__serverConfig?.serverPort) {
     return window.__serverConfig.serverPort
   }
-  return import.meta.env.VITE_API_PORT || '3000'
+  const fromBuild = Number(
+    import.meta.env.VITE_SERVER_PORT || import.meta.env.VITE_API_PORT,
+  )
+  if (fromBuild) return fromBuild
+  return import.meta.env.DEV ? DEV_SERVER_PORT : INSTALLED_APP_PORT
 }
 
 // Check if we're running in Tauri mode
@@ -114,7 +126,7 @@ export function getApiUrl(): string | null {
     return window.location.origin
   }
 
-  return `http://${getApiHost()}:${getApiPort()}`
+  return `http://${getApiHost()}:${getServerPort()}`
 }
 
 /**
@@ -137,7 +149,7 @@ export function getWsUrl(): string | null {
     return window.location.origin.replace(/^http/, 'ws')
   }
 
-  return `ws://${getApiHost()}:${getApiPort()}`
+  return `ws://${getApiHost()}:${getServerPort()}`
 }
 
 /**

@@ -1,6 +1,6 @@
 import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
-import { isMobile } from '~/config'
+import { getServerPort, isMobile } from '~/config'
 import { trackServerDatabase } from '~/features/server-identity/utils/trackServerDatabase'
 import { getStoredApiUrl } from '~/service/api-url'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
@@ -33,7 +33,7 @@ function getApiBaseUrl(): string {
   }
 
   // Plain browser: the page origin IS the API origin, whatever the port —
-  // main app on 3000, worktrees on 3002 — no compile-time env needed.
+  // installed app on 3000, dev on 3001, worktrees on 3002 — no env needed.
   if (!isTauri) {
     return window.location.origin
   }
@@ -42,12 +42,7 @@ function getApiBaseUrl(): string {
   // sidecar binds to localhost — using `tauri.localhost` here makes every
   // fetch fail the document CSP (`connect-src http://localhost:*`). Force
   // `localhost` so the URL matches CSP; CORS handles cross-origin allow.
-  const port =
-    window.__serverConfig?.serverPort ??
-    import.meta.env.VITE_SERVER_PORT ??
-    3000
-
-  return `http://localhost:${port}`
+  return `http://localhost:${getServerPort()}`
 }
 
 type FetcherOptions = RequestInit & ClientOptions & { timeout?: number }

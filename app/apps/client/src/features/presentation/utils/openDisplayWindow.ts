@@ -1,6 +1,7 @@
 import type { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import type { Window } from '@tauri-apps/api/window'
 
+import { getServerPort } from '~/config'
 import { isAppFrontmost } from '~/utils/isAppFrontmost'
 import { createLogger } from '~/utils/logger'
 import {
@@ -116,14 +117,13 @@ export function isTauri(): boolean {
 /**
  * Gets the frontend base URL for display windows
  * In Tauri mode, window.location.origin returns tauri://localhost
- * so we need to use the actual server URL (localhost:3000)
+ * so we need to use the actual server URL (see getServerPort)
  */
 export function getFrontendUrl(): string {
   // In Tauri mode, use 127.0.0.1 (where sidecar serves the app)
   // Use 127.0.0.1 instead of localhost to avoid IPv6 resolution issues on macOS
   if (isTauri()) {
-    const port = import.meta.env.VITE_SERVER_PORT ?? 3000
-    return `http://127.0.0.1:${port}`
+    return `http://127.0.0.1:${getServerPort()}`
   }
   // In browser mode, use the current origin
   return window.location.origin

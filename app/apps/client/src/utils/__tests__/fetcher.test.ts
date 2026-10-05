@@ -7,6 +7,7 @@ vi.mock('@tauri-apps/plugin-http', () => ({
 
 vi.mock('~/config', () => ({
   isMobile: vi.fn(() => false),
+  getServerPort: vi.fn(() => 3000),
 }))
 
 vi.mock('~/service/api-url', () => ({
