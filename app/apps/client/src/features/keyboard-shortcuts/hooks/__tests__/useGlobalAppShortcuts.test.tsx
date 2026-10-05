@@ -20,23 +20,30 @@ vi.mock('../useIsAppFrontmost', () => ({
   useIsAppFrontmost: vi.fn(),
 }))
 
-const { register } = await import('@tauri-apps/plugin-global-shortcut')
+const { register, unregisterAll } = await import(
+  '@tauri-apps/plugin-global-shortcut'
+)
 const registerMock = vi.mocked(register)
+const unregisterAllMock = vi.mocked(unregisterAll)
 const frontmost = vi.mocked(useIsAppFrontmost)
 
 const noop = () => {}
 
-function renderShortcuts(onNextSlide: (shortcut: string) => void = noop) {
+function renderShortcuts(
+  onNextSlide: (shortcut: string) => void = noop,
+  onlyWhenAppFocused = false,
+) {
   return renderHook(() =>
     useGlobalAppShortcuts({
       shortcuts: {
         ...DEFAULT_SHORTCUTS_CONFIG,
+        onlyWhenAppFocused,
         actions: {
           ...DEFAULT_SHORTCUTS_CONFIG.actions,
           nextSlide: { enabled: true, shortcuts: ['F2'] },
         },
       },
-      sceneShortcuts: [],
+      sceneShortcuts: [{ shortcut: 'F10', sceneName: 'Main' }],
       sidebarShortcuts: [
         {
           shortcut: 'F6',
@@ -66,6 +73,7 @@ function registeredKeys(): string[] {
 describe('useGlobalAppShortcuts', () => {
   beforeEach(() => {
     registerMock.mockClear()
+    unregisterAllMock.mockClear()
   })
 
   it('holds navigation keys OS-wide while Church Hub is in front', async () => {
@@ -87,6 +95,34 @@ describe('useGlobalAppShortcuts', () => {
     await waitFor(() => expect(registeredKeys()).toContain('F2'))
     expect(registeredKeys()).not.toContain('F6')
     expect(registeredKeys()).not.toContain('F9')
+  })
+
+  it('keeps presentation and scene keys while Church Hub is behind, by default', async () => {
+    frontmost.mockReturnValue(false)
+    renderShortcuts()
+
+    await waitFor(() => expect(registeredKeys()).toContain('F2'))
+    expect(registeredKeys()).toContain('F10')
+  })
+
+  it('lets every key go to the app in front when set to "only when in front"', async () => {
+    frontmost.mockReturnValue(false)
+    renderShortcuts(noop, true)
+
+    // F1–F12 must reach the program in front (e.g. BibleShow) instead of a
+    // minimised Church Hub.
+    await waitFor(() => expect(unregisterAllMock).toHaveBeenCalled())
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(registeredKeys()).toEqual([])
+  })
+
+  it('holds every key again once Church Hub is back in front, in that mode', async () => {
+    frontmost.mockReturnValue(true)
+    renderShortcuts(noop, true)
+
+    await waitFor(() => expect(registeredKeys()).toContain('F2'))
+    expect(registeredKeys()).toContain('F10')
+    expect(registeredKeys()).toContain('F6')
   })
 
   it('tells the Next handler which key was pressed', async () => {

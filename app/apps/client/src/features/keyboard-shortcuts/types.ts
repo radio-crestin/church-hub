@@ -16,6 +16,12 @@ export interface ShortcutActionConfig {
 
 export interface GlobalShortcutsConfig {
   actions: Record<GlobalShortcutActionId, ShortcutActionConfig>
+  /**
+   * Presentation, livestream and OBS scene keys are held OS-wide by default,
+   * so they work while another program is in front. True holds them only
+   * while Church Hub is in front, leaving keys like F1–F12 to that program.
+   */
+  onlyWhenAppFocused?: boolean
   midi?: MIDIConfig
   version: number
 }
@@ -41,5 +47,6 @@ export const DEFAULT_SHORTCUTS_CONFIG: GlobalShortcutsConfig = {
     nextSlide: { shortcuts: [], enabled: true },
     prevSlide: { shortcuts: [], enabled: true },
   },
+  onlyWhenAppFocused: false,
   version: 1,
 }

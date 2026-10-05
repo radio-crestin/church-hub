@@ -246,6 +246,10 @@
         "pages": "Pages",
         "pagesDescription": "Switch to a page, focus its search, and keys that only work while that page is open."
       },
+      "focusOnly": {
+        "label": "Only when Church Hub is in front",
+        "description": "Presentation, live stream and OBS scene keys, like F1–F12, work only while Church Hub is the active window. Otherwise they go to the program in front, for example BibleShow."
+      },
       "actions": {
         "startLive": {
           "label": "Start Live Stream",

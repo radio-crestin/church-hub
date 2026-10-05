@@ -100,8 +100,8 @@ export function useGlobalAppShortcuts({
     onPageShortcut,
   ])
 
-  // Navigation shortcuts are only held while Church Hub is the app in front —
-  // see the registration loops below.
+  // Navigation shortcuts are only held while Church Hub is the app in front;
+  // presentation and OBS ones too when the user chose so — see the loops below.
   const isFrontmost = useIsAppFrontmost()
 
   // Use JSON stringified config as dependency to avoid object reference issues
@@ -143,6 +143,18 @@ export function useGlobalAppShortcuts({
 
         if (isCancelled) return
 
+        // Presentation, livestream and OBS scene keys are held OS-wide so the
+        // service can be run from another window. The user can opt out: with
+        // "only when Church Hub is in front" they are let go like the
+        // navigation keys below, so F1–F12 reach the program in front (e.g.
+        // BibleShow) instead of being swallowed by a minimised Church Hub.
+        const holdServiceKeys = isFrontmost || !config.onlyWhenAppFocused
+        if (!holdServiceKeys) {
+          logger.debug(
+            'Church Hub is behind another app: presentation and scene keys released',
+          )
+        }
+
         // Register global app shortcuts
         const actionHandlers: Record<
           GlobalShortcutActionId,
@@ -167,9 +179,9 @@ export function useGlobalAppShortcuts({
         )
 
         if (config.actions) {
-          for (const [actionId, actionConfig] of Object.entries(
-            config.actions,
-          )) {
+          for (const [actionId, actionConfig] of holdServiceKeys
+            ? Object.entries(config.actions)
+            : []) {
             if (!actionConfig.enabled) continue
 
             for (const shortcut of actionConfig.shortcuts) {
@@ -228,7 +240,7 @@ export function useGlobalAppShortcuts({
         }
 
         // Register scene shortcuts
-        for (const { shortcut, sceneName } of scenes) {
+        for (const { shortcut, sceneName } of holdServiceKeys ? scenes : []) {
           if (!shortcut) continue
           if (isCancelled) return
 
@@ -267,7 +279,7 @@ export function useGlobalAppShortcuts({
         // move around inside Church Hub, so they are worth nothing while the
         // user is elsewhere: register them only while the app is in front, and
         // hand the keys straight back to the other application otherwise.
-        // Presentation and OBS shortcuts above stay global on purpose — running
+        // Presentation and OBS shortcuts above stay global by default — running
         // the service from another window is exactly what they are for.
         for (const {
           shortcut,
