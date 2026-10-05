@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Print the download links of a PR's test build (made by .github/workflows/pr-build.yml
-# on every push, ~25 min). The same links sit in the PR's "Test build of <sha>" comment.
+# on every push, ~25 min) into the shared `pr-builds` prerelease. The same links sit in the
+# "Test build of <sha>" section of the PR description.
 #
 # Usage: pr-build-links.sh <pr-number> [--wait]
 #   --wait  block until the build of the PR's current head finishes, then print.
@@ -26,7 +27,7 @@ if [ "${2:-}" = "--wait" ]; then
   fi
 fi
 
-links=$(gh release view "pr-build-$pr" --json assets \
+links=$(gh release view pr-builds --json assets \
   --jq ".assets[] | select(.name | contains(\"$suffix\")) | \"\(.name)\t\(.url)\"" 2>/dev/null || true)
 
 if [ -z "$links" ]; then

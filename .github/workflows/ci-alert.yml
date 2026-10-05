@@ -1,0 +1,53 @@
+name: CI alert
+run-name: "CI alert: ${{ github.event.workflow_run.name }} failed on ${{ github.event.workflow_run.head_branch }}"
+
+# One open issue, "CI is failing on main or a release", for the failures
+# that matter: a run of main (tests, build) or of a release tag. Opened
+# assigned to whoever pushed, then one comment per later failure, so the
+# assignee is emailed as a participant while GitHub's own "failed
+# workflow" emails (which also fire for every PR build) can be turned off.
+# Close the issue once fixed; the next failure opens a new one.
+#
+# workflow_run runs the copy of this file on main, never a PR's.
+
+on:
+  workflow_run:
+    workflows: [Test, Main build, Build and Release]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  alert:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the CI failure issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const run = context.payload.workflow_run
+            const repo = context.repo
+            const TITLE = 'CI is failing on main or a release'
+            const line = `**${run.name}** failed on \`${run.head_branch}\` at ${run.head_sha.slice(0, 7)}: ${run.html_url}`
+
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              ...repo, state: 'open', creator: 'github-actions[bot]', per_page: 100,
+            })
+            const issue = open.find((i) => i.title === TITLE && !i.pull_request)
+            if (issue) {
+              await github.rest.issues.createComment({ ...repo, issue_number: issue.number, body: line })
+              return
+            }
+            const actor = run.triggering_actor
+            await github.rest.issues.create({
+              ...repo,
+              title: TITLE,
+              body: `${line}\n\nClose this issue once it is fixed.`,
+              assignees: actor?.type === 'User' ? [actor.login] : [],
+            })
