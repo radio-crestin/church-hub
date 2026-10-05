@@ -204,8 +204,10 @@ jobs:
             // PR author, an edited description emails no one.
             const pull = await github.rest.pulls.get({ ...repo, pull_number: Number(PR) })
             const description = pull.data.body ?? ''
-            const begin = description.indexOf(START)
-            const end = description.indexOf(END)
+            // Markers that start a line: the text above may quote them inline.
+            const at = description.lastIndexOf(`\n${START}`)
+            const begin = at < 0 ? -1 : at + 1
+            const end = begin < 0 ? -1 : description.indexOf(`\n${END}`, begin) + 1
             const body = begin >= 0 && end > begin
               ? description.slice(0, begin) + section + description.slice(end + END.length)
               : `${description.trimEnd()}\n\n${section}\n`
