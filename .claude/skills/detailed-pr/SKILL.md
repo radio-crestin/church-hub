@@ -1,6 +1,6 @@
 ---
 name: detailed-pr
-description: Generate an extremely detailed, professional "Staff Engineer final review" Pull Request description (13-section Markdown — Summary, Why, What changed, Technical details, API changes, Database changes, Permissions/Authorization, UI/UX, Migration/Backfill, Commit breakdown, Test plan, Risks, Out of scope) grounded in the branch's REAL commits and diff, then create or update the GitHub PR with it. Use WHENEVER the user asks to create, open, make, write, refresh, or update a PR or a PR description — e.g. "fă un PR", "fă-mi un PR", "deschide un PR", "update la PR", "actualizează descrierea PR-ului", "create/open/update a PR". This is the lightweight text-only counterpart to `documented-pr` (which records GIF demos); prefer THIS one unless the user explicitly wants demo videos.
+description: Generate an extremely detailed, professional "Staff Engineer final review" Pull Request description (13-section Markdown — Summary, Why, What changed, Technical details, API changes, Database changes, Permissions/Authorization, UI/UX, Migration/Backfill, Commit breakdown, Test plan, Risks, Out of scope) grounded in the branch's REAL commits and diff, then create or update the GitHub PR with it. Use WHENEVER the user asks to create, open, make, write, refresh, or update a PR or a PR description — e.g. "fă un PR", "fă-mi un PR", "deschide un PR", "update la PR", "actualizează descrierea PR-ului", "create/open/update a PR".
 ---
 
 # detailed-pr
@@ -13,8 +13,10 @@ The description must read as if written by the feature's **principal author**.
 **Everything is grounded in the actual branch diff — never invent endpoints,
 permissions, migrations, or behaviour the diff doesn't contain.**
 
-This skill is text-only (no GIF recording). For the GIF-demo variant the user
-invokes `/documented-pr` explicitly.
+This skill writes text only. Demo videos come from the better-tasks plugin
+(its before/after video rules); keep its video lines and `--attach` when you
+rewrite a body. Installer links: `scripts/pr-build-links.sh <pr> --wait`; keep
+the `<!-- pr-build:start -->` ... `<!-- pr-build:end -->` block.
 
 ---
 
