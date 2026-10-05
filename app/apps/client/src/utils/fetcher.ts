@@ -49,10 +49,24 @@ function getApiBaseUrl(): string {
   return `http://localhost:${port}`
 }
 
+type FetcherOptions = RequestInit & ClientOptions & { timeout?: number }
+
+/** The parsed JSON body, whatever the HTTP status (see `fetchJsonWithStatus`). */
 export async function fetcher<T>(
   url: string,
-  options?: RequestInit & ClientOptions & { timeout?: number },
+  options?: FetcherOptions,
 ): Promise<T> {
+  return (await fetchJsonWithStatus<T>(url, options)).body
+}
+
+/**
+ * Like `fetcher`, plus the HTTP status, for callers that must tell "the server
+ * has no such thing" (404) apart from any other failure.
+ */
+export async function fetchJsonWithStatus<T>(
+  url: string,
+  options?: FetcherOptions,
+): Promise<{ status: number; body: T }> {
   const headers: Record<string, string> = {
     ...((options?.headers as Record<string, string>) ?? {}),
     ...getAuthHeaders(),
@@ -90,7 +104,7 @@ export async function fetcher<T>(
       )
     }
 
-    return await res.json()
+    return { status: res.status, body: await res.json() }
   } catch (error) {
     const duration = performance.now() - startTime
 

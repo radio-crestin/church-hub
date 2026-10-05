@@ -1,4 +1,4 @@
-import { fetcher } from '~/utils/fetcher'
+import { fetcher, fetchJsonWithStatus } from '~/utils/fetcher'
 import type {
   AISearchResponse,
   Song,
@@ -72,11 +72,19 @@ export async function getSongsPaginated(
   return response.data ?? { songs: [], total: 0, hasMore: false }
 }
 
+/**
+ * The song, or null only when the server says it has no such song (404). Any
+ * other failure throws, so it is never mistaken for a deleted song (T-096).
+ */
 export async function getSongById(id: number): Promise<SongWithSlides | null> {
-  const response = await fetcher<ApiResponse<SongWithSlides>>(
-    `/api/songs/${id}`,
-  )
-  return response.data ?? null
+  const { status, body } = await fetchJsonWithStatus<
+    ApiResponse<SongWithSlides>
+  >(`/api/songs/${id}`)
+  if (status === 404) return null
+  if (!body.data) {
+    throw new Error(body.error ?? `Loading song ${id} failed (HTTP ${status})`)
+  }
+  return body.data
 }
 
 export interface UpsertSongResult {

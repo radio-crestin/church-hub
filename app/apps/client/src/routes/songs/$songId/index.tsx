@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import {
   createFileRoute,
   redirect,
@@ -61,6 +62,7 @@ import {
   type CategoryEditDialogHandle,
   SongBookmarksPanel,
   SongControlPanel,
+  SongLoadError,
   SongSlidesPanel,
   SongStageBoard,
   SongVersionsPanel,
@@ -202,11 +204,17 @@ function SongPreviewPage() {
     }
   }, [reset, navigate])
   const numericId = parseInt(songId, 10)
+  const isValidSongId = Number.isInteger(numericId) && numericId > 0
 
   // Opening a song reviews its "updated elsewhere" sync badge.
   useMarkEntitySeen('song', Number.isNaN(numericId) ? null : numericId)
 
-  const { data: song, isLoading, isError } = useSong(numericId)
+  const songQuery = useSong(isValidSongId ? numericId : null)
+  const { data: song, isLoading, isError } = songQuery
+  // Only the server saying "no such song" (null) means missing. A failed or
+  // slow load is not: it gets a retry instead (T-096).
+  const isSongMissing = !isValidSongId || song === null
+  const queryClient = useQueryClient()
   const presentTemporarySong = usePresentTemporarySong()
   const navigateTemporary = useNavigateTemporary()
   const clearTemporary = useClearTemporaryContent()
@@ -324,18 +332,22 @@ function SongPreviewPage() {
     }
   }, [previewMode, stagedSlideIndex, song, expandedSlides])
 
-  // Handle song not found - redirect to search with toast
+  const backToSongList = useCallback(() => {
+    navigate({
+      to: '/songs/',
+      search: { fromSong: true, q: searchQuery || undefined },
+    })
+  }, [navigate, searchQuery])
+
+  // A deleted song: say so and go back to the list, refreshed so it drops out.
   useEffect(() => {
-    if (!isLoading && (!song || isError)) {
-      // Clear last visited to prevent navigation loop
-      clearSectionLastVisited('songs')
-      showToast(t('messages.notFound'), 'error')
-      navigate({
-        to: '/songs/',
-        search: { fromSong: true, q: searchQuery || undefined },
-      })
-    }
-  }, [isLoading, song, isError, showToast, t, navigate, searchQuery])
+    if (!isSongMissing) return
+    // Clear last visited to prevent navigation loop
+    clearSectionLastVisited('songs')
+    queryClient.invalidateQueries({ queryKey: ['songs'] })
+    showToast(t('messages.notFound'), 'error')
+    backToSongList()
+  }, [isSongMissing, queryClient, showToast, t, backToSongList])
 
   // Save last visited song to localStorage
   useEffect(() => {
@@ -746,7 +758,16 @@ function SongPreviewPage() {
       : 'song-detail',
   )
 
-  if (isLoading || !song) {
+  if (!song) {
+    if (isError) {
+      return (
+        <SongLoadError
+          isRetrying={songQuery.isFetching}
+          onRetry={() => songQuery.refetch()}
+          onBack={backToSongList}
+        />
+      )
+    }
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
