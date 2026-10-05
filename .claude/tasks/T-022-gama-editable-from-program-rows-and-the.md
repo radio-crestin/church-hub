@@ -2,8 +2,8 @@
 id: T-022
 title: Gama editable from program rows and the program edit view
 sprint: 2026-10-05
-urgent: true
-status: doing
+urgent: false
+status: done
 owner: programs-gama-2
 rolled: 0
 order: 0
@@ -24,3 +24,4 @@ Test: CI=1 TEST_PORT=3117 bunx playwright test e2e/program-gama.spec.ts --worker
 Not verified on real devices.
 - 2026-10-05: build: https://github.com/radio-crestin/church-hub/releases/download/pr-build-114/church-hub-macos-arm64-pr-114-5949640.dmg · https://github.com/radio-crestin/church-hub/releases/download/pr-build-114/church-hub-windows-x64-pr-114-5949640.exe · https://github.com/radio-crestin/church-hub/releases/download/pr-build-114/church-hub-linux-x64-pr-114-5949640.AppImage (commit 5949640)
 - 2026-10-05: User review (2026-10-05): «same observation at t-017, are they duplicate?». Not duplicates: T-017 = exports, T-022 = gama shown/edited in the app; they share PR #114. The markdown-export request is tracked on T-017. Re-ask both together once the markdown export is in.
+- 2026-10-05: Gama chip on program rows and the song page's program list ("Fără gamă" hint when missing), editable via the song gama dialog and via Edit as Text braces. PR #114 merged.
