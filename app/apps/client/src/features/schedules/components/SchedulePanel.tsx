@@ -33,7 +33,7 @@ import { KeyLineEditDialog } from '~/features/song-key'
 import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { usePermissions } from '~/provider/permissions-provider'
-import { Combobox, type ComboboxOption } from '~/ui/combobox'
+import type { ComboboxOption } from '~/ui/combobox'
 import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
@@ -46,6 +46,8 @@ import {
   ScheduleItemEditors,
   type ScheduleItemEditorsHandle,
 } from './ScheduleItemEditors'
+import { SchedulePanelNoPrograms } from './SchedulePanelNoPrograms'
+import { SchedulePanelPicker } from './SchedulePanelPicker'
 import { ScheduleSlideRow } from './ScheduleSlideRow'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import { ScheduleVerseRow } from './ScheduleVerseRow'
@@ -826,17 +828,13 @@ export function SchedulePanel({
           {/* Program picker — searchable, because a church accumulates a lot
               of past programs. */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <Combobox
+            <SchedulePanelPicker
               options={scheduleOptions}
               value={selectedScheduleId}
-              onChange={(value) =>
-                setSelectedScheduleId(
-                  typeof value === 'number' ? value : Number(value) || null,
-                )
+              onChange={setSelectedScheduleId}
+              onNewProgram={
+                canCreateProgram ? () => setIsCreatingSchedule(true) : undefined
               }
-              placeholder={t('panel.selectSchedule')}
-              allowClear={false}
-              className="w-full"
             />
           </div>
 
@@ -881,26 +879,44 @@ export function SchedulePanel({
                 ...
               </div>
             ) : schedules.length === 0 ? (
-              <div className="px-4 py-6 text-center">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('panel.noSchedules')}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {t('panel.noSchedulesDescription')}
-                </p>
-              </div>
+              <SchedulePanelNoPrograms
+                onNewProgram={
+                  canCreateProgram
+                    ? () => setIsCreatingSchedule(true)
+                    : undefined
+                }
+                onCreated={setSelectedScheduleId}
+              />
             ) : displayItems.length === 0 ? (
               isSearching ? (
                 <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                   {t('panel.noResults')}
                 </div>
               ) : (
-                <div className="px-4 py-6 text-center">
+                <div
+                  data-testid="schedule-panel-empty-program"
+                  className="px-4 py-6 text-center"
+                >
                   <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {t('panel.emptySchedule')}
                   </p>
+                  {canEditProgram && (
+                    <>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        {t('panel.emptyScheduleHint')}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => editorsRef.current?.addItem()}
+                        data-testid="schedule-panel-add-first"
+                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                      >
+                        <Plus size={16} />
+                        {tCommon('addMenu.button')}
+                      </button>
+                    </>
+                  )}
                 </div>
               )
             ) : (
