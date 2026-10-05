@@ -27,7 +27,7 @@ test.describe('E2E test server isolation', () => {
     )
   })
 
-  test('never frees port 3000 or proxies to the dev server', ({}, testInfo) => {
+  test('never frees the app ports or proxies to the dev server', ({}, testInfo) => {
     expect(testInfo.config.webServer?.command).not.toContain('dev:web')
   })
 
@@ -36,7 +36,7 @@ test.describe('E2E test server isolation', () => {
     baseURL,
   }, testInfo) => {
     if (!process.env.TEST_PORT) {
-      expect(new URL(baseURL ?? '').port).not.toBe('3000')
+      expect(['3000', '3001']).not.toContain(new URL(baseURL ?? '').port)
     }
     expect(testInfo.config.webServer?.command).toContain(
       'e2e/.test-data/app.db',

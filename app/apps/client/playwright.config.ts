@@ -24,15 +24,15 @@ export const WEBKIT_STORAGE_STATE = join(
   'e2e/.auth/super-admin-webkit.json',
 )
 
-// Not 3000: the desktop app and the dev server live there. A run that landed
+// Not 3000 (the installed app) nor 3001 (the dev server). A run that landed
 // on the running app drove its real projector and database ("slides appear
 // with nobody presenting", T-030).
 const TEST_PORT = process.env.TEST_PORT ?? '3099'
-// The test server frees its port on start (killProcessOnPort), so on 3000 it
-// would kill the desktop app or the dev server.
-if (TEST_PORT === '3000') {
+// The test server frees its port on start (killProcessOnPort), so there it
+// would kill the installed app or the dev server.
+if (TEST_PORT === '3000' || TEST_PORT === '3001') {
   throw new Error(
-    'TEST_PORT=3000 is the desktop app / dev server: pick another',
+    `TEST_PORT=${TEST_PORT} is the installed app / dev server: pick another`,
   )
 }
 const TEST_BASE_URL = `http://localhost:${TEST_PORT}`

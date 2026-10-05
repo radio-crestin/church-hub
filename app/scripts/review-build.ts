@@ -4,7 +4,7 @@
  * keeps it in `.review-build/<task id>/` in the checkout, ready to open.
  *
  * It never meets the user's real Church Hub:
- *   - its own port, 4100 + task number (not 3000, not the e2e port 3100 + n:
+ *   - its own port, 4100 + task number (not 3000/3001, not the e2e port 3100 + n:
  *     the app kills whatever holds its port at start),
  *   - its own data folder, `.review-build/<task id>/data` (database, logs, backups),
  *   - its own bundle identifier, so a running Church Hub (single instance)
@@ -236,7 +236,7 @@ function keepBuild(
 
 /**
  * The tauri build rebuilt dist/ for the review port; put back the checkout's
- * own: a worktree's e2e port, or the main checkout's default 3000.
+ * own: a worktree's e2e port, or the main checkout's default (no baked port).
  */
 function restoreClient(app: string, clientPort: number | null) {
   const {
@@ -254,7 +254,7 @@ function restoreClient(app: string, clientPort: number | null) {
     ...env,
     ...ports,
   })
-  return `dist/ talks to port ${clientPort ?? 3000} again`
+  return `dist/ talks to port ${clientPort ?? 'default'} again`
 }
 
 function changedFiles(root: string) {

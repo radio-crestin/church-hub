@@ -5,7 +5,7 @@
  * a second; the GitHub steps add a few more.
  *
  *   1. closes the task's review app and stops whatever listens on its ports
- *      (e2e 3100 + task number, review 4100 + task number; never 3000),
+ *      (e2e 3100 + task number, review 4100 + task number; never 3000/3001),
  *   2. unlocks the worktree, renames it aside and prunes git's record of it,
  *   3. deletes the renamed folder (node_modules, test DB, dist, test-results)
  *      with one detached rm, so nobody waits for it,
@@ -45,7 +45,8 @@ import {
   step,
 } from './worktree-common'
 
-const USER_DEV_PORT = 3000
+/** The user's installed app (3000) and dev server (3001): never freed. */
+const USER_PORTS = [3000, 3001]
 const USAGE =
   'usage: bun app/scripts/worktree-cleanup.ts <task id, e.g. T-052> <branch | worktree path>'
 
@@ -83,8 +84,11 @@ function findWorktree(mainRoot: string, target: string): Worktree {
 }
 
 function stopPorts(mainRoot: string, ports: number[]) {
-  if (ports.includes(USER_DEV_PORT))
-    throw new Error('port 3000 is the user dev server')
+  const userPort = ports.find((port) => USER_PORTS.includes(port))
+  if (userPort)
+    throw new Error(
+      `port ${userPort} is the user's installed app or dev server`,
+    )
   const freePort = join(mainRoot, 'app', 'scripts', 'free-port.js')
   spawnSync(process.execPath, [freePort, ...ports.map(String)], {
     stdio: 'ignore',
