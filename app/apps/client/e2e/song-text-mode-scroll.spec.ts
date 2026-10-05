@@ -33,7 +33,7 @@ async function openTextMode(page: Page, songId: number) {
   })
   await page.goto(`/songs/${songId}`)
   await page.getByTestId('toggle-slides-edit-mode').click()
-  const textarea = page.locator('textarea.font-mono')
+  const textarea = page.getByTestId('slides-text-textarea')
   await expect(textarea).toBeVisible()
   return textarea
 }
