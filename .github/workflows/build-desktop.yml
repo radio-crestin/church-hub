@@ -2,8 +2,8 @@ name: Build desktop app
 
 # The one place the desktop installers are built. Called by:
 #   - build-release.yml — every v*.*.* tag (the published release)
-#   - pr-build.yml      — every pull request (a test build to download)
-#   - main-build.yml    — every push to main (keeps the shared caches warm)
+#   - pr-build.yml      — a pull request's installers, only when asked (by hand)
+#   - main-build.yml    — by hand (a main build to try out)
 #   - by hand (Actions → Run workflow), e.g. to try the release upload on a
 #     throwaway draft release (never a v* one: the plan job refuses that)
 # Each platform compiles the sidecar, smoke-tests it (/ping must answer),
@@ -13,8 +13,10 @@ name: Build desktop app
 #
 # Caches, shared by every workflow and ref: Rust (rust-cache, one key per
 # target), bun's download cache (same key as test.yml), Tauri's bundler
-# tools. Only main saves Rust: PRs and release tags restore main's copy, so
-# PR caches never evict it from the 10 GB budget.
+# tools. Saved only by trusted builds of trusted code: a v* release (the tag
+# rule set decides who pushes one) and a main build run by hand on main
+# itself. PR builds only restore, so they never evict those from the 10 GB
+# budget or plant PR code in a cache a release restores.
 
 on:
   workflow_call:
@@ -45,6 +47,10 @@ on:
         description: Also build the cross-compiled macOS x64 installer.
         type: boolean
         default: true
+      platforms:
+        description: Comma-separated platforms to build (macos, windows, linux). Empty builds all.
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       ref:
@@ -115,6 +121,7 @@ jobs:
         id: plan
         env:
           MACOS_INTEL: ${{ inputs.macos_intel }}
+          WANTED: ${{ inputs.platforms }}
           # smoke: launch the compiled sidecar first. Not on the Intel Mac
           #   build, cross-compiled on an ARM runner that can't run it.
           # optional: Linux is new and not in the updater manifest yet, so a
@@ -146,8 +153,13 @@ jobs:
                 "tauri_args": "--bundles appimage", "smoke": true, "optional": true }
             ]
         run: |
-          PICKED=$(jq -c --argjson intel "$MACOS_INTEL" \
-            '[.[] | select($intel or .target != "macos-x64")]' <<<"$PLATFORMS")
+          # WANTED: "macos,linux" keeps the targets starting with those names.
+          PICKED=$(jq -c --argjson intel "$MACOS_INTEL" --arg wanted "${WANTED:-}" '
+            ($wanted | split(",") | map(select(. != ""))) as $w
+            | [.[] | select($intel or .target != "macos-x64")
+                   | select(.target as $t | ($w | length) == 0 or any($w[]; . as $p | $t | startswith($p)))]
+          ' <<<"$PLATFORMS")
+          [ "$PICKED" != "[]" ] || { echo "::error::No platform matches '$WANTED'"; exit 1; }
           echo "platforms=$PICKED" | tee -a "$GITHUB_OUTPUT"
 
   build:
@@ -170,10 +182,10 @@ jobs:
       contents: write
     env:
       RELEASE_BUILD: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
-      # Caches are written only by main building its own commit. A PR build
-      # started by hand also runs as main but checks out the PR's code,
-      # which must never end up in a cache the release and every PR restore.
-      SAVE_CACHES: ${{ github.ref == 'refs/heads/main' && inputs.ref == '' }}
+      # Caches are written only by a v* release or by main building its own
+      # commit. A PR build started by hand also runs as main but checks out
+      # the PR's code, which must never end up in a cache a release restores.
+      SAVE_CACHES: ${{ (github.ref == 'refs/heads/main' && inputs.ref == '') || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) }}
 
     steps:
       - name: Checkout repository
@@ -243,8 +255,6 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
@@ -264,17 +274,14 @@ jobs:
         working-directory: app
         run: bun install --frozen-lockfile
 
-      # The v0.1.60 lesson: a sidecar that passes `bun test` can still die
+      # The v0.1.60 lesson: a sidecar that runs from source can still die
       # when compiled. Launch the compiled one, laid out like the bundle,
       # and require /ping-style readiness before spending time on Tauri.
       - name: Smoke-test the compiled sidecar
         if: matrix.smoke
         working-directory: app/apps/server
-        env:
-          RUN_COMPILE_TESTS: '1'
         timeout-minutes: 10
-        shell: bash
-        run: bun test src/__tests__/compiled-sidecar.test.ts
+        run: bun run smoke:sidecar
 
       # No separate client build: Tauri's beforeBuildCommand (build:apps)
       # always rebuilds the client and the native sidecar anyway. The sidecar

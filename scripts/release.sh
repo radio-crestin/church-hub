@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # Release helper — bumps app/tauri/tauri.conf.json, commits, tags, pushes.
-# CI takes over from the tag push: it builds the release artifacts and
-# then runs `sync-version-back` to commit the bump back to `main` (which
-# is a no-op here because this script already did it locally).
+# CI takes over from the tag push (build-release.yml): first the pre-release
+# gate — the e2e suite and the compiled-sidecar smoke on macOS, Windows and
+# Linux, and CodeQL — and only if all are green it builds and publishes the
+# release, then runs `sync-version-back` to commit the bump back to `main`
+# (a no-op here because this script already did it locally).
+#
+# A red gate publishes nothing: fix main, then tag the next version. To catch
+# a platform failure before tagging, run the gate on main first:
+#   gh workflow run test.yml --ref main
 #
 # Usage:
 #   ./scripts/release.sh patch       # 0.1.71 -> 0.1.72
@@ -121,6 +127,7 @@ git -C "$REPO_ROOT" push origin main
 git -C "$REPO_ROOT" push origin "v$NEW"
 
 echo
-echo "Released v$NEW."
-echo "CI will pick up the tag and build the artifacts."
+echo "Tagged v$NEW."
+echo "CI runs the pre-release gate (e2e + smoke on macOS/Windows/Linux, CodeQL);"
+echo "the release is built and published only if it is green."
 echo "Watch: https://github.com/radio-crestin/church-hub/actions"

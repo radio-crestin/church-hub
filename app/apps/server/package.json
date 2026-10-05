@@ -1,9 +1,6 @@
 {
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@julusian/midi",
-      "esbuild"
-    ],
+    "onlyBuiltDependencies": ["@julusian/midi", "esbuild"],
     "overrides": {
       "esbuild": ">=0.25.0"
     }
@@ -15,7 +12,8 @@
   "scripts": {
     "dev": "node ../../scripts/run-bun.js --watch ./src/index.ts",
     "compile": "node ../../scripts/run-bun.js ./scripts/compile.ts",
-    "test": "bun test"
+    "smoke:sidecar": "bun scripts/smoke-compiled-sidecar.ts",
+    "test": "bun test src/service/sync"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.84",

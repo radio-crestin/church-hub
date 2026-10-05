@@ -96,9 +96,5 @@ bunx tauri signer generate -w ~/.tauri/church-hub-updater.key
 
 The plugin can only replace a packaged app, so the flow is exercised on a
 release build, never with `tauri dev`. Point a development build at a test
-manifest by editing `plugins.updater.endpoints`, or use the unit tests:
-
-- `app/tauri/src/updater.rs` — marker handling (`cargo test updater`)
-- `app/apps/client/src/features/app-update/services/__tests__/updateStore.test.ts`
-  — download retry, install ordering, failure recovery
-- `app/apps/client/e2e/app-update.spec.ts` — the updates page in a browser
+manifest by editing `plugins.updater.endpoints`, or run the e2e spec
+`app/apps/client/e2e/app-update.spec.ts` (the updates page in a browser).

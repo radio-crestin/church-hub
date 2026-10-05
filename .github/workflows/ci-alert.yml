@@ -2,7 +2,8 @@ name: CI alert
 run-name: "CI alert: ${{ github.event.workflow_run.name }} failed on ${{ github.event.workflow_run.head_branch }}"
 
 # One open issue, "CI is failing on main or a release", for the failures
-# that matter: a run of main (tests, build) or of a release tag. Opened
+# that matter: a release (its pre-release gate or its build) or the weekly
+# CodeQL scan. Opened
 # assigned to whoever pushed, then one comment per later failure, so the
 # assignee is emailed as a participant while GitHub's own "failed
 # workflow" emails (which also fire for every PR build) can be turned off.
@@ -12,7 +13,7 @@ run-name: "CI alert: ${{ github.event.workflow_run.name }} failed on ${{ github.
 
 on:
   workflow_run:
-    workflows: [Test, Main build, Build and Release]
+    workflows: [Build and Release, CodeQL]
     types: [completed]
 
 permissions:
@@ -22,7 +23,7 @@ jobs:
   alert:
     if: >-
       github.event.workflow_run.conclusion == 'failure' &&
-      github.event.workflow_run.event == 'push'
+      contains(fromJSON('["push", "schedule"]'), github.event.workflow_run.event)
     runs-on: ubuntu-latest
     permissions:
       issues: write

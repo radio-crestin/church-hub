@@ -1,0 +1,25 @@
+#!/bin/sh
+# pre-push hook — refuses a push whose commits hold a secret: gitleaks over
+# exactly the commits being pushed (.gitleaks.toml). Catches what a commit
+# made without the pre-commit hook (another machine, --no-verify) let in.
+#
+# git passes one line per ref: <local ref> <local sha> <remote ref> <remote sha>
+
+set -eu
+
+root="$(git rev-parse --show-toplevel)"
+. "$root/.githooks/require-gitleaks.sh"
+
+remote="$1"
+zero="0000000000000000000000000000000000000000"
+
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue # a branch deletion pushes no commits
+  if [ "$remote_sha" = "$zero" ]; then
+    commits="$local_sha --not --remotes=$remote" # a new branch: what the remote lacks
+  else
+    commits="$remote_sha..$local_sha"
+  fi
+  gitleaks git --redact --no-banner --config "$root/.gitleaks.toml" \
+    --log-opts="$commits" "$root"
+done
