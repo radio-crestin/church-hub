@@ -1,4 +1,4 @@
-export { SCREENSHOT_ROUTE_PREFIX } from './constants'
+export { BODY_MAX_BYTES, SCREENSHOT_ROUTE_PREFIX } from './constants'
 export { consumeDailyQuota } from './consumeDailyQuota'
 export { FeatureRequestError } from './FeatureRequestError'
 export { getScreenshotStore } from './getScreenshotStore'

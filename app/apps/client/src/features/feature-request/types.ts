@@ -1,22 +1,22 @@
-/** The element the user clicked in the picker. */
-export interface PickedElement {
-  /** Unique CSS selector: `document.querySelector(selector)` finds it again. */
-  selector: string
-  /** Readable path from <body> with ids, test ids and a few classes. */
-  path: string
-  /** Short visible name: aria-label, test id or text. */
-  label: string
+/** What the user types; kept while they retake the screenshot. */
+export interface RequestFeatureValues {
+  /** Optional description of the request. */
+  notes: string
+  /** Optional reply address; empty when not given. */
+  email: string
 }
 
 export interface FeatureRequestPayload {
-  title: string
+  /** Optional description; may be empty. */
   notes: string
-  email: string
+  /** The notes placed on the screenshot, in order (numbered 1, 2, ...). */
+  screenshotNotes?: string[]
+  /** Optional: without it the request cannot get a reply. */
+  email?: string
   route: string
   viewport: string
   osVersion: string
   appVersion: string
-  element?: PickedElement
   screenshot?: string
   supportId?: string
 }
@@ -35,8 +35,39 @@ export interface StrokePoint {
   y: number
 }
 
+/** A free-hand line (pen or highlighter), in canvas pixels. */
 export interface Stroke {
   color: string
   width: number
+  /** 1 for the pen; lower for the see-through highlighter. */
+  opacity: number
   points: StrokePoint[]
 }
+
+export type ShapeType = 'rect' | 'ellipse' | 'arrow'
+
+/** A shape dragged from one corner (or the arrow's tail) to the other. */
+export interface Shape {
+  shape: ShapeType
+  color: string
+  width: number
+  from: StrokePoint
+  to: StrokePoint
+}
+
+/** A text note placed on the screenshot, at canvas pixels (x, y). */
+export interface ScreenshotNote {
+  x: number
+  y: number
+  text: string
+  color: string
+}
+
+/** Something the user added on the screenshot, in the order they added it. */
+export type Annotation =
+  | ({ kind: 'stroke' } & Stroke)
+  | ({ kind: 'shape' } & Shape)
+  | ({ kind: 'note' } & ScreenshotNote)
+
+/** The markup tools of the screenshot step. */
+export type AnnotationTool = 'pen' | 'highlighter' | ShapeType | 'note'
