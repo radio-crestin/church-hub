@@ -4,7 +4,7 @@ title: Drop the old better-tasks overrides; use the plugin's official instructio
 sprint: 2026-10-05
 urgent: false
 status: done
-owner: tasks-tooling
+owner: tasks-tooling-2
 rolled: 0
 order: -6
 created: 2026-10-05
@@ -31,6 +31,9 @@ No official text is copied into the project files. The plugin has a merge place:
 New commit a3ba8295: deleted task-template.md and tips.md. They held only the shipped text inside a comment, a copy that would drift; without the files the plugin uses its own text.
 Commits to merge: 8f996ccd, a3ba8295 (branch worktree-agent-a21f6efc8262b1721, fast-forward from main 6c7119b9).
 - 2026-10-05: Project coordinator.md/teammate.md now extend (not replace) the plugin's instructions with a short church-hub list; plugin demo videos (Kokoro voice) and PR-per-task on; stale task-template.md/tips.md removed. Landed on main.
+- 2026-10-05: User 2026-10-05 (reopened): «make sure to not override it.. let the plugin have their own configs and you extend it separately.. with a claude.md file or something like this». The `<!-- extend -->` coordinator.md/teammate.md in .claude/tasks/ still count as overriding the plugin's files. Do: delete .claude/tasks/coordinator.md and teammate.md so the plugin's own texts apply untouched; move the church-hub specifics (incl. the pr-builds installer rule from T-077) into a separate file Claude loads on its own, e.g. a "better-tasks: church-hub specifics" section in CLAUDE.md or .claude/rules/better-tasks.md (lead and teammates both read it). Keep config.json (plugin settings). Check nothing else references the deleted files (worktree-cleanup.ts, documented-pr skill, other docs). Commit on main.
+- 2026-10-05: Done (reopen ask). Commit 8013da5c, pushed to origin/main. Deleted .claude/tasks/coordinator.md and teammate.md, so the plugin's own texts apply untouched. config.json kept. The church-hub rules now live in .claude/rules/better-tasks.md (Claude Code loads it by itself for the lead and for teammates), in two sections: Lead and Teammates. The pr-builds installer rule is in there. Updated the files that pointed at the deleted ones: app/scripts/worktree-setup.ts, app/apps/client/.gitignore, .claude/skills/documented-pr/SKILL.md. Old task files (T-052/53/54) still name them as history; left as is. How to check: `ls .claude/tasks` shows no coordinator.md/teammate.md; a newly spawned teammate gets the plugin text plus the rules file. Not checked: a fresh spawn. The main checkout needs `git pull --ff-only`: I made the commit in my worktree because worktree isolation blocked edits in the main checkout.
+- 2026-10-05: Plugin files no longer overridden: .claude/tasks/coordinator.md and teammate.md deleted; church-hub rules moved to .claude/rules/better-tasks.md (loaded for lead and teammates). Pushed to main.
 
 ## PR
 - branch:
