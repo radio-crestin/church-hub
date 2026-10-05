@@ -59,7 +59,13 @@
     },
     "elements": {
       "songKey": "Song key",
-      "amen": "Amen"
+      "amen": "Amen",
+      "mainText": "Main Text",
+      "contentText": "Content Text",
+      "referenceText": "Reference Text",
+      "personLabel": "Person Label",
+      "clock": "Clock",
+      "nextSlide": "Next Slide"
     },
     "position": {
       "x": "X Position",
@@ -107,7 +113,9 @@
         "pipe": "Pipe (|)"
       },
       "fitLineToWidth": "Fit Each Line to Width",
-      "fitLineToWidthDescription": "Prevents line wrapping - each line scales to fit container width"
+      "fitLineToWidthDescription": "Prevents line wrapping - each line scales to fit container width",
+      "justify": "Justify",
+      "systemDefault": "System Default"
     },
     "animation": {
       "animationIn": "Animation In",

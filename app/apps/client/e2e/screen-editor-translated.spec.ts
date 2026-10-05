@@ -19,6 +19,12 @@ const ENGLISH_LEFTOVERS = [
   'Italic',
   'Underline',
   'Position',
+  'Main Text',
+  'Left',
+  'Center',
+  'Justify',
+  'Middle',
+  'System Default',
 ]
 
 async function openSongEditor(page: Page, screenId: number) {

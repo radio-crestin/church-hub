@@ -173,6 +173,11 @@ export function ScreenEditorSidebar({
     value,
     label: t(labelKey),
   }))
+  const fontFamilyOptions = FONT_FAMILY_OPTIONS.map((option) =>
+    option.value === 'system-ui'
+      ? { ...option, label: t('screens.textStyle.systemDefault') }
+      : option,
+  )
   // Normalize the active content config so the Background controls (and any
   // other field access) never crash on a config that drifted to lack a
   // `background` — e.g. configs saved by older app versions or partial OBS
@@ -362,12 +367,8 @@ export function ScreenEditorSidebar({
         // Element-specific configuration
         <>
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200 capitalize">
-              {selectedElement.type === 'songKey'
-                ? t('screens.elements.songKey')
-                : selectedElement.type === 'amen'
-                  ? t('screens.elements.amen')
-                  : selectedElement.type.replace(/([A-Z])/g, ' $1').trim()}
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200">
+              {t(`screens.elements.${selectedElement.type}`)}
             </h3>
           </div>
 
@@ -479,7 +480,7 @@ export function ScreenEditorSidebar({
                     onChange={(value) => {
                       updateElementStyle({ fontFamily: value })
                     }}
-                    options={FONT_FAMILY_OPTIONS}
+                    options={fontFamilyOptions}
                     className="w-full"
                     portalContainer={portalContainer}
                   />
@@ -620,7 +621,7 @@ export function ScreenEditorSidebar({
                             updateElementStyle({ alignment: align })
                           }}
                         >
-                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                          {t(`screens.textStyle.${align}`)}
                         </button>
                       ),
                     )}
@@ -644,7 +645,7 @@ export function ScreenEditorSidebar({
                           updateElementStyle({ verticalAlignment: align })
                         }}
                       >
-                        {align.charAt(0).toUpperCase() + align.slice(1)}
+                        {t(`screens.textStyle.${align}`)}
                       </button>
                     ))}
                   </div>
@@ -831,7 +832,7 @@ export function ScreenEditorSidebar({
                           fontFamily: value,
                         })
                       }}
-                      options={FONT_FAMILY_OPTIONS}
+                      options={fontFamilyOptions}
                       className="w-full"
                       portalContainer={portalContainer}
                     />
@@ -1018,7 +1019,7 @@ export function ScreenEditorSidebar({
                               })
                             }}
                           >
-                            {align.charAt(0).toUpperCase() + align.slice(1)}
+                            {t(`screens.textStyle.${align}`)}
                           </button>
                         ),
                       )}
@@ -1047,7 +1048,7 @@ export function ScreenEditorSidebar({
                             })
                           }}
                         >
-                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                          {t(`screens.textStyle.${align}`)}
                         </button>
                       ))}
                     </div>
@@ -1193,7 +1194,7 @@ export function ScreenEditorSidebar({
                           fontFamily: value,
                         })
                       }}
-                      options={FONT_FAMILY_OPTIONS}
+                      options={fontFamilyOptions}
                       className="w-full"
                       portalContainer={portalContainer}
                     />
@@ -1382,7 +1383,7 @@ export function ScreenEditorSidebar({
                               })
                             }}
                           >
-                            {align.charAt(0).toUpperCase() + align.slice(1)}
+                            {t(`screens.textStyle.${align}`)}
                           </button>
                         ),
                       )}
@@ -1411,7 +1412,7 @@ export function ScreenEditorSidebar({
                             })
                           }}
                         >
-                          {align.charAt(0).toUpperCase() + align.slice(1)}
+                          {t(`screens.textStyle.${align}`)}
                         </button>
                       ))}
                     </div>

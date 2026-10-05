@@ -59,7 +59,13 @@
     },
     "elements": {
       "songKey": "Gama",
-      "amen": "Amin"
+      "amen": "Amin",
+      "mainText": "Text principal",
+      "contentText": "Textul versetului",
+      "referenceText": "Referința biblică",
+      "personLabel": "Numele cititorului",
+      "clock": "Ceas",
+      "nextSlide": "Slide următor"
     },
     "position": {
       "x": "Poziție X",
@@ -107,7 +113,9 @@
         "pipe": "Bară Verticală (|)"
       },
       "fitLineToWidth": "Potrivește Fiecare Linie la Lățime",
-      "fitLineToWidthDescription": "Previne întreruperea liniilor - fiecare linie se scalează pentru a încăpea"
+      "fitLineToWidthDescription": "Previne întreruperea liniilor - fiecare linie se scalează pentru a încăpea",
+      "justify": "Justificat",
+      "systemDefault": "Implicit (sistem)"
     },
     "animation": {
       "animationIn": "Animație Intrare",
