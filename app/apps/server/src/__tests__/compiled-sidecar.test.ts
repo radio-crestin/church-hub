@@ -130,6 +130,11 @@ describeFn('Compiled sidecar binary', () => {
         'bun',
         'build',
         '--compile',
+        // The release flags (scripts/compile.ts): the boot server's worker is
+        // built from function source, which minification rewrites.
+        '--production',
+        '--minify',
+        '--minify-syntax',
         '--target',
         'bun',
         '--bundle',
@@ -209,6 +214,17 @@ describeFn('Compiled sidecar binary', () => {
 
   test('sidecar did not crash with "CFB is not defined"', () => {
     expect(stderrChunks).not.toContain('CFB is not defined')
+  })
+
+  test('the boot server ran in its worker, not on the main thread', () => {
+    expect(stdoutChunks).toContain('Boot server listening')
+    expect(stderrChunks).not.toContain('boot server runs on the main thread')
+  })
+
+  test('the first start seeded the songs from the embedded fixture', async () => {
+    const res = await fetch(`${BASE_URL}/health`)
+    expect(await res.json()).toMatchObject({ ready: true, firstRun: true })
+    expect(stdoutChunks).toMatch(/Seeded \d+ song\(s\) from fixtures/)
   })
 
   test('sidecar did not throw any ReferenceError', () => {

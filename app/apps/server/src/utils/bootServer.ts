@@ -136,22 +136,49 @@ async function startBootServerWorker(port: number): Promise<BootServer> {
       unsubscribe()
       const stopped = waitForWorker(worker, 'stopped')
       worker.postMessage({ type: 'stop' })
-      await stopped
-      worker.terminate()
-      URL.revokeObjectURL(url)
+      try {
+        await stopped
+      } catch (error) {
+        // Terminating the worker frees the port too; the real server's bind
+        // retries until it is free, so starting up carries on.
+        logBootServerProblem(error)
+      } finally {
+        worker.terminate()
+        URL.revokeObjectURL(url)
+      }
     },
   }
 }
 
-/** Fallback: the same server on the main thread (answers between steps only). */
-function startBootServerInline(port: number): BootServer {
-  const server = Bun.serve({
-    port,
-    hostname: '0.0.0.0',
-    reusePort: true,
-    fetch: (req) => bootServerResponse(req, publishedHealth()),
-  })
-  return { stop: () => server.stop(true) }
+const INLINE_BIND_ATTEMPTS = 10
+const INLINE_BIND_RETRY_MS = 300
+
+/**
+ * Fallback: the same server on the main thread (answers between steps only).
+ * Retries the bind: a worker that timed out may still be letting the port go.
+ */
+async function startBootServerInline(port: number): Promise<BootServer> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const server = Bun.serve({
+        port,
+        hostname: '0.0.0.0',
+        reusePort: true,
+        fetch: (req) => bootServerResponse(req, publishedHealth()),
+      })
+      return { stop: () => server.stop(true) }
+    } catch (error) {
+      if (attempt >= INLINE_BIND_ATTEMPTS) throw error
+      await Bun.sleep(INLINE_BIND_RETRY_MS)
+    }
+  }
+}
+
+function logBootServerProblem(error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error)
+  // biome-ignore lint/suspicious/noConsole: startup logging
+  console.error(`[startup] ${message}`)
+  logToFile('boot', 'warn', message)
 }
 
 /**
@@ -164,9 +191,7 @@ export async function startBootServer(port: number): Promise<BootServer> {
     return await startBootServerWorker(port)
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    // biome-ignore lint/suspicious/noConsole: startup logging
-    console.error(`[startup] ${message}; boot server runs on the main thread`)
-    logToFile('boot', 'warn', `boot server worker failed: ${message}`)
+    logBootServerProblem(`${message}; boot server runs on the main thread`)
     return startBootServerInline(port)
   }
 }
