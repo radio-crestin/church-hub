@@ -48,9 +48,7 @@ test.describe('Song key line default per screen type', () => {
   })
 
   for (const type of ['primary', 'stage']) {
-    test(`a fresh ${type} screen still shows the gama`, async ({
-      request,
-    }) => {
+    test(`a fresh ${type} screen still shows the gama`, async ({ request }) => {
       const screen = await createScreen(
         request,
         `E2E Gama ${type} ${Date.now()}`,
