@@ -36,7 +36,7 @@ export function NotesField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={t('common:featureRequest.notesPlaceholder')}
         maxLength={NOTES_MAX_LENGTH}
-        rows={4}
+        rows={3}
         disabled={disabled}
         className={`${inputClass} resize-y`}
       />

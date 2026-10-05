@@ -9,13 +9,19 @@ interface EmailFieldProps {
   disabled: boolean
 }
 
-/** The reply address; private, and remembered on this device on blur. */
+/**
+ * The reply address: optional and private, remembered on this device on
+ * blur. Without it the request cannot get a reply.
+ */
 export function EmailField({ value, onChange, disabled }: EmailFieldProps) {
   const { t } = useTranslation()
   return (
     <div>
       <label htmlFor="feature-request-email" className={labelClass}>
         {t('common:featureRequest.emailLabel')}
+        <span className="font-normal text-gray-500 dark:text-gray-400">
+          {` ${t('common:featureRequest.optional')}`}
+        </span>
       </label>
       <input
         id="feature-request-email"
@@ -26,7 +32,6 @@ export function EmailField({ value, onChange, disabled }: EmailFieldProps) {
         onChange={(event) => onChange(event.target.value)}
         onBlur={(event) => saveEmail(event.target.value)}
         placeholder={t('common:featureRequest.emailPlaceholder')}
-        required
         disabled={disabled}
         className={inputClass}
       />

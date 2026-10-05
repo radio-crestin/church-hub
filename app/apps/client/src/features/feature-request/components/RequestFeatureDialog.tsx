@@ -1,12 +1,13 @@
-import { ArrowLeft, ArrowRight, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ContactModal } from './ContactModal'
-import { FlowProgress } from './FlowProgress'
+import { EmailField } from './EmailField'
+import { NotesField } from './NotesField'
+import { PublicNotice } from './PublicNotice'
 import { RequestFeatureSuccess } from './RequestFeatureSuccess'
-import { ScreenshotStep } from './ScreenshotStep'
-import { WriteStep } from './WriteStep'
+import { ScreenshotMarkup } from './ScreenshotMarkup'
 import { useSubmitFeatureRequest } from '../hooks/useSubmitFeatureRequest'
 import type { Annotation, RequestFeatureValues } from '../types'
 import { FEATURE_REQUEST_UI_ATTRIBUTE } from '../utils/isFeatureRequestUi'
@@ -23,12 +24,6 @@ interface RequestFeatureDialogProps {
   onClose: () => void
 }
 
-const TOTAL_STEPS = 2
-const primaryButton =
-  'flex items-center justify-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-indigo-600'
-const secondaryButton =
-  'flex items-center justify-center gap-1.5 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors disabled:opacity-60'
-
 /** Why Send is still off, as a translation key, or null when it can go. */
 function getMissingKey(
   values: RequestFeatureValues,
@@ -37,13 +32,16 @@ function getMissingKey(
   if (!hasPicture && values.notes.trim() === '') {
     return 'common:featureRequest.contentRequired'
   }
-  if (!isValidEmail(values.email)) return 'common:featureRequest.emailRequired'
+  // The email is optional, but one that is typed must be valid.
+  if (values.email.trim() && !isValidEmail(values.email)) {
+    return 'common:featureRequest.emailInvalid'
+  }
   return null
 }
 
 /**
- * Two short steps. 1: the screenshot, to draw on or add notes to (both
- * optional). 2: an optional description, the email, and Send.
+ * One screen: the screenshot with the markup bar on top, then an optional
+ * description and an optional email, then Send.
  */
 export function RequestFeatureDialog({
   screenshot,
@@ -58,7 +56,6 @@ export function RequestFeatureDialog({
   const { t } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const notesRef = useRef<HTMLTextAreaElement>(null)
-  const [step, setStep] = useState<'show' | 'write'>('show')
   const [isScreenshotIncluded, setIsScreenshotIncluded] = useState(true)
   const [isContactOpen, setIsContactOpen] = useState(false)
   const { state, submit } = useSubmitFeatureRequest()
@@ -68,16 +65,13 @@ export function RequestFeatureDialog({
 
   useEffect(() => {
     dialogRef.current?.showModal()
+    // Ready to type, without scrolling the screenshot away.
+    notesRef.current?.focus({ preventScroll: true })
   }, [])
-
-  useEffect(() => {
-    // Step 2 opens ready to type.
-    if (step === 'write') notesRef.current?.focus({ preventScroll: true })
-  }, [step])
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    if (step !== 'write' || isSending || missingKey) return
+    if (isSending || missingKey) return
     void submit({
       values,
       screenshot: sentScreenshot,
@@ -126,32 +120,34 @@ export function RequestFeatureDialog({
             onSubmit={handleSubmit}
             className="flex flex-col gap-4 px-4 sm:px-6 pb-4 sm:pb-6"
           >
-            <FlowProgress
-              current={step === 'show' ? 1 : 2}
-              total={TOTAL_STEPS}
+            <ScreenshotMarkup
+              screenshot={screenshot}
+              annotations={annotations}
+              onAnnotationsChange={onAnnotationsChange}
+              isIncluded={isScreenshotIncluded}
+              onIncludedChange={setIsScreenshotIncluded}
+              onRetake={onRetake}
+              hasCaptureError={hasCaptureError}
             />
-
-            {step === 'show' ? (
-              <ScreenshotStep
-                screenshot={screenshot}
-                annotations={annotations}
-                onAnnotationsChange={onAnnotationsChange}
-                isIncluded={isScreenshotIncluded}
-                onIncludedChange={setIsScreenshotIncluded}
-                onRetake={onRetake}
-                hasCaptureError={hasCaptureError}
-              />
-            ) : (
-              <WriteStep
-                values={values}
-                onValuesChange={onValuesChange}
-                screenshot={sentScreenshot}
-                annotations={annotations}
-                disabled={isSending}
-                errorMessage={errorMessage}
-                notesRef={notesRef}
-                onEditScreenshot={() => setStep('show')}
-              />
+            <NotesField
+              ref={notesRef}
+              value={values.notes}
+              onChange={(notes) => onValuesChange({ ...values, notes })}
+              disabled={isSending}
+            />
+            <EmailField
+              value={values.email}
+              onChange={(email) => onValuesChange({ ...values, email })}
+              disabled={isSending}
+            />
+            <PublicNotice />
+            {errorMessage && (
+              <p
+                className="text-sm text-red-600 dark:text-red-400"
+                role="alert"
+              >
+                {errorMessage}
+              </p>
             )}
 
             <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -162,48 +158,26 @@ export function RequestFeatureDialog({
               >
                 {t('common:contact.title')}
               </button>
-              {step === 'show' ? (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                {missingKey && (
+                  <span
+                    data-testid="feature-request-missing-hint"
+                    className="text-xs text-gray-600 dark:text-gray-400 text-center sm:text-right"
+                  >
+                    {t(missingKey)}
+                  </span>
+                )}
                 <button
-                  type="button"
-                  data-testid="feature-request-next"
-                  onClick={() => setStep('write')}
-                  className={primaryButton}
+                  type="submit"
+                  data-testid="feature-request-submit"
+                  disabled={isSending || missingKey !== null}
+                  className="flex items-center justify-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-indigo-600"
                 >
-                  {t('common:featureRequest.next')}
-                  <ArrowRight size={16} />
+                  {isSending
+                    ? t('common:featureRequest.sending')
+                    : t('common:featureRequest.submit')}
                 </button>
-              ) : (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  {missingKey && (
-                    <span
-                      data-testid="feature-request-missing-hint"
-                      className="text-xs text-gray-600 dark:text-gray-400 text-center sm:text-right"
-                    >
-                      {t(missingKey)}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    data-testid="feature-request-back"
-                    disabled={isSending}
-                    onClick={() => setStep('show')}
-                    className={secondaryButton}
-                  >
-                    <ArrowLeft size={16} />
-                    {t('common:featureRequest.back')}
-                  </button>
-                  <button
-                    type="submit"
-                    data-testid="feature-request-submit"
-                    disabled={isSending || missingKey !== null}
-                    className={primaryButton}
-                  >
-                    {isSending
-                      ? t('common:featureRequest.sending')
-                      : t('common:featureRequest.submit')}
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
           </form>
         )}

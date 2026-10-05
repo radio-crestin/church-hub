@@ -8,7 +8,7 @@ import { ScreenshotAnnotator } from './ScreenshotAnnotator'
 import type { Annotation, AnnotationTool } from '../types'
 import { DEFAULT_MARKUP_COLOR } from '../utils/markupColors'
 
-interface ScreenshotStepProps {
+interface ScreenshotMarkupProps {
   /** Null when no screenshot could be taken. */
   screenshot: HTMLCanvasElement | null
   annotations: Annotation[]
@@ -23,11 +23,11 @@ const linkButton =
   'flex items-center gap-1 px-2 py-1.5 text-sm font-medium rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors'
 
 /**
- * Step 1: the screenshot, big, with an iPad-style markup bar: pen,
+ * The screenshot, on top of the request form, with an iPad-style markup bar: pen,
  * highlighter, shapes, text notes and colours (all optional). It can be
  * retaken or left out.
  */
-export function ScreenshotStep({
+export function ScreenshotMarkup({
   screenshot,
   annotations,
   onAnnotationsChange,
@@ -35,7 +35,7 @@ export function ScreenshotStep({
   onIncludedChange,
   onRetake,
   hasCaptureError,
-}: ScreenshotStepProps) {
+}: ScreenshotMarkupProps) {
   const { t } = useTranslation()
   const [tool, setTool] = useState<AnnotationTool>('pen')
   const [color, setColor] = useState(DEFAULT_MARKUP_COLOR)
@@ -56,7 +56,7 @@ export function ScreenshotStep({
   return (
     <div className="flex flex-col gap-3 min-w-0">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
           {t('common:featureRequest.stepShowTitle')}
         </h3>
         {isShown && retakeButton}

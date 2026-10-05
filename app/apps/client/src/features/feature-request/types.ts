@@ -2,6 +2,7 @@
 export interface RequestFeatureValues {
   /** Optional description of the request. */
   notes: string
+  /** Optional reply address; empty when not given. */
   email: string
 }
 
@@ -10,7 +11,8 @@ export interface FeatureRequestPayload {
   notes: string
   /** The notes placed on the screenshot, in order (numbered 1, 2, ...). */
   screenshotNotes?: string[]
-  email: string
+  /** Optional: without it the request cannot get a reply. */
+  email?: string
   route: string
   viewport: string
   osVersion: string

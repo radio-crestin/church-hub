@@ -42,7 +42,7 @@ export function useSubmitFeatureRequest() {
         screenshotNotes: getScreenshotNotes(annotations).map(
           (note) => note.text,
         ),
-        email: values.email.trim(),
+        email: values.email.trim() || undefined,
         route: window.location.pathname,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
         ...systemInfo,
