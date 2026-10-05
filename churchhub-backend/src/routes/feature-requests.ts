@@ -1,5 +1,6 @@
 import { type Context, Hono } from 'hono'
 import {
+  BODY_MAX_BYTES,
   consumeDailyQuota,
   FeatureRequestError,
   getScreenshotStore,
@@ -30,6 +31,11 @@ featureRequests.post('/feature-requests', async (c) => {
       key: `feature-request:${clientIp}`,
     })
   if (!withinLimit) return rateLimited(c)
+
+  const declaredBytes = Number(c.req.header('Content-Length') ?? 0)
+  if (declaredBytes > BODY_MAX_BYTES) {
+    return c.json({ success: false, error: 'Request is too large' }, 413)
+  }
 
   try {
     const request = parseFeatureRequest(await c.req.json().catch(() => null))

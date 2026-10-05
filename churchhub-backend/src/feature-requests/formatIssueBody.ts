@@ -33,10 +33,10 @@ export function formatIssueBody(
   sections.push(
     [
       '## Context',
-      `- **Route:** ${request.route || 'unknown'}`,
-      `- **Viewport:** ${request.viewport || 'unknown'}`,
-      `- **App version:** ${request.appVersion}`,
-      `- **OS:** ${request.osVersion}`,
+      `- **Route:** ${neutralizeMentions(request.route || 'unknown')}`,
+      `- **Viewport:** ${neutralizeMentions(request.viewport || 'unknown')}`,
+      `- **App version:** ${neutralizeMentions(request.appVersion)}`,
+      `- **OS:** ${neutralizeMentions(request.osVersion)}`,
       `- **Submitted:** ${new Date().toISOString()}`,
     ].join('\n')
   )

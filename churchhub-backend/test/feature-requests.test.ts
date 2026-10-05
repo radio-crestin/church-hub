@@ -308,10 +308,53 @@ describe('POST /feature-requests', () => {
     expect(env.SIGNALING_KV.values.size).toBe(0)
   })
 
-  test('returns 500 when GitHub fails', async () => {
+  test("returns 500 without GitHub's error details when GitHub fails", async () => {
     globalThis.fetch = (async () =>
-      new Response('boom', { status: 502 })) as unknown as typeof fetch
+      new Response('boom: token details', {
+        status: 502,
+      })) as unknown as typeof fetch
     const response = await post(validBody())
     expect(response.status).toBe(500)
+    expect(await response.text()).not.toContain('boom')
+  })
+
+  test('names the issue after the first line of the notes when no title is sent', async () => {
+    const notes = `  \n${'Bigger   song font for the projector please '.repeat(3)}\nMore detail`
+    const response = await post(validBody({ title: undefined, notes }))
+    expect(response.status).toBe(200)
+    const title = String(calls[0].body.title)
+    expect(
+      title.startsWith('Bigger song font for the projector please Bigger')
+    ).toBe(true)
+    expect(title.length).toBeLessThanOrEqual(80)
+    expect(title.endsWith('…')).toBe(true)
+  })
+
+  test('still accepts a title from older app versions', async () => {
+    await post(validBody({ title: 'Old app title' }))
+    expect(calls[0].body.title).toBe('Old app title')
+  })
+
+  test('rejects a body over 8 MB before reading it', async () => {
+    const response = await app.request(
+      'https://backend.test/feature-requests',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': String(9 * 1024 * 1024),
+          'CF-Connecting-IP': CLIENT_IP,
+        },
+        body: '{}',
+      },
+      createEnv()
+    )
+    expect(response.status).toBe(413)
+    expect(calls).toHaveLength(0)
+  })
+
+  test('keeps user text in the context from pinging GitHub users', async () => {
+    await post(validBody({ route: '/songs/@octocat' }))
+    expect(String(calls[0].body.body)).toContain('/songs/@​octocat')
   })
 })

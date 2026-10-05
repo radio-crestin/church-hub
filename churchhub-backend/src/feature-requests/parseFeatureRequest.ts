@@ -4,6 +4,7 @@ import {
   SHORT_FIELD_MAX_LENGTH,
   TITLE_MAX_LENGTH,
 } from './constants'
+import { deriveIssueTitle } from './deriveIssueTitle'
 import { FeatureRequestError } from './FeatureRequestError'
 import { isValidEmail } from './isValidEmail'
 import { parseImageDataUrl } from './parseImageDataUrl'
@@ -21,9 +22,11 @@ export function parseFeatureRequest(body: unknown): FeatureRequestInput {
   if (!isValidEmail(email)) throw new FeatureRequestError('email is invalid')
 
   const optional = { required: false }
+  const notes = readString(raw.notes, 'notes', NOTES_MAX_LENGTH)
+  const title = readString(raw.title, 'title', TITLE_MAX_LENGTH, optional)
   return {
-    title: readString(raw.title, 'title', TITLE_MAX_LENGTH),
-    notes: readString(raw.notes, 'notes', NOTES_MAX_LENGTH),
+    title: deriveIssueTitle(title, notes),
+    notes,
     email,
     route: readString(raw.route, 'route', SHORT_FIELD_MAX_LENGTH, optional),
     viewport: readString(

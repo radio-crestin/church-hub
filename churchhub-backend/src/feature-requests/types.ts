@@ -11,6 +11,7 @@ export interface PickedElement {
 }
 
 export interface FeatureRequestInput {
+  /** Sent by older apps; otherwise the first line of the notes. */
   title: string
   notes: string
   /** Private: goes only to the maintainer's WhatsApp, never to GitHub. */
