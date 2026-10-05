@@ -102,15 +102,15 @@ function Section({
 
 // Animation type options
 const ANIMATION_TYPES = [
-  { value: 'none', label: 'None' },
-  { value: 'fade', label: 'Fade' },
-  { value: 'slide-left', label: 'Slide Left' },
-  { value: 'slide-right', label: 'Slide Right' },
-  { value: 'slide-up', label: 'Slide Up' },
-  { value: 'slide-down', label: 'Slide Down' },
-  { value: 'zoom', label: 'Zoom' },
-  { value: 'blur', label: 'Blur' },
-]
+  { value: 'none', labelKey: 'screens.animation.types.none' },
+  { value: 'fade', labelKey: 'screens.animation.types.fade' },
+  { value: 'slide-left', labelKey: 'screens.animation.types.slideLeft' },
+  { value: 'slide-right', labelKey: 'screens.animation.types.slideRight' },
+  { value: 'slide-up', labelKey: 'screens.animation.types.slideUp' },
+  { value: 'slide-down', labelKey: 'screens.animation.types.slideDown' },
+  { value: 'zoom', labelKey: 'screens.animation.types.zoom' },
+  { value: 'blur', labelKey: 'screens.animation.types.blur' },
+] as const
 
 // Line separator options
 const LINE_SEPARATORS = [
@@ -169,6 +169,10 @@ export function ScreenEditorSidebar({
   portalContainer,
 }: ScreenEditorSidebarProps) {
   const { t } = useTranslation('presentation')
+  const animationOptions = ANIMATION_TYPES.map(({ value, labelKey }) => ({
+    value,
+    label: t(labelKey),
+  }))
   // Normalize the active content config so the Background controls (and any
   // other field access) never crash on a config that drifted to lack a
   // `background` — e.g. configs saved by older app versions or partial OBS
@@ -369,7 +373,7 @@ export function ScreenEditorSidebar({
 
           {/* Position Section */}
           {'constraints' in selectedConfig.config && (
-            <Section title="Position" icon={Move}>
+            <Section title={t('screens.sections.position')} icon={Move}>
               <ConstraintControls
                 constraints={
                   (selectedConfig.config as { constraints: Constraints })
@@ -461,11 +465,11 @@ export function ScreenEditorSidebar({
 
           {/* Text Style Section */}
           {'style' in selectedConfig.config && (
-            <Section title="Text Style" icon={Type}>
+            <Section title={t('screens.panels.textStyle')} icon={Type}>
               <div className="space-y-3">
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    Font Family
+                    {t('screens.textStyle.fontFamily')}
                   </Label>
                   <Combobox
                     value={
@@ -540,7 +544,7 @@ export function ScreenEditorSidebar({
                 )}
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    Color
+                    {t('screens.textStyle.color')}
                   </Label>
                   <div className="flex items-center gap-2">
                     <input
@@ -574,7 +578,7 @@ export function ScreenEditorSidebar({
                     onCheckedChange={(checked) => {
                       updateElementStyle({ bold: !!checked })
                     }}
-                    label="Bold"
+                    label={t('screens.textStyle.bold')}
                   />
                   <Checkbox
                     checked={
@@ -584,7 +588,7 @@ export function ScreenEditorSidebar({
                     onCheckedChange={(checked) => {
                       updateElementStyle({ italic: !!checked })
                     }}
-                    label="Italic"
+                    label={t('screens.textStyle.italic')}
                   />
                   <Checkbox
                     checked={
@@ -594,12 +598,12 @@ export function ScreenEditorSidebar({
                     onCheckedChange={(checked) => {
                       updateElementStyle({ underline: !!checked })
                     }}
-                    label="Underline"
+                    label={t('screens.textStyle.underline')}
                   />
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    Horizontal Alignment
+                    {t('screens.textStyle.horizontalAlignment')}
                   </Label>
                   <div className="flex gap-2 mt-1">
                     {(['left', 'center', 'right', 'justify'] as const).map(
@@ -624,7 +628,7 @@ export function ScreenEditorSidebar({
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    Vertical Alignment
+                    {t('screens.textStyle.verticalAlignment')}
                   </Label>
                   <div className="flex gap-2 mt-1">
                     {(['top', 'middle', 'bottom'] as const).map((align) => (
@@ -808,11 +812,11 @@ export function ScreenEditorSidebar({
           {/* Title Style Section (for nextSlide) */}
           {'labelStyle' in selectedConfig.config &&
             selectedConfig.isNextSlide && (
-              <Section title="Title Style" icon={Type}>
+              <Section title={t('screens.sections.titleStyle')} icon={Type}>
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Font Family
+                      {t('screens.textStyle.fontFamily')}
                     </Label>
                     <Combobox
                       value={
@@ -909,7 +913,7 @@ export function ScreenEditorSidebar({
                   )}
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Color
+                      {t('screens.textStyle.color')}
                     </Label>
                     <div className="flex items-center gap-2">
                       <input
@@ -957,7 +961,7 @@ export function ScreenEditorSidebar({
                       onCheckedChange={(checked) => {
                         updateNextSlideStyle('labelStyle', { bold: !!checked })
                       }}
-                      label="Bold"
+                      label={t('screens.textStyle.bold')}
                     />
                     <Checkbox
                       checked={
@@ -972,7 +976,7 @@ export function ScreenEditorSidebar({
                           italic: !!checked,
                         })
                       }}
-                      label="Italic"
+                      label={t('screens.textStyle.italic')}
                     />
                     <Checkbox
                       checked={
@@ -987,12 +991,12 @@ export function ScreenEditorSidebar({
                           underline: !!checked,
                         })
                       }}
-                      label="Underline"
+                      label={t('screens.textStyle.underline')}
                     />
                   </div>
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Horizontal Alignment
+                      {t('screens.textStyle.horizontalAlignment')}
                     </Label>
                     <div className="flex gap-2 mt-1">
                       {(['left', 'center', 'right', 'justify'] as const).map(
@@ -1022,7 +1026,7 @@ export function ScreenEditorSidebar({
                   </div>
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Vertical Alignment
+                      {t('screens.textStyle.verticalAlignment')}
                     </Label>
                     <div className="flex gap-2 mt-1">
                       {(['top', 'middle', 'bottom'] as const).map((align) => (
@@ -1170,11 +1174,11 @@ export function ScreenEditorSidebar({
           {/* Content Style Section (for nextSlide) */}
           {'contentStyle' in selectedConfig.config &&
             selectedConfig.isNextSlide && (
-              <Section title="Content Style" icon={Type}>
+              <Section title={t('screens.sections.contentStyle')} icon={Type}>
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Font Family
+                      {t('screens.textStyle.fontFamily')}
                     </Label>
                     <Combobox
                       value={
@@ -1271,7 +1275,7 @@ export function ScreenEditorSidebar({
                   )}
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Color
+                      {t('screens.textStyle.color')}
                     </Label>
                     <div className="flex items-center gap-2">
                       <input
@@ -1321,7 +1325,7 @@ export function ScreenEditorSidebar({
                           bold: !!checked,
                         })
                       }}
-                      label="Bold"
+                      label={t('screens.textStyle.bold')}
                     />
                     <Checkbox
                       checked={
@@ -1336,7 +1340,7 @@ export function ScreenEditorSidebar({
                           italic: !!checked,
                         })
                       }}
-                      label="Italic"
+                      label={t('screens.textStyle.italic')}
                     />
                     <Checkbox
                       checked={
@@ -1351,12 +1355,12 @@ export function ScreenEditorSidebar({
                           underline: !!checked,
                         })
                       }}
-                      label="Underline"
+                      label={t('screens.textStyle.underline')}
                     />
                   </div>
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Horizontal Alignment
+                      {t('screens.textStyle.horizontalAlignment')}
                     </Label>
                     <div className="flex gap-2 mt-1">
                       {(['left', 'center', 'right', 'justify'] as const).map(
@@ -1386,7 +1390,7 @@ export function ScreenEditorSidebar({
                   </div>
                   <div>
                     <Label className="text-xs text-gray-500 dark:text-gray-400">
-                      Vertical Alignment
+                      {t('screens.textStyle.verticalAlignment')}
                     </Label>
                     <div className="flex gap-2 mt-1">
                       {(['top', 'middle', 'bottom'] as const).map((align) => (
@@ -1535,11 +1539,15 @@ export function ScreenEditorSidebar({
 
           {/* Animation Section */}
           {'animationIn' in selectedConfig.config && (
-            <Section title="Animation" icon={Film} defaultOpen={false}>
+            <Section
+              title={t('screens.panels.animation')}
+              icon={Film}
+              defaultOpen={false}
+            >
               <div className="space-y-4">
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
-                    Animation In
+                    {t('screens.animation.animationIn')}
                   </Label>
                   <Combobox
                     value={
@@ -1563,14 +1571,14 @@ export function ScreenEditorSidebar({
                         newAnim,
                       )
                     }}
-                    options={ANIMATION_TYPES}
+                    options={animationOptions}
                     className="w-full mb-2"
                     portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
                       <Label className="text-xs text-gray-500 dark:text-gray-400">
-                        Duration (ms)
+                        {t('screens.animation.durationMs')}
                       </Label>
                       <Slider
                         value={[
@@ -1632,14 +1640,14 @@ export function ScreenEditorSidebar({
                         newAnim,
                       )
                     }}
-                    options={ANIMATION_TYPES}
+                    options={animationOptions}
                     className="w-full mb-2"
                     portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
                       <Label className="text-xs text-gray-500 dark:text-gray-400">
-                        Duration (ms)
+                        {t('screens.animation.durationMs')}
                       </Label>
                       <Slider
                         value={[
@@ -1703,14 +1711,14 @@ export function ScreenEditorSidebar({
                         newAnim,
                       )
                     }}
-                    options={ANIMATION_TYPES}
+                    options={animationOptions}
                     className="w-full mb-2"
                     portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
                       <Label className="text-xs text-gray-500 dark:text-gray-400">
-                        Duration (ms)
+                        {t('screens.animation.durationMs')}
                       </Label>
                       <Slider
                         value={[
@@ -1745,7 +1753,7 @@ export function ScreenEditorSidebar({
                 </div>
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                   <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
-                    Animation Out
+                    {t('screens.animation.animationOut')}
                   </Label>
                   <Combobox
                     value={
@@ -1769,14 +1777,14 @@ export function ScreenEditorSidebar({
                         newAnim,
                       )
                     }}
-                    options={ANIMATION_TYPES}
+                    options={animationOptions}
                     className="w-full mb-2"
                     portalContainer={portalContainer}
                   />
                   <div className="space-y-2">
                     <div>
                       <Label className="text-xs text-gray-500 dark:text-gray-400">
-                        Duration (ms)
+                        {t('screens.animation.durationMs')}
                       </Label>
                       <Slider
                         value={[
@@ -1813,7 +1821,7 @@ export function ScreenEditorSidebar({
 
           {/* Clock-specific Settings */}
           {selectedElement?.type === 'clock' && selectedConfig?.isClock && (
-            <Section title="Clock Settings" icon={Clock}>
+            <Section title={t('screens.sections.clockSettings')} icon={Clock}>
               <div className="space-y-3">
                 <Checkbox
                   checked={
@@ -1828,11 +1836,11 @@ export function ScreenEditorSidebar({
                       },
                     })
                   }}
-                  label="Show seconds"
+                  label={t('screens.clock.showSeconds')}
                 />
                 <div>
                   <Label className="text-xs text-gray-500 dark:text-gray-400">
-                    Format
+                    {t('screens.clock.format')}
                   </Label>
                   <div className="flex gap-2 mt-1">
                     {(['24h', '12h'] as const).map((format) => (
@@ -1950,16 +1958,16 @@ export function ScreenEditorSidebar({
         <>
           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200">
-              Screen Settings
+              {t('screens.sections.screenSettings')}
             </h3>
           </div>
 
           {/* Screen Size */}
-          <Section title="Screen Size" icon={Settings}>
+          <Section title={t('screens.general.screenSize')} icon={Settings}>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400">
-                  Width (px)
+                  {t('screens.general.widthPx')}
                 </Label>
                 <Input
                   type="number"
@@ -1976,7 +1984,7 @@ export function ScreenEditorSidebar({
               </div>
               <div>
                 <Label className="text-xs text-gray-500 dark:text-gray-400">
-                  Height (px)
+                  {t('screens.general.heightPx')}
                 </Label>
                 <Input
                   type="number"
@@ -2077,7 +2085,11 @@ export function ScreenEditorSidebar({
           )}
 
           {/* Clock Settings - per-content-type enable with shared config */}
-          <Section title="Clock" icon={Clock} defaultOpen={false}>
+          <Section
+            title={t('screens.sections.clock')}
+            icon={Clock}
+            defaultOpen={false}
+          >
             <div className="space-y-3">
               {/* Per-content-type enable toggle */}
               <Checkbox
@@ -2310,7 +2322,7 @@ export function ScreenEditorSidebar({
                         labelText: e.target.value,
                       })
                     }}
-                    placeholder="Urmeaza:"
+                    placeholder={t('screens.nextSlide.labelPlaceholder')}
                     className="h-8"
                   />
                 </div>

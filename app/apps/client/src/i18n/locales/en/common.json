@@ -32,7 +32,8 @@
     "delete": "Delete",
     "save": "Save",
     "ok": "OK",
-    "retry": "Retry"
+    "retry": "Retry",
+    "done": "Done"
   },
   "errors": {
     "pageNotFound": "The page you are looking for does not exist.",

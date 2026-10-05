@@ -12,7 +12,8 @@
     "screenTypes": {
       "primary": "Principal / Audiență",
       "stage": "Monitor Scenă",
-      "livestream": "Transmisie Live"
+      "livestream": "Transmisie Live",
+      "kiosk": "Chioșc"
     },
     "createAndConfigure": "Creează și Configurează",
     "deleteConfirmTitle": "Șterge Ecranul?",
@@ -27,7 +28,11 @@
       "previewTextDescription": "Personalizați textul de previzualizare pentru a testa cum arată stilul cu conținut diferit.",
       "customPreviewText": "Text Personalizat",
       "previewTextPlaceholder": "Introduceți text personalizat (multiline suportat)...",
-      "resetPreviewText": "Resetează la Implicit"
+      "resetPreviewText": "Resetează la Implicit",
+      "noScene": "Implicit (fără scenă)",
+      "loading": "Se încarcă...",
+      "nextSlidePreview": "Previzualizarea slide-ului următor...",
+      "screenSharePreview": "Previzualizarea ecranului partajat"
     },
     "contentTypes": {
       "song": "Cântec",
@@ -81,8 +86,8 @@
       "fontSize": "Dimensiune Font",
       "minFontSize": "Dimensiune Min Font",
       "color": "Culoare",
-      "bold": "Bold",
-      "italic": "Italic",
+      "bold": "Îngroșat",
+      "italic": "Cursiv",
       "underline": "Subliniat",
       "horizontalAlignment": "Aliniere Orizontală",
       "verticalAlignment": "Aliniere Verticală",
@@ -123,7 +128,8 @@
         "slideLeft": "Alunecare Stânga",
         "slideRight": "Alunecare Dreapta",
         "scale": "Scalare",
-        "blur": "Blur"
+        "blur": "Blur",
+        "zoom": "Zoom"
       },
       "easings": {
         "linear": "Liniar",
@@ -131,7 +137,8 @@
         "easeOut": "Ease Out",
         "easeInOut": "Ease In Out",
         "bounce": "Bounce"
-      }
+      },
+      "durationMs": "Durată (ms)"
     },
     "background": {
       "type": "Tip",
@@ -189,7 +196,9 @@
       "width": "Lățime",
       "height": "Înălțime",
       "clockEnabled": "Afișează Ceas",
-      "defaultBackground": "Fundal Implicit"
+      "defaultBackground": "Fundal Implicit",
+      "widthPx": "Lățime (px)",
+      "heightPx": "Înălțime (px)"
     },
     "screenShare": {
       "title": "Partajare Ecran",
@@ -212,7 +221,8 @@
       "enabled": "Afișează Secțiunea Slide Următor",
       "labelText": "Text Etichetă",
       "labelStyle": "Stil Etichetă",
-      "contentStyle": "Stil Conținut"
+      "contentStyle": "Stil Conținut",
+      "labelPlaceholder": "Urmează:"
     },
     "songOptions": {
       "title": "Opțiuni Cântare",
@@ -263,6 +273,14 @@
       "disconnected": "{{name}} (neconectat)",
       "identify": "Identifică",
       "identifyTooltip": "Afișează un număr pe fiecare ecran, ca să le deosebești"
+    },
+    "sections": {
+      "position": "Poziție",
+      "titleStyle": "Stilul titlului",
+      "contentStyle": "Stilul conținutului",
+      "clockSettings": "Setări ceas",
+      "clock": "Ceas",
+      "screenSettings": "Setări ecran"
     }
   },
   "displays": {

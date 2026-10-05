@@ -32,7 +32,8 @@
     "delete": "Șterge",
     "save": "Salvează",
     "ok": "OK",
-    "retry": "Reîncearcă"
+    "retry": "Reîncearcă",
+    "done": "Gata"
   },
   "errors": {
     "pageNotFound": "Pagina pe care o căutați nu există.",

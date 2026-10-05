@@ -12,7 +12,8 @@
     "screenTypes": {
       "primary": "Primary / Audience",
       "stage": "Stage Monitor",
-      "livestream": "Live Stream"
+      "livestream": "Live Stream",
+      "kiosk": "Kiosk"
     },
     "createAndConfigure": "Create & Configure",
     "deleteConfirmTitle": "Delete Screen?",
@@ -27,7 +28,11 @@
       "previewTextDescription": "Customize the preview text to test how your styling looks with different content.",
       "customPreviewText": "Custom Text",
       "previewTextPlaceholder": "Enter custom preview text (multiline supported)...",
-      "resetPreviewText": "Reset to Default"
+      "resetPreviewText": "Reset to Default",
+      "noScene": "Default (No Scene)",
+      "loading": "Loading...",
+      "nextSlidePreview": "Next slide content preview...",
+      "screenSharePreview": "Screen Share Preview"
     },
     "contentTypes": {
       "song": "Song",
@@ -123,7 +128,8 @@
         "slideLeft": "Slide Left",
         "slideRight": "Slide Right",
         "scale": "Scale",
-        "blur": "Blur"
+        "blur": "Blur",
+        "zoom": "Zoom"
       },
       "easings": {
         "linear": "Linear",
@@ -131,7 +137,8 @@
         "easeOut": "Ease Out",
         "easeInOut": "Ease In Out",
         "bounce": "Bounce"
-      }
+      },
+      "durationMs": "Duration (ms)"
     },
     "background": {
       "type": "Type",
@@ -186,7 +193,9 @@
       "width": "Width",
       "height": "Height",
       "clockEnabled": "Show Clock",
-      "defaultBackground": "Default Background"
+      "defaultBackground": "Default Background",
+      "widthPx": "Width (px)",
+      "heightPx": "Height (px)"
     },
     "screenShare": {
       "title": "Screen Share",
@@ -209,7 +218,8 @@
       "enabled": "Show Next Slide Section",
       "labelText": "Label Text",
       "labelStyle": "Label Style",
-      "contentStyle": "Content Style"
+      "contentStyle": "Content Style",
+      "labelPlaceholder": "Next:"
     },
     "songOptions": {
       "title": "Song Options",
@@ -260,6 +270,14 @@
       "disconnected": "{{name}} (not connected)",
       "identify": "Identify",
       "identifyTooltip": "Flash a number on every display so you can tell them apart"
+    },
+    "sections": {
+      "position": "Position",
+      "titleStyle": "Title Style",
+      "contentStyle": "Content Style",
+      "clockSettings": "Clock Settings",
+      "clock": "Clock",
+      "screenSettings": "Screen Settings"
     }
   },
   "displays": {

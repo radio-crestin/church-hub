@@ -70,7 +70,7 @@ export function ScreenEditor({
   // Scene selector options
   const sceneOptions = useMemo(() => {
     const opts: { value: string; label: string }[] = [
-      { value: '__default__', label: 'Default (No Scene)' },
+      { value: '__default__', label: t('screens.editor.noScene') },
     ]
     for (const scene of scenes) {
       opts.push({
@@ -79,7 +79,7 @@ export function ScreenEditor({
       })
     }
     return opts
-  }, [scenes])
+  }, [scenes, t])
 
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
@@ -363,7 +363,7 @@ export function ScreenEditor({
           {/* Content type selector */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Preview:
+              {t('screens.editor.preview')}
             </span>
             <Combobox
               value={state.selectedContentType}
@@ -413,7 +413,7 @@ export function ScreenEditor({
               data-testid="screen-editor-save"
             >
               <Save className="w-4 h-4 mr-2" />
-              Save
+              {t('screens.editor.save')}
             </Button>
             <Button variant="ghost" onClick={handleClose}>
               <X className="w-4 h-4" />
