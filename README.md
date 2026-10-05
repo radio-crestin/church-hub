@@ -291,8 +291,10 @@ npm run dev
 
 ### Access
 
-- 🌐 **Web**: http://localhost:3000
-- 📚 **API Docs**: http://localhost:3000/api/docs
+Ports: the **dev server runs on 3001**; the installed app keeps **3000** (phones and remote screens connect to it). Different ports let both run at once: each Church Hub frees its own port on start.
+
+- 🌐 **Web (dev)**: http://localhost:3001 (installed app: http://localhost:3000)
+- 📚 **API Docs (dev)**: http://localhost:3001/api/docs
 
 ### Logs Path
 

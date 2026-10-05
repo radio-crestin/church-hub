@@ -4,7 +4,7 @@ import type { SongWithSlides } from '../../types'
 
 vi.mock('~/utils/fetcher')
 
-import { fetcher } from '~/utils/fetcher'
+import { fetcher, fetchJsonWithStatus } from '~/utils/fetcher'
 import {
   aiSearchSongs,
   deleteSong,
@@ -17,6 +17,7 @@ import {
 } from '../songs'
 
 const mockFetcher = vi.mocked(fetcher)
+const mockFetchJsonWithStatus = vi.mocked(fetchJsonWithStatus)
 
 const fakeSong = {
   id: 1,
@@ -106,16 +107,29 @@ describe('getSongsPaginated', () => {
 
 describe('getSongById', () => {
   it('returns song with slides', async () => {
-    mockFetcher.mockResolvedValue({ data: fakeSongWithSlides })
+    mockFetchJsonWithStatus.mockResolvedValue({
+      status: 200,
+      body: { data: fakeSongWithSlides },
+    })
     const result = await getSongById(1)
     expect(result).toEqual(fakeSongWithSlides)
-    expect(mockFetcher).toHaveBeenCalledWith('/api/songs/1')
+    expect(mockFetchJsonWithStatus).toHaveBeenCalledWith('/api/songs/1')
   })
 
-  it('returns null when data is undefined', async () => {
-    mockFetcher.mockResolvedValue({})
-    const result = await getSongById(999)
-    expect(result).toBeNull()
+  it('returns null only when the server has no such song (404)', async () => {
+    mockFetchJsonWithStatus.mockResolvedValue({
+      status: 404,
+      body: { error: 'Song not found' },
+    })
+    expect(await getSongById(999)).toBeNull()
+  })
+
+  it('throws on any other failure, so it is not taken for a deleted song', async () => {
+    mockFetchJsonWithStatus.mockResolvedValue({
+      status: 500,
+      body: { error: 'database is locked' },
+    })
+    await expect(getSongById(1)).rejects.toThrow('database is locked')
   })
 })
 

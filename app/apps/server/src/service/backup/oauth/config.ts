@@ -1,3 +1,5 @@
+import { getServerPort } from '../../../utils/serverPort'
+
 const DRIVE_CALLBACK_PATH = '/api/backup/google/callback'
 
 /**
@@ -15,8 +17,7 @@ export function getOAuthWorkerUrl(): string {
 
 /** The local origin the worker validates and calls back to. */
 export function getLocalOrigin(): string {
-  const port = process.env.PORT || '3000'
-  return `http://localhost:${port}`
+  return `http://localhost:${getServerPort()}`
 }
 
 /**

@@ -32,7 +32,7 @@ function canBind(p, host) {
 function findListenerPidsUnix(p) {
   try {
     // -sTCP:LISTEN: only match listeners, never clients merely connected to
-    // the port (e.g. a browser with a tab open on localhost:3000).
+    // the port (e.g. a browser with a tab open on localhost:3001).
     const out = execFileSync('lsof', ['-t', `-iTCP:${p}`, '-sTCP:LISTEN'], {
       encoding: 'utf8',
     }).trim()

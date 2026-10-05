@@ -1,4 +1,9 @@
 {
+  "serverChanged": {
+    "title": "This window now shows another Church Hub's data",
+    "description": "Another Church Hub app started and took over this window's server, so the songs you see come from that app. To get this app's data back, close the other app and restart this one.",
+    "dismiss": "Close"
+  },
   "addMenu": {
     "button": "Add",
     "title": "Add Item",

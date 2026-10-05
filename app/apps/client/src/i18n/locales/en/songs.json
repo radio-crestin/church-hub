@@ -157,12 +157,18 @@
     "filterPlaceholder": "All tags",
     "filterAll": "All tags"
   },
+  "loadError": {
+    "title": "Couldn't load this song",
+    "description": "This is usually temporary. Try again, or go back to the song list.",
+    "retry": "Try again",
+    "backToSongs": "Back to songs"
+  },
   "messages": {
     "saving": "Saving song...",
     "saved": "Song saved successfully",
     "deleted": "Song deleted successfully",
     "error": "An error occurred",
-    "notFound": "Song not found",
+    "notFound": "This song no longer exists. It may have been deleted.",
     "slideSaved": "Slide saved",
     "slideDeleted": "Slide deleted",
     "slideCloned": "Slide cloned",

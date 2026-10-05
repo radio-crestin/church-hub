@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tauri dev",
     "dev:worktree": "tauri dev --config tauri/tauri.worktree.conf.json",
-    "dev:web": "node scripts/free-port.js 3000 && concurrently --kill-others --names server,client -c blue,green \"cd apps/server && node ../../scripts/run-bun.js --watch ./src/index.ts\" \"cd apps/client && vite dev\"",
+    "dev:web": "node scripts/free-port.js 3001 && cross-env PORT=3001 concurrently --kill-others --names server,client -c blue,green \"cd apps/server && node ../../scripts/run-bun.js --watch ./src/index.ts\" \"cd apps/client && vite dev\"",
     "dev:apps": "concurrently -k -n server,client -c blue,green \"cd apps/server && node ../../scripts/run-bun.js --watch ./src/index.ts\" \"cd apps/client && vite dev\"",
     "dev:server": "cd apps/server && node scripts/run-bun.js --watch ./src/index.ts",
     "dev:client": "cd apps/client && vite dev",

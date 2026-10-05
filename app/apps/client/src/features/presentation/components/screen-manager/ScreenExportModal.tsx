@@ -9,6 +9,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getServerPort } from '~/config'
 import { Button } from '~/ui/button/Button'
 import { Combobox, type ComboboxOption } from '~/ui/combobox'
 import { Input } from '~/ui/input/Input'
@@ -23,7 +24,6 @@ import { getFrontendUrl, openInBrowser } from '../../utils/openDisplayWindow'
 
 const LOCALHOST_VALUE = '__localhost__'
 const CUSTOM_VALUE = '__custom__'
-const DEFAULT_PORT = '3000'
 
 interface ScreenExportModalProps {
   isOpen: boolean
@@ -52,7 +52,7 @@ export function ScreenExportModal({
     const options: ComboboxOption[] = [
       {
         value: LOCALHOST_VALUE,
-        label: `${t('sections.screens.export.serverUrl.localhost')} (localhost:${DEFAULT_PORT})`,
+        label: `${t('sections.screens.export.serverUrl.localhost')} (localhost:${getServerPort()})`,
       },
     ]
 
@@ -60,7 +60,7 @@ export function ScreenExportModal({
     for (const iface of interfaces) {
       options.push({
         value: iface.address,
-        label: `${iface.name} - ${iface.address}:${DEFAULT_PORT}`,
+        label: `${iface.name} - ${iface.address}:${getServerPort()}`,
       })
     }
 
@@ -76,13 +76,13 @@ export function ScreenExportModal({
   // Compute the actual server URL based on selection
   const serverUrl = useMemo(() => {
     if (selectedUrlOption === LOCALHOST_VALUE) {
-      return `http://localhost:${DEFAULT_PORT}`
+      return `http://localhost:${getServerPort()}`
     }
     if (selectedUrlOption === CUSTOM_VALUE) {
-      return customUrl || `http://localhost:${DEFAULT_PORT}`
+      return customUrl || `http://localhost:${getServerPort()}`
     }
     // It's a network interface IP
-    return `http://${selectedUrlOption}:${DEFAULT_PORT}`
+    return `http://${selectedUrlOption}:${getServerPort()}`
   }, [selectedUrlOption, customUrl])
 
   const { exportToFile, isExporting, progress, error, filePath, retry } =

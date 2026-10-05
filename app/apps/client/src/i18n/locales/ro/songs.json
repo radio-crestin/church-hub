@@ -157,12 +157,18 @@
     "filterPlaceholder": "Toate etichetele",
     "filterAll": "Toate etichetele"
   },
+  "loadError": {
+    "title": "Nu am putut încărca această cântare",
+    "description": "De obicei, problema e temporară. Încearcă din nou sau revino la lista de cântări.",
+    "retry": "Încearcă din nou",
+    "backToSongs": "Înapoi la cântări"
+  },
   "messages": {
     "saving": "Se salvează cântarea...",
     "saved": "Cântarea a fost salvată cu succes",
     "deleted": "Cântarea a fost ștearsă cu succes",
     "error": "A apărut o eroare",
-    "notFound": "Cântarea nu a fost găsită",
+    "notFound": "Cântarea nu mai există. Poate a fost ștearsă.",
     "slideSaved": "Slide salvat",
     "slideDeleted": "Slide șters",
     "slideCloned": "Slide clonat",

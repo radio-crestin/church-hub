@@ -4,8 +4,8 @@
   "version": "0.1.103",
   "identifier": "com.church-hub",
   "build": {
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "node scripts/free-port.js 3000 8086 && cross-env PORT=3000 VITE_DEV_PORT=8086 npm run dev:apps",
+    "devUrl": "http://localhost:3001",
+    "beforeDevCommand": "node scripts/free-port.js 3001 8086 && cross-env PORT=3001 VITE_DEV_PORT=8086 npm run dev:apps",
     "beforeBuildCommand": "npm run build:apps",
     "frontendDist": "../apps/client/dist"
   },

@@ -1,6 +1,7 @@
 import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
 
-import { isMobile } from '~/config'
+import { getServerPort, isMobile } from '~/config'
+import { trackServerDatabase } from '~/features/server-identity/utils/trackServerDatabase'
 import { getStoredApiUrl } from '~/service/api-url'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
 import { createLogger } from '~/utils/logger'
@@ -32,7 +33,7 @@ function getApiBaseUrl(): string {
   }
 
   // Plain browser: the page origin IS the API origin, whatever the port —
-  // main app on 3000, worktrees on 3002 — no compile-time env needed.
+  // installed app on 3000, dev on 3001, worktrees on 3002 — no env needed.
   if (!isTauri) {
     return window.location.origin
   }
@@ -41,18 +42,27 @@ function getApiBaseUrl(): string {
   // sidecar binds to localhost — using `tauri.localhost` here makes every
   // fetch fail the document CSP (`connect-src http://localhost:*`). Force
   // `localhost` so the URL matches CSP; CORS handles cross-origin allow.
-  const port =
-    window.__serverConfig?.serverPort ??
-    import.meta.env.VITE_SERVER_PORT ??
-    3000
-
-  return `http://localhost:${port}`
+  return `http://localhost:${getServerPort()}`
 }
 
+type FetcherOptions = RequestInit & ClientOptions & { timeout?: number }
+
+/** The parsed JSON body, whatever the HTTP status (see `fetchJsonWithStatus`). */
 export async function fetcher<T>(
   url: string,
-  options?: RequestInit & ClientOptions & { timeout?: number },
+  options?: FetcherOptions,
 ): Promise<T> {
+  return (await fetchJsonWithStatus<T>(url, options)).body
+}
+
+/**
+ * Like `fetcher`, plus the HTTP status, for callers that must tell "the server
+ * has no such thing" (404) apart from any other failure.
+ */
+export async function fetchJsonWithStatus<T>(
+  url: string,
+  options?: FetcherOptions,
+): Promise<{ status: number; body: T }> {
   const headers: Record<string, string> = {
     ...((options?.headers as Record<string, string>) ?? {}),
     ...getAuthHeaders(),
@@ -80,6 +90,9 @@ export async function fetcher<T>(
 
     const duration = performance.now() - startTime
 
+    // Another Church Hub answered: the window reloads; never use its answer.
+    if (trackServerDatabase(res)) return new Promise(() => {})
+
     if (!res.ok) {
       logger.warn(
         `API ${options?.method ?? 'GET'} ${url} returned ${res.status} (${duration.toFixed(0)}ms)`,
@@ -90,7 +103,7 @@ export async function fetcher<T>(
       )
     }
 
-    return await res.json()
+    return { status: res.status, body: await res.json() }
   } catch (error) {
     const duration = performance.now() - startTime
 

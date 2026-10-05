@@ -345,11 +345,13 @@ import {
   setBootReady,
   setBootStep,
 } from './utils/bootState'
+import { DATABASE_ID_HEADER, getDatabaseId } from './utils/databaseId'
 import { isPortFree } from './utils/isPortFree'
 import { createLogger } from './utils/logger'
 import { getDatabasePath, getLogsDir } from './utils/paths'
 import { reportError } from './utils/reportError'
 import { logRequest, logResponse } from './utils/request-logger'
+import { getServerPort } from './utils/serverPort'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
   broadcastMIDIConnectionStatus,
@@ -552,7 +554,7 @@ async function main() {
 
   // A stale server on the port (a crashed run) is killed first. The kill
   // looks it up with lsof/netstat (slow on Windows), so only when it is held.
-  const serverPort = Number(process.env['PORT']) || 3000
+  const serverPort = getServerPort()
   let t = performance.now()
   if (!(await isPortFree(serverPort))) {
     killProcessOnPort(serverPort)
@@ -787,6 +789,8 @@ async function startRealServer(): Promise<void> {
     )
     res.headers.set('Access-Control-Allow-Credentials', 'true')
     res.headers.set('Access-Control-Max-Age', '86400')
+    res.headers.set(DATABASE_ID_HEADER, getDatabaseId())
+    res.headers.set('Access-Control-Expose-Headers', DATABASE_ID_HEADER)
 
     // Persist every failed response (4xx/5xx) to the on-disk log so the Logs
     // viewer and bug reports surface what went wrong (permission denials,
@@ -817,7 +821,7 @@ async function startRealServer(): Promise<void> {
   })
 
   const server = await serveWithRetry<WebSocketData>({
-    port: process.env['PORT'] ?? 3000,
+    port: getServerPort(),
     hostname: '0.0.0.0',
     reusePort: true,
     // Bun's 128 MiB default would reject background video uploads (up to
@@ -888,9 +892,9 @@ async function startRealServer(): Promise<void> {
         }
 
         // Redirect to frontend using the same host the user accessed from
-        // Always use port 3000 - both dev and prod serve client from this port
+        // The server serves the client on its own port (dev and installed app)
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = process.env['PORT'] ?? 3000
+        const frontendPort = getServerPort()
         const frontendUrl = `http://${host}:${frontendPort}/`
 
         // Redirect to frontend app with cookie set. Cookie attributes are
@@ -1029,7 +1033,7 @@ async function startRealServer(): Promise<void> {
       )
       if (req.method === 'GET' && loginRedirectMatch?.[1]) {
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = process.env['PORT'] ?? 3000
+        const frontendPort = getServerPort()
         const fallbackHost = `${host}:${frontendPort}`
         const token = consumeLoginTicket(
           decodeURIComponent(loginRedirectMatch[1]),
@@ -1102,7 +1106,7 @@ async function startRealServer(): Promise<void> {
         url.pathname === '/api/auth/logout-redirect'
       ) {
         const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = process.env['PORT'] ?? 3000
+        const frontendPort = getServerPort()
         const location = resolveReturnUrl(
           url.searchParams.get('return'),
           `${host}:${frontendPort}`,

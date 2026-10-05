@@ -30,6 +30,7 @@ import {
   useCloseScreensOnHide,
   useReopenScreensOnPresentation,
 } from '~/features/presentation/hooks'
+import { ServerChangedNotice } from '~/features/server-identity'
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
 import { SongDiscoveryProvider } from '~/features/song-discovery'
 import { FileDropZoneProvider } from '~/features/song-import'
@@ -161,6 +162,7 @@ function MainLayout() {
               <MobileConnectionGuard>
                 <I18nProvider>
                   <ToastProvider>
+                    <ServerChangedNotice />
                     <LoginGate>
                       <KeyboardNavigationProvider>
                         <MIDISettingsProvider>

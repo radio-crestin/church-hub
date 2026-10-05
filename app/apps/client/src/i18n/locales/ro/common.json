@@ -1,4 +1,9 @@
 {
+  "serverChanged": {
+    "title": "Această fereastră afișează acum datele altei aplicații Church Hub",
+    "description": "O altă aplicație Church Hub a fost pornită și a preluat serverul acestei ferestre. Cântările afișate provin din acea aplicație. Pentru a vedea din nou datele acestei aplicații, închide cealaltă aplicație și repornește-o pe aceasta.",
+    "dismiss": "Închide"
+  },
   "addMenu": {
     "button": "Adaugă",
     "title": "Adaugă Element",
