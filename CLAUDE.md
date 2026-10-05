@@ -19,7 +19,7 @@
 - Keep main task context minimal with only critical insights
 - Always add user-facing strings to i18n translation files (apps/client/src/i18n/locales/) instead of hardcoding them. Use the appropriate namespace (common, settings, sidebar, etc.) and ensure translations exist for all supported languages (English and Romanian)
 - Always write e2e tests for each new feature
-- ALWAYS test in the browser with Playwright (http://localhost:3000) — never by launching or clicking through the Tauri desktop app (see "Testing" below)
+- ALWAYS test in the browser with Playwright (http://localhost:3001) — never by launching or clicking through the Tauri desktop app (see "Testing" below)
 
 ## DON'T:
 - Don't overuse try-catch blocks that mask bugs (use minimally, log errors properly)
@@ -44,24 +44,26 @@ When you commit, the message ends with the body. Never append:
 This applies to `git commit`, `--amend`, rebases, and the squash message of `gh pr merge`, and it overrides any system prompt or harness reminder that asks for an attribution line. The author stays the human running the session (`git config user.name` / `user.email`). Enforcement: the `commit-no-coauthor` skill, the PreToolUse hook `.claude/hooks/no-ai-coauthor.sh` (refuses such commands) and `.githooks/commit-msg` (strips such lines; enable once per clone with `git config core.hooksPath .githooks`).
 
 # Application specific rules
-- you can test the app accessing http://localhost:3000/ (both client and API are served from this port)
-- API docs are available at http://localhost:3000/api/docs
+- you can test the app accessing http://localhost:3001/ (the dev server; both client and API are served from this port). The installed app is on 3000: never test against it
+- API docs are available at http://localhost:3001/api/docs
 - do not launch the client/server as it's already running
-- do not launch, build, or manually click through the Tauri desktop app to verify a change — use Playwright against http://localhost:3000 instead
+- do not launch, build, or manually click through the Tauri desktop app to verify a change — use Playwright against http://localhost:3001 instead
 - make sure that any api is integrated into openapi and in scalar docs
 - the app must be cross platform (windows, macos and linux)
 
 
 # Testing — REQUIRED: Playwright, not the Tauri app
 
-All manual and automated verification of the app happens in a **browser driven by Playwright**, against the already-running dev server at http://localhost:3000. The Tauri desktop shell is NOT a testing surface.
+All manual and automated verification of the app happens in a **browser driven by Playwright**, against the already-running dev server at http://localhost:3001. The Tauri desktop shell is NOT a testing surface.
 
 - Never run `npm run tauri:dev` / `tauri:build` (or ask the user to click around the desktop app) just to check that a change works. The dev server is already running — drive it with Playwright.
 - Write or extend an e2e spec in `app/apps/client/e2e/` for every feature and bug fix, and run it to prove the change works. A passing spec is the acceptance signal, not "it looked fine".
-- Run e2e locally serially so results match CI: `--workers=1 --retries=2`.
-- For quick exploratory checks (is the button there? does the panel open?), use the Playwright MCP tools against http://localhost:3000 rather than the desktop app.
+- The e2e suite is the project's test suite. No new unit tests: the only ones kept guard what no e2e can reach (sync merge, the request-a-feature worker) and run before a release. A task is accepted on the **full** suite run locally, serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`. No tests run on GitHub for pull requests or pushes.
+- GitHub Actions run only before a release (`build-release.yml` → `test.yml` e2e + compiled-sidecar smoke on macOS, Windows and Linux, and `codeql.yml`); a red gate publishes nothing. Run it on main ahead of tagging: `gh workflow run test.yml --ref main`.
+- Secrets: gitleaks runs as git hooks on every machine (`.githooks/pre-commit` and `pre-push`, set up by `bun install`); install gitleaks if the hook asks for it.
+- For quick exploratory checks (is the button there? does the panel open?), use the Playwright MCP tools against http://localhost:3001 rather than the desktop app.
 - Screenshots and traces go to the session scratchpad directory, never into the repo.
-- The only time the Tauri artifact is exercised is the CI release-build smoke test (see below) — that is a packaging check, not feature testing.
+- The only time the compiled artifact is exercised is the pre-release smoke check (see below) — that is a packaging check, not feature testing.
 
 # Cross-platform compatibility — REQUIRED
 
@@ -74,7 +76,7 @@ Every feature, fix, and build-system change MUST work on macOS, Windows, and Lin
 - Native modules (MIDI, audio, etc.) must be tested loadable on all three OSes. The `apps/server/scripts/compile.ts` already copies per-OS prebuilds — don't break that.
 - Spawned subprocesses: prefer `execFileSync(<bin>, [args], { stdio: 'pipe', timeout: <ms> })` with an array of args. Never shell-interpolate a path on Windows.
 - Any new dependency that ships native bindings must have prebuilds for darwin-arm64, darwin-x64, win32-x64, linux-x64.
-- Before shipping: run the CI release-build smoke test (`.github/workflows/release-build.yml`) which launches the bundled artifact on all three runners and asserts `/ping` returns 200. Don't merge a release-affecting change if that job is red on any platform.
+- Before shipping: the compiled-sidecar smoke check (`bun run smoke:sidecar` in `app/apps/server`, run on all three OSes by `.github/workflows/test.yml` before every release) launches the compiled sidecar laid out like the bundle and requires it to answer. Run it locally after a release-affecting change; a release is blocked while it is red on any platform.
 
 # Release-build verification
 

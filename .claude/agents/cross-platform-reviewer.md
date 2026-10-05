@@ -30,7 +30,7 @@ v0.1.60 exited silently 4s after launch on macOS. Root cause: a darwin-only `che
    - **file:line**
    - **what's wrong** (one line)
    - **what to do** (one line, concrete)
-4. Also verify: did the change touch native modules, the Tauri config, or the compile script without an update to `.github/workflows/release-build.yml` smoke checks? If so, flag it.
+4. Also verify: did the change touch native modules, the Tauri config, or the compile script without an update to the compiled-sidecar smoke check (`app/apps/server/scripts/smoke-compiled-sidecar.ts`, run on all three OSes by `.github/workflows/test.yml` before a release)? If so, flag it.
 
 # Output
 
