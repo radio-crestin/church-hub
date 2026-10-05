@@ -594,12 +594,12 @@ export function SchedulePanel({
             onSelect: () => editorsRef.current?.addItem(),
             testId: 'schedule-add-item-menu',
             inline: (
-              <Tooltip content={tCommon('addMenu.button')} position="bottom">
+              <Tooltip content={t('panel.addItem')} position="bottom">
                 <button
                   type="button"
                   onClick={() => editorsRef.current?.addItem()}
                   data-testid="schedule-add-item"
-                  aria-label={tCommon('addMenu.button')}
+                  aria-label={t('panel.addItem')}
                   className="p-1.5 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
                 >
                   <ListPlus className="w-3.5 h-3.5" />

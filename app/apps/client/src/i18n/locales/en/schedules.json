@@ -81,7 +81,8 @@
     "newSchedule": "New program",
     "createNamed": "Create program",
     "emptyScheduleHint": "Add songs or verses with the buttons above, or drag a song here.",
-    "dragToReorder": "Drag to reorder"
+    "dragToReorder": "Drag to reorder",
+    "addItem": "Add a song or verse to this program"
   },
   "search": {
     "placeholder": "Search schedules...",

@@ -81,7 +81,8 @@
     "newSchedule": "Program nou",
     "createNamed": "Creează programul",
     "emptyScheduleHint": "Adaugă cântări sau versete cu butoanele de sus, ori trage aici o cântare.",
-    "dragToReorder": "Trage ca să schimbi ordinea"
+    "dragToReorder": "Trage ca să schimbi ordinea",
+    "addItem": "Adaugă o cântare sau un verset în program"
   },
   "search": {
     "placeholder": "Cauta programe...",
