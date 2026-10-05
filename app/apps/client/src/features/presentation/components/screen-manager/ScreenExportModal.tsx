@@ -335,9 +335,7 @@ export function ScreenExportModal({
                 <FolderOpen className="w-4 h-4 mr-2" />
                 {t('sections.screens.export.openFolder')}
               </Button>
-              <Button onClick={onClose}>
-                {t('common:buttons.done', 'Done')}
-              </Button>
+              <Button onClick={onClose}>{t('common:buttons.done')}</Button>
             </>
           ) : isError ? (
             <>

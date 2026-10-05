@@ -70,7 +70,10 @@ export function ScreenManager() {
         value: 'livestream' as ScreenType,
         label: t('presentation:screens.screenTypes.livestream'),
       },
-      { value: 'kiosk' as ScreenType, label: 'Kiosk' },
+      {
+        value: 'kiosk' as ScreenType,
+        label: t('presentation:screens.screenTypes.kiosk'),
+      },
     ],
     [t],
   )
