@@ -19,14 +19,24 @@ import {
 const NOT_FOUND_TOAST =
   /Song not found|Cântarea nu a fost găsită|no longer exists|nu mai există/i
 
+/** Songs made by the running test, deleted after it so no other spec finds them. */
+let createdSongIds: number[] = []
+
+/** Letters only: a digit run would fuzzily match other specs' timestamp searches. */
+const randomTag = () =>
+  Array.from({ length: 8 }, () =>
+    String.fromCharCode(97 + Math.floor(Math.random() * 26)),
+  ).join('')
+
 async function createSong(request: APIRequestContext, label: string) {
-  const title = `T096 ${label} ${Date.now()}`
+  const title = `T096 ${label} ${randomTag()}`
   const lyric = `Lyric line for ${title}`
   const res = await request.post('/api/songs', {
     data: { title, slides: [{ content: lyric, sortOrder: 0, label: 'V1' }] },
   })
   expect(res.ok()).toBe(true)
   const { id } = (await res.json()).data as { id: number }
+  createdSongIds.push(id)
   return { id, title, lyric }
 }
 
@@ -43,6 +53,11 @@ async function snap(page: Page, testInfo: TestInfo, name: string) {
 }
 
 test.describe('Opening a song (T-096)', () => {
+  test.afterEach(async ({ request }) => {
+    for (const id of createdSongIds) await request.delete(`/api/songs/${id}`)
+    createdSongIds = []
+  })
+
   test('opens while the computer reports no internet', async ({
     page,
     request,
