@@ -2,7 +2,7 @@ name: Build desktop app
 
 # The one place the desktop installers are built. Called by:
 #   - build-release.yml — every v*.*.* tag (the published release)
-#   - pr-build.yml      — a pull request's installers, only when asked (/build)
+#   - pr-build.yml      — a pull request's installers, only when asked (by hand)
 #   - main-build.yml    — every push to main (keeps the shared caches warm)
 #   - by hand (Actions → Run workflow), e.g. to try the release upload on a
 #     throwaway draft release (never a v* one: the plan job refuses that)

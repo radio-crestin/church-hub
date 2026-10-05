@@ -1,5 +1,5 @@
 name: PR build
-run-name: "PR build #${{ github.event.pull_request.number || inputs.pr }}"
+run-name: "PR build #${{ inputs.pr }}"
 
 # A pull request's installers, only when someone asks: reviews use the
 # app built locally for the reviewer's own computer (review-build.ts), so
@@ -8,10 +8,12 @@ run-name: "PR build #${{ github.event.pull_request.number || inputs.pr }}"
 # prerelease `pr-builds`, named after the PR and commit, and a section of
 # the PR description links them.
 #
-# Ask on the PR (write access needed), or by hand:
-#   /build                       all three: macOS (Apple Silicon), Windows, Linux
-#   /build macos windows         only those
-#   gh workflow run pr-build.yml -f pr=<number> -f platforms=macos,windows
+# Ask for it (write access needed to run a workflow):
+#   gh workflow run pr-build.yml -f pr=<number>                       all three
+#   gh workflow run pr-build.yml -f pr=<number> -f platforms=macos    only those
+# No PR-comment trigger: a /build comment would build whatever the branch
+# holds when the job checks out, maybe a push made after the comment, with a
+# token that writes releases (CodeQL: untrusted-checkout-toctou).
 #
 # Quiet by design: watchers get an email when a release is published and
 # the PR author when someone comments, but never when a release gets new
@@ -21,8 +23,6 @@ run-name: "PR build #${{ github.event.pull_request.number || inputs.pr }}"
 # left to releases.
 
 on:
-  issue_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       pr:
@@ -32,14 +32,9 @@ on:
         description: Comma-separated platforms (macos, windows, linux) or all
         default: all
 
-# Every comment on any PR or issue starts a run, which stops at once unless
-# it is a /build: such a run gets a group of its own, so it never cancels a
-# build in progress. A newer /build of the same PR replaces the running one.
+# A newer request for the same PR replaces the running build.
 concurrency:
-  group: >-
-    pr-build-${{
-      (github.event_name == 'workflow_dispatch' || startsWith(github.event.comment.body, '/build'))
-      && format('{0}', github.event.issue.number || inputs.pr) || github.run_id }}
+  group: pr-build-${{ inputs.pr }}
   cancel-in-progress: true
 
 permissions:
@@ -48,22 +43,11 @@ permissions:
 jobs:
   prepare:
     # The build runs the PR's code with a token that writes releases, so
-    # only for a branch of this repository (never a fork), asked by someone
-    # with write access. author_association skips strangers before a runner
-    # starts (CONTRIBUTOR stays in: the payload shows a private org member
-    # as CONTRIBUTOR); the API check below is the real gate. A dispatch
-    # needs write access to run at all.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.issue.pull_request != null &&
-       startsWith(github.event.comment.body, '/build') &&
-       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association))
+    # only for a branch of this repository (never a fork, checked below);
+    # a dispatch needs write access to run at all.
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Reacting to a PR comment needs pull-requests: write, not only issues.
-      pull-requests: write
-      issues: write
     outputs:
       pr: ${{ steps.resolve.outputs.pr }}
       sha: ${{ steps.resolve.outputs.sha }}
@@ -72,31 +56,14 @@ jobs:
       version: ${{ steps.resolve.outputs.version }}
       platforms: ${{ steps.platforms.outputs.platforms }}
     steps:
-      - name: Check the commenter has write access
-        if: github.event_name == 'issue_comment'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENTER: ${{ github.event.comment.user.login }}
-        run: |
-          set -euo pipefail
-          PERMISSION=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$COMMENTER/permission" \
-            --jq .permission 2>/dev/null || echo none)
-          case "$PERMISSION" in
-            admin|maintain|write) echo "$COMMENTER has $PERMISSION access" ;;
-            *) echo "::error::$COMMENTER (permission=$PERMISSION) asked for a build; only people with write access get one."
-               exit 1 ;;
-          esac
-
-      # "/build", "/build all", "/build macos win" → a list such as macos,windows.
+      # "all", "macos,win", "macos windows" → a list such as macos,windows.
       - name: Pick the platforms
         id: platforms
         env:
-          ASKED: ${{ github.event_name == 'issue_comment' && github.event.comment.body || inputs.platforms }}
-          FROM_COMMENT: ${{ github.event_name == 'issue_comment' }}
+          ASKED: ${{ inputs.platforms }}
         run: |
           set -euo pipefail
           WORDS=$(printf '%s\n' "$ASKED" | head -n 1 | tr ',' ' ' | tr '[:upper:]' '[:lower:]')
-          if [ "$FROM_COMMENT" = true ]; then WORDS=${WORDS#/build}; fi
           PICKED=()
           for WORD in $WORDS; do
             case "$WORD" in
@@ -111,17 +78,6 @@ jobs:
           LIST=$(printf '%s\n' "${PICKED[@]}" | awk '!seen[$0]++' | paste -sd, -)
           echo "platforms=$LIST" | tee -a "$GITHUB_OUTPUT"
 
-      - name: Acknowledge the comment
-        if: github.event_name == 'issue_comment'
-        # A nicety: never fail the build over it.
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENT_ID: ${{ github.event.comment.id }}
-        run: |
-          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/comments/$COMMENT_ID/reactions" \
-            -f content=rocket >/dev/null
-
       # The build carries the latest release's version, so the installed
       # test build's updater sees "up to date" instead of replacing itself
       # with the release.
@@ -129,7 +85,7 @@ jobs:
         id: resolve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ github.event.issue.number || inputs.pr }}
+          PR: ${{ inputs.pr }}
         run: |
           set -euo pipefail
           [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::Not a PR number: $PR"; exit 1; }
@@ -233,7 +189,7 @@ jobs:
               '|---|---|',
               ...rows.map((r) => r.row),
               '',
-              `Built from ${SHA} as version ${VERSION} · [build log](${RUN_URL}) · built on request: comment \`/build\` (or e.g. \`/build macos\`) for a newer push.`,
+              `Built from ${SHA} as version ${VERSION} · [build log](${RUN_URL}) · built on request: \`gh workflow run pr-build.yml -f pr=${PR}\` builds a newer push.`,
               'It installs over Church Hub on that computer and uses the same data: back it up first if this PR changes the database.',
               '',
               '<details><summary>Opening the unsigned installers</summary>',

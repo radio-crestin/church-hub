@@ -15,8 +15,8 @@ permissions, migrations, or behaviour the diff doesn't contain.**
 
 This skill writes text only. Demo videos come from the better-tasks plugin
 (its before/after video rules); keep its video lines and `--attach` when you
-rewrite a body. Installers are built only on request (a `/build` comment, see
-`.github/workflows/pr-build.yml`); their links: `scripts/pr-build-links.sh <pr> --wait`.
+rewrite a body. Installers are built only on request (`gh workflow run pr-build.yml -f pr=<n>`,
+see `.github/workflows/pr-build.yml`); their links: `scripts/pr-build-links.sh <pr> --wait`.
 Keep the `<!-- pr-build:start -->` ... `<!-- pr-build:end -->` block when there is one.
 
 ---
