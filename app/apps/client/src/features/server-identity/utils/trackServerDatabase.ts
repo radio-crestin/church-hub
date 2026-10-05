@@ -12,10 +12,11 @@ let knownDatabaseId: string | null = null
 /**
  * Remembers which database answers this window and reports a change.
  *
- * Every Church Hub (installed app, dev server, other builds) takes port 3000
- * and kills whatever held it. The older window stays open on its lists, but
- * its requests now reach another app's database, where a listed song is
- * missing or is a different song (T-096). On a change the window reloads on
+ * A Church Hub kills whatever holds its port on start. When two apps share a
+ * port (two installed builds; before T-096 also the dev server on 3000), the
+ * older window stays open on its lists, but its requests now reach another
+ * app's database, where a listed song is missing or is a different song
+ * (T-096). On a change the window reloads on
  * the section's list, so everything it shows comes from the database it
  * talks to, and says why.
  *

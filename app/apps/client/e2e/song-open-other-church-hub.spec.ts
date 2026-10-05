@@ -7,10 +7,12 @@ import { expect, type Page, test } from '@playwright/test'
 
 /**
  * T-096: with several Church Hub apps open, a song shown in a list said it
- * doesn't exist. Every app (installed, dev server, other builds) uses port
- * 3000 and, on start, kills whatever holds it. The older app's window stays
- * open on its list, but its requests now reach the newer app's server and its
- * own database, where that id is missing (or is another song).
+ * doesn't exist. The installed app and the dev server both used port 3000,
+ * and each kills whatever holds its port on start. The older app's window
+ * stayed open on its list, but its requests reached the newer app's server
+ * and its own database, where that id is missing (or is another song). The
+ * dev server now has its own port (3001); any two apps on one port (e.g. two
+ * installed builds) still meet this, and the window must handle it.
  *
  * Here the takeover is a second server on a copy of the database made before
  * the song existed, and the window's API requests are sent to it.
