@@ -148,7 +148,7 @@ Guidelines:
 DEMO_OUT=<scratchpad>/demos .claude/skills/documented-pr/scripts/record-features.sh app/apps/client/e2e/_pr-demos.spec.ts
 ```
 
-In a worktree prefix `CI=1 TEST_PORT=<port>` and build the client for that port first (`.claude/tasks/teammate.md`, step 2). Extra arguments go to `playwright test`.
+In a worktree prefix `CI=1 TEST_PORT=<port>` and build the client for that port first (`.claude/rules/better-tasks.md`, Setup). Extra arguments go to `playwright test`.
 
 The script:
 1. Wipes `app/apps/client/test-results/` so we know which files are new.

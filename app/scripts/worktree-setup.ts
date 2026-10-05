@@ -89,7 +89,7 @@ function checkBrowser(worktreeApp: string) {
   const location = plan.match(/Install location:\s*(.+)/)?.[1]?.trim()
   if (location && existsSync(join(location, 'INSTALLATION_COMPLETE')))
     return location
-  return `MISSING ${location}: run \`bunx playwright install chromium-headless-shell\` once (see .claude/tasks/teammate.md if it hangs)`
+  return `MISSING ${location}: run \`bunx playwright install chromium-headless-shell\` once (see .claude/rules/better-tasks.md if it hangs)`
 }
 
 function buildClient(worktreeApp: string, port: number) {

@@ -5,5 +5,5 @@ e2e/.auth/
 # e2e isolated test database
 e2e/.test-data/
 
-# Temporary demo-video specs (task flow step 4, see .claude/tasks/teammate.md)
+# Temporary demo-video specs (better-tasks demo videos)
 e2e/_*.spec.ts

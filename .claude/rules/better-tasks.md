@@ -1,7 +1,12 @@
-<!-- extend -->
-<!-- church-hub additions to better-tasks' own teammate text (the plugin's hooks/texts.ts, plus its video and PR rules from config.json's demoVideos and pullRequests). Only facts the plugin can't know go here; the plugin's flow (worktree, video with Kokoro, PR with --attach) stays as shipped. Comments never reach the model. -->
+# better-tasks: church-hub specifics
+Project additions to the better-tasks plugin's own coordinator and teammate rules; the plugin's texts and `.claude/tasks/config.json` stay untouched. Open when leading or working a better-tasks task.
 
-## church-hub specifics
+## Lead (coordinator)
+- **Finishing question** also lists, each on its own line, the local app (`app:` file:// link) and the installers (`build:`) from the task's notes.
+- **Merge** with `gh pr merge <n> --merge --admin` instead of `--squash --delete-branch`: keeps the granular commits; `--admin` passes branch protection. Then `git pull --ff-only` in the main checkout.
+- **Cleanup** after the merge, from the main checkout: `bun app/scripts/worktree-cleanup.ts <task-id> <branch>`, then stop the teammate. It closes the review app, frees ports 3100 + n and 4100 + n (never 3000), removes the worktree and review build, and deletes the branches and the `pr-build-<n>` release once merged. A task with no PR (tooling) still runs it for its worktree and branch.
+
+## Teammates
 - **Branch**: `git switch -c feat/<slug>` (or `fix/<slug>`) first; push it under that name, not `task/T-xxx` (CLAUDE.md rule).
 - **Setup**: `bun app/scripts/worktree-setup.ts <task-id>` (~5 s): reuses the main checkout's caches, builds the client for your port = 3100 + task number. After client changes: `cd app/apps/client && VITE_API_PORT=<port> VITE_SERVER_PORT=<port> bun run build`.
 - **Port 3000** is the user's dev server: never start, test against or kill it. e2e always with `CI=1 TEST_PORT=<port>` (without `CI=1`, Playwright rebuilds the client for port 3000). Capture video steps against your port too.
