@@ -1,5 +1,6 @@
 import type { Database } from 'bun:sqlite'
 import { rebuildSearchIndex } from '../../service/songs/search'
+import { setBootProgress } from '../../utils/bootState'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -52,7 +53,7 @@ export function rebuildFtsForSingleCharFix(db: Database): void {
   }
 
   log('info', `Rebuilding FTS index for ${ftsRowCount} song row(s)...`)
-  rebuildSearchIndex()
+  rebuildSearchIndex(setBootProgress)
   log('info', 'FTS rebuild complete')
   markComplete(db, { rebuilt: true, rowCount: ftsRowCount })
 }

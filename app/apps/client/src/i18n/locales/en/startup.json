@@ -1,0 +1,23 @@
+{
+  "starting": "Starting Church Hub",
+  "connecting": "Connecting to server",
+  "steps": {
+    "database": "Preparing the database",
+    "songs": "Adding the songs",
+    "bibles": "Adding the Bibles",
+    "search": "Preparing song search",
+    "finishing": "Almost ready"
+  },
+  "progress": "{{done}} of {{total}} songs",
+  "firstRunHint": "First start: setting everything up. This happens only once.",
+  "longHint": "This is taking longer than usual…",
+  "errorUnreachable": "Couldn't reach the local server",
+  "errorRemote": "Couldn't reach the server",
+  "errorBootFailed": "Church Hub could not finish starting",
+  "errorServerStopped": "Church Hub's local server stopped",
+  "retry": "Retry",
+  "restart": "Restart the server",
+  "retryHint": "Tap retry below — or fully quit and reopen Church Hub.",
+  "restartHint": "Restart it below — or fully quit and reopen Church Hub.",
+  "reported": "The error was reported to the team automatically."
+}

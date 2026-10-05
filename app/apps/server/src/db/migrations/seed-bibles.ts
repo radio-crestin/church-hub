@@ -1,5 +1,8 @@
 import type { Database } from 'bun:sqlite'
-import defaultBibles from '../fixtures/default-bibles.json'
+import defaultBiblesFile from '../fixtures/default-bibles.json' with {
+  type: 'file',
+}
+import { readFixtureFile } from '../fixtures/readFixtureFile'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -56,7 +59,8 @@ export function seedBibleTranslations(db: Database): void {
       return
     }
 
-    const translations = defaultBibles as BibleTranslationFixture[]
+    const translations =
+      readFixtureFile<BibleTranslationFixture[]>(defaultBiblesFile)
 
     if (!Array.isArray(translations) || translations.length === 0) {
       log('info', 'No Bible fixtures available, skipping seed')

@@ -38,6 +38,7 @@ import { seedAppSettings } from './seed-settings'
 import { seedSongCategories } from './seed-song-categories'
 import { seedSongs } from './seed-songs'
 import type { Database } from 'bun:sqlite'
+import { type BootStep, setBootStep } from '../../utils/bootState'
 import { reportError } from '../../utils/reportError'
 import { createFtsTables } from '../fts'
 
@@ -118,10 +119,13 @@ function runEmbeddedMigrations(rawDb: Database): void {
   log('info', 'Embedded migrations complete')
 }
 
-/**
- * Runs all database migrations using Drizzle
- * Also handles FTS tables and seed data which Drizzle cannot manage
- */
+/** The loading-page step of the slow steps; every other step is 'database'. */
+const BOOT_STEP_OF: Record<string, BootStep> = {
+  seed_songs: 'songs',
+  seed_bible_translations: 'bibles',
+  rebuild_fts_single_char_fix: 'search',
+}
+
 /**
  * Runs one migration/seed step with timing AND error attribution. On failure
  * the step name is reported to BOTH the on-disk log and PostHog (so a field
@@ -129,6 +133,7 @@ function runEmbeddedMigrations(rawDb: Database): void {
  * sequence still fails loudly — bootState reports the overall boot failure.
  */
 function runStep(key: string, label: string, fn: () => void): void {
+  setBootStep(BOOT_STEP_OF[key] ?? 'database')
   log('info', `${label}...`)
   const start = performance.now()
   try {
