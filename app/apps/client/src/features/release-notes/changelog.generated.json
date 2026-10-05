@@ -1,7 +1,7 @@
 [
   {
     "version": "0.1.103",
-    "date": "2026-10-05T16:26:02+03:00",
+    "date": "2026-10-05T16:26:31+03:00",
     "features": [
       {
         "scope": "shortcuts",
@@ -363,10 +363,6 @@
       }
     ],
     "changes": [
-      {
-        "scope": null,
-        "message": "bump"
-      },
       {
         "scope": "tasks",
         "message": "add T-078..T-089, close T-079, T-080, T-081, T-089"

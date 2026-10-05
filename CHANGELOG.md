@@ -101,7 +101,6 @@
 
 ### 🔧 Changes
 
-- bump
 - **tasks**: add T-078..T-089, close T-079, T-080, T-081, T-089
 - **rules**: watch PR checks until green before approval and merge (T-089)
 - **skills**: whatsapp-requests skill tracks the group's requests in a private ledger (T-081)
