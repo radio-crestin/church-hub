@@ -4577,11 +4577,20 @@ async function startRealServer(): Promise<void> {
           url.searchParams.get('inSchedulesOnly') === 'true' || undefined
         const hasKeyLine =
           url.searchParams.get('hasKeyLine') === 'true' || undefined
+        const tagIds = (url.searchParams.get('tagIds') ?? '')
+          .split(',')
+          .map((id) => parseInt(id, 10))
+          .filter((id) => !isNaN(id))
         const results = searchSongs(
           query,
           categoryIds && categoryIds.length > 0 ? categoryIds : undefined,
           50,
-          { presentedOnly, inSchedulesOnly, hasKeyLine },
+          {
+            presentedOnly,
+            inSchedulesOnly,
+            hasKeyLine,
+            tagIds: tagIds.length > 0 ? tagIds : undefined,
+          },
         )
 
         return handleCors(

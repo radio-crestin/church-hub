@@ -11,6 +11,6 @@
 - **Test**: a spec in `app/apps/client/e2e/`; `CI=1 TEST_PORT=<port> bunx playwright test <spec> --workers=1 --retries=2` must pass.
 - **PR body**: the `detailed-pr` skill's sections; keep the video line and `--attach` from the PR rules.
 - **Local app**: `bun app/scripts/review-build.ts <task-id>` (~1 min, waits for a lock) builds the branch's desktop app into `.review-build/<task-id>/` (own port 4100 + n, own data, no updater) and prints its `file://` link. Rebuild after each push.
-- **Installers**: CI builds them on every push (`pr-build.yml`, ~10 min): `.claude/skills/documented-pr/scripts/pr-build-links.sh <n> --wait`. None: `gh workflow run pr-build.yml -f pr=<n>`.
+- **Installers**: CI builds them on every push (`pr-build.yml`, ~10 min) into the shared `pr-builds` prerelease and links them at the end of the PR description (keep its `<!-- pr-build:start/end -->` block when you rewrite the body; edits mail no one, comments and new releases do): `.claude/skills/documented-pr/scripts/pr-build-links.sh <n> --wait`. None: `gh workflow run pr-build.yml -f pr=<n>`.
 - **Notes from a worktree**: the task file lives in the main checkout; add notes with `task_note` (your task id). Lines: `PR: <url>`, `app: <file:// link>`, `build: <macOS> · <Windows> · <Linux>`.
 - **Temp files** go in your scratchpad, never the repo or `$TMPDIR`; delete them when done.

@@ -1,6 +1,6 @@
 /**
  * The GitHub side of a finished task, for worktree-cleanup.ts: its merged
- * remote branch and its `pr-build-<n>` installers prerelease. Every function
+ * remote branch and its installers in the shared `pr-builds` prerelease. Every function
  * answers with a sentence for the step log and never throws when `gh` is
  * missing, offline or not logged in: the local cleanup must still finish.
  *
@@ -77,21 +77,45 @@ export function deleteRemoteBranch(
     : `kept origin/${branch}: git push --delete failed`
 }
 
-/** Deletes the `pr-build-<n>` prerelease (and its tag) of a pull request that is merged or closed. */
+const PR_BUILDS_TAG = 'pr-builds'
+
+interface ReleaseAsset {
+  id: number
+  name: string
+}
+
+/** Deletes a merged or closed pull request's installers (`church-hub-<platform>-pr-<n>-<sha>.<ext>`) from the shared `pr-builds` prerelease. */
 export function deletePrBuildRelease(
   mainRoot: string,
   pull: Pick<PullRequest, 'number' | 'state'> | undefined,
 ) {
   if (!pull) return 'no pull request, no installers to remove'
   if (pull.state === 'OPEN') return `kept: PR #${pull.number} is still open`
-  const tag = `pr-build-${pull.number}`
-  if (ask('gh', ['release', 'view', tag], mainRoot) === undefined)
-    return `no ${tag} release`
-  const deleted =
-    ask(
-      'gh',
-      ['release', 'delete', tag, '--cleanup-tag', '--yes'],
-      mainRoot,
-    ) !== undefined
-  return deleted ? `deleted ${tag}` : `kept ${tag}: gh release delete failed`
+  const listed = ask(
+    'gh',
+    [
+      'api',
+      `repos/{owner}/{repo}/releases/tags/${PR_BUILDS_TAG}`,
+      '--jq',
+      '.assets | map({id, name})',
+    ],
+    mainRoot,
+  )
+  if (listed === undefined) return `no ${PR_BUILDS_TAG} release`
+  const marker = `-pr-${pull.number}-`
+  const mine = (JSON.parse(listed) as ReleaseAsset[]).filter((asset) =>
+    asset.name.includes(marker),
+  )
+  if (mine.length === 0) return `no installers of PR #${pull.number}`
+  const failed = mine.filter(
+    (asset) =>
+      ask(
+        'gh',
+        ['api', '-X', 'DELETE', `repos/{owner}/{repo}/releases/assets/${asset.id}`],
+        mainRoot,
+      ) === undefined,
+  )
+  return failed.length === 0
+    ? `deleted ${mine.length} installers of PR #${pull.number}`
+    : `kept ${failed.length} installers of PR #${pull.number}: delete failed`
 }

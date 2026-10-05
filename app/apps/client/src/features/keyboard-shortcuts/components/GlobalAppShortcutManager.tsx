@@ -7,6 +7,7 @@ import {
   useShowSlide,
 } from '~/features/presentation/hooks'
 import {
+  BUILTIN_ITEMS,
   usePageShortcuts,
   useSidebarItemShortcuts,
 } from '~/features/sidebar-config'
@@ -15,6 +16,7 @@ import { useShortcutRecording } from '../context'
 import {
   useAppShortcuts,
   useGlobalAppShortcuts,
+  useShortcutPermissionCheck,
   useSidebarShortcutKeys,
 } from '../hooks'
 import { useMIDILEDFeedback } from '../midi/hooks'
@@ -25,6 +27,7 @@ import {
   type NavigationDirection,
 } from '../utils/navigationShortcutEvent'
 import { emitPageShortcutEvent } from '../utils/pageShortcutEvent'
+import { permittedShortcutsConfig } from '../utils/permittedShortcutsConfig'
 import { useGlobalRecordingState } from '../utils/recordingState'
 
 const logger = createLogger('keyboard-shortcuts:manager')
@@ -33,6 +36,12 @@ export function GlobalAppShortcutManager() {
   const navigate = useNavigate()
   const location = useLocation()
   const { shortcuts, isLoading } = useAppShortcuts()
+  const canUse = useShortcutPermissionCheck()
+  // Keys for what the user may not do by hand are never held
+  const permittedShortcuts = useMemo(
+    () => permittedShortcutsConfig(shortcuts, canUse),
+    [shortcuts, canUse],
+  )
   const { start, stop, isLive, isStarting, isStopping, streamStartProgress } =
     useStreaming()
   const { scenes, switchScene, currentScene } = useOBSScenes()
@@ -83,6 +92,11 @@ export function GlobalAppShortcutManager() {
     }
     return result
   }, [scenes])
+  // OBS scenes belong to the Livestream page: no keys without access to it
+  const permittedSceneShortcuts = useMemo(
+    () => (canUse(BUILTIN_ITEMS.livestream.permission) ? sceneShortcuts : []),
+    [sceneShortcuts, canUse],
+  )
 
   const handleStartLive = useCallback(() => {
     // Toggle behavior: if already streaming, stop instead
@@ -234,8 +248,10 @@ export function GlobalAppShortcutManager() {
 
   // Register keyboard shortcuts
   useGlobalAppShortcuts({
-    shortcuts: isLoading ? { actions: {} as never, version: 1 } : shortcuts,
-    sceneShortcuts,
+    shortcuts: isLoading
+      ? { actions: {} as never, version: 1 }
+      : permittedShortcuts,
+    sceneShortcuts: permittedSceneShortcuts,
     sidebarShortcuts,
     pageShortcuts: pageShortcutKeys,
     onStartLive: handleStartLive,

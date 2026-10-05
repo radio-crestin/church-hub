@@ -12,7 +12,10 @@ function makeScheduleItem(overrides: Partial<ScheduleItem> = {}): ScheduleItem {
     scheduleId: 1,
     itemType: 'song',
     songId: 1,
-    song: { id: 1, title: 'Test Song', categoryName: null },
+    song: { id: 1, title: 'Test Song', categoryName: null, tagNames: [] },
+    keyLine: null,
+    isSung: false,
+    sungAt: null,
     slides: [
       {
         id: 1,
@@ -151,6 +154,12 @@ describe('schedule-export/utils/generateChurchProgramJson', () => {
       expect(song.ccli).toBeNull()
       expect(song.key).toBeNull()
       expect(song.tempo).toBeNull()
+    })
+
+    it("exports the song's gama as its key", () => {
+      const schedule = makeSchedule([makeScheduleItem({ keyLine: 'Re major' })])
+      const result = generateChurchProgramJson(schedule)
+      expect(result.items[0].song!.key).toBe('Re major')
     })
   })
 

@@ -746,7 +746,7 @@ export function upsertScreen(input: UpsertScreenInput): Screen | null {
       }
       // Adjust for livestream
       if (screenType === 'livestream') {
-        adjustConfigForLivestream(config)
+        adjustConfigForLivestream(config, contentType)
       }
 
       db.insert(screenContentConfigs)
@@ -817,9 +817,14 @@ function adjustConfigForStage(config: Record<string, unknown>) {
   }
 }
 
-function adjustConfigForLivestream(config: Record<string, unknown>) {
+function adjustConfigForLivestream(
+  config: Record<string, unknown>,
+  contentType: string,
+) {
   // Use transparent background and add shadows
   config.background = { type: 'transparent', opacity: 1 }
+  // The stream audience doesn't need the song key (gama)
+  if (contentType === 'song') config.displayKeyLine = false
 
   const addShadow = (element: unknown) => {
     if (element && typeof element === 'object') {

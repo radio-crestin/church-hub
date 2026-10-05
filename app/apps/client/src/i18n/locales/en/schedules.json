@@ -1,5 +1,6 @@
 {
   "title": "Schedules",
+  "keyLine": { "missing": "No key" },
   "actions": {
     "create": "New Schedule",
     "save": "Save",
@@ -234,7 +235,7 @@
     "formatHelpLines": {
       "title": "Format examples:",
       "songSuffix": "S",
-      "song": "Song Title #123 [S]",
+      "song": "Song Title #123 {Key} [S]",
       "announcement": "Announcement text [A]",
       "bibleComment": "Bible passage:",
       "bible": "John 3:16 [V]",

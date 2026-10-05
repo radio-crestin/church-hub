@@ -246,6 +246,10 @@
         "pages": "Pagini",
         "pagesDescription": "Comută la o pagină, focusează căutarea și taste care funcționează doar cât timp pagina e deschisă."
       },
+      "focusOnly": {
+        "label": "Doar când Church Hub este în prim-plan",
+        "description": "Scurtăturile pentru prezentare, Live Stream și scene OBS, precum F1–F12, funcționează doar când Church Hub este fereastra activă. Altfel, tastele sunt preluate de programul din prim-plan, de exemplu BibleShow."
+      },
       "actions": {
         "startLive": {
           "label": "Pornește Transmisiunea",

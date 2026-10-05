@@ -1,9 +1,12 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Loader2, Music, Search } from 'lucide-react'
+import { Loader2, Music, Search, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ClearSearchButton } from '~/ui/search'
+import { SongCategoryFilter } from './SongCategoryFilter'
+import { SongTagFilter } from './SongTagFilter'
+import { useCategories } from '../hooks/useCategories'
 import { useSearchSongs } from '../hooks/useSearchSongs'
 import { useSongsInfinite } from '../hooks/useSongsInfinite'
 
@@ -47,8 +50,16 @@ export function SongSearchPicker({
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [categoryIds, setCategoryIds] = useState<number[]>([])
+  const [tagIds, setTagIds] = useState<number[]>([])
+  // Filter dropdowns portal here: the picker lives in a modal <dialog>, whose
+  // top layer would hide anything portaled to <body>.
+  const [dialogEl, setDialogEl] = useState<HTMLElement | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const rootRef = useCallback((node: HTMLDivElement | null) => {
+    setDialogEl(node?.closest('dialog') ?? null)
+  }, [])
 
   useEffect(() => {
     if (autoFocus) searchInputRef.current?.focus()
@@ -59,13 +70,16 @@ export function SongSearchPicker({
     return () => clearTimeout(handle)
   }, [query])
 
-  // A new query always restarts the reveal window and scroll position.
+  // A new query or filter always restarts the reveal window and scroll position.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
     scrollRef.current?.scrollTo({ top: 0 })
-  }, [debouncedQuery])
+  }, [debouncedQuery, categoryIds, tagIds])
 
   const isSearching = debouncedQuery.length > 0
+  const hasFilters = categoryIds.length > 0 || tagIds.length > 0
+  const activeCategoryIds = categoryIds.length > 0 ? categoryIds : undefined
+  const activeTagIds = tagIds.length > 0 ? tagIds : undefined
 
   const {
     data: browseData,
@@ -73,10 +87,22 @@ export function SongSearchPicker({
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useSongsInfinite({ sortBy: 'title' }, !isSearching)
+  } = useSongsInfinite(
+    { sortBy: 'title', categoryIds: activeCategoryIds, tagIds: activeTagIds },
+    !isSearching,
+  )
 
-  const { data: searchResults, isFetching: searchFetching } =
-    useSearchSongs(debouncedQuery)
+  const { data: searchResults, isFetching: searchFetching } = useSearchSongs(
+    debouncedQuery,
+    activeCategoryIds,
+    { tagIds: activeTagIds },
+  )
+
+  const { data: categories } = useCategories()
+  const categoryNameById = useMemo(
+    () => new Map((categories ?? []).map((c) => [c.id, c.name])),
+    [categories],
+  )
 
   const browseRows = useMemo<PickerRow[]>(
     () =>
@@ -84,11 +110,14 @@ export function SongSearchPicker({
         page.songs.map((song) => ({
           id: song.id,
           title: song.title,
-          categoryName: null,
+          categoryName:
+            song.categoryId != null
+              ? (categoryNameById.get(song.categoryId) ?? null)
+              : null,
           keyLine: song.keyLine,
         })),
       ),
-    [browseData],
+    [browseData, categoryNameById],
   )
 
   const searchRows = useMemo<PickerRow[]>(
@@ -143,7 +172,7 @@ export function SongSearchPicker({
   }, [virtualItems, rows.length, hasMore, isLoadingMore, loadMore])
 
   return (
-    <div className={`flex flex-col min-h-0 ${className}`}>
+    <div ref={rootRef} className={`flex flex-col min-h-0 ${className}`}>
       <div className="relative flex-shrink-0 mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
@@ -169,6 +198,26 @@ export function SongSearchPicker({
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           />
         )}
+      </div>
+
+      <div className="flex-shrink-0 mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div data-testid="song-picker-category-filter" className="min-w-0">
+          <SongCategoryFilter
+            value={categoryIds}
+            onChange={setCategoryIds}
+            portalContainer={dialogEl}
+          />
+        </div>
+        <div
+          data-testid="song-picker-tag-filter"
+          className="min-w-0 empty:hidden"
+        >
+          <SongTagFilter
+            value={tagIds}
+            onChange={setTagIds}
+            portalContainer={dialogEl}
+          />
+        </div>
       </div>
 
       {/* Result count — makes it obvious when a search matched more than the
@@ -204,6 +253,20 @@ export function SongSearchPicker({
                 ? t('search.noResults', { query: debouncedQuery })
                 : t('noSongs')}
             </p>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCategoryIds([])
+                  setTagIds([])
+                }}
+                data-testid="song-picker-clear-filters"
+                className="mt-3 py-2 px-4 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                {t('search.clearFiltersForMore')}
+              </button>
+            )}
           </div>
         ) : (
           <>

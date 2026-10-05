@@ -29,6 +29,7 @@ import { usePresentationState } from '~/features/presentation'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import { ScheduleItemSubItems } from './ScheduleItemSubItems'
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
+import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
 import type { ScheduleItem } from '../types'
@@ -263,6 +264,7 @@ export function ScheduleItemsPanel({
                 onAnnouncementClick={onAnnouncementClick}
                 onSceneClick={onSceneClick}
                 onToggleSung={onToggleSung}
+                onEditKeyLine={onEditKeyLine}
                 t={t}
               />
             ))}
@@ -303,6 +305,7 @@ interface SortableItemWrapperProps {
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
   onToggleSung?: (item: ScheduleItem) => void
+  onEditKeyLine?: (item: ScheduleItem) => void
   t: (key: string) => string
 }
 
@@ -322,6 +325,7 @@ function SortableItemWrapper({
   onAnnouncementClick,
   onSceneClick,
   onToggleSung,
+  onEditKeyLine,
   t,
 }: SortableItemWrapperProps) {
   const {
@@ -350,6 +354,7 @@ function SortableItemWrapper({
   return (
     <div
       ref={setNodeRef}
+      data-testid="schedule-item"
       style={style}
       className={`rounded-lg border bg-white dark:bg-gray-800 overflow-hidden ${
         isDragging ? 'opacity-50 shadow-lg' : ''
@@ -409,7 +414,16 @@ function SortableItemWrapper({
         {/* Item Title & Info */}
         <div className="flex-1 min-w-0 text-left">
           <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
-            {item.itemType === 'song' && item.song?.title}
+            {item.itemType === 'song' && (
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate">{item.song?.title}</span>
+                <ScheduleKeyLineChip
+                  keyLine={item.keyLine}
+                  onEdit={onEditKeyLine ? () => onEditKeyLine(item) : undefined}
+                  testId="schedule-item-key-line"
+                />
+              </span>
+            )}
             {item.itemType === 'slide' &&
               item.slideType === 'announcement' &&
               t('presenter.announcement')}
@@ -442,8 +456,9 @@ function SortableItemWrapper({
               </span>
             )}
           </div>
-          {/* Song rows deliberately carry no second line: the title plus the
-              slides underneath is the whole story while running a program. */}
+          {/* Song rows deliberately carry no second line: the title, its gama
+              and the slides underneath are the whole story while running a
+              program. */}
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {item.itemType === 'bible_passage' && (
               <>

@@ -2471,6 +2471,7 @@
     "sortOrder": 0,
     "contentConfigs": {
       "song": {
+        "displayKeyLine": false,
         "background": {
           "type": "color",
           "opacity": 1

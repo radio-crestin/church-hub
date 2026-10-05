@@ -151,7 +151,10 @@ export function SongKeyPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-2 py-4 sm:px-4">
+      <div
+        data-testid="song-key-list"
+        className="flex-1 overflow-y-auto px-2 py-4 sm:px-4"
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
@@ -182,6 +185,7 @@ export function SongKeyPage() {
                   {group.songs.map((song) => (
                     <button
                       key={song.id}
+                      data-testid="song-key-row"
                       onClick={() => handleSongClick(song)}
                       className="w-full flex items-center justify-between px-3 sm:px-4 py-3 rounded-lg
                         bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700

@@ -10,6 +10,7 @@ export function useSearchSongs(
     presentedOnly?: boolean
     inSchedulesOnly?: boolean
     hasKeyLine?: boolean
+    tagIds?: number[]
   },
 ) {
   return useQuery<SongSearchResult[]>({

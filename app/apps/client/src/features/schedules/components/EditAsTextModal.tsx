@@ -8,8 +8,10 @@ import { MissingSongResolver } from './MissingSongResolver'
 import { getBooks, getTranslationById } from '../../bible/service/bible'
 import { parsePassageRange } from '../../bible/utils/parsePassageRange'
 import { searchSongs, upsertSong } from '../../songs/service/songs'
+import { saveSongKeyLines } from '../service/saveSongKeyLines'
 import { replaceScheduleItems } from '../service/schedules'
 import type { MissingSongItem, ScheduleItem, SlideTemplate } from '../types'
+import { changedKeyLines } from '../utils/changedKeyLines'
 import { generateScheduleText } from '../utils/generateScheduleText'
 import type { ParsedScheduleItem } from '../utils/parseScheduleText'
 import { parseScheduleText } from '../utils/parseScheduleText'
@@ -98,7 +100,9 @@ export function EditAsTextModal({
       result.push(
         trimmed
           .replace(/\s*\[(SC|S|C|A|VT|V)\]\s*$/i, '')
-          .replace(/\s+#\d+$/, ''),
+          .replace(/\s*\{\s*\}$/, '')
+          .replace(/\s*\{([^{}]*)\}$/, ' ($1)')
+          .replace(/\s+#\d+(?= \(|$)/, ''),
       )
     }
     return result.join('\n')
@@ -459,6 +463,14 @@ export function EditAsTextModal({
         }
       }
 
+      await saveSongKeyLines(
+        changedKeyLines(
+          items,
+          processedItems.map((item) => item.songId),
+          currentItems,
+        ),
+      )
+
       // Replace schedule items
       const result = await replaceScheduleItems(scheduleId, {
         items: validItems,
@@ -483,7 +495,7 @@ export function EditAsTextModal({
             t('editAsText.messages.partialSuccess', {
               count: result.skippedItems.length,
             }),
-            'warning',
+            'info',
           )
           setModalState('editing')
         } else {

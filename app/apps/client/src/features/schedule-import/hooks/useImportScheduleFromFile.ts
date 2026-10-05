@@ -145,7 +145,7 @@ async function processScheduleItem(
       author: item.song.author,
       copyright: item.song.copyright,
       ccli: item.song.ccli,
-      key: item.song.key,
+      keyLine: item.song.key,
       tempo: item.song.tempo,
       slides,
     })

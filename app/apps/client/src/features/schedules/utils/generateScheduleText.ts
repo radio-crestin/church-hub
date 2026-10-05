@@ -29,7 +29,9 @@ export function generateScheduleText(
 
   for (const item of items) {
     if (item.itemType === 'song' && item.song) {
-      lines.push(`${item.song.title} #${item.song.id} [${songSuffix}]`)
+      lines.push(
+        `${item.song.title} #${item.song.id} {${item.keyLine ?? ''}} [${songSuffix}]`,
+      )
     } else if (item.itemType === 'bible_passage') {
       // Bible passage item - use the reference directly
       if (item.biblePassageReference) {
@@ -104,7 +106,9 @@ function generateReferenceSection(items: ScheduleItem[]): string[] {
 
   for (const item of items) {
     if (item.itemType === 'song' && item.song) {
-      lines.push(item.song.title)
+      lines.push(
+        item.keyLine ? `${item.song.title} (${item.keyLine})` : item.song.title,
+      )
       const expandedSlides = expandSongSlidesWithChoruses(item.slides)
       for (const slide of expandedSlides) {
         const text = stripHtml(slide.content)

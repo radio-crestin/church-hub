@@ -14,11 +14,19 @@ export const songsPaths = {
           description: 'Search query',
         },
         {
-          name: 'categoryId',
+          name: 'categoryIds',
           in: 'query',
           required: false,
-          schema: { type: 'integer' },
-          description: 'Filter results by category ID',
+          schema: { type: 'string' },
+          description: 'Comma-separated list of category IDs to filter by',
+        },
+        {
+          name: 'tagIds',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description:
+            'Comma-separated list of tag IDs; songs with ANY of them match',
         },
       ],
       responses: {

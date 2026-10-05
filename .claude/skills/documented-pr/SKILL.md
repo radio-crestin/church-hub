@@ -210,7 +210,7 @@ gh api -H 'Accept: application/vnd.github.html+json' \
 
 Should equal the number of GIFs embedded. `data-animated-image=""` is the GitHub renderer's marker that the image is an animated GIF — its presence means the GIF will play in the rendered description.
 
-Test build: nothing to do by hand. `.github/workflows/pr-build.yml` builds macOS (Apple Silicon), Windows and Linux installers for every push (~25 min) and keeps one PR comment, "Test build of `<sha>`", linking them (assets of the `pr-build-<n>` prerelease). Get the links for the task file and the report:
+Test build: nothing to do by hand. `.github/workflows/pr-build.yml` builds macOS (Apple Silicon), Windows and Linux installers for every push (~25 min) and links them in a "Test build of `<sha>`" section at the end of the PR description (assets of the shared `pr-builds` prerelease; a description, not a comment, so nobody gets an email). Rewriting the description drops that section until the next push rebuilds it: keep the `<!-- pr-build:start -->` … `<!-- pr-build:end -->` block when you replace the body. Get the links for the task file and the report:
 
 ```bash
 .claude/skills/documented-pr/scripts/pr-build-links.sh <num> --wait   # name<TAB>url per platform

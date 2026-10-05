@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { PreviewTexts, SelectedElement } from './hooks/useEditorState'
 import type {
@@ -502,6 +503,7 @@ export function ScreenEditorCanvas({
   onSelectElement,
   onUpdateElement,
 }: ScreenEditorCanvasProps) {
+  const { t } = useTranslation('presentation')
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 800, height: 450 })
@@ -965,7 +967,7 @@ export function ScreenEditorCanvas({
                 fontSize: ns.contentStyle.maxFontSize * scale,
               }}
             >
-              Next slide content preview...
+              {t('screens.editor.nextSlidePreview')}
             </div>
           </div>
         </DraggableElement>,
@@ -1033,7 +1035,7 @@ export function ScreenEditorCanvas({
               />
             </svg>
             <span className="text-blue-400/70 text-xs font-medium">
-              Screen Share Preview
+              {t('screens.editor.screenSharePreview')}
             </span>
             <span className="text-gray-500 text-xs">{ve.objectFit}</span>
           </div>

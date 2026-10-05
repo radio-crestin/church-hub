@@ -14,6 +14,11 @@ export interface ParsedScheduleItem {
   content: string
   lineNumber: number
   songId?: number
+  /**
+   * The song's gama as written between braces: `Title #12 {Re major} [S]`.
+   * Absent when the line has no braces; '' when they are empty.
+   */
+  keyLine?: string
 }
 
 export interface ParseScheduleTextResult {
@@ -83,24 +88,40 @@ export function parseScheduleText(text: string): ParseScheduleTextResult {
       continue
     }
 
-    // Extract song ID if present (e.g., "Song Title #123")
-    let songId: number | undefined
-    let finalContent = trimmedContent
-    if (type === 'song') {
-      const idMatch = trimmedContent.match(/^(.+?)\s+#(\d+)$/)
-      if (idMatch) {
-        finalContent = idMatch[1].trim()
-        songId = Number.parseInt(idMatch[2], 10)
-      }
+    if (type !== 'song') {
+      items.push({ type, content: trimmedContent, lineNumber })
+      continue
     }
 
+    const song = parseSongContent(trimmedContent)
+    if (!song.title) {
+      errors.push({ line: lineNumber, message: 'Content cannot be empty' })
+      continue
+    }
     items.push({
       type,
-      content: finalContent,
+      content: song.title,
       lineNumber,
-      ...(songId !== undefined && { songId }),
+      ...(song.songId !== undefined && { songId: song.songId }),
+      ...(song.keyLine !== undefined && { keyLine: song.keyLine }),
     })
   }
 
   return { items, errors }
+}
+
+// "Song Title", "Song Title #123", "Song Title #123 {Re major}", "Song Title {}"
+const SONG_CONTENT_REGEX = /^(.*?)(?:\s+#(\d+))?(?:\s*\{([^{}]*)\})?$/
+
+function parseSongContent(content: string): {
+  title: string
+  songId?: number
+  keyLine?: string
+} {
+  const [, title = '', id, keyLine] = content.match(SONG_CONTENT_REGEX) ?? []
+  return {
+    title: title.trim(),
+    ...(id !== undefined && { songId: Number.parseInt(id, 10) }),
+    ...(keyLine !== undefined && { keyLine: keyLine.trim() }),
+  }
 }

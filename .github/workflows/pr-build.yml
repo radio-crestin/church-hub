@@ -3,8 +3,15 @@ run-name: "PR build #${{ github.event.pull_request.number || inputs.pr }}"
 
 # Every pull request gets installers to download and test: macOS (Apple
 # Silicon), Windows and Linux, built by build-desktop.yml (the release
-# build). They go to the prerelease `pr-build-<n>` and one comment on the
-# PR links them; each push rebuilds and edits that same comment.
+# build). They go to the one shared prerelease `pr-builds`, named after
+# the PR and commit, and a section of the PR description links them; each
+# push rebuilds and rewrites that section.
+#
+# Quiet by design: watchers get an email when a release is published and
+# the PR author when someone comments, but never when a release gets new
+# assets or a description is edited. So the shared release is published
+# once (by hand: gh release create pr-builds --prerelease) and nothing here
+# creates a release or a comment.
 #
 # Cost: the repo is public, so Actions minutes are free; still, drafts,
 # fork PRs and pushes that only touch docs or .claude/ are skipped, a
@@ -47,7 +54,7 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     outputs:
       pr: ${{ steps.resolve.outputs.pr }}
       sha: ${{ steps.resolve.outputs.sha }}
@@ -90,7 +97,7 @@ jobs:
             exit 1
           fi
           LATEST=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
-          TAG="pr-build-$PR"
+          TAG="pr-builds"
           {
             echo "pr=$PR"
             echo "sha=$SHA"
@@ -101,11 +108,11 @@ jobs:
 
           # A prerelease, not a draft: draft asset links 404 for anyone
           # without push access, and prereleases stay out of "Latest".
-          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease \
-              --title "PR #$PR test build" \
-              --notes "Installers built from pull request #$PR. The PR comment links the ones for its latest commit."
-          fi
+          # Never created here: publishing a release emails every watcher.
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || {
+            echo "::error::The shared prerelease $TAG is missing. Publish it once: gh release create $TAG --prerelease --title 'PR test builds' --notes 'Installers of open pull requests, named church-hub-<platform>-pr-<number>-<commit>.'"
+            exit 1
+          }
 
   build:
     needs: prepare
@@ -143,7 +150,9 @@ jobs:
           script: |
             const { PR, SHA, SUFFIX, TAG, VERSION, RUN_URL } = process.env
             const repo = context.repo
-            const MARKER = '<!-- pr-build -->'
+            const START = '<!-- pr-build:start -->'
+            const END = '<!-- pr-build:end -->'
+            const LEGACY_MARKER = '<!-- pr-build -->'
             const platforms = [
               { base: 'church-hub-macos-arm64', ext: 'dmg', label: 'macOS (Apple Silicon)' },
               { base: 'church-hub-windows-x64', ext: 'exe', label: 'Windows (x64)' },
@@ -162,16 +171,16 @@ jobs:
               return { ...p, asset, row: `| ${p.label} | ${link} |` }
             })
 
-            // Older commits' installers of a platform that rebuilt fine.
+            // This PR's older installers of a platform that rebuilt fine.
             for (const p of rows.filter((r) => r.asset)) {
-              const stale = assets.filter((a) => a.name.startsWith(`${p.base}-pr-`) && a.name !== p.asset.name)
+              const stale = assets.filter((a) => a.name.startsWith(`${p.base}-pr-${PR}-`) && a.name !== p.asset.name)
               for (const a of stale) {
                 await github.rest.repos.deleteReleaseAsset({ ...repo, asset_id: a.id })
               }
             }
 
-            const body = [
-              MARKER,
+            const section = [
+              START,
               `### Test build of ${SHA.slice(0, 7)}`,
               '',
               '| Platform | Download |',
@@ -188,15 +197,27 @@ jobs:
               '- **Linux**: `chmod +x church-hub-linux-x64-*.AppImage`, then run it.',
               '',
               '</details>',
+              END,
             ].join('\n')
 
+            // In the description, not a comment: a new comment emails the
+            // PR author, an edited description emails no one.
+            const pull = await github.rest.pulls.get({ ...repo, pull_number: Number(PR) })
+            const description = pull.data.body ?? ''
+            // Markers that start a line: the text above may quote them inline.
+            const at = description.lastIndexOf(`\n${START}`)
+            const begin = at < 0 ? -1 : at + 1
+            const end = begin < 0 ? -1 : description.indexOf(`\n${END}`, begin) + 1
+            const body = begin >= 0 && end > begin
+              ? description.slice(0, begin) + section + description.slice(end + END.length)
+              : `${description.trimEnd()}\n\n${section}\n`
+            await github.rest.pulls.update({ ...repo, pull_number: Number(PR), body })
+
+            // The comment older builds left, now stale; deleting mails no one.
             const comments = await github.paginate(github.rest.issues.listComments, {
               ...repo, issue_number: Number(PR), per_page: 100,
             })
-            const mine = comments.find((c) => c.body?.startsWith(MARKER))
-            if (mine) {
-              await github.rest.issues.updateComment({ ...repo, comment_id: mine.id, body })
-            } else {
-              await github.rest.issues.createComment({ ...repo, issue_number: Number(PR), body })
+            for (const old of comments.filter((c) => c.body?.startsWith(LEGACY_MARKER))) {
+              await github.rest.issues.deleteComment({ ...repo, comment_id: old.id })
             }
-            core.summary.addRaw(body).write()
+            core.summary.addRaw(section).write()
