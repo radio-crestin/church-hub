@@ -25,12 +25,8 @@ import {
   useLoadScheduleFromFile,
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
-import {
-  KeyLineEditDialog,
-  type KeyLineEditDialogHandle,
-} from '~/features/song-key'
+import { KeyLineEditDialog } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
-import { getSongById } from '~/features/songs/service'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
 import { useEditLayoutAction, Workspace } from '~/features/workspace'
 import { usePermissions } from '~/provider/permissions-provider'
@@ -51,6 +47,7 @@ import {
   useSchedule,
   useScheduleFlatNavigation,
   useScheduleKeyboardShortcuts,
+  useScheduleKeyLineEditor,
   useUpsertSchedule,
 } from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
@@ -168,7 +165,8 @@ export function SchedulePresenter({
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const importDialogRef = useRef<HTMLDialogElement>(null)
-  const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
+  const { keyLineDialogRef, editKeyLine: handleEditKeyLine } =
+    useScheduleKeyLineEditor()
 
   // Track screen size for responsive layout
   useEffect(() => {
@@ -443,16 +441,6 @@ export function SchedulePresenter({
   const handleChangeSong = useCallback((item: ScheduleItem) => {
     if (item.itemType === 'song') {
       setChangingSongItem(item)
-    }
-  }, [])
-
-  // Edit key line handler - open key line dialog for the song
-  const handleEditKeyLine = useCallback(async (item: ScheduleItem) => {
-    if (item.itemType === 'song' && item.songId) {
-      const song = await getSongById(item.songId)
-      if (song) {
-        keyLineDialogRef.current?.open(song)
-      }
     }
   }, [])
 

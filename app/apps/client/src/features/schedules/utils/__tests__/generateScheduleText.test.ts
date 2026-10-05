@@ -109,14 +109,20 @@ function makeSceneItem(
 describe('schedules/utils/generateScheduleText', () => {
   it('generates text for a song item', () => {
     const result = generateScheduleText([makeSongItem()])
-    expect(result).toContain('Amazing Grace #42 [S]')
+    expect(result).toContain('Amazing Grace #42 {} [S]')
+  })
+
+  it('writes the gama between braces on the song line', () => {
+    const result = generateScheduleText([makeSongItem({ keyLine: 'Re major' })])
+    expect(result).toContain('Amazing Grace #42 {Re major} [S]')
+    expect(result).toContain('Amazing Grace (Re major)')
   })
 
   it('uses custom songSuffix', () => {
     const result = generateScheduleText([makeSongItem()], {
       songSuffix: 'C',
     })
-    expect(result).toContain('Amazing Grace #42 [C]')
+    expect(result).toContain('Amazing Grace #42 {} [C]')
   })
 
   it('generates text for a bible passage', () => {

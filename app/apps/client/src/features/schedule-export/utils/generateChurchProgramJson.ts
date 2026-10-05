@@ -18,7 +18,7 @@ export function generateChurchProgramJson(
           author: null,
           copyright: null,
           ccli: null,
-          key: null,
+          key: item.keyLine,
           tempo: null,
           slides: item.slides.map((slide) => ({
             content: slide.content,

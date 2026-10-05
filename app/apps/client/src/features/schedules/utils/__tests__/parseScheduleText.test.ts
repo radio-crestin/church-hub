@@ -126,6 +126,32 @@ Camera [SC]`
     expect(result.errors[0].line).toBe(2)
   })
 
+  it('reads the gama between braces after the song id', () => {
+    const result = parseScheduleText('Amazing Grace #42 {Re major} [S]')
+    expect(result.items[0]).toMatchObject({
+      content: 'Amazing Grace',
+      songId: 42,
+      keyLine: 'Re major',
+    })
+  })
+
+  it('reads empty braces as an empty gama and no braces as no gama', () => {
+    const [empty, none] = parseScheduleText(
+      'Amazing Grace #42 {} [S]\nAmazing Grace #42 [S]',
+    ).items
+    expect(empty.keyLine).toBe('')
+    expect(none.keyLine).toBeUndefined()
+  })
+
+  it('reads a gama on a song without id', () => {
+    const result = parseScheduleText('Amazing Grace {Sol} [C]')
+    expect(result.items[0]).toMatchObject({
+      content: 'Amazing Grace',
+      keyLine: 'Sol',
+    })
+    expect(result.items[0].songId).toBeUndefined()
+  })
+
   it('does not extract songId from non-song types', () => {
     const result = parseScheduleText('Announce #42 [A]')
     expect(result.items[0].songId).toBeUndefined()
