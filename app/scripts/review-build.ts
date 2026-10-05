@@ -1,7 +1,10 @@
 #!/usr/bin/env bun
 /**
  * Builds the desktop app of this checkout for review on this computer and
- * keeps it in `.review-build/<task id>/` in the checkout, ready to open.
+ * keeps it in `.review-build/<task id>/` in the MAIN checkout, ready to open:
+ * a standalone copy that outlives the task's worktree. It is the one thing a
+ * reviewer opens (installers for other platforms only on request:
+ * pr-build.yml); worktree-cleanup.ts deletes it once the task is merged.
  *
  * It never meets the user's real Church Hub:
  *   - its own port, 4100 + task number (not 3000/3001, not the e2e port 3100 + n:
@@ -50,6 +53,7 @@ import {
 
 const USAGE =
   'usage: bun app/scripts/review-build.ts <task id, e.g. T-023> [--out <dir>]'
+const REVIEW_DIR = '.review-build'
 const LOCK_WAIT_MS = 30 * 60 * 1000
 
 const BUNDLES: Record<string, { bundle: string; folder: string; ext: string }> =
@@ -69,7 +73,7 @@ function parseArgs() {
   const out =
     outFlag > 0
       ? resolve(process.argv[outFlag + 1])
-      : join(root, '.review-build', taskId.toUpperCase())
+      : join(mainCheckoutRoot(root), REVIEW_DIR, taskId.toUpperCase())
   return {
     taskId: taskId.toUpperCase(),
     e2ePort,
@@ -308,7 +312,8 @@ try {
 }
 
 const minutes = ((performance.now() - started) / 60000).toFixed(1)
+const link = pathToFileURL(kept).href
 // biome-ignore lint/suspicious/noConsole: the script's result
 console.log(
-  `\n${taskId} review build (${minutes} min): ${kept}\nOpen: ${pathToFileURL(kept).href}\nPort ${port}, data in ${dataDir}`,
+  `\n${taskId} review build (${minutes} min): ${kept}\nOpen: ${link}\nPort ${port}, data in ${dataDir}\nTask note: app: ${link}`,
 )
