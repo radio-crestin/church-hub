@@ -273,6 +273,44 @@ test.describe('Request a feature', () => {
     await expect(dialog.getByTestId('feature-request-tool-hint')).toBeVisible()
   })
 
+  test('step 2 shows the screenshot big; click enlarges it, Edit goes back', async ({
+    page,
+  }) => {
+    await mockFeatureRequestApi(page)
+    await openSongsPage(page)
+
+    const dialog = await openRequestFeature(page)
+    await addNote(page, dialog, 'Look here')
+    await goToWriting(dialog)
+
+    // Big and whole: wide as the form, the screenshot's own shape, in view.
+    const preview = dialog.getByTestId('feature-request-preview')
+    await expect(preview).toBeInViewport()
+    const box = await preview.boundingBox()
+    const dialogBox = await dialog.boundingBox()
+    expect(box?.width ?? 0).toBeGreaterThan((dialogBox?.width ?? 0) * 0.6)
+    const ratio = (box?.width ?? 0) / (box?.height ?? 1)
+    expect(Math.abs(ratio - 1280 / 800)).toBeLessThan(0.05)
+
+    // Click opens it full screen; Escape closes only that view.
+    await dialog.getByTestId('feature-request-preview-open').click()
+    const lightbox = page.getByTestId('feature-request-lightbox')
+    await expect(lightbox).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(lightbox).toHaveCount(0)
+    await expect(dialog).toBeVisible()
+
+    // A click on the full-screen view closes it too.
+    await dialog.getByTestId('feature-request-preview-open').click()
+    await lightbox.click()
+    await expect(lightbox).toHaveCount(0)
+
+    // Edit goes back to the markup, with the note still there.
+    await dialog.getByTestId('feature-request-preview-edit').click()
+    await expect(dialog.getByTestId('feature-request-toolbar')).toBeVisible()
+    await expect(dialog.getByTestId('feature-request-undo')).toBeEnabled()
+  })
+
   test('Send waits for a valid email, and for something to send', async ({
     page,
   }) => {

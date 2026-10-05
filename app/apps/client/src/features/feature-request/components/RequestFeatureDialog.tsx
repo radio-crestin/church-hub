@@ -72,7 +72,7 @@ export function RequestFeatureDialog({
 
   useEffect(() => {
     // Step 2 opens ready to type.
-    if (step === 'write') notesRef.current?.focus()
+    if (step === 'write') notesRef.current?.focus({ preventScroll: true })
   }, [step])
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -150,6 +150,7 @@ export function RequestFeatureDialog({
                 disabled={isSending}
                 errorMessage={errorMessage}
                 notesRef={notesRef}
+                onEditScreenshot={() => setStep('show')}
               />
             )}
 

@@ -97,7 +97,11 @@
     "colorBlue": "Albastru",
     "colorBlack": "Negru",
     "colorWhite": "Alb",
-    "canvasLabel": "Captură pentru adnotări"
+    "canvasLabel": "Captură pentru adnotări",
+    "previewCaption": "Această captură va fi trimisă. Apasă ca s-o mărești.",
+    "enlargePreview": "Mărește captura",
+    "editScreenshot": "Editează",
+    "closePreview": "Închide"
   },
   "contact": {
     "title": "Contactează-ne",

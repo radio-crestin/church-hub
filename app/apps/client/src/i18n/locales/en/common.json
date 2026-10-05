@@ -97,7 +97,11 @@
     "colorBlue": "Blue",
     "colorBlack": "Black",
     "colorWhite": "White",
-    "canvasLabel": "Screenshot to mark up"
+    "canvasLabel": "Screenshot to mark up",
+    "previewCaption": "This is what will be sent. Click to enlarge.",
+    "enlargePreview": "Enlarge the screenshot",
+    "editScreenshot": "Edit",
+    "closePreview": "Close"
   },
   "contact": {
     "title": "Contact Us",
