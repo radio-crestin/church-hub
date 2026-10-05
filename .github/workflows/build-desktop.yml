@@ -2,7 +2,7 @@ name: Build desktop app
 
 # The one place the desktop installers are built. Called by:
 #   - build-release.yml — every v*.*.* tag (the published release)
-#   - pr-build.yml      — every pull request (a test build to download)
+#   - pr-build.yml      — a pull request's installers, only when asked (/build)
 #   - main-build.yml    — every push to main (keeps the shared caches warm)
 #   - by hand (Actions → Run workflow), e.g. to try the release upload on a
 #     throwaway draft release (never a v* one: the plan job refuses that)
@@ -45,6 +45,10 @@ on:
         description: Also build the cross-compiled macOS x64 installer.
         type: boolean
         default: true
+      platforms:
+        description: Comma-separated platforms to build (macos, windows, linux). Empty builds all.
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       ref:
@@ -115,6 +119,7 @@ jobs:
         id: plan
         env:
           MACOS_INTEL: ${{ inputs.macos_intel }}
+          WANTED: ${{ inputs.platforms }}
           # smoke: launch the compiled sidecar first. Not on the Intel Mac
           #   build, cross-compiled on an ARM runner that can't run it.
           # optional: Linux is new and not in the updater manifest yet, so a
@@ -146,8 +151,13 @@ jobs:
                 "tauri_args": "--bundles appimage", "smoke": true, "optional": true }
             ]
         run: |
-          PICKED=$(jq -c --argjson intel "$MACOS_INTEL" \
-            '[.[] | select($intel or .target != "macos-x64")]' <<<"$PLATFORMS")
+          # WANTED: "macos,linux" keeps the targets starting with those names.
+          PICKED=$(jq -c --argjson intel "$MACOS_INTEL" --arg wanted "${WANTED:-}" '
+            ($wanted | split(",") | map(select(. != ""))) as $w
+            | [.[] | select($intel or .target != "macos-x64")
+                   | select(.target as $t | ($w | length) == 0 or any($w[]; . as $p | $t | startswith($p)))]
+          ' <<<"$PLATFORMS")
+          [ "$PICKED" != "[]" ] || { echo "::error::No platform matches '$WANTED'"; exit 1; }
           echo "platforms=$PICKED" | tee -a "$GITHUB_OUTPUT"
 
   build:
