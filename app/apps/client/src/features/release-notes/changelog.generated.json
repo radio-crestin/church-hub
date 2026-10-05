@@ -1,5 +1,591 @@
 [
   {
+    "version": "0.1.103",
+    "date": "2026-10-05T16:26:02+03:00",
+    "features": [
+      {
+        "scope": "shortcuts",
+        "message": "option to hold keys only while Church Hub is in front"
+      },
+      {
+        "scope": "schedules",
+        "message": "Edit as Text saves a gama changed between the braces"
+      },
+      {
+        "scope": "schedules",
+        "message": "show and edit each song's gama on program rows"
+      },
+      {
+        "scope": "schedule-export",
+        "message": "the program file and text carry each song's gama"
+      },
+      {
+        "scope": "songs",
+        "message": "category and tag filters in the song picker"
+      },
+      {
+        "scope": "songs",
+        "message": "song search filters by tag"
+      },
+      {
+        "scope": "song-bookmarks",
+        "message": "edit the song Marcaje as text"
+      },
+      {
+        "scope": "song-bookmarks",
+        "message": "read and replace the Marcaje list as Markdown text"
+      },
+      {
+        "scope": "tooling",
+        "message": "task cleanup also removes review builds, merged branches and PR installers"
+      },
+      {
+        "scope": "client",
+        "message": "field 'Describe your feature request or bug', Romanian texts redone"
+      },
+      {
+        "scope": "bookmarks",
+        "message": "store and exchange Marcaje as standard Markdown"
+      },
+      {
+        "scope": "bookmarks",
+        "message": "add the standard Markdown codec for styled text"
+      },
+      {
+        "scope": "client",
+        "message": "retake the Request a feature screenshot on another page or screen"
+      },
+      {
+        "scope": "client",
+        "message": "Request a feature is screenshot first, in two short steps"
+      },
+      {
+        "scope": "backend",
+        "message": "store feature-request screenshots in R2, not in the repo"
+      },
+      {
+        "scope": "client",
+        "message": "\"Request a feature\" replaces Feedback as a screenshot tool"
+      },
+      {
+        "scope": "backend",
+        "message": "cap feature requests at 50 per IP per rolling 24 hours"
+      },
+      {
+        "scope": "backend",
+        "message": "keep feature-request screenshots in GitHub, not R2"
+      },
+      {
+        "scope": "server",
+        "message": "POST /api/feature-requests relays requests to the backend worker"
+      },
+      {
+        "scope": "backend",
+        "message": "feature requests become a public GitHub issue and a WhatsApp notice"
+      },
+      {
+        "scope": "songs",
+        "message": "song editor panels use the shared workspace (resize, move, reset)"
+      },
+      {
+        "scope": "songs",
+        "message": "Versiuni sits under the song preview by default"
+      },
+      {
+        "scope": "songs",
+        "message": "song history dialog on the song page with restore"
+      },
+      {
+        "scope": "songs",
+        "message": "song editor drops Programe, slides on the right, text edit in place, fixed title"
+      },
+      {
+        "scope": "song-export",
+        "message": "export a song as PDF or Word for printing"
+      },
+      {
+        "scope": "songs",
+        "message": "record who edited a song and when, with restore (server + API)"
+      },
+      {
+        "scope": "e2e",
+        "message": "BEFORE / AFTER badge on demo videos, stacked in PRs"
+      },
+      {
+        "scope": "tooling",
+        "message": "local review builds of the desktop app per task"
+      },
+      {
+        "scope": "schedules",
+        "message": "create a program from the Programe panel, with a one-click Today button"
+      },
+      {
+        "scope": "schedules",
+        "message": "save program readings typed as comma verse lists"
+      },
+      {
+        "scope": "schedules",
+        "message": "store program readings made of a comma verse list"
+      },
+      {
+        "scope": "bible",
+        "message": "read comma verse lists like \"Ioan 3:16,17\" in references"
+      },
+      {
+        "scope": "e2e",
+        "message": "read each demo caption aloud in the mp4"
+      },
+      {
+        "scope": "e2e",
+        "message": "highlight the bug or new feature in demo videos"
+      }
+    ],
+    "bugFixes": [
+      {
+        "scope": "release",
+        "message": "keep a draft marked pre-release out of latest when publishing"
+      },
+      {
+        "scope": "e2e",
+        "message": "target the song text textarea by test id"
+      },
+      {
+        "scope": "song-key",
+        "message": "give each gama dialog its own input id"
+      },
+      {
+        "scope": "song-key",
+        "message": "keep the Game cântări scroll after saving a gama"
+      },
+      {
+        "scope": "shortcuts",
+        "message": "ignore shortcuts the user has no permission for"
+      },
+      {
+        "scope": "screens",
+        "message": "translate element headings, alignment buttons and system font option"
+      },
+      {
+        "scope": "screens",
+        "message": "translate the screen editor sidebar, toolbar and canvas labels"
+      },
+      {
+        "scope": "ui",
+        "message": "Escape closes only an open multi-select dropdown"
+      },
+      {
+        "scope": "screens",
+        "message": "livestream screens hide the gama by default"
+      },
+      {
+        "scope": "sidebar",
+        "message": "brand text is not a heading, layout specs collapse the sidebar"
+      },
+      {
+        "scope": "e2e",
+        "message": "schedule-songs-panel test no longer expects Programe in the song editor"
+      },
+      {
+        "scope": "song-bookmarks",
+        "message": "never drop a title typed after a blank line"
+      },
+      {
+        "scope": "server",
+        "message": "stop logging the feature-request backend URL"
+      },
+      {
+        "scope": "sidebar",
+        "message": "start expanded on a fresh install"
+      },
+      {
+        "scope": "marcaje",
+        "message": "styles land on the same words on every screen"
+      },
+      {
+        "scope": "songs",
+        "message": "text mode of long songs opens at the top and scrolls with the wheel"
+      },
+      {
+        "scope": "screens",
+        "message": "song key and Amin fade in and out with the lyrics"
+      },
+      {
+        "scope": "settings",
+        "message": "remove secrets that older default settings seeded"
+      },
+      {
+        "scope": "fixtures",
+        "message": "ship only allow-listed settings, redact every fixture"
+      },
+      {
+        "scope": "midi",
+        "message": "MIDI requests wait at most 5 s for the CoreMIDI warm-up"
+      },
+      {
+        "scope": "midi",
+        "message": "never crash at start-up when CoreMIDI refuses a client"
+      },
+      {
+        "scope": "ai-search",
+        "message": "make Anthropic and Gemini work with the ai 5 SDK"
+      },
+      {
+        "scope": "deps",
+        "message": "patch Rust crates in the screen-brightness plugin lockfile"
+      },
+      {
+        "scope": "deps",
+        "message": "bump tauri to 2.11.6 and patch Rust crates in app/tauri"
+      },
+      {
+        "scope": "deps",
+        "message": "bump vitest to 4.1.11 in the client"
+      },
+      {
+        "scope": "deps",
+        "message": "bump hono and wrangler in churchhub-backend"
+      },
+      {
+        "scope": "ci",
+        "message": "main build grants the permissions build-desktop asks for"
+      },
+      {
+        "scope": "deps",
+        "message": "clear bun audit findings in app/bun.lock"
+      },
+      {
+        "scope": "client-tests",
+        "message": "use jsdom's localStorage under Node 25+"
+      },
+      {
+        "scope": "ci",
+        "message": "only main's own builds write the shared caches"
+      },
+      {
+        "scope": "security",
+        "message": "escape values in the OAuth worker's HTML pages"
+      },
+      {
+        "scope": "security",
+        "message": "never send stack traces or raw thrown values in API errors"
+      },
+      {
+        "scope": "security",
+        "message": "crypto RNG for the live-translation secret, linear backup-version regex"
+      },
+      {
+        "scope": "security",
+        "message": "only open and load http(s) URLs from outside the code"
+      },
+      {
+        "scope": "security",
+        "message": "match YouTube embed URLs by host name, not substring"
+      },
+      {
+        "scope": "security",
+        "message": "strip slide HTML tags to a fixpoint and decode entities once"
+      },
+      {
+        "scope": "tooling",
+        "message": "review builds always restore dist/ and take turns safely"
+      },
+      {
+        "scope": "tooling",
+        "message": "review build folders ignore themselves"
+      },
+      {
+        "scope": "tooling",
+        "message": "review builds start and leave no diff"
+      },
+      {
+        "scope": "e2e",
+        "message": "start the run on the server's Ready line, not an HTTP probe"
+      },
+      {
+        "scope": "demos",
+        "message": "open the PR demo mp4 in the browser instead of downloading it"
+      },
+      {
+        "scope": "screens",
+        "message": "projector and stage windows always on top by default"
+      },
+      {
+        "scope": "presentation",
+        "message": "keep the clock on the projector during scene items"
+      },
+      {
+        "scope": "songs",
+        "message": "load only uncategorized songs in the settings card"
+      },
+      {
+        "scope": "songs",
+        "message": "exclude hidden categories in the search SQL, not after it"
+      },
+      {
+        "scope": "songs",
+        "message": "page GET /api/songs by default instead of returning every song"
+      },
+      {
+        "scope": "startup",
+        "message": "let clicks and drags through the fading start-up screen"
+      },
+      {
+        "scope": "shortcuts",
+        "message": "run sidebar shortcuts when the page receives the key"
+      },
+      {
+        "scope": "bible",
+        "message": "select the search text when the shortcut focuses it"
+      },
+      {
+        "scope": "obs",
+        "message": "switch back to the song scene after a program scene item"
+      },
+      {
+        "scope": "ci",
+        "message": "pick build platforms in a plan job"
+      },
+      {
+        "scope": "ci",
+        "message": "PR build matrix exclude and run name"
+      },
+      {
+        "scope": "e2e",
+        "message": "draw demo highlights above modal dialogs"
+      },
+      {
+        "scope": "worktree",
+        "message": "satisfy strict null check in cleanup script"
+      },
+      {
+        "scope": "e2e",
+        "message": "never run the suite against the desktop app on port 3000"
+      }
+    ],
+    "changes": [
+      {
+        "scope": null,
+        "message": "bump"
+      },
+      {
+        "scope": "tasks",
+        "message": "add T-078..T-089, close T-079, T-080, T-081, T-089"
+      },
+      {
+        "scope": "rules",
+        "message": "watch PR checks until green before approval and merge (T-089)"
+      },
+      {
+        "scope": "skills",
+        "message": "whatsapp-requests skill tracks the group's requests in a private ledger (T-081)"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-075"
+      },
+      {
+        "scope": "tasks",
+        "message": "move church-hub better-tasks rules to .claude/rules/better-tasks.md"
+      },
+      {
+        "scope": "tasks",
+        "message": "add and close T-076, T-077"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-017 and T-022"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-021, T-027, T-033, T-041, T-075; notes on T-017, T-022"
+      },
+      {
+        "scope": "tasks",
+        "message": "drop starter-only template and tips copies"
+      },
+      {
+        "scope": "tasks",
+        "message": "use better-tasks' official flow with Kokoro videos"
+      },
+      {
+        "scope": "songs",
+        "message": "shared category and tag filter components"
+      },
+      {
+        "scope": "e2e",
+        "message": "format livestream gama spec"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-005, T-067, T-069, T-070, T-074; add T-071..T-073"
+      },
+      {
+        "scope": "song-bookmarks",
+        "message": "Romanian Edit-as-text help and error reworded via Codex"
+      },
+      {
+        "scope": "marcaje",
+        "message": "Romanian export and import texts reworded via Codex"
+      },
+      {
+        "scope": "tasks",
+        "message": "teammates get Romanian texts from Codex"
+      },
+      {
+        "scope": "server",
+        "message": "describe supportId, the rate limit and the new log flow in OpenAPI"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-009 and T-068"
+      },
+      {
+        "scope": "agents",
+        "message": "move the task teammate to the user's agents"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-003, T-004, T-006, T-007, T-008, T-010"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-066, add T-067 and T-068"
+      },
+      {
+        "scope": "tasks",
+        "message": "plan sprint 41 (songs & editor polish)"
+      },
+      {
+        "scope": "agents",
+        "message": "add a Sonnet high-effort teammate for better-tasks"
+      },
+      {
+        "scope": "tasks",
+        "message": "close sprint 40 security tasks"
+      },
+      {
+        "scope": "tasks",
+        "message": "keep security task notes private"
+      },
+      {
+        "scope": "security",
+        "message": "gitleaks config, pre-commit hook, key-shape check"
+      },
+      {
+        "scope": "api-url",
+        "message": "use a made-up user token in the doc example"
+      },
+      {
+        "scope": "tasks",
+        "message": "sprint 40 task notes"
+      },
+      {
+        "scope": null,
+        "message": "ignore the untracked build output, archive and generated files"
+      },
+      {
+        "scope": null,
+        "message": "stop tracking build output, a stale archive and generated files"
+      },
+      {
+        "scope": null,
+        "message": "pin Bun 1.4.2 in app/package.json"
+      },
+      {
+        "scope": "tasks",
+        "message": "close sprint 40 tasks"
+      },
+      {
+        "scope": "tasks",
+        "message": "teammates build a local app for review"
+      },
+      {
+        "scope": "tasks",
+        "message": "link PR demo GIFs to the jsDelivr mp4 in step 5"
+      },
+      {
+        "scope": "tasks",
+        "message": "teammates hand PR lines to the lead in a task note"
+      },
+      {
+        "scope": "tasks",
+        "message": "PR build links in the PR flow and the report"
+      },
+      {
+        "scope": "tasks",
+        "message": "sprint 40 task notes and PR sections"
+      },
+      {
+        "scope": "tasks",
+        "message": "update sprint 40 task notes"
+      },
+      {
+        "scope": "tasks",
+        "message": "record a before and an after video for every task"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-052"
+      },
+      {
+        "scope": "tasks",
+        "message": "update T-052 notes"
+      },
+      {
+        "scope": "tasks",
+        "message": "clean up the worktree on accept"
+      },
+      {
+        "scope": "worktree",
+        "message": "add fast cleanup script for finished tasks"
+      },
+      {
+        "scope": "worktree",
+        "message": "share port, run and step helpers between worktree scripts"
+      },
+      {
+        "scope": "tasks",
+        "message": "set up worktrees with the cache-reusing script"
+      },
+      {
+        "scope": "worktree",
+        "message": "add setup script that reuses the main checkout's caches"
+      },
+      {
+        "scope": "tasks",
+        "message": "use the installed headless shell instead of downloading it"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-001 and T-051, add T-052"
+      },
+      {
+        "scope": "tasks",
+        "message": "require worktree, e2e, demo video and PR for each task"
+      },
+      {
+        "scope": "documented-pr",
+        "message": "reuse demo helper, add mp4 and output dir"
+      },
+      {
+        "scope": null,
+        "message": "Update settings.json"
+      },
+      {
+        "scope": null,
+        "message": "add better-tasks"
+      },
+      {
+        "scope": "tasks",
+        "message": "keep task titles valid YAML"
+      },
+      {
+        "scope": null,
+        "message": "add tasks"
+      }
+    ]
+  },
+  {
     "version": "0.1.102",
     "date": "2026-09-18T19:00:42+02:00",
     "features": [

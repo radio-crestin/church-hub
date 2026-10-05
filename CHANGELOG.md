@@ -2,6 +2,161 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.103 — 2026-10-05
+
+### 🚀 Features
+
+- **shortcuts**: option to hold keys only while Church Hub is in front
+- **schedules**: Edit as Text saves a gama changed between the braces
+- **schedules**: show and edit each song's gama on program rows
+- **schedule-export**: the program file and text carry each song's gama
+- **songs**: category and tag filters in the song picker
+- **songs**: song search filters by tag
+- **song-bookmarks**: edit the song Marcaje as text
+- **song-bookmarks**: read and replace the Marcaje list as Markdown text
+- **tooling**: task cleanup also removes review builds, merged branches and PR installers
+- **client**: field 'Describe your feature request or bug', Romanian texts redone
+- **bookmarks**: store and exchange Marcaje as standard Markdown
+- **bookmarks**: add the standard Markdown codec for styled text
+- **client**: retake the Request a feature screenshot on another page or screen
+- **client**: Request a feature is screenshot first, in two short steps
+- **backend**: store feature-request screenshots in R2, not in the repo
+- **client**: "Request a feature" replaces Feedback as a screenshot tool
+- **backend**: cap feature requests at 50 per IP per rolling 24 hours
+- **backend**: keep feature-request screenshots in GitHub, not R2
+- **server**: POST /api/feature-requests relays requests to the backend worker
+- **backend**: feature requests become a public GitHub issue and a WhatsApp notice
+- **songs**: song editor panels use the shared workspace (resize, move, reset)
+- **songs**: Versiuni sits under the song preview by default
+- **songs**: song history dialog on the song page with restore
+- **songs**: song editor drops Programe, slides on the right, text edit in place, fixed title
+- **song-export**: export a song as PDF or Word for printing
+- **songs**: record who edited a song and when, with restore (server + API)
+- **e2e**: BEFORE / AFTER badge on demo videos, stacked in PRs
+- **tooling**: local review builds of the desktop app per task
+- **schedules**: create a program from the Programe panel, with a one-click Today button
+- **schedules**: save program readings typed as comma verse lists
+- **schedules**: store program readings made of a comma verse list
+- **bible**: read comma verse lists like "Ioan 3:16,17" in references
+- **e2e**: read each demo caption aloud in the mp4
+- **e2e**: highlight the bug or new feature in demo videos
+
+### 🐛 Bug Fixes
+
+- **release**: keep a draft marked pre-release out of latest when publishing
+- **e2e**: target the song text textarea by test id
+- **song-key**: give each gama dialog its own input id
+- **song-key**: keep the Game cântări scroll after saving a gama
+- **shortcuts**: ignore shortcuts the user has no permission for
+- **screens**: translate element headings, alignment buttons and system font option
+- **screens**: translate the screen editor sidebar, toolbar and canvas labels
+- **ui**: Escape closes only an open multi-select dropdown
+- **screens**: livestream screens hide the gama by default
+- **sidebar**: brand text is not a heading, layout specs collapse the sidebar
+- **e2e**: schedule-songs-panel test no longer expects Programe in the song editor
+- **song-bookmarks**: never drop a title typed after a blank line
+- **server**: stop logging the feature-request backend URL
+- **sidebar**: start expanded on a fresh install
+- **marcaje**: styles land on the same words on every screen
+- **songs**: text mode of long songs opens at the top and scrolls with the wheel
+- **screens**: song key and Amin fade in and out with the lyrics
+- **settings**: remove secrets that older default settings seeded
+- **fixtures**: ship only allow-listed settings, redact every fixture
+- **midi**: MIDI requests wait at most 5 s for the CoreMIDI warm-up
+- **midi**: never crash at start-up when CoreMIDI refuses a client
+- **ai-search**: make Anthropic and Gemini work with the ai 5 SDK
+- **deps**: patch Rust crates in the screen-brightness plugin lockfile
+- **deps**: bump tauri to 2.11.6 and patch Rust crates in app/tauri
+- **deps**: bump vitest to 4.1.11 in the client
+- **deps**: bump hono and wrangler in churchhub-backend
+- **ci**: main build grants the permissions build-desktop asks for
+- **deps**: clear bun audit findings in app/bun.lock
+- **client-tests**: use jsdom's localStorage under Node 25+
+- **ci**: only main's own builds write the shared caches
+- **security**: escape values in the OAuth worker's HTML pages
+- **security**: never send stack traces or raw thrown values in API errors
+- **security**: crypto RNG for the live-translation secret, linear backup-version regex
+- **security**: only open and load http(s) URLs from outside the code
+- **security**: match YouTube embed URLs by host name, not substring
+- **security**: strip slide HTML tags to a fixpoint and decode entities once
+- **tooling**: review builds always restore dist/ and take turns safely
+- **tooling**: review build folders ignore themselves
+- **tooling**: review builds start and leave no diff
+- **e2e**: start the run on the server's Ready line, not an HTTP probe
+- **demos**: open the PR demo mp4 in the browser instead of downloading it
+- **screens**: projector and stage windows always on top by default
+- **presentation**: keep the clock on the projector during scene items
+- **songs**: load only uncategorized songs in the settings card
+- **songs**: exclude hidden categories in the search SQL, not after it
+- **songs**: page GET /api/songs by default instead of returning every song
+- **startup**: let clicks and drags through the fading start-up screen
+- **shortcuts**: run sidebar shortcuts when the page receives the key
+- **bible**: select the search text when the shortcut focuses it
+- **obs**: switch back to the song scene after a program scene item
+- **ci**: pick build platforms in a plan job
+- **ci**: PR build matrix exclude and run name
+- **e2e**: draw demo highlights above modal dialogs
+- **worktree**: satisfy strict null check in cleanup script
+- **e2e**: never run the suite against the desktop app on port 3000
+
+### 🔧 Changes
+
+- bump
+- **tasks**: add T-078..T-089, close T-079, T-080, T-081, T-089
+- **rules**: watch PR checks until green before approval and merge (T-089)
+- **skills**: whatsapp-requests skill tracks the group's requests in a private ledger (T-081)
+- **tasks**: close T-075
+- **tasks**: move church-hub better-tasks rules to .claude/rules/better-tasks.md
+- **tasks**: add and close T-076, T-077
+- **tasks**: close T-017 and T-022
+- **tasks**: close T-021, T-027, T-033, T-041, T-075; notes on T-017, T-022
+- **tasks**: drop starter-only template and tips copies
+- **tasks**: use better-tasks' official flow with Kokoro videos
+- **songs**: shared category and tag filter components
+- **e2e**: format livestream gama spec
+- **tasks**: close T-005, T-067, T-069, T-070, T-074; add T-071..T-073
+- **song-bookmarks**: Romanian Edit-as-text help and error reworded via Codex
+- **marcaje**: Romanian export and import texts reworded via Codex
+- **tasks**: teammates get Romanian texts from Codex
+- **server**: describe supportId, the rate limit and the new log flow in OpenAPI
+- **tasks**: close T-009 and T-068
+- **agents**: move the task teammate to the user's agents
+- **tasks**: close T-003, T-004, T-006, T-007, T-008, T-010
+- **tasks**: close T-066, add T-067 and T-068
+- **tasks**: plan sprint 41 (songs & editor polish)
+- **agents**: add a Sonnet high-effort teammate for better-tasks
+- **tasks**: close sprint 40 security tasks
+- **tasks**: keep security task notes private
+- **security**: gitleaks config, pre-commit hook, key-shape check
+- **api-url**: use a made-up user token in the doc example
+- **tasks**: sprint 40 task notes
+- ignore the untracked build output, archive and generated files
+- stop tracking build output, a stale archive and generated files
+- pin Bun 1.4.2 in app/package.json
+- **tasks**: close sprint 40 tasks
+- **tasks**: teammates build a local app for review
+- **tasks**: link PR demo GIFs to the jsDelivr mp4 in step 5
+- **tasks**: teammates hand PR lines to the lead in a task note
+- **tasks**: PR build links in the PR flow and the report
+- **tasks**: sprint 40 task notes and PR sections
+- **tasks**: update sprint 40 task notes
+- **tasks**: record a before and an after video for every task
+- **tasks**: close T-052
+- **tasks**: update T-052 notes
+- **tasks**: clean up the worktree on accept
+- **worktree**: add fast cleanup script for finished tasks
+- **worktree**: share port, run and step helpers between worktree scripts
+- **tasks**: set up worktrees with the cache-reusing script
+- **worktree**: add setup script that reuses the main checkout's caches
+- **tasks**: use the installed headless shell instead of downloading it
+- **tasks**: close T-001 and T-051, add T-052
+- **tasks**: require worktree, e2e, demo video and PR for each task
+- **documented-pr**: reuse demo helper, add mp4 and output dir
+- Update settings.json
+- add better-tasks
+- **tasks**: keep task titles valid YAML
+- add tasks
+
 ## v0.1.102 — 2026-09-18
 
 ### 🚀 Features
