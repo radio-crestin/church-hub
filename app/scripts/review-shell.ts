@@ -154,7 +154,19 @@ function stripPerTaskFiles(app: string, template: string) {
   })
 }
 
+/**
+ * generate_context! embeds frontendDist, so it must exist; the review shell
+ * never serves it (review.rs serves the task's own build from disk).
+ */
+function ensureFrontendDist(app: string) {
+  const dist = join(app, 'apps', 'client', 'dist')
+  if (existsSync(join(dist, 'index.html'))) return
+  mkdirSync(dist, { recursive: true })
+  writeFileSync(join(dist, 'index.html'), '<!doctype html>\n')
+}
+
 function compileShell(app: string, targetDir: string, staging: string) {
+  ensureFrontendDist(app)
   const config = join(staging, 'tauri.shell.conf.json')
   // The task's web build and sidecar are built by review-build.ts itself.
   writeFileSync(

@@ -141,8 +141,19 @@ function buildClient(app: string, port: number, outDir: string) {
   return `talks to port ${port}`
 }
 
+/** Windows keeps a running app's files locked: say so instead of EBUSY. */
+function removeOldApp(layout: Layout) {
+  try {
+    rmSync(layout.app, { recursive: true, force: true })
+  } catch (error) {
+    throw new Error(
+      `cannot replace ${layout.app}: close the running review app first (${error})`,
+    )
+  }
+}
+
 function copyShell(shell: string, layout: Layout) {
-  rmSync(layout.app, { recursive: true, force: true })
+  removeOldApp(layout)
   if (process.platform === 'darwin') {
     cpSync(join(shell, shellEntry()), layout.app, {
       recursive: true,
