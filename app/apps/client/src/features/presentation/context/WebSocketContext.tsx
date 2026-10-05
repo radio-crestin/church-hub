@@ -14,7 +14,6 @@ import { getApiUrl, getWsUrl, isMobile } from '~/config'
 import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
-import { presentedSongsQueryKey } from '../../song-key/hooks/usePresentedSongs'
 import { updateStateIfNewer } from '../hooks/usePresentationControls'
 import { presentationStateQueryKey } from '../hooks/usePresentationState'
 import { screenQueryKey } from '../hooks/useScreen'
@@ -377,14 +376,12 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           queryClient.invalidateQueries({
             queryKey: ['song', data.payload.songId],
           })
-          // Also invalidate the songs list to update any list views
+          // Refetch every song list, the Game cântări one included. Never
+          // reset it: a reset drops the loaded pages, so the page scrolled
+          // back to the top after each saved gama (T-076). A refetch keeps
+          // them on screen and still brings newly presented songs to the top.
           queryClient.invalidateQueries({
             queryKey: ['songs'],
-          })
-          // Reset the presented songs infinite query to refetch from beginning
-          // This ensures newly presented songs appear at the top in real-time
-          queryClient.resetQueries({
-            queryKey: presentedSongsQueryKey,
           })
           // Invalidate all schedule queries to update slides in schedule panels
           queryClient.invalidateQueries({

@@ -206,8 +206,12 @@ test.describe('Page actions menu', () => {
       await openSong(page, song.id)
 
       await page.getByTestId('song-set-key-line').click()
-      await expect(page.locator('#keyLine')).toBeVisible({ timeout: 10000 })
-      await expect(page.getByTestId('key-line-save')).toBeVisible()
+      await expect(
+        page.locator('dialog[open]').getByTestId('key-line-input'),
+      ).toBeVisible({ timeout: 10000 })
+      await expect(
+        page.locator('dialog[open]').getByTestId('key-line-save'),
+      ).toBeVisible()
       await page.keyboard.press('Escape')
     } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
