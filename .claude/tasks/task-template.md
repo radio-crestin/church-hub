@@ -7,8 +7,3 @@
 ## Notes
 
 -->
-
-## PR
-- branch:
-- pr:
-- video:

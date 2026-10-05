@@ -2,6 +2,8 @@
   "//": "better-tasks settings for this project. Remove the // in front of a key to set it here; keys left out come from /config or the defaults. {id}, {slug} and {title} work in taskFileName.",
   "// editor": "auto",
   "worktree": true,
+  "demoVideos": true,
+  "pullRequests": true,
   "// contextLimit": 50,
   "// longCache": true,
   "// statusEvery": 10,
