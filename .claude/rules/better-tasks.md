@@ -9,6 +9,7 @@ Project additions to the better-tasks plugin's own coordinator and teammate rule
 - **Cleanup** after the merge, from the main checkout: `bun app/scripts/worktree-cleanup.ts <task-id> <branch>`, then stop the teammate. It closes the review app, frees ports 3100 + n and 4100 + n (never 3000), removes the worktree and review build, and deletes the branches and the `pr-build-<n>` release once merged. A task with no PR (tooling) still runs it for its worktree and branch.
 
 ## Teammates
+- **Plugin**: one install per machine, `claude plugin install better-tasks@better-tasks` (user scope; never a second `--scope project` copy, which updates on its own and goes stale); `.claude/settings.json` enables it with `autoUpdate`, so each Claude Code start pulls the latest version.
 - **Branch**: `git switch -c feat/<slug>` (or `fix/<slug>`) first; push it under that name, not `task/T-xxx` (CLAUDE.md rule).
 - **Setup**: `bun app/scripts/worktree-setup.ts <task-id>` (~5 s): reuses the main checkout's caches, builds the client for your port = 3100 + task number. After client changes: `cd app/apps/client && VITE_API_PORT=<port> VITE_SERVER_PORT=<port> bun run build`.
 - **Port 3000** is the user's dev server: never start, test against or kill it. e2e always with `CI=1 TEST_PORT=<port>` (without `CI=1`, Playwright rebuilds the client for port 3000). The before/after video's steps run against your port too.
