@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Print the download links of a PR's test build (made by .github/workflows/pr-build.yml
-# on every push, ~25 min) into the shared `pr-builds` prerelease. The same links sit in the
-# "Test build of <sha>" section of the PR description.
+# Print the download links of a PR's installers, built only on request by
+# .github/workflows/pr-build.yml (~10 min) into the shared `pr-builds` prerelease.
+# The same links sit in the "Test build of <sha>" section of the PR description.
+# Reviews use the local app (app/scripts/review-build.ts); installers are for
+# when the user asks for them.
+#
+# Ask for them first: comment `/build` (all) or `/build macos windows` on the PR, or
+#   gh workflow run pr-build.yml -f pr=<n> -f platforms=macos,windows,linux
 #
 # Usage: pr-build-links.sh <pr-number> [--wait]
-#   --wait  block until the build of the PR's current head finishes, then print.
+#   --wait  block until the latest requested build of the PR finishes, then print.
 
 set -euo pipefail
 
@@ -31,7 +36,7 @@ links=$(gh release view pr-builds --json assets \
   --jq ".assets[] | select(.name | contains(\"$suffix\")) | \"\(.name)\t\(.url)\"" 2>/dev/null || true)
 
 if [ -z "$links" ]; then
-  echo "no build of ${head:0:7} yet; latest PR build run:" >&2
+  echo "no installers of ${head:0:7}: ask for them with a /build comment on PR #$pr. Latest PR build run:" >&2
   latest_run | jq -r '"\(.status) \(.conclusion // "") \(.url)"' >&2
   exit 1
 fi
