@@ -524,12 +524,17 @@ export function warmupSearchIndex(): void {
   logger.info(`FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
 }
 
+const PROGRESS_EVERY_SONGS = 1000
+
 /**
  * Rebuilds the entire search index (both standard and trigram)
  * Uses JavaScript normalization to properly expand Romanian contractions
- * and handle hyphenated words for better searchability
+ * and handle hyphenated words for better searchability.
+ * `onProgress` hears songs indexed of all songs (the start-up loading page).
  */
-export function rebuildSearchIndex(): void {
+export function rebuildSearchIndex(
+  onProgress?: (done: number, total: number) => void,
+): void {
   try {
     logger.info('Rebuilding search index...')
 
@@ -583,7 +588,10 @@ export function rebuildSearchIndex(): void {
       `)
 
       // Insert each song with normalized content
-      for (const song of songs) {
+      onProgress?.(0, songs.length)
+      for (const [index, song] of songs.entries()) {
+        if (index % PROGRESS_EVERY_SONGS === 0)
+          onProgress?.(index, songs.length)
         const normalizedTitle = normalizeForIndex(
           joinSearchTitles(song.title, song.alternate_titles),
         )
@@ -601,6 +609,7 @@ export function rebuildSearchIndex(): void {
       }
 
       db.run('COMMIT')
+      onProgress?.(songs.length, songs.length)
 
       // Clear the search cache since index changed
       clearSearchCache()

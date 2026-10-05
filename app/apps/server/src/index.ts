@@ -334,15 +334,20 @@ import {
   startSyncScheduler,
   upsertSyncConfig,
 } from './service/sync'
+import { startBootServer } from './utils/bootServer'
 import {
   type BootPhase,
   getBootHealth,
   setBootFailed,
+  setBootFirstRun,
   setBootPhase,
+  setBootProgress,
   setBootReady,
+  setBootStep,
 } from './utils/bootState'
+import { isPortFree } from './utils/isPortFree'
 import { createLogger } from './utils/logger'
-import { getLogsDir } from './utils/paths'
+import { getDatabasePath, getLogsDir } from './utils/paths'
 import { reportError } from './utils/reportError'
 import { logRequest, logResponse } from './utils/request-logger'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
@@ -461,74 +466,6 @@ async function serveWithRetry<T>(
 }
 
 /**
- * A minimal HTTP server that binds the real port BEFORE the heavy boot work
- * (migrations, FTS rebuild, seeding) runs. It exists so two things are true
- * from the very first moment the sidecar process is alive:
- *
- *  1. The desktop shell's `/ping` health check answers immediately, so the
- *     Tauri window paints instead of waiting on a 30s timeout.
- *  2. The client can poll `/health` to render real boot progress — and, if a
- *     migration throws, read the actual failure instead of spinning forever.
- *
- * Every non-health request gets a 503 with the current phase so any code that
- * races ahead of readiness fails loudly rather than hitting a half-built DB.
- * The handle is handed back so `main()` can stop it before the real server
- * binds the same port.
- */
-function startBootServer(port: number | string): ReturnType<typeof Bun.serve> {
-  const healthResponse = () =>
-    new Response(JSON.stringify(getBootHealth()), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    })
-
-  return Bun.serve({
-    port,
-    hostname: '0.0.0.0',
-    reusePort: true,
-    fetch(req) {
-      const url = new URL(req.url)
-      if (req.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': '*',
-          },
-        })
-      }
-      if (url.pathname === '/health' || url.pathname === '/api/health') {
-        return healthResponse()
-      }
-      if (url.pathname === '/ping' || url.pathname === '/api/ping') {
-        return new Response(JSON.stringify({ data: 'pong' }), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        })
-      }
-      // Everything else: the server isn't ready to do real work yet.
-      const health = getBootHealth()
-      return new Response(
-        JSON.stringify({ error: 'Server starting', ...health }),
-        {
-          status: 503,
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': '1',
-            'Access-Control-Allow-Origin': '*',
-          },
-        },
-      )
-    },
-  })
-}
-
-/**
  * Waits for a port to become available, retrying up to maxRetries times.
  * Handles ghost PIDs on Windows where the process is gone but the binding lingers.
  */
@@ -537,18 +474,8 @@ async function waitForPortAvailable(
   maxRetries = 6,
   delayMs = 500,
 ): Promise<void> {
-  const net = await import('node:net')
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const inUse = await new Promise<boolean>((resolve) => {
-      const srv = net.createServer()
-      srv.once('error', () => resolve(true))
-      srv.once('listening', () => {
-        srv.close()
-        resolve(false)
-      })
-      srv.listen(port, '127.0.0.1')
-    })
-    if (!inUse) return
+    if (await isPortFree(port)) return
     // biome-ignore lint/suspicious/noConsole: Startup info
     console.log(
       `[startup] Port ${port} still in use, waiting... (${attempt}/${maxRetries})`,
@@ -623,17 +550,20 @@ async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log('[startup] === Server Starting ===')
 
-  // Kill any existing process on the server port and wait for it to be free
+  // A stale server on the port (a crashed run) is killed first. The kill
+  // looks it up with lsof/netstat (slow on Windows), so only when it is held.
   const serverPort = Number(process.env['PORT']) || 3000
-  killProcessOnPort(serverPort)
-  await waitForPortAvailable(serverPort)
+  if (!(await isPortFree(serverPort))) {
+    killProcessOnPort(serverPort)
+    await waitForPortAvailable(serverPort)
+  }
 
-  // Bind the port immediately with a minimal boot server so the shell's
-  // /ping check answers right away (no blank-screen wait) and the client can
-  // poll /health for real boot progress while the heavy init below runs. If
-  // any init step throws, the boot server stays up reporting the failure via
-  // /health instead of the process dying silently into an endless spinner.
-  const bootServer = startBootServer(serverPort)
+  // Bind the port at once with the boot server (in a worker thread), so the
+  // window's loading page reads each step from /health while the heavy init
+  // below runs. If any init step throws, the boot server stays up reporting
+  // the failure via /health instead of the process dying silently.
+  setBootFirstRun(!existsSync(getDatabasePath()))
+  const bootServer = await startBootServer(serverPort)
   // biome-ignore lint/suspicious/noConsole: Startup logging
   console.log(
     `[startup] Boot server listening on ${serverPort} — serving /health while initializing`,
@@ -645,16 +575,19 @@ async function main() {
     // Initialize database (Drizzle ORM wrapper) and run migrations
     bootPhase = 'migrating'
     setBootPhase('migrating')
+    setBootStep('database')
     t = performance.now()
     await initializeDatabase()
     logTiming('database_init', t)
 
     bootPhase = 'indexing'
     setBootPhase('indexing')
+    setBootStep('search')
     await runFtsRebuild()
 
     bootPhase = 'finalizing'
     setBootPhase('finalizing')
+    setBootStep('finishing')
     await runFinalizeBoot()
   } catch (bootErr) {
     // Surface the failure to PostHog + log file and keep the boot server up so
@@ -668,7 +601,7 @@ async function main() {
   // Heavy init done — hand the port off from the boot server to the real one.
   // Await the stop so the socket is fully released before we rebind (serveWithRetry
   // also retries EADDRINUSE as a belt-and-braces guard against a lingering bind).
-  await bootServer.stop(true)
+  await bootServer.stop()
 
   await startRealServer()
 
@@ -719,7 +652,7 @@ async function runFtsRebuild(): Promise<void> {
       console.log(
         `[startup] songs FTS out of sync (${songsFtsCount}/${songsCount}) — rebuilding`,
       )
-      rebuildSearchIndex()
+      rebuildSearchIndex(setBootProgress)
     }
     const schedulesCount = count('SELECT COUNT(*) AS c FROM schedules')
     const schedulesFtsCount = count('SELECT COUNT(*) AS c FROM schedules_fts')
