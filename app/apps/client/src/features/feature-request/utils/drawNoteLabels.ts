@@ -6,9 +6,12 @@ const TEXT_COLOR = '#111827'
 // A white or yellow note gets a dark outline so its white box still shows.
 const LIGHT_NOTE_OUTLINE = '#111827'
 
-/** Font size in canvas pixels: readable at any screenshot width. */
-export function getNoteFontSize(canvasWidth: number): number {
-  return Math.max(14, Math.round(canvasWidth / 70))
+/**
+ * Font size in canvas pixels, from the picture's longer side so a tall phone
+ * screenshot gets readable notes too (its width alone would make them tiny).
+ */
+function getNoteFontSize(width: number, height: number): number {
+  return Math.max(14, Math.round(Math.max(width, height) / 60))
 }
 
 /**
@@ -20,7 +23,7 @@ export function drawNoteLabels(
   notes: ScreenshotNote[],
 ): void {
   const { width, height } = context.canvas
-  const fontSize = getNoteFontSize(width)
+  const fontSize = getNoteFontSize(width, height)
   const radius = fontSize * 0.8
   const padding = fontSize * 0.4
   const lineHeight = fontSize * 1.25
