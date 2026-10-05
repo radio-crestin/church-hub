@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { Loader2, Plus, Search, Upload } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useSyncUpdatesMap } from '~/features/sync'
 import { usePermissions } from '~/provider/permissions-provider'
 import { ConfirmModal } from '~/ui/modal'
+import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { SidebarProgramRow } from './SidebarProgramRow'
 import { useConfirmDeleteProgram } from '../../hooks/useConfirmDeleteProgram'
@@ -38,6 +39,7 @@ export function SidebarProgramList() {
     useImportProgramFromFile()
   const deletion = useConfirmDeleteProgram()
   const [filter, setFilter] = useState('')
+  const filterRef = useRef<HTMLInputElement>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [renaming, setRenaming] = useState<Schedule | null>(null)
 
@@ -48,20 +50,22 @@ export function SidebarProgramList() {
     () => [...(schedules ?? [])].sort((a, b) => b.createdAt - a.createdAt),
     [schedules],
   )
-  // The server also finds programs by the songs and verses in them; until it
-  // answers, titles are matched here.
+  // Titles that match come first; then the programs the server finds by
+  // the songs and verses in them.
   const query = filter.trim()
   const { data: searchResults } = useSearchSchedules(query)
   const shown = useMemo(() => {
     if (!query) return newestFirst
-    if (searchResults) {
-      const byId = new Map(newestFirst.map((s) => [s.id, s]))
-      return searchResults.flatMap((r) => byId.get(r.id) ?? [])
-    }
     const needle = normalizeForSearch(query)
-    return newestFirst.filter((s) =>
+    const byTitle = newestFirst.filter((s) =>
       normalizeForSearch(s.title).includes(needle),
     )
+    const listed = new Set(byTitle.map((s) => s.id))
+    const byId = new Map(newestFirst.map((s) => [s.id, s]))
+    const byContent = (searchResults ?? []).flatMap((r) =>
+      listed.has(r.id) ? [] : (byId.get(r.id) ?? []),
+    )
+    return [...byTitle, ...byContent]
   }, [newestFirst, query, searchResults])
 
   const openProgram = (scheduleId: number) =>
@@ -71,7 +75,11 @@ export function SidebarProgramList() {
     })
 
   return (
-    <div data-testid="sidebar-program-list" className="mt-1 ml-6 space-y-1">
+    <div
+      data-testid="sidebar-program-list"
+      // Zero intrinsic width: long titles truncate instead of widening the sidebar.
+      className="mt-1 ml-6 w-0 min-w-[calc(100%-1.5rem)] space-y-1"
+    >
       {newestFirst.length > FILTER_FROM && (
         <div className="relative">
           <Search
@@ -79,14 +87,23 @@ export function SidebarProgramList() {
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
           />
           <input
-            type="search"
+            ref={filterRef}
+            type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder={t('search.placeholder')}
             aria-label={t('search.placeholder')}
             data-testid="sidebar-program-filter"
-            className="w-full pl-8 pr-2 py-1 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full pl-8 pr-7 py-1 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
           />
+          {filter && (
+            <ClearSearchButton
+              inputRef={filterRef}
+              onClear={() => setFilter('')}
+              size={14}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            />
+          )}
         </div>
       )}
 
@@ -145,29 +162,37 @@ export function SidebarProgramList() {
         </div>
       )}
 
-      <CreateScheduleModal
-        isOpen={isCreating}
-        onClose={() => setIsCreating(false)}
-        onCreated={openProgram}
-      />
-      <RenameScheduleModal
-        schedule={renaming}
-        onClose={() => setRenaming(null)}
-      />
-      <ConfirmModal
-        isOpen={deletion.pending !== null}
-        title={t('panel.deleteScheduleTitle')}
-        message={t('panel.deleteScheduleMessage', {
-          title: deletion.pending?.title ?? '',
-          count: deletion.pending?.itemCount ?? 0,
-        })}
-        confirmLabel={t('actions.delete')}
-        cancelLabel={t('modal.cancel')}
-        variant="danger"
-        onConfirm={deletion.confirmDelete}
-        onCancel={deletion.cancel}
-        testId="sidebar-program-delete-confirm"
-      />
+      {/* Mounted only while open: the Programs panel on the song and Bible
+          pages has the same dialogs, and two closed copies would clash. */}
+      {isCreating && (
+        <CreateScheduleModal
+          isOpen
+          onClose={() => setIsCreating(false)}
+          onCreated={openProgram}
+        />
+      )}
+      {renaming && (
+        <RenameScheduleModal
+          schedule={renaming}
+          onClose={() => setRenaming(null)}
+        />
+      )}
+      {deletion.pending && (
+        <ConfirmModal
+          isOpen
+          title={t('panel.deleteScheduleTitle')}
+          message={t('panel.deleteScheduleMessage', {
+            title: deletion.pending.title,
+            count: deletion.pending.itemCount,
+          })}
+          confirmLabel={t('actions.delete')}
+          cancelLabel={t('modal.cancel')}
+          variant="danger"
+          onConfirm={deletion.confirmDelete}
+          onCancel={deletion.cancel}
+          testId="sidebar-program-delete-confirm"
+        />
+      )}
     </div>
   )
 }

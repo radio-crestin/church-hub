@@ -292,7 +292,6 @@
     "hidePrograms": "Hide programs",
     "newProgram": "New program",
     "importProgram": "Import a program from a file",
-    "programActions": "Actions for {{title}}",
-    "emptyHint": "Programs are listed in the sidebar. Make the first one here."
+    "programActions": "Actions for {{title}}"
   }
 }

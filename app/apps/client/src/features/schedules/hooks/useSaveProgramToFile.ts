@@ -26,6 +26,8 @@ export function useSaveProgramToFile() {
       } else if (result.error) {
         showToast(result.error, 'error')
       }
+    } catch {
+      showToast(t('messages.error'), 'error')
     } finally {
       setSavingId(null)
     }

@@ -292,7 +292,6 @@
     "hidePrograms": "Ascunde programele",
     "newProgram": "Program nou",
     "importProgram": "Importă un program dintr-un fișier",
-    "programActions": "Acțiuni pentru {{title}}",
-    "emptyHint": "Programele apar în bara laterală. Creează aici primul program."
+    "programActions": "Acțiuni pentru {{title}}"
   }
 }
