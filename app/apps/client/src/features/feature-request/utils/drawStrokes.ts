@@ -1,6 +1,6 @@
 import type { Stroke } from '../types'
 
-/** Paints pen strokes (in canvas pixels) on top of whatever the canvas holds. */
+/** Paints free-hand strokes (in canvas pixels) on top of the canvas. */
 export function drawStrokes(
   context: CanvasRenderingContext2D,
   strokes: Stroke[],
@@ -11,6 +11,7 @@ export function drawStrokes(
   for (const stroke of strokes) {
     const [first, ...rest] = stroke.points
     if (!first) continue
+    context.globalAlpha = stroke.opacity
     context.strokeStyle = stroke.color
     context.lineWidth = stroke.width
     context.beginPath()

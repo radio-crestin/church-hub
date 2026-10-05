@@ -7,20 +7,23 @@ import {
   useAnnotationCanvas,
 } from '../hooks/useAnnotationCanvas'
 import type { Annotation, AnnotationTool } from '../types'
+import { getToolCursor } from '../utils/getToolCursor'
 
 interface ScreenshotAnnotatorProps {
   screenshot: HTMLCanvasElement
   annotations: Annotation[]
   onAnnotationsChange: (annotations: Annotation[]) => void
   tool: AnnotationTool
+  color: string
 }
 
-/** The screenshot as a canvas: draw on it, or click to place a text note. */
+/** The screenshot as a canvas to mark up with the chosen tool and colour. */
 export function ScreenshotAnnotator({
   screenshot,
   annotations,
   onAnnotationsChange,
   tool,
+  color,
 }: ScreenshotAnnotatorProps) {
   const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -31,6 +34,7 @@ export function ScreenshotAnnotator({
     annotations,
     onAnnotationsChange,
     tool,
+    color,
     (spot) => {
       // A click while a note is open only closes it: its blur saves it.
       if (noteSpot) (document.activeElement as HTMLElement | null)?.blur()
@@ -42,7 +46,7 @@ export function ScreenshotAnnotator({
     if (noteSpot) {
       onAnnotationsChange([
         ...annotations,
-        { kind: 'note', ...noteSpot.canvas, text },
+        { kind: 'note', ...noteSpot.canvas, text, color },
       ])
     }
     setNoteSpot(null)
@@ -54,12 +58,9 @@ export function ScreenshotAnnotator({
         ref={canvasRef}
         data-testid="feature-request-canvas"
         data-tool={tool}
-        aria-label={t(
-          tool === 'note'
-            ? 'common:featureRequest.noteHint'
-            : 'common:featureRequest.penHint',
-        )}
-        className={`block w-auto h-auto max-w-full max-h-[45vh] md:max-h-[55vh] rounded-lg border border-gray-200 dark:border-gray-700 touch-none bg-gray-100 dark:bg-gray-900 ${tool === 'note' ? 'cursor-text' : 'cursor-crosshair'}`}
+        aria-label={t('common:featureRequest.canvasLabel')}
+        className="block w-auto h-auto max-w-full max-h-[45vh] md:max-h-[55vh] rounded-lg border border-gray-200 dark:border-gray-700 touch-none bg-gray-100 dark:bg-gray-900"
+        style={{ cursor: getToolCursor(tool, color) }}
         {...canvasHandlers}
       />
       {noteSpot && (
@@ -68,6 +69,7 @@ export function ScreenshotAnnotator({
           left={noteSpot.css.x}
           top={noteSpot.css.y}
           boxWidth={canvasRef.current?.clientWidth ?? 0}
+          color={color}
           onSave={saveNote}
           onCancel={() => setNoteSpot(null)}
         />

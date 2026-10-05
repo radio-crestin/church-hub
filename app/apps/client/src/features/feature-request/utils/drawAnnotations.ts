@@ -1,17 +1,17 @@
 import { drawNoteLabels } from './drawNoteLabels'
+import { drawShape } from './drawShape'
 import { drawStrokes } from './drawStrokes'
 import { getScreenshotNotes } from './getScreenshotNotes'
-import type { Annotation, Stroke } from '../types'
+import type { Annotation } from '../types'
 
-/** Paints the drawing, then the numbered notes on top of it. */
+/** Paints the drawings and shapes in the order made, then the notes on top. */
 export function drawAnnotations(
   context: CanvasRenderingContext2D,
   annotations: Annotation[],
 ): void {
-  const strokes = annotations.filter(
-    (annotation): annotation is { kind: 'stroke' } & Stroke =>
-      annotation.kind === 'stroke',
-  )
-  drawStrokes(context, strokes)
+  for (const annotation of annotations) {
+    if (annotation.kind === 'stroke') drawStrokes(context, [annotation])
+    if (annotation.kind === 'shape') drawShape(context, annotation)
+  }
   drawNoteLabels(context, getScreenshotNotes(annotations))
 }

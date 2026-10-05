@@ -1,11 +1,15 @@
 import { type RefObject, useEffect, useRef } from 'react'
 
-import type { Annotation, AnnotationTool, Stroke, StrokePoint } from '../types'
+import type { Annotation, AnnotationTool, StrokePoint } from '../types'
 import { drawAnnotations } from '../utils/drawAnnotations'
-import { NOTE_COLOR } from '../utils/drawNoteLabels'
 
-// Pen width in CSS pixels; scaled so it looks the same at any canvas size.
+// Line widths in CSS pixels; scaled so they look the same at any canvas size.
 const PEN_WIDTH = 4
+const HIGHLIGHTER_WIDTH = 18
+const HIGHLIGHTER_OPACITY = 0.35
+const SHAPE_WIDTH = 4
+// A shape smaller than this (CSS pixels) was a click, not a drag.
+const MIN_SHAPE_SIZE = 4
 
 /** Where a new note goes: canvas pixels, and CSS pixels inside the canvas box. */
 export interface NoteSpot {
@@ -14,11 +18,11 @@ export interface NoteSpot {
 }
 
 /**
- * The screenshot canvas with the user's drawing and notes on it. With the
- * pen, dragging draws; with the note tool, a click reports the spot so the
- * caller can ask for the note's text. Points are kept in canvas pixels so
- * they line up with the full-size screenshot at export, however small the
- * canvas is shown (phones).
+ * The screenshot canvas with the user's markup on it. Pen and highlighter
+ * draw free-hand; rectangle, ellipse and arrow are dragged out; the note
+ * tool reports the clicked spot so the caller can ask for the text. Points
+ * are kept in canvas pixels so they line up with the full-size screenshot
+ * at export, however small the canvas is shown (phones).
  */
 export function useAnnotationCanvas(
   canvasRef: RefObject<HTMLCanvasElement | null>,
@@ -26,18 +30,20 @@ export function useAnnotationCanvas(
   annotations: Annotation[],
   onAnnotationsChange: (annotations: Annotation[]) => void,
   tool: AnnotationTool,
+  color: string,
   onPlaceNote: (spot: NoteSpot) => void,
 ) {
-  const activeStroke = useRef<Stroke | null>(null)
+  // The stroke or shape being drawn right now, not yet in `annotations`.
+  const active = useRef<Annotation | null>(null)
 
-  const redraw = (extra: Stroke | null = null) => {
+  const redraw = () => {
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
     if (!canvas || !context) return
     context.drawImage(screenshot, 0, 0)
     drawAnnotations(
       context,
-      extra ? [...annotations, { kind: 'stroke', ...extra }] : annotations,
+      active.current ? [...annotations, active.current] : annotations,
     )
   }
 
@@ -59,38 +65,60 @@ export function useAnnotationCanvas(
   }
 
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect()
+    const canvas = event.currentTarget
+    const rect = canvas.getBoundingClientRect()
+    const scale = canvas.width / rect.width
+    const point = toCanvasPoint(event)
     if (tool === 'note') {
       // No mousedown follows, so focus stays in the note box that opens.
       event.preventDefault()
       onPlaceNote({
-        canvas: toCanvasPoint(event),
+        canvas: point,
         css: { x: event.clientX - rect.left, y: event.clientY - rect.top },
       })
       return
     }
-    event.currentTarget.setPointerCapture(event.pointerId)
-    activeStroke.current = {
-      color: NOTE_COLOR,
-      width: (PEN_WIDTH * event.currentTarget.width) / rect.width,
-      points: [toCanvasPoint(event)],
+    canvas.setPointerCapture(event.pointerId)
+    if (tool === 'pen' || tool === 'highlighter') {
+      const isPen = tool === 'pen'
+      active.current = {
+        kind: 'stroke',
+        color,
+        width: (isPen ? PEN_WIDTH : HIGHLIGHTER_WIDTH) * scale,
+        opacity: isPen ? 1 : HIGHLIGHTER_OPACITY,
+        points: [point],
+      }
+    } else {
+      active.current = {
+        kind: 'shape',
+        shape: tool,
+        color,
+        width: SHAPE_WIDTH * scale,
+        from: point,
+        to: point,
+      }
     }
-    redraw(activeStroke.current)
+    redraw()
   }
 
   const onPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!activeStroke.current) return
-    activeStroke.current.points.push(toCanvasPoint(event))
-    redraw(activeStroke.current)
+    const current = active.current
+    if (!current) return
+    const point = toCanvasPoint(event)
+    if (current.kind === 'stroke') current.points.push(point)
+    if (current.kind === 'shape') current.to = point
+    redraw()
   }
 
-  const onPointerUp = () => {
-    if (!activeStroke.current) return
-    onAnnotationsChange([
-      ...annotations,
-      { kind: 'stroke', ...activeStroke.current },
-    ])
-    activeStroke.current = null
+  const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const current = active.current
+    if (!current) return
+    active.current = null
+    if (current.kind === 'shape' && isTooSmall(current, event.currentTarget)) {
+      redraw()
+      return
+    }
+    onAnnotationsChange([...annotations, current])
   }
 
   return {
@@ -99,4 +127,16 @@ export function useAnnotationCanvas(
     onPointerUp,
     onPointerCancel: onPointerUp,
   }
+}
+
+function isTooSmall(
+  shape: { from: StrokePoint; to: StrokePoint },
+  canvas: HTMLCanvasElement,
+): boolean {
+  const scale = canvas.width / canvas.getBoundingClientRect().width
+  const size = Math.max(
+    Math.abs(shape.to.x - shape.from.x),
+    Math.abs(shape.to.y - shape.from.y),
+  )
+  return size < MIN_SHAPE_SIZE * scale
 }

@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { isLightColor } from '../utils/isLightColor'
+
 export const NOTE_MAX_LENGTH = 200
 const INPUT_WIDTH_PX = 240
 
@@ -10,6 +12,8 @@ interface NoteInputProps {
   top: number
   /** Width of the screenshot box, to keep the input inside it. */
   boxWidth: number
+  /** The note's colour, shown as the box's border. */
+  color: string
   onSave: (text: string) => void
   onCancel: () => void
 }
@@ -22,6 +26,7 @@ export function NoteInput({
   left,
   top,
   boxWidth,
+  color,
   onSave,
   onCancel,
 }: NoteInputProps) {
@@ -59,11 +64,12 @@ export function NoteInput({
           close(false)
         }
       }}
-      className="absolute z-10 px-2 py-1 text-sm rounded-md border-2 border-red-500 bg-white text-gray-900 shadow-lg focus:outline-none"
+      className="absolute z-10 px-2 py-1 text-sm rounded-md border-2 bg-white text-gray-900 shadow-lg focus:outline-none"
       style={{
         left: Math.max(0, Math.min(left, boxWidth - width)),
         top: Math.max(0, top - 16),
         width,
+        borderColor: isLightColor(color) ? '#111827' : color,
       }}
     />
   )

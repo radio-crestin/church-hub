@@ -218,6 +218,61 @@ test.describe('Request a feature', () => {
     expect(sent[0].screenshotNotes).toEqual(['First note'])
   })
 
+  test('markup bar: shapes in the chosen colour, a cursor per tool', async ({
+    page,
+  }) => {
+    await mockFeatureRequestApi(page)
+    await openSongsPage(page)
+
+    const dialog = await openRequestFeature(page)
+    const canvas = dialog.getByTestId('feature-request-canvas')
+    const cursor = () => canvas.evaluate((element) => element.style.cursor)
+    const undo = dialog.getByTestId('feature-request-undo')
+
+    // The pen is ready, with a pencil cursor in the chosen colour (red).
+    await expect(dialog.getByTestId('feature-request-toolbar')).toBeVisible()
+    expect(await cursor()).toContain('%23ef4444')
+    await dialog.getByTestId('feature-request-color-3b82f6').click()
+    await expect(
+      dialog.getByTestId('feature-request-color-3b82f6'),
+    ).toHaveAttribute('aria-pressed', 'true')
+    expect(await cursor()).toContain('%233b82f6')
+
+    // Shapes use a crosshair; a click without dragging adds nothing.
+    await dialog.getByTestId('feature-request-tool-rect').click()
+    expect(await cursor()).toBe('crosshair')
+    const box = await canvasBox(dialog)
+    await page.mouse.click(box.x + 30, box.y + 30)
+    await expect(undo).toBeDisabled()
+
+    // A dragged rectangle is drawn in blue on the screenshot.
+    await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.2)
+    await page.mouse.down()
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.6, {
+      steps: 5,
+    })
+    await page.mouse.up()
+    await expect(undo).toBeEnabled()
+    const edgePixel = await canvas.evaluate((element) => {
+      const target = element as HTMLCanvasElement
+      const context = target.getContext('2d')
+      const x = Math.round(target.width * 0.4)
+      const y = Math.round(target.height * 0.2)
+      return Array.from(context?.getImageData(x, y, 1, 1).data ?? [])
+    })
+    expect(edgePixel[2]).toBeGreaterThan(200)
+    expect(edgePixel[0]).toBeLessThan(120)
+
+    // The other tools: arrow and circle draw too; text notes get a text cursor.
+    for (const tool of ['arrow', 'ellipse', 'highlighter'] as const) {
+      await dialog.getByTestId(`feature-request-tool-${tool}`).click()
+      await drawOnScreenshot(page, dialog)
+    }
+    await dialog.getByTestId('feature-request-tool-note').click()
+    expect(await cursor()).toBe('text')
+    await expect(dialog.getByTestId('feature-request-tool-hint')).toBeVisible()
+  })
+
   test('Send waits for a valid email, and for something to send', async ({
     page,
   }) => {

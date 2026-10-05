@@ -1,8 +1,10 @@
+import { isLightColor } from './isLightColor'
 import { wrapText } from './wrapText'
 import type { ScreenshotNote } from '../types'
 
-export const NOTE_COLOR = '#ef4444'
 const TEXT_COLOR = '#111827'
+// A white or yellow note gets a dark outline so its white box still shows.
+const LIGHT_NOTE_OUTLINE = '#111827'
 
 /** Font size in canvas pixels: readable at any screenshot width. */
 export function getNoteFontSize(canvasWidth: number): number {
@@ -10,8 +12,8 @@ export function getNoteFontSize(canvasWidth: number): number {
 }
 
 /**
- * Paints each note as a numbered red badge at its spot, with its text in a
- * white box beside it. The numbers match the list sent as text in the issue.
+ * Paints each note as a numbered badge in its colour at its spot, with its
+ * text in a white box beside it. The numbers match the list sent as text in the issue.
  */
 export function drawNoteLabels(
   context: CanvasRenderingContext2D,
@@ -43,7 +45,8 @@ export function drawNoteLabels(
     )
 
     context.fillStyle = '#ffffff'
-    context.strokeStyle = NOTE_COLOR
+    const isLight = isLightColor(note.color)
+    context.strokeStyle = isLight ? LIGHT_NOTE_OUTLINE : note.color
     context.lineWidth = Math.max(2, fontSize / 8)
     context.beginPath()
     context.roundRect(boxX, boxY, boxWidth, boxHeight, padding)
@@ -59,11 +62,12 @@ export function drawNoteLabels(
       )
     })
 
-    context.fillStyle = NOTE_COLOR
+    context.fillStyle = note.color
     context.beginPath()
     context.arc(note.x, note.y, radius, 0, Math.PI * 2)
     context.fill()
-    context.fillStyle = '#ffffff'
+    if (isLight) context.stroke()
+    context.fillStyle = isLight ? TEXT_COLOR : '#ffffff'
     context.textAlign = 'center'
     context.fillText(String(index + 1), note.x, note.y)
   })
