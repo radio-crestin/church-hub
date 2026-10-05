@@ -1,6 +1,8 @@
 {
   "title": "Programe",
-  "keyLine": { "missing": "Fără gamă" },
+  "keyLine": {
+    "missing": "Fără gamă"
+  },
   "actions": {
     "create": "Program Nou",
     "save": "Salveaza",
@@ -36,7 +38,8 @@
     "verseteTineri": "Versete Biblice",
     "items": "{{count}} elemente",
     "items_one": "{{count}} element",
-    "items_other": "{{count}} elemente"
+    "items_few": "{{count}} elemente",
+    "items_other": "{{count}} de elemente"
   },
   "panel": {
     "title": "Programe",
@@ -45,7 +48,8 @@
     "selectSchedule": "Alege un program...",
     "searchPlaceholder": "Cauta in program...",
     "songCount_one": "{{count}} cantare",
-    "songCount_other": "{{count}} cantari",
+    "songCount_few": "{{count}} cantari",
+    "songCount_other": "{{count}} de cantari",
     "addVerse": "Adauga {{reference}} in acest program",
     "addVerseDisabled": "Deschide mai intai un verset",
     "verseAdded": "{{reference}} a fost adaugat in program",
@@ -94,15 +98,19 @@
     "savedToFile": "Programul a fost salvat in fisier",
     "imported": "{{count}} elemente importate",
     "imported_one": "{{count}} element importat",
-    "imported_other": "{{count}} elemente importate",
+    "imported_few": "{{count}} elemente importate",
+    "imported_other": "{{count}} de elemente importate",
     "skippedSongs": "{{count}} cantari negasite si omise",
     "skippedSongs_one": "{{count}} cantare negasita si omisa",
-    "skippedSongs_other": "{{count}} cantari negasite si omise",
+    "skippedSongs_few": "{{count}} cantari negasite si omise",
+    "skippedSongs_other": "{{count}} de cantari negasite si omise",
     "skippedBiblePassages": "{{count}} pasaje biblice omise",
     "skippedBiblePassages_one": "{{count}} pasaj biblic omis",
-    "skippedBiblePassages_other": "{{count}} pasaje biblice omise",
+    "skippedBiblePassages_few": "{{count}} pasaje biblice omise",
+    "skippedBiblePassages_other": "{{count}} de pasaje biblice omise",
     "importedWithSongs_one": "Program importat cu {{count}} cantare noua creata",
-    "importedWithSongs_other": "Program importat cu {{count}} cantari noi create",
+    "importedWithSongs_few": "Program importat cu {{count}} cantari noi create",
+    "importedWithSongs_other": "Program importat cu {{count}} de cantari noi create",
     "importError": "Importul programului a esuat",
     "error": "A aparut o eroare",
     "notFound": "Programul nu a fost gasit",
@@ -154,7 +162,8 @@
     "addEntry": "Adauga Intrare",
     "noEntries": "Nicio intrare inca",
     "entriesCount_one": "{{count}} intrare",
-    "entriesCount_other": "{{count}} intrari",
+    "entriesCount_few": "{{count}} intrari",
+    "entriesCount_other": "{{count}} de intrari",
     "personNamePlaceholder": "Nume persoana",
     "removeEntry": "Sterge intrare",
     "errorNoValidEntries": "Adauga cel putin o intrare valida",
@@ -172,7 +181,8 @@
     "addToProgram": "Adauga in program",
     "previewEmpty": "Aceasta cantare nu are inca slide-uri",
     "slideCount_one": "{{count}} slide",
-    "slideCount_other": "{{count}} slide-uri",
+    "slideCount_few": "{{count}} slide-uri",
+    "slideCount_other": "{{count}} de slide-uri",
     "adding": "Se adauga...",
     "createTitle": "Program Nou",
     "scheduleName": "Numele programului",
@@ -181,7 +191,8 @@
     "createNew": "Creeaza program nou",
     "searchSchedules": "Cauta programe...",
     "addedToSchedules_one": "Cantarea a fost adaugata in {{count}} program",
-    "addedToSchedules_other": "Cantarea a fost adaugata in {{count}} programe",
+    "addedToSchedules_few": "Cantarea a fost adaugata in {{count}} programe",
+    "addedToSchedules_other": "Cantarea a fost adaugata in {{count}} de programe",
     "goToSchedule": "Editeaza",
     "renameTitle": "Redenumeste programul"
   },
@@ -206,13 +217,15 @@
     "warning": "Aceasta actiune va inlocui toate elementele existente din program.",
     "itemCount": "{{count}} elemente vor fi importate",
     "itemCount_one": "{{count}} element va fi importat",
-    "itemCount_other": "{{count}} elemente vor fi importate",
+    "itemCount_few": "{{count}} elemente vor fi importate",
+    "itemCount_other": "{{count}} de elemente vor fi importate",
     "confirm": "Importa"
   },
   "noSchedules": "Niciun program inca",
   "noSchedulesDescription": "Creeaza primul tau program pentru a planifica prezentarile",
   "itemCount_one": "{{count}} element",
-  "itemCount_other": "{{count}} elemente",
+  "itemCount_few": "{{count}} elemente",
+  "itemCount_other": "{{count}} de elemente",
   "createdAt": "Creat pe {{date}}",
   "warnings": {
     "missingContent": "Continut lipsa",
@@ -246,7 +259,8 @@
     },
     "preview": "{{count}} elemente detectate",
     "preview_one": "{{count}} element detectat",
-    "preview_other": "{{count}} elemente detectate",
+    "preview_few": "{{count}} elemente detectate",
+    "preview_other": "{{count}} de elemente detectate",
     "errors": {
       "noBibleTranslation": "Nicio traducere biblica configurata",
       "invalidBibleReference": "Referinta biblica invalida",
@@ -254,7 +268,8 @@
       "versesNotFound": "Versetele nu au fost gasite in baza de date"
     },
     "errors_one": "{{count}} eroare gasita",
-    "errors_other": "{{count}} erori gasite",
+    "errors_few": "{{count}} erori gasite",
+    "errors_other": "{{count}} de erori gasite",
     "save": "Aplica Modificarile",
     "cancel": "Anuleaza",
     "copy": "Copiaza",
@@ -276,7 +291,8 @@
       "songCreated": "Cantarea \"{{title}}\" a fost creata",
       "partialSuccess": "{{count}} elemente omise din cauza versetelor lipsa",
       "partialSuccess_one": "{{count}} element omis din cauza versetelor lipsa",
-      "partialSuccess_other": "{{count}} elemente omise din cauza versetelor lipsa"
+      "partialSuccess_few": "{{count}} elemente omise din cauza versetelor lipsa",
+      "partialSuccess_other": "{{count}} de elemente omise din cauza versetelor lipsa"
     },
     "lineError": "Linia {{line}}: {{message}}",
     "validationErrors": "Corectati urmatoarele probleme:"
