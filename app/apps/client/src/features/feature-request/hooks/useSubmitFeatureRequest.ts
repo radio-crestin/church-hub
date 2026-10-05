@@ -1,13 +1,12 @@
 import { useState } from 'react'
 
 import { openExternalUrl } from '../../livestream/utils/openInBrowser'
-import type { RequestFeatureValues } from '../components/RequestFeatureFields'
 import { attachFeedbackLogs } from '../services/attachFeedbackLogs'
 import { getSupportId } from '../services/getSupportId'
 import { getSystemInfo } from '../services/getSystemInfo'
 import { saveEmail } from '../services/savedEmail'
 import { submitFeatureRequest } from '../services/submitFeatureRequest'
-import type { PickedElement, Stroke } from '../types'
+import type { RequestFeatureValues, Stroke } from '../types'
 import { renderAnnotatedScreenshot } from '../utils/renderAnnotatedScreenshot'
 
 type SubmitState =
@@ -16,7 +15,6 @@ type SubmitState =
 
 interface SubmitInput {
   values: RequestFeatureValues
-  element: PickedElement | null
   screenshot: HTMLCanvasElement | null
   strokes: Stroke[]
 }
@@ -28,12 +26,7 @@ interface SubmitInput {
 export function useSubmitFeatureRequest() {
   const [state, setState] = useState<SubmitState>({ status: 'idle' })
 
-  const submit = async ({
-    values,
-    element,
-    screenshot,
-    strokes,
-  }: SubmitInput) => {
+  const submit = async ({ values, screenshot, strokes }: SubmitInput) => {
     setState({ status: 'sending' })
     saveEmail(values.email)
     try {
@@ -42,13 +35,11 @@ export function useSubmitFeatureRequest() {
       if (supportId) void attachFeedbackLogs(supportId, systemInfo)
 
       const result = await submitFeatureRequest({
-        title: values.title.trim(),
         notes: values.notes.trim(),
         email: values.email.trim(),
         route: window.location.pathname,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
         ...systemInfo,
-        element: element ?? undefined,
         screenshot: screenshot
           ? renderAnnotatedScreenshot(screenshot, strokes)
           : undefined,

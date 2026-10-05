@@ -1,9 +1,9 @@
 import { expect, type Locator, type Page, test } from '@playwright/test'
 
 /**
- * "Request a feature" is screenshot first: opening it photographs the screen,
- * a short two-step flow lets the user draw on it (a friendly nudge, optional)
- * and then write the request and send it.
+ * "Request a feature" is one short form: opening it photographs the screen,
+ * then the user writes what they would like (required), may draw on the
+ * screenshot, gives an email and sends. There is no title.
  * The local API (which relays to the Cloudflare worker, and from there to
  * GitHub and WhatsApp) is mocked here, so no real issue or message is made.
  */
@@ -12,12 +12,12 @@ const ISSUE_URL = 'https://github.com/radio-crestin/church-hub/issues/999'
 const EMAIL = 'e2e-requester@example.com'
 
 interface SentRequest {
-  title: string
+  title?: string
   notes: string
   email: string
   route: string
   viewport: string
-  element?: { selector: string; path: string; label: string }
+  element?: unknown
   screenshot?: string
 }
 
@@ -64,7 +64,7 @@ async function openSongsPage(page: Page) {
   })
 }
 
-/** Opens the tool and waits for the screenshot step. */
+/** Opens the tool and waits for the form. */
 async function openRequestFeature(page: Page) {
   await page.getByTestId('sidebar-request-feature').click()
   const dialog = page.getByTestId('feature-request-dialog')
@@ -72,14 +72,7 @@ async function openRequestFeature(page: Page) {
   return dialog
 }
 
-/** Moves on to the writing step. */
-async function goToWriting(dialog: Locator) {
-  await dialog.getByTestId('feature-request-next').click()
-  await expect(dialog.getByTestId('feature-request-title')).toBeVisible()
-}
-
-async function fillRequest(dialog: Locator, title: string, notes: string) {
-  await dialog.getByTestId('feature-request-title').fill(title)
+async function fillRequest(dialog: Locator, notes: string) {
   await dialog.getByTestId('feature-request-notes').fill(notes)
   await dialog.getByTestId('feature-request-email').fill(EMAIL)
 }
@@ -100,7 +93,7 @@ test.describe('Request a feature', () => {
     await recordOpenedUrls(page)
   })
 
-  test('takes the screenshot right away, nudges to draw, then sends a public request', async ({
+  test('one short form: describe, draw, send a public request without a title', async ({
     page,
   }) => {
     const sent = await mockFeatureRequestApi(page)
@@ -111,119 +104,88 @@ test.describe('Request a feature', () => {
     await expect(trigger).toContainText(
       /Request a feature|Propune o funcție nouă/,
     )
-    await trigger.click()
+    const dialog = await openRequestFeature(page)
 
-    // Step 1: no picker first; the screenshot is already there, with a nudge.
-    const dialog = page.getByTestId('feature-request-dialog')
-    await expect(dialog).toBeVisible({ timeout: 20000 })
-    await expect(page.getByTestId('feature-request-picker')).toHaveCount(0)
-    await expect(dialog.getByTestId('feature-request-progress')).toContainText(
-      /1.*2/,
-    )
-    await expect(dialog.getByTestId('feature-request-draw-hint')).toBeVisible()
+    // Everything on one screen: no steps, no title, the description first.
+    await expect(dialog.getByTestId('feature-request-title')).toHaveCount(0)
+    await expect(dialog.getByTestId('feature-request-next')).toHaveCount(0)
+    await expect(dialog.getByTestId('feature-request-notes')).toBeFocused()
     await expect(dialog.getByTestId('feature-request-canvas')).toBeVisible()
-    const pen = dialog.getByTestId('feature-request-pen')
-    await expect(pen).toHaveAttribute('data-pulsing', 'true')
+    await expect(dialog.getByTestId('feature-request-draw-hint')).toBeVisible()
+    await expect(
+      dialog.getByTestId('feature-request-public-notice'),
+    ).toContainText(/GitHub/)
 
     const undo = dialog.getByTestId('feature-request-undo')
     await expect(undo).toBeDisabled()
     await drawOnScreenshot(page, dialog)
     await expect(undo).toBeEnabled()
-    await expect(pen).toHaveAttribute('data-pulsing', 'false')
 
-    // Step 2: write the request; a preview shows the drawing that goes along.
-    await goToWriting(dialog)
-    await expect(dialog.getByTestId('feature-request-progress')).toContainText(
-      /2.*2/,
-    )
-    await expect(dialog.getByTestId('feature-request-preview')).toBeVisible()
-    await expect(
-      dialog.getByTestId('feature-request-public-notice'),
-    ).toContainText(/public/i)
-    await dialog.getByTestId('feature-request-notes').fill('Hello')
+    await fillRequest(dialog, 'Let me choose the font size of song titles.')
     await expect(
       dialog.getByTestId('feature-request-notes-counter'),
-    ).toContainText('5 / 5000')
-    await expect(dialog.getByTestId('feature-request-submit')).toBeDisabled()
-
-    await fillRequest(
-      dialog,
-      'E2E: bigger font',
-      'Let me choose the font size of song titles.',
-    )
+    ).toContainText('43 / 5000')
+    await expect(
+      dialog.getByTestId('feature-request-missing-hint'),
+    ).toHaveCount(0)
     await dialog.getByTestId('feature-request-submit').click()
 
     await expect(dialog.getByTestId('feature-request-success')).toBeVisible()
     expect(sent).toHaveLength(1)
     const [request] = sent
-    expect(request.title).toBe('E2E: bigger font')
+    expect(request.title).toBeUndefined()
+    expect(request.element).toBeUndefined()
     expect(request.notes).toBe('Let me choose the font size of song titles.')
     expect(request.email).toBe(EMAIL)
     expect(request.route).toBe('/songs')
     expect(request.viewport).toBe('1280x800')
-    expect(request.element).toBeUndefined()
     expect(request.screenshot).toMatch(/^data:image\/jpeg;base64,/)
 
     // The created issue is opened for the user.
     await expect.poll(() => openedUrls(page)).toContain(ISSUE_URL)
   })
 
-  test('pointing at a part of the app sends its exact path', async ({
+  test('Send stays off with a hint until the description is written', async ({
     page,
   }) => {
     const sent = await mockFeatureRequestApi(page)
     await openSongsPage(page)
 
-    const trigger = page.getByTestId('sidebar-request-feature')
     const dialog = await openRequestFeature(page)
-    await dialog.getByTestId('feature-request-pick-element').click()
+    const submit = dialog.getByTestId('feature-request-submit')
+    const hint = dialog.getByTestId('feature-request-missing-hint')
+    await dialog.getByTestId('feature-request-email').fill(EMAIL)
+    await expect(submit).toBeDisabled()
+    await expect(hint).toContainText(/Describe|Descrie/)
 
-    // Picker: hovering outlines the element under the pointer.
-    const picker = page.getByTestId('feature-request-picker')
-    await expect(picker).toBeVisible()
-    const box = await trigger.boundingBox()
-    if (!box) throw new Error('Request a feature button has no box')
-    const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-    await page.mouse.move(center.x, center.y)
-    await expect(page.getByTestId('feature-request-highlight')).toBeVisible()
-    await page.mouse.click(center.x, center.y)
+    // Spaces alone do not count as a description.
+    await dialog.getByTestId('feature-request-notes').fill('   ')
+    await expect(submit).toBeDisabled()
 
-    await expect(dialog).toBeVisible({ timeout: 20000 })
-    await expect(picker).toBeHidden()
-    await expect(
-      dialog.getByTestId('feature-request-element-label'),
-    ).not.toContainText(/Whole screen|Tot ecranul/)
-    await goToWriting(dialog)
-    await fillRequest(dialog, 'E2E: pointed', 'About this button')
-    await dialog.getByTestId('feature-request-submit').click()
-    await expect(dialog.getByTestId('feature-request-success')).toBeVisible()
+    // Without a valid email it stays off too, with its own hint.
+    await dialog.getByTestId('feature-request-notes').fill('Bigger font')
+    await dialog.getByTestId('feature-request-email').fill('not-an-email')
+    await expect(submit).toBeDisabled()
+    await expect(hint).toContainText(/email|e-mail/)
 
-    const [request] = sent
-    expect(request.element?.path).toContain('button')
-    const selectorFindsTheButton = await page.evaluate(
-      (css) =>
-        document
-          .querySelector(css)
-          ?.closest('[data-testid="sidebar-request-feature"]') != null,
-      request.element?.selector ?? '',
-    )
-    expect(selectorFindsTheButton).toBe(true)
+    await dialog.getByTestId('feature-request-email').fill(EMAIL)
+    await expect(hint).toHaveCount(0)
+    await expect(submit).toBeEnabled()
+    expect(sent).toHaveLength(0)
   })
 
-  test('takes the screenshot again on another page of the app', async ({
+  test('retakes the screenshot on another page and keeps the text', async ({
     page,
   }) => {
     const sent = await mockFeatureRequestApi(page)
     await openSongsPage(page)
 
     const dialog = await openRequestFeature(page)
+    await fillRequest(dialog, 'Seen on the settings page')
     await drawOnScreenshot(page, dialog)
-    await goToWriting(dialog)
-    await fillRequest(dialog, 'E2E: other page', 'Seen on the settings page')
-    await dialog.getByTestId('feature-request-back').click()
 
     // Leave the dialog, go elsewhere, and photograph that page instead.
-    await dialog.getByTestId('feature-request-roam').click()
+    await dialog.getByTestId('feature-request-retake').click()
     const bar = page.getByTestId('feature-request-roaming')
     await expect(bar).toBeVisible()
     await expect(dialog).toHaveCount(0)
@@ -232,13 +194,12 @@ test.describe('Request a feature', () => {
     await expect(bar).toBeVisible()
     await page.getByTestId('feature-request-take').click()
 
-    // Back in the flow: the new picture is undrawn, the typed text is kept.
+    // Back in the form: the new picture is undrawn, the typed text is kept.
     await expect(dialog).toBeVisible({ timeout: 20000 })
     await expect(bar).toHaveCount(0)
     await expect(dialog.getByTestId('feature-request-undo')).toBeDisabled()
-    await goToWriting(dialog)
-    await expect(dialog.getByTestId('feature-request-title')).toHaveValue(
-      'E2E: other page',
+    await expect(dialog.getByTestId('feature-request-notes')).toHaveValue(
+      'Seen on the settings page',
     )
     await dialog.getByTestId('feature-request-submit').click()
     await expect(dialog.getByTestId('feature-request-success')).toBeVisible()
@@ -246,7 +207,7 @@ test.describe('Request a feature', () => {
     expect(sent[0].screenshot).toMatch(/^data:image\/jpeg;base64,/)
   })
 
-  test('cancelling the other-page bar returns to the same screenshot', async ({
+  test('cancelling the retake bar returns to the same screenshot', async ({
     page,
   }) => {
     await mockFeatureRequestApi(page)
@@ -254,10 +215,25 @@ test.describe('Request a feature', () => {
 
     const dialog = await openRequestFeature(page)
     await drawOnScreenshot(page, dialog)
-    await dialog.getByTestId('feature-request-roam').click()
+    await dialog.getByTestId('feature-request-retake').click()
     await page.getByTestId('feature-request-roaming-cancel').click()
     await expect(dialog).toBeVisible()
     await expect(dialog.getByTestId('feature-request-undo')).toBeEnabled()
+  })
+
+  test('Escape on the retake bar returns to the form without sending', async ({
+    page,
+  }) => {
+    const sent = await mockFeatureRequestApi(page)
+    await openSongsPage(page)
+
+    const dialog = await openRequestFeature(page)
+    await dialog.getByTestId('feature-request-retake').click()
+    await expect(page.getByTestId('feature-request-roaming')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('feature-request-roaming')).toHaveCount(0)
+    await expect(dialog).toBeVisible()
+    expect(sent).toHaveLength(0)
   })
 
   test('captures another screen or window through the system picker', async ({
@@ -281,13 +257,13 @@ test.describe('Request a feature', () => {
     await openSongsPage(page)
 
     const dialog = await openRequestFeature(page)
-    await dialog.getByTestId('feature-request-capture-display').click()
+    await dialog.getByTestId('feature-request-retake').click()
+    await page.getByTestId('feature-request-capture-display').click()
     await expect(dialog.getByTestId('feature-request-canvas')).toHaveJSProperty(
       'width',
       640,
     )
-    await goToWriting(dialog)
-    await fillRequest(dialog, 'E2E: other screen', 'From the projector')
+    await fillRequest(dialog, 'From the projector')
     await dialog.getByTestId('feature-request-submit').click()
     await expect(dialog.getByTestId('feature-request-success')).toBeVisible()
     expect(sent[0].screenshot).toMatch(/^data:image\/jpeg;base64,/)
@@ -305,24 +281,11 @@ test.describe('Request a feature', () => {
     await toggle.click()
     await expect(toggle).toHaveAttribute('aria-checked', 'false')
     await expect(dialog.getByTestId('feature-request-canvas')).toHaveCount(0)
-    await goToWriting(dialog)
-    await expect(dialog.getByTestId('feature-request-preview')).toHaveCount(0)
-    await fillRequest(dialog, 'E2E: no picture', 'Text only')
+    await fillRequest(dialog, 'Text only')
     await dialog.getByTestId('feature-request-submit').click()
     await expect(dialog.getByTestId('feature-request-success')).toBeVisible()
 
     expect(sent[0].screenshot).toBeUndefined()
-  })
-
-  test('Back returns to the drawing and keeps it', async ({ page }) => {
-    await mockFeatureRequestApi(page)
-    await openSongsPage(page)
-
-    const dialog = await openRequestFeature(page)
-    await drawOnScreenshot(page, dialog)
-    await goToWriting(dialog)
-    await dialog.getByTestId('feature-request-back').click()
-    await expect(dialog.getByTestId('feature-request-undo')).toBeEnabled()
   })
 
   test('fits a phone screen', async ({ page }) => {
@@ -333,9 +296,9 @@ test.describe('Request a feature', () => {
       .getByRole('button', { name: /Open menu|Deschide meniu/ })
       .click({ timeout: 15000 })
     const dialog = await openRequestFeature(page)
-    await expect(dialog.getByTestId('feature-request-next')).toBeInViewport()
-    await goToWriting(dialog)
-    await expect(dialog.getByTestId('feature-request-submit')).toBeVisible()
+    await expect(dialog.getByTestId('feature-request-notes')).toBeInViewport()
+    await dialog.getByTestId('feature-request-submit').scrollIntoViewIfNeeded()
+    await expect(dialog.getByTestId('feature-request-submit')).toBeInViewport()
     const box = await dialog.boundingBox()
     expect(box?.width ?? 0).toBeLessThanOrEqual(390)
   })
@@ -345,35 +308,16 @@ test.describe('Request a feature', () => {
     await openSongsPage(page)
 
     const dialog = await openRequestFeature(page)
-    await goToWriting(dialog)
     await dialog.getByTestId('feature-request-email').fill(EMAIL)
-    await dialog.getByTestId('feature-request-title').click()
+    await dialog.getByTestId('feature-request-notes').click()
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
 
     await page.reload()
     const reopened = await openRequestFeature(page)
-    await goToWriting(reopened)
     await expect(reopened.getByTestId('feature-request-email')).toHaveValue(
       EMAIL,
     )
-  })
-
-  test('Escape leaves the picker without sending anything', async ({
-    page,
-  }) => {
-    const sent = await mockFeatureRequestApi(page)
-    await openSongsPage(page)
-
-    const dialog = await openRequestFeature(page)
-    await dialog.getByTestId('feature-request-pick-element').click()
-    await expect(page.getByTestId('feature-request-picker')).toBeVisible()
-    await page.keyboard.press('Escape')
-
-    await expect(page.getByTestId('feature-request-picker')).toBeHidden()
-    await expect(page.getByTestId('feature-request-dialog')).toHaveCount(0)
-    await expect(page).toHaveURL(/\/songs/)
-    expect(sent).toHaveLength(0)
   })
 
   test('shows an error and keeps the form when the backend fails', async ({
@@ -388,13 +332,12 @@ test.describe('Request a feature', () => {
     await openSongsPage(page)
 
     const dialog = await openRequestFeature(page)
-    await goToWriting(dialog)
-    await fillRequest(dialog, 'E2E: failing', 'Should fail')
+    await fillRequest(dialog, 'Should fail')
     await dialog.getByTestId('feature-request-submit').click()
 
     await expect(dialog.getByRole('alert')).toBeVisible()
-    await expect(dialog.getByTestId('feature-request-title')).toHaveValue(
-      'E2E: failing',
+    await expect(dialog.getByTestId('feature-request-notes')).toHaveValue(
+      'Should fail',
     )
     expect(await openedUrls(page)).toEqual([])
   })
@@ -411,8 +354,7 @@ test.describe('Request a feature', () => {
     await openSongsPage(page)
 
     const dialog = await openRequestFeature(page)
-    await goToWriting(dialog)
-    await fillRequest(dialog, 'E2E: limited', 'Too many')
+    await fillRequest(dialog, 'Too many')
     await dialog.getByTestId('feature-request-submit').click()
 
     await expect(dialog.getByRole('alert')).toContainText(/50/)

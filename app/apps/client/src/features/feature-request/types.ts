@@ -1,22 +1,16 @@
-/** The element the user clicked in the picker. */
-export interface PickedElement {
-  /** Unique CSS selector: `document.querySelector(selector)` finds it again. */
-  selector: string
-  /** Readable path from <body> with ids, test ids and a few classes. */
-  path: string
-  /** Short visible name: aria-label, test id or text. */
-  label: string
+/** What the user types; kept while they retake the screenshot. */
+export interface RequestFeatureValues {
+  notes: string
+  email: string
 }
 
 export interface FeatureRequestPayload {
-  title: string
   notes: string
   email: string
   route: string
   viewport: string
   osVersion: string
   appVersion: string
-  element?: PickedElement
   screenshot?: string
   supportId?: string
 }
