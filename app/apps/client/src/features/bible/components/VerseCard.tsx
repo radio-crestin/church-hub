@@ -1,6 +1,7 @@
 import { ListPlus, Play } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { HighlightedText } from '~/ui/search'
 import type { BibleSearchResult, BibleVerse } from '../types'
 import { formatVerseReference } from '../types'
 
@@ -35,12 +36,9 @@ export function VerseCard({
           <h3 className="font-medium text-gray-900 dark:text-white text-sm">
             {reference}
           </h3>
-          <p
-            className="mt-1 text-gray-600 dark:text-gray-300 text-sm line-clamp-3 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
-            dangerouslySetInnerHTML={{
-              __html: highlightedText || verse.text,
-            }}
-          />
+          <p className="mt-1 text-gray-600 dark:text-gray-300 text-sm line-clamp-3 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
+            <HighlightedText text={highlightedText || verse.text} />
+          </p>
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {onAddToQueue && (
