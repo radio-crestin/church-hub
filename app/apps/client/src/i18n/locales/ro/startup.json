@@ -1,0 +1,23 @@
+{
+  "starting": "Se pornește Church Hub",
+  "connecting": "Se conectează la server",
+  "steps": {
+    "database": "Pregătim baza de date",
+    "songs": "Adăugăm cântările",
+    "bibles": "Adăugăm traducerile Bibliei",
+    "search": "Pregătim căutarea cântărilor",
+    "finishing": "Aproape gata"
+  },
+  "progress": "Cântări: {{done}} din {{total}}",
+  "firstRunHint": "Prima pornire: pregătim totul. Se întâmplă o singură dată.",
+  "longHint": "Durează mai mult decât de obicei…",
+  "errorUnreachable": "Nu s-a putut contacta serverul local",
+  "errorRemote": "Nu s-a putut contacta serverul",
+  "errorBootFailed": "Church Hub nu a putut finaliza pornirea",
+  "errorServerStopped": "Serverul local Church Hub s-a oprit",
+  "retry": "Reîncearcă",
+  "restart": "Repornește serverul",
+  "retryHint": "Apasă reîncearcă mai jos — sau închide complet și redeschide Church Hub.",
+  "restartHint": "Repornește-l mai jos — sau închide complet și redeschide Church Hub.",
+  "reported": "Eroarea a fost raportată automat echipei."
+}
