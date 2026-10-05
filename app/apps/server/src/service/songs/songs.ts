@@ -314,22 +314,17 @@ export function getSongsPaginated(
  * Gets a song by ID
  */
 export function getSongById(id: number): Song | null {
-  try {
-    logger.debug(`Getting song by ID: ${id}`)
+  logger.debug(`Getting song by ID: ${id}`)
 
-    const db = getDatabase()
-    const record = db.select().from(songs).where(eq(songs.id, id)).get()
+  const db = getDatabase()
+  const record = db.select().from(songs).where(eq(songs.id, id)).get()
 
-    if (!record) {
-      logger.debug(`Song not found: ${id}`)
-      return null
-    }
-
-    return toSong(record)
-  } catch (error) {
-    logger.error(`Failed to get song: ${error}`)
+  if (!record) {
+    logger.debug(`Song not found: ${id}`)
     return null
   }
+
+  return toSong(record)
 }
 
 /**
@@ -337,35 +332,30 @@ export function getSongById(id: number): Song | null {
  * expanded presentation order with chorus insertions
  */
 export function getSongWithSlides(id: number): SongWithSlides | null {
-  try {
-    logger.debug(`Getting song with slides: ${id}`)
+  logger.debug(`Getting song with slides: ${id}`)
 
-    const song = getSongById(id)
-    if (!song) {
-      return null
-    }
-
-    const slides = getSlidesBySongId(id)
-    const category = song.categoryId ? getCategoryById(song.categoryId) : null
-    const tags = getTagsBySongId(id)
-
-    // Slides are served RAW. The last-slide "Amin" treatment is applied at
-    // render time by the shared presentation resolver (songElements.ts), so
-    // preview and projection always work from identical content.
-
-    // Generate expanded presentation order (C1 V1 C1 V2 C1 V3 C2...)
-    const expandedPresentationOrder = generateExpandedPresentationOrder(slides)
-
-    return {
-      ...song,
-      presentationOrder: expandedPresentationOrder || song.presentationOrder,
-      slides,
-      category,
-      tags,
-    }
-  } catch (error) {
-    logger.error(`Failed to get song with slides: ${error}`)
+  const song = getSongById(id)
+  if (!song) {
     return null
+  }
+
+  const slides = getSlidesBySongId(id)
+  const category = song.categoryId ? getCategoryById(song.categoryId) : null
+  const tags = getTagsBySongId(id)
+
+  // Slides are served RAW. The last-slide "Amin" treatment is applied at
+  // render time by the shared presentation resolver (songElements.ts), so
+  // preview and projection always work from identical content.
+
+  // Generate expanded presentation order (C1 V1 C1 V2 C1 V3 C2...)
+  const expandedPresentationOrder = generateExpandedPresentationOrder(slides)
+
+  return {
+    ...song,
+    presentationOrder: expandedPresentationOrder || song.presentationOrder,
+    slides,
+    category,
+    tags,
   }
 }
 
