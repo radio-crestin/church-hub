@@ -388,6 +388,7 @@ export function SongSlidesPanel({
             <div className="relative flex-1 min-h-[60vh] lg:min-h-[200px]">
               <textarea
                 ref={textareaRef}
+                data-testid="slides-text-textarea"
                 value={textValue}
                 onChange={(e) => setTextValue(e.target.value)}
                 onScroll={syncGutterToTextarea}
