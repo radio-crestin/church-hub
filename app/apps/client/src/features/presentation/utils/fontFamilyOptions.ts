@@ -6,7 +6,7 @@
  */
 export const FONT_FAMILY_OPTIONS = [
   // Bundled with the app: identical on macOS, Windows and Linux.
-  { value: 'Source Sans 3', label: 'Source Sans 3' },
+  { value: 'Fira Sans', label: 'Fira Sans' },
   { value: 'Montserrat', label: 'Montserrat' },
   { value: 'Lora', label: 'Lora' },
   { value: 'system-ui', label: 'System Default' },

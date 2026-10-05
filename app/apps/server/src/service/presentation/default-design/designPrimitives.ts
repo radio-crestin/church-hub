@@ -8,7 +8,7 @@
 /** Fonts bundled with the client (see bundledFonts.ts there). */
 export const FONTS = {
   /** Lyrics, scripture, body text: compact, very legible from far away. */
-  text: 'Source Sans 3',
+  text: 'Fira Sans',
   /** References, labels, announcements, clock: strong geometric titles. */
   title: 'Montserrat',
 } as const

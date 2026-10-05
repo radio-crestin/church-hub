@@ -5,7 +5,7 @@ import { contentTypes } from '../../../db/schema'
 import type { ScreenType } from '../types'
 
 const SCREEN_TYPES: ScreenType[] = ['primary', 'stage', 'livestream', 'kiosk']
-const BUNDLED_FONTS = ['Source Sans 3', 'Montserrat']
+const BUNDLED_FONTS = ['Fira Sans', 'Montserrat']
 
 interface Edge {
   enabled: boolean

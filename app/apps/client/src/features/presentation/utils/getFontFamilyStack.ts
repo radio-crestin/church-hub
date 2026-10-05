@@ -15,14 +15,7 @@ const FONT_STACKS: Record<string, string[]> = {
     'Liberation Sans',
     'sans-serif',
   ],
-  'source sans 3': [
-    'Source Sans 3 Variable',
-    'Source Sans 3',
-    'Source Sans Pro',
-    'Segoe UI',
-    'Arial',
-    'sans-serif',
-  ],
+  'fira sans': ['Fira Sans', 'Segoe UI', 'Arial', 'sans-serif'],
   lora: ['Lora Variable', 'Lora', 'Georgia', 'Gelasio', 'serif'],
   'system-ui': [
     'system-ui',

@@ -90,7 +90,7 @@ describe('parseNextSlideConfig', () => {
     expect(result.contentStyle.maxFontSize).toBe(64)
     expect(result.contentStyle.alignment).toBe('center')
     // Default fields should be filled in
-    expect(result.contentStyle.fontFamily).toBe('Source Sans 3')
+    expect(result.contentStyle.fontFamily).toBe('Fira Sans')
   })
 
   // Test against actual fixture data to catch fixture/schema drift

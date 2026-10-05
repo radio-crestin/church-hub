@@ -1,15 +1,18 @@
 /**
  * Fonts shipped inside the app, so slides look the same on macOS, Windows and
- * Linux whatever the machine has installed. Variable fonts: one file per
- * subset covers every weight; the latin-ext subset carries the Romanian
- * diacritics (ă â î ș ț). Importing this module registers their faces;
- * `getFontFamilyStack` puts these families first for the stored names.
+ * Linux whatever the machine has installed. Each comes in subsets loaded on
+ * use; the latin-ext subset carries the Romanian diacritics (ă ș ț).
+ * Importing this module registers their @font-face rules; `getFontFamilyStack`
+ * puts these families first for the stored names.
+ *
+ * Fira Sans is the text font: its line box is 1.2em in every metric table, so
+ * at the slides' 1.3 line height no engine draws a line past its text box.
  */
+import '@fontsource/fira-sans/400.css'
+import '@fontsource/fira-sans/400-italic.css'
+import '@fontsource/fira-sans/700.css'
+import '@fontsource/fira-sans/700-italic.css'
 import '@fontsource-variable/montserrat/wght.css'
 import '@fontsource-variable/montserrat/wght-italic.css'
 import '@fontsource-variable/lora/wght.css'
 import '@fontsource-variable/lora/wght-italic.css'
-
-import { registerSourceSans3 } from './registerSourceSans3'
-
-registerSourceSans3()

@@ -13,7 +13,7 @@ import {
  */
 
 const SCREEN_TYPES = ['primary', 'stage', 'livestream', 'kiosk'] as const
-const BUNDLED_FONTS = ['Source Sans 3', 'Montserrat']
+const BUNDLED_FONTS = ['Fira Sans', 'Montserrat']
 const LYRIC = 'Cât de mare ești Tu, Doamne, și sfânt'
 
 interface ElementConfig {
@@ -116,7 +116,7 @@ test.describe('Factory slide design', () => {
     const fontFamily = await lyric.evaluate(
       (element) => getComputedStyle(element).fontFamily,
     )
-    expect(fontFamily).toMatch(/^["']Source Sans 3 Variable["']/)
+    expect(fontFamily).toMatch(/^["']?Fira Sans["']?,/)
 
     // The webfont itself is loaded — both the Latin and the Latin Extended
     // (ă ș ț) files — not a system fallback.
@@ -127,7 +127,7 @@ test.describe('Factory slide design', () => {
             .filter(
               (face) =>
                 face.status === 'loaded' &&
-                face.family.includes('Source Sans 3 Variable'),
+                face.family.replace(/["']/g, '') === 'Fira Sans',
             )
             .map((face) => face.unicodeRange.split(',')[0].trim()),
         ),
