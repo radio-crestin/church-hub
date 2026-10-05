@@ -361,8 +361,15 @@ jobs:
               exit 1
             fi
           done
-          gh release edit "$TAG" --repo "$REPO" --draft=false --latest
-          echo "Published $TAG"
+          # A draft someone marked as pre-release (gh release edit --prerelease)
+          # stays one and never becomes `latest`, so the updater skips it.
+          if [ "$(gh release view "$TAG" --repo "$REPO" --json isPrerelease -q .isPrerelease)" = "true" ]; then
+            gh release edit "$TAG" --repo "$REPO" --draft=false --prerelease --latest=false
+            echo "Published $TAG as a pre-release"
+          else
+            gh release edit "$TAG" --repo "$REPO" --draft=false --latest
+            echo "Published $TAG"
+          fi
 
   # Keep `main` in lock-step with whatever was just released. Without this,
   # `app/tauri/tauri.conf.json` on `main` drifts behind the tag (the build job
