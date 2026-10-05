@@ -6,19 +6,20 @@ name: CodeQL
 #
 # No build needed: JavaScript/TypeScript, the workflows themselves and the
 # Tauri shell's Rust are all analysed from source (build-mode none).
+#
+# Runs before every release (build-release.yml calls it; an open error- or
+# high/critical-severity alert on the release commit blocks the release), on
+# a weekly schedule, and by hand. Not on pull requests or pushes.
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_call:
   schedule:
     # Mondays 04:23 UTC: new queries and advisories reach old code too.
     - cron: '23 4 * * 1'
   workflow_dispatch:
 
 concurrency:
-  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  group: codeql-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -56,3 +57,37 @@ jobs:
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           category: /language:${{ matrix.language }}
+
+  # Before a release only: the scan above uploads alerts but passes either
+  # way, so this fails on any open error- or high/critical-severity alert of
+  # the commit being released.
+  release-gate:
+    name: No serious CodeQL alert
+    needs: analyze
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: read
+    steps:
+      - name: Fail on open serious alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          # Never pass on an empty list: the analyses above must be on record.
+          ANALYSES=$(gh api "repos/$GITHUB_REPOSITORY/code-scanning/analyses?tool_name=CodeQL&ref=$REF&per_page=10" --jq 'length')
+          if [ "$ANALYSES" = 0 ]; then
+            echo "::error::No CodeQL analysis recorded for $REF, so its alerts can't be checked."
+            exit 1
+          fi
+          ALERTS=$(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/code-scanning/alerts?tool_name=CodeQL&state=open&ref=$REF&per_page=100" \
+            --jq '.[] | select(.rule.severity == "error" or .rule.security_severity_level == "high" or .rule.security_severity_level == "critical")
+                  | "#\(.number) \(.rule.id) \(.most_recent_instance.location.path):\(.most_recent_instance.location.start_line)"')
+          if [ -n "$ALERTS" ]; then
+            echo "::error::Open CodeQL alerts block this release:"
+            echo "$ALERTS"
+            exit 1
+          fi
+          echo "No serious CodeQL alert on $REF"

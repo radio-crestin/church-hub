@@ -1,25 +1,19 @@
 name: Test
 
-# Tests run automatically on:
-#   - push to main (post-merge verification)
-#   - manual workflow_dispatch
-# Tests run on PRs ONLY when a maintainer comments "/test" — keeps CI minutes
-# out of every push during a long-running feature branch and prevents fork PRs
-# from exercising the runners without review.
+# The pre-release gate, on macOS, Windows and Linux:
+#   - e2e: the Playwright suite (app/apps/client/e2e), the project's only tests,
+#   - smoke: the COMPILED sidecar boots and serves the API (the v0.1.60
+#     lesson: a sidecar that runs from source can die once compiled).
 #
-# A "/test" run executes the PR's code (maybe a fork's) in this repository's
-# context, so the jobs that run it hold a read-only token, keep no git
-# credentials and never save a cache: main and the signed release builds
-# restore those caches. Only the gate (reaction) and report-status (commit
-# statuses) write, and neither runs PR code.
+# Runs only before a release: build-release.yml calls it on every v* tag and
+# publishes nothing unless it is green. Pull requests and pushes run no tests
+# here: every task is accepted on the full e2e suite run locally. Run it by
+# hand on main ahead of tagging to catch a platform failure early:
+#   gh workflow run test.yml --ref main
+
 on:
-  push:
-    branches: [main]
-    tags-ignore:
-      - '**'
+  workflow_call:
   workflow_dispatch:
-  issue_comment:
-    types: [created]
 
 permissions:
   contents: read
@@ -29,193 +23,37 @@ env:
   # Public PostHog tokens — write-only client-side keys, safe to embed in
   # the bundle. Forks override via repository secrets. These need to be in
   # the env when the client builds (Vite inlines VITE_PUBLIC_*) and when
-  # the compiled-sidecar smoke test runs (the bundled binary initialises
-  # posthog-node on import).
+  # the compiled sidecar runs (it initialises posthog-node on import).
   VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN || 'phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK' }}
   VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com' }}
   VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN || '4GDD07pVU98dgX9qHiFHNswimJuq7gD1hE6nvTHXMBY' }}
+  # One browser folder on every OS, so the cache path is the same.
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/../ms-playwright
+  # Caches are saved only by main or a v* tag testing its own commit (there
+  # is no input to test another commit), never by a run of another branch:
+  # a release restores them.
+  TRUSTED_RUN: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
 
 jobs:
-  # Gate job: validates a comment-triggered run and resolves the PR head SHA.
-  # All other jobs depend on this. For push / workflow_dispatch, it short-
-  # circuits with the current SHA.
-  #
-  # Two checks on a comment. Its author_association skips the run before a
-  # runner starts for anyone who never contributed (NONE, FIRST_TIMER, …).
-  # CONTRIBUTOR stays in: the payload shows a private org member as
-  # CONTRIBUTOR. The API check is the real gate: write access or fail.
-  gate:
-    runs-on: ubuntu-latest
-    if: >-
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.pull_request != null &&
-       startsWith(github.event.comment.body, '/test') &&
-       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association))
-    # Reacting to a comment that belongs to a PR is authorized via the
-    # pull-requests permission — issues: write alone 403s with "Resource
-    # not accessible by integration" — so both need write.
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-    outputs:
-      sha: ${{ steps.resolve.outputs.sha }}
-      pr_number: ${{ steps.resolve.outputs.pr_number }}
-    steps:
-      - name: Check commenter permission
-        if: github.event_name == 'issue_comment'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              username: context.payload.comment.user.login,
-            });
-            const allowed = ['admin', 'maintain', 'write'].includes(perm.permission);
-            if (!allowed) {
-              core.setFailed(
-                `${context.payload.comment.user.login} (permission=${perm.permission}) is not allowed to trigger CI. Required: write+.`
-              );
-            }
-
-      - name: Acknowledge comment with reaction
-        if: github.event_name == 'issue_comment'
-        # The reaction is a nicety — never fail the whole CI run over it.
-        continue-on-error: true
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id,
-              content: 'rocket',
-            });
-
-      - name: Resolve target SHA
-        id: resolve
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            if (context.eventName === 'issue_comment') {
-              const { data: pr } = await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.issue.number,
-              });
-              core.setOutput('sha', pr.head.sha);
-              core.setOutput('pr_number', String(pr.number));
-              core.info(`Resolved PR #${pr.number} head ${pr.head.sha}`);
-            } else {
-              core.setOutput('sha', context.sha);
-              core.setOutput('pr_number', '');
-            }
-
-  unit-tests:
-    needs: gate
-    runs-on: ubuntu-latest
+  e2e:
+    name: E2E (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.gate.outputs.sha }}
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version-file: app/package.json
-
-      - name: Restore Bun dependencies
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: bun-cache
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        working-directory: app
-        run: bun install --frozen-lockfile
-
-      - name: Save Bun dependencies
-        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ steps.bun-cache.outputs.cache-primary-key }}
-
-      - name: Run client unit tests
-        working-directory: app
-        run: bun run test:unit
-
-  server-tests:
-    needs: gate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.gate.outputs.sha }}
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version-file: app/package.json
-
-      - name: Restore Bun dependencies
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: bun-cache
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        working-directory: app
-        run: bun install --frozen-lockfile
-
-      - name: Save Bun dependencies
-        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ steps.bun-cache.outputs.cache-primary-key }}
-
-      - name: Run server integration tests
-        working-directory: app
-        run: bun run test:server
-
-  e2e-tests:
-    runs-on: ubuntu-latest
-    needs: [gate, unit-tests, server-tests]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.gate.outputs.sha }}
-          persist-credentials: false
-
-      - name: Install system dependencies
+      - name: Install Linux audio + MIDI deps and a virtual display
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update && sudo apt-get install -y \
-            libpulse-dev \
-            libasound2-dev \
-            xvfb
+            libpulse-dev libasound2-dev libjack-jackd2-dev xvfb
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -227,33 +65,31 @@ jobs:
         with:
           bun-version-file: app/package.json
 
+      # Not on Windows: unpacking the cache there is slower than downloading.
+      # Exact key only, and saved below only by trusted runs (TRUSTED_RUN).
       - name: Restore Bun dependencies
+        if: runner.os != 'Windows'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: bun-cache
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
 
       # WebKit runs the preview/projection specs (the macOS desktop app's
-      # engine). The browser set is part of the key: a cache saved with
-      # Chromium alone would otherwise be an exact hit and skip installing it.
+      # engine). The browser set is part of the key.
       - name: Restore Playwright browsers
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: playwright-cache
         with:
-          path: ~/.cache/ms-playwright
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ runner.os }}-playwright-chromium-webkit-${{ hashFiles('app/apps/client/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
 
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
 
       - name: Save Bun dependencies
-        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
+        if: runner.os != 'Windows' && env.TRUSTED_RUN == 'true' && steps.bun-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -265,50 +101,48 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
 
       - name: Save Playwright browsers
-        if: github.event_name != 'issue_comment' && steps.playwright-cache.outputs.cache-hit != 'true'
+        if: env.TRUSTED_RUN == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ~/.cache/ms-playwright
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
 
       - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        if: steps.playwright-cache.outputs.cache-hit == 'true' && runner.os == 'Linux'
+        working-directory: app/apps/client
         run: npx playwright install-deps chromium webkit
 
       - name: Build client
         working-directory: app
         run: bun run --filter client build
 
-      - name: Run E2E tests
+      - name: Run E2E tests (Linux, virtual display)
+        if: runner.os == 'Linux'
         working-directory: app/apps/client
         run: xvfb-run --auto-servernum -- npx playwright test --grep-invert "@obs"
         env:
           CI: true
 
-      - name: Upload Playwright report
+      - name: Run E2E tests
+        if: runner.os != 'Linux'
+        working-directory: app/apps/client
+        run: npx playwright test --grep-invert "@obs"
+        env:
+          CI: true
+
+      - name: Upload Playwright report and traces
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
-          name: playwright-report
-          path: app/apps/client/playwright-report/
+          name: playwright-${{ matrix.os }}
+          path: |
+            app/apps/client/playwright-report/
+            app/apps/client/test-results/
           retention-days: 7
+          if-no-files-found: ignore
 
-      - name: Upload Playwright traces
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: failure()
-        with:
-          name: playwright-traces
-          path: app/apps/client/test-results/
-          retention-days: 7
-
-  # Smoke-test the COMPILED sidecar on every release-affecting platform.
-  # Catches regressions like the v0.1.60 macOS exit-on-launch bug where
-  # the bundled binary parsed fine in `bun test` but crashed in production.
-  # Compiles `bun build --compile`, launches it with TAURI_MODE=true,
-  # and asserts /ping returns 200 within the timeout.
-  release-build-smoke:
+  smoke:
     name: Release build smoke (${{ matrix.os }})
-    needs: gate
     strategy:
       fail-fast: false
       matrix:
@@ -318,11 +152,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.gate.outputs.sha }}
           persist-credentials: false
 
       - name: Install Linux audio + MIDI deps
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libpulse-dev libasound2-dev libjack-jackd2-dev
@@ -337,7 +170,7 @@ jobs:
         with:
           bun-version-file: app/package.json
 
-      # Not on Windows: unpacking the cache there is slower than downloading.
+      # Exact key only, and saved below only by trusted runs (TRUSTED_RUN).
       - name: Restore Bun dependencies
         if: runner.os != 'Windows'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -345,90 +178,51 @@ jobs:
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('app/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
 
       - name: Install dependencies
         working-directory: app
         run: bun install --frozen-lockfile
 
       - name: Save Bun dependencies
-        if: runner.os != 'Windows' && github.event_name != 'issue_comment' && steps.bun-cache.outputs.cache-hit != 'true'
+        if: runner.os != 'Windows' && env.TRUSTED_RUN == 'true' && steps.bun-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ steps.bun-cache.outputs.cache-primary-key }}
 
-      - name: Run compiled-sidecar smoke test
+      - name: Smoke-test the compiled sidecar
         working-directory: app/apps/server
-        env:
-          RUN_COMPILE_TESTS: '1'
-        # Default timeout in the test is 180s; CI runners are slower than
-        # dev laptops, so allow plenty of headroom.
         timeout-minutes: 10
-        shell: bash
-        run: bun test src/__tests__/compiled-sidecar.test.ts
+        run: bun run smoke:sidecar
 
-      - name: Upload compiled binary on failure
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: compiled-sidecar-${{ matrix.os }}
-          path: |
-            /tmp/church-hub-compile-test-*
-            app/apps/server/test-results/
-          retention-days: 7
-          if-no-files-found: ignore
-
-  # Post commit statuses back to the PR head SHA so test results appear in
-  # the PR's "Checks" UI. issue_comment-triggered runs have head_sha == main,
-  # so without this step the runs are only visible in the Actions tab.
-  report-status:
-    needs: [gate, unit-tests, server-tests, e2e-tests, release-build-smoke]
-    # Only after a gate that let the run through: every other comment on an
-    # issue or PR skips the gate, and used to start this job anyway.
-    if: always() && github.event_name == 'issue_comment' && needs.gate.result == 'success'
+  # The few unit tests kept on purpose: data-safety and security logic no
+  # e2e spec can reach (sync merge needs Google Drive; the feature-request
+  # worker's limits and escaping run on Cloudflare, not in the e2e server).
+  kept-unit-tests:
+    name: Kept unit tests (sync merge, request worker)
     runs-on: ubuntu-latest
-    permissions:
-      statuses: write
     steps:
-      - name: Post commit statuses to PR head
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          PR_SHA: ${{ needs.gate.outputs.sha }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          UNIT_RESULT: ${{ needs.unit-tests.result }}
-          SERVER_RESULT: ${{ needs.server-tests.result }}
-          E2E_RESULT: ${{ needs.e2e-tests.result }}
-          SMOKE_RESULT: ${{ needs.release-build-smoke.result }}
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          script: |
-            const sha = process.env.PR_SHA;
-            const runUrl = process.env.RUN_URL;
-            const mapResult = (r) => {
-              if (r === 'success') return 'success';
-              if (r === 'skipped' || r === 'cancelled') return 'error';
-              return 'failure';
-            };
-            const checks = [
-              ['unit-tests', process.env.UNIT_RESULT],
-              ['server-tests', process.env.SERVER_RESULT],
-              ['e2e-tests', process.env.E2E_RESULT],
-              ['release-build-smoke', process.env.SMOKE_RESULT],
-            ];
-            for (const [statusContext, result] of checks) {
-              try {
-                await github.rest.repos.createCommitStatus({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  sha,
-                  state: mapResult(result),
-                  context: statusContext,
-                  description: result,
-                  target_url: runUrl,
-                });
-                core.info(`Posted ${statusContext}=${mapResult(result)} for ${sha}`);
-              } catch (err) {
-                core.warning(`Failed to post status ${statusContext}: ${err.message}`);
-              }
-            }
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: app/package.json
+
+      - name: Sync merge
+        working-directory: app/apps/server
+        run: bun run test
+
+      - name: Request-a-feature worker
+        working-directory: churchhub-backend
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          bun test

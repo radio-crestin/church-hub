@@ -1,20 +1,16 @@
 name: Main build
 
-# Builds main after every code push, uploading nothing. Its job is the
-# caches: only runs on main save the Rust cache (build-desktop.yml), and
-# PR builds and release tags restore main's copy, so main must keep it
-# fresh for all four targets, the Intel Mac included. It also proves main
-# still builds and that its compiled sidecar answers /ping.
+# Builds main for all four targets, the Intel Mac included, uploading
+# nothing: proves main still builds and that its compiled sidecar answers
+# /ping, and refreshes the shared caches. By hand only: GitHub Actions run
+# before a release (build-release.yml, which also saves the caches), not on
+# every push.
+#   gh workflow run main-build.yml --ref main
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - '.claude/**'
-      - '**/*.md'
   workflow_dispatch:
 
-# One at a time; a newer push replaces the waiting run, never the running one
+# One at a time; a newer run replaces the waiting one, never the running one
 # (a cancelled run would save no cache).
 concurrency:
   group: main-build

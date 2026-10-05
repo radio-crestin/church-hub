@@ -52,10 +52,13 @@ const TEST_DB_PATH = join(ROOT_DIR, 'e2e/.test-data/app.db')
 // locally it is built here. Never `dev:web`: it frees port 3000 first, which
 // kills the desktop app or the dev server running there.
 const isCI = !!process.env.CI
-const serveBuiltClient = `cd ../.. && NODE_ENV=production CLIENT_DIST_PATH=apps/client/dist DATABASE_PATH='${TEST_DB_PATH}' PORT=${TEST_PORT} bun run apps/server/src/index.ts`
+// No shell syntax beyond `&&` (cmd.exe has it too): the suite runs on
+// macOS, Windows and Linux before every release. Env and cwd go through
+// webServer's own options.
+const serveBuiltClient = 'bun run apps/server/src/index.ts'
 const webServerCommand = isCI
   ? serveBuiltClient
-  : `bun run build && ${serveBuiltClient}`
+  : `bun run --cwd apps/client build && ${serveBuiltClient}`
 
 export default defineConfig({
   testDir: './e2e',
@@ -102,6 +105,13 @@ export default defineConfig({
   ],
   webServer: {
     command: webServerCommand,
+    cwd: join(ROOT_DIR, '../..'),
+    env: {
+      NODE_ENV: 'production',
+      CLIENT_DIST_PATH: 'apps/client/dist',
+      DATABASE_PATH: TEST_DB_PATH,
+      PORT: TEST_PORT,
+    },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has
     // no socket timeout, so one request that never gets an answer stalled the
