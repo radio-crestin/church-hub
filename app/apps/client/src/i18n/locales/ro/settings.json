@@ -484,7 +484,8 @@
       "uncategorized": {
         "title": "Fără categorie",
         "count": "{{count}} cântare fără categorie",
-        "count_other": "{{count}} cântări fără categorie",
+        "count_few": "{{count}} cântări fără categorie",
+        "count_other": "{{count}} de cântări fără categorie",
         "deleteSong": "Șterge cântare",
         "deleteAll": "Șterge Tot",
         "modals": {
@@ -515,7 +516,8 @@
       "tagName": "Nume etichetă",
       "tagNamePlaceholder": "ex: Tineret, Bărbați, Surori, Copii",
       "songCount_one": "{{count}} cântare",
-      "songCount_other": "{{count}} cântări",
+      "songCount_few": "{{count}} cântări",
+      "songCount_other": "{{count}} de cântări",
       "actions": {
         "edit": "Editează",
         "delete": "Șterge"
@@ -981,7 +983,8 @@
         "songs": "Cântări ({{total}})",
         "schedules": "Programe ({{total}})",
         "scheduleSongs_one": "{{count}} cantare",
-        "scheduleSongs_other": "{{count}} cantari",
+        "scheduleSongs_few": "{{count}} cantari",
+        "scheduleSongs_other": "{{count}} de cantari",
         "playlists": "Playlisturi ({{total}})",
         "more": "…și încă {{total}}",
         "playlistItems_one": "{{count}} element",

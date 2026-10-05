@@ -122,7 +122,8 @@
     "selectSong": "Selecteaza Cantare",
     "searchResults": "Se afiseaza {{shown}} din {{total}} rezultate",
     "loadedCount_one": "{{count}} cantare incarcata",
-    "loadedCount_other": "{{count}} cantari incarcate",
+    "loadedCount_few": "{{count}} cantari incarcate",
+    "loadedCount_other": "{{count}} de cantari incarcate",
     "loadMore": "Incarca inca {{count}}"
   },
   "import": {
@@ -138,7 +139,8 @@
     "formatHelp": "Folosește **bold**, *italic*, __subliniat__. Liniile goale sau --- separă slide-urile.",
     "preview": "{{count}} slide-uri",
     "preview_one": "{{count}} slide",
-    "preview_other": "{{count}} slide-uri"
+    "preview_few": "{{count}} slide-uri",
+    "preview_other": "{{count}} de slide-uri"
   },
   "category": {
     "none": "Fără categorie",
@@ -367,7 +369,8 @@
   "versions": {
     "title": "Versiuni ale cântării",
     "count_one": "{{count}} versiune",
-    "count_other": "{{count}} versiuni",
+    "count_few": "{{count}} versiuni",
+    "count_other": "{{count}} de versiuni",
     "badge": "{{count}} versiuni",
     "primary": "Principală",
     "setAsPrimary": "Setează ca principală",

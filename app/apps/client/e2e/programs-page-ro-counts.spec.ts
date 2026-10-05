@@ -1,4 +1,12 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { type APIRequestContext, expect, test } from '@playwright/test'
+
+const RO_LOCALES = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '../src/i18n/locales/ro',
+)
 
 /**
  * In Romanian the Programs page counts items in Romanian (T-105). Romanian
@@ -68,4 +76,25 @@ test('program item counts read as Romanian for 0, 1, 2 and 20', async ({
     for (const id of ids) await request.delete(`/api/schedules/${id}`)
     await request.delete(`/api/songs/${songId}`)
   }
+})
+
+/** Every Romanian count has all three forms, so none falls back to English. */
+test('every Romanian plural has its one, few and other forms', () => {
+  const missing: string[] = []
+  const walk = (node: Record<string, unknown>, path: string) => {
+    for (const [key, value] of Object.entries(node)) {
+      if (value && typeof value === 'object') {
+        walk(value as Record<string, unknown>, `${path}${key}.`)
+      } else if (key.endsWith('_other')) {
+        const base = key.slice(0, -'_other'.length)
+        if (!(`${base}_few` in node)) missing.push(`${path}${base}`)
+      }
+    }
+  }
+  for (const file of readdirSync(RO_LOCALES).filter((f) =>
+    f.endsWith('.json'),
+  )) {
+    walk(JSON.parse(readFileSync(join(RO_LOCALES, file), 'utf8')), `${file}:`)
+  }
+  expect(missing).toEqual([])
 })
