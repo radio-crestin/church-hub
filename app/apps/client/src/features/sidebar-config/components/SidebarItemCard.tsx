@@ -1,6 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Eye, EyeOff, GripVertical, Settings, Trash2 } from 'lucide-react'
+import {
+  Eye,
+  EyeOff,
+  GripVertical,
+  type LucideIcon,
+  Settings,
+  Trash2,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -53,7 +60,7 @@ export function SidebarItemCard({
   const isCustom = item.type === 'custom'
 
   // Get icon and label
-  let Icon
+  let Icon: LucideIcon
   let label: string
   let customIconUrl: string | undefined
   let faviconBgColor: string | undefined
@@ -123,17 +130,17 @@ export function SidebarItemCard({
         >
           <img src={customIconUrl} alt="" className="w-5 h-5 object-contain" />
         </div>
-      ) : Icon && iconColorClasses ? (
+      ) : iconColorClasses ? (
         <div
           className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md ${iconColorClasses.bg}`}
         >
           <Icon size={18} className={iconColorClasses.text} />
         </div>
-      ) : Icon ? (
+      ) : (
         <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
           <Icon size={18} />
         </div>
-      ) : null}
+      )}
 
       {/* Label and Type Badge */}
       <div className="flex-1 min-w-0">

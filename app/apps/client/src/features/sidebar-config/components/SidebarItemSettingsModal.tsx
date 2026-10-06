@@ -258,7 +258,6 @@ export function SidebarItemSettingsModal({
       shortcut: string,
       index: number,
       sourceList: string[],
-      allowSameAsFocusSearch = false,
     ): string | undefined => {
       if (!shortcut) return undefined
 
@@ -269,9 +268,6 @@ export function SidebarItemSettingsModal({
       if (duplicateIndex !== -1) {
         return t('sections.sidebarItem.shortcuts.duplicateError')
       }
-
-      // Allow same shortcut between switch and focus-search lists
-      // (user explicitly wants this allowed)
 
       // Check against global shortcuts (only valid action IDs, ignore legacy ones)
       for (const [actionId, config] of Object.entries(

@@ -1,3 +1,5 @@
+import type { Webview } from '@tauri-apps/api/webview'
+
 import { isTauri } from '~/features/presentation/utils/openDisplayWindow'
 import { transformToEmbedUrl } from '../utils/transformEmbedUrl'
 
@@ -8,14 +10,10 @@ import { transformToEmbedUrl } from '../utils/transformEmbedUrl'
 
 // Track created child webviews by label
 // Using interface for the webview methods we need
-interface WebviewHandle {
-  close: () => Promise<void>
-  hide: () => Promise<void>
-  show: () => Promise<void>
-  setPosition: (position: { x: number; y: number }) => Promise<void>
-  setSize: (size: { width: number; height: number }) => Promise<void>
-  setFocus: () => Promise<void>
-}
+type WebviewHandle = Pick<
+  Webview,
+  'close' | 'hide' | 'show' | 'setPosition' | 'setSize' | 'setFocus'
+>
 const createdWebviews = new Map<string, WebviewHandle>()
 
 // Currently visible webview label
