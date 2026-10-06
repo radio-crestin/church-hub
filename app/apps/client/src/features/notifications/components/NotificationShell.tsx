@@ -57,7 +57,7 @@ export function NotificationShell({
     <article
       data-testid={testId}
       data-new={isNew || undefined}
-      className={`group flex gap-3 rounded-xl border p-4 transition-colors ${
+      className={`group flex gap-3 rounded-lg border p-4 transition-colors ${
         isNew
           ? 'border-indigo-200 bg-indigo-50/60 dark:border-indigo-800/60 dark:bg-indigo-950/30'
           : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'

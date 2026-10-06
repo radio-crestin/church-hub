@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongCheckingNotification } from '~/features/song-discovery/components/SongCheckingNotification'
+import { EmptyState, Page, PageHeader, PagePanel } from '~/ui/page'
 import { NotificationItem } from './NotificationItem'
 import { useNotificationHistory } from '../hooks/useNotificationHistory'
 import type { AppNotification } from '../service/notificationsApi'
@@ -34,46 +35,32 @@ export function NotificationsPage() {
   })
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t('title')}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t('description')}
-        </p>
-      </header>
+    <Page testId="notifications-page">
+      <PageHeader title={t('title')} description={t('description')} />
+      <PagePanel testId="notifications-panel">
+        <SongCheckingNotification />
 
-      <SongCheckingNotification />
+        {!isLoading && notifications.length === 0 && (
+          <EmptyState icon={Bell} title={t('empty')} hint={t('emptyHint')} />
+        )}
 
-      {!isLoading && notifications.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center dark:border-gray-700">
-          <Bell className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="font-medium text-gray-700 dark:text-gray-200">
-            {t('empty')}
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('emptyHint')}
-          </p>
-        </div>
-      )}
-
-      {days.map(({ label, items }) => (
-        <section key={label} className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-            {label}
-          </h2>
-          {items.map((notification: AppNotification) => (
-            <NotificationItem
-              key={notification.id}
-              notification={notification}
-              isNew={newIds.has(notification.id)}
-              onClose={() => remove(notification.id)}
-              closeLabel={t('remove')}
-            />
-          ))}
-        </section>
-      ))}
-    </div>
+        {days.map(({ label, items }) => (
+          <section key={label} className="flex flex-col gap-3">
+            <h2 className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+              {label}
+            </h2>
+            {items.map((notification: AppNotification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                isNew={newIds.has(notification.id)}
+                onClose={() => remove(notification.id)}
+                closeLabel={t('remove')}
+              />
+            ))}
+          </section>
+        ))}
+      </PagePanel>
+    </Page>
   )
 }
