@@ -1,5 +1,5 @@
-import JSZip from 'jszip'
 import { expect, test } from '@playwright/test'
+import JSZip from 'jszip'
 
 /**
  * Song discovery: importing NEW songs from external sources. Covers the new
@@ -142,7 +142,9 @@ test.describe('Song Discovery — staging UI', () => {
       data: {
         title: `UI Existing Song ${ts}`,
         sourceFilename: dupFilename,
-        slides: [{ content: '<p>existing library content here</p>', sortOrder: 0 }],
+        slides: [
+          { content: '<p>existing library content here</p>', sortOrder: 0 },
+        ],
       },
     })
     expect([201, 409]).toContain(seedRes.status())
@@ -152,30 +154,22 @@ test.describe('Song Discovery — staging UI', () => {
 
     // Build a tiny OpenSong ZIP: one duplicate (by filename) + one brand-new.
     const zip = new JSZip()
-    zip.file(dupFilename, openSongXml(`UI Existing Song ${ts}`, 'existing content'))
+    zip.file(
+      dupFilename,
+      openSongXml(`UI Existing Song ${ts}`, 'existing content'),
+    )
     zip.file(
       `ui-new-${ts}.xml`,
       openSongXml(newTitle, 'a fresh unseen verse never imported before today'),
     )
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
 
-    // Mock the external download (browser mode proxies through /api/proxy/download).
-    await page.route('**/api/proxy/download**', (route) =>
+    // Mock the Resurse Creștine archive (the server downloads it from the release).
+    await page.route('**/api/song-sources/resurse-crestine/archive', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/zip',
         body: zipBuffer,
-      }),
-    )
-    // The background sync issues a cheap HEAD change-check — stub it too so the
-    // test never reaches the real external host.
-    await page.route('**/api/proxy/head**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          data: { lastModified: 'test', etag: null, contentLength: '1' },
-        }),
       }),
     )
 
@@ -194,7 +188,10 @@ test.describe('Song Discovery — staging UI', () => {
     await expect(page.getByText(`UI Existing Song ${ts}`)).toHaveCount(0)
 
     // Approve the new candidate and import it.
-    await page.getByRole('button', { name: /^(Import|Importă)$/ }).first().click()
+    await page
+      .getByRole('button', { name: /^(Import|Importă)$/ })
+      .first()
+      .click()
     await page
       .getByRole('button', { name: /Import selected|Importă selecția/ })
       .click()

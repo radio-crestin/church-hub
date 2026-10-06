@@ -89,15 +89,56 @@ export const songSourcesPaths = {
   '/api/song-sources/{id}/songs': {
     get: {
       tags,
-      summary: 'Read a song bundle source’s songs',
+      summary: 'Read a shared folder’s songs',
       description:
-        'For `song-bundle-file` and `song-bundle-folder` sources. A folder downloads only the songs whose hash changed since the last read. Requires `songs.create`.',
+        'For `song-bundle-folder` sources: only the songs whose hash changed since the last read are downloaded. Requires `songs.create`.',
       security,
       parameters: [idParameter('string')],
       responses: {
         '200': {
           description: 'The source’s OpenSong files, in manifest order',
           content: dataOf(arrayOf('SongBundleFile')),
+        },
+        '502': { description: 'The source could not be read' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/{id}/archive': {
+    get: {
+      tags,
+      summary: 'Download a song file source’s archive',
+      description:
+        'For `song-bundle-file` sources: the `.chsongs` file, downloaded by the server (links are checked to reach public addresses only). Requires `songs.create`.',
+      security,
+      parameters: [idParameter('string')],
+      responses: {
+        '200': {
+          description: 'The archive',
+          content: {
+            'application/zip': { schema: { type: 'string', format: 'binary' } },
+          },
+        },
+        '502': { description: 'The source could not be read' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/{id}/checksum': {
+    get: {
+      tags,
+      summary: 'Get what changes when a source’s songs change',
+      description:
+        'Cheap: the `.sha256` published next to an archive, a shared folder’s manifest checksum, or cantaricrestine.ro’s song count. Empty when the source offers none. Requires `songs.view`.',
+      security,
+      parameters: [idParameter('string')],
+      responses: {
+        '200': {
+          description: 'The checksum',
+          content: dataOf({
+            type: 'object',
+            properties: { checksum: { type: 'string' } },
+          }),
         },
         '502': { description: 'The source could not be read' },
         ...errors,

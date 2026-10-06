@@ -3,10 +3,8 @@ import type { QueryClient } from '@tanstack/react-query'
 import { backfillAlternateTitles } from '~/features/songs/service'
 import { catalogQueryKey } from './useFetchCatalog'
 import { fetchSourceCatalog, type SongSource } from '../providers'
-import {
-  countNewCandidates,
-  fetchCatalogSignature,
-} from '../service/discoveryApi'
+import { countNewCandidates } from '../service/discoveryApi'
+import { getSourceChecksum } from '../service/songSourcesApi'
 import { alternateTitleEntries } from '../utils/alternateTitleEntries'
 import { shouldRecoverTitles } from '../utils/shouldRecoverTitles'
 
@@ -29,7 +27,7 @@ const TITLES_ATTEMPTED_KEY = 'song-discovery-titles-attempted'
 
 /** What the last check of one source found, kept across launches. */
 export interface SourceCheck {
-  /** HTTP validator of the catalogue ('' when the server gives none). */
+  /** The source's checksum ('' when it offers none). */
   signature: string
   /** Songs in the catalogue the library lacks. */
   count: number
@@ -72,9 +70,9 @@ async function recoverTitles(
 }
 
 /**
- * Checks one source for songs the library lacks. Cheap by design: a HEAD
- * validator that matches the last check skips the download; a source without
- * one is downloaded at most daily. `force` always downloads ("Check now").
+ * Checks one source for songs the library lacks. Cheap by design: a checksum
+ * that matches the last check skips the download; a source without one is
+ * downloaded at most daily. `force` always downloads ("Check now").
  * The downloaded catalogue primes Song discovery's cache.
  */
 export async function checkSourceForNewSongs(
@@ -84,7 +82,7 @@ export async function checkSourceForNewSongs(
 ): Promise<SourceCheck> {
   const previous = readSourceCheck(source.id)
   const now = Date.now()
-  const signature = await fetchCatalogSignature(source.url)
+  const signature = await getSourceChecksum(source.id)
   const titlesDue =
     source.id === TITLES_SOURCE_ID &&
     shouldRecoverTitles({

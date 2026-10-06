@@ -1,8 +1,10 @@
+import { sanitizeSongTitle } from '@church-hub/song-formats'
 import { open } from '@tauri-apps/plugin-dialog'
 import { Download, FileUp, Globe } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSongSources } from '~/features/song-discovery/hooks/useSongSources'
 import {
   downloadFromUrl,
   ImportConfirmationModal,
@@ -13,7 +15,6 @@ import {
   processImportFiles,
   processImportFilesWeb,
   processZipFromBuffer,
-  sanitizeSongTitle,
   useBatchImportSongs,
 } from '~/features/song-import'
 import { useCategories, useUpsertCategory } from '~/features/songs/hooks'
@@ -24,8 +25,8 @@ import { ExportOptionsModal } from './ExportOptionsModal'
 import { ExportProgressModal } from './ExportProgressModal'
 import { useExportSongs } from '../hooks'
 
-const RESURSE_CRESTINE_URL =
-  'https://download.resursecrestine.ro/programe-crestine/cantece-resurse-crestine-opensong-standard.zip'
+/** The built-in Resurse Creștine source, whose archive these actions download. */
+const RESURSE_CRESTINE_SOURCE_ID = 'resurse-crestine'
 const RESURSE_CRESTINE_CATEGORY_NAME = 'Resurse Crestine'
 
 type ModalState =
@@ -38,6 +39,12 @@ type ModalState =
 export function ImportExportManager() {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
+  const { data: songSources } = useSongSources()
+  const resurseCrestineUrl = () => {
+    const source = songSources?.find((s) => s.id === RESURSE_CRESTINE_SOURCE_ID)
+    if (!source) throw new Error('The Resurse Creștine source is not loaded')
+    return source.url
+  }
   const {
     batchImport,
     isPending: isImporting,
@@ -308,7 +315,7 @@ export function ImportExportManager() {
 
     try {
       const zipData = await downloadFromUrl(
-        RESURSE_CRESTINE_URL,
+        resurseCrestineUrl(),
         (downloaded, total) => {
           setImportProgress({
             phase: 'downloading',
@@ -364,7 +371,7 @@ export function ImportExportManager() {
     try {
       // Step 1: Download the ZIP file
       const zipData = await downloadFromUrl(
-        RESURSE_CRESTINE_URL,
+        resurseCrestineUrl(),
         (downloaded, total) => {
           setImportProgress({
             phase: 'downloading',

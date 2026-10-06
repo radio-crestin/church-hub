@@ -1,12 +1,10 @@
 /**
  * How a source's catalog is laid out at its `url`:
- * - `opensong-zip`: a ZIP of OpenSong XML files (Resurse Creștine).
  * - `cantaricrestine-api`: cantaricrestine.ro's JSON API (plain-text lyrics).
  * - `song-bundle-file`: a `.chsongs` song bundle file (see bundle/types.ts).
  * - `song-bundle-folder`: a song bundle folder, by its manifest.json URL.
  */
 export type SongSourceFormat =
-  | 'opensong-zip'
   | 'cantaricrestine-api'
   | 'song-bundle-file'
   | 'song-bundle-folder'

@@ -1,7 +1,10 @@
 export { decodeHtmlEntities } from './decodeHtmlEntities'
 export { htmlToPlainText } from './htmlToPlainText'
+export { isOpenSongXml } from './isOpenSongXml'
+export { mightBeOpenSongFile } from './mightBeOpenSongFile'
 export { removeHtmlTags } from './removeHtmlTags'
 export { sanitizeFilename } from './sanitizeFilename'
+export { sanitizeSongTitle } from './sanitizeSongTitle'
 export {
   type SlideForOpenSong,
   slidesToOpenSongVerses,

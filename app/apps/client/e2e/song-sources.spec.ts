@@ -103,7 +103,7 @@ test.describe('Song sources', () => {
         .map((s) => [s.id, s.format]),
     )
     expect(builtIn).toEqual({
-      'resurse-crestine': 'opensong-zip',
+      'resurse-crestine': 'song-bundle-file',
       'bcev-baicoi': 'song-bundle-file',
       'laudele-domnului': 'cantaricrestine-api',
       'pe-drumul-credintei': 'cantaricrestine-api',
@@ -201,6 +201,16 @@ test.describe('Song sources', () => {
       (s) => s.origin === 'link' && s.name === categoryName,
     )?.id
     expect(linkSourceId).toBeTruthy()
+
+    // Its checksum (from the manifest) tells the app cheaply when to sync.
+    const manifestChecksum = JSON.parse(
+      s3.text(`/church/e2e/${slug()}/manifest.json`) ?? '{}',
+    ).checksum
+    expect(manifestChecksum).toBeTruthy()
+    const checksum = await request.get(
+      `/api/song-sources/${linkSourceId}/checksum`,
+    )
+    expect((await checksum.json()).data.checksum).toBe(manifestChecksum)
 
     await page.goto(`/songs/discover?source=${linkSourceId}`)
     await expect(page.getByRole('tab', { name: categoryName })).toHaveAttribute(

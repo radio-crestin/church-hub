@@ -1,0 +1,65 @@
+# Rebuilds the Resurse Creștine song archive from resursecrestine.ro and
+# publishes it to the `song-sources` release, where the app's built-in
+# Resurse Creștine source downloads it. Daily, and on demand. Uploads only
+# when a song changed (the checksum differs from the published one).
+name: Resurse Creștine archive
+
+on:
+  schedule:
+    # Daily at 03:17 UTC
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: resurse-crestine-archive
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write # upload release assets
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: app/package.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Read the published checksum
+        id: published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          checksum=$(gh release download song-sources --repo "$GITHUB_REPOSITORY" \
+            --pattern resurse-crestine.chsongs.sha256 --output - 2>/dev/null || true)
+          echo "checksum=${checksum}" >> "$GITHUB_OUTPUT"
+
+      - name: Build the archive
+        id: build
+        working-directory: app/apps/server
+        env:
+          PREVIOUS: ${{ steps.published.outputs.checksum }}
+        run: bun scripts/build-resurse-crestine-archive.ts "$RUNNER_TEMP/archive" "$PREVIOUS"
+
+      - name: Publish to the song-sources release
+        if: steps.build.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload song-sources --repo "$GITHUB_REPOSITORY" --clobber \
+            "$RUNNER_TEMP/archive/resurse-crestine.chsongs" \
+            "$RUNNER_TEMP/archive/resurse-crestine.zip" \
+            "$RUNNER_TEMP/archive/resurse-crestine.chsongs.sha256"

@@ -10,9 +10,11 @@ import type { DiscoveryCandidate } from '../types'
 export function bundleSongsToCandidates(
   sourceId: string,
   files: SongBundleFile[],
+  /** Church Hub's own files keep their titles; others are cleaned up. */
+  { exactTitle }: { exactTitle: boolean },
 ): DiscoveryCandidate[] {
   return files.map((file) => {
-    const parsed = parseOpenSongXml(file.xml, file.path, { exactTitle: true })
+    const parsed = parseOpenSongXml(file.xml, file.path, { exactTitle })
     return {
       tempId: `${sourceId}-${file.id}`,
       sourceFilename: parsed.metadata?.sourceFilename ?? file.path,

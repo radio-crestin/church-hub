@@ -1,6 +1,5 @@
+import { sanitizeSongTitle } from '@church-hub/song-formats'
 import JSZip from 'jszip'
-
-import { sanitizeSongTitle } from './sanitizeTitle'
 
 export interface ParsedSlide {
   slideNumber: number

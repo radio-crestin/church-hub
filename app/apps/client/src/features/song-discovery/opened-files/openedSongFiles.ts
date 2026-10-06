@@ -6,6 +6,7 @@ import type { SongBundleFile, SongSource } from '../providers/types'
 interface OpenedFile {
   source: SongSource
   files: SongBundleFile[]
+  ownFormat: boolean
 }
 
 /**
@@ -37,16 +38,16 @@ export function addOpenedSongFile(
   }
   opened = [
     ...opened.filter((f) => f.source.id !== id),
-    { source, files: file.files },
+    { source, files: file.files, ownFormat: file.ownFormat },
   ]
   emit()
   return id
 }
 
-export function getOpenedSongFiles(sourceId: string): SongBundleFile[] {
+export function getOpenedSongFile(sourceId: string): OpenedFile {
   const file = opened.find((f) => f.source.id === sourceId)
   if (!file) throw new Error('The opened song file is no longer available')
-  return file.files
+  return file
 }
 
 /** The opened files as sources, re-rendering when one is opened. */

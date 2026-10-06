@@ -35,11 +35,9 @@ export type {
 export {
   downloadFromUrl,
   extractPptxFromZip,
-  isOpenSongXml,
   parseOpenSongXml,
   parsePptxFile,
   processImportFiles,
   processImportFilesWeb,
   processZipFromBuffer,
-  sanitizeSongTitle,
 } from './utils'

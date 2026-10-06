@@ -10,6 +10,8 @@ import {
   getS3Storage,
   listPublications,
   listSongSources,
+  readSourceArchive,
+  readSourceChecksum,
   readSourceSongs,
   type S3StorageInput,
   SONG_BUNDLE_EXTENSION,
@@ -30,6 +32,8 @@ type HandleCors = (req: Request, res: Response) => Response
 const logger = createLogger('song-sources')
 
 const SOURCE_SONGS_PATH = /^\/api\/song-sources\/([\w-]+)\/songs$/
+const SOURCE_ARCHIVE_PATH = /^\/api\/song-sources\/([\w-]+)\/archive$/
+const SOURCE_CHECKSUM_PATH = /^\/api\/song-sources\/([\w-]+)\/checksum$/
 const SOURCE_PATH = /^\/api\/song-sources\/([\w-]+)$/
 const PUBLICATION_SYNC_PATH = /^\/api\/song-sources\/publications\/(\d+)\/sync$/
 const PUBLICATION_PATH = /^\/api\/song-sources\/publications\/(\d+)$/
@@ -50,7 +54,9 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - GET    /api/song-sources                     every source (songs.view)
  * - POST   /api/song-sources                     add a source from a link `{ url }` (songs.create)
  * - DELETE /api/song-sources/:id                 remove a source added from a link (songs.create)
- * - GET    /api/song-sources/:id/songs           a song-bundle source's songs (songs.create)
+ * - GET    /api/song-sources/:id/songs           a shared folder's OpenSong files (songs.create)
+ * - GET    /api/song-sources/:id/archive         a song file source's .chsongs (songs.create)
+ * - GET    /api/song-sources/:id/checksum        what changes when the source's songs do (songs.view)
  * - GET    /api/song-sources/export?categoryId=&format=chsongs|zip  a category as a song bundle (songs.view)
  * - GET    /api/song-sources/storage             the S3 storage, without its secret (settings.view)
  * - PUT    /api/song-sources/storage             save the S3 storage (settings.edit)
@@ -208,6 +214,41 @@ export async function handleSongSourceRoutes(
       return respond(200, { data: await readSourceSongs(songsMatch[1]) })
     } catch (error) {
       logger.warning(`Reading source ${songsMatch[1]} failed: ${error}`)
+      return respond(502, { error: errorMessage(error) })
+    }
+  }
+
+  const archiveMatch = pathname.match(SOURCE_ARCHIVE_PATH)
+  if (req.method === 'GET' && archiveMatch) {
+    const denied = deny('songs.create')
+    if (denied) return denied
+    try {
+      const archive = await readSourceArchive(archiveMatch[1])
+      return handleCors(
+        req,
+        new Response(archive, {
+          headers: {
+            'Content-Type': 'application/zip',
+            'Content-Length': String(archive.byteLength),
+          },
+        }),
+      )
+    } catch (error) {
+      logger.warning(`Reading source ${archiveMatch[1]} failed: ${error}`)
+      return respond(502, { error: errorMessage(error) })
+    }
+  }
+
+  const checksumMatch = pathname.match(SOURCE_CHECKSUM_PATH)
+  if (req.method === 'GET' && checksumMatch) {
+    const denied = deny('songs.view')
+    if (denied) return denied
+    try {
+      return respond(200, {
+        data: { checksum: await readSourceChecksum(checksumMatch[1]) },
+      })
+    } catch (error) {
+      logger.warning(`Checksum of ${checksumMatch[1]} failed: ${error}`)
       return respond(502, { error: errorMessage(error) })
     }
   }

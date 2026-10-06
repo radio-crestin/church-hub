@@ -1,8 +1,7 @@
+import { isOpenSongXml, mightBeOpenSongFile } from '@church-hub/song-formats'
 import JSZip from 'jszip'
 
 import { yieldToMain } from '~/utils/async-utils'
-import { mightBeOpenSongFile } from './mightBeOpenSongFile'
-import { isOpenSongXml } from './parseOpenSong'
 import type {
   ExtractedOpenSongFile,
   ExtractedPptFile,

@@ -34,6 +34,12 @@ export interface SongBundleManifest {
   version: number
   name: string
   categoryName: string
+  /**
+   * Changes exactly when any song (or the source's name) changes: a reader
+   * compares it with the last one to know, cheaply, that there is something
+   * to sync. Also published next to a release archive as `<name>.sha256`.
+   */
+  checksum: string
   /** ISO time the bundle was built. */
   updatedAt: string
   songs: SongBundleManifestEntry[]

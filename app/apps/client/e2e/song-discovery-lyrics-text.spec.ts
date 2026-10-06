@@ -53,20 +53,11 @@ test('Compare shows a library song lyrics as text', async ({
   const zip = new JSZip()
   zip.file(`candidate-text-${ts}.xml`, openSongXml(candidateTitle, lyrics))
   const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
-  await page.route('**/api/proxy/download**', (route) =>
+  await page.route('**/api/song-sources/resurse-crestine/archive', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/zip',
       body: zipBuffer,
-    }),
-  )
-  await page.route('**/api/proxy/head**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        data: { lastModified: 'test', etag: null, contentLength: '1' },
-      }),
     }),
   )
 

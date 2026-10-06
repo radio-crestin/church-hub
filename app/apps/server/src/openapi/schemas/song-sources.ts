@@ -13,12 +13,7 @@ export const songSourceSchemas = {
       },
       format: {
         type: 'string',
-        enum: [
-          'opensong-zip',
-          'cantaricrestine-api',
-          'song-bundle-file',
-          'song-bundle-folder',
-        ],
+        enum: ['cantaricrestine-api', 'song-bundle-file', 'song-bundle-folder'],
       },
       url: { type: 'string', format: 'uri' },
       homepage: { type: 'string', format: 'uri' },

@@ -191,7 +191,9 @@ export async function processZipFromBuffer(
             success: true as const,
             data: {
               parsed,
-              sourceFilename: opensongFile.filename,
+              // A Church Hub song file names the file the song first came from.
+              sourceFilename:
+                parsed.metadata?.sourceFilename ?? opensongFile.filename,
               sourceFormat: 'opensong' as const,
             },
           }

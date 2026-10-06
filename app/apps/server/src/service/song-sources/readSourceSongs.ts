@@ -1,18 +1,15 @@
 import type { SongBundleFile } from './bundle/types'
-import { readBundleFile } from './links/readBundleFile'
 import { readBundleFolder } from './links/readBundleFolder'
-import { listSongSources } from './listSongSources'
+import { findSongSource } from './listSongSources'
 
 /**
- * The song files of a song-bundle source (a `.chsongs` file or a shared folder).
- * Read on the server, which holds the folder cache and needs no CORS.
+ * The song files of a shared folder source, read on the server, which keeps
+ * the folder cache (only changed songs are downloaded).
  */
 export function readSourceSongs(sourceId: string): Promise<SongBundleFile[]> {
-  const source = listSongSources().find((s) => s.id === sourceId)
-  if (!source) throw new Error(`Unknown song source: ${sourceId}`)
-  if (source.format === 'song-bundle-file') return readBundleFile(source.url)
-  if (source.format === 'song-bundle-folder') {
-    return readBundleFolder(source.url)
+  const source = findSongSource(sourceId)
+  if (source.format !== 'song-bundle-folder') {
+    throw new Error(`${source.name} is not a shared folder`)
   }
-  throw new Error(`${source.name} is not a song bundle source`)
+  return readBundleFolder(source.url)
 }

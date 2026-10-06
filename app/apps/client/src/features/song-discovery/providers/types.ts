@@ -3,7 +3,6 @@ import type { DiscoveryCandidate } from '../types'
 
 /** Mirrors the server's `SongSourceFormat`. */
 export type SongSourceFormat =
-  | 'opensong-zip'
   | 'cantaricrestine-api'
   | 'song-bundle-file'
   | 'song-bundle-folder'

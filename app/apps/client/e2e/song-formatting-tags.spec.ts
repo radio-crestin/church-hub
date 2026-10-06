@@ -158,17 +158,8 @@ test.describe('Resurse Creștine import', () => {
     zip.file(`tags-${alphaId}.xml`, xml)
     const body = await zip.generateAsync({ type: 'nodebuffer' })
 
-    await page.route('**/api/proxy/download**', (route) =>
+    await page.route('**/api/song-sources/resurse-crestine/archive', (route) =>
       route.fulfill({ status: 200, contentType: 'application/zip', body }),
-    )
-    await page.route('**/api/proxy/head**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          data: { lastModified: 'test', etag: null, contentLength: '1' },
-        }),
-      }),
     )
 
     await page.goto('/songs/discover')

@@ -2,8 +2,8 @@
   "id": "resurse-crestine",
   "name": "Resurse Creștine",
   "categoryName": "Resurse Crestine",
-  "format": "opensong-zip",
-  "url": "https://download.resursecrestine.ro/programe-crestine/cantece-resurse-crestine-opensong-standard.zip",
+  "format": "song-bundle-file",
+  "url": "https://github.com/radio-crestin/church-hub/releases/download/song-sources/resurse-crestine.chsongs",
   "homepage": "https://www.resursecrestine.ro",
-  "license": "CC BY-NC-SA 3.0: free of charge, credit the author and www.resursecrestine.ro"
+  "license": "CC BY-NC-SA 3.0: free of charge, credit the author and www.resursecrestine.ro. Rebuilt daily from resursecrestine.ro by the resurse-crestine-archive workflow."
 }

@@ -1,3 +1,4 @@
+import { sanitizeSongTitle } from '@church-hub/song-formats'
 import { FileUp, Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -5,7 +6,6 @@ import { useTranslation } from 'react-i18next'
 import { CategoryPicker } from '~/features/songs/components'
 import type { ImportOptions, ParsedSong } from '../types'
 import type { ParsedPptx } from '../utils/parsePptx'
-import { sanitizeSongTitle } from '../utils/sanitizeTitle'
 
 interface SongWithFilename {
   parsed: ParsedPptx | ParsedSong
