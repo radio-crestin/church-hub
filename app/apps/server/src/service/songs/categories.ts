@@ -126,16 +126,20 @@ export function upsertCategory(
     if (input.id) {
       logger.debug(`Updating category: ${input.id}`)
 
-      // Build SET clause dynamically
+      // Only the column names are written into the SQL; every value is bound.
       const setClauses: string[] = ['updated_at = unixepoch()']
+      const values: Array<string | number> = []
       if (input.name !== undefined) {
-        setClauses.push(`name = '${input.name.replace(/'/g, "''")}'`)
+        setClauses.push('name = ?')
+        values.push(input.name)
       }
       if (input.priority !== undefined) {
-        setClauses.push(`priority = ${input.priority}`)
+        setClauses.push('priority = ?')
+        values.push(input.priority)
       }
       if (input.isHidden !== undefined) {
-        setClauses.push(`is_hidden = ${input.isHidden ? 1 : 0}`)
+        setClauses.push('is_hidden = ?')
+        values.push(input.isHidden ? 1 : 0)
       }
 
       // Single efficient query: UPDATE with RETURNING + subquery for song count
@@ -155,7 +159,7 @@ export function upsertCategory(
           (SELECT COUNT(*) FROM songs WHERE category_id = ?) as songCount
       `,
         )
-        .get(input.id, input.id) as
+        .get(...values, input.id, input.id) as
         | {
             id: number
             name: string

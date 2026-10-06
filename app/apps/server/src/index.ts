@@ -328,6 +328,7 @@ import {
   upsertCategory,
   upsertSongSlide,
   upsertTag,
+  validateCategoryInput,
   validateSongBackground,
   warmupSearchIndex as warmupSongsSearchIndex,
 } from './service/songs'
@@ -6815,10 +6816,11 @@ async function startRealServer(): Promise<void> {
           )
           if (permError) return permError
 
-          if (!body.name) {
+          const inputError = validateCategoryInput(body)
+          if (inputError) {
             return handleCors(
               req,
-              new Response(JSON.stringify({ error: 'Missing name' }), {
+              new Response(JSON.stringify({ error: inputError }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' },
               }),
@@ -6949,7 +6951,10 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as ReorderCategoriesInput
 
-          if (!body.categoryIds || !Array.isArray(body.categoryIds)) {
+          if (
+            !Array.isArray(body.categoryIds) ||
+            !body.categoryIds.every(Number.isInteger)
+          ) {
             return handleCors(
               req,
               new Response(
