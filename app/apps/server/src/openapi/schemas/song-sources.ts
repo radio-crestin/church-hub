@@ -26,34 +26,14 @@ export const songSourceSchemas = {
       origin: { type: 'string', enum: ['built-in', 'link'] },
     },
   },
-  SongBundleSong: {
+  SongBundleFile: {
     type: 'object',
-    description: 'One song of a song bundle (songs/<id>.json)',
+    description:
+      'One song of a song bundle: its OpenSong file, named after the song',
     properties: {
-      id: { type: 'string' },
-      title: { type: 'string' },
-      alternateTitles: { type: 'array', items: { type: 'string' } },
-      sourceFilename: { type: 'string', nullable: true },
-      author: { type: 'string', nullable: true },
-      copyright: { type: 'string', nullable: true },
-      ccli: { type: 'string', nullable: true },
-      tempo: { type: 'string', nullable: true },
-      timeSignature: { type: 'string', nullable: true },
-      theme: { type: 'string', nullable: true },
-      altTheme: { type: 'string', nullable: true },
-      hymnNumber: { type: 'string', nullable: true },
-      keyLine: { type: 'string', nullable: true },
-      presentationOrder: { type: 'string', nullable: true },
-      slides: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            content: { type: 'string', description: 'Slide HTML' },
-            label: { type: 'string', nullable: true },
-          },
-        },
-      },
+      id: { type: 'string', description: 'The song’s uuid' },
+      path: { type: 'string', example: '001 - Lauda pe Domnul.opensong' },
+      xml: { type: 'string', description: 'OpenSong XML' },
     },
   },
   S3Storage: {

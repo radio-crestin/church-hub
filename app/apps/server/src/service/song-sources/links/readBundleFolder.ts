@@ -1,7 +1,7 @@
 import { fetchLink } from './fetchLink'
 import { getRawDatabase } from '../../../db'
 import { parseManifest } from '../bundle/parseManifest'
-import type { SongBundleManifestEntry, SongBundleSong } from '../bundle/types'
+import type { SongBundleFile, SongBundleManifestEntry } from '../bundle/types'
 
 /** Downloads at a time; a first read of a large folder stays quick. */
 const CONCURRENCY = 16
@@ -14,7 +14,8 @@ interface CachedSong {
 
 /** A song file's URL, refusing paths that leave the manifest's site. */
 function songUrl(manifestUrl: string, entry: SongBundleManifestEntry): string {
-  const url = new URL(entry.path, manifestUrl)
+  const path = entry.path.split('/').map(encodeURIComponent).join('/')
+  const url = new URL(path, manifestUrl)
   if (url.origin !== new URL(manifestUrl).origin) {
     throw new Error(`Song path leaves the source: ${entry.path}`)
   }
@@ -22,13 +23,13 @@ function songUrl(manifestUrl: string, entry: SongBundleManifestEntry): string {
 }
 
 /**
- * Every song of a shared folder. The manifest says each song's hash, so only
+ * Every song file of a shared folder. The manifest says each song's hash, so only
  * songs that are new or changed since the last read are downloaded; the rest
  * come from the local cache. Songs gone from the manifest leave the cache.
  */
 export async function readBundleFolder(
   manifestUrl: string,
-): Promise<SongBundleSong[]> {
+): Promise<SongBundleFile[]> {
   const db = getRawDatabase()
   const manifest = parseManifest(
     new TextDecoder().decode(await fetchLink(manifestUrl)),
@@ -79,6 +80,6 @@ export async function readBundleFolder(
   return manifest.songs.map((entry) => {
     const song = cached.get(entry.id)
     if (!song) throw new Error(`Song ${entry.id} was not downloaded`)
-    return JSON.parse(song.contents)
+    return { id: entry.id, path: entry.path, xml: song.contents }
   })
 }

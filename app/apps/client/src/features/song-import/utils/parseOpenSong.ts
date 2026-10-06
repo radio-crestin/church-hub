@@ -56,12 +56,13 @@ function getTextContent(song: Element, tagName: string): string | null {
  */
 function extractMetadata(
   song: Element,
-  filename?: string,
+  filename: string | undefined,
+  exactTitle: boolean,
 ): { title: string; metadata: OpenSongMetadata } {
   const rawTitle =
     getTextContent(song, 'title') ||
     (filename ? extractFilenameWithoutExtension(filename) : 'Untitled Song')
-  const title = sanitizeSongTitle(rawTitle)
+  const title = exactTitle ? rawTitle.trim() : sanitizeSongTitle(rawTitle)
 
   const churchHubIdStr = getTextContent(song, 'church_hub_id')
   const metadata: OpenSongMetadata = {
@@ -195,6 +196,8 @@ export function isOpenSongXml(content: string): boolean {
 export function parseOpenSongXml(
   xmlContent: string,
   filename?: string,
+  /** Keep the title as written: Church Hub's own song files, not foreign ones. */
+  { exactTitle = false }: { exactTitle?: boolean } = {},
 ): ParsedOpenSong {
   const parser = new DOMParser()
   const doc = parser.parseFromString(xmlContent, 'application/xml')
@@ -211,7 +214,7 @@ export function parseOpenSongXml(
   }
 
   // Extract metadata
-  const { title, metadata } = extractMetadata(song, filename)
+  const { title, metadata } = extractMetadata(song, filename, exactTitle)
 
   // Extract and parse lyrics
   const lyricsElement = song.querySelector('lyrics')

@@ -1,4 +1,7 @@
-import { readCategorySongs } from './readCategorySongs'
+import { sanitizeFilename } from '@church-hub/song-formats'
+
+import { type CategorySong, readCategorySongs } from './readCategorySongs'
+import { songToOpenSong } from './songToOpenSong'
 import {
   SONG_BUNDLE_FORMAT,
   SONG_BUNDLE_VERSION,
@@ -14,20 +17,36 @@ function hashFile(contents: string): string {
     .slice(0, 16)
 }
 
-/** A category's songs as a bundle: one file per song plus the manifest. */
+/** The song's file name: its own file's name when it came from one, else its title. */
+function baseName(song: CategorySong): string {
+  const fromFile = song.sourceFilename
+    ?.split(/[/\\]/)
+    .pop()
+    ?.replace(/\.[^.]+$/, '')
+  return sanitizeFilename(fromFile || song.title) || `song-${song.id}`
+}
+
+/** A category's songs as a bundle: one OpenSong file per song plus the manifest. */
 export function buildBundleFiles(
   categoryId: number,
   source: { name: string; categoryName: string },
 ): SongBundleFiles {
   const songFiles = new Map<string, string>()
+  const taken = new Set<string>()
   const entries: SongBundleManifestEntry[] = []
 
   for (const song of readCategorySongs(categoryId)) {
-    const path = `songs/${encodeURIComponent(song.id)}.json`
-    const contents = JSON.stringify(song)
+    const base = baseName(song)
+    let path = `${base}.opensong`
+    for (let n = 2; taken.has(path.toLowerCase()); n++) {
+      path = `${base} (${n}).opensong`
+    }
+    taken.add(path.toLowerCase())
+
+    const contents = songToOpenSong(song)
     songFiles.set(path, contents)
     entries.push({
-      id: song.id,
+      id: song.uuid || `song-${song.id}`,
       title: song.title,
       path,
       hash: hashFile(contents),

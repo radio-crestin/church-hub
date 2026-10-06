@@ -28,23 +28,11 @@ export interface SongSource {
   origin: SongSourceOrigin
 }
 
-/** Mirrors the server's `SongBundleSong` (one songs/<id>.json). */
-export interface SongBundleSong {
+/** Mirrors the server's `SongBundleFile`: one song's OpenSong file. */
+export interface SongBundleFile {
   id: string
-  title: string
-  alternateTitles?: string[]
-  sourceFilename: string | null
-  author: string | null
-  copyright: string | null
-  ccli: string | null
-  tempo: string | null
-  timeSignature: string | null
-  theme: string | null
-  altTheme: string | null
-  hymnNumber: string | null
-  keyLine: string | null
-  presentationOrder: string | null
-  slides: Array<{ content: string; label: string | null }>
+  path: string
+  xml: string
 }
 
 /** Downloads and parses one source's catalog into comparable candidates. */

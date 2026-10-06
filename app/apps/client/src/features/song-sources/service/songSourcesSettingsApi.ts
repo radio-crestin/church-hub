@@ -47,12 +47,13 @@ export const unpublish = (id: number) =>
     method: 'DELETE',
   })
 
-/** A category as a `.chsongs` file's bytes. */
+/** A category as a song bundle's bytes: a `.chsongs` file or the same as `.zip`. */
 export async function exportCategoryFile(
   categoryId: number,
+  format: 'chsongs' | 'zip',
 ): Promise<Uint8Array> {
   const response = await fetch(
-    `${getApiUrl()}/api/song-sources/export?categoryId=${categoryId}`,
+    `${getApiUrl()}/api/song-sources/export?categoryId=${categoryId}&format=${format}`,
     { credentials: 'include', headers: getAuthHeaders() },
   )
   if (!response.ok) throw new Error(`Export failed: ${response.status}`)

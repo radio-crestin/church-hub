@@ -1,5 +1,5 @@
 import { fetcher } from '~/utils/fetcher'
-import type { SongBundleSong, SongSource } from '../providers/types'
+import type { SongBundleFile, SongSource } from '../providers/types'
 
 interface ApiResponse<T> {
   data?: T
@@ -23,7 +23,7 @@ export const getSongSources = () => call<SongSource[]>('/api/song-sources')
 
 /** The songs of a song-bundle source, read by the server. */
 export const getSourceSongs = (sourceId: string) =>
-  call<SongBundleSong[]>(
+  call<SongBundleFile[]>(
     `/api/song-sources/${encodeURIComponent(sourceId)}/songs`,
     // A first read of a large shared folder downloads every song.
     { timeout: 5 * 60_000 },

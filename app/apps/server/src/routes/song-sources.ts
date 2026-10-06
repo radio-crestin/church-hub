@@ -1,3 +1,5 @@
+import { sanitizeFilename } from '@church-hub/song-formats'
+
 import { requirePermission } from '../middleware/permissions'
 import type { RequestContext } from '../middleware/types'
 import {
@@ -35,10 +37,10 @@ const PUBLICATION_PATH = /^\/api\/song-sources\/publications\/(\d+)$/
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error)
 
-/** "Pe Drumul Credinței" → "Pe Drumul Credinței.chsongs", safe as a file name. */
-function bundleFileName(categoryName: string): string {
-  const safe = categoryName.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'songs'
-  return `${safe}${SONG_BUNDLE_EXTENSION}`
+/** "Pe Drumul Credinței" → "Pe Drumul Credinței.chsongs" (or `.zip`). */
+function bundleFileName(categoryName: string, format: string | null): string {
+  const extension = format === 'zip' ? '.zip' : SONG_BUNDLE_EXTENSION
+  return `${sanitizeFilename(categoryName) || 'songs'}${extension}`
 }
 
 /**
@@ -49,7 +51,7 @@ function bundleFileName(categoryName: string): string {
  * - POST   /api/song-sources                     add a source from a link `{ url }` (songs.create)
  * - DELETE /api/song-sources/:id                 remove a source added from a link (songs.create)
  * - GET    /api/song-sources/:id/songs           a song-bundle source's songs (songs.create)
- * - GET    /api/song-sources/export?categoryId=  a category as a .chsongs file (songs.view)
+ * - GET    /api/song-sources/export?categoryId=&format=chsongs|zip  a category as a song bundle (songs.view)
  * - GET    /api/song-sources/storage             the S3 storage, without its secret (settings.view)
  * - PUT    /api/song-sources/storage             save the S3 storage (settings.edit)
  * - GET    /api/song-sources/publications        published categories (settings.view)
@@ -118,7 +120,7 @@ export async function handleSongSourceRoutes(
       new Response(file, {
         headers: {
           'Content-Type': 'application/zip',
-          'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(bundleFileName(categoryName))}`,
+          'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(bundleFileName(categoryName, url.searchParams.get('format')))}`,
         },
       }),
     )

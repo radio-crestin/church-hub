@@ -1,11 +1,11 @@
 import { useSyncExternalStore } from 'react'
 
-import type { SongBundleFile } from './readSongBundleFile'
-import type { SongBundleSong, SongSource } from '../providers/types'
+import type { OpenedSongFile } from './readSongBundleFile'
+import type { SongBundleFile, SongSource } from '../providers/types'
 
 interface OpenedFile {
   source: SongSource
-  songs: SongBundleSong[]
+  files: SongBundleFile[]
 }
 
 /**
@@ -24,7 +24,7 @@ function emit() {
 /** Adds an opened file as a source and returns its id. */
 export function addOpenedSongFile(
   fileName: string,
-  file: SongBundleFile,
+  file: OpenedSongFile,
 ): string {
   const id = `file-${fileName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
   const source: SongSource = {
@@ -37,16 +37,16 @@ export function addOpenedSongFile(
   }
   opened = [
     ...opened.filter((f) => f.source.id !== id),
-    { source, songs: file.songs },
+    { source, files: file.files },
   ]
   emit()
   return id
 }
 
-export function getOpenedSongFileSongs(sourceId: string): SongBundleSong[] {
+export function getOpenedSongFiles(sourceId: string): SongBundleFile[] {
   const file = opened.find((f) => f.source.id === sourceId)
   if (!file) throw new Error('The opened song file is no longer available')
-  return file.songs
+  return file.files
 }
 
 /** The opened files as sources, re-rendering when one is opened. */

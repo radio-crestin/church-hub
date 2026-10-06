@@ -1,12 +1,26 @@
-import type { SongBundleSlide, SongBundleSong } from './types'
 import { getRawDatabase } from '../../../db'
-import { parseAlternateTitles } from '../../songs/parseAlternateTitles'
+
+export interface CategorySong {
+  id: number
+  uuid: string
+  title: string
+  sourceFilename: string | null
+  author: string | null
+  copyright: string | null
+  ccli: string | null
+  tempo: string | null
+  timeSignature: string | null
+  theme: string | null
+  altTheme: string | null
+  hymnNumber: string | null
+  keyLine: string | null
+  slides: Array<{ content: string; label: string | null }>
+}
 
 interface SongRow {
   id: number
   uuid: string
   title: string
-  alternate_titles: string | null
   source_filename: string | null
   author: string | null
   copyright: string | null
@@ -17,7 +31,6 @@ interface SongRow {
   alt_theme: string | null
   hymn_number: string | null
   key_line: string | null
-  presentation_order: string | null
 }
 
 interface SlideRow {
@@ -26,14 +39,13 @@ interface SlideRow {
   label: string | null
 }
 
-/** Every song of a category with its slides, in bundle form. */
-export function readCategorySongs(categoryId: number): SongBundleSong[] {
+/** Every song of a category with its slides in order, two queries in all. */
+export function readCategorySongs(categoryId: number): CategorySong[] {
   const db = getRawDatabase()
   const songRows = db
     .query<SongRow, [number]>(
-      `SELECT id, uuid, title, alternate_titles, source_filename, author,
-              copyright, ccli, tempo, time_signature, theme, alt_theme,
-              hymn_number, key_line, presentation_order
+      `SELECT id, uuid, title, source_filename, author, copyright, ccli, tempo,
+              time_signature, theme, alt_theme, hymn_number, key_line
          FROM songs WHERE category_id = ? ORDER BY title, id`,
     )
     .all(categoryId)
@@ -45,7 +57,7 @@ export function readCategorySongs(categoryId: number): SongBundleSong[] {
     )
     .all(categoryId)
 
-  const slidesBySong = new Map<number, SongBundleSlide[]>()
+  const slidesBySong = new Map<number, CategorySong['slides']>()
   for (const row of slideRows) {
     const slides = slidesBySong.get(row.song_id) ?? []
     slides.push({ content: row.content, label: row.label })
@@ -53,11 +65,9 @@ export function readCategorySongs(categoryId: number): SongBundleSong[] {
   }
 
   return songRows.map((row) => ({
-    // uuid is the song's identity across devices; the local id is the
-    // fallback for a row the sync engine has not stamped yet.
-    id: row.uuid || `song-${row.id}`,
+    id: row.id,
+    uuid: row.uuid,
     title: row.title,
-    alternateTitles: parseAlternateTitles(row.alternate_titles),
     sourceFilename: row.source_filename,
     author: row.author,
     copyright: row.copyright,
@@ -68,7 +78,6 @@ export function readCategorySongs(categoryId: number): SongBundleSong[] {
     altTheme: row.alt_theme,
     hymnNumber: row.hymn_number,
     keyLine: row.key_line,
-    presentationOrder: row.presentation_order,
     slides: slidesBySong.get(row.id) ?? [],
   }))
 }

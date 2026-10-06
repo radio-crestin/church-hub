@@ -1,9 +1,9 @@
 import JSZip from 'jszip'
 
-import type { SongBundleSong } from '../providers/types'
+import type { SongBundleFile } from '../providers/types'
 
 const SONG_BUNDLE_FORMAT = 'church-hub-song-bundle'
-const SUPPORTED_VERSION = 1
+const SUPPORTED_VERSION = 2
 
 /** Mirrors the server's `SongBundleManifest` (bundle/types.ts). */
 interface SongBundleManifest {
@@ -14,16 +14,17 @@ interface SongBundleManifest {
   songs: Array<{ id: string; path: string }>
 }
 
-export interface SongBundleFile {
+/** A `.chsongs` file as read: its source name, category and song files. */
+export interface OpenedSongFile {
   name: string
   categoryName: string
-  songs: SongBundleSong[]
+  files: SongBundleFile[]
 }
 
-/** Reads a `.chsongs` file: its manifest, then every song it lists. */
+/** Reads a `.chsongs` file: its manifest, then every OpenSong file it lists. */
 export async function readSongBundleFile(
   data: ArrayBuffer | Uint8Array,
-): Promise<SongBundleFile> {
+): Promise<OpenedSongFile> {
   const zip = await JSZip.loadAsync(data)
   const manifestText = await zip.file('manifest.json')?.async('string')
   if (!manifestText) throw new Error('Not a Church Hub song file')
@@ -35,10 +36,10 @@ export async function readSongBundleFile(
     throw new Error('This song file needs a newer Church Hub')
   }
 
-  const songs: SongBundleSong[] = []
+  const files: SongBundleFile[] = []
   for (const entry of manifest.songs) {
-    const text = await zip.file(entry.path)?.async('string')
-    if (text) songs.push(JSON.parse(text))
+    const xml = await zip.file(entry.path)?.async('string')
+    if (xml) files.push({ id: entry.id, path: entry.path, xml })
   }
-  return { name: manifest.name, categoryName: manifest.categoryName, songs }
+  return { name: manifest.name, categoryName: manifest.categoryName, files }
 }

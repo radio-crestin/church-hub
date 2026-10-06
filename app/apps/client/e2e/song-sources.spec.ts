@@ -4,6 +4,7 @@ import {
   type Page,
   test,
 } from '@playwright/test'
+import JSZip from 'jszip'
 
 import { FakeS3 } from './helpers/fake-s3'
 
@@ -234,6 +235,21 @@ test.describe('Song sources', () => {
     expect(res.ok()).toBeTruthy()
     expect(res.headers()['content-disposition']).toContain('.chsongs')
     const file = await res.body()
+
+    // Inside: one OpenSong file per song, named after it, plus the manifest.
+    const zip = await JSZip.loadAsync(file)
+    expect(Object.keys(zip.files).sort()).toEqual(
+      ['manifest.json', ...titles.map((t) => `${t}.opensong`)].sort(),
+    )
+    const xml = (await zip.file(`${titles[1]}.opensong`)?.async('string')) ?? ''
+    expect(xml).toContain(`<title>${titles[1]}</title>`)
+    expect(xml).toContain('<lyrics>')
+
+    // The same bytes as a plain .zip, for other programs.
+    const asZip = await request.get(
+      `/api/song-sources/export?categoryId=${categoryId}&format=zip`,
+    )
+    expect(asZip.headers()['content-disposition']).toMatch(/\.zip$/)
 
     // Opened somewhere these songs are missing.
     const search = await request.get(

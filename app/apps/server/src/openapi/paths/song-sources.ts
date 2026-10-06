@@ -96,8 +96,8 @@ export const songSourcesPaths = {
       parameters: [idParameter('string')],
       responses: {
         '200': {
-          description: 'The source’s songs, in manifest order',
-          content: dataOf(arrayOf('SongBundleSong')),
+          description: 'The source’s OpenSong files, in manifest order',
+          content: dataOf(arrayOf('SongBundleFile')),
         },
         '502': { description: 'The source could not be read' },
         ...errors,
@@ -107,9 +107,9 @@ export const songSourcesPaths = {
   '/api/song-sources/export': {
     get: {
       tags,
-      summary: 'Export a category as a .chsongs file',
+      summary: 'Export a category as a song bundle (.chsongs or .zip)',
       description:
-        'A ZIP of manifest.json plus songs/<id>.json, with the `.chsongs` extension. Requires `songs.view`.',
+        'A ZIP of manifest.json plus one OpenSong file per song, named after the song. `format=chsongs` (default) names it `.chsongs`, which Church Hub opens; `format=zip` gives the same bytes as a `.zip` for other programs. Requires `songs.view`.',
       security,
       parameters: [
         {
@@ -117,6 +117,12 @@ export const songSourcesPaths = {
           in: 'query',
           required: true,
           schema: { type: 'integer' },
+        },
+        {
+          name: 'format',
+          in: 'query',
+          required: false,
+          schema: { type: 'string', enum: ['chsongs', 'zip'] },
         },
       ],
       responses: {

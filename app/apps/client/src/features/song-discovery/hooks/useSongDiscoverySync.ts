@@ -1,52 +1,22 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { backfillAlternateTitles } from '~/features/songs/service'
-import { catalogQueryKey } from './useFetchCatalog'
-import { SONG_SOURCES_QUERY_KEY } from './useSongSources'
-import { fetchSourceCatalog } from '../providers'
 import {
-  countNewCandidates,
-  fetchCatalogSignature,
-} from '../service/discoveryApi'
+  checkSourceForNewSongs,
+  MIN_CHECK_GAP_MS,
+  readSourceCheck,
+} from './checkSourceForNewSongs'
+import { SONG_SOURCES_QUERY_KEY } from './useSongSources'
 import { getSongSources } from '../service/songSourcesApi'
-import { alternateTitleEntries } from '../utils/alternateTitleEntries'
-import { shouldRecoverTitles } from '../utils/shouldRecoverTitles'
-
-/** The source the background check watches. */
-const WATCHED_SOURCE_ID = 'resurse-crestine'
 
 const ENABLED_KEY = 'song-discovery-enabled'
 const LAST_CHECKED_KEY = 'song-discovery-last-checked'
+/** All sources' state in one string; the badge comes back when it changes. */
 const SIGNATURE_KEY = 'song-discovery-signature'
 const NEW_COUNT_KEY = 'song-discovery-new-count'
 const DISMISSED_SIGNATURE_KEY = 'song-discovery-dismissed-signature'
-/**
- * The catalogue the songs' real names were last taken from.
- *
- * A library imported with "use the first verse as the title" is filed under
- * each song's opening line, and the name the source gave it was lost. The
- * catalogue still carries it, so whenever this key does not match the
- * catalogue in front of us the names are recovered from it — which is what
- * makes the first launch after an update do the recovery even though the
- * catalogue itself has not changed since the last check.
- */
-const TITLES_SIGNATURE_KEY = 'song-discovery-titles-signature'
-/**
- * When recovering those names was last attempted, successfully or not.
- *
- * Without it a recovery that keeps failing — no permission, a server that is
- * down — would pull the multi-MB catalogue down again on every single launch,
- * which is exactly the bandwidth the signature check exists to save. A failed
- * attempt waits out the same daily gap the rest of the sync uses before trying
- * again, so it still heals itself without costing anything.
- */
-const TITLES_ATTEMPTED_KEY = 'song-discovery-titles-attempted'
 
-/** Minimum gap between real catalog checks — the user asked for a daily cadence. */
-const MIN_CHECK_GAP_MS = 1000 * 60 * 60 * 24
-
-/** How often the timer re-evaluates (the daily gap above gates the real work). */
+/** How often the timer re-evaluates (the daily gap gates the real work). */
 const REEVALUATE_INTERVAL_MS = 1000 * 60 * 60 * 6
 
 /** Let the app settle (render first) before the on-open catalog check fires. */
@@ -82,14 +52,13 @@ export interface UseSongDiscoverySyncResult {
 }
 
 /**
- * Background catalog sync: periodically (daily) checks the external source for
- * songs the library lacks and surfaces a count for a badge + a one-time toast.
+ * Background catalog sync: periodically (daily) checks every song source,
+ * built-in and added from links, for songs the library lacks, and surfaces
+ * their total for a badge + a one-time toast.
  *
- * Cheap by design: a HEAD-based signature check skips the multi-MB download
- * entirely when the catalog hasn't changed since the last check; only a changed
- * (or first-seen) catalog is downloaded, parsed and counted via the lightweight
- * /discovery/count endpoint. Results persist in localStorage so the badge
- * survives reloads without re-checking.
+ * Cheap by design (see checkSourceForNewSongs): an unchanged catalogue is not
+ * downloaded again. Results persist in localStorage so the badge survives
+ * reloads without re-checking.
  *
  * `enabledExternally` lets the caller gate the whole thing on permission/auth.
  */
@@ -147,71 +116,33 @@ export function useSongDiscoverySync(
           queryKey: SONG_SOURCES_QUERY_KEY,
           queryFn: getSongSources,
         })
-        const source = sources.find((s) => s.id === WATCHED_SOURCE_ID)
-        if (!source) return
-
-        const nextSignature = await fetchCatalogSignature(source.url)
-        const storedSignature = localStorage.getItem(SIGNATURE_KEY) ?? ''
-        const lastChecked = readNumber(LAST_CHECKED_KEY)
-        const dueByTime = Date.now() - lastChecked >= MIN_CHECK_GAP_MS
-
-        // The songs' real names have never been taken from this catalogue, so
-        // it is worth downloading even when nothing about it has changed —
-        // once a day at most, however often the program is opened.
-        const titlesDue = shouldRecoverTitles({
-          recoveredSignature: localStorage.getItem(TITLES_SIGNATURE_KEY),
-          nextSignature,
-          attemptedAt: readNumber(TITLES_ATTEMPTED_KEY),
-          now: Date.now(),
-          gapMs: MIN_CHECK_GAP_MS,
-        })
-
-        if (!force && !titlesDue) {
-          // Reliable "unchanged" via the HTTP validator → cheap skip, no download.
-          if (nextSignature && nextSignature === storedSignature) {
-            localStorage.setItem(LAST_CHECKED_KEY, String(Date.now()))
-            return
-          }
-          // No upstream validator to compare against: we can't tell cheaply if
-          // the catalog changed. Don't re-download the whole thing on every open
-          // (it competes with the screen and burns bandwidth) — fall back to the
-          // daily cadence once we've checked at least once.
-          if (!nextSignature && lastChecked > 0 && !dueByTime) {
-            return
-          }
+        // One at a time: each catalogue can be several MB.
+        for (const source of sources) {
+          await checkSourceForNewSongs(source, queryClient, force).catch(
+            (error) =>
+              // Left as last checked; tried again on the next tick.
+              // biome-ignore lint/suspicious/noConsole: background job
+              console.warn(`[song-discovery] ${source.name}:`, error),
+          )
         }
 
-        const candidates = await fetchSourceCatalog(source)
-        const count = await countNewCandidates(candidates)
-
-        // Give the library back the names the catalogue knows its songs by, so
-        // searching finds them by the name anyone would actually type. It runs
-        // off the catalogue that was just downloaded — no second trip — and the
-        // server leaves alone every song that already carries the name, so this
-        // settles into a no-op after the first pass.
-        // Recorded before the attempt, not after: a run that dies partway
-        // through still counts as one, so a failing recovery cannot turn every
-        // launch into another download.
-        localStorage.setItem(TITLES_ATTEMPTED_KEY, String(Date.now()))
-        try {
-          await backfillAlternateTitles(alternateTitleEntries(candidates))
-          localStorage.setItem(TITLES_SIGNATURE_KEY, nextSignature)
-        } catch {
-          // Left for the next check rather than failing the whole sync: the
-          // count above is what the operator is waiting on.
-        }
-
-        // Prime the discover screen's cache so opening it doesn't re-download.
-        queryClient.setQueryData(catalogQueryKey(source.id), candidates)
-
+        const checks = sources.map((source) => ({
+          id: source.id,
+          ...readSourceCheck(source.id),
+        }))
+        const count = checks.reduce((sum, check) => sum + check.count, 0)
+        const nextSignature = checks
+          .map((c) => `${c.id}:${c.signature}:${c.count}`)
+          .join('|')
         localStorage.setItem(SIGNATURE_KEY, nextSignature)
         localStorage.setItem(NEW_COUNT_KEY, String(count))
         localStorage.setItem(LAST_CHECKED_KEY, String(Date.now()))
         setSignature(nextSignature)
         setNewCount(count)
-      } catch {
-        // Network/permission failure — leave the prior state untouched and try
-        // again on the next tick. No user-facing error for a background job.
+      } catch (error) {
+        // The source list itself failed (server down): try on the next tick.
+        // biome-ignore lint/suspicious/noConsole: background job
+        console.warn('[song-discovery] Background check failed', error)
       } finally {
         inFlightRef.current = false
         setIsChecking(false)

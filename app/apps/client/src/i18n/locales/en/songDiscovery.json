@@ -99,10 +99,12 @@
     },
     "export": {
       "title": "Song file",
-      "description": "Save a category as a .chsongs file. Anyone with Church Hub can open it and import its songs.",
+      "description": "Save a category's songs: as a .chsongs file anyone with Church Hub can open, as a .zip of OpenSong files for other programs, or as a .zip of PowerPoint files.",
       "category": "Choose a category",
-      "button": "Export .chsongs",
-      "failed": "Export failed: {{error}}"
+      "failed": "Export failed: {{error}}",
+      "chsongs": "Export .chsongs",
+      "zip": "OpenSong .zip",
+      "pptx": "PowerPoint .zip"
     },
     "storage": {
       "title": "Your S3 storage",

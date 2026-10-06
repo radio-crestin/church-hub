@@ -4,11 +4,11 @@ import { fetchOpenSongZipCatalog } from './fetchOpenSongZipCatalog'
 import { fetchSongBundleCatalog } from './fetchSongBundleCatalog'
 import type {
   FetchCatalog,
-  SongBundleSong,
+  SongBundleFile,
   SongSource,
   SongSourceFormat,
 } from './types'
-import { getOpenedSongFileSongs } from '../opened-files/openedSongFiles'
+import { getOpenedSongFiles } from '../opened-files/openedSongFiles'
 
 /** How each source format's catalog is downloaded and parsed. */
 const FETCHERS: Record<SongSourceFormat, FetchCatalog> = {
@@ -21,7 +21,7 @@ const FETCHERS: Record<SongSourceFormat, FetchCatalog> = {
 /** Downloads and parses a source's catalog; an opened file is in memory. */
 export const fetchSourceCatalog: FetchCatalog = async (source, onProgress) =>
   source.origin === 'file'
-    ? bundleSongsToCandidates(source.id, getOpenedSongFileSongs(source.id))
+    ? bundleSongsToCandidates(source.id, getOpenedSongFiles(source.id))
     : FETCHERS[source.format](source, onProgress)
 
-export type { SongBundleSong, SongSource, SongSourceFormat }
+export type { SongBundleFile, SongSource, SongSourceFormat }
