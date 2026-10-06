@@ -1,12 +1,15 @@
 import { joinSearchTitles, parseAlternateTitles } from './parseAlternateTitles'
-import { decodeHtmlEntities } from './text/decodeHtmlEntities'
-import { elisionVariants } from './text/elisionVariants'
-import { findHighlightRanges, wrapRanges } from './text/findHighlightRanges'
-import { joinedWordVariants } from './text/joinedWordVariants'
 import type { SongSearchResult } from './types'
 import { visibleCategoryCondition } from './visibleCategoryCondition'
 import { getRawDatabase } from '../../db'
 import { getSetting } from '../settings'
+import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
+import { elisionVariants } from '../text-search/text/elisionVariants'
+import {
+  findHighlightRanges,
+  wrapRanges,
+} from '../text-search/text/findHighlightRanges'
+import { joinedWordVariants } from '../text-search/text/joinedWordVariants'
 
 /**
  * Synonym group interface matching client-side structure
