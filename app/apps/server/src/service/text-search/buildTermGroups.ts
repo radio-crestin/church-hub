@@ -9,7 +9,8 @@ export type SynonymsOf = (word: string) => string[]
 /**
  * A query as term groups, one per typed word. The last word is matched as a
  * beginning until the user types a space after it. A query of nothing but
- * short words still looks up its two-letter ones, so "la" finds something.
+ * short words still looks up its two-letter ones as whole words, so "la"
+ * finds something without scanning every word that starts with it.
  */
 export function buildTermGroups(
   query: string,
@@ -29,6 +30,7 @@ export function buildTermGroups(
   if (groups.some((group) => group.required)) return groups
   return groups.map((group) => ({
     ...group,
+    variants: group.variants.map((variant) => ({ ...variant, prefix: false })),
     required: group.typed.length >= 2,
   }))
 }

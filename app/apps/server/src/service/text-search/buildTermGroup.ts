@@ -15,6 +15,7 @@ const SIGNS_RE = /[^\p{L}\p{N}]+/u
  */
 const WELL_ATTESTED_DOCUMENTS = 3
 const FAR_MORE_COMMON = 10
+const MIN_PREFIX_PIECE = 3
 
 /**
  * One typed word (folded, as `splitWordUnits` gives it) and every way it
@@ -31,8 +32,14 @@ export function buildTermGroup(
 ): TermGroup {
   const pieces = unit.split(SIGNS_RE).filter((piece) => piece.length > 0)
   const compact = pieces.join('')
+  // After a sign, a piece of one or two letters is a clitic ("și-n",
+  // "aspru-a"), already whole: as a beginning it would scan every word
+  // that starts with that letter.
+  const lastPiece = pieces[pieces.length - 1] ?? ''
+  const piecesTyping =
+    typing && (pieces.length === 1 || lastPiece.length >= MIN_PREFIX_PIECE)
   const variants: TermVariant[] = [
-    { text: pieces.join(' '), prefix: typing, edits: 0 },
+    { text: pieces.join(' '), prefix: piecesTyping, edits: 0 },
   ]
   for (const spelling of [
     ...joinedWordVariants(unit),
