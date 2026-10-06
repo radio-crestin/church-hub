@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { BroadcastInfo } from './BroadcastInfo'
+import { LivestreamGuideButton } from './guide/LivestreamGuideButton'
 import { MixerConnectionButton } from './MixerConnectionButton'
 import { OBSConnectionButton } from './OBSConnectionButton'
 import { SceneGrid } from './SceneGrid'
@@ -19,6 +20,7 @@ export function LiveStreamPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {t('title')}
         </h1>
+        <LivestreamGuideButton />
       </div>
 
       <div className="flex items-center justify-between gap-2 mb-4 flex-shrink-0">

@@ -1,0 +1,19 @@
+{
+  "startSceneName": "Început",
+  "stopSceneName": "Final",
+  "scenes": [
+    { "obsSceneName": "Început", "contentTypes": [] },
+    { "obsSceneName": "Predică", "contentTypes": [] },
+    {
+      "obsSceneName": "Cântare",
+      "contentTypes": ["song_temporary", "song_schedule"]
+    },
+    {
+      "obsSceneName": "Biblie",
+      "contentTypes": ["bible", "bible_passage", "versete_tineri"]
+    },
+    { "obsSceneName": "Rugăciune", "contentTypes": [] },
+    { "obsSceneName": "Anunțuri", "contentTypes": ["announcement"] },
+    { "obsSceneName": "Final", "contentTypes": [] }
+  ]
+}

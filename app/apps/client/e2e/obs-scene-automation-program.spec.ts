@@ -31,6 +31,19 @@ async function deleteLeftoverE2EScenes(request: Request) {
   }
 }
 
+/** The default "Cântare" scene also claims songs: the first scene wins, so this one goes first. */
+async function putSceneFirst(request: Request, sceneId: number) {
+  const res = await request.get('/api/livestream/obs/scenes')
+  const { data } = await res.json()
+  const others = (data as { id: number }[])
+    .map((scene) => scene.id)
+    .filter((id) => id !== sceneId)
+  const reorder = await request.put('/api/livestream/obs/scenes/reorder', {
+    data: { sceneIds: [sceneId, ...others] },
+  })
+  expect(reorder.ok()).toBeTruthy()
+}
+
 async function readCurrentScene(request: Request): Promise<string | null> {
   const res = await request.get('/api/livestream/obs/scenes')
   const { data } = await res.json()
@@ -87,6 +100,7 @@ test.describe('OBS scene automation in a program', () => {
     await request.put(`/api/livestream/obs/scenes/${songScene.id}`, {
       data: { contentTypes: ['song_schedule'] },
     })
+    await putSceneFirst(request, songScene.id)
 
     const songA = await createSong(request, `E2E OBS Song A ${uniq}`)
     const songB = await createSong(request, `E2E OBS Song B ${uniq}`)

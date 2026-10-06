@@ -130,7 +130,7 @@
   },
   "scenes": {
     "title": "Scenes",
-    "noScenes": "No scenes available. Click the settings icon to add scenes.",
+    "noScenes": "No scenes yet. The setup guide shows how to create the first one.",
     "settings": "Scene Settings",
     "sceneSettings": "Scene Settings",
     "displayName": "Display Name",
@@ -221,5 +221,65 @@
     "obsNotConnected": "OBS is not connected. Please connect to OBS first.",
     "retry": "Retry",
     "dismiss": "Dismiss"
+  },
+  "guide": {
+    "open": "Setup guide",
+    "title": "Set up your livestream",
+    "intro": "Do these steps once. After that, Church Hub switches the stream's scenes for you while you present.",
+    "close": "Close",
+    "done": "Done",
+    "optional": "Optional",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "obs": {
+      "title": "Connect OBS Studio",
+      "install": "Install OBS Studio on the computer that streams. It is free, and it sends the camera and Church Hub's text to YouTube.",
+      "connect": "Then let Church Hub control OBS: in OBS, open Tools → WebSocket Server Settings, turn the server on and use the password from the OBS setup.",
+      "openSetup": "Open OBS setup",
+      "download": "Download OBS Studio"
+    },
+    "browserSource": {
+      "title": "Show Church Hub in OBS",
+      "description": "The Live Stream screen shows the lyrics and Bible verses for the stream, on a transparent background. In OBS, add a Browser source with this address and size:",
+      "address": "Address",
+      "size": "Size",
+      "noScreen": "There is no Live Stream screen. Add one in Settings → Screens.",
+      "looks": "You choose how the text looks on the Live Stream screen, in Settings → Screens.",
+      "openScreens": "Open screen settings"
+    },
+    "firstScene": {
+      "title": "Create your first scene",
+      "create": "In OBS, under Scenes, click + and name the scene exactly “{{name}}”.",
+      "fallbackName": "Song",
+      "camera": "Under Sources, click + → Video Capture Device and choose your camera.",
+      "browser": "Click + → Browser and add the Church Hub source from step 2, above the camera.",
+      "others": "Make the other scenes below the same way, with the same names. Church Hub finds them as soon as OBS is connected.",
+      "switchedBy": "Switches on by itself for: {{types}}",
+      "inOBS": "In OBS",
+      "missingInOBS": "Not in OBS yet"
+    },
+    "switching": {
+      "title": "Switch scenes during the service",
+      "click": "Click a scene on this page to put it on the stream.",
+      "automatic": "When you present a song, a Bible verse or an announcement, the stream moves to its scene by itself, and goes back when you hide it. You can rename scenes, hide them or change what switches them.",
+      "openSettings": "Open scene settings"
+    },
+    "midi": {
+      "title": "Switch scenes from a MIDI controller",
+      "device": "Plug in a MIDI pad or keyboard and choose it in Settings → MIDI Controller.",
+      "sceneShortcut": "Then, in Settings → Live Stream, open a scene, click the shortcut field and press a pad. Starting and stopping the stream can go on pads too, in Settings → Shortcuts.",
+      "openSettings": "Open MIDI settings"
+    },
+    "mixer": {
+      "title": "Connect the audio mixer",
+      "description": "With a digital mixer (Behringer X32, XR18 and similar), Church Hub mutes and unmutes channels when the scene changes. Enter the mixer's IP address and turn the control on.",
+      "openSetup": "Open mixer setup"
+    },
+    "youtube": {
+      "title": "Go live on YouTube",
+      "signIn": "Click YouTube at the top of this page and sign in with the church's channel.",
+      "start": "Start Stream then creates the broadcast on YouTube and starts OBS; Stop Stream ends it.",
+      "startStopScenes": "The stream opens on the “{{start}}” scene and closes on “{{stop}}”."
+    }
   }
 }
