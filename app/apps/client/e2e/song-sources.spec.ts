@@ -9,7 +9,9 @@ import JSZip from 'jszip'
 import { FakeS3 } from './helpers/fake-s3'
 import {
   deleteCategoriesNamed,
+  deleteLinkSourcesNamed,
   setAutoUpdate,
+  stopSongUpdates,
 } from './helpers/song-folder-source'
 
 /**
@@ -81,21 +83,35 @@ test.describe('Song sources', () => {
   })
 
   test.afterAll(async ({ request }) => {
-    // Its own category with its songs, and the one the shared link's import
-    // made: first, so nothing below can skip it.
+    // Nothing may import after the cleanup: the link source goes (found by
+    // name, as a failed test may not have kept its id), then the check it
+    // started stops, before the categories go and auto-update comes back on.
+    // Otherwise that check, finishing with auto-update on, imported the songs
+    // into a new category of the same name after it was cleaned up.
+    await deleteLinkSourcesNamed(request, [categoryName])
+    await stopSongUpdates(request)
+    // Its own category with its songs, and the ones the shared link's import
+    // made, which carry the same name.
     await deleteCategoriesNamed(request, [categoryName])
     await setAutoUpdate(request, true)
-    if (linkSourceId) await request.delete(`/api/song-sources/${linkSourceId}`)
     if (publicationId) {
       await request.delete(`/api/song-sources/publications/${publicationId}`)
     }
-    const search = await request.get(
-      `/api/songs/search?q=${encodeURIComponent(`Shared Song ${ts}`)}`,
-    )
-    for (const hit of ((await search.json()).data ?? []) as { id: number }[]) {
-      await request.delete(`/api/songs/${hit.id}`)
-    }
     for (const id of songIds) await request.delete(`/api/songs/${id}`)
+    // Any of its songs still about (one imported without a category, say),
+    // by exact title only: a search also returns songs that merely resemble.
+    for (const title of titles) {
+      const search = await request.get(
+        `/api/songs/search?q=${encodeURIComponent(title)}`,
+      )
+      const hits = ((await search.json()).data ?? []) as {
+        id: number
+        title: string
+      }[]
+      for (const hit of hits.filter((h) => h.title === title)) {
+        await request.delete(`/api/songs/${hit.id}`)
+      }
+    }
     await s3.stop()
   })
 
@@ -200,8 +216,13 @@ test.describe('Song sources', () => {
       .getByPlaceholder('https://…/manifest.json')
       .fill(`${s3.endpoint}/church/e2e/${slug()}/manifest.json`)
     await page.getByRole('button', { name: /Add source|Adaugă sursa/ }).click()
+    // The link's own row, not the publication above, which shows the same
+    // URL: matching that one let the test leave the page before the app had
+    // asked for the new source to be checked, so it never was.
     await expect(
-      page.getByText(`${s3.endpoint}/church/e2e/${slug()}/manifest.json`),
+      page.getByTestId('song-source-link').filter({
+        hasText: `${s3.endpoint}/church/e2e/${slug()}/manifest.json`,
+      }),
     ).toBeVisible()
 
     const sources = (await (await request.get('/api/song-sources')).json())
