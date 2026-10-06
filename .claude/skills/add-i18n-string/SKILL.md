@@ -28,6 +28,6 @@ You are adding a new translation key to the project's i18n locale files.
 
 ## Constraints
 
-- Only `en/` and `ro/` are statically imported in `app/apps/client/src/i18n/config.ts`; the other 49 locale dirs are dormant. Do NOT touch them.
-- Never edit `app/apps/client/src/i18n/config.ts` from this skill — namespaces are already registered.
+- Only `en/` and `ro/` are statically imported in `app/apps/client/src/i18n/config.ts`; the other 49 locale dirs are dormant, so leave them alone.
+- Leave `app/apps/client/src/i18n/config.ts` alone: namespaces are already registered.
 - If the namespace doesn't exist yet, stop and tell the user; adding a namespace requires editing the config and is out of scope for this skill.
