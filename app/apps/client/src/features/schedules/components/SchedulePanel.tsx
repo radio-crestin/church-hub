@@ -16,9 +16,9 @@ import {
 } from '@dnd-kit/sortable'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Bookmark,
   BookmarkPlus,
   CalendarDays,
+  CalendarPlus,
   ChevronDown,
   ExternalLink,
   ListPlus,
@@ -663,7 +663,7 @@ export function SchedulePanel({
             disabled: loadIntoBookmarks.isPending,
             testId: 'schedule-load-into-bookmarks-menu',
             inline: (
-              <Tooltip content={t('panel.loadIntoBookmarks')} position="bottom">
+              <Tooltip content={t('panel.loadIntoBookmarks')} position="left">
                 <button
                   type="button"
                   onClick={loadIntoBookmarks.load}
@@ -684,7 +684,7 @@ export function SchedulePanel({
           {
             id: 'add-all-bookmarks',
             label: t('panel.addAllBookmarks'),
-            icon: <Bookmark size={18} />,
+            icon: <CalendarPlus size={18} />,
             iconClassName:
               'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
             onSelect: onAddAllBookmarks,
@@ -699,7 +699,7 @@ export function SchedulePanel({
                   title={t('panel.addAllBookmarks')}
                   className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
                 >
-                  <Bookmark className="w-3.5 h-3.5" />
+                  <CalendarPlus className="w-3.5 h-3.5" />
                 </button>
               </Tooltip>
             ),
