@@ -238,5 +238,19 @@ test.describe('Calm slide transitions', () => {
       'never both on screen',
     ).toBe(true)
     expect(frames.at(-1)).toEqual([0, 1])
+
+    // The next verse after a song is a slide change too, not a cut.
+    const nextVerse = sampleOpacities(page, [VERSES[0], VERSES[1]], 1500)
+    expect((await presentVerse(request, 1)).ok()).toBeTruthy()
+    const verses = await nextVerse
+    expect(
+      verses.some(([first]) => isFading(first)),
+      'verse eases out',
+    ).toBe(true)
+    expect(
+      verses.some(([, next]) => isFading(next)),
+      'next eases in',
+    ).toBe(true)
+    expect(verses.at(-1)).toEqual([0, 1])
   })
 })
