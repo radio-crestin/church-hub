@@ -40,6 +40,7 @@ import { seedAppSettings } from './seed-settings'
 import { seedSongCategories } from './seed-song-categories'
 import { seedSongs } from './seed-songs'
 import { stripSongFormattingTags } from './strip-song-formatting-tags'
+import { upgradeFactoryTransitions } from './upgrade-factory-transitions'
 import type { Database } from 'bun:sqlite'
 import { type BootStep, setBootStep } from '../../utils/bootState'
 import { reportError } from '../../utils/reportError'
@@ -422,6 +423,13 @@ export function runMigrations(
   // the library sync carries the delete to the cloud copy.
   runStep('remove_seeded_test_song', 'Removing the seeded test song', () =>
     removeSeededTestSong(rawDb),
+  )
+
+  // Calm factory transitions on the screens that still have the old ones.
+  runStep(
+    'upgrade_factory_transitions',
+    'Running upgrade factory transitions migration',
+    () => upgradeFactoryTransitions(rawDb),
   )
 
   return { ftsRecreated: ftsCreated }

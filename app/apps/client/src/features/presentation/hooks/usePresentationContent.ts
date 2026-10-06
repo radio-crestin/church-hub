@@ -6,7 +6,7 @@ import type { SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import { usePresentationState } from './usePresentationState'
-import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/styleUtils'
+import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/calculateMaxExitAnimationDuration'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,

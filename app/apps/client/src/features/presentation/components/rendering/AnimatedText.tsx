@@ -23,6 +23,7 @@ function toAnimationConfig(
   return {
     type: config.type,
     duration: config.duration,
+    easing: config.easing,
   }
 }
 
