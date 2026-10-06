@@ -7,6 +7,7 @@ import {
 import JSZip from 'jszip'
 
 import { FakeS3 } from './helpers/fake-s3'
+import { setAutoUpdate } from './helpers/song-folder-source'
 
 /**
  * Song sources: the built-in configs, a category shared through the user's
@@ -77,6 +78,7 @@ test.describe('Song sources', () => {
   })
 
   test.afterAll(async ({ request }) => {
+    await setAutoUpdate(request, true)
     if (linkSourceId) await request.delete(`/api/song-sources/${linkSourceId}`)
     if (publicationId) {
       await request.delete(`/api/song-sources/publications/${publicationId}`)
@@ -185,6 +187,8 @@ test.describe('Song sources', () => {
     // Someone else's library lacks these songs: remove them here first.
     for (const id of songIds) await request.delete(`/api/songs/${id}`)
     songIds = []
+    // Reviewed in Song discovery here, not added on their own.
+    await setAutoUpdate(request, false)
 
     await page.goto('/settings/songs')
     await page
@@ -212,19 +216,17 @@ test.describe('Song sources', () => {
     )
     expect((await checksum.json()).data.checksum).toBe(manifestChecksum)
 
+    // Adding it checked it: Song discovery has its songs, all ticked.
     await page.goto(`/songs/discover?source=${linkSourceId}`)
-    await expect(page.getByRole('tab', { name: categoryName })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    )
-    await expect(page.getByText(titles[0])).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByText(titles[1])).toBeVisible()
-    await page
-      .getByRole('button', { name: /Select all|Selectează tot/ })
-      .click()
-    await page
-      .getByRole('button', { name: /Import selected|Importă selecția/ })
-      .click()
+    await expect(
+      page.getByRole('checkbox', { name: categoryName, exact: true }),
+    ).toBeChecked()
+    for (const title of titles) {
+      await expect(
+        page.getByRole('checkbox', { name: new RegExp(title) }),
+      ).toBeChecked({ timeout: 30_000 })
+    }
+    await page.getByRole('button', { name: /^(Import|Importă)/ }).click()
 
     await expect(async () => {
       const search = await request.get(
@@ -276,13 +278,16 @@ test.describe('Song sources', () => {
     await page.goto('/songs')
     await dropFile(page, file, `${categoryName}.chsongs`)
     await expect(page).toHaveURL(/\/songs\/discover\?source=file-/)
+    // Only the opened file is ticked; its songs are ready to import.
     await expect(
-      page.getByRole('tab', { name: categoryName }).last(),
-    ).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByText(titles[0])).toBeVisible({ timeout: 30_000 })
+      page.getByRole('checkbox', { name: 'Resurse Creștine', exact: true }),
+    ).not.toBeChecked()
+    await expect(
+      page.getByRole('checkbox', { name: new RegExp(titles[0]) }),
+    ).toBeChecked({ timeout: 30_000 })
   })
 
-  test('a link named like a built-in source is told apart in the picker', async ({
+  test('a link named like a built-in source is told apart in the list', async ({
     page,
     request,
   }) => {
@@ -309,11 +314,11 @@ test.describe('Song sources', () => {
       await page.goto(`/songs/discover?source=${twinId}`)
       const host = new URL(s3.endpoint).host
       await expect(
-        page.getByRole('tab', { name: `Laudele Domnului ${host}` }),
-      ).toHaveAttribute('aria-selected', 'true')
+        page.getByRole('checkbox', { name: `Laudele Domnului ${host}` }),
+      ).toBeChecked()
       await expect(
-        page.getByRole('tab', { name: 'Laudele Domnului', exact: true }),
-      ).toHaveCount(1)
+        page.getByRole('checkbox', { name: 'Laudele Domnului', exact: true }),
+      ).not.toBeChecked()
     } finally {
       await request.delete(`/api/song-sources/${twinId}`)
       s3.objects.delete('/church/twin/manifest.json')

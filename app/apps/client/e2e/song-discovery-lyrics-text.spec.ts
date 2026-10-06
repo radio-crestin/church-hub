@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test'
-import JSZip from 'jszip'
+
+import { FakeS3 } from './helpers/fake-s3'
+import {
+  addLinkSource,
+  checkSource,
+  publishSongFolder,
+} from './helpers/song-folder-source'
 
 /**
  * Song discovery's "Compare" reads a library song's lyrics as plain text:
@@ -50,19 +56,27 @@ test('Compare shows a library song lyrics as text', async ({
   const librarySongId = (await seeded.json()).data.id as number
 
   const candidateTitle = `Discovery Candidate Text ${alphaId}`
-  const zip = new JSZip()
-  zip.file(`candidate-text-${ts}.xml`, openSongXml(candidateTitle, lyrics))
-  const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
-  await page.route('**/api/song-sources/resurse-crestine/archive', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/zip',
-      body: zipBuffer,
-    }),
+  const s3 = new FakeS3()
+  await s3.start()
+  const url = publishSongFolder(
+    s3,
+    `/lyrics-text/${alphaId}`,
+    `E2E Lyrics ${alphaId}`,
+    [
+      {
+        id: 'candidate',
+        title: candidateTitle,
+        xml: openSongXml(candidateTitle, lyrics),
+      },
+    ],
+    'one',
   )
+  // A version of the library song: left for review, never added on its own.
+  const sourceId = await addLinkSource(request, url)
+  await checkSource(request, sourceId)
 
   try {
-    await page.goto('/songs/discover')
+    await page.goto(`/songs/discover?source=${sourceId}`)
     await page.getByText(candidateTitle).click({ timeout: 30_000 })
     await page.getByRole('button', { name: /^(Compare|Compară)$/ }).click()
 
@@ -77,5 +91,7 @@ test('Compare shows a library song lyrics as text', async ({
     )
   } finally {
     await request.delete(`/api/songs/${librarySongId}`).catch(() => {})
+    await request.delete(`/api/song-sources/${sourceId}`)
+    await s3.stop()
   }
 })

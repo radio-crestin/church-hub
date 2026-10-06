@@ -144,9 +144,7 @@ export function SongDiscoveryScreen({
             isLoading={lacking.isLoading || isRunning}
             failed={lacking.failed}
           />
-          <AddSourceLink
-            onAdded={(sourceId) => void checkNow({ sourceIds: [sourceId] })}
-          />
+          <AddSourceLink />
           <SongChecklist
             items={visible}
             sourceNames={sourceNames}

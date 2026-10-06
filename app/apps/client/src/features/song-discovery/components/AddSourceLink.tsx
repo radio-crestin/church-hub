@@ -5,13 +5,11 @@ import { useTranslation } from 'react-i18next'
 import { useAddLinkSource } from '~/features/song-sources/hooks/useLinkSources'
 import { useToast } from '~/ui/toast'
 
-interface AddSourceLinkProps {
-  /** The source added from the link, to check it for songs at once. */
-  onAdded: (sourceId: string) => void
-}
-
-/** Paste a link to a .chsongs file (or a shared folder) to add it as a source. */
-export function AddSourceLink({ onAdded }: AddSourceLinkProps) {
+/**
+ * Paste a link to a .chsongs file (or a shared folder) to add it as a
+ * source; it is checked for songs at once.
+ */
+export function AddSourceLink() {
   const { t } = useTranslation('songDiscovery')
   const { showToast } = useToast()
   const addSource = useAddLinkSource()
@@ -22,9 +20,8 @@ export function AddSourceLink({ onAdded }: AddSourceLinkProps) {
     const url = link.trim()
     if (!url) return
     try {
-      const source = await addSource.mutateAsync(url)
+      await addSource.mutateAsync(url)
       setLink('')
-      onAdded(source.id)
     } catch (error) {
       showToast(
         t('songSources.links.addFailed', {
