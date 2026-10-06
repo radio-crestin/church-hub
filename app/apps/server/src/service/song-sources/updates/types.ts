@@ -6,7 +6,7 @@ export interface SourceUpdate {
   checksum: string
   /** Songs in the source the library lacks (new or a different version). */
   newCount: number
-  /** Songs added to the library by the automatic update at this check. */
+  /** Songs the automatic update added when the source last changed. */
   imported: number
   checkedAt: number
   /** Why the source could not be checked, when it could not. */

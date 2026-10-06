@@ -44,9 +44,9 @@ export async function runSongUpdates(run: SongUpdatesRun): Promise<number> {
     const sourceStarted = performance.now()
     const last = updates.get(source.id)
     try {
-      const result = await checkSourceForUpdates(source, last, run)
-      imported += result.imported
-      updates.set(source.id, result)
+      const { update, added } = await checkSourceForUpdates(source, last, run)
+      imported += added
+      updates.set(source.id, update)
     } catch (error) {
       logger.warning(`${source.name}: ${error}`)
       updates.set(source.id, failedCheck(source.id, source.name, last, error))
