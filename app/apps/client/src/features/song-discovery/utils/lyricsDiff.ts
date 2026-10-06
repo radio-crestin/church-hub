@@ -13,10 +13,10 @@ function htmlToLines(html: string): string[] {
     .replace(/<\/(p|div|h[1-6]|li)>/gi, '\n')
 
   let text: string
-  if (typeof document !== 'undefined') {
-    const tmp = document.createElement('div')
-    tmp.innerHTML = withBreaks
-    text = tmp.textContent ?? ''
+  if (typeof DOMParser !== 'undefined') {
+    // A DOMParser document is inert: nothing in the lyrics loads or runs.
+    const doc = new DOMParser().parseFromString(withBreaks, 'text/html')
+    text = doc.body.textContent ?? ''
   } else {
     // SSR / non-DOM fallback: strip tags crudely.
     text = withBreaks.replace(/<[^>]+>/g, ' ')
