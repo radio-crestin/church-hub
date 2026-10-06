@@ -14,10 +14,11 @@ const FOCUS_SETTLE_MS = 250
 /**
  * Whether Church Hub is the application the user is working in.
  *
- * Only the control window mounts this (display windows render a layout without
- * the shortcut manager), so watching that window's focus catches every switch
- * to and from another application; the check itself covers all our windows, so
- * a projection taking the keyboard still counts as Church Hub being in front.
+ * The answer is asked again whenever ANY Church Hub window gains or loses
+ * focus, projections and page windows included. Watching only this window's
+ * focus left it stale: with a projection holding the keyboard, switching to
+ * another program fired no event here, so Church Hub still counted as in
+ * front and kept holding its keys over that program.
  *
  * Outside Tauri there is no other application to lose the keyboard to, so the
  * answer is always yes.
@@ -30,7 +31,7 @@ export function useIsAppFrontmost(): boolean {
 
     let isCancelled = false
     let settleTimer: ReturnType<typeof setTimeout> | undefined
-    let stopListening: (() => void) | undefined
+    const stopListening: Array<() => void> = []
 
     const settle = () => {
       if (settleTimer) clearTimeout(settleTimer)
@@ -41,20 +42,24 @@ export function useIsAppFrontmost(): boolean {
     }
 
     void (async () => {
-      const { getCurrentWindow } = await import('@tauri-apps/api/window')
-      const unlisten = await getCurrentWindow().onFocusChanged(settle)
+      const { listen, TauriEvent } = await import('@tauri-apps/api/event')
+      // `listen` with no target hears the event from every window
+      const unlisteners = await Promise.all([
+        listen(TauriEvent.WINDOW_FOCUS, settle),
+        listen(TauriEvent.WINDOW_BLUR, settle),
+      ])
       if (isCancelled) {
-        unlisten()
+        for (const unlisten of unlisteners) unlisten()
         return
       }
-      stopListening = unlisten
+      stopListening.push(...unlisteners)
       settle()
     })()
 
     return () => {
       isCancelled = true
       if (settleTimer) clearTimeout(settleTimer)
-      stopListening?.()
+      for (const unlisten of stopListening) unlisten()
     }
   }, [])
 
