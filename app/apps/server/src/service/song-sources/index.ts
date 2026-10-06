@@ -36,10 +36,16 @@ export {
   type LackingSong,
   readLackingSongs,
 } from './updates/lackingSongsStore'
-export { recordSourceNewCount } from './updates/recordSourceNewCount'
+export { recountSourceSongs } from './updates/recountSourceSongs'
 export {
+  cancelSongUpdates,
   runSongUpdatesInWorker,
   startSongUpdates,
 } from './updates/songUpdatesRunner'
 export { setAutoUpdateSongs } from './updates/sourceUpdatesStore'
-export type { SongUpdatesState, SourceUpdate } from './updates/types'
+export { syncPendingSongs } from './updates/syncPendingSongs'
+export type {
+  SongSyncData,
+  SongUpdatesState,
+  SourceUpdate,
+} from './updates/types'

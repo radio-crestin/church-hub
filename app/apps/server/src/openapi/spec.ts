@@ -16,6 +16,7 @@ import {
   feedbackPaths,
   healthPaths,
   logsPaths,
+  notificationsPaths,
   presentationHighlightsPaths,
   presentationPaths,
   schedulesPaths,
@@ -107,6 +108,10 @@ export const openApiSpec = {
       description: 'Feature requests and user feedback submission',
     },
     { name: 'Logs', description: 'Application logs access' },
+    {
+      name: 'Notifications',
+      description: 'The notifications history: song syncs and app updates',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -133,6 +138,7 @@ export const openApiSpec = {
     ...presentationHighlightsPaths,
     ...conversionPaths,
     ...feedbackPaths,
+    ...notificationsPaths,
   },
   components: {
     securitySchemes,

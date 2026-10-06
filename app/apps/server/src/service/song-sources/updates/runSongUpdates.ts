@@ -1,6 +1,10 @@
 import { checkSourceForUpdates } from './checkSourceForUpdates'
+import {
+  recordSyncedNotification,
+  refreshPendingNotification,
+} from './songSyncNotifications'
 import { getStoredSourceUpdates, saveSourceUpdates } from './sourceUpdatesStore'
-import type { SongUpdatesRun, SourceUpdate } from './types'
+import type { SongUpdatesRun, SourceSongChanges, SourceUpdate } from './types'
 import { createLogger } from '../../../utils/logger'
 import { listSongSources } from '../listSongSources'
 
@@ -18,15 +22,20 @@ function failedCheck(
     name,
     checksum: last?.checksum ?? '',
     newCount: last?.newCount ?? 0,
+    similarCount: last?.similarCount ?? 0,
+    changedCount: last?.changedCount ?? 0,
     imported: 0,
+    updated: 0,
     checkedAt: last?.checkedAt ?? 0,
     error: String(error),
   }
 }
 
 /**
- * Checks every song source, one at a time, saving each result as soon as it
- * is known. Returns how many songs were added.
+ * Checks every song source, one at a time. As soon as each is known, it
+ * saves the result and tells the user, in the notifications, what it synced
+ * or what waits for their approval. Returns how many songs it added or
+ * updated.
  */
 export async function runSongUpdates(run: SongUpdatesRun): Promise<number> {
   const started = performance.now()
@@ -39,25 +48,32 @@ export async function runSongUpdates(run: SongUpdatesRun): Promise<number> {
   const sources = run.sourceIds
     ? all.filter((source) => run.sourceIds?.includes(source.id))
     : all
-  let imported = 0
+  const synced: SourceSongChanges[] = []
+  const notificationId = `songs-synced:${Date.now()}`
   for (const source of sources) {
     const sourceStarted = performance.now()
     const last = updates.get(source.id)
     try {
-      const { update, added } = await checkSourceForUpdates(source, last, run)
-      imported += added
+      const { update, changes } = await checkSourceForUpdates(source, last, run)
+      synced.push(changes)
       updates.set(source.id, update)
     } catch (error) {
       logger.warning(`${source.name}: ${error}`)
       updates.set(source.id, failedCheck(source.id, source.name, last, error))
     }
     saveSourceUpdates([...updates.values()])
+    recordSyncedNotification(notificationId, synced)
+    refreshPendingNotification()
     logger.info(
       `${source.name}: ${(performance.now() - sourceStarted).toFixed(0)} ms`,
     )
   }
-  logger.info(
-    `Checked ${sources.length} sources in ${(performance.now() - started).toFixed(0)} ms, added ${imported} songs`,
+  const changed = synced.reduce(
+    (sum, s) => sum + s.added.count + s.updated.count,
+    0,
   )
-  return imported
+  logger.info(
+    `Checked ${sources.length} sources in ${(performance.now() - started).toFixed(0)} ms, added or updated ${changed} songs`,
+  )
+  return changed
 }

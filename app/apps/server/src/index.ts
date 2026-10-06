@@ -42,6 +42,7 @@ import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
+import { handleNotificationRoutes } from './routes/notifications'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
 import {
@@ -179,6 +180,7 @@ import {
   shutdownMusicPlayer,
 } from './service/music-player'
 import { getExternalInterfaces } from './service/network'
+import { startNotificationCleanup } from './service/notifications'
 import {
   addSlideHighlight,
   batchUpdateScreenConfigs,
@@ -629,6 +631,9 @@ async function main() {
   // Check the song sources for new songs (and add them, when updating songs
   // automatically) in a worker thread, a bit after start.
   startSongUpdates()
+
+  // Drop notifications older than 60 days, now and daily.
+  startNotificationCleanup()
 }
 
 /**
@@ -8158,6 +8163,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (songSourcesResponse) return songSourcesResponse
+
+      // The notifications history (song syncs, app updates)
+      const notificationsResponse = await handleNotificationRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (notificationsResponse) return notificationsResponse
 
       // Background media routes (screen background image/video uploads)
       const backgroundMediaResponse = await handleBackgroundMediaRoutes(

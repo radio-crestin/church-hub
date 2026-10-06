@@ -6,6 +6,7 @@ import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
+import { addNotifications } from './add-notifications'
 import { addPreviewScreen } from './add-preview-screen'
 import { addScheduleItemSung } from './add-schedule-item-sung'
 import { addScreenMonitor } from './add-screen-monitor'
@@ -423,6 +424,11 @@ export function runMigrations(
   // The user's own song sources: S3 storage, publications, subscriptions.
   runStep('add_song_sources', 'Running add song sources migration', () =>
     addSongSources(rawDb),
+  )
+
+  // The notifications history (song syncs, app updates), kept 60 days.
+  runStep('add_notifications', 'Running add notifications migration', () =>
+    addNotifications(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and

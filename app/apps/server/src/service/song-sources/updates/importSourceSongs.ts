@@ -1,5 +1,7 @@
 import type { SourceSong } from '@church-hub/song-formats'
 
+import type { SongRef } from './types'
+import { getRawDatabase } from '../../../db'
 import {
   type BatchImportSongInput,
   batchImportSongs,
@@ -45,12 +47,27 @@ function sourceCategoryId(source: SongSource): number | null {
   )
 }
 
-/** Adds songs to the library in the source's category; returns how many. */
+const CHUNK = 500
+
+function titlesOf(ids: number[]): SongRef[] {
+  const songs: SongRef[] = []
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK)
+    const marks = chunk.map(() => '?').join(',')
+    const rows = getRawDatabase()
+      .query(`SELECT id, title FROM songs WHERE id IN (${marks})`)
+      .all(...chunk) as SongRef[]
+    songs.push(...rows)
+  }
+  return songs
+}
+
+/** Adds songs to the library in the source's category; returns them. */
 export function importSourceSongs(
   source: SongSource,
   songs: SourceSong[],
-): number {
-  if (songs.length === 0) return 0
+): SongRef[] {
+  if (songs.length === 0) return []
   const result = batchImportSongs(
     songs.map(toBatchSong),
     sourceCategoryId(source),
@@ -58,5 +75,5 @@ export function importSourceSongs(
     false,
   )
   batchUpdateSearchIndex(result.songIds)
-  return result.successCount
+  return titlesOf(result.songIds)
 }

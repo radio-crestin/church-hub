@@ -18,8 +18,8 @@ self.onmessage = async (event: MessageEvent<SongUpdatesRun>) => {
     connected = true
   }
   try {
-    const imported = await runSongUpdates(event.data)
-    self.postMessage({ type: 'done', imported })
+    const changed = await runSongUpdates(event.data)
+    self.postMessage({ type: 'done', changed })
   } catch (error) {
     self.postMessage({ type: 'failed', error: String(error) })
   }

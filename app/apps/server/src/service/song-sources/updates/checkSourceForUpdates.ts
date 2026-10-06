@@ -1,11 +1,11 @@
 import type { SourceSong } from '@church-hub/song-formats'
 
+import { applySourcePending } from './applySourcePending'
+import { saveChangedSongs } from './changedSongsStore'
 import { findChangedSongs } from './findChangedSongs'
-import { importSourceSongs } from './importSourceSongs'
 import { type LackingSong, saveLackingSongs } from './lackingSongsStore'
 import { readSourceSongList } from './readSourceSongList'
-import type { SongUpdatesRun, SourceUpdate } from './types'
-import { updateLibrarySongs } from './updateLibrarySongs'
+import type { SongUpdatesRun, SourceSongChanges, SourceUpdate } from './types'
 import {
   backfillAlternateTitles,
   type DiscoveryMatchResult,
@@ -14,10 +14,10 @@ import {
 import { readSourceChecksum } from '../readSourceChecksum'
 import type { SongSource } from '../types'
 
-/** One source's check: what it found, and the songs this check added. */
+/** One source's check: what it found, and what it synced. */
 export interface SourceCheck {
   update: SourceUpdate
-  added: number
+  changes: SourceSongChanges
 }
 
 /**
@@ -59,13 +59,19 @@ function findLacking(
   })
 }
 
+const nothingSynced = (source: SongSource): SourceSongChanges => ({
+  sourceId: source.id,
+  name: source.name,
+  added: { count: 0, songs: [] },
+  updated: { count: 0, songs: [] },
+})
+
 /**
- * Checks one source for songs the library lacks and, when updating
- * automatically, adds the new ones and brings the songs nobody edited by
- * hand up to date with the source. A song the library has under another
- * title is left for the user to review in Song discovery.
+ * Checks one source for songs the library lacks and songs it changed, and
+ * keeps them for the user's approval or, when syncing without approval,
+ * syncs them (see applySourcePending).
  * Cheap when nothing changed: a checksum equal to the last check's skips
- * the download.
+ * the download, and only syncs what an earlier check left waiting.
  */
 export async function checkSourceForUpdates(
   source: SongSource,
@@ -75,9 +81,25 @@ export async function checkSourceForUpdates(
   const checksum = await readSourceChecksum(source.id)
   const now = Date.now()
   if (!run.force && previous && checksum && checksum === previous.checksum) {
+    const waiting = previous.newCount > 0 || previous.changedCount > 0
+    if (!run.autoUpdate || !waiting) {
+      return {
+        update: { ...previous, name: source.name, checkedAt: now },
+        changes: nothingSynced(source),
+      }
+    }
+    const changes = applySourcePending(source)
     return {
-      update: { ...previous, name: source.name, checkedAt: now },
-      added: 0,
+      update: {
+        ...previous,
+        name: source.name,
+        newCount: 0,
+        changedCount: 0,
+        imported: changes.added.count,
+        updated: changes.updated.count,
+        checkedAt: now,
+      },
+      changes,
     }
   }
 
@@ -85,25 +107,25 @@ export async function checkSourceForUpdates(
   recoverTitles(songs)
   const verdicts = matchSongs(songs)
   const lacking = findLacking(songs, verdicts)
-  const toAdd = run.autoUpdate
-    ? lacking.filter((song) => song.verdict === 'new')
-    : []
-  const added = importSourceSongs(source, toAdd)
-  const updated = run.autoUpdate
-    ? updateLibrarySongs(findChangedSongs(songs, verdicts))
-    : 0
-  const left = lacking.filter((song) => !toAdd.includes(song))
-  saveLackingSongs(source.id, left)
+  const changed = findChangedSongs(songs, verdicts)
+  saveLackingSongs(source.id, lacking)
+  saveChangedSongs(source.id, changed)
+  const changes = run.autoUpdate
+    ? applySourcePending(source)
+    : nothingSynced(source)
+  const fresh = lacking.filter((song) => song.verdict === 'new').length
   return {
     update: {
       sourceId: source.id,
       name: source.name,
       checksum,
-      newCount: left.length,
-      imported: added,
-      updated,
+      newCount: run.autoUpdate ? 0 : fresh,
+      similarCount: lacking.length - fresh,
+      changedCount: run.autoUpdate ? 0 : changed.length,
+      imported: changes.added.count,
+      updated: changes.updated.count,
       checkedAt: now,
     },
-    added: added + updated,
+    changes,
   }
 }

@@ -4,6 +4,7 @@ import { requirePermission } from '../middleware/permissions'
 import type { RequestContext } from '../middleware/types'
 import {
   buildBundleFiles,
+  cancelSongUpdates,
   deleteLinkSource,
   deletePublication,
   getPublication,
@@ -15,11 +16,12 @@ import {
   readSourceArchive,
   readSourceChecksum,
   readSourceSongs,
-  recordSourceNewCount,
+  recountSourceSongs,
   runSongUpdatesInWorker,
   type S3StorageInput,
   SONG_BUNDLE_EXTENSION,
   setAutoUpdateSongs,
+  syncPendingSongs,
   syncPublication,
   toPublicationView,
   toS3StorageView,
@@ -40,7 +42,7 @@ const SOURCE_SONGS_PATH = /^\/api\/song-sources\/([\w-]+)\/songs$/
 const SOURCE_ARCHIVE_PATH = /^\/api\/song-sources\/([\w-]+)\/archive$/
 const SOURCE_CHECKSUM_PATH = /^\/api\/song-sources\/([\w-]+)\/checksum$/
 const SOURCE_LACKING_PATH = /^\/api\/song-sources\/([\w-]+)\/lacking$/
-const SOURCE_NEW_COUNT_PATH = /^\/api\/song-sources\/([\w-]+)\/new-count$/
+const SOURCE_RECOUNT_PATH = /^\/api\/song-sources\/([\w-]+)\/recount$/
 const SOURCE_PATH = /^\/api\/song-sources\/([\w-]+)$/
 const PUBLICATION_SYNC_PATH = /^\/api\/song-sources\/publications\/(\d+)\/sync$/
 const PUBLICATION_PATH = /^\/api\/song-sources\/publications\/(\d+)$/
@@ -65,10 +67,12 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - GET    /api/song-sources/:id/archive         a song file source's .chsongs (songs.create)
  * - GET    /api/song-sources/:id/checksum        what changes when the source's songs do (songs.view)
  * - GET    /api/song-sources/:id/lacking         the songs its last check found the library lacks (songs.create)
- * - PUT    /api/song-sources/:id/new-count       Song discovery's count of its new songs `{ newCount }` (songs.create)
+ * - POST   /api/song-sources/:id/recount         count its waiting songs again, after an import (songs.create)
  * - GET    /api/song-sources/updates             each source's last check for new songs (songs.view)
  * - POST   /api/song-sources/updates/run         check the sources now `{ force?, sourceIds? }` (songs.create)
- * - PUT    /api/song-sources/updates/settings    update songs automatically `{ autoUpdate }` (settings.edit)
+ * - POST   /api/song-sources/updates/cancel      stop the running check (songs.create)
+ * - POST   /api/song-sources/updates/sync        sync the songs waiting for approval (songs.create)
+ * - PUT    /api/song-sources/updates/settings    sync without approval `{ autoUpdate }` (settings.edit)
  * - GET    /api/song-sources/export?categoryId=&format=chsongs|zip  a category as a song bundle (songs.view)
  * - GET    /api/song-sources/storage             the S3 storage, without its secret (settings.view)
  * - PUT    /api/song-sources/storage             save the S3 storage (settings.edit)
@@ -126,6 +130,26 @@ export async function handleSongSourceRoutes(
   }
 
   if (
+    req.method === 'POST' &&
+    pathname === '/api/song-sources/updates/cancel'
+  ) {
+    const denied = deny('songs.create')
+    if (denied) return denied
+    cancelSongUpdates()
+    return respond(200, { data: getSongUpdatesState() })
+  }
+
+  if (req.method === 'POST' && pathname === '/api/song-sources/updates/sync') {
+    const denied = deny('songs.create')
+    if (denied) return denied
+    if (getSongUpdatesState().running) {
+      return respond(409, { error: 'The song sources are being checked' })
+    }
+    syncPendingSongs()
+    return respond(200, { data: getSongUpdatesState() })
+  }
+
+  if (
     req.method === 'PUT' &&
     pathname === '/api/song-sources/updates/settings'
   ) {
@@ -147,16 +171,12 @@ export async function handleSongSourceRoutes(
     )
   }
 
-  const newCountMatch = pathname.match(SOURCE_NEW_COUNT_PATH)
-  if (req.method === 'PUT' && newCountMatch) {
+  const recountId = pathname.match(SOURCE_RECOUNT_PATH)?.[1]
+  if (req.method === 'POST' && recountId) {
     const denied = deny('songs.create')
     if (denied) return denied
-    const { newCount } = await readJson<{ newCount: number }>()
-    if (!Number.isInteger(newCount) || (newCount ?? -1) < 0) {
-      return respond(400, { error: 'newCount must be a whole number' })
-    }
     try {
-      recordSourceNewCount(newCountMatch[1], newCount as number)
+      recountSourceSongs(recountId)
       return respond(200, { data: getSongUpdatesState() })
     } catch (error) {
       return respond(404, { error: errorMessage(error) })

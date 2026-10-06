@@ -1,3 +1,4 @@
+import { isOnline } from './isOnline'
 import { getAutoUpdateSongs } from './sourceUpdatesStore'
 import { createLogger } from '../../../utils/logger'
 import { clearSearchCache } from '../../songs'
@@ -8,7 +9,13 @@ const logger = createLogger('song-updates')
 const START_DELAY_MS = 30_000
 const DAILY_MS = 24 * 60 * 60 * 1000
 
-let running: Promise<void> | null = null
+interface Run {
+  done: Promise<void>
+  /** Stops the worker; what it saved so far stays. */
+  stop: () => void
+}
+
+let current: Run | null = null
 
 /**
  * The worker's file. In the compiled sidecar every worker is an entrypoint
@@ -23,7 +30,7 @@ function workerSpecifier(): string | URL {
 }
 
 export function isSongUpdatesRunning(): boolean {
-  return running !== null
+  return current !== null
 }
 
 /**
@@ -33,33 +40,52 @@ export function isSongUpdatesRunning(): boolean {
 export function runSongUpdatesInWorker(
   options: { force?: boolean; sourceIds?: string[] } = {},
 ): Promise<void> {
-  if (running) return running
+  if (current) return current.done
   const worker = new Worker(workerSpecifier())
-  running = new Promise<void>((resolve) => {
-    const finish = () => {
+  let stop = () => {}
+  const done = new Promise<void>((resolve) => {
+    stop = () => {
       worker.terminate()
-      running = null
+      // Songs added from the worker: searches must see them.
+      clearSearchCache()
+      current = null
       resolve()
     }
     worker.onmessage = (event: MessageEvent) => {
       if (event.data?.type === 'failed') {
         logger.error(`Song updates failed: ${event.data.error}`)
       }
-      // Songs added from the worker: searches must see them.
-      if (event.data?.imported > 0) clearSearchCache()
-      finish()
+      stop()
     }
     worker.onerror = (event) => {
       logger.error(`Song updates worker: ${event.message}`)
-      finish()
+      stop()
     }
   })
+  current = { done, stop }
   worker.postMessage({
     force: options.force ?? false,
     autoUpdate: getAutoUpdateSongs(),
     sourceIds: options.sourceIds,
   })
-  return running
+  return done
+}
+
+/** Stops the running check; false when none runs. */
+export function cancelSongUpdates(): boolean {
+  if (!current) return false
+  logger.info('Song updates cancelled by the user')
+  current.stop()
+  return true
+}
+
+/** A scheduled check starts only online; offline it quietly waits for the next. */
+async function runScheduled(): Promise<void> {
+  if (!(await isOnline())) {
+    logger.info('No internet connection: the song sources are checked later')
+    return
+  }
+  await runSongUpdatesInWorker()
 }
 
 /**
@@ -69,6 +95,6 @@ export function runSongUpdatesInWorker(
  */
 export function startSongUpdates(): void {
   if (process.env.CHURCH_HUB_SONG_UPDATES_AT_START === 'false') return
-  setTimeout(() => void runSongUpdatesInWorker(), START_DELAY_MS)
-  setInterval(() => void runSongUpdatesInWorker(), DAILY_MS)
+  setTimeout(() => void runScheduled(), START_DELAY_MS)
+  setInterval(() => void runScheduled(), DAILY_MS)
 }

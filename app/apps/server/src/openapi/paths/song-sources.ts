@@ -35,8 +35,22 @@ const songUpdates = {
           sourceId: { type: 'string' },
           name: { type: 'string' },
           checksum: { type: 'string' },
-          newCount: { type: 'integer' },
+          newCount: {
+            type: 'integer',
+            description: 'New songs waiting for approval',
+          },
+          similarCount: {
+            type: 'integer',
+            description:
+              'Songs the library has under another title, for review in Song discovery',
+          },
+          changedCount: {
+            type: 'integer',
+            description:
+              'Library songs the source changed, waiting for approval',
+          },
           imported: { type: 'integer' },
+          updated: { type: 'integer' },
           checkedAt: { type: 'integer' },
           error: { type: 'string' },
         },
@@ -199,32 +213,19 @@ export const songSourcesPaths = {
       },
     },
   },
-  '/api/song-sources/{id}/new-count': {
-    put: {
+  '/api/song-sources/{id}/recount': {
+    post: {
       tags,
-      summary: 'Record Song discovery’s count of a source’s new songs',
+      summary: 'Count a source’s waiting songs again',
       description:
-        'Song discovery’s own count once it compared the source with the library, fresher than the last check after an import. Requires `songs.create`.',
+        'After songs were imported in Song discovery: the counts and the “waiting for approval” notification then match what is left. Requires `songs.create`.',
       security,
       parameters: [idParameter('string')],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              required: ['newCount'],
-              properties: { newCount: { type: 'integer', minimum: 0 } },
-            },
-          },
-        },
-      },
       responses: {
         '200': {
           description: 'The song updates',
           content: dataOf(songUpdates),
         },
-        '400': { description: 'newCount is not a whole number' },
         '404': { description: 'No such source' },
         ...errors,
       },
@@ -235,7 +236,7 @@ export const songSourcesPaths = {
       tags,
       summary: 'Get each source’s last check for new songs',
       description:
-        'The sources are checked in a worker thread a bit after the server starts, then daily: a source whose checksum did not change is not downloaded again. When updating songs automatically (the default), songs with no similar version in the library are added to the source’s category. Requires `songs.view`.',
+        'The sources are checked in a worker thread a bit after the server starts (only when the internet answers), then daily: a source whose checksum did not change is not downloaded again. When syncing without approval (the default), songs with no similar version in the library are added to the source’s category and library songs nobody edited by hand get the source’s newer lyrics; otherwise they wait for POST /api/song-sources/updates/sync. Each run is recorded in the notifications. Requires `songs.view`.',
       security,
       responses: {
         '200': {
@@ -273,10 +274,43 @@ export const songSourcesPaths = {
       },
     },
   },
+  '/api/song-sources/updates/cancel': {
+    post: {
+      tags,
+      summary: 'Stop the running check',
+      description:
+        'What it saved so far stays. Nothing happens when no check runs. Requires `songs.create`.',
+      security,
+      responses: {
+        '200': {
+          description: 'The song updates',
+          content: dataOf(songUpdates),
+        },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/updates/sync': {
+    post: {
+      tags,
+      summary: 'Sync the songs waiting for approval',
+      description:
+        'Adds every source’s waiting new songs and updates the library songs the sources changed (never a song edited by hand), and records a “songs synced” notification. Requires `songs.create`.',
+      security,
+      responses: {
+        '200': {
+          description: 'The song updates',
+          content: dataOf(songUpdates),
+        },
+        '409': { description: 'A check is running' },
+        ...errors,
+      },
+    },
+  },
   '/api/song-sources/updates/settings': {
     put: {
       tags,
-      summary: 'Turn updating songs automatically on or off',
+      summary: 'Turn syncing without approval on or off',
       description: 'On by default. Requires `settings.edit`.',
       security,
       requestBody: {
