@@ -11,7 +11,7 @@ The project's rules for any agent working here: the principles, then the facts o
 - Components work on mobile.
 - Debug logs are controlled by env variables, with levels (debug, verbose, trace, info, warning, error).
 - Every API is in the OpenAPI spec and the Scalar docs (http://localhost:3001/api/docs).
-- Every user-facing string goes in the i18n files (`app/apps/client/src/i18n/locales/`, right namespace), in English and Romanian.
+- Every user-facing string goes in the i18n files (`apps/client/src/i18n/locales/`, right namespace), in English and Romanian.
 - Delegate code exploration, debugging and web browsing to subagents (ultrathink for debugging and deep-context work); they return summaries with `file:line` paths, and the main context keeps only the critical insights.
 - Navigate to claude's cwd first, then cd into the correct folder before running commands.
 - A request the user makes mid-task goes on the todo list, so no detail is lost.
