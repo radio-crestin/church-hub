@@ -107,7 +107,9 @@ test.describe('Search result text', () => {
       const found = results.find((song) => song.id === songId)
       expect(found).toBeTruthy()
       // The only markup the server sends is its own <mark> tags.
-      expect(found?.matchedContent.replace(/<\/?mark>/g, '')).not.toMatch(/[<>]/)
+      expect(found?.matchedContent.replace(/<\/?mark>/g, '')).not.toMatch(
+        /[<>]/,
+      )
 
       await page.goto('/songs')
       await page.getByPlaceholder(/search songs|caută cântări/i).fill(uniq)
