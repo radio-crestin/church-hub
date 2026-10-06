@@ -109,6 +109,36 @@ export async function checkSource(
 }
 
 /**
+ * Stops the song check that runs, or waits for, and waits until none runs.
+ * A check started by a spec that then failed would otherwise go on after
+ * its cleanup, and with auto-update on it imports the source's songs into a
+ * fresh category the cleanup has already passed.
+ */
+export async function stopSongUpdates(request: APIRequestContext) {
+  await request.post('/api/song-sources/updates/cancel')
+  await expect(async () => {
+    const state = (
+      await (await request.get('/api/song-sources/updates')).json()
+    ).data
+    expect(state.running).toBe(false)
+  }).toPass({ timeout: 30_000 })
+}
+
+/** Removes the link sources with these names, whether or not a spec kept their ids. */
+export async function deleteLinkSourcesNamed(
+  request: APIRequestContext,
+  names: string[],
+): Promise<void> {
+  const sources = (await (await request.get('/api/song-sources')).json())
+    .data as { id: string; origin: string; name: string }[]
+  for (const { id, origin, name } of sources) {
+    if (origin === 'link' && names.includes(name)) {
+      await request.delete(`/api/song-sources/${id}`)
+    }
+  }
+}
+
+/**
  * Removes every notification, so a spec starts from none and leaves no
  * pop-up over the next spec's page.
  */
