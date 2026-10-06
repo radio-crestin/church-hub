@@ -13,6 +13,8 @@ import {
   formatShortcutForDisplay,
   useAppShortcuts,
 } from '~/features/keyboard-shortcuts'
+import { Button } from '~/ui/button'
+import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
 import { useScreenShareContext } from '../context'
@@ -138,40 +140,37 @@ export function ControlRoom() {
 
   return (
     <div className="flex flex-col h-full gap-4">
-      {/* Navigation Bar */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('presentation:controlRoom.title')}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Screen Share Button - synced across all clients */}
-          {screenShareState.isActive ? (
-            <button
-              type="button"
+      <PageHeader
+        title={t('presentation:controlRoom.title')}
+        actions={
+          // Screen Share Button - synced across all clients
+          screenShareState.isActive ? (
+            <Button
+              variant="danger"
               onClick={handleStopScreenShare}
-              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg transition-colors"
+              aria-label={t('presentation:controlRoom.screenShare.stop')}
+              className="gap-2"
             >
               <MonitorOff className="w-4 h-4" />
               <span className="hidden sm:inline">
                 {t('presentation:controlRoom.screenShare.stop')}
               </span>
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={handleStartScreenShare}
-              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
+              aria-label={t('presentation:controlRoom.screenShare.start')}
+              className="gap-2"
             >
               <MonitorPlay className="w-4 h-4" />
               <span className="hidden sm:inline">
                 {t('presentation:controlRoom.screenShare.start')}
               </span>
-            </button>
-          )}
-        </div>
-      </div>
+            </Button>
+          )
+        }
+      />
 
       {/* Preview Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">

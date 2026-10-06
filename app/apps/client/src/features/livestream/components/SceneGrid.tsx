@@ -1,5 +1,7 @@
+import { Clapperboard } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState } from '~/ui/page'
 import { LivestreamGuideButton } from './guide/LivestreamGuideButton'
 import { SceneCard } from './SceneCard'
 import { useOBSConnection, useOBSScenes } from '../hooks'
@@ -30,10 +32,11 @@ export function SceneGrid() {
       {/*  {t('scenes.title')}*/}
       {/*</h2>*/}
       {visibleScenes.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 p-8 text-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg">
-          <p>{t('scenes.noScenes')}</p>
-          <LivestreamGuideButton variant="primary" />
-        </div>
+        <EmptyState
+          icon={Clapperboard}
+          title={t('scenes.noScenes')}
+          action={<LivestreamGuideButton variant="primary" />}
+        />
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {visibleScenes.map((scene) => (
