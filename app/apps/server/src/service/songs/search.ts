@@ -1,6 +1,7 @@
 import { joinSearchTitles } from './parseAlternateTitles'
 import { SONGS_FTS_TABLE } from './song-search/fetchSongCandidates'
 import { songSearchCache } from './song-search/songSearchCache'
+import { resetLibraryVersionIndex } from './song-versions/libraryVersionIndex'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
@@ -18,6 +19,7 @@ const logger = createLogger('song-search')
  */
 export function clearSearchCache(): void {
   songSearchCache.clear()
+  resetLibraryVersionIndex()
   logger.debug('Search cache cleared')
 }
 

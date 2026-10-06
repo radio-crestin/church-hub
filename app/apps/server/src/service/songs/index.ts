@@ -38,7 +38,6 @@ export {
 export {
   getGroupForSong,
   getSimilarSongs,
-  getSimilarSongsForContent,
   getSongGroupWithMembers,
   getVersionCounts,
   linkSongs,
