@@ -32,7 +32,7 @@ import {
   type DuplicateAction,
   DuplicateSongDialog,
 } from './DuplicateSongDialog'
-import { parsePptViaServer } from '../utils/convertPptToPptx'
+import { parsePptViaServer } from '../utils/parsePptViaServer'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
 interface PendingImport {

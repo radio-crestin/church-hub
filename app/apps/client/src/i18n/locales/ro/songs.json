@@ -267,9 +267,7 @@
     "saving": "Se salvează în baza de date...",
     "useFirstVerseAsTitle": "Folosește primul vers ca titlu",
     "overwriteDuplicates": "Suprascrie cântările existente cu același titlu",
-    "skipManuallyEdited": "Sari peste cântările editate manual",
-    "libreOfficeNotInstalled": "LibreOffice este necesar pentru a importa fișiere .ppt",
-    "libreOfficeNotInstalledDescription": "Te rugăm să instalezi LibreOffice de la https://www.libreoffice.org pentru a activa importul fișierelor .ppt. Alternativ, convertește fișierele în format .pptx mai întâi."
+    "skipManuallyEdited": "Sari peste cântările editate manual"
   },
   "settings": {
     "title": "Setări cântări"

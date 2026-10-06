@@ -594,19 +594,6 @@ test.describe('Categories API', () => {
   })
 })
 
-test.describe('Conversion API', () => {
-  test('GET /api/convert/check-libreoffice returns status', async ({
-    request,
-  }) => {
-    const response = await request.get('/api/convert/check-libreoffice')
-    expect(response.status()).toBe(200)
-
-    const json = await response.json()
-    expect(json.data).toHaveProperty('installed')
-    expect(typeof json.data.installed).toBe('boolean')
-  })
-})
-
 test.describe('Music API', () => {
   test('GET /api/music/player/status returns status', async ({ request }) => {
     const response = await request.get('/api/music/player/status')

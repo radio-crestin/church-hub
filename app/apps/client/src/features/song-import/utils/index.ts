@@ -1,6 +1,6 @@
-export { parsePptViaServer } from './convertPptToPptx'
 export { downloadFromUrl } from './downloadFromUrl'
 export { extractFilesFromZip, extractPptxFromZip } from './extractPptxFromZip'
+export { parsePptViaServer } from './parsePptViaServer'
 export type { ParsedPptx, ParsedSlide } from './parsePptx'
 export { parsePptxFile } from './parsePptx'
 export { processImportFiles } from './processImportFiles'
