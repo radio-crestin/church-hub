@@ -139,7 +139,7 @@ function SongsPage() {
   const handleAISearchSaved = useCallback(
     (savedId: number) => {
       navigate({
-        to: '/songs/',
+        to: '/songs',
         search: {
           q: searchQuery || undefined,
           aiSearchId: savedId,
@@ -163,7 +163,7 @@ function SongsPage() {
     if (reset || focus) {
       // Clear the reset/focus param from URL
       navigate({
-        to: '/songs/',
+        to: '/songs',
         search: {
           q: reset ? undefined : searchQuery || undefined,
         },
@@ -216,7 +216,7 @@ function SongsPage() {
     if (lastVisited?.songId) {
       hasNavigatedOnOpen.current = true
       navigate({
-        to: '/songs/',
+        to: '/songs',
         search: {
           q: lastVisited.searchQuery || searchQuery || undefined,
           selectedSongId: lastVisited.songId,
@@ -240,7 +240,7 @@ function SongsPage() {
   const handleSearchChange = (query: string) => {
     // Clear aiSearchId when search query changes
     navigate({
-      to: '/songs/',
+      to: '/songs',
       search: { q: query || undefined },
       replace: true,
     })
@@ -319,7 +319,7 @@ function SongsPage() {
       const target = getSchedulePassageTarget(item)
       if (!target) return
       navigate({
-        to: '/bible/',
+        to: '/bible',
         search: {
           bookName: target.bookName,
           chapter: target.chapter,

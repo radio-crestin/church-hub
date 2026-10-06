@@ -35,10 +35,10 @@ export function ImportProgressModal({
     }
   }
 
-  const hasKnownTotal =
-    progress && progress.total !== null && progress.total > 0
+  const total = progress?.total ?? 0
+  const hasKnownTotal = total > 0
   const percentage = hasKnownTotal
-    ? Math.round((progress.current / progress.total) * 100)
+    ? Math.round(((progress?.current ?? 0) / total) * 100)
     : 0
 
   const formatBytes = (bytes: number) => {
@@ -73,7 +73,7 @@ export function ImportProgressModal({
                 {progress.phase === 'downloading' ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {hasKnownTotal
-                      ? `${formatBytes(progress.current)} / ${formatBytes(progress.total)}`
+                      ? `${formatBytes(progress.current)} / ${formatBytes(total)}`
                       : formatBytes(progress.current)}
                   </p>
                 ) : (

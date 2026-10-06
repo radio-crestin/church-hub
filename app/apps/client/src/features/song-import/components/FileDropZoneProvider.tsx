@@ -152,7 +152,7 @@ function deriveTitleFromFilename(filename: string | null): string {
 async function checkForDuplicate(
   title: string,
   importedSlides: Array<{ content: string; label?: string | null }>,
-  existingIdHint?: number,
+  existingIdHint?: number | null,
 ): Promise<DuplicateCheckResult> {
   // If we have an ID hint (e.g., from churchHubId), check that first
   if (existingIdHint) {
@@ -297,7 +297,6 @@ export function FileDropZoneProvider({ children }: Props) {
         author: parsed.metadata?.author,
         copyright: parsed.metadata?.copyright,
         ccli: parsed.metadata?.ccli,
-        key: parsed.metadata?.key,
         tempo: parsed.metadata?.tempo,
         timeSignature: parsed.metadata?.timeSignature,
         theme: parsed.metadata?.theme,
@@ -384,7 +383,6 @@ export function FileDropZoneProvider({ children }: Props) {
               author: item.song.author,
               copyright: item.song.copyright,
               ccli: item.song.ccli,
-              key: item.song.key,
               tempo: item.song.tempo,
               slides,
             })
@@ -769,8 +767,7 @@ export function FileDropZoneProvider({ children }: Props) {
             if (paths && paths.length > 0) {
               await processFilePaths(paths)
             }
-          } else if (event.payload.type === 'cancel') {
-            // User cancelled the drag
+          } else if (event.payload.type === 'leave') {
             setIsDragging(false)
           }
         })
@@ -863,7 +860,6 @@ export function FileDropZoneProvider({ children }: Props) {
             author: parsed.metadata?.author,
             copyright: parsed.metadata?.copyright,
             ccli: parsed.metadata?.ccli,
-            key: parsed.metadata?.key,
             tempo: parsed.metadata?.tempo,
             timeSignature: parsed.metadata?.timeSignature,
             theme: parsed.metadata?.theme,
@@ -898,7 +894,6 @@ export function FileDropZoneProvider({ children }: Props) {
             author: parsed.metadata?.author,
             copyright: parsed.metadata?.copyright,
             ccli: parsed.metadata?.ccli,
-            key: parsed.metadata?.key,
             tempo: parsed.metadata?.tempo,
             timeSignature: parsed.metadata?.timeSignature,
             theme: parsed.metadata?.theme,

@@ -198,7 +198,7 @@ function SongPreviewPage() {
   useEffect(() => {
     if (reset) {
       navigate({
-        to: '/songs/',
+        to: '/songs',
         search: { reset, fromSong: true },
       })
     }
@@ -334,7 +334,7 @@ function SongPreviewPage() {
 
   const backToSongList = useCallback(() => {
     navigate({
-      to: '/songs/',
+      to: '/songs',
       search: { fromSong: true, q: searchQuery || undefined },
     })
   }, [navigate, searchQuery])
@@ -456,7 +456,7 @@ function SongPreviewPage() {
     clearSectionLastVisited('songs')
 
     navigate({
-      to: '/songs/',
+      to: '/songs',
       search: {
         fromSong: true,
         q: searchQuery || undefined,
@@ -727,7 +727,7 @@ function SongPreviewPage() {
       const target = getSchedulePassageTarget(item)
       if (!target) return
       navigate({
-        to: '/bible/',
+        to: '/bible',
         search: {
           bookName: target.bookName,
           chapter: target.chapter,

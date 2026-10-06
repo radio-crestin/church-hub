@@ -55,7 +55,6 @@ export function useBatchImportSongs() {
               author: song.author,
               copyright: song.copyright,
               ccli: song.ccli,
-              key: song.key,
               tempo: song.tempo,
               timeSignature: song.timeSignature,
               theme: song.theme,
