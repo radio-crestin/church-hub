@@ -255,6 +255,8 @@ test.describe('Shortcut scopes: where each key works', () => {
   }) => {
     // Slide keys: F2 Church Hub only, F1 any program (their default). F3 is a
     // key the Bible page bound to "show slide": Church Hub only by default.
+    // A MIDI pad on "start live" is the MIDI listener's, never a keyboard key
+    // for the shell to hold.
     const actions = (original?.actions as object | undefined) ?? {}
     await saveShortcuts(
       request,
@@ -263,6 +265,7 @@ test.describe('Shortcut scopes: where each key works', () => {
         {
           actions: {
             ...actions,
+            startLive: { shortcuts: ['midi:note_on:40'], enabled: true },
             nextSlide: { shortcuts: ['F2'], enabled: true },
             prevSlide: { shortcuts: ['F1'], enabled: true },
           },
@@ -307,5 +310,47 @@ test.describe('Shortcut scopes: where each key works', () => {
     await expect
       .poll(() => heldKeys(page))
       .toEqual(expect.arrayContaining(['F1', 'F2', 'F3']))
+  })
+
+  test('a MIDI pad works from any program, next to a key on the same action, whatever its scope', async ({
+    page,
+    request,
+  }) => {
+    // Next slide answers both F2 (Church Hub only) and a MIDI pad. Even a
+    // "Church Hub only" scope stored for the pad must not limit it.
+    const pad = 'midi:note_on:41'
+    const actions = (original?.actions as object | undefined) ?? {}
+    await saveShortcuts(
+      request,
+      withScopes(
+        { F2: 'app', [pad]: 'app' },
+        {
+          actions: {
+            ...actions,
+            nextSlide: { shortcuts: ['F2', pad], enabled: true },
+          },
+        },
+      ),
+    )
+    const padAction = async () => {
+      const response = await request.get('/api/midi/debug-shortcuts')
+      const { data } = await response.json()
+      return data.shortcutMap[pad] as { type: string; action: string }
+    }
+
+    await fakeDesktopShell(page)
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+
+    // In Church Hub: the key is held, the pad is the MIDI listener's
+    await expect.poll(() => heldKeys(page)).toContain('F2')
+    expect(await heldKeys(page)).not.toContain(pad)
+    expect(await padAction()).toEqual({ type: 'global', action: 'nextSlide' })
+
+    // Another program in front: the key is let go, the pad still runs
+    await moveKeyboard(page, null)
+    await expect.poll(() => heldKeys(page)).not.toContain('F2')
+    expect(await heldKeys(page)).not.toContain(pad)
+    expect(await padAction()).toEqual({ type: 'global', action: 'nextSlide' })
   })
 })

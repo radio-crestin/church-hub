@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
 import { useShortcutPermissionCheck } from '~/features/keyboard-shortcuts/hooks/useShortcutPermissionCheck'
+import { isMIDIShortcut } from '~/features/keyboard-shortcuts/midi/utils'
 import { useSidebarConfig } from './useSidebarConfig'
 import { BUILTIN_ITEMS } from '../constants'
 import {
@@ -41,7 +42,7 @@ export function usePageShortcuts(): PageShortcut[] {
 
       for (const action of PAGE_SHORTCUT_ACTIONS) {
         for (const shortcut of item.settings.pageShortcuts[action] ?? []) {
-          if (!shortcut || shortcut.startsWith('midi:')) continue
+          if (!shortcut || isMIDIShortcut(shortcut)) continue
           shortcuts.push({
             shortcut,
             pageId: builtinId,
