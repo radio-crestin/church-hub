@@ -40,7 +40,7 @@ first, since a description of a conflicting branch misleads.
 
 ## The description: 13 sections
 
-Write to `/tmp/pr-body.md`. A section with nothing in the diff gets a one-line
+Write to a file in your scratchpad (`pr-body.md`). A section with nothing in the diff gets a one-line
 "N/A" (e.g. "No database changes."), never filler. Use tables where they add
 clarity, hierarchical lists and concrete examples; group commits by theme and
 cite their short hashes. Explain the reasoning behind each decision and the
@@ -118,15 +118,14 @@ Title style: `<scope or domain>: <short summary>`.
 
 ## Push, then create or update the PR
 
-The branch must be on origin before the PR can reference its commits. Pushing
-and PR create/edit are part of this skill's contract — **the project-wide "ask
-before pushing" rule is suspended the moment the user invokes this skill**; do
-not ask for confirmation.
+The branch must be on origin before the PR can reference its commits. Invoking
+this skill is the user's request to push and to create or edit the PR, so do
+both without asking again.
 
 Push the branch every time, then update the branch's PR if it has one
-(`gh pr edit <n> --body-file /tmp/pr-body.md`; the title only if the user asked
+(`gh pr edit <n> --body-file <that file>`; the title only if the user asked
 or it is clearly stale), else create it (`gh pr create --base <base> --head
-<branch> --title "<title>" --body-file /tmp/pr-body.md`). Never open a
+<branch> --title "<title>" --body-file <that file>`). Never open a
 duplicate. Show the user the PR link.
 
 ## Sole author

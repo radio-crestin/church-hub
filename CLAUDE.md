@@ -11,9 +11,8 @@ The project's rules for any agent working here: the principles, then the facts o
 - Components work on mobile.
 - Debug logs are controlled by env variables, with levels (debug, verbose, trace, info, warning, error).
 - Every API is in the OpenAPI spec and the Scalar docs (http://localhost:3001/api/docs).
-- Every user-facing string goes in the i18n files (`apps/client/src/i18n/locales/`, right namespace), in English and Romanian.
+- Every user-facing string goes in the i18n files (`app/apps/client/src/i18n/locales/`, right namespace), in English and Romanian.
 - Delegate code exploration, debugging and web browsing to subagents (ultrathink for debugging and deep-context work); they return summaries with `file:line` paths, and the main context keeps only the critical insights.
-- Navigate to claude's cwd first, then cd into the correct folder before running commands.
 - A request the user makes mid-task goes on the todo list, so no detail is lost.
 - When the user pastes `/abc/sample.py:XX:YY`, XX is the line and YY the number of lines to select.
 
@@ -33,40 +32,17 @@ The project's rules for any agent working here: the principles, then the facts o
 
 ## Cross-platform
 Everything must work on macOS, Windows and Linux, in both the Tauri shell (Rust) and the Bun-compiled sidecar. Why it matters: the macOS v0.1.60 build exited silently 4 s after launch, because a darwin-only `checkMidiSafety` spawned `process.execPath -e <code>`, which Bun's standalone ignores: it re-ran the whole sidecar, whose port cleanup killed the parent. `bun dev` passing proves nothing about the bundled artifact.
-- Never call `process.execPath` with Node-style flags (`-e`, `--inspect`, …) on the compiled sidecar; add a dedicated CLI flag (e.g. `--probe-midi`) handled at the top of `apps/server/src/index.ts`.
+- Never call `process.execPath` with Node-style flags (`-e`, `--inspect`, …) on the compiled sidecar; add a dedicated CLI flag (e.g. `--warm-up-coremidi`) handled at the top of `app/apps/server/src/index.ts`.
 - Path resolution branches on `process.platform` (`darwin` | `win32` | `linux`) for the bundle layouts: macOS `<App>.app/Contents/MacOS/<bin>` with resources in `<App>.app/Contents/Resources/`; Windows and Linux keep resources next to the executable.
 - Spawn subprocesses with `execFileSync(<bin>, [args], { stdio: 'pipe', timeout: <ms> })`, an args array, never a shell-interpolated path.
-- Native modules (MIDI, audio, …) must load on all three OSes; `apps/server/scripts/compile.ts` copies the per-OS prebuilds. A new dependency with native bindings needs prebuilds for darwin-arm64, darwin-x64, win32-x64 and linux-x64.
+- Native modules (MIDI, audio, …) must load on all three OSes; `app/apps/server/scripts/compile.ts` copies the per-OS prebuilds. A new dependency with native bindings needs prebuilds for darwin-arm64, darwin-x64, win32-x64 and linux-x64.
 - After a release-affecting change, run the compiled-sidecar smoke check locally (`bun run smoke:sidecar` in `app/apps/server`): it launches the sidecar laid out like the bundle and requires it to answer `/ping`. A release is blocked while it is red on any platform.
 
 ## Presentation rendering
-All presentation content (LivePreview, ScreenRenderer and any other display) renders through the shared `usePresentationContent` hook (`apps/client/src/features/presentation/hooks/usePresentationContent.ts`), so exit animations, content fetching and visibility behave the same everywhere. New content types and rendering changes go in the hook, never in a separate engine.
+All presentation content (LivePreview, ScreenRenderer and any other display) renders through the shared `usePresentationContent` hook (`app/apps/client/src/features/presentation/hooks/usePresentationContent.ts`), so exit animations, content fetching and visibility behave the same everywhere. New content types and rendering changes go in the hook, never in a separate engine.
 
 ## Worktrees
-
-For worktrees, create a Tauri config override to avoid port conflicts:
-
-```bash
-# Copy the sample config
-cp tauri/tauri.worktree.conf.json.sample tauri/tauri.worktree.conf.json
-
-# Run with worktree config (extends main config via JSON Merge Patch)
-npm run dev:worktree
-```
-
-The sample config (`tauri.worktree.conf.json.sample`) contains only the overrides:
-- PORT: 3002, VITE_DEV_PORT: 8088
-- devUrl: http://localhost:3002
-- Window title: "Church Hub (Worktree)"
-
-Edit your local `tauri.worktree.conf.json` to use different ports if needed. This file is gitignored.
+A task's worktree, ports and review build are set up by the scripts in `.claude/rules/better-tasks.md`.
 
 ## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+`graphify-out/` holds a knowledge graph of the codebase (god nodes, communities, cross-file links). When `graphify-out/graph.json` exists, `graphify query "<question>"`, `graphify path "<A>" "<B>"` and `graphify explain "<concept>"` return a scoped subgraph, much smaller than `GRAPH_REPORT.md` or raw grep; `graphify-out/wiki/index.md` is the broad map. After changing code, `graphify update .` keeps the graph current (AST-only, no API cost).

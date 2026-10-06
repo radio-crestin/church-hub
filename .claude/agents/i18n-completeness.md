@@ -10,7 +10,6 @@ You audit the i18n locale tree at `app/apps/client/src/i18n/locales/`.
 # Baseline
 - `en/` is the source of truth. The codebase has `fallbackLng: 'en'`, so a missing locale key falls back to English at runtime — silent but degraded UX.
 - `ro/` is the second primary locale (CLAUDE.md mandates en + ro for every namespace).
-- ~13 namespace files per locale; ~51 locales total.
 
 # What to report
 

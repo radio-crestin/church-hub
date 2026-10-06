@@ -11,7 +11,7 @@ You are adding a new translation key to the project's i18n locale files.
 ## Steps
 
 1. **Gather inputs** — if not provided, ask the user for:
-   - **namespace** (one of: `bible`, `bibleBooks`, `common`, `livestream`, `music`, `presentation`, `queue`, `schedules`, `settings`, `sidebar`, `songKey`, `songs`, `liveTranslation`)
+   - **namespace** (a file in `app/apps/client/src/i18n/locales/en/`)
    - **key path** in dot notation (e.g. `actions.archive`, `editor.subtitlePlaceholder`)
    - **English value**
    - **Romanian value**
@@ -28,6 +28,6 @@ You are adding a new translation key to the project's i18n locale files.
 
 ## Constraints
 
-- Only `en/` and `ro/` are statically imported in `app/apps/client/src/i18n/config.ts`; the other 49 locale dirs are dormant, so leave them alone.
+- Only `en/` and `ro/` are statically imported in `app/apps/client/src/i18n/config.ts`; the other locale dirs are dormant, so leave them alone.
 - Leave `app/apps/client/src/i18n/config.ts` alone: namespaces are already registered.
 - If the namespace doesn't exist yet, stop and tell the user; adding a namespace requires editing the config and is out of scope for this skill.
