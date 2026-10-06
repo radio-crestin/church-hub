@@ -15,7 +15,8 @@ const SHORTCUT_SETTING_KEYS = [
 ]
 
 /**
- * The default sidebar keys, F4 upward in the sidebar's order. New installs get
+ * The default sidebar keys, F4 upward in the sidebar's order (F11 is left free:
+ * macOS uses it for Show Desktop). New installs get
  * them from default-settings.json; keep the two in step.
  */
 const DEFAULT_PAGE_KEYS: Record<string, string> = {
@@ -26,7 +27,7 @@ const DEFAULT_PAGE_KEYS: Record<string, string> = {
   music: 'F8',
   song_key: 'F9',
   live_translation: 'F10',
-  livestream: 'F11',
+  livestream: 'F12',
 }
 
 interface SidebarItem {
