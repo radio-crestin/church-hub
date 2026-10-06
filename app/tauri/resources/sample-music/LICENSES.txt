@@ -1,0 +1,25 @@
+Sample hymns bundled with Church Hub: where each recording comes from and why
+it may ship in the app. Open this file before adding or replacing a recording.
+
+All three are public domain (CC0 or works of the United States government),
+re-encoded to 128 kbit/s MP3 and tagged; the music itself is unchanged.
+
+01-amazing-grace.mp3
+  "Amazing Grace" (traditional; arrangement: Cleveland Chandler)
+  Performed by the United States Air Force Band, Strolling Strings (2004)
+  Licence: public domain, a work of the United States Air Force
+           (https://www.music.af.mil/Multimedia/Music/Public-Domain-Music/)
+  Source: https://commons.wikimedia.org/wiki/File:Amazing_Grace_(2004)_-_Strolling_Strings_-_United_States_Air_Force_Band.mp3
+
+02-ein-feste-burg-ist-unser-gott.mp3
+  "Ein feste Burg ist unser Gott" / "A Mighty Fortress Is Our God"
+  (Martin Luther, 1529), organ, Wolfgang Kindl
+  Licence: CC0 1.0, public domain dedication
+  Source: https://commons.wikimedia.org/wiki/File:(Wolfgang_Kindl)_EG_362_Ein_feste_Burg_ist_unser_Gott_(erste_Version).mp3
+
+03-nearer-my-god-to-thee.mp3
+  "Nearer, My God, to Thee" (Lowell Mason; arrangement: Paul Rawlins)
+  Performed by the United States Air Force Band, Ceremonial Brass (1993)
+  Licence: public domain, a work of the United States Air Force
+           (https://www.music.af.mil/Multimedia/Music/Public-Domain-Music/)
+  Source: https://commons.wikimedia.org/wiki/File:Nearer_My_God_to_Thee_-_Ceremonial_Brass_-_United_States_Air_Force_Band.mp3
