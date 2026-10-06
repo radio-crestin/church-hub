@@ -596,7 +596,7 @@ export function SchedulePanel({
             onSelect: () => editorsRef.current?.addItem(),
             testId: 'schedule-add-item-menu',
             inline: (
-              <Tooltip content={t('panel.addItem')} position="bottom">
+              <Tooltip content={t('panel.addItem')} position="left">
                 <button
                   type="button"
                   onClick={() => editorsRef.current?.addItem()}
@@ -625,7 +625,7 @@ export function SchedulePanel({
             onSelect: toggleSearch,
             testId: 'schedule-search-toggle-menu',
             inline: (
-              <Tooltip content={searchLabel} position="bottom">
+              <Tooltip content={searchLabel} position="left">
                 <button
                   type="button"
                   onClick={toggleSearch}
@@ -690,7 +690,7 @@ export function SchedulePanel({
             onSelect: onAddAllBookmarks,
             testId: 'schedule-add-all-bookmarks-menu',
             inline: (
-              <Tooltip content={t('panel.addAllBookmarks')} position="bottom">
+              <Tooltip content={t('panel.addAllBookmarks')} position="left">
                 <button
                   type="button"
                   onClick={onAddAllBookmarks}
@@ -717,7 +717,7 @@ export function SchedulePanel({
             onSelect: () => onOpenSchedule(selectedScheduleId),
             testId: 'schedule-open-menu',
             inline: (
-              <Tooltip content={t('panel.openSchedule')} position="bottom">
+              <Tooltip content={t('panel.openSchedule')} position="left">
                 <button
                   type="button"
                   onClick={() => onOpenSchedule(selectedScheduleId)}
@@ -742,7 +742,7 @@ export function SchedulePanel({
             onSelect: () => setRenamingSchedule(schedule),
             testId: 'schedule-rename-menu',
             inline: (
-              <Tooltip content={t('panel.renameSchedule')} position="bottom">
+              <Tooltip content={t('panel.renameSchedule')} position="left">
                 <button
                   type="button"
                   onClick={() => setRenamingSchedule(schedule)}
@@ -769,7 +769,7 @@ export function SchedulePanel({
             onSelect: () => setPendingDelete(true),
             testId: 'schedule-delete-menu',
             inline: (
-              <Tooltip content={t('panel.deleteSchedule')} position="bottom">
+              <Tooltip content={t('panel.deleteSchedule')} position="left">
                 <button
                   type="button"
                   onClick={() => setPendingDelete(true)}
