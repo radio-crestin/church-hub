@@ -101,6 +101,7 @@ test.describe('Notifications page actions', () => {
     )
     expect(await listed(request)).toHaveLength(0)
     await expect(clearAll).toBeDisabled()
+    await expect(page.getByTestId('notifications-mark-all-read')).toBeDisabled()
     await shot(page, 'after-cleared')
   })
 })

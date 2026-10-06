@@ -43,7 +43,9 @@ export function NotificationsPage() {
         description={t('description')}
         actions={
           <NotificationsPageActions
-            hasNew={newIds.size > 0 || unreadIds !== ''}
+            hasNew={notifications.some(
+              (n) => n.readAt === null || newIds.has(n.id),
+            )}
             isEmpty={notifications.length === 0}
             onMarkAllRead={() => {
               markAllRead()
