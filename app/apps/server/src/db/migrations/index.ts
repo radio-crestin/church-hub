@@ -20,6 +20,7 @@ import { addSongVersionsPermissions } from './add-song-versions-permissions'
 import { addSync } from './add-sync'
 import { addUserAuthFields } from './add-user-auth-fields'
 import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
+import { assignDefaultPageKeys } from './assign-default-page-keys'
 import { convertBibleBookmarkStylesToMarkdown } from './convert-bible-bookmark-styles-to-markdown'
 import { dropSongKeyColumn } from './drop-song-key-column'
 import { EMBEDDED_MIGRATIONS } from './embedded'
@@ -297,6 +298,11 @@ export function runMigrations(
   // Clean up legacy shortcuts (searchSong, searchBible removed from codebase)
   runStep('migrate_shortcuts', 'Running shortcuts cleanup migration', () =>
     migrateShortcuts(rawDb),
+  )
+
+  // Give existing installs the default page keys (F4 upward) they lack
+  runStep('assign_default_page_keys', 'Assigning default page keys', () =>
+    assignDefaultPageKeys(rawDb),
   )
 
   // Convert legacy MIDI device indices to name-based persistence

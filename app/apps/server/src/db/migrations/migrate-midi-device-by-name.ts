@@ -61,7 +61,10 @@ export function migrateMidiDeviceByName(db: Database): void {
     const hasNewKeys = 'inputDeviceName' in midi || 'outputDeviceName' in midi
 
     if (!hadInputId && !hadOutputId && hasNewKeys) {
-      markMigrationComplete(db, { migrated: false, reason: 'already_new_shape' })
+      markMigrationComplete(db, {
+        migrated: false,
+        reason: 'already_new_shape',
+      })
       return
     }
 

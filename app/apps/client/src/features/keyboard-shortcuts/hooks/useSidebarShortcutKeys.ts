@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
 import { canonicalShortcut } from '../utils/canonicalShortcut'
+import { offerKeyToPage } from '../utils/pageKeyClaimEvent'
 import { isGlobalRecordingActive } from '../utils/recordingState'
 import { shortcutFromKeyboardEvent } from '../utils/shortcutFromKeyboardEvent'
 
@@ -49,6 +50,10 @@ export function useSidebarShortcutKeys(
       event.preventDefault()
       event.stopPropagation()
       if (event.repeat) return
+      if (offerKeyToPage(pressed)) {
+        logger.debug(`Sidebar key ${pressed} taken by the open page`)
+        return
+      }
       logger.debug(
         `Sidebar key ${pressed} pressed in the page -> ${entry.route}`,
       )

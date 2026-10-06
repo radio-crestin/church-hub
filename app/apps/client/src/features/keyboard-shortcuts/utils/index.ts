@@ -6,6 +6,10 @@ export {
   type NavigationShortcutDetail,
 } from './navigationShortcutEvent'
 export {
+  listenForPageKeyClaims,
+  offerKeyToPage,
+} from './pageKeyClaimEvent'
+export {
   emitPageShortcutEvent,
   usePageShortcutEvent,
 } from './pageShortcutEvent'

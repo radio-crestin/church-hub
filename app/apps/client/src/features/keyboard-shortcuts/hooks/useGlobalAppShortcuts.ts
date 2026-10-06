@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { createLogger } from '~/utils/logger'
 import { useIsAppFrontmost } from './useIsAppFrontmost'
 import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
-import { isGlobalRecordingActive } from '../utils'
+import { isGlobalRecordingActive, offerKeyToPage } from '../utils'
 
 const logger = createLogger('app:keyboard:global')
 
@@ -297,6 +297,12 @@ export function useGlobalAppShortcuts({
                 if (isGlobalRecordingActive() || isRecordingRef?.current) {
                   logger.debug(
                     `Skipping sidebar shortcut ${shortcut} - recording in progress`,
+                  )
+                  return
+                }
+                if (offerKeyToPage(shortcut)) {
+                  logger.debug(
+                    `Sidebar shortcut ${shortcut} taken by the open page`,
                   )
                   return
                 }
