@@ -19,7 +19,8 @@
   "source": {
     "label": "Source",
     "fetch": "Fetch catalog",
-    "refresh": "Refresh catalog"
+    "refresh": "Refresh catalog",
+    "openedFile": "file"
   },
   "status": {
     "fetching": "Downloading and parsing the catalog…",

@@ -19,7 +19,8 @@
   "source": {
     "label": "Sursă",
     "fetch": "Descarcă catalogul",
-    "refresh": "Reîmprospătează catalogul"
+    "refresh": "Reîmprospătează catalogul",
+    "openedFile": "fișier"
   },
   "status": {
     "fetching": "Se descarcă și se prelucrează catalogul…",

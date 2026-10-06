@@ -8,6 +8,18 @@ interface SourcePickerProps {
   onSelect: (sourceId: string) => void
 }
 
+/** Names more than one source goes by, e.g. a link named like a built-in. */
+function sharedNames(sources: SongSource[]): Set<string> {
+  const seen = new Set<string>()
+  const shared = new Set<string>()
+  for (const { name } of sources) {
+    const key = name.trim().toLowerCase()
+    if (seen.has(key)) shared.add(key)
+    seen.add(key)
+  }
+  return shared
+}
+
 /** A row of pills, one per song source; scrolls sideways on narrow screens. */
 export function SourcePicker({
   sources,
@@ -15,6 +27,15 @@ export function SourcePicker({
   onSelect,
 }: SourcePickerProps) {
   const { t } = useTranslation('songDiscovery')
+  const shared = sharedNames(sources)
+
+  /** Where a source comes from, shown only when its name is not enough. */
+  const origin = (source: SongSource): string | null => {
+    if (!shared.has(source.name.trim().toLowerCase())) return null
+    if (source.origin === 'link') return new URL(source.url).host
+    if (source.origin === 'file') return t('source.openedFile')
+    return null
+  }
 
   return (
     <div
@@ -24,6 +45,7 @@ export function SourcePicker({
     >
       {sources.map((source) => {
         const selected = source.id === selectedId
+        const from = origin(source)
         return (
           <button
             key={source.id}
@@ -38,6 +60,12 @@ export function SourcePicker({
             }`}
           >
             {source.name}
+            {from && (
+              <>
+                {' '}
+                <span className="text-xs font-normal opacity-75">{from}</span>
+              </>
+            )}
           </button>
         )
       })}

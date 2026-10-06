@@ -256,6 +256,44 @@ test.describe('Song sources', () => {
     await expect(page.getByText(titles[0])).toBeVisible({ timeout: 30_000 })
   })
 
+  test('a link named like a built-in source is told apart in the picker', async ({
+    page,
+    request,
+  }) => {
+    s3.objects.set(
+      '/church/twin/manifest.json',
+      Buffer.from(
+        JSON.stringify({
+          format: 'church-hub-song-bundle',
+          version: 1,
+          name: 'Laudele Domnului',
+          categoryName: 'Laudele Domnului',
+          updatedAt: new Date().toISOString(),
+          songs: [],
+        }),
+      ),
+    )
+    const added = await request.post('/api/song-sources', {
+      data: { url: `${s3.endpoint}/church/twin/manifest.json` },
+    })
+    expect(added.ok()).toBeTruthy()
+    const twinId = (await added.json()).data.id as string
+
+    try {
+      await page.goto(`/songs/discover?source=${twinId}`)
+      const host = new URL(s3.endpoint).host
+      await expect(
+        page.getByRole('tab', { name: `Laudele Domnului ${host}` }),
+      ).toHaveAttribute('aria-selected', 'true')
+      await expect(
+        page.getByRole('tab', { name: 'Laudele Domnului', exact: true }),
+      ).toHaveCount(1)
+    } finally {
+      await request.delete(`/api/song-sources/${twinId}`)
+      s3.objects.delete('/church/twin/manifest.json')
+    }
+  })
+
   test('stopping sharing takes the files off the bucket', async ({
     request,
   }) => {
