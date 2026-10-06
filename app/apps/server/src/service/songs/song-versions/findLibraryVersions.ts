@@ -42,28 +42,21 @@ export function findLibraryVersions(
   const hidden = new Set(getHiddenCategoryIds())
   const excluded = new Set(excludeSongIds)
 
-  const scored: Array<{
-    position: number
-    score: number
-    reason: SongVersionSuggestion['reason']
-  }> = []
-  for (const position of candidatePositions(subject)) {
-    const song = index.songs[position]
-    if (excluded.has(song.id)) continue
+  const scored: Array<
+    Pick<SongVersionSuggestion, 'songId' | 'score' | 'reason'>
+  > = []
+  for (const place of candidatePlaces(subject)) {
+    const song = index.songs[place]
+    if (!song || excluded.has(song.id)) continue
     if (song.categoryId !== null && hidden.has(song.categoryId)) continue
     const { score, reason } = scoreVersionPair(subject, song)
-    if (score >= minScore) scored.push({ position, score, reason })
+    if (score >= minScore) scored.push({ songId: song.id, score, reason })
   }
-  scored.sort(
-    (a, b) =>
-      b.score - a.score ||
-      index.songs[a.position].id - index.songs[b.position].id,
-  )
+  scored.sort((a, b) => b.score - a.score || a.songId - b.songId)
   return describeSongs(
-    scored.slice(0, limit).map(({ position, score, reason }) => ({
-      songId: index.songs[position].id,
-      score: Math.round(score * 100) / 100,
-      reason,
+    scored.slice(0, limit).map((song) => ({
+      ...song,
+      score: Math.round(song.score * 100) / 100,
     })),
   )
 }
@@ -73,24 +66,24 @@ export function findLibraryVersions(
  * word, or lyrics sharing at least `LYRICS_MATCH_THRESHOLD` of the subject's
  * words (a Jaccard that high needs at least that many shared words).
  */
-function candidatePositions(subject: VersionWords): Set<number> {
+function candidatePlaces(subject: VersionWords): Set<number> {
   const { songs, titlePostings, lyricsPostings } = getLibraryVersionIndex()
-  const positions = new Set<number>()
+  const places = new Set<number>()
   for (const id of subject.title.ids) {
-    for (const position of titlePostings[id]) positions.add(position)
+    for (const place of titlePostings[id]) places.add(place)
   }
 
   const lyricsSize = wordSetSize(subject.lyrics)
-  if (lyricsSize < MIN_LYRICS_CONTENT_WORDS) return positions
+  if (lyricsSize < MIN_LYRICS_CONTENT_WORDS) return places
   const needed = Math.ceil(LYRICS_MATCH_THRESHOLD * lyricsSize - 1e-9)
-  if (needed > subject.lyrics.ids.length) return positions
+  if (needed > subject.lyrics.ids.length) return places
   const shared = new Int32Array(songs.length)
   for (const id of subject.lyrics.ids) {
-    for (const position of lyricsPostings[id]) {
-      if (++shared[position] === needed) positions.add(position)
+    for (const place of lyricsPostings[id]) {
+      if (++shared[place] === needed) places.add(place)
     }
   }
-  return positions
+  return places
 }
 
 /** The scored songs with what the version list shows for each. */
