@@ -3,6 +3,7 @@ import { and, asc, eq, ne, sql } from 'drizzle-orm'
 import { getDefaultContentConfig } from './default-design/getDefaultContentConfig'
 import { getDefaultGlobalSettings } from './default-design/getDefaultGlobalSettings'
 import { getDefaultNextSlideConfig } from './default-design/getDefaultNextSlideConfig'
+import { getMissingContentConfig } from './getMissingContentConfig'
 import type {
   ContentType,
   DisplayOpenMode,
@@ -196,12 +197,21 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
       Record<string, unknown>
     > = {} as Record<ContentType, Record<string, unknown>>
 
+    const savedSong = configRecords.find((r) => r.contentType === 'song')
+    const savedSongConfig = savedSong
+      ? parseContentConfig('song', savedSong.config)
+      : undefined
+
     for (const type of contentTypes) {
       const existing = configRecords.find((r) => r.contentType === type)
       if (existing) {
         configMap[type] = parseContentConfig(type, existing.config)
       } else {
-        configMap[type] = getDefaultContentConfig(type, screen.type)
+        configMap[type] = getMissingContentConfig(
+          type,
+          screen.type,
+          savedSongConfig,
+        )
       }
     }
 
@@ -605,28 +615,36 @@ export function updateContentConfig(
   }
 }
 
+function getSavedContentConfig(
+  screenId: number,
+  contentType: ContentType,
+): Record<string, unknown> | undefined {
+  const record = getDatabase()
+    .select()
+    .from(screenContentConfigs)
+    .where(
+      and(
+        eq(screenContentConfigs.screenId, screenId),
+        eq(screenContentConfigs.contentType, contentType),
+      ),
+    )
+    .get()
+  return record ? parseContentConfig(contentType, record.config) : undefined
+}
+
 export function getContentConfig(
   screenId: number,
   contentType: ContentType,
 ): Record<string, unknown> {
   try {
-    const db = getDatabase()
-    const record = db
-      .select()
-      .from(screenContentConfigs)
-      .where(
-        and(
-          eq(screenContentConfigs.screenId, screenId),
-          eq(screenContentConfigs.contentType, contentType),
-        ),
-      )
-      .get()
+    const record = getSavedContentConfig(screenId, contentType)
+    if (record) return record
 
-    if (record) {
-      return parseContentConfig(contentType, record.config)
-    }
-
-    return getDefaultContentConfig(contentType, getScreenById(screenId)?.type)
+    return getMissingContentConfig(
+      contentType,
+      getScreenById(screenId)?.type,
+      getSavedContentConfig(screenId, 'song'),
+    )
   } catch (error) {
     logger.error(`Failed to get content config: ${error}`)
     return getDefaultContentConfig(contentType)
