@@ -1,20 +1,39 @@
-import { type ReactNode, useCallback, useRef, useState } from 'react'
+import {
+  type CSSProperties,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { createPortal } from 'react-dom'
+
+import {
+  placeTooltip,
+  type TooltipPlacement,
+  type TooltipSide,
+} from './placeTooltip'
 
 interface TooltipProps {
   content: string
   children: ReactNode
-  position?: 'top' | 'bottom' | 'left' | 'right'
+  /** The side it prefers; it flips and slides on its own to stay in the window. */
+  position?: TooltipSide
   className?: string
 }
 
-const arrowPositionStyles = {
-  top: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-full border-t-gray-900 dark:border-t-gray-700 border-x-transparent border-b-transparent',
+const arrowSideStyles: Record<TooltipSide, string> = {
+  top: 'top-full border-t-gray-900 dark:border-t-gray-700 border-x-transparent border-b-transparent',
   bottom:
-    'top-0 left-1/2 -translate-x-1/2 -translate-y-full border-b-gray-900 dark:border-b-gray-700 border-x-transparent border-t-transparent',
-  left: 'right-0 top-1/2 -translate-y-1/2 translate-x-full border-l-gray-900 dark:border-l-gray-700 border-y-transparent border-r-transparent',
+    'bottom-full border-b-gray-900 dark:border-b-gray-700 border-x-transparent border-t-transparent',
+  left: 'left-full border-l-gray-900 dark:border-l-gray-700 border-y-transparent border-r-transparent',
   right:
-    'left-0 top-1/2 -translate-y-1/2 -translate-x-full border-r-gray-900 dark:border-r-gray-700 border-y-transparent border-l-transparent',
+    'right-full border-r-gray-900 dark:border-r-gray-700 border-y-transparent border-l-transparent',
+}
+
+function arrowStyle({ side, arrowOffset }: TooltipPlacement): CSSProperties {
+  return side === 'top' || side === 'bottom'
+    ? { left: arrowOffset, transform: 'translateX(-50%)' }
+    : { top: arrowOffset, transform: 'translateY(-50%)' }
 }
 
 function getPortalContainer(element: HTMLElement | null): HTMLElement {
@@ -33,45 +52,28 @@ export function Tooltip({
   className,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false)
-  const [coords, setCoords] = useState({ top: 0, left: 0 })
+  const [placement, setPlacement] = useState<TooltipPlacement | null>(null)
   const triggerRef = useRef<HTMLDivElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
 
-  const show = useCallback(() => {
-    if (!triggerRef.current) return
-    const rect = triggerRef.current.getBoundingClientRect()
-    const gap = 8
+  // Measured before paint: the tooltip is first laid out hidden, then placed
+  // where its real size fits inside the window.
+  useLayoutEffect(() => {
+    if (!isVisible || !triggerRef.current || !tooltipRef.current) return
+    const tooltip = tooltipRef.current.getBoundingClientRect()
+    setPlacement(
+      placeTooltip(
+        position,
+        triggerRef.current.getBoundingClientRect(),
+        { width: tooltip.width, height: tooltip.height },
+        { width: window.innerWidth, height: window.innerHeight },
+      ),
+    )
+  }, [isVisible, position, content])
 
-    let top = 0
-    let left = 0
-
-    switch (position) {
-      case 'top':
-        top = rect.top - gap
-        left = rect.left + rect.width / 2
-        break
-      case 'bottom':
-        top = rect.bottom + gap
-        left = rect.left + rect.width / 2
-        break
-      case 'left':
-        top = rect.top + rect.height / 2
-        left = rect.left - gap
-        break
-      case 'right':
-        top = rect.top + rect.height / 2
-        left = rect.right + gap
-        break
-    }
-
-    setCoords({ top, left })
-    setIsVisible(true)
-  }, [position])
-
-  const transformOrigin = {
-    top: 'translate(-50%, -100%)',
-    bottom: 'translate(-50%, 0%)',
-    left: 'translate(-100%, -50%)',
-    right: 'translate(0%, -50%)',
+  const hide = () => {
+    setIsVisible(false)
+    setPlacement(null)
   }
 
   const portalTarget = getPortalContainer(triggerRef.current)
@@ -80,27 +82,33 @@ export function Tooltip({
     <div
       ref={triggerRef}
       className={`relative inline-flex ${className ?? ''}`}
-      onMouseEnter={show}
-      onMouseLeave={() => setIsVisible(false)}
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={hide}
     >
       {children}
       {isVisible &&
         createPortal(
           <div
-            className="fixed pointer-events-none"
+            ref={tooltipRef}
+            role="tooltip"
+            className="fixed pointer-events-none w-max max-w-[calc(100vw-16px)]"
             style={{
-              top: coords.top,
-              left: coords.left,
-              transform: transformOrigin[position],
+              top: placement?.top ?? 0,
+              left: placement?.left ?? 0,
+              visibility: placement ? 'visible' : 'hidden',
               zIndex: 99999,
             }}
           >
-            <div className="px-3 py-1.5 text-sm font-medium text-white dark:text-gray-100 bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg whitespace-nowrap">
+            <div className="px-3 py-1.5 text-sm font-medium text-white dark:text-gray-100 bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg break-words">
               {content}
             </div>
-            <div
-              className={`absolute w-0 h-0 border-4 ${arrowPositionStyles[position]}`}
-            />
+            {placement && (
+              <div
+                data-testid="tooltip-arrow"
+                className={`absolute w-0 h-0 border-4 ${arrowSideStyles[placement.side]}`}
+                style={arrowStyle(placement)}
+              />
+            )}
           </div>,
           portalTarget,
         )}
