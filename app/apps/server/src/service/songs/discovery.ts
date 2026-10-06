@@ -1,5 +1,5 @@
 import { normalizeForIndex } from './search'
-import { getSimilarSongsForContent } from './song-groups'
+import { findLibraryVersions } from './song-versions/findLibraryVersions'
 import type { DiscoveryCandidateInput, DiscoveryMatchResult } from './types'
 import { getDatabase } from '../../db'
 import { songs } from '../../db/schema'
@@ -86,7 +86,7 @@ function isExactLibraryMatch(
  * that are new-by-filename AND new-by-title:
  *   1. exact `source_filename` match  → 'exact-filename'
  *   2. exact normalized-title match   → 'exact-title'
- *   3. fuzzy version match (FTS + Jaccard, reuses getSimilarSongsForContent)
+ *   3. fuzzy version match against the whole library (findLibraryVersions)
  *      → 'similar' (with matches) else 'new'
  *
  * The library snapshot (filename + normalized-title maps) is built ONCE for
@@ -130,11 +130,10 @@ export function matchCandidatesAgainstLibrary(
       }
 
       // 3) Fuzzy version match — only reached when both exact passes missed.
-      const similar = getSimilarSongsForContent(
-        candidate.title,
-        candidate.lyrics,
-        { limit: SIMILAR_LIMIT, minScore: SIMILAR_MIN_SCORE },
-      )
+      const similar = findLibraryVersions(candidate.title, candidate.lyrics, {
+        limit: SIMILAR_LIMIT,
+        minScore: SIMILAR_MIN_SCORE,
+      })
 
       return {
         tempId: candidate.tempId,

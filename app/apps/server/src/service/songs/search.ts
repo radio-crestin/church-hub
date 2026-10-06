@@ -1,6 +1,12 @@
 import { joinSearchTitles } from './parseAlternateTitles'
 import { SONGS_FTS_TABLE } from './song-search/fetchSongCandidates'
 import { songSearchCache } from './song-search/songSearchCache'
+import {
+  getLibraryVersionIndex,
+  refreshLibrarySong,
+  removeLibrarySong,
+  resetLibraryVersionIndex,
+} from './song-versions/libraryVersionIndex'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
@@ -143,6 +149,8 @@ export function updateSearchIndex(songId: number): void {
         `${normalizedTitle} ${normalizedCategory} ${normalizedContent}`,
       ),
     )
+    // …and compared as a version with what it says now.
+    refreshLibrarySong(songId)
 
     // The result cache holds whole result sets keyed by query, so an edited
     // title stays unfindable for the cache's lifetime unless it is dropped.
@@ -161,6 +169,7 @@ export function removeFromSearchIndex(songId: number): void {
 
     const db = getRawDatabase()
     db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
+    removeLibrarySong(songId)
 
     // Otherwise a deleted song keeps showing up in cached result sets.
     clearSearchCache()
@@ -276,6 +285,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       // Clear the search cache and vocabulary since the index changed
       clearSearchCache()
       resetVocabulary(SONGS_FTS_TABLE)
+      for (const songId of songIds) refreshLibrarySong(songId)
 
       logger.info(
         `[PERF] Search index update: ${totalTime.toFixed(2)}ms | Delete: ${deleteTime.toFixed(0)}ms | FTS: ${ftsTime.toFixed(0)}ms`,
@@ -291,12 +301,14 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
 /**
  * Warms up the songs FTS index by loading its vocabulary (the typo lookup),
- * which reads the whole index into the OS page cache on the way.
+ * which reads the whole index into the OS page cache on the way, and the
+ * library version index, so the first "possible versions" is instant.
  */
 export function warmupSearchIndex(): void {
   const startTime = performance.now()
   try {
     getVocabulary(SONGS_FTS_TABLE)
+    getLibraryVersionIndex()
   } catch (error) {
     logger.warning(`FTS warmup skipped: ${error}`)
   }
@@ -386,6 +398,7 @@ export function rebuildSearchIndex(
       // Clear the search cache and vocabulary since the index changed
       clearSearchCache()
       resetVocabulary(SONGS_FTS_TABLE)
+      resetLibraryVersionIndex()
 
       logger.info(`Search index rebuilt: ${songs.length} songs indexed`)
     } catch (error) {
