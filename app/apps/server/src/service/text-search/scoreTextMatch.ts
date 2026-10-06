@@ -31,15 +31,17 @@ export function scoreTextMatch(
   units.forEach((unit, position) => {
     atUnit.fill(NO_MATCH)
     for (const form of wordUnitForms(unit)) matcher(form, atUnit)
-    let matched = false
+    // A letter on its own ("a", "o") is marked only as part of the typed
+    // phrase, never wherever it stands alone.
+    let worthMarking = false
     for (let group = 0; group < groupCount; group++) {
       const cost = atUnit[group]
       if (cost === NO_MATCH) continue
-      matched = true
+      if (groups[group].required) worthMarking = true
       edits[group * units.length + position] = cost
       if (cost < best[group]) best[group] = cost
     }
-    if (matched) matchedForms.add(unit)
+    if (worthMarking) matchedForms.add(unit)
   })
 
   const phrase = longestPhrase(edits, groupCount, units.length)

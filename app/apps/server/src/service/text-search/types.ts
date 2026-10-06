@@ -39,6 +39,6 @@ export interface TextMatchScore {
   allFound: boolean
   /** Position of the first word of the longest in-order phrase found. */
   phraseStart: number
-  /** The words of the text that matched, as folded forms, for highlighting. */
+  /** The words of the text that matched a looked-up word (folded), to mark. */
   matchedForms: string[]
 }
