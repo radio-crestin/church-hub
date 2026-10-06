@@ -1,5 +1,5 @@
-import { decodeHtmlEntities } from '~/utils/decodeHtmlEntities'
-import { removeHtmlTags } from '~/utils/removeHtmlTags'
+import { decodeHtmlEntities } from './decodeHtmlEntities'
+import { removeHtmlTags } from './removeHtmlTags'
 
 /**
  * Strips HTML tags and converts slide content to plain text

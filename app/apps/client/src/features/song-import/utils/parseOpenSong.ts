@@ -77,6 +77,7 @@ function extractMetadata(
     keyLine: getTextContent(song, 'key_line'),
     presentationOrder: getTextContent(song, 'presentation'),
     churchHubId: churchHubIdStr ? parseInt(churchHubIdStr, 10) : null,
+    sourceFilename: getTextContent(song, 'source_filename'),
   }
 
   return { title, metadata }
@@ -178,11 +179,11 @@ function createSlidesFromPresentation(
 }
 
 /**
- * Checks if content appears to be OpenSong XML format
- * OpenSong files start with <song> element and contain <lyrics>
+ * Checks if content appears to be OpenSong XML format: a <song> element
+ * with <lyrics>, after an optional XML declaration (our own export writes one)
  */
 export function isOpenSongXml(content: string): boolean {
-  const trimmed = content.trim()
+  const trimmed = content.trim().replace(/^<\?xml[^>]*\?>\s*/, '')
   return trimmed.startsWith('<song') && trimmed.includes('<lyrics>')
 }
 

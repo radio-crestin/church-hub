@@ -1,8 +1,8 @@
+import { htmlToPlainText } from '@church-hub/song-formats'
 import PptxGenJS from 'pptxgenjs'
 
 import type { SongWithSlides } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
-import { htmlToPlainText } from './htmlToPlainText'
 
 /**
  * Default slide configuration matching the rendering engine

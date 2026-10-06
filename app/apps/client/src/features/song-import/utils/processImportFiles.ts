@@ -3,7 +3,8 @@ import { readFile } from '@tauri-apps/plugin-fs'
 import { parsePptViaServer } from './convertPptToPptx'
 import { extractFilename } from './extractFilename'
 import { extractFilesFromZip } from './extractPptxFromZip'
-import { parseOpenSongXml } from './parseOpenSong'
+import { mightBeOpenSongFile } from './mightBeOpenSongFile'
+import { isOpenSongXml, parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
 import type {
   ImportProgress,
@@ -12,25 +13,6 @@ import type {
 } from '../types'
 
 const PARALLEL_CHUNK_SIZE = 5
-
-/**
- * Checks if a file might be an OpenSong file based on path
- * OpenSong files often have no extension
- */
-function mightBeOpenSongFile(filePath: string): boolean {
-  const filename = filePath.split(/[/\\]/).pop() || ''
-  const lowerPath = filePath.toLowerCase()
-  // Has .xml extension or no extension at all
-  return lowerPath.endsWith('.xml') || !filename.includes('.')
-}
-
-/**
- * Quickly checks if text content looks like OpenSong XML
- */
-function isOpenSongContent(content: string): boolean {
-  const trimmed = content.trim()
-  return trimmed.startsWith('<song') && trimmed.includes('<lyrics>')
-}
 
 /**
  * Processes chunks in parallel with a concurrency limit
@@ -412,7 +394,7 @@ export async function processImportFiles(
           const textContent = new TextDecoder().decode(fileData)
 
           // Verify it's actually OpenSong format
-          if (isOpenSongContent(textContent)) {
+          if (isOpenSongXml(textContent)) {
             const parsed = parseOpenSongXml(textContent, filePath)
             return {
               success: true as const,

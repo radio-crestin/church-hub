@@ -1,16 +1,5 @@
+import { sanitizeFilename } from '@church-hub/song-formats'
 import JSZip from 'jszip'
-
-/**
- * Sanitizes a filename by removing/replacing invalid characters
- */
-export function sanitizeFilename(filename: string): string {
-  // Remove or replace characters that are invalid in filenames
-  return filename
-    .replace(/[<>:"/\\|?*]/g, '') // Remove invalid chars
-    .replace(/\s+/g, ' ') // Collapse multiple spaces
-    .trim()
-    .slice(0, 200) // Limit length
-}
 
 /**
  * Song file for export

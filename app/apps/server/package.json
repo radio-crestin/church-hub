@@ -19,6 +19,7 @@
     "@ai-sdk/anthropic": "^2.0.84",
     "@ai-sdk/google": "^2.0.77",
     "@ai-sdk/openai": "^2.0.110",
+    "@church-hub/song-formats": "workspace:*",
     "@google/genai": "^1.48.0",
     "ai": "^5.0.207",
     "audify": "^1.10.1",

@@ -1,3 +1,4 @@
+import { sanitizeFilename } from '@church-hub/song-formats'
 import JSZip from 'jszip'
 
 import {
@@ -6,7 +7,6 @@ import {
 } from './generateChurchProgramJson'
 import type { ScheduleWithItems } from '../../schedules/types'
 import { generateScheduleText } from '../../schedules/utils/generateScheduleText'
-import { sanitizeFilename } from '../../song-export/utils/createExportZip'
 import { generatePptx } from '../../song-export/utils/generatePptx'
 
 /**

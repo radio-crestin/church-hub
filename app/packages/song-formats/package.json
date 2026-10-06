@@ -1,0 +1,9 @@
+{
+  "name": "@church-hub/song-formats",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Song file formats shared by the client and the server: OpenSong writing, slide text helpers.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

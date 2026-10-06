@@ -102,6 +102,7 @@ export function parseCantariCrestineCatalog(
           keyLine: null,
           presentationOrder: null,
           churchHubId: null,
+          sourceFilename: null,
         },
       },
       sourceFilename: fileName(song.url_fisier),

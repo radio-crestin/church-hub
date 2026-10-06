@@ -57,6 +57,8 @@ export interface OpenSongMetadata {
   keyLine: string | null
   presentationOrder: string | null
   churchHubId: number | null
+  /** The file the song first came from (Church Hub song files carry it). */
+  sourceFilename: string | null
 }
 
 /**
