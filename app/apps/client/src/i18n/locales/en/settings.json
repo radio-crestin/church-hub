@@ -250,6 +250,10 @@
         "label": "Only when Church Hub is in front",
         "description": "Presentation, live stream and OBS scene keys, like F1–F12, work only while Church Hub is the active window. Otherwise they go to the program in front, for example BibleShow."
       },
+      "sidebarKeysSystemWide": {
+        "label": "Page keys from any program",
+        "description": "The sidebar page keys (F4 Control Room, F5 Songs, F6 Bible, …) also work while another program is in front, and bring Church Hub forward. Off: they work only inside Church Hub, and other programs keep their keys."
+      },
       "actions": {
         "startLive": {
           "label": "Start Live Stream",

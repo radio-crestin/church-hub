@@ -22,6 +22,12 @@ export interface GlobalShortcutsConfig {
    * while Church Hub is in front, leaving keys like F1–F12 to that program.
    */
   onlyWhenAppFocused?: boolean
+  /**
+   * Sidebar page keys (F4 Present, F5 Songs, …) work only while Church Hub
+   * has the keyboard by default. True holds them OS-wide, so they bring
+   * Church Hub forward from any program.
+   */
+  sidebarKeysSystemWide?: boolean
   midi?: MIDIConfig
   version: number
 }
@@ -48,5 +54,6 @@ export const DEFAULT_SHORTCUTS_CONFIG: GlobalShortcutsConfig = {
     prevSlide: { shortcuts: [], enabled: true },
   },
   onlyWhenAppFocused: false,
+  sidebarKeysSystemWide: false,
   version: 1,
 }

@@ -250,6 +250,10 @@
         "label": "Doar când Church Hub este în prim-plan",
         "description": "Scurtăturile pentru prezentare, Live Stream și scene OBS, precum F1–F12, funcționează doar când Church Hub este fereastra activă. Altfel, tastele sunt preluate de programul din prim-plan, de exemplu BibleShow."
       },
+      "sidebarKeysSystemWide": {
+        "label": "Tastele pentru pagini funcționează din orice program",
+        "description": "Tastele din bara laterală (F4 Camera de control, F5 Cântări, F6 Biblia…) funcționează și când alt program este în prim-plan și aduc Church Hub în față. Cu opțiunea dezactivată, funcționează doar în Church Hub, iar celelalte programe pot folosi acele taste."
+      },
       "actions": {
         "startLive": {
           "label": "Pornește Transmisiunea",

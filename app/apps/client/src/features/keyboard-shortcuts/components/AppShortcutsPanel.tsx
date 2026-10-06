@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { BuiltInMenuItemId } from '~/features/sidebar-config/types'
 import { GlobalShortcutsSettings } from './GlobalShortcutsSettings'
 import { PageShortcutsSettings } from './PageShortcutsSettings'
-import { ShortcutFocusOnlyToggle } from './ShortcutFocusOnlyToggle'
+import { ShortcutConfigSwitch } from './ShortcutConfigSwitch'
 import {
   LIVESTREAM_SHORTCUT_ACTIONS,
   PRESENTATION_SHORTCUT_ACTIONS,
@@ -27,7 +27,14 @@ export function AppShortcutsPanel() {
 
   return (
     <div className="space-y-6">
-      <ShortcutFocusOnlyToggle />
+      <ShortcutConfigSwitch
+        setting="onlyWhenAppFocused"
+        textKey="sections.shortcuts.focusOnly"
+      />
+      <ShortcutConfigSwitch
+        setting="sidebarKeysSystemWide"
+        textKey="sections.shortcuts.sidebarKeysSystemWide"
+      />
 
       <section className={cardClass}>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
