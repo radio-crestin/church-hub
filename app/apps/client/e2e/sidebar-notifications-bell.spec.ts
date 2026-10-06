@@ -38,7 +38,11 @@ async function closePopUp(page: Page) {
 }
 
 async function shot(page: Page, name: string) {
-  if (SHOTS_DIR) await page.screenshot({ path: `${SHOTS_DIR}/${name}.png` })
+  if (!SHOTS_DIR) return
+  await page.screenshot({
+    path: `${SHOTS_DIR}/${name}.png`,
+    animations: 'disabled',
+  })
 }
 
 async function expectBellRightOfSettings(page: Page) {
