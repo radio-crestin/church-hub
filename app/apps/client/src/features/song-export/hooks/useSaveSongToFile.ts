@@ -170,7 +170,7 @@ export function useSaveSongToFile() {
           return await saveWithTauri(data, defaultFilename, fileConfig)
         }
         // Browser fallback - direct download
-        const blob = new Blob([data], { type: fileConfig.mimeType })
+        const blob = new Blob([data.slice()], { type: fileConfig.mimeType })
         downloadInBrowser(blob, defaultFilename, fileConfig.mimeType)
         return { success: true, filePath: defaultFilename }
       } catch (error) {

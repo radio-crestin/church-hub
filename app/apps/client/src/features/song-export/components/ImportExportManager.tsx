@@ -218,7 +218,6 @@ export function ImportExportManager() {
             author: metadata?.author,
             copyright: metadata?.copyright,
             ccli: metadata?.ccli,
-            key: metadata?.key,
             tempo: metadata?.tempo,
             timeSignature: metadata?.timeSignature,
             theme: metadata?.theme,

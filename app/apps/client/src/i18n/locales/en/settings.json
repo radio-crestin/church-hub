@@ -598,7 +598,6 @@
         "button": "Export Songs",
         "allSongs": "All songs",
         "byCategory": "By category",
-        "selectCategory": "Select a category",
         "fileFormatLabel": "File Format",
         "fileFormats": {
           "opensong": "OpenSong",
