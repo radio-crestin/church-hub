@@ -1473,9 +1473,7 @@ function BiblePage() {
       collapsed: !programsOpen,
       render: () => (
         <SchedulePanel
-          variant="verses"
           activeReference={activePassageReference}
-          candidatePassage={candidatePassage}
           onSelectPassage={handleSelectSchedulePassage}
           onSelectSong={handleSelectScheduleSong}
           onOpenSchedule={(scheduleId) =>

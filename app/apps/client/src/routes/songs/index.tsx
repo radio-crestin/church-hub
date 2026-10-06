@@ -410,7 +410,6 @@ function SongsPage() {
           onSongPresented={handleScheduleSongClick}
           onSelectPassage={handleSchedulePassageClick}
           onOpenSchedule={handleOpenSchedule}
-          candidateSong={selectedSong}
           acceptsSongDrop
           onAddAllBookmarks={
             bookmarks.length > 0
