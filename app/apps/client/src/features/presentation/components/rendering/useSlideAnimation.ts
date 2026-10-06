@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { CALM_TRANSITIONS } from '../../utils/calmTransitions'
+
 export type AnimationType =
   | 'none'
   | 'fade'
@@ -13,6 +15,8 @@ export type AnimationType =
 export interface AnimationConfig {
   type?: AnimationType
   duration?: number
+  /** CSS timing function, e.g. 'ease-in-out' */
+  easing?: string
 }
 
 interface UseSlideAnimationOptions {
@@ -41,8 +45,15 @@ interface SlideAnimationState {
   shouldRender: boolean
 }
 
-const DEFAULT_ANIMATION_DURATION = 300
-const DEFAULT_SLIDE_TRANSITION_DURATION = 250
+const DEFAULT_ANIMATION_DURATION = CALM_TRANSITIONS.animationIn.duration
+const DEFAULT_SLIDE_TRANSITION_DURATION =
+  CALM_TRANSITIONS.slideTransitionOut.duration
+
+/** The CSS transition for one animation, with its own duration and easing. */
+function toCssTransition(config: AnimationConfig): string {
+  const duration = config.duration ?? DEFAULT_ANIMATION_DURATION
+  return `all ${duration}ms ${config.easing ?? 'ease-out'}`
+}
 
 /**
  * Animation phases:
@@ -127,15 +138,14 @@ export function useSlideAnimation({
   const cachedContentRef = useRef<React.ReactNode>(content)
   const cachedKeyRef = useRef(contentKey)
 
-  // Track previous visibility state
-  const prevVisibleRef = useRef(isVisible)
+  // Track previous visibility state. An element starts out hidden, so one that
+  // mounts already visible (the first slide after an empty screen, or a new
+  // content type's text) fades in with animationIn instead of cutting in.
+  const prevVisibleRef = useRef(false)
   const prevContentKeyRef = useRef(contentKey)
   const hasAnimatedIn = useRef(false)
 
-  // Animation phase state - start visible if already visible to avoid flash
-  const [phase, setPhase] = useState<AnimationPhase>(() =>
-    isVisible ? 'visible' : 'hidden',
-  )
+  const [phase, setPhase] = useState<AnimationPhase>('hidden')
 
   // Track which animation config to use for current transition
   const [currentEnterConfig, setCurrentEnterConfig] =
@@ -151,16 +161,9 @@ export function useSlideAnimation({
   const getEnterAnimation = useCallback(
     (isSlideChange: boolean): AnimationConfig => {
       if (isSlideChange) {
-        return (
-          slideTransitionIn ?? {
-            type: 'fade',
-            duration: DEFAULT_SLIDE_TRANSITION_DURATION,
-          }
-        )
+        return slideTransitionIn ?? CALM_TRANSITIONS.slideTransitionIn
       }
-      return (
-        animationIn ?? { type: 'fade', duration: DEFAULT_ANIMATION_DURATION }
-      )
+      return animationIn ?? CALM_TRANSITIONS.animationIn
     },
     [animationIn, slideTransitionIn],
   )
@@ -168,16 +171,9 @@ export function useSlideAnimation({
   const getExitAnimation = useCallback(
     (isSlideChange: boolean): AnimationConfig => {
       if (isSlideChange) {
-        return (
-          slideTransitionOut ?? {
-            type: 'fade',
-            duration: DEFAULT_SLIDE_TRANSITION_DURATION,
-          }
-        )
+        return slideTransitionOut ?? CALM_TRANSITIONS.slideTransitionOut
       }
-      return (
-        animationOut ?? { type: 'fade', duration: DEFAULT_ANIMATION_DURATION }
-      )
+      return animationOut ?? CALM_TRANSITIONS.animationOut
     },
     [animationOut, slideTransitionOut],
   )
@@ -336,21 +332,15 @@ export function useSlideAnimation({
     const enterConfig = currentEnterConfig ?? getEnterAnimation(false)
     const exitConfig = currentExitConfig ?? getExitAnimation(false)
 
-    const enterType = enterConfig.type ?? 'fade'
-    const enterDuration = enterConfig.duration ?? DEFAULT_ANIMATION_DURATION
-    const exitType = exitConfig.type ?? 'fade'
-    const exitDuration = exitConfig.duration ?? DEFAULT_ANIMATION_DURATION
-
-    const enterStyles = getAnimationStyles(enterType)
-    const exitStyles = getAnimationStyles(exitType)
+    const enterStyles = getAnimationStyles(enterConfig.type ?? 'fade')
+    const exitStyles = getAnimationStyles(exitConfig.type ?? 'fade')
+    const enterTransition = toCssTransition(enterConfig)
+    const exitTransition = toCssTransition(exitConfig)
 
     // Special case: becoming visible but effect hasn't run yet
     // Render with START styles so element is ready for animation
     if (isBecomingVisible) {
-      return {
-        ...enterStyles.start,
-        transition: `all ${enterDuration}ms ease-out`,
-      }
+      return { ...enterStyles.start, transition: enterTransition }
     }
 
     switch (phase) {
@@ -360,17 +350,11 @@ export function useSlideAnimation({
       case 'mounting':
         // Initial render - apply START styles WITH transition
         // The transition is pre-applied so it's ready when entering phase starts
-        return {
-          ...enterStyles.start,
-          transition: `all ${enterDuration}ms ease-out`,
-        }
+        return { ...enterStyles.start, transition: enterTransition }
 
       case 'entering':
         // Transitioning to END styles - transition was already set in mounting
-        return {
-          ...enterStyles.end,
-          transition: `all ${enterDuration}ms ease-out`,
-        }
+        return { ...enterStyles.end, transition: enterTransition }
 
       case 'visible':
         // Fully visible - END styles without transition
@@ -378,10 +362,7 @@ export function useSlideAnimation({
 
       case 'exiting':
         // Transitioning to START styles
-        return {
-          ...exitStyles.start,
-          transition: `all ${exitDuration}ms ease-out`,
-        }
+        return { ...exitStyles.start, transition: exitTransition }
 
       default:
         return { opacity: 1 }

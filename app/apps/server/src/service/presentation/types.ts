@@ -566,6 +566,8 @@ export interface TextElementConfig {
   padding: number
   animationIn: AnimationConfig
   animationOut: AnimationConfig
+  slideTransitionIn?: AnimationConfig
+  slideTransitionOut?: AnimationConfig
   hidden?: boolean
 }
 

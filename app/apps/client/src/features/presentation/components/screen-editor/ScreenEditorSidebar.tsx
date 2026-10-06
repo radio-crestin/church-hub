@@ -45,6 +45,7 @@ import type {
   SongContentConfig,
   TextStyle,
 } from '../../types'
+import { CALM_TRANSITIONS } from '../../utils/calmTransitions'
 import { getDefaultBackground } from '../../utils/defaultConfigs'
 import { FONT_FAMILY_OPTIONS } from '../../utils/fontFamilyOptions'
 
@@ -126,34 +127,13 @@ const OBJECT_FIT_OPTIONS = [
   { value: 'fill', key: 'fill' },
 ]
 
-// Default animation config for elements that may be missing it (backwards compatibility)
-const DEFAULT_ANIMATION_IN: AnimationConfig = {
-  type: 'fade',
-  duration: 300,
-  delay: 0,
-  easing: 'ease-out',
-}
-
-const DEFAULT_ANIMATION_OUT: AnimationConfig = {
-  type: 'fade',
-  duration: 200,
-  delay: 0,
-  easing: 'ease-in',
-}
-
-const DEFAULT_SLIDE_TRANSITION_OUT: AnimationConfig = {
-  type: 'fade',
-  duration: 250,
-  delay: 0,
-  easing: 'ease-in',
-}
-
-const DEFAULT_SLIDE_TRANSITION_IN: AnimationConfig = {
-  type: 'fade',
-  duration: 250,
-  delay: 0,
-  easing: 'ease-out',
-}
+// Elements saved without a transition show the factory one, as the screen plays it
+const {
+  animationIn: DEFAULT_ANIMATION_IN,
+  animationOut: DEFAULT_ANIMATION_OUT,
+  slideTransitionIn: DEFAULT_SLIDE_TRANSITION_IN,
+  slideTransitionOut: DEFAULT_SLIDE_TRANSITION_OUT,
+} = CALM_TRANSITIONS
 
 export function ScreenEditorSidebar({
   screen,
@@ -1656,7 +1636,8 @@ export function ScreenEditorSidebar({
                             selectedConfig.config as {
                               slideTransitionOut?: AnimationConfig
                             }
-                          ).slideTransitionOut?.duration ?? 250,
+                          ).slideTransitionOut?.duration ??
+                            DEFAULT_SLIDE_TRANSITION_OUT.duration,
                         ]}
                         onValueChange={([value]) => {
                           const currentTransition =
@@ -1727,7 +1708,8 @@ export function ScreenEditorSidebar({
                             selectedConfig.config as {
                               slideTransitionIn?: AnimationConfig
                             }
-                          ).slideTransitionIn?.duration ?? 250,
+                          ).slideTransitionIn?.duration ??
+                            DEFAULT_SLIDE_TRANSITION_IN.duration,
                         ]}
                         onValueChange={([value]) => {
                           const currentTransition =

@@ -5,6 +5,8 @@
  * font at the screen's own size).
  */
 
+import { calmTransitions } from './calmTransitions'
+
 /** Fonts bundled with the client (see bundledFonts.ts there). */
 export const FONTS = {
   /** Lyrics, scripture, body text: compact, very legible from far away. */
@@ -81,14 +83,6 @@ export function textStyle(overrides: Record<string, unknown> = {}) {
   }
 }
 
-export function fadeIn() {
-  return { type: 'fade', duration: 300, delay: 0, easing: 'ease-out' }
-}
-
-export function fadeOut() {
-  return { type: 'fade', duration: 200, delay: 0, easing: 'ease-in' }
-}
-
 /** A text element placed in `slot`, styled by `style` on top of the shared defaults. */
 export function textElement(
   slot: TextSlot,
@@ -103,8 +97,7 @@ export function textElement(
       verticalAlignment: slot.verticalAlignment ?? 'middle',
       ...style,
     }),
-    animationIn: fadeIn(),
-    animationOut: fadeOut(),
+    ...calmTransitions(),
     ...(slot.hidden ? { hidden: true } : {}),
     ...extra,
   }

@@ -5,8 +5,9 @@ import { getApiUrl, isMobile } from '~/config'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
+import { useContentTypeHandoff } from './useContentTypeHandoff'
 import { usePresentationState } from './usePresentationState'
-import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/styleUtils'
+import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/calculateMaxExitAnimationDuration'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,
@@ -377,6 +378,19 @@ export function usePresentationContent({
     // This prevents stale async operations from setting state
     let isCancelled = false
 
+    // Sets the slide's layout, text and key together, so no path keeps the
+    // previous slide's key. An empty key lets the renderer key the slide by its
+    // text, so each new verse or announcement still reads as a slide change.
+    const showContent = (
+      type: ContentType,
+      data: ContentData,
+      key = '',
+    ): void => {
+      setContentType(type)
+      setContentData(data)
+      setContentKey(key)
+    }
+
     const fetchContent = async () => {
       logger.debug(
         `fetchContent called: isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, updatedAt=${presentationState?.updatedAt}`,
@@ -398,16 +412,16 @@ export function usePresentationContent({
               )
             : null
         if (built) {
-          setContentType(built.contentType)
-          setContentData(built.contentData)
           // Distinct key prefix so promoting the staged slide to live (same
           // song/index) still reads as a content change for transitions.
-          setContentKey(`preview|${built.contentKey}`)
+          showContent(
+            built.contentType,
+            built.contentData,
+            `preview|${built.contentKey}`,
+          )
           setNextSlideData(includeNextSlide ? built.nextSlide : undefined)
         } else {
-          setContentData({})
-          setContentKey('')
-          setContentType('empty')
+          showContent('empty', {})
           setNextSlideData(undefined)
         }
         return
@@ -419,9 +433,7 @@ export function usePresentationContent({
       // path below repaints it.)
       if (wasPreview && presentationState?.isHidden) {
         if (isCancelled) return
-        setContentData({})
-        setContentKey('')
-        setContentType('empty')
+        showContent('empty', {})
         setNextSlideData(undefined)
         return
       }
@@ -429,9 +441,7 @@ export function usePresentationContent({
       if (!presentationState) {
         logger.debug('No presentation state, setting empty content')
         if (isCancelled) return
-        setContentData({})
-        setContentKey('')
-        setContentType('empty')
+        showContent('empty', {})
         setNextSlideData(undefined)
         return
       }
@@ -475,8 +485,7 @@ export function usePresentationContent({
           }
 
           if (isCancelled) return
-          setContentType('bible')
-          setContentData({
+          showContent('bible', {
             referenceText,
             contentText,
             secondaryContentText: data.secondaryText,
@@ -512,9 +521,7 @@ export function usePresentationContent({
           )
           if (built) {
             if (isCancelled) return
-            setContentType(built.contentType)
-            setContentData(built.contentData)
-            setContentKey(built.contentKey)
+            showContent(built.contentType, built.contentData, built.contentKey)
             if (includeNextSlide) setNextSlideData(built.nextSlide)
             return
           }
@@ -522,8 +529,7 @@ export function usePresentationContent({
 
         if (temp.type === 'announcement') {
           if (isCancelled) return
-          setContentType('announcement')
-          setContentData({ mainText: temp.data.content })
+          showContent('announcement', { mainText: temp.data.content })
           setNextSlideData(undefined)
           return
         }
@@ -532,8 +538,7 @@ export function usePresentationContent({
           const currentVerse = temp.data.verses[temp.data.currentVerseIndex]
           if (currentVerse && !isCancelled) {
             const reference = `${temp.data.bookName} ${temp.data.startChapter}:${currentVerse.verse}`
-            setContentType('bible_passage')
-            setContentData({
+            showContent('bible_passage', {
               referenceText: reference,
               contentText: currentVerse.text,
             })
@@ -558,8 +563,7 @@ export function usePresentationContent({
         if (temp.type === 'versete_tineri') {
           const currentEntry = temp.data.entries[temp.data.currentEntryIndex]
           if (currentEntry && !isCancelled) {
-            setContentType('versete_tineri')
-            setContentData({
+            showContent('versete_tineri', {
               personLabel: currentEntry.personName,
               referenceText: currentEntry.reference,
               contentText: currentEntry.text,
@@ -584,8 +588,7 @@ export function usePresentationContent({
 
         if (temp.type === 'screen_share') {
           if (isCancelled) return
-          setContentType('screen_share')
-          setContentData({})
+          showContent('screen_share', {})
           setNextSlideData(undefined)
           return
         }
@@ -595,9 +598,7 @@ export function usePresentationContent({
         // no "scene" slide layout to render.
         if (temp.type === 'scene') {
           if (isCancelled) return
-          setContentType('empty')
-          setContentData({})
-          setContentKey('')
+          showContent('empty', {})
           setNextSlideData(undefined)
           return
         }
@@ -628,8 +629,7 @@ export function usePresentationContent({
 
           if (!queueResponse.ok) {
             if (isCancelled) return
-            setContentData({})
-            setContentType('empty')
+            showContent('empty', {})
             setNextSlideData(undefined)
             return
           }
@@ -681,21 +681,21 @@ export function usePresentationContent({
               // First slide WITH a gama → "Cântec - Primul Slide" (song_first_slide),
               // last slide WITH an amin → "Cântec - Ultimul Slide" (song_last_slide);
               // otherwise the plain `song` layout.
-              setContentType(
+              showContent(
                 resolveSongSlideContentType(
                   isFirstSlide,
                   isLastSlide,
                   !!songKeyValue,
                   !!amenValue,
                 ),
+                {
+                  mainText: songMainText,
+                  chords: queueChords,
+                  songKey: songKeyValue,
+                  amen: amenValue,
+                },
+                `song|${item.songId}|${slideIndex}`,
               )
-              setContentData({
-                mainText: songMainText,
-                chords: queueChords,
-                songKey: songKeyValue,
-                amen: amenValue,
-              })
-              setContentKey(`song|${item.songId}|${slideIndex}`)
 
               // Show next slide preview if enabled
               if (includeNextSlide) {
@@ -735,8 +735,7 @@ export function usePresentationContent({
                   : queueItem.verseteTineriEntries[0]
 
                 if (entry && !isCancelled) {
-                  setContentType('versete_tineri')
-                  setContentData({
+                  showContent('versete_tineri', {
                     personLabel: entry.person || '',
                     referenceText: entry.reference,
                     contentText: entry.text,
@@ -748,8 +747,9 @@ export function usePresentationContent({
 
               // Regular announcement slide
               if (isCancelled) return
-              setContentType('announcement')
-              setContentData({ mainText: queueItem.slideContent || '' })
+              showContent('announcement', {
+                mainText: queueItem.slideContent || '',
+              })
               setNextSlideData(undefined)
               return
             }
@@ -760,8 +760,7 @@ export function usePresentationContent({
                 '',
               )
               if (isCancelled) return
-              setContentType('bible')
-              setContentData({
+              showContent('bible', {
                 referenceText: reference,
                 contentText: queueItem.bibleText || '',
               })
@@ -776,8 +775,7 @@ export function usePresentationContent({
                 : queueItem.biblePassageVerses?.[0]
 
               if (verse && !isCancelled) {
-                setContentType('bible_passage')
-                setContentData({
+                showContent('bible_passage', {
                   referenceText: verse.reference,
                   contentText: verse.text,
                 })
@@ -790,16 +788,12 @@ export function usePresentationContent({
 
         // No content, show empty
         if (isCancelled) return
-        setContentData({})
-        setContentKey('')
-        setContentType('empty')
+        showContent('empty', {})
         setNextSlideData(undefined)
       } catch (error) {
         logger.debug(`Error fetching content: ${error}`)
         if (isCancelled) return
-        setContentData({})
-        setContentKey('')
-        setContentType('empty')
+        showContent('empty', {})
         setNextSlideData(undefined)
       }
     }
@@ -852,13 +846,11 @@ export function usePresentationContent({
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
   )
 
-  return {
-    contentType,
-    contentData,
-    contentKey,
+  const shown = useContentTypeHandoff(
+    { contentType, contentData, contentKey, nextSlideData },
     isVisible,
-    isExitAnimating,
-    nextSlideData,
-    presentationState,
-  }
+    screen?.contentConfigs,
+  )
+
+  return { ...shown, isExitAnimating, presentationState }
 }
