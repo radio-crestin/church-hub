@@ -5557,25 +5557,7 @@ async function startRealServer(): Promise<void> {
       // File Conversion API Endpoints
       // ============================================================
 
-      // GET /api/convert/check-libreoffice - Check if PPT conversion is available
-      // PPT conversion is now built-in (pure JS), no external dependencies needed
-      if (
-        req.method === 'GET' &&
-        url.pathname === '/api/convert/check-libreoffice'
-      ) {
-        const permError = checkPermission('songs.view')
-        if (permError) return permError
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ data: { installed: true } }), {
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
       // POST /api/convert/ppt-to-pptx - Parse PPT and return slides
-      // Now uses pure JS parsing instead of LibreOffice conversion
       if (
         req.method === 'POST' &&
         url.pathname === '/api/convert/ppt-to-pptx'
@@ -5602,7 +5584,7 @@ async function startRealServer(): Promise<void> {
           // Decode base64 to Buffer
           const pptBuffer = Buffer.from(body.data, 'base64')
 
-          // Parse PPT directly (no LibreOffice needed)
+          // Parse PPT directly
           const result = await parsePptFile(pptBuffer, body.filename)
 
           if (!result.success) {

@@ -5,9 +5,9 @@ import {
 } from '@church-hub/song-formats'
 import { readFile } from '@tauri-apps/plugin-fs'
 
-import { parsePptViaServer } from './convertPptToPptx'
 import { extractFilename } from './extractFilename'
 import { extractFilesFromZip } from './extractPptxFromZip'
+import { parsePptViaServer } from './parsePptViaServer'
 import { parsePptxFile } from './parsePptx'
 import type {
   ImportProgress,
@@ -43,7 +43,7 @@ async function processInChunks<T, R>(
 
 /**
  * Processes selected files (PPTX, PPT, OpenSong XML, and ZIP) into parsed songs
- * PPT files are converted to PPTX via server-side LibreOffice before parsing
+ * PPT files are parsed by the server
  * Uses parallel processing for faster extraction and parsing
  */
 export async function processImportFiles(

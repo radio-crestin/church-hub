@@ -1,34 +1,4 @@
 export const conversionPaths = {
-  '/api/convert/check-libreoffice': {
-    get: {
-      tags: ['Conversion'],
-      summary: 'Check PPT conversion availability',
-      description:
-        'Checks if PPT file conversion is available. Always returns true since conversion is now built-in (pure JS, no external dependencies).',
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-      responses: {
-        '200': {
-          description: 'Conversion availability status',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  data: {
-                    type: 'object',
-                    properties: {
-                      installed: { type: 'boolean' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        '401': { $ref: '#/components/responses/Unauthorized' },
-      },
-    },
-  },
   '/api/convert/ppt-to-pptx': {
     post: {
       tags: ['Conversion'],
