@@ -311,6 +311,7 @@ export function SceneSettingsPopup({
                       onRemove={() => handleRemoveShortcut(index)}
                       error={errors[index]}
                       namespace="livestream"
+                      scopeKind="scene"
                     />
                     {errors[index] && (
                       <p className="mt-1 text-xs text-red-500">

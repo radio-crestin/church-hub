@@ -155,6 +155,7 @@ export function ShortcutActionRow({
                 onRemove={() => handleRemoveShortcut(index)}
                 error={errors[index]}
                 namespace="settings"
+                scopeKind="action"
               />
               {errors[index] && (
                 <p className="mt-1 text-xs text-red-500">{errors[index]}</p>

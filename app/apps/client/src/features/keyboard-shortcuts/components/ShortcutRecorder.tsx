@@ -3,9 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useWebSocket } from '~/features/presentation/hooks'
+import { ShortcutScopeToggle } from './ShortcutScopeToggle'
 import { useShortcutRecordingOptional } from '../context'
 import { useMIDIOptional } from '../midi/context'
 import { isMIDIShortcut, midiMessageToShortcutString } from '../midi/utils'
+import type { ShortcutKind } from '../types'
 import {
   formatShortcutForDisplay,
   setGlobalRecordingState,
@@ -23,6 +25,11 @@ interface ShortcutRecorderProps {
    * bindings only the client can act on — MIDI is dispatched by the server.
    */
   allowMidi?: boolean
+  /**
+   * What the key does. Given, a recorded keyboard key gets a switch for where
+   * it works: only in Church Hub, or from any program.
+   */
+  scopeKind?: ShortcutKind
 }
 
 export function ShortcutRecorder({
@@ -32,6 +39,7 @@ export function ShortcutRecorder({
   error,
   namespace = 'settings',
   allowMidi = true,
+  scopeKind,
 }: ShortcutRecorderProps) {
   const { t } = useTranslation(namespace)
   const [isRecording, setIsRecording] = useState(false)
@@ -174,6 +182,9 @@ export function ShortcutRecorder({
           </span>
         )}
       </div>
+      {scopeKind && value && !isMIDI && (
+        <ShortcutScopeToggle shortcut={value} kind={scopeKind} />
+      )}
       <button
         type="button"
         onClick={onRemove}

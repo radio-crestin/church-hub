@@ -29,6 +29,7 @@ import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
 import { mergeBiblePassagesIntoVerseteTineri } from './merge-bible-passages-into-versete-tineri'
 import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
+import { moveFocusOnlyToKeyScopes } from './move-focus-only-to-key-scopes'
 import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
 import { removeSeededSecrets } from './remove-seeded-secrets'
 import { removeSeededTestSong } from './remove-seeded-test-song'
@@ -303,6 +304,13 @@ export function runMigrations(
   // Give existing installs the default page keys (F4 upward) they lack
   runStep('assign_default_page_keys', 'Assigning default page keys', () =>
     assignDefaultPageKeys(rawDb),
+  )
+
+  // The "only when Church Hub is in front" switch becomes a choice per key
+  runStep(
+    'move_focus_only_to_key_scopes',
+    'Moving focus-only to key scopes',
+    () => moveFocusOnlyToKeyScopes(rawDb),
   )
 
   // Convert legacy MIDI device indices to name-based persistence

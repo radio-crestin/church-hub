@@ -3,8 +3,16 @@ import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
 import { useIsAppFrontmost } from './useIsAppFrontmost'
-import type { GlobalShortcutActionId, GlobalShortcutsConfig } from '../types'
-import { isGlobalRecordingActive, offerKeyToPage } from '../utils'
+import type {
+  GlobalShortcutActionId,
+  GlobalShortcutsConfig,
+  ShortcutKind,
+} from '../types'
+import {
+  isGlobalRecordingActive,
+  offerKeyToPage,
+  shortcutScope,
+} from '../utils'
 
 const logger = createLogger('app:keyboard:global')
 
@@ -100,8 +108,7 @@ export function useGlobalAppShortcuts({
     onPageShortcut,
   ])
 
-  // Page shortcuts are only held while Church Hub is the app in front;
-  // presentation and OBS ones too when the user chose so — see the loops below.
+  // App-level keys are only held while Church Hub is the app in front
   const isFrontmost = useIsAppFrontmost()
 
   // Use JSON stringified config as dependency to avoid object reference issues
@@ -143,15 +150,18 @@ export function useGlobalAppShortcuts({
 
         if (isCancelled) return
 
-        // Presentation, livestream and OBS scene keys are held OS-wide so the
-        // service can be run from another window. The user can opt out: with
-        // "only when Church Hub is in front" they are let go like the
-        // navigation keys below, so F1–F12 reach the program in front (e.g.
-        // BibleShow) instead of being swallowed by a minimised Church Hub.
-        const holdServiceKeys = isFrontmost || !config.onlyWhenAppFocused
-        if (!holdServiceKeys) {
+        // Each key works where the user chose (shortcutScope). A "system" key
+        // is held OS-wide all the time, so it works from any program. An "app"
+        // key is held only while a Church Hub window has the keyboard, so the
+        // program in front keeps it otherwise (e.g. F1–F12 for BibleShow).
+        // App-level sidebar keys are never held: the page runs them itself
+        // (useSidebarShortcutKeys).
+        const isHeld = (shortcut: string, kind: ShortcutKind) =>
+          shortcutScope(config, shortcut, kind) === 'system' ||
+          (kind !== 'sidebar' && isFrontmost)
+        if (!isFrontmost) {
           logger.debug(
-            'Church Hub is behind another app: presentation and scene keys released',
+            'Church Hub is behind another app: app-level keys released',
           )
         }
 
@@ -179,13 +189,13 @@ export function useGlobalAppShortcuts({
         )
 
         if (config.actions) {
-          for (const [actionId, actionConfig] of holdServiceKeys
-            ? Object.entries(config.actions)
-            : []) {
+          for (const [actionId, actionConfig] of Object.entries(
+            config.actions,
+          )) {
             if (!actionConfig.enabled) continue
 
             for (const shortcut of actionConfig.shortcuts) {
-              if (!shortcut) continue
+              if (!shortcut || !isHeld(shortcut, 'action')) continue
               if (isCancelled) return
 
               // Skip if already registered (handles shared startLive/stopLive shortcuts)
@@ -240,8 +250,8 @@ export function useGlobalAppShortcuts({
         }
 
         // Register scene shortcuts
-        for (const { shortcut, sceneName } of holdServiceKeys ? scenes : []) {
-          if (!shortcut) continue
+        for (const { shortcut, sceneName } of scenes) {
+          if (!shortcut || !isHeld(shortcut, 'scene')) continue
           if (isCancelled) return
 
           try {
@@ -271,19 +281,15 @@ export function useGlobalAppShortcuts({
           }
         }
 
-        // Register sidebar navigation shortcuts, only when the user chose
-        // "from any program". By default they are app-level: never held
-        // OS-wide, so another program in front keeps F4–F12, and the page
-        // runs them itself while it has the keyboard (useSidebarShortcutKeys).
-        // Holding them only "while Church Hub is in front" was not enough:
-        // that answer follows one window's focus and goes stale.
+        // Register sidebar navigation shortcuts the user set to work from any
+        // program; the rest are run by the page (see isHeld above).
         for (const {
           shortcut,
           route,
           focusSearchOnNavigate,
           displayName,
-        } of config.sidebarKeysSystemWide ? sidebarItems : []) {
-          if (!shortcut) continue
+        } of sidebarItems) {
+          if (!shortcut || !isHeld(shortcut, 'sidebar')) continue
           if (isCancelled) return
 
           try {
@@ -325,10 +331,9 @@ export function useGlobalAppShortcuts({
         // Register page-scoped shortcuts: one registration per key, whatever
         // number of pages bound it. A key a global action already owns is
         // left to that action — the settings refuse such a conflict anyway.
-        // A page shortcut acts on a page inside Church Hub, so it has no
-        // meaning in another app: held only while Church Hub is in front.
-        for (const shortcut of new Set(isFrontmost ? pageKeys : [])) {
+        for (const shortcut of new Set(pageKeys)) {
           if (!shortcut || registeredShortcuts.has(shortcut)) continue
+          if (!isHeld(shortcut, 'page')) continue
           if (isCancelled) return
 
           try {

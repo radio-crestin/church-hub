@@ -20,9 +20,9 @@ interface SidebarShortcutKey {
  *
  * This is how sidebar keys work by default, in the browser and in the desktop
  * app alike: only while Church Hub has the keyboard, so a program in front
- * keeps its own F-keys. With "page keys from any program" the desktop shell
- * holds them OS-wide instead (useGlobalAppShortcuts), which swallows the press
- * before the page sees it. Captured before any other handler so it works with
+ * keeps its own F-keys. A key the user set to work from any program is held
+ * OS-wide by the desktop shell instead (useGlobalAppShortcuts), which swallows
+ * the press before the page sees it. Captured before any other handler so it works with
  * the focus inside a text field too, and so the browser never runs its own
  * meaning of the key (F6 moves focus to the address bar).
  */

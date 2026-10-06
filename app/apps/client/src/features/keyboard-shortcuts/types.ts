@@ -9,6 +9,15 @@ export type GlobalShortcutActionId =
   | 'nextSlide'
   | 'prevSlide'
 
+/**
+ * Where a key works: `app` only while a Church Hub window has the keyboard,
+ * `system` from any program (the desktop shell holds it OS-wide).
+ */
+export type ShortcutScope = 'app' | 'system'
+
+/** What a key does, which decides where it works unless the user chose. */
+export type ShortcutKind = 'sidebar' | 'page' | 'action' | 'scene'
+
 export interface ShortcutActionConfig {
   shortcuts: string[]
   enabled: boolean
@@ -17,17 +26,11 @@ export interface ShortcutActionConfig {
 export interface GlobalShortcutsConfig {
   actions: Record<GlobalShortcutActionId, ShortcutActionConfig>
   /**
-   * Presentation, livestream and OBS scene keys are held OS-wide by default,
-   * so they work while another program is in front. True holds them only
-   * while Church Hub is in front, leaving keys like F1–F12 to that program.
+   * Where each key works, chosen per key (any spelling of it, matched through
+   * `canonicalShortcut`). A key not listed takes its kind's default: see
+   * `shortcutScope`.
    */
-  onlyWhenAppFocused?: boolean
-  /**
-   * Sidebar page keys (F4 Present, F5 Songs, …) work only while Church Hub
-   * has the keyboard by default. True holds them OS-wide, so they bring
-   * Church Hub forward from any program.
-   */
-  sidebarKeysSystemWide?: boolean
+  keyScopes?: Record<string, ShortcutScope>
   midi?: MIDIConfig
   version: number
 }
@@ -53,7 +56,5 @@ export const DEFAULT_SHORTCUTS_CONFIG: GlobalShortcutsConfig = {
     nextSlide: { shortcuts: [], enabled: true },
     prevSlide: { shortcuts: [], enabled: true },
   },
-  onlyWhenAppFocused: false,
-  sidebarKeysSystemWide: false,
   version: 1,
 }

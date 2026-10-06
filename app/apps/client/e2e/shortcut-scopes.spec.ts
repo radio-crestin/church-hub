@@ -6,14 +6,16 @@ import {
 } from '@playwright/test'
 
 /**
- * T-123. Sidebar page keys (F4 Present, F5 Songs, F6 Bible, …) work only while
- * Church Hub has the keyboard, unless Settings → Shortcuts says "from any
- * program". App-level keys are never held by the desktop shell OS-wide: the
- * page handles the press itself, so another program in front keeps its keys.
- *
- * Keys that are held OS-wide only while Church Hub is in front (page keys, and
- * presentation keys with "only when Church Hub is in front") are let go as
- * soon as no Church Hub window has the keyboard, whichever window lost it.
+ * T-123. Each key works either only inside Church Hub or from any program, and
+ * the user chooses per key (Settings → Shortcuts, next to the key).
+ *  - Sidebar page keys (F4 Control Room, F5 Songs, F6 Bible, …) and page keys
+ *    default to Church Hub only; presentation, livestream and OBS scene keys
+ *    default to any program.
+ *  - A Church Hub only sidebar key is never held by the desktop shell: the page
+ *    runs it, so another program in front keeps the key.
+ *  - Other Church Hub only keys are held while a Church Hub window has the
+ *    keyboard, and let go as soon as none has it, whichever window lost it.
+ *  - An any-program key is held all the time.
  *
  * A browser cannot press OS-wide keys, so the desktop shell is stood in for by
  * a recording `__TAURI_INTERNALS__`: the test reads which keys the app asks the
@@ -22,7 +24,6 @@ import {
 
 const SHORTCUTS_SETTING = '/api/settings/app_settings/global_keyboard_shortcuts'
 const SIDEBAR_SETTING = '/api/settings/app_settings/sidebar_configuration'
-const SYSTEM_WIDE_SWITCH = /page keys from any program|din orice program/i
 
 type ShortcutsConfig = Record<string, unknown>
 
@@ -150,53 +151,72 @@ async function heldKeys(page: Page): Promise<string[]> {
   ])
 }
 
-test.describe('Sidebar keys: app-level by default', () => {
+const SCOPE_TOGGLE = (key: string) =>
+  new RegExp(`where ${key} works|unde funcționează ${key}`, 'i')
+
+test.describe('Shortcut scopes: where each key works', () => {
   test.describe.configure({ mode: 'serial' })
 
   let original: ShortcutsConfig | null = null
+  let sidebarBefore = ''
+
+  const withScopes = (
+    keyScopes: Record<string, string>,
+    extra: ShortcutsConfig = {},
+  ): ShortcutsConfig => ({
+    ...(original ?? { actions: {}, version: 1 }),
+    ...extra,
+    keyScopes,
+  })
+
   test.beforeAll(async ({ request }) => {
     original = await savedShortcuts(request)
+    sidebarBefore = (await (await request.get(SIDEBAR_SETTING)).json()).data
+      .value as string
   })
   test.afterAll(async ({ request }) => {
     if (original) await saveShortcuts(request, original)
+    await request.post('/api/settings/app_settings', {
+      data: { key: 'sidebar_configuration', value: sidebarBefore },
+    })
   })
 
-  test('the "from any program" switch is off by default and is saved', async ({
+  test('each key has its own switch, Church Hub only by default for page keys', async ({
     page,
     request,
   }) => {
+    await saveShortcuts(request, withScopes({}))
     await page.goto('/settings/shortcuts')
-    const toggle = page.getByRole('switch', { name: SYSTEM_WIDE_SWITCH })
-    await expect(toggle).toBeVisible({ timeout: 10000 })
-    await expect(toggle).toHaveAttribute('aria-checked', 'false')
-    await page.screenshot({
-      path: test.info().outputPath('settings-shortcuts.png'),
-      fullPage: true,
-    })
+    // The switch belongs to the key: F5 shows up in Songs' two lists, and
+    // both follow it
+    const songsKeys = page.getByRole('switch', { name: SCOPE_TOGGLE('F5') })
+    const bibleKey = page
+      .getByRole('switch', { name: SCOPE_TOGGLE('F6') })
+      .first()
+    await expect(songsKeys.first()).toBeVisible({ timeout: 10000 })
+    await expect(songsKeys.first()).toHaveAttribute('aria-checked', 'false')
+    await expect(bibleKey).toHaveAttribute('aria-checked', 'false')
 
-    await toggle.click()
+    await songsKeys.first().click()
     await expect
-      .poll(async () => (await savedShortcuts(request))?.sidebarKeysSystemWide)
-      .toBe(true)
+      .poll(async () => (await savedShortcuts(request))?.keyScopes)
+      .toEqual({ F5: 'system' })
     await page.reload()
-    await expect(
-      page.getByRole('switch', { name: SYSTEM_WIDE_SWITCH }),
-    ).toHaveAttribute('aria-checked', 'true', { timeout: 10000 })
-
-    await page.getByRole('switch', { name: SYSTEM_WIDE_SWITCH }).click()
-    await expect
-      .poll(async () => (await savedShortcuts(request))?.sidebarKeysSystemWide)
-      .toBe(false)
+    for (const toggle of await songsKeys.all()) {
+      await expect(toggle).toHaveAttribute('aria-checked', 'true', {
+        timeout: 10000,
+      })
+    }
+    await expect(bibleKey).toHaveAttribute('aria-checked', 'false')
+    await songsKeys.first().scrollIntoViewIfNeeded()
+    await page.screenshot({ path: test.info().outputPath('settings.png') })
   })
 
   test('by default the shell holds no sidebar key, and F6 still opens Bible in the app', async ({
     page,
     request,
   }) => {
-    await saveShortcuts(request, {
-      ...(original ?? { actions: {}, version: 1 }),
-      sidebarKeysSystemWide: false,
-    })
+    await saveShortcuts(request, withScopes({}))
     await fakeDesktopShell(page)
     await page.goto('/songs')
     await page.waitForLoadState('networkidle')
@@ -213,82 +233,79 @@ test.describe('Sidebar keys: app-level by default', () => {
     await expect(page).toHaveURL(/\/bible/)
   })
 
-  test('"from any program" has the shell hold the sidebar keys', async ({
+  test('a sidebar key set to any program is held, also with another program in front', async ({
     page,
     request,
   }) => {
-    await saveShortcuts(request, {
-      ...(original ?? { actions: {}, version: 1 }),
-      sidebarKeysSystemWide: true,
-    })
+    await saveShortcuts(request, withScopes({ F5: 'system' }))
     await fakeDesktopShell(page)
     await page.goto('/songs')
     await page.waitForLoadState('networkidle')
 
-    await expect.poll(() => heldKeys(page)).toContain('F6')
-    expect(await heldKeys(page)).toEqual(
-      expect.arrayContaining(['F4', 'F5', 'F6', 'F7']),
-    )
+    await expect.poll(() => heldKeys(page)).toContain('F5')
+    await moveKeyboard(page, null)
+    await page.waitForTimeout(1000)
+    expect(await heldKeys(page)).toContain('F5')
+    expect(await heldKeys(page)).not.toContain('F6')
   })
 
-  test('page keys and "only when in front" keys are let go when the user leaves from a projection', async ({
+  test('Church Hub only keys are let go when the user leaves from a projection; any-program keys stay', async ({
     page,
     request,
   }) => {
-    const sidebarBefore = (await (await request.get(SIDEBAR_SETTING)).json())
-      .data.value as string
-    try {
-      // A presentation key held only while Church Hub is in front, and a key
-      // the Bible page bound to "show slide"
-      await saveShortcuts(request, {
-        ...(original ?? { version: 1 }),
-        actions: {
-          ...((original?.actions as object | undefined) ?? {}),
-          nextSlide: { shortcuts: ['F2'], enabled: true },
+    // Slide keys: F2 Church Hub only, F1 any program (their default). F3 is a
+    // key the Bible page bound to "show slide": Church Hub only by default.
+    const actions = (original?.actions as object | undefined) ?? {}
+    await saveShortcuts(
+      request,
+      withScopes(
+        { F2: 'app' },
+        {
+          actions: {
+            ...actions,
+            nextSlide: { shortcuts: ['F2'], enabled: true },
+            prevSlide: { shortcuts: ['F1'], enabled: true },
+          },
         },
-        onlyWhenAppFocused: true,
-        sidebarKeysSystemWide: false,
-      })
-      const sidebar = JSON.parse(sidebarBefore) as {
-        items: Array<{ id: string; settings?: Record<string, unknown> }>
-      }
-      for (const item of sidebar.items) {
-        if (item.id === 'bible') {
-          item.settings = {
-            ...item.settings,
-            pageShortcuts: { showSlide: ['F3'] },
-          }
+      ),
+    )
+    const sidebar = JSON.parse(sidebarBefore) as {
+      items: Array<{ id: string; settings?: Record<string, unknown> }>
+    }
+    for (const item of sidebar.items) {
+      if (item.id === 'bible') {
+        item.settings = {
+          ...item.settings,
+          pageShortcuts: { showSlide: ['F3'] },
         }
       }
-      await request.post('/api/settings/app_settings', {
-        data: { key: 'sidebar_configuration', value: JSON.stringify(sidebar) },
-      })
-
-      await fakeDesktopShell(page)
-      await page.goto('/bible')
-      await page.waitForLoadState('networkidle')
-      await expect
-        .poll(() => heldKeys(page))
-        .toEqual(expect.arrayContaining(['F2', 'F3']))
-
-      // Presenting hands the keyboard to the projection: still Church Hub
-      await moveKeyboard(page, 'screen-1')
-      await page.waitForTimeout(1000)
-      expect(await heldKeys(page)).toEqual(expect.arrayContaining(['F2', 'F3']))
-
-      // The user switches to another program from the projection
-      await moveKeyboard(page, null)
-      await expect.poll(() => heldKeys(page)).toEqual([])
-
-      // And comes back to Church Hub
-      await moveKeyboard(page, 'main')
-      await expect
-        .poll(() => heldKeys(page))
-        .toEqual(expect.arrayContaining(['F2', 'F3']))
-    } finally {
-      await request.post('/api/settings/app_settings', {
-        data: { key: 'sidebar_configuration', value: sidebarBefore },
-      })
     }
+    await request.post('/api/settings/app_settings', {
+      data: { key: 'sidebar_configuration', value: JSON.stringify(sidebar) },
+    })
+
+    await fakeDesktopShell(page)
+    await page.goto('/bible')
+    await page.waitForLoadState('networkidle')
+    await expect
+      .poll(() => heldKeys(page))
+      .toEqual(expect.arrayContaining(['F1', 'F2', 'F3']))
+
+    // Presenting hands the keyboard to the projection: still Church Hub
+    await moveKeyboard(page, 'screen-1')
+    await page.waitForTimeout(1000)
+    expect(await heldKeys(page)).toEqual(
+      expect.arrayContaining(['F1', 'F2', 'F3']),
+    )
+
+    // The user switches to another program from the projection
+    await moveKeyboard(page, null)
+    await expect.poll(() => heldKeys(page)).toEqual(['F1'])
+
+    // And comes back to Church Hub
+    await moveKeyboard(page, 'main')
+    await expect
+      .poll(() => heldKeys(page))
+      .toEqual(expect.arrayContaining(['F1', 'F2', 'F3']))
   })
 })
