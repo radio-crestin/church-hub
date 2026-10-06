@@ -99,12 +99,12 @@
     },
     "export": {
       "title": "Fișier cu cântări",
-      "description": "Salvează cântările unei categorii: ca fișier .chsongs, pe care îl poate deschide oricine are Church Hub, ca arhivă .zip cu fișiere OpenSong pentru alte programe sau ca arhivă .zip cu fișiere PowerPoint.",
+      "description": "Salvează cântările dintr-o categorie într-un fișier .chsongs, pe care îl poate deschide oricine are Church Hub, într-o arhivă .zip cu fișiere OpenSong pentru alte programe sau într-o arhivă .zip cu fișiere PowerPoint.",
       "category": "Alege o categorie",
       "failed": "Exportul a eșuat: {{error}}",
       "chsongs": "Exportă .chsongs",
-      "zip": "OpenSong .zip",
-      "pptx": "PowerPoint .zip"
+      "zip": "Exportă OpenSong (.zip)",
+      "pptx": "Exportă PowerPoint (.zip)"
     },
     "storage": {
       "title": "Stocarea ta S3",

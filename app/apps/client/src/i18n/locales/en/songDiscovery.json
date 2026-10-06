@@ -103,8 +103,8 @@
       "category": "Choose a category",
       "failed": "Export failed: {{error}}",
       "chsongs": "Export .chsongs",
-      "zip": "OpenSong .zip",
-      "pptx": "PowerPoint .zip"
+      "zip": "Export OpenSong (.zip)",
+      "pptx": "Export PowerPoint (.zip)"
     },
     "storage": {
       "title": "Your S3 storage",
