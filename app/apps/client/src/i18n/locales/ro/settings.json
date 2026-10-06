@@ -246,9 +246,12 @@
         "pages": "Pagini",
         "pagesDescription": "Comută la o pagină, focusează căutarea și taste care funcționează doar cât timp pagina e deschisă."
       },
-      "focusOnly": {
-        "label": "Doar când Church Hub este în prim-plan",
-        "description": "Scurtăturile pentru prezentare, Live Stream și scene OBS, precum F1–F12, funcționează doar când Church Hub este fereastra activă. Altfel, tastele sunt preluate de programul din prim-plan, de exemplu BibleShow."
+      "scope": {
+        "app": "Doar în Church Hub",
+        "system": "În orice program",
+        "appHint": "Funcționează doar când fereastra Church Hub este activă. Dă clic ca să funcționeze în orice program.",
+        "systemHint": "Funcționează în orice program, iar alte programe nu pot folosi această tastă. Dă clic ca să funcționeze doar în Church Hub.",
+        "toggle": "Unde funcționează {{shortcut}}"
       },
       "actions": {
         "startLive": {

@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { ShortcutRecorder } from './ShortcutRecorder'
+import type { ShortcutKind } from '../types'
 
 interface ShortcutListSectionProps {
   title: string
@@ -17,6 +18,8 @@ interface ShortcutListSectionProps {
   allowMidi?: boolean
   /** Test id of the section; recorders get `${testId}-recorder`. */
   testId?: string
+  /** What the keys do; gives each one its "where it works" switch. */
+  scopeKind?: ShortcutKind
 }
 
 /**
@@ -31,6 +34,7 @@ export function ShortcutListSection({
   getError,
   allowMidi = true,
   testId,
+  scopeKind,
 }: ShortcutListSectionProps) {
   const { t } = useTranslation('settings')
 
@@ -61,6 +65,7 @@ export function ShortcutListSection({
                 error={error}
                 namespace="settings"
                 allowMidi={allowMidi}
+                scopeKind={scopeKind}
               />
               {error && (
                 <p className="mt-1 text-red-600 text-xs dark:text-red-400">

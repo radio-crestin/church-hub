@@ -437,6 +437,7 @@ export function SidebarItemSettingsModal({
                     onRemove={() => handleRemoveShortcut(index)}
                     error={getShortcutError(shortcut, index, shortcuts)}
                     namespace="settings"
+                    scopeKind="sidebar"
                   />
                 ))}
               </div>
@@ -478,6 +479,7 @@ export function SidebarItemSettingsModal({
                         focusSearchShortcuts,
                       )}
                       namespace="settings"
+                      scopeKind="sidebar"
                     />
                   ))}
                 </div>

@@ -18,13 +18,13 @@ interface SidebarShortcutKey {
  * Runs a sidebar shortcut (e.g. F6 = Bible + focus its search) when the page
  * itself receives the key press.
  *
- * The desktop shell registers these keys OS-wide, which swallows the press
- * before the page sees it. Wherever that registration is not in place — the
- * app opened in a browser, or the shell not holding the key at that moment —
- * the press reached the page, nothing handled it, and the browser ran its own
- * meaning instead (F6 moves focus to the address bar). Captured before any
- * other handler so it works with the focus inside a text field too, exactly
- * like the OS-wide registration does.
+ * This is how sidebar keys work by default, in the browser and in the desktop
+ * app alike: only while Church Hub has the keyboard, so a program in front
+ * keeps its own F-keys. A key the user set to work from any program is held
+ * OS-wide by the desktop shell instead (useGlobalAppShortcuts), which swallows
+ * the press before the page sees it. Captured before any other handler so it works with
+ * the focus inside a text field too, and so the browser never runs its own
+ * meaning of the key (F6 moves focus to the address bar).
  */
 export function useSidebarShortcutKeys(
   sidebarShortcuts: SidebarShortcutKey[],

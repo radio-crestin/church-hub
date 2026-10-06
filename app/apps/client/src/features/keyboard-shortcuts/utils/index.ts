@@ -19,6 +19,7 @@ export {
   useGlobalRecordingState,
 } from './recordingState'
 export { shortcutFromKeyboardEvent } from './shortcutFromKeyboardEvent'
+export { shortcutScope, withShortcutScope } from './shortcutScope'
 export type {
   SceneShortcutSource,
   SidebarShortcutSource,

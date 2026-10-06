@@ -246,6 +246,7 @@ export function PageShortcutsSettings({
         shortcuts={switchShortcuts}
         onChange={handleSwitchChange}
         getError={(s, i, list) => getShortcutError(s, i, list, 'switch')}
+        scopeKind="sidebar"
         testId={`page-shortcuts-${pageId}-switch`}
       />
 
@@ -258,6 +259,7 @@ export function PageShortcutsSettings({
           shortcuts={focusSearchShortcuts}
           onChange={handleFocusSearchChange}
           getError={(s, i, list) => getShortcutError(s, i, list, 'focusSearch')}
+          scopeKind="sidebar"
           testId={`page-shortcuts-${pageId}-focus-search`}
         />
       </div>
@@ -285,6 +287,7 @@ export function PageShortcutsSettings({
             onChange={(next) => handlePageListChange(action, next)}
             getError={(s, i, list) => getShortcutError(s, i, list, action)}
             allowMidi={false}
+            scopeKind="page"
             testId={`page-shortcuts-${pageId}-${action}`}
           />
         ))}
