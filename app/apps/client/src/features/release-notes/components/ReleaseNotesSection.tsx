@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { VersionNotesCard } from './VersionNotesCard'
+import { SettingsSection } from '../../settings'
 import { useReleaseNotes } from '../hooks'
 
 const DEFAULT_VISIBLE = 5
@@ -26,21 +27,12 @@ export function ReleaseNotesSection({
   const normalizedCurrent = currentVersion?.replace(/^v/, '')
 
   return (
-    <div
-      data-testid="release-notes-section"
-      className="flex-1 bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800"
+    <SettingsSection
+      testId="release-notes-section"
+      title={t('title')}
+      description={t('description')}
+      icon={ScrollText}
     >
-      <div className="flex items-center gap-2 mb-4">
-        <ScrollText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {t('title')}
-        </h3>
-      </div>
-
-      <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-        {t('description')}
-      </p>
-
       <div className="space-y-3">
         {visible.map((notes) => (
           <VersionNotesCard
@@ -71,6 +63,6 @@ export function ReleaseNotesSection({
           )}
         </button>
       )}
-    </div>
+    </SettingsSection>
   )
 }
