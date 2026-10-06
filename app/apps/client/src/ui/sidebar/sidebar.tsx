@@ -16,7 +16,7 @@ import { useSidebarCollapsed } from './use-sidebar-collapsed'
 import { CurrentUserButton } from '../../features/auth'
 import { RequestFeatureTool } from '../../features/feature-request'
 import { useKioskSettings } from '../../features/kiosk'
-import { NotificationsSidebarItem } from '../../features/notifications/components/NotificationsSidebarItem'
+import { NotificationsBell } from '../../features/notifications/components/NotificationsBell'
 import { usePresentationState } from '../../features/presentation'
 import {
   hideAllCustomPageWebviews,
@@ -370,34 +370,34 @@ export function Sidebar({
               </button>
             )}
 
-            {/* Notifications (synced songs, app updates): the page with
-                all of them, the unread count, and the pop-up of a new one. */}
-            {!isScreenRoute && (
-              <NotificationsSidebarItem
-                isCollapsed={isCollapsed}
-                iconColor={getItemIconColor('settings')}
-                onClick={(e) => handleSidebarItemClick('/notifications', e)}
-              />
-            )}
-
-            {/* Settings */}
-            {canViewSettings && (
-              <SidebarItem
-                pageId="settings"
-                icon={Settings}
-                label={t('sidebar:navigation.settings')}
-                to="/settings"
-                isCollapsed={isCollapsed}
-                isActive={
-                  location.pathname === '/settings' ||
-                  location.pathname.startsWith('/settings/')
-                }
-                className="md:flex"
-                onClick={(e) => handleSidebarItemClick('/settings', e)}
-                nativeWindowSettings={getItemNativeWindowSettings('settings')}
-                iconColor={getItemIconColor('settings')}
-              />
-            )}
+            {/* Settings, with the notifications bell (synced songs, app
+                updates) at the right end of its row; stacked when collapsed. */}
+            <div
+              className={`flex items-center justify-end gap-1 ${isCollapsed ? 'md:flex-col md:items-stretch' : ''}`}
+            >
+              {canViewSettings && (
+                <SidebarItem
+                  pageId="settings"
+                  icon={Settings}
+                  label={t('sidebar:navigation.settings')}
+                  to="/settings"
+                  isCollapsed={isCollapsed}
+                  isActive={
+                    location.pathname === '/settings' ||
+                    location.pathname.startsWith('/settings/')
+                  }
+                  className="md:flex flex-1 min-w-0"
+                  onClick={(e) => handleSidebarItemClick('/settings', e)}
+                  nativeWindowSettings={getItemNativeWindowSettings('settings')}
+                  iconColor={getItemIconColor('settings')}
+                />
+              )}
+              {!isScreenRoute && (
+                <NotificationsBell
+                  onClick={(e) => handleSidebarItemClick('/notifications', e)}
+                />
+              )}
+            </div>
 
             {/* Current user — opens the account page (profile, permissions,
                 switch user, log out), replacing the current page content. */}

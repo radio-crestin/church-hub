@@ -34,6 +34,7 @@
     "updateDescription": "Download it here; installing restarts the app."
   },
   "notifications": {
-    "title": "Notifications"
+    "title": "Notifications",
+    "unread": "New notifications"
   }
 }

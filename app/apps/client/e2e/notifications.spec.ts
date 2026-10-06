@@ -108,9 +108,10 @@ test.describe('Notifications', () => {
     await popup.getByRole('button', { name: /^(Close|Închide)$/ }).click()
     await expect(popup).toHaveCount(0)
 
-    // Seen: no second pop-up, but unread on the sidebar item.
-    const item = page.getByRole('link', { name: /Notifications|Notificări/ })
-    await expect(item.getByLabel(/1 new/)).toBeVisible()
+    // Seen: no second pop-up, but the dot on the sidebar bell.
+    const item = page.getByTestId('sidebar-notifications-bell')
+    const dot = page.getByTestId('sidebar-notifications-dot')
+    await expect(dot).toBeVisible()
     await page.reload()
     await expect(item).toBeVisible()
     await expect(page.getByTestId('notification-popup')).toHaveCount(0)
@@ -120,7 +121,7 @@ test.describe('Notifications', () => {
     await expect(page).toHaveURL(/\/notifications$/)
     const card = page.getByTestId('notification-songs-synced')
     await expect(card).toContainText(/Added \(1\)|Adăugate \(1\)/)
-    await expect(item.getByLabel(/new/)).toHaveCount(0)
+    await expect(dot).toHaveCount(0)
     await card.getByRole('link', { name: fresh.title }).click()
     await expect(page).toHaveURL(/\/songs\/\d+/)
   })
