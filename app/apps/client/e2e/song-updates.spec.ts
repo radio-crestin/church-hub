@@ -122,4 +122,48 @@ test.describe('Song updates', () => {
     expect(result.newCount).toBe(2)
     expect(await songsTitled(request, third.title)).toHaveLength(0)
   })
+  test('brings the songs nobody edited up to date, never one edited by hand', async ({
+    request,
+  }) => {
+    await setAutoUpdate(request, true)
+    const [kept, edited] = fresh
+    const [editedSong] = await songsTitled(request, edited.title)
+    // An edit in the app marks the song as edited by hand.
+    const edit = await request.post('/api/songs', {
+      data: {
+        id: editedSong.id,
+        title: edited.title,
+        slides: [{ content: '<p>versurile noastre</p>', sortOrder: 0 }],
+      },
+    })
+    expect(edit.ok()).toBeTruthy()
+
+    const newer = (s: FolderSong, lyrics: string) => song(s.id, s.title, lyrics)
+    publishSongFolder(
+      s3,
+      folder,
+      categoryName,
+      [
+        newer(kept, `${tag} zori noi de lumina peste vale`),
+        newer(edited, `${tag} alte versuri de la sursa`),
+        known,
+        third,
+      ],
+      'three',
+    )
+    const result = (await checkSource(request, sourceId)) as {
+      updated?: number
+    }
+    expect(result.updated).toBe(1)
+
+    const lyricsOf = async (title: string) => {
+      const [hit] = await songsTitled(request, title)
+      const res = await request.get(`/api/songs/${hit.id}`)
+      return ((await res.json()).data.slides as { content: string }[])
+        .map((slide) => slide.content)
+        .join('')
+    }
+    expect(await lyricsOf(kept.title)).toContain('zori noi de lumina')
+    expect(await lyricsOf(edited.title)).toContain('versurile noastre')
+  })
 })

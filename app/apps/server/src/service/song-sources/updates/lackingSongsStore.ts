@@ -13,8 +13,7 @@ export interface LackingSong extends SourceSong {
 }
 
 /** Next to the database, so another database never reads them. */
-const folder = () =>
-  join(dirname(getDatabasePath()), 'song-sources', 'lacking')
+const folder = () => join(dirname(getDatabasePath()), 'song-sources', 'lacking')
 const fileOf = (sourceId: string) =>
   join(folder(), `${encodeURIComponent(sourceId)}.json`)
 

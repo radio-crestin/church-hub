@@ -8,6 +8,8 @@ export interface SourceUpdate {
   newCount: number
   /** Songs the automatic update added when the source last changed. */
   imported: number
+  /** Library songs (not edited by hand) it brought up to date then. */
+  updated?: number
   checkedAt: number
   /** Why the source could not be checked, when it could not. */
   error?: string

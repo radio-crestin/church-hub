@@ -114,9 +114,10 @@ test.describe('Notification center', () => {
       .getByRole('button', { name: /Review new songs|Verifică cântările noi/ })
       .click()
     await expect(page).toHaveURL(/\/songs\/discover/)
+    // A version of a library song starts unticked.
     await expect(
       page.getByRole('checkbox', { name: new RegExp(known.title) }),
-    ).toBeChecked({ timeout: 30_000 })
+    ).not.toBeChecked({ timeout: 30_000 })
     await expect(
       page.getByRole('checkbox', { name: categoryName, exact: true }),
     ).toBeChecked()

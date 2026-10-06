@@ -1,11 +1,14 @@
 import type { SourceSong } from '@church-hub/song-formats'
 
+import { findChangedSongs } from './findChangedSongs'
 import { importSourceSongs } from './importSourceSongs'
 import { type LackingSong, saveLackingSongs } from './lackingSongsStore'
 import { readSourceSongList } from './readSourceSongList'
 import type { SongUpdatesRun, SourceUpdate } from './types'
+import { updateLibrarySongs } from './updateLibrarySongs'
 import {
   backfillAlternateTitles,
+  type DiscoveryMatchResult,
   matchCandidatesAgainstLibrary,
 } from '../../songs'
 import { readSourceChecksum } from '../readSourceChecksum'
@@ -31,9 +34,9 @@ function recoverTitles(songs: SourceSong[]): void {
   )
 }
 
-/** The songs the library lacks, each with its verdict and similar versions. */
-function findLacking(songs: SourceSong[]): LackingSong[] {
-  const verdicts = matchCandidatesAgainstLibrary(
+/** Each song's verdict against the library. */
+function matchSongs(songs: SourceSong[]): DiscoveryMatchResult[] {
+  return matchCandidatesAgainstLibrary(
     songs.map((song) => ({
       tempId: song.id,
       title: song.parsed.title,
@@ -41,6 +44,13 @@ function findLacking(songs: SourceSong[]): LackingSong[] {
       sourceFilename: song.sourceFilename,
     })),
   )
+}
+
+/** The songs the library lacks, each with its verdict and similar versions. */
+function findLacking(
+  songs: SourceSong[],
+  verdicts: DiscoveryMatchResult[],
+): LackingSong[] {
   const byId = new Map(verdicts.map((v) => [v.tempId, v]))
   return songs.flatMap((song) => {
     const match = byId.get(song.id)
@@ -51,7 +61,8 @@ function findLacking(songs: SourceSong[]): LackingSong[] {
 
 /**
  * Checks one source for songs the library lacks and, when updating
- * automatically, adds the new ones. A song the library has under another
+ * automatically, adds the new ones and brings the songs nobody edited by
+ * hand up to date with the source. A song the library has under another
  * title is left for the user to review in Song discovery.
  * Cheap when nothing changed: a checksum equal to the last check's skips
  * the download.
@@ -72,11 +83,15 @@ export async function checkSourceForUpdates(
 
   const songs = await readSourceSongList(source)
   recoverTitles(songs)
-  const lacking = findLacking(songs)
+  const verdicts = matchSongs(songs)
+  const lacking = findLacking(songs, verdicts)
   const toAdd = run.autoUpdate
     ? lacking.filter((song) => song.verdict === 'new')
     : []
   const added = importSourceSongs(source, toAdd)
+  const updated = run.autoUpdate
+    ? updateLibrarySongs(findChangedSongs(songs, verdicts))
+    : 0
   const left = lacking.filter((song) => !toAdd.includes(song))
   saveLackingSongs(source.id, left)
   return {
@@ -86,8 +101,9 @@ export async function checkSourceForUpdates(
       checksum,
       newCount: left.length,
       imported: added,
+      updated,
       checkedAt: now,
     },
-    added,
+    added: added + updated,
   }
 }

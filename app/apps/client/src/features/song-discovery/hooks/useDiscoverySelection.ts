@@ -11,8 +11,9 @@ interface Override {
 }
 
 /**
- * What the user picked in Song discovery: every source and every song is
- * picked until unticked. Edits to a song stay with it; imported songs leave
+ * What the user picked in Song discovery: every source and every new song
+ * is picked until unticked; a song the library has under another title is
+ * not. Edits to a song stay with it; imported songs leave
  * the list.
  */
 export function useDiscoverySelection(
@@ -59,7 +60,8 @@ export function useDiscoverySelection(
           draft:
             override?.draft ??
             buildDraft(entry.candidate, categoryId(entry.sourceId)),
-          selected: override?.selected ?? true,
+          // A version of a library song waits for a deliberate tick.
+          selected: override?.selected ?? entry.verdict === 'new',
         }
       })
   }, [remaining, isSourceChecked, overrides, sources, categories])
