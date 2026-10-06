@@ -73,7 +73,7 @@ function SongEditorPage() {
   useEffect(() => {
     if (reset) {
       navigate({
-        to: '/songs/',
+        to: '/songs',
         search: { reset, fromSong: true },
       })
     }
@@ -298,7 +298,7 @@ function SongEditorPage() {
   const handleBack = useCallback(() => {
     if (isNew) {
       // Go back to songs list for new songs
-      navigate({ to: '/songs/', search: { q: searchQuery } })
+      navigate({ to: '/songs', search: { q: searchQuery } })
     } else {
       // Go back to preview page for existing songs
       navigate({ to: '/songs/$songId', params: { songId } })
@@ -313,7 +313,7 @@ function SongEditorPage() {
     if (success) {
       showToast(t('songs:messages.deleted'), 'success')
       // Navigate to songs list after deletion
-      navigate({ to: '/songs/', search: { q: searchQuery } })
+      navigate({ to: '/songs', search: { q: searchQuery } })
     } else {
       showToast(t('songs:messages.error'), 'error')
     }
