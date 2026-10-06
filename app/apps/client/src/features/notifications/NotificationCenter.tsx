@@ -8,7 +8,7 @@ import { useNotifications } from './useNotifications'
 
 /** How long a new notification stays up before it folds under the bell. */
 const POP_UP_MS = 12_000
-const PANEL_WIDTH = 320
+const PANEL_WIDTH = 384
 
 /** Next to the bell, kept on screen (the sidebar is full width on phones). */
 function panelPosition(bell: HTMLElement): CSSProperties {
