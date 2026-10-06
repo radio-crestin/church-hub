@@ -60,7 +60,7 @@ export function SongRefList({ label, set, onOpen }: SongRefListProps) {
             >
               {isOpen
                 ? t('notification.showLess')
-                : t('notification.showAll', { count: set.songs.length })}
+                : t('notification.showAll', { count: set.count })}
             </button>
           </li>
         )}
