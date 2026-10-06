@@ -1,4 +1,5 @@
 import { elisionVariants } from './elisionVariants'
+import { escapeHtml } from './escapeHtml'
 import { foldText } from './foldText'
 import { joinedWordVariants, WORD_JOINERS } from './joinedWordVariants'
 
@@ -253,14 +254,17 @@ export function findHighlightRanges(
   return mergeRanges(text, ranges)
 }
 
-/** Wraps each range in <mark>, leaving the rest of the text untouched. */
+/**
+ * The text as HTML with each range wrapped in <mark>: every slice of the
+ * text is escaped, so the marks are the only markup in the result.
+ */
 export function wrapRanges(text: string, ranges: TextRange[]): string {
   let out = ''
   let cursor = 0
   for (const range of ranges) {
-    out += text.slice(cursor, range.start)
-    out += `<mark>${text.slice(range.start, range.end)}</mark>`
+    out += escapeHtml(text.slice(cursor, range.start))
+    out += `<mark>${escapeHtml(text.slice(range.start, range.end))}</mark>`
     cursor = range.end
   }
-  return out + text.slice(cursor)
+  return out + escapeHtml(text.slice(cursor))
 }

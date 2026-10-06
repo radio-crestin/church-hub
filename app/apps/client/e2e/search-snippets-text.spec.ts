@@ -80,4 +80,45 @@ test.describe('Search result text', () => {
       await request.delete(`/api/songs/${songId}`).catch(() => {})
     }
   })
+
+  test('song search keeps entity-encoded markup in lyrics as text, in the API and on the page', async ({
+    page,
+    request,
+  }) => {
+    const uniq = String(Date.now())
+    const encoded = MARKUP.replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    const created = await request.post('/api/songs', {
+      data: {
+        title: `Imn ${uniq}`,
+        slides: [{ content: `<p>Har ${uniq} ${encoded}</p>`, sortOrder: 0 }],
+      },
+    })
+    expect(created.status()).toBe(201)
+    const songId = (await created.json()).data.id as number
+
+    try {
+      const response = await request.get(
+        `/api/songs/search?q=${encodeURIComponent(`har ${uniq}`)}`,
+      )
+      const results = (await response.json()).data as Array<{
+        id: number
+        matchedContent: string
+      }>
+      const found = results.find((song) => song.id === songId)
+      expect(found).toBeTruthy()
+      // The only markup the server sends is its own <mark> tags.
+      expect(found?.matchedContent.replace(/<\/?mark>/g, '')).not.toMatch(
+        /[<>]/,
+      )
+
+      await page.goto('/songs')
+      await page.getByPlaceholder(/search songs|caută cântări/i).fill(uniq)
+      const snippet = page.getByTestId('song-card-snippet')
+      await expect(snippet.locator('mark')).toHaveText(uniq)
+      await expect(snippet).toContainText(`<img src=x data-e2e-markup`)
+      await expectNoMarkupOnPage(page)
+    } finally {
+      await request.delete(`/api/songs/${songId}`).catch(() => {})
+    }
+  })
 })

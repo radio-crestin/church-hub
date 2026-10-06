@@ -16,18 +16,18 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 export function createFtsTables(): boolean {
   const db = getRawDatabase()
 
-  // Check if FTS tables already exist. Only the four virtual tables count —
+  // Check if FTS tables already exist. Only the three virtual tables count —
   // every FTS5 table drags along shadow tables (songs_fts_data, songs_fts_idx,
   // …) that also match a `%_fts%` pattern, so counting those would report the
   // set as complete when a single index exists and skip creating the rest.
   const existingTables = db
     .query<{ name: string }, []>(
       `SELECT name FROM sqlite_master WHERE type='table' AND name IN
-         ('songs_fts', 'songs_fts_trigram', 'schedules_fts', 'bible_verses_fts')`,
+         ('songs_fts', 'schedules_fts', 'bible_verses_fts')`,
     )
     .all()
 
-  if (existingTables.length >= 4) {
+  if (existingTables.length >= 3) {
     log('info', 'FTS5 virtual tables already exist, skipping creation')
     return false // Tables already existed, no rebuild needed
   }
@@ -42,16 +42,6 @@ export function createFtsTables(): boolean {
       category_name,
       content,
       tokenize='unicode61 remove_diacritics 2'
-    );
-  `)
-
-  // Songs FTS with trigram for fuzzy/partial matching
-  db.exec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS songs_fts_trigram USING fts5(
-      song_id UNINDEXED,
-      title,
-      content,
-      tokenize='trigram'
     );
   `)
 

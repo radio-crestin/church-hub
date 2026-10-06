@@ -1,5 +1,6 @@
 import { asc, count, eq } from 'drizzle-orm'
 
+import { resetVerseSearchState } from './text-search/verseSearchState'
 import type { BibleTranslation, OperationResult } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
 import { bibleBooks, bibleTranslations, bibleVerses } from '../../db/schema'
@@ -184,6 +185,7 @@ export function deleteTranslation(id: number): OperationResult {
       db.delete(bibleTranslations).where(eq(bibleTranslations.id, id)).run()
 
       rawDb.exec('COMMIT')
+      resetVerseSearchState()
 
       log('info', `Successfully deleted translation ID: ${id}`)
 

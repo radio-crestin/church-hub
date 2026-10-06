@@ -704,20 +704,14 @@ async function runFtsRebuild(): Promise<void> {
 }
 
 /**
- * Final pre-serve work: warm the FTS caches, reset presentation state, ensure a
- * fallback Bible exists, add the bundled default backgrounds to the gallery,
- * mint the system token and wire OBS callbacks. Extracted
- * from {@link main} so a throw here is attributed to the `finalizing` phase.
+ * Final pre-serve work: reset presentation state, ensure a fallback Bible
+ * exists, add the bundled default backgrounds to the gallery, mint the
+ * system token and wire OBS callbacks. Extracted from {@link main} so a
+ * throw here is attributed to the `finalizing` phase.
  */
 async function runFinalizeBoot(): Promise<void> {
-  // Warm up FTS indexes so first user search is fast (loads index pages from disk into OS cache)
-  let t = performance.now()
-  warmupBibleSearchIndex()
-  warmupSongsSearchIndex()
-  logTiming('fts_warmup', t)
-
   // Clear the displayed slide on startup to ensure a clean state
-  t = performance.now()
+  let t = performance.now()
   stopPresentation()
   logTiming('clear_presentation', t)
 
@@ -8375,6 +8369,16 @@ async function startRealServer(): Promise<void> {
   console.log(
     `[startup] === Server Ready (total: ${(performance.now() - startupStart).toFixed(1)}ms) ===`,
   )
+
+  // Load the search vocabularies (the typo lookup, up to a second or two on
+  // a large library) once the app is up, not on the boot screen, so the
+  // first search is already fast.
+  setTimeout(() => {
+    const warmupStart = performance.now()
+    warmupBibleSearchIndex()
+    warmupSongsSearchIndex()
+    logTiming('fts_warmup', warmupStart)
+  }, 0)
 
   // Graceful shutdown
   process.on('SIGINT', async () => {

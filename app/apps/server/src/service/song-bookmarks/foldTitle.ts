@@ -1,4 +1,4 @@
-import { foldText } from '../songs/text/foldText'
+import { foldText } from '../text-search/text/foldText'
 
 /** A title as a person would match it: case, diacritics and punctuation gone. */
 export function foldTitle(title: string): string {

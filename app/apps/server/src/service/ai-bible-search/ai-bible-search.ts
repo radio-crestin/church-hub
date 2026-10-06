@@ -2,7 +2,7 @@ import { getAIBibleSearchConfig, isAIBibleSearchEnabled } from './config'
 import { generateBibleSearchTerms } from './query-generator'
 import { analyzeBibleResults } from './result-analyzer'
 import type { AIBibleSearchInput, AIBibleSearchResponse } from './types'
-import { searchVersesByText } from '../bible/search'
+import { searchVersesByText } from '../bible/text-search/searchVersesByText'
 
 /**
  * Perform AI-enhanced semantic search on Bible verses

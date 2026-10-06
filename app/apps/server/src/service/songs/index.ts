@@ -30,7 +30,6 @@ export {
   clearSearchCache,
   rebuildSearchIndex,
   removeFromSearchIndex,
-  searchSongs,
   updateSearchIndex,
   updateSearchIndexByCategory,
   warmupSearchIndex,
@@ -47,6 +46,7 @@ export {
   setPrimarySong,
   unlinkSong,
 } from './song-groups'
+export { searchSongs } from './song-search/searchSongs'
 // Song Slides
 export {
   cloneSongSlide,

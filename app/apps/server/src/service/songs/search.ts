@@ -1,208 +1,25 @@
-import { joinSearchTitles, parseAlternateTitles } from './parseAlternateTitles'
-import { decodeHtmlEntities } from './text/decodeHtmlEntities'
-import { elisionVariants } from './text/elisionVariants'
-import { findHighlightRanges, wrapRanges } from './text/findHighlightRanges'
-import { joinedWordVariants } from './text/joinedWordVariants'
-import type { SongSearchResult } from './types'
-import { visibleCategoryCondition } from './visibleCategoryCondition'
+import { joinSearchTitles } from './parseAlternateTitles'
+import { SONGS_FTS_TABLE } from './song-search/fetchSongCandidates'
+import { songSearchCache } from './song-search/songSearchCache'
 import { getRawDatabase } from '../../db'
-import { getSetting } from '../settings'
+import { createLogger } from '../../utils/logger'
+import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
+import { joinedWordVariants } from '../text-search/text/joinedWordVariants'
+import {
+  addVocabularyWords,
+  getVocabulary,
+  resetVocabulary,
+} from '../text-search/vocabularyStore'
 
-/**
- * Synonym group interface matching client-side structure
- */
-interface SynonymGroup {
-  id: string
-  primary: string
-  synonyms: string[]
-}
-
-/**
- * Synonyms configuration stored in app_settings
- */
-interface SynonymsConfig {
-  groups: SynonymGroup[]
-}
-
-/**
- * In-memory cache for synonyms to avoid DB hits on every search
- */
-let synonymsCache: Map<string, string[]> | null = null
-let synonymsCacheTimestamp = 0
-const SYNONYMS_CACHE_TTL = 60000 // 1 minute cache TTL
-
-// ============================================================================
-// LRU Cache for Search Results
-// ============================================================================
-
-interface SearchCacheEntry {
-  results: SongSearchResult[]
-  timestamp: number
-}
-
-const SEARCH_CACHE_MAX_SIZE = 100
-const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
-
-/**
- * How many rows each FTS phase hands to the JS re-ranker. Both phases order by
- * raw BM25 over a broad `term*` OR, which is a much worse ranking than the
- * phrase scoring applied afterwards — anything cut here can never be ranked
- * back in, which is how an exact title match went missing on a large library.
- */
-const FTS_CANDIDATE_LIMIT = 400
-const TITLE_CANDIDATE_LIMIT = 200
-const TRIGRAM_CANDIDATE_LIMIT = 150
-
-const searchResultsCache = new Map<string, SearchCacheEntry>()
-
-function getSearchCacheKey(
-  query: string,
-  categoryIds: number[] | undefined,
-  filters?: {
-    presentedOnly?: boolean
-    inSchedulesOnly?: boolean
-    hasKeyLine?: boolean
-    tagIds?: number[]
-  },
-): string {
-  const categoryKey = categoryIds?.sort().join(',') ?? 'all'
-  const filterKey = [
-    filters?.presentedOnly ? 'p' : '',
-    filters?.inSchedulesOnly ? 's' : '',
-    filters?.hasKeyLine ? 'k' : '',
-    filters?.tagIds?.length ? `t${[...filters.tagIds].sort().join('.')}` : '',
-  ]
-    .filter(Boolean)
-    .join('')
-  return `${query.toLowerCase().trim()}:${categoryKey}:${filterKey}`
-}
-
-/** SQL condition (one `?` per tag) matching songs that carry any of the tags. */
-function songHasAnyTagCondition(tagIds: number[]): string {
-  const placeholders = tagIds.map(() => '?').join(',')
-  return `s.id IN (SELECT song_id FROM song_tag_assignments WHERE tag_id IN (${placeholders}))`
-}
-
-function getFromSearchCache(key: string): SongSearchResult[] | null {
-  const entry = searchResultsCache.get(key)
-  if (!entry) return null
-
-  // Check if expired
-  if (Date.now() - entry.timestamp > SEARCH_CACHE_TTL_MS) {
-    searchResultsCache.delete(key)
-    return null
-  }
-
-  // Move to end (most recently used) by re-inserting
-  searchResultsCache.delete(key)
-  searchResultsCache.set(key, entry)
-
-  return entry.results
-}
-
-function setInSearchCache(key: string, results: SongSearchResult[]): void {
-  // Evict oldest entries if cache is full
-  if (searchResultsCache.size >= SEARCH_CACHE_MAX_SIZE) {
-    const firstKey = searchResultsCache.keys().next().value
-    if (firstKey) searchResultsCache.delete(firstKey)
-  }
-
-  searchResultsCache.set(key, {
-    results,
-    timestamp: Date.now(),
-  })
-}
+const logger = createLogger('song-search')
 
 /**
  * Clears the search results cache (call when index is updated)
  */
 export function clearSearchCache(): void {
-  searchResultsCache.clear()
+  songSearchCache.clear()
   logger.debug('Search cache cleared')
 }
-
-/**
- * Loads and caches synonyms from the database
- * Returns a Map where each term (primary and synonyms) maps to all related terms
- */
-function loadSynonyms(): Map<string, string[]> {
-  const now = Date.now()
-
-  // Return cached if still valid
-  if (synonymsCache && now - synonymsCacheTimestamp < SYNONYMS_CACHE_TTL) {
-    return synonymsCache
-  }
-
-  logger.debug('Loading synonyms from database')
-
-  const setting = getSetting('app_settings', 'search_synonyms')
-  const synonymMap = new Map<string, string[]>()
-
-  if (!setting) {
-    logger.debug('No synonyms configured')
-    synonymsCache = synonymMap
-    synonymsCacheTimestamp = now
-    return synonymMap
-  }
-
-  try {
-    const config = JSON.parse(setting.value) as SynonymsConfig
-
-    for (const group of config.groups) {
-      // All terms in the group (primary + synonyms), folded the same way the
-      // search terms are. A group saved as "cântare" is looked up as "cantare"
-      // — without folding here the group could never be hit.
-      const allTerms = [
-        foldTerm(group.primary),
-        ...group.synonyms.map(foldTerm),
-      ].filter((term) => term.length > 0)
-
-      // Each term maps to all other terms in the group
-      for (const term of allTerms) {
-        const otherTerms = allTerms.filter((t) => t !== term)
-        const existing = synonymMap.get(term) || []
-        synonymMap.set(term, [...new Set([...existing, ...otherTerms])])
-      }
-    }
-
-    logger.debug(`Loaded ${config.groups.length} synonym groups`)
-  } catch (error) {
-    logger.error(`Failed to parse synonyms config: ${error}`)
-  }
-
-  synonymsCache = synonymMap
-  synonymsCacheTimestamp = now
-  return synonymMap
-}
-
-/**
- * Expands search terms with their synonyms
- * Example: ["cristos"] -> ["cristos", "hristos"]
- */
-function expandTermsWithSynonyms(terms: string[]): string[] {
-  const synonymMap = loadSynonyms()
-  const expandedTerms = new Set<string>(terms)
-
-  for (const term of terms) {
-    const synonyms = synonymMap.get(foldTerm(term))
-    if (synonyms) {
-      for (const synonym of synonyms) {
-        expandedTerms.add(synonym)
-      }
-    }
-  }
-
-  const result = Array.from(expandedTerms)
-  if (result.length > terms.length) {
-    logger.debug(`Expanded terms: ${terms.join(', ')} -> ${result.join(', ')}`)
-  }
-
-  return result
-}
-
-import { createLogger } from '../../utils/logger'
-
-const logger = createLogger('song-search')
 
 /**
  * Normalizes text by removing diacritics (accents)
@@ -210,26 +27,6 @@ const logger = createLogger('song-search')
  */
 function removeDiacritics(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
-
-/**
- * The canonical form a search term is compared in: lowercase and diacritics
- * folded, matching what `extractSearchTerms` produces and what the FTS
- * tokenizer indexes.
- */
-function foldTerm(text: string): string {
-  return removeDiacritics(text).toLowerCase().trim()
-}
-
-/**
- * A title as the operator would type it: diacritics folded, lowercase,
- * punctuation as spaces — and nothing else added, unlike the indexed form.
- */
-function foldForScore(text: string): string {
-  return removeDiacritics(decodeHtmlEntities(text))
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim()
 }
 
 /**
@@ -289,14 +86,11 @@ export function normalizeForIndex(text: string): string {
   // Single-character tokens stay in the index. They are linguistically
   // meaningful — the Romanian clitic contractions split into them at
   // tokenization ("m-a" → "m a") and a user typing the exact title needs
-  // those tokens to land an exact phrase match in FTS. Per-term scoring
-  // protects itself with ordered indexOf in calculateTitleScoreNormalized.
+  // those tokens to land an exact phrase match in FTS.
   return [...expandedWords, ...joined].join(' ')
 }
 
-/**
- * Updates the FTS index for a specific song (both standard and trigram)
- */
+/** Updates the FTS index for a specific song. */
 export function updateSearchIndex(songId: number): void {
   try {
     logger.debug(`Updating search index for song: ${songId}`)
@@ -342,12 +136,13 @@ export function updateSearchIndex(songId: number): void {
       VALUES (?, ?, ?, ?)
     `).run(songId, normalizedTitle, normalizedCategory, normalizedContent)
 
-    // Update trigram FTS index for fuzzy matching
-    db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
-    db.query(`
-      INSERT INTO songs_fts_trigram (song_id, title, content)
-      VALUES (?, ?, ?)
-    `).run(songId, normalizedTitle, normalizedContent)
+    // A song saved a moment ago is found with a typo straight away.
+    addVocabularyWords(
+      SONGS_FTS_TABLE,
+      indexedWords(
+        `${normalizedTitle} ${normalizedCategory} ${normalizedContent}`,
+      ),
+    )
 
     // The result cache holds whole result sets keyed by query, so an edited
     // title stays unfindable for the cache's lifetime unless it is dropped.
@@ -359,16 +154,13 @@ export function updateSearchIndex(songId: number): void {
   }
 }
 
-/**
- * Removes a song from the FTS index (both standard and trigram)
- */
+/** Removes a song from the FTS index. */
 export function removeFromSearchIndex(songId: number): void {
   try {
     logger.debug(`Removing song from search index: ${songId}`)
 
     const db = getRawDatabase()
     db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
-    db.query('DELETE FROM songs_fts_trigram WHERE song_id = ?').run(songId)
 
     // Otherwise a deleted song keeps showing up in cached result sets.
     clearSearchCache()
@@ -452,20 +244,12 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       db.query(`DELETE FROM songs_fts WHERE song_id IN (${placeholders})`).run(
         ...songIds,
       )
-      db.query(
-        `DELETE FROM songs_fts_trigram WHERE song_id IN (${placeholders})`,
-      ).run(...songIds)
       const deleteTime = performance.now() - deleteStart
 
       // Prepare insert statements
       const ftsInsert = db.prepare(`
         INSERT INTO songs_fts (song_id, title, category_name, content)
         VALUES (?, ?, ?, ?)
-      `)
-
-      const trigramInsert = db.prepare(`
-        INSERT INTO songs_fts_trigram (song_id, title, content)
-        VALUES (?, ?, ?)
       `)
 
       // Insert each song with normalized content
@@ -483,16 +267,15 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
           normalizedCategory,
           normalizedContent,
         )
-
-        trigramInsert.run(song.id, normalizedTitle, normalizedContent)
       }
       const ftsTime = performance.now() - ftsStart
 
       db.run('COMMIT')
       const totalTime = performance.now() - totalStart
 
-      // Clear the search cache since index changed
+      // Clear the search cache and vocabulary since the index changed
       clearSearchCache()
+      resetVocabulary(SONGS_FTS_TABLE)
 
       logger.info(
         `[PERF] Search index update: ${totalTime.toFixed(2)}ms | Delete: ${deleteTime.toFixed(0)}ms | FTS: ${ftsTime.toFixed(0)}ms`,
@@ -507,18 +290,15 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 }
 
 /**
- * Warms up the songs FTS index by running a cheap query to load index pages into OS page cache.
+ * Warms up the songs FTS index by loading its vocabulary (the typo lookup),
+ * which reads the whole index into the OS page cache on the way.
  */
 export function warmupSearchIndex(): void {
   const startTime = performance.now()
   try {
-    const rawDb = getRawDatabase()
-    rawDb.run("SELECT rowid FROM songs_fts WHERE songs_fts MATCH 'a*' LIMIT 1")
-    rawDb.run(
-      "SELECT rowid FROM songs_fts_trigram WHERE songs_fts_trigram MATCH 'aaa' LIMIT 1",
-    )
-  } catch {
-    // FTS tables might not exist yet
+    getVocabulary(SONGS_FTS_TABLE)
+  } catch (error) {
+    logger.warning(`FTS warmup skipped: ${error}`)
   }
   const elapsed = performance.now() - startTime
   logger.info(`FTS index warmup completed in ${elapsed.toFixed(1)}ms`)
@@ -527,7 +307,7 @@ export function warmupSearchIndex(): void {
 const PROGRESS_EVERY_SONGS = 1000
 
 /**
- * Rebuilds the entire search index (both standard and trigram)
+ * Rebuilds the entire search index
  * Uses JavaScript normalization to properly expand Romanian contractions
  * and handle hyphenated words for better searchability.
  * `onProgress` hears songs indexed of all songs (the start-up loading page).
@@ -574,17 +354,11 @@ export function rebuildSearchIndex(
     try {
       // Clear existing indexes
       db.run('DELETE FROM songs_fts')
-      db.run('DELETE FROM songs_fts_trigram')
 
       // Prepare insert statements
       const ftsInsert = db.prepare(`
         INSERT INTO songs_fts (song_id, title, category_name, content)
         VALUES (?, ?, ?, ?)
-      `)
-
-      const trigramInsert = db.prepare(`
-        INSERT INTO songs_fts_trigram (song_id, title, content)
-        VALUES (?, ?, ?)
       `)
 
       // Insert each song with normalized content
@@ -604,15 +378,14 @@ export function rebuildSearchIndex(
           normalizedCategory,
           normalizedContent,
         )
-
-        trigramInsert.run(song.id, normalizedTitle, normalizedContent)
       }
 
       db.run('COMMIT')
       onProgress?.(songs.length, songs.length)
 
-      // Clear the search cache since index changed
+      // Clear the search cache and vocabulary since the index changed
       clearSearchCache()
+      resetVocabulary(SONGS_FTS_TABLE)
 
       logger.info(`Search index rebuilt: ${songs.length} songs indexed`)
     } catch (error) {
@@ -624,1113 +397,10 @@ export function rebuildSearchIndex(
   }
 }
 
-/**
- * Extracts and sanitizes search terms from query text.
- *
- * Strips a single leading hymn-number prefix ("1.", "265 -", "34 ") so
- * that users who type "1. Cand Isus Hristos m-a mantuit" still hit the
- * canonical title "Cand Isus Hristos m-a mantuit". Single-letter tokens
- * inside the rest of the query (Romanian clitic contractions m / a /
- * s / n that come from splitting "m-a", "s-a", "n-am") are preserved —
- * they carry phrase signal in FTS and are handled defensively in
- * downstream scoring (ordered indexOf, broad-OR exclusion).
- */
-export function extractSearchTerms(queryText: string): string[] {
-  // Strip leading hymn-number-style prefix: optional digits, an optional
-  // "." or "-", and trailing whitespace. Only at the START of the input
-  // so internal numbers (e.g. song lyrics containing dates) survive.
-  const dehymned = queryText.replace(/^\s*\d+[.\-]?\s+/, '')
-
-  // Every sign — apostrophes included — separates, exactly as in the index,
-  // so "ne'ncetat" and "ne-ncetat" both become ["ne", "ncetat"].
-  const sanitized = removeDiacritics(dehymned)
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ') // Replace ALL non-letter, non-number, non-space chars with space
-    .replace(/\s+/g, ' ')
-    .trim()
+/** The words the FTS tokenizer stores for an indexed text. */
+function indexedWords(normalizedText: string): string[] {
+  return normalizedText
     .toLowerCase()
-
-  const terms = sanitized.split(/\s+/).filter((t) => t.length > 0)
-
-  // Deduplicate terms (e.g. "Isus,Isus" → ["isus", "isus"] → ["isus"])
-  return [...new Set(terms)]
-}
-
-/** One query word: the split pieces it searches as, and its other spellings. */
-interface QueryWordSpellings {
-  pieces: string[]
-  variants: string[]
-}
-
-function extractQueryWordSpellings(queryText: string): QueryWordSpellings[] {
-  const dehymned = queryText.replace(/^\s*\d+[.\-]?\s+/, '')
-  const spellings: QueryWordSpellings[] = []
-  for (const word of removeDiacritics(dehymned).toLowerCase().split(/\s+/)) {
-    const variants = [...joinedWordVariants(word), ...elisionVariants(word)]
-    if (variants.length === 0) continue
-    spellings.push({ pieces: extractSearchTerms(word), variants })
-  }
-  return spellings
-}
-
-/**
- * The other spellings of each query word, e.g. "ne-ncetat" → ["nencetat",
- * "neincetat"] and "neincetat" → ["nencetat"]. These go into the FTS query
- * and the highlighter alongside the split terms, so however the operator
- * writes a word — with a sign, without, or with the elided "î" back in —
- * it finds songs that write it any other way.
- */
-export function extractQueryVariants(queryText: string): string[] {
-  const variants = new Set<string>()
-  for (const word of extractQueryWordSpellings(queryText)) {
-    for (const variant of word.variants) variants.add(variant)
-  }
-  return Array.from(variants)
-}
-
-/**
- * The term lists a song is scored against: the typed terms, plus one list
- * per other spelling with that word swapped in — so a title written
- * "neîncetat" scores as a full match for "ne-ncetat" and vice versa.
- */
-export function buildScoringTermLists(
-  queryText: string,
-  terms: string[],
-): string[][] {
-  const lists: string[][] = [terms]
-  for (const word of extractQueryWordSpellings(queryText)) {
-    const at = findSequence(terms, word.pieces)
-    if (at === -1) continue
-    for (const variant of word.variants) {
-      lists.push([
-        ...terms.slice(0, at),
-        variant,
-        ...terms.slice(at + word.pieces.length),
-      ])
-    }
-  }
-  return lists
-}
-
-function findSequence(haystack: string[], needle: string[]): number {
-  if (needle.length === 0) return -1
-  for (let i = 0; i + needle.length <= haystack.length; i++) {
-    if (needle.every((piece, j) => haystack[i + j] === piece)) return i
-  }
-  return -1
-}
-
-/**
- * Searches for a song by hymn number (e.g. "#034", "#34", "034", "34")
- * Returns results directly from DB lookup (pre-phase, before FTS)
- */
-function searchByHymnNumber(
-  rawQuery: string,
-  db: ReturnType<typeof getRawDatabase>,
-  extraFilter: string,
-  categoryParams: number[],
-): Array<{
-  id: number
-  title: string
-  category_id: number | null
-  category_name: string | null
-  category_priority: number
-  presentation_count: number
-  key_line: string | null
-  hymn_number: string | null
-}> | null {
-  // Match queries like "#034", "#34", "034", "34" — purely numeric with optional # prefix
-  const match = rawQuery.trim().match(/^#?(\d+)$/)
-  if (!match) return null
-
-  const numericPart = match[1]
-  // Strip leading zeros for a normalized comparison
-  const numericValue = Number.parseInt(numericPart, 10).toString()
-
-  logger.debug(
-    `Hymn number pre-phase lookup for: "${rawQuery}" → ${numericValue}`,
-  )
-
-  const rows = db
-    .query(
-      `
-      SELECT
-        s.id,
-        s.title,
-        s.category_id,
-        sc.name as category_name,
-        COALESCE(sc.priority, 1) as category_priority,
-        s.presentation_count,
-        s.key_line,
-        s.hymn_number
-      FROM songs s
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      WHERE (
-        s.hymn_number = ?
-        OR s.hymn_number = ?
-        OR CAST(CAST(s.hymn_number AS INTEGER) AS TEXT) = ?
-        OR (
-          s.title GLOB '[0-9]*'
-          AND CAST(SUBSTR(s.title, 1,
-            CASE WHEN INSTR(s.title, ' ') > 0
-              THEN INSTR(s.title, ' ') - 1
-              ELSE LENGTH(s.title)
-            END
-          ) AS INTEGER) = CAST(? AS INTEGER)
-        )
-      )
-      ${extraFilter ? `AND ${extraFilter.replace(/^AND /, '')}` : ''}
-      LIMIT 20
-    `,
-    )
-    .all(
-      numericPart,
-      `#${numericPart}`,
-      numericValue,
-      numericValue,
-      ...categoryParams,
-    ) as Array<{
-    id: number
-    title: string
-    category_id: number | null
-    category_name: string | null
-    category_priority: number
-    presentation_count: number
-    key_line: string | null
-    hymn_number: string | null
-  }>
-
-  return rows.length > 0 ? rows : null
-}
-
-/**
- * Checks which terms exist in the corpus.
- * Uses a single FTS query with OR to check all terms at once.
- * All terms that match at least one document are considered valid.
- */
-export function getValidTerms(terms: string[]): { validTerms: string[] } {
-  // All terms are valid if they can be part of an FTS query
-  // The FTS engine handles non-matching terms gracefully
-  const validTerms = terms.filter(
-    (t) => t.length > 0 && /^[\p{L}\p{N}]+$/u.test(t),
-  )
-  return { validTerms }
-}
-
-/**
- * The shared tiers of the FTS query, most specific first. Order matters
- * because BM25 sums score contributions across all matched sub-clauses, so
- * the most-specific tier first gives true phrase matches a decisive boost.
- *
- * - "<phrase>" : exact phrase, synonym-aware.
- * - variants : a hyphen/apostrophe word in its other spellings —
- *     "ne-ncetat" must reach "nencetat" and "neîncetat", which the split
- *     phrase cannot.
- * - NEAR(terms, 10) : proximity fallback.
- * - prefix OR (multi-char terms only) : broad recall. Single-char prefixes
- *     like "a"* match every word starting with "a" — they are excluded here
- *     to avoid drowning specific matches in noise.
- */
-function buildQueryTiers(
-  effectiveTerms: string[],
-  joinedVariants: string[],
-): string[] {
-  const variantClause =
-    joinedVariants.length > 0
-      ? `(${joinedVariants.map((v) => `"${v}"*`).join(' OR ')})`
-      : null
-
-  if (effectiveTerms.length === 1) {
-    const single = `"${effectiveTerms[0]}"*`
-    return variantClause ? [single, variantClause] : [single]
-  }
-
-  const broadOrTerms = effectiveTerms.filter((t) => t.length > 1)
-  const tiers: string[] = [`("${effectiveTerms.join(' ')}")`]
-  if (variantClause) tiers.push(variantClause)
-  tiers.push(`(NEAR(${effectiveTerms.map((t) => `"${t}"`).join(' ')}, 10))`)
-  if (broadOrTerms.length > 0) {
-    tiers.push(`(${broadOrTerms.map((t) => `"${t}"*`).join(' OR ')})`)
-  }
-  return tiers
-}
-
-/**
- * Builds a simple FTS5 query optimized for performance
- * Uses OR for broad matching, letting post-processing handle ranking
- *
- * Strategy:
- * 1. Exact phrase match (highest BM25 boost)
- * 2. NEAR query for proximity matching
- * 3. OR with prefix for each term (broad candidate search)
- *
- * Single-character terms are filtered out to reduce noise
- * (e.g., "m-a mantuit" becomes ["a", "mantuit"] → only ["mantuit"] is used for FTS)
- */
-export function buildSearchQuery(
-  queryText: string,
-  /**
-   * Original (pre-synonym-expansion) terms used to build a tight
-   * `title:"…"` clause. When `queryText` carries synonym-expanded
-   * terms (e.g. `cristos` appended because the user typed `hristos`),
-   * the title-restricted phrase must NOT include the synonyms,
-   * otherwise it never matches any indexed title. Defaults to the
-   * extracted terms of `queryText` for back-compat with callers that
-   * don't expand.
-   */
-  originalTerms?: string[],
-  /**
-   * Other spellings of the query words (see `extractQueryVariants`),
-   * matched as their own prefix terms.
-   */
-  joinedVariants: string[] = [],
-): string {
-  const effectiveTerms = extractSearchTerms(queryText)
-
-  if (effectiveTerms.length === 0) return ''
-
-  const tiers = buildQueryTiers(effectiveTerms, joinedVariants)
-  if (effectiveTerms.length === 1) return tiers.join(' OR ')
-
-  // title:"<original phrase>" : exact title match (incl. clitic
-  // single-letter tokens like "m a", so "Cand Isus Hristos m-a mantuit"
-  // indexes/matches identically). Built from the user's ORIGINAL terms
-  // only — synonyms (e.g. cristos) must not appear in the title clause or
-  // it never matches a real title.
-  const titlePhraseTerms = originalTerms ?? effectiveTerms
-  const clauses: string[] = []
-  if (titlePhraseTerms.length > 1) {
-    clauses.push(`(title:"${titlePhraseTerms.join(' ')}")`)
-  }
-  clauses.push(...tiers)
-
-  return clauses.join(' OR ')
-}
-
-/**
- * The same tiers restricted to the title column. Run on its own, before
- * the general query, so that every song whose TITLE matches is a candidate
- * no matter how many songs merely sing the words: the general query's
- * candidate cut is taken by BM25 rank, and a few hundred lyric phrase
- * matches can push a title spelled "neîncetat" out of it when the operator
- * typed "ne-ncetat".
- */
-export function buildTitleSearchQuery(
-  queryText: string,
-  joinedVariants: string[] = [],
-): string {
-  const effectiveTerms = extractSearchTerms(queryText)
-  if (effectiveTerms.length === 0) return ''
-  const tiers = buildQueryTiers(effectiveTerms, joinedVariants)
-  return `title : (${tiers.join(' OR ')})`
-}
-
-/**
- * Title scoring for pre-normalized (diacritics-free, lowercase) text.
- * Skips redundant removeDiacritics calls.
- */
-export function calculateTitleScoreNormalized(
-  normalizedTitle: string,
-  queryTerms: string[],
-): number {
-  if (!normalizedTitle || queryTerms.length === 0) return 0
-
-  const title = normalizedTitle.toLowerCase()
-  const exactPhrase = queryTerms.join(' ')
-
-  if (title.startsWith(exactPhrase)) return 100
-  if (title.includes(exactPhrase)) return 95
-
-  // Per-term matching with TWO passes:
-  //   1. inOrderCount  — terms found in the same order they appear in the
-  //      query, by searching from lastMatchPos + 1 each step. Single-letter
-  //      tokens (Romanian clitics "m", "a", "s", "n" that come from
-  //      splitting "m-a", "s-a", "n-am") that happen to also appear earlier
-  //      inside another word ("a" in "cAnd") no longer poison the order
-  //      detection — the ordered scan finds the LATER occurrence that
-  //      actually belongs to the clitic position in the title.
-  //   2. matchedCount  — terms that appear anywhere in the title at all.
-  //      Used to reward full coverage even when one term is out of order.
-  let matchedCount = 0
-  let inOrderCount = 0
-  let lastEnd = -1
-  for (const term of queryTerms) {
-    if (title.includes(term)) matchedCount++
-    const orderedPos = title.indexOf(term, lastEnd + 1)
-    if (orderedPos !== -1) {
-      inOrderCount++
-      lastEnd = orderedPos + term.length - 1
-    }
-  }
-
-  if (matchedCount === 0) return 0
-
-  // Reward proportional coverage of MEANINGFUL terms — single-character
-  // tokens contribute when matched but never penalise when missing, so a
-  // stray noise char in the query (e.g. user typed "Isus a inviat",
-  // tokens ["isus","a","inviat"]) does not drag the percentage down on a
-  // title that happens to lack the "a".
-  const meaningfulQueryTerms = queryTerms.filter((t) => t.length > 1)
-  const meaningfulMatched = meaningfulQueryTerms.filter((t) =>
-    title.includes(t),
-  ).length
-  const denom = meaningfulQueryTerms.length || queryTerms.length
-  const matchPercentage = meaningfulMatched / denom
-
-  const orderBonus = inOrderCount === matchedCount ? 0.2 : 0
-  const allMatchedBonus =
-    meaningfulMatched === meaningfulQueryTerms.length &&
-    meaningfulQueryTerms.length > 0
-      ? 0.2
-      : 0
-
-  return Math.round(
-    matchPercentage * 54 + allMatchedBonus * 100 + orderBonus * 100,
-  )
-}
-
-/**
- * Optimized content scoring for pre-normalized (diacritics-free) text.
- * Skips redundant removeDiacritics calls.
- */
-export function calculateBestPhraseScoreNormalized(
-  normalizedContent: string,
-  queryTerms: string[],
-): number {
-  if (!normalizedContent || queryTerms.length === 0) return 0
-
-  const content = normalizedContent.toLowerCase()
-  const exactPhrase = queryTerms.join(' ')
-  if (content.includes(exactPhrase)) return 100
-
-  const termPositions: Map<number, number[]> = new Map()
-  for (let i = 0; i < queryTerms.length; i++) {
-    const positions: number[] = []
-    let pos = 0
-    while ((pos = content.indexOf(queryTerms[i], pos)) !== -1) {
-      positions.push(pos)
-      pos++
-    }
-    if (positions.length > 0) termPositions.set(i, positions)
-  }
-
-  if (termPositions.size === 0) return 0
-  if (termPositions.size === 1) return Math.round((1 / queryTerms.length) * 50)
-
-  let bestScore = 0
-  const CLUSTER_RADIUS = 150
-
-  for (const [startTermIdx, startPositions] of termPositions) {
-    for (const anchorPos of startPositions) {
-      const termsInCluster = new Set<number>([startTermIdx])
-      let clusterStart = anchorPos
-      let clusterEnd = anchorPos + queryTerms[startTermIdx].length
-
-      for (const [termIdx, positions] of termPositions) {
-        if (termIdx === startTermIdx) continue
-        let closestPos = -1
-        let closestDist = Number.POSITIVE_INFINITY
-        for (const pos of positions) {
-          const d = Math.min(
-            Math.abs(pos - clusterStart),
-            Math.abs(pos - clusterEnd),
-          )
-          if (d < closestDist && d <= CLUSTER_RADIUS) {
-            closestDist = d
-            closestPos = pos
-          }
-        }
-        if (closestPos !== -1) {
-          termsInCluster.add(termIdx)
-          clusterStart = Math.min(clusterStart, closestPos)
-          clusterEnd = Math.max(
-            clusterEnd,
-            closestPos + queryTerms[termIdx].length,
-          )
-        }
-      }
-
-      const matchRatio = termsInCluster.size / queryTerms.length
-      const clusterSpan = clusterEnd - clusterStart
-
-      let inOrder = true
-      let lastPos = -1
-      for (let i = 0; i < queryTerms.length; i++) {
-        if (!termsInCluster.has(i)) continue
-        const positions = termPositions.get(i) || []
-        const posInCluster = positions.find(
-          (p) => p >= clusterStart && p <= clusterEnd,
-        )
-        if (posInCluster !== undefined) {
-          if (posInCluster < lastPos) {
-            inOrder = false
-            break
-          }
-          lastPos = posInCluster
-        }
-      }
-
-      const baseScore = matchRatio * 50
-      const idealSpan = termsInCluster.size * 10
-      const proximityScore =
-        termsInCluster.size > 1
-          ? Math.max(0, 30 * (1 - Math.min(1, (clusterSpan - idealSpan) / 200)))
-          : 0
-      const orderScore = inOrder ? 20 : 0
-      bestScore = Math.max(bestScore, baseScore + proximityScore + orderScore)
-    }
-  }
-
-  return Math.round(bestScore)
-}
-
-/**
- * Extracts fuzzy search substrings from a term
- * For "Hristos", extracts substrings that would also match "Cristos"
- * Uses middle portion of words for better fuzzy matching
- * Minimum length 4 to avoid false positives
- */
-function extractFuzzySubstrings(term: string): string[] {
-  if (term.length < 5) return []
-
-  const substrings: string[] = []
-
-  // Extract middle portions (skip first and last char for fuzzy matching)
-  // "Hristos" -> "risto", "isto"
-  // "Cristos" -> "risto", "isto"
-  // Common matches: "risto", "isto"
-  // Minimum length 4 to avoid false positives like "ist" matching "Linistit"
-  for (let len = Math.min(5, term.length - 1); len >= 4; len--) {
-    for (let start = 1; start <= term.length - len; start++) {
-      const sub = term.substring(start, start + len)
-      if (sub.length >= 4 && !substrings.includes(sub)) {
-        substrings.push(sub)
-      }
-    }
-  }
-
-  return substrings.slice(0, 3) // Limit to top 3 substrings per term
-}
-
-/**
- * Highlights search terms in text, diacritic- and punctuation-insensitive.
- * Operates on the original text so the highlighted output keeps its
- * diacritics, entities and signs — "ne-ncetat" typed marks the whole
- * "ne'ncetat" or "neîncetat" in the title, sign included.
- *
- * Literal typing wins: while the user types "Cand Isus Hristos m" → "m-" →
- * "m-a" the mark widens one character at a time. Only when the typed text
- * is not a literal substring does it fall back to spelling variants, then
- * to per-term marks merged across whitespace / clitic gaps.
- */
-export function highlightWithDiacritics(
-  text: string,
-  searchTerms: string[],
-  rawQuery?: string,
-): string {
-  if (!searchTerms.length && !rawQuery) return text
-  const ranges = findHighlightRanges(text, searchTerms, { rawQuery })
-  return ranges.length === 0 ? text : wrapRanges(text, ranges)
-}
-
-/**
- * Creates a highlighted content snippet around the best match. Shares the
- * range finder with the title highlighter so the two always mark the same
- * thing; additionally lights up fuzzy matches (e.g. "Hristos" → "Cristos").
- */
-export function createFuzzyHighlightedSnippet(
-  content: string,
-  queryTerms: string[],
-  maxLength: number = 150,
-  rawQuery?: string,
-): string {
-  // Strip HTML tags for cleaner processing
-  const plainContent = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
-
-  const ranges = findHighlightRanges(plainContent, queryTerms, {
-    rawQuery,
-    fuzzy: true,
-  })
-
-  if (ranges.length === 0) {
-    // No matches, return start of content
-    return plainContent.length > maxLength
-      ? `${plainContent.substring(0, maxLength)}...`
-      : plainContent
-  }
-
-  // Find the best snippet window (area with most highlighted characters),
-  // always wide enough to hold the match it is anchored on in full.
-  let bestStart = 0
-  let bestEnd = Math.min(plainContent.length, maxLength)
-  let bestHighlightChars = 0
-  for (const range of ranges) {
-    const windowStart = Math.max(0, range.start - 30)
-    const windowEnd = Math.min(
-      plainContent.length,
-      Math.max(windowStart + maxLength, range.end),
-    )
-    const highlightChars = ranges
-      .filter((r) => r.start >= windowStart && r.end <= windowEnd)
-      .reduce((sum, r) => sum + (r.end - r.start), 0)
-    if (highlightChars > bestHighlightChars) {
-      bestHighlightChars = highlightChars
-      bestStart = windowStart
-      bestEnd = windowEnd
-    }
-  }
-
-  const snippet = plainContent.slice(bestStart, bestEnd)
-  const local = ranges
-    .filter((r) => r.start >= bestStart && r.end <= bestEnd)
-    .map((r) => ({ start: r.start - bestStart, end: r.end - bestStart }))
-
-  const prefix = bestStart > 0 ? '...' : ''
-  const suffix = bestEnd < plainContent.length ? '...' : ''
-  return `${prefix}${wrapRanges(snippet, local)}${suffix}`
-}
-
-/**
- * Builds a trigram query for fuzzy matching
- * Uses middle substrings of words to find similar matches
- * e.g., "Hristos" -> searches for "risto", "isto" which also matches "Cristos"
- */
-function buildTrigramQuery(terms: string[]): string {
-  const allSubstrings: string[] = []
-
-  for (const term of terms) {
-    // Add full term if long enough
-    if (term.length >= 4) {
-      allSubstrings.push(term)
-    }
-    // Add fuzzy substrings
-    allSubstrings.push(...extractFuzzySubstrings(term))
-  }
-
-  if (allSubstrings.length === 0) return ''
-
-  // Use OR to match any substring
-  return allSubstrings.map((s) => `"${s}"`).join(' OR ')
-}
-
-/**
- * Searches songs using FTS5 with three-phase ranking:
- *
- * Phase 1: Standard FTS5 query to find exact/prefix matches
- * Phase 2: Trigram FTS5 query to find fuzzy/similar matches (e.g., "Hristos" ~ "Cristos")
- * Phase 3: Combine results and re-rank by term match count
- *
- * This approach:
- * - Uses standard FTS for fast exact matching
- * - Uses trigram for fuzzy matching of similar words
- * - Properly ranks partial phrase matches (e.g., 5/6 terms matched ranks high)
- *
- * Performance optimizations:
- * - Uses `rank` column instead of bm25() for faster sorting
- * - Simple query structure avoids combinatorial explosion
- * - Limits candidates, returns top results after re-ranking
- *
- * @param query - Search query string
- * @param categoryIds - Optional category IDs to filter results (array)
- * @param limit - Maximum number of results to return (default: 50)
- */
-export function searchSongs(
-  query: string,
-  categoryIds?: number[],
-  rawLimit = 50,
-  filters?: {
-    presentedOnly?: boolean
-    inSchedulesOnly?: boolean
-    hasKeyLine?: boolean
-    tagIds?: number[]
-  },
-): SongSearchResult[] {
-  const limit = Math.min(Math.max(1, rawLimit), 200)
-  const startTime = performance.now()
-
-  try {
-    logger.debug(`Searching songs: ${query}`)
-
-    if (!query.trim()) {
-      return []
-    }
-
-    // Check cache first (before any processing)
-    const cacheKey = getSearchCacheKey(query, categoryIds, filters)
-    const cachedResults = getFromSearchCache(cacheKey)
-    if (cachedResults) {
-      logger.debug(
-        `Cache hit for: "${query}" (${cachedResults.length} results)`,
-      )
-      return cachedResults.slice(0, limit)
-    }
-
-    const db = getRawDatabase()
-
-    // Build extra filter conditions early for hymn number pre-phase.
-    // Songs in a hidden category never surface in search.
-    const prePhaseExtraConditions: string[] = [
-      visibleCategoryCondition('s.category_id'),
-    ]
-    const prePhaseCategoryParams: number[] = []
-    if (categoryIds && categoryIds.length > 0) {
-      const placeholders = categoryIds.map(() => '?').join(',')
-      prePhaseExtraConditions.push(`s.category_id IN (${placeholders})`)
-      prePhaseCategoryParams.push(...categoryIds)
-    }
-    if (filters?.tagIds && filters.tagIds.length > 0) {
-      prePhaseExtraConditions.push(songHasAnyTagCondition(filters.tagIds))
-      prePhaseCategoryParams.push(...filters.tagIds)
-    }
-    if (filters?.presentedOnly) {
-      prePhaseExtraConditions.push('s.presentation_count > 0')
-    }
-    if (filters?.inSchedulesOnly) {
-      prePhaseExtraConditions.push(
-        `s.id IN (SELECT DISTINCT song_id FROM schedule_items WHERE song_id IS NOT NULL)`,
-      )
-    }
-    if (filters?.hasKeyLine) {
-      prePhaseExtraConditions.push(
-        `s.key_line IS NOT NULL AND s.key_line != ''`,
-      )
-    }
-    const prePhaseExtraFilter =
-      prePhaseExtraConditions.length > 0
-        ? `AND ${prePhaseExtraConditions.join(' AND ')}`
-        : ''
-
-    // Pre-phase: Hymn number direct lookup (e.g. "#034", "034", "34")
-    const hymnRows = searchByHymnNumber(
-      query,
-      db,
-      prePhaseExtraFilter,
-      prePhaseCategoryParams,
-    )
-    if (hymnRows && hymnRows.length > 0) {
-      logger.debug(`Hymn number pre-phase: ${hymnRows.length} results`)
-      const hymnFinalResults: SongSearchResult[] = hymnRows
-        .map((r) => ({
-          id: r.id,
-          title: r.title,
-          categoryId: r.category_id,
-          categoryName: r.category_name,
-          keyLine: r.key_line,
-          highlightedTitle: r.title,
-          matchedContent: r.hymn_number ? `Hymn #${r.hymn_number}` : '',
-          presentationCount: r.presentation_count,
-          score: 100,
-        }))
-        .slice(0, limit)
-      setInSearchCache(cacheKey, hymnFinalResults)
-      return hymnFinalResults
-    }
-
-    const queryTerms = extractSearchTerms(query)
-
-    // Filter to valid terms (terms that exist in corpus)
-    const validTermsStart = performance.now()
-    let { validTerms } = getValidTerms(queryTerms)
-    logger.debug(
-      `getValidTerms: ${(performance.now() - validTermsStart).toFixed(1)}ms`,
-    )
-
-    // If ALL terms were filtered out, fall back to original terms
-    if (validTerms.length === 0 && queryTerms.length > 0) {
-      logger.debug(
-        'All terms filtered as noise, falling back to original terms',
-      )
-      validTerms = queryTerms
-    }
-
-    logger.debug(
-      `Query terms: ${queryTerms.join(', ')} | Valid: ${validTerms.join(', ')}`,
-    )
-
-    // If still no valid terms (shouldn't happen), return empty
-    if (validTerms.length === 0) {
-      logger.debug('No valid search terms found')
-      return []
-    }
-
-    // Expand valid terms with synonyms for broader search
-    const expandedTerms = expandTermsWithSynonyms(validTerms)
-
-    // Build FTS query using expanded terms for broader results, but pass the
-    // pre-expansion terms separately so the title-restricted clause matches
-    // the user's literal title query without diluting on synonym variants.
-    const joinedVariants = extractQueryVariants(query)
-    const ftsQuery = buildSearchQuery(
-      expandedTerms.join(' '),
-      validTerms,
-      joinedVariants,
-    )
-    const titleQuery = buildTitleSearchQuery(
-      expandedTerms.join(' '),
-      joinedVariants,
-    )
-
-    if (!ftsQuery) {
-      return []
-    }
-
-    logger.debug(`FTS query: ${ftsQuery}`)
-
-    // Phase 1: Standard FTS5 search for exact/prefix matches
-    // Build additional SQL filters. Hidden categories are excluded in SQL so
-    // they never take candidate slots from visible songs.
-    const extraConditions: string[] = [
-      visibleCategoryCondition('s.category_id'),
-    ]
-    let categoryParams: number[] = []
-    if (categoryIds && categoryIds.length > 0) {
-      const placeholders = categoryIds.map(() => '?').join(',')
-      extraConditions.push(`s.category_id IN (${placeholders})`)
-      categoryParams = categoryIds
-    }
-    if (filters?.tagIds && filters.tagIds.length > 0) {
-      extraConditions.push(songHasAnyTagCondition(filters.tagIds))
-      categoryParams = [...categoryParams, ...filters.tagIds]
-    }
-    if (filters?.presentedOnly) {
-      extraConditions.push('s.presentation_count > 0')
-    }
-    if (filters?.inSchedulesOnly) {
-      extraConditions.push(
-        `s.id IN (SELECT DISTINCT song_id FROM schedule_items WHERE song_id IS NOT NULL)`,
-      )
-    }
-    if (filters?.hasKeyLine) {
-      extraConditions.push(`s.key_line IS NOT NULL AND s.key_line != ''`)
-    }
-    const extraFilter =
-      extraConditions.length > 0 ? `AND ${extraConditions.join(' AND ')}` : ''
-    const candidateSql = (limit: number) => `
-      SELECT
-        s.id,
-        s.title,
-        s.alternate_titles,
-        s.category_id,
-        sc.name as category_name,
-        COALESCE(sc.priority, 1) as category_priority,
-        s.presentation_count,
-        s.key_line,
-        songs_fts.content as full_content,
-        songs_fts.title as fts_title,
-        COALESCE((SELECT GROUP_CONCAT(content, ' ') FROM (SELECT content FROM song_slides WHERE song_id = s.id ORDER BY sort_order)), '') as original_content,
-        rank as bm25_rank
-      FROM songs_fts
-      JOIN songs s ON s.id = songs_fts.song_id
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      WHERE songs_fts MATCH ? ${extraFilter}
-      ORDER BY rank
-      LIMIT ${limit}
-    `
-    type CandidateRow = {
-      id: number
-      title: string
-      alternate_titles: string | null
-      category_id: number | null
-      category_name: string | null
-      category_priority: number
-      presentation_count: number
-      key_line: string | null
-      full_content: string
-      fts_title: string
-      original_content: string
-      bm25_rank: number
-    }
-
-    // Phase 1a: titles first. An operator typing a title wants that song,
-    // so every title match is a candidate before the lyrics are looked at.
-    const titleResults = titleQuery
-      ? (db
-          .query(candidateSql(TITLE_CANDIDATE_LIMIT))
-          .all(titleQuery, ...categoryParams) as CandidateRow[])
-      : []
-    logger.debug(`Phase 1a (title): Found ${titleResults.length} results`)
-
-    // Phase 1b: Standard FTS5 search across title + content
-    const standardResults = db
-      .query(candidateSql(FTS_CANDIDATE_LIMIT))
-      .all(ftsQuery, ...categoryParams) as CandidateRow[]
-
-    const phase1Elapsed = performance.now() - startTime
-    logger.debug(
-      `Phase 1 (standard): Found ${standardResults.length} results in ${phase1Elapsed.toFixed(1)}ms`,
-    )
-
-    // Phase 2: Trigram search for fuzzy matches (use expanded terms)
-    let phase2Elapsed = phase1Elapsed
-    const trigramQuery = buildTrigramQuery([
-      ...expandedTerms,
-      ...joinedVariants,
-    ])
-    let trigramResults: Array<{
-      id: number
-      title: string
-      category_id: number | null
-      category_name: string | null
-      category_priority: number
-      presentation_count: number
-      key_line: string | null
-      full_content: string
-      bm25_rank: number
-    }> = []
-
-    if (trigramQuery) {
-      try {
-        const trigramQueryParams = [trigramQuery, ...categoryParams]
-        trigramResults = db
-          .query(
-            `
-          SELECT
-            s.id,
-            s.title,
-            s.alternate_titles,
-            s.category_id,
-            sc.name as category_name,
-            COALESCE(sc.priority, 1) as category_priority,
-            s.presentation_count,
-            s.key_line,
-            songs_fts_trigram.content as full_content,
-            rank as bm25_rank
-          FROM songs_fts_trigram
-          JOIN songs s ON s.id = songs_fts_trigram.song_id
-          LEFT JOIN song_categories sc ON s.category_id = sc.id
-          WHERE songs_fts_trigram MATCH ? ${extraFilter}
-          ORDER BY rank
-          LIMIT ${TRIGRAM_CANDIDATE_LIMIT}
-        `,
-          )
-          .all(...trigramQueryParams) as typeof trigramResults
-
-        phase2Elapsed = performance.now() - startTime
-        logger.debug(
-          `Phase 2 (trigram): Found ${trigramResults.length} results in ${phase2Elapsed.toFixed(1)}ms`,
-        )
-      } catch (e) {
-        // Trigram table might not exist yet, continue without it
-        logger.debug(`Trigram search failed (table may not exist): ${e}`)
-      }
-    }
-
-    // Combine results - use Map to deduplicate by song ID
-    const candidateMap = new Map<
-      number,
-      {
-        id: number
-        title: string
-        alternate_titles: string | null
-        category_id: number | null
-        category_name: string | null
-        category_priority: number
-        presentation_count: number
-        key_line: string | null
-        full_content: string
-        fts_title: string
-        original_content: string
-        bm25_rank: number
-        fromTrigram: boolean
-      }
-    >()
-
-    // Title matches first, then the general results
-    for (const r of [...titleResults, ...standardResults]) {
-      if (!candidateMap.has(r.id)) {
-        candidateMap.set(r.id, { ...r, fromTrigram: false })
-      }
-    }
-
-    // Add trigram results (without overwriting standard results)
-    for (const r of trigramResults) {
-      if (!candidateMap.has(r.id)) {
-        candidateMap.set(r.id, {
-          ...r,
-          // The trigram table carries no separate title column to score
-          // against, so the same set of names the standard index holds is
-          // rebuilt here — otherwise a fuzzy hit on an alternate title would
-          // be scored as if the song had no such name.
-          fts_title: removeDiacritics(
-            joinSearchTitles(r.title, r.alternate_titles),
-          ).toLowerCase(),
-          original_content: '',
-          fromTrigram: true,
-        })
-      }
-    }
-
-    const candidates = Array.from(candidateMap.values())
-    logger.debug(`Combined: ${candidates.length} unique candidates`)
-
-    // Phase 3: Calculate match scores using phrase-based scoring
-    // FTS content is already diacritics-free (normalizeForIndex strips diacritics)
-    // so we skip redundant removeDiacritics calls in scoring
-    // Title matches are a different class of result from lyric matches: an
-    // operator typing a title wants that song, not every song that happens to
-    // sing the words. A song whose title matches well is scored in a band
-    // above every content-only match instead of competing with it on a shared
-    // scale, and the boosts below only ever reorder songs inside their band.
-    // The offset clears the highest a content-only match can reach once every
-    // multiplier below is applied (100 * 1.15 * 1.1 ≈ 127), so the bands
-    // never overlap.
-    const TITLE_MATCH_THRESHOLD = 50
-    const TITLE_BAND_OFFSET = 200
-    // The index carries every spelling of a word ("ne ncetat … nencetat
-    // neincetat"), so a title written "neîncetat" and one written
-    // "ne-ncetat" score the same for either query. The one spelled the way
-    // the operator typed it goes first.
-    const EXACT_SPELLING_BONUS = 2
-    const typedPhrase = validTerms.join(' ')
-    const scoringTermLists = buildScoringTermLists(query, validTerms)
-    // key_line boost: 15% additive bonus for songs that have a key line set
-    const KEY_LINE_BOOST = 0.15
-    // presentationCount logarithmic boost: up to ~10% extra for frequently presented songs
-    // log10(1+n) / log10(1+100) * 0.1 ≈ 0-10% for n in [0, 100]
-    const PRESENTATION_BOOST_SCALE = 0.1
-    const PRESENTATION_BOOST_DENOM = Math.log10(101)
-
-    const scoredResults = candidates.map((r) => {
-      // Score against the user's ORIGINAL (pre-synonym-expansion) terms.
-      // Synonyms broaden FTS recall — they should not be appended to the
-      // queryTerms used for phrase / order detection or the joined exact
-      // phrase will never match a real title.
-      const baseTitleScore = Math.max(
-        ...scoringTermLists.map((terms) =>
-          calculateTitleScoreNormalized(r.fts_title, terms),
-        ),
-      )
-      // The bonus is for typing a name exactly as it is spelled, whichever of
-      // the song's names that is: a library filed under each song's first verse
-      // is found by the name the song is actually known by, and must not rank
-      // below one that merely happens to carry the phrase in its own title.
-      const spelledExactly = [
-        r.title,
-        ...parseAlternateTitles(r.alternate_titles),
-      ].some((name) => foldForScore(name).includes(typedPhrase))
-      const titleScore =
-        baseTitleScore > 0 && spelledExactly
-          ? baseTitleScore + EXACT_SPELLING_BONUS
-          : baseTitleScore
-
-      const contentScore = Math.max(
-        ...scoringTermLists.map((terms) =>
-          calculateBestPhraseScoreNormalized(r.full_content, terms),
-        ),
-      )
-
-      // A real title match lands in the upper band; everything else keeps its
-      // content score. Content still contributes inside the title band, so two
-      // equally-titled songs are separated by how well their lyrics match.
-      const isTitleMatch = titleScore >= TITLE_MATCH_THRESHOLD
-      const termScore = isTitleMatch
-        ? TITLE_BAND_OFFSET + titleScore + contentScore / 100
-        : contentScore
-
-      // key_line boost: songs with a key line get +15% of base score
-      const keyLineMultiplier =
-        r.key_line && r.key_line.length > 0 ? 1 + KEY_LINE_BOOST : 1
-
-      // presentationCount logarithmic boost: frequently presented songs rank slightly higher
-      const presentationMultiplier =
-        1 +
-        (Math.log10(1 + (r.presentation_count ?? 0)) /
-          PRESENTATION_BOOST_DENOM) *
-          PRESENTATION_BOOST_SCALE
-
-      const boostedScore =
-        termScore * keyLineMultiplier * presentationMultiplier
-
-      return {
-        ...r,
-        titleScore,
-        contentScore,
-        termScore,
-        boostedScore,
-      }
-    })
-
-    // Sort by: boosted score (desc), term score (desc), title score (desc), FTS over trigram, then BM25 rank (asc)
-    scoredResults.sort((a, b) => {
-      // Primary: boosted score
-      if (b.boostedScore !== a.boostedScore) {
-        return b.boostedScore - a.boostedScore
-      }
-      // Category priority only orders equally good matches. It is an
-      // operator-set rank (reordering 13 categories makes the first one 13),
-      // and as a score multiplier it let a weak lyric hit in the top category
-      // outrank the one song that holds the exact phrase.
-      if (b.category_priority !== a.category_priority) {
-        return b.category_priority - a.category_priority
-      }
-      // Secondary: more terms matched = higher priority
-      if (b.termScore !== a.termScore) {
-        return b.termScore - a.termScore
-      }
-      // Tertiary: prefer title matches over content-only matches
-      if (b.titleScore !== a.titleScore) {
-        return b.titleScore - a.titleScore
-      }
-      // Quaternary: prioritize FTS results over trigram results
-      // (trigram BM25 scores are not comparable to FTS scores)
-      if (a.fromTrigram !== b.fromTrigram) {
-        return a.fromTrigram ? 1 : -1 // FTS (false) comes before trigram (true)
-      }
-      // Quinary: better BM25 score (lower rank value = better match)
-      return a.bm25_rank - b.bm25_rank
-    })
-
-    // Return top results based on limit
-    const topResults = scoredResults.slice(0, limit)
-
-    const phase3Elapsed = performance.now() - startTime
-    logger.debug(
-      `Phase 3: Re-ranked ${candidates.length} candidates in ${(phase3Elapsed - phase2Elapsed).toFixed(1)}ms. Top score: ${topResults[0]?.termScore ?? 0}%`,
-    )
-
-    const finalResults = topResults.map((r) => {
-      // Use original content (with diacritics) for snippet highlighting
-      // Fall back to FTS content if original is not available
-      const contentForSnippet = r.original_content || r.full_content
-      // Pass the raw user query so the highlighter can prefer a literal
-      // substring match (incremental typing produces the same visual mark
-      // in title and snippet, one character at a time).
-      const matchedContent = createFuzzyHighlightedSnippet(
-        contentForSnippet,
-        expandedTerms,
-        undefined,
-        query,
-      )
-
-      // Highlight original title with diacritic-insensitive matching
-      const highlightedTitle = highlightWithDiacritics(
-        r.title,
-        expandedTerms,
-        query,
-      )
-
-      return {
-        id: r.id,
-        title: r.title,
-        categoryId: r.category_id,
-        categoryName: r.category_name,
-        keyLine: r.key_line,
-        highlightedTitle,
-        matchedContent,
-        presentationCount: r.presentation_count,
-        score: Math.min(100, Math.round(r.boostedScore)),
-      }
-    })
-    // Cache results for future queries
-    setInSearchCache(cacheKey, finalResults)
-
-    const elapsed = performance.now() - startTime
-    logger.debug(
-      `Search completed: "${query}" → ${finalResults.length} results in ${elapsed.toFixed(1)}ms`,
-    )
-
-    return finalResults
-  } catch (error) {
-    logger.error(`Failed to search songs with query "${query}": ${error}`)
-    return []
-  }
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((word) => word.length > 0)
 }

@@ -1,4 +1,4 @@
-import { decodeHtmlEntities } from '../songs/text/decodeHtmlEntities'
+import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
 
 /**
  * Romanian hymnals close a repeated stanza with a marker glued to the end of
