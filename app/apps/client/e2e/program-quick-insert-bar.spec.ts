@@ -1,9 +1,10 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 /**
- * The bar between two program entries inserts right there (T-018): a song or
- * Bible verses land after the entry above the bar, not at the end, and the
- * dialog does not reopen the add menu afterwards.
+ * The bar between two program entries inserts right there (T-018): its one
+ * "Inserează element" button opens the add menu, and a song or Bible verses
+ * picked there land after the entry above the bar, not at the end. The add
+ * menu does not reopen afterwards.
  */
 
 interface Item {
@@ -54,16 +55,17 @@ test('the bar between entries inserts a song and verses right there', async ({
     // One bar, between the two entries (none after the last).
     const bars = page.getByTestId('schedule-quick-insert-bar')
     await expect(bars).toHaveCount(1, { timeout: 10000 })
-    const songButton = bars.getByTestId('schedule-quick-insert-song')
+    const insert = bars.getByTestId('schedule-quick-insert')
     await bars.hover()
-    await songButton.hover()
+    await insert.hover()
     await expect(
-      page.getByText(/(Add a song after|Adaugă o cântare după)/),
+      page.getByText(/(Insert an item after|Inserează un element după)/),
     ).toBeVisible()
 
-    // A song, straight into the song search.
-    await songButton.click()
+    // A song, picked from the add menu the button opens.
+    await insert.click()
     const modal = page.getByTestId('add-schedule-item-modal')
+    await modal.getByTestId('add-schedule-item-song').click()
     await modal
       .getByTestId('song-picker-search')
       .fill(`E2E Bar Inserted ${stamp}`)
@@ -80,7 +82,8 @@ test('the bar between entries inserts a song and verses right there', async ({
     // Bible verses, after the inserted song.
     await expect(bars).toHaveCount(2)
     await bars.nth(1).hover()
-    await bars.nth(1).getByTestId('schedule-quick-insert-verses').click()
+    await bars.nth(1).getByTestId('schedule-quick-insert').click()
+    await modal.getByTestId('add-schedule-item-verseteTineri').click()
     const verses = page.getByTestId('insert-slide-modal')
     await expect(verses).toBeVisible()
     await verses

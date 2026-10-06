@@ -39,7 +39,6 @@ import { InsertSlideModal } from './InsertSlideModal'
 import { ScenePickerModal } from './ScenePickerModal'
 import { ScheduleItemsPanel } from './ScheduleItemsPanel'
 import { SchedulePreviewPanel } from './SchedulePreviewPanel'
-import type { QuickInsertKind } from './ScheduleQuickInsertBar'
 import {
   useAddItemToSchedule,
   useDeleteSchedule,
@@ -158,7 +157,6 @@ export function SchedulePresenter({
   )
   // State to control Add Menu visibility (for reopening after closing sub-modals)
   const [showAddMenu, setShowAddMenu] = useState(false)
-  const [addMenuStart, setAddMenuStart] = useState<'menu' | 'song'>('menu')
   // Set while adding from the bar between two entries: the new item lands
   // right after this one instead of at the end.
   const [quickInsertAfterId, setQuickInsertAfterId] = useState<number | null>(
@@ -390,22 +388,11 @@ export function SchedulePresenter({
     setShowAddMenu(true)
   }, [quickInsertAfterId])
 
-  /** The bar between two entries: insert right after `afterItemId`. */
-  const handleQuickInsert = useCallback(
-    (afterItemId: number, kind: QuickInsertKind) => {
-      setQuickInsertAfterId(afterItemId)
-      if (kind === 'song') {
-        setAddMenuStart('song')
-        setShowAddMenu(true)
-      } else if (kind === 'verses') {
-        setSlideTemplate('versete_tineri')
-        setShowSlideModal(true)
-      } else {
-        setShowScenePicker(true)
-      }
-    },
-    [],
-  )
+  /** The bar between two entries: the add menu, inserting after `afterItemId`. */
+  const handleQuickInsert = useCallback((afterItemId: number) => {
+    setQuickInsertAfterId(afterItemId)
+    setShowAddMenu(true)
+  }, [])
 
   // Reorder handler
   const handleReorder = useCallback(
@@ -702,13 +689,9 @@ export function SchedulePresenter({
               </button>
               <AddScheduleItemModal
                 isOpen={showAddMenu}
-                startAt={addMenuStart}
                 onOpenChange={(open) => {
-                  // The header's own "Adaugă" appends at the end, from the menu.
-                  if (open) {
-                    setQuickInsertAfterId(null)
-                    setAddMenuStart('menu')
-                  }
+                  // The header's own "Adaugă" appends at the end.
+                  if (open) setQuickInsertAfterId(null)
                   setShowAddMenu(open)
                 }}
                 onAddSong={handleSongSelected}

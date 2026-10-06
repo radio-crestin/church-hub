@@ -296,8 +296,7 @@
     "hint": "Program for today, {{title}}: created in one click, or reused if it already exists"
   },
   "quickInsert": {
-    "song": "Add a song after “{{title}}”",
-    "verses": "Add Bible verses after “{{title}}”",
-    "scene": "Add an OBS scene after “{{title}}”"
+    "button": "Insert item",
+    "tooltip": "Insert an item after “{{title}}”"
   }
 }

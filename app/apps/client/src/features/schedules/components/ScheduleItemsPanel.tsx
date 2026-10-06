@@ -30,10 +30,7 @@ import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import { ScheduleItemSubItems } from './ScheduleItemSubItems'
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
 import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
-import {
-  type QuickInsertKind,
-  ScheduleQuickInsertBar,
-} from './ScheduleQuickInsertBar'
+import { ScheduleQuickInsertBar } from './ScheduleQuickInsertBar'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
 import type { ScheduleItem } from '../types'
@@ -63,7 +60,7 @@ interface ScheduleItemsPanelProps {
   /** Flips an item's done-marker. Every kind carries one. */
   onToggleSung?: (item: ScheduleItem) => void
   /** Inserts right after an entry, from the bar between entries; absent hides the bar. */
-  onQuickInsert?: (afterItemId: number, kind: QuickInsertKind) => void
+  onQuickInsert?: (afterItemId: number) => void
   expandAllTrigger?: number
   collapseAllTrigger?: number
 }
@@ -278,7 +275,7 @@ export function ScheduleItemsPanel({
                 {onQuickInsert && index < items.length - 1 ? (
                   <ScheduleQuickInsertBar
                     afterTitle={scheduleItemShortTitle(item)}
-                    onInsert={(kind) => onQuickInsert(item.id, kind)}
+                    onInsert={() => onQuickInsert(item.id)}
                   />
                 ) : null}
               </Fragment>
