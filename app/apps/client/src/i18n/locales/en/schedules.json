@@ -294,5 +294,9 @@
   "today": {
     "button": "Today",
     "hint": "Program for today, {{title}}: created in one click, or reused if it already exists"
+  },
+  "quickInsert": {
+    "button": "Insert item",
+    "tooltip": "Insert an item after “{{title}}”"
   }
 }

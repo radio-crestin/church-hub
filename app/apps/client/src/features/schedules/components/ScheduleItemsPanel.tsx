@@ -22,7 +22,7 @@ import {
   Loader2,
   MoreVertical,
 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
@@ -30,6 +30,7 @@ import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import { ScheduleItemSubItems } from './ScheduleItemSubItems'
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
 import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
+import { ScheduleQuickInsertBar } from './ScheduleQuickInsertBar'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
 import type { ScheduleItem } from '../types'
@@ -38,6 +39,7 @@ import {
   type PresentedScheduleInfo,
 } from '../utils/presentedScheduleInfo'
 import { buildItemStartFlatIndex } from '../utils/scheduleFlatItems'
+import { scheduleItemShortTitle } from '../utils/scheduleItemShortTitle'
 
 interface ScheduleItemsPanelProps {
   scheduleId: number
@@ -57,6 +59,8 @@ interface ScheduleItemsPanelProps {
   onEditKeyLine?: (item: ScheduleItem) => void
   /** Flips an item's done-marker. Every kind carries one. */
   onToggleSung?: (item: ScheduleItem) => void
+  /** Inserts right after an entry, from the bar between entries; absent hides the bar. */
+  onQuickInsert?: (afterItemId: number) => void
   expandAllTrigger?: number
   collapseAllTrigger?: number
 }
@@ -83,6 +87,7 @@ export function ScheduleItemsPanel({
   onChangeSong,
   onEditKeyLine,
   onToggleSung,
+  onQuickInsert,
   expandAllTrigger,
   collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
@@ -246,27 +251,34 @@ export function ScheduleItemsPanel({
             ref={containerRef}
             className="flex-1 min-h-0 space-y-2 overflow-hidden lg:overflow-y-auto p-1"
           >
-            {items.map((item) => (
-              <SortableItemWrapper
-                key={item.id}
-                item={item}
-                isExpanded={isExpanded(item.id)}
-                presentedInfo={presentedInfo}
-                itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
-                highlightedRef={highlightedRef}
-                onHeaderClick={handleHeaderClick}
-                onAuxClick={handleAuxClick}
-                onDoubleClick={handleDoubleClick}
-                onContextMenu={handleContextMenu}
-                onSlideClick={onSlideClick}
-                onVerseClick={onVerseClick}
-                onEntryClick={onEntryClick}
-                onAnnouncementClick={onAnnouncementClick}
-                onSceneClick={onSceneClick}
-                onToggleSung={onToggleSung}
-                onEditKeyLine={onEditKeyLine}
-                t={t}
-              />
+            {items.map((item, index) => (
+              <Fragment key={item.id}>
+                <SortableItemWrapper
+                  item={item}
+                  isExpanded={isExpanded(item.id)}
+                  presentedInfo={presentedInfo}
+                  itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
+                  highlightedRef={highlightedRef}
+                  onHeaderClick={handleHeaderClick}
+                  onAuxClick={handleAuxClick}
+                  onDoubleClick={handleDoubleClick}
+                  onContextMenu={handleContextMenu}
+                  onSlideClick={onSlideClick}
+                  onVerseClick={onVerseClick}
+                  onEntryClick={onEntryClick}
+                  onAnnouncementClick={onAnnouncementClick}
+                  onSceneClick={onSceneClick}
+                  onToggleSung={onToggleSung}
+                  onEditKeyLine={onEditKeyLine}
+                  t={t}
+                />
+                {onQuickInsert && index < items.length - 1 ? (
+                  <ScheduleQuickInsertBar
+                    afterTitle={scheduleItemShortTitle(item)}
+                    onInsert={() => onQuickInsert(item.id)}
+                  />
+                ) : null}
+              </Fragment>
             ))}
           </div>
         </SortableContext>

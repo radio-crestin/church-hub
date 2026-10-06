@@ -157,6 +157,11 @@ export function SchedulePresenter({
   )
   // State to control Add Menu visibility (for reopening after closing sub-modals)
   const [showAddMenu, setShowAddMenu] = useState(false)
+  // Set while adding from the bar between two entries: the new item lands
+  // right after this one instead of at the end.
+  const [quickInsertAfterId, setQuickInsertAfterId] = useState<number | null>(
+    null,
+  )
 
   // Expand/collapse all triggers
   const [allExpanded, setAllExpanded] = useState(false)
@@ -356,6 +361,7 @@ export function SchedulePresenter({
           input: {
             slideType: 'scene',
             obsSceneName,
+            afterItemId: quickInsertAfterId ?? undefined,
           },
         },
         {
@@ -369,11 +375,22 @@ export function SchedulePresenter({
         },
       )
     },
-    [addItemMutation, scheduleId, showToast, t, refetch],
+    [addItemMutation, scheduleId, showToast, t, refetch, quickInsertAfterId],
   )
 
-  // Callback to reopen add menu after closing sub-modals (only for non-edit mode)
+  // Callback to reopen add menu after closing sub-modals (only for non-edit
+  // mode). An insert from the bar between entries just ends instead.
   const handleReopenAddMenu = useCallback(() => {
+    if (quickInsertAfterId !== null) {
+      setQuickInsertAfterId(null)
+      return
+    }
+    setShowAddMenu(true)
+  }, [quickInsertAfterId])
+
+  /** The bar between two entries: the add menu, inserting after `afterItemId`. */
+  const handleQuickInsert = useCallback((afterItemId: number) => {
+    setQuickInsertAfterId(afterItemId)
     setShowAddMenu(true)
   }, [])
 
@@ -503,14 +520,26 @@ export function SchedulePresenter({
       } else {
         // Add song via API - the schedule will be refetched automatically
         const { addItemToSchedule } = await import('../service/schedules')
-        const result = await addItemToSchedule(scheduleId, { songId })
+        const result = await addItemToSchedule(scheduleId, {
+          songId,
+          afterItemId: quickInsertAfterId ?? undefined,
+        })
+        setQuickInsertAfterId(null)
         if (result.success) {
           showToast(t('messages.itemAdded'), 'success')
           refetch()
         }
       }
     },
-    [scheduleId, showToast, t, refetch, changingSongItem, items],
+    [
+      scheduleId,
+      showToast,
+      t,
+      refetch,
+      changingSongItem,
+      items,
+      quickInsertAfterId,
+    ],
   )
 
   // Delete handler
@@ -660,7 +689,11 @@ export function SchedulePresenter({
               </button>
               <AddScheduleItemModal
                 isOpen={showAddMenu}
-                onOpenChange={setShowAddMenu}
+                onOpenChange={(open) => {
+                  // The header's own "Adaugă" appends at the end.
+                  if (open) setQuickInsertAfterId(null)
+                  setShowAddMenu(open)
+                }}
                 onAddSong={handleSongSelected}
                 onAddBiblePassage={handleAddBiblePassage}
                 onAddSlide={handleAddSlide}
@@ -686,6 +719,7 @@ export function SchedulePresenter({
               onChangeSong={handleChangeSong}
               onEditKeyLine={handleEditKeyLine}
               onToggleSung={handleToggleSung}
+              onQuickInsert={canEditProgram ? handleQuickInsert : undefined}
               expandAllTrigger={expandAllTrigger}
               collapseAllTrigger={collapseAllTrigger}
             />
@@ -864,6 +898,7 @@ export function SchedulePresenter({
           setEditingSlideItem(null)
         }}
         scheduleId={scheduleId}
+        afterItemId={quickInsertAfterId ?? undefined}
         initialTemplate={slideTemplate}
         editingItem={
           editingSlideItem
@@ -921,6 +956,7 @@ export function SchedulePresenter({
         onSceneSelect={(obsSceneName) => {
           handleSceneSelect(obsSceneName)
           setShowScenePicker(false)
+          setQuickInsertAfterId(null)
         }}
       />
 

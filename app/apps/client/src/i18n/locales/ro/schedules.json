@@ -309,5 +309,9 @@
   "today": {
     "button": "Azi",
     "hint": "Programul de azi, {{title}}: creat dintr-un click, sau folosit cel existent"
+  },
+  "quickInsert": {
+    "button": "Inserează element",
+    "tooltip": "Inserează un element după „{{title}}”"
   }
 }
