@@ -47,6 +47,10 @@ export function readSourceCheck(sourceId: string): SourceCheck {
   return { signature: '', count: 0, checkedAt: 0 }
 }
 
+export function writeSourceCheck(sourceId: string, check: SourceCheck) {
+  localStorage.setItem(stateKey(sourceId), JSON.stringify(check))
+}
+
 function readNumber(key: string): number {
   const n = Number(localStorage.getItem(key) ?? 0)
   return Number.isFinite(n) ? n : 0
@@ -110,6 +114,6 @@ export async function checkSourceForNewSongs(
     queryClient.setQueryData(catalogQueryKey(source.id), candidates)
     next = { signature, count, checkedAt: now }
   }
-  localStorage.setItem(stateKey(source.id), JSON.stringify(next))
+  writeSourceCheck(source.id, next)
   return next
 }

@@ -29,9 +29,6 @@ export interface DiscoveryMatchResult {
   similar: SongVersionSuggestion[]
 }
 
-/** The operator's per-candidate decision in the staging screen. */
-export type DiscoveryDecision = 'pending' | 'approve' | 'skip'
-
 /** Editable draft of a candidate — seeded from `parsed`, committed on import. */
 export interface CandidateDraft {
   title: string
@@ -51,5 +48,6 @@ export interface StagingItem {
   verdict: DiscoveryMatchVerdict
   similar: SongVersionSuggestion[]
   draft: CandidateDraft
-  decision: DiscoveryDecision
+  /** Picked for the next import. */
+  selected: boolean
 }

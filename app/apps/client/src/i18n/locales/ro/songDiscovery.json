@@ -20,7 +20,14 @@
     "label": "Sursă",
     "fetch": "Descarcă catalogul",
     "refresh": "Reîmprospătează catalogul",
-    "openedFile": "fișier"
+    "openedFile": "fișier",
+    "lastChecked": "Verificat {{when}}",
+    "checkAll": "Verifică toate sursele",
+    "checkingAll": "Se verifică sursele…",
+    "upToDate": "La zi",
+    "newCount_one": "{{count}} nouă",
+    "newCount_few": "{{count}} noi",
+    "newCount_other": "{{count}} noi"
   },
   "status": {
     "fetching": "Se descarcă și se prelucrează catalogul…",
@@ -35,11 +42,6 @@
       "parsing": "Se citesc cântările…",
       "saving": "Se salvează…"
     }
-  },
-  "stats": {
-    "online": "online",
-    "new": "noi",
-    "selected": "selectate"
   },
   "verdict": {
     "new": "Nouă",
@@ -59,13 +61,13 @@
     "inCatalog": "în catalog"
   },
   "actions": {
-    "approve": "Importă",
-    "skip": "Omite"
+    "select": "Selectează „{{title}}”"
   },
   "toolbar": {
-    "summary": "{{total}} noi · {{approved}} selectate",
-    "approveAllNew": "Selectează tot",
-    "importApproved": "Importă selecția ({{count}})"
+    "summary": "{{total}} noi din {{online}} · {{selected}} selectate",
+    "selectAll": "Selectează tot",
+    "clearSelection": "Deselectează tot",
+    "importSelected": "Importă selecția ({{count}})"
   },
   "toast": {
     "imported": "Au fost importate {{count}} cântări",
@@ -148,5 +150,11 @@
       "stop": "Oprește distribuirea",
       "failed": "Distribuirea a eșuat: {{error}}"
     }
+  },
+  "notice": {
+    "title_one": "{{count}} cântare nouă de descărcat",
+    "title_few": "{{count}} cântări noi de descărcat",
+    "title_other": "{{count}} de cântări noi de descărcat",
+    "dismiss": "Închide"
   }
 }

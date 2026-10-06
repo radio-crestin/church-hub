@@ -1,5 +1,6 @@
 import { SourceDiscovery } from './SourceDiscovery'
 import { SourcePicker } from './SourcePicker'
+import { useSongDiscovery } from '../context/SongDiscoveryContext'
 import { useSongSources } from '../hooks/useSongSources'
 import { useOpenedSongFileSources } from '../opened-files/openedSongFiles'
 
@@ -21,6 +22,8 @@ export function SongDiscoveryScreen({
 }: SongDiscoveryScreenProps) {
   const { data: serverSources = [] } = useSongSources()
   const openedFiles = useOpenedSongFileSources()
+  const { sourceUpdates, isChecking, checkNow } = useSongDiscovery()
+  const updates = new Map(sourceUpdates.map((u) => [u.id, u]))
   const sources = [...serverSources, ...openedFiles]
   const source = sources.find((s) => s.id === sourceId) ?? sources[0]
   if (!source) return null
@@ -35,6 +38,9 @@ export function SongDiscoveryScreen({
           sources={sources}
           selectedId={source.id}
           onSelect={onSourceChange}
+          updates={updates}
+          isChecking={isChecking}
+          onCheckAll={() => void checkNow({ force: true })}
         />
       }
     />

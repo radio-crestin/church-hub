@@ -10,6 +10,7 @@ import { CandidateEditorPanel } from './CandidateEditorPanel'
 import { CandidateList } from './CandidateList'
 import { DiscoveryProgress } from './DiscoveryProgress'
 import { DiscoveryToolbar } from './DiscoveryToolbar'
+import { useSongDiscovery } from '../context/SongDiscoveryContext'
 import { useFetchCatalog } from '../hooks/useFetchCatalog'
 import { useImportApproved } from '../hooks/useImportApproved'
 import { useMatchCandidates } from '../hooks/useMatchCandidates'
@@ -55,30 +56,6 @@ function buildDraft(
   }
 }
 
-/** A compact count chip for the stats strip. */
-function StatChip({
-  value,
-  label,
-  accent = false,
-}: {
-  value: number
-  label: string
-  accent?: boolean
-}) {
-  return (
-    <div
-      className={`flex items-baseline gap-1.5 rounded-lg px-3 py-1.5 ${
-        accent
-          ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300'
-          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-      }`}
-    >
-      <span className="text-sm font-semibold tabular-nums">{value}</span>
-      <span className="text-xs">{label}</span>
-    </div>
-  )
-}
-
 /**
  * Staging screen for importing new songs from external sources. Reuses the
  * catalog the background sync already downloaded (so it appears instantly),
@@ -93,6 +70,7 @@ export function SourceDiscovery({
   const { t } = useTranslation('songDiscovery')
   const { showToast } = useToast()
   const queryClient = useQueryClient()
+  const { recordSourceCount } = useSongDiscovery()
 
   const [selectedTempId, setSelectedTempId] = useState<string | null>(null)
   // Per-candidate edits/decisions, keyed by tempId, preserved across re-diffs.
@@ -162,7 +140,7 @@ export function SourceDiscovery({
           verdict: result.verdict,
           similar: result.similar,
           draft: existing?.draft ?? buildDraft(candidate, defaultCategoryId),
-          decision: existing?.decision ?? 'pending',
+          selected: existing?.selected ?? false,
         }
       }
       return next
@@ -175,7 +153,7 @@ export function SourceDiscovery({
   )
 
   const approvedItems = useMemo(
-    () => stagingItems.filter((i) => i.decision === 'approve'),
+    () => stagingItems.filter((i) => i.selected),
     [stagingItems],
   )
 
@@ -183,13 +161,11 @@ export function SourceDiscovery({
 
   const { importApproved, isPending: isImporting } = useImportApproved()
 
-  const handleDecide = (tempId: string, decision: 'approve' | 'skip') => {
+  const handleToggle = (tempId: string) => {
     setItems((prev) => {
       const item = prev[tempId]
       if (!item) return prev
-      // Toggle off when re-clicking the active decision.
-      const nextDecision = item.decision === decision ? 'pending' : decision
-      return { ...prev, [tempId]: { ...item, decision: nextDecision } }
+      return { ...prev, [tempId]: { ...item, selected: !item.selected } }
     })
   }
 
@@ -201,11 +177,13 @@ export function SourceDiscovery({
     })
   }
 
-  const handleApproveAllNew = () => {
+  /** Selects every song, or clears the selection when all are selected. */
+  const handleToggleAll = () => {
     setItems((prev) => {
-      const next = { ...prev }
-      for (const tempId of Object.keys(next)) {
-        next[tempId] = { ...next[tempId], decision: 'approve' }
+      const selectAll = Object.values(prev).some((item) => !item.selected)
+      const next: Record<string, StagingItem> = {}
+      for (const [tempId, item] of Object.entries(prev)) {
+        next[tempId] = { ...item, selected: selectAll }
       }
       return next
     })
@@ -306,6 +284,25 @@ export function SourceDiscovery({
     found: stagingItems.length,
   })
   const loadError = fetchError ?? matchError
+  const compared =
+    !isBusy &&
+    !loadError &&
+    results.length > 0 &&
+    results.length === candidates.length
+
+  // The screen's own count is fresher than the background check's: it keeps
+  // the source's tab and the update notification right after an import.
+  useEffect(() => {
+    if (compared && source.origin !== 'file') {
+      recordSourceCount(source.id, stagingItems.length)
+    }
+  }, [
+    compared,
+    source.id,
+    source.origin,
+    stagingItems.length,
+    recordSourceCount,
+  ])
   const showAllPresent =
     !isBusy && candidates.length > 0 && stagingItems.length === 0
   const showResults = stagingItems.length > 0
@@ -338,10 +335,12 @@ export function SourceDiscovery({
           type="button"
           onClick={handleRefresh}
           disabled={isBusy}
+          aria-label={t('source.refresh')}
+          title={t('source.refresh')}
           className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
         >
           <RefreshCw className={`h-4 w-4 ${isBusy ? 'animate-spin' : ''}`} />
-          {t('source.refresh')}
+          <span className="hidden sm:inline">{t('source.refresh')}</span>
         </button>
       </div>
 
@@ -363,20 +362,6 @@ export function SourceDiscovery({
           detail={matchProgress.total > 0 ? `${analyzePct}%` : undefined}
           meta={matchProgress.total > 0 ? analyzeMeta : undefined}
         />
-      )}
-
-      {/* Stats strip */}
-      {(showResults || (!isBusy && candidates.length > 0)) && (
-        <div className="flex flex-wrap items-center gap-2">
-          <StatChip value={candidates.length} label={t('stats.online')} />
-          <StatChip value={stagingItems.length} label={t('stats.new')} accent />
-          {approvedItems.length > 0 && (
-            <StatChip
-              value={approvedItems.length}
-              label={t('stats.selected')}
-            />
-          )}
-        </div>
       )}
 
       {loadError && !isBusy && !showResults ? (
@@ -428,9 +413,10 @@ export function SourceDiscovery({
       ) : showResults ? (
         <>
           <DiscoveryToolbar
+            onlineCount={candidates.length}
             totalCount={stagingItems.length}
-            approvedCount={approvedItems.length}
-            onApproveAllNew={handleApproveAllNew}
+            selectedCount={approvedItems.length}
+            onToggleAll={handleToggleAll}
             onImport={handleImport}
             isImporting={isImporting}
           />
@@ -441,7 +427,7 @@ export function SourceDiscovery({
                 items={stagingItems}
                 selectedTempId={selectedTempId}
                 onSelect={setSelectedTempId}
-                onDecide={handleDecide}
+                onToggle={handleToggle}
               />
             </div>
 

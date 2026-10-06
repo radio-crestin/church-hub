@@ -42,7 +42,8 @@ export function SongDiscoveryProvider({ children }: { children: ReactNode }) {
   const canImport = hasPermission('songs.create')
   const sync = useSongDiscoverySync(canImport)
 
-  const { hasUnacknowledgedNew, newCount } = sync
+  const { hasUnacknowledgedNew, newCount, signature, sourceUpdates } = sync
+  const firstWithNew = sourceUpdates.find((u) => u.count > 0)?.id
 
   // Toast exactly once per distinct catalog signature (persisted across
   // sessions) so the user isn't re-pinged for songs they've already seen.
@@ -50,24 +51,33 @@ export function SongDiscoveryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hasUnacknowledgedNew || newCount <= 0) return
 
-    const currentSignature = localStorage.getItem('song-discovery-signature')
-    if (!currentSignature) return
-
     const alreadyToasted =
-      localStorage.getItem(TOASTED_SIGNATURE_KEY) === currentSignature
-    if (alreadyToasted || lastToastedRef.current === currentSignature) return
+      localStorage.getItem(TOASTED_SIGNATURE_KEY) === signature
+    if (alreadyToasted || lastToastedRef.current === signature) return
 
-    lastToastedRef.current = currentSignature
-    localStorage.setItem(TOASTED_SIGNATURE_KEY, currentSignature)
+    lastToastedRef.current = signature
+    localStorage.setItem(TOASTED_SIGNATURE_KEY, signature)
 
     showToast(t('toast.newSongs', { count: newCount }), 'info', {
       duration: TOAST_DURATION_MS,
       action: {
         label: t('toast.view'),
-        onClick: () => navigate({ to: '/songs/discover' }),
+        onClick: () =>
+          navigate({
+            to: '/songs/discover',
+            search: { source: firstWithNew },
+          }),
       },
     })
-  }, [hasUnacknowledgedNew, newCount, showToast, navigate, t])
+  }, [
+    hasUnacknowledgedNew,
+    newCount,
+    signature,
+    firstWithNew,
+    showToast,
+    navigate,
+    t,
+  ])
 
   return (
     <SongDiscoveryContext.Provider value={sync}>
@@ -93,5 +103,8 @@ export function useSongDiscovery(): UseSongDiscoverySyncResult {
     checkNow: async () => {},
     hasUnacknowledgedNew: false,
     newCount: 0,
+    sourceUpdates: [],
+    signature: '',
+    recordSourceCount: () => {},
   }
 }

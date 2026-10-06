@@ -20,7 +20,13 @@
     "label": "Source",
     "fetch": "Fetch catalog",
     "refresh": "Refresh catalog",
-    "openedFile": "file"
+    "openedFile": "file",
+    "lastChecked": "Checked {{when}}",
+    "checkAll": "Check all sources",
+    "checkingAll": "Checking sources…",
+    "upToDate": "Up to date",
+    "newCount_one": "{{count}} new",
+    "newCount_other": "{{count}} new"
   },
   "status": {
     "fetching": "Downloading and parsing the catalog…",
@@ -35,11 +41,6 @@
       "parsing": "Reading the songs…",
       "saving": "Saving…"
     }
-  },
-  "stats": {
-    "online": "online",
-    "new": "new",
-    "selected": "selected"
   },
   "verdict": {
     "new": "New",
@@ -59,13 +60,13 @@
     "inCatalog": "in the catalog"
   },
   "actions": {
-    "approve": "Import",
-    "skip": "Skip"
+    "select": "Select {{title}}"
   },
   "toolbar": {
-    "summary": "{{total}} new · {{approved}} selected",
-    "approveAllNew": "Select all",
-    "importApproved": "Import selected ({{count}})"
+    "summary": "{{total}} new of {{online}} · {{selected}} selected",
+    "selectAll": "Select all",
+    "clearSelection": "Clear selection",
+    "importSelected": "Import selected ({{count}})"
   },
   "toast": {
     "imported": "Imported {{count}} song(s)",
@@ -147,5 +148,10 @@
       "stop": "Stop sharing",
       "failed": "Sharing failed: {{error}}"
     }
+  },
+  "notice": {
+    "title_one": "{{count}} new song to download",
+    "title_other": "{{count}} new songs to download",
+    "dismiss": "Dismiss"
   }
 }

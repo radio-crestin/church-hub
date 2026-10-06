@@ -1,30 +1,32 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Check, X } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { VerdictBadge } from './VerdictBadge'
 import type { StagingItem } from '../types'
 
-const ESTIMATED_ROW_HEIGHT = 76
+const ESTIMATED_ROW_HEIGHT = 49
 
 interface CandidateListProps {
   items: StagingItem[]
   selectedTempId: string | null
   onSelect: (tempId: string) => void
-  onDecide: (tempId: string, decision: 'approve' | 'skip') => void
+  /** Picks or unpicks a song for the next import. */
+  onToggle: (tempId: string) => void
 }
 
 /**
  * Virtualized list of staged candidates (the songs the user lacks). Only the
  * on-screen rows mount, so a multi-thousand-song catalog never floods the DOM.
- * Each row shows the verdict badge + quick approve/skip toggles.
+ * Each row has a checkbox to pick the song for import; the rest of the row
+ * opens it for review.
  */
 export function CandidateList({
   items,
   selectedTempId,
   onSelect,
-  onDecide,
+  onToggle,
 }: CandidateListProps) {
   const { t } = useTranslation('songDiscovery')
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -52,7 +54,7 @@ export function CandidateList({
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const item = items[virtualRow.index]
-          const isSelected = item.tempId === selectedTempId
+          const isOpen = item.tempId === selectedTempId
           return (
             <div
               key={item.tempId}
@@ -61,54 +63,40 @@ export function CandidateList({
               className="absolute top-0 left-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
-              <button
-                type="button"
-                onClick={() => onSelect(item.tempId)}
-                className={`w-full text-left px-4 py-3 border-b border-gray-200 dark:border-gray-700 transition-colors ${
-                  isSelected
+              <div
+                className={`flex items-center gap-3 border-b border-gray-200 px-3 transition-colors dark:border-gray-700 ${
+                  isOpen
                     ? 'bg-indigo-50 dark:bg-indigo-900/30'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                } ${item.decision === 'skip' ? 'opacity-50' : ''}`}
+                }`}
               >
-                <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={item.selected}
+                  aria-label={t('actions.select', {
+                    title: item.draft.title || t('untitled'),
+                  })}
+                  onClick={() => onToggle(item.tempId)}
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
+                    item.selected
+                      ? 'border-indigo-600 bg-indigo-600 text-white'
+                      : 'border-gray-300 bg-white hover:border-indigo-400 dark:border-gray-600 dark:bg-gray-800'
+                  }`}
+                >
+                  {item.selected && <Check className="h-3.5 w-3.5" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelect(item.tempId)}
+                  className="flex min-w-0 flex-1 items-center gap-2 py-3 text-left"
+                >
                   <span className="flex-1 truncate font-medium text-gray-900 dark:text-white">
                     {item.draft.title || t('untitled')}
                   </span>
                   <VerdictBadge verdict={item.verdict} />
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDecide(item.tempId, 'approve')
-                    }}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                      item.decision === 'approve'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-green-100 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-green-900/40'
-                    }`}
-                  >
-                    <Check className="w-3 h-3" />
-                    {t('actions.approve')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onDecide(item.tempId, 'skip')
-                    }}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                      item.decision === 'skip'
-                        ? 'bg-gray-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    <X className="w-3 h-3" />
-                    {t('actions.skip')}
-                  </button>
-                </div>
-              </button>
+                </button>
+              </div>
             </div>
           )
         })}

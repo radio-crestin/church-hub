@@ -187,10 +187,9 @@ test.describe('Song Discovery — staging UI', () => {
     // The duplicate-by-filename entry must NOT appear in staging.
     await expect(page.getByText(`UI Existing Song ${ts}`)).toHaveCount(0)
 
-    // Approve the new candidate and import it.
+    // Pick the new candidate and import it.
     await page
-      .getByRole('button', { name: /^(Import|Importă)$/ })
-      .first()
+      .getByRole('checkbox', { name: new RegExp(newTitle) })
       .click()
     await page
       .getByRole('button', { name: /Import selected|Importă selecția/ })

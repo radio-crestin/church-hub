@@ -1,19 +1,25 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   checkSourceForNewSongs,
   MIN_CHECK_GAP_MS,
   readSourceCheck,
+  type SourceCheck,
+  writeSourceCheck,
 } from './checkSourceForNewSongs'
-import { SONG_SOURCES_QUERY_KEY } from './useSongSources'
+import { SONG_SOURCES_QUERY_KEY, useSongSources } from './useSongSources'
 import { getSongSources } from '../service/songSourcesApi'
 
 const ENABLED_KEY = 'song-discovery-enabled'
 const LAST_CHECKED_KEY = 'song-discovery-last-checked'
-/** All sources' state in one string; the badge comes back when it changes. */
-const SIGNATURE_KEY = 'song-discovery-signature'
-const NEW_COUNT_KEY = 'song-discovery-new-count'
 const DISMISSED_SIGNATURE_KEY = 'song-discovery-dismissed-signature'
 
 /** How often the timer re-evaluates (the daily gap gates the real work). */
@@ -26,6 +32,25 @@ function readNumber(key: string): number {
   const raw = localStorage.getItem(key)
   const n = raw ? Number(raw) : 0
   return Number.isFinite(n) ? n : 0
+}
+
+/** What the last check of one source found, with the source's name. */
+export interface SourceUpdate extends SourceCheck {
+  id: string
+  name: string
+}
+
+/**
+ * Every checked source's state in one string; the notice comes back when it
+ * changes. A source's checksum stands for its songs (its new-song count only
+ * when it has no checksum), so importing songs never brings a dismissed
+ * notice back.
+ */
+function signatureOf(updates: SourceUpdate[]): string {
+  return updates
+    .filter((u) => u.checkedAt > 0)
+    .map((u) => `${u.id}:${u.signature || u.count}`)
+    .join('|')
 }
 
 export interface UseSongDiscoverySyncResult {
@@ -49,6 +74,12 @@ export interface UseSongDiscoverySyncResult {
   /** True the moment a fresh, unacknowledged batch of new songs is detected. */
   hasUnacknowledgedNew: boolean
   newCount: number
+  /** Every source with what its last check found, in the sources' order. */
+  sourceUpdates: SourceUpdate[]
+  /** All sources' state in one string (see signatureOf). */
+  signature: string
+  /** Song discovery's own count of a source's new songs, once it compared them. */
+  recordSourceCount: (sourceId: string, count: number) => void
 }
 
 /**
@@ -70,12 +101,20 @@ export function useSongDiscoverySync(
   const [enabled, setEnabledState] = useState<boolean>(
     () => localStorage.getItem(ENABLED_KEY) !== 'false',
   )
-  const [newCount, setNewCount] = useState<number>(() =>
-    readNumber(NEW_COUNT_KEY),
+  const { data: sources = [] } = useSongSources(enabledExternally)
+  // Source checks live in localStorage; bumping this re-reads them.
+  const [checksVersion, reloadChecks] = useReducer((n: number) => n + 1, 0)
+  const sourceUpdates = useMemo<SourceUpdate[]>(
+    () =>
+      sources.map((source) => ({
+        id: source.id,
+        name: source.name,
+        ...readSourceCheck(source.id),
+      })),
+    [sources, checksVersion],
   )
-  const [signature, setSignature] = useState<string>(
-    () => localStorage.getItem(SIGNATURE_KEY) ?? '',
-  )
+  const newCount = sourceUpdates.reduce((sum, u) => sum + u.count, 0)
+  const signature = signatureOf(sourceUpdates)
   const [dismissedSignature, setDismissedSignature] = useState<string>(
     () => localStorage.getItem(DISMISSED_SIGNATURE_KEY) ?? '',
   )
@@ -90,9 +129,19 @@ export function useSongDiscoverySync(
   }, [])
 
   const dismiss = useCallback(() => {
-    const current = localStorage.getItem(SIGNATURE_KEY) ?? ''
-    localStorage.setItem(DISMISSED_SIGNATURE_KEY, current)
-    setDismissedSignature(current)
+    localStorage.setItem(DISMISSED_SIGNATURE_KEY, signature)
+    setDismissedSignature(signature)
+  }, [signature])
+
+  const recordSourceCount = useCallback((sourceId: string, count: number) => {
+    const previous = readSourceCheck(sourceId)
+    if (previous.count === count && previous.checkedAt > 0) return
+    writeSourceCheck(sourceId, {
+      ...previous,
+      count,
+      checkedAt: previous.checkedAt || Date.now(),
+    })
+    reloadChecks()
   }, [])
 
   const checkNow = useCallback(
@@ -126,19 +175,8 @@ export function useSongDiscoverySync(
           )
         }
 
-        const checks = sources.map((source) => ({
-          id: source.id,
-          ...readSourceCheck(source.id),
-        }))
-        const count = checks.reduce((sum, check) => sum + check.count, 0)
-        const nextSignature = checks
-          .map((c) => `${c.id}:${c.signature}:${c.count}`)
-          .join('|')
-        localStorage.setItem(SIGNATURE_KEY, nextSignature)
-        localStorage.setItem(NEW_COUNT_KEY, String(count))
         localStorage.setItem(LAST_CHECKED_KEY, String(Date.now()))
-        setSignature(nextSignature)
-        setNewCount(count)
+        reloadChecks()
       } catch (error) {
         // The source list itself failed (server down): try on the next tick.
         // biome-ignore lint/suspicious/noConsole: background job
@@ -201,5 +239,8 @@ export function useSongDiscoverySync(
     checkNow,
     hasUnacknowledgedNew,
     newCount,
+    sourceUpdates,
+    signature,
+    recordSourceCount,
   }
 }
