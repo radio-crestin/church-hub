@@ -33,9 +33,9 @@ function failedCheck(
 
 /**
  * Checks every song source, one at a time. As soon as each is known, it
- * saves the result and tells the user, in the notifications, what it synced
- * or what waits for their approval. Returns how many songs it added or
- * updated.
+ * saves the result and records what it synced in the notifications (so a
+ * cancelled run still tells); what waits for approval is recorded at the
+ * end. Returns how many songs it added or updated.
  */
 export async function runSongUpdates(run: SongUpdatesRun): Promise<number> {
   const started = performance.now()
@@ -63,11 +63,13 @@ export async function runSongUpdates(run: SongUpdatesRun): Promise<number> {
     }
     saveSourceUpdates([...updates.values()])
     recordSyncedNotification(notificationId, synced)
-    refreshPendingNotification()
     logger.info(
       `${source.name}: ${(performance.now() - sourceStarted).toFixed(0)} ms`,
     )
   }
+  // Once, at the end: each new set of waiting songs is a new notification,
+  // which would pop up again after every source.
+  refreshPendingNotification()
   const changed = synced.reduce(
     (sum, s) => sum + s.added.count + s.updated.count,
     0,
