@@ -14,6 +14,7 @@ export interface PullRequest {
   number: number
   state: 'OPEN' | 'CLOSED' | 'MERGED'
   headRefOid: string
+  headRefName: string
 }
 
 const KEPT_BRANCHES = new Set(['main', 'master', 'pr-assets', 'pr-demo-videos'])
@@ -41,7 +42,7 @@ export function findPullRequest(
       '--limit',
       '5',
       '--json',
-      'number,state,headRefOid',
+      'number,state,headRefOid,headRefName',
     ],
     mainRoot,
   )
@@ -111,7 +112,12 @@ export function deletePrBuildRelease(
     (asset) =>
       ask(
         'gh',
-        ['api', '-X', 'DELETE', `repos/{owner}/{repo}/releases/assets/${asset.id}`],
+        [
+          'api',
+          '-X',
+          'DELETE',
+          `repos/{owner}/{repo}/releases/assets/${asset.id}`,
+        ],
         mainRoot,
       ) === undefined,
   )
