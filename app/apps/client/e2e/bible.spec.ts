@@ -10,7 +10,7 @@ async function searchBible(page: Page, query: string) {
   await expect(searchInput).toBeVisible({ timeout: 5000 })
 
   const resultsCountLocator = page.locator(
-    'text=/\\d+ (versete? gasi(t|te)|verses? found)/i',
+    'text=/\\d+ (de )?(versete? gasi(t|te)|verses? found)/i',
   )
 
   // Retry search up to 3 times — FTS index may still be building in CI
