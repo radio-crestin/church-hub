@@ -2,7 +2,6 @@ import type {
   BackgroundConfig,
   Constraints,
   Position,
-  PositionUnit,
   Size,
   SizeWithUnits,
   TextStyle,
@@ -144,20 +143,6 @@ export function getBackgroundCSS(
   }
 }
 
-function formatConstraintValue(value: number, unit: PositionUnit): string {
-  return unit === '%' ? `${value}%` : `${value}px`
-}
-
-export interface ConstraintStyles {
-  position: 'absolute'
-  top?: string
-  bottom?: string
-  left?: string
-  right?: string
-  width?: string
-  height?: string
-}
-
 /**
  * Create default constraints (top-left positioned)
  */
@@ -180,62 +165,6 @@ function getDefaultSize(): SizeWithUnits {
     height: 100,
     heightUnit: '%',
   }
-}
-
-/**
- * Calculate CSS styles from constraints for rendering
- */
-export function calculateConstraintStyles(
-  constraints: Constraints | undefined,
-  size: SizeWithUnits | undefined,
-  screenWidth: number,
-  screenHeight: number,
-): ConstraintStyles {
-  // Use defaults if constraints or size are undefined (legacy data)
-  const c = constraints ?? getDefaultConstraints()
-  const s = size ?? getDefaultSize()
-
-  const styles: ConstraintStyles = { position: 'absolute' }
-
-  // Horizontal positioning
-  if (c.left.enabled) {
-    styles.left = formatConstraintValue(c.left.value, c.left.unit)
-  }
-  if (c.right.enabled) {
-    styles.right = formatConstraintValue(c.right.value, c.right.unit)
-  }
-
-  // If both left and right are enabled, width is automatic (stretch)
-  // Otherwise, apply explicit width
-  if (!(c.left.enabled && c.right.enabled)) {
-    styles.width = formatConstraintValue(s.width, s.widthUnit)
-  }
-
-  // Vertical positioning
-  if (c.top.enabled) {
-    styles.top = formatConstraintValue(c.top.value, c.top.unit)
-  }
-  if (c.bottom.enabled) {
-    styles.bottom = formatConstraintValue(c.bottom.value, c.bottom.unit)
-  }
-
-  // If both top and bottom are enabled, height is automatic (stretch)
-  // Otherwise, apply explicit height
-  if (!(c.top.enabled && c.bottom.enabled)) {
-    styles.height = formatConstraintValue(s.height, s.heightUnit)
-  }
-
-  // If no horizontal constraints, default to left: 0
-  if (!c.left.enabled && !c.right.enabled) {
-    styles.left = '0'
-  }
-
-  // If no vertical constraints, default to top: 0
-  if (!c.top.enabled && !c.bottom.enabled) {
-    styles.top = '0'
-  }
-
-  return styles
 }
 
 export interface PixelBounds {

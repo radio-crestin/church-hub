@@ -67,16 +67,11 @@ import {
   readSelectedScheduleId,
   writeSelectedScheduleId,
 } from '../service/selectedSchedule'
-import type { AddToScheduleInput, Schedule, ScheduleItem } from '../types'
+import type { Schedule, ScheduleItem } from '../types'
 import { isSamePassage } from '../utils/isSamePassage'
 import { countScheduleItemSteps } from '../utils/scheduleFlatItems'
 
 interface SchedulePanelProps {
-  /**
-   * Which item kind this panel is primarily about. The song page lists songs,
-   * the Bible page lists passages; each can opt into showing the other.
-   */
-  variant?: 'songs' | 'verses'
   /** Highlights the song currently open on the song page. */
   activeSongId?: number
   /** Highlights the passage currently open on the Bible page. */
@@ -94,15 +89,6 @@ interface SchedulePanelProps {
   onSelectPassage?: (item: ScheduleItem) => void
   /** Opens the full program page. */
   onOpenSchedule?: (scheduleId: number) => void
-  /**
-   * The song the page currently has in focus — the open song on the song page,
-   * the highlighted row on the search page. The header's "+" adds this one.
-   */
-  candidateSong?: { id: number; title: string } | null
-  /** The passage the Bible page has in focus — what the header's "+" adds. */
-  candidatePassage?:
-    | (NonNullable<AddToScheduleInput['biblePassage']> & { label: string })
-    | null
   /** Accepts songs dragged in from the song list. */
   acceptsSongDrop?: boolean
   /**
@@ -130,20 +116,12 @@ interface SchedulePanelProps {
  * program editor's business, so those rows ride along at their fixed positions.
  */
 export function SchedulePanel({
-  // Songs vs verses only steered the header's green one-click add, which is
-  // gone; kept until it is decided whether the distinction comes back.
-  variant = 'songs',
   activeSongId,
   activeReference = null,
   onSelectSong,
   onSongPresented,
   onSelectPassage,
   onOpenSchedule,
-  // Left in place while the header's green one-click add is gone: the prop is
-  // still passed by every host, and whether it comes back is not this
-  // component's call.
-  candidateSong = null,
-  candidatePassage = null,
   acceptsSongDrop = false,
   onAddAllBookmarks,
   isCollapsed = false,
@@ -406,28 +384,6 @@ export function SchedulePanel({
     },
     [selectedScheduleId, addItemMutation, showToast, t],
   )
-
-  /**
-   * Appends the Bible page's current passage to the selected program. Nothing
-   * calls this since the header's green one-click add was removed; it is kept
-   * rather than deleted until that is deliberately decided.
-   */
-  // biome-ignore lint/correctness/noUnusedVariables: kept pending a decision on the removed quick-add
-  const addPassageToSelected = useCallback(() => {
-    if (!selectedScheduleId || !candidatePassage) {
-      showToast(t('panel.selectScheduleFirst'), 'error')
-      return
-    }
-    const { label, ...biblePassage } = candidatePassage
-    addItemMutation.mutate(
-      { scheduleId: selectedScheduleId, input: { biblePassage } },
-      {
-        onSuccess: () =>
-          showToast(t('panel.verseAdded', { reference: label }), 'success'),
-        onError: () => showToast(t('messages.error'), 'error'),
-      },
-    )
-  }, [selectedScheduleId, candidatePassage, addItemMutation, showToast, t])
 
   const {
     ref: songDropRef,

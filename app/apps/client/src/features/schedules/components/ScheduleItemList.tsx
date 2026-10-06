@@ -123,9 +123,6 @@ function SortableScheduleItem({
           onRemove={handleRemove}
           onEditSlide={() => onEditSlide(item)}
           onInsertSongAfter={() => onInsertSongAfter(item.id)}
-          onInsertSlideAfter={(template) =>
-            onInsertSlideAfter(item.id, template)
-          }
           dragHandleProps={{ ...attributes, ...listeners }}
         />
       </div>
@@ -139,7 +136,6 @@ function SortableScheduleItem({
         onRemove={handleRemove}
         onEditSong={() => item.songId && onEditSong(item.songId)}
         onInsertSongAfter={() => onInsertSongAfter(item.id)}
-        onInsertSlideAfter={(template) => onInsertSlideAfter(item.id, template)}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>

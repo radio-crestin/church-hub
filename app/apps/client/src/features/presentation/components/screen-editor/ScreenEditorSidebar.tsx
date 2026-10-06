@@ -458,7 +458,9 @@ export function ScreenEditorSidebar({
                         .fontFamily
                     }
                     onChange={(value) => {
-                      updateElementStyle({ fontFamily: value })
+                      updateElementStyle({
+                        fontFamily: value ? String(value) : undefined,
+                      })
                     }}
                     options={fontFamilyOptions}
                     className="w-full"
@@ -809,7 +811,7 @@ export function ScreenEditorSidebar({
                       }
                       onChange={(value) => {
                         updateNextSlideStyle('labelStyle', {
-                          fontFamily: value,
+                          fontFamily: value ? String(value) : undefined,
                         })
                       }}
                       options={fontFamilyOptions}
@@ -1171,7 +1173,7 @@ export function ScreenEditorSidebar({
                       }
                       onChange={(value) => {
                         updateNextSlideStyle('contentStyle', {
-                          fontFamily: value,
+                          fontFamily: value ? String(value) : undefined,
                         })
                       }}
                       options={fontFamilyOptions}

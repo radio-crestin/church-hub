@@ -104,7 +104,7 @@ test.describe('Song text mode on a long song', () => {
       const textarea = await openTextMode(page, song.id)
 
       await textarea.click()
-      await textarea.evaluate((el) => {
+      await textarea.evaluate((el: HTMLTextAreaElement) => {
         el.setSelectionRange(el.value.length, el.value.length)
       })
       await page.keyboard.type('\n\n---\n\nNou 1\nNou 2\nNou 3')

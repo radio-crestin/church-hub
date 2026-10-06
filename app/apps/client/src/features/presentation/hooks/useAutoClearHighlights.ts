@@ -41,7 +41,6 @@ export function useAutoClearHighlights() {
 
   // Extract stable values from state to use as dependencies
   const currentSongSlideId = state?.currentSongSlideId ?? null
-  const currentQueueItemId = state?.currentQueueItemId ?? null
   const temporaryType = state?.temporaryContent?.type ?? null
   const temporaryData = state?.temporaryContent?.data as
     | {
@@ -58,13 +57,11 @@ export function useAutoClearHighlights() {
   // Track previous slide identifiers to detect slide changes
   const prevSlideRef = useRef<{
     songSlideId: number | null
-    queueItemId: number | null
     temporaryType: string | null
     temporaryIndex: number | null
     initialized: boolean
   }>({
     songSlideId: null,
-    queueItemId: null,
     temporaryType: null,
     temporaryIndex: null,
     initialized: false,
@@ -77,7 +74,6 @@ export function useAutoClearHighlights() {
     const slideChanged =
       prev.initialized &&
       (prev.songSlideId !== currentSongSlideId ||
-        prev.queueItemId !== currentQueueItemId ||
         prev.temporaryType !== temporaryType ||
         prev.temporaryIndex !== temporaryIndex)
 
@@ -88,14 +84,12 @@ export function useAutoClearHighlights() {
     // Update refs
     prevSlideRef.current = {
       songSlideId: currentSongSlideId,
-      queueItemId: currentQueueItemId,
       temporaryType,
       temporaryIndex,
       initialized: true,
     }
   }, [
     currentSongSlideId,
-    currentQueueItemId,
     temporaryType,
     temporaryIndex,
     hasHighlights,

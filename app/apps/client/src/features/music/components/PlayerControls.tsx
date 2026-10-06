@@ -54,7 +54,6 @@ export function PlayerControls({
       </Button>
 
       <Button
-        variant="default"
         size="icon"
         className="h-10 w-10 rounded-full"
         onClick={onPlayPause}

@@ -14,7 +14,7 @@ export function usePresentationState() {
       logger.debug('Polling presentation state')
       const state = await getPresentationState()
       logger.debug(
-        `State polled: isHidden=${state.isHidden}, updatedAt=${state.updatedAt}, queueItemId=${state.currentQueueItemId}, songSlideId=${state.currentSongSlideId}`,
+        `State polled: isHidden=${state.isHidden}, updatedAt=${state.updatedAt}, songSlideId=${state.currentSongSlideId}`,
       )
       return state
     },

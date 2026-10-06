@@ -1,18 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import type { AnimationType } from '../../types'
 import { CALM_TRANSITIONS } from '../../utils/calmTransitions'
 
-export type AnimationType =
-  | 'none'
-  | 'fade'
-  | 'slide-up'
-  | 'slide-down'
-  | 'slide-left'
-  | 'slide-right'
-  | 'zoom'
-  | 'blur'
-
-export interface AnimationConfig {
+export interface SlideAnimationConfig {
   type?: AnimationType
   duration?: number
   /** CSS timing function, e.g. 'ease-in-out' */
@@ -27,13 +18,13 @@ interface UseSlideAnimationOptions {
   /** Whether the element should be visible */
   isVisible: boolean
   /** Animation for when content first appears (presentation starts) */
-  animationIn?: AnimationConfig
+  animationIn?: SlideAnimationConfig
   /** Animation for when content disappears (presentation ends) */
-  animationOut?: AnimationConfig
+  animationOut?: SlideAnimationConfig
   /** Animation for old content exiting during slide transitions */
-  slideTransitionOut?: AnimationConfig
+  slideTransitionOut?: SlideAnimationConfig
   /** Animation for new content entering during slide transitions */
-  slideTransitionIn?: AnimationConfig
+  slideTransitionIn?: SlideAnimationConfig
 }
 
 interface SlideAnimationState {
@@ -50,7 +41,7 @@ const DEFAULT_SLIDE_TRANSITION_DURATION =
   CALM_TRANSITIONS.slideTransitionOut.duration
 
 /** The CSS transition for one animation, with its own duration and easing. */
-function toCssTransition(config: AnimationConfig): string {
+function toCssTransition(config: SlideAnimationConfig): string {
   const duration = config.duration ?? DEFAULT_ANIMATION_DURATION
   return `all ${duration}ms ${config.easing ?? 'ease-out'}`
 }
@@ -149,9 +140,9 @@ export function useSlideAnimation({
 
   // Track which animation config to use for current transition
   const [currentEnterConfig, setCurrentEnterConfig] =
-    useState<AnimationConfig | null>(null)
+    useState<SlideAnimationConfig | null>(null)
   const [currentExitConfig, setCurrentExitConfig] =
-    useState<AnimationConfig | null>(null)
+    useState<SlideAnimationConfig | null>(null)
 
   // Refs for timeouts and animation frames
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -159,7 +150,7 @@ export function useSlideAnimation({
 
   // Get animation configs with fallbacks
   const getEnterAnimation = useCallback(
-    (isSlideChange: boolean): AnimationConfig => {
+    (isSlideChange: boolean): SlideAnimationConfig => {
       if (isSlideChange) {
         return slideTransitionIn ?? CALM_TRANSITIONS.slideTransitionIn
       }
@@ -169,7 +160,7 @@ export function useSlideAnimation({
   )
 
   const getExitAnimation = useCallback(
-    (isSlideChange: boolean): AnimationConfig => {
+    (isSlideChange: boolean): SlideAnimationConfig => {
       if (isSlideChange) {
         return slideTransitionOut ?? CALM_TRANSITIONS.slideTransitionOut
       }
@@ -191,26 +182,29 @@ export function useSlideAnimation({
   }, [])
 
   // Start enter animation
-  const startEnterAnimation = useCallback((enterConfig: AnimationConfig) => {
-    setCurrentEnterConfig(enterConfig)
-    const enterType = enterConfig.type ?? 'fade'
-    const enterDuration = enterConfig.duration ?? DEFAULT_ANIMATION_DURATION
+  const startEnterAnimation = useCallback(
+    (enterConfig: SlideAnimationConfig) => {
+      setCurrentEnterConfig(enterConfig)
+      const enterType = enterConfig.type ?? 'fade'
+      const enterDuration = enterConfig.duration ?? DEFAULT_ANIMATION_DURATION
 
-    if (enterType === 'none') {
-      setPhase('visible')
-    } else {
-      setPhase('mounting')
+      if (enterType === 'none') {
+        setPhase('visible')
+      } else {
+        setPhase('mounting')
 
-      rafRef.current = requestAnimationFrame(() => {
         rafRef.current = requestAnimationFrame(() => {
-          setPhase('entering')
-          timeoutRef.current = setTimeout(() => {
-            setPhase('visible')
-          }, enterDuration)
+          rafRef.current = requestAnimationFrame(() => {
+            setPhase('entering')
+            timeoutRef.current = setTimeout(() => {
+              setPhase('visible')
+            }, enterDuration)
+          })
         })
-      })
-    }
-  }, [])
+      }
+    },
+    [],
+  )
 
   // Handle visibility and content changes
   useEffect(() => {

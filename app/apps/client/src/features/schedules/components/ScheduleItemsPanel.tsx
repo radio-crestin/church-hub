@@ -14,6 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import type { TFunction } from 'i18next'
 import {
   AlertTriangle,
   ChevronDown,
@@ -318,7 +319,7 @@ interface SortableItemWrapperProps {
   onSceneClick?: (item: ScheduleItem) => void
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
-  t: (key: string) => string
+  t: TFunction
 }
 
 function SortableItemWrapper({

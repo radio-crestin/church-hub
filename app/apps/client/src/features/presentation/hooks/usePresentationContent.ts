@@ -1,18 +1,16 @@
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import { useEffect, useRef, useState } from 'react'
 
-import { getApiUrl, isMobile } from '~/config'
 import type { SlideStyleOverride } from '~/features/songs/types'
-import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import { useContentTypeHandoff } from './useContentTypeHandoff'
 import { usePresentationState } from './usePresentationState'
+import type { NextSlideData } from '../components/rendering/types'
 import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/calculateMaxExitAnimationDuration'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,
   ScreenBackgroundConfig,
-  ScreenConfig,
+  ScreenWithConfigs,
   SongContentConfig,
   SongLastSlideContentConfig,
   TemporaryContent,
@@ -30,65 +28,9 @@ const logger = createLogger('app:presentation:content')
 // Extra buffer time after animation completes before transitioning to empty state (ms)
 const EXIT_ANIMATION_BUFFER = 200
 
-// Check if we're running in Tauri context
-const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
-const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
-
-// Queue cache to avoid redundant fetches during slide navigation
-let queueCache: {
-  data: QueueItem[]
-  updatedAt: number
-  songUpdatedAt: number
-  fetchedAt: number
-} | null = null
-const QUEUE_CACHE_MAX_AGE = 5000 // 5 seconds
-
-// Get headers with auth token for mobile
-function getHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    'Cache-Control': 'no-cache',
-  }
-  if (isMobile()) {
-    const userToken = getStoredUserToken()
-    if (userToken) {
-      headers['Cookie'] = `user_auth=${userToken}`
-    }
-  }
-  return headers
-}
-
 interface ChordMapping {
   wordIndex: number
   chord: string
-}
-
-interface SongSlide {
-  id: number
-  content: string
-  chords?: ChordMapping[] | null
-}
-
-interface QueueItem {
-  id: number
-  itemType: string
-  slideType?: string
-  slideContent?: string
-  bibleReference?: string
-  bibleText?: string
-  bibleTranslation?: string
-  bibleVerseId?: number
-  biblePassageVerses?: Array<{ id: number; reference: string; text: string }>
-  biblePassageTranslation?: string
-  verseteTineriEntries?: Array<{
-    id: number
-    reference: string
-    text: string
-    person?: string
-  }>
-  slides?: SongSlide[]
-  keyLine?: string | null
 }
 
 export interface ContentData {
@@ -109,14 +51,9 @@ export interface ContentData {
   songBackground?: ScreenBackgroundConfig | null
 }
 
-export interface NextSlideData {
-  contentType: string
-  preview: string
-}
-
 interface UsePresentationContentOptions {
   /** Screen config for animation duration calculation */
-  screen: ScreenConfig | null | undefined
+  screen: ScreenWithConfigs | null | undefined
   /** Whether to calculate next slide data (for preview) */
   includeNextSlide?: boolean
   /** Function to get next verse for bible passages */
@@ -157,7 +94,7 @@ interface UsePresentationContentResult {
  */
 function buildSongSlideContent(
   data: TemporarySongContent,
-  screen: ScreenConfig | null | undefined,
+  screen: ScreenWithConfigs | null | undefined,
   includeNextSlide: boolean,
 ): {
   contentType: ContentType
@@ -604,198 +541,10 @@ export function usePresentationContent({
         }
       }
 
-      // Fetch from queue if no temporary content (with caching)
-      try {
-        const stateUpdatedAt = presentationState.updatedAt || 0
-        const now = Date.now()
-        const cacheValid =
-          queueCache &&
-          queueCache.updatedAt === stateUpdatedAt &&
-          queueCache.songUpdatedAt === songUpdateTimestamp &&
-          now - queueCache.fetchedAt < QUEUE_CACHE_MAX_AGE
-
-        let queueItems: QueueItem[]
-
-        if (cacheValid) {
-          logger.debug('Using cached queue data')
-          queueItems = queueCache.data
-        } else {
-          logger.debug('Fetching fresh queue data')
-          const queueResponse = await fetchFn(`${getApiUrl()}/api/queue`, {
-            cache: 'no-store',
-            headers: getHeaders(),
-            credentials: 'include',
-          })
-
-          if (!queueResponse.ok) {
-            if (isCancelled) return
-            showContent('empty', {})
-            setNextSlideData(undefined)
-            return
-          }
-
-          const queueResult = await queueResponse.json()
-          queueItems = queueResult.data || []
-          queueCache = {
-            data: queueItems,
-            updatedAt: stateUpdatedAt,
-            songUpdatedAt: songUpdateTimestamp,
-            fetchedAt: now,
-          }
-        }
-
-        // Find current content - song slide
-        if (presentationState.currentSongSlideId) {
-          for (const item of queueItems) {
-            const slideIndex = item.slides?.findIndex(
-              (s) => s.id === presentationState.currentSongSlideId,
-            )
-            if (slideIndex !== undefined && slideIndex !== -1 && item.slides) {
-              const slide = item.slides[slideIndex]
-              const isFirstSlide = slideIndex === 0
-              const isLastSlide = slideIndex === item.slides.length - 1
-              const slideContent = slide.content
-              const songCfg = screen?.contentConfigs?.song as
-                | SongContentConfig
-                | undefined
-              // Key + Amin are emitted as separate elements (see above). A
-              // standalone trailing "amin" line is pulled out of the lyrics.
-              const songKeyValue = resolveSongKey(
-                isFirstSlide,
-                item.keyLine,
-                songCfg,
-              )
-              // Operator's custom "Amin" label (from the "Strofă - Amin" tab).
-              const customAmin =
-                (
-                  screen?.contentConfigs?.song_last_slide as
-                    | SongLastSlideContentConfig
-                    | undefined
-                )?.amen?.text ?? songCfg?.amen?.text
-              const { mainText: songMainText, amen: amenValue } =
-                resolveSongSlideBody(isLastSlide, slideContent, customAmin)
-              // Resolve chords for this slide
-              const queueChords = resolveSlideChords(slideIndex, item.slides)
-
-              if (isCancelled) return
-              // First slide WITH a gama → "Cântec - Primul Slide" (song_first_slide),
-              // last slide WITH an amin → "Cântec - Ultimul Slide" (song_last_slide);
-              // otherwise the plain `song` layout.
-              showContent(
-                resolveSongSlideContentType(
-                  isFirstSlide,
-                  isLastSlide,
-                  !!songKeyValue,
-                  !!amenValue,
-                ),
-                {
-                  mainText: songMainText,
-                  chords: queueChords,
-                  songKey: songKeyValue,
-                  amen: amenValue,
-                },
-                `song|${item.songId}|${slideIndex}`,
-              )
-
-              // Show next slide preview if enabled
-              if (includeNextSlide) {
-                const nextSlide = item.slides[slideIndex + 1]
-                if (nextSlide) {
-                  setNextSlideData({
-                    contentType: 'song',
-                    preview: nextSlide.content,
-                  })
-                } else {
-                  setNextSlideData(undefined)
-                }
-              }
-              return
-            }
-          }
-        }
-
-        // Queue item content (not song slide)
-        if (
-          presentationState.currentQueueItemId &&
-          !presentationState.currentSongSlideId
-        ) {
-          const queueItem = queueItems.find(
-            (item) => item.id === presentationState.currentQueueItemId,
-          )
-
-          if (queueItem) {
-            if (queueItem.itemType === 'slide') {
-              if (
-                queueItem.slideType === 'versete_tineri' &&
-                queueItem.verseteTineriEntries
-              ) {
-                const entryId = presentationState.currentVerseteTineriEntryId
-                const entry = entryId
-                  ? queueItem.verseteTineriEntries.find((e) => e.id === entryId)
-                  : queueItem.verseteTineriEntries[0]
-
-                if (entry && !isCancelled) {
-                  showContent('versete_tineri', {
-                    personLabel: entry.person || '',
-                    referenceText: entry.reference,
-                    contentText: entry.text,
-                  })
-                  setNextSlideData(undefined)
-                  return
-                }
-              }
-
-              // Regular announcement slide
-              if (isCancelled) return
-              showContent('announcement', {
-                mainText: queueItem.slideContent || '',
-              })
-              setNextSlideData(undefined)
-              return
-            }
-
-            if (queueItem.itemType === 'bible') {
-              const reference = (queueItem.bibleReference || '').replace(
-                /\s*-\s*[A-Z]+\s*$/,
-                '',
-              )
-              if (isCancelled) return
-              showContent('bible', {
-                referenceText: reference,
-                contentText: queueItem.bibleText || '',
-              })
-              setNextSlideData(undefined)
-              return
-            }
-
-            if (queueItem.itemType === 'bible_passage') {
-              const verseId = presentationState.currentBiblePassageVerseId
-              const verse = verseId
-                ? queueItem.biblePassageVerses?.find((v) => v.id === verseId)
-                : queueItem.biblePassageVerses?.[0]
-
-              if (verse && !isCancelled) {
-                showContent('bible_passage', {
-                  referenceText: verse.reference,
-                  contentText: verse.text,
-                })
-                setNextSlideData(undefined)
-                return
-              }
-            }
-          }
-        }
-
-        // No content, show empty
-        if (isCancelled) return
-        showContent('empty', {})
-        setNextSlideData(undefined)
-      } catch (error) {
-        logger.debug(`Error fetching content: ${error}`)
-        if (isCancelled) return
-        showContent('empty', {})
-        setNextSlideData(undefined)
-      }
+      // Nothing temporary is presented: show empty
+      if (isCancelled) return
+      showContent('empty', {})
+      setNextSlideData(undefined)
     }
 
     fetchContent()
@@ -806,9 +555,6 @@ export function usePresentationContent({
     }
   }, [
     presentationState?.currentSongSlideId,
-    presentationState?.currentQueueItemId,
-    presentationState?.currentBiblePassageVerseId,
-    presentationState?.currentVerseteTineriEntryId,
     presentationState?.isHidden,
     presentationState?.updatedAt,
     // Include temporaryContent to ensure re-render when navigating temporary songs/bible

@@ -12,14 +12,13 @@ import { useTranslation } from 'react-i18next'
 
 import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import { removeHtmlTags } from '~/utils/removeHtmlTags'
-import type { ScheduleItem, SlideTemplate } from '../types'
+import type { ScheduleItem } from '../types'
 
 interface ScheduleItemSlideProps {
   item: ScheduleItem
   onRemove: () => void
   onEditSlide: () => void
   onInsertSongAfter: () => void
-  onInsertSlideAfter: (template: SlideTemplate) => void
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
@@ -28,7 +27,6 @@ export function ScheduleItemSlide({
   onRemove,
   onEditSlide,
   onInsertSongAfter,
-  onInsertSlideAfter,
   dragHandleProps,
 }: ScheduleItemSlideProps) {
   const { t } = useTranslation('queue')

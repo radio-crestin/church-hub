@@ -9,7 +9,10 @@ export const Route = createFileRoute('/(root)/')({
 
     if (settings.enabled) {
       if (settings.startupPage.type === 'screen') {
-        throw redirect({ to: `/screen/${settings.startupPage.screenId}` })
+        throw redirect({
+          to: '/screen/$screenId',
+          params: { screenId: String(settings.startupPage.screenId) },
+        })
       } else if (settings.startupPage.path) {
         throw redirect({ to: settings.startupPage.path })
       }

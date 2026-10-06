@@ -142,7 +142,6 @@ export function ExportOptionsModal({
               <CategoryPicker
                 value={categoryId}
                 onChange={setCategoryId}
-                placeholder={t('sections.importExport.export.selectCategory')}
                 portalContainer={dialogRef.current}
               />
             </div>

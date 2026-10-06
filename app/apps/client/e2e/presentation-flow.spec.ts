@@ -112,9 +112,6 @@ test.describe('Presentation Flow', () => {
     await page.waitForTimeout(2000)
 
     // Capture first slide content
-    const _firstSlideText = await page
-      .locator('.w-screen.h-screen')
-      .textContent()
 
     // Navigate to next slide
     const navRes = await request.post('/api/presentation/navigate-temporary', {
@@ -311,8 +308,6 @@ test.describe('Presentation Flow', () => {
     await page.waitForTimeout(1500)
 
     // Screen should initially be empty/stopped
-    const initialState = await request.get('/api/presentation/state')
-    const _initialBody = await initialState.json()
 
     // Present a song via API
     const songsRes = await request.get(
@@ -463,12 +458,6 @@ test.describe('Presentation Flow', () => {
       await page.waitForTimeout(1500)
 
       // Check for highlights in the DOM (background-color in style)
-      const _hasHighlight = await page.evaluate(() => {
-        const spans = document.querySelectorAll(
-          '.w-screen.h-screen span[style*="background"]',
-        )
-        return spans.length > 0
-      })
 
       // Highlight may or may not render depending on WebSocket propagation
       // Just verify the page is stable

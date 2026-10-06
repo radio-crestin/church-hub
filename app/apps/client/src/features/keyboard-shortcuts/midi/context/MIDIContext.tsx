@@ -306,8 +306,12 @@ export function MIDIProvider({
               outputDeviceName: outputName,
             }),
           })
-          const _result = await response.json()
-        } catch (_error) {}
+          if (!response.ok) {
+            logger.warn(`MIDI auto-connect failed: HTTP ${response.status}`)
+          }
+        } catch (error) {
+          logger.warn('MIDI auto-connect failed', error)
+        }
       }
 
       return true

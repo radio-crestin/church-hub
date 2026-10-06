@@ -35,9 +35,6 @@ test.describe('Livestream Page', () => {
 
     // The page should render without errors, showing connection status
     // Look for connect/disconnect buttons or status indicators
-    const _connectButtons = page.locator(
-      'button:has-text(/connect|conectare|disconnect|deconectare/i)',
-    )
 
     await page.waitForTimeout(2000)
     await expect(page.locator('body')).toBeVisible()

@@ -601,7 +601,6 @@
         "button": "Exportă Cântări",
         "allSongs": "Toate cântările",
         "byCategory": "După categorie",
-        "selectCategory": "Selectează o categorie",
         "fileFormatLabel": "Format Fișier",
         "fileFormats": {
           "opensong": "OpenSong",

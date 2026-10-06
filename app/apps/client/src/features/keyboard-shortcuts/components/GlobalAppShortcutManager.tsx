@@ -138,7 +138,7 @@ export function GlobalAppShortcutManager() {
     }
     isStopOperationRef.current = true
     logger.info('Stopping live stream via shortcut')
-    navigate({ to: '/livestream/' })
+    navigate({ to: '/livestream' })
     stop()
   }, [stop, navigate, isLive, isStopping, isStartingStream])
 

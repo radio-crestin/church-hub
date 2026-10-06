@@ -10,7 +10,7 @@ import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarke
 import { decodeHtmlEntities } from '../../../../utils/decodeHtmlEntities'
 import { removeHtmlTags } from '../../../../utils/removeHtmlTags'
 import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
-import type { TextStyle } from '../../types'
+import type { LineSeparatorType, TextStyle } from '../../types'
 
 /**
  * Represents a text segment with optional highlight color.
@@ -136,7 +136,7 @@ interface TextContentProps {
  */
 function compressSegments(
   segments: TextSegment[],
-  separator: 'space' | 'slash',
+  separator: LineSeparatorType,
 ): TextSegment[] {
   // First, join all segments into one string to apply compression
   const fullText = segments.map((s) => s.text).join('')
@@ -286,14 +286,8 @@ export function TextContent({
       : [{ text: content }]
 
     if (shouldCompressLines) {
-      const compressedContent = compressLines(
-        baseContent,
-        lineSeparator as 'space',
-      )
-      const compressedSegments = compressSegments(
-        baseSegments,
-        lineSeparator as 'space',
-      )
+      const compressedContent = compressLines(baseContent, lineSeparator)
+      const compressedSegments = compressSegments(baseSegments, lineSeparator)
       return {
         processedContent: compressedContent,
         processedSegments: compressedSegments,

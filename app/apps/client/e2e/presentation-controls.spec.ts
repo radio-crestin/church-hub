@@ -229,16 +229,12 @@ test.describe('Presentation Controls', () => {
     await page.waitForTimeout(2000)
 
     // Get initial state
-    const initialState = await request.get('/api/presentation/state')
-    const _initialBody = await initialState.json()
 
     // Press arrow down/right to go to next slide
     await page.keyboard.press('ArrowDown')
     await page.waitForTimeout(1000)
 
     // Get state after navigation
-    const afterState = await request.get('/api/presentation/state')
-    const _afterBody = await afterState.json()
 
     // State should have been updated (slide index may have changed)
     // The exact behavior depends on keyboard shortcuts configuration
@@ -323,17 +319,9 @@ test.describe('Presentation Controls', () => {
     await page.waitForTimeout(2000)
 
     // Look for screen share start button
-    const screenShareButton = page
-      .getByRole('button', {
-        name: /screen share|partajare|share screen/i,
-      })
-      .first()
 
     // Screen share button should be available in the control room toolbar
     // It may be hidden on small screens behind a responsive breakpoint
-    const _isVisible = await screenShareButton
-      .isVisible({ timeout: 5000 })
-      .catch(() => false)
 
     // Verify the page loaded without errors regardless
     await expect(page.locator('body')).toBeVisible()
@@ -473,8 +461,6 @@ test.describe('Presentation Controls', () => {
     // Get initial state
     let stateRes = await request.get('/api/presentation/state')
     let state = await stateRes.json()
-    const _initialSlideIndex =
-      state.data.temporaryContent?.data?.currentSlideIndex
 
     // Navigate to next slide
     const navRes = await request.post('/api/presentation/navigate-temporary', {

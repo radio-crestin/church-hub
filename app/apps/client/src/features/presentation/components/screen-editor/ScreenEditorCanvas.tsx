@@ -90,7 +90,6 @@ interface DraggableElementProps {
   onConstraintChange: (constraints: Constraints) => void
   onSizeChange: (size: SizeWithUnits) => void
   canvasWidth: number
-  canvasHeight: number
   screenWidth: number
   screenHeight: number
   canvasRef: React.RefObject<HTMLDivElement | null>
@@ -112,7 +111,6 @@ function DraggableElement({
   onConstraintChange,
   onSizeChange,
   canvasWidth,
-  canvasHeight,
   screenWidth,
   screenHeight,
   canvasRef,
@@ -607,7 +605,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('mainText')}
           onSizeChange={handleSizeChange('mainText')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}
@@ -661,7 +658,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('contentText')}
           onSizeChange={handleSizeChange('contentText')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}
@@ -705,7 +701,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('referenceText')}
           onSizeChange={handleSizeChange('referenceText')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}
@@ -753,7 +748,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('songKey')}
           onSizeChange={handleSizeChange('songKey')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}
@@ -801,7 +795,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('amen')}
           onSizeChange={handleSizeChange('amen')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}
@@ -841,7 +834,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('personLabel')}
           onSizeChange={handleSizeChange('personLabel')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}
@@ -900,7 +892,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('clock')}
           onSizeChange={handleSizeChange('clock')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}
@@ -943,7 +934,6 @@ export function ScreenEditorCanvas({
           onConstraintChange={handleConstraintChange('nextSlide')}
           onSizeChange={handleSizeChange('nextSlide')}
           canvasWidth={displaySize.width}
-          canvasHeight={displaySize.height}
           screenWidth={canvasWidth}
           screenHeight={canvasHeight}
           canvasRef={canvasRef}

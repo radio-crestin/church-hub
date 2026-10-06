@@ -28,8 +28,14 @@ interface SongFiltersDropdownProps {
   onChange: (filters: SongFiltersState) => void
 }
 
+type ToggleFilterKey =
+  | 'presentedOnly'
+  | 'inSchedulesOnly'
+  | 'hasKeyLine'
+  | 'bookmarkedOnly'
+
 interface FilterOption {
-  key: keyof SongFiltersState
+  key: ToggleFilterKey
   icon: React.ReactNode
   labelKey: string
 }
@@ -154,9 +160,7 @@ export function SongFiltersDropdown({
     }
   }, [isOpen])
 
-  const handleToggle = (
-    key: 'presentedOnly' | 'inSchedulesOnly' | 'hasKeyLine' | 'bookmarkedOnly',
-  ) => {
+  const handleToggle = (key: ToggleFilterKey) => {
     onChange({
       ...filters,
       [key]: !filters[key],

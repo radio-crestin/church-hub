@@ -112,7 +112,7 @@ export function useSaveScheduleToFile() {
 
       setIsPending(true)
       try {
-        let data: Uint8Array
+        let data: Uint8Array<ArrayBuffer>
 
         if (format === 'pptx') {
           // Generate ZIP with PPTX files and schedule text

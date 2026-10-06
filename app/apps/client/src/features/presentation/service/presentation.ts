@@ -386,7 +386,7 @@ export async function presentTemporaryVerseteTineri(
 export async function presentTemporaryScene(
   input: PresentTemporarySceneInput,
 ): Promise<PresentationState> {
-  logger.info('POST /api/presentation/temporary-scene', input.sceneId)
+  logger.info('POST /api/presentation/temporary-scene', input.obsSceneName)
   const response = await fetchFn(
     `${getApiUrl()}/api/presentation/temporary-scene`,
     {

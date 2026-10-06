@@ -298,7 +298,6 @@ export function stopPresentation(): PresentationState {
 /**
  * Clears the current slide (shows blank/clock)
  * Saves currentSongSlideId to lastSongSlideId for restoration
- * Keeps currentQueueItemId so the slide can be restored with showSlide
  * Also clears all slide highlights
  */
 export function clearSlide(): PresentationState {

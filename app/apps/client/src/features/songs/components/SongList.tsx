@@ -56,11 +56,6 @@ interface SongListProps {
   urlPath?: string
   onAISearchSaved?: (searchId: number) => void
   /**
-   * Reports the keyboard-selected song so the page can act on it (e.g. add the
-   * selected song to a program). Fires with null when nothing is selected.
-   */
-  onSelectedSongChange?: (song: { id: number; title: string } | null) => void
-  /**
    * Gives every row its Marcaje / Programe buttons. Off by default so pickers
    * and embedded lists keep plain click behaviour.
    */
@@ -86,7 +81,6 @@ export function SongList({
   aiSearchId,
   urlPath,
   onAISearchSaved,
-  onSelectedSongChange,
   showRowActions = false,
   onAddSongToSchedule,
 }: SongListProps) {
@@ -827,14 +821,6 @@ export function SongList({
     el?.scrollIntoView({ block: 'center' })
     lastScrolledToSongIdRef.current = initialSelectedSongId
   }, [initialSelectedSongId, displaySongs, setSelectedIndex, itemRefs])
-
-  // Mirror the keyboard selection out to the page. Kept as its own effect so
-  // the selection stays owned by useSearchKeyboardNavigation.
-  useEffect(() => {
-    if (!onSelectedSongChange) return
-    const song = selectedIndex >= 0 ? displaySongs[selectedIndex] : undefined
-    onSelectedSongChange(song ? { id: song.id, title: song.title } : null)
-  }, [selectedIndex, displaySongs, onSelectedSongChange])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
