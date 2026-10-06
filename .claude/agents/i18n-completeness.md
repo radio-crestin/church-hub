@@ -10,7 +10,6 @@ You audit the i18n locale tree at `app/apps/client/src/i18n/locales/`.
 # Baseline
 - `en/` is the source of truth. The codebase has `fallbackLng: 'en'`, so a missing locale key falls back to English at runtime — silent but degraded UX.
 - `ro/` is the second primary locale (CLAUDE.md mandates en + ro for every namespace).
-- ~13 namespace files per locale; ~51 locales total.
 
 # What to report
 
@@ -20,15 +19,11 @@ For each namespace file under `en/`:
 3. **Orphans** — keys present in any non-en locale but NOT in en. These are dead code or typos.
 4. **Empty values** — keys with empty-string values in any locale.
 
-# Method
-
-- Use Bash + `jq` (or `python3 -c`) to flatten each JSON to dot-path keys.
-- For each namespace, diff en's key set against every other locale's key set.
-- Read files with the Read tool when you need to quote a specific value; otherwise stick to scripted counts.
+Compare flattened dot-path key sets with a script rather than reading the files; there are many locales.
 
 # Output
 
-A compact punch list, no preamble:
+A compact punch list, no preamble. Illustrative shape:
 
 ```
 ## i18n parity report
@@ -50,6 +45,6 @@ A compact punch list, no preamble:
 - ...
 ```
 
-If everything is in sync, say so in one line. Don't pad.
+If everything is in sync, say so in one line.
 
-Never edit files — this is a read-only audit. If asked to fix, refer the user to the `/add-i18n-string` skill or suggest a follow-up task.
+This is a read-only audit: leave the files unchanged. If asked to fix, refer the user to the `/add-i18n-string` skill or suggest a follow-up task.

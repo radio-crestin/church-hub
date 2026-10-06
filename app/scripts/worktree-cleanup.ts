@@ -13,7 +13,8 @@
  *      in the Cargo target and the folders the OS made for the app,
  *   5. deletes the branch, and the worktree's empty `worktree-agent-*` base
  *      branch, only when merged into main, fully pushed or the head of a merged PR,
- *   6. deletes the remote branch and the PR's installers from the shared
+ *   6. deletes the PR's remote branch (`task/<id>` when better-tasks pushed
+ *      it) and its installers from the shared
  *      `pr-builds` release once the PR is merged (installers also once closed).
  *
  * Kept: shared caches (bun's global cache, the Playwright browsers, the main
@@ -198,9 +199,12 @@ if (!target) throw new Error(USAGE)
 const mainRoot = mainCheckoutRoot(process.cwd())
 const worktree = findWorktree(mainRoot, target)
 // Asked first: the branch is deleted below, and the PR proves what was merged.
-const pull = worktree.branch
-  ? findPullRequest(mainRoot, worktree.branch)
-  : undefined
+// better-tasks pushes a worktree's branch as `task/<id>`, so the PR's head is
+// that name; a PR opened from the local branch's own name is found too.
+const pull =
+  (worktree.branch && findPullRequest(mainRoot, worktree.branch)) ||
+  findPullRequest(mainRoot, `task/${taskId}`)
+const remoteBranch = pull?.headRefName ?? worktree.branch
 step('review app closed', () => stopReviewApp(taskId))
 step('ports stopped', () => stopPorts(mainRoot, [port, reviewPort]))
 step('worktree removed', () => removeWorktree(mainRoot, worktree))
@@ -208,8 +212,6 @@ step('review build removed', () => removeReviewBuild(mainRoot, taskId))
 step('branch', () => deleteBranchIfSafe(mainRoot, worktree.branch, pull))
 step('base branch', () => deleteBaseBranch(mainRoot, worktree))
 step('remote branch', () =>
-  worktree.branch
-    ? deleteRemoteBranch(mainRoot, worktree.branch, pull)
-    : 'no branch',
+  remoteBranch ? deleteRemoteBranch(mainRoot, remoteBranch, pull) : 'no branch',
 )
 step('PR installers', () => deletePrBuildRelease(mainRoot, pull))

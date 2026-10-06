@@ -1,24 +1,18 @@
 # better-tasks: church-hub specifics
-Project additions to the better-tasks plugin's own coordinator and teammate rules; the plugin's texts and `.claude/tasks/config.json` stay untouched. Open when leading or working a better-tasks task.
-
-## Lead (coordinator)
-- **Finishing question** also lists the local app (`app:` file:// link from the task's notes): the one build to review, made for this computer only. Installer links (`build:`) only when the user asked for installers for that task.
-- **Before merging**: no unresolved review comments, no conflicts. Anything open goes back to the owner to fix.
-- **Merge**: main's branch protection needs `--admin` on `gh pr merge` (it passes branch protection, nothing else). Then `git pull --ff-only` in the main checkout.
-- **Cleanup** after the merge, from the main checkout: `bun app/scripts/worktree-cleanup.ts <task-id> <branch>`, then stop the teammate. It closes the review app, frees ports 3100 + n and 4100 + n (never 3000 or 3001), removes the worktree and review build, and deletes the branches and the PR's installers in the `pr-builds` release once merged. A task with no PR (tooling) still runs it for its worktree and branch.
+Where this project differs from the better-tasks plugin's own lead and teammate rules. Open when leading or working a better-tasks task. Everything not named here follows the plugin (its texts and `.claude/tasks/config.json` stay untouched); project-wide rules are in the root `CLAUDE.md`.
 
 ## Teammates
-- **Plugin**: one install per machine, `claude plugin install better-tasks@better-tasks` (user scope; never a second `--scope project` copy, which updates on its own and goes stale); `.claude/settings.json` enables it with `autoUpdate`, so each Claude Code start pulls the latest version.
-- **Branch**: `git switch -c feat/<slug>` (or `fix/<slug>`) first; push it under that name, not `task/T-xxx` (CLAUDE.md rule).
-- **Setup**: `bun app/scripts/worktree-setup.ts <task-id>` (~5 s): reuses the main checkout's caches, builds the client for your port = 3100 + task number. After client changes: `cd app/apps/client && VITE_API_PORT=<port> VITE_SERVER_PORT=<port> bun run build`.
-- **Ports 3000 (installed app) and 3001 (dev server)** are the user's: never start, test against or kill them. e2e always with `CI=1 TEST_PORT=<port>` (without `CI=1`, Playwright rebuilds the client for the default port). The before/after video's steps run against your port too.
-- **Cargo** shares the main checkout's target dir: `cargo check`/`clippy`/`test` only; no `tauri build`/`dev` by hand. `review-build.ts` (below) compiles Rust only when the task changed `app/tauri` or `app/tauri-plugins`.
-- **Playwright browser MISSING** and `playwright install` hangs at 100%: unzip its complete zip from `$TMPDIR/playwright-download-*/` into the reported folder and add an empty `INSTALLATION_COMPLETE` file.
-- **Romanian texts via Codex**: for each new or changed user-facing string, `codex exec -s read-only "<strings + where they appear + what they do>"`; ask for short, natural church wording with correct diacritics (ă â î ș ț), no calques. Check it in context, put it in `ro/`.
-- **Test**: a spec in `app/apps/client/e2e/` (the test suite; no new unit tests); `CI=1 TEST_PORT=<port> bunx playwright test <spec> --workers=1 --retries=2` must pass.
-- **Full tests** (at the finish, after the user accepts): the whole e2e suite, locally, serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`. No GitHub Actions run on PRs; don't wait for any.
-- **Video**: only the plugin's own before/after video rules and its `demo-video.sh`, from the installed plugin; the project has no recording tool of its own. Capture at 1920×1080 (Playwright `viewport` and `recordVideo.size` both `{ width: 1920, height: 1080 }`, else it records 800×600).
-- **Local app** (the review build): `bun app/scripts/review-build.ts <task-id>` (~6 s; several at once) builds the branch's desktop app for this OS into the main checkout's `.review-build/<task-id>/` (outlives the worktree; own port 4100 + n, own data, own identifier, no updater) and prints its `file://` link. It reuses one compiled Tauri shell per shell version (`.review-build/.shells/`, newest 3 kept) and builds only the task's web client and sidecar; a task that changed the shell compiles its own once (~1–2 min, one at a time). Rebuild after each push.
-- **Installers only on request**: no push builds them. When the user asks for installers (other OSes, another computer), `gh workflow run pr-build.yml -f pr=<n>` (all) or `-f platforms=macos,windows` (only those); ~10 min, into the shared `pr-builds` prerelease, linked at the end of the PR description (keep its `<!-- pr-build:start/end -->` block when you rewrite the body). Links: `.claude/skills/detailed-pr/scripts/pr-build-links.sh <n> --wait`. Never wait for them otherwise.
-- **Notes from a worktree**: the task file lives in the main checkout; add notes with `task_note` (your task id). Lines: `PR: <url>`, `app: <file:// link>`; `build: <links>` only for requested installers.
-- **Temp files** go in your scratchpad, never the repo or `$TMPDIR`; delete them when done.
+- **Task file**: it lives in the main checkout, outside your worktree: write your notes with `task_note`.
+- **Your environment**: `bun app/scripts/worktree-setup.ts <task-id>` sets up the worktree on port 3100 + n (n = task number). After client changes, rebuild the client for that port (`VITE_API_PORT=<port> VITE_SERVER_PORT=<port> bun run build` in `app/apps/client`).
+- **e2e**: always with `CI=1 TEST_PORT=<port>`, or Playwright rebuilds the client for the default port. The plugin's "full tests" are the full suite in the root `CLAUDE.md`. A Playwright video recording needs `viewport` and `recordVideo.size` both `{ width: 1920, height: 1080 }`, or it comes out 800×600.
+- **Playwright browser MISSING** while `playwright install` hangs at 100%: unzip the complete zip from `$TMPDIR/playwright-download-*/` into the reported folder and add an empty `INSTALLATION_COMPLETE` file.
+- **Cargo** shares the main checkout's target dir: `cargo check` / `clippy` / `test` only.
+- **Romanian texts**: have Codex propose each new or changed user-facing string (`codex exec -s read-only "<strings, where they appear, what they do>"`) in short, natural church wording with correct diacritics, no calques; check it in context.
+- **The build the user tries** is the review build: `bun app/scripts/review-build.ts <task-id>` builds this branch's desktop app (own port 4100 + n, own data) and prints its `file://` link. Rebuild after each push. The link goes in your notes and the done block as `app: <link>`.
+- **Installers only when the user asks**: `gh workflow run pr-build.yml -f pr=<n>` (or `-f platforms=…`); their links come from `.claude/skills/detailed-pr/scripts/pr-build-links.sh <n> --wait`, noted as `build: <links>` and kept in the PR body's `<!-- pr-build:start/end -->` block.
+
+## Lead
+- **Finishing question** also gives the `app:` link; installer links only when the user asked for them.
+- **Merge**: PRs have no GitHub checks, so a PR is ready once it has no unresolved review comments and no conflicts; anything open goes back to the owner. Main's branch protection needs `--admin` on the plugin's `gh pr merge --squash`; then `git pull --ff-only` in the main checkout.
+- **Cleanup** after the merge, from the main checkout, before you stop the teammate: `bun app/scripts/worktree-cleanup.ts <task-id> <branch>` (closes the review app, frees the task's ports, removes the worktree, review build, branches and the PR's installers). A task with no PR still runs it.
+- **Plugin**: one user-scope install per machine (`claude plugin install better-tasks@better-tasks`), never a second `--scope project` copy, which goes stale; `.claude/settings.json` turns on its `autoUpdate`.

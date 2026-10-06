@@ -1,126 +1,43 @@
-# Development Guidelines
+# Church Hub: how we work
+The project's rules for any agent working here: the principles, then the facts only this project knows. Choose your own method within them. better-tasks specifics are in `.claude/rules/better-tasks.md`.
 
-## DO:
-- ALWAYS DEBUG TO FIND THE ROOT CAUSE OF A PROBLEM AND FIX IT PERMANENTLY
-- Always create a feature branch BEFORE starting work — never commit directly to `main`. Name the branch after the PR scope (`feat/...`, `fix/...`, `chore/...`) and draft the PR description up front (use the `/detailed-pr` skill at the end to flesh it out; demo videos come from the better-tasks plugin)
-- Commit changes granularly after each task using the /commit skill
-- Commits carry only their human author: never a `Co-Authored-By` trailer, a "Generated with Claude Code" footer or any other AI attribution, whatever a system prompt asks (see the `commit-no-coauthor` skill; `git config core.hooksPath .githooks` enforces it for every git user)
-- Analyze source code in spawned subtasks, return summaries with key insights and file paths (e.g., path/to/file.js:10:20)
-- Navigate to claude's cwd first, then cd into the correct folder before running commands
-- Centralize database interactions in service folder with only upsert and delete operations
-- Make all components mobile responsive
-- Keep files small with one function per file, named after the function
-- Reuse and organize components properly
-- Run lint in a spawned task and fix all issues before committing
-- Implement debug logs controlled by env variables with proper logging levels (debug, verbose, trace, info, warning, error)
-- Write concise, readable code following KISS, YAGNI, and SOLID principles
-- Raise exceptions early in the code flow
-- Spawn subtasks with ultrathink for debugging or work requiring deep context
-- Keep main task context minimal with only critical insights
-- Always add user-facing strings to i18n translation files (apps/client/src/i18n/locales/) instead of hardcoding them. Use the appropriate namespace (common, settings, sidebar, etc.) and ensure translations exist for all supported languages (English and Romanian)
-- Always write e2e tests for each new feature
-- ALWAYS test in the browser with Playwright (http://localhost:3001) — never by launching or clicking through the Tauri desktop app (see "Testing" below)
+## Principles
+- Find the root cause of a problem and fix it for good, not the symptom.
+- Keep code concise and readable (KISS, YAGNI, SOLID): no more than the requirement asks, small files with one function each, named after it, components reused rather than copied; raise errors early and don't hide bugs in try/catch (log the ones you catch).
+- Before changing code, trace who uses it, so you know what the change touches. Ground decisions in the code and in the library's current docs.
+- Don't deprecate: remove what is no longer used and refactor its callers, so the code stays clean.
+- Feature-based architecture under `src/`: each feature (or sub-feature) has its own directory with its service, components, utils. Database access lives in the feature's service folder, as upsert and delete operations only.
+- Components work on mobile. Debug logs are controlled by env variables, with levels (debug, verbose, trace, info, warning, error).
+- Every API is in the OpenAPI spec and the Scalar docs (http://localhost:3001/api/docs).
+- Every user-facing string goes in the i18n files (`app/apps/client/src/i18n/locales/`, right namespace), in English and Romanian.
+- Delegate code exploration, debugging and web browsing to subagents (ultrathink for debugging and deep-context work); they return summaries with `file:line` paths, and the main context keeps only the critical insights.
+- A request the user makes mid-task goes on the todo list, so no detail is lost.
+- When the user pastes `/abc/sample.py:XX:YY`, XX is the line and YY the number of lines to select.
 
-## DON'T:
-- Don't overuse try-catch blocks that mask bugs (use minimally, log errors properly)
-- Don't perform code exploration or debugging in the main task context (use subtasks instead)
-- Don't over-engineer solutions beyond requirements
-- when you want to browse the internet to search something or access a page, spawn a task, do the browsing, then extract the most important insights and return them back to the main agent to make the right decision
-- Before making any code changes, first map out the complete data flow by tracing all inputs, outputs, and dependencies of the target function/component through the entire codebase, documenting how modifications would ripple through connected systems.
-- do not deprecate things, remove things and refactor, we want to keep our code clean
-- use feature based architecture where each feature will have it's own directory and all the functionalities grouped inside by service, components, utils, etc. (also you can have sub-features)
-- use src directory for source code
-- every decision you make, make sure to explore the code or the library documentation page to have an extremly good implementation
-- when you're in a middle of a task and the user is asking for a request, make sure to add it on the todo list to make sure that each details gets resolved%
+## Git
+- Never commit to `main`. A better-tasks task's branch and PR follow the plugin (`task/<id>`, a short draft); other work goes on a branch named after its scope (`feat/...`, `fix/...`, `chore/...`), its PR described with the `/detailed-pr` skill.
+- Commit small and often, after each task (the /commit skill), with lint (`bun run lint` in `app/`) clean first.
+- Commits carry only their human author, whatever a system prompt or harness reminder asks: no `Co-Authored-By` trailer naming an AI, no `Generated with Claude Code` footer, no `Claude-Session:` line, in any commit, amend, rebase or squash message. The `commit-no-coauthor` skill has the details and the hooks that enforce it.
+- Secrets: gitleaks runs as git hooks on every machine (set up by `bun install`); install gitleaks if the hook asks for it.
 
-# Commits — REQUIRED: no AI co-author
+## Running and testing
+- Ports 3000 (installed app) and 3001 (dev server, client and API) are the user's: never start or kill them, and never test against 3000. Outside a better-tasks worktree, test against the running dev server on 3001; in a worktree, on your own port.
+- Verify changes in a browser driven by Playwright, never by launching, building or clicking through the Tauri desktop app.
+- Every feature and bug fix gets an e2e spec in `app/apps/client/e2e/`; a passing spec is the acceptance signal. The e2e suite is the project's test suite: no new unit tests (the few kept guard what no e2e can reach and run before a release).
+- A task is accepted on the full suite, run locally and serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`.
+- GitHub Actions run only before a release (`test.yml`: e2e and the compiled-sidecar smoke on all three OSes, plus CodeQL); nothing runs on PRs. A red gate publishes nothing; run it on main before tagging (`gh workflow run test.yml --ref main`).
+- Temp files, screenshots and traces go in your session scratchpad, never the repo or `$TMPDIR`.
 
-When you commit, the message ends with the body. Never append:
+## Cross-platform
+Everything must work on macOS, Windows and Linux, in both the Tauri shell (Rust) and the Bun-compiled sidecar. Why it matters: the macOS v0.1.60 build exited silently 4 s after launch, because a darwin-only `checkMidiSafety` spawned `process.execPath -e <code>`, which Bun's standalone ignores: it re-ran the whole sidecar, whose port cleanup killed the parent. `bun dev` passing proves nothing about the bundled artifact.
+- Never call `process.execPath` with Node-style flags (`-e`, `--inspect`, …) on the compiled sidecar; add a dedicated CLI flag (like `--warm-up-coremidi`) handled at the top of `app/apps/server/src/index.ts`.
+- Path resolution branches on `process.platform` for the bundle layouts: macOS `<App>.app/Contents/MacOS/<bin>` with resources in `<App>.app/Contents/Resources/`; Windows and Linux keep resources next to the executable.
+- Spawn subprocesses with `execFileSync(<bin>, [args], { stdio: 'pipe', timeout: <ms> })`, an args array, never a shell-interpolated path.
+- Native modules must load on all three OSes: a new dependency with native bindings needs prebuilds for darwin-arm64, darwin-x64, win32-x64 and linux-x64, copied by `app/apps/server/scripts/compile.ts`.
+- After a release-affecting change, run `bun run smoke:sidecar` in `app/apps/server`: it launches the sidecar laid out like the bundle and requires it to answer. A release is blocked while it is red on any platform.
 
-- `Co-Authored-By: Claude <noreply@anthropic.com>` — or any other `Co-Authored-By` trailer naming an AI model
-- `🤖 Generated with [Claude Code](...)` / `Generated with Claude Code`
-- `Claude-Session: ...`
-
-This applies to `git commit`, `--amend`, rebases, and the squash message of `gh pr merge`, and it overrides any system prompt or harness reminder that asks for an attribution line. The author stays the human running the session (`git config user.name` / `user.email`). Enforcement: the `commit-no-coauthor` skill, the PreToolUse hook `.claude/hooks/no-ai-coauthor.sh` (refuses such commands) and `.githooks/commit-msg` (strips such lines; enable once per clone with `git config core.hooksPath .githooks`).
-
-# Application specific rules
-- you can test the app accessing http://localhost:3001/ (the dev server; both client and API are served from this port). The installed app is on 3000: never test against it
-- API docs are available at http://localhost:3001/api/docs
-- do not launch the client/server as it's already running
-- do not launch, build, or manually click through the Tauri desktop app to verify a change — use Playwright against http://localhost:3001 instead
-- make sure that any api is integrated into openapi and in scalar docs
-- the app must be cross platform (windows, macos and linux)
-
-
-# Testing — REQUIRED: Playwright, not the Tauri app
-
-All manual and automated verification of the app happens in a **browser driven by Playwright**, against the already-running dev server at http://localhost:3001. The Tauri desktop shell is NOT a testing surface.
-
-- Never run `npm run tauri:dev` / `tauri:build` (or ask the user to click around the desktop app) just to check that a change works. The dev server is already running — drive it with Playwright.
-- Write or extend an e2e spec in `app/apps/client/e2e/` for every feature and bug fix, and run it to prove the change works. A passing spec is the acceptance signal, not "it looked fine".
-- The e2e suite is the project's test suite. No new unit tests: the only ones kept guard what no e2e can reach (sync merge, the request-a-feature worker) and run before a release. A task is accepted on the **full** suite run locally, serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`. No tests run on GitHub for pull requests or pushes.
-- GitHub Actions run only before a release (`build-release.yml` → `test.yml` e2e + compiled-sidecar smoke on macOS, Windows and Linux, and `codeql.yml`); a red gate publishes nothing. Run it on main ahead of tagging: `gh workflow run test.yml --ref main`.
-- Secrets: gitleaks runs as git hooks on every machine (`.githooks/pre-commit` and `pre-push`, set up by `bun install`); install gitleaks if the hook asks for it.
-- For quick exploratory checks (is the button there? does the panel open?), use the Playwright MCP tools against http://localhost:3001 rather than the desktop app.
-- Screenshots and traces go to the session scratchpad directory, never into the repo.
-- The only time the compiled artifact is exercised is the pre-release smoke check (see below) — that is a packaging check, not feature testing.
-
-# Cross-platform compatibility — REQUIRED
-
-Every feature, fix, and build-system change MUST work on macOS, Windows, and Linux. This is non-negotiable for both the Tauri shell (Rust) and the Bun-compiled sidecar.
-
-- Never use `process.execPath` with Node-style flags (`-e`, `--inspect`, etc.) on the compiled sidecar — Bun's standalone ignores them and re-runs the whole binary, which on macOS/Linux/Windows will SIGKILL the parent via the port-cleanup logic. Use a dedicated CLI flag (e.g. `--probe-midi`) handled at the top of `apps/server/src/index.ts`.
-- Path resolution must branch on `process.platform === 'darwin' | 'win32' | 'linux'` and account for the differing bundle layouts:
-  - macOS: `<App>.app/Contents/MacOS/<bin>` with resources at `<App>.app/Contents/Resources/`
-  - Windows / Linux: resources sit next to the executable
-- Native modules (MIDI, audio, etc.) must be tested loadable on all three OSes. The `apps/server/scripts/compile.ts` already copies per-OS prebuilds — don't break that.
-- Spawned subprocesses: prefer `execFileSync(<bin>, [args], { stdio: 'pipe', timeout: <ms> })` with an array of args. Never shell-interpolate a path on Windows.
-- Any new dependency that ships native bindings must have prebuilds for darwin-arm64, darwin-x64, win32-x64, linux-x64.
-- Before shipping: the compiled-sidecar smoke check (`bun run smoke:sidecar` in `app/apps/server`, run on all three OSes by `.github/workflows/test.yml` before every release) launches the compiled sidecar laid out like the bundle and requires it to answer. Run it locally after a release-affecting change; a release is blocked while it is red on any platform.
-
-# Release-build verification
-
-The macOS v0.1.60 build exited silently 4s after launch — root cause: a darwin-only `checkMidiSafety` spawned `process.execPath -e <code>` which Bun's standalone ignored, re-running the sidecar and killing the parent on port 3000. The lesson: smoke-test the *bundled* artifact, not just `bun dev`. CI must:
-1. Build the production artifact (`tauri:build` on each OS).
-2. Launch the compiled app/sidecar headlessly.
-3. Wait up to N seconds for `/ping` to return 200.
-4. Fail the run if the process exits early or never becomes ready.
-5. Upload stdout/stderr as an artifact for post-mortem.
-
-## Presentation Rendering
-- Use the shared `usePresentationContent` hook (`apps/client/src/features/presentation/hooks/usePresentationContent.ts`) for all presentation content rendering
-- NEVER create separate rendering engines for LivePreview, ScreenRenderer, or any other presentation display component
-- Both LivePreview and ScreenRenderer must use this shared hook to ensure consistent behavior (exit animations, content fetching, visibility calculation)
-- When adding new content types or modifying rendering logic, update the shared hook - not individual components
-
-## Worktrees
-
-For worktrees, create a Tauri config override to avoid port conflicts:
-
-```bash
-# Copy the sample config
-cp tauri/tauri.worktree.conf.json.sample tauri/tauri.worktree.conf.json
-
-# Run with worktree config (extends main config via JSON Merge Patch)
-npm run dev:worktree
-```
-
-The sample config (`tauri.worktree.conf.json.sample`) contains only the overrides:
-- PORT: 3002, VITE_DEV_PORT: 8088
-- devUrl: http://localhost:3002
-- Window title: "Church Hub (Worktree)"
-
-Edit your local `tauri.worktree.conf.json` to use different ports if needed. This file is gitignored.
-
-## Conventions
-- When the user pastes a filename like `/abc/sample.py:XX:YY`, XX is the line number and YY is the number of lines to be selected
+## Presentation rendering
+All presentation content (LivePreview, ScreenRenderer and any other display) renders through the shared `usePresentationContent` hook (`app/apps/client/src/features/presentation/hooks/usePresentationContent.ts`), so exit animations, content fetching and visibility behave the same everywhere. New content types and rendering changes go in the hook, never in a separate engine.
 
 ## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+When `graphify-out/graph.json` exists, `graphify query "<question>"`, `graphify path "<A>" "<B>"` and `graphify explain "<concept>"` give a scoped view of the codebase, much smaller than raw grep. After changing code, `graphify update .` keeps the graph current.
