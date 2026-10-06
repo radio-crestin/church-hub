@@ -25,6 +25,7 @@ test.use({ viewport: { width: 1440, height: 900 } })
 const SCHEDULE_ACTIONS = [
   'schedule-add-item',
   'schedule-search-toggle',
+  'schedule-load-into-bookmarks',
   'schedule-add-all-bookmarks',
   'schedule-open',
   'schedule-rename',
@@ -139,6 +140,12 @@ test.describe('Panel header actions overflow into a More menu', () => {
       })
       expect(scheduleResponse.ok()).toBeTruthy()
       ids.scheduleId = (await scheduleResponse.json()).data.id
+      // A song in it, so Programe offers "load into Marcaje" too.
+      const itemResponse = await request.post(
+        `/api/schedules/${ids.scheduleId}/items`,
+        { data: { songId: ids.songId } },
+      )
+      expect(itemResponse.ok()).toBeTruthy()
 
       // A bookmark, so Marcaje shows its actions and both headers offer
       // "add all bookmarked songs to a program".

@@ -16,8 +16,9 @@ import {
 } from '@dnd-kit/sortable'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Bookmark,
+  BookmarkPlus,
   CalendarDays,
+  CalendarPlus,
   ChevronDown,
   ExternalLink,
   ListPlus,
@@ -61,6 +62,7 @@ import {
   useScheduleKeyLineEditor,
   useSchedules,
 } from '../hooks'
+import { useLoadProgramIntoBookmarks } from '../hooks/useLoadProgramIntoBookmarks'
 import {
   readSelectedScheduleId,
   writeSelectedScheduleId,
@@ -265,6 +267,7 @@ export function SchedulePanel({
   // one running order, so an announcement moves between two songs exactly the
   // way a song moves between two announcements.
   const orderedItems = localOrder ?? allItems
+  const loadIntoBookmarks = useLoadProgramIntoBookmarks(orderedItems)
 
   useEffect(() => {
     setLocalOrder(null)
@@ -593,7 +596,7 @@ export function SchedulePanel({
             onSelect: () => editorsRef.current?.addItem(),
             testId: 'schedule-add-item-menu',
             inline: (
-              <Tooltip content={t('panel.addItem')} position="bottom">
+              <Tooltip content={t('panel.addItem')} position="left">
                 <button
                   type="button"
                   onClick={() => editorsRef.current?.addItem()}
@@ -622,7 +625,7 @@ export function SchedulePanel({
             onSelect: toggleSearch,
             testId: 'schedule-search-toggle-menu',
             inline: (
-              <Tooltip content={searchLabel} position="bottom">
+              <Tooltip content={searchLabel} position="left">
                 <button
                   type="button"
                   onClick={toggleSearch}
@@ -647,18 +650,47 @@ export function SchedulePanel({
     // not need a program selected — the modal creates one on the spot — so it
     // stays up before the first program exists, which is exactly when the
     // operator needs it.
+    // The other way round: this program's songs, in order, into Marcaje.
+    ...(loadIntoBookmarks.songCount > 0
+      ? [
+          {
+            id: 'load-into-bookmarks',
+            label: t('panel.loadIntoBookmarks'),
+            icon: <BookmarkPlus size={18} />,
+            iconClassName:
+              'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+            onSelect: loadIntoBookmarks.load,
+            disabled: loadIntoBookmarks.isPending,
+            testId: 'schedule-load-into-bookmarks-menu',
+            inline: (
+              <Tooltip content={t('panel.loadIntoBookmarks')} position="left">
+                <button
+                  type="button"
+                  onClick={loadIntoBookmarks.load}
+                  disabled={loadIntoBookmarks.isPending}
+                  data-testid="schedule-load-into-bookmarks"
+                  aria-label={t('panel.loadIntoBookmarks')}
+                  className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
+                >
+                  <BookmarkPlus className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
+            ),
+          },
+        ]
+      : []),
     ...(onAddAllBookmarks
       ? [
           {
             id: 'add-all-bookmarks',
             label: t('panel.addAllBookmarks'),
-            icon: <Bookmark size={18} />,
+            icon: <CalendarPlus size={18} />,
             iconClassName:
               'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
             onSelect: onAddAllBookmarks,
             testId: 'schedule-add-all-bookmarks-menu',
             inline: (
-              <Tooltip content={t('panel.addAllBookmarks')} position="bottom">
+              <Tooltip content={t('panel.addAllBookmarks')} position="left">
                 <button
                   type="button"
                   onClick={onAddAllBookmarks}
@@ -667,7 +699,7 @@ export function SchedulePanel({
                   title={t('panel.addAllBookmarks')}
                   className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
                 >
-                  <Bookmark className="w-3.5 h-3.5" />
+                  <CalendarPlus className="w-3.5 h-3.5" />
                 </button>
               </Tooltip>
             ),
@@ -685,7 +717,7 @@ export function SchedulePanel({
             onSelect: () => onOpenSchedule(selectedScheduleId),
             testId: 'schedule-open-menu',
             inline: (
-              <Tooltip content={t('panel.openSchedule')} position="bottom">
+              <Tooltip content={t('panel.openSchedule')} position="left">
                 <button
                   type="button"
                   onClick={() => onOpenSchedule(selectedScheduleId)}
@@ -710,7 +742,7 @@ export function SchedulePanel({
             onSelect: () => setRenamingSchedule(schedule),
             testId: 'schedule-rename-menu',
             inline: (
-              <Tooltip content={t('panel.renameSchedule')} position="bottom">
+              <Tooltip content={t('panel.renameSchedule')} position="left">
                 <button
                   type="button"
                   onClick={() => setRenamingSchedule(schedule)}
@@ -737,7 +769,7 @@ export function SchedulePanel({
             onSelect: () => setPendingDelete(true),
             testId: 'schedule-delete-menu',
             inline: (
-              <Tooltip content={t('panel.deleteSchedule')} position="bottom">
+              <Tooltip content={t('panel.deleteSchedule')} position="left">
                 <button
                   type="button"
                   onClick={() => setPendingDelete(true)}

@@ -82,7 +82,11 @@
     "createNamed": "Create program",
     "emptyScheduleHint": "Add songs or verses with the buttons above, or drag a song here.",
     "dragToReorder": "Drag to reorder",
-    "addItem": "Add a song or verse to this program"
+    "addItem": "Add a song or verse to this program",
+    "loadIntoBookmarks": "Load this program's songs into Marcaje",
+    "loadedIntoBookmarks_one": "{{count}} song added to Marcaje",
+    "loadedIntoBookmarks_other": "{{count}} songs added to Marcaje",
+    "alreadyInBookmarks": "All the songs in this program are already in Marcaje"
   },
   "search": {
     "placeholder": "Search schedules...",

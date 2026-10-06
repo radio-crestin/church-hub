@@ -1,3 +1,5 @@
+export type { AddSongsToBookmarksResult } from './useAddSongsToBookmarks'
+export { useAddSongsToBookmarks } from './useAddSongsToBookmarks'
 export { useAISearchSongs } from './useAISearchSongs'
 export { useAllSongsAlphabetical } from './useAllSongsAlphabetical'
 export { useAlphabetScroll } from './useAlphabetScroll'

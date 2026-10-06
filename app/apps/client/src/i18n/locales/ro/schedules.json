@@ -84,7 +84,12 @@
     "createNamed": "Creează programul",
     "emptyScheduleHint": "Adaugă cântări sau versete cu butoanele de sus, ori trage aici o cântare.",
     "dragToReorder": "Trage ca să schimbi ordinea",
-    "addItem": "Adaugă o cântare sau un verset în program"
+    "addItem": "Adaugă o cântare sau un verset în program",
+    "loadIntoBookmarks": "Adaugă cântările din acest program în Marcaje",
+    "loadedIntoBookmarks_one": "{{count}} cântare adăugată în Marcaje",
+    "loadedIntoBookmarks_few": "{{count}} cântări adăugate în Marcaje",
+    "loadedIntoBookmarks_other": "{{count}} de cântări adăugate în Marcaje",
+    "alreadyInBookmarks": "Toate cântările din acest program sunt deja în Marcaje"
   },
   "search": {
     "placeholder": "Cauta programe...",
