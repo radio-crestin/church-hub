@@ -102,9 +102,9 @@ test.describe('program readings accept comma verse lists', () => {
       await expect(modal).toBeVisible()
 
       const addEntry = modal.getByRole('button', {
-        name: /Adauga Intrare|Add Entry/,
+        name: /Adaug[aă] Intrare|Add Entry/,
       })
-      const names = modal.getByPlaceholder(/Nume persoana|Person name/)
+      const names = modal.getByPlaceholder(/Nume persoan[aă]|Person name/)
       const references = modal.getByPlaceholder(/Gen 1:1/)
 
       await addEntry.click()

@@ -57,7 +57,7 @@ test('Bible verse entries are counted in Romanian, one and few', async ({
     await expect(list.getByText('1 intrare', { exact: true })).toBeVisible({
       timeout: 10000,
     })
-    await expect(list.getByText('2 intrari', { exact: true })).toBeVisible()
+    await expect(list.getByText('2 intrări', { exact: true })).toBeVisible()
     await expect(list.getByText(/\d+ entries/)).toHaveCount(0)
   } finally {
     await request.delete(`/api/schedules/${program.id}`)

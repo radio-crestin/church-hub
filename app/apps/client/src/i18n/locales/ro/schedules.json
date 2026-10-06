@@ -171,15 +171,15 @@
   },
   "verseteTineri": {
     "title": "Versete Biblice",
-    "addEntry": "Adauga Intrare",
-    "noEntries": "Nicio intrare inca",
+    "addEntry": "Adaugă Intrare",
+    "noEntries": "Nicio intrare încă",
     "entriesCount_one": "{{count}} intrare",
-    "entriesCount_few": "{{count}} intrari",
-    "entriesCount_other": "{{count}} de intrari",
-    "personNamePlaceholder": "Nume persoana",
-    "removeEntry": "Sterge intrare",
-    "errorNoValidEntries": "Adauga cel putin o intrare valida",
-    "errorNoTranslation": "Nicio traducere biblica selectata"
+    "entriesCount_few": "{{count}} intrări",
+    "entriesCount_other": "{{count}} de intrări",
+    "personNamePlaceholder": "Nume persoană",
+    "removeEntry": "Șterge intrare",
+    "errorNoValidEntries": "Adaugă cel puțin o intrare validă",
+    "errorNoTranslation": "Nicio traducere biblică selectată"
   },
   "modal": {
     "deleteTitle": "Sterge Programul",
