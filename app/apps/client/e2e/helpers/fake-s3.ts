@@ -10,6 +10,8 @@ export class FakeS3 {
   readonly objects = new Map<string, Buffer>()
   /** Every request, as "METHOD /path", so a spec can see what was sent. */
   readonly requests: string[] = []
+  /** Paths answered with a redirect to the given location. */
+  readonly redirects = new Map<string, string>()
   private server: Server | undefined
 
   async start(): Promise<void> {
@@ -28,6 +30,11 @@ export class FakeS3 {
       if (req.method === 'DELETE') {
         this.objects.delete(path)
         res.writeHead(204).end()
+        return
+      }
+      const location = this.redirects.get(path)
+      if (location) {
+        res.writeHead(302, { Location: location }).end()
         return
       }
       const body = this.objects.get(path)
