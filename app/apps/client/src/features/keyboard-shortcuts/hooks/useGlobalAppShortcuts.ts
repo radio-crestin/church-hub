@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
 import { useIsAppFrontmost } from './useIsAppFrontmost'
+import { isMIDIShortcut } from '../midi/utils'
 import type {
   GlobalShortcutActionId,
   GlobalShortcutsConfig,
@@ -10,7 +11,6 @@ import type {
 } from '../types'
 import {
   isGlobalRecordingActive,
-  isMidiShortcut,
   offerKeyToPage,
   shortcutScope,
 } from '../utils'
@@ -156,10 +156,11 @@ export function useGlobalAppShortcuts({
         // key is held only while a Church Hub window has the keyboard, so the
         // program in front keeps it otherwise (e.g. F1–F12 for BibleShow).
         // App-level sidebar keys are never held: the page runs them itself
-        // (useSidebarShortcutKeys). MIDI bindings are never held: they are
-        // not keyboard keys, the MIDI listener runs them.
+        // (useSidebarShortcutKeys). MIDI pads are never held here: they are
+        // not keyboard keys. The server's MIDI listener runs them from any
+        // program, whatever the scopes say (service/midi/shortcuts.ts).
         const isHeld = (shortcut: string, kind: ShortcutKind) =>
-          !isMidiShortcut(shortcut) &&
+          !isMIDIShortcut(shortcut) &&
           (shortcutScope(config, shortcut, kind) === 'system' ||
             (kind !== 'sidebar' && isFrontmost))
         if (!isFrontmost) {

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
+import { isMIDIShortcut } from '../midi/utils'
 import { canonicalShortcut } from '../utils/canonicalShortcut'
-import { isMidiShortcut } from '../utils/isMidiShortcut'
 import { offerKeyToPage } from '../utils/pageKeyClaimEvent'
 import { isGlobalRecordingActive } from '../utils/recordingState'
 import { shortcutFromKeyboardEvent } from '../utils/shortcutFromKeyboardEvent'
@@ -37,7 +37,7 @@ export function useSidebarShortcutKeys(
   useEffect(() => {
     const byKey = new Map(
       sidebarShortcuts
-        .filter(({ shortcut }) => shortcut && !isMidiShortcut(shortcut))
+        .filter(({ shortcut }) => shortcut && !isMIDIShortcut(shortcut))
         .map((entry) => [canonicalShortcut(entry.shortcut), entry]),
     )
     if (byKey.size === 0) return
