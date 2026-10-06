@@ -16,11 +16,9 @@ the branch's actual commits and diff against its base (the PR's base, else
 missing one. When unsure, inspect the code.
 
 A better-tasks task's PR is the plugin's short draft (its pull-request
-skill); write this long form for one only when the user asks for it. This
-skill writes text only: demo videos come from the better-tasks plugin, so keep
-its video lines and `--attach` when you rewrite a body. Installers are built only on request (`gh workflow run pr-build.yml -f pr=<n>`,
-see `.github/workflows/pr-build.yml`); their links: `scripts/pr-build-links.sh <pr> --wait`.
-Keep the `<!-- pr-build:start -->` ... `<!-- pr-build:end -->` block when there is one.
+skill); write this long form for one only when the user asks for it. When you
+rewrite a body, keep its before/after video lines and its
+`<!-- pr-build:start/end -->` installers block.
 
 ## Language
 
@@ -118,18 +116,8 @@ Title style: `<scope or domain>: <short summary>`.
 
 ## Push, then create or update the PR
 
-The branch must be on origin before the PR can reference its commits. Invoking
-this skill is the user's request to push and to create or edit the PR, so do
-both without asking again.
-
-Push the branch every time, then update the branch's PR if it has one
-(`gh pr edit <n> --body-file <that file>`; the title only if the user asked
-or it is clearly stale), else create it (`gh pr create --base <base> --head
-<branch> --title "<title>" --body-file <that file>`). Never open a
-duplicate. Show the user the PR link.
-
-## Sole author
-
-This user requires being the sole author: no `Co-Authored-By: Claude` trailer
-on any commit and no "Generated with Claude Code" footer in the PR body, which
-becomes the squash commit (see the `commit-no-coauthor` skill).
+Invoking this skill is the user's request to push and to create or edit the
+PR, so do both without asking again: push the branch, then update its PR
+(the title only if asked or clearly stale) or create one, never a duplicate,
+and show the user the link. The body becomes the squash commit, so it carries
+no AI attribution either (`commit-no-coauthor`).
