@@ -1,10 +1,13 @@
-import { isOpenSongXml, mightBeOpenSongFile } from '@church-hub/song-formats'
+import {
+  isOpenSongXml,
+  mightBeOpenSongFile,
+  parseOpenSongXml,
+} from '@church-hub/song-formats'
 import { readFile } from '@tauri-apps/plugin-fs'
 
 import { parsePptViaServer } from './convertPptToPptx'
 import { extractFilename } from './extractFilename'
 import { extractFilesFromZip } from './extractPptxFromZip'
-import { parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
 import type {
   ImportProgress,

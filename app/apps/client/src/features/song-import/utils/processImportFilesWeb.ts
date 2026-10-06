@@ -1,8 +1,11 @@
-import { isOpenSongXml, mightBeOpenSongFile } from '@church-hub/song-formats'
+import {
+  isOpenSongXml,
+  mightBeOpenSongFile,
+  parseOpenSongXml,
+} from '@church-hub/song-formats'
 
 import { parsePptViaServer } from './convertPptToPptx'
 import { extractFilesFromZip } from './extractPptxFromZip'
-import { parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
 import type {
   ImportProgress,

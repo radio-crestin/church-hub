@@ -1,5 +1,4 @@
-import type { ParsedSlideWithLabel } from '~/features/song-import'
-import type { DiscoveryCandidate } from '../types'
+import type { ParsedSlideWithLabel, SourceSong } from './sourceSongTypes'
 
 /** One song as cantaricrestine.ro's API returns it. */
 interface CantariCrestineSong {
@@ -71,25 +70,24 @@ function fileName(url: string | null): string | null {
 }
 
 /**
- * Turns a cantaricrestine.ro API response into discovery candidates.
- * Songs without lyrics are left out: there is nothing to project.
+ * The songs of a cantaricrestine.ro API response. Songs without lyrics are
+ * left out: there is nothing to project.
  */
-export function parseCantariCrestineCatalog(
-  sourceId: string,
+export function parseCantariCrestineSongs(
   response: CantariCrestineResponse,
-): DiscoveryCandidate[] {
-  const songs = Object.values(response.rezultate ?? {})
-  const candidates: DiscoveryCandidate[] = []
-
-  for (const song of songs) {
+): SourceSong[] {
+  const songs: SourceSong[] = []
+  for (const song of Object.values(response.rezultate ?? {})) {
     const slides = toSlides(song.descriere ?? '')
     if (slides.length === 0) continue
     const { title, hymnNumber } = splitNumberedTitle(song.denumire)
-    candidates.push({
-      tempId: `${sourceId}-${song.id}`,
+    songs.push({
+      id: song.id,
+      sourceFilename: fileName(song.url_fisier),
       parsed: {
         title,
         slides,
+        verses: [],
         metadata: {
           author: null,
           copyright: null,
@@ -105,9 +103,7 @@ export function parseCantariCrestineCatalog(
           sourceFilename: null,
         },
       },
-      sourceFilename: fileName(song.url_fisier),
     })
   }
-
-  return candidates
+  return songs
 }

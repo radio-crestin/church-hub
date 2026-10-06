@@ -1,8 +1,6 @@
 export { parsePptViaServer } from './convertPptToPptx'
 export { downloadFromUrl } from './downloadFromUrl'
 export { extractFilesFromZip, extractPptxFromZip } from './extractPptxFromZip'
-export type { OpenSongVerse, ParsedOpenSong } from './parseOpenSong'
-export { parseOpenSongXml } from './parseOpenSong'
 export type { ParsedPptx, ParsedSlide } from './parsePptx'
 export { parsePptxFile } from './parsePptx'
 export { processImportFiles } from './processImportFiles'

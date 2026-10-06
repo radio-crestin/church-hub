@@ -1,12 +1,13 @@
-import { isOpenSongXml, mightBeOpenSongFile } from '@church-hub/song-formats'
 import JSZip from 'jszip'
 
-import type { SongBundleFile } from '../providers/types'
+import { isOpenSongXml } from './isOpenSongXml'
+import { mightBeOpenSongFile } from './mightBeOpenSongFile'
+import type { SongBundleFile } from './sourceSongTypes'
 
 const SONG_BUNDLE_FORMAT = 'church-hub-song-bundle'
 const SUPPORTED_VERSION = 2
 
-/** Mirrors the server's `SongBundleManifest` (bundle/types.ts). */
+/** The parts of a bundle's manifest.json read here (server: bundle/types.ts). */
 interface SongBundleManifest {
   format: string
   version: number
@@ -16,7 +17,7 @@ interface SongBundleManifest {
 }
 
 /** A song archive as read: its source name, category and song files. */
-export interface OpenedSongFile {
+export interface SongBundleZip {
   name: string
   categoryName: string
   files: SongBundleFile[]
@@ -40,9 +41,9 @@ async function readPlainOpenSongZip(zip: JSZip): Promise<SongBundleFile[]> {
  * Reads a song archive: a `.chsongs` file (its manifest, then every OpenSong
  * file it lists) or, without a manifest, any ZIP of OpenSong files.
  */
-export async function readSongBundleFile(
+export async function readSongBundleZip(
   data: ArrayBuffer | Uint8Array,
-): Promise<OpenedSongFile> {
+): Promise<SongBundleZip> {
   const zip = await JSZip.loadAsync(data)
   const manifestText = await zip.file('manifest.json')?.async('string')
   if (!manifestText) {

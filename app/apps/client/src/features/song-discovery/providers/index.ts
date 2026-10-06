@@ -1,6 +1,8 @@
-import { bundleSongsToCandidates } from './bundleSongsToCandidates'
+import { bundleFilesToSongs } from '@church-hub/song-formats'
+
 import { fetchCantariCrestineCatalog } from './fetchCantariCrestineCatalog'
 import { fetchSongBundleCatalog } from './fetchSongBundleCatalog'
+import { sourceSongsToCandidates } from './sourceSongsToCandidates'
 import type {
   FetchCatalog,
   SongBundleFile,
@@ -21,7 +23,10 @@ export const fetchSourceCatalog: FetchCatalog = async (source, onProgress) => {
   if (source.origin !== 'file')
     return FETCHERS[source.format](source, onProgress)
   const { files, ownFormat } = getOpenedSongFile(source.id)
-  return bundleSongsToCandidates(source.id, files, { exactTitle: ownFormat })
+  return sourceSongsToCandidates(
+    source.id,
+    bundleFilesToSongs(files, { exactTitle: ownFormat }),
+  )
 }
 
 export type { SongBundleFile, SongSource, SongSourceFormat }

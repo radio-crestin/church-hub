@@ -1,6 +1,7 @@
-import { bundleSongsToCandidates } from './bundleSongsToCandidates'
+import { bundleFilesToSongs, readSongBundleZip } from '@church-hub/song-formats'
+
+import { sourceSongsToCandidates } from './sourceSongsToCandidates'
 import type { FetchCatalog } from './types'
-import { readSongBundleFile } from '../opened-files/readSongBundleFile'
 import {
   downloadSourceArchive,
   getSourceSongs,
@@ -26,10 +27,16 @@ export const fetchSongBundleCatalog: FetchCatalog = async (
   report(0, null)
   if (source.format === 'song-bundle-folder') {
     const files = await getSourceSongs(source.id)
-    return bundleSongsToCandidates(source.id, files, { exactTitle: true })
+    return sourceSongsToCandidates(
+      source.id,
+      bundleFilesToSongs(files, { exactTitle: true }),
+    )
   }
   const archive = await downloadSourceArchive(source.id, report)
-  const { files, ownFormat } = await readSongBundleFile(archive)
+  const { files, ownFormat } = await readSongBundleZip(archive)
   onProgress?.({ phase: 'parsing', current: 0, total: files.length })
-  return bundleSongsToCandidates(source.id, files, { exactTitle: ownFormat })
+  return sourceSongsToCandidates(
+    source.id,
+    bundleFilesToSongs(files, { exactTitle: ownFormat }),
+  )
 }

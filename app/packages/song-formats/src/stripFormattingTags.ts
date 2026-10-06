@@ -1,5 +1,5 @@
-// Same rules as the server's apps/server/src/service/songs/text/stripFormattingTags.ts
-// (the strip_song_formatting_tags migration): change both together.
+// Shared by the OpenSong / Resurse Creștine import (client and server) and
+// the strip_song_formatting_tags migration.
 
 /** Inline formatting tags songs should not carry (structure like <p>/<br> stays). */
 const FORMATTING_TAG_NAMES =

@@ -1,3 +1,4 @@
+import { type ParsedOpenSong, parseOpenSongXml } from '@church-hub/song-formats'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { invoke } from '@tauri-apps/api/core'
@@ -32,7 +33,6 @@ import {
   DuplicateSongDialog,
 } from './DuplicateSongDialog'
 import { parsePptViaServer } from '../utils/convertPptToPptx'
-import { type ParsedOpenSong, parseOpenSongXml } from '../utils/parseOpenSong'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
 interface PendingImport {

@@ -1,6 +1,7 @@
+import { stripFormattingTags } from '@church-hub/song-formats'
+
 import type { Database } from 'bun:sqlite'
 import { batchUpdateSearchIndex } from '../../service/songs/search'
-import { stripFormattingTags } from '../../service/songs/text/stripFormattingTags'
 
 const DEBUG = process.env.DEBUG === 'true'
 

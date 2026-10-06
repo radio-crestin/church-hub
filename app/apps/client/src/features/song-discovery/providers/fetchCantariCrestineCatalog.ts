@@ -1,8 +1,10 @@
-import { downloadFromUrl } from '~/features/song-import'
 import {
   type CantariCrestineResponse,
-  parseCantariCrestineCatalog,
-} from './parseCantariCrestineCatalog'
+  parseCantariCrestineSongs,
+} from '@church-hub/song-formats'
+
+import { downloadFromUrl } from '~/features/song-import'
+import { sourceSongsToCandidates } from './sourceSongsToCandidates'
 import type { FetchCatalog } from './types'
 
 /**
@@ -26,5 +28,5 @@ export const fetchCantariCrestineCatalog: FetchCatalog = async (
   const response = JSON.parse(
     new TextDecoder().decode(body),
   ) as CantariCrestineResponse
-  return parseCantariCrestineCatalog(source.id, response)
+  return sourceSongsToCandidates(source.id, parseCantariCrestineSongs(response))
 }

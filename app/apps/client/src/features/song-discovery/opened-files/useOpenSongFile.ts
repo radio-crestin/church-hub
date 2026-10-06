@@ -1,3 +1,4 @@
+import { readSongBundleZip } from '@church-hub/song-formats'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
@@ -5,7 +6,6 @@ import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
 import { addOpenedSongFile } from './openedSongFiles'
-import { readSongBundleFile } from './readSongBundleFile'
 import { catalogQueryKey } from '../hooks/useFetchCatalog'
 
 /** Extension of Church Hub song files (song bundles). */
@@ -27,7 +27,7 @@ export function useOpenSongFile() {
   return useCallback(
     async (data: ArrayBuffer | Uint8Array, fileName: string) => {
       try {
-        const file = await readSongBundleFile(data)
+        const file = await readSongBundleZip(data)
         const name = fileName.split(/[/\\]/).pop() ?? fileName
         const sourceId = addOpenedSongFile(name, file)
         queryClient.removeQueries({ queryKey: catalogQueryKey(sourceId) })

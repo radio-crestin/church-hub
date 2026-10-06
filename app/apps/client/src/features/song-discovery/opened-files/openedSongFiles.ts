@@ -1,6 +1,6 @@
+import type { SongBundleZip } from '@church-hub/song-formats'
 import { useSyncExternalStore } from 'react'
 
-import type { OpenedSongFile } from './readSongBundleFile'
 import type { SongBundleFile, SongSource } from '../providers/types'
 
 interface OpenedFile {
@@ -25,7 +25,7 @@ function emit() {
 /** Adds an opened file as a source and returns its id. */
 export function addOpenedSongFile(
   fileName: string,
-  file: OpenedSongFile,
+  file: SongBundleZip,
 ): string {
   const id = `file-${fileName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
   const source: SongSource = {

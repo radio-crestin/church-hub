@@ -1,7 +1,8 @@
+import { parseOpenSongXml } from '@church-hub/song-formats'
+
 import { yieldToMain } from '~/utils/async-utils'
 import { parsePptViaServer } from './convertPptToPptx'
 import { extractFilesFromZip } from './extractPptxFromZip'
-import { parseOpenSongXml } from './parseOpenSong'
 import { parsePptxFile } from './parsePptx'
 import type {
   ImportProgress,

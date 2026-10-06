@@ -1,3 +1,7 @@
+import type { SongBundleFile } from '@church-hub/song-formats'
+
+export type { SongBundleFile }
+
 import type { ImportProgress } from '~/features/song-import'
 import type { DiscoveryCandidate } from '../types'
 
@@ -25,13 +29,6 @@ export interface SongSource {
   homepage?: string
   license?: string
   origin: SongSourceOrigin
-}
-
-/** Mirrors the server's `SongBundleFile`: one song's OpenSong file. */
-export interface SongBundleFile {
-  id: string
-  path: string
-  xml: string
 }
 
 /** Downloads and parses one source's catalog into comparable candidates. */
