@@ -78,5 +78,71 @@
     "enableLabel": "Check for new songs automatically",
     "checkNow": "Check now",
     "newCount": "{{count}} new song(s) found"
+  },
+  "songFile": {
+    "openFailed": "Couldn't open the song file: {{error}}"
+  },
+  "songSources": {
+    "title": "Song sources",
+    "description": "Where Song discovery finds new songs. Add sources from links others share, and share your own categories as a file or a link.",
+    "builtIn": "Built in",
+    "links": {
+      "title": "Sources from links",
+      "description": "Paste a link someone shared with you: a .chsongs file or a manifest.json. Its songs show up in Song discovery.",
+      "placeholder": "https://…/manifest.json",
+      "add": "Add source",
+      "remove": "Remove",
+      "empty": "No sources from links yet.",
+      "added": "{{name}} added to Song discovery",
+      "addFailed": "Couldn't add the source: {{error}}"
+    },
+    "export": {
+      "title": "Song file",
+      "description": "Save a category as a .chsongs file. Anyone with Church Hub can open it and import its songs.",
+      "category": "Choose a category",
+      "button": "Export .chsongs",
+      "failed": "Export failed: {{error}}"
+    },
+    "storage": {
+      "title": "Your S3 storage",
+      "description": "To share categories by link, connect an S3-compatible bucket (AWS S3, Cloudflare R2, MinIO). The secret key stays on this computer.",
+      "endpoint": "S3 endpoint",
+      "region": "Region",
+      "bucket": "Bucket",
+      "pathPrefix": "Folder in the bucket",
+      "accessKeyId": "Access key",
+      "secretAccessKey": "Secret key",
+      "publicBaseUrl": "Public URL of the bucket",
+      "secretKept": "Saved; leave empty to keep it",
+      "placeholder": {
+        "endpoint": "https://ACCOUNT.r2.cloudflarestorage.com",
+        "region": "auto",
+        "bucket": "church-songs",
+        "pathPrefix": "church-hub",
+        "accessKeyId": "",
+        "secretAccessKey": "",
+        "publicBaseUrl": "https://pub-….r2.dev"
+      },
+      "save": "Save storage",
+      "saved": "Storage saved",
+      "saveFailed": "Couldn't save the storage: {{error}}"
+    },
+    "publish": {
+      "title": "Shared categories",
+      "description": "Each shared category stays in sync with the bucket: every 5 minutes, only the songs that changed are uploaded. Send the link to whoever should get the songs.",
+      "needsStorage": "Save your S3 storage first.",
+      "category": "Choose a category to share",
+      "button": "Share",
+      "empty": "No shared categories yet.",
+      "songs_one": "{{count}} song",
+      "songs_other": "{{count}} songs",
+      "syncedAt": "synced {{time}}",
+      "notSynced": "not synced yet",
+      "copyLink": "Copy link",
+      "copied": "Link copied",
+      "syncNow": "Sync now",
+      "stop": "Stop sharing",
+      "failed": "Sharing failed: {{error}}"
+    }
   }
 }

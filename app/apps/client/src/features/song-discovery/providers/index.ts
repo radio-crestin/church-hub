@@ -1,20 +1,27 @@
+import { bundleSongsToCandidates } from './bundleSongsToCandidates'
 import { fetchCantariCrestineCatalog } from './fetchCantariCrestineCatalog'
 import { fetchOpenSongZipCatalog } from './fetchOpenSongZipCatalog'
-import type { FetchCatalog, SongSource, SongSourceFormat } from './types'
+import { fetchSongBundleCatalog } from './fetchSongBundleCatalog'
+import type {
+  FetchCatalog,
+  SongBundleSong,
+  SongSource,
+  SongSourceFormat,
+} from './types'
+import { getOpenedSongFileSongs } from '../opened-files/openedSongFiles'
 
 /** How each source format's catalog is downloaded and parsed. */
-const FETCHERS: Partial<Record<SongSourceFormat, FetchCatalog>> = {
+const FETCHERS: Record<SongSourceFormat, FetchCatalog> = {
   'opensong-zip': fetchOpenSongZipCatalog,
   'cantaricrestine-api': fetchCantariCrestineCatalog,
+  'song-bundle-file': fetchSongBundleCatalog,
+  'song-bundle-folder': fetchSongBundleCatalog,
 }
 
-/** Downloads and parses a source's catalog, by its format. */
-export const fetchSourceCatalog: FetchCatalog = (source, onProgress) => {
-  const fetchCatalog = FETCHERS[source.format]
-  if (!fetchCatalog) {
-    throw new Error(`Unsupported song source format: ${source.format}`)
-  }
-  return fetchCatalog(source, onProgress)
-}
+/** Downloads and parses a source's catalog; an opened file is in memory. */
+export const fetchSourceCatalog: FetchCatalog = async (source, onProgress) =>
+  source.origin === 'file'
+    ? bundleSongsToCandidates(source.id, getOpenedSongFileSongs(source.id))
+    : FETCHERS[source.format](source, onProgress)
 
-export type { SongSource, SongSourceFormat }
+export type { SongBundleSong, SongSource, SongSourceFormat }

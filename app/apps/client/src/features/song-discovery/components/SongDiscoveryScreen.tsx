@@ -1,6 +1,7 @@
 import { SourceDiscovery } from './SourceDiscovery'
 import { SourcePicker } from './SourcePicker'
 import { useSongSources } from '../hooks/useSongSources'
+import { useOpenedSongFileSources } from '../opened-files/openedSongFiles'
 
 interface SongDiscoveryScreenProps {
   /** The source to show; the first one when missing or unknown. */
@@ -18,7 +19,9 @@ export function SongDiscoveryScreen({
   onSourceChange,
   onBack,
 }: SongDiscoveryScreenProps) {
-  const { data: sources = [] } = useSongSources()
+  const { data: serverSources = [] } = useSongSources()
+  const openedFiles = useOpenedSongFileSources()
+  const sources = [...serverSources, ...openedFiles]
   const source = sources.find((s) => s.id === sourceId) ?? sources[0]
   if (!source) return null
 

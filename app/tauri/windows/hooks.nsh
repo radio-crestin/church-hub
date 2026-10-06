@@ -42,6 +42,10 @@
   !insertmacro CH_APP_ASSOCIATE "churchprogram" "ChurchHub.Program" "Church Hub Schedule" \
     "$INSTDIR\church-hub.exe,0" "Open with Church Hub" "$INSTDIR\church-hub.exe $\"%1$\""
 
+  ; Register .chsongs files (Church Hub song collections)
+  !insertmacro CH_APP_ASSOCIATE "chsongs" "ChurchHub.Songs" "Church Hub Songs" \
+    "$INSTDIR\church-hub.exe,0" "Open with Church Hub" "$INSTDIR\church-hub.exe $\"%1$\""
+
   ; Register .pptx files (as secondary handler - won't override PowerPoint)
   !insertmacro CH_APP_ASSOCIATE "pptx" "ChurchHub.PowerPoint" "PowerPoint Presentation" \
     "$INSTDIR\church-hub.exe,0" "Import to Church Hub" "$INSTDIR\church-hub.exe $\"%1$\""
@@ -57,6 +61,9 @@
 
   ; Unregister .churchprogram files
   !insertmacro CH_APP_UNASSOCIATE "churchprogram" "ChurchHub.Program"
+
+  ; Unregister .chsongs files
+  !insertmacro CH_APP_UNASSOCIATE "chsongs" "ChurchHub.Songs"
 
   ; Unregister .pptx files
   !insertmacro CH_APP_UNASSOCIATE "pptx" "ChurchHub.PowerPoint"

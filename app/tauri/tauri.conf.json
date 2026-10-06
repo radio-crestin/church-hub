@@ -72,6 +72,13 @@
         "description": "Church Hub Schedule",
         "role": "Editor"
       }
+,
+      {
+        "ext": ["chsongs"],
+        "name": "Church Hub Songs",
+        "description": "Church Hub song collection",
+        "role": "Editor"
+      }
     ],
     "iOS": {
       "developmentTeam": "2KNY2RZVGC"

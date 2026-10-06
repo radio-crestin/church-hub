@@ -1,6 +1,6 @@
 {
   "title": "Descarcă ultimele cântări din {{source}}",
-  "description": "Aduce cele mai noi cântări din {{source}} care nu sunt încă în biblioteca ta, le verifică și importă doar ce dorești.",
+  "description": "Descarcă cele mai noi cântări din {{source}} care nu sunt încă în biblioteca ta. Verifică-le și importă doar ce vrei.",
   "button": {
     "discover": "Descarcă cântări",
     "searching": "Caut"
@@ -78,5 +78,72 @@
     "enableLabel": "Verifică automat cântările noi",
     "checkNow": "Verifică acum",
     "newCount": "{{count}} cântări noi găsite"
+  },
+  "songFile": {
+    "openFailed": "Nu s-a putut deschide fișierul cu cântări: {{error}}"
+  },
+  "songSources": {
+    "title": "Surse de cântări",
+    "description": "De unde vin cântările noi la Descarcă cântări. Adaugă surse din linkurile primite și distribuie categoriile tale ca fișier sau prin link.",
+    "builtIn": "Surse incluse",
+    "links": {
+      "title": "Surse adăugate prin link",
+      "description": "Lipește un link primit către un fișier .chsongs sau manifest.json. Cântările din sursă vor apărea la Descarcă cântări.",
+      "placeholder": "https://…/manifest.json",
+      "add": "Adaugă sursa",
+      "remove": "Elimină",
+      "empty": "Nu ai adăugat încă surse prin link.",
+      "added": "Sursa {{name}} a fost adăugată la Descarcă cântări",
+      "addFailed": "Nu s-a putut adăuga sursa: {{error}}"
+    },
+    "export": {
+      "title": "Fișier cu cântări",
+      "description": "Salvează o categorie într-un fișier .chsongs. Oricine are Church Hub îl poate deschide și importa cântările.",
+      "category": "Alege o categorie",
+      "button": "Exportă .chsongs",
+      "failed": "Exportul a eșuat: {{error}}"
+    },
+    "storage": {
+      "title": "Stocarea ta S3",
+      "description": "Pentru a distribui categorii prin link, conectează un bucket compatibil S3 (AWS S3, Cloudflare R2, MinIO). Cheia secretă rămâne pe acest computer.",
+      "endpoint": "Endpoint S3",
+      "region": "Regiune",
+      "bucket": "Bucket",
+      "pathPrefix": "Folder în bucket",
+      "accessKeyId": "Cheie de acces",
+      "secretAccessKey": "Cheie secretă",
+      "publicBaseUrl": "URL-ul public al bucketului",
+      "secretKept": "Salvată; lasă câmpul gol ca să o păstrezi",
+      "placeholder": {
+        "endpoint": "https://ACCOUNT.r2.cloudflarestorage.com",
+        "region": "auto",
+        "bucket": "church-songs",
+        "pathPrefix": "church-hub",
+        "accessKeyId": "",
+        "secretAccessKey": "",
+        "publicBaseUrl": "https://pub-….r2.dev"
+      },
+      "save": "Salvează setările S3",
+      "saved": "Setările S3 au fost salvate",
+      "saveFailed": "Nu s-au putut salva setările S3: {{error}}"
+    },
+    "publish": {
+      "title": "Categorii distribuite",
+      "description": "Fiecare categorie distribuită se sincronizează cu bucketul: la fiecare 5 minute se încarcă doar cântările modificate. Trimite linkul celor care vor să importe cântările.",
+      "needsStorage": "Salvează mai întâi setările S3.",
+      "category": "Alege o categorie de distribuit",
+      "button": "Distribuie",
+      "empty": "Nu ai distribuit încă nicio categorie.",
+      "songs_one": "{{count}} cântare",
+      "songs_few": "{{count}} cântări",
+      "songs_other": "{{count}} de cântări",
+      "syncedAt": "sincronizată la {{time}}",
+      "notSynced": "încă nesincronizată",
+      "copyLink": "Copiază linkul",
+      "copied": "Link copiat",
+      "syncNow": "Sincronizează acum",
+      "stop": "Oprește distribuirea",
+      "failed": "Distribuirea a eșuat: {{error}}"
+    }
   }
 }
