@@ -26,6 +26,13 @@ interface ClockTextProps {
   slideTransitionIn?: AnimationConfig
 }
 
+const NO_ANIMATION: AnimationConfig = {
+  type: 'none',
+  duration: 0,
+  delay: 0,
+  easing: 'linear',
+}
+
 /**
  * Clock component that updates every second.
  * Uses precise timing synchronized to second boundaries to prevent drift.
@@ -37,10 +44,10 @@ export function ClockText({
   height,
   left,
   top,
-  animationIn = { type: 'none' },
-  animationOut = { type: 'none' },
-  slideTransitionIn = { type: 'none' },
-  slideTransitionOut = { type: 'none' },
+  animationIn = NO_ANIMATION,
+  animationOut = NO_ANIMATION,
+  slideTransitionIn = NO_ANIMATION,
+  slideTransitionOut = NO_ANIMATION,
 }: ClockTextProps) {
   const [time, setTime] = useState(() => new Date())
 

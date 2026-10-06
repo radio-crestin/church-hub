@@ -34,6 +34,14 @@ import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapp
 import { offsetStyleRanges } from '../../utils/offsetStyleRanges'
 import { toTextStyleRanges } from '../../utils/toTextStyleRanges'
 
+/** Narrows a content config to the layouts that have the element `key`. */
+function hasElement<K extends string>(
+  config: ContentTypeConfig | undefined,
+  key: K,
+): config is Extract<ContentTypeConfig, Record<K, unknown>> {
+  return !!config && key in config
+}
+
 interface ScreenContentProps {
   screen: ScreenWithConfigs
   contentType: ContentType
@@ -154,7 +162,7 @@ export function ScreenContent({
 
   // Render main text
   const renderMainText = () => {
-    if (!config || !('mainText' in config)) {
+    if (!hasElement(config, 'mainText')) {
       return null
     }
 
@@ -263,7 +271,7 @@ export function ScreenContent({
 
   // Render content text
   const renderContentText = () => {
-    if (!config || !('contentText' in config)) return null
+    if (!hasElement(config, 'contentText')) return null
 
     const ct = config.contentText
     if (ct.hidden) return null
@@ -322,7 +330,7 @@ export function ScreenContent({
 
   // Render reference text
   const renderReferenceText = () => {
-    if (!config || !('referenceText' in config)) return null
+    if (!hasElement(config, 'referenceText')) return null
 
     const rt = config.referenceText
     if (rt.hidden) return null
@@ -441,7 +449,7 @@ export function ScreenContent({
 
   // Render person label
   const renderPersonLabel = () => {
-    if (!config || !('personLabel' in config)) return null
+    if (!hasElement(config, 'personLabel')) return null
 
     const pl = config.personLabel
     if (pl.hidden) return null

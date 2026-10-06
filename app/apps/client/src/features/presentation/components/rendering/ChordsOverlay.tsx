@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { localizeChordName } from '~/features/songs/utils/localizeChordName'
 import { normalizeText } from './utils/normalizeText'
+import type { TextStyle } from '../../types'
 import { getFontFamilyStack } from '../../utils/getFontFamilyStack'
 
 interface ChordMapping {
@@ -32,7 +33,7 @@ interface ChordsOverlayProps {
   /** Font family */
   fontFamily: string
   /** Text alignment */
-  alignment: 'left' | 'center' | 'right'
+  alignment: TextStyle['alignment']
   /** Click handler for chord names */
   onChordClick?: (chord: string) => void
 }

@@ -1,6 +1,9 @@
 import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 
-import { type AnimationConfig, useSlideAnimation } from './useSlideAnimation'
+import {
+  type SlideAnimationConfig,
+  useSlideAnimation,
+} from './useSlideAnimation'
 import { calculateFontSize } from './utils/calculateFontSize'
 import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
@@ -18,7 +21,7 @@ import { applyStylesToText } from '../../utils/applyStylesToText'
 // Convert types animation config to hook animation config
 function toAnimationConfig(
   config?: TypesAnimationConfig,
-): AnimationConfig | undefined {
+): SlideAnimationConfig | undefined {
   if (!config) return undefined
   return {
     type: config.type,

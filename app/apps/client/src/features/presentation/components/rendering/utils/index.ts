@@ -1,5 +1,4 @@
 export * from './calculateFontSize'
-export * from './calculateNextSlide'
 export * from './getTextStyles'
 export * from './normalizeText'
 export * from './sanitizePastedText'

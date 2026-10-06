@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useScreenShareViewer } from '../../hooks/useScreenShareViewer'
-import type { VideoElementConfig } from '../../types'
+import type { Constraint, VideoElementConfig } from '../../types'
+
+function toCssEdge(constraint: Constraint): string | undefined {
+  return constraint.enabled
+    ? `${constraint.value}${constraint.unit}`
+    : undefined
+}
 
 interface ScreenShareReceiverProps {
   broadcasterId: string
@@ -61,22 +67,10 @@ export function ScreenShareReceiver({
 
     const { constraints } = videoElement
     return {
-      left:
-        constraints.left !== undefined
-          ? `${constraints.left}${constraints.leftUnit}`
-          : undefined,
-      right:
-        constraints.right !== undefined
-          ? `${constraints.right}${constraints.rightUnit}`
-          : undefined,
-      top:
-        constraints.top !== undefined
-          ? `${constraints.top}${constraints.topUnit}`
-          : undefined,
-      bottom:
-        constraints.bottom !== undefined
-          ? `${constraints.bottom}${constraints.bottomUnit}`
-          : undefined,
+      left: toCssEdge(constraints.left),
+      right: toCssEdge(constraints.right),
+      top: toCssEdge(constraints.top),
+      bottom: toCssEdge(constraints.bottom),
     }
   }, [videoElement])
 
@@ -89,7 +83,7 @@ export function ScreenShareReceiver({
       transform: 'translateZ(0)',
       willChange: 'transform',
       // Ensure color accuracy
-      colorRendering: 'optimizeQuality',
+      colorRendering: 'optimizeQuality' as const,
       // Prevent any browser optimizations that could reduce quality
       backfaceVisibility: 'hidden' as const,
     }
