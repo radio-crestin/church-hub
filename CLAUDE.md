@@ -41,3 +41,6 @@ All presentation content (LivePreview, ScreenRenderer and any other display) ren
 
 ## graphify
 When `graphify-out/graph.json` exists, `graphify query "<question>"`, `graphify path "<A>" "<B>"` and `graphify explain "<concept>"` give a scoped view of the codebase, much smaller than raw grep. After changing code, `graphify update .` keeps the graph current.
+
+## Rust build output
+`target/` reaches tens of GB per checkout. When you are done with a worktree or branch, run `cargo clean --manifest-path app/tauri/Cargo.toml` there before leaving it; never keep `target/` in a checkout nobody builds anymore.
