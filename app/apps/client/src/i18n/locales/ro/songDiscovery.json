@@ -1,7 +1,9 @@
 {
   "button": {
     "discover": "Descarcă cântări",
-    "searching": "Caut"
+    "syncPending_one": "Sincronizează {{count}} cântare în așteptare",
+    "syncPending_few": "Sincronizează {{count}} cântări în așteptare",
+    "syncPending_other": "Sincronizează {{count}} de cântări în așteptare"
   },
   "back": "Înapoi la cântări",
   "selectPrompt": "Selectează o cântare din stânga pentru a o verifica și edita înainte de import.",
@@ -51,10 +53,13 @@
   },
   "settings": {
     "title": "Cântări noi",
-    "description": "La scurt timp după pornire și apoi zilnic, aplicația verifică sursele de cântări. Adaugă automat cântările noi, iar pe cele pe care le-ai putea avea deja sub alt titlu le lasă spre verificare la „Descarcă cântări”.",
-    "enableLabel": "Adaugă automat cântările noi",
+    "description": "La scurt timp după pornire, apoi zilnic, Church Hub verifică sursele tale de cântări când ai internet. Cântările noi și versiunile mai recente ale celor pe care nu le-ai modificat se sincronizează automat. Cântările modificate de tine nu sunt înlocuite. Cele pe care s-ar putea să le ai deja sub alt titlu așteaptă la „Descarcă cântări”.",
+    "enableLabel": "Sincronizează automat cântările noi și actualizările",
     "checkNow": "Verifică acum",
-    "newCount": "{{count}} cântări noi găsite"
+    "enableHint": "Când oprești opțiunea, cântările așteaptă în Notificări până le sincronizezi.",
+    "pendingCount_one": "{{count}} cântare de aprobat",
+    "pendingCount_few": "{{count}} cântări de aprobat",
+    "pendingCount_other": "{{count}} de cântări de aprobat"
   },
   "songFile": {
     "openFailed": "Nu s-a putut deschide fișierul cu cântări: {{error}}"
@@ -125,25 +130,6 @@
       "failed": "Distribuirea a eșuat: {{error}}"
     }
   },
-  "notice": {
-    "title_one": "{{count}} cântare nouă de descărcat",
-    "title_few": "{{count}} cântări noi de descărcat",
-    "title_other": "{{count}} de cântări noi de descărcat",
-    "added_one": "{{count}} cântare nouă adăugată",
-    "added_few": "{{count}} cântări noi adăugate",
-    "added_other": "{{count}} de cântări noi adăugate",
-    "toReview_one": "Încă {{count}} cântare de verificat",
-    "toReview_few": "Încă {{count}} cântări de verificat",
-    "toReview_other": "Încă {{count}} de cântări de verificat",
-    "addedShort_one": "+{{count}} adăugată",
-    "addedShort_few": "+{{count}} adăugate",
-    "addedShort_other": "+{{count}} adăugate",
-    "newShort_one": "{{count}} nouă",
-    "newShort_few": "{{count}} noi",
-    "newShort_other": "{{count}} noi",
-    "review": "Verifică cântările noi",
-    "viewSongs": "Vezi cântările"
-  },
   "page": {
     "title": "Descarcă ultimele cântări",
     "description": "Cântări noi din sursele tale, pe care nu le ai încă în bibliotecă."
@@ -160,5 +146,40 @@
     "label": "Link către un fișier cu cântări",
     "placeholder": "Lipește un link către un fișier .chsongs",
     "add": "Adaugă"
+  },
+  "notification": {
+    "syncedTitle": "Cântări sincronizate",
+    "pendingTitle": "Cântări de aprobat",
+    "added_one": "{{count}} cântare nouă adăugată",
+    "added_few": "{{count}} cântări noi adăugate",
+    "added_other": "{{count}} de cântări noi adăugate",
+    "updated_one": "{{count}} cântare actualizată",
+    "updated_few": "{{count}} cântări actualizate",
+    "updated_other": "{{count}} de cântări actualizate",
+    "toAdd_one": "{{count}} cântare nouă de adăugat",
+    "toAdd_few": "{{count}} cântări noi de adăugat",
+    "toAdd_other": "{{count}} de cântări noi de adăugat",
+    "toUpdate_one": "{{count}} cântare de actualizat",
+    "toUpdate_few": "{{count}} cântări de actualizat",
+    "toUpdate_other": "{{count}} de cântări de actualizat",
+    "addedList": "Adăugate ({{count}})",
+    "updatedList": "Actualizate ({{count}})",
+    "toAddList": "De adăugat ({{count}})",
+    "toUpdateList": "De actualizat ({{count}})",
+    "showAll": "Arată toate ({{count}})",
+    "showLess": "Arată mai puține",
+    "andMore_one": "…și încă {{count}} cântare",
+    "andMore_few": "…și încă {{count}} cântări",
+    "andMore_other": "…și încă {{count}} de cântări",
+    "syncNow": "Sincronizează acum",
+    "review": "Verifică cântările",
+    "syncSettings": "Setări de sincronizare",
+    "syncDone_one": "{{count}} cântare sincronizată",
+    "syncDone_few": "{{count}} cântări sincronizate",
+    "syncDone_other": "{{count}} de cântări sincronizate",
+    "syncFailed": "Nu s-au putut sincroniza cântările: {{error}}",
+    "checkingTitle": "Se verifică sursele…",
+    "checkingDescription": "Cântările noi și actualizările vor apărea aici la final. Verificarea nu încetinește aplicația.",
+    "cancel": "Anulează"
   }
 }

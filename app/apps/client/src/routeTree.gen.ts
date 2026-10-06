@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as SongsIndexRouteImport } from './routes/songs/index'
 import { Route as SongKeyIndexRouteImport } from './routes/song-key/index'
@@ -48,6 +49,11 @@ import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/ind
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
 
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -241,6 +247,7 @@ const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
 export interface FileRoutesByTo {
+  '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
@@ -321,6 +329,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
@@ -363,6 +372,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/settings'
+    | '/notifications'
     | '/custom-page/$pageId'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/songs/$songId/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/notifications'
     | '/custom-page/$pageId'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/settings'
+    | '/notifications'
     | '/custom-page/$pageId'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
@@ -483,6 +495,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  NotificationsRoute: typeof NotificationsRoute
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
   MonitorBadgeNumberRoute: typeof MonitorBadgeNumberRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
@@ -506,6 +519,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -823,6 +843,7 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  NotificationsRoute: NotificationsRoute,
   CustomPagePageIdRoute: CustomPagePageIdRoute,
   MonitorBadgeNumberRoute: MonitorBadgeNumberRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,

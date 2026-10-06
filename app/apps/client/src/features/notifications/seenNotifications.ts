@@ -1,43 +1,39 @@
 import { useSyncExternalStore } from 'react'
 
 /**
- * Which notifications the user has seen as a pop-up, read under the bell or
- * dismissed, by id. Per computer (localStorage): it is about this screen.
+ * The notifications this screen already showed as a pop-up, by id. Per
+ * computer (localStorage): each screen pops a notification up once.
  */
-type Mark = 'seen' | 'read' | 'dismissed'
-
-const KEYS: Record<Mark, string> = {
-  seen: 'notifications-seen',
-  read: 'notifications-read',
-  dismissed: 'notifications-dismissed',
-}
-/** Old ids are dropped beyond this, so the lists never grow without end. */
-const MAX_IDS = 50
+const KEY = 'notifications-seen'
+/** Old ids are dropped beyond this, so the list never grows without end. */
+const MAX_IDS = 100
 
 const listeners = new Set<() => void>()
-const cache = new Map<Mark, string[]>()
+let cache: string[] | null = null
 
-function read(mark: Mark): string[] {
-  const cached = cache.get(mark)
-  if (cached) return cached
+function readSeen(): string[] {
+  if (cache) return cache
   let ids: string[] = []
   try {
-    ids = JSON.parse(localStorage.getItem(KEYS[mark]) ?? '[]') as string[]
+    ids = JSON.parse(localStorage.getItem(KEY) ?? '[]') as string[]
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: a corrupt list starts empty
-    console.warn(`[notifications] Unreadable ${mark} list`, error)
+    console.warn('[notifications] Unreadable seen list', error)
   }
-  cache.set(mark, ids)
+  cache = ids
   return ids
 }
 
-export function addMark(mark: Mark, ids: string[]): void {
-  const current = read(mark)
-  const fresh = ids.filter((id) => !current.includes(id))
-  if (fresh.length === 0) return
-  const next = [...current, ...fresh].slice(-MAX_IDS)
-  cache.set(mark, next)
-  localStorage.setItem(KEYS[mark], JSON.stringify(next))
+export function markSeen(id: string): void {
+  const current = readSeen()
+  if (current.includes(id)) return
+  cache = [...current, id].slice(-MAX_IDS)
+  try {
+    localStorage.setItem(KEY, JSON.stringify(cache))
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: it then pops up again next time
+    console.warn('[notifications] Could not save the seen list', error)
+  }
   for (const listener of listeners) listener()
 }
 
@@ -46,7 +42,7 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener)
 }
 
-/** The ids with this mark; re-renders when it changes. */
-export function useMarks(mark: Mark): string[] {
-  return useSyncExternalStore(subscribe, () => read(mark))
+/** The ids already shown as a pop-up; re-renders when it changes. */
+export function useSeen(): string[] {
+  return useSyncExternalStore(subscribe, readSeen)
 }

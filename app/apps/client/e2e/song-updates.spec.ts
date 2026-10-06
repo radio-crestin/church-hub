@@ -4,6 +4,7 @@ import { FakeS3 } from './helpers/fake-s3'
 import {
   addLinkSource,
   checkSource,
+  clearNotifications,
   type FolderSong,
   openSongXml,
   publishSongFolder,
@@ -12,9 +13,10 @@ import {
 
 /**
  * Song updates: the server checks the song sources in a worker thread and,
- * when updating songs automatically, adds the songs that are new to the
- * library. A song the library has under another title is left for review.
- * With automatic updates off, new songs are only counted.
+ * when syncing without approval (the default), adds the songs that are new
+ * to the library and updates those nobody edited by hand. A song the library
+ * has under another title is left for review. With syncing without approval
+ * off, the songs wait until the user syncs them.
  */
 
 // Letters only: titles lose their digits on the way in.
@@ -84,6 +86,7 @@ test.describe('Song updates', () => {
       }
     }
     for (const id of libraryIds) await request.delete(`/api/songs/${id}`)
+    await clearNotifications(request)
     await s3.stop()
   })
 
@@ -96,8 +99,7 @@ test.describe('Song updates', () => {
     expect(state.autoUpdate).toBe(true)
 
     const result = await checkSource(request, sourceId)
-    expect(result.imported).toBe(2)
-    expect(result.newCount).toBe(1)
+    expect(result).toMatchObject({ imported: 2, newCount: 0, similarCount: 1 })
     for (const { title } of fresh) {
       expect(await songsTitled(request, title)).toHaveLength(1)
     }
@@ -112,16 +114,26 @@ test.describe('Song updates', () => {
     ])
   })
 
-  test('with automatic updates off, new songs are only counted', async ({
+  test('with syncing without approval off, new songs wait until synced', async ({
     request,
   }) => {
     await setAutoUpdate(request, false)
     publishSongFolder(s3, folder, categoryName, [...fresh, known, third], 'two')
     const result = await checkSource(request, sourceId)
-    expect(result.imported).toBe(0)
-    expect(result.newCount).toBe(2)
+    expect(result).toMatchObject({ imported: 0, newCount: 1, similarCount: 1 })
     expect(await songsTitled(request, third.title)).toHaveLength(0)
+
+    const sync = await request.post('/api/song-sources/updates/sync')
+    expect(sync.ok()).toBeTruthy()
+    const synced = (await sync.json()).data.sources.find(
+      (s: { sourceId: string }) => s.sourceId === sourceId,
+    )
+    expect(synced).toMatchObject({ newCount: 0, imported: 1 })
+    expect(await songsTitled(request, third.title)).toHaveLength(1)
+    // The one the library has under another title still waits for review.
+    expect(await songsTitled(request, known.title)).toHaveLength(0)
   })
+
   test('brings the songs nobody edited up to date, never one edited by hand', async ({
     request,
   }) => {

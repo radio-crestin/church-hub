@@ -40,7 +40,7 @@ export function SongDiscoveryScreen({
     () => [...openedFiles, ...serverSources],
     [openedFiles, serverSources],
   )
-  const { state, isRunning, checkNow, recordNewCount } = useSongUpdates()
+  const { state, isRunning, checkNow, recount } = useSongUpdates()
   const lacking = useLackingSongs(sources, state?.finishedAt ?? null)
   const selection = useDiscoverySelection(
     lacking.entries,
@@ -83,12 +83,10 @@ export function SongDiscoveryScreen({
       const imported = await importSelected(picked)
       selection.markImported(imported)
       if (openTempId && imported.includes(openTempId)) setOpenTempId(null)
-      // Each source's count drops by what was imported from it.
+      // The server counts each source's waiting songs again.
       for (const source of sources) {
         if (source.origin === 'file') continue
-        const before = selection.countBySource.get(source.id) ?? 0
-        const taken = picked.filter((i) => i.sourceId === source.id).length
-        if (taken > 0) recordNewCount(source.id, before - taken)
+        if (picked.some((i) => i.sourceId === source.id)) recount(source.id)
       }
       showToast(t('toast.imported', { count: imported.length }), 'success')
     } catch (error) {

@@ -12,6 +12,8 @@ export class FakeS3 {
   readonly requests: string[] = []
   /** Paths answered with a redirect to the given location. */
   readonly redirects = new Map<string, string>()
+  /** Paths never answered, like a stalled server. */
+  readonly stalled = new Set<string>()
   private server: Server | undefined
 
   async start(): Promise<void> {
@@ -32,6 +34,7 @@ export class FakeS3 {
         res.writeHead(204).end()
         return
       }
+      if (this.stalled.has(path)) return
       const location = this.redirects.get(path)
       if (location) {
         res.writeHead(302, { Location: location }).end()
@@ -60,6 +63,7 @@ export class FakeS3 {
   }
 
   async stop(): Promise<void> {
+    this.server?.closeAllConnections()
     await new Promise<void>((resolve) => this.server?.close(() => resolve()))
   }
 }

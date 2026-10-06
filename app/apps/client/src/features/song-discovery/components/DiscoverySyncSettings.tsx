@@ -6,14 +6,14 @@ import { Switch } from '~/ui/switch/Switch'
 import { useSongUpdates } from '../hooks/useSongUpdates'
 
 /**
- * Settings card for the song updates: adding new songs from the song sources
- * automatically (on by default), and checking the sources now. The checks
- * run on the server, in a worker thread, a bit after start and then daily.
+ * Settings card for the song sync: syncing new songs and updates without
+ * asking (on by default), and checking the sources now. The checks run on
+ * the server, in a worker thread, a bit after start and then daily.
  */
 export function DiscoverySyncSettings() {
   const { t, i18n } = useTranslation('songDiscovery')
-  const { state, isRunning, checkNow, setAutoUpdate } = useSongUpdates()
-  const newCount = state?.sources.reduce((sum, s) => sum + s.newCount, 0) ?? 0
+  const { state, isRunning, checkNow, setAutoUpdate, pendingCount } =
+    useSongUpdates()
 
   return (
     <div className="space-y-4">
@@ -27,12 +27,17 @@ export function DiscoverySyncSettings() {
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <label
-          htmlFor="song-updates-auto"
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          {t('settings.enableLabel')}
-        </label>
+        <div>
+          <label
+            htmlFor="song-updates-auto"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {t('settings.enableLabel')}
+          </label>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t('settings.enableHint')}
+          </p>
+        </div>
         <Switch
           id="song-updates-auto"
           checked={state?.autoUpdate ?? true}
@@ -61,7 +66,7 @@ export function DiscoverySyncSettings() {
             : state?.finishedAt
               ? `${t('source.lastChecked', {
                   when: formatRelativeTime(state.finishedAt, i18n.language),
-                })}${newCount > 0 ? ` · ${t('settings.newCount', { count: newCount })}` : ''}`
+                })}${pendingCount > 0 ? ` · ${t('settings.pendingCount', { count: pendingCount })}` : ''}`
               : null}
         </span>
       </div>

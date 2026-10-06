@@ -1,7 +1,8 @@
 {
   "button": {
     "discover": "Download songs",
-    "searching": "Searching"
+    "syncPending_one": "Sync {{count}} waiting song",
+    "syncPending_other": "Sync {{count}} waiting songs"
   },
   "back": "Back to songs",
   "selectPrompt": "Select a song on the left to review and edit it before importing.",
@@ -50,10 +51,12 @@
   },
   "settings": {
     "title": "Song updates",
-    "description": "A little after the app starts, and then every day, Church Hub checks your song sources. It adds the new songs on its own; songs you may already have under another title wait for you in Download songs.",
-    "enableLabel": "Add new songs automatically",
+    "description": "A little after the app starts, and then every day, Church Hub checks your song sources when there is internet. New songs, and newer versions of songs you never edited, sync on their own: a song you edited is never replaced. Songs you may already have under another title wait for you in Download songs.",
+    "enableLabel": "Sync new songs and updates without asking",
     "checkNow": "Check now",
-    "newCount": "{{count}} new song(s) found"
+    "enableHint": "When off, they wait in the notifications until you sync them.",
+    "pendingCount_one": "{{count}} waiting for approval",
+    "pendingCount_other": "{{count}} waiting for approval"
   },
   "songFile": {
     "openFailed": "Couldn't open the song file: {{error}}"
@@ -123,20 +126,6 @@
       "failed": "Sharing failed: {{error}}"
     }
   },
-  "notice": {
-    "title_one": "{{count}} new song to download",
-    "title_other": "{{count}} new songs to download",
-    "added_one": "{{count}} new song added",
-    "added_other": "{{count}} new songs added",
-    "toReview_one": "{{count}} more to review",
-    "toReview_other": "{{count}} more to review",
-    "addedShort_one": "+{{count}} added",
-    "addedShort_other": "+{{count}} added",
-    "newShort_one": "{{count}} new",
-    "newShort_other": "{{count}} new",
-    "review": "Review new songs",
-    "viewSongs": "Open songs"
-  },
   "page": {
     "title": "Download the latest songs",
     "description": "New songs from your song sources that aren't in your library yet."
@@ -153,5 +142,34 @@
     "label": "Link to a song file",
     "placeholder": "Paste a link to a .chsongs file",
     "add": "Add"
+  },
+  "notification": {
+    "syncedTitle": "Songs synced",
+    "pendingTitle": "Songs waiting for your approval",
+    "added_one": "{{count}} new song added",
+    "added_other": "{{count}} new songs added",
+    "updated_one": "{{count}} song updated",
+    "updated_other": "{{count}} songs updated",
+    "toAdd_one": "{{count}} new song to add",
+    "toAdd_other": "{{count}} new songs to add",
+    "toUpdate_one": "{{count}} song to update",
+    "toUpdate_other": "{{count}} songs to update",
+    "addedList": "Added ({{count}})",
+    "updatedList": "Updated ({{count}})",
+    "toAddList": "To add ({{count}})",
+    "toUpdateList": "To update ({{count}})",
+    "showAll": "Show all {{count}}",
+    "showLess": "Show less",
+    "andMore_one": "…and {{count}} more",
+    "andMore_other": "…and {{count}} more",
+    "syncNow": "Sync now",
+    "review": "Review songs",
+    "syncSettings": "Sync settings",
+    "syncDone_one": "{{count}} song synced",
+    "syncDone_other": "{{count}} songs synced",
+    "syncFailed": "Could not sync the songs: {{error}}",
+    "checkingTitle": "Checking the song sources…",
+    "checkingDescription": "New songs and updates arrive here when it is done. The app stays fast meanwhile.",
+    "cancel": "Cancel"
   }
 }

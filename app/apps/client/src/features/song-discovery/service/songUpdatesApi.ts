@@ -5,12 +5,43 @@ export interface SourceUpdate {
   sourceId: string
   name: string
   checksum: string
-  /** Songs in the source the library lacks. */
+  /** New songs the library lacks, waiting for approval. */
   newCount: number
-  /** Songs the automatic update added when the source last changed. */
+  /** Songs the library has under another title: for review here. */
+  similarCount: number
+  /** Library songs the source changed, waiting for approval. */
+  changedCount: number
+  /** Songs the sync added when the source last changed. */
   imported: number
+  /** Library songs it brought up to date then. */
+  updated: number
   checkedAt: number
   error?: string
+}
+
+/** A song in a notification; `id` once it is in the library. */
+export interface SongRef {
+  id?: number
+  title: string
+}
+
+/** Some songs: how many, and the first of them. */
+export interface SongSet {
+  count: number
+  songs: SongRef[]
+}
+
+/** One source's songs added and updated (or to add and update). */
+export interface SourceSongChanges {
+  sourceId: string
+  name: string
+  added: SongSet
+  updated: SongSet
+}
+
+/** A songs-synced or songs-pending notification's details. */
+export interface SongSyncData {
+  sources: SourceSongChanges[]
 }
 
 /** GET /api/song-sources/updates */
@@ -48,8 +79,14 @@ export const runSongUpdates = (options: {
 export const setAutoUpdateSongs = (autoUpdate: boolean) =>
   call('/api/song-sources/updates/settings', 'PUT', { autoUpdate })
 
-/** Song discovery's own count of a source's new songs, after comparing them. */
-export const recordSourceNewCount = (sourceId: string, newCount: number) =>
-  call(`/api/song-sources/${encodeURIComponent(sourceId)}/new-count`, 'PUT', {
-    newCount,
-  })
+/** Stops the running check; what it synced so far stays. */
+export const cancelSongUpdates = () =>
+  call('/api/song-sources/updates/cancel', 'POST')
+
+/** Syncs the songs waiting for approval: new songs and updates. */
+export const syncPendingSongs = () =>
+  call('/api/song-sources/updates/sync', 'POST')
+
+/** Counts a source's waiting songs again, after an import here. */
+export const recountSourceSongs = (sourceId: string) =>
+  call(`/api/song-sources/${encodeURIComponent(sourceId)}/recount`, 'POST')

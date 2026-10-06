@@ -1,0 +1,11 @@
+{
+  "title": "Notificări",
+  "description": "Ce s-a întâmplat în aplicație în ultimele 60 de zile",
+  "today": "Azi",
+  "yesterday": "Ieri",
+  "empty": "Nu ai încă notificări",
+  "emptyHint": "Cântările sincronizate din sursele tale și noile versiuni ale aplicației apar aici.",
+  "remove": "Șterge",
+  "close": "Închide",
+  "seeAll": "Vezi toate notificările"
+}

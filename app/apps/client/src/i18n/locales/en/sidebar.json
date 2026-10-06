@@ -25,14 +25,15 @@
   "version": {
     "updateAvailable": "v{{version}} available",
     "readyToInstall": "v{{version}} ready to install",
-    "clickToOpenUpdates": "Open the updates page",
     "clickToInstall": "Downloaded — install it now",
     "viewUpdate": "See what's new",
     "install": "Install now",
-    "dismiss": "Dismiss"
+    "download": "Download update",
+    "downloading": "Downloading… {{progress}}%",
+    "installing": "Installing…",
+    "updateDescription": "Download it here; installing restarts the app."
   },
   "notifications": {
-    "title": "Notifications",
-    "dismiss": "Dismiss"
+    "title": "Notifications"
   }
 }

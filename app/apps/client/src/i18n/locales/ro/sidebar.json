@@ -25,14 +25,15 @@
   "version": {
     "updateAvailable": "v{{version}} disponibilă",
     "readyToInstall": "v{{version}} gata de instalare",
-    "clickToOpenUpdates": "Deschide pagina de actualizari",
     "clickToInstall": "Descarcata - instaleaz-o acum",
     "viewUpdate": "Vezi ce e nou",
     "install": "Instaleaza acum",
-    "dismiss": "Închide"
+    "download": "Descarcă actualizarea",
+    "downloading": "Se descarcă… {{progress}}%",
+    "installing": "Se instalează…",
+    "updateDescription": "Descarcă actualizarea aici. Instalarea va reporni aplicația."
   },
   "notifications": {
-    "title": "Notificări",
-    "dismiss": "Închide notificarea"
+    "title": "Notificări"
   }
 }

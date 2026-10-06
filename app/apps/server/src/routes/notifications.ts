@@ -9,7 +9,7 @@ import {
 
 type HandleCors = (req: Request, res: Response) => Response
 
-const NOTIFICATION_PATH = /^\/api\/notifications\/([\w:.+-]+)$/
+const NOTIFICATION_PATH = /^\/api\/notifications\/([^/]+)$/
 const VERSION = /^[\w.+-]{1,40}$/
 
 /**
@@ -69,9 +69,16 @@ export async function handleNotificationRoutes(
     return respond(200, { data: { ok: true } })
   }
 
-  const id = pathname.match(NOTIFICATION_PATH)?.[1]
-  if (req.method === 'DELETE' && id) {
-    return deleteNotification(decodeURIComponent(id))
+  // Ids hold a ':', so clients send them encoded.
+  const encodedId = pathname.match(NOTIFICATION_PATH)?.[1]
+  if (req.method === 'DELETE' && encodedId) {
+    let id: string
+    try {
+      id = decodeURIComponent(encodedId)
+    } catch {
+      return respond(400, { error: 'Not a notification id' })
+    }
+    return deleteNotification(id)
       ? respond(200, { data: { ok: true } })
       : respond(404, { error: 'Notification not found' })
   }

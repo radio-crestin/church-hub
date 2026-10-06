@@ -76,16 +76,25 @@ export async function setAutoUpdate(
   expect(res.ok()).toBeTruthy()
 }
 
+/** What a check found for one source (GET /api/song-sources/updates). */
+export interface SourceCheck {
+  newCount: number
+  similarCount: number
+  changedCount: number
+  imported: number
+  updated: number
+}
+
 /** Checks the source now (in the server's worker) and waits for the result. */
 export async function checkSource(
   request: APIRequestContext,
   sourceId: string,
-): Promise<{ newCount: number; imported: number }> {
+): Promise<SourceCheck> {
   const run = await request.post('/api/song-sources/updates/run', {
     data: { sourceIds: [sourceId] },
   })
   expect(run.status()).toBe(202)
-  let source: { newCount: number; imported: number } | undefined
+  let source: SourceCheck | undefined
   await expect(async () => {
     const state = (
       await (await request.get('/api/song-sources/updates')).json()
@@ -96,5 +105,18 @@ export async function checkSource(
     )
     expect(source).toBeTruthy()
   }).toPass({ timeout: 60_000 })
-  return source as { newCount: number; imported: number }
+  return source as SourceCheck
+}
+
+/**
+ * Removes every notification, so a spec starts from none and leaves no
+ * pop-up over the next spec's page.
+ */
+export async function clearNotifications(
+  request: APIRequestContext,
+): Promise<void> {
+  const res = await request.get('/api/notifications')
+  for (const { id } of (await res.json()).data as { id: string }[]) {
+    await request.delete(`/api/notifications/${encodeURIComponent(id)}`)
+  }
 }
