@@ -5,7 +5,7 @@ const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 /**
  * A shared source link must be https (plain http only to this machine, in
  * the e2e suite). Throws on anything else. Where the host resolves is
- * checked separately, by assertPublicUrl.
+ * checked when connecting, by requestOnce.
  */
 export function requireLinkUrl(value: string): URL {
   let url: URL
