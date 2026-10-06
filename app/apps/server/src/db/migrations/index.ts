@@ -30,6 +30,7 @@ import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
 import { removeSeededSecrets } from './remove-seeded-secrets'
+import { removeSeededTestSong } from './remove-seeded-test-song'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedSampleMusic } from './seed-music'
@@ -409,6 +410,12 @@ export function runMigrations(
     'strip_song_formatting_tags',
     'Running strip song formatting tags migration',
     () => stripSongFormattingTags(rawDb),
+  )
+
+  // The e2e song older default songs shipped (T-114). After add_sync, so
+  // the library sync carries the delete to the cloud copy.
+  runStep('remove_seeded_test_song', 'Removing the seeded test song', () =>
+    removeSeededTestSong(rawDb),
   )
 
   return { ftsRecreated: ftsCreated }
