@@ -19,6 +19,31 @@ const errors = {
   '401': { $ref: '#/components/responses/Unauthorized' },
   '403': { $ref: '#/components/responses/Forbidden' },
 }
+
+/** GET /api/song-sources/updates: each source's last check. */
+const songUpdates = {
+  type: 'object',
+  properties: {
+    running: { type: 'boolean' },
+    autoUpdate: { type: 'boolean' },
+    finishedAt: { type: 'integer', nullable: true },
+    sources: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          sourceId: { type: 'string' },
+          name: { type: 'string' },
+          checksum: { type: 'string' },
+          newCount: { type: 'integer' },
+          imported: { type: 'integer' },
+          checkedAt: { type: 'integer' },
+          error: { type: 'string' },
+        },
+      },
+    },
+  },
+}
 const idParameter = (type: 'string' | 'integer') => ({
   name: 'id',
   in: 'path',
@@ -141,6 +166,108 @@ export const songSourcesPaths = {
           }),
         },
         '502': { description: 'The source could not be read' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/{id}/new-count': {
+    put: {
+      tags,
+      summary: 'Record Song discovery’s count of a source’s new songs',
+      description:
+        'Song discovery’s own count once it compared the source with the library, fresher than the last check after an import. Requires `songs.create`.',
+      security,
+      parameters: [idParameter('string')],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['newCount'],
+              properties: { newCount: { type: 'integer', minimum: 0 } },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'The song updates',
+          content: dataOf(songUpdates),
+        },
+        '400': { description: 'newCount is not a whole number' },
+        '404': { description: 'No such source' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/updates': {
+    get: {
+      tags,
+      summary: 'Get each source’s last check for new songs',
+      description:
+        'The sources are checked in a worker thread a bit after the server starts, then daily: a source whose checksum did not change is not downloaded again. When updating songs automatically (the default), songs with no similar version in the library are added to the source’s category. Requires `songs.view`.',
+      security,
+      responses: {
+        '200': {
+          description: 'The song updates',
+          content: dataOf(songUpdates),
+        },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/updates/run': {
+    post: {
+      tags,
+      summary: 'Check the song sources now',
+      description:
+        'Starts a run in the worker thread and answers at once; `running` turns false when it is done. `force` downloads every source even when its checksum did not change; `sourceIds` limits the run to those sources. Requires `songs.create`.',
+      security,
+      requestBody: {
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                force: { type: 'boolean' },
+                sourceIds: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '202': { description: 'The run started', content: dataOf(songUpdates) },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/updates/settings': {
+    put: {
+      tags,
+      summary: 'Turn updating songs automatically on or off',
+      description: 'On by default. Requires `settings.edit`.',
+      security,
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['autoUpdate'],
+              properties: { autoUpdate: { type: 'boolean' } },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'The song updates',
+          content: dataOf(songUpdates),
+        },
+        '400': { description: 'autoUpdate is not a boolean' },
         ...errors,
       },
     },

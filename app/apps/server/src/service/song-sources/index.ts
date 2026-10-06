@@ -31,3 +31,11 @@ export type {
   SongSourceFormat,
   SongSourceOrigin,
 } from './types'
+export { getSongUpdatesState } from './updates/getSongUpdatesState'
+export { recordSourceNewCount } from './updates/recordSourceNewCount'
+export {
+  runSongUpdatesInWorker,
+  startSongUpdates,
+} from './updates/songUpdatesRunner'
+export { setAutoUpdateSongs } from './updates/sourceUpdatesStore'
+export type { SongUpdatesState, SourceUpdate } from './updates/types'

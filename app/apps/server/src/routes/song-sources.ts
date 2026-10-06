@@ -8,13 +8,17 @@ import {
   deletePublication,
   getPublication,
   getS3Storage,
+  getSongUpdatesState,
   listPublications,
   listSongSources,
   readSourceArchive,
   readSourceChecksum,
   readSourceSongs,
+  recordSourceNewCount,
+  runSongUpdatesInWorker,
   type S3StorageInput,
   SONG_BUNDLE_EXTENSION,
+  setAutoUpdateSongs,
   syncPublication,
   toPublicationView,
   toS3StorageView,
@@ -34,6 +38,7 @@ const logger = createLogger('song-sources')
 const SOURCE_SONGS_PATH = /^\/api\/song-sources\/([\w-]+)\/songs$/
 const SOURCE_ARCHIVE_PATH = /^\/api\/song-sources\/([\w-]+)\/archive$/
 const SOURCE_CHECKSUM_PATH = /^\/api\/song-sources\/([\w-]+)\/checksum$/
+const SOURCE_NEW_COUNT_PATH = /^\/api\/song-sources\/([\w-]+)\/new-count$/
 const SOURCE_PATH = /^\/api\/song-sources\/([\w-]+)$/
 const PUBLICATION_SYNC_PATH = /^\/api\/song-sources\/publications\/(\d+)\/sync$/
 const PUBLICATION_PATH = /^\/api\/song-sources\/publications\/(\d+)$/
@@ -57,6 +62,10 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - GET    /api/song-sources/:id/songs           a shared folder's OpenSong files (songs.create)
  * - GET    /api/song-sources/:id/archive         a song file source's .chsongs (songs.create)
  * - GET    /api/song-sources/:id/checksum        what changes when the source's songs do (songs.view)
+ * - PUT    /api/song-sources/:id/new-count       Song discovery's count of its new songs `{ newCount }` (songs.create)
+ * - GET    /api/song-sources/updates             each source's last check for new songs (songs.view)
+ * - POST   /api/song-sources/updates/run         check the sources now `{ force?, sourceIds? }` (songs.create)
+ * - PUT    /api/song-sources/updates/settings    update songs automatically `{ autoUpdate }` (settings.edit)
  * - GET    /api/song-sources/export?categoryId=&format=chsongs|zip  a category as a song bundle (songs.view)
  * - GET    /api/song-sources/storage             the S3 storage, without its secret (settings.view)
  * - PUT    /api/song-sources/storage             save the S3 storage (settings.edit)
@@ -96,6 +105,51 @@ export async function handleSongSourceRoutes(
 
   if (req.method === 'GET' && pathname === '/api/song-sources') {
     return deny('songs.view') ?? respond(200, { data: listSongSources() })
+  }
+
+  if (req.method === 'GET' && pathname === '/api/song-sources/updates') {
+    return deny('songs.view') ?? respond(200, { data: getSongUpdatesState() })
+  }
+
+  if (req.method === 'POST' && pathname === '/api/song-sources/updates/run') {
+    const denied = deny('songs.create')
+    if (denied) return denied
+    const { force, sourceIds } = await readJson<{
+      force: boolean
+      sourceIds: string[]
+    }>()
+    void runSongUpdatesInWorker({ force, sourceIds })
+    return respond(202, { data: getSongUpdatesState() })
+  }
+
+  if (
+    req.method === 'PUT' &&
+    pathname === '/api/song-sources/updates/settings'
+  ) {
+    const denied = deny('settings.edit')
+    if (denied) return denied
+    const { autoUpdate } = await readJson<{ autoUpdate: boolean }>()
+    if (typeof autoUpdate !== 'boolean') {
+      return respond(400, { error: 'autoUpdate must be true or false' })
+    }
+    setAutoUpdateSongs(autoUpdate)
+    return respond(200, { data: getSongUpdatesState() })
+  }
+
+  const newCountMatch = pathname.match(SOURCE_NEW_COUNT_PATH)
+  if (req.method === 'PUT' && newCountMatch) {
+    const denied = deny('songs.create')
+    if (denied) return denied
+    const { newCount } = await readJson<{ newCount: number }>()
+    if (!Number.isInteger(newCount) || (newCount ?? -1) < 0) {
+      return respond(400, { error: 'newCount must be a whole number' })
+    }
+    try {
+      recordSourceNewCount(newCountMatch[1], newCount as number)
+      return respond(200, { data: getSongUpdatesState() })
+    } catch (error) {
+      return respond(404, { error: errorMessage(error) })
+    }
   }
 
   if (req.method === 'POST' && pathname === '/api/song-sources') {

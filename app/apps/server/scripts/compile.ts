@@ -103,6 +103,11 @@ function copyMidiPrebuilds(os: string, arch: string): void {
   )
 }
 
+/** Worker threads, created with `new Worker(new URL('./x.ts', import.meta.url))`. */
+const WORKER_ENTRYPOINTS = [
+  './src/service/song-sources/updates/songUpdatesWorker.ts',
+]
+
 async function main() {
   const os = process.platform as keyof typeof BINARIES_POSTFIX
   const arch = process.arch as keyof typeof ARCHITECTURES
@@ -132,7 +137,8 @@ async function main() {
   // Drive backup) goes through the ChurchHub OAuth worker, which holds the
   // client id/secret server-side.
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
-  await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
+  // Every worker thread is its own entrypoint (Bun bundles each separately).
+  await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts ${WORKER_ENTRYPOINTS} --outfile ${outfile}`
 
   console.log('\x1b[32mDone! Binary created at:\x1b[0m', outfile)
 }

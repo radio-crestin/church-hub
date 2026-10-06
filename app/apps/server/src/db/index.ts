@@ -1,5 +1,6 @@
 export {
   closeDatabase,
+  connectDatabase,
   getDatabase,
   getRawDatabase,
   initializeDatabase,

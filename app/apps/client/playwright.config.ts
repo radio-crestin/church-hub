@@ -114,6 +114,8 @@ export default defineConfig({
       // Song-source specs share links from a stand-in S3 on 127.0.0.1;
       // every other private address stays refused.
       CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
+      // Tests start the song-source checks they need (no network at start).
+      CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has

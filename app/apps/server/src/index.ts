@@ -271,7 +271,11 @@ import {
   updateBookmarkNote,
 } from './service/song-bookmarks'
 import { resolveSongEditor, saveSongWithHistory } from './service/song-history'
-import { isProxyAllowedUrl, startPublicationSync } from './service/song-sources'
+import {
+  isProxyAllowedUrl,
+  startPublicationSync,
+  startSongUpdates,
+} from './service/song-sources'
 import {
   type BatchImportSongInput,
   backfillAlternateTitles,
@@ -622,6 +626,10 @@ async function main() {
   // Keep the categories published to the user's S3 bucket up to date
   // (no-op until a bucket and a published category exist).
   startPublicationSync()
+
+  // Check the song sources for new songs (and add them, when updating songs
+  // automatically) in a worker thread, a bit after start.
+  startSongUpdates()
 }
 
 /**
