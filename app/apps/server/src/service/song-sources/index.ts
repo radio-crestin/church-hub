@@ -32,6 +32,10 @@ export type {
   SongSourceOrigin,
 } from './types'
 export { getSongUpdatesState } from './updates/getSongUpdatesState'
+export {
+  type LackingSong,
+  readLackingSongs,
+} from './updates/lackingSongsStore'
 export { recordSourceNewCount } from './updates/recordSourceNewCount'
 export {
   runSongUpdatesInWorker,

@@ -1,6 +1,7 @@
 import type { SourceSong } from '@church-hub/song-formats'
 
 import { importSourceSongs } from './importSourceSongs'
+import { type LackingSong, saveLackingSongs } from './lackingSongsStore'
 import { readSourceSongList } from './readSourceSongList'
 import type { SongUpdatesRun, SourceUpdate } from './types'
 import {
@@ -30,8 +31,8 @@ function recoverTitles(songs: SourceSong[]): void {
   )
 }
 
-/** The songs the library lacks, and the new ones among them (no similar version). */
-function findLacking(songs: SourceSong[]) {
+/** The songs the library lacks, each with its verdict and similar versions. */
+function findLacking(songs: SourceSong[]): LackingSong[] {
   const verdicts = matchCandidatesAgainstLibrary(
     songs.map((song) => ({
       tempId: song.id,
@@ -40,13 +41,12 @@ function findLacking(songs: SourceSong[]) {
       sourceFilename: song.sourceFilename,
     })),
   )
-  const verdictById = new Map(verdicts.map((v) => [v.tempId, v.verdict]))
-  const lacking = songs.filter((song) => {
-    const verdict = verdictById.get(song.id)
-    return verdict === 'new' || verdict === 'similar'
+  const byId = new Map(verdicts.map((v) => [v.tempId, v]))
+  return songs.flatMap((song) => {
+    const match = byId.get(song.id)
+    if (match?.verdict !== 'new' && match?.verdict !== 'similar') return []
+    return [{ ...song, verdict: match.verdict, similar: match.similar }]
   })
-  const fresh = lacking.filter((song) => verdictById.get(song.id) === 'new')
-  return { lacking, fresh }
 }
 
 /**
@@ -72,14 +72,19 @@ export async function checkSourceForUpdates(
 
   const songs = await readSourceSongList(source)
   recoverTitles(songs)
-  const { lacking, fresh } = findLacking(songs)
-  const added = importSourceSongs(source, run.autoUpdate ? fresh : [])
+  const lacking = findLacking(songs)
+  const toAdd = run.autoUpdate
+    ? lacking.filter((song) => song.verdict === 'new')
+    : []
+  const added = importSourceSongs(source, toAdd)
+  const left = lacking.filter((song) => !toAdd.includes(song))
+  saveLackingSongs(source.id, left)
   return {
     update: {
       sourceId: source.id,
       name: source.name,
       checksum,
-      newCount: lacking.length - added,
+      newCount: left.length,
       imported: added,
       checkedAt: now,
     },

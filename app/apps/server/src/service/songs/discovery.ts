@@ -170,16 +170,19 @@ export function matchCandidatesAgainstLibrary(
 export function countNewCandidates(
   candidates: readonly { title: string; sourceFilename: string | null }[],
 ): number {
-  if (candidates.length === 0) return 0
-  try {
-    const index = buildLibraryExactIndex()
-    let newCount = 0
-    for (const candidate of candidates) {
-      if (!isExactLibraryMatch(index, candidate)) newCount++
-    }
-    return newCount
-  } catch (error) {
-    logger.error(`countNewCandidates failed: ${error}`)
-    return 0
-  }
+  return keepNotInLibrary(candidates).length
+}
+
+/**
+ * The candidates the library has under neither their file name nor their
+ * title: cheap (one pass over the library, then lookups), no similarity.
+ */
+export function keepNotInLibrary<
+  T extends { title: string; sourceFilename: string | null },
+>(candidates: readonly T[]): T[] {
+  if (candidates.length === 0) return []
+  const index = buildLibraryExactIndex()
+  return candidates.filter(
+    (candidate) => !isExactLibraryMatch(index, candidate),
+  )
 }

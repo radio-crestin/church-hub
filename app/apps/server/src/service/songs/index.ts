@@ -16,7 +16,11 @@ export {
   upsertCategory,
 } from './categories'
 // Discovery (external-source import)
-export { countNewCandidates, matchCandidatesAgainstLibrary } from './discovery'
+export {
+  countNewCandidates,
+  keepNotInLibrary,
+  matchCandidatesAgainstLibrary,
+} from './discovery'
 export {
   completeSongReplacement,
   type ReplaceSongReferencesResult,

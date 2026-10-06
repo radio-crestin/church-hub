@@ -170,6 +170,35 @@ export const songSourcesPaths = {
       },
     },
   },
+  '/api/song-sources/{id}/lacking': {
+    get: {
+      tags,
+      summary: 'Get the songs a source has that the library lacks',
+      description:
+        'From the last check (done in a worker thread), so it answers at once: each song with its parsed slides and metadata, its verdict (`new`, or `similar` when the library has a version under another title) and the similar library songs. Songs added to the library since are left out. Requires `songs.create`.',
+      security,
+      parameters: [idParameter('string')],
+      responses: {
+        '200': {
+          description: 'The songs',
+          content: dataOf({
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                sourceFilename: { type: 'string', nullable: true },
+                parsed: { type: 'object' },
+                verdict: { type: 'string', enum: ['new', 'similar'] },
+                similar: { type: 'array', items: { type: 'object' } },
+              },
+            },
+          }),
+        },
+        ...errors,
+      },
+    },
+  },
   '/api/song-sources/{id}/new-count': {
     put: {
       tags,
