@@ -7,8 +7,8 @@ import {
 
 /**
  * Programs are made right in the Programe panel next to Marcaje (T-088): the
- * header's green + and a new name typed in the program picker. Empty states
- * explain, without buttons of their own.
+ * green + beside the program picker, or a new name typed in the picker.
+ * Empty states explain, without buttons of their own.
  */
 
 interface ProgramRow {
@@ -67,22 +67,19 @@ test.describe('make a program in the Programe panel', () => {
     await request.delete(`/api/songs/${songId}`).catch(() => {})
   })
 
-  test('the green + in the header makes a program and picks it', async ({
+  test('"+" next to the program picker makes a program and picks it', async ({
     page,
     request,
   }) => {
     await makeProgram(request, `E2E Existing ${Date.now()}`)
-    const title = `E2E Header New ${Date.now()}`
+    const title = `E2E Picker Plus ${Date.now()}`
     await openSongPageWithPanel(page, songId)
 
-    // Every header button says what it does on hover.
-    const newButton = panel(page).getByTestId('schedule-new')
-    await newButton.hover()
+    const plus = panel(page).getByTestId('schedule-picker-new')
+    await plus.hover()
     await expect(page.getByText(/^(New program|Program nou)$/)).toBeVisible()
-
-    await newButton.click()
+    await plus.click()
     const dialog = panel(page).getByTestId('create-schedule-modal')
-    await expect(dialog).toBeVisible()
     await dialog.getByRole('textbox').fill(title)
     await dialog.getByRole('textbox').press('Enter')
 
@@ -91,6 +88,8 @@ test.describe('make a program in the Programe panel', () => {
       { timeout: 10000 },
     )
     expect(await programTitled(request, title)).toBeTruthy()
+    // The + lives only beside the picker now, not in the header too.
+    await expect(panel(page).getByTestId('schedule-new')).toHaveCount(0)
     // A new program is empty: the panel says so, without its own add button.
     const empty = panel(page).getByTestId('schedule-panel-empty-program')
     await expect(empty).toBeVisible()
@@ -134,6 +133,6 @@ test.describe('make a program in the Programe panel', () => {
     // It points to the header's green + instead of offering buttons of its own.
     await expect(empty.getByRole('button')).toHaveCount(0)
     await expect(empty).toContainText(/green \+|verde \+/)
-    await expect(panel(page).getByTestId('schedule-new')).toBeVisible()
+    await expect(panel(page).getByTestId('schedule-picker-new')).toBeVisible()
   })
 })

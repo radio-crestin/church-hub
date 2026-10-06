@@ -22,7 +22,6 @@ import {
   ExternalLink,
   ListPlus,
   Pencil,
-  Plus,
   Search,
   Trash2,
 } from 'lucide-react'
@@ -675,35 +674,6 @@ export function SchedulePanel({
           },
         ]
       : []),
-    // A new program, made right here and picked straight away — on Sunday
-    // morning usually today's, which the dialog makes in one click.
-    ...(canCreateProgram
-      ? [
-          {
-            id: 'new-schedule',
-            label: t('panel.newSchedule'),
-            icon: <Plus size={18} />,
-            iconClassName:
-              'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-            onSelect: () => setIsCreatingSchedule(true),
-            testId: 'schedule-new-menu',
-            inline: (
-              <Tooltip content={t('panel.newSchedule')} position="bottom">
-                <button
-                  type="button"
-                  onClick={() => setIsCreatingSchedule(true)}
-                  data-testid="schedule-new"
-                  aria-label={t('panel.newSchedule')}
-                  title={t('panel.newSchedule')}
-                  className="p-1.5 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </Tooltip>
-            ),
-          },
-        ]
-      : []),
     ...(selectedScheduleId && onOpenSchedule
       ? [
           {
@@ -849,7 +819,9 @@ export function SchedulePanel({
               options={scheduleOptions}
               value={selectedScheduleId}
               onChange={setSelectedScheduleId}
-              canCreate={canCreateProgram}
+              onNewProgram={
+                canCreateProgram ? () => setIsCreatingSchedule(true) : undefined
+              }
             />
           </div>
 
