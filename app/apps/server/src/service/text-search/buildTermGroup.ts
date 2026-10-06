@@ -6,11 +6,19 @@ import type { TermGroup, TermVariant, Vocabulary } from './types'
 import { typoBudget } from './typoBudget'
 
 const SIGNS_RE = /[^\p{L}\p{N}]+/u
+/**
+ * A word found in this many documents is taken as meant: looking for its
+ * look-alikes ("care" → "mare", "tare", "cale"…) would mostly add noise and
+ * slow every lookup. A real word typed by mistake is still found by the
+ * tier that lets one word go missing.
+ */
+const WELL_ATTESTED_DOCUMENTS = 3
 
 /**
  * One typed word (folded, as `splitWordUnits` gives it) and every way it
  * may be written in a document: itself, its joined and elided spellings,
- * and the indexed words within its typo budget. `typing` marks the last
+ * and, unless it is a known word, the indexed words within its typo
+ * budget. `typing` marks the last
  * word while it is still being typed, matched as a beginning.
  */
 export function buildTermGroup(
@@ -29,7 +37,9 @@ export function buildTermGroup(
   ]) {
     variants.push({ text: spelling, prefix: typing, edits: 0 })
   }
-  if (pieces.length === 1) {
+  const attested =
+    documentFrequency(vocabulary, variants[0]) >= WELL_ATTESTED_DOCUMENTS
+  if (pieces.length === 1 && !attested) {
     variants.push(
       ...findSimilarTerms(vocabulary, compact, typoBudget(compact), typing),
     )

@@ -1,4 +1,4 @@
-import { buildMatchTiers } from './buildMatchTiers'
+import { buildMatchTiers, type MatchTiers } from './buildMatchTiers'
 import { buildTermGroups } from './buildTermGroups'
 import { buildVariantMatcher, type VariantMatcher } from './buildVariantMatcher'
 import { foldSearchText } from './foldSearchText'
@@ -10,8 +10,8 @@ import { getVocabulary } from './vocabularyStore'
 /** A query understood once, ready to find candidates and score texts. */
 export interface TextQuery {
   groups: TermGroup[]
-  /** FTS5 expressions, narrowest first (see `buildMatchTiers`). */
-  tiers: string[]
+  /** The FTS5 queries that find candidates (see `buildMatchTiers`). */
+  tiers: MatchTiers
   /** Scores a text (as stored, any case and diacritics) against the query. */
   score: (text: string) => TextMatchScore
 }
