@@ -25,3 +25,11 @@ export function deleteOldNotifications(now = Date.now()): number {
     .run(now - NOTIFICATION_RETENTION_MS)
   return result.changes
 }
+
+/** Every notification, or all but the song sync's for who can't see songs. */
+export function deleteAllNotifications(includeSongs: boolean): number {
+  const sql = includeSongs
+    ? 'DELETE FROM notifications'
+    : "DELETE FROM notifications WHERE kind NOT LIKE 'songs-%'"
+  return getRawDatabase().query(sql).run().changes
+}

@@ -93,6 +93,32 @@ export const notificationsPaths = {
         ...errors,
       },
     },
+    delete: {
+      tags,
+      summary: 'Remove every notification',
+      description:
+        'Those the user sees: without `songs.view`, the song sync’s stay.',
+      security,
+      responses: {
+        '200': {
+          description: 'How many were removed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { removed: { type: 'integer' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        ...errors,
+      },
+    },
   },
   '/api/notifications/read': {
     post: {
@@ -124,6 +150,23 @@ export const notificationsPaths = {
       responses: {
         '200': ok,
         '400': { description: 'Not a version number' },
+        ...errors,
+      },
+    },
+  },
+  '/api/notifications/{id}/read': {
+    post: {
+      tags,
+      summary: 'Mark one notification read',
+      description:
+        'When the user clicks it. One already removed is left alone (still 200).',
+      security,
+      parameters: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        '200': ok,
+        '400': { description: 'Not a notification id' },
         ...errors,
       },
     },

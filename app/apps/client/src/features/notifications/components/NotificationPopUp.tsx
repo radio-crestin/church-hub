@@ -19,7 +19,7 @@ const RECENT_MS = 24 * 60 * 60 * 1000
 export function NotificationPopUp() {
   const { t } = useTranslation('notifications')
   const { pathname } = useLocation()
-  const { notifications } = useNotificationHistory()
+  const { notifications, markRead } = useNotificationHistory()
   const seen = useSeen()
 
   const next =
@@ -40,6 +40,11 @@ export function NotificationPopUp() {
 
   if (!next) return null
   const close = () => markSeen(next.id)
+  // Used (a button or link in it): read. Only closed: still new.
+  const acted = () => {
+    close()
+    markRead(next.id)
+  }
 
   // On the body: the sidebar's own layout must not move or clip it.
   return createPortal(
@@ -53,7 +58,7 @@ export function NotificationPopUp() {
         isNew={false}
         onClose={close}
         closeLabel={t('close')}
-        onActed={close}
+        onActed={acted}
         compact
       />
       <Link

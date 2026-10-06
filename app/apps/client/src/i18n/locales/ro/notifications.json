@@ -7,5 +7,10 @@
   "emptyHint": "Cântările sincronizate din sursele tale și noile versiuni ale aplicației apar aici.",
   "remove": "Șterge",
   "close": "Închide",
-  "seeAll": "Vezi toate notificările"
+  "seeAll": "Vezi toate notificările",
+  "markAllRead": "Marchează toate ca citite",
+  "clearAll": "Șterge toate",
+  "clearAllTitle": "Ștergi toate notificările?",
+  "clearAllMessage": "Toate notificările vor fi șterse din listă. Acțiunea nu poate fi anulată.",
+  "clearAllConfirm": "Șterge toate"
 }

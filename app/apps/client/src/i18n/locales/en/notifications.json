@@ -7,5 +7,10 @@
   "emptyHint": "Songs synced from your song sources and new app versions show up here.",
   "remove": "Remove",
   "close": "Close",
-  "seeAll": "See all notifications"
+  "seeAll": "See all notifications",
+  "markAllRead": "Mark all as read",
+  "clearAll": "Clear all",
+  "clearAllTitle": "Clear all notifications?",
+  "clearAllMessage": "Every notification is removed from the list. This can't be undone.",
+  "clearAllConfirm": "Clear all"
 }

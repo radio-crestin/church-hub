@@ -1,4 +1,5 @@
 export {
+  deleteAllNotifications,
   deleteNotification,
   deleteNotificationsOfKind,
   deleteOldNotifications,
@@ -14,5 +15,6 @@ export {
 } from './types'
 export {
   upsertNotification,
+  upsertNotificationRead,
   upsertNotificationsRead,
 } from './upsertNotification'

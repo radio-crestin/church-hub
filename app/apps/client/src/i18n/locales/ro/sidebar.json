@@ -34,6 +34,7 @@
     "updateDescription": "Descarcă actualizarea aici. Instalarea va reporni aplicația."
   },
   "notifications": {
-    "title": "Notificări"
+    "title": "Notificări",
+    "unread": "Notificări noi"
   }
 }
