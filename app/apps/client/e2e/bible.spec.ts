@@ -496,8 +496,12 @@ test.describe('Bible Feature', () => {
     // buttons, whose own scroll container would otherwise be measured instead.
     const readScrollTop = () =>
       page.evaluate(() => {
-        const verse = document.querySelector('.space-y-1 button.w-full.text-left')
-        const scroller = verse?.closest('.overflow-y-auto') as HTMLElement | null
+        const verse = document.querySelector(
+          '.space-y-1 button.w-full.text-left',
+        )
+        const scroller = verse?.closest(
+          '.overflow-y-auto',
+        ) as HTMLElement | null
         return scroller?.scrollTop ?? -1
       })
 

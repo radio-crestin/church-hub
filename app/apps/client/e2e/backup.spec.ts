@@ -318,9 +318,7 @@ test.describe('Backup - local', () => {
     expect((await browsed.json()).data.backups.length).toBe(1)
 
     // Browsing alone did not make it the configured folder.
-    const whileBrowsing = await (
-      await request.get('/api/backup/config')
-    ).json()
+    const whileBrowsing = await (await request.get('/api/backup/config')).json()
     expect(whileBrowsing.data.localBackupPath).toBeNull()
 
     const restored = await request.post('/api/backup/local/restore', {

@@ -234,7 +234,9 @@ test.describe('Song Import/Export via UI', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 
-    const searchInput = page.getByPlaceholder(/search songs|caută cântări/i).first()
+    const searchInput = page
+      .getByPlaceholder(/search songs|caută cântări/i)
+      .first()
     if (!(await searchInput.isVisible({ timeout: 10000 }).catch(() => false))) {
       await searchInput.scrollIntoViewIfNeeded().catch(() => {})
     }

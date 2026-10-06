@@ -326,9 +326,9 @@ test.describe('Song Versions', () => {
       'data-testid',
       'version-current-row',
     )
-    await expect(
-      page.getByTestId('version-member-row').first(),
-    ).toContainText(`AAA E2E Pinned Top ${tag}`)
+    await expect(page.getByTestId('version-member-row').first()).toContainText(
+      `AAA E2E Pinned Top ${tag}`,
+    )
   })
 
   test('a standalone song shows its own highlighted row first, then suggestions sorted by score', async ({
