@@ -14,6 +14,7 @@ import { addSongBackground } from './add-song-background'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongEditHistory } from './add-song-edit-history'
 import { addSongGroups } from './add-song-groups'
+import { addSongSources } from './add-song-sources'
 import { addSongSlideNotes } from './add-song-slide-notes'
 import { addSongSlideStyleOverrides } from './add-song-slide-style-overrides'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
@@ -417,6 +418,11 @@ export function runMigrations(
     'add_song_edit_history',
     'Running add song edit history migration',
     () => addSongEditHistory(rawDb),
+  )
+
+  // The user's own song sources: S3 storage, publications, subscriptions.
+  runStep('add_song_sources', 'Running add song sources migration', () =>
+    addSongSources(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and

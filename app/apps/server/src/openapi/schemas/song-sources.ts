@@ -2,7 +2,7 @@ export const songSourceSchemas = {
   SongSource: {
     type: 'object',
     description:
-      'A place songs are imported from: a built-in config file shipped with the app',
+      'A place songs are imported from: a built-in config file shipped with the app, or a link someone shared',
     required: ['id', 'name', 'categoryName', 'format', 'url', 'origin'],
     properties: {
       id: { type: 'string', example: 'laudele-domnului' },
@@ -13,12 +13,99 @@ export const songSourceSchemas = {
       },
       format: {
         type: 'string',
-        enum: ['opensong-zip', 'cantaricrestine-api', 'church-hub-bundle'],
+        enum: [
+          'opensong-zip',
+          'cantaricrestine-api',
+          'song-bundle-file',
+          'song-bundle-folder',
+        ],
       },
       url: { type: 'string', format: 'uri' },
       homepage: { type: 'string', format: 'uri' },
       license: { type: 'string' },
-      origin: { type: 'string', enum: ['built-in'] },
+      origin: { type: 'string', enum: ['built-in', 'link'] },
+    },
+  },
+  SongBundleSong: {
+    type: 'object',
+    description: 'One song of a song bundle (songs/<id>.json)',
+    properties: {
+      id: { type: 'string' },
+      title: { type: 'string' },
+      alternateTitles: { type: 'array', items: { type: 'string' } },
+      sourceFilename: { type: 'string', nullable: true },
+      author: { type: 'string', nullable: true },
+      copyright: { type: 'string', nullable: true },
+      ccli: { type: 'string', nullable: true },
+      tempo: { type: 'string', nullable: true },
+      timeSignature: { type: 'string', nullable: true },
+      theme: { type: 'string', nullable: true },
+      altTheme: { type: 'string', nullable: true },
+      hymnNumber: { type: 'string', nullable: true },
+      keyLine: { type: 'string', nullable: true },
+      presentationOrder: { type: 'string', nullable: true },
+      slides: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            content: { type: 'string', description: 'Slide HTML' },
+            label: { type: 'string', nullable: true },
+          },
+        },
+      },
+    },
+  },
+  S3Storage: {
+    type: 'object',
+    description:
+      'The S3-compatible bucket published sources go to. The secret key is never returned.',
+    properties: {
+      endpoint: { type: 'string', format: 'uri' },
+      region: { type: 'string', nullable: true },
+      bucket: { type: 'string' },
+      pathPrefix: { type: 'string' },
+      accessKeyId: { type: 'string' },
+      publicBaseUrl: {
+        type: 'string',
+        format: 'uri',
+        description: 'Public, read-only URL of the bucket',
+      },
+      hasSecret: { type: 'boolean' },
+    },
+  },
+  S3StorageInput: {
+    type: 'object',
+    required: ['endpoint', 'bucket', 'accessKeyId', 'publicBaseUrl'],
+    properties: {
+      endpoint: { type: 'string', format: 'uri' },
+      region: { type: 'string', nullable: true },
+      bucket: { type: 'string' },
+      pathPrefix: { type: 'string' },
+      accessKeyId: { type: 'string' },
+      secretAccessKey: {
+        type: 'string',
+        description: 'Leave empty to keep the stored secret',
+      },
+      publicBaseUrl: { type: 'string', format: 'uri' },
+    },
+  },
+  SongSourcePublication: {
+    type: 'object',
+    description: 'A category published to the S3 bucket as a shared source',
+    properties: {
+      id: { type: 'integer' },
+      categoryId: { type: 'integer' },
+      categoryName: { type: 'string' },
+      shareUrl: {
+        type: 'string',
+        format: 'uri',
+        nullable: true,
+        description: 'Public link of its manifest.json, to share',
+      },
+      songCount: { type: 'integer' },
+      lastSyncedAt: { type: 'integer', nullable: true },
+      lastError: { type: 'string', nullable: true },
     },
   },
 }

@@ -271,7 +271,7 @@ import {
   updateBookmarkNote,
 } from './service/song-bookmarks'
 import { resolveSongEditor, saveSongWithHistory } from './service/song-history'
-import { isProxyAllowedUrl } from './service/song-sources'
+import { isProxyAllowedUrl, startPublicationSync } from './service/song-sources'
 import {
   type BatchImportSongInput,
   backfillAlternateTitles,
@@ -618,6 +618,10 @@ async function main() {
   // Start the Drive library sync scheduler (no-op unless sync is enabled).
   // Also performs the on-startup "import changes made elsewhere" sync.
   startSyncScheduler()
+
+  // Keep the categories published to the user's S3 bucket up to date
+  // (no-op until a bucket and a published category exist).
+  startPublicationSync()
 }
 
 /**

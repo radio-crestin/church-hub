@@ -1,3 +1,4 @@
+import bcevBaicoi from './built-in/bcev-baicoi.json'
 import laudeleDomnului from './built-in/laudele-domnului.json'
 import peDrumulCredintei from './built-in/pe-drumul-credintei.json'
 import resurseCrestine from './built-in/resurse-crestine.json'
@@ -5,6 +6,7 @@ import type { SongSource, SongSourceConfig } from './types'
 
 const CONFIGS = [
   resurseCrestine,
+  bcevBaicoi,
   laudeleDomnului,
   peDrumulCredintei,
 ] as SongSourceConfig[]
