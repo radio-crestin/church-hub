@@ -1,6 +1,4 @@
 {
-  "title": "Download the latest songs from {{source}}",
-  "description": "Brings the newest songs from {{source}} that aren't in your library yet, lets you review them, and import only what you want.",
   "button": {
     "discover": "Download songs",
     "searching": "Searching"
@@ -8,39 +6,18 @@
   "back": "Back to songs",
   "selectPrompt": "Select a song on the left to review and edit it before importing.",
   "allPresent": "Your library already contains every song from this source.",
-  "allDone": "You've reviewed all the new songs. Refresh the catalog to check for more.",
-  "emptyStaging": "No new songs to review.",
   "error": {
-    "failed": "Couldn't load the catalog. Check your connection and try again.",
-    "retry": "Try again"
+    "failed": "Couldn't load the catalog. Check your connection and try again."
   },
   "untitled": "(untitled)",
   "editorHint": "Edits here apply only to the imported copy. Nothing is saved until you import.",
   "source": {
     "label": "Source",
-    "fetch": "Fetch catalog",
-    "refresh": "Refresh catalog",
     "openedFile": "file",
     "lastChecked": "Checked {{when}}",
     "checkAll": "Check all sources",
     "checkingAll": "Checking sources…",
-    "upToDate": "Up to date",
-    "newCount_one": "{{count}} new",
-    "newCount_other": "{{count}} new"
-  },
-  "status": {
-    "fetching": "Downloading and parsing the catalog…",
-    "matching": "Comparing against your library…",
-    "analyzing": "Analyzing songs against your library…",
-    "analyzeMeta": "{{analyzed}} of {{total}} analyzed · {{found}} new found",
-    "filesMeta": "{{current}} / {{total}} songs",
-    "phase": {
-      "downloading": "Downloading the catalog…",
-      "extracting": "Extracting the archive…",
-      "converting": "Converting files…",
-      "parsing": "Reading the songs…",
-      "saving": "Saving…"
-    }
+    "upToDate": "Up to date"
   },
   "verdict": {
     "new": "New",
@@ -63,21 +40,18 @@
     "select": "Select {{title}}"
   },
   "toolbar": {
-    "summary": "{{total}} new of {{online}} · {{selected}} selected",
-    "selectAll": "Select all",
-    "clearSelection": "Clear selection",
-    "importSelected": "Import selected ({{count}})"
+    "importSelected": "Import selected ({{count}})",
+    "importAll_one": "Import {{count}} song",
+    "importAll_other": "Import all {{count}} songs"
   },
   "toast": {
     "imported": "Imported {{count}} song(s)",
-    "importFailed": "Import failed: {{error}}",
-    "newSongs": "{{count}} new song(s) available to import",
-    "view": "View"
+    "importFailed": "Import failed: {{error}}"
   },
   "settings": {
-    "title": "Background check for new songs",
-    "description": "Periodically check the external source in the background and notify you when new songs are available to import.",
-    "enableLabel": "Check for new songs automatically",
+    "title": "Song updates",
+    "description": "A little after the app starts, and then every day, Church Hub checks your song sources. It adds the new songs on its own; songs you may already have under another title wait for you in Download songs.",
+    "enableLabel": "Add new songs automatically",
     "checkNow": "Check now",
     "newCount": "{{count}} new song(s) found"
   },
@@ -152,6 +126,32 @@
   "notice": {
     "title_one": "{{count}} new song to download",
     "title_other": "{{count}} new songs to download",
-    "dismiss": "Dismiss"
+    "added_one": "{{count}} new song added",
+    "added_other": "{{count}} new songs added",
+    "toReview_one": "{{count}} more to review",
+    "toReview_other": "{{count}} more to review",
+    "addedShort_one": "+{{count}} added",
+    "addedShort_other": "+{{count}} added",
+    "newShort_one": "{{count}} new",
+    "newShort_other": "{{count}} new",
+    "review": "Review new songs",
+    "viewSongs": "Open songs"
+  },
+  "page": {
+    "title": "Download the latest songs",
+    "description": "New songs from your song sources that aren't in your library yet."
+  },
+  "search": {
+    "placeholder": "Search songs…"
+  },
+  "songs": {
+    "title": "Songs",
+    "selectAll": "Select all songs",
+    "selected": "{{selected}} of {{total}} selected"
+  },
+  "addLink": {
+    "label": "Link to a song file",
+    "placeholder": "Paste a link to a .chsongs file",
+    "add": "Add"
   }
 }

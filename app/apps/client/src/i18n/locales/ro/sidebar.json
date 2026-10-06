@@ -30,5 +30,9 @@
     "viewUpdate": "Vezi ce e nou",
     "install": "Instaleaza acum",
     "dismiss": "Închide"
+  },
+  "notifications": {
+    "title": "Notificări",
+    "dismiss": "Închide notificarea"
   }
 }

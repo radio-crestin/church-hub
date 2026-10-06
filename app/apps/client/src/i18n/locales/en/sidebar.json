@@ -30,5 +30,9 @@
     "viewUpdate": "See what's new",
     "install": "Install now",
     "dismiss": "Dismiss"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "dismiss": "Dismiss"
   }
 }

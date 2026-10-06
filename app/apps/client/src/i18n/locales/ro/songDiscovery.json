@@ -1,6 +1,4 @@
 {
-  "title": "Descarcă ultimele cântări din {{source}}",
-  "description": "Descarcă cele mai noi cântări din {{source}} care nu sunt încă în biblioteca ta. Verifică-le și importă doar ce vrei.",
   "button": {
     "discover": "Descarcă cântări",
     "searching": "Caut"
@@ -8,40 +6,18 @@
   "back": "Înapoi la cântări",
   "selectPrompt": "Selectează o cântare din stânga pentru a o verifica și edita înainte de import.",
   "allPresent": "Biblioteca ta conține deja toate cântările din această sursă.",
-  "allDone": "Ai verificat toate cântările noi. Reîmprospătează catalogul ca să cauți altele.",
-  "emptyStaging": "Nu sunt cântări noi de verificat.",
   "error": {
-    "failed": "Catalogul nu a putut fi încărcat. Verifică conexiunea și încearcă din nou.",
-    "retry": "Încearcă din nou"
+    "failed": "Catalogul nu a putut fi încărcat. Verifică conexiunea și încearcă din nou."
   },
   "untitled": "(fără titlu)",
   "editorHint": "Modificările de aici se aplică doar copiei importate. Nimic nu se salvează până la import.",
   "source": {
     "label": "Sursă",
-    "fetch": "Descarcă catalogul",
-    "refresh": "Reîmprospătează catalogul",
     "openedFile": "fișier",
     "lastChecked": "Verificat {{when}}",
     "checkAll": "Verifică toate sursele",
     "checkingAll": "Se verifică sursele…",
-    "upToDate": "La zi",
-    "newCount_one": "{{count}} nouă",
-    "newCount_few": "{{count}} noi",
-    "newCount_other": "{{count}} noi"
-  },
-  "status": {
-    "fetching": "Se descarcă și se prelucrează catalogul…",
-    "matching": "Se compară cu biblioteca ta…",
-    "analyzing": "Se analizează cântările față de biblioteca ta…",
-    "analyzeMeta": "{{analyzed}} din {{total}} analizate · {{found}} noi găsite",
-    "filesMeta": "{{current}} / {{total}} cântări",
-    "phase": {
-      "downloading": "Se descarcă catalogul…",
-      "extracting": "Se extrage arhiva…",
-      "converting": "Se convertesc fișierele…",
-      "parsing": "Se citesc cântările…",
-      "saving": "Se salvează…"
-    }
+    "upToDate": "La zi"
   },
   "verdict": {
     "new": "Nouă",
@@ -64,21 +40,19 @@
     "select": "Selectează „{{title}}”"
   },
   "toolbar": {
-    "summary": "{{total}} noi din {{online}} · {{selected}} selectate",
-    "selectAll": "Selectează tot",
-    "clearSelection": "Deselectează tot",
-    "importSelected": "Importă selecția ({{count}})"
+    "importSelected": "Importă selecția ({{count}})",
+    "importAll_one": "Importă {{count}} cântare",
+    "importAll_few": "Importă toate cele {{count}} cântări",
+    "importAll_other": "Importă toate cele {{count}} de cântări"
   },
   "toast": {
     "imported": "Au fost importate {{count}} cântări",
-    "importFailed": "Importul a eșuat: {{error}}",
-    "newSongs": "{{count}} cântări noi disponibile pentru import",
-    "view": "Vezi"
+    "importFailed": "Importul a eșuat: {{error}}"
   },
   "settings": {
-    "title": "Verificare în fundal pentru cântări noi",
-    "description": "Verifică periodic sursa externă în fundal și te anunță când sunt cântări noi disponibile pentru import.",
-    "enableLabel": "Verifică automat cântările noi",
+    "title": "Cântări noi",
+    "description": "La scurt timp după pornire și apoi zilnic, aplicația verifică sursele de cântări. Adaugă automat cântările noi, iar pe cele pe care le-ai putea avea deja sub alt titlu le lasă spre verificare la „Descarcă cântări”.",
+    "enableLabel": "Adaugă automat cântările noi",
     "checkNow": "Verifică acum",
     "newCount": "{{count}} cântări noi găsite"
   },
@@ -155,6 +129,36 @@
     "title_one": "{{count}} cântare nouă de descărcat",
     "title_few": "{{count}} cântări noi de descărcat",
     "title_other": "{{count}} de cântări noi de descărcat",
-    "dismiss": "Închide"
+    "added_one": "{{count}} cântare nouă adăugată",
+    "added_few": "{{count}} cântări noi adăugate",
+    "added_other": "{{count}} de cântări noi adăugate",
+    "toReview_one": "Încă {{count}} cântare de verificat",
+    "toReview_few": "Încă {{count}} cântări de verificat",
+    "toReview_other": "Încă {{count}} de cântări de verificat",
+    "addedShort_one": "+{{count}} adăugată",
+    "addedShort_few": "+{{count}} adăugate",
+    "addedShort_other": "+{{count}} adăugate",
+    "newShort_one": "{{count}} nouă",
+    "newShort_few": "{{count}} noi",
+    "newShort_other": "{{count}} noi",
+    "review": "Verifică cântările noi",
+    "viewSongs": "Vezi cântările"
+  },
+  "page": {
+    "title": "Descarcă ultimele cântări",
+    "description": "Cântări noi din sursele tale, pe care nu le ai încă în bibliotecă."
+  },
+  "search": {
+    "placeholder": "Caută cântări…"
+  },
+  "songs": {
+    "title": "Cântări",
+    "selectAll": "Selectează toate cântările",
+    "selected": "{{selected}} din {{total}} selectate"
+  },
+  "addLink": {
+    "label": "Link către un fișier cu cântări",
+    "placeholder": "Lipește un link către un fișier .chsongs",
+    "add": "Adaugă"
   }
 }

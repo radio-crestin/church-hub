@@ -1,7 +1,10 @@
+import type { ParsedOpenSong } from '@church-hub/song-formats'
+
 import { getApiUrl } from '~/config'
 import { fetcher } from '~/utils/fetcher'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
 import type { SongBundleFile, SongSource } from '../providers/types'
+import type { DiscoveryMatchResult } from '../types'
 
 interface ApiResponse<T> {
   data?: T
@@ -84,3 +87,18 @@ export const deleteLinkSource = (sourceId: string) =>
   call<SongSource[]>(`/api/song-sources/${encodeURIComponent(sourceId)}`, {
     method: 'DELETE',
   })
+
+/** A song of a source the library lacks, from the server's last check. */
+export interface LackingSong {
+  id: string
+  sourceFilename: string | null
+  parsed: ParsedOpenSong
+  verdict: 'new' | 'similar'
+  similar: DiscoveryMatchResult['similar']
+}
+
+/** The songs a source has that the library lacks (the server's last check). */
+export const getLackingSongs = (sourceId: string) =>
+  call<LackingSong[]>(
+    `/api/song-sources/${encodeURIComponent(sourceId)}/lacking`,
+  )

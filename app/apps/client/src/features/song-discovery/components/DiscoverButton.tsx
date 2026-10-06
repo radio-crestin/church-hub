@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { useSongDiscovery } from '../context/SongDiscoveryContext'
+import { useSongUpdates } from '../hooks/useSongUpdates'
 
 /**
  * The exact lucide "sparkles" icon (same one in the discovery screen header) as
@@ -13,12 +13,12 @@ const SPARKLES_MASK =
 
 /**
  * Header entry point to the discovery screen. The border and the star share one
- * animated gradient (it drifts faster while the background catalog check runs).
+ * animated gradient (it drifts faster while the server checks the song sources).
  */
 export function DiscoverButton() {
   const { t } = useTranslation('songDiscovery')
   const navigate = useNavigate()
-  const { isChecking } = useSongDiscovery()
+  const { isRunning: isChecking } = useSongUpdates()
 
   const gradient = `discover-gradient${isChecking ? ' discover-gradient-active' : ''}`
 

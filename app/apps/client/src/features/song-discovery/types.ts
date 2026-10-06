@@ -44,10 +44,20 @@ export interface CandidateDraft {
  */
 export interface StagingItem {
   tempId: string
+  /** The source the song comes from. */
+  sourceId: string
   candidate: DiscoveryCandidate
   verdict: DiscoveryMatchVerdict
   similar: SongVersionSuggestion[]
   draft: CandidateDraft
   /** Picked for the next import. */
   selected: boolean
+}
+
+/** A song of a source the library lacks: new, or a version of a library song. */
+export interface LackingEntry {
+  sourceId: string
+  candidate: DiscoveryCandidate
+  verdict: 'new' | 'similar'
+  similar: SongVersionSuggestion[]
 }

@@ -13,10 +13,10 @@ import { useTranslation } from 'react-i18next'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { useSidebarCollapsed } from './use-sidebar-collapsed'
-import { UpdateNotification } from '../../features/app-update'
 import { CurrentUserButton } from '../../features/auth'
 import { RequestFeatureTool } from '../../features/feature-request'
 import { useKioskSettings } from '../../features/kiosk'
+import { NotificationCenter } from '../../features/notifications/NotificationCenter'
 import { usePresentationState } from '../../features/presentation'
 import {
   hideAllCustomPageWebviews,
@@ -333,8 +333,8 @@ export function Sidebar({
             {/* Divider */}
             <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
 
-            {/* Update notification - shown above Feedback when update available */}
-            <UpdateNotification isCollapsed={isCollapsed} />
+            {/* Notifications (app updates, new songs) - above Feedback when there are any */}
+            <NotificationCenter isCollapsed={isCollapsed} />
 
             {/* Feedback — opens the screenshot tool (mark it up, add notes)
                 that files a public GitHub issue.

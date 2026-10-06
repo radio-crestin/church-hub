@@ -2,9 +2,6 @@ import type { SongBundleFile } from '@church-hub/song-formats'
 
 export type { SongBundleFile }
 
-import type { ImportProgress } from '~/features/song-import'
-import type { DiscoveryCandidate } from '../types'
-
 /** Mirrors the server's `SongSourceFormat`. */
 export type SongSourceFormat =
   | 'cantaricrestine-api'
@@ -30,9 +27,3 @@ export interface SongSource {
   license?: string
   origin: SongSourceOrigin
 }
-
-/** Downloads and parses one source's catalog into comparable candidates. */
-export type FetchCatalog = (
-  source: SongSource,
-  onProgress?: (progress: ImportProgress) => void,
-) => Promise<DiscoveryCandidate[]>

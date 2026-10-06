@@ -1,13 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
 
-import {
-  SongDiscoveryScreen,
-  useSongDiscovery,
-} from '~/features/song-discovery'
+import { SongDiscoveryScreen } from '~/features/song-discovery'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 
 interface DiscoverSearch {
+  /** Only this source ticked at first (an opened song file, say). */
   source?: string
 }
 
@@ -21,25 +18,13 @@ export const Route = createFileRoute('/songs/discover')({
 function SongDiscoverPage() {
   const navigate = useNavigate()
   const { source } = Route.useSearch()
-  const { dismiss } = useSongDiscovery()
-
-  // Opening this screen is the "I've seen it" signal — clear the sidebar badge.
-  useEffect(() => {
-    dismiss()
-  }, [dismiss])
 
   // Discovering + importing songs is a create operation — gate on songs.create.
   return (
     <PagePermissionGuard permission="songs.create">
       <SongDiscoveryScreen
-        sourceId={source}
-        onSourceChange={(sourceId) =>
-          navigate({
-            to: '/songs/discover',
-            search: { source: sourceId },
-            replace: true,
-          })
-        }
+        key={source ?? 'all'}
+        focusSourceId={source}
         onBack={() => navigate({ to: '/songs' })}
       />
     </PagePermissionGuard>

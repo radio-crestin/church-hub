@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
 import { addOpenedSongFile } from './openedSongFiles'
-import { catalogQueryKey } from '../hooks/useFetchCatalog'
+import { LACKING_SONGS_QUERY_KEY } from '../hooks/useLackingSongs'
 
 /** Extension of Church Hub song files (song bundles). */
 export const SONG_FILE_EXTENSION = '.chsongs'
@@ -30,7 +30,9 @@ export function useOpenSongFile() {
         const file = await readSongBundleZip(data)
         const name = fileName.split(/[/\\]/).pop() ?? fileName
         const sourceId = addOpenedSongFile(name, file)
-        queryClient.removeQueries({ queryKey: catalogQueryKey(sourceId) })
+        queryClient.removeQueries({
+          queryKey: [LACKING_SONGS_QUERY_KEY, sourceId],
+        })
         await navigate({ to: '/songs/discover', search: { source: sourceId } })
       } catch (error) {
         // biome-ignore lint/suspicious/noConsole: error logging

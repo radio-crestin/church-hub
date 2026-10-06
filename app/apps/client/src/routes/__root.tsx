@@ -32,7 +32,6 @@ import {
 } from '~/features/presentation/hooks'
 import { ServerChangedNotice } from '~/features/server-identity'
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
-import { SongDiscoveryProvider } from '~/features/song-discovery'
 import { FileDropZoneProvider } from '~/features/song-import'
 import { SongDragGhost } from '~/features/songs/components/SongDragGhost'
 import { I18nProvider } from '~/provider/i18n-provider'
@@ -178,11 +177,9 @@ function MainLayout() {
                               <AutoOpenPageWindows />
                               <SidebarNavigationListener />
                               <GlobalAppShortcutManager />
-                              <SongDiscoveryProvider>
-                                <AppLayout>
-                                  <Outlet />
-                                </AppLayout>
-                              </SongDiscoveryProvider>
+                              <AppLayout>
+                                <Outlet />
+                              </AppLayout>
                             </FileDropZoneProvider>
                           </ShortcutRecordingProvider>
                         </MIDISettingsProvider>
