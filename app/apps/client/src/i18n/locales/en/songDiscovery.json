@@ -1,47 +1,24 @@
 {
-  "title": "Download the latest songs from Resurse Crestine",
-  "description": "Brings the newest songs from Resurse Crestine that aren't in your library yet, lets you review them, and import only what you want.",
   "button": {
     "discover": "Download songs",
-    "searching": "Searching"
+    "syncPending_one": "Sync {{count}} waiting song",
+    "syncPending_other": "Sync {{count}} waiting songs"
   },
   "back": "Back to songs",
   "selectPrompt": "Select a song on the left to review and edit it before importing.",
   "allPresent": "Your library already contains every song from this source.",
-  "allDone": "You've reviewed all the new songs. Refresh the catalog to check for more.",
-  "emptyStaging": "No new songs to review.",
   "error": {
-    "failed": "Couldn't load the catalog. Check your connection and try again.",
-    "retry": "Try again"
+    "failed": "Couldn't load the catalog. Check your connection and try again."
   },
   "untitled": "(untitled)",
   "editorHint": "Edits here apply only to the imported copy. Nothing is saved until you import.",
   "source": {
     "label": "Source",
-    "fetch": "Fetch catalog",
-    "refresh": "Refresh catalog"
-  },
-  "sources": {
-    "resurseCrestine": "Resurse Crestine"
-  },
-  "status": {
-    "fetching": "Downloading and parsing the catalog…",
-    "matching": "Comparing against your library…",
-    "analyzing": "Analyzing songs against your library…",
-    "analyzeMeta": "{{analyzed}} of {{total}} analyzed · {{found}} new found",
-    "filesMeta": "{{current}} / {{total}} songs",
-    "phase": {
-      "downloading": "Downloading the catalog…",
-      "extracting": "Extracting the archive…",
-      "converting": "Converting files…",
-      "parsing": "Reading the songs…",
-      "saving": "Saving…"
-    }
-  },
-  "stats": {
-    "online": "online",
-    "new": "new",
-    "selected": "selected"
+    "openedFile": "file",
+    "lastChecked": "Checked {{when}}",
+    "checkAll": "Check all sources",
+    "checkingAll": "Checking sources…",
+    "upToDate": "Up to date"
   },
   "verdict": {
     "new": "New",
@@ -61,25 +38,138 @@
     "inCatalog": "in the catalog"
   },
   "actions": {
-    "approve": "Import",
-    "skip": "Skip"
+    "select": "Select {{title}}"
   },
   "toolbar": {
-    "summary": "{{total}} new · {{approved}} selected",
-    "approveAllNew": "Select all",
-    "importApproved": "Import selected ({{count}})"
+    "importSelected": "Import selected ({{count}})",
+    "importAll_one": "Import {{count}} song",
+    "importAll_other": "Import all {{count}} songs"
   },
   "toast": {
     "imported": "Imported {{count}} song(s)",
-    "importFailed": "Import failed: {{error}}",
-    "newSongs": "{{count}} new song(s) available to import",
-    "view": "View"
+    "importFailed": "Import failed: {{error}}"
   },
   "settings": {
-    "title": "Background check for new songs",
-    "description": "Periodically check the external source in the background and notify you when new songs are available to import.",
-    "enableLabel": "Check for new songs automatically",
+    "title": "Song updates",
+    "description": "A little after the app starts, and then every day, Church Hub checks your song sources when there is internet. New songs, and newer versions of songs you never edited, sync on their own: a song you edited is never replaced. Songs you may already have under another title wait for you in Download songs.",
+    "enableLabel": "Sync new songs and updates without asking",
     "checkNow": "Check now",
-    "newCount": "{{count}} new song(s) found"
+    "enableHint": "When off, they wait in the notifications until you sync them.",
+    "pendingCount_one": "{{count}} waiting for approval",
+    "pendingCount_other": "{{count}} waiting for approval"
+  },
+  "songFile": {
+    "openFailed": "Couldn't open the song file: {{error}}"
+  },
+  "songSources": {
+    "title": "Song sources",
+    "description": "Where Song discovery finds new songs. Add sources from links others share, and share your own categories as a file or a link.",
+    "builtIn": "Built in",
+    "links": {
+      "title": "Sources from links",
+      "description": "Paste a link someone shared with you: a .chsongs file or a manifest.json. Its songs show up in Song discovery.",
+      "placeholder": "https://…/manifest.json",
+      "add": "Add source",
+      "remove": "Remove",
+      "empty": "No sources from links yet.",
+      "added": "{{name}} added to Song discovery",
+      "addFailed": "Couldn't add the source: {{error}}"
+    },
+    "export": {
+      "title": "Song file",
+      "description": "Save a category's songs: as a .chsongs file anyone with Church Hub can open, as a .zip of OpenSong files for other programs, or as a .zip of PowerPoint files.",
+      "category": "Choose a category",
+      "failed": "Export failed: {{error}}",
+      "chsongs": "Export .chsongs",
+      "zip": "Export OpenSong (.zip)",
+      "pptx": "Export PowerPoint (.zip)"
+    },
+    "storage": {
+      "title": "Your S3 storage",
+      "description": "To share categories by link, connect an S3-compatible bucket (AWS S3, Cloudflare R2, MinIO). The secret key stays on this computer.",
+      "endpoint": "S3 endpoint",
+      "region": "Region",
+      "bucket": "Bucket",
+      "pathPrefix": "Folder in the bucket",
+      "accessKeyId": "Access key",
+      "secretAccessKey": "Secret key",
+      "publicBaseUrl": "Public URL of the bucket",
+      "secretKept": "Saved; leave empty to keep it",
+      "placeholder": {
+        "endpoint": "https://ACCOUNT.r2.cloudflarestorage.com",
+        "region": "auto",
+        "bucket": "church-songs",
+        "pathPrefix": "church-hub",
+        "accessKeyId": "",
+        "secretAccessKey": "",
+        "publicBaseUrl": "https://pub-….r2.dev"
+      },
+      "save": "Save storage",
+      "saved": "Storage saved",
+      "saveFailed": "Couldn't save the storage: {{error}}"
+    },
+    "publish": {
+      "title": "Shared categories",
+      "description": "Each shared category stays in sync with the bucket: every 5 minutes, only the songs that changed are uploaded. Send the link to whoever should get the songs.",
+      "needsStorage": "Save your S3 storage first.",
+      "category": "Choose a category to share",
+      "button": "Share",
+      "empty": "No shared categories yet.",
+      "songs_one": "{{count}} song",
+      "songs_other": "{{count}} songs",
+      "syncedAt": "synced {{time}}",
+      "notSynced": "not synced yet",
+      "copyLink": "Copy link",
+      "copied": "Link copied",
+      "syncNow": "Sync now",
+      "stop": "Stop sharing",
+      "failed": "Sharing failed: {{error}}"
+    }
+  },
+  "page": {
+    "title": "Download the latest songs",
+    "description": "New songs from your song sources that aren't in your library yet."
+  },
+  "search": {
+    "placeholder": "Search songs…"
+  },
+  "songs": {
+    "title": "Songs",
+    "selectAll": "Select all songs",
+    "selected": "{{selected}} of {{total}} selected"
+  },
+  "addLink": {
+    "label": "Link to a song file",
+    "placeholder": "Paste a link to a .chsongs file",
+    "add": "Add"
+  },
+  "notification": {
+    "syncedTitle": "Songs synced",
+    "pendingTitle": "Songs waiting for your approval",
+    "added_one": "{{count}} new song added",
+    "added_other": "{{count}} new songs added",
+    "updated_one": "{{count}} song updated",
+    "updated_other": "{{count}} songs updated",
+    "toAdd_one": "{{count}} new song to add",
+    "toAdd_other": "{{count}} new songs to add",
+    "toUpdate_one": "{{count}} song to update",
+    "toUpdate_other": "{{count}} songs to update",
+    "addedList": "Added ({{count}})",
+    "updatedList": "Updated ({{count}})",
+    "toAddList": "To add ({{count}})",
+    "toUpdateList": "To update ({{count}})",
+    "showAll": "Show all {{count}}",
+    "showLess": "Show less",
+    "andMore_one": "…and {{count}} more",
+    "andMore_other": "…and {{count}} more",
+    "syncNow": "Sync now",
+    "review": "Review songs",
+    "syncSettings": "Sync settings",
+    "syncDone_one": "{{count}} song synced",
+    "syncDone_other": "{{count}} songs synced",
+    "syncFailed": "Could not sync the songs: {{error}}",
+    "checkingTitle": "Checking the song sources…",
+    "checkingDescription": "New songs and updates arrive here when it is done. The app stays fast meanwhile.",
+    "cancel": "Cancel"
   }
 }

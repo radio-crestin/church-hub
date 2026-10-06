@@ -42,7 +42,9 @@ import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
+import { handleNotificationRoutes } from './routes/notifications'
 import { handleSongHistoryRoutes } from './routes/song-history'
+import { handleSongSourceRoutes } from './routes/song-sources'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -178,6 +180,7 @@ import {
   shutdownMusicPlayer,
 } from './service/music-player'
 import { getExternalInterfaces } from './service/network'
+import { startNotificationCleanup } from './service/notifications'
 import {
   addSlideHighlight,
   batchUpdateScreenConfigs,
@@ -271,6 +274,11 @@ import {
 } from './service/song-bookmarks'
 import { resolveSongEditor, saveSongWithHistory } from './service/song-history'
 import {
+  isProxyAllowedUrl,
+  startPublicationSync,
+  startSongUpdates,
+} from './service/song-sources'
+import {
   type BatchImportSongInput,
   backfillAlternateTitles,
   batchImportSongs,
@@ -278,7 +286,6 @@ import {
   clearSearchCache,
   cloneSongSlide,
   completeSongReplacement,
-  countNewCandidates,
   DEFAULT_SONGS_PAGE_SIZE,
   type DiscoveryCandidateInput,
   deleteCategory,
@@ -616,6 +623,17 @@ async function main() {
   // Start the Drive library sync scheduler (no-op unless sync is enabled).
   // Also performs the on-startup "import changes made elsewhere" sync.
   startSyncScheduler()
+
+  // Keep the categories published to the user's S3 bucket up to date
+  // (no-op until a bucket and a published category exist).
+  startPublicationSync()
+
+  // Check the song sources for new songs (and add them, when updating songs
+  // automatically) in a worker thread, a bit after start.
+  startSongUpdates()
+
+  // Drop notifications older than 60 days, now and daily.
+  startNotificationCleanup()
 }
 
 /**
@@ -5393,150 +5411,9 @@ async function startRealServer(): Promise<void> {
         }
       }
 
-      // POST /api/songs/discovery/count - Cheap "how many are new?" count for the
-      // background discovery check (sidebar badge + toast). Filename + title only,
-      // no FTS — so it stays fast even over a multi-thousand-song catalog.
-      if (
-        req.method === 'POST' &&
-        url.pathname === '/api/songs/discovery/count'
-      ) {
-        const permError = checkPermission('songs.create')
-        if (permError) return permError
-
-        try {
-          const body = (await req.json()) as {
-            candidates: { title: string; sourceFilename: string | null }[]
-          }
-
-          if (!body.candidates || !Array.isArray(body.candidates)) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({ error: 'Missing candidates array' }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
-          }
-
-          if (body.candidates.length > 5000) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({
-                  error: 'Too many candidates (max 5000 per request)',
-                }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
-          }
-
-          const newCount = countNewCandidates(body.candidates)
-
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: { newCount } }), {
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
       // ============================================================
       // Proxy Download Endpoint (for CORS bypass)
       // ============================================================
-
-      // GET /api/proxy/head - Cheap change-check for a whitelisted external file.
-      // Issues a HEAD and returns last-modified / etag / content-length so the
-      // background discovery sync can skip re-downloading an unchanged catalog.
-      if (req.method === 'GET' && url.pathname === '/api/proxy/head') {
-        const permError = checkPermission('songs.create')
-        if (permError) return permError
-
-        const targetUrl = url.searchParams.get('url')
-        if (!targetUrl) {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Missing url parameter' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-
-        const allowedDomains = [
-          'download.resursecrestine.ro',
-          'resursecrestine.ro',
-        ]
-        let parsedHeadUrl: URL
-        try {
-          parsedHeadUrl = new URL(targetUrl)
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid URL' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-        if (!allowedDomains.includes(parsedHeadUrl.hostname)) {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({ error: 'Domain not allowed for proxy head' }),
-              {
-                status: 403,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-
-        try {
-          const headResponse = await fetch(targetUrl, {
-            method: 'HEAD',
-            redirect: 'follow',
-          })
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({
-                data: {
-                  lastModified: headResponse.headers.get('last-modified'),
-                  etag: headResponse.headers.get('etag'),
-                  contentLength: headResponse.headers.get('content-length'),
-                },
-              }),
-              { headers: { 'Content-Type': 'application/json' } },
-            ),
-          )
-        } catch (error) {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({ error: `Head request failed: ${error}` }),
-              {
-                status: 502,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-      }
 
       // GET /api/proxy/download - Proxy download from external URL
       if (req.method === 'GET' && url.pathname === '/api/proxy/download') {
@@ -5554,11 +5431,7 @@ async function startRealServer(): Promise<void> {
           )
         }
 
-        // Only allow specific trusted domains
-        const allowedDomains = [
-          'download.resursecrestine.ro',
-          'resursecrestine.ro',
-        ]
+        // Only the hosts of known song sources
         let parsedUrl: URL
         try {
           parsedUrl = new URL(targetUrl)
@@ -5572,7 +5445,7 @@ async function startRealServer(): Promise<void> {
           )
         }
 
-        if (!allowedDomains.includes(parsedUrl.hostname)) {
+        if (!isProxyAllowedUrl(parsedUrl)) {
           return handleCors(
             req,
             new Response(
@@ -8281,6 +8154,24 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (songHistoryResponse) return songHistoryResponse
+
+      // Song sources (built-in configs and the user's own)
+      const songSourcesResponse = await handleSongSourceRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (songSourcesResponse) return songSourcesResponse
+
+      // The notifications history (song syncs, app updates)
+      const notificationsResponse = await handleNotificationRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (notificationsResponse) return notificationsResponse
 
       // Background media routes (screen background image/video uploads)
       const backgroundMediaResponse = await handleBackgroundMediaRoutes(

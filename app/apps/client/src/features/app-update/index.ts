@@ -1,5 +1,4 @@
 export { AboutSection } from './components/AboutSection'
-export { UpdateNotification } from './components/UpdateNotification'
 export { UpdatePanel } from './components/UpdatePanel'
 export { useAppUpdate } from './hooks/useAppUpdate'
 export { useUpdateDownload } from './hooks/useUpdateDownload'

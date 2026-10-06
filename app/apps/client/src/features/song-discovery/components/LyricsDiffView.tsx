@@ -61,7 +61,6 @@ export function LyricsDiffView({
       <div className="max-h-72 overflow-y-auto bg-white font-mono text-xs leading-relaxed dark:bg-gray-900">
         {diff.map((line, index) => (
           <div
-            // biome-ignore lint/suspicious/noArrayIndexKey: positional diff rows
             key={index}
             className={`flex gap-2 px-3 py-0.5 ${ROW_STYLES[line.type]}`}
           >

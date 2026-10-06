@@ -1,5 +1,6 @@
+import { htmlToPlainText } from '@church-hub/song-formats'
+
 import type { SongWithSlides } from '~/features/songs/types'
-import { htmlToPlainText } from './htmlToPlainText'
 
 export interface PrintableSection {
   label: string | null

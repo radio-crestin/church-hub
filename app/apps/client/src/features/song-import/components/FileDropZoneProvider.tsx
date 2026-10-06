@@ -1,3 +1,4 @@
+import { type ParsedOpenSong, parseOpenSongXml } from '@church-hub/song-formats'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { invoke } from '@tauri-apps/api/core'
@@ -20,6 +21,10 @@ import {
   addItemToSchedule,
   upsertSchedule,
 } from '~/features/schedules/service/schedules'
+import {
+  isSongFile,
+  useOpenSongFile,
+} from '~/features/song-discovery/opened-files/useOpenSongFile'
 import { useUpsertSong } from '~/features/songs/hooks'
 import { getSongById, searchSongs, upsertSong } from '~/features/songs/service'
 import type { SlideInput, SongSearchResult } from '~/features/songs/types'
@@ -28,7 +33,6 @@ import {
   DuplicateSongDialog,
 } from './DuplicateSongDialog'
 import { parsePptViaServer } from '../utils/convertPptToPptx'
-import { type ParsedOpenSong, parseOpenSongXml } from '../utils/parseOpenSong'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
 interface PendingImport {
@@ -192,6 +196,7 @@ export function FileDropZoneProvider({ children }: Props) {
   const dragCounterRef = useRef(0)
   const dragOverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const upsertMutation = useUpsertSong()
+  const openSongFile = useOpenSongFile()
 
   // State for duplicate dialog
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null)
@@ -427,7 +432,9 @@ export function FileDropZoneProvider({ children }: Props) {
 
         const lowerPath = filePath.toLowerCase()
 
-        if (lowerPath.endsWith('.pptx')) {
+        if (isSongFile(lowerPath)) {
+          await openSongFile(await readFile(filePath), filePath)
+        } else if (lowerPath.endsWith('.pptx')) {
           const fileData = await readFile(filePath)
           const parsed = await parsePptxFile(fileData.buffer, filePath)
           await importPptxAsSong(parsed, filePath)
@@ -449,7 +456,12 @@ export function FileDropZoneProvider({ children }: Props) {
     }
 
     checkPendingImport()
-  }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
+  }, [
+    importPptxAsSong,
+    handleOpenSongFile,
+    handleChurchProgramFile,
+    openSongFile,
+  ])
 
   // Listen for file-opened events (when app is already running and file is opened)
   useEffect(() => {
@@ -468,7 +480,9 @@ export function FileDropZoneProvider({ children }: Props) {
         const lowerPath = filePath.toLowerCase()
 
         try {
-          if (lowerPath.endsWith('.pptx')) {
+          if (isSongFile(lowerPath)) {
+            await openSongFile(await readFile(filePath), filePath)
+          } else if (lowerPath.endsWith('.pptx')) {
             const fileData = await readFile(filePath)
             const parsed = await parsePptxFile(fileData.buffer, filePath)
             await importPptxAsSong(parsed, filePath)
@@ -498,7 +512,12 @@ export function FileDropZoneProvider({ children }: Props) {
     return () => {
       unlisten?.()
     }
-  }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
+  }, [
+    importPptxAsSong,
+    handleOpenSongFile,
+    handleChurchProgramFile,
+    openSongFile,
+  ])
 
   // Use document-level event listeners for reliable drag and drop
   useEffect(() => {
@@ -571,6 +590,13 @@ export function FileDropZoneProvider({ children }: Props) {
       if (!e.dataTransfer?.files) return
 
       const files = Array.from(e.dataTransfer.files)
+
+      // Church Hub song files open in Song discovery, for review
+      const songFile = files.find((f) => isSongFile(f.name))
+      if (songFile) {
+        await openSongFile(await songFile.arrayBuffer(), songFile.name)
+        return
+      }
 
       // Handle PPTX files
       const pptxFile = files.find((f) => f.name.toLowerCase().endsWith('.pptx'))
@@ -654,7 +680,12 @@ export function FileDropZoneProvider({ children }: Props) {
         dragOverTimerRef.current = null
       }
     }
-  }, [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile])
+  }, [
+    importPptxAsSong,
+    handleOpenSongFile,
+    handleChurchProgramFile,
+    openSongFile,
+  ])
 
   // Helper function to process file paths (used by Tauri drag-drop)
   const processFilePaths = useCallback(
@@ -663,6 +694,11 @@ export function FileDropZoneProvider({ children }: Props) {
         const lowerPath = filePath.toLowerCase()
 
         try {
+          if (isSongFile(lowerPath)) {
+            await openSongFile(await readFile(filePath), filePath)
+            return
+          }
+
           if (lowerPath.endsWith('.pptx')) {
             const fileData = await readFile(filePath)
             const parsed = await parsePptxFile(fileData.buffer, filePath)
@@ -702,7 +738,12 @@ export function FileDropZoneProvider({ children }: Props) {
         }
       }
     },
-    [importPptxAsSong, handleOpenSongFile, handleChurchProgramFile],
+    [
+      importPptxAsSong,
+      handleOpenSongFile,
+      handleChurchProgramFile,
+      openSongFile,
+    ],
   )
 
   // Tauri-specific drag and drop handler

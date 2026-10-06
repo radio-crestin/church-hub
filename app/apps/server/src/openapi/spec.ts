@@ -16,6 +16,7 @@ import {
   feedbackPaths,
   healthPaths,
   logsPaths,
+  notificationsPaths,
   presentationHighlightsPaths,
   presentationPaths,
   schedulesPaths,
@@ -24,6 +25,7 @@ import {
   songBookmarksPaths,
   songGroupsPaths,
   songHistoryPaths,
+  songSourcesPaths,
   songsPaths,
   syncPaths,
   usersPaths,
@@ -38,6 +40,7 @@ import {
   screenSchemas,
   songHistorySchemas,
   songSchemas,
+  songSourceSchemas,
   userSchemas,
 } from './schemas'
 
@@ -83,6 +86,10 @@ export const openApiSpec = {
       name: 'Song History',
       description: 'Who edited a song and when, with restore',
     },
+    {
+      name: 'Song Sources',
+      description: 'Where Song discovery imports songs from',
+    },
     { name: 'Categories', description: 'Song categories' },
     { name: 'Bible', description: 'Bible translations and verse management' },
     { name: 'Schedules', description: 'Schedule management' },
@@ -101,6 +108,10 @@ export const openApiSpec = {
       description: 'Feature requests and user feedback submission',
     },
     { name: 'Logs', description: 'Application logs access' },
+    {
+      name: 'Notifications',
+      description: 'The notifications history: song syncs and app updates',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -115,6 +126,7 @@ export const openApiSpec = {
     ...songsPaths,
     ...songGroupsPaths,
     ...songHistoryPaths,
+    ...songSourcesPaths,
     ...songBookmarksPaths,
     ...categoriesPaths,
     ...biblePaths,
@@ -126,6 +138,7 @@ export const openApiSpec = {
     ...presentationHighlightsPaths,
     ...conversionPaths,
     ...feedbackPaths,
+    ...notificationsPaths,
   },
   components: {
     securitySchemes,
@@ -134,6 +147,7 @@ export const openApiSpec = {
       ...deviceSchemas,
       ...songSchemas,
       ...songHistorySchemas,
+      ...songSourceSchemas,
       ...bibleSchemas,
       ...scheduleSchemas,
       ...screenSchemas,

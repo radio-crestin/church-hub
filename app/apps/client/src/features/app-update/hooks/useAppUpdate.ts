@@ -8,7 +8,6 @@ import { setPendingUpdate } from '../services/updateStore'
 import type { UpdateInfo } from '../services/versionService'
 import { checkForUpdates, getCurrentVersion } from '../services/versionService'
 
-const UPDATE_DISMISSED_KEY = 'update-dismissed-version'
 const CHECK_INTERVAL = 1000 * 60 * 60 // Check every hour
 
 // A dev instance is anything served by Vite's dev server (`vite dev`, including
@@ -21,14 +20,12 @@ interface UseAppUpdateResult {
   updateInfo: UpdateInfo | null
   isLoading: boolean
   error: string | null
-  isDismissed: boolean
   isDevInstance: boolean
   /**
    * Runs the check. Pressing the button in the UI always reaches the release
    * feed, even on a dev instance — see `checkNow` for why.
    */
   checkNow: () => Promise<void>
-  dismissUpdate: () => void
 }
 
 export function useAppUpdate(): UseAppUpdateResult {
@@ -37,7 +34,6 @@ export function useAppUpdate(): UseAppUpdateResult {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isDismissed, setIsDismissed] = useState(false)
 
   /**
    * Fills in the current version without contacting anything. Used for the
@@ -74,10 +70,6 @@ export function useAppUpdate(): UseAppUpdateResult {
       const { info, update } = await checkForUpdates()
       setPendingUpdate(update)
       setUpdateInfo(info)
-
-      // Check if this version was dismissed
-      const dismissedVersion = localStorage.getItem(UPDATE_DISMISSED_KEY)
-      setIsDismissed(dismissedVersion === info.latestVersion)
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to check for updates',
@@ -86,13 +78,6 @@ export function useAppUpdate(): UseAppUpdateResult {
       setIsLoading(false)
     }
   }, [])
-
-  const dismissUpdate = useCallback(() => {
-    if (updateInfo?.latestVersion) {
-      localStorage.setItem(UPDATE_DISMISSED_KEY, updateInfo.latestVersion)
-      setIsDismissed(true)
-    }
-  }, [updateInfo?.latestVersion])
 
   // On mount a dev instance only shows its own version; the operator can still
   // press "Check now" to reach the release feed deliberately.
@@ -145,8 +130,6 @@ export function useAppUpdate(): UseAppUpdateResult {
     isLoading,
     error,
     isDevInstance: IS_DEV_INSTANCE,
-    isDismissed,
     checkNow,
-    dismissUpdate,
   }
 }

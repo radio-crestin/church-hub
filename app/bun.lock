@@ -24,6 +24,7 @@
       "name": "client",
       "version": "0.0.0",
       "dependencies": {
+        "@church-hub/song-formats": "workspace:*",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/modifiers": "^7.0.0",
         "@dnd-kit/sortable": "^9.0.0",
@@ -96,6 +97,7 @@
         "@ai-sdk/anthropic": "^2.0.84",
         "@ai-sdk/google": "^2.0.77",
         "@ai-sdk/openai": "^2.0.110",
+        "@church-hub/song-formats": "workspace:*",
         "@google/genai": "^1.48.0",
         "ai": "^5.0.207",
         "audify": "^1.10.1",
@@ -106,6 +108,7 @@
         "easymidi": "^3.2.0",
         "google-auth-library": "^10.6.2",
         "googleapis": "^169.0.0",
+        "jszip": "^3.10.1",
         "music-metadata": "^11.12.3",
         "obs-websocket-js": "^5.0.8",
         "posthog-node": "^4.5.0",
@@ -124,6 +127,13 @@
     "packages/ip-patched": {
       "name": "ip",
       "version": "2.1.0-security.1",
+    },
+    "packages/song-formats": {
+      "name": "@church-hub/song-formats",
+      "version": "0.0.0",
+      "dependencies": {
+        "jszip": "^3.10.1",
+      },
     },
   },
   "trustedDependencies": [
@@ -226,6 +236,8 @@
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.10", "", { "os": "win32", "cpu": "x64" }, "sha512-aW/JU5GuyH4uxMrNYpoC2kjaHlyJGLgIa3XkhPEZI0uKhZhJZU8BuEyJmvgzSPQNGozBwWjC972RaNdcJ9KyJg=="],
 
     "@borewit/text-codec": ["@borewit/text-codec@0.2.2", "", {}, "sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ=="],
+
+    "@church-hub/song-formats": ["@church-hub/song-formats@workspace:packages/song-formats"],
 
     "@dnd-kit/accessibility": ["@dnd-kit/accessibility@3.1.1", "", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw=="],
 

@@ -7,6 +7,7 @@ import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { $ } from 'bun'
 
+import { WORKER_ENTRYPOINTS } from './workerEntrypoints'
 import packageJson from '../../../package.json'
 
 const ARCHITECTURES = {
@@ -132,7 +133,8 @@ async function main() {
   // Drive backup) goes through the ChurchHub OAuth worker, which holds the
   // client id/secret server-side.
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
-  await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts --outfile ${outfile}`
+  // Every worker thread is its own entrypoint (Bun bundles each separately).
+  await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts ${WORKER_ENTRYPOINTS.map((entry) => `./${entry}`)} --outfile ${outfile}`
 
   console.log('\x1b[32mDone! Binary created at:\x1b[0m', outfile)
 }

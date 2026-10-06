@@ -1,0 +1,12 @@
+{
+  "name": "@church-hub/song-formats",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Song file formats shared by the client and the server: reading and writing OpenSong, song bundles, source catalogues, slide text helpers.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "jszip": "^3.10.1"
+  }
+}

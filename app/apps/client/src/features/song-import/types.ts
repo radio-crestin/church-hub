@@ -1,3 +1,10 @@
+import type {
+  OpenSongMetadata,
+  ParsedSlideWithLabel,
+} from '@church-hub/song-formats'
+
+export type { OpenSongMetadata, ParsedSlideWithLabel }
+
 import type { ParsedPptx } from './utils/parsePptx'
 
 export interface ExtractedPptxFile {
@@ -30,33 +37,6 @@ export interface ImportProgress {
   current: number
   total: number | null
   currentFile?: string
-}
-
-/**
- * Parsed slide with optional label (V1, C, etc.)
- */
-export interface ParsedSlideWithLabel {
-  slideNumber: number
-  text: string
-  htmlContent: string
-  label?: string | null
-}
-
-/**
- * OpenSong metadata fields
- */
-export interface OpenSongMetadata {
-  author: string | null
-  copyright: string | null
-  ccli: string | null
-  tempo: string | null
-  timeSignature: string | null
-  theme: string | null
-  altTheme: string | null
-  hymnNumber: string | null
-  keyLine: string | null
-  presentationOrder: string | null
-  churchHubId: number | null
 }
 
 /**

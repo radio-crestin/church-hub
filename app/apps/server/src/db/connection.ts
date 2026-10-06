@@ -133,6 +133,32 @@ function cleanupOldVersionBackups(dbDir: string): void {
   }
 }
 
+/** The connection settings every connection to the app database uses. */
+function applyPragmas(sqlite: Database): void {
+  // Enable WAL mode for better concurrency
+  sqlite.run('PRAGMA journal_mode = WAL')
+
+  // Enable foreign keys
+  sqlite.run('PRAGMA foreign_keys = ON')
+
+  // Set busy timeout to 15 seconds so queries waiting for a lock
+  // will retry rather than fail immediately
+  sqlite.run('PRAGMA busy_timeout = 15000')
+
+  // RAM optimizations for better performance on slow machines
+  // 64MB page cache (negative value = KB)
+  sqlite.run('PRAGMA cache_size = -65536')
+  // Store temporary tables and indexes in memory
+  sqlite.run('PRAGMA temp_store = MEMORY')
+  // 256MB memory-mapped I/O for faster file access
+  sqlite.run('PRAGMA mmap_size = 268435456')
+  // NORMAL sync is safe with WAL and faster than FULL
+  sqlite.run('PRAGMA synchronous = NORMAL')
+  // Allow readers to proceed without acquiring shared locks, so SELECT
+  // queries never block writes and long writes never block reads
+  sqlite.run('PRAGMA read_uncommitted = ON')
+}
+
 /**
  * Initializes the SQLite database connection with Drizzle ORM
  * Creates the data directory if it doesn't exist
@@ -166,30 +192,8 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     sqlite = new Database(DATABASE_PATH, { create: true })
     logTiming('sqlite_connect', t)
 
-    // Enable WAL mode for better concurrency
     t = performance.now()
-    sqlite.run('PRAGMA journal_mode = WAL')
-
-    // Enable foreign keys
-    sqlite.run('PRAGMA foreign_keys = ON')
-
-    // Set busy timeout to 15 seconds so queries waiting for a lock
-    // will retry rather than fail immediately
-    sqlite.run('PRAGMA busy_timeout = 15000')
-
-    // RAM optimizations for better performance on slow machines
-    // 64MB page cache (negative value = KB)
-    sqlite.run('PRAGMA cache_size = -65536')
-    // Store temporary tables and indexes in memory
-    sqlite.run('PRAGMA temp_store = MEMORY')
-    // 256MB memory-mapped I/O for faster file access
-    sqlite.run('PRAGMA mmap_size = 268435456')
-    // NORMAL sync is safe with WAL and faster than FULL
-    sqlite.run('PRAGMA synchronous = NORMAL')
-    // Allow readers to proceed without acquiring shared locks, so SELECT
-    // queries never block writes and long writes never block reads
-    sqlite.run('PRAGMA read_uncommitted = ON')
-
+    applyPragmas(sqlite)
     logTiming('sqlite_pragma', t)
 
     // Initialize Drizzle ORM with schema
@@ -209,6 +213,16 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     log('error', `Failed to initialize database: ${error}`)
     throw error
   }
+}
+
+/**
+ * Opens the app database, already set up by the server's initializeDatabase,
+ * from a worker thread: its own connection, no backup and no migrations.
+ */
+export function connectDatabase(): void {
+  sqlite = new Database(DATABASE_PATH)
+  applyPragmas(sqlite)
+  db = drizzle(sqlite, { schema })
 }
 
 /**

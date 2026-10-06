@@ -13,10 +13,10 @@ import { useTranslation } from 'react-i18next'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { useSidebarCollapsed } from './use-sidebar-collapsed'
-import { UpdateNotification } from '../../features/app-update'
 import { CurrentUserButton } from '../../features/auth'
 import { RequestFeatureTool } from '../../features/feature-request'
 import { useKioskSettings } from '../../features/kiosk'
+import { NotificationsSidebarItem } from '../../features/notifications/components/NotificationsSidebarItem'
 import { usePresentationState } from '../../features/presentation'
 import {
   hideAllCustomPageWebviews,
@@ -333,9 +333,6 @@ export function Sidebar({
             {/* Divider */}
             <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
 
-            {/* Update notification - shown above Feedback when update available */}
-            <UpdateNotification isCollapsed={isCollapsed} />
-
             {/* Feedback — opens the screenshot tool (mark it up, add notes)
                 that files a public GitHub issue.
                 Never rendered on /screen/* — those windows are church
@@ -371,6 +368,16 @@ export function Sidebar({
                   </span>
                 )}
               </button>
+            )}
+
+            {/* Notifications (synced songs, app updates): the page with
+                all of them, the unread count, and the pop-up of a new one. */}
+            {!isScreenRoute && (
+              <NotificationsSidebarItem
+                isCollapsed={isCollapsed}
+                iconColor={getItemIconColor('settings')}
+                onClick={(e) => handleSidebarItemClick('/notifications', e)}
+              />
             )}
 
             {/* Settings */}

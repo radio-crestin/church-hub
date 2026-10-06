@@ -1,5 +1,13 @@
-import JSZip from 'jszip'
 import { expect, test } from '@playwright/test'
+
+import { FakeS3 } from './helpers/fake-s3'
+import {
+  addLinkSource,
+  checkSource,
+  deleteCategoriesNamed,
+  publishSongFolder,
+  setAutoUpdate,
+} from './helpers/song-folder-source'
 
 /**
  * Song discovery: importing NEW songs from external sources. Covers the new
@@ -112,8 +120,16 @@ test.describe('Song Discovery — staging UI', () => {
   // sanitize-stable title token; the numeric ts is fine for filenames.
   const alphaId = String(ts).replace(/\d/g, (d) => 'abcdefghij'[Number(d)])
   const newTitle = `UI New Discovery Song ${alphaId}`
+  const s3 = new FakeS3()
+  let sourceId = ''
+
+  test.beforeAll(() => s3.start())
 
   test.afterAll(async ({ request }) => {
+    await deleteCategoriesNamed(request, [`E2E Discovery ${alphaId}`])
+    await setAutoUpdate(request, true)
+    if (sourceId) await request.delete(`/api/song-sources/${sourceId}`)
+    await s3.stop()
     for (const id of createdSongIds) {
       await request.delete(`/api/songs/${id}`)
     }
@@ -131,75 +147,79 @@ test.describe('Song Discovery — staging UI', () => {
     }
   })
 
-  test('shows only new songs, lets the user import an approved candidate', async ({
+  test('shows only the songs the library lacks, all ticked, and imports the ticked ones', async ({
     page,
     request,
   }) => {
-    // Seed a library song whose filename matches one catalog entry → that entry
-    // must be hidden from the staging list as already-present.
-    const dupFilename = `ui-dup-${ts}.xml`
+    // The library has this one already (same title): it must not show.
+    const existingTitle = `UI Existing Song ${alphaId}`
     const seedRes = await request.post('/api/songs', {
       data: {
-        title: `UI Existing Song ${ts}`,
-        sourceFilename: dupFilename,
-        slides: [{ content: '<p>existing library content here</p>', sortOrder: 0 }],
+        title: existingTitle,
+        slides: [
+          { content: '<p>existing library content here</p>', sortOrder: 0 },
+        ],
       },
     })
-    expect([201, 409]).toContain(seedRes.status())
-    if (seedRes.status() === 201) {
-      createdSongIds.push((await seedRes.json()).data.id)
-    }
+    expect(seedRes.status()).toBe(201)
+    createdSongIds.push((await seedRes.json()).data.id)
 
-    // Build a tiny OpenSong ZIP: one duplicate (by filename) + one brand-new.
-    const zip = new JSZip()
-    zip.file(dupFilename, openSongXml(`UI Existing Song ${ts}`, 'existing content'))
-    zip.file(
-      `ui-new-${ts}.xml`,
-      openSongXml(newTitle, 'a fresh unseen verse never imported before today'),
+    const brokenTitle = `UI Broken Song ${alphaId}`
+    const url = publishSongFolder(
+      s3,
+      `/discovery/${alphaId}`,
+      `E2E Discovery ${alphaId}`,
+      [
+        {
+          id: 'dup',
+          title: existingTitle,
+          xml: openSongXml(existingTitle, 'existing content'),
+        },
+        {
+          id: 'new',
+          title: newTitle,
+          xml: openSongXml(
+            newTitle,
+            'a fresh unseen verse never imported before today',
+          ),
+        },
+        // A bare "&" is not valid XML: the song is still read, and so is the rest.
+        {
+          id: 'broken',
+          title: brokenTitle,
+          xml: openSongXml(brokenTitle, 'Bill & Gloria'),
+        },
+      ],
+      'one',
     )
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
+    // Left for review here, not added on their own.
+    await setAutoUpdate(request, false)
+    sourceId = await addLinkSource(request, url)
+    await checkSource(request, sourceId)
 
-    // Mock the external download (browser mode proxies through /api/proxy/download).
-    await page.route('**/api/proxy/download**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/zip',
-        body: zipBuffer,
-      }),
-    )
-    // The background sync issues a cheap HEAD change-check — stub it too so the
-    // test never reaches the real external host.
-    await page.route('**/api/proxy/head**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          data: { lastModified: 'test', etag: null, contentLength: '1' },
-        }),
-      }),
-    )
-
-    // The screen auto-fetches on open (reusing the mocked download) — no click.
-    await page.goto('/songs/discover')
+    await page.goto(`/songs/discover?source=${sourceId}`)
     await expect(
       page.getByRole('heading', {
         name: /Download the latest songs|Descarcă ultimele cântări/,
       }),
     ).toBeVisible()
+    const newBox = page.getByRole('checkbox', { name: new RegExp(newTitle) })
+    const brokenBox = page.getByRole('checkbox', {
+      name: new RegExp(brokenTitle),
+    })
+    await expect(newBox).toBeChecked({ timeout: 30_000 })
+    await expect(brokenBox).toBeChecked()
+    await expect(page.getByText(existingTitle)).toHaveCount(0)
 
-    // Wait for the diff to stream in and surface the new song.
-    await expect(page.getByText(newTitle)).toBeVisible({ timeout: 30_000 })
-
-    // The duplicate-by-filename entry must NOT appear in staging.
-    await expect(page.getByText(`UI Existing Song ${ts}`)).toHaveCount(0)
-
-    // Approve the new candidate and import it.
-    await page.getByRole('button', { name: /^(Import|Importă)$/ }).first().click()
+    // Search narrows the list; untick one song, import the rest.
+    await page.getByRole('searchbox').fill('broken')
+    await expect(newBox).toHaveCount(0)
+    await brokenBox.uncheck()
+    await page.getByRole('searchbox').fill('')
     await page
       .getByRole('button', { name: /Import selected|Importă selecția/ })
       .click()
 
-    // It now exists in the library.
     await expect(async () => {
       const search = await request.get(
         `/api/songs/search?q=${encodeURIComponent(newTitle)}`,
@@ -207,5 +227,7 @@ test.describe('Song Discovery — staging UI', () => {
       const hits = (await search.json()).data as { title: string }[]
       expect(hits.some((h) => h.title === newTitle)).toBe(true)
     }).toPass({ timeout: 15_000 })
+    await expect(newBox).toHaveCount(0)
+    await expect(brokenBox).not.toBeChecked()
   })
 })

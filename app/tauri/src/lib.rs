@@ -44,6 +44,16 @@ use tauri::Manager;
 use tauri::WindowEvent;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+
+/// Files the app opens when the OS hands them over: a PowerPoint to import,
+/// an OpenSong song, a program, or a Church Hub song file (.chsongs).
+fn is_opened_file(path: &std::path::Path) -> bool {
+    path.extension().is_some_and(|ext| {
+        ["pptx", "opensong", "churchprogram", "chsongs"]
+            .iter()
+            .any(|known| ext.eq_ignore_ascii_case(known))
+    })
+}
 pub fn run() {
     // File logging — initialize before anything else so we capture startup
     // events. Best-effort: a logging failure must never block the app.
@@ -206,11 +216,7 @@ pub fn run() {
             for arg in args.iter().skip(1) {
                 // Skip first arg (exe path)
                 let path = PathBuf::from(arg);
-                if path.extension().is_some_and(|ext| {
-                    ext.eq_ignore_ascii_case("pptx")
-                        || ext.eq_ignore_ascii_case("opensong")
-                        || ext.eq_ignore_ascii_case("churchprogram")
-                }) {
+                if is_opened_file(&path) {
                     println!("[single-instance] File detected: {path:?}");
 
                     // Emit event to frontend so it can import the file
@@ -339,11 +345,7 @@ pub fn run() {
         let args: Vec<String> = std::env::args().collect();
         if args.len() > 1 {
             let path = PathBuf::from(&args[1]);
-            if path.extension().is_some_and(|ext| {
-                ext.eq_ignore_ascii_case("pptx")
-                    || ext.eq_ignore_ascii_case("opensong")
-                    || ext.eq_ignore_ascii_case("churchprogram")
-            }) {
+            if is_opened_file(&path) {
                 println!("[file-association] File detected: {path:?}");
                 *pending_import.file_path.lock() = Some(path);
             }
@@ -598,11 +600,7 @@ pub fn run() {
             RunEvent::Opened { urls } => {
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
-                        if path.extension().is_some_and(|ext| {
-                            ext.eq_ignore_ascii_case("pptx")
-                                || ext.eq_ignore_ascii_case("opensong")
-                                || ext.eq_ignore_ascii_case("churchprogram")
-                        }) {
+                        if is_opened_file(&path) {
                             println!("[file-association] Opened event: {path:?}");
 
                             // Emit event to frontend

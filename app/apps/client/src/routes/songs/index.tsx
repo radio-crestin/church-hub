@@ -449,8 +449,7 @@ function SongsPage() {
             )}
             {/* Discovering + importing from external sources is a create
                 operation — same gate as the create button, same route guard.
-                The button animates while the background catalog check runs and
-                shows a count once new songs are found. */}
+                Songs waiting for approval add a small button that syncs them. */}
             <PermissionGate permission="songs.create">
               <DiscoverButton />
             </PermissionGate>

@@ -1,0 +1,11 @@
+{
+  "title": "Notifications",
+  "description": "What happened in the app in the last 60 days",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "empty": "No notifications yet",
+  "emptyHint": "Songs synced from your song sources and new app versions show up here.",
+  "remove": "Remove",
+  "close": "Close",
+  "seeAll": "See all notifications"
+}

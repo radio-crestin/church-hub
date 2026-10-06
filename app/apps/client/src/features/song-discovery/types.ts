@@ -12,7 +12,6 @@ export interface DiscoveryCandidate {
   tempId: string
   parsed: ParsedSong
   sourceFilename: string | null
-  sourceFormat: 'opensong' | 'pptx'
 }
 
 /** Mirrors the server's `DiscoveryMatchVerdict`. */
@@ -30,9 +29,6 @@ export interface DiscoveryMatchResult {
   similar: SongVersionSuggestion[]
 }
 
-/** The operator's per-candidate decision in the staging screen. */
-export type DiscoveryDecision = 'pending' | 'approve' | 'skip'
-
 /** Editable draft of a candidate — seeded from `parsed`, committed on import. */
 export interface CandidateDraft {
   title: string
@@ -48,9 +44,20 @@ export interface CandidateDraft {
  */
 export interface StagingItem {
   tempId: string
+  /** The source the song comes from. */
+  sourceId: string
   candidate: DiscoveryCandidate
   verdict: DiscoveryMatchVerdict
   similar: SongVersionSuggestion[]
   draft: CandidateDraft
-  decision: DiscoveryDecision
+  /** Picked for the next import. */
+  selected: boolean
+}
+
+/** A song of a source the library lacks: new, or a version of a library song. */
+export interface LackingEntry {
+  sourceId: string
+  candidate: DiscoveryCandidate
+  verdict: 'new' | 'similar'
+  similar: SongVersionSuggestion[]
 }

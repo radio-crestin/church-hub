@@ -10,6 +10,7 @@ import galleryEN from './locales/en/gallery.json'
 import livestreamEN from './locales/en/livestream.json'
 import liveTranslationEN from './locales/en/liveTranslation.json'
 import musicEN from './locales/en/music.json'
+import notificationsEN from './locales/en/notifications.json'
 import presentationEN from './locales/en/presentation.json'
 import queueEN from './locales/en/queue.json'
 import releaseNotesEN from './locales/en/releaseNotes.json'
@@ -28,6 +29,7 @@ import galleryRO from './locales/ro/gallery.json'
 import livestreamRO from './locales/ro/livestream.json'
 import liveTranslationRO from './locales/ro/liveTranslation.json'
 import musicRO from './locales/ro/music.json'
+import notificationsRO from './locales/ro/notifications.json'
 import presentationRO from './locales/ro/presentation.json'
 import queueRO from './locales/ro/queue.json'
 import releaseNotesRO from './locales/ro/releaseNotes.json'
@@ -49,6 +51,7 @@ export const resources = {
     gallery: galleryEN,
     livestream: livestreamEN,
     music: musicEN,
+    notifications: notificationsEN,
     presentation: presentationEN,
     queue: queueEN,
     releaseNotes: releaseNotesEN,
@@ -69,6 +72,7 @@ export const resources = {
     gallery: galleryRO,
     livestream: livestreamRO,
     music: musicRO,
+    notifications: notificationsRO,
     presentation: presentationRO,
     queue: queueRO,
     releaseNotes: releaseNotesRO,
@@ -99,6 +103,7 @@ i18n
       'gallery',
       'livestream',
       'music',
+      'notifications',
       'presentation',
       'queue',
       'releaseNotes',

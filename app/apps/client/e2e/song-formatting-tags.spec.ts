@@ -1,13 +1,19 @@
 import { DatabaseSync } from 'node:sqlite'
 import { type APIRequestContext, expect, test } from '@playwright/test'
-import JSZip from 'jszip'
 
 import { ExtraServer } from './helpers/extra-server'
+import { FakeS3 } from './helpers/fake-s3'
+import {
+  addLinkSource,
+  checkSource,
+  deleteCategoriesNamed,
+  publishSongFolder,
+} from './helpers/song-folder-source'
 
 /**
  * Songs carry no <i>, <b> and similar formatting tags (T-104): a start-up
- * migration cleans every song already in the library, and the Resurse
- * Creștine (OpenSong) import drops them from what it brings in. The text
+ * migration cleans every song already in the library, and the song source
+ * (OpenSong) import drops them from what it brings in. The text
  * inside the tags stays, and so do entities like &amp;.
  */
 
@@ -135,16 +141,23 @@ test.describe('formatting tags migration', () => {
   })
 })
 
-test.describe('Resurse Creștine import', () => {
+test.describe('Song source import', () => {
   const cleanTitle = `Cântare nouă ${alphaId}`
+  const s3 = new FakeS3()
+  let sourceId = ''
+
+  test.beforeAll(() => s3.start())
 
   test.afterAll(async ({ request }) => {
+    await deleteCategoriesNamed(request, [`E2E Tags ${alphaId}`])
+    if (sourceId) await request.delete(`/api/song-sources/${sourceId}`)
     for (const hit of await searchTitles(request, cleanTitle)) {
       if (hit.title === cleanTitle) await request.delete(`/api/songs/${hit.id}`)
     }
+    await s3.stop()
   })
 
-  test('brings songs in without formatting tags', async ({ page, request }) => {
+  test('brings songs in without formatting tags', async ({ request }) => {
     // Escaped in the XML, so the file's text holds the tags themselves.
     const xml = `<song>
   <title>&lt;i&gt;Cântare&lt;/i&gt; nouă ${alphaId}</title>
@@ -154,47 +167,22 @@ test.describe('Resurse Creștine import', () => {
  &lt;i&gt;Lăudați-L&lt;/i&gt; în adunare &amp; cu bucurie
 </lyrics>
 </song>`
-    const zip = new JSZip()
-    zip.file(`tags-${alphaId}.xml`, xml)
-    const body = await zip.generateAsync({ type: 'nodebuffer' })
-
-    await page.route('**/api/proxy/download**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/zip', body }),
+    const url = publishSongFolder(
+      s3,
+      `/tags/${alphaId}`,
+      `E2E Tags ${alphaId}`,
+      [{ id: 'tags', title: cleanTitle, xml }],
+      'one',
     )
-    await page.route('**/api/proxy/head**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          data: { lastModified: 'test', etag: null, contentLength: '1' },
-        }),
-      }),
+    // The song updates add it on their own (automatic updates are on).
+    sourceId = await addLinkSource(request, url)
+    expect((await checkSource(request, sourceId)).imported).toBe(1)
+
+    const hit = (await searchTitles(request, cleanTitle)).find(
+      (h) => h.title === cleanTitle,
     )
-
-    await page.goto('/songs/discover')
-    await expect(page.getByText(cleanTitle, { exact: true })).toBeVisible({
-      timeout: 30_000,
-    })
-    await expect(page.getByText(/<\/?(i|b)>/)).toHaveCount(0)
-
-    await page
-      .getByRole('button', { name: /^(Import|Importă)$/ })
-      .first()
-      .click()
-    await page
-      .getByRole('button', { name: /Import selected|Importă selecția/ })
-      .click()
-
-    let songId = 0
-    await expect(async () => {
-      const hit = (await searchTitles(request, cleanTitle)).find(
-        (h) => h.title === cleanTitle,
-      )
-      expect(hit).toBeTruthy()
-      songId = hit!.id
-    }).toPass({ timeout: 15_000 })
-
-    const song = await getSong(request, songId)
+    expect(hit).toBeTruthy()
+    const song = await getSong(request, hit?.id ?? 0)
     expect(song.author).toBe('Autor necunoscut')
     expect(song.slides[0].content).toBe(
       `<p>Cântați Domnului o cântare nouă ${alphaId}</p>` +

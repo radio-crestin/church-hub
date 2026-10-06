@@ -26,20 +26,12 @@ export type {
   ProcessedImport,
   ProcessImportResult,
 } from './types'
-export type {
-  OpenSongVerse,
-  ParsedOpenSong,
-  ParsedPptx,
-  ParsedSlide,
-} from './utils'
+export type { ParsedPptx, ParsedSlide } from './utils'
 export {
   downloadFromUrl,
   extractPptxFromZip,
-  isOpenSongXml,
-  parseOpenSongXml,
   parsePptxFile,
   processImportFiles,
   processImportFilesWeb,
   processZipFromBuffer,
-  sanitizeSongTitle,
 } from './utils'

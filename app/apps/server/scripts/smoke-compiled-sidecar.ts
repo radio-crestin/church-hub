@@ -27,6 +27,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { type Subprocess, spawn } from 'bun'
 
+import { WORKER_ENTRYPOINTS } from './workerEntrypoints'
 import {
   DEFAULT_BACKGROUND_MEDIA,
   DEFAULT_BACKGROUND_MEDIA_RESOURCE_DIR,
@@ -87,6 +88,9 @@ async function compile(binaryPath: string) {
       'bun',
       '--bundle',
       resolve(import.meta.dir, '../src/index.ts'),
+      ...WORKER_ENTRYPOINTS.map((entry) =>
+        resolve(import.meta.dir, '..', entry),
+      ),
       '--outfile',
       binaryPath,
     ],
@@ -236,6 +240,32 @@ async function main() {
         },
       )
     }
+    await check('the song updates run in their worker thread', async () => {
+      const users = (await (
+        await fetch(`${BASE_URL}/api/auth/local-users`)
+      ).json()) as { data: { id: number; isSuperAdmin: boolean }[] }
+      const admin = users.data.find((user) => user.isSuperAdmin)
+      const login = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: admin?.id }),
+      })
+      const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0]
+      // No sources: the worker starts, checks nothing, and reports back.
+      const run = await fetch(`${BASE_URL}/api/song-sources/updates/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', cookie },
+        body: JSON.stringify({ sourceIds: [] }),
+      })
+      if (run.status !== 202) return false
+      for (let i = 0; i < 50; i++) {
+        if (output.stdout.includes('Checked 0 sources')) {
+          return !output.stderr.includes('Song updates worker')
+        }
+        await Bun.sleep(200)
+      }
+      return false
+    })
     await check(
       'no ReferenceError on the way',
       () => !output.stderr.includes('ReferenceError'),
