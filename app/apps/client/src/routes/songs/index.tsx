@@ -97,12 +97,6 @@ function SongsPage() {
   const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [focusTrigger, setFocusTrigger] = useState(0)
-  // The row the operator has highlighted in the list — what the Programe
-  // panel's "+" acts on.
-  const [selectedSong, setSelectedSong] = useState<{
-    id: number
-    title: string
-  } | null>(null)
   // Both side panels are collapsible here, exactly as on the song page, and
   // remember their state across visits.
   const [bookmarksOpen, setBookmarksOpen] = usePersistedBoolean(
@@ -377,7 +371,6 @@ function SongsPage() {
           aiSearchId={aiSearchId}
           urlPath={urlPath ?? undefined}
           onAISearchSaved={handleAISearchSaved}
-          onSelectedSongChange={setSelectedSong}
           showRowActions
           onAddSongToSchedule={handleAddSongToSchedule}
         />
