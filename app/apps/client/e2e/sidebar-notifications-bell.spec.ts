@@ -82,6 +82,7 @@ test.describe('Sidebar notifications bell', () => {
 
     await bellOf(page).click()
     await expect(page).toHaveURL(/\/notifications$/)
+    await expect(bellOf(page)).toHaveAttribute('aria-current', 'page')
     await expect(dotOf(page)).toHaveCount(0)
     await shot(page, 'after-read')
   })
