@@ -1,5 +1,5 @@
 import type { VariantMatcher } from './buildVariantMatcher'
-import type { TermGroup, TextMatchScore } from './types'
+import { MatchClass, type TermGroup, type TextMatchScore } from './types'
 import { wordUnitForms } from './wordUnitForms'
 
 const NO_MATCH = 127
@@ -50,12 +50,20 @@ export function scoreTextMatch(
       COVERAGE_SHARE * coverage(groups, best) +
         PHRASE_SHARE * (phrase.length / groupCount),
     ),
-    allFound: groups.every(
-      (group, index) => !group.required || best[index] !== NO_MATCH,
-    ),
+    matchClass: matchClassOf(groups, best),
     phraseStart: phrase.start,
     matchedForms: Array.from(matchedForms),
   }
+}
+
+function matchClassOf(groups: TermGroup[], best: Int8Array): MatchClass {
+  let typos = false
+  for (let index = 0; index < groups.length; index++) {
+    if (!groups[index].required) continue
+    if (best[index] === NO_MATCH) return MatchClass.PARTIAL
+    if (best[index] > 0) typos = true
+  }
+  return typos ? MatchClass.TYPOS : MatchClass.EXACT
 }
 
 function coverage(groups: TermGroup[], best: Int8Array): number {

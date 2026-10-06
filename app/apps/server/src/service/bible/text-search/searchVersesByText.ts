@@ -62,7 +62,12 @@ export function searchVersesByText(
 
   const results = candidates
     .map((row) => ({ row, match: textQuery.score(row.text) }))
-    .sort((a, b) => b.match.score - a.match.score || a.row.rank - b.row.rank)
+    .sort(
+      (a, b) =>
+        a.match.matchClass - b.match.matchClass ||
+        b.match.score - a.match.score ||
+        a.row.rank - b.row.rank,
+    )
     .slice(0, limit)
     .map(({ row, match }) => ({
       id: row.id,

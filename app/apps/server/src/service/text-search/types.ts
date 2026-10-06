@@ -31,12 +31,20 @@ export interface TermGroup {
   required: boolean
 }
 
+export const MatchClass = { EXACT: 0, TYPOS: 1, PARTIAL: 2 } as const
+export type MatchClass = (typeof MatchClass)[keyof typeof MatchClass]
+
 /** How well one text matches the query, see `scoreTextMatch`. */
 export interface TextMatchScore {
   /** 0–100: 100 is every word, untouched, as one phrase. */
   score: number
-  /** True when every word that carries meaning (2+ letters) was found. */
-  allFound: boolean
+  /**
+   * How completely the words were found, ranked before the score: every
+   * word looked up as typed (EXACT), every word but some only through a
+   * typo (TYPOS), or some word missing (PARTIAL). A text holding what was
+   * typed beats one that is merely close to it.
+   */
+  matchClass: MatchClass
   /** Position of the first word of the longest in-order phrase found. */
   phraseStart: number
   /** The words of the text that matched a looked-up word (folded), to mark. */

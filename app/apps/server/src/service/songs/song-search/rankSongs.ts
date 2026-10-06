@@ -1,7 +1,7 @@
 import type { SongCandidate } from './fetchSongCandidates'
 import type { TextQuery } from '../../text-search/prepareTextQuery'
 import { decodeHtmlEntities } from '../../text-search/text/decodeHtmlEntities'
-import type { TextMatchScore } from '../../text-search/types'
+import type { MatchClass, TextMatchScore } from '../../text-search/types'
 import { parseAlternateTitles } from '../parseAlternateTitles'
 
 /**
@@ -25,6 +25,8 @@ const PRESENTATION_BOOST_DENOM = Math.log10(101)
 
 export interface RankedSong {
   song: SongCandidate
+  /** The better of the title's and the lyrics' (see `TextMatchScore`). */
+  matchClass: MatchClass
   lyrics: string
   /** The words of the title and lyrics that matched, for the highlights. */
   matchedForms: string[]
@@ -35,8 +37,8 @@ export interface RankedSong {
 
 /**
  * Scores every candidate on its titles and lyrics with the shared scorer
- * and orders them: best match first, category priority only between equally
- * good matches, then BM25.
+ * and orders them: the words as typed before look-alikes, then best match
+ * first, category priority only between equally good matches, then BM25.
  */
 export function rankSongs(
   candidates: SongCandidate[],
@@ -68,6 +70,10 @@ export function rankSongs(
           : contentMatch.score
       return {
         song,
+        matchClass: Math.min(
+          contentMatch.matchClass,
+          ...titleMatches.map((match) => match.matchClass),
+        ) as MatchClass,
         lyrics,
         matchedForms: [
           ...new Set([
@@ -82,6 +88,7 @@ export function rankSongs(
     })
     .sort(
       (a, b) =>
+        a.matchClass - b.matchClass ||
         b.boostedScore - a.boostedScore ||
         b.song.category_priority - a.song.category_priority ||
         b.termScore - a.termScore ||
