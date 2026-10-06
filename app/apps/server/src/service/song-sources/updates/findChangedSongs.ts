@@ -52,7 +52,9 @@ function readLibrarySongs(ids: number[]): Map<number, LibrarySong> {
  * library song several source songs claim is left out: updating it from each
  * in turn would never settle.
  */
-function sameFileMatches(verdicts: DiscoveryMatchResult[]): Map<string, number> {
+function sameFileMatches(
+  verdicts: DiscoveryMatchResult[],
+): Map<string, number> {
   const fromFile = verdicts.filter(
     (v) => v.verdict === 'exact-filename' && v.exactSongId != null,
   )
