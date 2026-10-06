@@ -5,7 +5,8 @@
  * from (source_filename). Run daily by .github/workflows/resurse-crestine-archive.yml.
  *
  * Usage: bun scripts/build-resurse-crestine-archive.ts <out-dir> [previous-checksum]
- * Writes resurse-crestine.chsongs, .zip (same bytes) and .chsongs.sha256 to
+ * Writes resurse-crestine.chsongs, resurse-crestine-opensong.zip (the same
+ * bytes, for other programs) and resurse-crestine.chsongs.sha256 to
  * <out-dir>, and `changed=true|false` to $GITHUB_OUTPUT when set. Nothing is
  * written when the checksum equals the previous one.
  */
@@ -126,7 +127,7 @@ async function main() {
   const archive = await zipBundleFiles(bundle)
   mkdirSync(outDir, { recursive: true })
   writeFileSync(join(outDir, `${ARCHIVE_NAME}.chsongs`), archive)
-  writeFileSync(join(outDir, `${ARCHIVE_NAME}.zip`), archive)
+  writeFileSync(join(outDir, `${ARCHIVE_NAME}-opensong.zip`), archive)
   writeFileSync(join(outDir, `${ARCHIVE_NAME}.chsongs.sha256`), `${checksum}\n`)
 }
 

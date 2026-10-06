@@ -61,5 +61,5 @@ jobs:
         run: |
           gh release upload song-sources --repo "$GITHUB_REPOSITORY" --clobber \
             "$RUNNER_TEMP/archive/resurse-crestine.chsongs" \
-            "$RUNNER_TEMP/archive/resurse-crestine.zip" \
+            "$RUNNER_TEMP/archive/resurse-crestine-opensong.zip" \
             "$RUNNER_TEMP/archive/resurse-crestine.chsongs.sha256"
