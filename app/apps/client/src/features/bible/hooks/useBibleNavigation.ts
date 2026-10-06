@@ -272,6 +272,7 @@ export function useBibleNavigation(
       presentedIndex: params.verseIndex,
       searchedIndex: null,
       searchQuery: '',
+      previousSearchQuery: null,
       level: 'verses',
     })
   }, [])

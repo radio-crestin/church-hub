@@ -2,7 +2,6 @@
 export {
   BibleBookmarksPanel,
   BibleControlPanel,
-  BibleHistoryItem,
   BibleHistoryPanel,
   BibleNavigationPanel,
   BibleSettingsPanel,

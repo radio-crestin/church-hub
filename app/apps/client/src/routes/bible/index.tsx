@@ -329,7 +329,7 @@ function BiblePage() {
     if (reset || focus) {
       // Clear the reset/focus param from URL, keep other params if just focusing
       navigate({
-        to: '/bible/',
+        to: '/bible',
         search: reset
           ? {}
           : {
@@ -416,7 +416,7 @@ function BiblePage() {
       // Navigate via URL to keep URL as source of truth
       // Use select=true to only select the verse (indigo) not present it (green)
       navigate({
-        to: '/bible/',
+        to: '/bible',
         search: {
           book: lastVisited.bookId,
           bookName: lastVisited.bookName,
@@ -846,7 +846,7 @@ function BiblePage() {
       isBrowsingRef.current = true
       pendingInternalNavRef.current = true
       navigate({
-        to: '/bible/',
+        to: '/bible',
         search: {
           book: book?.id,
           bookName: target.bookName,
@@ -1026,7 +1026,7 @@ function BiblePage() {
       // Clear select from URL so searchedIndex effect doesn't re-apply stale verse
       if (urlSelectOnly) {
         navigate({
-          to: '/bible/',
+          to: '/bible',
           search: {
             book: navigation.state.bookId,
             bookName: navigation.state.bookName,
@@ -1056,7 +1056,7 @@ function BiblePage() {
       // Navigate via URL - this will trigger the sync effect to update navigation state
       // Pass select=true to only select the verse without presenting it
       navigate({
-        to: '/bible/',
+        to: '/bible',
         search: {
           book: result.bookId,
           bookName: result.bookName,
@@ -1179,7 +1179,7 @@ function BiblePage() {
         // after chapter transitions (the URL verse would match in the new chapter)
         if (urlSelectOnly) {
           navigate({
-            to: '/bible/',
+            to: '/bible',
             search: {
               book: navigation.state.bookId,
               bookName: navigation.state.bookName,
@@ -1238,14 +1238,14 @@ function BiblePage() {
       if (level === 'verses' && bookId && bookName) {
         // Go back to chapters view
         navigate({
-          to: '/bible/',
+          to: '/bible',
           search: { book: bookId, bookName },
           replace: true,
         })
       } else if (level === 'chapters') {
         // Go back to books view
         navigate({
-          to: '/bible/',
+          to: '/bible',
           search: {},
           replace: true,
         })
@@ -1253,7 +1253,7 @@ function BiblePage() {
         // At books level with search - clear the search to show books
         navigation.clearSearch()
         navigate({
-          to: '/bible/',
+          to: '/bible',
           search: {},
           replace: true,
         })
@@ -1368,14 +1368,14 @@ function BiblePage() {
                 // browser history
                 pendingInternalNavRef.current = true
                 navigate({
-                  to: '/bible/',
+                  to: '/bible',
                   search: { book: bookId, bookName },
                 })
               }}
               onNavigateToChapter={(bookId, bookName, chapter, verse) => {
                 pendingInternalNavRef.current = true
                 navigate({
-                  to: '/bible/',
+                  to: '/bible',
                   search: {
                     book: bookId,
                     bookName,
@@ -1387,7 +1387,7 @@ function BiblePage() {
               }}
               onSearchQueryChange={(query) => {
                 navigate({
-                  to: '/bible/',
+                  to: '/bible',
                   search: query ? { q: query } : {},
                   replace: true,
                 })
@@ -1423,7 +1423,7 @@ function BiblePage() {
             isBrowsingRef.current = true
             pendingInternalNavRef.current = true
             navigate({
-              to: '/bible/',
+              to: '/bible',
               search: {
                 book: item.bookId,
                 bookName: item.bookName,
@@ -1453,7 +1453,7 @@ function BiblePage() {
             isBrowsingRef.current = true
             pendingInternalNavRef.current = true
             navigate({
-              to: '/bible/',
+              to: '/bible',
               search: {
                 book: bookmark.bookId,
                 bookName: bookmark.bookName,

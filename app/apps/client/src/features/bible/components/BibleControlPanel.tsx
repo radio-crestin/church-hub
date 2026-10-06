@@ -61,12 +61,10 @@ export function BibleControlPanel({
 
   const isHidden = state?.isHidden ?? true
   const hasContent =
-    !!state?.currentSongSlideId ||
-    !!state?.currentQueueItemId ||
-    !!state?.lastSongSlideId
+    !!state?.currentSongSlideId || !!state?.lastSongSlideId
 
   const handleShow = async () => {
-    if (state?.lastSongSlideId || state?.currentQueueItemId) {
+    if (state?.lastSongSlideId) {
       await showSlideCommand.mutateAsync()
     }
   }

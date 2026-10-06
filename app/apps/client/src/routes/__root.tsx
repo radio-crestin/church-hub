@@ -104,7 +104,7 @@ function SidebarNavigationListener() {
       const { route, focusSearch } = event.detail
       navigate({
         to: route,
-        search: focusSearch ? { focus: 'true' } : undefined,
+        search: focusSearch ? { focus: true } : undefined,
       })
     }
 

@@ -554,7 +554,6 @@ export function VersesList({
                         <MultiTranslationVerse
                           results={multiTranslationResults}
                           isLoading={isLoadingMulti}
-                          verseNumber={verse.verse}
                         />
                       )}
                     </div>

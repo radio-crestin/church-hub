@@ -28,7 +28,7 @@ export function useSmartSearch({
   onNavigateToChapter,
 }: UseSmartSearchParams) {
   const lastNavigatedRef = useRef<string | null>(null)
-  const { selectBook, navigateToChapter, selectVerse } = navigation
+  const { selectBook, navigateToChapter } = navigation
 
   const parsedReference = useMemo(() => {
     if (!enabled || books.length === 0 || !searchQuery.trim()) {
@@ -100,7 +100,6 @@ export function useSmartSearch({
     parsedReference,
     selectBook,
     navigateToChapter,
-    selectVerse,
     onNavigateToBook,
     onNavigateToChapter,
   ])

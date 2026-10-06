@@ -5,13 +5,11 @@ import type { MultiTranslationVerseResult } from '../hooks/useMultiTranslationVe
 interface MultiTranslationVerseProps {
   results: MultiTranslationVerseResult[]
   isLoading: boolean
-  verseNumber: number
 }
 
 export function MultiTranslationVerse({
   results,
   isLoading,
-  verseNumber,
 }: MultiTranslationVerseProps) {
   if (isLoading) {
     return (
