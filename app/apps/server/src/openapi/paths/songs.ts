@@ -594,62 +594,6 @@ export const songsPaths = {
       },
     },
   },
-  '/api/songs/discovery/count': {
-    post: {
-      tags: ['Songs'],
-      summary: 'Count new external candidates',
-      description:
-        'Cheap "how many of these are new?" count for the background discovery check (sidebar badge + toast). Uses filename + normalized-title exact matching only — no fuzzy/FTS — so it stays fast over a multi-thousand-song catalog. Send at most 5000 candidates per request.',
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              required: ['candidates'],
-              properties: {
-                candidates: {
-                  type: 'array',
-                  maxItems: 5000,
-                  items: {
-                    type: 'object',
-                    required: ['title'],
-                    properties: {
-                      title: { type: 'string' },
-                      sourceFilename: { type: 'string', nullable: true },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      responses: {
-        '200': {
-          description: 'Count of candidates not already in the library',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  data: {
-                    type: 'object',
-                    properties: {
-                      newCount: { type: 'integer' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        '400': { $ref: '#/components/responses/BadRequest' },
-        '401': { $ref: '#/components/responses/Unauthorized' },
-      },
-    },
-  },
   '/api/songs/{id}': {
     get: {
       tags: ['Songs'],

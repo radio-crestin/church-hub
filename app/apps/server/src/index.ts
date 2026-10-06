@@ -284,7 +284,6 @@ import {
   clearSearchCache,
   cloneSongSlide,
   completeSongReplacement,
-  countNewCandidates,
   DEFAULT_SONGS_PAGE_SIZE,
   type DiscoveryCandidateInput,
   deleteCategory,
@@ -5393,68 +5392,6 @@ async function startRealServer(): Promise<void> {
           return handleCors(
             req,
             new Response(JSON.stringify({ data: results }), {
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // POST /api/songs/discovery/count - Cheap "how many are new?" count for the
-      // background discovery check (sidebar badge + toast). Filename + title only,
-      // no FTS — so it stays fast even over a multi-thousand-song catalog.
-      if (
-        req.method === 'POST' &&
-        url.pathname === '/api/songs/discovery/count'
-      ) {
-        const permError = checkPermission('songs.create')
-        if (permError) return permError
-
-        try {
-          const body = (await req.json()) as {
-            candidates: { title: string; sourceFilename: string | null }[]
-          }
-
-          if (!body.candidates || !Array.isArray(body.candidates)) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({ error: 'Missing candidates array' }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
-          }
-
-          if (body.candidates.length > 5000) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({
-                  error: 'Too many candidates (max 5000 per request)',
-                }),
-                {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                },
-              ),
-            )
-          }
-
-          const newCount = countNewCandidates(body.candidates)
-
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ data: { newCount } }), {
               headers: { 'Content-Type': 'application/json' },
             }),
           )

@@ -157,23 +157,6 @@ export function matchCandidatesAgainstLibrary(
 }
 
 /**
- * Cheap "how many of these are new?" count for the BACKGROUND discovery check
- * that drives the sidebar badge + toast. Deliberately skips the expensive FTS
- * fuzzy pass — it only needs filename + normalized-title exact matching, which
- * is two hash lookups per candidate. A candidate counts as new when it matches
- * NO existing library song by filename or title (the fuzzy "similar" ones still
- * count as new here, since the user doesn't actually have them yet).
- *
- * Returns just the count so the background job can decide whether to notify
- * without paying for the full per-candidate similarity payload.
- */
-export function countNewCandidates(
-  candidates: readonly { title: string; sourceFilename: string | null }[],
-): number {
-  return keepNotInLibrary(candidates).length
-}
-
-/**
  * The candidates the library has under neither their file name nor their
  * title: cheap (one pass over the library, then lookups), no similarity.
  */

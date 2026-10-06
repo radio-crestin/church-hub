@@ -17,7 +17,6 @@ export {
 } from './categories'
 // Discovery (external-source import)
 export {
-  countNewCandidates,
   keepNotInLibrary,
   matchCandidatesAgainstLibrary,
 } from './discovery'
