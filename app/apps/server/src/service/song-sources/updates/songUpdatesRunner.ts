@@ -15,7 +15,26 @@ interface Run {
   stop: () => void
 }
 
+interface RunOptions {
+  force?: boolean
+  /** Only these sources; every source when left out. */
+  sourceIds?: string[]
+}
+
 let current: Run | null = null
+/** What was asked for while a run ran: it runs right after. */
+let queued: RunOptions | null = null
+
+/** Two requests as one: forced if either is, every source if either asks. */
+function mergeRuns(a: RunOptions, b: RunOptions): RunOptions {
+  return {
+    force: a.force || b.force,
+    sourceIds:
+      a.sourceIds && b.sourceIds
+        ? [...new Set([...a.sourceIds, ...b.sourceIds])]
+        : undefined,
+  }
+}
 
 /**
  * The worker's file. In the compiled sidecar every worker is an entrypoint
@@ -35,12 +54,16 @@ export function isSongUpdatesRunning(): boolean {
 
 /**
  * Runs the song updates in a worker thread (see songUpdatesWorker.ts), one
- * run at a time: a second request while one runs waits for it.
+ * run at a time: what is asked for while one runs (a link just added, say)
+ * runs right after it, all such requests as one.
  */
 export function runSongUpdatesInWorker(
-  options: { force?: boolean; sourceIds?: string[] } = {},
+  options: RunOptions = {},
 ): Promise<void> {
-  if (current) return current.done
+  if (current) {
+    queued = queued ? mergeRuns(queued, options) : options
+    return current.done
+  }
   const worker = new Worker(workerSpecifier())
   let stop = () => {}
   const done = new Promise<void>((resolve) => {
@@ -50,6 +73,9 @@ export function runSongUpdatesInWorker(
       clearSearchCache()
       current = null
       resolve()
+      const next = queued
+      queued = null
+      if (next) void runSongUpdatesInWorker(next)
     }
     worker.onmessage = (event: MessageEvent) => {
       if (event.data?.type === 'failed') {
@@ -71,10 +97,11 @@ export function runSongUpdatesInWorker(
   return done
 }
 
-/** Stops the running check; false when none runs. */
+/** Stops the running check, and the one asked for after it; false when none runs. */
 export function cancelSongUpdates(): boolean {
   if (!current) return false
   logger.info('Song updates cancelled by the user')
+  queued = null
   current.stop()
   return true
 }

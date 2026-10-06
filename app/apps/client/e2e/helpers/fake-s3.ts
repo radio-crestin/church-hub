@@ -14,6 +14,8 @@ export class FakeS3 {
   readonly redirects = new Map<string, string>()
   /** Paths never answered, like a stalled server. */
   readonly stalled = new Set<string>()
+  /** Paths answered only after this many ms, like a slow server. */
+  readonly delays = new Map<string, number>()
   private server: Server | undefined
 
   async start(): Promise<void> {
@@ -40,12 +42,15 @@ export class FakeS3 {
         res.writeHead(302, { Location: location }).end()
         return
       }
-      const body = this.objects.get(path)
-      if (!body) {
-        res.writeHead(404).end()
-        return
+      const answer = () => {
+        const body = this.objects.get(path)
+        if (!body) {
+          res.writeHead(404).end()
+          return
+        }
+        res.writeHead(200, { 'Content-Length': body.length }).end(body)
       }
-      res.writeHead(200, { 'Content-Length': body.length }).end(body)
+      setTimeout(answer, this.delays.get(path) ?? 0)
     })
     await new Promise<void>((resolve) =>
       this.server?.listen(0, '127.0.0.1', resolve),

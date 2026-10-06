@@ -178,4 +178,53 @@ test.describe('Song updates', () => {
     expect(await lyricsOf(kept.title)).toContain('zori noi de lumina')
     expect(await lyricsOf(edited.title)).toContain('versurile noastre')
   })
+
+  test('a check asked for while another runs follows right after it', async ({
+    request,
+  }) => {
+    const other = song(
+      'e',
+      `Cantare din alta sursa ${tag}`,
+      `${tag} munti inalti si vai adanci sub cer`,
+    )
+    const url = publishSongFolder(
+      s3,
+      `${folder}-other`,
+      `${categoryName} B`,
+      [other],
+      'one',
+    )
+    const otherId = await addLinkSource(request, url)
+    // The first source answers slowly, so its check is still running.
+    s3.delays.set(`${folder}/manifest.json`, 3000)
+    try {
+      const first = await request.post('/api/song-sources/updates/run', {
+        data: { sourceIds: [sourceId], force: true },
+      })
+      expect(first.status()).toBe(202)
+      const second = await request.post('/api/song-sources/updates/run', {
+        data: { sourceIds: [otherId] },
+      })
+      expect((await second.json()).data.running).toBe(true)
+
+      await expect(async () => {
+        const state = (
+          await (await request.get('/api/song-sources/updates')).json()
+        ).data
+        expect(state.running).toBe(false)
+        expect(
+          state.sources.find(
+            (s: { sourceId: string }) => s.sourceId === otherId,
+          ),
+        ).toMatchObject({ imported: 1 })
+      }).toPass({ timeout: 60_000 })
+      expect(await songsTitled(request, other.title)).toHaveLength(1)
+    } finally {
+      s3.delays.clear()
+      await request.delete(`/api/song-sources/${otherId}`)
+      for (const hit of await songsTitled(request, other.title)) {
+        await request.delete(`/api/songs/${hit.id}`)
+      }
+    }
+  })
 })
