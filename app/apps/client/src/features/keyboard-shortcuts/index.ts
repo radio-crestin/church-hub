@@ -39,6 +39,7 @@ export type { SceneShortcutSource, SidebarShortcutSource } from './utils'
 export {
   formatShortcutForDisplay,
   isModifierKey,
+  listenForPageKeyClaims,
   validateGlobalShortcut,
   validateSceneShortcut,
   validateSidebarShortcut,

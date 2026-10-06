@@ -1,7 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 
 import {
   KEYBOARD_PRIORITY,
+  listenForPageKeyClaims,
   useKeyboardNavigationHandler,
 } from '~/features/keyboard-shortcuts'
 
@@ -66,11 +67,22 @@ export function useSongSlideSelectionKeyboard({
     [slidesCount, selectedSlideIndex, onSelectSlide, onPresentSlide, onGoBack],
   )
 
+  // F5 is also the Songs sidebar key; on an open song it still presents.
+  const isActive = enabled && slidesCount > 0
+  useEffect(() => {
+    if (!isActive) return
+    return listenForPageKeyClaims((shortcut) => {
+      if (shortcut !== 'F5') return false
+      onPresentSlide()
+      return true
+    })
+  }, [isActive, onPresentSlide])
+
   // Register with PAGE priority (higher than global presentation shortcuts)
   useKeyboardNavigationHandler(
     'song-slide-selection',
     KEYBOARD_PRIORITY.PAGE,
     handleKeyDown,
-    enabled && slidesCount > 0,
+    isActive,
   )
 }
