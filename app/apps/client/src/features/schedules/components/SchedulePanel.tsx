@@ -16,13 +16,12 @@ import {
 } from '@dnd-kit/sortable'
 import { useQueryClient } from '@tanstack/react-query'
 import {
+  Bookmark,
   CalendarDays,
-  CalendarPlus,
-  CalendarPlus2,
   ChevronDown,
   ExternalLink,
+  ListPlus,
   Pencil,
-  Plus,
   Search,
   Trash2,
 } from 'lucide-react'
@@ -33,7 +32,7 @@ import { KeyLineEditDialog } from '~/features/song-key'
 import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { usePermissions } from '~/provider/permissions-provider'
-import { Combobox, type ComboboxOption } from '~/ui/combobox'
+import type { ComboboxOption } from '~/ui/combobox'
 import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
@@ -46,6 +45,8 @@ import {
   ScheduleItemEditors,
   type ScheduleItemEditorsHandle,
 } from './ScheduleItemEditors'
+import { SchedulePanelNoPrograms } from './SchedulePanelNoPrograms'
+import { SchedulePanelPicker } from './SchedulePanelPicker'
 import { ScheduleSlideRow } from './ScheduleSlideRow'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import { ScheduleVerseRow } from './ScheduleVerseRow'
@@ -65,6 +66,7 @@ import {
   writeSelectedScheduleId,
 } from '../service/selectedSchedule'
 import type { AddToScheduleInput, Schedule, ScheduleItem } from '../types'
+import { isSamePassage } from '../utils/isSamePassage'
 import { countScheduleItemSteps } from '../utils/scheduleFlatItems'
 
 interface SchedulePanelProps {
@@ -118,8 +120,8 @@ interface SchedulePanelProps {
  * It is the program page's item list in miniature — every kind of item shows
  * up, each expands to its presentable steps, clicking a step projects it, and
  * the live step is ringed green — wrapped in the panel affordances the two
- * pages already had: the sung/read markers, the all/remaining/sung tabs, the
- * search box, drag-to-reorder, and the add/open/delete buttons.
+ * pages already had: the sung/read markers, the search box, drag-to-reorder,
+ * and the new/add/open/rename/delete buttons.
  *
  * Reordering and filtering deliberately stay a songs-and-passages affair: an
  * announcement has no "already sung" state and its place in the program is the
@@ -154,6 +156,7 @@ export function SchedulePanel({
   const { hasPermission } = usePermissions()
   const canEditProgram = hasPermission('programs.edit')
   const canCreateProgram = hasPermission('programs.create')
+  const canDeleteProgram = hasPermission('programs.delete')
   const [isCreatingSchedule, setIsCreatingSchedule] = useState(false)
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
@@ -493,7 +496,7 @@ export function SchedulePanel({
             item={item}
             isActive={
               !!activeReference &&
-              item.biblePassageReference?.startsWith(activeReference) === true
+              isSamePassage(item.biblePassageReference, activeReference)
             }
             isLive={isLive}
             isSortable={sortable}
@@ -505,7 +508,7 @@ export function SchedulePanel({
                 : undefined
             }
             onSelect={() => onSelectPassage?.(item)}
-            onRemove={() => handleRemove(item.id)}
+            onRemove={canEditProgram ? () => handleRemove(item.id) : undefined}
             onToggleSung={() => handleToggleSung(item.id, item.isSung)}
           />
         )
@@ -528,7 +531,7 @@ export function SchedulePanel({
             }
             onEditKeyLine={() => editKeyLine(item)}
             onSelect={() => item.songId && onSelectSong?.(item.songId)}
-            onRemove={() => handleRemove(item.id)}
+            onRemove={canEditProgram ? () => handleRemove(item.id) : undefined}
             onToggleSung={() => handleToggleSung(item.id, item.isSung)}
           />
         )
@@ -584,21 +587,21 @@ export function SchedulePanel({
           {
             id: 'add-item',
             label: tCommon('addMenu.title'),
-            icon: <Plus size={18} />,
+            icon: <ListPlus size={18} />,
             iconClassName:
               'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
             onSelect: () => editorsRef.current?.addItem(),
             testId: 'schedule-add-item-menu',
             inline: (
-              <Tooltip content={tCommon('addMenu.button')} position="bottom">
+              <Tooltip content={t('panel.addItem')} position="bottom">
                 <button
                   type="button"
                   onClick={() => editorsRef.current?.addItem()}
                   data-testid="schedule-add-item"
-                  aria-label={tCommon('addMenu.button')}
+                  aria-label={t('panel.addItem')}
                   className="p-1.5 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <ListPlus className="w-3.5 h-3.5" />
                 </button>
               </Tooltip>
             ),
@@ -619,21 +622,23 @@ export function SchedulePanel({
             onSelect: toggleSearch,
             testId: 'schedule-search-toggle-menu',
             inline: (
-              <button
-                type="button"
-                onClick={toggleSearch}
-                aria-expanded={isSearchOpen}
-                aria-label={searchLabel}
-                title={searchLabel}
-                data-testid="schedule-search-toggle"
-                className={`p-1.5 rounded-md transition-colors ${
-                  isSearchOpen
-                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
-                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={searchLabel} position="bottom">
+                <button
+                  type="button"
+                  onClick={toggleSearch}
+                  aria-expanded={isSearchOpen}
+                  aria-label={searchLabel}
+                  title={searchLabel}
+                  data-testid="schedule-search-toggle"
+                  className={`p-1.5 rounded-md transition-colors ${
+                    isSearchOpen
+                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
+                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -647,48 +652,24 @@ export function SchedulePanel({
           {
             id: 'add-all-bookmarks',
             label: t('panel.addAllBookmarks'),
-            icon: <CalendarPlus size={18} />,
+            icon: <Bookmark size={18} />,
             iconClassName:
               'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
             onSelect: onAddAllBookmarks,
             testId: 'schedule-add-all-bookmarks-menu',
             inline: (
-              <button
-                type="button"
-                onClick={onAddAllBookmarks}
-                data-testid="schedule-add-all-bookmarks"
-                title={t('panel.addAllBookmarks')}
-                className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-              </button>
-            ),
-          },
-        ]
-      : []),
-    // A new program, made right here and picked straight away — on Sunday
-    // morning usually today's, which the dialog makes in one click.
-    ...(canCreateProgram
-      ? [
-          {
-            id: 'new-schedule',
-            label: t('panel.newSchedule'),
-            icon: <CalendarPlus2 size={18} />,
-            iconClassName:
-              'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-            onSelect: () => setIsCreatingSchedule(true),
-            testId: 'schedule-new-menu',
-            inline: (
-              <button
-                type="button"
-                onClick={() => setIsCreatingSchedule(true)}
-                data-testid="schedule-new"
-                aria-label={t('panel.newSchedule')}
-                title={t('panel.newSchedule')}
-                className="p-1.5 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
-              >
-                <CalendarPlus2 className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.addAllBookmarks')} position="bottom">
+                <button
+                  type="button"
+                  onClick={onAddAllBookmarks}
+                  data-testid="schedule-add-all-bookmarks"
+                  aria-label={t('panel.addAllBookmarks')}
+                  title={t('panel.addAllBookmarks')}
+                  className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -704,15 +685,18 @@ export function SchedulePanel({
             onSelect: () => onOpenSchedule(selectedScheduleId),
             testId: 'schedule-open-menu',
             inline: (
-              <button
-                type="button"
-                onClick={() => onOpenSchedule(selectedScheduleId)}
-                data-testid="schedule-open"
-                className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
-                title={t('panel.openSchedule')}
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.openSchedule')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => onOpenSchedule(selectedScheduleId)}
+                  data-testid="schedule-open"
+                  aria-label={t('panel.openSchedule')}
+                  className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
+                  title={t('panel.openSchedule')}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -726,21 +710,23 @@ export function SchedulePanel({
             onSelect: () => setRenamingSchedule(schedule),
             testId: 'schedule-rename-menu',
             inline: (
-              <button
-                type="button"
-                onClick={() => setRenamingSchedule(schedule)}
-                data-testid="schedule-rename"
-                aria-label={t('panel.renameSchedule')}
-                title={t('panel.renameSchedule')}
-                className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.renameSchedule')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setRenamingSchedule(schedule)}
+                  data-testid="schedule-rename"
+                  aria-label={t('panel.renameSchedule')}
+                  title={t('panel.renameSchedule')}
+                  className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
       : []),
-    ...(selectedScheduleId
+    ...(selectedScheduleId && canDeleteProgram
       ? [
           {
             id: 'delete',
@@ -751,15 +737,18 @@ export function SchedulePanel({
             onSelect: () => setPendingDelete(true),
             testId: 'schedule-delete-menu',
             inline: (
-              <button
-                type="button"
-                onClick={() => setPendingDelete(true)}
-                data-testid="schedule-delete"
-                title={t('panel.deleteSchedule')}
-                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content={t('panel.deleteSchedule')} position="bottom">
+                <button
+                  type="button"
+                  onClick={() => setPendingDelete(true)}
+                  data-testid="schedule-delete"
+                  aria-label={t('panel.deleteSchedule')}
+                  title={t('panel.deleteSchedule')}
+                  className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             ),
           },
         ]
@@ -826,17 +815,13 @@ export function SchedulePanel({
           {/* Program picker — searchable, because a church accumulates a lot
               of past programs. */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <Combobox
+            <SchedulePanelPicker
               options={scheduleOptions}
               value={selectedScheduleId}
-              onChange={(value) =>
-                setSelectedScheduleId(
-                  typeof value === 'number' ? value : Number(value) || null,
-                )
+              onChange={setSelectedScheduleId}
+              onNewProgram={
+                canCreateProgram ? () => setIsCreatingSchedule(true) : undefined
               }
-              placeholder={t('panel.selectSchedule')}
-              allowClear={false}
-              className="w-full"
             />
           </div>
 
@@ -881,26 +866,26 @@ export function SchedulePanel({
                 ...
               </div>
             ) : schedules.length === 0 ? (
-              <div className="px-4 py-6 text-center">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('panel.noSchedules')}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {t('panel.noSchedulesDescription')}
-                </p>
-              </div>
+              <SchedulePanelNoPrograms canCreate={canCreateProgram} />
             ) : displayItems.length === 0 ? (
               isSearching ? (
                 <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                   {t('panel.noResults')}
                 </div>
               ) : (
-                <div className="px-4 py-6 text-center">
+                <div
+                  data-testid="schedule-panel-empty-program"
+                  className="px-4 py-6 text-center"
+                >
                   <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {t('panel.emptySchedule')}
                   </p>
+                  {canEditProgram && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      {t('panel.emptyScheduleHint')}
+                    </p>
+                  )}
                 </div>
               )
             ) : (

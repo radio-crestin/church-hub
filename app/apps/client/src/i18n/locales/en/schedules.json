@@ -1,6 +1,8 @@
 {
   "title": "Schedules",
-  "keyLine": { "missing": "No key" },
+  "keyLine": {
+    "missing": "No key"
+  },
   "actions": {
     "create": "New Schedule",
     "save": "Save",
@@ -64,8 +66,8 @@
     "deleteScheduleMessage": "\"{{title}}\" and everything in it ({{count}} items) will be deleted. This cannot be undone.",
     "openSchedule": "Open program",
     "noSchedules": "No programs yet",
-    "noSchedulesDescription": "Create a program from the Programs page to see its songs here.",
-    "emptySchedule": "This program has no songs",
+    "noSchedulesDescription": "Make one with the green + beside the program list.",
+    "emptySchedule": "This program is empty",
     "noResults": "No matching songs",
     "openSearch": "Search in this program",
     "closeSearch": "Close search",
@@ -76,7 +78,11 @@
     "openSong": "Open the song",
     "openPassage": "Open the passage",
     "renameSchedule": "Rename this program",
-    "newSchedule": "New program"
+    "newSchedule": "New program",
+    "createNamed": "Create program",
+    "emptyScheduleHint": "Add songs or verses with the buttons above, or drag a song here.",
+    "dragToReorder": "Drag to reorder",
+    "addItem": "Add a song or verse to this program"
   },
   "search": {
     "placeholder": "Search schedules...",

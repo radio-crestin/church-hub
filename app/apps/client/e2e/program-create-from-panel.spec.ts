@@ -77,15 +77,9 @@ async function expectPanelOn(
     .toBe(String(program.id))
 }
 
-/** The panel's "New program", whether it sits in the header or under "More". */
+/** The panel's "New program": the + beside the program picker. */
 async function clickNewProgram(page: Page) {
-  const inline = page.getByTestId('schedule-new')
-  if (await inline.isVisible()) {
-    await inline.click()
-    return
-  }
-  await page.getByTestId('schedule-header-more').click()
-  await page.getByTestId('schedule-new-menu').click()
+  await page.getByTestId('schedule-picker-new').click()
 }
 
 test.describe('create a program from the Programe panel', () => {

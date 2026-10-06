@@ -68,8 +68,8 @@
     "deleteScheduleMessage": "\"{{title}}\" si tot ce contine ({{count}} elemente) vor fi sterse. Actiunea nu poate fi anulata.",
     "openSchedule": "Deschide programul",
     "noSchedules": "Niciun program creat",
-    "noSchedulesDescription": "Creeaza un program din pagina Programe pentru a-i vedea cantarile aici.",
-    "emptySchedule": "Acest program nu are cantari",
+    "noSchedulesDescription": "Creează un program cu butonul verde + de lângă listă.",
+    "emptySchedule": "Acest program este gol",
     "noResults": "Nicio cantare gasita",
     "openSearch": "Cauta in acest program",
     "closeSearch": "Inchide cautarea",
@@ -80,7 +80,11 @@
     "openSong": "Deschide cantarea",
     "openPassage": "Deschide pasajul",
     "renameSchedule": "Redenumeste acest program",
-    "newSchedule": "Program nou"
+    "newSchedule": "Program nou",
+    "createNamed": "Creează programul",
+    "emptyScheduleHint": "Adaugă cântări sau versete cu butoanele de sus, ori trage aici o cântare.",
+    "dragToReorder": "Trage ca să schimbi ordinea",
+    "addItem": "Adaugă o cântare sau un verset în program"
   },
   "search": {
     "placeholder": "Cauta programe...",

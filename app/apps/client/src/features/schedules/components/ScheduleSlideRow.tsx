@@ -117,6 +117,7 @@ export function ScheduleSlideRow({
           {...attributes}
           {...listeners}
           data-testid="schedule-slide-drag-handle"
+          title={t('panel.dragToReorder')}
           className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <GripVertical
