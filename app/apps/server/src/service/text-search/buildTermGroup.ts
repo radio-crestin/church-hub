@@ -17,14 +17,15 @@ const WELL_ATTESTED_DOCUMENTS = 3
 /**
  * One typed word (folded, as `splitWordUnits` gives it) and every way it
  * may be written in a document: itself, its joined and elided spellings,
- * and, unless it is a known word, the indexed words within its typo
- * budget. `typing` marks the last
- * word while it is still being typed, matched as a beginning.
+ * its `synonyms` and, unless it is a known word, the indexed words within
+ * its typo budget. `typing` marks the last word while it is still being
+ * typed, matched as a beginning.
  */
 export function buildTermGroup(
   unit: string,
   typing: boolean,
   vocabulary: Vocabulary,
+  synonyms: string[],
 ): TermGroup {
   const pieces = unit.split(SIGNS_RE).filter((piece) => piece.length > 0)
   const compact = pieces.join('')
@@ -34,6 +35,7 @@ export function buildTermGroup(
   for (const spelling of [
     ...joinedWordVariants(unit),
     ...elisionVariants(compact),
+    ...synonyms,
   ]) {
     variants.push({ text: spelling, prefix: typing, edits: 0 })
   }

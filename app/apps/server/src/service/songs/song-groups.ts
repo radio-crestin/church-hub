@@ -1,7 +1,7 @@
 import { eq, inArray, sql } from 'drizzle-orm'
 
 import { getHiddenCategoryIds } from './categories'
-import { searchSongs } from './search'
+import { searchSongs } from './song-search/searchSongs'
 import type {
   OperationResult,
   SongGroup,

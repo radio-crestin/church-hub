@@ -1,5 +1,5 @@
 import { buildMatchTiers, type MatchTiers } from './buildMatchTiers'
-import { buildTermGroups } from './buildTermGroups'
+import { buildTermGroups, type SynonymsOf } from './buildTermGroups'
 import { buildVariantMatcher, type VariantMatcher } from './buildVariantMatcher'
 import { foldSearchText } from './foldSearchText'
 import { scoreTextMatch } from './scoreTextMatch'
@@ -19,10 +19,14 @@ export interface TextQuery {
 /**
  * The shared search engine's entry point, used by the Bible and the songs
  * alike: the query's words with their typo and spelling variants, looked up
- * in the vocabulary of `ftsTable`.
+ * in the vocabulary of `ftsTable`, plus any synonyms the caller knows.
  */
-export function prepareTextQuery(query: string, ftsTable: string): TextQuery {
-  const groups = buildTermGroups(query, getVocabulary(ftsTable))
+export function prepareTextQuery(
+  query: string,
+  ftsTable: string,
+  synonymsOf: SynonymsOf = () => [],
+): TextQuery {
+  const groups = buildTermGroups(query, getVocabulary(ftsTable), synonymsOf)
   const matcher: VariantMatcher = buildVariantMatcher(groups)
   return {
     groups,

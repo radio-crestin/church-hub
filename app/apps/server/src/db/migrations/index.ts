@@ -25,6 +25,7 @@ import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
 import { assignDefaultPageKeys } from './assign-default-page-keys'
 import { convertBibleBookmarkStylesToMarkdown } from './convert-bible-bookmark-styles-to-markdown'
 import { dropSongKeyColumn } from './drop-song-key-column'
+import { dropSongsTrigramIndex } from './drop-songs-trigram-index'
 import { EMBEDDED_MIGRATIONS } from './embedded'
 import { enableScreensAlwaysOnTop } from './enable-screens-always-on-top'
 import { extractKeylinesFromSlides } from './extract-keylines-from-slides'
@@ -456,6 +457,11 @@ export function runMigrations(
     'upgrade_factory_transitions',
     'Running upgrade factory transitions migration',
     () => upgradeFactoryTransitions(rawDb),
+  )
+
+  // Song typos are found through the songs_fts vocabulary now (T-128).
+  runStep('drop_songs_trigram_index', 'Dropping the songs trigram index', () =>
+    dropSongsTrigramIndex(rawDb),
   )
 
   return { ftsRecreated: ftsCreated }
