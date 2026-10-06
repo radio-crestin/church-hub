@@ -15,9 +15,10 @@ the branch's actual commits and diff against its base (the PR's base, else
 `main`): reviewers act on this text, so an invented behaviour is worse than a
 missing one. When unsure, inspect the code.
 
-This skill writes text only. Demo videos come from the better-tasks plugin
-(its before/after video rules); keep its video lines and `--attach` when you
-rewrite a body. Installers are built only on request (`gh workflow run pr-build.yml -f pr=<n>`,
+A better-tasks task's PR is the plugin's short draft (its pull-request
+skill); write this long form for one only when the user asks for it. This
+skill writes text only: demo videos come from the better-tasks plugin, so keep
+its video lines and `--attach` when you rewrite a body. Installers are built only on request (`gh workflow run pr-build.yml -f pr=<n>`,
 see `.github/workflows/pr-build.yml`); their links: `scripts/pr-build-links.sh <pr> --wait`.
 Keep the `<!-- pr-build:start -->` ... `<!-- pr-build:end -->` block when there is one.
 

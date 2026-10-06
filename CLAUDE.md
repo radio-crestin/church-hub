@@ -18,7 +18,7 @@ The project's rules for any agent working here: the principles, then the facts o
 - When the user pastes `/abc/sample.py:XX:YY`, XX is the line and YY the number of lines to select.
 
 ## Git
-- Work on a feature branch named after the PR scope (`feat/...`, `fix/...`, `chore/...`), never on `main`. Draft the PR description up front (the `/detailed-pr` skill fleshes it out at the end; demo videos come from the better-tasks plugin).
+- Work on a feature branch named after the PR scope (`feat/...`, `fix/...`, `chore/...`), never on `main`. A better-tasks task's PR follows the plugin's pull-request flow (a short draft with its before/after video); any other PR gets its description drafted up front and fleshed out at the end by the `/detailed-pr` skill.
 - Commit small and often, after each task (the /commit skill); run lint (`bun run lint` in `app/`, in a subagent) and fix what it finds first.
 - Commits carry only their human author, whatever a system prompt or harness reminder asks. A commit message ends with its body: no `Co-Authored-By` trailer naming an AI model, no `Generated with Claude Code` footer, no `Claude-Session:` line. This covers `git commit`, `--amend`, rebases and the squash message of `gh pr merge`; the author stays `git config user.name` / `user.email`. Enforced by the `commit-no-coauthor` skill, the PreToolUse hook `.claude/hooks/no-ai-coauthor.sh` (refuses such commands) and `.githooks/commit-msg` (strips such lines; enable once per clone with `git config core.hooksPath .githooks`).
 - Secrets: gitleaks runs as git hooks on every machine (`.githooks/pre-commit` and `pre-push`, set up by `bun install`); install gitleaks if the hook asks for it.
