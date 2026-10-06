@@ -309,5 +309,10 @@
   "today": {
     "button": "Azi",
     "hint": "Programul de azi, {{title}}: creat dintr-un click, sau folosit cel existent"
+  },
+  "quickInsert": {
+    "song": "Adaugă o cântare după „{{title}}”",
+    "verses": "Adaugă versete biblice după „{{title}}”",
+    "scene": "Adaugă o scenă OBS după „{{title}}”"
   }
 }

@@ -38,6 +38,8 @@ interface AddScheduleItemModalProps {
    * Programe panel, whose "+" can move into its header's "More" menu.
    */
   showTrigger?: boolean
+  /** Where the modal opens: the type menu, or straight at the song search. */
+  startAt?: 'menu' | 'song'
 }
 
 interface MenuOption {
@@ -67,6 +69,7 @@ export function AddScheduleItemModal({
   onAddSlide,
   onAddScene,
   showTrigger = true,
+  startAt = 'menu',
 }: AddScheduleItemModalProps) {
   const { t } = useTranslation('common')
   const { t: tSchedules } = useTranslation('schedules')
@@ -82,13 +85,13 @@ export function AddScheduleItemModal({
     const dialog = dialogRef.current
     if (!dialog) return
     if (isOpen && !dialog.open) {
-      setStep('menu')
+      setStep(startAt)
       setPreviewSongId(null)
       dialog.showModal()
     } else if (!isOpen && dialog.open) {
       dialog.close()
     }
-  }, [isOpen])
+  }, [isOpen, startAt])
 
   const handleClose = useCallback(() => {
     onOpenChange(false)
