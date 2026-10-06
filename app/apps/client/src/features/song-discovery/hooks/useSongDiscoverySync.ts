@@ -2,13 +2,19 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { backfillAlternateTitles } from '~/features/songs/service'
-import { PROVIDERS } from '../providers'
+import { catalogQueryKey } from './useFetchCatalog'
+import { SONG_SOURCES_QUERY_KEY } from './useSongSources'
+import { fetchSourceCatalog } from '../providers'
 import {
   countNewCandidates,
   fetchCatalogSignature,
 } from '../service/discoveryApi'
+import { getSongSources } from '../service/songSourcesApi'
 import { alternateTitleEntries } from '../utils/alternateTitleEntries'
 import { shouldRecoverTitles } from '../utils/shouldRecoverTitles'
+
+/** The source the background check watches. */
+const WATCHED_SOURCE_ID = 'resurse-crestine'
 
 const ENABLED_KEY = 'song-discovery-enabled'
 const LAST_CHECKED_KEY = 'song-discovery-last-checked'
@@ -134,13 +140,17 @@ export function useSongDiscoverySync(
         return
       }
 
-      const provider = PROVIDERS[0]
-      if (!provider) return
-
       inFlightRef.current = true
       setIsChecking(true)
       try {
-        const nextSignature = await fetchCatalogSignature(provider.catalogUrl)
+        const sources = await queryClient.fetchQuery({
+          queryKey: SONG_SOURCES_QUERY_KEY,
+          queryFn: getSongSources,
+        })
+        const source = sources.find((s) => s.id === WATCHED_SOURCE_ID)
+        if (!source) return
+
+        const nextSignature = await fetchCatalogSignature(source.url)
         const storedSignature = localStorage.getItem(SIGNATURE_KEY) ?? ''
         const lastChecked = readNumber(LAST_CHECKED_KEY)
         const dueByTime = Date.now() - lastChecked >= MIN_CHECK_GAP_MS
@@ -171,7 +181,7 @@ export function useSongDiscoverySync(
           }
         }
 
-        const candidates = await provider.fetchCatalog()
+        const candidates = await fetchSourceCatalog(source)
         const count = await countNewCandidates(candidates)
 
         // Give the library back the names the catalogue knows its songs by, so
@@ -192,7 +202,7 @@ export function useSongDiscoverySync(
         }
 
         // Prime the discover screen's cache so opening it doesn't re-download.
-        queryClient.setQueryData(['discovery-catalog', provider.id], candidates)
+        queryClient.setQueryData(catalogQueryKey(source.id), candidates)
 
         localStorage.setItem(SIGNATURE_KEY, nextSignature)
         localStorage.setItem(NEW_COUNT_KEY, String(count))

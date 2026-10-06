@@ -1,6 +1,6 @@
 {
-  "title": "Descarcă ultimele cântări de pe Resurse Creștine",
-  "description": "Aduce cele mai noi cântări de pe Resurse Creștine care nu sunt încă în biblioteca ta, le verifică și importă doar ce dorești.",
+  "title": "Descarcă ultimele cântări din {{source}}",
+  "description": "Aduce cele mai noi cântări din {{source}} care nu sunt încă în biblioteca ta, le verifică și importă doar ce dorești.",
   "button": {
     "discover": "Descarcă cântări",
     "searching": "Caut"
@@ -20,9 +20,6 @@
     "label": "Sursă",
     "fetch": "Descarcă catalogul",
     "refresh": "Reîmprospătează catalogul"
-  },
-  "sources": {
-    "resurseCrestine": "Resurse Creștine"
   },
   "status": {
     "fetching": "Se descarcă și se prelucrează catalogul…",

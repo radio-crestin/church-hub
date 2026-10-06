@@ -1,14 +1,20 @@
-import { resurseCrestineProvider } from './resurseCrestine'
-import type { SourceProvider } from './types'
+import { fetchCantariCrestineCatalog } from './fetchCantariCrestineCatalog'
+import { fetchOpenSongZipCatalog } from './fetchOpenSongZipCatalog'
+import type { FetchCatalog, SongSource, SongSourceFormat } from './types'
 
-/**
- * Registry of external song sources. Adding a source = append its provider
- * here. Order is the order shown in the source picker.
- */
-export const PROVIDERS: SourceProvider[] = [resurseCrestineProvider]
-
-export function getProvider(id: string): SourceProvider | undefined {
-  return PROVIDERS.find((p) => p.id === id)
+/** How each source format's catalog is downloaded and parsed. */
+const FETCHERS: Partial<Record<SongSourceFormat, FetchCatalog>> = {
+  'opensong-zip': fetchOpenSongZipCatalog,
+  'cantaricrestine-api': fetchCantariCrestineCatalog,
 }
 
-export type { SourceProvider }
+/** Downloads and parses a source's catalog, by its format. */
+export const fetchSourceCatalog: FetchCatalog = (source, onProgress) => {
+  const fetchCatalog = FETCHERS[source.format]
+  if (!fetchCatalog) {
+    throw new Error(`Unsupported song source format: ${source.format}`)
+  }
+  return fetchCatalog(source, onProgress)
+}
+
+export type { SongSource, SongSourceFormat }

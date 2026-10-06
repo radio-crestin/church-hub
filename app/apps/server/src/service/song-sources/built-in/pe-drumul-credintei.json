@@ -1,0 +1,9 @@
+{
+  "id": "pe-drumul-credintei",
+  "name": "Pe drumul credinței",
+  "categoryName": "Pe Drumul Credinței",
+  "format": "cantaricrestine-api",
+  "url": "https://www.cantaricrestine.ro/api.php?token=church-hub&categorie=pdc&limita=5000&pagina=1",
+  "homepage": "https://www.cantaricrestine.ro/?categoria=pdc",
+  "license": "cantaricrestine.ro terms: free viewing, copying and distribution; no selling"
+}

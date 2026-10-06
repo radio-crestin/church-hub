@@ -24,6 +24,7 @@ import {
   songBookmarksPaths,
   songGroupsPaths,
   songHistoryPaths,
+  songSourcesPaths,
   songsPaths,
   syncPaths,
   usersPaths,
@@ -38,6 +39,7 @@ import {
   screenSchemas,
   songHistorySchemas,
   songSchemas,
+  songSourceSchemas,
   userSchemas,
 } from './schemas'
 
@@ -83,6 +85,10 @@ export const openApiSpec = {
       name: 'Song History',
       description: 'Who edited a song and when, with restore',
     },
+    {
+      name: 'Song Sources',
+      description: 'Where Song discovery imports songs from',
+    },
     { name: 'Categories', description: 'Song categories' },
     { name: 'Bible', description: 'Bible translations and verse management' },
     { name: 'Schedules', description: 'Schedule management' },
@@ -115,6 +121,7 @@ export const openApiSpec = {
     ...songsPaths,
     ...songGroupsPaths,
     ...songHistoryPaths,
+    ...songSourcesPaths,
     ...songBookmarksPaths,
     ...categoriesPaths,
     ...biblePaths,
@@ -134,6 +141,7 @@ export const openApiSpec = {
       ...deviceSchemas,
       ...songSchemas,
       ...songHistorySchemas,
+      ...songSourceSchemas,
       ...bibleSchemas,
       ...scheduleSchemas,
       ...screenSchemas,

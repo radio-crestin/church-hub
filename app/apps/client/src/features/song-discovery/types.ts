@@ -12,7 +12,6 @@ export interface DiscoveryCandidate {
   tempId: string
   parsed: ParsedSong
   sourceFilename: string | null
-  sourceFormat: 'opensong' | 'pptx'
 }
 
 /** Mirrors the server's `DiscoveryMatchVerdict`. */

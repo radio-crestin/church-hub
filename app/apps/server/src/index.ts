@@ -43,6 +43,7 @@ import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleSongHistoryRoutes } from './routes/song-history'
+import { handleSongSourceRoutes } from './routes/song-sources'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -270,6 +271,7 @@ import {
   updateBookmarkNote,
 } from './service/song-bookmarks'
 import { resolveSongEditor, saveSongWithHistory } from './service/song-history'
+import { isProxyAllowedUrl } from './service/song-sources'
 import {
   type BatchImportSongInput,
   backfillAlternateTitles,
@@ -5477,10 +5479,6 @@ async function startRealServer(): Promise<void> {
           )
         }
 
-        const allowedDomains = [
-          'download.resursecrestine.ro',
-          'resursecrestine.ro',
-        ]
         let parsedHeadUrl: URL
         try {
           parsedHeadUrl = new URL(targetUrl)
@@ -5493,7 +5491,7 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
-        if (!allowedDomains.includes(parsedHeadUrl.hostname)) {
+        if (!isProxyAllowedUrl(parsedHeadUrl)) {
           return handleCors(
             req,
             new Response(
@@ -5554,11 +5552,7 @@ async function startRealServer(): Promise<void> {
           )
         }
 
-        // Only allow specific trusted domains
-        const allowedDomains = [
-          'download.resursecrestine.ro',
-          'resursecrestine.ro',
-        ]
+        // Only the hosts of known song sources
         let parsedUrl: URL
         try {
           parsedUrl = new URL(targetUrl)
@@ -5572,7 +5566,7 @@ async function startRealServer(): Promise<void> {
           )
         }
 
-        if (!allowedDomains.includes(parsedUrl.hostname)) {
+        if (!isProxyAllowedUrl(parsedUrl)) {
           return handleCors(
             req,
             new Response(
@@ -8281,6 +8275,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (songHistoryResponse) return songHistoryResponse
+
+      // Song sources (built-in configs and the user's own)
+      const songSourcesResponse = await handleSongSourceRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (songSourcesResponse) return songSourcesResponse
 
       // Background media routes (screen background image/video uploads)
       const backgroundMediaResponse = await handleBackgroundMediaRoutes(

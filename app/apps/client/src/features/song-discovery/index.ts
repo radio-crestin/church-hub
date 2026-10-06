@@ -5,8 +5,7 @@ export {
   SongDiscoveryProvider,
   useSongDiscovery,
 } from './context/SongDiscoveryContext'
-export { PROVIDERS } from './providers'
-export type { SourceProvider } from './providers/types'
+export type { SongSource } from './providers'
 export type {
   CandidateDraft,
   DiscoveryCandidate,

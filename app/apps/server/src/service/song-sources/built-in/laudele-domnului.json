@@ -1,0 +1,9 @@
+{
+  "id": "laudele-domnului",
+  "name": "Laudele Domnului",
+  "categoryName": "Laudele Domnului",
+  "format": "cantaricrestine-api",
+  "url": "https://www.cantaricrestine.ro/api.php?token=church-hub&categorie=ld&limita=5000&pagina=1",
+  "homepage": "https://www.cantaricrestine.ro/?categoria=ld",
+  "license": "cantaricrestine.ro terms: free viewing, copying and distribution; no selling"
+}
