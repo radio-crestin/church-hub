@@ -46,14 +46,22 @@ async function programSongIds(
     )
 }
 
-/** Presses on `source`, travels to `target` and releases there. */
-async function dragOnto(page: Page, source: Locator, target: Locator) {
+/**
+ * Presses on `source`, travels to `target` and releases there: at its centre,
+ * or `yRatio` of the way down it.
+ */
+async function dragOnto(
+  page: Page,
+  source: Locator,
+  target: Locator,
+  yRatio = 0.5,
+) {
   const from = await source.boundingBox()
   const to = await target.boundingBox()
   if (!from || !to) throw new Error('drag source or target is not on screen')
 
   const start = { x: from.x + from.width / 2, y: from.y + from.height / 2 }
-  const end = { x: to.x + to.width / 2, y: to.y + to.height / 2 }
+  const end = { x: to.x + to.width / 2, y: to.y + to.height * yRatio }
 
   await page.mouse.move(start.x, start.y)
   await page.mouse.down()
@@ -319,7 +327,8 @@ test.describe('Drag a song out of the list', () => {
         new RegExp(`${first.title}.*(added|adaugata)`),
       )
       await expect(toast).toBeVisible()
-      await dragOnto(page, rowOf(second.title), toast)
+      // Its top edge: the part of the toast that is over the panel.
+      await dragOnto(page, rowOf(second.title), toast, 0.15)
 
       await expect
         .poll(async () => await programSongIds(request, program.id), {
