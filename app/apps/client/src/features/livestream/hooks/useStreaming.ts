@@ -69,8 +69,12 @@ export function useStreaming() {
           livestreamStatus.broadcastUrl ||
           `https://youtu.be/${livestreamStatus.broadcastId}`,
         status: 'live',
-        scheduledStartTime: new Date(livestreamStatus.startedAt || Date.now()),
-        actualStartTime: new Date(livestreamStatus.startedAt || Date.now()),
+        scheduledStartTime: new Date(
+          livestreamStatus.startedAt || Date.now(),
+        ).toISOString(),
+        actualStartTime: new Date(
+          livestreamStatus.startedAt || Date.now(),
+        ).toISOString(),
       }
     }
     return activeBroadcastQuery.data

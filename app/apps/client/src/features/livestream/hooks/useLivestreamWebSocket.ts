@@ -81,6 +81,10 @@ export function useLivestreamWebSocket() {
     }
 
     const apiUrl = getApiUrl()
+    if (!apiUrl) {
+      logger.warn('No API URL configured; livestream updates are off')
+      return
+    }
     const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws'
 
     logger.debug(`Connecting to ${wsUrl}`)
