@@ -10,6 +10,18 @@ const DAILY_MS = 24 * 60 * 60 * 1000
 
 let running: Promise<void> | null = null
 
+/**
+ * The worker's file. In the compiled sidecar every worker is an entrypoint
+ * of its own (scripts/workerEntrypoints.ts), found by its path from src/;
+ * from source, it is the file next to this one.
+ */
+function workerSpecifier(): string | URL {
+  const compiled = Bun.main.includes('$bunfs') || Bun.main.includes('~BUN')
+  return compiled
+    ? './service/song-sources/updates/songUpdatesWorker.ts'
+    : new URL('./songUpdatesWorker.ts', import.meta.url)
+}
+
 export function isSongUpdatesRunning(): boolean {
   return running !== null
 }
@@ -22,7 +34,7 @@ export function runSongUpdatesInWorker(
   options: { force?: boolean; sourceIds?: string[] } = {},
 ): Promise<void> {
   if (running) return running
-  const worker = new Worker(new URL('./songUpdatesWorker.ts', import.meta.url))
+  const worker = new Worker(workerSpecifier())
   running = new Promise<void>((resolve) => {
     const finish = () => {
       worker.terminate()
