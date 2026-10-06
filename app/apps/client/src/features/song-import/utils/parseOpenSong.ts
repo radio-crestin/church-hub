@@ -1,3 +1,4 @@
+import { stripFormattingTags } from '~/utils/stripFormattingTags'
 import { sanitizeSongTitle } from './sanitizeTitle'
 import type {
   OpenSongMetadata,
@@ -41,11 +42,12 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Gets text content from an XML element, returning null if empty
+ * Gets text content from an XML element, returning null if empty.
+ * Formatting tags written into the text (`<i>Cântare</i>`) are dropped, text kept.
  */
 function getTextContent(song: Element, tagName: string): string | null {
   const element = song.querySelector(tagName)
-  const text = element?.textContent?.trim()
+  const text = stripFormattingTags(element?.textContent ?? '').trim()
   return text || null
 }
 
@@ -212,7 +214,7 @@ export function parseOpenSongXml(
 
   // Extract and parse lyrics
   const lyricsElement = song.querySelector('lyrics')
-  const lyricsText = lyricsElement?.textContent || ''
+  const lyricsText = stripFormattingTags(lyricsElement?.textContent || '')
   const verses = parseLyrics(lyricsText)
 
   // Create slides based on presentation order

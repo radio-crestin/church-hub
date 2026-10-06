@@ -10,6 +10,7 @@ import { forwardRef, useRef } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
+import { HighlightedText } from '~/ui/search'
 import { startSongDrag } from '../utils/songDragController'
 
 interface SongCardProps {
@@ -123,11 +124,11 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
             {hasHighlight ? (
               <h3 className="font-medium text-gray-900 dark:text-white truncate">
                 <span
+                  data-testid="song-card-title"
                   className="[&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
-                  dangerouslySetInnerHTML={{
-                    __html: song.highlightedTitle!,
-                  }}
-                />
+                >
+                  <HighlightedText text={song.highlightedTitle!} />
+                </span>
                 {categorySuffix && (
                   <span className="text-gray-400 dark:text-gray-500 font-normal">
                     {categorySuffix}
@@ -190,9 +191,11 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
             </div>
             {song.matchedContent && (
               <p
+                data-testid="song-card-snippet"
                 className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
-                dangerouslySetInnerHTML={{ __html: song.matchedContent }}
-              />
+              >
+                <HighlightedText text={song.matchedContent} />
+              </p>
             )}
           </div>
         </button>
