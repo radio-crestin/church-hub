@@ -93,8 +93,8 @@ export function initGlobalErrorHandlers(): void {
   window.addEventListener(
     'error',
     (event) => {
-      const target = event.target as HTMLElement | null
-      if (target && target !== window && 'src' in target) {
+      const target = event.target
+      if (target instanceof HTMLElement && 'src' in target) {
         captureWarning('Resource failed to load', {
           source: 'resource-error',
           element: target.tagName,

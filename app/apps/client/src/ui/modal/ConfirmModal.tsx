@@ -13,6 +13,8 @@ interface ConfirmModalProps {
   /** Extra content under the message, e.g. the items the action applies to */
   children?: ReactNode
   testId?: string
+  /** Disables the confirm button while the action runs */
+  isLoading?: boolean
 }
 
 export function ConfirmModal({
@@ -26,6 +28,7 @@ export function ConfirmModal({
   variant = 'default',
   children,
   testId,
+  isLoading = false,
 }: ConfirmModalProps) {
   const { t } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -88,7 +91,8 @@ export function ConfirmModal({
           <button
             type="button"
             onClick={onConfirm}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${confirmButtonClass}`}
+            disabled={isLoading}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${confirmButtonClass}`}
           >
             {confirmLabel}
           </button>

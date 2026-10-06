@@ -159,6 +159,7 @@ export function SongEditorModal({
         hymnNumber: result.data.hymnNumber,
         keyLine: result.data.keyLine,
         presentationOrder: result.data.presentationOrder,
+        sourceFilename: result.data.sourceFilename,
       })
       onSaved?.()
       onClose()
