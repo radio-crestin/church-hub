@@ -130,7 +130,7 @@
   },
   "scenes": {
     "title": "Scene",
-    "noScenes": "Nicio scena disponibila. Apasa pe iconita de setari pentru a adauga scene.",
+    "noScenes": "Nu există încă scene. Ghidul de configurare îți arată cum să creezi prima scenă.",
     "settings": "Setari scene",
     "sceneSettings": "Setari scena",
     "displayName": "Nume afisat",
@@ -221,5 +221,65 @@
     "obsNotConnected": "OBS nu este conectat. Te rugam sa te conectezi la OBS mai intai.",
     "retry": "Reincearca",
     "dismiss": "Inchide"
+  },
+  "guide": {
+    "open": "Ghid de configurare",
+    "title": "Configurează transmisiunea live",
+    "intro": "Parcurge acești pași o singură dată. Apoi, Church Hub schimbă automat scenele transmisiunii în timp ce prezinți.",
+    "close": "Închide",
+    "done": "Gata",
+    "optional": "Opțional",
+    "copy": "Copiază",
+    "copied": "Copiat!",
+    "obs": {
+      "title": "Conectează OBS Studio",
+      "install": "Instalează OBS Studio pe computerul de pe care transmiți. Este gratuit și trimite imaginea camerei și textele din Church Hub către YouTube.",
+      "connect": "Apoi permite aplicației Church Hub să controleze OBS: în OBS, deschide Tools → WebSocket Server Settings, pornește serverul și folosește parola din configurarea OBS.",
+      "openSetup": "Deschide configurarea OBS",
+      "download": "Descarcă OBS Studio"
+    },
+    "browserSource": {
+      "title": "Afișează Church Hub în OBS",
+      "description": "Ecranul Live Stream afișează versurile și versetele biblice pe un fundal transparent. În OBS, adaugă o sursă Browser cu această adresă și aceste dimensiuni:",
+      "address": "Adresă",
+      "size": "Dimensiuni",
+      "noScreen": "Nu există un ecran Live Stream. Adaugă unul în Setări → Ecrane.",
+      "looks": "Alegi cum arată textul de pe ecranul Live Stream în Setări → Ecrane.",
+      "openScreens": "Deschide setările ecranelor"
+    },
+    "firstScene": {
+      "title": "Creează prima scenă",
+      "create": "În OBS, la Scenes, apasă + și dă scenei exact numele „{{name}}”.",
+      "fallbackName": "Cântare",
+      "camera": "La Sources, apasă + → Video Capture Device și alege camera.",
+      "browser": "Apasă + → Browser și adaugă sursa Church Hub de la pasul 2, deasupra camerei.",
+      "others": "Creează la fel și celelalte scene de mai jos, cu numele afișate. Church Hub le găsește imediat ce OBS este conectat.",
+      "switchedBy": "Se activează automat pentru: {{types}}",
+      "inOBS": "În OBS",
+      "missingInOBS": "Nu există încă în OBS"
+    },
+    "switching": {
+      "title": "Schimbă scenele în timpul programului",
+      "click": "Apasă pe o scenă de pe această pagină ca să o afișezi în transmisiune.",
+      "automatic": "Când prezinți o cântare, un verset biblic sau un anunț, transmisiunea trece automat la scena potrivită și revine când ascunzi conținutul. Poți redenumi sau ascunde scenele și poți schimba ce le activează.",
+      "openSettings": "Deschide setările scenelor"
+    },
+    "midi": {
+      "title": "Schimbă scenele cu un controller MIDI",
+      "device": "Conectează un pad sau o claviatură MIDI și alege dispozitivul în Setări → Controller MIDI.",
+      "sceneShortcut": "Apoi, în Setări → Live Stream, deschide o scenă, apasă pe câmpul pentru scurtătură și apasă un buton de pe controller. În Setări → Scurtături, poți atribui butoane și pentru pornirea și oprirea transmisiunii.",
+      "openSettings": "Deschide setările MIDI"
+    },
+    "mixer": {
+      "title": "Conectează mixerul audio",
+      "description": "Cu un mixer digital (Behringer X32, XR18 sau similar), Church Hub oprește și pornește sunetul canalelor când se schimbă scena. Introdu adresa IP a mixerului și activează controlul.",
+      "openSetup": "Deschide configurarea mixerului"
+    },
+    "youtube": {
+      "title": "Intră live pe YouTube",
+      "signIn": "Apasă YouTube în partea de sus a paginii și conectează-te la canalul bisericii.",
+      "start": "„Porneste live-ul” creează transmisiunea pe YouTube și pornește OBS; „Opreste Stream” încheie transmisiunea.",
+      "startStopScenes": "Transmisiunea începe pe scena „{{start}}” și se încheie pe „{{stop}}”."
+    }
   }
 }
