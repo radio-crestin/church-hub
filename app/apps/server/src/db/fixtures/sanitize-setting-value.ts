@@ -1,3 +1,4 @@
+import { dropCustomSidebarItems } from './drop-custom-sidebar-items'
 import { redactSecrets } from './redact-secrets'
 import { SAFE_SETTING_KEYS } from './safe-setting-keys'
 import { SECRET_NAME, SECRET_VALUE } from './secret-patterns'
@@ -7,7 +8,8 @@ import { SECRET_NAME, SECRET_VALUE } from './secret-patterns'
  *
  * Returns null when the setting must stay out: it is not on the allow-list,
  * its name looks secret, or its plain value is shaped like a key. Otherwise
- * returns the value with secret fields set to null.
+ * returns the value with secret fields set to null, and the sidebar without
+ * the links added on this machine.
  */
 export function sanitizeSettingValue(
   settingKey: string,
@@ -19,7 +21,11 @@ export function sanitizeSettingValue(
   const parsed = parseJson(value)
   if (parsed === undefined) return SECRET_VALUE.test(value) ? null : value
 
-  const redacted = redactSecrets(parsed)
+  const shareable =
+    settingKey === 'sidebar_configuration'
+      ? dropCustomSidebarItems(parsed)
+      : parsed
+  const redacted = redactSecrets(shareable)
   const changed = JSON.stringify(redacted) !== JSON.stringify(parsed)
   return changed ? JSON.stringify(redacted) : value
 }
