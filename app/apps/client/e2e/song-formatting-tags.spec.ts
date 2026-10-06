@@ -6,6 +6,7 @@ import { FakeS3 } from './helpers/fake-s3'
 import {
   addLinkSource,
   checkSource,
+  deleteCategoriesNamed,
   publishSongFolder,
 } from './helpers/song-folder-source'
 
@@ -148,6 +149,7 @@ test.describe('Song source import', () => {
   test.beforeAll(() => s3.start())
 
   test.afterAll(async ({ request }) => {
+    await deleteCategoriesNamed(request, [`E2E Tags ${alphaId}`])
     if (sourceId) await request.delete(`/api/song-sources/${sourceId}`)
     for (const hit of await searchTitles(request, cleanTitle)) {
       if (hit.title === cleanTitle) await request.delete(`/api/songs/${hit.id}`)

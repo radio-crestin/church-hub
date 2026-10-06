@@ -5,6 +5,7 @@ import {
   addLinkSource,
   checkSource,
   clearNotifications,
+  deleteCategoriesNamed,
   openSongXml,
   publishSongFolder,
   setAutoUpdate,
@@ -82,6 +83,7 @@ test.describe('Notifications', () => {
   })
 
   test.afterAll(async ({ request }) => {
+    await deleteCategoriesNamed(request, [categoryName])
     await setAutoUpdate(request, true)
     if (sourceId) await request.delete(`/api/song-sources/${sourceId}`)
     for (const { title } of [fresh, known, later]) {

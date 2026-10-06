@@ -5,6 +5,7 @@ import {
   addLinkSource,
   checkSource,
   clearNotifications,
+  deleteCategoriesNamed,
   type FolderSong,
   openSongXml,
   publishSongFolder,
@@ -78,6 +79,7 @@ test.describe('Song updates', () => {
   })
 
   test.afterAll(async ({ request }) => {
+    await deleteCategoriesNamed(request, [categoryName, `${categoryName} B`])
     await setAutoUpdate(request, true)
     if (sourceId) await request.delete(`/api/song-sources/${sourceId}`)
     for (const { title } of [...fresh, known, third]) {
@@ -185,7 +187,7 @@ test.describe('Song updates', () => {
     const other = song(
       'e',
       `Cantare din alta sursa ${tag}`,
-      `${tag} munti inalti si vai adanci sub cer`,
+      'munti inalti si vai adanci sub cerul senin al diminetii',
     )
     const url = publishSongFolder(
       s3,

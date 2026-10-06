@@ -7,7 +7,10 @@ import {
 import JSZip from 'jszip'
 
 import { FakeS3 } from './helpers/fake-s3'
-import { setAutoUpdate } from './helpers/song-folder-source'
+import {
+  deleteCategoriesNamed,
+  setAutoUpdate,
+} from './helpers/song-folder-source'
 
 /**
  * Song sources: the built-in configs, a category shared through the user's
@@ -78,6 +81,9 @@ test.describe('Song sources', () => {
   })
 
   test.afterAll(async ({ request }) => {
+    // Its own category with its songs, and the one the shared link's import
+    // made: first, so nothing below can skip it.
+    await deleteCategoriesNamed(request, [categoryName])
     await setAutoUpdate(request, true)
     if (linkSourceId) await request.delete(`/api/song-sources/${linkSourceId}`)
     if (publicationId) {
@@ -90,7 +96,6 @@ test.describe('Song sources', () => {
       await request.delete(`/api/songs/${hit.id}`)
     }
     for (const id of songIds) await request.delete(`/api/songs/${id}`)
-    await request.delete(`/api/categories/${categoryId}`)
     await s3.stop()
   })
 

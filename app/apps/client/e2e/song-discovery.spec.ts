@@ -4,6 +4,7 @@ import { FakeS3 } from './helpers/fake-s3'
 import {
   addLinkSource,
   checkSource,
+  deleteCategoriesNamed,
   publishSongFolder,
   setAutoUpdate,
 } from './helpers/song-folder-source'
@@ -125,6 +126,7 @@ test.describe('Song Discovery — staging UI', () => {
   test.beforeAll(() => s3.start())
 
   test.afterAll(async ({ request }) => {
+    await deleteCategoriesNamed(request, [`E2E Discovery ${alphaId}`])
     await setAutoUpdate(request, true)
     if (sourceId) await request.delete(`/api/song-sources/${sourceId}`)
     await s3.stop()

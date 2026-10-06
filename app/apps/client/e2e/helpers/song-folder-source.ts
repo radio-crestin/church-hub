@@ -120,3 +120,20 @@ export async function clearNotifications(
     await request.delete(`/api/notifications/${encodeURIComponent(id)}`)
   }
 }
+
+/**
+ * Deletes the categories with these names, and with them their songs: a
+ * source's songs land in a category named after it, which the spec must not
+ * leave behind (leftovers shift every category's search priority). First in
+ * an afterAll, so a later cleanup step that fails cannot skip it.
+ */
+export async function deleteCategoriesNamed(
+  request: APIRequestContext,
+  names: string[],
+): Promise<void> {
+  const res = await request.get('/api/categories')
+  const categories = (await res.json()).data as { id: number; name: string }[]
+  for (const { id, name } of categories) {
+    if (names.includes(name)) await request.delete(`/api/categories/${id}`)
+  }
+}
