@@ -1,4 +1,9 @@
-import { type APIRequestContext, expect, type Page, test } from '@playwright/test'
+import {
+  type APIRequestContext,
+  expect,
+  type Page,
+  test,
+} from '@playwright/test'
 
 /**
  * Calm factory transitions (T-112): every text element of every new screen
@@ -9,8 +14,8 @@ import { type APIRequestContext, expect, type Page, test } from '@playwright/tes
 
 const SCREEN_TYPES = ['primary', 'stage', 'livestream', 'kiosk'] as const
 const CALM = {
-  animationIn: 600,
-  animationOut: 500,
+  animationIn: 500,
+  animationOut: 400,
   slideTransitionIn: 400,
   slideTransitionOut: 300,
 }
@@ -72,14 +77,49 @@ function collectTransitions(page: Page, ms: number) {
   )
 }
 
+/**
+ * How opaque each of `texts` looks on every frame over the next `ms`
+ * (its opacity times its ancestors'; 0 when it is not on the page).
+ */
+function sampleOpacities(page: Page, texts: string[], ms: number) {
+  return page.evaluate(
+    ({ texts, duration }) =>
+      new Promise<number[][]>((resolve) => {
+        const frames: number[][] = []
+        const end = performance.now() + duration
+        const opacityOf = (text: string) => {
+          const anchor = [
+            ...document.querySelectorAll<HTMLElement>('[data-style-anchor]'),
+          ].find((element) => element.textContent?.includes(text))
+          let opacity = anchor ? 1 : 0
+          for (let el = anchor ?? null; el; el = el.parentElement) {
+            opacity *= Number(getComputedStyle(el).opacity)
+          }
+          return opacity
+        }
+        const sample = () => {
+          frames.push(texts.map(opacityOf))
+          if (performance.now() < end) requestAnimationFrame(sample)
+          else resolve(frames)
+        }
+        sample()
+      }),
+    { texts, duration: ms },
+  )
+}
+
+const isFading = (opacity: number) => opacity > 0.05 && opacity < 0.95
+
 test.describe('Calm slide transitions', () => {
   const created: number[] = []
+  let songId: number | undefined
 
   test.afterAll(async ({ request }) => {
     await request.post('/api/presentation/stop').catch(() => {})
     for (const id of created) {
       await request.delete(`/api/screens/${id}`).catch(() => {})
     }
+    if (songId) await request.delete(`/api/songs/${songId}`).catch(() => {})
   })
 
   for (const type of SCREEN_TYPES) {
@@ -133,5 +173,70 @@ test.describe('Calm slide transitions', () => {
     expect(seen).toContain('400ms ease-in-out')
     await expect(page.getByText(VERSES[1]).last()).toBeVisible()
     await expect(page.getByText(VERSES[0])).toHaveCount(0)
+  })
+
+  test('the first verse on an empty screen fades in', async ({
+    page,
+    request,
+  }) => {
+    const screen = await createScreen(request, 'primary')
+    created.push(screen.id)
+    await request.post('/api/presentation/stop')
+    await page.goto(`/screen/${screen.id}`)
+    await expect(page.locator('[data-style-anchor]')).toHaveCount(0)
+
+    const sampling = sampleOpacities(page, [VERSES[0]], 1500)
+    expect((await presentVerse(request, 0)).ok()).toBeTruthy()
+    const verse = (await sampling).map(([opacity]) => opacity)
+
+    expect(verse.some(isFading), 'the verse passes through a soft fade').toBe(
+      true,
+    )
+    expect(verse.at(-1)).toBe(1)
+  })
+
+  test('a song, then a verse: the song fades out before the verse fades in', async ({
+    page,
+    request,
+  }) => {
+    const lyric = `Cât de mare ești Tu, Doamne ${Date.now()}`
+    const song = await request.post('/api/songs', {
+      data: {
+        title: `E2E Transitions Song ${Date.now()}`,
+        slides: [
+          { content: 'Prima strofă', sortOrder: 0 },
+          { content: lyric, sortOrder: 1 },
+          { content: 'Ultima strofă', sortOrder: 2 },
+        ],
+      },
+    })
+    expect(song.ok()).toBeTruthy()
+    songId = (await song.json()).data.id as number
+    const screen = await createScreen(request, 'primary')
+    created.push(screen.id)
+    await request.post('/api/presentation/temporary-song', {
+      data: { songId, slideIndex: 1 },
+    })
+    await page.goto(`/screen/${screen.id}`)
+    await expect(page.getByText(lyric).last()).toBeVisible()
+    await page.waitForTimeout(800)
+
+    const sampling = sampleOpacities(page, [lyric, VERSES[0]], 2000)
+    expect((await presentVerse(request, 0)).ok()).toBeTruthy()
+    const frames = await sampling
+
+    expect(
+      frames.some(([song]) => isFading(song)),
+      'song fades out',
+    ).toBe(true)
+    expect(
+      frames.some(([, verse]) => isFading(verse)),
+      'verse fades in',
+    ).toBe(true)
+    expect(
+      frames.every(([song, verse]) => song === 0 || verse === 0),
+      'never both on screen',
+    ).toBe(true)
+    expect(frames.at(-1)).toEqual([0, 1])
   })
 })

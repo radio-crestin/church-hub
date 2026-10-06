@@ -138,15 +138,14 @@ export function useSlideAnimation({
   const cachedContentRef = useRef<React.ReactNode>(content)
   const cachedKeyRef = useRef(contentKey)
 
-  // Track previous visibility state
-  const prevVisibleRef = useRef(isVisible)
+  // Track previous visibility state. An element starts out hidden, so one that
+  // mounts already visible (the first slide after an empty screen, or a new
+  // content type's text) fades in with animationIn instead of cutting in.
+  const prevVisibleRef = useRef(false)
   const prevContentKeyRef = useRef(contentKey)
   const hasAnimatedIn = useRef(false)
 
-  // Animation phase state - start visible if already visible to avoid flash
-  const [phase, setPhase] = useState<AnimationPhase>(() =>
-    isVisible ? 'visible' : 'hidden',
-  )
+  const [phase, setPhase] = useState<AnimationPhase>('hidden')
 
   // Track which animation config to use for current transition
   const [currentEnterConfig, setCurrentEnterConfig] =

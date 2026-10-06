@@ -5,6 +5,7 @@ import { getApiUrl, isMobile } from '~/config'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
+import { useContentTypeHandoff } from './useContentTypeHandoff'
 import { usePresentationState } from './usePresentationState'
 import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/calculateMaxExitAnimationDuration'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
@@ -852,13 +853,11 @@ export function usePresentationContent({
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
   )
 
-  return {
-    contentType,
-    contentData,
-    contentKey,
+  const shown = useContentTypeHandoff(
+    { contentType, contentData, contentKey, nextSlideData },
     isVisible,
-    isExitAnimating,
-    nextSlideData,
-    presentationState,
-  }
+    screen?.contentConfigs,
+  )
+
+  return { ...shown, isExitAnimating, presentationState }
 }

@@ -23,7 +23,7 @@ export function calculateMaxExitAnimationDuration(
 ): number {
   if (!config) return 0
   const durations = ANIMATED_ELEMENTS.flatMap((name) => {
-    const element = (config as Record<string, unknown>)[name] as
+    const element = (config as unknown as Record<string, unknown>)[name] as
       | { animationOut?: AnimationConfig }
       | undefined
     if (!element) return []

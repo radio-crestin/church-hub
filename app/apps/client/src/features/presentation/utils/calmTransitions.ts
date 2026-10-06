@@ -11,8 +11,8 @@ function calmFade(duration: number): AnimationConfig {
  * (apps/server/src/service/presentation/default-design/calmTransitions.ts).
  */
 export const CALM_TRANSITIONS = {
-  animationIn: calmFade(600),
-  animationOut: calmFade(500),
+  animationIn: calmFade(500),
+  animationOut: calmFade(400),
   slideTransitionIn: calmFade(400),
   slideTransitionOut: calmFade(300),
 } as const
