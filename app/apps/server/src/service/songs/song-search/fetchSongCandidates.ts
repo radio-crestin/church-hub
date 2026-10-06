@@ -20,11 +20,23 @@ export interface SongCandidate {
 }
 
 /**
- * The songs one FTS5 expression matches within the filters, best BM25
- * first unless the match is too broad to rank cheaply (see
- * `MAX_RANKED_MATCHES`).
+ * The songs one FTS5 expression matches within the filters: first every
+ * song whose title matches (few, so always ranked), then the rest, best
+ * BM25 first unless the match is too broad to rank cheaply (see
+ * `MAX_RANKED_MATCHES`). Titles go first because a broad lyric match is
+ * cut in stored order, and an operator typing a title wants that song.
  */
 export function fetchSongCandidates(
+  expression: string,
+  filter: SongFilterSql,
+): SongCandidate[] {
+  return [
+    ...fetchMatching(`title : (${expression})`, filter),
+    ...fetchMatching(expression, filter),
+  ]
+}
+
+function fetchMatching(
   expression: string,
   filter: SongFilterSql,
 ): SongCandidate[] {
