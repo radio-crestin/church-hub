@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
+import { HighlightedText } from '~/ui/search'
 import { Tooltip } from '~/ui/tooltip/Tooltip'
 
 interface ScheduleCardProps {
@@ -101,9 +102,11 @@ export function ScheduleCard({
           </div>
           {schedule.matchedContent && (
             <p
+              data-testid="schedule-card-snippet"
               className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-1"
-              dangerouslySetInnerHTML={{ __html: schedule.matchedContent }}
-            />
+            >
+              <HighlightedText text={schedule.matchedContent} />
+            </p>
           )}
         </div>
       </div>

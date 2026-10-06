@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
-import { ClearSearchButton } from '~/ui/search'
+import { ClearSearchButton, HighlightedText } from '~/ui/search'
 import { BooksList } from './BooksList'
 import { ChaptersGrid } from './ChaptersGrid'
 import { VersesList } from './VersesList'
@@ -795,14 +795,13 @@ function SearchResults({
                   </span>
                 )}
               </div>
-              <div
-                className="text-sm text-gray-700 dark:text-gray-200 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
-                dangerouslySetInnerHTML={{
-                  __html: isSearchResult
-                    ? searchResult.highlightedText
-                    : verse.text,
-                }}
-              />
+              <div className="text-sm text-gray-700 dark:text-gray-200 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
+                <HighlightedText
+                  text={
+                    isSearchResult ? searchResult.highlightedText : verse.text
+                  }
+                />
+              </div>
             </button>
           )
         })}
