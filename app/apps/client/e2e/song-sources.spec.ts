@@ -200,8 +200,13 @@ test.describe('Song sources', () => {
       .getByPlaceholder('https://…/manifest.json')
       .fill(`${s3.endpoint}/church/e2e/${slug()}/manifest.json`)
     await page.getByRole('button', { name: /Add source|Adaugă sursa/ }).click()
+    // The link's own row, not the publication above, which shows the same
+    // URL: matching that one let the test leave the page before the app had
+    // asked for the new source to be checked, so it never was.
     await expect(
-      page.getByText(`${s3.endpoint}/church/e2e/${slug()}/manifest.json`),
+      page.getByTestId('song-source-link').filter({
+        hasText: `${s3.endpoint}/church/e2e/${slug()}/manifest.json`,
+      }),
     ).toBeVisible()
 
     const sources = (await (await request.get('/api/song-sources')).json())

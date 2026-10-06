@@ -30,7 +30,10 @@ test.describe('Search result text', () => {
       await page.goto('/schedules')
       await page.getByPlaceholder(/search schedules|cauta programe/i).fill(uniq)
 
-      const snippet = page.getByTestId('schedule-card-snippet')
+      // Its own program only, for the same reason as the song below.
+      const snippet = page
+        .getByTestId('schedule-card-snippet')
+        .filter({ hasText: `Seara ${uniq}` })
       await expect(snippet).toHaveCount(1)
       await expect(snippet.locator('mark')).toHaveText(uniq)
       await expect(snippet).toContainText(`<img src=x data-e2e-markup`)
@@ -58,12 +61,18 @@ test.describe('Search result text', () => {
       await page.goto('/songs')
       await page.getByPlaceholder(/search songs|caută cântări/i).fill(uniq)
 
-      const title = page.getByTestId('song-card-title')
-      await expect(title).toHaveCount(1)
+      // Its own card only: a number also finds songs with similar numbers,
+      // such as other specs' songs left behind by a run that died.
+      const card = page
+        .getByTestId('song-card')
+        .filter({ hasText: `Cantare ${uniq}` })
+      await expect(card).toHaveCount(1)
+
+      const title = card.getByTestId('song-card-title')
       await expect(title.locator('mark')).toHaveText(uniq)
       await expect(title).toContainText(`<img src=x data-e2e-markup`)
 
-      const snippet = page.getByTestId('song-card-snippet')
+      const snippet = card.getByTestId('song-card-snippet')
       await expect(snippet.locator('mark')).toHaveText(uniq)
       await expect(snippet).toContainText(`Slavă ${uniq} & har`)
       await expectNoMarkupOnPage(page)

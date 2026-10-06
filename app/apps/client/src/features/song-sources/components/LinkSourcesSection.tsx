@@ -79,6 +79,7 @@ export function LinkSourcesSection() {
             <li
               key={source.id}
               className="flex items-center justify-between gap-3 px-3 py-2"
+              data-testid="song-source-link"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
