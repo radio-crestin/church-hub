@@ -6,6 +6,7 @@ import 'overlayscrollbars/overlayscrollbars.css'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
 import { useEditLayoutAction, Workspace } from '~/features/workspace'
 import { ActionMenu } from '~/ui/menu'
+import { Page, PageHeader } from '~/ui/page'
 import { AddFolderButton } from './AddFolderButton'
 import { FolderBrowser } from './FolderBrowser'
 import { SearchInput } from './SearchInput'
@@ -149,23 +150,21 @@ export function MusicPage() {
   const editLayoutAction = useEditLayoutAction('music')
 
   return (
-    <div className="flex-1 flex flex-col overflow-x-hidden lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <div className="flex items-center justify-between mb-4 flex-shrink-0 gap-2">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-            {t('title')}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <AddFolderButton />
-          {/* Panels only form movable columns on a large screen. */}
-          <ActionMenu
-            items={isLargeScreen ? [editLayoutAction] : []}
-            label={tCommon('actionsMenu.trigger')}
-            testId="music-actions-menu"
-          />
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        title={t('title')}
+        actions={
+          <>
+            <AddFolderButton />
+            {/* Panels only form movable columns on a large screen. */}
+            <ActionMenu
+              items={isLargeScreen ? [editLayoutAction] : []}
+              label={tCommon('actionsMenu.trigger')}
+              testId="music-actions-menu"
+            />
+          </>
+        }
+      />
 
       <div ref={containerRef} className="flex-1 flex flex-col lg:min-h-0">
         <Workspace
@@ -177,6 +176,6 @@ export function MusicPage() {
           className="flex-1 lg:min-h-0"
         />
       </div>
-    </div>
+    </Page>
   )
 }

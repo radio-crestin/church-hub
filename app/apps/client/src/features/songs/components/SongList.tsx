@@ -6,6 +6,7 @@ import { useSidebarItemShortcuts } from '~/features/sidebar-config'
 import { useSyncUpdatesMap } from '~/features/sync'
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { EmptyState } from '~/ui/page'
 import { ClearSearchButton } from '~/ui/search'
 import { AlphabetSongScroller } from './AlphabetSongScroller'
 import { SongCard } from './SongCard'
@@ -1055,31 +1056,28 @@ export function SongList({
           ))}
         </div>
       ) : displaySongs.length === 0 ? (
-        <div className="flex-1 mt-4 text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <Music
-            size={48}
-            className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
+        <div className="flex-1 mt-4">
+          <EmptyState
+            icon={Music}
+            title={
+              isSearching
+                ? t('search.noResults', { query: localQuery })
+                : t('noSongs')
+            }
+            hint={isSearching ? undefined : t('noSongsDescription')}
+            action={
+              hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleClearAllFilters}
+                  className="mt-2 py-2 px-4 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  {t('search.clearFiltersForMore')}
+                </button>
+              )
+            }
           />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
-            {isSearching
-              ? t('search.noResults', { query: localQuery })
-              : t('noSongs')}
-          </p>
-          {!isSearching && (
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-              {t('noSongsDescription')}
-            </p>
-          )}
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={handleClearAllFilters}
-              className="mt-4 py-2 px-4 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex items-center gap-2"
-            >
-              <X className="w-4 h-4" />
-              {t('search.clearFiltersForMore')}
-            </button>
-          )}
         </div>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 mt-4">
