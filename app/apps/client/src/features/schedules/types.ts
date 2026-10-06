@@ -126,6 +126,21 @@ export interface VerseteTineriEntryInput {
 }
 
 /**
+ * A Bible passage as the server takes it when adding or updating an item
+ */
+export interface BiblePassageInput {
+  translationId: number
+  translationAbbreviation: string
+  bookCode: string
+  bookName: string
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  verseSegments?: VerseSegment[]
+}
+
+/**
  * Input for adding an item to a schedule
  */
 export interface AddToScheduleInput {
@@ -134,17 +149,7 @@ export interface AddToScheduleInput {
   slideContent?: string
   afterItemId?: number
   // Bible passage fields
-  biblePassage?: {
-    translationId: number
-    translationAbbreviation: string
-    bookCode: string
-    bookName: string
-    startChapter: number
-    startVerse: number
-    endChapter: number
-    endVerse: number
-    verseSegments?: VerseSegment[]
-  }
+  biblePassage?: BiblePassageInput
   // Versete Tineri entries
   verseteTineriEntries?: VerseteTineriEntryInput[]
   // Scene fields
@@ -155,10 +160,11 @@ export interface AddToScheduleInput {
  * Input for updating a slide in a schedule
  */
 export interface UpdateScheduleSlideInput {
-  slideType: SlideTemplate
+  slideType?: SlideTemplate
   slideContent?: string
   // Versete Tineri entries (for versete_tineri slides)
   verseteTineriEntries?: VerseteTineriEntryInput[]
+  biblePassage?: BiblePassageInput
 }
 
 /**
