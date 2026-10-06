@@ -5,7 +5,13 @@ import { isIP } from 'node:net'
 import { isBlockedAddress } from './isBlockedAddress'
 import { PRIVATE_ADDRESS_ERROR, vettedLookup } from './vettedLookup'
 
-const TIMEOUT_MS = 60_000
+/** No byte for this long: the connection is dead. */
+const IDLE_TIMEOUT_MS = 60_000
+/**
+ * The whole request, however it stalls (DNS, TLS, a body that stopped
+ * coming): a check must never hang on one source.
+ */
+const DEADLINE_MS = 5 * 60_000
 /** A song bundle is a few MB; anything far bigger is not one. */
 const MAX_BYTES = 200 * 1024 * 1024
 
@@ -27,14 +33,21 @@ export function requestOnce(url: URL): Promise<LinkResponse> {
   }
   const client = url.protocol === 'https:' ? https : http
 
-  return new Promise((resolve, reject) => {
+  let deadline: ReturnType<typeof setTimeout> | undefined
+  const request = new Promise<LinkResponse>((resolve, reject) => {
+    // Bun's req.destroy(error) never emits 'error' while the response has
+    // not started, so giving up rejects here, never through the event.
+    const fail = (message: string) => {
+      req.destroy()
+      reject(new Error(message))
+    }
     const req = client.get(url, { lookup: vettedLookup }, (res) => {
       const chunks: Buffer[] = []
       let size = 0
       res.on('data', (chunk: Buffer) => {
         size += chunk.length
         if (size > MAX_BYTES) {
-          req.destroy(new Error('The link is too large to be a song source'))
+          fail('The link is too large to be a song source')
           return
         }
         chunks.push(chunk)
@@ -49,8 +62,8 @@ export function requestOnce(url: URL): Promise<LinkResponse> {
       res.on('error', reject)
     })
     req.on('error', reject)
-    req.setTimeout(TIMEOUT_MS, () =>
-      req.destroy(new Error(`Timed out: ${url}`)),
-    )
+    req.setTimeout(IDLE_TIMEOUT_MS, () => fail(`Timed out: ${url}`))
+    deadline = setTimeout(() => fail(`Took too long: ${url}`), DEADLINE_MS)
   })
+  return request.finally(() => clearTimeout(deadline))
 }
