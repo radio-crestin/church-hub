@@ -240,7 +240,9 @@ test.describe('Schedule Management - API', () => {
     expect(Array.isArray(json.data)).toBe(true)
   })
 
-  test.skip('can import schedule to presentation queue', async ({ request }) => {
+  test.skip('can import schedule to presentation queue', async ({
+    request,
+  }) => {
     // Create a schedule with items
     const scheduleResponse = await request.post('/api/schedules', {
       data: {

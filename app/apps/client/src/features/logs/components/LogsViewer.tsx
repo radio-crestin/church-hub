@@ -68,7 +68,6 @@ function LogBlock({
           lines.map((line, i) => (
             <div
               // Log lines aren't uniquely identifiable; the list never reorders.
-              // biome-ignore lint/suspicious/noArrayIndexKey: log line list
               key={i}
               className={`whitespace-pre-wrap break-words ${
                 line.isSeparator

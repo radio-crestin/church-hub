@@ -576,7 +576,9 @@ test.describe('Categories API', () => {
 
   test('POST + DELETE category lifecycle', async ({ request }) => {
     const createResponse = await request.post('/api/categories', {
-      data: { name: `E2E Cat ${Date.now()} ${Math.random().toString(36).slice(2)}` },
+      data: {
+        name: `E2E Cat ${Date.now()} ${Math.random().toString(36).slice(2)}`,
+      },
     })
     expect([200, 201, 409]).toContain(createResponse.status())
     if (![200, 201].includes(createResponse.status())) {

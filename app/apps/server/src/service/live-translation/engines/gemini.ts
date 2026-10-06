@@ -48,7 +48,6 @@ class GeminiEngineSession implements EngineSession {
       this.cfg.targetLanguage,
     )
 
-    const textOnly = this.cfg.outputModality === 'text_only'
     // Single model for both modes (see comment by AUDIO_MODEL). Text-only
     // discards the audio output and surfaces only the running transcript.
     const model = AUDIO_MODEL
