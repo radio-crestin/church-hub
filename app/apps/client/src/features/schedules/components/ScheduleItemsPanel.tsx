@@ -474,13 +474,19 @@ function SortableItemWrapper({
           <div className="text-xs text-gray-500 dark:text-gray-400">
             {item.itemType === 'bible_passage' && (
               <>
-                {item.biblePassageVerses.length} verses •{' '}
-                {item.biblePassageTranslation}
+                {t('presenter.versesCount', {
+                  count: item.biblePassageVerses.length,
+                })}{' '}
+                • {item.biblePassageTranslation}
               </>
             )}
             {item.itemType === 'slide' &&
               item.slideType === 'versete_tineri' && (
-                <>{item.verseteTineriEntries.length} entries</>
+                <>
+                  {t('verseteTineri.entriesCount', {
+                    count: item.verseteTineriEntries.length,
+                  })}
+                </>
               )}
             {item.itemType === 'slide' &&
               item.slideType === 'scene' &&
