@@ -6,7 +6,7 @@ import { type APIRequestContext, expect, test } from '@playwright/test'
  */
 
 interface Fixture {
-  uniq: number
+  uniq: string
   carols: { id: number; name: string }
   hymns: { id: number; name: string }
   youth: { id: number; name: string }
@@ -20,8 +20,18 @@ async function post(request: APIRequestContext, url: string, data: object) {
   return (await res.json()).data
 }
 
+/**
+ * A random word of letters only. The search is fuzzy, so a number such as
+ * Date.now() also matched number-titled songs left by other specs, and a
+ * timestamp in letters stays close to the one of a run before.
+ */
+function uniqueWord(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(12))
+  return Array.from(bytes, (b) => String.fromCharCode(97 + (b % 26))).join('')
+}
+
 async function createFixture(request: APIRequestContext): Promise<Fixture> {
-  const uniq = Date.now()
+  const uniq = uniqueWord()
   const carols = await post(request, '/api/categories', {
     name: `E2E Carols ${uniq}`,
   })
