@@ -33,6 +33,7 @@ import { removeSeededSecrets } from './remove-seeded-secrets'
 import { seedSystemRoles } from './seed'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedSampleMusic } from './seed-music'
+import { seedDefaultObsScenes } from './seed-obs-scenes'
 import { seedDefaultScreens } from './seed-screens'
 import { seedAppSettings } from './seed-settings'
 import { seedSongCategories } from './seed-song-categories'
@@ -248,6 +249,11 @@ export function runMigrations(
   // Seed default screens
   runStep('seed_screens', 'Seeding default screens', () =>
     seedDefaultScreens(rawDb),
+  )
+
+  // Seed the default livestream scenes (once, on an install without scenes)
+  runStep('seed_obs_scenes', 'Seeding default OBS scenes', () =>
+    seedDefaultObsScenes(rawDb),
   )
 
   // Seed song categories (before songs, as songs reference categories)
