@@ -63,6 +63,8 @@ test.describe('Saving a category', () => {
       name: `E2E Save bad ${Date.now()}`,
       priority: 'high',
     })
+    const created = response.ok() ? (await response.json()).data : null
+    if (created) await request.delete(`/api/categories/${created.id}`)
     expect(response.status()).toBe(400)
   })
 
