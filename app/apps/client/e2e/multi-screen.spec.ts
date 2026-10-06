@@ -365,7 +365,6 @@ test.describe('Multi-Screen', () => {
     // Get current screen data
     const screenRes = await request.get(`/api/screens/${sid}`)
     expect(screenRes.ok()).toBeTruthy()
-    const _screenBody = await screenRes.json()
 
     // Update next slide config
     const nextSlideConfig = {

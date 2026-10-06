@@ -117,7 +117,7 @@ test.describe('API auth guards', () => {
 
   test('forged or unknown credentials are refused', async ({ baseURL }) => {
     const base = baseURL as string
-    const forged = [
+    const forged: Record<string, string>[] = [
       { Authorization: 'Bearer not-a-real-system-token' },
       { Cookie: 'user_auth=not-a-real-user-token' },
       { 'X-User-Auth': 'not-a-real-user-token' },

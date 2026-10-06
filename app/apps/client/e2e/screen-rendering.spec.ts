@@ -370,7 +370,6 @@ test.describe('Screen Rendering', () => {
     // Clock may or may not be visible depending on config - just verify no errors
     if (bodyText && timeRegex.test(bodyText)) {
       // Clock is displaying - verify it updates
-      const _firstTime = bodyText.match(timeRegex)?.[0]
       await page.waitForTimeout(2000)
       const updatedBodyText = await page.locator('body').textContent()
       // Time should either be the same or have changed (second boundary)
@@ -406,32 +405,6 @@ test.describe('Screen Rendering', () => {
     await page.waitForTimeout(2000)
 
     // Check for CSS transition/animation properties on animated text elements
-    const _hasTransitions = await page.evaluate(() => {
-      const elements = document.querySelectorAll(
-        '[style*="position: absolute"]',
-      )
-      let foundTransition = false
-      for (const el of elements) {
-        const style = window.getComputedStyle(el)
-        if (
-          style.transition !== 'all 0s ease 0s' &&
-          style.transition !== '' &&
-          style.transition !== 'none'
-        ) {
-          foundTransition = true
-          break
-        }
-        if (
-          style.opacity !== '' &&
-          style.opacity !== '1' &&
-          style.opacity !== '0'
-        ) {
-          foundTransition = true
-          break
-        }
-      }
-      return foundTransition
-    })
 
     // Animations may or may not be configured - just verify the page is stable
     await expect(page.locator('.w-screen.h-screen')).toBeVisible()

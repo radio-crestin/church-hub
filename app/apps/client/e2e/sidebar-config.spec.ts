@@ -131,7 +131,7 @@ test.describe('Sidebar Configuration', () => {
 
     for (const pagePath of pages) {
       await page.goto(pagePath)
-      const _response = await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('networkidle')
       await expect(page).toHaveURL(new RegExp(pagePath.replace('/', '\\/')))
       await expect(page.locator('body')).toBeVisible()
     }
