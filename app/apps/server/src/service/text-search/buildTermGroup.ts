@@ -7,18 +7,20 @@ import { typoBudget } from './typoBudget'
 
 const SIGNS_RE = /[^\p{L}\p{N}]+/u
 /**
- * A word found in this many documents is taken as meant: looking for its
- * look-alikes ("care" → "mare", "tare", "cale"…) would mostly add noise and
- * slow every lookup. A real word typed by mistake is still found by the
- * tier that lets one word go missing.
+ * A word found in this many documents is taken as meant: its look-alikes
+ * ("care" → "mare", "tare", "cale"…) would mostly add noise and slow every
+ * lookup. Only a look-alike one typo away and far more common still counts
+ * — the usual spelling of a word typed in an old or rare one ("neâncetat"
+ * for "neîncetat").
  */
 const WELL_ATTESTED_DOCUMENTS = 3
+const FAR_MORE_COMMON = 10
 
 /**
  * One typed word (folded, as `splitWordUnits` gives it) and every way it
  * may be written in a document: itself, its joined and elided spellings,
- * its `synonyms` and, unless it is a known word, the indexed words within
- * its typo budget. `typing` marks the last word while it is still being
+ * its `synonyms` and the indexed words within its typo budget (see
+ * `typoVariants`). `typing` marks the last word while it is still being
  * typed, matched as a beginning.
  */
 export function buildTermGroup(
@@ -39,12 +41,8 @@ export function buildTermGroup(
   ]) {
     variants.push({ text: spelling, prefix: typing, edits: 0 })
   }
-  const attested =
-    documentFrequency(vocabulary, variants[0]) >= WELL_ATTESTED_DOCUMENTS
-  if (pieces.length === 1 && !attested) {
-    variants.push(
-      ...findSimilarTerms(vocabulary, compact, typoBudget(compact), typing),
-    )
+  if (pieces.length === 1) {
+    variants.push(...typoVariants(vocabulary, variants[0]))
   }
 
   const required = compact.length >= (typing ? 3 : 2)
@@ -55,6 +53,27 @@ export function buildTermGroup(
     weight: termWeight(vocabulary, variants),
     required,
   }
+}
+
+/** The indexed words a typed word may be a misspelling of. */
+function typoVariants(
+  vocabulary: Vocabulary,
+  typed: TermVariant,
+): TermVariant[] {
+  const similar = findSimilarTerms(
+    vocabulary,
+    typed.text,
+    typoBudget(typed.text),
+    typed.prefix,
+  )
+  const typedFrequency = documentFrequency(vocabulary, typed)
+  if (typedFrequency < WELL_ATTESTED_DOCUMENTS) return similar
+  return similar.filter(
+    (variant) =>
+      variant.edits === 1 &&
+      documentFrequency(vocabulary, variant) >=
+        typedFrequency * FAR_MORE_COMMON,
+  )
 }
 
 /**

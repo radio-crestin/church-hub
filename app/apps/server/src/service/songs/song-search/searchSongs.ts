@@ -10,6 +10,7 @@ import { createLogger } from '../../../utils/logger'
 import { collectCandidates } from '../../text-search/collectCandidates'
 import { highlightText } from '../../text-search/highlightText'
 import { prepareTextQuery } from '../../text-search/prepareTextQuery'
+import { decodeHtmlEntities } from '../../text-search/text/decodeHtmlEntities'
 import type { SongSearchResult } from '../types'
 
 const logger = createLogger('song-search')
@@ -75,7 +76,11 @@ function searchByText(
         categoryId: ranked.song.category_id,
         categoryName: ranked.song.category_name,
         keyLine: ranked.song.key_line,
-        highlightedTitle: highlightText(ranked.song.title, terms, query),
+        highlightedTitle: highlightText(
+          decodeHtmlEntities(ranked.song.title),
+          terms,
+          query,
+        ),
         matchedContent: createLyricsSnippet(ranked.lyrics, terms, query),
         presentationCount: ranked.song.presentation_count,
         score: Math.min(100, Math.round(ranked.boostedScore)),

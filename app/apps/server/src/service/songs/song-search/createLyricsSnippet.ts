@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../text-search/text/escapeHtml'
 import {
   findHighlightRanges,
   wrapRanges,
@@ -7,9 +8,10 @@ const SNIPPET_LENGTH = 150
 const LEAD_IN = 30
 
 /**
- * The stretch of the lyrics with the most marked text, the matches wrapped
- * in <mark>. Shares the range finder with the title highlight so the two
- * always mark the same thing.
+ * The stretch of the lyrics (plain text) with the most marked text, as HTML
+ * with the matches wrapped in <mark> and everything else escaped. Shares the
+ * range finder with the title highlight so the two always mark the same
+ * thing.
  */
 export function createLyricsSnippet(
   lyrics: string,
@@ -23,8 +25,8 @@ export function createLyricsSnippet(
   })
   if (ranges.length === 0) {
     return text.length > SNIPPET_LENGTH
-      ? `${text.substring(0, SNIPPET_LENGTH)}...`
-      : text
+      ? `${escapeHtml(text.substring(0, SNIPPET_LENGTH))}...`
+      : escapeHtml(text)
   }
 
   // Each window is anchored on a match and always wide enough to hold it.

@@ -1,5 +1,7 @@
 import type { SongFilterSql } from './songFilterSql'
 import { getRawDatabase } from '../../../db'
+import { decodeHtmlEntities } from '../../text-search/text/decodeHtmlEntities'
+import { escapeHtml } from '../../text-search/text/escapeHtml'
 import type { SongSearchResult } from '../types'
 
 const HYMN_NUMBER_RE = /^#?(\d+)$/
@@ -61,7 +63,7 @@ export function searchByHymnNumber(
     categoryId: row.category_id,
     categoryName: row.category_name,
     keyLine: row.key_line,
-    highlightedTitle: row.title,
+    highlightedTitle: escapeHtml(decodeHtmlEntities(row.title)),
     matchedContent: row.hymn_number ? `Hymn #${row.hymn_number}` : '',
     presentationCount: row.presentation_count,
     score: 100,
