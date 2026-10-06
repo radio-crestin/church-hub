@@ -8,6 +8,7 @@ import JSZip from 'jszip'
 
 import { FakeS3 } from './helpers/fake-s3'
 import {
+  clearNotifications,
   deleteCategoriesNamed,
   deleteLinkSourcesNamed,
   setAutoUpdate,
@@ -90,6 +91,9 @@ test.describe('Song sources', () => {
     // into a new category of the same name after it was cleaned up.
     await deleteLinkSourcesNamed(request, [categoryName])
     await stopSongUpdates(request)
+    // The checks it ran left "songs synced" notifications; they would pop up
+    // over the next specs' pages.
+    await clearNotifications(request)
     // Its own category with its songs, and the ones the shared link's import
     // made, which carry the same name.
     await deleteCategoriesNamed(request, [categoryName])
