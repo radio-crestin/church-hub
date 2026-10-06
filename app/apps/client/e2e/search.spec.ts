@@ -266,26 +266,30 @@ test.describe('Categories', () => {
   })
 
   test('can reorder categories', async ({ request }) => {
-    // Get existing categories
     const listResponse = await request.get('/api/categories')
-    const listJson = await listResponse.json()
+    const original = (await listResponse.json()).data as Array<{
+      id: number
+      name: string
+      priority: number
+    }>
 
-    if (listJson.data.length < 2) {
+    if (original.length < 2) {
       test.skip(true, 'Need at least 2 categories to test reorder')
       return
     }
 
-    const categoryIds = listJson.data.map((c: { id: number }) => c.id)
-
-    // Reverse the order
-    const reorderResponse = await request.put('/api/categories/reorder', {
-      data: { categoryIds: categoryIds.reverse() },
-    })
-    expect(reorderResponse.status()).toBe(200)
-
-    // Restore original order
-    await request.put('/api/categories/reorder', {
-      data: { categoryIds: categoryIds.reverse() },
-    })
+    try {
+      const reorderResponse = await request.put('/api/categories/reorder', {
+        data: { categoryIds: original.map((c) => c.id).reverse() },
+      })
+      expect(reorderResponse.status()).toBe(200)
+    } finally {
+      // Put every priority back as it was. Reordering again cannot: it
+      // renumbers N..1, and the seeded categories all start at 1. Left
+      // renumbered, they reorder every later spec's search results.
+      for (const { id, name, priority } of original) {
+        await request.post('/api/categories', { data: { id, name, priority } })
+      }
+    }
   })
 })

@@ -1571,7 +1571,7 @@ export function searchSongs(
     // above every content-only match instead of competing with it on a shared
     // scale, and the boosts below only ever reorder songs inside their band.
     // The offset clears the highest a content-only match can reach once every
-    // multiplier below is applied (100 * 1.5 * 1.15 * 1.1 ≈ 190), so the bands
+    // multiplier below is applied (100 * 1.15 * 1.1 ≈ 127), so the bands
     // never overlap.
     const TITLE_MATCH_THRESHOLD = 50
     const TITLE_BAND_OFFSET = 200
@@ -1582,12 +1582,6 @@ export function searchSongs(
     const EXACT_SPELLING_BONUS = 2
     const typedPhrase = validTerms.join(' ')
     const scoringTermLists = buildScoringTermLists(query, validTerms)
-    // Category priority is an unbounded, operator-editable integer. Used raw
-    // as a multiplier it dwarfs every other signal — a weak lyric hit in a
-    // priority-5 category outranked an exact title match in a priority-1 one.
-    // Damped, it stays a tiebreaker.
-    const CATEGORY_PRIORITY_SCALE = 0.05
-    const MAX_CATEGORY_PRIORITY_BOOST = 0.5
     // key_line boost: 15% additive bonus for songs that have a key line set
     const KEY_LINE_BOOST = 0.15
     // presentationCount logarithmic boost: up to ~10% extra for frequently presented songs
@@ -1643,19 +1637,8 @@ export function searchSongs(
           PRESENTATION_BOOST_DENOM) *
           PRESENTATION_BOOST_SCALE
 
-      // Apply all boosts and the damped category priority multiplier
-      const categoryMultiplier =
-        1 +
-        Math.min(
-          Math.max(r.category_priority - 1, 0) * CATEGORY_PRIORITY_SCALE,
-          MAX_CATEGORY_PRIORITY_BOOST,
-        )
-
       const boostedScore =
-        termScore *
-        categoryMultiplier *
-        keyLineMultiplier *
-        presentationMultiplier
+        termScore * keyLineMultiplier * presentationMultiplier
 
       return {
         ...r,
@@ -1668,9 +1651,16 @@ export function searchSongs(
 
     // Sort by: boosted score (desc), term score (desc), title score (desc), FTS over trigram, then BM25 rank (asc)
     scoredResults.sort((a, b) => {
-      // Primary: boosted score (category priority applied)
+      // Primary: boosted score
       if (b.boostedScore !== a.boostedScore) {
         return b.boostedScore - a.boostedScore
+      }
+      // Category priority only orders equally good matches. It is an
+      // operator-set rank (reordering 13 categories makes the first one 13),
+      // and as a score multiplier it let a weak lyric hit in the top category
+      // outrank the one song that holds the exact phrase.
+      if (b.category_priority !== a.category_priority) {
+        return b.category_priority - a.category_priority
       }
       // Secondary: more terms matched = higher priority
       if (b.termScore !== a.termScore) {
