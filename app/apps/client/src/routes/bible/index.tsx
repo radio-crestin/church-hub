@@ -69,6 +69,7 @@ import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
 import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
+import { PageHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast'
 
 /**
@@ -1535,21 +1536,19 @@ function BiblePage() {
 
   return (
     <PagePermissionGuard permission="bible.view">
-      <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
-        <div className="flex items-center gap-3 mb-3 lg:mb-4 flex-shrink-0">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('title')}
-          </h1>
-          {/* Same single labelled menu as the song page, so both pages expose
-              their actions the same way. */}
-          <div className="ml-auto shrink-0">
+      <div className="flex flex-col gap-4 h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
+        {/* Same single labelled menu as the song page, so both pages expose
+            their actions the same way. */}
+        <PageHeader
+          title={t('title')}
+          actions={
             <ActionMenu
               items={bibleActionItems}
               label={t('actionsMenu.trigger')}
               testId="bible-actions-menu"
             />
-          </div>
-        </div>
+          }
+        />
 
         {translationsLoading ? (
           <div className="flex items-center justify-center flex-1">

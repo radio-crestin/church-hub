@@ -3,6 +3,7 @@ import { Download, ExternalLink, Info, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { ReleaseNotesSection } from '../../release-notes'
+import { SettingsSection } from '../../settings'
 import { useAppUpdate } from '../hooks/useAppUpdate'
 
 export function AboutSection() {
@@ -11,18 +12,11 @@ export function AboutSection() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-2 mb-4">
-          <Info className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('sections.about.title')}
-          </h3>
-        </div>
-
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-          {t('sections.about.description')}
-        </p>
-
+      <SettingsSection
+        title={t('sections.about.title')}
+        description={t('sections.about.description')}
+        icon={Info}
+      >
         <div className="space-y-4">
           {/* Current Version */}
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -108,7 +102,7 @@ export function AboutSection() {
             </a>
           )}
         </div>
-      </div>
+      </SettingsSection>
 
       <ReleaseNotesSection currentVersion={updateInfo?.currentVersion} />
     </div>

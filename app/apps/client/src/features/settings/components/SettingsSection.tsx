@@ -5,12 +5,8 @@ interface SettingsSectionProps {
   title?: string
   description?: string
   icon?: LucideIcon
-  /**
-   * When false, renders children without the card chrome — for components that
-   * already render their own card (e.g. AboutSection).
-   */
-  card?: boolean
   children: ReactNode
+  testId?: string
 }
 
 /** Consistent titled card wrapper for a settings panel. */
@@ -18,8 +14,8 @@ export function SettingsSection({
   title,
   description,
   icon: Icon,
-  card = true,
   children,
+  testId,
 }: SettingsSectionProps) {
   const header =
     title || description ? (
@@ -40,17 +36,11 @@ export function SettingsSection({
       </div>
     ) : null
 
-  if (!card) {
-    return (
-      <div className="flex-1">
-        {header}
-        {children}
-      </div>
-    )
-  }
-
   return (
-    <div className="flex-1 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+    <div
+      data-testid={testId}
+      className="flex-1 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900"
+    >
       {header}
       {children}
     </div>

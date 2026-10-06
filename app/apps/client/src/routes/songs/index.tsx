@@ -24,6 +24,7 @@ import { usePersistedBoolean } from '~/hooks/usePersistedBoolean'
 import { ActionMenu } from '~/ui/menu'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { PermissionGate } from '~/ui/PermissionGate'
+import { Page, PageHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast'
 
 /**
@@ -420,53 +421,58 @@ function SongsPage() {
 
   return (
     <PagePermissionGuard permission="songs.view">
-      <div className="flex flex-col min-h-0 lg:h-[calc(100vh-3rem)] lg:overflow-hidden">
-        <div className="flex-shrink-0 flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('title')}
-          </h1>
-          <div className="flex items-center gap-2">
-            {presentedSongId && (
-              <button
-                type="button"
-                onClick={handleFocusPresentedSong}
-                className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-700 rounded-lg transition-colors"
-                title={t('bookmarks.focusPresentedSong')}
-              >
-                <Eye className="w-4 h-4" />
-                <span className="hidden sm:inline truncate max-w-[200px]">
-                  {presentedSong?.title}
-                </span>
-              </button>
-            )}
-            {/* Discovering + importing from external sources is a create
+      <Page>
+        <PageHeader
+          title={t('title')}
+          actions={
+            <>
+              {presentedSongId && (
+                <button
+                  type="button"
+                  onClick={handleFocusPresentedSong}
+                  className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-700 rounded-lg transition-colors"
+                  title={t('bookmarks.focusPresentedSong')}
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="hidden sm:inline truncate max-w-[200px]">
+                    {presentedSong?.title}
+                  </span>
+                </button>
+              )}
+              {/* Discovering + importing from external sources is a create
                 operation — same gate as the create button, same route guard.
                 Songs waiting for approval add a small button that syncs them. */}
-            <PermissionGate permission="songs.create">
-              <DiscoverButton />
-            </PermissionGate>
-            {/* Creating songs requires songs.create — hide the button entirely
+              <PermissionGate permission="songs.create">
+                <DiscoverButton />
+              </PermissionGate>
+              {/* Creating songs requires songs.create — hide the button entirely
                 for users without it (the /songs/new route is guarded too). */}
-            <PermissionGate permission="songs.create">
-              <button
-                type="button"
-                onClick={() =>
-                  navigate({ to: '/songs/$songId', params: { songId: 'new' } })
-                }
-                className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('actions.create')}</span>
-              </button>
-            </PermissionGate>
-            {/* Panels only form movable columns on a large screen. */}
-            <ActionMenu
-              items={isLargeScreen ? [editLayoutAction] : []}
-              label={tCommon('actionsMenu.trigger')}
-              testId="songs-actions-menu"
-            />
-          </div>
-        </div>
+              <PermissionGate permission="songs.create">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate({
+                      to: '/songs/$songId',
+                      params: { songId: 'new' },
+                    })
+                  }
+                  className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    {t('actions.create')}
+                  </span>
+                </button>
+              </PermissionGate>
+              {/* Panels only form movable columns on a large screen. */}
+              <ActionMenu
+                items={isLargeScreen ? [editLayoutAction] : []}
+                label={tCommon('actionsMenu.trigger')}
+                testId="songs-actions-menu"
+              />
+            </>
+          }
+        />
 
         <Workspace
           id="songs-list"
@@ -482,7 +488,7 @@ function SongsPage() {
           songIds={bookmarkSongIds}
           onClose={() => setShowAddToScheduleModal(false)}
         />
-      </div>
+      </Page>
     </PagePermissionGuard>
   )
 }

@@ -7,6 +7,5 @@ export const Route = createFileRoute('/settings/about')({
 })
 
 function AboutSettings() {
-  // AboutSection renders its own card chrome, so it is not wrapped here.
   return <AboutSection />
 }

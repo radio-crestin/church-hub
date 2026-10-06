@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
+import { PageHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast/useToast'
 import { ScreenExportModal } from './ScreenExportModal'
 import { ScreenMonitorPicker } from './ScreenMonitorPicker'
@@ -376,24 +377,16 @@ export function ScreenManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <MonitorUp size={24} className="text-indigo-600" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('settings:sections.screens.title')}
-          </h1>
-        </div>
-        <Button onClick={handleAddNew} variant="primary">
-          <Plus size={20} className="mr-2" />
-          {t('settings:sections.screens.addScreen')}
-        </Button>
-      </div>
-
-      {/* Description */}
-      <p className="text-gray-600 dark:text-gray-400">
-        {t('settings:sections.screens.description')}
-      </p>
+      <PageHeader
+        title={t('settings:sections.screens.title')}
+        description={t('settings:sections.screens.description')}
+        actions={
+          <Button onClick={handleAddNew} variant="primary" className="gap-2">
+            <Plus size={16} />
+            {t('settings:sections.screens.addScreen')}
+          </Button>
+        }
+      />
 
       {/* Screens List */}
       {screens && screens.length > 0 ? (

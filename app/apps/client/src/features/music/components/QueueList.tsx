@@ -1,6 +1,7 @@
 import { Music, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState } from '~/ui/page'
 import type { QueueItemSummary } from '../types'
 
 interface QueueListProps {
@@ -26,12 +27,7 @@ export function QueueList({
   const { t } = useTranslation('music')
 
   if (queue.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        <Music className="w-8 h-8 mx-auto mb-2 opacity-50" />
-        <p className="text-sm">{t('player.emptyQueue')}</p>
-      </div>
-    )
+    return <EmptyState icon={Music} title={t('player.emptyQueue')} />
   }
 
   return (

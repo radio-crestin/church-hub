@@ -16,7 +16,9 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '~/ui/button'
 import { Combobox } from '~/ui/combobox/Combobox'
+import { PageHeader } from '~/ui/page'
 import { AudioLevelMeter } from './AudioLevelMeter'
 import { TranscriptionDisplay } from './TranscriptionDisplay'
 import {
@@ -162,33 +164,33 @@ export function LiveTranslationPage() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('title')}
-          </h1>
-          {state.isActive && (
-            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              {t('status.live')}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowSettings(!showSettings)}
-          className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
-        >
-          <Settings className="w-4 h-4" />
-          <span className="hidden sm:inline">{t('settings.button')}</span>
-        </button>
-      </div>
+    <div className="flex flex-col gap-3 h-full overflow-hidden">
+      <PageHeader
+        title={t('title')}
+        actions={
+          <>
+            {state.isActive && (
+              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                {t('status.live')}
+              </span>
+            )}
+            <Button
+              variant="secondary"
+              onClick={() => setShowSettings(!showSettings)}
+              aria-label={t('settings.button')}
+              className="gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('settings.button')}</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* Always-visible listener link bar */}
       {streamUrl && (
-        <div className="mb-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-lg flex-shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-lg flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div className="text-xs font-semibold text-blue-900 dark:text-blue-300 mb-0.5">
               {t('settings.streamUrl')}
@@ -576,7 +578,7 @@ export function LiveTranslationPage() {
       </dialog>
 
       {/* Language Bar + Controls */}
-      <div className="flex items-center justify-between mb-3 flex-shrink-0 flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-shrink-0 flex-wrap gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs">
             <span className="text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider text-[10px]">
@@ -616,7 +618,7 @@ export function LiveTranslationPage() {
             <button
               type="button"
               onClick={clearTranscription}
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
               title={t('controls.clear')}
             >
               <Trash2 className="w-4 h-4" />
@@ -627,11 +629,11 @@ export function LiveTranslationPage() {
             type="button"
             onClick={state.isActive ? stopTranslation : startTranslation}
             disabled={!canStart && !state.isActive}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
               state.isActive
-                ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/20'
+                ? 'bg-red-600 hover:bg-red-700 text-white'
                 : canStart
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
             }`}
           >
@@ -652,7 +654,7 @@ export function LiveTranslationPage() {
 
       {/* Audio Level Meters */}
       {state.isActive && (
-        <div className="flex items-center gap-6 mb-3 px-4 py-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center gap-6 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0">
           <AudioLevelMeter
             level={state.inputAudioLevel}
             label={t('levels.input')}
@@ -669,7 +671,7 @@ export function LiveTranslationPage() {
 
       {/* Per-target listener counts */}
       {state.isActive && state.targets.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2 flex-shrink-0">
+        <div className="flex flex-wrap gap-2 flex-shrink-0">
           {state.targets.map((tgt) => (
             <span
               key={tgt.id}
@@ -688,13 +690,13 @@ export function LiveTranslationPage() {
       )}
 
       {state.error && (
-        <div className="mb-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm flex-shrink-0">
+        <div className="px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm flex-shrink-0">
           {state.error}
         </div>
       )}
 
       {/* Transcription Area */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
         <TranscriptionDisplay
           entries={state.transcription}
           sourceLanguage={settings.sourceLanguage}

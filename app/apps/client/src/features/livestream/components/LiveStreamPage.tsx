@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
+import { PageHeader } from '~/ui/page'
 import { BroadcastInfo } from './BroadcastInfo'
 import { LivestreamGuideButton } from './guide/LivestreamGuideButton'
 import { MixerConnectionButton } from './MixerConnectionButton'
@@ -15,15 +16,10 @@ export function LiveStreamPage() {
   useLivestreamWebSocket()
 
   return (
-    <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
-      <div className="flex items-center gap-3 mb-3 lg:mb-4 flex-shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t('title')}
-        </h1>
-        <LivestreamGuideButton />
-      </div>
+    <div className="flex flex-col gap-4 h-full lg:overflow-hidden overflow-auto scrollbar-thin">
+      <PageHeader title={t('title')} actions={<LivestreamGuideButton />} />
 
-      <div className="flex items-center justify-between gap-2 mb-4 flex-shrink-0">
+      <div className="flex items-center justify-between gap-2 flex-shrink-0">
         <div className="flex flex-wrap items-center gap-2">
           <YouTubeConnectionButton />
           <OBSConnectionButton />
@@ -35,7 +31,7 @@ export function LiveStreamPage() {
       <div className="space-y-4 lg:space-y-6 flex-1 lg:overflow-auto">
         <BroadcastInfo />
 
-        <div className="mt-2 p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="p-4 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
           <SceneGrid />
         </div>
       </div>

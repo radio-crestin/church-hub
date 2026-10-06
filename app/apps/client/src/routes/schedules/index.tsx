@@ -8,9 +8,10 @@ import { useSaveScheduleToFile } from '~/features/schedule-export'
 import { useImportScheduleFromFile } from '~/features/schedule-import'
 import { ScheduleList } from '~/features/schedules/components'
 import { getScheduleById } from '~/features/schedules/service/schedules'
+import { Button } from '~/ui/button'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
+import { Page, PageHeader, PagePanel } from '~/ui/page'
 import { useToast } from '~/ui/toast'
-import { Tooltip } from '~/ui/tooltip/Tooltip'
 
 export const Route = createFileRoute('/schedules/')({
   component: SchedulesPage,
@@ -85,18 +86,32 @@ function SchedulesPage() {
 
   return (
     <PagePermissionGuard permission="programs.view">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('title')}
-          </h1>
-          <div className="flex items-center gap-2">
-            <Tooltip content={t('actions.importFromFile')} position="bottom">
-              <button
-                type="button"
+      <Page>
+        <PageHeader
+          title={t('title')}
+          actions={
+            <>
+              <Button
+                onClick={() =>
+                  navigate({
+                    to: '/schedules/$scheduleId',
+                    params: { scheduleId: 'new' },
+                  })
+                }
+                title={t('actions.create')}
+                aria-label={t('actions.create')}
+                className="gap-2"
+              >
+                <Plus size={16} />
+                <span className="hidden sm:inline">{t('actions.create')}</span>
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={handleImportSchedule}
                 disabled={isImporting}
-                className="flex items-center gap-2 p-2 sm:px-4 sm:py-2 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                title={t('actions.importFromFile')}
+                aria-label={t('actions.importFromFile')}
+                className="gap-2"
               >
                 {isImporting ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -106,32 +121,18 @@ function SchedulesPage() {
                 <span className="hidden sm:inline">
                   {t('actions.importFromFile')}
                 </span>
-              </button>
-            </Tooltip>
-            <Tooltip content={t('actions.create')} position="bottom">
-              <button
-                type="button"
-                onClick={() =>
-                  navigate({
-                    to: '/schedules/$scheduleId',
-                    params: { scheduleId: 'new' },
-                  })
-                }
-                className="flex items-center gap-2 p-2 sm:px-4 sm:py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-              >
-                <Plus size={16} />
-                <span className="hidden sm:inline">{t('actions.create')}</span>
-              </button>
-            </Tooltip>
-          </div>
-        </div>
-
-        <ScheduleList
-          onScheduleClick={handleScheduleClick}
-          onSaveClick={handleSaveSchedule}
-          savingScheduleId={savingScheduleId}
+              </Button>
+            </>
+          }
         />
-      </div>
+        <PagePanel>
+          <ScheduleList
+            onScheduleClick={handleScheduleClick}
+            onSaveClick={handleSaveSchedule}
+            savingScheduleId={savingScheduleId}
+          />
+        </PagePanel>
+      </Page>
     </PagePermissionGuard>
   )
 }

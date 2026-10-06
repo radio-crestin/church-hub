@@ -2,6 +2,7 @@ import { Search, Sparkles } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState, Page } from '~/ui/page'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
 import { AddSourceLink } from './AddSourceLink'
@@ -100,9 +101,8 @@ export function SongDiscoveryScreen({
       ? t('allPresent')
       : null
 
-  // No padding of its own: the app layout already pads every page.
   return (
-    <div className="flex h-full flex-col gap-4">
+    <Page>
       <DiscoveryHeader
         onBack={onBack}
         selectedCount={picked.length}
@@ -159,13 +159,13 @@ export function SongDiscoveryScreen({
               onDraftChange={selection.setDraft}
             />
           ) : (
-            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-              <Sparkles className="h-6 w-6 text-gray-300 dark:text-gray-600" />
-              {emptyText ?? t('selectPrompt')}
-            </div>
+            <EmptyState
+              icon={Sparkles}
+              title={emptyText ?? t('selectPrompt')}
+            />
           )}
         </main>
       </div>
-    </div>
+    </Page>
   )
 }

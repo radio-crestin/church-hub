@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useSyncUpdatesMap } from '~/features/sync'
+import { EmptyState } from '~/ui/page'
 import { ClearSearchButton } from '~/ui/search'
 import { ScheduleCard } from './ScheduleCard'
 import { useSchedules, useSearchSchedules } from '../hooks'
@@ -85,22 +86,15 @@ export function ScheduleList({
           ))}
         </div>
       ) : displaySchedules.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <CalendarDays
-            size={48}
-            className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
-          />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
-            {isSearching
+        <EmptyState
+          icon={CalendarDays}
+          title={
+            isSearching
               ? t('search.noResults', { query: searchQuery })
-              : t('noSchedules')}
-          </p>
-          {!isSearching && (
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-              {t('noSchedulesDescription')}
-            </p>
-          )}
-        </div>
+              : t('noSchedules')
+          }
+          hint={isSearching ? undefined : t('noSchedulesDescription')}
+        />
       ) : (
         <div className="grid gap-3">
           {isSearching && (

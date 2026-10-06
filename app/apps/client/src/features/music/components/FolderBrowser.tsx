@@ -1,6 +1,7 @@
 import { FolderOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState } from '~/ui/page'
 import { FolderCard } from './FolderCard'
 import { useMusicFolders } from '../hooks'
 import type { MusicFile } from '../types'
@@ -30,15 +31,11 @@ export function FolderBrowser({
 
   if (folders.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <FolderOpen className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-        <p className="text-lg font-medium text-gray-500 dark:text-gray-400">
-          {t('folders.empty')}
-        </p>
-        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-          {t('folders.emptyDescription')}
-        </p>
-      </div>
+      <EmptyState
+        icon={FolderOpen}
+        title={t('folders.empty')}
+        hint={t('folders.emptyDescription')}
+      />
     )
   }
 

@@ -2,6 +2,8 @@ import { Loader2, Music, RefreshCw } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '~/ui/button'
+import { EmptyState, Page, PageHeader, PagePanel } from '~/ui/page'
 import {
   KeyLineEditDialog,
   type KeyLineEditDialogHandle,
@@ -131,40 +133,37 @@ export function SongKeyPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
-    <div className="flex flex-col h-full overflow-x-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-            {t('title')}
-          </h1>
-        </div>
-        <button
-          onClick={() => refetch()}
-          disabled={isRefetching}
-          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700
-            disabled:opacity-50 transition-colors"
-          title={t('actions.refresh')}
-        >
-          <RefreshCw size={20} className={isRefetching ? 'animate-spin' : ''} />
-        </button>
-      </div>
+    <Page>
+      <PageHeader
+        title={t('title')}
+        actions={
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            title={t('actions.refresh')}
+            aria-label={t('actions.refresh')}
+          >
+            <RefreshCw
+              size={20}
+              className={isRefetching ? 'animate-spin' : ''}
+            />
+          </Button>
+        }
+      />
 
-      {/* Content */}
-      <div
-        data-testid="song-key-list"
-        className="flex-1 overflow-y-auto px-2 py-4 sm:px-4"
-      >
+      <PagePanel testId="song-key-list">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
           </div>
         ) : allSongs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-            <Music size={48} className="mb-4 opacity-50" />
-            <p className="text-lg font-medium">{t('emptyState.title')}</p>
-            <p className="text-sm">{t('emptyState.description')}</p>
-          </div>
+          <EmptyState
+            icon={Music}
+            title={t('emptyState.title')}
+            hint={t('emptyState.description')}
+          />
         ) : (
           <div className="space-y-6">
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -230,10 +229,10 @@ export function SongKeyPage() {
             )}
           </div>
         )}
-      </div>
+      </PagePanel>
 
       {/* Edit Dialog */}
       <KeyLineEditDialog ref={dialogRef} />
-    </div>
+    </Page>
   )
 }
