@@ -44,6 +44,22 @@ test.describe('Notifications page actions', () => {
     await clearNotifications(request)
   })
 
+  test('opening the page reads nothing, and what it showed does not pop up', async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    await addTwo(request)
+    await page.goto('/notifications')
+    await expect(page.locator('[data-new]')).toHaveCount(2)
+
+    await page.goto('/songs')
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible()
+    await expect(page.getByTestId('sidebar-notifications-dot')).toBeVisible()
+    await expect(page.getByTestId('notification-popup')).toHaveCount(0)
+    for (const n of await listed(request)) expect(n.readAt).toBeNull()
+  })
+
   test('mark all as read takes the new mark off every notification', async ({
     page,
     request,

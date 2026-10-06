@@ -20,3 +20,12 @@ export function upsertNotificationsRead(): void {
     .query('UPDATE notifications SET read_at = ? WHERE read_at IS NULL')
     .run(Date.now())
 }
+
+/** Marks one notification read; one already gone is left alone. */
+export function upsertNotificationRead(id: string): void {
+  getRawDatabase()
+    .query(
+      'UPDATE notifications SET read_at = ? WHERE id = ? AND read_at IS NULL',
+    )
+    .run(Date.now(), id)
+}

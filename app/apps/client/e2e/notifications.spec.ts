@@ -116,13 +116,16 @@ test.describe('Notifications', () => {
     await expect(item).toBeVisible()
     await expect(page.getByTestId('notification-popup')).toHaveCount(0)
 
-    // The page lists it with its songs; opening it reads it.
+    // The page lists it with its songs.
     await item.click()
     await expect(page).toHaveURL(/\/notifications$/)
     const card = page.getByTestId('notification-songs-synced')
     await expect(card).toContainText(/Added \(1\)|Adăugate \(1\)/)
-    await expect(dot).toHaveCount(0)
+    // Opening the page reads nothing; clicking the notification does.
+    await page.reload()
+    await expect(dot).toBeVisible()
     await card.getByRole('link', { name: fresh.title }).click()
+    await expect(dot).toHaveCount(0)
     await expect(page).toHaveURL(/\/songs\/\d+/)
   })
 
@@ -164,6 +167,9 @@ test.describe('Notifications', () => {
     page,
     request,
   }) => {
+    // The last test's notifications stay unread (none was clicked): read
+    // them, so only the running check could show here.
+    await request.post('/api/notifications/read')
     s3.stalled.add(`${folder}/manifest.json`)
     const run = await request.post('/api/song-sources/updates/run', {
       data: { sourceIds: [sourceId], force: true },

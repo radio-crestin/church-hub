@@ -7,6 +7,7 @@ import {
   deleteAllNotifications,
   deleteNotification,
   listNotifications,
+  markNotificationRead,
   markNotificationsRead,
   NOTIFICATIONS_QUERY_KEY,
 } from '../service/notificationsApi'
@@ -36,9 +37,13 @@ export function useNotificationHistory() {
     wasRunning.current = isRunning
   }, [isRunning, queryClient])
 
-  // `mutate` is stable, so the page can mark them read from an effect.
+  // Read only on the user's say: a click on one, or "Mark all as read".
   const { mutate: markAllRead } = useMutation({
     mutationFn: markNotificationsRead,
+    onSuccess: refresh,
+  })
+  const { mutate: markRead } = useMutation({
+    mutationFn: markNotificationRead,
     onSuccess: refresh,
   })
   const { mutate: remove } = useMutation({
@@ -56,6 +61,7 @@ export function useNotificationHistory() {
     isLoading: query.isLoading,
     unreadCount: notifications.filter((n) => n.readAt === null).length,
     markAllRead,
+    markRead,
     remove,
     removeAll,
   }

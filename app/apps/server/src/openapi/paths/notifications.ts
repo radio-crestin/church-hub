@@ -154,6 +154,23 @@ export const notificationsPaths = {
       },
     },
   },
+  '/api/notifications/{id}/read': {
+    post: {
+      tags,
+      summary: 'Mark one notification read',
+      description:
+        'When the user clicks it. One already removed is left alone (still 200).',
+      security,
+      parameters: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+      ],
+      responses: {
+        '200': ok,
+        '400': { description: 'Not a notification id' },
+        ...errors,
+      },
+    },
+  },
   '/api/notifications/{id}': {
     delete: {
       tags,

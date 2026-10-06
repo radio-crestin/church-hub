@@ -15,5 +15,6 @@ export {
 } from './types'
 export {
   upsertNotification,
+  upsertNotificationRead,
   upsertNotificationsRead,
 } from './upsertNotification'

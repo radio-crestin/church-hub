@@ -87,7 +87,16 @@ test.describe('Sidebar notifications bell', () => {
     await bellOf(page).click()
     await expect(page).toHaveURL(/\/notifications$/)
     await expect(bellOf(page)).toHaveAttribute('aria-current', 'page')
+
+    // Opening the page leaves the dot; clicking the notification reads it.
+    const card = page.getByTestId('notification-app-update')
+    await expect(card).toHaveAttribute('data-new', 'true')
+    await page.reload()
+    await expect(dotOf(page)).toBeVisible()
+    await shot(page, 'after-open')
+    await card.click({ position: { x: 600, y: 20 } })
     await expect(dotOf(page)).toHaveCount(0)
+    await expect(card).not.toHaveAttribute('data-new')
     await shot(page, 'after-read')
   })
 

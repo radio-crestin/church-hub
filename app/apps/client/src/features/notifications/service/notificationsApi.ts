@@ -41,6 +41,9 @@ export const listNotifications = () =>
 export const markNotificationsRead = () =>
   call('/api/notifications/read', 'POST')
 
+export const markNotificationRead = (id: string) =>
+  call(`/api/notifications/${encodeURIComponent(id)}/read`, 'POST')
+
 export const deleteNotification = (id: string) =>
   call(`/api/notifications/${encodeURIComponent(id)}`, 'DELETE')
 
