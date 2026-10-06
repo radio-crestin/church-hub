@@ -48,20 +48,38 @@ function readLibrarySongs(ids: number[]): Map<number, LibrarySong> {
 }
 
 /**
- * The source's songs the library has (same file or title) whose lyrics the
- * source changed since, for the library songs nobody edited by hand: a song
- * the user changed is never replaced. Same title only, so an update always
- * lands on the song it came from.
+ * Each source song and the library song that came from the same file. A
+ * library song several source songs claim is left out: updating it from each
+ * in turn would never settle.
+ */
+function sameFileMatches(verdicts: DiscoveryMatchResult[]): Map<string, number> {
+  const fromFile = verdicts.filter(
+    (v) => v.verdict === 'exact-filename' && v.exactSongId != null,
+  )
+  const claims = new Map<number, number>()
+  for (const v of fromFile) {
+    const id = v.exactSongId as number
+    claims.set(id, (claims.get(id) ?? 0) + 1)
+  }
+  return new Map(
+    fromFile
+      .filter((v) => claims.get(v.exactSongId as number) === 1)
+      .map((v) => [v.tempId, v.exactSongId as number]),
+  )
+}
+
+/**
+ * The source's songs whose lyrics changed since the library got them, for
+ * the library songs nobody edited by hand: a song the user changed is never
+ * replaced. Only a library song from the same file, under the same title, so
+ * an update always lands on the song it came from, never on another song
+ * that only shares its title.
  */
 export function findChangedSongs(
   songs: SourceSong[],
   verdicts: DiscoveryMatchResult[],
 ): ChangedSong[] {
-  const exact = new Map(
-    verdicts
-      .filter((v) => v.exactSongId != null)
-      .map((v) => [v.tempId, v.exactSongId as number]),
-  )
+  const exact = sameFileMatches(verdicts)
   if (exact.size === 0) return []
   const library = readLibrarySongs([...new Set(exact.values())])
   return songs.flatMap((song) => {
