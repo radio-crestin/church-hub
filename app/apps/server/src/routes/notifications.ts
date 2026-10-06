@@ -1,6 +1,7 @@
 import { requirePermission } from '../middleware/permissions'
 import type { RequestContext } from '../middleware/types'
 import {
+  deleteAllNotifications,
   deleteNotification,
   listNotifications,
   upsertNotification,
@@ -19,6 +20,7 @@ const VERSION = /^[\w.+-]{1,40}$/
  * - GET    /api/notifications              every notification, newest first
  * - POST   /api/notifications/read         mark them all read
  * - POST   /api/notifications/app-update   record a new app version `{ version }`
+ * - DELETE /api/notifications              remove all (those the user sees)
  * - DELETE /api/notifications/:id          remove one
  */
 export async function handleNotificationRoutes(
@@ -40,12 +42,18 @@ export async function handleNotificationRoutes(
     )
   if (!context) return respond(401, { error: 'Unauthorized' })
 
+  const seesSongs = requirePermission('songs.view')(context) === null
+
   if (req.method === 'GET' && pathname === '/api/notifications') {
-    const seesSongs = requirePermission('songs.view')(context) === null
     const notifications = listNotifications().filter(
       (n) => seesSongs || !n.kind.startsWith('songs-'),
     )
     return respond(200, { data: notifications })
+  }
+
+  if (req.method === 'DELETE' && pathname === '/api/notifications') {
+    const removed = deleteAllNotifications(seesSongs)
+    return respond(200, { data: { removed } })
   }
 
   if (req.method === 'POST' && pathname === '/api/notifications/read') {

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useSongUpdates } from '~/features/song-discovery/hooks/useSongUpdates'
 import {
   type AppNotification,
+  deleteAllNotifications,
   deleteNotification,
   listNotifications,
   markNotificationsRead,
@@ -44,6 +45,10 @@ export function useNotificationHistory() {
     mutationFn: deleteNotification,
     onSuccess: refresh,
   })
+  const { mutate: removeAll } = useMutation({
+    mutationFn: deleteAllNotifications,
+    onSuccess: refresh,
+  })
 
   const notifications = query.data ?? []
   return {
@@ -52,5 +57,6 @@ export function useNotificationHistory() {
     unreadCount: notifications.filter((n) => n.readAt === null).length,
     markAllRead,
     remove,
+    removeAll,
   }
 }

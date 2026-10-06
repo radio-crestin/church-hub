@@ -44,6 +44,8 @@ export const markNotificationsRead = () =>
 export const deleteNotification = (id: string) =>
   call(`/api/notifications/${encodeURIComponent(id)}`, 'DELETE')
 
+export const deleteAllNotifications = () => call('/api/notifications', 'DELETE')
+
 /** Puts a new app version in the history (once; again is a no-op). */
 export const recordAppUpdate = (version: string) =>
   call('/api/notifications/app-update', 'POST', { version })

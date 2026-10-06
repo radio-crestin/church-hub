@@ -93,6 +93,32 @@ export const notificationsPaths = {
         ...errors,
       },
     },
+    delete: {
+      tags,
+      summary: 'Remove every notification',
+      description:
+        'Those the user sees: without `songs.view`, the song sync’s stay.',
+      security,
+      responses: {
+        '200': {
+          description: 'How many were removed',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { removed: { type: 'integer' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        ...errors,
+      },
+    },
   },
   '/api/notifications/read': {
     post: {

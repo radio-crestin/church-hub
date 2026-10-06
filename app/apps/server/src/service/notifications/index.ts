@@ -1,4 +1,5 @@
 export {
+  deleteAllNotifications,
   deleteNotification,
   deleteNotificationsOfKind,
   deleteOldNotifications,

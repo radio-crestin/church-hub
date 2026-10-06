@@ -5,17 +5,19 @@ import { useTranslation } from 'react-i18next'
 import { SongCheckingNotification } from '~/features/song-discovery/components/SongCheckingNotification'
 import { EmptyState, Page, PageHeader, PagePanel } from '~/ui/page'
 import { NotificationItem } from './NotificationItem'
+import { NotificationsPageActions } from './NotificationsPageActions'
 import { useNotificationHistory } from '../hooks/useNotificationHistory'
 import type { AppNotification } from '../service/notificationsApi'
 import { groupByDay } from '../utils/groupByDay'
 
 /**
  * Every notification of the last 60 days, newest first, by day. Opening it
- * reads them: those unread until now stay marked as new while it is open.
+ * reads them: those unread until now stay marked as new while it is open, or
+ * until "Mark all as read".
  */
 export function NotificationsPage() {
   const { t, i18n } = useTranslation('notifications')
-  const { notifications, isLoading, markAllRead, remove } =
+  const { notifications, isLoading, markAllRead, remove, removeAll } =
     useNotificationHistory()
   const [newIds, setNewIds] = useState<Set<string>>(new Set())
 
@@ -36,7 +38,21 @@ export function NotificationsPage() {
 
   return (
     <Page testId="notifications-page">
-      <PageHeader title={t('title')} description={t('description')} />
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        actions={
+          <NotificationsPageActions
+            hasNew={newIds.size > 0 || unreadIds !== ''}
+            isEmpty={notifications.length === 0}
+            onMarkAllRead={() => {
+              markAllRead()
+              setNewIds(new Set())
+            }}
+            onClearAll={removeAll}
+          />
+        }
+      />
       <PagePanel testId="notifications-panel">
         <SongCheckingNotification />
 
