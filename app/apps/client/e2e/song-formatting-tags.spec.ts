@@ -168,10 +168,7 @@ test.describe('Resurse Creștine import', () => {
     })
     await expect(page.getByText(/<\/?(i|b)>/)).toHaveCount(0)
 
-    await page
-      .getByRole('button', { name: /^(Import|Importă)$/ })
-      .first()
-      .click()
+    await page.getByRole('checkbox', { name: new RegExp(cleanTitle) }).click()
     await page
       .getByRole('button', { name: /Import selected|Importă selecția/ })
       .click()
