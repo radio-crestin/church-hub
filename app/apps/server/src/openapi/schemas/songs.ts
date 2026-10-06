@@ -286,7 +286,13 @@ export const songSchemas = {
       name: { type: 'string' },
       priority: {
         type: 'integer',
-        description: 'Priority for search ranking',
+        description:
+          'Orders the categories; in search it only orders equally good matches. A non-integer is refused with 400.',
+      },
+      isHidden: {
+        type: 'integer',
+        enum: [0, 1],
+        description: '1 hides the category and its songs; 0 shows them',
       },
     },
   },

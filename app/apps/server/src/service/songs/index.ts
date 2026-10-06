@@ -113,4 +113,5 @@ export type {
   UpsertTagInput,
 } from './types'
 // Per-song background override
+export { validateCategoryInput } from './validateCategoryInput'
 export { validateSongBackground } from './validateSongBackground'
