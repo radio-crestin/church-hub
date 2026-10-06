@@ -38,7 +38,9 @@
     "verseteTineri": "Bible Verses",
     "items": "{{count}} items",
     "items_one": "{{count}} item",
-    "items_other": "{{count}} items"
+    "items_other": "{{count}} items",
+    "versesCount_one": "{{count}} verse",
+    "versesCount_other": "{{count}} verses"
   },
   "panel": {
     "title": "Programs",

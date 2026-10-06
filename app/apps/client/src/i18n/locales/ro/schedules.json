@@ -39,7 +39,10 @@
     "items": "{{count}} elemente",
     "items_one": "{{count}} element",
     "items_few": "{{count}} elemente",
-    "items_other": "{{count}} de elemente"
+    "items_other": "{{count}} de elemente",
+    "versesCount_one": "{{count}} verset",
+    "versesCount_few": "{{count}} versete",
+    "versesCount_other": "{{count}} de versete"
   },
   "panel": {
     "title": "Programe",
