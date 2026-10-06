@@ -1,4 +1,4 @@
-import { Info, Loader2 } from 'lucide-react'
+import { Images, Info, Loader2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -9,9 +9,9 @@ import {
 import type { BackgroundMedia } from '~/features/background-media/service/types'
 import { ConfirmModal } from '~/ui/modal'
 import { useHasPermission } from '~/ui/PermissionGate'
+import { EmptyState, Page, PageHeader, PagePanel } from '~/ui/page'
 import { useToast } from '~/ui/toast'
 import { createLogger } from '~/utils/logger'
-import { GalleryEmptyState } from './GalleryEmptyState'
 import { GalleryFilterTabs } from './GalleryFilterTabs'
 import { GalleryItemCard } from './GalleryItemCard'
 import { GalleryPreviewModal } from './GalleryPreviewModal'
@@ -96,7 +96,15 @@ export function GalleryPage() {
     }
 
     if (items.length === 0) {
-      return <GalleryEmptyState filter={filter} />
+      return (
+        <div data-testid="gallery-empty">
+          <EmptyState
+            icon={Images}
+            title={t(`empty.${filter}`)}
+            hint={t('empty.hint')}
+          />
+        </div>
+      )
     }
 
     return (
@@ -114,31 +122,22 @@ export function GalleryPage() {
   }
 
   return (
-    <div
-      data-testid="gallery-page"
-      className="flex h-full flex-col overflow-x-hidden"
-    >
-      {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-gray-200 px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-gray-700">
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-white">
-            {t('title')}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('description')}
-          </p>
-        </div>
-        {canEdit && (
-          <GalleryUploadButton
-            progress={progress}
-            onFilesSelected={(files) => void uploadFiles(files)}
-          />
-        )}
-      </div>
+    <Page testId="gallery-page">
+      <PageHeader
+        title={t('title')}
+        description={t('description')}
+        actions={
+          canEdit && (
+            <GalleryUploadButton
+              progress={progress}
+              onFilesSelected={(files) => void uploadFiles(files)}
+            />
+          )
+        }
+      />
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6">
-        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <PagePanel>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <GalleryFilterTabs
             value={filter}
             counts={counts}
@@ -151,7 +150,7 @@ export function GalleryPage() {
         </div>
 
         {renderContent()}
-      </div>
+      </PagePanel>
 
       <GalleryPreviewModal
         media={previewMedia}
@@ -169,6 +168,6 @@ export function GalleryPage() {
       />
 
       {heavyGifWarning}
-    </div>
+    </Page>
   )
 }

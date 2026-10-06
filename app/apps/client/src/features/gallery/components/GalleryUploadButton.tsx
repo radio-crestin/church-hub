@@ -37,7 +37,6 @@ export function GalleryUploadButton({
         data-testid="gallery-upload-button"
         disabled={progress !== null}
         onClick={() => inputRef.current?.click()}
-        className="w-full sm:w-auto"
       >
         {progress ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
