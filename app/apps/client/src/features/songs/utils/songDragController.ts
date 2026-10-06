@@ -81,12 +81,16 @@ export function registerSongDropZone(
   }
 }
 
-/** The registered zone under a viewport point, if any. */
+/**
+ * The registered zone under a viewport point, if any. Looks through every
+ * layer at the point, not just the top one: a toast or pop-up floating over a
+ * panel is not a drop target, and the song dropped on it belongs to the panel.
+ */
 function zoneAt(x: number, y: number): string | null {
-  const target = document.elementFromPoint(x, y)
-  if (!target) return null
-  for (const [id, zone] of zones) {
-    if (zone.element === target || zone.element.contains(target)) return id
+  for (const target of document.elementsFromPoint(x, y)) {
+    for (const [id, zone] of zones) {
+      if (zone.element === target || zone.element.contains(target)) return id
+    }
   }
   return null
 }
@@ -137,14 +141,16 @@ export function startSongDrag(
     })
   }
 
-  const finish = (commit: boolean) => {
+  const finish = (commit: boolean, at?: { x: number; y: number }) => {
     document.removeEventListener('pointermove', move)
     document.removeEventListener('pointerup', up)
     document.removeEventListener('pointercancel', cancel)
     document.removeEventListener('keydown', onKeyDown)
     document.body.style.userSelect = ''
 
-    const zoneId = state.activeZoneId
+    // Where the pointer is released decides, not the last move: the panel
+    // under it may have re-registered since.
+    const zoneId = at ? zoneAt(at.x, at.y) : state.activeZoneId
     const dragged = state.song
     state = IDLE
     emit()
@@ -156,7 +162,7 @@ export function startSongDrag(
 
   const up = (upEvent: PointerEvent) => {
     if (upEvent.pointerId !== pointerId) return
-    finish(armed)
+    finish(armed, { x: upEvent.clientX, y: upEvent.clientY })
   }
   const cancel = () => finish(false)
   const onKeyDown = (keyEvent: KeyboardEvent) => {

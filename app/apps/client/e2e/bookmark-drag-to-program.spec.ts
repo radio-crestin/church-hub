@@ -290,4 +290,48 @@ test.describe('Drag a song out of the list', () => {
       await request.delete(`/api/songs/${song.id}`)
     }
   })
+
+  test('a song dropped onto the toast over Programe still lands', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const open = await createSong(request, `E2E Drag Toast Host ${uniq}`)
+    const first = await createSong(request, `E2E Drag Toast One ${uniq}`)
+    const second = await createSong(request, `E2E Drag Toast Two ${uniq}`)
+    const program = await createProgram(request, `E2E Drag Toast ${uniq}`)
+
+    try {
+      await request.delete('/api/song-bookmarks')
+      for (const song of [first, second]) {
+        await request.post('/api/song-bookmarks', { data: { songId: song.id } })
+      }
+
+      await page.goto(`/songs/${open.id}`)
+      const rowOf = (title: string) =>
+        page.getByTestId('bookmark-song-drag').filter({ hasText: title })
+      await expect(rowOf(second.title)).toBeVisible({ timeout: 15000 })
+      const panel = page.getByTestId('schedule-songs-panel')
+
+      await dragOnto(page, rowOf(first.title), panel)
+      // The "added" toast now floats over the bottom of the Programe panel.
+      const toast = page.getByText(
+        new RegExp(`${first.title}.*(added|adaugata)`),
+      )
+      await expect(toast).toBeVisible()
+      await dragOnto(page, rowOf(second.title), toast)
+
+      await expect
+        .poll(async () => await programSongIds(request, program.id), {
+          timeout: 10000,
+        })
+        .toEqual([first.id, second.id])
+    } finally {
+      await request.delete(`/api/schedules/${program.id}`)
+      await request.delete('/api/song-bookmarks')
+      for (const song of [open, first, second]) {
+        await request.delete(`/api/songs/${song.id}`)
+      }
+    }
+  })
 })
