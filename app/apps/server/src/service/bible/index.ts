@@ -23,7 +23,6 @@ export {
   rebuildSearchIndex,
   searchBible,
   searchByReference,
-  searchVersesByText,
   updateSearchIndex,
   warmupSearchIndex,
 } from './search'
@@ -32,6 +31,7 @@ export {
   ensureRCCVExists,
   seedRCCV,
 } from './seed-rccv'
+export { searchVersesByText } from './text-search/searchVersesByText'
 // Translation operations
 export {
   deleteTranslation,

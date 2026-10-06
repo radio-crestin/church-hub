@@ -16,6 +16,8 @@ export function loadVocabulary(db: Database, ftsTable: string): Vocabulary {
       `SELECT term, doc FROM ${vocabTable}`,
     )
     .all()
+  // Dropped again so a rebuild that recreates the index starts clean.
+  db.run(`DROP TABLE ${vocabTable}`)
   rows.sort((a, b) => (a.term < b.term ? -1 : a.term > b.term ? 1 : 0))
   const documentCount =
     db.query<{ c: number }, []>(`SELECT COUNT(*) AS c FROM ${ftsTable}`).get()

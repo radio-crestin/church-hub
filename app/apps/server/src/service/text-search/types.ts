@@ -7,6 +7,7 @@ export interface Vocabulary {
 
 /** One way a typed word may appear in a document. */
 export interface TermVariant {
+  /** The word, or its pieces separated by spaces ("s a" for "s-a"). */
   text: string
   /** Matches every word that starts with `text` (the word still being typed). */
   prefix: boolean
@@ -22,6 +23,12 @@ export interface TermGroup {
   pieces: string[]
   /** How much finding this word says about a match: rarer words weigh more. */
   weight: number
+  /**
+   * Whether a document must hold the word to be a candidate. A single letter
+   * or a two-letter beginning still being typed matches too much to look
+   * up; it only counts in the scoring.
+   */
+  required: boolean
 }
 
 /** How well one text matches the query, see `scoreTextMatch`. */

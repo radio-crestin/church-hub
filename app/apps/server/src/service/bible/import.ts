@@ -1,5 +1,6 @@
 import { parseHolyBibleXml } from './import-holy-bible-xml'
 import { parseOsisXml } from './import-osis'
+import { resetVerseSearchState } from './text-search/verseSearchState'
 import type { CreateTranslationInput, ImportResult, ParsedBible } from './types'
 import { getRawDatabase } from '../../db'
 
@@ -192,6 +193,7 @@ export function importBibleTranslation(
 
       // Commit transaction
       db.exec('COMMIT')
+      resetVerseSearchState()
 
       log(
         'info',
