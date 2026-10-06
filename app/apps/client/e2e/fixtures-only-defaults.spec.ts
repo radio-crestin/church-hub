@@ -4,13 +4,15 @@ import { fileURLToPath } from 'node:url'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { ExtraServer } from './helpers/extra-server'
+import { sanitizeSettingValue } from '../../server/src/db/fixtures/sanitize-setting-value'
 
 /**
- * What the tests make stays in the test database (T-114): the songs every
- * install starts with hold no e2e song. One had reached them, "E2E Unique
- * Song …" with its "API test verse 1", when the fixtures were dumped from a
- * dev database a test run had once written into; installs that got it lose
- * it on their next start.
+ * A new install starts with defaults only (T-114): nothing the tests made
+ * and nothing of the machine the fixtures were dumped from.
+ * - Songs: one e2e song had reached them, "E2E Unique Song …" with its
+ *   "API test verse 1"; installs that got it lose it on their next start.
+ * - Settings: our MIDI live shortcuts, kiosk settings and WhatsApp sidebar
+ *   link had reached them; a dump now leaves them out.
  */
 
 const SONGS_FIXTURE = fileURLToPath(
@@ -51,6 +53,45 @@ test('the shipped songs have no e2e song', () => {
   expect(testSongs).toEqual([])
 })
 
+// One machine's own setup, never a default.
+const OWN_SETUP_KEYS = [
+  'global_keyboard_shortcuts',
+  'kiosk_mode_enabled',
+  'kiosk_startup_page',
+]
+
+interface SidebarItem {
+  id: string
+  type: string
+}
+
+test("a dump leaves one machine's own setup out", () => {
+  const shortcuts = JSON.stringify({
+    actions: { startLive: { shortcuts: ['midi:note_on:40'], enabled: true } },
+  })
+  expect(sanitizeSettingValue('global_keyboard_shortcuts', shortcuts)).toBe(
+    null,
+  )
+  expect(sanitizeSettingValue('kiosk_mode_enabled', 'true')).toBe(null)
+
+  const sidebar = JSON.stringify({
+    version: 2,
+    items: [
+      { id: 'songs', type: 'builtin', order: 0 },
+      {
+        id: 'custom_1',
+        type: 'custom',
+        url: 'https://web.whatsapp.com/',
+        order: 1,
+      },
+    ],
+  })
+  const dumped = JSON.parse(
+    sanitizeSettingValue('sidebar_configuration', sidebar) ?? '{}',
+  ) as { items: SidebarItem[] }
+  expect(dumped.items.map((item) => item.id)).toEqual(['songs'])
+})
+
 test.describe('installs', () => {
   test.describe.configure({ mode: 'serial', timeout: 600_000 })
 
@@ -68,6 +109,23 @@ test.describe('installs', () => {
   test('a fresh install finds no e2e song', async () => {
     const api = await server.adminRequest()
     expect(await findTestSongs(api, 'E2E Unique Song')).toEqual([])
+  })
+
+  test('a fresh install starts with none of our own setup', async () => {
+    const api = await server.adminRequest()
+    const res = await api.get('/api/settings/app_settings')
+    expect(res.ok()).toBe(true)
+    const settings = (await res.json()).data as { key: string; value: string }[]
+
+    const keys = settings.map((setting) => setting.key)
+    for (const key of OWN_SETUP_KEYS) expect(keys).not.toContain(key)
+
+    const sidebar = settings.find((s) => s.key === 'sidebar_configuration')
+    const items = (
+      JSON.parse(sidebar?.value ?? '{}') as { items: SidebarItem[] }
+    ).items
+    expect(items.length).toBeGreaterThan(0)
+    expect(items.filter((item) => item.type === 'custom')).toEqual([])
   })
 
   test('an install that got the e2e song loses it on its next start', async () => {

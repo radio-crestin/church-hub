@@ -3,15 +3,14 @@
  * setting stays out of default-settings.json until it is added here, so a
  * token, password or per-install secret can't slip in by accident.
  * Secret fields inside these values are still set to null on dump.
+ * Left out on purpose, as one machine's own setup: global_keyboard_shortcuts
+ * (its keyboard and MIDI mappings) and the kiosk settings.
  */
 export const SAFE_SETTING_KEYS = new Set([
   'ai_search_config',
   'bible_ai_search_config',
   'songs_ai_search_config',
   'debug_mode',
-  'global_keyboard_shortcuts',
-  'kiosk_mode_enabled',
-  'kiosk_startup_page',
   'language',
   'live_translation_settings',
   'music_player_current_index',
