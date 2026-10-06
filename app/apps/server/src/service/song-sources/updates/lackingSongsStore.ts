@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import type { SourceSong } from '@church-hub/song-formats'
 
-import { getDataDir } from '../../../utils/paths'
+import { getDatabasePath } from '../../../utils/paths'
 import { keepNotInLibrary, type SongVersionSuggestion } from '../../songs'
 
 /** A song of a source the library lacks, as the last check classified it. */
@@ -12,7 +12,9 @@ export interface LackingSong extends SourceSong {
   similar: SongVersionSuggestion[]
 }
 
-const folder = () => join(getDataDir(), 'song-sources', 'lacking')
+/** Next to the database, so another database never reads them. */
+const folder = () =>
+  join(dirname(getDatabasePath()), 'song-sources', 'lacking')
 const fileOf = (sourceId: string) =>
   join(folder(), `${encodeURIComponent(sourceId)}.json`)
 

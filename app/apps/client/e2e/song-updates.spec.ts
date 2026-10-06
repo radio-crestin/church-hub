@@ -1,6 +1,14 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { FakeS3 } from './helpers/fake-s3'
+import {
+  addLinkSource,
+  checkSource,
+  type FolderSong,
+  openSongXml,
+  publishSongFolder,
+  setAutoUpdate,
+} from './helpers/song-folder-source'
 
 /**
  * Song updates: the server checks the song sources in a worker thread and,
@@ -9,78 +17,16 @@ import { FakeS3 } from './helpers/fake-s3'
  * With automatic updates off, new songs are only counted.
  */
 
-const ts = Date.now()
 // Letters only: titles lose their digits on the way in.
-const tag = ts
-  .toString()
-  .split('')
-  .map((d) => String.fromCharCode(97 + Number(d)))
-  .join('')
+const tag = String(Date.now()).replace(/\d/g, (d) => 'abcdefghij'[Number(d)])
 const categoryName = `E2E Updates ${tag}`
 const folder = `/updates/${tag}`
 
-interface BundleSong {
-  id: string
-  title: string
-  lyrics: string
-}
-
-function openSong({ title, lyrics }: BundleSong): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<song>
-  <title>${title}</title>
-  <lyrics>[V1]
- ${lyrics}
-</lyrics>
-</song>`
-}
-
-/** A shared folder on the stand-in S3: manifest.json plus a file per song. */
-function publish(s3: FakeS3, songs: BundleSong[], checksum: string) {
-  const manifest = {
-    format: 'church-hub-song-bundle',
-    version: 2,
-    name: categoryName,
-    categoryName,
-    checksum,
-    updatedAt: new Date().toISOString(),
-    songs: songs.map((song) => ({
-      id: song.id,
-      title: song.title,
-      path: `songs/${song.id}.opensong`,
-      hash: `${song.id}-${checksum}`,
-    })),
-  }
-  s3.objects.set(
-    `${folder}/manifest.json`,
-    Buffer.from(JSON.stringify(manifest)),
-  )
-  for (const song of songs) {
-    s3.objects.set(
-      `${folder}/songs/${song.id}.opensong`,
-      Buffer.from(openSong(song)),
-    )
-  }
-}
-
-async function runUpdates(request: APIRequestContext, sourceId: string) {
-  const run = await request.post('/api/song-sources/updates/run', {
-    data: { sourceIds: [sourceId] },
-  })
-  expect(run.status()).toBe(202)
-  let source: { newCount: number; imported: number } | undefined
-  await expect(async () => {
-    const state = (
-      await (await request.get('/api/song-sources/updates')).json()
-    ).data
-    expect(state.running).toBe(false)
-    source = state.sources.find(
-      (s: { sourceId: string }) => s.sourceId === sourceId,
-    )
-    expect(source).toBeTruthy()
-  }).toPass({ timeout: 60_000 })
-  return source as { newCount: number; imported: number }
-}
+const song = (id: string, title: string, lyrics: string): FolderSong => ({
+  id,
+  title,
+  xml: openSongXml(title, [lyrics]),
+})
 
 async function songsTitled(request: APIRequestContext, title: string) {
   const res = await request.get(
@@ -97,53 +43,43 @@ test.describe('Song updates', () => {
   const s3 = new FakeS3()
   let sourceId = ''
   const libraryIds: number[] = []
-  const fresh: BundleSong[] = [
-    {
-      id: 'a',
-      title: `Cantare noua ${tag} unu`,
-      lyrics: `${tag} zori de lumina peste vale`,
-    },
-    {
-      id: 'b',
-      title: `Cantare noua ${tag} doi`,
-      lyrics: `${tag} rauri curg spre marea larga`,
-    },
+  const fresh = [
+    song('a', `Cantare noua ${tag} unu`, `${tag} zori de lumina peste vale`),
+    song('b', `Cantare noua ${tag} doi`, `${tag} rauri curg spre marea larga`),
   ]
+  const knownLyrics = `${tag} harul Tau ma poarta zi de zi pe drumul vietii mele`
   // The library has this one under a shorter title.
-  const known: BundleSong = {
-    id: 'c',
-    title: `Harul Tau ma poarta ${tag}`,
-    lyrics: `${tag} harul Tau ma poarta zi de zi pe drumul vietii mele`,
-  }
+  const known = song('c', `Harul Tau ma poarta ${tag}`, knownLyrics)
+  const third = song(
+    'd',
+    `Cantare noua ${tag} trei`,
+    `${tag} stele mici aprinse`,
+  )
 
   test.beforeAll(async ({ request }) => {
     await s3.start()
     const library = await request.post('/api/songs', {
       data: {
         title: `Harul Tau ${tag}`,
-        slides: [{ content: `<p>${known.lyrics}</p>`, sortOrder: 0 }],
+        slides: [{ content: `<p>${knownLyrics}</p>`, sortOrder: 0 }],
       },
     })
     libraryIds.push((await library.json()).data.id)
-    publish(s3, [...fresh, known], 'one')
-    const added = await request.post('/api/song-sources', {
-      data: { url: `${s3.endpoint}${folder}/manifest.json` },
-    })
-    expect(added.ok()).toBeTruthy()
-    sourceId = (await added.json()).data.id
+    const url = publishSongFolder(
+      s3,
+      folder,
+      categoryName,
+      [...fresh, known],
+      'one',
+    )
+    sourceId = await addLinkSource(request, url)
   })
 
   test.afterAll(async ({ request }) => {
-    await request.put('/api/song-sources/updates/settings', {
-      data: { autoUpdate: true },
-    })
+    await setAutoUpdate(request, true)
     if (sourceId) await request.delete(`/api/song-sources/${sourceId}`)
-    for (const song of [
-      ...fresh,
-      known,
-      { title: `Cantare noua ${tag} trei` },
-    ]) {
-      for (const hit of await songsTitled(request, song.title)) {
+    for (const { title } of [...fresh, known, third]) {
+      for (const hit of await songsTitled(request, title)) {
         await request.delete(`/api/songs/${hit.id}`)
       }
     }
@@ -159,32 +95,29 @@ test.describe('Song updates', () => {
     ).data
     expect(state.autoUpdate).toBe(true)
 
-    const result = await runUpdates(request, sourceId)
+    const result = await checkSource(request, sourceId)
     expect(result.imported).toBe(2)
     expect(result.newCount).toBe(1)
-    for (const song of fresh) {
-      await expect(async () => {
-        expect(await songsTitled(request, song.title)).toHaveLength(1)
-      }).toPass({ timeout: 10_000 })
+    for (const { title } of fresh) {
+      expect(await songsTitled(request, title)).toHaveLength(1)
     }
     expect(await songsTitled(request, known.title)).toHaveLength(0)
+
+    // Song discovery gets the one left at once, with its verdict.
+    const lacking = (
+      await (await request.get(`/api/song-sources/${sourceId}/lacking`)).json()
+    ).data as { parsed: { title: string }; verdict: string }[]
+    expect(lacking.map((s) => [s.parsed.title, s.verdict])).toEqual([
+      [known.title, 'similar'],
+    ])
   })
 
   test('with automatic updates off, new songs are only counted', async ({
     request,
   }) => {
-    const off = await request.put('/api/song-sources/updates/settings', {
-      data: { autoUpdate: false },
-    })
-    expect((await off.json()).data.autoUpdate).toBe(false)
-
-    const third: BundleSong = {
-      id: 'd',
-      title: `Cantare noua ${tag} trei`,
-      lyrics: `${tag} stele mici aprinse peste sat`,
-    }
-    publish(s3, [...fresh, known, third], 'two')
-    const result = await runUpdates(request, sourceId)
+    await setAutoUpdate(request, false)
+    publishSongFolder(s3, folder, categoryName, [...fresh, known, third], 'two')
+    const result = await checkSource(request, sourceId)
     expect(result.imported).toBe(0)
     expect(result.newCount).toBe(2)
     expect(await songsTitled(request, third.title)).toHaveLength(0)
