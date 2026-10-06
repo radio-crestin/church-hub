@@ -1,4 +1,5 @@
 export { emitFocusSearchEvent, useFocusSearchEvent } from './focusSearchEvent'
+export { isMidiShortcut } from './isMidiShortcut'
 export {
   emitNavigationShortcut,
   listenForNavigationShortcuts,

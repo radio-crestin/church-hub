@@ -255,6 +255,8 @@ test.describe('Shortcut scopes: where each key works', () => {
   }) => {
     // Slide keys: F2 Church Hub only, F1 any program (their default). F3 is a
     // key the Bible page bound to "show slide": Church Hub only by default.
+    // A MIDI pad on "start live" is the MIDI listener's, never a keyboard key
+    // for the shell to hold.
     const actions = (original?.actions as object | undefined) ?? {}
     await saveShortcuts(
       request,
@@ -263,6 +265,7 @@ test.describe('Shortcut scopes: where each key works', () => {
         {
           actions: {
             ...actions,
+            startLive: { shortcuts: ['midi:note_on:40'], enabled: true },
             nextSlide: { shortcuts: ['F2'], enabled: true },
             prevSlide: { shortcuts: ['F1'], enabled: true },
           },

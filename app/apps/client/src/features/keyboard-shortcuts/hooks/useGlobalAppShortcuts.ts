@@ -10,6 +10,7 @@ import type {
 } from '../types'
 import {
   isGlobalRecordingActive,
+  isMidiShortcut,
   offerKeyToPage,
   shortcutScope,
 } from '../utils'
@@ -155,10 +156,12 @@ export function useGlobalAppShortcuts({
         // key is held only while a Church Hub window has the keyboard, so the
         // program in front keeps it otherwise (e.g. F1–F12 for BibleShow).
         // App-level sidebar keys are never held: the page runs them itself
-        // (useSidebarShortcutKeys).
+        // (useSidebarShortcutKeys). MIDI bindings are never held: they are
+        // not keyboard keys, the MIDI listener runs them.
         const isHeld = (shortcut: string, kind: ShortcutKind) =>
-          shortcutScope(config, shortcut, kind) === 'system' ||
-          (kind !== 'sidebar' && isFrontmost)
+          !isMidiShortcut(shortcut) &&
+          (shortcutScope(config, shortcut, kind) === 'system' ||
+            (kind !== 'sidebar' && isFrontmost))
         if (!isFrontmost) {
           logger.debug(
             'Church Hub is behind another app: app-level keys released',
