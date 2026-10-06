@@ -1,6 +1,10 @@
 import { getRawDatabase } from '../../../db'
+import { refreshPendingNotification } from '../updates/songSyncNotifications'
 
-/** Removes a source added from a link, and the songs cached from it. */
+/**
+ * Removes a source added from a link, the songs cached from it, and its songs
+ * from the "waiting for approval" notification.
+ */
 export function deleteLinkSource(id: string): void {
   const db = getRawDatabase()
   const row = db
@@ -13,4 +17,5 @@ export function deleteLinkSource(id: string): void {
     row.url,
   )
   db.query('DELETE FROM song_source_subscriptions WHERE id = ?').run(id)
+  refreshPendingNotification()
 }
