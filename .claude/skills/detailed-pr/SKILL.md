@@ -5,13 +5,15 @@ description: Generate an extremely detailed, professional "Staff Engineer final 
 
 # detailed-pr
 
-Produce a Pull Request description so thorough that any reviewer understands the
+Write a Pull Request description from which any reviewer understands the
 problem, why it mattered, the solution, the design decisions, and every
-permission / migration / API / UI change — then open or update the PR with it.
+permission / migration / API / UI change, then open or update the PR with it.
+It reads as if written by the feature's principal author.
 
-The description must read as if written by the feature's **principal author**.
-**Everything is grounded in the actual branch diff — never invent endpoints,
-permissions, migrations, or behaviour the diff doesn't contain.**
+Every claim (endpoint, permission, migration, column, file count) comes from
+the branch's actual commits and diff against its base (the PR's base, else
+`main`): reviewers act on this text, so an invented behaviour is worse than a
+missing one. When unsure, inspect the code.
 
 This skill writes text only. Demo videos come from the better-tasks plugin
 (its before/after video rules); keep its video lines and `--attach` when you
@@ -19,66 +21,30 @@ rewrite a body. Installers are built only on request (`gh workflow run pr-build.
 see `.github/workflows/pr-build.yml`); their links: `scripts/pr-build-links.sh <pr> --wait`.
 Keep the `<!-- pr-build:start -->` ... `<!-- pr-build:end -->` block when there is one.
 
----
+## Language
 
-## Step 0 — Language
+English prose and the English section headers below, like this repo's commits
+and PRs. If the user asks for Romanian, write the prose in Romanian and keep
+the English headers.
 
-Default to **English content with the English section headers below** (matches
-this repo's existing commits/PRs). If the user explicitly asks for Romanian,
-write the prose in Romanian but **keep the English section headers**. When
-unsure, check existing PRs: `gh pr list --state all --limit 5 --json title`.
+## What to look at
 
----
+Besides the commit list and changed files, the high-risk areas get read in
+full, not skimmed: migrations and schema files (what they alter or insert,
+their idempotency guard); permission keys the diff adds, each checked against
+the base's permission catalog to tell a NEW permission from an existing one
+that is only newly enforced; new or changed API routes and their OpenAPI
+entries. If the branch is behind its base, say so and offer to merge the base
+first, since a description of a conflicting branch misleads.
 
-## Step 1 — Gather the facts (run these; base them, not memory)
+## The description: 13 sections
 
-```bash
-# Branch + base
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-BASE=$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null || echo main)
-git fetch origin "$BASE" --quiet
-
-# Commits, stat, files (use three-dot for "since divergence")
-git log --pretty='%h %s' "origin/$BASE..HEAD"
-git diff --shortstat "origin/$BASE...HEAD"
-git diff --name-only "origin/$BASE...HEAD"
-```
-
-Then detect the high-signal areas the format requires a dedicated section for:
-
-```bash
-# Database: migrations + schema changes
-git diff --name-only "origin/$BASE...HEAD" | grep -iE 'migration|db/schema' || true
-#   → read each migration file fully (what it ALTERs/INSERTs, idempotency guard)
-
-# Permissions: new permission keys, and whether they are NEW vs pre-existing
-git diff "origin/$BASE...HEAD" | grep -E '^\+' | grep -oE "'[a-z_]+\.[a-z_]+'" | sort -u
-#   for each candidate, confirm whether it already existed on the base:
-#   git show "origin/$BASE:<permission-catalog-file>" | grep -c '<key>'   (>0 = pre-existing, only newly ENFORCED)
-
-# API: new/changed endpoints (routes, handlers, openapi paths)
-git diff "origin/$BASE...HEAD" | grep -E '^\+' | grep -iE "app\.(get|post|put|delete|patch)|url\.pathname ===|/api/" | head -40
-
-# UI surfaces, new components/hooks/services
-git diff --name-only "origin/$BASE...HEAD" | grep -iE 'components|hooks|service|routes' | head
-```
-
-Read the bodies of anything flagged (migrations especially). If the diff touches
-**permissions, authorization, migrations, or data**, prioritise depth over
-brevity in those sections — they are the highest-risk parts of any review.
-
-If the branch is behind the base, say so; offer to merge `origin/$BASE` first
-(a conflict-laden description is misleading).
-
----
-
-## Step 2 — Generate the description (this EXACT 13-section format)
-
-Write to `/tmp/pr-body.md`. Fill every section that applies; omit a section only
-when the diff genuinely has nothing for it (e.g. no DB change → write
-"No database changes." rather than fabricating one). Use tables where they add
-clarity, hierarchical lists, and concrete examples. Group commits by theme and
-cite their short hashes.
+Write to `/tmp/pr-body.md`. A section with nothing in the diff gets a one-line
+"N/A" (e.g. "No database changes."), never filler. Use tables where they add
+clarity, hierarchical lists and concrete examples; group commits by theme and
+cite their short hashes. Explain the reasoning behind each decision and the
+architectural intent the changes show, not just what moved. Permissions, authorization, migrations and data get
+depth over brevity. The result is ready to paste into GitHub as is.
 
 ```markdown
 # <PR title>
@@ -147,50 +113,23 @@ each with a mitigation.
 Explicitly list everything this PR does NOT do.
 ```
 
-### Quality requirements (non-negotiable)
-- No vague summaries. Deduce the architectural intent from the implemented changes.
-- Explain the reasoning behind each decision.
-- Tables where they increase clarity; hierarchical lists; concrete examples.
-- A migration or a permission change gets a full dedicated section.
-- If the PR touches permissions, authorization, or data → depth over brevity.
-- Produce a description **ready to copy-paste into GitHub with no further edits**.
+Title style: `<scope or domain>: <short summary>`.
 
----
-
-## Step 3 — Push, then create or update the PR
+## Push, then create or update the PR
 
 The branch must be on origin before the PR can reference its commits. Pushing
 and PR create/edit are part of this skill's contract — **the project-wide "ask
 before pushing" rule is suspended the moment the user invokes this skill**; do
 not ask for confirmation.
 
-```bash
-git push -u origin "$BRANCH"
+Push the branch every time, then update the branch's PR if it has one
+(`gh pr edit <n> --body-file /tmp/pr-body.md`; the title only if the user asked
+or it is clearly stale), else create it (`gh pr create --base <base> --head
+<branch> --title "<title>" --body-file /tmp/pr-body.md`). Never open a
+duplicate. Show the user the PR link.
 
-if gh pr view --json number -q .number >/dev/null 2>&1; then
-  gh pr edit "$(gh pr view --json number -q .number)" --body-file /tmp/pr-body.md
-  # update the title too only if the user asked or it's clearly stale:
-  # gh pr edit <num> --title "<title>"
-else
-  gh pr create --base "$BASE" --head "$BRANCH" --title "<title>" --body-file /tmp/pr-body.md
-fi
-gh pr view --json url -q .url   # show the user the link
-```
+## Sole author
 
-Title style: `<scope or domain>: <short summary>` — compact, conventional.
-
----
-
-## Constraints
-
-- **Sole author.** This user requires being the sole author. Do NOT add a
-  `Co-Authored-By: Claude` trailer to any commit, and do NOT add a
-  "Generated with Claude Code" footer to the PR body.
-- **Grounded only.** Every claim (endpoint, permission, migration, column, file
-  count) must come from the actual diff/commits. When something is uncertain,
-  inspect it; do not guess.
-- **Create vs update.** If a PR already exists for the branch, UPDATE it
-  (`gh pr edit`); otherwise CREATE it. Never open a duplicate.
-- **Push every time** before `gh pr create` / `gh pr edit`.
-- **Don't pad.** Omit a section with a one-line "N/A" rather than inventing
-  content to fill the template.
+This user requires being the sole author: no `Co-Authored-By: Claude` trailer
+on any commit and no "Generated with Claude Code" footer in the PR body, which
+becomes the squash commit (see the `commit-no-coauthor` skill).
