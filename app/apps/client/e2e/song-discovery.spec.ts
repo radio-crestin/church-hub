@@ -162,6 +162,11 @@ test.describe('Song Discovery — staging UI', () => {
       `ui-new-${ts}.xml`,
       openSongXml(newTitle, 'a fresh unseen verse never imported before today'),
     )
+    // A broken file (bare "&" is not XML) must not hide the other songs.
+    zip.file(
+      `ui-broken-${ts}.xml`,
+      openSongXml(`UI Broken Song ${ts}`, 'Bill & Gloria'),
+    )
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
 
     // Mock the Resurse Creștine archive (the server downloads it from the release).
@@ -186,11 +191,10 @@ test.describe('Song Discovery — staging UI', () => {
 
     // The duplicate-by-filename entry must NOT appear in staging.
     await expect(page.getByText(`UI Existing Song ${ts}`)).toHaveCount(0)
+    await expect(page.getByText(`UI Broken Song ${ts}`)).toHaveCount(0)
 
     // Pick the new candidate and import it.
-    await page
-      .getByRole('checkbox', { name: new RegExp(newTitle) })
-      .click()
+    await page.getByRole('checkbox', { name: new RegExp(newTitle) }).click()
     await page
       .getByRole('button', { name: /Import selected|Importă selecția/ })
       .click()

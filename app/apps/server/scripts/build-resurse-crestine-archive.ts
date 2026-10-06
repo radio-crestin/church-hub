@@ -63,12 +63,23 @@ function songTitle(xml: string, fileName: string): string {
   return isJunkTitle(fromLyrics) ? title : fromLyrics
 }
 
+/**
+ * Repairs what makes some upstream files invalid XML, which no OpenSong reader
+ * accepts: a bare "&" ("Bill & Gloria Gaither") and control characters such
+ * as a stray vertical tab.
+ */
+const toValidXml = (xml: string) =>
+  xml
+    .replace(/&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#x[0-9a-fA-F]+);)/g, '&amp;')
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+
 /** The upstream file with our title and the name of the file it came from. */
 function rewrite(xml: string, title: string, fileName: string): string {
   const ours = `<title>${escapeXml(title)}</title>\n  <source_filename>${escapeXml(fileName)}</source_filename>`
-  return /<title>[\s\S]*?<\/title>/.test(xml)
-    ? xml.replace(/<title>[\s\S]*?<\/title>/, ours)
-    : xml.replace(/<song([^>]*)>/, `<song$1>\n  ${ours}`)
+  const valid = toValidXml(xml)
+  return /<title>[\s\S]*?<\/title>/.test(valid)
+    ? valid.replace(/<title>[\s\S]*?<\/title>/, ours)
+    : valid.replace(/<song([^>]*)>/, `<song$1>\n  ${ours}`)
 }
 
 async function main() {
