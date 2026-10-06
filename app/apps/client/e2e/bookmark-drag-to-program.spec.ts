@@ -334,4 +334,48 @@ test.describe('Drag a song out of the list', () => {
       }
     }
   })
+
+  test('a song dropped while the programs are still loading lands once they load', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const open = await createSong(request, `E2E Drag Early Host ${uniq}`)
+    const marked = await createSong(request, `E2E Drag Early ${uniq}`)
+    const program = await createProgram(request, `E2E Drag Early ${uniq}`)
+
+    try {
+      await request.delete('/api/song-bookmarks')
+      await request.post('/api/song-bookmarks', { data: { songId: marked.id } })
+
+      // Hold the program list back, as a slow start would.
+      let releaseList = () => {}
+      const listHeld = new Promise<void>((resolve) => {
+        releaseList = resolve
+      })
+      await page.route(/\/api\/schedules(\?.*)?$/, async (route) => {
+        await listHeld
+        await route.continue()
+      })
+
+      await page.goto(`/songs/${open.id}`)
+      const row = page
+        .getByTestId('bookmark-song-drag')
+        .filter({ hasText: marked.title })
+      await expect(row).toBeVisible({ timeout: 15000 })
+      await dragOnto(page, row, page.getByTestId('schedule-songs-panel'))
+      releaseList()
+
+      await expect
+        .poll(async () => await programSongIds(request, program.id), {
+          timeout: 10000,
+        })
+        .toEqual([marked.id])
+    } finally {
+      await request.delete(`/api/schedules/${program.id}`)
+      await request.delete('/api/song-bookmarks')
+      await request.delete(`/api/songs/${open.id}`)
+      await request.delete(`/api/songs/${marked.id}`)
+    }
+  })
 })
