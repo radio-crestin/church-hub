@@ -46,14 +46,22 @@ async function programSongIds(
     )
 }
 
-/** Presses on `source`, travels to `target` and releases there. */
-async function dragOnto(page: Page, source: Locator, target: Locator) {
+/**
+ * Presses on `source`, travels to `target` and releases there: at its centre,
+ * or `yRatio` of the way down it.
+ */
+async function dragOnto(
+  page: Page,
+  source: Locator,
+  target: Locator,
+  yRatio = 0.5,
+) {
   const from = await source.boundingBox()
   const to = await target.boundingBox()
   if (!from || !to) throw new Error('drag source or target is not on screen')
 
   const start = { x: from.x + from.width / 2, y: from.y + from.height / 2 }
-  const end = { x: to.x + to.width / 2, y: to.y + to.height / 2 }
+  const end = { x: to.x + to.width / 2, y: to.y + to.height * yRatio }
 
   await page.mouse.move(start.x, start.y)
   await page.mouse.down()
@@ -288,6 +296,95 @@ test.describe('Drag a song out of the list', () => {
     } finally {
       await request.delete('/api/song-bookmarks')
       await request.delete(`/api/songs/${song.id}`)
+    }
+  })
+
+  test('a song dropped onto the toast over Programe still lands', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const open = await createSong(request, `E2E Drag Toast Host ${uniq}`)
+    const first = await createSong(request, `E2E Drag Toast One ${uniq}`)
+    const second = await createSong(request, `E2E Drag Toast Two ${uniq}`)
+    const program = await createProgram(request, `E2E Drag Toast ${uniq}`)
+
+    try {
+      await request.delete('/api/song-bookmarks')
+      for (const song of [first, second]) {
+        await request.post('/api/song-bookmarks', { data: { songId: song.id } })
+      }
+
+      await page.goto(`/songs/${open.id}`)
+      const rowOf = (title: string) =>
+        page.getByTestId('bookmark-song-drag').filter({ hasText: title })
+      await expect(rowOf(second.title)).toBeVisible({ timeout: 15000 })
+      const panel = page.getByTestId('schedule-songs-panel')
+
+      await dragOnto(page, rowOf(first.title), panel)
+      // The "added" toast now floats over the bottom of the Programe panel.
+      const toast = page.getByText(
+        new RegExp(`${first.title}.*(added|adaugata)`),
+      )
+      await expect(toast).toBeVisible()
+      // Its top edge: the part of the toast that is over the panel.
+      await dragOnto(page, rowOf(second.title), toast, 0.15)
+
+      await expect
+        .poll(async () => await programSongIds(request, program.id), {
+          timeout: 10000,
+        })
+        .toEqual([first.id, second.id])
+    } finally {
+      await request.delete(`/api/schedules/${program.id}`)
+      await request.delete('/api/song-bookmarks')
+      for (const song of [open, first, second]) {
+        await request.delete(`/api/songs/${song.id}`)
+      }
+    }
+  })
+
+  test('a song dropped while the programs are still loading lands once they load', async ({
+    page,
+    request,
+  }) => {
+    const uniq = Date.now()
+    const open = await createSong(request, `E2E Drag Early Host ${uniq}`)
+    const marked = await createSong(request, `E2E Drag Early ${uniq}`)
+    const program = await createProgram(request, `E2E Drag Early ${uniq}`)
+
+    try {
+      await request.delete('/api/song-bookmarks')
+      await request.post('/api/song-bookmarks', { data: { songId: marked.id } })
+
+      // Hold the program list back, as a slow start would.
+      let releaseList = () => {}
+      const listHeld = new Promise<void>((resolve) => {
+        releaseList = resolve
+      })
+      await page.route(/\/api\/schedules(\?.*)?$/, async (route) => {
+        await listHeld
+        await route.continue()
+      })
+
+      await page.goto(`/songs/${open.id}`)
+      const row = page
+        .getByTestId('bookmark-song-drag')
+        .filter({ hasText: marked.title })
+      await expect(row).toBeVisible({ timeout: 15000 })
+      await dragOnto(page, row, page.getByTestId('schedule-songs-panel'))
+      releaseList()
+
+      await expect
+        .poll(async () => await programSongIds(request, program.id), {
+          timeout: 10000,
+        })
+        .toEqual([marked.id])
+    } finally {
+      await request.delete(`/api/schedules/${program.id}`)
+      await request.delete('/api/song-bookmarks')
+      await request.delete(`/api/songs/${open.id}`)
+      await request.delete(`/api/songs/${marked.id}`)
     }
   })
 })

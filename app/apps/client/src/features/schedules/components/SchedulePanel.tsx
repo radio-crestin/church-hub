@@ -367,9 +367,17 @@ export function SchedulePanel({
    * Appends a song to the selected program. Duplicates are allowed on purpose:
    * a service often opens and closes with the same song.
    */
+  // A song dropped before the program list has loaded waits for the panel to
+  // pick its program, instead of being turned away.
+  const pendingDropRef = useRef<{ id: number; title: string } | null>(null)
+
   const addSongToSelected = useCallback(
     (song: { id: number; title: string }) => {
       if (!selectedScheduleId) {
+        if (schedulesLoading) {
+          pendingDropRef.current = song
+          return
+        }
         showToast(t('panel.selectScheduleFirst'), 'error')
         return
       }
@@ -382,8 +390,23 @@ export function SchedulePanel({
         },
       )
     },
-    [selectedScheduleId, addItemMutation, showToast, t],
+    [selectedScheduleId, schedulesLoading, addItemMutation, showToast, t],
   )
+
+  // Once loaded, the held song goes to the program the panel picked (or is
+  // turned away when there is no program at all).
+  useEffect(() => {
+    const pending = pendingDropRef.current
+    if (!pending || schedulesLoading) return
+    if (!selectedScheduleId && schedules.length > 0) return
+    pendingDropRef.current = null
+    addSongToSelected(pending)
+  }, [
+    schedulesLoading,
+    schedules.length,
+    selectedScheduleId,
+    addSongToSelected,
+  ])
 
   const {
     ref: songDropRef,
