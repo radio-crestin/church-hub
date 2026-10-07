@@ -72,17 +72,20 @@ export function PageShortcutsSettings({
     )
   }, [config, pageId])
 
-  // What this component last wrote. Its own save comes straight back through
-  // the config — without empty rows, which are only ever local — and must not
-  // wipe the row the operator is about to record into.
-  const lastSavedRef = useRef<string | null>(null)
+  // This page's settings as last loaded or written here. The config changes
+  // whenever any page saves (and is refetched after each save); unless this
+  // page's own part changed, reloading would wipe the empty row the operator
+  // is about to record into — empty rows are only ever local.
+  const appliedRef = useRef<string | null>(null)
 
   // Load values from config (initially, and whenever it changes elsewhere)
   useEffect(() => {
     if (!sidebarItem) return
     const settings =
       sidebarItem.settings ?? getDefaultSidebarItemSettings(pageId)
-    if (lastSavedRef.current === snapshotOf(settings)) return
+    const snapshot = snapshotOf(settings)
+    if (appliedRef.current === snapshot) return
+    appliedRef.current = snapshot
 
     setSwitchShortcuts([...settings.shortcuts])
     // Migrate legacy: if focusSearchOnNavigate was true and no focusSearchShortcuts,
@@ -125,7 +128,7 @@ export function PageShortcutsSettings({
           prevSlide: clean(nextPageLists.prevSlide),
         },
       }
-      lastSavedRef.current = snapshotOf(settings)
+      appliedRef.current = snapshotOf(settings)
 
       const updatedItems = config.items.map((item) =>
         item.id === sidebarItem.id ? { ...item, settings } : item,
