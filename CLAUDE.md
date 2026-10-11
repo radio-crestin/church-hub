@@ -39,8 +39,5 @@ Everything must work on macOS, Windows and Linux, in both the Tauri shell (Rust)
 ## Presentation rendering
 All presentation content (LivePreview, ScreenRenderer and any other display) renders through the shared `usePresentationContent` hook (`app/apps/client/src/features/presentation/hooks/usePresentationContent.ts`), so exit animations, content fetching and visibility behave the same everywhere. New content types and rendering changes go in the hook, never in a separate engine.
 
-## graphify
-When `graphify-out/graph.json` exists, `graphify query "<question>"`, `graphify path "<A>" "<B>"` and `graphify explain "<concept>"` give a scoped view of the codebase, much smaller than raw grep. After changing code, `graphify update .` keeps the graph current.
-
 ## Rust build output
 `target/` reaches tens of GB per checkout. When you are done with a worktree or branch, run `cargo clean --manifest-path app/tauri/Cargo.toml` there before leaving it; never keep `target/` in a checkout nobody builds anymore.

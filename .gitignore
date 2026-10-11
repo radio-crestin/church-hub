@@ -114,10 +114,8 @@ app/test-results/
 # Local working notes for the current branch
 context.md
 
-# graphify / omc tool output
+# omc tool output
 .omc/
-graphify-out/
-*.graphify-bak
 test-results/
 
 # Local review builds of the desktop app (app/scripts/review-build.ts)
