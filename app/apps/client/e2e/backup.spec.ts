@@ -365,9 +365,11 @@ test.describe('Backup - local', () => {
       expect(config.status()).toBe(200)
       expect((await config.json()).data.maxBackups).toBe(7)
     } finally {
-      // The reopened app.db is read-only: a restore that succeeds reopens it
-      // writable for the specs after this one.
+      // The old database was reopened as it is, read-only, and its `.backup`
+      // copy inherited that mode: make both writable, then a restore that
+      // succeeds reopens the database writable for the specs after this one.
       chmodSync(dbPath, 0o644)
+      chmodSync(`${dbPath}.backup`, 0o644)
       const restored = await request.post('/api/backup/local/restore', {
         data: { fileName },
       })
