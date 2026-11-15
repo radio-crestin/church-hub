@@ -2,10 +2,10 @@ import { joinSearchTitles } from './parseAlternateTitles'
 import { SONGS_FTS_TABLE } from './song-search/fetchSongCandidates'
 import { songSearchCache } from './song-search/songSearchCache'
 import {
-  getLibraryVersionIndex,
   refreshLibrarySong,
   removeLibrarySong,
   resetLibraryVersionIndex,
+  warmUpLibraryVersionIndex,
 } from './song-versions/libraryVersionIndex'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
@@ -304,11 +304,11 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
  * which reads the whole index into the OS page cache on the way, and the
  * library version index, so the first "possible versions" is instant.
  */
-export function warmupSearchIndex(): void {
+export async function warmupSearchIndex(): Promise<void> {
   const startTime = performance.now()
   try {
     getVocabulary(SONGS_FTS_TABLE)
-    getLibraryVersionIndex()
+    await warmUpLibraryVersionIndex()
   } catch (error) {
     logger.warning(`FTS warmup skipped: ${error}`)
   }
