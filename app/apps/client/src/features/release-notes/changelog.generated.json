@@ -1,5 +1,419 @@
 [
   {
+    "version": "0.1.104",
+    "date": "2026-11-15T19:04:09+00:00",
+    "features": [
+      {
+        "scope": "review-build",
+        "message": "reuse the cached shell, build only client and sidecar"
+      },
+      {
+        "scope": "review-build",
+        "message": "one review shell for every task, settings read at start"
+      },
+      {
+        "scope": "dev",
+        "message": "run the dev server on port 3001; the installed app keeps 3000"
+      },
+      {
+        "scope": "server",
+        "message": "say on every API response which database answered"
+      },
+      {
+        "scope": "feature-request",
+        "message": "name it \"Feedback\" in the sidebar and dialog"
+      },
+      {
+        "scope": "feature-request",
+        "message": "one screen, markup on top; email optional"
+      },
+      {
+        "scope": "worker",
+        "message": "email is optional on feature requests"
+      },
+      {
+        "scope": "feature-request",
+        "message": "big screenshot preview in step 2, click to enlarge"
+      },
+      {
+        "scope": "feature-request",
+        "message": "iPad-style markup bar on the screenshot"
+      },
+      {
+        "scope": "worker",
+        "message": "screenshot notes as text, optional description"
+      },
+      {
+        "scope": "feature-request",
+        "message": "two steps, text notes on the screenshot, optional description"
+      },
+      {
+        "scope": "worker",
+        "message": "feature requests without a title, body size cap"
+      },
+      {
+        "scope": "feature-request",
+        "message": "one short form, no title, description required"
+      },
+      {
+        "scope": "startup",
+        "message": "loading page lists each start-up step with progress"
+      },
+      {
+        "scope": "screens",
+        "message": "professional factory slide design for every screen type"
+      },
+      {
+        "scope": "screens",
+        "message": "bundle Source Sans 3, Montserrat and Lora fonts"
+      }
+    ],
+    "bugFixes": [
+      {
+        "scope": "websocket",
+        "message": "send the presentation state to a client when it connects"
+      },
+      {
+        "scope": "songs",
+        "message": "build the library version index in steps so the first show after start-up is not held"
+      },
+      {
+        "scope": "tooltip",
+        "message": "keep tooltips inside the window"
+      },
+      {
+        "scope": "search",
+        "message": "one shared way to show highlighted search result text"
+      },
+      {
+        "scope": "song-discovery",
+        "message": "read lyrics for Compare from an inert document"
+      },
+      {
+        "scope": "programs",
+        "message": "program cards show their real date, not 1970"
+      },
+      {
+        "scope": "songs",
+        "message": "song editor window uses most of the screen"
+      },
+      {
+        "scope": "review-build",
+        "message": "shell builds on a checkout without dist; clear message when Windows locks a running app"
+      },
+      {
+        "scope": "client",
+        "message": "one getServerPort for every link to this window's server"
+      },
+      {
+        "scope": "client",
+        "message": "a window taken over by another Church Hub shows that app's data"
+      },
+      {
+        "scope": "feature-request",
+        "message": "phone screenshot without the menu drawer"
+      },
+      {
+        "scope": "feature-request",
+        "message": "readable note labels on tall phone screenshots"
+      },
+      {
+        "scope": "feature-request",
+        "message": "screenshot uses the full width on phones"
+      },
+      {
+        "scope": "server",
+        "message": "keep starting when the boot server worker is slow to stop or start"
+      },
+      {
+        "scope": "desktop",
+        "message": "show the window at once instead of after the server starts"
+      },
+      {
+        "scope": "server",
+        "message": "answer /health with each start-up step while the database is built"
+      },
+      {
+        "scope": "songs",
+        "message": "stop turning database errors into \"song not found\""
+      },
+      {
+        "scope": "songs",
+        "message": "tell a deleted song apart from a song that failed to load"
+      },
+      {
+        "scope": "query",
+        "message": "run requests whatever the browser's internet status"
+      },
+      {
+        "scope": "fonts",
+        "message": "ship the bundled fonts' OFL licences with the app"
+      },
+      {
+        "scope": "screens",
+        "message": "use Fira Sans as the slide text font"
+      },
+      {
+        "scope": "screens",
+        "message": "line height 1.3 in the factory design"
+      },
+      {
+        "scope": "screens",
+        "message": "keep Source Sans 3 lines inside the text box"
+      }
+    ],
+    "changes": [
+      {
+        "scope": "release",
+        "message": "release.sh bumps on a branch for a PR, then tags the merge on main"
+      },
+      {
+        "scope": "release",
+        "message": "a normal release is Latest; a draft flagged pre-release stays out of the updater"
+      },
+      {
+        "scope": null,
+        "message": "T-140 Search fields let Up/Down and page keys move the live slide"
+      },
+      {
+        "scope": null,
+        "message": "T-145 Restoring a backup fails on Windows and leaves the server with no database"
+      },
+      {
+        "scope": null,
+        "message": "T-144 superfactory.yaml: task checkouts install app/ deps and every Playwright browser the suite uses"
+      },
+      {
+        "scope": null,
+        "message": "T-142 smoke:sidecar: wait for the sidecar to exit before removing its work dir"
+      },
+      {
+        "scope": null,
+        "message": "T-138 Clock not shown: projector windows refused by Tauri 2.11's ACL; idle clock on main"
+      },
+      {
+        "scope": null,
+        "message": "move from the better-tasks plugin to Superfactory"
+      },
+      {
+        "scope": null,
+        "message": "T-137 Shortcuts settings: an added key slot is no longer wiped by a config refetch"
+      },
+      {
+        "scope": null,
+        "message": "T-136 e2e: bookmark-drag-to-program sometimes drops onto the Programe panel without effect"
+      },
+      {
+        "scope": null,
+        "message": "T-124 Song discovery: comparing a large source is slow (~10 s per 150 songs)"
+      },
+      {
+        "scope": null,
+        "message": "T-135 e2e: a song-sources notification toast left on the test DB covers the program panel in bookmark-drag-to-program"
+      },
+      {
+        "scope": null,
+        "message": "T-134 Move every page onto the page-layout standard (shared Page, PageHeader, PagePanel, EmptyState)"
+      },
+      {
+        "scope": null,
+        "message": "T-132 Client type check: fix the remaining ~220 tsc errors (presentation, Bible routes, song export, songs components, e2e)"
+      },
+      {
+        "scope": null,
+        "message": "T-128 Best-in-class search: one fast, typo-tolerant engine for Bible verses and song full text"
+      },
+      {
+        "scope": null,
+        "message": "T-133 Sidebar notifications: just a bell icon with a dot, on the Settings line, to the right"
+      },
+      {
+        "scope": null,
+        "message": "T-131 e2e: song-sources.spec \\\"a shared link becomes a source\\\" is flaky (manifest URL matches 2 elements)"
+      },
+      {
+        "scope": null,
+        "message": "T-130 Client type check reports errors in song-import and the songs route"
+      },
+      {
+        "scope": null,
+        "message": "T-127 Song categories: priority is interpolated into SQL in the category upsert"
+      },
+      {
+        "scope": null,
+        "message": "clean up Rust target/ when a checkout is no longer used"
+      },
+      {
+        "scope": null,
+        "message": "T-122 Remove the unused check-libreoffice endpoint; rename convertPptToPptx.ts to parsePptViaServer.ts"
+      },
+      {
+        "scope": null,
+        "message": "T-120 Song sources: config files for BCEV Băicoi, Laudele Domnului, Pe drumul credinței; user sources synced to their own S3 and shareable"
+      },
+      {
+        "scope": null,
+        "message": "T-125 e2e on main: shortcut-scopes keeps the MIDI note-40 key held after leaving a projection"
+      },
+      {
+        "scope": null,
+        "message": "T-126 Song search: category priority only orders equally good matches"
+      },
+      {
+        "scope": null,
+        "message": "T-123 Sidebar F4–F12 keys work only while the app is focused, with an option for system-wide"
+      },
+      {
+        "scope": null,
+        "message": "T-121 Remove the deprecated LibreOffice PPT conversion from the client"
+      },
+      {
+        "scope": null,
+        "message": "T-117 Lint: fix lint errors on main"
+      },
+      {
+        "scope": null,
+        "message": "T-119 Songs: F5 as a shortcut"
+      },
+      {
+        "scope": null,
+        "message": "T-112 Professional, easy-on-the-eyes transitions for Bible verses and every slide type"
+      },
+      {
+        "scope": null,
+        "message": "T-118 e2e: song-key-keeps-scroll times out and leaves its songs behind, breaking song-picker-filters"
+      },
+      {
+        "scope": null,
+        "message": "T-114 Fixtures: e2e test content only in the dev env, never in the shipped fixtures"
+      },
+      {
+        "scope": null,
+        "message": "T-113 Music: three public-domain sample hymns instead of a test clip"
+      },
+      {
+        "scope": null,
+        "message": "T-115 Livestream: good default scenes and a guide to connect everything and create the first scene"
+      },
+      {
+        "scope": null,
+        "message": "T-110 Song first/last slide layouts follow the screen's own song design"
+      },
+      {
+        "scope": null,
+        "message": "T-109 Simplify the project's agent instructions"
+      },
+      {
+        "scope": null,
+        "message": "T-108 Program page: Romanian count for Bible verse entries"
+      },
+      {
+        "scope": null,
+        "message": "T-018 Program quick-insert bar between entries"
+      },
+      {
+        "scope": null,
+        "message": "T-087 Load a program's songs into Marcaje"
+      },
+      {
+        "scope": null,
+        "message": "T-088 Programe panel: make programs there, review fixes"
+      },
+      {
+        "scope": null,
+        "message": "T-105 Romanian item counts instead of English"
+      },
+      {
+        "scope": null,
+        "message": "T-104 Songs: remove <i>, <b> and similar formatting tags"
+      },
+      {
+        "scope": "rules",
+        "message": "drop lines that contradict the better-tasks plugin's own rules"
+      },
+      {
+        "scope": null,
+        "message": "Revert \"docs(rules): review through the PR + video; local app only on request\""
+      },
+      {
+        "scope": "rules",
+        "message": "review through the PR + video; local app only on request"
+      },
+      {
+        "scope": "rules",
+        "message": "review builds reuse one shell, ~6 s, several at once"
+      },
+      {
+        "scope": "instructions",
+        "message": "e2e-only acceptance, Actions before a release, gitleaks hooks, dev on 3001"
+      },
+      {
+        "scope": "tests",
+        "message": "remove the unit tests main gained meanwhile (server port, database tracking)"
+      },
+      {
+        "scope": "auto-update",
+        "message": "the updater is tried through its e2e spec, not unit tests"
+      },
+      {
+        "scope": "tests",
+        "message": "remove the unit tests; the e2e suite is the project's test suite"
+      },
+      {
+        "scope": "server",
+        "message": "compiled-sidecar release smoke check as a script, not a bun test"
+      },
+      {
+        "scope": "security",
+        "message": "gitleaks as git hooks on every machine, no GitHub workflow"
+      },
+      {
+        "scope": "better-tasks",
+        "message": "review with the local app; installers only on request"
+      },
+      {
+        "scope": "review-build",
+        "message": "keep the review app in the main checkout so it outlives the worktree"
+      },
+      {
+        "scope": null,
+        "message": "dev server on 3001, installed app on 3000"
+      },
+      {
+        "scope": "e2e",
+        "message": "never test against or free the dev port 3001 either"
+      },
+      {
+        "scope": "worker",
+        "message": "deploy .prod.vars as Worker secrets"
+      },
+      {
+        "scope": "server",
+        "message": "log the port check and boot server start times"
+      },
+      {
+        "scope": "server",
+        "message": "read the song and Bible fixtures only when seeding"
+      },
+      {
+        "scope": "tooling",
+        "message": "record demo videos at 1080p with the plugin's tool"
+      },
+      {
+        "scope": "tooling",
+        "message": "auto-update the better-tasks plugin for the whole team"
+      },
+      {
+        "scope": "tooling",
+        "message": "drop the project's own demo recording, use better-tasks' video"
+      },
+      {
+        "scope": "tasks",
+        "message": "close T-078"
+      }
+    ]
+  },
+  {
     "version": "0.1.103",
     "date": "2026-10-05T16:26:31+03:00",
     "features": [
