@@ -18,7 +18,6 @@
       "!**/db/fixtures/*.json",
       "!**/playwright-report/**",
       "!**/.omc",
-      "!**/graphify-out",
       "!**/test-results",
       "!**/playwright-report"
     ]

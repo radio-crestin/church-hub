@@ -95,37 +95,7 @@
             "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/no-ai-coauthor.sh"
           }
         ]
-      },
-      {
-        "matcher": "Bash|Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "PATH=\"$HOME/.local/bin:$PATH\"; command -v graphify >/dev/null 2>&1 && graphify hook-guard search || true"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Glob",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "PATH=\"$HOME/.local/bin:$PATH\"; command -v graphify >/dev/null 2>&1 && graphify hook-guard read || true"
-          }
-        ]
       }
     ]
-  },
-  "enabledPlugins": {
-    "better-tasks@better-tasks": true
-  },
-  "extraKnownMarketplaces": {
-    "better-tasks": {
-      "source": {
-        "source": "github",
-        "repo": "iosifnicolae2/better-tasks"
-      },
-      "autoUpdate": true
-    }
   }
 }
