@@ -67,6 +67,26 @@ the per-user data directory (`%APPDATA%\church-hub` on Windows,
   points at a release whose manifest is still missing. A build that fails
   leaves a draft behind, which can be deleted or re-run.
 
+## Latest or pre-release
+
+`releases/latest` is the only thing installed apps look at, so a release
+reaches churches only when GitHub marks it **Latest**.
+
+- **A normal release** (`scripts/release.sh`, nothing else) is published as
+  Latest. Never touch the draft while it builds.
+- **A pre-release** is published as one only because someone ran
+  `gh release edit vX.Y.Z --prerelease` on the draft before the publish step:
+  that step keeps the flag and leaves Latest where it was. The updater never
+  offers it, and nothing promotes it later. v0.1.103 went out this way (CH-078),
+  so churches stayed on v0.1.102 until the next normal release.
+- To ship a pre-release to churches after all:
+  `gh release edit vX.Y.Z --prerelease=false --latest`.
+
+After any release, check what churches get:
+`gh release list -L 3` shows it as Latest, and
+`curl -sL https://github.com/radio-crestin/church-hub/releases/latest/download/latest.json | jq .version`
+reports its version.
+
 ## The signing key
 
 The updater trusts exactly one minisign key pair. The public half is in
