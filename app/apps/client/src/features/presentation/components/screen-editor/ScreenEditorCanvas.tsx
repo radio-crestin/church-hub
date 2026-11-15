@@ -850,17 +850,7 @@ export function ScreenEditorCanvas({
 
     // Clock - per-content-type enable with shared global config for position/style
     const clockConfig = screen.globalSettings.clockConfig
-    // Support both new structure (clockEnabled: boolean) and old structure (clock: { enabled: boolean })
-    const isClockEnabled =
-      clockConfig &&
-      config &&
-      (('clockEnabled' in config && config.clockEnabled) ||
-        ('clock' in config &&
-          config.clock &&
-          typeof config.clock === 'object' &&
-          'enabled' in config.clock &&
-          config.clock.enabled))
-    if (isClockEnabled) {
+    if (clockConfig && config?.clockEnabled) {
       // Default size for backwards compatibility with configs that don't have size
       const clockSize = clockConfig.size ?? {
         width: 10,

@@ -71,7 +71,8 @@ const primary: ScreenLayout = {
   },
   clock: { box: box(3, 3, 89, 75), maxFontSize: 56, alignment: 'right' },
   clockWithContent: false,
-  clockWhenIdle: false,
+  // The projector has always shown the time between items (T-138).
+  clockWhenIdle: true,
 }
 
 /**
