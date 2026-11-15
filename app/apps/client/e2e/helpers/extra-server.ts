@@ -26,6 +26,12 @@ export class ExtraServer {
   readonly port = Number(process.env.TEST_PORT ?? '3099') + 600
   readonly baseURL = `http://localhost:${this.port}`
   private process: ChildProcess | undefined
+  private output = ''
+
+  /** What the server has printed since its last start. */
+  get log(): string {
+    return this.output
+  }
 
   async start(): Promise<void> {
     if (this.port === 3000) throw new Error('port 3000 is the user dev server')
@@ -46,20 +52,20 @@ export class ExtraServer {
       },
     )
     this.process = child
-    let output = ''
+    this.output = ''
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(
         () =>
           reject(
             new Error(
-              `extra server not ready in time:\n${output.slice(-2000)}`,
+              `extra server not ready in time:\n${this.output.slice(-2000)}`,
             ),
           ),
         BOOT_TIMEOUT_MS,
       )
       const onData = (chunk: Buffer) => {
-        output += chunk.toString()
-        if (SERVER_READY_LINE.test(output)) {
+        this.output += chunk.toString()
+        if (SERVER_READY_LINE.test(this.output)) {
           clearTimeout(timer)
           resolve()
         }
@@ -69,7 +75,9 @@ export class ExtraServer {
       child.on('exit', (code) => {
         clearTimeout(timer)
         reject(
-          new Error(`extra server exited (${code}):\n${output.slice(-2000)}`),
+          new Error(
+            `extra server exited (${code}):\n${this.output.slice(-2000)}`,
+          ),
         )
       })
     })

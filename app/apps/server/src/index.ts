@@ -8372,11 +8372,12 @@ async function startRealServer(): Promise<void> {
 
   // Load the search vocabularies (the typo lookup, up to a second or two on
   // a large library) once the app is up, not on the boot screen, so the
-  // first search is already fast.
-  setTimeout(() => {
+  // first search is already fast. The song library's part is built in steps,
+  // so a projection opening now is not held behind it.
+  setTimeout(async () => {
     const warmupStart = performance.now()
     warmupBibleSearchIndex()
-    warmupSongsSearchIndex()
+    await warmupSongsSearchIndex()
     logTiming('fts_warmup', warmupStart)
   }, 0)
 
