@@ -1,0 +1,26 @@
+# The app's own commands (build.rs APP_COMMANDS), for every window that loads
+# Church Hub: the main window and the display, song and page windows, which
+# load it from the sidecar's http://127.0.0.1:<port> (capabilities/remote.json).
+[[set]]
+identifier = "app-commands"
+description = "Every command of Church Hub itself."
+permissions = [
+  "allow-get-server-config",
+  "allow-get-pending-import",
+  "allow-clear-pending-import",
+  "allow-create-child-webview",
+  "allow-create-native-page-window",
+  "allow-close-child-webview",
+  "allow-show-child-webview",
+  "allow-hide-child-webview",
+  "allow-update-child-webview",
+  "allow-webview-exists",
+  "allow-toggle-devtools",
+  "allow-zoom-in",
+  "allow-zoom-out",
+  "allow-reset-zoom",
+  "allow-restart-server",
+  "allow-prepare-update-install",
+  "allow-abort-update-install",
+  "allow-take-update-outcome",
+]

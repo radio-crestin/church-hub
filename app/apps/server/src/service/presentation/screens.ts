@@ -4,6 +4,7 @@ import { getDefaultContentConfig } from './default-design/getDefaultContentConfi
 import { getDefaultGlobalSettings } from './default-design/getDefaultGlobalSettings'
 import { getDefaultNextSlideConfig } from './default-design/getDefaultNextSlideConfig'
 import { getMissingContentConfig } from './getMissingContentConfig'
+import { readLegacyClockFlag } from './readLegacyClockFlag'
 import type {
   ContentType,
   DisplayOpenMode,
@@ -44,7 +45,7 @@ function parseGlobalSettings(json: string): ScreenGlobalSettings {
 
 function parseConfig(json: string): Record<string, unknown> {
   try {
-    return JSON.parse(json)
+    return readLegacyClockFlag(JSON.parse(json))
   } catch {
     return {}
   }

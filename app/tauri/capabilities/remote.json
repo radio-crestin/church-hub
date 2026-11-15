@@ -8,6 +8,7 @@
   },
   "permissions": [
     "core:default",
+    "app-commands",
     "core:window:default",
     "core:window:allow-set-fullscreen",
     "core:window:allow-is-fullscreen",

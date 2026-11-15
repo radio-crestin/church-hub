@@ -5,6 +5,7 @@
   "windows": ["main", "display-*", "custom-page-*", "song-*", "page-*", "monitor-badge-*"],
   "permissions": [
     "core:default",
+    "app-commands",
     "opener:default",
     "opener:allow-open-url",
     "opener:allow-reveal-item-in-dir",
