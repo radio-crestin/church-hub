@@ -873,6 +873,7 @@ export function SongList({
             />
             <input
               ref={searchInputRef}
+              data-slide-navigation=""
               type="text"
               value={localQuery}
               onChange={handleSearchChange}
