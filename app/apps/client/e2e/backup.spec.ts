@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { chmodSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
@@ -332,6 +332,47 @@ test.describe('Backup - local', () => {
     // That is the whole point of a restore, not a side effect of browsing.
     const afterRestore = await (await request.get('/api/backup/config')).json()
     expect(afterRestore.data.localBackupPath).toBe(folder)
+  })
+
+  /**
+   * A read-only app.db makes the copy over it fail after the live database
+   * was closed (Windows' file lock did the same, T-145). The server must
+   * reopen the database it had, not stay without one until restart.
+   */
+  test('a restore that fails partway keeps the old database open', async ({
+    request,
+  }) => {
+    await request.put('/api/backup/config', {
+      data: { localBackupPath: folder, maxBackups: 5 },
+    })
+    expect((await request.post('/api/backup/local/now')).status()).toBe(200)
+    const fileName = readdirSync(folder).find((n) => n.endsWith('.db'))
+    // A change made after the backup: the data the failed restore must keep.
+    await request.put('/api/backup/config', { data: { maxBackups: 7 } })
+
+    const dbPath = (await (await request.get('/api/database/info')).json()).data
+      .path as string
+    chmodSync(dbPath, 0o444)
+    try {
+      const failed = await request.post('/api/backup/local/restore', {
+        data: { fileName },
+      })
+      expect(failed.status()).toBe(400)
+      expect((await failed.json()).error).toBe('Failed to import database')
+
+      // Still answering, with the data from before the restore.
+      const config = await request.get('/api/backup/config')
+      expect(config.status()).toBe(200)
+      expect((await config.json()).data.maxBackups).toBe(7)
+    } finally {
+      // The reopened app.db is read-only: a restore that succeeds reopens it
+      // writable for the specs after this one.
+      chmodSync(dbPath, 0o644)
+      const restored = await request.post('/api/backup/local/restore', {
+        data: { fileName },
+      })
+      expect(restored.status()).toBe(200)
+    }
   })
 
   test('browsing a relative folder lists nothing', async ({ request }) => {

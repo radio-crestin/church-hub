@@ -253,12 +253,15 @@ export function getRawDatabase(): Database {
 }
 
 /**
- * Closes the database connection
+ * Closes the database connection.
+ * `close(true)` throws instead of leaving the connection open while prepared
+ * statements are still alive: Windows keeps an open file locked, so anything
+ * replacing app.db afterwards (a restore) would fail.
  */
 export function closeDatabase(): void {
   if (sqlite) {
     log('info', 'Closing database connection')
-    sqlite.close()
+    sqlite.close(true)
     sqlite = null
     db = null
   }

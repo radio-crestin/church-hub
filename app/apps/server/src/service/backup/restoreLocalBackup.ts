@@ -90,7 +90,9 @@ export async function restoreLocalBackup(
   const result = await importDatabase(resolved.path)
 
   if (!result.success) {
-    logger.error(`Local restore failed: ${result.message}`)
+    logger.error(
+      `Local restore failed: ${result.message} (${result.error ?? 'no detail'})`,
+    )
   } else {
     logger.info('Local restore completed')
   }
