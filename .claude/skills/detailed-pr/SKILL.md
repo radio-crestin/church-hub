@@ -15,8 +15,8 @@ the branch's actual commits and diff against its base (the PR's base, else
 `main`): reviewers act on this text, so an invented behaviour is worse than a
 missing one. When unsure, inspect the code.
 
-A better-tasks task's PR is the plugin's short draft (its pull-request
-skill); write this long form for one only when the user asks for it. When you
+A Superfactory task's PR is Superfactory's short draft; write this long form
+for one only when the user asks for it. When you
 rewrite a body, keep its before/after video lines and its
 `<!-- pr-build:start/end -->` installers block.
 

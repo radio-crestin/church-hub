@@ -5,5 +5,5 @@ e2e/.auth/
 # e2e isolated test database
 e2e/.test-data/
 
-# Temporary demo-video specs (better-tasks demo videos)
+# Temporary demo-video specs (task demo videos)
 e2e/_*.spec.ts

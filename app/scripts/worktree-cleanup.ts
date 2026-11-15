@@ -13,8 +13,7 @@
  *      in the Cargo target and the folders the OS made for the app,
  *   5. deletes the branch, and the worktree's empty `worktree-agent-*` base
  *      branch, only when merged into main, fully pushed or the head of a merged PR,
- *   6. deletes the PR's remote branch (`task/<id>` when better-tasks pushed
- *      it) and its installers from the shared
+ *   6. deletes the PR's remote branch and its installers from the shared
  *      `pr-builds` release once the PR is merged (installers also once closed).
  *
  * Kept: shared caches (bun's global cache, the Playwright browsers, the main
@@ -199,11 +198,7 @@ if (!target) throw new Error(USAGE)
 const mainRoot = mainCheckoutRoot(process.cwd())
 const worktree = findWorktree(mainRoot, target)
 // Asked first: the branch is deleted below, and the PR proves what was merged.
-// better-tasks pushes a worktree's branch as `task/<id>`, so the PR's head is
-// that name; a PR opened from the local branch's own name is found too.
-const pull =
-  (worktree.branch && findPullRequest(mainRoot, worktree.branch)) ||
-  findPullRequest(mainRoot, `task/${taskId}`)
+const pull = worktree.branch ? findPullRequest(mainRoot, worktree.branch) : undefined
 const remoteBranch = pull?.headRefName ?? worktree.branch
 step('review app closed', () => stopReviewApp(taskId))
 step('ports stopped', () => stopPorts(mainRoot, [port, reviewPort]))
