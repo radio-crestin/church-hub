@@ -2,6 +2,7 @@ import type { ServerWebSocket } from 'bun'
 
 import {
   clearTemporaryContent,
+  getPresentationState,
   presentTemporaryScreenShare,
   setOnSongPresentedCallback,
 } from '../service/presentation/presentation-state'
@@ -304,6 +305,21 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
   clients.set(clientId, { ws, lastActivity: Date.now() })
 
   wsLogger.info(`Client connected: ${clientId} (total: ${clients.size})`)
+
+  // A screen loads the state over HTTP before its socket opens: a change made
+  // in between was broadcast before it listened, so hand it the current state.
+  try {
+    ws.send(
+      JSON.stringify({
+        type: 'presentation_state',
+        payload: getPresentationState(),
+      } satisfies PresentationMessage),
+    )
+  } catch (error) {
+    wsLogger.error(
+      `Failed to send initial presentation state to ${clientId}: ${error}`,
+    )
+  }
 
   // Send initial OBS status to the new client
   if (getOBSStatusCallback) {
