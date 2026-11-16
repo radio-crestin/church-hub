@@ -67,23 +67,32 @@ the per-user data directory (`%APPDATA%\church-hub` on Windows,
   points at a release whose manifest is still missing. A build that fails
   leaves a draft behind, which can be deleted or re-run.
 
-## Latest or pre-release
+## Pre-release first, then Latest
 
 `releases/latest` is the only thing installed apps look at, so a release
-reaches churches only when GitHub marks it **Latest**.
+reaches churches only when GitHub marks it **Latest**. Every release goes out
+as a **pre-release** first, so its installers can be tried by hand; churches
+get it only once it is promoted.
 
-- **A normal release** (`scripts/release.sh`, nothing else) is published as
-  Latest. Never touch the draft while it builds.
-- **A pre-release** is published as one only because someone ran
-  `gh release edit vX.Y.Z --prerelease` on the draft before the publish step:
-  that step keeps the flag and leaves Latest where it was. The updater never
-  offers it, and nothing promotes it later. v0.1.103 went out this way (CH-078),
-  so churches stayed on v0.1.102 until the next normal release.
-- To ship a pre-release to churches after all:
-  `gh release edit vX.Y.Z --prerelease=false --latest`.
+1. `scripts/release.sh <version>` on a branch: the version bump, merged as a PR.
+2. `scripts/release.sh tag`: makes the v<version> release as a pre-release
+   draft, then tags the merge commit on main. CI runs the gate, builds the
+   installers for every platform (macOS Apple Silicon and Intel, Windows,
+   Linux), writes `latest.json` and publishes the release, keeping the
+   pre-release flag.
+3. Download the installers from the release page and try them.
+4. `scripts/release.sh promote`: marks it Latest and checks that
+   `releases/latest/download/latest.json` now reports its version. Installed
+   apps offer the update from then on.
 
-After any release, check what churches get:
-`gh release list -L 3` shows it as Latest, and
+A release never promoted stays a pre-release, and churches keep the previous
+Latest: that is what happened to v0.1.103 (CH-078). A tag pushed without
+`release.sh tag` (from the GitHub UI) has no pre-release draft yet and is
+published as Latest by the current workflow; the workflow change in PR #185
+makes every release a pre-release there too.
+
+To check what churches get: `gh release list -L 3` shows which release is
+Latest, and
 `curl -sL https://github.com/radio-crestin/church-hub/releases/latest/download/latest.json | jq .version`
 reports its version.
 
