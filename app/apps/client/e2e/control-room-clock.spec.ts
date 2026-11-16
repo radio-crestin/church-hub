@@ -95,10 +95,48 @@ async function serveScreenClock(
   })
 }
 
+/** The live presentation state with a song slide on screen, or nothing on it. */
+function fakePresentationState(
+  state: Record<string, unknown>,
+  onScreen: 'song' | 'nothing',
+) {
+  const song = onScreen === 'song'
+  return {
+    ...state,
+    currentSongSlideId: null,
+    lastSongSlideId: null,
+    isPresenting: song,
+    isHidden: !song,
+    slideHighlights: [],
+    temporaryContent: song
+      ? {
+          type: 'song',
+          data: {
+            songId: 1,
+            title: 'E2E Clock Song',
+            slides: [
+              {
+                id: 1,
+                sortOrder: 0,
+                content: Array(4).fill(LYRIC).join('\n'),
+              },
+            ],
+            currentSlideIndex: 0,
+          },
+        }
+      : null,
+    // Newer than anything the server broadcasts, so the live state the
+    // WebSocket sends later never replaces this one.
+    updatedAt: Date.now() + 10 ** 10,
+  }
+}
+
 /**
  * Serves a presentation state with a song slide on screen, or with nothing on
- * it. Writes are refused: the slide change this fakes would otherwise have the
- * page clear the live highlights.
+ * it, over HTTP and in the state the WebSocket sends when it opens (which can
+ * arrive first and then stands in for the HTTP fetch). Writes are refused: the
+ * slide change this fakes would otherwise have the page clear the live
+ * highlights.
  */
 async function servePresentation(page: Page, onScreen: 'song' | 'nothing') {
   await page.route('**/api/presentation/**', async (route) => {
@@ -109,36 +147,18 @@ async function servePresentation(page: Page, onScreen: 'song' | 'nothing') {
     }
     const response = await route.fetch()
     const body = await response.json()
-    const song = onScreen === 'song'
-    body.data = {
-      ...body.data,
-      currentSongSlideId: null,
-      lastSongSlideId: null,
-      isPresenting: song,
-      isHidden: !song,
-      slideHighlights: [],
-      temporaryContent: song
-        ? {
-            type: 'song',
-            data: {
-              songId: 1,
-              title: 'E2E Clock Song',
-              slides: [
-                {
-                  id: 1,
-                  sortOrder: 0,
-                  content: Array(4).fill(LYRIC).join('\n'),
-                },
-              ],
-              currentSlideIndex: 0,
-            },
-          }
-        : null,
-      // Newer than anything the server broadcasts, so the live state the
-      // WebSocket sends never replaces this one.
-      updatedAt: Date.now() + 10 ** 10,
-    }
+    body.data = fakePresentationState(body.data, onScreen)
     await route.fulfill({ response, json: body })
+  })
+  await page.routeWebSocket(/\/ws$/, (ws) => {
+    const server = ws.connectToServer()
+    server.onMessage((message) => {
+      const data = JSON.parse(message.toString())
+      if (data.type === 'presentation_state') {
+        data.payload = fakePresentationState(data.payload, onScreen)
+      }
+      ws.send(JSON.stringify(data))
+    })
   })
 }
 
