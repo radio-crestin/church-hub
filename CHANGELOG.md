@@ -2,7 +2,7 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
-## v0.1.104 — 2026-11-15
+## v0.1.104 — 2026-11-16
 
 ### 🚀 Features
 
@@ -51,6 +51,7 @@
 
 ### 🔧 Changes
 
+- **release**: every release goes out as a pre-release; release.sh promote makes it Latest
 - **release**: release.sh bumps on a branch for a PR, then tags the merge on main
 - **release**: a normal release is Latest; a draft flagged pre-release stays out of the updater
 - T-140 Search fields let Up/Down and page keys move the live slide

@@ -1,7 +1,7 @@
 [
   {
     "version": "0.1.104",
-    "date": "2026-11-15T19:04:09+00:00",
+    "date": "2026-11-16T07:13:33+00:00",
     "features": [
       {
         "scope": "review-build",
@@ -163,6 +163,10 @@
       }
     ],
     "changes": [
+      {
+        "scope": "release",
+        "message": "every release goes out as a pre-release; release.sh promote makes it Latest"
+      },
       {
         "scope": "release",
         "message": "release.sh bumps on a branch for a PR, then tags the merge on main"
