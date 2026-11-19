@@ -29,6 +29,7 @@ import {
   songsPaths,
   syncPaths,
   usersPaths,
+  voiceIsolationPaths,
 } from './paths'
 import {
   backgroundMediaSchemas,
@@ -112,6 +113,10 @@ export const openApiSpec = {
       name: 'Notifications',
       description: 'The notifications history: song syncs and app updates',
     },
+    {
+      name: 'Live Translation',
+      description: 'Live translation of the preacher microphone',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -139,6 +144,7 @@ export const openApiSpec = {
     ...conversionPaths,
     ...feedbackPaths,
     ...notificationsPaths,
+    ...voiceIsolationPaths,
   },
   components: {
     securitySchemes,

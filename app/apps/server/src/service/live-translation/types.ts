@@ -1,3 +1,8 @@
+import type {
+  VoiceIsolation,
+  VoiceIsolationStatus,
+} from './voice-isolation/types'
+
 export type OutputMode = 'device' | 'webrtc' | 'both'
 
 /** Whether engines synthesize a spoken translation or only produce text. */
@@ -22,6 +27,7 @@ export interface LiveTranslationConfig {
   inputDeviceId?: number
   outputDeviceId?: number
   outputMode?: OutputMode
+  voiceIsolation?: VoiceIsolation
 }
 
 export interface TranscriptionEntry {
@@ -52,6 +58,7 @@ export interface LiveTranslationState {
   targets: TargetState[]
   primaryTargetId?: string
   error?: string
+  voiceIsolation: VoiceIsolationStatus
   startedAt: number | null
 }
 
@@ -64,6 +71,7 @@ export const DEFAULT_TRANSLATION_STATE: LiveTranslationState = {
   outputAudioLevel: 0,
   transcription: [],
   targets: [],
+  voiceIsolation: 'off',
   startedAt: null,
 }
 

@@ -4,6 +4,7 @@ import {
   startAudioPlayback,
   stopAudioCapture,
   stopAudioPlayback,
+  toEngineInputRate,
 } from './audio-io'
 import { createEngineSession, type EngineSession } from './engines'
 import type {
@@ -14,6 +15,10 @@ import type {
   TranslationTarget,
 } from './types'
 import { DEFAULT_TRANSLATION_STATE } from './types'
+import {
+  createIsolationFilter,
+  type IsolationFilter,
+} from './voice-isolation/createIsolationFilter'
 import { log } from '../../utils/fileLogger'
 
 const logger = {
@@ -55,6 +60,9 @@ let transcriptionIdCounter = 0
 let currentOutputMode: OutputMode = 'device'
 let primaryTargetId: string | undefined
 let capturing = false
+let isolationFilter: IsolationFilter | null = null
+/** How far the isolated voice may lag the microphone before it's bypassed. */
+const MAX_ISOLATION_LAG_MS = 1000
 
 export function setStateCallback(cb: StateCallback) {
   stateCallback = cb
@@ -271,10 +279,25 @@ export async function startTranslation(
     }
   }
 
+  // The mic goes through voice isolation (if chosen), then to the engines
+  const filter = createIsolationFilter(
+    config.voiceIsolation ?? 'off',
+    (pcm48k) => handleMicInput(toEngineInputRate(pcm48k)),
+    {
+      maxLagMs: MAX_ISOLATION_LAG_MS,
+      onStatus: (voiceIsolation) => updateState({ voiceIsolation }),
+    },
+  )
+  isolationFilter = filter
+
   // Start mic capture only after all engines are ready
-  await startAudioCapture((pcmBuffer) => {
-    handleMicInput(pcmBuffer)
-  }, config.inputDeviceId)
+  try {
+    await startAudioCapture(filter.push, config.inputDeviceId)
+  } catch (err) {
+    filter.stop()
+    isolationFilter = null
+    throw err
+  }
   capturing = true
 }
 
@@ -309,6 +332,8 @@ export async function stopTranslation(): Promise<void> {
     stopAudioCapture()
     capturing = false
   }
+  isolationFilter?.stop()
+  isolationFilter = null
   stopAudioPlayback()
 
   for (const rt of runningTargets.values()) {

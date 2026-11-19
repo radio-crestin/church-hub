@@ -1,3 +1,4 @@
+import { handleVoiceIsolationRoutes } from './voice-isolation'
 import type { RequestContext } from '../middleware'
 import { getAudioDevices } from '../service/live-translation/audio-io'
 import { defaultVoiceForEngine } from '../service/live-translation/engines'
@@ -36,6 +37,10 @@ import type {
   TranslationEngine,
   TranslationTarget,
 } from '../service/live-translation/types'
+import {
+  VOICE_ISOLATIONS,
+  type VoiceIsolation,
+} from '../service/live-translation/voice-isolation/types'
 import { getSetting, upsertSetting } from '../service/settings'
 import { log } from '../utils/fileLogger'
 import { toErrorMessage } from '../utils/toErrorMessage'
@@ -105,6 +110,9 @@ export async function handleLiveTranslationRoutes(
   url: URL,
   _context: RequestContext,
 ): Promise<Response | null> {
+  const voiceIsolation = handleVoiceIsolationRoutes(req, url)
+  if (voiceIsolation) return voiceIsolation
+
   if (req.method === 'GET' && url.pathname === '/api/live-translation/state') {
     return Response.json(getTranslationState())
   }
@@ -272,6 +280,11 @@ function handleStart(req: Request): Response {
         outputDeviceId:
           body.outputDeviceId ?? saved.outputDeviceId ?? undefined,
         outputMode: body.outputMode ?? saved.outputMode ?? 'device',
+        voiceIsolation: VOICE_ISOLATIONS.includes(
+          body.voiceIsolation as VoiceIsolation,
+        )
+          ? body.voiceIsolation
+          : saved.voiceIsolation,
       }
 
       // Publish target languages to listeners BEFORE starting the relay

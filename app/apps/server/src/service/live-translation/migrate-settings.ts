@@ -4,6 +4,7 @@ import type {
   TranslationEngine,
   TranslationTarget,
 } from './types'
+import { VOICE_ISOLATIONS, type VoiceIsolation } from './voice-isolation/types'
 
 export interface PersistedSettings {
   engine: TranslationEngine
@@ -16,6 +17,7 @@ export interface PersistedSettings {
   inputDeviceId?: number | null
   outputDeviceId?: number | null
   outputMode?: 'device' | 'webrtc' | 'both'
+  voiceIsolation: VoiceIsolation
 }
 
 export function generateTargetId(): string {
@@ -39,6 +41,7 @@ export function defaultSettings(): PersistedSettings {
     inputDeviceId: null,
     outputDeviceId: null,
     outputMode: 'device',
+    voiceIsolation: 'off',
   }
 }
 
@@ -109,5 +112,10 @@ export function migrateSettings(raw: unknown): PersistedSettings {
       obj.outputMode === 'both'
         ? obj.outputMode
         : defaults.outputMode,
+    voiceIsolation: VOICE_ISOLATIONS.includes(
+      obj.voiceIsolation as VoiceIsolation,
+    )
+      ? (obj.voiceIsolation as VoiceIsolation)
+      : defaults.voiceIsolation,
   }
 }

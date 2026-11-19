@@ -7,6 +7,7 @@ import type {
 } from './types'
 import { log } from '../../../utils/fileLogger'
 import { LANGUAGE_NAMES } from '../types'
+import { pcmToWav } from '../wav/pcmToWav'
 
 const logger = {
   debug: (msg: string, data?: unknown) =>
@@ -46,31 +47,6 @@ function audioLevel(pcm: Buffer): number {
   if (rms < 1e-6) return 0
   const dbfs = 20 * Math.log10(rms)
   return Math.max(0, Math.min(1, (dbfs + 60) / 60))
-}
-
-/** Wrap raw PCM16 mono in a minimal WAV container so generateContent
- *  accepts it as `audio/wav` (it doesn't accept bare `audio/pcm`). */
-function pcmToWav(pcm: Buffer, sampleRate: number): Buffer {
-  const numChannels = 1
-  const bitsPerSample = 16
-  const byteRate = sampleRate * numChannels * (bitsPerSample / 8)
-  const blockAlign = numChannels * (bitsPerSample / 8)
-  const dataSize = pcm.length
-  const header = Buffer.alloc(44)
-  header.write('RIFF', 0)
-  header.writeUInt32LE(36 + dataSize, 4)
-  header.write('WAVE', 8)
-  header.write('fmt ', 12)
-  header.writeUInt32LE(16, 16) // fmt chunk size
-  header.writeUInt16LE(1, 20) // audio format = PCM
-  header.writeUInt16LE(numChannels, 22)
-  header.writeUInt32LE(sampleRate, 24)
-  header.writeUInt32LE(byteRate, 28)
-  header.writeUInt16LE(blockAlign, 32)
-  header.writeUInt16LE(bitsPerSample, 34)
-  header.write('data', 36)
-  header.writeUInt32LE(dataSize, 40)
-  return Buffer.concat([header, pcm])
 }
 
 class GeminiPipelineSession implements EngineSession {

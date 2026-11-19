@@ -70,9 +70,14 @@ function resampleInt16(
   return output
 }
 
+/** Microphone audio (48kHz) at the rate the engines take (16kHz). */
+export function toEngineInputRate(pcm48k: Buffer): Buffer {
+  return resampleInt16(pcm48k, HARDWARE_RATE, GEMINI_INPUT_RATE)
+}
+
 /**
  * Start capturing audio from the microphone using RtAudio.
- * Captures at 48kHz and resamples to 16kHz before calling onChunk.
+ * Hands onChunk 48kHz 16-bit mono PCM in 40ms frames (see toEngineInputRate).
  */
 export async function startAudioCapture(
   onChunk: AudioChunkCallback,
@@ -102,10 +107,7 @@ export async function startAudioCapture(
     HARDWARE_RATE,
     1920,
     'translation-input',
-    (pcm) => {
-      const resampled = resampleInt16(pcm, HARDWARE_RATE, GEMINI_INPUT_RATE)
-      onChunk(resampled)
-    },
+    onChunk,
     null,
     0,
     (type, msg) => {
