@@ -17,7 +17,7 @@ Tibi PC already has the Windows toolchain: bun, Rust (`x86_64-pc-windows-msvc`),
 - `%APPDATA%\church-hub\` (`C:\Users\Tibi\AppData\Roaming\church-hub`): the data of the Church Hub installed on Tibi PC, loaded from that copy.
 - `C:\Users\Tibi\church-hub-backups\`: what each load replaced.
 
-Loading the copy into a data folder (`app/scripts/use-adunare-copy.ts`) backs up the folder, copies the data in, points the music library and the local backup folder at Tibi PC, and switches off what reaches the church's live accounts and gear: the YouTube sign-in is removed, the mixer is disabled. The pristine copy keeps them.
+Loading the copy into a data folder (`app/scripts/use-adunare-copy.ts`) backs up the folder, copies the data in, points the music library and the local backup folder at Tibi PC, and switches off what reaches the church's live accounts and gear: the YouTube sign-in is removed, the mixer is disabled. The projector screens no longer open at startup, fullscreen and on top with Escape off: on Tibi PC's one monitor they would hide the app. The pristine copy keeps the church's settings.
 
 ## Run Church Hub on the real data
 

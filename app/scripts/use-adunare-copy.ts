@@ -12,7 +12,8 @@
  *   2. copies app.db, media/ and song-sources/ into it (stale -wal/-shm removed),
  *   3. points the music library and the local backup folder at this machine,
  *   4. switches off what would reach the church's live gear and accounts:
- *      the mixer (10.4.101.3) and the YouTube sign-in.
+ *      the mixer (10.4.101.3) and the YouTube sign-in,
+ *   5. keeps the projector screens from opening fullscreen on top at startup.
  *
  * Usage (close the Church Hub that uses the target folder first):
  *   bun app/scripts/use-adunare-copy.ts <data dir>
@@ -81,6 +82,11 @@ function adaptToThisMachine(dir: string): void {
     )
     db.run('UPDATE mixer_config SET is_enabled = 0')
     db.run('DELETE FROM youtube_auth')
+    // The church's projector opens at startup, fullscreen and on top, with
+    // Escape off: on a one-monitor test machine it would hide the app.
+    db.run(
+      'UPDATE screens SET open_on_startup = 0, always_on_top = 0, close_on_escape = 1',
+    )
   })()
   db.close()
 }
