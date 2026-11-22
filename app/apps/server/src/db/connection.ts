@@ -16,6 +16,11 @@ interface InitializeResult {
 const DEBUG = process.env.DEBUG === 'true'
 const DATABASE_PATH = getDatabasePath()
 
+// `db.query()` caches prepared statements up to this many SQL strings and
+// never evicts one: at Bun's default (20) the migrations fill it, and every
+// later query is prepared again on each call (10 s of a 26k-song sync).
+Database.MAX_QUERY_CACHE_SIZE = 1000
+
 let sqlite: Database | null = null
 let db: BunSQLiteDatabase<typeof schema> | null = null
 

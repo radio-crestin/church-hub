@@ -1,3 +1,4 @@
+import { fetchSongIndexRows } from './fetchSongIndexRows'
 import { joinSearchTitles } from './parseAlternateTitles'
 import { SONGS_FTS_TABLE } from './song-search/fetchSongCandidates'
 import { songSearchCache } from './song-search/songSearchCache'
@@ -215,35 +216,8 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
     const db = getRawDatabase()
 
-    // Build placeholders for IN clause
+    const songs = fetchSongIndexRows(songIds)
     const placeholders = songIds.map(() => '?').join(',')
-
-    // Fetch songs data
-    const songs = db
-      .query(
-        `
-      SELECT
-        s.id,
-        s.title,
-        s.alternate_titles,
-        COALESCE(sc.name, '') as category_name,
-        COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
-      FROM songs s
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      LEFT JOIN (
-        SELECT song_id, content FROM song_slides ORDER BY sort_order
-      ) ss ON ss.song_id = s.id
-      WHERE s.id IN (${placeholders})
-      GROUP BY s.id
-    `,
-      )
-      .all(...songIds) as Array<{
-      id: number
-      title: string
-      alternate_titles: string | null
-      category_name: string
-      content: string
-    }>
 
     db.run('BEGIN TRANSACTION')
 
@@ -332,31 +306,7 @@ export function rebuildSearchIndex(
 
     const db = getRawDatabase()
 
-    // Fetch all songs with their content
-    const songs = db
-      .query(
-        `
-      SELECT
-        s.id,
-        s.title,
-        s.alternate_titles,
-        COALESCE(sc.name, '') as category_name,
-        COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
-      FROM songs s
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      LEFT JOIN (
-        SELECT song_id, content FROM song_slides ORDER BY sort_order
-      ) ss ON ss.song_id = s.id
-      GROUP BY s.id
-    `,
-      )
-      .all() as Array<{
-      id: number
-      title: string
-      alternate_titles: string | null
-      category_name: string
-      content: string
-    }>
+    const songs = fetchSongIndexRows()
 
     logger.info(`Found ${songs.length} songs to index`)
 
