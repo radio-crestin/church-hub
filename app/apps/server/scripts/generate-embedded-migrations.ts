@@ -2,6 +2,9 @@
  * Generates embedded migrations for production builds
  * This reads all migration SQL files and creates a TypeScript file
  * that can be bundled into the compiled binary
+ *
+ * Usage: bun scripts/generate-embedded-migrations.ts [migrations dir] [output file]
+ * (defaults: drizzle/migrations and src/db/migrations/embedded.ts)
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -10,8 +13,10 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const MIGRATIONS_DIR = join(__dirname, '../drizzle/migrations')
-const OUTPUT_FILE = join(__dirname, '../src/db/migrations/embedded.ts')
+const MIGRATIONS_DIR =
+  process.argv[2] ?? join(__dirname, '../drizzle/migrations')
+const OUTPUT_FILE =
+  process.argv[3] ?? join(__dirname, '../src/db/migrations/embedded.ts')
 
 interface JournalEntry {
   idx: number
@@ -37,7 +42,8 @@ function main() {
 
   for (const entry of journal.entries) {
     const sqlPath = join(MIGRATIONS_DIR, `${entry.tag}.sql`)
-    const sql = readFileSync(sqlPath, 'utf-8')
+    // LF whatever the checkout's line endings, so the output is byte-stable on every OS
+    const sql = readFileSync(sqlPath, 'utf-8').replace(/\r\n/g, '\n')
     migrations.push({
       tag: entry.tag,
       sql,
@@ -52,15 +58,15 @@ function main() {
 
     if (obj === null) return 'null'
     if (typeof obj === 'string') {
-      let escaped: string
-      // Always use single quotes - Biome prefers escaping single quotes over double quotes
-      escaped = obj
+      // Biome's quotes: single, unless the string has more ' than " (fewer escapes)
+      const quote = obj.split("'").length > obj.split('"').length ? '"' : "'"
+      const escaped = obj
         .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
+        .replaceAll(quote, `\\${quote}`)
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r')
         .replace(/\t/g, '\\t')
-      return `'${escaped}'`
+      return `${quote}${escaped}${quote}`
     }
     if (typeof obj === 'number' || typeof obj === 'boolean') return String(obj)
 
