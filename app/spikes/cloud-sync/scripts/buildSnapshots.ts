@@ -31,8 +31,13 @@ const { serializeLibrary } = await import(
 )
 await initializeDatabase()
 const full = serializeLibrary('spike-pc', 'Church PC', new Set())
-closeDatabase()
-rmSync(work, { recursive: true, force: true })
+try {
+  closeDatabase()
+  rmSync(work, { recursive: true, force: true })
+} catch (error) {
+  // On Windows, close(true) throws "database is locked" here; the copy stays.
+  console.warn(`left ${work} behind: ${(error as Error).message}`)
+}
 
 mkdirSync(outDir, { recursive: true })
 const sizes = sizeArgs.length ? sizeArgs.map(Number) : [full.songs.length, 3000]
