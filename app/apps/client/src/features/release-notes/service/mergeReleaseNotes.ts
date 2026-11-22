@@ -11,8 +11,9 @@ function hasContent(notes: VersionNotes): boolean {
  * Merges the bundled (offline) changelog with notes fetched from GitHub.
  *
  * The bundled data is the source of truth for versions it covers (structured,
- * reliable). GitHub only contributes versions newer than the build — i.e. an
- * update the user hasn't installed yet — so they still see what's coming.
+ * reliable). GitHub contributes versions newer than the build — i.e. an
+ * update the user hasn't installed yet — so they still see what's coming, and
+ * the written notes of a version this build only has the commits of.
  */
 export function mergeReleaseNotes(
   bundled: VersionNotes[],
@@ -22,8 +23,12 @@ export function mergeReleaseNotes(
   for (const notes of bundled) byVersion.set(notes.version, notes)
 
   for (const notes of remote) {
-    if (!byVersion.has(notes.version) && hasContent(notes)) {
-      byVersion.set(notes.version, notes)
+    const local = byVersion.get(notes.version)
+    if (!local) {
+      if (hasContent(notes)) byVersion.set(notes.version, notes)
+    } else if (!local.written && notes.written) {
+      // Written in the release CI after this build was made.
+      byVersion.set(notes.version, { ...local, written: notes.written })
     }
   }
 

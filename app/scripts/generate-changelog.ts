@@ -16,6 +16,10 @@
  *   bun app/scripts/generate-changelog.ts            # regenerate both files
  *   bun app/scripts/generate-changelog.ts --check    # fail if files are stale
  *
+ * A version Claude wrote notes for in the release CI (written-notes.json, kept
+ * by save-written-notes.ts) carries them as `written`: the app shows them
+ * instead of the commits, and CHANGELOG.md lists their English text.
+ *
  * Commits are grouped into exactly three buckets to match the UI:
  *   feat        -> Features
  *   fix         -> Bug Fixes
@@ -26,6 +30,9 @@
 import { execSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+
+import { readWrittenNotes } from './written-notes-file'
+import type { WrittenNotes } from '../apps/client/src/features/release-notes/types'
 
 const REPO_ROOT = join(import.meta.dir, '..', '..')
 const CONF_FILE = join(REPO_ROOT, 'app', 'tauri', 'tauri.conf.json')
@@ -58,6 +65,7 @@ interface VersionNotes {
   features: ChangeEntry[]
   bugFixes: ChangeEntry[]
   changes: ChangeEntry[]
+  written?: WrittenNotes
 }
 
 function git(args: string): string {
@@ -161,7 +169,10 @@ function buildVersionList(): VersionNotes[] {
     })
   }
 
-  return versions
+  const written = readWrittenNotes()
+  return versions.map((v) =>
+    written[v.version] ? { ...v, written: written[v.version] } : v,
+  )
 }
 
 function renderEntry(entry: ChangeEntry): string {
@@ -182,11 +193,18 @@ function renderMarkdown(versions: VersionNotes[]): string {
     const date = v.date ? v.date.slice(0, 10) : ''
     lines.push(`## v${v.version}${date ? ` — ${date}` : ''}`, '')
 
-    const sections: Array<[string, ChangeEntry[]]> = [
-      ['### 🚀 Features', v.features],
-      ['### 🐛 Bug Fixes', v.bugFixes],
-      ['### 🔧 Changes', v.changes],
-    ]
+    const toEntries = (messages: string[]) =>
+      messages.map((message) => ({ scope: null, message }))
+    const sections: Array<[string, ChangeEntry[]]> = v.written
+      ? [
+          ['### 🚀 Features', toEntries(v.written.en.features)],
+          ['### 🐛 Bug Fixes', toEntries(v.written.en.bugFixes)],
+        ]
+      : [
+          ['### 🚀 Features', v.features],
+          ['### 🐛 Bug Fixes', v.bugFixes],
+          ['### 🔧 Changes', v.changes],
+        ]
 
     let hadContent = false
     for (const [heading, entries] of sections) {

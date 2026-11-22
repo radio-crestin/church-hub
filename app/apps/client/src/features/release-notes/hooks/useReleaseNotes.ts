@@ -14,6 +14,9 @@ export function useReleaseNotes() {
     queryKey: RELEASE_NOTES_QUERY_KEY,
     queryFn: getReleaseNotes,
     initialData: getBundledReleaseNotes,
+    // Bundled at build time: stale at once, so the GitHub fetch still runs
+    // (initial data counts as fetched now, which held it off for staleTime).
+    initialDataUpdatedAt: 0,
     staleTime: 30 * 60 * 1000, // 30 minutes
   })
 }

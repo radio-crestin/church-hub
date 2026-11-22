@@ -18,6 +18,25 @@ export interface VersionNotes {
   features: ChangeEntry[]
   bugFixes: ChangeEntry[]
   changes: ChangeEntry[]
+  /**
+   * The same version told plainly for the people using the app, written by
+   * Claude in the release CI (app/scripts/write-release-notes.ts). Shown
+   * instead of the commit list when present.
+   */
+  written?: WrittenNotes
 }
+
+/** Plain-language notes, one sentence per item. */
+export interface WrittenNotesInLanguage {
+  features: string[]
+  bugFixes: string[]
+}
+
+export interface WrittenNotes {
+  en: WrittenNotesInLanguage
+  ro: WrittenNotesInLanguage
+}
+
+export type WrittenNotesLanguage = keyof WrittenNotes
 
 export type ChangeCategory = 'features' | 'bugFixes' | 'changes'
