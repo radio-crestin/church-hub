@@ -16,9 +16,11 @@
  *   bun app/scripts/generate-changelog.ts            # regenerate both files
  *   bun app/scripts/generate-changelog.ts --check    # fail if files are stale
  *
- * A version Claude wrote notes for in the release CI (written-notes.json, kept
- * by save-written-notes.ts) carries them as `written`: the app shows them
- * instead of the commits, and CHANGELOG.md lists their English text.
+ * A version with plain-language notes (written-notes.json, written by the agent
+ * cutting the release) carries them as `written`: the app shows them instead
+ * of the commits, and its CHANGELOG.md section (which the release CI copies
+ * into the GitHub release) has them in English and Romanian, plus the block
+ * the app reads from GitHub for a version not installed yet.
  *
  * Commits are grouped into exactly three buckets to match the UI:
  *   feat        -> Features
@@ -32,6 +34,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 import { readWrittenNotes } from './written-notes-file'
+import { renderWrittenNotes } from '../apps/client/src/features/release-notes/service/writtenNotesBlock'
 import type { WrittenNotes } from '../apps/client/src/features/release-notes/types'
 
 const REPO_ROOT = join(import.meta.dir, '..', '..')
@@ -193,18 +196,16 @@ function renderMarkdown(versions: VersionNotes[]): string {
     const date = v.date ? v.date.slice(0, 10) : ''
     lines.push(`## v${v.version}${date ? ` — ${date}` : ''}`, '')
 
-    const toEntries = (messages: string[]) =>
-      messages.map((message) => ({ scope: null, message }))
-    const sections: Array<[string, ChangeEntry[]]> = v.written
-      ? [
-          ['### 🚀 Features', toEntries(v.written.en.features)],
-          ['### 🐛 Bug Fixes', toEntries(v.written.en.bugFixes)],
-        ]
-      : [
-          ['### 🚀 Features', v.features],
-          ['### 🐛 Bug Fixes', v.bugFixes],
-          ['### 🔧 Changes', v.changes],
-        ]
+    if (v.written) {
+      lines.push(...renderWrittenNotes(v.written))
+      continue
+    }
+
+    const sections: Array<[string, ChangeEntry[]]> = [
+      ['### 🚀 Features', v.features],
+      ['### 🐛 Bug Fixes', v.bugFixes],
+      ['### 🔧 Changes', v.changes],
+    ]
 
     let hadContent = false
     for (const [heading, entries] of sections) {

@@ -19,9 +19,9 @@ export interface VersionNotes {
   bugFixes: ChangeEntry[]
   changes: ChangeEntry[]
   /**
-   * The same version told plainly for the people using the app, written by
-   * Claude in the release CI (app/scripts/write-release-notes.ts). Shown
-   * instead of the commit list when present.
+   * The same version told plainly for the people using the app, in English
+   * and Romanian, written by the agent cutting the release (written-notes.json,
+   * the release-notes skill). Shown instead of the commit list when present.
    */
   written?: WrittenNotes
 }

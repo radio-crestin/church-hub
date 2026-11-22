@@ -3,6 +3,7 @@ import type { VersionNotes } from '../types'
 
 function hasContent(notes: VersionNotes): boolean {
   return (
+    !!notes.written ||
     notes.features.length + notes.bugFixes.length + notes.changes.length > 0
   )
 }
@@ -27,7 +28,7 @@ export function mergeReleaseNotes(
     if (!local) {
       if (hasContent(notes)) byVersion.set(notes.version, notes)
     } else if (!local.written && notes.written) {
-      // Written in the release CI after this build was made.
+      // A build made before its notes were written.
       byVersion.set(notes.version, { ...local, written: notes.written })
     }
   }
