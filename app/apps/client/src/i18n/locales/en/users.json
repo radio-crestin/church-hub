@@ -10,7 +10,12 @@
     "signIn": "Sign in",
     "back": "Back",
     "noAccounts": "No accounts found. Restart Church Hub or contact your administrator.",
-    "failed": "Sign-in failed. Check the connection and try again."
+    "failed": "Sign-in failed. Check the connection and try again.",
+    "enterCode": "Enter the code shown on the Church Hub computer",
+    "codeLabel": "Pairing code",
+    "codeHint": "This account has no password. A 6-digit code is now shown on the Church Hub computer.",
+    "wrongCode": "Wrong or expired code. Try again or send a new code.",
+    "newCode": "Send a new code"
   },
   "password": {
     "label": "Password",
@@ -35,5 +40,12 @@
     "fullAccess": "Full access to all features",
     "noPermissions": "No permissions assigned",
     "close": "Close"
+  },
+  "pairing": {
+    "title": "Sign-in from another device",
+    "description": "Someone at {{ip}} wants to sign in as {{name}}. Give them this code:",
+    "expires": "Expires in {{seconds}} s",
+    "warning": "Don't give it out if you don't know who asked.",
+    "dismiss": "Close"
   }
 }

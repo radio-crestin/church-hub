@@ -107,6 +107,9 @@ export function LoginGate({ children }: { children: ReactNode }) {
       setAutoLoggingIn(true)
       login(users[0].id)
         .then(() => refresh())
+        // Refused (e.g. from another device, where it needs a pairing code):
+        // show the picker instead of spinning forever.
+        .catch(() => setSkipSoleAutoLogin(true))
         .finally(() => setAutoLoggingIn(false))
     }
   }, [needsList, users, autoLoginTried, soleAutoLogin, refresh])

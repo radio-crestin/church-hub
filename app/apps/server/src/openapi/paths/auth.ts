@@ -78,7 +78,7 @@ export const authPaths = {
       tags: ['Authentication'],
       summary: 'Log in as a local user',
       description:
-        'Verifies credentials and sets the `user_auth` session cookie. Passwordless login is only permitted for localhost requests; remote clients must supply a password.',
+        'Verifies credentials and sets the `user_auth` session cookie. An account with a password needs it. A passwordless account signs in freely from this machine (judged by the TCP peer address, never the Host header); from another device the first attempt answers 401 `pairing_required` with a `pairingId` and shows a 6-digit code in the desktop app, and the next attempt sends `pairingId` and `code` (valid 2 minutes, 5 tries).',
       requestBody: {
         required: true,
         content: {
@@ -89,6 +89,15 @@ export const authPaths = {
               properties: {
                 userId: { type: 'integer' },
                 password: { type: 'string' },
+                pairingId: {
+                  type: 'string',
+                  description:
+                    'The pairing a previous `pairing_required` answer opened.',
+                },
+                code: {
+                  type: 'string',
+                  description: 'The 6-digit code shown in the desktop app.',
+                },
               },
             },
           },
@@ -120,10 +129,24 @@ export const authPaths = {
           },
         },
         '401': {
-          description: 'Invalid credentials',
+          description:
+            'Invalid credentials, or `pairing_required` (a code is now shown in the desktop app)',
           content: {
             'application/json': {
-              schema: { $ref: '#/components/schemas/Error' },
+              schema: {
+                type: 'object',
+                properties: {
+                  error: {
+                    type: 'string',
+                    example: 'pairing_required',
+                  },
+                  pairingId: { type: 'string' },
+                  expiresAt: {
+                    type: 'integer',
+                    description: 'When the code expires (ms since epoch)',
+                  },
+                },
+              },
             },
           },
         },

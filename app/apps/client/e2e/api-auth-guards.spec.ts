@@ -1,18 +1,19 @@
 import { request as httpRequest } from 'node:http'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
+import { lanAddress, lanBaseUrl } from './helpers/lan-address'
+
 /**
  * The server's auth guards, end to end over HTTP: who may read, who may write,
  * which credentials are refused and what the session cookie looks like.
  * Identity must come from credentials, never from the network location.
  *
  * The default `request` fixture is the super admin (auth.setup.ts). A "remote"
- * request is one whose Host header is not localhost, as a phone or another
- * computer on the church network would send; Node's http client lets the test
- * set that header (browser-style clients refuse to).
+ * request reaches the server by this machine's LAN address, so it comes from a
+ * non-loopback peer, as a phone or another computer on the church network
+ * would; Node's http client lets the test set any header (browser-style
+ * clients refuse to).
  */
-
-const LAN_HOST = '192.168.50.10'
 
 interface RawResponse {
   status: number
@@ -57,10 +58,6 @@ function rawRequest(
   })
 }
 
-function remoteHeaders(baseURL: string, extra: Record<string, string> = {}) {
-  return { Host: `${LAN_HOST}:${new URL(baseURL).port}`, ...extra }
-}
-
 async function createUser(
   request: APIRequestContext,
   permissions: string[],
@@ -103,15 +100,19 @@ test.describe('API auth guards', () => {
   }) => {
     const base = baseURL as string
     for (const path of ['/api/songs', '/api/settings/app_settings']) {
-      const res = await rawRequest(base, path, { headers: remoteHeaders(base) })
+      const res = await rawRequest(lanBaseUrl(base), path, {})
       expect(res.status, path).toBe(401)
     }
     // The "Request a feature" relay never reaches the worker anonymously.
-    const feature = await rawRequest(base, '/api/feature-requests', {
-      method: 'POST',
-      headers: remoteHeaders(base, { 'Content-Type': 'application/json' }),
-      body: '{}',
-    })
+    const feature = await rawRequest(
+      lanBaseUrl(base),
+      '/api/feature-requests',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      },
+    )
     expect(feature.status).toBe(401)
   })
 
@@ -123,8 +124,8 @@ test.describe('API auth guards', () => {
       { 'X-User-Auth': 'not-a-real-user-token' },
     ]
     for (const credentials of forged) {
-      const res = await rawRequest(base, '/api/songs', {
-        headers: remoteHeaders(base, credentials),
+      const res = await rawRequest(lanBaseUrl(base), '/api/songs', {
+        headers: credentials,
       })
       expect(res.status, JSON.stringify(Object.keys(credentials))).toBe(401)
     }
@@ -157,8 +158,8 @@ test.describe('API auth guards', () => {
     const userId = await createUser(request, ['songs.view'], PASSWORD)
     const token = await loginToken(base, userId, PASSWORD)
 
-    const before = await rawRequest(base, '/api/songs', {
-      headers: remoteHeaders(base, { Cookie: `user_auth=${token}` }),
+    const before = await rawRequest(lanBaseUrl(base), '/api/songs', {
+      headers: { Cookie: `user_auth=${token}` },
     })
     expect(before.status).toBe(200)
 
@@ -167,8 +168,8 @@ test.describe('API auth guards', () => {
     })
     expect(deactivate.ok()).toBe(true)
 
-    const after = await rawRequest(base, '/api/songs', {
-      headers: remoteHeaders(base, { Cookie: `user_auth=${token}` }),
+    const after = await rawRequest(lanBaseUrl(base), '/api/songs', {
+      headers: { Cookie: `user_auth=${token}` },
     })
     expect(after.status).toBe(401)
   })
@@ -184,12 +185,12 @@ test.describe('API auth guards', () => {
       PASSWORD,
     )
     const token = await loginToken(base, userId, PASSWORD)
-    const res = await rawRequest(base, `/api/users/${userId}`, {
+    const res = await rawRequest(lanBaseUrl(base), `/api/users/${userId}`, {
       method: 'PUT',
-      headers: remoteHeaders(base, {
+      headers: {
         Cookie: `user_auth=${token}`,
         'Content-Type': 'application/json',
-      }),
+      },
       body: JSON.stringify({ isActive: true }),
     })
     expect(res.status).toBe(403)
@@ -254,9 +255,11 @@ test.describe('API auth guards', () => {
     })
     expect(upload.status).toBe(403)
 
-    const remoteList = await rawRequest(base, '/api/media/backgrounds', {
-      headers: remoteHeaders(base),
-    })
+    const remoteList = await rawRequest(
+      lanBaseUrl(base),
+      '/api/media/backgrounds',
+      {},
+    )
     expect(remoteList.status).toBe(401)
 
     // A path-traversal id is refused before any file is touched.
@@ -323,8 +326,8 @@ test.describe('API auth guards', () => {
   }) => {
     const base = baseURL as string
     const userId = await createUser(request, ['songs.view'], PASSWORD)
-    const login = (headers: Record<string, string>) =>
-      rawRequest(base, '/api/auth/login', {
+    const loginFrom = (server: string, headers: Record<string, string>) =>
+      rawRequest(server, '/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ userId, password: PASSWORD }),
@@ -333,7 +336,7 @@ test.describe('API auth guards', () => {
       [res.headers['set-cookie'] ?? []].flat().join('\n')
 
     const chromium = cookieOf(
-      await login({
+      await loginFrom(base, {
         'User-Agent':
           'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
       }),
@@ -343,7 +346,7 @@ test.describe('API auth guards', () => {
     expect(chromium).toContain('Secure')
 
     const webkit = cookieOf(
-      await login({
+      await loginFrom(base, {
         'User-Agent':
           'Mozilla/5.0 AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
       }),
@@ -352,9 +355,9 @@ test.describe('API auth guards', () => {
     expect(webkit).toContain('SameSite=Lax')
     expect(webkit).not.toContain('Secure')
 
-    const lan = cookieOf(await login(remoteHeaders(base)))
+    const lan = cookieOf(await loginFrom(lanBaseUrl(base), {}))
     expect(lan).toContain('HttpOnly')
     expect(lan).toContain('SameSite=Lax')
-    expect(lan).toContain(`Domain=${LAN_HOST}`)
+    expect(lan).toContain(`Domain=${lanAddress()}`)
   })
 })

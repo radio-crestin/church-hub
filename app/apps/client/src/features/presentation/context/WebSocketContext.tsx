@@ -215,6 +215,18 @@ interface WebRTCIceCandidateMessage {
   }
 }
 
+/** A pairing code to show in the desktop app (local sockets only). */
+interface LoginPairingRequestMessage {
+  type: 'login_pairing_request'
+  payload: {
+    id: string
+    userName: string
+    code: string
+    requesterIp: string
+    expiresAt: number
+  }
+}
+
 type MessageData =
   | PresentationMessage
   | ScreenConfigUpdatedMessage
@@ -236,6 +248,8 @@ type MessageData =
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
   | { type: 'translation_audio_output'; payload: Record<string, unknown> }
+  | LoginPairingRequestMessage
+  | { type: 'login_pairing_closed'; payload: { id: string } }
   | { type: 'pong' }
 
 // Check if we should use Tauri WebSocket plugin (on mobile)
@@ -503,6 +517,15 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             new CustomEvent('live-translation-message', {
               detail: data,
             }),
+          )
+        }
+
+        if (
+          data.type === 'login_pairing_request' ||
+          data.type === 'login_pairing_closed'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent('login-pairing-message', { detail: data }),
           )
         }
 

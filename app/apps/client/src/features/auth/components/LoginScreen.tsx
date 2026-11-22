@@ -9,7 +9,11 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { type LoginResult, login } from '~/features/users/service'
+import {
+  type LoginResult,
+  login,
+  PairingRequiredError,
+} from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { captureActivity } from '~/utils/activity-logger'
 import { UserAvatar } from './UserAvatar'
@@ -51,8 +55,9 @@ function BrandPanel({ tagline }: { tagline: string }) {
 
 /**
  * Modern split-screen local login. A branded panel sits beside the account
- * chooser; selecting a user signs in immediately (passwordless) or reveals a
- * password field.
+ * chooser; selecting a user signs in immediately (passwordless, on the Church
+ * Hub computer), or reveals a password field, or, for a passwordless account
+ * from another device, a field for the pairing code the desktop app shows.
  */
 export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
   const { t } = useTranslation('users')
@@ -61,6 +66,9 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  // Set while signing in to a passwordless account from another device.
+  const [pairingId, setPairingId] = useState<string | null>(null)
+  const codeMode = pairingId !== null
   const passwordRowRef = useRef<HTMLDivElement>(null)
 
   // Re-trigger the shake animation on every wrong-password attempt by
@@ -75,16 +83,26 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
     el.classList.add('animate-shake')
   }, [error])
 
-  async function doLogin(user: LocalUser, pw?: string) {
+  async function doLogin(
+    user: LocalUser,
+    pw?: string,
+    pairing?: { pairingId: string; code: string },
+  ) {
     setSubmitting(true)
     setError(false)
     try {
-      const result = await login(user.id, pw)
+      const result = await login(user.id, pw, pairing)
       captureActivity('login', { source: 'login-screen', userId: user.id })
       await onLoggedIn(result)
-    } catch {
-      setError(true)
+    } catch (err) {
       setSubmitting(false)
+      if (err instanceof PairingRequiredError) {
+        setSelected(user)
+        setPairingId(err.pairingId)
+        setPassword('')
+        return
+      }
+      setError(true)
     }
   }
 
@@ -92,6 +110,7 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
     setError(false)
     setPassword('')
     setShowPassword(false)
+    setPairingId(null)
     if (user.hasPassword) {
       setSelected(user)
     } else {
@@ -101,7 +120,10 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
 
   function handleSubmitPassword(e: React.FormEvent) {
     e.preventDefault()
-    if (selected) void doLogin(selected, password)
+    if (!selected) return
+    if (pairingId)
+      void doLogin(selected, undefined, { pairingId, code: password })
+    else void doLogin(selected, password)
   }
 
   const roleLabel = (user: LocalUser) =>
@@ -130,7 +152,11 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
             {t('login.title')}
           </h1>
           <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-            {selected ? t('login.enterPassword') : t('login.selectUser')}
+            {!selected
+              ? t('login.selectUser')
+              : codeMode
+                ? t('login.enterCode')
+                : t('login.enterPassword')}
           </p>
 
           <div className="mt-8">
@@ -157,13 +183,21 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
                     htmlFor="login-password"
                     className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    {t('login.passwordLabel')}
+                    {codeMode ? t('login.codeLabel') : t('login.passwordLabel')}
                   </label>
+                  {codeMode ? (
+                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                      {t('login.codeHint')}
+                    </p>
+                  ) : null}
                   <div ref={passwordRowRef} className="relative">
                     <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
                       id="login-password"
-                      type={showPassword ? 'text' : 'password'}
+                      type={codeMode || showPassword ? 'text' : 'password'}
+                      inputMode={codeMode ? 'numeric' : undefined}
+                      autoComplete={codeMode ? 'one-time-code' : undefined}
+                      maxLength={codeMode ? 6 : undefined}
                       autoFocus
                       value={password}
                       onChange={(e) => {
@@ -176,23 +210,27 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
                           ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30'
                           : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/30 dark:border-gray-600'
                       }`}
-                      placeholder={t('login.passwordPlaceholder')}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      tabIndex={-1}
-                      aria-label={
-                        showPassword ? t('password.hide') : t('password.show')
+                      placeholder={
+                        codeMode ? '000000' : t('login.passwordPlaceholder')
                       }
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
+                    />
+                    {codeMode ? null : (
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        tabIndex={-1}
+                        aria-label={
+                          showPassword ? t('password.hide') : t('password.show')
+                        }
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
                   </div>
                   {error ? (
                     <p
@@ -200,15 +238,30 @@ export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
                       className="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400"
                     >
                       <AlertCircle className="h-4 w-4 shrink-0" />
-                      {t('login.wrongPassword')}
+                      {codeMode
+                        ? t('login.wrongCode')
+                        : t('login.wrongPassword')}
                     </p>
+                  ) : null}
+                  {codeMode ? (
+                    <button
+                      type="button"
+                      onClick={() => void doLogin(selected)}
+                      disabled={submitting}
+                      className="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 disabled:opacity-60 dark:text-indigo-400"
+                    >
+                      {t('login.newCode')}
+                    </button>
                   ) : null}
                 </div>
 
                 <div className="flex gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setSelected(null)}
+                    onClick={() => {
+                      setSelected(null)
+                      setPairingId(null)
+                    }}
                     disabled={submitting}
                     className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
                   >
