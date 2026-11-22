@@ -1492,30 +1492,15 @@ function BiblePage() {
 
   const editLayoutAction = useEditLayoutAction('bible')
 
+  const bookmarkLabel = isCurrentVerseBookmarked
+    ? t('bookmarks.remove')
+    : t('bookmarks.add')
+
   /**
-   * Mirrors the song page: both actions answer "where does this verse belong?",
-   * and both now sit behind one labelled menu instead of two bare icons.
+   * Mirrors the song page: the bookmark toggle is used all service long, so it
+   * sits in the header as its own button (below); the rest stays in the menu.
    */
   const bibleActionItems: ActionMenuItem[] = [
-    {
-      id: 'bookmark',
-      label: isCurrentVerseBookmarked
-        ? t('bookmarks.remove')
-        : t('bookmarks.add'),
-      description: t('actionsMenu.bookmarkDescription'),
-      icon: isCurrentVerseBookmarked ? (
-        <BookmarkCheck size={18} />
-      ) : (
-        <Bookmark size={18} />
-      ),
-      iconClassName: isCurrentVerseBookmarked
-        ? 'bg-amber-500 text-white'
-        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-      active: isCurrentVerseBookmarked,
-      disabled: !focusedVerse,
-      onSelect: handleToggleBookmark,
-      testId: 'bible-bookmark-toggle',
-    },
     {
       id: 'add-to-schedule',
       label: t('actionsMenu.addToSchedule'),
@@ -1542,11 +1527,33 @@ function BiblePage() {
         <PageHeader
           title={t('title')}
           actions={
-            <ActionMenu
-              items={bibleActionItems}
-              label={t('actionsMenu.trigger')}
-              testId="bible-actions-menu"
-            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleToggleBookmark}
+                disabled={!focusedVerse}
+                aria-pressed={isCurrentVerseBookmarked}
+                aria-label={bookmarkLabel}
+                title={bookmarkLabel}
+                data-testid="bible-bookmark-toggle"
+                className={`inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isCurrentVerseBookmarked
+                    ? 'bg-amber-500 border-amber-500 text-white hover:bg-amber-600'
+                    : 'bg-white border-gray-300 text-amber-600 hover:bg-amber-50 dark:bg-gray-800 dark:border-gray-600 dark:text-amber-400 dark:hover:bg-gray-700'
+                }`}
+              >
+                {isCurrentVerseBookmarked ? (
+                  <BookmarkCheck size={16} />
+                ) : (
+                  <Bookmark size={16} />
+                )}
+              </button>
+              <ActionMenu
+                items={bibleActionItems}
+                label={t('actionsMenu.trigger')}
+                testId="bible-actions-menu"
+              />
+            </div>
           }
         />
 

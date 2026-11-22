@@ -1,7 +1,7 @@
 [
   {
-    "version": "0.1.104",
-    "date": "2026-11-16T07:13:33+00:00",
+    "version": "0.1.105",
+    "date": "2026-11-22T21:39:28+02:00",
     "features": [
       {
         "scope": "review-build",
@@ -164,16 +164,48 @@
     ],
     "changes": [
       {
-        "scope": "release",
-        "message": "every release goes out as a pre-release; release.sh promote makes it Latest"
+        "scope": null,
+        "message": "T-147 e2e: program-gama edit-as-text waits for the textarea's text before reading it"
       },
       {
-        "scope": "release",
-        "message": "release.sh bumps on a branch for a PR, then tags the merge on main"
+        "scope": null,
+        "message": "T-166 Identifică: each display shows its number and name again"
       },
       {
-        "scope": "release",
-        "message": "a normal release is Latest; a draft flagged pre-release stays out of the updater"
+        "scope": null,
+        "message": "T-167 Login from the LAN: pairing code for passwordless accounts (Super Admin included)"
+      },
+      {
+        "scope": null,
+        "message": "T-165 Pre-release fixes: backup card layout shift + Remove confirmation, translated Cancel, no discard prompt on an untouched new song"
+      },
+      {
+        "scope": null,
+        "message": "T-164 OBS WebSocket password from crypto.getRandomValues, not Math.random"
+      },
+      {
+        "scope": null,
+        "message": "T-161 Romanian texts: agents write them themselves, no Codex"
+      },
+      {
+        "scope": null,
+        "message": "T-163 e2e: fake desktop shells report the test server's port"
+      },
+      {
+        "scope": null,
+        "message": "T-158 Slides appear on the projector much faster"
+      },
+      {
+        "scope": null,
+        "message": "CH-160 Livestream: separate buttons, settings pages, every YouTube setting configurable (template, DVR off)"
+      },
+      {
+        "scope": null,
+        "message": "T-159 Screen settings: grouped, explained and fitted"
+      },
+      {
+        "scope": null,
+        "message": "T-148 v0.1.104: pre-release first, release.sh promote to Latest"
       },
       {
         "scope": null,
