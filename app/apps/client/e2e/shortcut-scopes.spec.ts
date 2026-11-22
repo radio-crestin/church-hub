@@ -109,6 +109,10 @@ async function fakeDesktopShell(page: Page) {
         },
       ) => {
         switch (command) {
+          // The app's server is the test server: without its port the app
+          // polls the build's default port and never leaves the loading page
+          case 'get_server_config':
+            return { serverPort: Number(window.location.port) }
           case 'plugin:global-shortcut|register':
             for (const key of args?.shortcuts ?? []) shell.held.add(key)
             return null
@@ -219,7 +223,7 @@ test.describe('Shortcut scopes: where each key works', () => {
     await saveShortcuts(request, withScopes({}))
     await fakeDesktopShell(page)
     await page.goto('/songs')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('sidebar-collapse-toggle')).toBeVisible()
     // Give the shortcut manager time to register what it is going to
     await page.waitForTimeout(1500)
 
@@ -240,7 +244,7 @@ test.describe('Shortcut scopes: where each key works', () => {
     await saveShortcuts(request, withScopes({ F5: 'system' }))
     await fakeDesktopShell(page)
     await page.goto('/songs')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('sidebar-collapse-toggle')).toBeVisible()
 
     await expect.poll(() => heldKeys(page)).toContain('F5')
     await moveKeyboard(page, null)
@@ -289,7 +293,7 @@ test.describe('Shortcut scopes: where each key works', () => {
 
     await fakeDesktopShell(page)
     await page.goto('/bible')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('sidebar-collapse-toggle')).toBeVisible()
     await expect
       .poll(() => heldKeys(page))
       .toEqual(expect.arrayContaining(['F1', 'F2', 'F3']))
@@ -340,7 +344,7 @@ test.describe('Shortcut scopes: where each key works', () => {
 
     await fakeDesktopShell(page)
     await page.goto('/bible')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('sidebar-collapse-toggle')).toBeVisible()
 
     // In Church Hub: the key is held, the pad is the MIDI listener's
     await expect.poll(() => heldKeys(page)).toContain('F2')
