@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Release helper, in two steps, because main only takes pull requests:
 #
-#   1. On a branch: bumps app/tauri/tauri.conf.json, regenerates the changelog,
-#      commits and pushes the branch. Open (or update) its PR and merge it.
+#   1. On a branch: checks the version's release notes are written
+#      (written-notes.json, the release-notes skill), bumps
+#      app/tauri/tauri.conf.json, regenerates the changelog, commits and
+#      pushes the branch. Open (or update) its PR and merge it.
 #   2. `tag`: makes the release a pre-release draft, then tags the merged
 #      commit on origin/main with the version main now carries and pushes the
 #      tag.
@@ -169,6 +171,24 @@ if [[ "$NEW" == "$CURRENT" ]]; then
 fi
 
 echo "New version:     $NEW"
+
+# The release notes people read in the app (Settings > About, the updates
+# page): written in plain English and Romanian by whoever cuts the release
+# (the release-notes skill), from the commits since the last tag. No API
+# key: the agent running this writes them. RELEASE_NOTES=commits releases
+# with the commit list only.
+NOTES_FILE="$REPO_ROOT/app/apps/client/src/features/release-notes/written-notes.json"
+if [[ "${RELEASE_NOTES:-}" != "commits" ]] && ! grep -q "\"$NEW\"" "$NOTES_FILE"; then
+  LAST_TAG=$(git -C "$REPO_ROOT" describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+  echo >&2
+  echo "error: no release notes for v$NEW yet." >&2
+  echo "Write them in app/apps/client/src/features/release-notes/written-notes.json" >&2
+  echo "(.claude/skills/release-notes/SKILL.md says how), commit, then run this again." >&2
+  echo "The commits since ${LAST_TAG:-the start}:" >&2
+  echo >&2
+  git -C "$REPO_ROOT" log --no-merges --format='- %s' ${LAST_TAG:+"$LAST_TAG..HEAD"} >&2
+  exit 1
+fi
 
 # The bump goes in through a pull request: main's rule set refuses pushes.
 BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD)

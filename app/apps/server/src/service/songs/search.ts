@@ -1,4 +1,3 @@
-import { fetchSongIndexRows } from './fetchSongIndexRows'
 import { joinSearchTitles } from './parseAlternateTitles'
 import { SONGS_FTS_TABLE } from './song-search/fetchSongCandidates'
 import { songSearchCache } from './song-search/songSearchCache'
@@ -8,6 +7,7 @@ import {
   resetLibraryVersionIndex,
   warmUpLibraryVersionIndex,
 } from './song-versions/libraryVersionIndex'
+import { SONG_INDEX_ROWS_SQL } from './songIndexRowsSql'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
@@ -216,8 +216,19 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
     const db = getRawDatabase()
 
-    const songs = fetchSongIndexRows(songIds)
+    // Build placeholders for IN clause
     const placeholders = songIds.map(() => '?').join(',')
+
+    // Fetch songs data
+    const songs = db
+      .query(`${SONG_INDEX_ROWS_SQL} WHERE s.id IN (${placeholders})`)
+      .all(...songIds) as Array<{
+      id: number
+      title: string
+      alternate_titles: string | null
+      category_name: string
+      content: string
+    }>
 
     db.run('BEGIN TRANSACTION')
 
@@ -306,7 +317,14 @@ export function rebuildSearchIndex(
 
     const db = getRawDatabase()
 
-    const songs = fetchSongIndexRows()
+    // Fetch all songs with their content
+    const songs = db.query(SONG_INDEX_ROWS_SQL).all() as Array<{
+      id: number
+      title: string
+      alternate_titles: string | null
+      category_name: string
+      content: string
+    }>
 
     logger.info(`Found ${songs.length} songs to index`)
 
