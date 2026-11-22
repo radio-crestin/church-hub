@@ -20,33 +20,14 @@ export function SettingsNavItem({
   const isActive = pathname === to
 
   return (
-    <Link to={to} className={settingsNavItemClass(isActive)}>
-      <SettingsNavItemContent icon={Icon} label={label} isActive={isActive} />
-    </Link>
-  )
-}
-
-/** A rail item's look, shared by links and buttons (e.g. a page's sections). */
-export function settingsNavItemClass(isActive: boolean): string {
-  return `flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
-    isActive
-      ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
-      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
-  }`
-}
-
-/** A rail item's icon and label. */
-export function SettingsNavItemContent({
-  icon: Icon,
-  label,
-  isActive,
-}: {
-  icon: LucideIcon
-  label: string
-  isActive: boolean
-}) {
-  return (
-    <>
+    <Link
+      to={to}
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        isActive
+          ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
+          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+      }`}
+    >
       <Icon
         size={17}
         className={`flex-shrink-0 ${
@@ -56,6 +37,6 @@ export function SettingsNavItemContent({
         }`}
       />
       <span className="flex-1 truncate">{label}</span>
-    </>
+    </Link>
   )
 }

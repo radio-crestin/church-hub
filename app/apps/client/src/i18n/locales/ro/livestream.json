@@ -255,10 +255,7 @@
       "off": "Oprit"
     },
     "railTitle": "Setări Live Stream",
-    "groups": {
-      "pages": "Setări",
-      "sections": "Pe această pagină"
-    },
+    "railGroup": "Setări",
     "rail": {
       "youtube": "YouTube",
       "obs": "OBS",

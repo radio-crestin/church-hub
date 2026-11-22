@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '~/ui/page'
 import { SettingsPageRail } from './SettingsPageRail'
-import type { SettingsPageSection } from './settingsPageSection'
 import { useActiveSection } from './useActiveSection'
 
 interface SettingsPageLayoutProps {
@@ -17,17 +16,15 @@ interface SettingsPageLayoutProps {
   actions?: ReactNode
   /** A bar kept at the bottom of the pane (e.g. Save). */
   footer?: ReactNode
-  /** The page's sections, in order, listed in the rail. */
-  sections?: SettingsPageSection[]
   children: ReactNode
   testId?: string
 }
 
 /**
  * A livestream settings page, laid out like the app settings: a rail on the
- * left (the settings pages, the page's sections) and the sections full width
- * in the pane beside it, each scrolling on its own. On a phone the rail is
- * hidden and the back link leads out.
+ * left with the settings pages, and the page's sections full width beside it,
+ * the one in view highlighted; each column scrolls on its own. On a phone the
+ * rail is hidden and the back link leads out.
  */
 export function SettingsPageLayout({
   back,
@@ -35,18 +32,13 @@ export function SettingsPageLayout({
   description,
   actions,
   footer,
-  sections = [],
   children,
   testId,
 }: SettingsPageLayoutProps) {
   const { t } = useTranslation('livestream')
   const pane = useRef<HTMLDivElement>(null)
-  const activeSection = useActiveSection(pane, sections)
-
-  const pickSection = (id: string) =>
-    pane.current
-      ?.querySelector(`[data-testid="${id}"]`)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const content = useRef<HTMLDivElement>(null)
+  useActiveSection(pane, content)
 
   return (
     <div
@@ -67,11 +59,7 @@ export function SettingsPageLayout({
           </h2>
         </div>
         <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-          <SettingsPageRail
-            sections={sections}
-            activeSection={activeSection}
-            onPickSection={pickSection}
-          />
+          <SettingsPageRail />
         </div>
       </aside>
 
@@ -93,7 +81,9 @@ export function SettingsPageLayout({
               description={description}
               actions={actions}
             />
-            {children}
+            <div ref={content} className="flex flex-col gap-4">
+              {children}
+            </div>
           </div>
         </div>
         {footer && (

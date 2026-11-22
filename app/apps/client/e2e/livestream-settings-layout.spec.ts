@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 /**
  * T-032 review: the Live Stream settings pages (YouTube, OBS, audio mixer)
  * are laid out like the app settings: a rail on the left with the settings
- * pages and the open page's sections, and the sections full width beside it.
+ * pages, and the sections full width beside it, the one in view highlighted.
  */
 
 const PAGES = [
@@ -39,16 +39,18 @@ test.describe('Live Stream settings pages', () => {
         await expect(rail.locator(`a[href="${href}"]`)).toBeVisible()
       }
       await expect(rail.locator(`a[href="${path}"]`)).toHaveClass(/indigo/)
+      // Only the pages: the sections are not listed again.
+      await expect(rail.locator('a')).toHaveCount(4)
+      await expect(rail.locator('button')).toHaveCount(0)
 
-      // The sections start right of the rail and fill the pane.
+      // The section in view is highlighted on the right (the last one at the end).
       const railBox = await rail.boundingBox()
       const card = page.getByTestId(section)
-      await page.getByTestId(`rail-${section}`).click()
-      await expect(card).toBeInViewport()
-      await expect(page.getByTestId(`rail-${section}`)).toHaveAttribute(
-        'aria-current',
-        'true',
-      )
+      await card.scrollIntoViewIfNeeded()
+      await card.hover()
+      await page.mouse.wheel(0, 5000)
+      await expect(card).toHaveAttribute('data-active', '')
+      await expect(page.locator('[data-active]')).toHaveCount(1)
       const pageBox = await page.getByTestId(pageId).boundingBox()
       const cardBox = await card.boundingBox()
       expect(railBox && cardBox && pageBox).toBeTruthy()

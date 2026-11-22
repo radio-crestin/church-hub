@@ -254,10 +254,7 @@
       "off": "Off"
     },
     "railTitle": "Live Stream settings",
-    "groups": {
-      "pages": "Settings",
-      "sections": "On this page"
-    },
+    "railGroup": "Settings",
     "rail": {
       "youtube": "YouTube",
       "obs": "OBS",
