@@ -86,11 +86,10 @@ export function parseReference(query: string): ParsedReference | null {
     /^(\d?\s*[a-zA-ZăâîșțĂÂÎȘȚ]+)(?:\s+(\d+)(?:[:\s]+(\d+)(?:-(\d+))?)?)?$/i
 
   const match = normalized.match(referencePattern)
-  if (!match) {
+  const [, bookPart, chapterStr, startVerseStr, endVerseStr] = match ?? []
+  if (!bookPart) {
     return null
   }
-
-  const [, bookPart, chapterStr, startVerseStr, endVerseStr] = match
 
   // Normalize book name (remove spaces, lowercase)
   const bookName = bookPart.replace(/\s+/g, '').toLowerCase()
@@ -233,7 +232,7 @@ export function updateSearchIndex(translationId: number): void {
     DELETE FROM bible_verses_fts
     WHERE rowid IN (SELECT id FROM bible_verses WHERE translation_id = ?)
   `,
-    translationId,
+    [translationId],
   )
 
   // Re-add entries
@@ -242,7 +241,7 @@ export function updateSearchIndex(translationId: number): void {
     INSERT INTO bible_verses_fts (rowid, text)
     SELECT id, text FROM bible_verses WHERE translation_id = ?
   `,
-    translationId,
+    [translationId],
   )
 
   resetVerseSearchState()

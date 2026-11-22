@@ -1,4 +1,4 @@
-const MONTHS = [
+const MONTHS: ReadonlyArray<readonly [ro: string, en: string]> = [
   ['ianuarie', 'january'],
   ['februarie', 'february'],
   ['martie', 'march'],
@@ -22,12 +22,13 @@ function sameWidth(value: number, like: string): string {
 /** `name` in the language and capitalisation of `like`. */
 function monthName(month: number, like: string): string {
   const pair = MONTHS[month]
+  if (!pair) throw new RangeError(`No month ${month}`)
   const name = MONTHS.some(([ro]) => ro === like.toLowerCase())
     ? pair[0]
     : pair[1]
   if (like === like.toUpperCase()) return name.toUpperCase()
-  if (like[0] === like[0].toUpperCase())
-    return name[0].toUpperCase() + name.slice(1)
+  if (like.charAt(0) === like.charAt(0).toUpperCase())
+    return name.charAt(0).toUpperCase() + name.slice(1)
   return name
 }
 

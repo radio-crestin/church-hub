@@ -78,7 +78,9 @@ function collectUsedKeys(db: Database): Set<string> {
   const used = new Set<string>()
   for (const settingKey of SHORTCUT_SETTING_KEYS) {
     const value = readSetting(db, settingKey) ?? ''
-    for (const [, key] of value.matchAll(/"(F\d{1,2})"/g)) used.add(key)
+    for (const [, key] of value.matchAll(/"(F\d{1,2})"/g)) {
+      if (key) used.add(key)
+    }
   }
   return used
 }
