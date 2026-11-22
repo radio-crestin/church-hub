@@ -164,9 +164,7 @@ export function replaceScheduleItems(
     }[] = []
 
     // Insert new items with correct sort order
-    for (let i = 0; i < input.items.length; i++) {
-      const item = input.items[i]
-
+    for (const [i, item] of input.items.entries()) {
       // A Bible passage is no longer an item type of its own: it becomes one
       // "Versete Biblice" slide holding the whole passage, with no person name.
       const vtEntries =
@@ -205,9 +203,7 @@ export function replaceScheduleItems(
 
         // Collect versete tineri entries for batch insert
         const entries = vtEntries
-        for (let j = 0; j < entries.length; j++) {
-          const entry = entries[j]
-
+        for (const [j, entry] of entries.entries()) {
           const entryRef = formatEntryReference(entry)
 
           // Validate that start and end verses exist
@@ -416,8 +412,7 @@ export function replaceScheduleItems(
         const itemId = result.id
 
         // Collect verses for batch insert
-        for (let j = 0; j < verses.length; j++) {
-          const verse = verses[j]
+        for (const [j, verse] of verses.entries()) {
           allVerseInserts.push({
             scheduleItemId: itemId,
             verseId: verse.id,

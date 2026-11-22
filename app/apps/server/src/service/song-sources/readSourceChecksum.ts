@@ -22,7 +22,9 @@ export async function readSourceChecksum(sourceId: string): Promise<string> {
   const source = findSongSource(sourceId)
   switch (source.format) {
     case 'song-bundle-file':
-      return decode(await fetchLink(`${source.url}.sha256`)).split(/\s/)[0]
+      return (
+        decode(await fetchLink(`${source.url}.sha256`)).split(/\s/)[0] ?? ''
+      )
     case 'song-bundle-folder':
       return parseManifest(decode(await fetchLink(source.url))).checksum ?? ''
     case 'cantaricrestine-api':

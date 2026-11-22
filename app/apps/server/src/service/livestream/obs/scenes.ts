@@ -92,6 +92,9 @@ export async function getScenes(): Promise<OBSScene[]> {
             sortOrder: maxSortOrder,
           })
           .returning()
+        if (!newScene) {
+          throw new Error(`Inserting OBS scene "${obsScene.sceneName}" failed`)
+        }
 
         result.push({
           id: newScene.id,
@@ -180,14 +183,14 @@ export async function updateScene(
 
 export async function reorderScenes(sceneIds: number[]): Promise<OBSScene[]> {
   const db = getDatabase()
-  for (let i = 0; i < sceneIds.length; i++) {
+  for (const [i, sceneId] of sceneIds.entries()) {
     await db
       .update(obsScenes)
       .set({
         sortOrder: i,
         updatedAt: new Date(),
       })
-      .where(eq(obsScenes.id, sceneIds[i]))
+      .where(eq(obsScenes.id, sceneId))
   }
 
   return getScenes()
@@ -239,6 +242,9 @@ export async function createScene(sceneName: string): Promise<OBSScene> {
       sortOrder: maxSortOrder + 1,
     })
     .returning()
+  if (!newScene) {
+    throw new Error(`Inserting OBS scene "${sceneName}" failed`)
+  }
 
   return {
     id: newScene.id,

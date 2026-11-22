@@ -55,6 +55,7 @@ interface ShortcutMapping {
 interface SidebarItemSettings {
   shortcuts?: string[]
   focusSearchOnNavigate?: boolean
+  focusSearchShortcuts?: string[]
 }
 
 interface SidebarItem {

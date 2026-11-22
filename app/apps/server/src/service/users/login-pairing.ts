@@ -27,7 +27,7 @@ const pairings = new Map<string, LoginPairing>()
 let recentCreations: number[] = []
 
 function generateCode(): string {
-  const [n] = crypto.getRandomValues(new Uint32Array(1))
+  const [n = 0] = crypto.getRandomValues(new Uint32Array(1))
   return String(n % 1_000_000).padStart(6, '0')
 }
 

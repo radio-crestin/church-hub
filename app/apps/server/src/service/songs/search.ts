@@ -82,7 +82,7 @@ export function normalizeForIndex(text: string): string {
     expandedWords.push(word)
     if (
       word.length > 2 &&
-      word[0].toLowerCase() === 'n' &&
+      word[0]?.toLowerCase() === 'n' &&
       !/^n[aeiou]/i.test(word)
     ) {
       expandedWords.push(word.substring(1))

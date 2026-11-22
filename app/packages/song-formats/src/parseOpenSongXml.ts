@@ -29,8 +29,9 @@ function elementText(xml: string, tagName: string): string {
   const match = xml.match(
     new RegExp(`<${tagName}(?:\\s[^>]*)?>([\\s\\S]*?)</${tagName}>`),
   )
-  if (!match) return ''
-  const content = match[1]
+  const inner = match?.[1]
+  if (inner === undefined) return ''
+  const content = inner
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (_, cdata: string) =>
       cdata.replace(/&/g, '&amp;').replace(/</g, '&lt;'),
     )
@@ -72,10 +73,10 @@ function parseLyrics(lyrics: string): ParsedOpenSongVerse[] {
   const verses: ParsedOpenSongVerse[] = []
   let current: ParsedOpenSongVerse | null = null
   for (const line of lyrics.split('\n')) {
-    const label = line.trim().match(VERSE_LABEL)
+    const label = line.trim().match(VERSE_LABEL)?.[1]
     if (label) {
       if (current && current.lines.length > 0) verses.push(current)
-      current = { label: label[1], lines: [] }
+      current = { label, lines: [] }
       continue
     }
     const text = (line.startsWith(' ') ? line.substring(1) : line).trim()

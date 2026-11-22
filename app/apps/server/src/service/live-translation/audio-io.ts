@@ -16,6 +16,14 @@ type Audify = typeof import('audify')
 type RtAudioFormatValue = Parameters<
   InstanceType<Audify['RtAudio']>['openStream']
 >[2]
+/**
+ * The stream-flags bitmask; its typings list only the single flags, not the
+ * empty mask 0 ("no flags") that rt_audio.cpp reads as a plain number.
+ */
+type RtAudioStreamFlagsValue = NonNullable<
+  Parameters<InstanceType<Audify['RtAudio']>['openStream']>[8]
+>
+const NO_STREAM_FLAGS = 0 as RtAudioStreamFlagsValue
 type AudifyRuntime = Audify & {
   RtAudioFormat: Record<'RTAUDIO_SINT16', RtAudioFormatValue>
 }
@@ -120,7 +128,7 @@ export async function startAudioCapture(
       onChunk(resampled)
     },
     null,
-    0,
+    NO_STREAM_FLAGS,
     (type, msg) => {
       logger.error('RtAudio input error', { type, msg })
     },
@@ -183,7 +191,7 @@ export async function startAudioPlayback(
     'translation-output',
     null,
     null,
-    0,
+    NO_STREAM_FLAGS,
     (type, msg) => {
       logger.error('RtAudio output error', { type, msg })
     },
