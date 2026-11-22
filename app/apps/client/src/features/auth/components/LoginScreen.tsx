@@ -22,6 +22,8 @@ interface LoginScreenProps {
   users: LocalUser[]
   /** Called after a successful login so the app can finalize the session. */
   onLoggedIn: (result: LoginResult) => void | Promise<void>
+  /** A pairing already opened for this user: ask for its code at once. */
+  initialPairing?: { user: LocalUser; pairingId: string } | null
 }
 
 /** Decorative branded panel shown on large screens. */
@@ -59,15 +61,23 @@ function BrandPanel({ tagline }: { tagline: string }) {
  * Hub computer), or reveals a password field, or, for a passwordless account
  * from another device, a field for the pairing code the desktop app shows.
  */
-export function LoginScreen({ users, onLoggedIn }: LoginScreenProps) {
+export function LoginScreen({
+  users,
+  onLoggedIn,
+  initialPairing,
+}: LoginScreenProps) {
   const { t } = useTranslation('users')
-  const [selected, setSelected] = useState<LocalUser | null>(null)
+  const [selected, setSelected] = useState<LocalUser | null>(
+    initialPairing?.user ?? null,
+  )
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   // Set while signing in to a passwordless account from another device.
-  const [pairingId, setPairingId] = useState<string | null>(null)
+  const [pairingId, setPairingId] = useState<string | null>(
+    initialPairing?.pairingId ?? null,
+  )
   const codeMode = pairingId !== null
   const passwordRowRef = useRef<HTMLDivElement>(null)
 

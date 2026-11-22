@@ -2,7 +2,12 @@ import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { isMobile } from '~/config'
-import { getLocalUsers, LOGGED_OUT_FLAG, login } from '~/features/users/service'
+import {
+  getLocalUsers,
+  LOGGED_OUT_FLAG,
+  login,
+  PairingRequiredError,
+} from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
 import { LoginScreen } from './LoginScreen'
@@ -62,6 +67,12 @@ export function LoginGate({ children }: { children: ReactNode }) {
   // in. Checked at runtime in the auto-login effect (logout refreshes the
   // context rather than reloading, so a mount-time read would miss it).
   const [skipSoleAutoLogin, setSkipSoleAutoLogin] = useState(false)
+  // The sole account's auto-login from another device opened a pairing: the
+  // login screen asks for its code straight away.
+  const [pendingPairing, setPendingPairing] = useState<{
+    user: LocalUser
+    pairingId: string
+  } | null>(null)
 
   // Only fetch the user list when we actually need it (picker or sole
   // auto-login). When a session is already valid we skip straight to the app.
@@ -105,11 +116,17 @@ export function LoginGate({ children }: { children: ReactNode }) {
       }
       setAutoLoginTried(true)
       setAutoLoggingIn(true)
-      login(users[0].id)
+      const user = users[0]
+      login(user.id)
         .then(() => refresh())
-        // Refused (e.g. from another device, where it needs a pairing code):
-        // show the picker instead of spinning forever.
-        .catch(() => setSkipSoleAutoLogin(true))
+        // Refused, or from another device, where it needs a pairing code:
+        // show the login screen instead of spinning forever.
+        .catch((err) => {
+          if (err instanceof PairingRequiredError) {
+            setPendingPairing({ user, pairingId: err.pairingId })
+          }
+          setSkipSoleAutoLogin(true)
+        })
         .finally(() => setAutoLoggingIn(false))
     }
   }, [needsList, users, autoLoginTried, soleAutoLogin, refresh])
@@ -141,5 +158,11 @@ export function LoginGate({ children }: { children: ReactNode }) {
   if (users === null || autoLoggingIn) return <FullScreenSpinner />
   if (soleAutoLogin) return <FullScreenSpinner />
 
-  return <LoginScreen users={users} onLoggedIn={handleSelected} />
+  return (
+    <LoginScreen
+      users={users}
+      onLoggedIn={handleSelected}
+      initialPairing={pendingPairing}
+    />
+  )
 }
