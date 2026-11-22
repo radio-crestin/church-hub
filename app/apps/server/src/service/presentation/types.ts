@@ -225,6 +225,8 @@ export interface TemporarySceneContent {
  * service (POST /api/screen-share/frame, GET /api/screen-share/stream.mjpg)
  */
 export interface TemporaryScreenShareContent {
+  /** When the share started: a new share opens a new stream on the screens */
+  startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation

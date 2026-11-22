@@ -1198,6 +1198,7 @@ export function presentTemporaryScreenShare(
     const temporaryContent: TemporaryContent = {
       type: 'screen_share',
       data: {
+        startedAt: Date.now(),
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
       },
