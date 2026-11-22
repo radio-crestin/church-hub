@@ -11,7 +11,8 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 /**
  * The YouTube broadcast settings the operator sets on the YouTube settings
  * page, each sent when a broadcast is created. DVR starts off, auto-start and
- * auto-stop on (what every broadcast had until now).
+ * auto-stop on (what every broadcast had until now), and the songs and verses
+ * shown written into the description as chapters, on.
  *
  * Idempotent: adds only the columns a database lacks.
  */
@@ -24,6 +25,7 @@ const COLUMNS: [name: string, definition: string][] = [
   ['enable_auto_start', 'INTEGER NOT NULL DEFAULT 1'],
   ['enable_auto_stop', 'INTEGER NOT NULL DEFAULT 1'],
   ['thumbnail_url', 'TEXT'],
+  ['description_chapters', 'INTEGER NOT NULL DEFAULT 1'],
 ]
 
 export function addYouTubeBroadcastSettings(db: Database): void {

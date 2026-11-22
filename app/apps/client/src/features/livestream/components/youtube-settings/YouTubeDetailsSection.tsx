@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { SettingsSection } from '~/features/settings/components/SettingsSection'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { Input } from '~/ui/input'
+import { SwitchRow } from '~/ui/switch/SwitchRow'
 import type { SetSetting, YouTubeSettingsDraft } from './useYouTubeSettingsForm'
 import { useVideoCategories } from '../../hooks'
 import { SettingField } from '../settings-page/SettingField'
@@ -13,7 +14,7 @@ interface YouTubeDetailsSectionProps {
   set: SetSetting
 }
 
-/** What viewers read: title, description, category, tags. */
+/** What viewers read: title, description (and its chapters), category, tags. */
 export function YouTubeDetailsSection({
   draft,
   set,
@@ -57,6 +58,13 @@ export function YouTubeDetailsSection({
           />
         )}
       </SettingField>
+      <SwitchRow
+        label={t('youtubeSettings.details.chapters')}
+        description={t('youtubeSettings.details.chaptersHint')}
+        checked={draft.descriptionChapters}
+        onCheckedChange={(checked) => set('descriptionChapters', checked)}
+        testId="youtube-description-chapters"
+      />
       <SettingField
         label={t('youtubeSettings.details.category')}
         description={t('youtubeSettings.details.categoryHint')}

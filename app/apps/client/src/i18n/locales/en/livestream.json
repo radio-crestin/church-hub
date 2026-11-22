@@ -282,6 +282,8 @@
       "streamTitleHint": "A date in the title (16.11.2025, 16 noiembrie 2025) changes to the day of the stream.",
       "streamDescription": "Description",
       "streamDescriptionHint": "Shown under the video.",
+      "chapters": "Songs and verses in the description",
+      "chaptersHint": "During the stream, each song and verse shown becomes a chapter of the video, and its full text is added under the description.",
       "category": "Category",
       "categoryHint": "Helps YouTube show the stream to the right people.",
       "categoryPlaceholder": "The channel's default",

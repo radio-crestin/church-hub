@@ -283,6 +283,8 @@
       "streamTitleHint": "O dată din titlu (16.11.2025, 16 noiembrie 2025) devine ziua transmisiunii.",
       "streamDescription": "Descriere",
       "streamDescriptionHint": "Apare sub videoclip.",
+      "chapters": "Cântările și versetele în descriere",
+      "chaptersHint": "În timpul transmisiunii, fiecare cântare și verset afișat devine un capitol al videoclipului, iar textul lor întreg se adaugă sub descriere.",
       "category": "Categorie",
       "categoryHint": "Ajută YouTube să arate transmisiunea oamenilor potriviți.",
       "categoryPlaceholder": "Cea implicită a canalului",
