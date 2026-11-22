@@ -50,7 +50,7 @@ const server = spawn('bun', ['apps/server/src/index.ts'], {
   stdio: ['pipe', 'ignore', 'ignore'],
   env: { ...process.env, CHURCH_HUB_EXIT_WITH_PARENT: 'true' },
 })
-console.log(server.pid)
+console.log('SERVER_PID=' + server.pid)
 setInterval(() => {}, 1 << 30)
 `
 
@@ -70,12 +70,19 @@ test.describe('The sidecar ends with the desktop shell (T-149)', () => {
       },
       stdio: ['ignore', 'pipe', 'inherit'],
     })
+    // Read until the pid line: the first chunk may hold other output.
     const serverPid = await new Promise<number>((resolve, reject) => {
-      shell.stdout.once('data', (chunk) =>
-        resolve(Number(String(chunk).trim())),
+      let out = ''
+      shell.stdout.on('data', (chunk) => {
+        out += String(chunk)
+        const match = out.match(/SERVER_PID=(\d+)/)
+        if (match) resolve(Number(match[1]))
+      })
+      shell.once('exit', () =>
+        reject(new Error(`the stand-in shell exited: ${out}`)),
       )
-      shell.once('exit', () => reject(new Error('the stand-in shell exited')))
     })
+    expect(isAlive(serverPid)).toBe(true)
 
     try {
       const url = `http://localhost:${port}`
