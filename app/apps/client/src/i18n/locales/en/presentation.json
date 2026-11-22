@@ -390,7 +390,7 @@
         "conflictOther": "Already used by \"{{action}}\""
       }
     },
-    "selectProgram": "Select a program",
+    "selectProgram": "Select a presentation",
     "presenting": "Presenting",
     "notPresenting": "Not presenting",
     "connected": "Connected",
@@ -398,7 +398,7 @@
     "disconnected": "Disconnected",
     "openDisplay": "Open Display",
     "slides": "Slides",
-    "noSlides": "No slides in this program",
+    "noSlides": "No slides in this presentation",
     "preview": "Preview",
     "openSong": "Open Song",
     "openBible": "Open Bible",

@@ -111,7 +111,7 @@
     "autoSceneDescription": "Switch to this scene when showing:",
     "contentTypes": {
       "songTemporary": "Songs (manual display)",
-      "songSchedule": "Songs (from schedule)",
+      "songSchedule": "Songs (from presentation)",
       "bible": "Bible Verse",
       "biblePassage": "Bible Passage",
       "announcement": "Announcements",

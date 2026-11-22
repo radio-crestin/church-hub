@@ -105,7 +105,7 @@
     "clear": "Sterge",
     "today": "Azi",
     "yesterday": "Ieri",
-    "export": "Exporta ca program",
+    "export": "Exportă ca prezentare",
     "exportLastSession": "Ultima sesiune",
     "exportEntireHistory": "Tot istoricul",
     "exportVerseCount_one": "{{count}} verset",
@@ -158,7 +158,7 @@
   "actionsMenu": {
     "trigger": "Mai multe",
     "bookmarkDescription": "Marchează versetul deschis acum",
-    "addToScheduleDescription": "Adaugă versetul deschis în programul selectat",
-    "addToSchedule": "Adaugă versetul în program"
+    "addToScheduleDescription": "Adaugă versetul deschis în prezentarea selectată",
+    "addToSchedule": "Adaugă versetul în prezentare"
   }
 }

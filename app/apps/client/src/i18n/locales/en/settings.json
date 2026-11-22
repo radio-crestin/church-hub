@@ -340,7 +340,7 @@
         "song_versions": "Song versions",
         "bible": "Bible",
         "control_room": "Control Room",
-        "programs": "Programs",
+        "programs": "Presentations",
         "queue": "Queue",
         "settings": "Settings",
         "displays": "Displays",
@@ -366,11 +366,11 @@
         "bible.present_now": "Present Bible verses immediately",
         "control_room.view": "View control room",
         "control_room.control": "Control presentation",
-        "programs.view": "View programs",
-        "programs.create": "Create programs",
-        "programs.edit": "Edit programs",
-        "programs.delete": "Delete programs",
-        "programs.import_to_queue": "Import programs to queue",
+        "programs.view": "View presentations",
+        "programs.create": "Create presentations",
+        "programs.edit": "Edit presentations",
+        "programs.delete": "Delete presentations",
+        "programs.import_to_queue": "Import presentations to queue",
         "queue.view": "View queue",
         "queue.add": "Add items to queue",
         "queue.remove": "Remove items from queue",
@@ -773,7 +773,7 @@
         "present": "Control Room",
         "songs": "Songs",
         "bible": "Bible",
-        "schedules": "Schedules",
+        "schedules": "Presentations",
         "livestream": "Livestream",
         "settings": "Settings"
       },
@@ -828,8 +828,8 @@
           "songsDescription": "Song categories, songs and slides",
           "bible": "Bible",
           "bibleDescription": "Bible translations and verses",
-          "schedules": "Schedules",
-          "schedulesDescription": "Programs and schedule items",
+          "schedules": "Presentations",
+          "schedulesDescription": "Presentations and their items",
           "configurations": "Configurations",
           "configurationsDescription": "Screens, settings and preferences"
         }
@@ -985,7 +985,7 @@
         "loading": "Downloading and reading the backup…",
         "failed": "Could not read the backup contents.",
         "songs": "Songs ({{total}})",
-        "schedules": "Schedules ({{total}})",
+        "schedules": "Presentations ({{total}})",
         "scheduleSongs_one": "{{count}} song",
         "scheduleSongs_other": "{{count}} songs",
         "playlists": "Playlists ({{total}})",
@@ -997,8 +997,8 @@
           "songSlides": "Song slides",
           "songCategories": "Song categories",
           "songBookmarks": "Song bookmarks",
-          "schedules": "Schedules",
-          "scheduleItems": "Schedule items",
+          "schedules": "Presentations",
+          "scheduleItems": "Presentation items",
           "musicPlaylists": "Playlists",
           "musicFiles": "Music files",
           "bibleTranslations": "Bible translations",
@@ -1009,7 +1009,7 @@
     },
     "sync": {
       "title": "Library Sync",
-      "description": "Keep your song library and schedules up to date across all your devices through your Google Drive account.",
+      "description": "Keep your song library and presentations up to date across all your devices through your Google Drive account.",
       "loading": "Loading sync status…",
       "toggle": {
         "title": "Real-time library sync",
@@ -1056,7 +1056,7 @@
           "song": "Song",
           "song_category": "Category",
           "song_group": "Group",
-          "schedule": "Schedule"
+          "schedule": "Presentation"
         }
       }
     },
@@ -1308,7 +1308,7 @@
           "install": "The update could not be installed and the current version is still running. Try again, or install the release from GitHub. A development instance cannot replace itself."
         }
       },
-      "howItWorks": "Installing closes Church Hub, replaces it with the new version and opens it again by itself. Your songs, schedules and settings are kept. On Windows a short progress window may appear; nothing needs to be clicked.",
+      "howItWorks": "Installing closes Church Hub, replaces it with the new version and opens it again by itself. Your songs, presentations and settings are kept. On Windows a short progress window may appear; nothing needs to be clicked.",
       "outcome": {
         "updated": "Updated to v{{version}}",
         "failed": "The update to v{{version}} did not complete — still running v{{current}}. See the logs for details."
