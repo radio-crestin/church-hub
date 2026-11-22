@@ -88,8 +88,8 @@
   "scenes": {
     "title": "Scene",
     "noScenes": "Nu există încă scene. Ghidul de configurare îți arată cum să creezi prima scenă.",
-    "settings": "Setari scene",
-    "sceneSettings": "Setari scena",
+    "settings": "Setările scenei",
+    "sceneSettings": "Setările scenei",
     "displayName": "Nume afisat",
     "visible": "Vizibila",
     "hidden": "Ascunsa",
@@ -371,5 +371,10 @@
     "channels": {
       "description": "Denumește canalele, ca lista de canale oprite a fiecărei scene să fie ușor de citit."
     }
+  },
+  "sceneSettingsPage": {
+    "back": "Înapoi la setările scenelor",
+    "subtitle": "Ce arată scena, scurtăturile ei și ce face mixerul când pornește.",
+    "notFound": "Scena aceasta nu mai există."
   }
 }

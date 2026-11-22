@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { Page, PageHeader } from '~/ui/page'
 
 interface SettingsPageLayoutProps {
+  /** Where the back link goes: Live Stream unless given. */
+  back?: { to: '/settings/livestream'; label: string }
   title: string
   description: string
   /** Buttons on the right of the title. */
@@ -16,8 +18,9 @@ interface SettingsPageLayoutProps {
   testId?: string
 }
 
-/** A livestream settings page: back to Live Stream, its title, its sections. */
+/** A livestream settings page: a back link, its title, its sections. */
 export function SettingsPageLayout({
+  back,
   title,
   description,
   actions,
@@ -31,11 +34,11 @@ export function SettingsPageLayout({
     <Page testId={testId}>
       <div className="mx-auto flex w-full max-w-3xl shrink-0 flex-col gap-2">
         <Link
-          to="/livestream"
+          to={back?.to ?? '/livestream'}
           className="inline-flex w-fit items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          {t('settingsPages.back')}
+          {back?.label ?? t('settingsPages.back')}
         </Link>
         <PageHeader title={title} description={description} actions={actions} />
       </div>

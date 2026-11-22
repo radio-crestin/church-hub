@@ -370,5 +370,10 @@
     "channels": {
       "description": "Name the channels so each scene's mute list is easy to read."
     }
+  },
+  "sceneSettingsPage": {
+    "back": "Back to scene settings",
+    "subtitle": "What this scene shows, its shortcuts, and what the mixer does when it comes on.",
+    "notFound": "This scene no longer exists."
   }
 }

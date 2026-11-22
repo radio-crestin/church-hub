@@ -50,6 +50,7 @@ import { Route as LivestreamMixerRouteImport } from './routes/livestream/mixer'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
+import { Route as LivestreamScenesSceneIdRouteImport } from './routes/livestream/scenes/$sceneId'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
 
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -257,6 +258,11 @@ const SongsSongIdEditRoute = SongsSongIdEditRouteImport.update({
   path: '/songs/$songId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LivestreamScenesSceneIdRoute = LivestreamScenesSceneIdRouteImport.update({
+  id: '/livestream/scenes/$sceneId',
+  path: '/livestream/scenes/$sceneId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
   id: '/auth/youtube/callback',
   path: '/auth/youtube/callback',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/song-key/': typeof SongKeyIndexRoute
   '/songs/': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
+  '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/song-key': typeof SongKeyIndexRoute
   '/songs': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
+  '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
 }
@@ -392,6 +400,7 @@ export interface FileRoutesById {
   '/song-key/': typeof SongKeyIndexRoute
   '/songs/': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
+  '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
@@ -438,6 +447,7 @@ export interface FileRouteTypes {
     | '/song-key/'
     | '/songs/'
     | '/auth/youtube/callback'
+    | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
   fileRoutesByTo: FileRoutesByTo
@@ -481,6 +491,7 @@ export interface FileRouteTypes {
     | '/song-key'
     | '/songs'
     | '/auth/youtube/callback'
+    | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId'
   id:
@@ -525,6 +536,7 @@ export interface FileRouteTypes {
     | '/song-key/'
     | '/songs/'
     | '/auth/youtube/callback'
+    | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
   fileRoutesById: FileRoutesById
@@ -552,6 +564,7 @@ export interface RootRouteChildren {
   SongKeyIndexRoute: typeof SongKeyIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
   AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
+  LivestreamScenesSceneIdRoute: typeof LivestreamScenesSceneIdRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
 }
@@ -845,6 +858,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SongsSongIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/livestream/scenes/$sceneId': {
+      id: '/livestream/scenes/$sceneId'
+      path: '/livestream/scenes/$sceneId'
+      fullPath: '/livestream/scenes/$sceneId'
+      preLoaderRoute: typeof LivestreamScenesSceneIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/youtube/callback': {
       id: '/auth/youtube/callback'
       path: '/auth/youtube/callback'
@@ -924,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
   SongKeyIndexRoute: SongKeyIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
   AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,
+  LivestreamScenesSceneIdRoute: LivestreamScenesSceneIdRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,
 }
