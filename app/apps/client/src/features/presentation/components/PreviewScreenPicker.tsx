@@ -45,7 +45,7 @@ export function PreviewScreenPicker({
   }
 
   return (
-    <label className="absolute top-2 left-2 z-10 flex items-center gap-1 max-w-[60%] rounded-md bg-black/60 px-2 py-1 text-xs text-white opacity-80 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm">
+    <label className="absolute bottom-2 left-2 z-10 flex items-center gap-1 max-w-[60%] rounded-md bg-black/60 px-2 py-1 text-xs text-white opacity-80 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm">
       <MonitorPlay size={14} className="shrink-0" aria-hidden />
       <select
         data-testid="preview-screen-picker"
