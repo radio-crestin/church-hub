@@ -41,6 +41,11 @@ async function fakeDesktopShell(page: Page) {
         command: string,
         args?: { event?: string; handler?: number },
       ) => {
+        // The app's server is the test server: without its port the app
+        // polls the build's default port and never leaves the loading page
+        if (command === 'get_server_config') {
+          return { serverPort: Number(window.location.port) }
+        }
         if (command !== 'plugin:event|listen') return null
         listeners.push({ event: args?.event ?? '', id: args?.handler ?? 0 })
         return args?.handler
@@ -68,10 +73,13 @@ test('the drop overlay hides when files are dragged back out of the window', asy
 }) => {
   await fakeDesktopShell(page)
   await page.goto('/songs')
-  await expect(page.getByRole('heading').first()).toBeVisible()
+  await expect(page.getByTestId('sidebar-collapse-toggle')).toBeVisible()
 
-  await emitTauri(page, 'tauri://drag-over', { position: { x: 400, y: 300 } })
-  await expect(page.getByText(DROP_HINT)).toBeVisible()
+  // The drop zone subscribes to the shell's drag events once it mounts
+  await expect(async () => {
+    await emitTauri(page, 'tauri://drag-over', { position: { x: 400, y: 300 } })
+    await expect(page.getByText(DROP_HINT)).toBeVisible({ timeout: 1000 })
+  }).toPass()
 
   await emitTauri(page, 'tauri://drag-leave', null)
   await expect(page.getByText(DROP_HINT)).toBeHidden()
