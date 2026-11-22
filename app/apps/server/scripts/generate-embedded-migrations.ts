@@ -2,6 +2,9 @@
  * Generates embedded migrations for production builds
  * This reads all migration SQL files and creates a TypeScript file
  * that can be bundled into the compiled binary
+ *
+ * Usage: bun scripts/generate-embedded-migrations.ts [migrations dir] [output file]
+ * (defaults: drizzle/migrations and src/db/migrations/embedded.ts)
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -10,8 +13,10 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const MIGRATIONS_DIR = join(__dirname, '../drizzle/migrations')
-const OUTPUT_FILE = join(__dirname, '../src/db/migrations/embedded.ts')
+const MIGRATIONS_DIR =
+  process.argv[2] ?? join(__dirname, '../drizzle/migrations')
+const OUTPUT_FILE =
+  process.argv[3] ?? join(__dirname, '../src/db/migrations/embedded.ts')
 
 interface JournalEntry {
   idx: number
