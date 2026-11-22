@@ -15,6 +15,7 @@ import {
   getYouTubeConfig,
   setActiveBroadcastCache,
 } from './youtube'
+import { startChapterLog, stopChapterLog } from './youtube/chapters'
 import {
   broadcastLivestreamStatus,
   broadcastOBSCurrentScene,
@@ -154,6 +155,16 @@ export async function startStream(): Promise<{
       return { success: false, error: 'OBS is not connected' }
     }
 
+    if (youtubeConfig.descriptionChapters) {
+      // The chapters are an extra: the stream runs without them.
+      startChapterLog(broadcast.broadcastId, Date.now()).catch((error) =>
+        log(
+          'error',
+          `Chapter log not started: ${error instanceof Error ? error.message : error}`,
+        ),
+      )
+    }
+
     // Step 5: Complete
     broadcastStreamStartProgress({
       step: 'completed',
@@ -226,6 +237,8 @@ export async function stopStream(): Promise<{
     if (obsStatus.connected) {
       await stopStreaming()
     }
+
+    await stopChapterLog()
 
     if (activeBroadcast) {
       await endBroadcast(activeBroadcast.broadcastId)

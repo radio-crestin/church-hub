@@ -8,6 +8,7 @@ import type { SetSetting, YouTubeSettingsDraft } from './useYouTubeSettingsForm'
 import { useStreamKeys } from '../../hooks'
 import { NativeSelect } from '../settings-page/NativeSelect'
 import { SettingField } from '../settings-page/SettingField'
+import { SettingFieldRow } from '../settings-page/SettingFieldRow'
 
 interface YouTubeStreamSectionProps {
   draft: YouTubeSettingsDraft
@@ -29,52 +30,54 @@ export function YouTubeStreamSection({
       icon={Radio}
       testId="youtube-settings-stream"
     >
-      <SettingField
-        label={t('youtubeSettings.stream.streamKey')}
-        description={t('youtubeSettings.stream.streamKeyHint')}
-      >
-        {() => (
-          <Combobox
-            testId="youtube-stream-key"
-            options={streamKeys.map((key) => ({
-              value: key.id,
-              label: key.name,
-            }))}
-            value={draft.streamKeyId ?? null}
-            onChange={(value) =>
-              set('streamKeyId', value ? String(value) : undefined)
-            }
-            placeholder={t('youtube.selectStreamKey')}
-            allowClear={false}
-          />
-        )}
-      </SettingField>
-      <SettingField
-        label={t('youtubeSettings.stream.latency')}
-        description={t(
-          `youtubeSettings.stream.latencyHint.${draft.latencyPreference}`,
-        )}
-      >
-        {(id) => (
-          <NativeSelect
-            id={id}
-            testId="youtube-latency"
-            value={draft.latencyPreference}
-            onChange={(value) => set('latencyPreference', value)}
-            options={[
-              {
-                value: 'normal',
-                label: t('youtubeSettings.stream.latencyNormal'),
-              },
-              { value: 'low', label: t('youtubeSettings.stream.latencyLow') },
-              {
-                value: 'ultraLow',
-                label: t('youtubeSettings.stream.latencyUltraLow'),
-              },
-            ]}
-          />
-        )}
-      </SettingField>
+      <SettingFieldRow>
+        <SettingField
+          label={t('youtubeSettings.stream.streamKey')}
+          description={t('youtubeSettings.stream.streamKeyHint')}
+        >
+          {() => (
+            <Combobox
+              testId="youtube-stream-key"
+              options={streamKeys.map((key) => ({
+                value: key.id,
+                label: key.name,
+              }))}
+              value={draft.streamKeyId ?? null}
+              onChange={(value) =>
+                set('streamKeyId', value ? String(value) : undefined)
+              }
+              placeholder={t('youtube.selectStreamKey')}
+              allowClear={false}
+            />
+          )}
+        </SettingField>
+        <SettingField
+          label={t('youtubeSettings.stream.latency')}
+          description={t(
+            `youtubeSettings.stream.latencyHint.${draft.latencyPreference}`,
+          )}
+        >
+          {(id) => (
+            <NativeSelect
+              id={id}
+              testId="youtube-latency"
+              value={draft.latencyPreference}
+              onChange={(value) => set('latencyPreference', value)}
+              options={[
+                {
+                  value: 'normal',
+                  label: t('youtubeSettings.stream.latencyNormal'),
+                },
+                { value: 'low', label: t('youtubeSettings.stream.latencyLow') },
+                {
+                  value: 'ultraLow',
+                  label: t('youtubeSettings.stream.latencyUltraLow'),
+                },
+              ]}
+            />
+          )}
+        </SettingField>
+      </SettingFieldRow>
       <SwitchRow
         label={t('youtubeSettings.stream.dvr')}
         description={t('youtubeSettings.stream.dvrHint')}

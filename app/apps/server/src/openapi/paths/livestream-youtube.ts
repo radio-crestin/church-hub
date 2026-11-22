@@ -48,6 +48,11 @@ const settings = {
     type: 'string',
     description: 'Image uploaded as each new broadcast’s thumbnail',
   },
+  descriptionChapters: {
+    type: 'boolean',
+    description:
+      'During the stream, the songs and verses shown are written into the description: a chapter for each, then their full text. On by default',
+  },
 }
 
 const config = {
