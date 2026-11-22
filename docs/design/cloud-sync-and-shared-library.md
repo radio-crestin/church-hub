@@ -1,138 +1,152 @@
-# Cloud sync and a shared song library (T-072): design and decisions
+# Cloud sync and a shared song library (T-072): design
 
-Status: **proposal, waiting on the user's decisions** (section 9). No code until they are made.
+Status: **design decided by the user on 2026-11-22** (section 10). Implementation is split into tasks (section 9).
 
 ## 1. What is asked
 
 From the user (05/10):
 - Phones and the computer stay in sync **even while the church computer is off**.
-- The infrastructure is **cheap and serverless**: S3/R2 plus Cloudflare Workers.
+- The infrastructure is **cheap and serverless**: S3 and Cloudflare Workers.
 - **A curated song library that we manage**, fed by songs users submit.
 - **Churches can share their songs** with each other.
 - **Deduplication on every client**, and **a local edit is never overwritten**. This is the same rule as the Resurse Crestine import (T-035), and any client can import shared sets that way.
-- Storage is **protected** (auth, access per church) and **compressed**.
+- Storage is **protected** and **compressed**.
 - **SQLite in the browser**, with a small, fast download and fast full-text search.
+
+The user's decisions on the first proposal (22/11):
+- **D1, architecture**: «workers charge per request.. so implement something which will be very simple and usually work with any s3 compatible storage.. also implement webrtc communication between clients and the main server when it's online.. also a qr code or link to be opened.. separate task to build mobile native apps and also a public page and when joined with the token then it's binded to that server.. some hono service through which the server will upload and sync differences and the clients will also sync things through it but the read will happen directly from the s3».
+- **D2, encryption**: no client-side encryption; token protection is enough.
+- **D3, a phone with the PC off**: **everything, full control**.
+- **D4, Google Drive sync**: kept as a backup option; cloud sync is the default.
 
 ## 2. What already exists, and what we reuse
 
 | Piece | Where | Reuse |
 |---|---|---|
-| **Library sync engine**: uuids on songs, categories, groups and schedules; SQLite triggers fill `sync_pending` and `sync_tombstones`; last-writer-wins merge per aggregate; conflict feed | `app/apps/server/src/service/sync/*`, `db/migrations/add-sync.ts` | **Kept whole.** Only the transport changes: today it uploads one gzipped JSON file to Google Drive (`driveLibraryFile.ts`); the new transport is a change log in the cloud. |
-| **Song sources (T-120)**: the `.chsongs` bundle, a manifest with a hash per song, publish to an S3 bucket, subscribe by URL | `service/song-sources/*` | **The format of every shared library**: the curated one, a church's shared set and Resurse Crestine all become sources. |
-| **Discovery matching (T-035/T-124)**: matches by exact filename, then exact title, then fuzzy (Jaccard ≥ 0.55); updates only songs with `last_manual_edit` NULL; review screen with a lyrics diff | `service/songs/discovery.ts`, `service/song-sources/updates/*`, `SongDiscoveryScreen.tsx` | **The one import path** for every source, on desktop and phone alike. |
-| **FTS5** with `unicode61 remove_diacritics 2`, plus `normalizeForIndex` (Romanian contractions) | `db/fts.ts`, `service/songs/search.ts` | The same table and normalizer run in the browser, so search gives the same results on the phone. |
-| **Accounts, roles, LAN pairing code (T-167)** | `db/schema/auth.ts`, `service/users/login-pairing.ts` | Pairing also hands a phone its cloud device token (and the church key, see D2). |
-| **Cloudflare Worker** `churchhub-backend` (Hono; R2, KV, rate limiter; crypto helpers) | `churchhub-backend/` | Gets the new routes. It has no database or accounts yet; those are new. |
+| **Library sync engine**: uuids on songs, categories, groups and schedules; SQLite triggers fill `sync_pending` and `sync_tombstones`; last-writer-wins merge per aggregate; conflict feed | `app/apps/server/src/service/sync/*`, `db/migrations/add-sync.ts` | **Kept whole.** It gets a second transport, `s3`, next to `drive`, and is extended to every table (D3). |
+| **Song sources (T-120)**: the `.chsongs` bundle, a manifest with a hash per song, publish to any S3 endpoint with Bun's `S3Client` | `service/song-sources/*` | **The format of every shared library**, and the S3 code. |
+| **Discovery matching (T-035/T-124)**: matches by exact filename, then exact title, then fuzzy (Jaccard ≥ 0.55); updates only songs with `last_manual_edit` NULL; review screen with a lyrics diff | `service/songs/discovery.ts`, `service/song-sources/updates/*` | **The one import path** for every source, on every client. |
+| **FTS5** with `unicode61 remove_diacritics 2`, plus `normalizeForIndex` | `db/fts.ts`, `service/songs/search.ts` | The same table and normalizer in the browser. |
+| **Accounts, roles, LAN pairing code (T-167)** | `db/schema/auth.ts`, `service/users/login-pairing.ts` | A device token is bound to a user, so their permissions apply. |
+| **`churchhub-backend`**: a Hono app on a Worker, with WebRTC signaling (`/signal/*`, KV) already used by live translation | `churchhub-backend/` | **Hosts the sync service** (Hono runs on Workers, Bun and Node alike) and the **WebRTC signaling** to the PC. |
 
-Measured on a real library: 27,320 songs come to **about 1.3 KB of raw data per song**, or about 4 KB counting the FTS index. A typical church keeps 500 to 3,000 songs, so **0.6 to 4 MB raw, and about 0.2 to 1 MB gzipped**.
+Measured on a real library: 27,320 songs come to **about 1.3 KB of raw data per song**. A typical church keeps 500 to 3,000 songs, so **0.6 to 4 MB raw, and about 0.2 to 1 MB gzipped**.
 
-## 3. The two options
-
-### Option A (recommended): Workers + Durable Objects + R2, with SQLite (wasm) in the browser
+## 3. The design in one picture
 
 ```
- Church PC (Bun + SQLite)        Phone / tablet (PWA or T-050 app)
- sync_pending ─┐                 ┌─ sqlite-wasm + OPFS, the same FTS5
-               │  push / pull    │
-               ▼                 ▼
-       Cloudflare Worker  (auth: device token → church)
-          │                       │
-  Durable Object per church    R2 bucket (private)
-  (SQLite: ordered change      snapshots/<church>/<seq>.gz
-   log, cursors per device)    library/<source>/shards/<hash>.gz
+            PC online: live, direct                    PC off: through S3
+ Phone ──── LAN WebSocket or WebRTC ──── Church PC      Phone ─┐
+   │        (signaling via /signal)        │                   │ writes: POST changes
+   │                                       │ uploads diffs     ▼
+   │                                       └──────────► Hono sync service (tiny; writes only)
+   │                                                           │ conditional PUT
+   │  reads: GET directly from S3 (presigned URLs)              ▼
+   └──────────────────────────────────────────────────► any S3-compatible bucket
+                                                         (R2, B2, AWS S3, MinIO…)
 ```
 
-- **One Durable Object per church** keeps an ordered change log: `seq, entity, uuid, updatedAt, deviceId, payload` (gzipped, and encrypted if D2 says so). A device **pushes** its `sync_pending` rows and **pulls** everything after its cursor. The DO only orders and stores; the **merge stays on the client** in the existing `mergeLibraries.ts` (last writer wins per aggregate, tombstones), so the PC and the phone behave the same.
-- **Compaction**: every N changes (or nightly) a client uploads a full **snapshot** to R2 and the DO cuts the log before it. A new device downloads the snapshot (one gzipped file) and then the tail of the log.
-- **Live updates**: a hibernating WebSocket on the DO, so a change on one phone reaches the others within a second, and an idle connection costs nothing.
-- **The PC can be off**: phones talk only to the cloud. When the PC comes back, it pulls what they did.
-- **Browser**: the official `@sqlite.org/sqlite-wasm` build (it includes FTS5) on **OPFS** in a Web Worker. The wasm is about 0.9 MB, **about 0.4 MB compressed**, and cached by the service worker after the first load. The schema and `normalizeForIndex` are shared code, so FTS5 answers in milliseconds, offline.
-- **Cost**: Workers Paid is $5 a month for the whole account. It includes 10M requests and the Durable Objects with SQLite storage; R2 has no egress fees and its first 10 GB are free. **Hundreds of churches fit in about $5 a month**, and the free plan is enough for a pilot. These are Cloudflare's list prices; recheck them when we build.
+- **The PC is the hub while it is on.** Phones talk to it directly: by the existing WebSocket on the LAN, or by **WebRTC** (signaling through the existing `/signal` routes) when they're elsewhere. This is live, as today, and nothing goes through the cloud on the critical path.
+- **The PC uploads the differences to S3 through the Hono service** as they happen, so the bucket always holds the current library.
+- **With the PC off**, phones **read directly from S3** and **write through the Hono service**. When the PC comes back, it pulls what they did, exactly as it does from Drive today.
+- **The service handles writes only**, and writes are rare (edits, not views). Reads, which are the bulk of the traffic, never touch a Worker. Per-request charges therefore stay negligible: the Workers free plan (100k requests a day) covers a lot of churches.
+- **Any S3-compatible storage** works. The only requirement is conditional writes (`If-Match` / `If-None-Match` on PUT), which R2, AWS S3, MinIO and B2 support. R2 is the default because it has no egress fees and its first 10 GB are free.
 
-### Option B: Electric + PGlite (Postgres and shapes)
+## 4. Bucket layout (per church)
 
 ```
- Postgres (Neon / Supabase)  ──logical replication──►  Electric service (always on)
-        ▲  writes go through our own API                    │ shapes over HTTP (CDN-cacheable)
-        │                                                    ▼
- Church PC and phones ◄─────────────────────────────── PGlite (Postgres in wasm)
+churches/<churchId>/head.json          tiny pointer: { seq, snapshot, segments[] }
+churches/<churchId>/snap/<seq>.json.gz full library at seq (the LibraryFile format the Drive sync already writes)
+churches/<churchId>/log/<seq>.json.gz  one change segment: the aggregates and tombstones written since seq-1
+libraries/<sourceId>/manifest.json     shared and curated libraries (T-120 format), public
+libraries/<sourceId>/shards/<hash>.json.gz   about 500 songs each, named by content hash, cached forever
 ```
 
-- Electric streams **reads only**. Writes still need an API of our own, plus the logic to resolve conflicts.
-- Running it means a Postgres database and an Electric service that is always on: Electric Cloud, or a VM. A Postgres database is free at small scale, then about $19 a month; the service is $5 to $20 a month or more, before any write API.
-- **PGlite is about 3 MB compressed**, 7 times sqlite-wasm. It also means a second schema, in Postgres, next to our SQLite schema on the desktop, with FTS rebuilt on `tsvector`. That gives different ranking from the desktop, and our Romanian normalizer would have to be ported.
-- The Drive sync engine and its merge would be thrown away instead of reused.
+- **A write** (`POST /sync/:church/changes`, from the PC or a phone) works like this:
+  1. The service writes `log/<seq+1>.json.gz`, guarded by `If-None-Match: *`.
+  2. It then updates `head.json`, guarded by `If-Match: <etag>`.
+  3. If two writers race, one gets a 412 and retries with the next `seq`. **No database and no Durable Object**: the bucket is the log.
+- **A read**:
+  1. GET `head.json` (with `If-None-Match`, so an unchanged head costs a 304).
+  2. Then fetch only the segments after the device's own `seq`.
+  3. A new device fetches the snapshot plus the segments after it.
+- **Compaction**: past 200 segments (or nightly), the PC writes a new snapshot, points `head.json` at it, and the old segments expire through a bucket lifecycle rule.
+- **The merge stays on the client**, in the existing `mergeLibraries.ts` (last writer wins per aggregate, tombstones), so the PC and the phones resolve conflicts the same way.
 
-### Side by side
+## 5. Protection (D2: tokens, no client-side encryption)
 
-| | **A: Workers + DO + R2 + sqlite-wasm** | **B: Electric + PGlite** |
-|---|---|---|
-| Monthly cost | about $0 (free plan) to $5 for everyone | about $25 to $45 or more, and it grows with the database |
-| Servers to keep running | none (serverless) | Postgres + Electric service + write API |
-| PC offline | phones sync through the cloud | same |
-| Phone offline (no internet) | full read, search and edit; pushes later | reads from PGlite; writes need the custom queue |
-| Browser download | about 0.4 MB engine + about 0.2 to 1 MB data | about 3 MB engine + data |
-| Full-text search | FTS5, same tokenizer and normalizer as the desktop, so same results | Postgres `tsvector`: different ranking, normalizer ported |
-| Dedup and no overwrite of local edits | existing `discovery.ts` + `last_manual_edit`, reused | to rewrite for Postgres |
-| End-to-end encryption possible | yes (the DO stores opaque blobs) | no (Electric must read the rows) |
-| Code reused | sync engine, merge, song sources, FTS | little |
+- **Bucket**: private, with no public read and no listing. Only the service holds its S3 keys.
+- **Reads without a Worker per read**: a device calls `GET /sync/:church/read-urls` **once a session**. With its token checked, it gets **presigned GET URLs valid for 1 hour**: one for `head.json`, plus one per segment or snapshot it is missing. For that hour, polling `head.json` goes straight to S3. That is about **one service request per active device per hour**.
+- **Tokens**:
+  - **Church**: the PC registers the church once (the Super Admin presses "Turn on cloud sync") and gets a `churchId` and a server token.
+  - **Devices**: each phone that joins gets its own device token. The token is bound to an app user, so that user's role applies.
+  - The service keeps only HMAC hashes of the tokens, as `hashClientIp.ts` does, in a small KV map.
+  - **Revoking** a token (from the PC's Settings) stops new presigned URLs right away; URLs already issued die within the hour.
+- **Permissions while the PC is off**: the phone enforces the user's permissions in its UI. The PC re-checks every change it pulls against its author's permissions and rejects what that user wasn't allowed to do, recording the rejection in the conflict feed.
+- **Abuse**: the service's rate limiter and size caps per church, as in the feature-request routes.
+- Shared and curated libraries are public to read (`libraries/*`), because they are meant to be shared.
 
-**Recommendation: A.** It is what the user asked for (S3/R2 + Workers, SQLite in the browser). It is about 10 times cheaper, has no server to look after, keeps a single schema and search engine, and reuses the sync engine we already have. Electric's strength, streaming shapes out of a big shared Postgres database, is not something we need.
+## 6. Joining: a QR code or a link (T-168)
 
-## 4. Protection
+- On the PC, **"Add a device"** shows a QR code and a link: `https://<public app>/join#c=<churchId>&t=<deviceToken>&p=<pcSignalId>`.
+  - The values sit in the `#` fragment, so they never reach a server log.
+  - The device token is minted for the chosen user.
+- **The public page** is the same React client, built as a PWA and hosted statically (Cloudflare Pages: free, with no Worker per page view). Opening the link **binds that browser or phone to that church server**. It stores the church, the token and the PC's signal id, and from then on syncs as section 3 describes.
+- **Native apps (T-050)** wrap the same build and open the same link as a deep link.
 
-- **Identity**: the church PC **registers the church** with the Worker once (the Super Admin presses "Turn on cloud sync"). It gets a `churchId` and a device token. Each phone paired through the T-167 code (or a QR code shown on the PC) gets **its own device token**, which the PC can revoke from Settings. The tokens are random 256-bit values, and the Worker stores only their hashes (HMAC, as `hashClientIp.ts` does).
-- **Per-church access**: the Worker maps token → church → that church's Durable Object and its R2 prefix. The bucket is private, so nothing in it is reachable without the Worker.
-- **Encryption** (decision D2): by default, the payloads are **encrypted on the client** with a church key (AES-256-GCM, through WebCrypto) that goes from device to device with the pairing QR code. Cloudflare and we only ever see ciphertext. Losing every device means losing the cloud copy, but the PC keeps its local database, and a printable recovery key is offered.
-- **Abuse**: the rate limiter and KV quotas already in the Worker; size caps per church.
+## 7. A phone with the PC off: full control (D3)
 
-## 5. Compression and download size
+- **Everything that is data** can be read and edited: songs, categories, schedules, the Bible, settings, users and roles, bookmarks, tags, playlists.
+  - For that, the sync engine is extended from four aggregates to every table, with a `uuid` on the root tables that lack one.
+  - The Bible is bundled per translation (about 11 MB, downloaded on demand) and is not synced as changes.
+- **How the phone runs it**: the server's service layer runs **in a Web Worker on the phone**, against `@sqlite.org/sqlite-wasm` on OPFS, through drizzle's SQLite driver. The services use drizzle today, so the same code serves the PC and the phone, and nothing is written twice.
+  - The wasm engine is about 0.4 MB compressed and cached by the service worker.
+  - FTS5 and `normalizeForIndex` give the same search results as the desktop, in milliseconds, offline.
+- **Presenting**: a phone can run a presentation and show it on its own screen, or on any display that opens the phone's presenter page. Displays and OBS physically wired to the PC need the PC on.
+- To be measured in the spike (step 1): bundle size, how much of the service layer runs unchanged in the browser, and how long the first sync of 3,000 songs and 27k songs takes.
 
-- **Sync payloads and snapshots**: gzip, through `CompressionStream` / `DecompressionStream`, which is native in browsers, Bun and Workers, so no extra library is needed. Lyrics shrink to about 25 to 30 %.
-- **Libraries** (curated, shared): the existing manifest + songs, split into **shards of about 500 songs**, each named by its content hash (`shards/<sha256>.gz`). The files never change, so they cache forever. An update downloads only the shards whose hash changed.
-- **The curated catalog** at Resurse Crestine size (27k songs) is about **7 MB gzipped**. A phone downloads it only when the user turns on "the whole catalog offline". Otherwise it searches a **titles + first line index of about 1 MB** and fetches the shard of a song when it is opened.
-- **FTS index**: built on the device in a Web Worker, from the shards. It is not downloaded: that is 3 times smaller to fetch, and it takes about 1 to 3 s for 27k songs (to measure in the spike).
+## 8. Compression, download size, the shared library
 
-## 6. The shared song library
-
-- **Everything is a song source** (the T-120 format), hosted on our R2 behind the Worker:
-  - **The Church Hub Library** (curated): public to read, and we write to it.
-  - **A church's shared set**: a church publishes its whole library or chosen categories, as *public* (listed in the catalog), *unlisted* (anyone with the link) or *private* (named churches). This replaces T-120's "bring your own S3 keys" with a single button; your own S3 bucket stays an option.
+- **Compression**: gzip everywhere, through `CompressionStream` / `DecompressionStream`, which is native in browsers, Bun and Workers. Lyrics shrink to about 25 to 30 %.
+- **A church's first sync**: one snapshot of about 0.2 to 1 MB gzipped. After that, segments of a few KB.
+- **The curated catalog** (27k songs, about 7 MB gzipped) is split into hash-named shards; an update downloads only the shards that changed. The FTS index is built on the device in a Web Worker, not downloaded.
+- **Everything shared is a song source** (the T-120 format) under `libraries/`:
+  - **The Church Hub Library** (curated by us).
+  - **A church's shared set**: the whole library or chosen categories, unlisted by default or listed in the catalog. Publishing goes through the service; the church needs no S3 keys of its own.
   - **Resurse Crestine**: unchanged.
-- **Submissions**: "Submit to the Church Hub Library" on a song sends it to a **moderation queue** (a Durable Object + R2). Our curators (a new `library_curator` role in the cloud) review it in a page of the app: approve, merge into an existing song, or reject. On approval the shard is rebuilt and the manifest is bumped.
-- **Importing** goes through the one existing path (T-035), for every source, on every client:
-  1. **Dedup** (client side): exact match by source song id, then by **content fingerprint** (new: sha256 of the normalized lyrics), then exact title, then fuzzy (Jaccard). A match is linked, not duplicated.
-  2. **Never overwrite a local edit**: a song is updated from its source only when `last_manual_edit` is NULL **and** its current content hash still equals the `source_hash` saved at import. That second check is new; it also catches edits made before `last_manual_edit` existed. An edited song gets a "new version available" badge (with the existing lyrics diff) and is never replaced silently.
-  3. **Review mode or auto-apply**, per source, as T-035 does.
-- New columns on `songs`: `source_id`, `source_song_id`, `source_hash`, `content_hash`. They are local and are not synced as content.
+- **Submissions**: "Submit to the Church Hub Library" sends the song through the service to `submissions/` in the bucket. Our curators review it in a page of the app (approve, merge into an existing song, or reject); approving rebuilds the shard.
+- **Importing** any source on any client goes through the existing T-035 path:
+  1. **Dedup** on the client: by source song id, then by a **lyrics fingerprint** (new: sha256 of the normalized lyrics), then exact title, then fuzzy match. A match is linked, never duplicated.
+  2. **Never overwrite a local edit**: a song is updated from its source only when `last_manual_edit` is NULL **and** its content hash still equals the `source_hash` saved at import. Otherwise it gets a "new version available" badge and the lyrics diff.
+  3. **Review mode or auto-apply**, per source.
+  - New local columns on `songs`: `source_id`, `source_song_id`, `source_hash`, `content_hash`.
 
-## 7. Phones while the PC is off
+## 9. Plan (each step a task with its own e2e)
 
-The phone's client is served by the PC's sidecar today, so **with the PC off the app itself doesn't load**. The fix:
-- The same React client, **built as a PWA and hosted on Cloudflare Pages** (`app.<domain>`), with a service worker so it opens offline. Later, the T-050 native apps wrap the same build.
-- In "cloud mode" the client's data layer talks to the sqlite-wasm database (a data adapter with the same API as the server routes) instead of the sidecar. When the PC is reachable on the LAN, the phone keeps using it directly, as it does now.
-- Scope (decision D3): by default, **songs, categories, schedules and the Bible** (read-only, bundled about 11 MB per translation, downloaded on demand) **can be read, searched and edited**. Presenting, screens, OBS and the livestream stay on the PC.
+1. **Spike** (about 1 day):
+   - The service layer + drizzle on sqlite-wasm/OPFS in a Web Worker on a phone: size, search speed, first sync.
+   - Conditional PUT on R2 and MinIO.
+2. **S3 transport + Hono sync service**:
+   - `/sync/*` routes in `churchhub-backend`: register, devices, changes, read-urls.
+   - The `s3` transport in `runSyncCycle` next to `drive`, with the bucket layout and compaction.
+   - Drive stays as a backup option (D4).
+3. **Sync every table** (D3): uuids on the remaining root tables, triggers, merge collections, the permission re-check on the PC.
+4. **Public page + join by QR code or link**, bound to the church server (T-168, together with the native apps of T-050).
+5. **WebRTC to the PC when it's online** (signaling via `/signal`), next to the LAN WebSocket.
+6. **The phone runs the app on sqlite-wasm** when the PC is unreachable: full control.
+7. **Shared libraries on S3**: hash-named shards, lyrics fingerprint and `source_hash`, a church's "Share my songs" button.
+8. **Curated library**: submissions, the curator page.
 
-## 8. Plan, once approved (each step a task with its own e2e)
+## 10. Decisions
 
-1. **Spike** (about 1 day): sqlite-wasm + OPFS + our FTS5 on a phone. Measure the bundle size, the index build time for 27k songs, and the search latency. A DO change log on the free plan.
-2. **Cloud transport**: Worker routes + a Durable Object per church; `runSyncCycle` gets a `cloud` transport next to `drive`; device tokens and church registration; pairing hands a phone its token (and key).
-3. **Encryption** of the payloads (if D2 = yes) + the recovery key.
-4. **PWA on Cloudflare Pages** + the sqlite-wasm data adapter for songs, schedules and search.
-5. **Library sources on R2**: content-hash shards, fingerprints and `source_hash`, a church's "Share my songs" button.
-6. **Curated library**: submission, moderation queue, curator page.
-7. **Retire Drive sync**, or keep it (decision D4).
-
-## 9. Decisions for the user
-
-| # | Decision | Recommended |
+| # | Decision | The user's answer |
 |---|---|---|
-| **D1** | Architecture: A (Workers + DO + R2 + sqlite-wasm) or B (Electric + PGlite) | **A** |
-| **D2** | Encrypt church data on the client, so Cloudflare and we never see it? | **Yes**, the key travels with pairing, plus a recovery key |
-| **D3** | What a phone can do with the PC off | **Songs + schedules: read, search, edit; Bible: read**; presenting stays on the PC |
-| **D4** | Google Drive sync, once cloud sync works | **Keep it as a backup option**, and make cloud sync the default |
+| D1 | Architecture | Any S3-compatible storage; a small Hono service for writes; reads directly from S3; WebRTC to the PC when it's on; join by QR code or link; a public page and native apps in a separate task |
+| D2 | Client-side encryption | No: token protection (private bucket, presigned reads, revocable device tokens) |
+| D3 | A phone with the PC off | Everything, full control |
+| D4 | Google Drive sync | Kept as a backup option; cloud is the default |
 
-Details with good defaults, unless the user wants otherwise:
-- Curators: us (the project team) at the start, with a cloud role we can hand out later.
-- A church's shared set: unlisted by default; the church chooses public.
-- Domain: under the existing `radiocrestin.ro` Worker domain, or a new one if the user prefers.
+Details with defaults, unless the user says otherwise:
+- **Curators**: the project team at the start.
+- **Shared sets**: unlisted by default.
+- **The sync service**: a route of `churchhub-backend` (Workers free plan). Anyone can self-host the same Hono app on Bun or Node with their own bucket.
