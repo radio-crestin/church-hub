@@ -89,6 +89,11 @@ export async function warmUpLibraryVersionIndex(): Promise<void> {
   logBuilt(index, start)
 }
 
+/** Changes with every change to the library: what is derived from the index is stale once it moves. */
+export function libraryIndexGeneration(): number {
+  return generation
+}
+
 /** After the whole library changed: the next comparison rebuilds the index. */
 export function resetLibraryVersionIndex(): void {
   generation++

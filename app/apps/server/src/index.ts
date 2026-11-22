@@ -294,6 +294,7 @@ import {
   deleteSongsByIds,
   deleteTag,
   deleteUncategorizedSongs,
+  findSameThemeSongs,
   getAllCategories,
   getAllSongsWithSlides,
   getAllTags,
@@ -5767,6 +5768,28 @@ async function startRealServer(): Promise<void> {
           new Response(JSON.stringify({ data: suggestions }), {
             headers: { 'Content-Type': 'application/json' },
           }),
+        )
+      }
+
+      // GET /api/songs/:id/same-theme - Other songs on the song's theme.
+      // Query: ?limit=8 (defaults to 8, capped at 20).
+      const sameThemeMatch = url.pathname.match(
+        /^\/api\/songs\/(\d+)\/same-theme$/,
+      )
+      if (req.method === 'GET' && sameThemeMatch?.[1]) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const songId = parseInt(sameThemeMatch[1], 10)
+        const rawLimit = parseInt(url.searchParams.get('limit') ?? '8', 10)
+        const limit = Math.min(20, Math.max(1, rawLimit || 8))
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({ data: findSameThemeSongs(songId, limit) }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
         )
       }
 
