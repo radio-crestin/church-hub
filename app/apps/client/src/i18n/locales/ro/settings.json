@@ -1069,61 +1069,71 @@
       "description": "Configurează ecranele pentru diferite scopuri de afișare. Fiecare tip de ecran are propriile opțiuni de configurare.",
       "addScreen": "Adaugă Ecran",
       "noScreens": "Niciun ecran configurat",
+      "status": {
+        "open": "fereastră deschisă",
+        "closed": "fereastră închisă"
+      },
+      "groups": {
+        "idle": "Când nu se afișează nimic",
+        "window": "Fereastra",
+        "advanced": "Mai multe opțiuni pentru fereastră"
+      },
+      "idle": {
+        "summaryOpen": "Între cântări și versete, pe proiector rămâne acest slide gol. Apasă pe el ca să-i schimbi aspectul.",
+        "summaryClosed": "Între cântări și versete fereastra se închide: pe proiector se vede desktopul calculatorului, fără ceas și fără fundal.",
+        "windowCloses": "Fereastra se închide: se vede desktopul",
+        "editEmptySlide": "Editează slide-ul gol",
+        "clock": {
+          "label": "Ceas pe slide-ul gol",
+          "description": "Arată ora când nu se afișează nimic, de exemplu înainte de serviciu."
+        }
+      },
       "window": {
-        "active": "Afișează într-o fereastră nativă",
-        "inactive": "Afișează într-o fereastră nativă",
-        "openTooltip": "Deschide o fereastră nativă pe acest ecran pentru a afișa conținutul",
-        "closeTooltip": "Închide fereastra nativă a acestui ecran"
+        "label": "Fereastra deschisă acum",
+        "description": "Afișează acest ecran pe monitorul lui. Oprește-l ca să închizi fereastra."
       },
-      "alwaysOnTop": {
-        "pin": "Ține această fereastră deasupra celorlalte",
-        "unpin": "Permite altor ferestre să o acopere",
-        "enabled": "Mereu deasupra",
-        "disabled": "Stivuire normală",
-        "pinned": "Fereastra setată mereu deasupra",
-        "unpinned": "Fereastra nu mai este mereu deasupra",
-        "error": "Nu s-a putut actualiza setarea"
-      },
-      "fullscreen": {
-        "fill": "Deschide acest ecran pe tot displayul",
-        "windowed": "Deschide acest ecran ca fereastră, nu pe tot displayul",
-        "on": "Se deschide pe tot ecranul",
-        "off": "Se deschide în fereastră",
-        "enabled": "Ecranul se va deschide pe tot ecranul",
-        "disabled": "Ecranul se va deschide ca fereastră",
-        "error": "Nu s-a putut actualiza setarea"
+      "openOnStartup": {
+        "label": "Se deschide la pornirea aplicației",
+        "description": "Fereastra se deschide singură la pornire, ca proiectorul să fie gata înainte de serviciu. Oprit: se deschide la primul slide.",
+        "enabled": "Ecranul se va deschide la pornirea aplicației",
+        "disabled": "Ecranul rămâne închis la pornire și se deschide la prima afișare",
+        "error": "Setarea de pornire nu a putut fi salvată"
       },
       "closeOnEscape": {
-        "tooltip": "Controlează dacă fereastra nativă a acestui ecran se închide când nu este afișat ceva (după Escape / hide). Conținutul se șterge mereu și apare ceasul — această opțiune controlează doar fereastra în sine. Implicit: fereastra rămâne deschisă.",
-        "on": "Închide fereastra când nu este afișat ceva",
-        "off": "Păstrează fereastra deschisă tot timpul",
+        "label": "Închide fereastra când nu se afișează nimic",
+        "description": "După Escape sau Ascunde, fereastra se închide și pe proiector se vede desktopul până la următorul slide. Lasă-l oprit ca să rămână ceasul și fundalul.",
         "enabled": "Fereastra se va închide când nu este afișat ceva",
         "disabled": "Fereastra va rămâne deschisă tot timpul",
         "error": "Nu s-a putut actualiza setarea"
       },
-      "openOnStartup": {
-        "tooltip": "Daca fereastra acestui ecran se deschide singura la pornirea aplicatiei",
-        "on": "Se deschide la pornire",
-        "off": "Se deschide doar la nevoie",
-        "enabled": "Ecranul se va deschide la pornirea aplicatiei",
-        "disabled": "Ecranul ramane inchis la pornire si se deschide la prima afisare",
-        "error": "Setarea de pornire nu a putut fi salvata"
-      },
       "previewScreen": {
-        "set": "Oglindește acest ecran în previzualizarea din aplicație",
-        "unset": "Nu mai oglindi acest ecran în previzualizarea din aplicație",
-        "on": "Ecran de previzualizare",
-        "off": "Folosește ca și previzualizare",
+        "label": "Arată în previzualizarea din Camera de control",
+        "description": "Previzualizarea din Camera de control arată acest ecran. Doar un ecran o dată.",
         "enabled": "Acest ecran este acum afișat în previzualizare",
         "disabled": "Acest ecran nu mai este afișat în previzualizare",
         "error": "Nu s-a putut actualiza setarea ecranului de previzualizare"
+      },
+      "fullscreen": {
+        "label": "Ocupă tot monitorul",
+        "description": "Oprit: se deschide ca fereastră obișnuită, pe care o poți muta și redimensiona.",
+        "enabled": "Ecranul se va deschide pe tot ecranul",
+        "disabled": "Ecranul se va deschide ca fereastră",
+        "error": "Nu s-a putut actualiza setarea"
+      },
+      "alwaysOnTop": {
+        "label": "Deasupra celorlalte ferestre",
+        "description": "Alte programe deschise pe acel monitor nu pot acoperi slide-urile.",
+        "enabled": "Fereastra setată mereu deasupra",
+        "disabled": "Fereastra nu mai este mereu deasupra",
+        "error": "Nu s-a putut actualiza setarea"
       },
       "actions": {
         "openInNewTab": "Deschide în tab nou",
         "copyUrl": "Copiază URL în clipboard",
         "duplicate": "Duplică ecranul cu toate setările",
-        "edit": "Editează",
-        "delete": "Șterge ecran"
+        "edit": "Editează aspectul",
+        "delete": "Șterge ecran",
+        "editTooltip": "Schimbă cum arată fiecare tip de slide pe acest ecran: text, fundal, ceas"
       },
       "toast": {
         "created": "Ecran creat cu succes",

@@ -19,7 +19,6 @@
     "deleteConfirmTitle": "Delete Screen?",
     "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
     "editor": {
-      "preview": "Preview",
       "zoom": "Zoom",
       "resetZoom": "Reset Zoom",
       "save": "Save",
@@ -32,7 +31,21 @@
       "noScene": "Default (No Scene)",
       "loading": "Loading...",
       "nextSlidePreview": "Next slide content preview...",
-      "screenSharePreview": "Screen Share Preview"
+      "screenSharePreview": "Screen Share Preview",
+      "slideType": "Slide type",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "close": "Close the editor",
+      "selectHint": "Click a text on the preview to change its font, size and place.",
+      "forSlideType": "Only on “{{type}}” slides",
+      "forSlideTypeDescription": "These change only this slide type. Pick another one at the top.",
+      "wholeScreen": "On the whole screen",
+      "wholeScreenDescription": "These are the same on every slide type of this screen.",
+      "elementsTitle": "Texts on this slide",
+      "elementsHint": "Pick one to change its font, size and place.",
+      "backToScreen": "Back to the screen settings",
+      "appliesToScreen": "Same on every slide type",
+      "appliesToSlideType": "Only on this slide type"
     },
     "contentTypes": {
       "song": "Song",
@@ -203,7 +216,8 @@
       "clockEnabled": "Show Clock",
       "defaultBackground": "Default Background",
       "widthPx": "Width (px)",
-      "heightPx": "Height (px)"
+      "heightPx": "Height (px)",
+      "screenSizeDescription": "The resolution of the projector or TV. Text and positions are laid out for it."
     },
     "screenShare": {
       "title": "Screen Share",
@@ -250,7 +264,7 @@
     },
     "clock": {
       "enableForSlideType": "Show clock on this slide type",
-      "enableDescription": "Enable clock display for this specific content type",
+      "enableDescription": "Shows the time on this slide type. Its look and place are the same on every slide type.",
       "sharedSettings": "Clock Settings (shared across all slide types)",
       "format": "Format",
       "showSeconds": "Show seconds",
@@ -277,7 +291,8 @@
       "unnamed": "Monitor {{index}}",
       "disconnected": "{{name}} (not connected)",
       "identify": "Identify",
-      "identifyTooltip": "Flash a number on every display so you can tell them apart"
+      "identifyTooltip": "Flash a number on every display so you can tell them apart",
+      "description": "The projector or TV this screen opens on."
     },
     "sections": {
       "position": "Position",

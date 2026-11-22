@@ -1064,61 +1064,71 @@
       "description": "Configure screens for different display purposes. Each screen type has its own layout and configuration options.",
       "addScreen": "Add Screen",
       "noScreens": "No screens configured",
+      "status": {
+        "open": "window open",
+        "closed": "window closed"
+      },
+      "groups": {
+        "idle": "When nothing is shown",
+        "window": "Window",
+        "advanced": "More window options"
+      },
+      "idle": {
+        "summaryOpen": "Between songs and verses the projector shows this empty slide. Click it to change its look.",
+        "summaryClosed": "Between songs and verses the window closes: the projector shows the computer's desktop, with no clock or background.",
+        "windowCloses": "Window closed: the desktop shows",
+        "editEmptySlide": "Edit the empty slide",
+        "clock": {
+          "label": "Clock on the empty slide",
+          "description": "Shows the time when nothing is live, for example before the service."
+        }
+      },
       "window": {
-        "active": "Show in a native window",
-        "inactive": "Show in a native window",
-        "openTooltip": "Open a native display window for this screen",
-        "closeTooltip": "Close the native display window for this screen"
-      },
-      "alwaysOnTop": {
-        "pin": "Make this window stay on top of others",
-        "unpin": "Allow other windows to cover this one",
-        "enabled": "Always on top",
-        "disabled": "Normal stacking",
-        "pinned": "Window set to always on top",
-        "unpinned": "Window no longer always on top",
-        "error": "Failed to update always on top setting"
-      },
-      "fullscreen": {
-        "fill": "Open this screen filling its display",
-        "windowed": "Open this screen as a window instead of filling its display",
-        "on": "Opens fullscreen",
-        "off": "Opens windowed",
-        "enabled": "Screen will open fullscreen",
-        "disabled": "Screen will open as a window",
-        "error": "Failed to update fullscreen setting"
-      },
-      "closeOnEscape": {
-        "tooltip": "Controls whether this screen's native window closes when nothing is being displayed (after Escape / hide). The slide content always clears and the clock shows — this only controls the window itself. Default: window stays open.",
-        "on": "Close window when nothing is displayed",
-        "off": "Keep window open at all times",
-        "enabled": "Window will close when nothing is displayed",
-        "disabled": "Window will stay open at all times",
-        "error": "Failed to update close-on-escape setting"
+        "label": "Window open now",
+        "description": "Shows this screen on its display. Turn it off to close the window."
       },
       "openOnStartup": {
-        "tooltip": "Whether this screen's window opens by itself when the app starts",
-        "on": "Opens at startup",
-        "off": "Opens only when needed",
+        "label": "Open when the app starts",
+        "description": "The window opens by itself at startup, so the projector is ready before the service. Off: it opens with the first slide.",
         "enabled": "This screen will open when the app starts",
         "disabled": "This screen will stay closed at startup and open on first use",
         "error": "Failed to update the startup setting"
       },
+      "closeOnEscape": {
+        "label": "Close the window when nothing is shown",
+        "description": "After Escape or Hide the window closes and the projector shows the desktop until the next slide. Leave it off to keep the clock and background up.",
+        "enabled": "Window will close when nothing is displayed",
+        "disabled": "Window will stay open at all times",
+        "error": "Failed to update close-on-escape setting"
+      },
       "previewScreen": {
-        "set": "Mirror this screen in the in-app preview",
-        "unset": "Stop mirroring this screen in the in-app preview",
-        "on": "Preview screen",
-        "off": "Use as preview",
+        "label": "Show in the Control Room preview",
+        "description": "The Control Room preview mirrors this screen. Only one screen at a time.",
         "enabled": "This screen is now shown in the preview",
         "disabled": "This screen is no longer shown in the preview",
         "error": "Failed to update preview screen setting"
+      },
+      "fullscreen": {
+        "label": "Fill the whole display",
+        "description": "Off: it opens as a normal window you can move and resize.",
+        "enabled": "Screen will open fullscreen",
+        "disabled": "Screen will open as a window",
+        "error": "Failed to update fullscreen setting"
+      },
+      "alwaysOnTop": {
+        "label": "Keep above other windows",
+        "description": "Other programs opened on that display can't cover the slides.",
+        "enabled": "Window set to always on top",
+        "disabled": "Window no longer always on top",
+        "error": "Failed to update always on top setting"
       },
       "actions": {
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
         "duplicate": "Duplicate the screen with all its settings",
-        "edit": "Edit",
-        "delete": "Delete screen"
+        "edit": "Edit layout",
+        "delete": "Delete screen",
+        "editTooltip": "Change what each slide type looks like on this screen: text, background, clock"
       },
       "toast": {
         "created": "Screen created successfully",

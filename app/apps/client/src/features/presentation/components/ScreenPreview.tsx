@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { ScreenBackground } from './rendering/ScreenBackground'
-import { ScreenContent } from './rendering/ScreenContent'
-import type { ContentData } from './rendering/types'
+import { ScreenContentLayers } from './rendering/ScreenContentLayers'
+import type { ContentData, NextSlideData } from './rendering/types'
+import type { ShownContent } from '../hooks/useContentTypeHandoff'
 import type {
   ClockOverride,
   ContentType,
@@ -25,6 +26,8 @@ interface ScreenPreviewProps {
   contentData: ContentData
   contentKey?: string
   isVisible?: boolean
+  /** The previous content type's content, fading out (usePresentationContent) */
+  leaving?: ShownContent<ContentData, NextSlideData | undefined> | null
   styleRanges?: TextStyleRange[]
   /** Stage editor: make the main lyrics element editable in place */
   editableMainText?: boolean
@@ -51,6 +54,7 @@ export function ScreenPreview({
   contentData,
   contentKey,
   isVisible = true,
+  leaving,
   styleRanges,
   editableMainText,
   editPlaceholder,
@@ -91,7 +95,8 @@ export function ScreenPreview({
     <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* First, so the (positioned) content paints above it */}
       <ScreenBackground background={bg} playVideo={playVideo} />
-      <ScreenContent
+      <ScreenContentLayers
+        leaving={leaving}
         screen={screen}
         contentType={contentType}
         contentData={contentData}

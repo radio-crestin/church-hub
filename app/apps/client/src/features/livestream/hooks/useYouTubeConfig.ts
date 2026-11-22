@@ -4,11 +4,12 @@ import {
   getPastBroadcasts,
   getStreamKeys,
   getUpcomingBroadcasts,
+  getVideoCategories,
   getYouTubeConfig,
   getYoutubePlaylists,
   updateYouTubeConfig,
+  type YouTubeConfigUpdate,
 } from '../service'
-import type { YouTubeConfig } from '../types'
 
 export function useYouTubeConfig() {
   const queryClient = useQueryClient()
@@ -20,7 +21,7 @@ export function useYouTubeConfig() {
   })
 
   const mutation = useMutation({
-    mutationFn: (config: Partial<YouTubeConfig>) => updateYouTubeConfig(config),
+    mutationFn: (config: YouTubeConfigUpdate) => updateYouTubeConfig(config),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['livestream', 'youtube', 'config'],
@@ -93,4 +94,15 @@ export function useYoutubePlaylists(enabled = true) {
     isRefetching: query.isRefetching,
     error: query.error,
   }
+}
+
+/** The categories a broadcast's video can be given, named in `language`. */
+export function useVideoCategories(language: string, enabled = true) {
+  const query = useQuery({
+    queryKey: ['livestream', 'youtube', 'categories', language],
+    queryFn: () => getVideoCategories(language),
+    staleTime: 60 * 60 * 1000,
+    enabled,
+  })
+  return { categories: query.data ?? [], isLoading: query.isLoading }
 }

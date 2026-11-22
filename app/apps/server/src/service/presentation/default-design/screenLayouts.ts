@@ -1,4 +1,5 @@
 import type { Box, TextSlot } from './designPrimitives'
+import { factoryTransitions } from './factoryTransitions'
 import type { ScreenType } from '../types'
 
 /**
@@ -27,6 +28,8 @@ export interface ScreenLayout {
   clockWithContent: boolean
   /** Clock shown when nothing is presented. */
   clockWhenIdle: boolean
+  /** How the text shows, hides and changes slides (factoryTransitions). */
+  transitions: ReturnType<typeof factoryTransitions>
 }
 
 function box(top: number, right: number, bottom: number, left: number): Box {
@@ -35,6 +38,7 @@ function box(top: number, right: number, bottom: number, left: number): Box {
 
 /** Main projection, 16:9: centred lyrics, scripture under a gold reference. */
 const primary: ScreenLayout = {
+  transitions: factoryTransitions('primary'),
   transparent: false,
   shadow: true,
   lyrics: { box: box(11, 6, 13, 6), maxFontSize: 110, alignment: 'center' },
@@ -81,6 +85,7 @@ const primary: ScreenLayout = {
  * "next slide" strip when it is switched on.
  */
 const stage: ScreenLayout = {
+  transitions: factoryTransitions('stage'),
   transparent: false,
   shadow: false,
   lyrics: {
@@ -132,6 +137,7 @@ const stage: ScreenLayout = {
  * key is for the musicians in the room.
  */
 const livestream: ScreenLayout = {
+  transitions: factoryTransitions('livestream'),
   transparent: true,
   shadow: true,
   lyrics: { box: box(8, 5, 8, 5), maxFontSize: 64, alignment: 'center' },
@@ -179,6 +185,7 @@ const livestream: ScreenLayout = {
 
 /** Kiosk / lobby portrait display (1080×1920): large text, clock when idle. */
 const kiosk: ScreenLayout = {
+  transitions: factoryTransitions('kiosk'),
   transparent: false,
   shadow: true,
   lyrics: { box: box(10, 7, 10, 7), maxFontSize: 96, alignment: 'center' },

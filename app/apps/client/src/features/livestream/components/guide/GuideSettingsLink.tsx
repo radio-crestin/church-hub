@@ -2,7 +2,13 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
 
 interface GuideSettingsLinkProps {
-  to: '/settings/livestream' | '/settings/midi' | '/settings/screens'
+  to:
+    | '/settings/livestream'
+    | '/settings/midi'
+    | '/settings/screens'
+    | '/livestream/youtube'
+    | '/livestream/obs'
+    | '/livestream/mixer'
   label: string
   onNavigate: () => void
 }

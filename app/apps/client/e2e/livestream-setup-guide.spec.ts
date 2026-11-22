@@ -79,17 +79,23 @@ test.describe('Livestream setup guide', () => {
       await expect(sceneList.getByText(name, { exact: true })).toBeVisible()
     }
 
-    // The OBS setup opens over the guide; closing it leaves the guide open.
-    await guide
-      .getByRole('button', {
-        name: /^(Open OBS setup|Deschide configurarea OBS)$/,
-      })
-      .click()
-    const obsSetup = guide.getByRole('dialog')
-    await expect(obsSetup).toBeVisible()
-    await page.keyboard.press('Escape')
-    await expect(obsSetup).toBeHidden()
-    await expect(guide).toBeVisible()
+    // OBS, the mixer and YouTube are set up on their own pages.
+    for (const [name, href] of [
+      [/^(Open OBS setup|Deschide configurarea OBS)$/, '/livestream/obs'],
+      [
+        /^(Open mixer setup|Deschide configurarea mixerului)$/,
+        '/livestream/mixer',
+      ],
+      [
+        /^(Open the YouTube settings|Deschide setările YouTube)$/,
+        '/livestream/youtube',
+      ],
+    ] as const) {
+      await expect(guide.getByRole('link', { name })).toHaveAttribute(
+        'href',
+        href,
+      )
+    }
 
     // A settings link closes the guide and opens the page it names.
     await guide

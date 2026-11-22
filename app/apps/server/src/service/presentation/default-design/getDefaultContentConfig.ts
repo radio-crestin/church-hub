@@ -12,18 +12,19 @@ function songElements(layout: ScreenLayout) {
   const shadow = layout.shadow
   return {
     mainText: textElement(
-      layout.lyrics,
+      layout,
+      'lyrics',
       { bold: true, shadow },
       { padding: 20 },
     ),
-    songKey: textElement(layout.songKey, {
+    songKey: textElement(layout, 'songKey', {
       fontFamily: FONTS.title,
       bold: true,
       color: COLORS.accent,
       autoScale: false,
       shadow,
     }),
-    amen: textElement(layout.amen, {
+    amen: textElement(layout, 'amen', {
       fontFamily: FONTS.title,
       bold: true,
       color: COLORS.accent,
@@ -67,7 +68,8 @@ function songLastSlideConfig(layout: ScreenLayout) {
   return {
     background: background(layout),
     mainText: textElement(
-      layout.lastSlideLyrics,
+      layout,
+      'lastSlideLyrics',
       { bold: true, shadow: layout.shadow },
       { padding: 20 },
     ),
@@ -79,9 +81,10 @@ function songLastSlideConfig(layout: ScreenLayout) {
 function bibleConfig(layout: ScreenLayout) {
   return {
     background: background(layout),
-    referenceText: textElement(layout.reference, referenceStyle(layout)),
+    referenceText: textElement(layout, 'reference', referenceStyle(layout)),
     contentText: textElement(
-      layout.scripture,
+      layout,
+      'scripture',
       { bold: true, lineHeight: 1.3, shadow: layout.shadow },
       { padding: 20 },
     ),
@@ -95,7 +98,8 @@ function announcementConfig(layout: ScreenLayout) {
   return {
     background: background(layout),
     mainText: textElement(
-      layout.announcement,
+      layout,
+      'announcement',
       {
         fontFamily: FONTS.title,
         bold: true,
@@ -111,15 +115,20 @@ function announcementConfig(layout: ScreenLayout) {
 function verseteTineriConfig(layout: ScreenLayout) {
   return {
     background: background(layout),
-    personLabel: textElement(layout.personLabel, {
+    personLabel: textElement(layout, 'personLabel', {
       italic: true,
       color: COLORS.muted,
       autoScale: false,
       shadow: layout.shadow,
     }),
-    referenceText: textElement(layout.youthReference, referenceStyle(layout)),
+    referenceText: textElement(
+      layout,
+      'youthReference',
+      referenceStyle(layout),
+    ),
     contentText: textElement(
-      layout.youthScripture,
+      layout,
+      'youthScripture',
       { bold: true, lineHeight: 1.3, shadow: layout.shadow },
       { padding: 20 },
     ),

@@ -19,7 +19,6 @@
     "deleteConfirmTitle": "Șterge Ecranul?",
     "deleteConfirmMessage": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
     "editor": {
-      "preview": "Previzualizare",
       "zoom": "Zoom",
       "resetZoom": "Resetează Zoom",
       "save": "Salvează",
@@ -32,7 +31,21 @@
       "noScene": "Implicit (fără scenă)",
       "loading": "Se încarcă...",
       "nextSlidePreview": "Previzualizarea slide-ului următor...",
-      "screenSharePreview": "Previzualizarea ecranului partajat"
+      "screenSharePreview": "Previzualizarea ecranului partajat",
+      "slideType": "Tip de slide",
+      "zoomIn": "Mărește",
+      "zoomOut": "Micșorează",
+      "close": "Închide editorul",
+      "selectHint": "Apasă pe un text din previzualizare ca să-i schimbi fontul, mărimea și locul.",
+      "forSlideType": "Doar pe slide-urile „{{type}}”",
+      "forSlideTypeDescription": "Se schimbă doar la acest tip de slide. Alege alt tip din bara de sus.",
+      "wholeScreen": "Pe tot ecranul",
+      "wholeScreenDescription": "Sunt la fel pe toate tipurile de slide ale acestui ecran.",
+      "elementsTitle": "Textele de pe acest slide",
+      "elementsHint": "Alege unul ca să-i schimbi fontul, mărimea și locul.",
+      "backToScreen": "Înapoi la setările ecranului",
+      "appliesToScreen": "La fel pe toate tipurile de slide",
+      "appliesToSlideType": "Doar pe acest tip de slide"
     },
     "contentTypes": {
       "song": "Cântec",
@@ -206,7 +219,8 @@
       "clockEnabled": "Afișează Ceas",
       "defaultBackground": "Fundal Implicit",
       "widthPx": "Lățime (px)",
-      "heightPx": "Înălțime (px)"
+      "heightPx": "Înălțime (px)",
+      "screenSizeDescription": "Rezoluția proiectorului sau a televizorului. Textele și pozițiile se așază după ea."
     },
     "screenShare": {
       "title": "Partajare Ecran",
@@ -253,7 +267,7 @@
     },
     "clock": {
       "enableForSlideType": "Afișează ceasul pe acest tip de slide",
-      "enableDescription": "Activează afișarea ceasului pentru acest tip de conținut specific",
+      "enableDescription": "Arată ora pe acest tip de slide. Aspectul și locul ceasului sunt aceleași pe toate tipurile de slide.",
       "sharedSettings": "Setări Ceas (comune pentru toate tipurile de slide)",
       "format": "Format",
       "showSeconds": "Afișează secundele",
@@ -280,7 +294,8 @@
       "unnamed": "Monitorul {{index}}",
       "disconnected": "{{name}} (neconectat)",
       "identify": "Identifică",
-      "identifyTooltip": "Afișează un număr pe fiecare ecran, ca să le deosebești"
+      "identifyTooltip": "Afișează un număr pe fiecare ecran, ca să le deosebești",
+      "description": "Proiectorul sau televizorul pe care se deschide acest ecran."
     },
     "sections": {
       "position": "Poziție",

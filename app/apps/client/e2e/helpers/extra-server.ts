@@ -33,7 +33,8 @@ export class ExtraServer {
     return this.output
   }
 
-  async start(): Promise<void> {
+  /** `env`: more environment for the server, e.g. a stand-in API's address. */
+  async start(env: Record<string, string> = {}): Promise<void> {
     if (this.port === 3000) throw new Error('port 3000 is the user dev server')
     const child = spawn(
       process.platform === 'win32' ? 'bun.exe' : 'bun',
@@ -47,6 +48,7 @@ export class ExtraServer {
           CHURCH_HUB_DATA_DIR: this.dataDir,
           DATABASE_PATH: this.databasePath,
           PORT: String(this.port),
+          ...env,
         },
         stdio: ['ignore', 'pipe', 'pipe'],
       },
