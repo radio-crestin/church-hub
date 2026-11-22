@@ -234,18 +234,6 @@ function renameMacApp(layout: Layout, taskId: string, name: string) {
   return reviewIdentifier(taskId)
 }
 
-function changedFiles(root: string) {
-  const names = run('git', ['diff', '--name-only'], root)
-  return new Set(names.split('\n').filter(Boolean))
-}
-
-/** Undo what the build regenerated (e.g. the embedded migrations), so it leaves no diff. */
-function restoreGenerated(root: string, before: Set<string>) {
-  const generated = [...changedFiles(root)].filter((file) => !before.has(file))
-  if (generated.length > 0) run('git', ['checkout', '--', ...generated], root)
-  return generated.join(', ') || 'nothing'
-}
-
 if (!['darwin', 'win32', 'linux'].includes(process.platform))
   throw new Error(`no review build for ${process.platform}`)
 const { taskId, port, root, reviewRoot, out } = parseArgs()
@@ -259,26 +247,21 @@ step('review shell support', () => checkShellSupport(app))
 mkdirSync(dataDir, { recursive: true })
 // Ignored even on a branch whose .gitignore predates review builds.
 writeFileSync(join(out, '.gitignore'), '*\n')
-const dirtyBefore = changedFiles(root)
-try {
-  step('sidecar', () => buildSidecar(app))
-  let shell = ''
-  step('shell', () => {
-    const result = ensureShell(root, join(reviewRoot, '.shells'))
-    shell = result.shell
-    return `${result.built ? 'built' : 'reused'} ${result.key}`
-  })
-  step('app copied', () => copyShell(shell, layout))
-  step('client', () =>
-    buildClient(app, port, join(layout.resources, CLIENT_DIST)),
-  )
-  step('sidecar copied', () => copySidecar(app, layout))
-  step('resources', () => copyResources(app, layout))
-  step('settings', () => writeSettings(layout, taskId, port, dataDir))
-  step('identity', () => renameMacApp(layout, taskId, name))
-} finally {
-  step('restored generated files', () => restoreGenerated(root, dirtyBefore))
-}
+step('sidecar', () => buildSidecar(app))
+let shell = ''
+step('shell', () => {
+  const result = ensureShell(root, join(reviewRoot, '.shells'))
+  shell = result.shell
+  return `${result.built ? 'built' : 'reused'} ${result.key}`
+})
+step('app copied', () => copyShell(shell, layout))
+step('client', () =>
+  buildClient(app, port, join(layout.resources, CLIENT_DIST)),
+)
+step('sidecar copied', () => copySidecar(app, layout))
+step('resources', () => copyResources(app, layout))
+step('settings', () => writeSettings(layout, taskId, port, dataDir))
+step('identity', () => renameMacApp(layout, taskId, name))
 
 const seconds = ((performance.now() - started) / 1000).toFixed(0)
 const link = pathToFileURL(layout.open).href

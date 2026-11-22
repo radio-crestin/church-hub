@@ -21,7 +21,8 @@ machines:
     purpose: The Windows build, the sidecar smoke test and the e2e suite on Windows
     needs: [bun]
 setup:
-  # WebKit's system libraries (libevent, gstreamer-plugins-bad, libavif, libwoff…); macOS and Windows need none.
+  # WebKit's system libraries for Playwright, and the Tauri shell's build libraries (WebKitGTK, ALSA…) for
+  # the review build; macOS and Windows need none.
   linux: scripts/setup/linux.sh
   inputs: [app/package.json, app/bun.lock]
 # Per worktree, in bash from its root: the dependencies, then every browser the Playwright projects use
