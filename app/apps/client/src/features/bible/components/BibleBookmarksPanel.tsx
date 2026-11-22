@@ -34,6 +34,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { applyStylesToText } from '~/features/presentation/utils/applyStylesToText'
+import { useScrollToBottomOnAdd } from '~/hooks/useScrollToBottomOnAdd'
 import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
@@ -369,6 +370,14 @@ export function BibleBookmarksPanel({
 
   // Use local order if set (during drag), otherwise use server data
   const unifiedItems = localOrder ?? serverItems
+
+  // A row just added lands at the end of the list, so bring it into view.
+  const listRef = useRef<HTMLDivElement>(null)
+  const serverIds = useMemo(
+    () => serverItems.map((item) => item.uniqueId),
+    [serverItems],
+  )
+  useScrollToBottomOnAdd(serverIds, listRef, !isLoading && !isCollapsed)
 
   const filteredItems = useMemo(() => {
     // Folded on both sides so "geneza" finds "Geneză" and vice versa.
@@ -714,7 +723,11 @@ export function BibleBookmarksPanel({
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
+          <div
+            ref={listRef}
+            data-testid="bible-bookmarks-list"
+            className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
+          >
             {isLoading ? (
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 ...

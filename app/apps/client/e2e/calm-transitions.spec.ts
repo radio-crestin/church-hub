@@ -77,38 +77,29 @@ function presentVerse(request: APIRequestContext, index: number) {
   })
 }
 
-/** Every inline CSS transition the page shows over the next `ms`. */
-function collectTransitions(page: Page, ms: number) {
-  return page.evaluate(
-    (duration) =>
-      new Promise<string[]>((resolve) => {
-        const seen = new Set<string>()
-        const end = performance.now() + duration
-        const sample = () => {
-          for (const element of document.querySelectorAll<HTMLElement>(
-            '[style*="transition"]',
-          )) {
-            seen.add(element.style.transition)
-          }
-          if (performance.now() < end) requestAnimationFrame(sample)
-          else resolve([...seen])
-        }
-        sample()
-      }),
-    ms,
-  )
+interface Frame {
+  /** How opaque each text looks: its opacity times its ancestors' (0 when not on the page). */
+  opacities: number[]
+  /** Every inline CSS transition on the page. */
+  transitions: string[]
 }
 
 /**
- * How opaque each of `texts` looks on every frame over the next `ms`
- * (its opacity times its ancestors'; 0 when it is not on the page).
+ * Samples every frame from before `action` runs until each of `texts` has
+ * held its `settled` opacity for 20 frames (or 10 s). The sampler is running
+ * before the change is sent, and it waits for the change however long it
+ * takes to arrive: a fixed window opened by an unawaited evaluate saw no fade
+ * on a slower machine (T-151).
  */
-function sampleOpacities(page: Page, texts: string[], ms: number) {
-  return page.evaluate(
-    ({ texts, duration }) =>
-      new Promise<number[][]>((resolve) => {
-        const frames: number[][] = []
-        const end = performance.now() + duration
+async function sampleDuring(
+  page: Page,
+  texts: string[],
+  settled: number[],
+  action: () => Promise<unknown>,
+): Promise<Frame[]> {
+  await page.evaluate(
+    ({ texts, settled }) =>
+      new Promise<void>((started) => {
         const opacityOf = (text: string) => {
           const anchor = [
             ...document.querySelectorAll<HTMLElement>('[data-style-anchor]'),
@@ -119,15 +110,48 @@ function sampleOpacities(page: Page, texts: string[], ms: number) {
           }
           return opacity
         }
-        const sample = () => {
-          frames.push(texts.map(opacityOf))
-          if (performance.now() < end) requestAnimationFrame(sample)
-          else resolve(frames)
-        }
-        sample()
+        const frames: Frame[] = []
+        let settledFrames = 0
+        const end = performance.now() + 10_000
+        ;(window as unknown as { __frames: Promise<Frame[]> }).__frames =
+          new Promise((resolve) => {
+            const sample = () => {
+              const opacities = texts.map(opacityOf)
+              frames.push({
+                opacities,
+                transitions: [
+                  ...document.querySelectorAll<HTMLElement>(
+                    '[style*="transition"]',
+                  ),
+                ].map((element) => element.style.transition),
+              })
+              const atRest = opacities.every((o, i) => o === settled[i])
+              settledFrames = atRest ? settledFrames + 1 : 0
+              if (settledFrames >= 20 || performance.now() > end) {
+                resolve(frames)
+              } else requestAnimationFrame(sample)
+            }
+            sample()
+            started()
+          })
       }),
-    { texts, duration: ms },
+    { texts, settled },
   )
+  await action()
+  return page.evaluate(
+    () => (window as unknown as { __frames: Promise<Frame[]> }).__frames,
+  )
+}
+
+/** Each frame's opacity of `texts`, from before `action` until they settle. */
+async function sampleOpacitiesDuring(
+  page: Page,
+  texts: string[],
+  settled: number[],
+  action: () => Promise<unknown>,
+) {
+  const frames = await sampleDuring(page, texts, settled, action)
+  return frames.map((frame) => frame.opacities)
 }
 
 const isFading = (opacity: number) => opacity > 0.05 && opacity < 0.95
@@ -184,9 +208,12 @@ test.describe('Calm slide transitions', () => {
     await page.goto(`/screen/${screen.id}`)
     await expect(page.getByText(VERSES[0]).last()).toBeVisible()
 
-    const transitions = collectTransitions(page, 1500)
-    expect((await presentVerse(request, 1)).ok()).toBeTruthy()
-    const seen = (await transitions).join(' | ')
+    const frames = await sampleDuring(page, [VERSES[1]], [1], async () =>
+      expect((await presentVerse(request, 1)).ok()).toBeTruthy(),
+    )
+    const seen = [
+      ...new Set(frames.flatMap((frame) => frame.transitions)),
+    ].join(' | ')
 
     expect(seen).toContain('300ms ease-in-out')
     await expect(page.getByText(VERSES[1]).last()).toBeVisible()
@@ -203,9 +230,13 @@ test.describe('Calm slide transitions', () => {
     await page.goto(`/screen/${screen.id}`)
     await expect(page.locator('[data-style-anchor]')).toHaveCount(0)
 
-    const sampling = sampleOpacities(page, [VERSES[0]], 1500)
-    expect((await presentVerse(request, 0)).ok()).toBeTruthy()
-    const verse = (await sampling).map(([opacity]) => opacity)
+    const frames = await sampleOpacitiesDuring(
+      page,
+      [VERSES[0]],
+      [1],
+      async () => expect((await presentVerse(request, 0)).ok()).toBeTruthy(),
+    )
+    const verse = frames.map(([opacity]) => opacity)
 
     expect(verse.some(isFading), 'the verse passes through a soft fade').toBe(
       true,
@@ -239,9 +270,12 @@ test.describe('Calm slide transitions', () => {
     await expect(page.getByText(lyric).last()).toBeVisible()
     await page.waitForTimeout(800)
 
-    const sampling = sampleOpacities(page, [lyric, VERSES[0]], 2000)
-    expect((await presentVerse(request, 0)).ok()).toBeTruthy()
-    const frames = await sampling
+    const frames = await sampleOpacitiesDuring(
+      page,
+      [lyric, VERSES[0]],
+      [0, 1],
+      async () => expect((await presentVerse(request, 0)).ok()).toBeTruthy(),
+    )
 
     expect(
       frames.some(([song]) => isFading(song)),
@@ -260,9 +294,12 @@ test.describe('Calm slide transitions', () => {
     expect(frames.at(-1)).toEqual([0, 1])
 
     // The next verse after a song is a slide change too, not a cut.
-    const nextVerse = sampleOpacities(page, [VERSES[0], VERSES[1]], 1500)
-    expect((await presentVerse(request, 1)).ok()).toBeTruthy()
-    const verses = await nextVerse
+    const verses = await sampleOpacitiesDuring(
+      page,
+      [VERSES[0], VERSES[1]],
+      [0, 1],
+      async () => expect((await presentVerse(request, 1)).ok()).toBeTruthy(),
+    )
     expect(
       verses.some(([first]) => isFading(first)),
       'verse eases out',
