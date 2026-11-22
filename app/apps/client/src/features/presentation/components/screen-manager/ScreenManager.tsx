@@ -1,24 +1,4 @@
-import {
-  AppWindow,
-  Copy,
-  CopyPlus,
-  DoorClosed,
-  DoorOpen,
-  Edit,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Loader2,
-  Maximize,
-  Minimize,
-  MonitorUp,
-  Pin,
-  PinOff,
-  Plus,
-  Power,
-  PowerOff,
-  Trash2,
-} from 'lucide-react'
+import { Loader2, MonitorUp, Plus } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -26,8 +6,8 @@ import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { PageHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast/useToast'
+import { ScreenCard } from './ScreenCard'
 import { ScreenExportModal } from './ScreenExportModal'
-import { ScreenMonitorPicker } from './ScreenMonitorPicker'
 import {
   useBatchUpdateScreenConfig,
   useDeleteScreen,
@@ -36,21 +16,17 @@ import {
   useScreens,
   useUpsertScreen,
 } from '../../hooks'
-import type { Screen, ScreenType, ScreenWithConfigs } from '../../types'
+import type {
+  ContentType,
+  Screen,
+  ScreenType,
+  ScreenWithConfigs,
+} from '../../types'
 import {
   closeDisplayWindow,
   getFrontendUrl,
-  openDisplayWindow,
-  setDisplayAlwaysOnTop,
 } from '../../utils/openDisplayWindow'
 import { ScreenEditor } from '../screen-editor'
-
-const SCREEN_TYPE_COLORS: Record<ScreenType, string> = {
-  primary: 'bg-blue-600',
-  stage: 'bg-purple-600',
-  livestream: 'bg-green-600',
-  kiosk: 'bg-orange-600',
-}
 
 export function ScreenManager() {
   const { t } = useTranslation(['settings', 'presentation'])
@@ -89,6 +65,10 @@ export function ScreenManager() {
   const [newScreenName, setNewScreenName] = useState('')
   const [newScreenType, setNewScreenType] = useState<ScreenType>('primary')
   const [editingScreenId, setEditingScreenId] = useState<number | null>(null)
+  // The slide type the editor opens on (the empty slide from its thumbnail)
+  const [editingContentType, setEditingContentType] = useState<
+    ContentType | undefined
+  >()
   const [deleteConfirm, setDeleteConfirm] = useState<Screen | null>(null)
   const [exportScreen, setExportScreen] = useState<Screen | null>(null)
 
@@ -119,7 +99,8 @@ export function ScreenManager() {
     }
   }
 
-  const handleEdit = (screen: Screen) => {
+  const handleEdit = (screen: Screen, contentType?: ContentType) => {
+    setEditingContentType(contentType)
     setEditingScreenId(screen.id)
   }
 
@@ -152,47 +133,6 @@ export function ScreenManager() {
     setDeleteConfirm(screen)
   }
 
-  // Toggle window open/close (persisted to database via isActive field)
-  const handleToggleWindow = async (screen: Screen) => {
-    const isCurrentlyActive = screen.isActive
-
-    try {
-      if (isCurrentlyActive) {
-        // Close the native window and update database
-        await closeDisplayWindow(screen.id)
-        await upsertScreen.mutateAsync({
-          id: screen.id,
-          name: screen.name,
-          type: screen.type,
-          isActive: false,
-        })
-        showToast(
-          t('settings:sections.screens.toast.windowClosed', {
-            name: screen.name,
-          }),
-          'success',
-        )
-      } else {
-        // Update database first, then open the native window
-        await upsertScreen.mutateAsync({
-          id: screen.id,
-          name: screen.name,
-          type: screen.type,
-          isActive: true,
-        })
-        await openDisplayWindow(screen)
-        showToast(
-          t('settings:sections.screens.toast.windowOpened', {
-            name: screen.name,
-          }),
-          'success',
-        )
-      }
-    } catch {
-      showToast(t('settings:sections.screens.toast.toggleError'), 'error')
-    }
-  }
-
   const handleCopyUrl = async (screen: Screen) => {
     const url = `${getFrontendUrl()}/screen/${screen.id}`
     try {
@@ -214,128 +154,6 @@ export function ScreenManager() {
       )
     } catch {
       showToast(t('settings:sections.screens.toast.duplicateError'), 'error')
-    }
-  }
-
-  const handleToggleAlwaysOnTop = async (screen: Screen) => {
-    const newValue = !screen.alwaysOnTop
-
-    try {
-      // Update in database
-      await upsertScreen.mutateAsync({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        alwaysOnTop: newValue,
-      })
-
-      // If window is active, update it immediately
-      if (screen.isActive) {
-        await setDisplayAlwaysOnTop(screen.id, newValue)
-      }
-
-      showToast(
-        newValue
-          ? t('sections.screens.alwaysOnTop.pinned')
-          : t('sections.screens.alwaysOnTop.unpinned'),
-        'success',
-      )
-    } catch {
-      showToast(t('sections.screens.alwaysOnTop.error'), 'error')
-    }
-  }
-
-  // How the projection window opens. Only this setting decides it: leaving
-  // fullscreen from the projection's own toolbar is for the moment, not for
-  // good, so the next open still fills the display.
-  const handleToggleFullscreen = async (screen: Screen) => {
-    const newValue = !screen.isFullscreen
-
-    try {
-      await upsertScreen.mutateAsync({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        isFullscreen: newValue,
-      })
-
-      showToast(
-        newValue
-          ? t('sections.screens.fullscreen.enabled')
-          : t('sections.screens.fullscreen.disabled'),
-        'success',
-      )
-    } catch {
-      showToast(t('sections.screens.fullscreen.error'), 'error')
-    }
-  }
-
-  const handleToggleCloseOnEscape = async (screen: Screen) => {
-    const newValue = !screen.closeOnEscape
-
-    try {
-      await upsertScreen.mutateAsync({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        closeOnEscape: newValue,
-      })
-
-      showToast(
-        newValue
-          ? t('sections.screens.closeOnEscape.enabled')
-          : t('sections.screens.closeOnEscape.disabled'),
-        'success',
-      )
-    } catch {
-      showToast(t('sections.screens.closeOnEscape.error'), 'error')
-    }
-  }
-
-  // Toggle whether this screen is mirrored in the in-app preview panel.
-  // The backend enforces a single preview screen, so turning one on turns the
-  // others off automatically.
-  const handleToggleOpenOnStartup = async (screen: Screen) => {
-    const newValue = !screen.openOnStartup
-
-    try {
-      await upsertScreen.mutateAsync({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        openOnStartup: newValue,
-      })
-
-      showToast(
-        newValue
-          ? t('sections.screens.openOnStartup.enabled')
-          : t('sections.screens.openOnStartup.disabled'),
-        'success',
-      )
-    } catch {
-      showToast(t('sections.screens.openOnStartup.error'), 'error')
-    }
-  }
-
-  const handleTogglePreviewScreen = async (screen: Screen) => {
-    const newValue = !screen.isPreviewScreen
-
-    try {
-      await upsertScreen.mutateAsync({
-        id: screen.id,
-        name: screen.name,
-        type: screen.type,
-        isPreviewScreen: newValue,
-      })
-
-      showToast(
-        newValue
-          ? t('sections.screens.previewScreen.enabled')
-          : t('sections.screens.previewScreen.disabled'),
-        'success',
-      )
-    } catch {
-      showToast(t('sections.screens.previewScreen.error'), 'error')
     }
   }
 
@@ -368,6 +186,7 @@ export function ScreenManager() {
       <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950">
         <ScreenEditor
           screen={editingScreen}
+          initialContentType={editingContentType}
           onSave={handleSaveScreen}
           onClose={handleCloseEditor}
         />
@@ -392,206 +211,16 @@ export function ScreenManager() {
       {screens && screens.length > 0 ? (
         <div className="space-y-3">
           {screens.map((screen) => (
-            <div
+            <ScreenCard
               key={screen.id}
-              data-testid="screen-card"
-              data-screen-id={screen.id}
-              className="flex flex-col gap-3 p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-            >
-              {/* Identity row: status + name/type + per-screen actions */}
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                  <div
-                    className={`w-3 h-3 rounded-full flex-shrink-0 ${
-                      screen.isActive ? 'bg-green-500' : 'bg-gray-400'
-                    }`}
-                  />
-                  <div className="min-w-0">
-                    <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                      {screen.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span
-                        className={`px-2 py-0.5 text-xs font-medium rounded-full text-white ${SCREEN_TYPE_COLORS[screen.type]}`}
-                      >
-                        {screen.type}
-                      </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {screen.width}×{screen.height}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setExportScreen(screen)}
-                    title={t('sections.screens.export.title')}
-                  >
-                    <ExternalLink size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopyUrl(screen)}
-                    title={t('sections.screens.actions.copyUrl')}
-                  >
-                    <Copy size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    data-testid="screen-duplicate"
-                    onClick={() => handleDuplicate(screen)}
-                    disabled={duplicateScreen.isPending}
-                    title={t('sections.screens.actions.duplicate')}
-                  >
-                    <CopyPlus size={16} />
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleEdit(screen)}
-                    title={t('sections.screens.actions.edit')}
-                  >
-                    <Edit size={16} />
-                    <span className="ml-1">
-                      {t('sections.screens.actions.edit')}
-                    </span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(screen)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title={t('sections.screens.actions.delete')}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Toggle row: behavior controls, indented under the title */}
-              <div className="flex items-center gap-2 flex-wrap md:pl-7 pt-2 border-t border-gray-100 dark:border-gray-700/60">
-                <Button
-                  variant={screen.isActive ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => handleToggleWindow(screen)}
-                  title={
-                    screen.isActive
-                      ? t('sections.screens.window.closeTooltip')
-                      : t('sections.screens.window.openTooltip')
-                  }
-                >
-                  <AppWindow size={16} />
-                  <span className="ml-1">
-                    {screen.isActive
-                      ? t('sections.screens.window.active')
-                      : t('sections.screens.window.inactive')}
-                  </span>
-                </Button>
-                <Button
-                  variant={screen.alwaysOnTop ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => handleToggleAlwaysOnTop(screen)}
-                  title={
-                    screen.alwaysOnTop
-                      ? t('sections.screens.alwaysOnTop.unpin')
-                      : t('sections.screens.alwaysOnTop.pin')
-                  }
-                >
-                  {screen.alwaysOnTop ? (
-                    <Pin size={16} />
-                  ) : (
-                    <PinOff size={16} />
-                  )}
-                  <span className="ml-1">
-                    {screen.alwaysOnTop
-                      ? t('sections.screens.alwaysOnTop.enabled')
-                      : t('sections.screens.alwaysOnTop.disabled')}
-                  </span>
-                </Button>
-                <Button
-                  variant={screen.isFullscreen ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => handleToggleFullscreen(screen)}
-                  title={
-                    screen.isFullscreen
-                      ? t('sections.screens.fullscreen.windowed')
-                      : t('sections.screens.fullscreen.fill')
-                  }
-                >
-                  {screen.isFullscreen ? (
-                    <Maximize size={16} />
-                  ) : (
-                    <Minimize size={16} />
-                  )}
-                  <span className="ml-1">
-                    {screen.isFullscreen
-                      ? t('sections.screens.fullscreen.on')
-                      : t('sections.screens.fullscreen.off')}
-                  </span>
-                </Button>
-                <Button
-                  variant={screen.closeOnEscape ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => handleToggleCloseOnEscape(screen)}
-                  title={t('sections.screens.closeOnEscape.tooltip')}
-                >
-                  {screen.closeOnEscape ? (
-                    <DoorClosed size={16} />
-                  ) : (
-                    <DoorOpen size={16} />
-                  )}
-                  <span className="ml-1">
-                    {screen.closeOnEscape
-                      ? t('sections.screens.closeOnEscape.on')
-                      : t('sections.screens.closeOnEscape.off')}
-                  </span>
-                </Button>
-                <Button
-                  variant={screen.openOnStartup ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => handleToggleOpenOnStartup(screen)}
-                  title={t('sections.screens.openOnStartup.tooltip')}
-                  data-testid="screen-open-on-startup"
-                >
-                  {screen.openOnStartup ? (
-                    <Power size={16} />
-                  ) : (
-                    <PowerOff size={16} />
-                  )}
-                  <span className="ml-1">
-                    {screen.openOnStartup
-                      ? t('sections.screens.openOnStartup.on')
-                      : t('sections.screens.openOnStartup.off')}
-                  </span>
-                </Button>
-                <Button
-                  variant={screen.isPreviewScreen ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => handleTogglePreviewScreen(screen)}
-                  title={
-                    screen.isPreviewScreen
-                      ? t('sections.screens.previewScreen.unset')
-                      : t('sections.screens.previewScreen.set')
-                  }
-                >
-                  {screen.isPreviewScreen ? (
-                    <Eye size={16} />
-                  ) : (
-                    <EyeOff size={16} />
-                  )}
-                  <span className="ml-1">
-                    {screen.isPreviewScreen
-                      ? t('sections.screens.previewScreen.on')
-                      : t('sections.screens.previewScreen.off')}
-                  </span>
-                </Button>
-                <ScreenMonitorPicker screen={screen} />
-              </div>
-            </div>
+              screen={screen}
+              onEdit={(contentType) => handleEdit(screen, contentType)}
+              onExport={() => setExportScreen(screen)}
+              onCopyUrl={() => handleCopyUrl(screen)}
+              onDuplicate={() => handleDuplicate(screen)}
+              onDelete={() => handleDelete(screen)}
+              isDuplicating={duplicateScreen.isPending}
+            />
           ))}
         </div>
       ) : (
