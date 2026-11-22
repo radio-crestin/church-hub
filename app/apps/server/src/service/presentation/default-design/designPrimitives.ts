@@ -5,7 +5,7 @@
  * font at the screen's own size).
  */
 
-import { calmTransitions } from './calmTransitions'
+import type { ScreenLayout } from './screenLayouts'
 
 /** Fonts bundled with the client (see bundledFonts.ts there). */
 export const FONTS = {
@@ -83,12 +83,21 @@ export function textStyle(overrides: Record<string, unknown> = {}) {
   }
 }
 
-/** A text element placed in `slot`, styled by `style` on top of the shared defaults. */
+type SlotName = {
+  [K in keyof ScreenLayout]: ScreenLayout[K] extends TextSlot ? K : never
+}[keyof ScreenLayout]
+
+/**
+ * A text element placed in the layout's `slotName` slot, styled by `style` on
+ * top of the shared defaults, with the screen's factory transitions.
+ */
 export function textElement(
-  slot: TextSlot,
+  layout: ScreenLayout,
+  slotName: SlotName,
   style: Record<string, unknown>,
   extra: Record<string, unknown> = {},
 ) {
+  const slot = layout[slotName]
   return {
     ...boxPlacement(slot.box),
     style: textStyle({
@@ -97,7 +106,7 @@ export function textElement(
       verticalAlignment: slot.verticalAlignment ?? 'middle',
       ...style,
     }),
-    ...calmTransitions(),
+    ...layout.transitions,
     ...(slot.hidden ? { hidden: true } : {}),
     ...extra,
   }

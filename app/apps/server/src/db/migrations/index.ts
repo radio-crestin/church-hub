@@ -460,7 +460,7 @@ export function runMigrations(
     removeSeededTestSong(rawDb),
   )
 
-  // Calm factory transitions on the screens that still have the old ones.
+  // Current factory transitions on the screens that still have older ones.
   runStep(
     'upgrade_factory_transitions',
     'Running upgrade factory transitions migration',

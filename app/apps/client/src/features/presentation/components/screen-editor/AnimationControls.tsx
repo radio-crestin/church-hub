@@ -4,7 +4,7 @@ import { Combobox } from '~/ui/combobox/Combobox'
 import { Label } from '~/ui/label/Label'
 import { Slider } from '~/ui/slider/Slider'
 import type { AnimationConfig } from '../../types'
-import { CALM_TRANSITIONS } from '../../utils/calmTransitions'
+import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
 
 const ANIMATION_TYPES = [
   { value: 'none', labelKey: 'screens.animation.types.none' },
@@ -51,7 +51,7 @@ export function AnimationControls({
   return (
     <div className="space-y-4">
       {ANIMATION_KEYS.map(({ key, described }, index) => {
-        const animation = config[key] ?? CALM_TRANSITIONS[key]
+        const animation = config[key] ?? FACTORY_TRANSITIONS[key]
         return (
           <div
             key={key}
