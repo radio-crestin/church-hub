@@ -27,8 +27,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [phoneBottomBarSlot, setPhoneBottomBarSlot] =
     useState<HTMLElement | null>(null)
-  // Tailwind's `md`: the live strip is a phone's alone, so a larger window
-  // leaves it out of the page instead of only hiding it.
+  // Tailwind's `md`: the tab bar and live strip are a phone's alone, so a
+  // larger window leaves them out of the page instead of only hiding them.
   const isPhone = !useMediaQuery('(min-width: 768px)')
 
   // Check if running in standalone mode (native window without sidebar)
@@ -87,13 +87,15 @@ export function AppLayout({ children }: AppLayoutProps) {
             bar gives way to the sidebar from `md`. */}
         <div className="group lg:hidden shrink-0">
           <div ref={setPhoneBottomBarSlot} />
-          <div className="md:hidden group-has-[[data-phone-bottom-bar]]:hidden">
-            {/* The control room is all about what is live already. */}
-            {isPhone && location.pathname !== '/present' && (
-              <MobileLiveStrip liveProgram={liveProgram} />
-            )}
-            <MobileTabBar onOpenMore={() => setIsMobileMenuOpen(true)} />
-          </div>
+          {isPhone && (
+            <div className="group-has-[[data-phone-bottom-bar]]:hidden">
+              {/* The control room is all about what is live already. */}
+              {location.pathname !== '/present' && (
+                <MobileLiveStrip liveProgram={liveProgram} />
+              )}
+              <MobileTabBar onOpenMore={() => setIsMobileMenuOpen(true)} />
+            </div>
+          )}
         </div>
       </main>
       {isDebugMode && <WebSocketDebugPanel debugInfo={debugInfo} />}
