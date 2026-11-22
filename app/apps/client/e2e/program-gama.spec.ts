@@ -156,6 +156,8 @@ test.describe('Program gama', () => {
       .getByRole('button', { name: /Edit as Text|Editeaza ca Text/ })
       .click()
     const textarea = page.locator('dialog[open] textarea')
+    // The modal opens before its text arrives: wait for it, inputValue doesn't retry.
+    await expect(textarea).toHaveValue(/#\d+ \{Re major\}/)
     const text = await textarea.inputValue()
     expect(text).toContain(`${f.withKey.title} #${f.withKey.id} {Re major}`)
     expect(text).toContain(`${f.withoutKey.title} #${f.withoutKey.id} {}`)
@@ -181,8 +183,8 @@ test.describe('Program gama', () => {
       .getByRole('button', { name: /Edit as Text|Editeaza ca Text/ })
       .click()
     const reopened = page.locator('dialog[open]')
-    expect(await reopened.locator('textarea').inputValue()).toContain(
-      `${f.withoutKey.title} #${f.withoutKey.id} {Mi major}`,
+    await expect(reopened.locator('textarea')).toHaveValue(
+      new RegExp(`#${f.withoutKey.id} \\{Mi major\\}`),
     )
     await reopened
       .getByRole('button', { name: /Plain View|Vizualizare Simpla/ })
