@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
@@ -22,6 +23,11 @@ export interface MockYouTubeApi {
   bodiesOf: (method: string, path: string) => Record<string, unknown>[]
   close: () => Promise<void>
 }
+
+/** A real photo, so the settings page shows the thumbnail. */
+const THUMBNAIL = readFileSync(
+  new URL('../fixtures/background-still.jpg', import.meta.url),
+)
 
 export const CREATED_BROADCAST_ID = 'new-broadcast-1'
 
@@ -116,7 +122,7 @@ export async function startMockYouTubeApi(): Promise<MockYouTubeApi> {
 
       if (path.startsWith('/thumbs/')) {
         res.writeHead(200, { 'content-type': 'image/jpeg' })
-        res.end(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]))
+        res.end(THUMBNAIL)
         return
       }
       if (path === '/youtube/v3/liveBroadcasts' && method === 'GET') {
