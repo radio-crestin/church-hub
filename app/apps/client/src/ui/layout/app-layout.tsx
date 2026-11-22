@@ -1,9 +1,8 @@
 import { useLocation, useSearch } from '@tanstack/react-router'
-import { Menu } from 'lucide-react'
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import {
+  MobileLiveStrip,
   useAutoClearHighlights,
   useKeyboardShortcuts,
   useWebSocket,
@@ -12,6 +11,8 @@ import {
 import { useLiveProgramNavigation } from '~/features/schedules'
 import { WebviewRouteManager } from '~/features/sidebar-config/components/WebviewRouteManager'
 import { useDebugMode } from '~/hooks/useDebugMode'
+import { MobileTabBar } from './mobile-tab-bar'
+import { PhoneBottomBarSlotContext } from './phone-bottom-bar'
 import { Sidebar } from '../sidebar/sidebar'
 
 interface AppLayoutProps {
@@ -23,7 +24,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isDebugMode } = useDebugMode()
   const { debugInfo } = useWebSocket()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { t } = useTranslation('sidebar')
+  const [phoneBottomBarSlot, setPhoneBottomBarSlot] =
+    useState<HTMLElement | null>(null)
 
   // Check if running in standalone mode (native window without sidebar)
   const search = useSearch({ strict: false }) as Record<string, unknown>
@@ -65,31 +67,28 @@ export function AppLayout({ children }: AppLayoutProps) {
         onMobileMenuChange={setIsMobileMenuOpen}
       />
       <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-gray-50 dark:bg-gray-950 safe-area-right safe-area-bottom overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto flex flex-col bg-gray-50 dark:bg-gray-950">
-          {/* Mobile Header - inside scroll area so it scrolls away */}
-          <header className="shrink-0 md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 safe-area-top safe-area-left safe-area-right">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3">
-                <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  Church Hub
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                aria-label={t('actions.openMenu')}
-              >
-                <Menu size={24} />
-              </button>
-            </div>
-          </header>
+        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto flex flex-col bg-gray-50 dark:bg-gray-950 safe-area-top">
           {/* The top padding is deliberately tighter than the sides: in the
               desktop window the OS title bar already sits above this, so a
               full p-6 up top reads as dead space before the page title. */}
-          <div className="p-3 pt-2 pb-16 sm:p-4 sm:pt-2 sm:pb-16 md:p-6 md:pt-3 md:pb-6 flex-1 lg:min-h-0">
-            {children}
+          <div className="p-3 pt-3 sm:p-4 sm:pt-3 md:p-6 md:pt-3 flex-1 lg:min-h-0">
+            <PhoneBottomBarSlotContext.Provider value={phoneBottomBarSlot}>
+              {children}
+            </PhoneBottomBarSlotContext.Provider>
+          </div>
+        </div>
+        {/* Phones: the tab bar and what is live, or the page's own controls
+            when it has a PhoneBottomBar (the slot then hides the rest). A
+            page keeps its phone layout, and so its bar, up to `lg`; the tab
+            bar gives way to the sidebar from `md`. */}
+        <div className="group lg:hidden shrink-0">
+          <div ref={setPhoneBottomBarSlot} />
+          <div className="md:hidden group-has-[[data-phone-bottom-bar]]:hidden">
+            {/* The control room is all about what is live already. */}
+            {location.pathname !== '/present' && (
+              <MobileLiveStrip liveProgram={liveProgram} />
+            )}
+            <MobileTabBar onOpenMore={() => setIsMobileMenuOpen(true)} />
           </div>
         </div>
       </main>
