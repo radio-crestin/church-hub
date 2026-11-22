@@ -1,10 +1,62 @@
 export const scheduleSchemas = {
+  ScheduleAutomationSettings: {
+    type: 'object',
+    description: 'How a presentation runs by itself',
+    properties: {
+      autoplaySeconds: {
+        type: 'integer',
+        nullable: true,
+        minimum: 1,
+        maximum: 3600,
+        description: 'Seconds each step stays up while it runs; null = manual',
+      },
+      loop: {
+        type: 'boolean',
+        description: 'Past the last step, start again from the first',
+      },
+      musicVolume: {
+        type: 'integer',
+        nullable: true,
+        minimum: 0,
+        maximum: 100,
+        description: 'Music player volume set when it starts; null = unchanged',
+      },
+      startOnAppStart: {
+        type: 'boolean',
+        description:
+          'Started by itself when Church Hub starts. Setting it on one presentation turns it off on the others',
+      },
+    },
+  },
+  ScheduleAutomationState: {
+    type: 'object',
+    description:
+      'What the presentation runner is doing. Also sent over the WebSocket as `schedule_automation`',
+    required: ['running'],
+    properties: {
+      running: { type: 'boolean' },
+      scheduleId: { type: 'integer' },
+      title: { type: 'string' },
+      stepIndex: {
+        type: 'integer',
+        description: 'Position of the step on screen in the running order',
+      },
+      stepCount: { type: 'integer' },
+      autoplaySeconds: { type: 'integer' },
+      loop: { type: 'boolean' },
+      nextStepAt: {
+        type: 'integer',
+        description: 'When the next step goes up (epoch ms)',
+      },
+    },
+  },
   Schedule: {
     type: 'object',
     properties: {
       id: { type: 'integer' },
       title: { type: 'string' },
       description: { type: 'string', nullable: true },
+      automation: { $ref: '#/components/schemas/ScheduleAutomationSettings' },
       itemCount: { type: 'integer' },
       songCount: { type: 'integer' },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
@@ -83,6 +135,10 @@ export const scheduleSchemas = {
       },
       title: { type: 'string' },
       description: { type: 'string', nullable: true },
+      automation: {
+        allOf: [{ $ref: '#/components/schemas/ScheduleAutomationSettings' }],
+        description: 'Only the settings given change',
+      },
     },
   },
   AddToScheduleInput: {

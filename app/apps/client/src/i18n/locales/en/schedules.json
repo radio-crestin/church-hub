@@ -300,5 +300,24 @@
   "quickInsert": {
     "button": "Insert item",
     "tooltip": "Insert an item after “{{title}}”"
+  },
+  "automation": {
+    "button": "Automation",
+    "title": "Automation",
+    "description": "Let this presentation run by itself, before the service for example.",
+    "autoplay": "Move on by itself",
+    "autoplayDescription": "Each slide stays up for the seconds below, then the next one goes up.",
+    "seconds": "Seconds per slide",
+    "loop": "Play in a loop",
+    "loopDescription": "After the last slide, start again from the first.",
+    "musicVolume": "Set the music volume",
+    "musicVolumeDescription": "When it starts, the music player's volume is set to this.",
+    "startOnAppStart": "Start when Church Hub starts",
+    "startOnAppStartDescription": "Only one presentation can start by itself: choosing this one turns it off for the others.",
+    "run": "Run",
+    "runDescription": "Start this presentation from the first slide",
+    "stop": "Stop",
+    "stopDescription": "Stop the presentation and clear the screens",
+    "runError": "The presentation could not start"
   }
 }

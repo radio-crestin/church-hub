@@ -1,4 +1,99 @@
 export const schedulesPaths = {
+  '/api/schedules/automation': {
+    get: {
+      tags: ['Schedules'],
+      summary: 'Presentation runner state',
+      description:
+        'Whether a presentation is running by itself, at which step, and when the next one goes up',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The runner state',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/ScheduleAutomationState',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/schedules/automation/stop': {
+    post: {
+      tags: ['Schedules'],
+      summary: 'Stop the running presentation',
+      description:
+        'Stops the presentation running by itself and takes its content off the screens. Needs control_room.control',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The runner state',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/ScheduleAutomationState',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+      },
+    },
+  },
+  '/api/schedules/{id}/run': {
+    post: {
+      tags: ['Schedules'],
+      summary: 'Run a presentation',
+      description:
+        'Presents the first step of the presentation. With autoplay on, the server then moves it on every autoplaySeconds (looping if set) until it is stopped, ends, or an operator presents something else. Sets the music volume first when the presentation has one. Needs control_room.control',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'The runner state',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/ScheduleAutomationState',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'The presentation has nothing to show',
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+        '404': { description: 'Presentation not found' },
+      },
+    },
+  },
   '/api/schedules/search': {
     get: {
       tags: ['Schedules'],

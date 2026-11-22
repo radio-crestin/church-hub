@@ -8,6 +8,7 @@ import {
   FileText,
   Loader2,
   Pencil,
+  Timer,
   Trash2,
   Upload,
   X,
@@ -37,8 +38,10 @@ import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScenePickerModal } from './ScenePickerModal'
+import { ScheduleAutomationModal } from './ScheduleAutomationModal'
 import { ScheduleItemsPanel } from './ScheduleItemsPanel'
 import { SchedulePreviewPanel } from './SchedulePreviewPanel'
+import { ScheduleRunButton } from './ScheduleRunButton'
 import {
   useAddItemToSchedule,
   useDeleteSchedule,
@@ -140,6 +143,7 @@ export function SchedulePresenter({
   const [showImportConfirmModal, setShowImportConfirmModal] = useState(false)
   const [importData, setImportData] = useState<ChurchProgramData | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showAutomation, setShowAutomation] = useState(false)
   const [showSlideModal, setShowSlideModal] = useState(false)
   const [slideTemplate, setSlideTemplate] =
     useState<SlideTemplate>('announcement')
@@ -824,6 +828,20 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
+          <ScheduleRunButton scheduleId={scheduleId} />
+          {canEditProgram && (
+            <button
+              type="button"
+              onClick={() => setShowAutomation(true)}
+              aria-label={t('automation.button')}
+              title={t('automation.description')}
+              data-testid="schedule-automation-button"
+              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
+            >
+              <Timer className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('automation.button')}</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={handleLoadFromFile}
@@ -876,6 +894,11 @@ export function SchedulePresenter({
         defaultColumnSizes={['40%', '60%']}
         stacked={!isLargeScreen}
         className="lg:flex-1 lg:min-h-0"
+      />
+
+      <ScheduleAutomationModal
+        schedule={showAutomation ? schedule : null}
+        onClose={() => setShowAutomation(false)}
       />
 
       {/* Song Picker Modal — only for replacing an existing song; adding a new

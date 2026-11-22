@@ -316,5 +316,24 @@
   "quickInsert": {
     "button": "Inserează element",
     "tooltip": "Inserează un element după „{{title}}”"
+  },
+  "automation": {
+    "button": "Automatizare",
+    "title": "Automatizare",
+    "description": "Prezentarea rulează singură, de exemplu înainte de începerea slujbei.",
+    "autoplay": "Avansează singură",
+    "autoplayDescription": "Fiecare slide rămâne afișat câte secunde alegi mai jos, apoi urmează următorul.",
+    "seconds": "Secunde pe slide",
+    "loop": "Redă în buclă",
+    "loopDescription": "După ultimul slide, reia de la primul.",
+    "musicVolume": "Setează volumul muzicii",
+    "musicVolumeDescription": "La pornire, volumul playerului de muzică devine acesta.",
+    "startOnAppStart": "Pornește odată cu Church Hub",
+    "startOnAppStartDescription": "Doar o prezentare poate porni singură: dacă o alegi pe aceasta, celelalte nu mai pornesc.",
+    "run": "Pornește",
+    "runDescription": "Pornește prezentarea de la primul slide",
+    "stop": "Oprește",
+    "stopDescription": "Oprește prezentarea și golește ecranele",
+    "runError": "Prezentarea nu a putut porni"
   }
 }
