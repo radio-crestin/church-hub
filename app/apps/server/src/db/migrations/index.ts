@@ -21,6 +21,7 @@ import { addSongSources } from './add-song-sources'
 import { addSongVersionsPermissions } from './add-song-versions-permissions'
 import { addSync } from './add-sync'
 import { addUserAuthFields } from './add-user-auth-fields'
+import { addYouTubeBroadcastSettings } from './add-youtube-broadcast-settings'
 import { allowDuplicateBookmarks } from './allow-duplicate-bookmarks'
 import { assignDefaultPageKeys } from './assign-default-page-keys'
 import { convertBibleBookmarkStylesToMarkdown } from './convert-bible-bookmark-styles-to-markdown'
@@ -251,6 +252,13 @@ export function runMigrations(
     'enable_screens_always_on_top',
     'Running enable screens always-on-top migration',
     () => enableScreensAlwaysOnTop(rawDb),
+  )
+
+  // The YouTube broadcast settings the operator sets (category, tags, DVR, …).
+  runStep(
+    'add_youtube_broadcast_settings',
+    'Running add YouTube broadcast settings migration',
+    () => addYouTubeBroadcastSettings(rawDb),
   )
 
   // Seed default screens

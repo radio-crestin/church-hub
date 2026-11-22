@@ -10,6 +10,9 @@ import { broadcastYouTubeAuthStatus } from '../../../websocket'
 const DEBUG = process.env.DEBUG === 'true'
 const YOUTUBE_OAUTH_SERVER =
   process.env.YOUTUBE_OAUTH_SERVER || 'https://churchub-backend.radiocrestin.ro'
+// Where the YouTube Data API lives; the e2e suite points it at a stand-in.
+export const YOUTUBE_API_ORIGIN =
+  process.env.YOUTUBE_API_ORIGIN || 'https://www.googleapis.com'
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
@@ -250,7 +253,11 @@ export async function getYouTubeService() {
     return null
   }
 
-  return google.youtube({ version: 'v3', auth: client })
+  return google.youtube({
+    version: 'v3',
+    auth: client,
+    rootUrl: `${YOUTUBE_API_ORIGIN}/`,
+  })
 }
 
 /**
@@ -368,7 +375,7 @@ export async function youtubeApiFetch<T>(
     throw new Error('Not authenticated with YouTube')
   }
 
-  const url = new URL(`https://www.googleapis.com/youtube/v3/${endpoint}`)
+  const url = new URL(`${YOUTUBE_API_ORIGIN}/youtube/v3/${endpoint}`)
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value)
   }

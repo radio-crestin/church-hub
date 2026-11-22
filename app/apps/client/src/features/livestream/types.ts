@@ -77,7 +77,17 @@ export interface YouTubeConfig {
   stopSceneName?: string | null
   selectedBroadcastId?: string
   broadcastMode: 'create' | 'reuse'
+  categoryId?: string
+  tags: string[]
+  madeForKids: boolean
+  latencyPreference: LatencyPreference
+  enableDvr: boolean
+  enableAutoStart: boolean
+  enableAutoStop: boolean
+  thumbnailUrl?: string
 }
+
+export type LatencyPreference = 'normal' | 'low' | 'ultraLow'
 
 export interface UpcomingBroadcast {
   broadcastId: string
@@ -85,18 +95,6 @@ export interface UpcomingBroadcast {
   scheduledStartTime: string
   privacyStatus: 'public' | 'unlisted' | 'private'
   url: string
-}
-
-export interface BroadcastTemplate {
-  id: number
-  name: string
-  title: string
-  description: string
-  privacyStatus: 'public' | 'unlisted' | 'private'
-  streamKeyId?: string
-  playlistId?: string
-  category?: string
-  usedAt: string
 }
 
 export interface PastBroadcast {

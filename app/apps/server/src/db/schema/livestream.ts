@@ -27,6 +27,22 @@ export const youtubeConfig = sqliteTable('youtube_config', {
   stopSceneName: text('stop_scene_name'),
   selectedBroadcastId: text('selected_broadcast_id'),
   broadcastMode: text('broadcast_mode').notNull().default('create'),
+  categoryId: text('category_id'),
+  tags: text('tags').notNull().default('[]'),
+  madeForKids: integer('made_for_kids', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  latencyPreference: text('latency_preference').notNull().default('normal'),
+  enableDvr: integer('enable_dvr', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  enableAutoStart: integer('enable_auto_start', { mode: 'boolean' })
+    .notNull()
+    .default(true),
+  enableAutoStop: integer('enable_auto_stop', { mode: 'boolean' })
+    .notNull()
+    .default(true),
+  thumbnailUrl: text('thumbnail_url'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
