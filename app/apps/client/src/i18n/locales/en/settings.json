@@ -1314,6 +1314,13 @@
         "failed": "The update to v{{version}} did not complete — still running v{{current}}. See the logs for details."
       }
     },
+    "startup": {
+      "title": "Startup",
+      "description": "What happens when the computer starts.",
+      "openOnLogin": "Open Church Hub when the computer starts",
+      "openOnLoginDescription": "A presentation set to start with Church Hub then begins on its own.",
+      "error": "The startup setting could not be changed"
+    },
     "about": {
       "title": "About",
       "description": "Application version and update information",

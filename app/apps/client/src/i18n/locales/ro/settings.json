@@ -1319,6 +1319,13 @@
         "failed": "Actualizarea la v{{version}} nu s-a finalizat — rulează în continuare v{{current}}. Detalii în loguri."
       }
     },
+    "startup": {
+      "title": "Pornire",
+      "description": "Ce se întâmplă când pornește calculatorul.",
+      "openOnLogin": "Deschide Church Hub la pornirea calculatorului",
+      "openOnLoginDescription": "O prezentare setată să pornească odată cu Church Hub începe apoi singură.",
+      "error": "Setarea de pornire nu a putut fi schimbată"
+    },
     "about": {
       "title": "Despre",
       "description": "Versiunea aplicației și informații despre actualizări",
