@@ -10,7 +10,12 @@
     "signIn": "Autentificare",
     "back": "Înapoi",
     "noAccounts": "Nu s-a găsit niciun cont. Repornește Church Hub sau contactează administratorul.",
-    "failed": "Autentificarea a eșuat. Verifică conexiunea și încearcă din nou."
+    "failed": "Autentificarea a eșuat. Verifică conexiunea și încearcă din nou.",
+    "enterCode": "Introdu codul afișat pe calculatorul cu Church Hub",
+    "codeLabel": "Cod de conectare",
+    "codeHint": "Acest cont nu are parolă. Pe calculatorul cu Church Hub a apărut acum un cod din 6 cifre.",
+    "wrongCode": "Cod greșit sau expirat. Încearcă din nou sau cere un cod nou.",
+    "newCode": "Cere un cod nou"
   },
   "password": {
     "label": "Parolă",
@@ -35,5 +40,12 @@
     "fullAccess": "Acces complet la toate funcțiile",
     "noPermissions": "Nicio permisiune atribuită",
     "close": "Închide"
+  },
+  "pairing": {
+    "title": "Conectare de pe alt dispozitiv",
+    "description": "Cineva de pe {{ip}} vrea să intre în contul {{name}}. Spune-i acest cod:",
+    "expires": "Expiră în {{seconds}} s",
+    "warning": "Nu-l da mai departe dacă nu știi cine l-a cerut.",
+    "dismiss": "Închide"
   }
 }

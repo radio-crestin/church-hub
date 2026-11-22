@@ -15,6 +15,8 @@ import { wsLogger } from '../utils/fileLogger'
 export interface WebSocketData {
   clientId: string
   displayId?: number
+  /** Opened from this machine (loopback peer): the desktop app's own windows. */
+  local?: boolean
 }
 
 export type PresentationMessage = {
@@ -131,6 +133,22 @@ interface ClientConnection {
   lastActivity: number
 }
 const clients = new Map<string, ClientConnection>()
+
+/**
+ * Sends a message only to the sockets opened from this machine, for what a
+ * LAN client must never see (a login pairing code).
+ */
+export function sendToLocalClients(message: string) {
+  for (const [clientId, conn] of clients) {
+    if (!conn.ws.data.local) continue
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
 
 // Track active screen share state
 interface ActiveScreenShare {
