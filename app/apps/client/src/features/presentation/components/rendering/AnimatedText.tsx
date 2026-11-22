@@ -1,22 +1,18 @@
-import { memo, useLayoutEffect, useMemo, useRef } from 'react'
+import { memo, useMemo } from 'react'
 
+import { TextLayer, type TextLayerContent } from './TextLayer'
 import {
   type SlideAnimationConfig,
   useSlideAnimation,
 } from './useSlideAnimation'
-import { calculateFontSize } from './utils/calculateFontSize'
-import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
-import { getTextStyles } from './utils/getTextStyles'
 import { normalizeText } from './utils/normalizeText'
 import { compressLines } from './utils/textProcessing'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
-import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type {
   TextStyle,
   TextStyleRange,
   AnimationConfig as TypesAnimationConfig,
 } from '../../types'
-import { applyStylesToText } from '../../utils/applyStylesToText'
 
 // Convert types animation config to hook animation config
 function toAnimationConfig(
@@ -158,7 +154,9 @@ function arePropsEqual(
 
 /**
  * Simplified animated text component.
- * Handles text rendering with auto-scaling and slide transition animations.
+ * Handles text rendering with auto-scaling and slide transition animations:
+ * on a slide change the old text fades out on its own layer while the new
+ * text fades in, so the new slide shows at once.
  * Memoized to prevent re-renders that would clear text selection.
  */
 const AnimatedTextInner = memo(function AnimatedText({
@@ -179,29 +177,37 @@ const AnimatedTextInner = memo(function AnimatedText({
   contentScale = 1,
   styleAnchorOffset,
 }: AnimatedTextProps) {
-  const textRef = useRef<HTMLDivElement>(null)
-  const measureRef = useRef<HTMLDivElement>(null)
-  const fontsLoadedVersion = useFontsLoadedVersion()
-
   // Normalize text content and apply line compression if enabled
-  const normalizedText = useMemo(() => {
-    let text = attachRepetitionMarkers(normalizeText(content, isHtml))
+  const text = useMemo(() => {
+    let normalized = attachRepetitionMarkers(normalizeText(content, isHtml))
 
     // Apply line compression if enabled in style
     if (style.compressLines) {
-      text = compressLines(text, style.lineSeparator ?? 'space')
+      normalized = compressLines(normalized, style.lineSeparator ?? 'space')
     }
 
-    return text
+    return normalized
   }, [content, isHtml, style.compressLines, style.lineSeparator])
 
-  // Use the slide animation hook
-  const {
-    displayContent,
-    style: animationStyle,
-    shouldRender,
-  } = useSlideAnimation({
-    content: normalizedText,
+  // Everything that decides how the text looks travels with it: a slide that
+  // leaves keeps its own size, box and inline runs while the next slide, maybe
+  // in the first-slide / last-slide layout, comes in with its own.
+  const layerContent = useMemo<TextLayerContent>(
+    () => ({
+      text,
+      style,
+      width,
+      height,
+      left,
+      top,
+      contentScale,
+      styleRanges,
+    }),
+    [text, style, width, height, left, top, contentScale, styleRanges],
+  )
+
+  const layers = useSlideAnimation({
+    content: layerContent,
     contentKey,
     isVisible,
     animationIn: toAnimationConfig(animationIn),
@@ -210,169 +216,15 @@ const AnimatedTextInner = memo(function AnimatedText({
     slideTransitionIn: toAnimationConfig(slideTransitionIn),
   })
 
-  // While a slide transition plays, the hook keeps showing the OUTGOING text.
-  // Everything that decides how that text looks has to travel with it: the
-  // incoming slide's size, box and inline runs belong to a different text, and
-  // applying them mid-transition resizes and repositions the words that are
-  // still fading out. This is what the operator sees as a flash — most visibly
-  // at the first and last slide, where the layout switches to the first-slide /
-  // last-slide screen config as well.
-  const showsCurrentText = displayContent === normalizedText
-  const currentRender = {
-    contentScale,
-    styleRanges,
-    style,
-    width,
-    height,
-    left,
-    top,
-  }
-  const previousRenderRef = useRef(currentRender)
-  if (showsCurrentText) {
-    previousRenderRef.current = currentRender
-  }
-  const shown = showsCurrentText ? currentRender : previousRenderRef.current
-  const displayScale = shown.contentScale
-  const displayRanges = shown.styleRanges
-  const displayStyle = shown.style
-
-  // Get the final display content - use styled HTML if available
-  // Must be before any early returns to maintain hooks order
-  const finalDisplayContent = useMemo(() => {
-    if (!displayRanges || displayRanges.length === 0) return null
-    // Apply styles to the display content
-    return applyStylesToText(
-      typeof displayContent === 'string' ? displayContent : '',
-      displayRanges,
-    )
-  }, [displayContent, displayRanges])
-
-  // Calculate font size synchronously before paint
-  useLayoutEffect(() => {
-    if (!measureRef.current || !textRef.current || !shouldRender) return
-
-    const text = typeof displayContent === 'string' ? displayContent : ''
-    if (!text) return
-
-    const minFontSize = displayStyle.minFontSize ?? 12
-    const fontSize = calculateFontSize(
-      measureRef.current,
-      text,
-      shown.width,
-      shown.height,
-      displayStyle.maxFontSize,
-      minFontSize,
-    )
-
-    // The fit measures plain text at the screen's own size; the slide's scale
-    // and any enlarged run are applied on top of it and can push the words off
-    // the top and bottom of the box, where they are cut off. Holding the scaled
-    // size to what the rendered markup still fits into is what keeps the text on
-    // the screen.
-    textRef.current.style.fontSize = `${fitFontSizeToBounds(
-      measureRef.current,
-      text,
-      finalDisplayContent,
-      fontSize * displayScale,
-      shown.width,
-      shown.height,
-      minFontSize,
-    )}px`
-  }, [
-    displayContent,
-    finalDisplayContent,
-    shown.width,
-    shown.height,
-    displayStyle.maxFontSize,
-    displayStyle.minFontSize,
-    // Everything below changes how wide the text measures, so the fit has to be
-    // redone when any of it does.
-    displayStyle.bold,
-    displayStyle.italic,
-    displayStyle.fontFamily,
-    displayStyle.lineHeight,
-    displayRanges,
-    displayScale,
-    shouldRender,
-    // A web font that finished loading measures differently from its fallback.
-    fontsLoadedVersion,
-  ])
-
-  if (!shouldRender) {
-    return null
-  }
-
-  const containerStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: shown.left,
-    top: shown.top,
-    width: shown.width,
-    height: shown.height,
-    overflow: 'hidden',
-    ...animationStyle,
-  }
-
-  const textStyles: React.CSSProperties = {
-    ...getTextStyles(displayStyle),
-    // Already carries the slide's own scale so the very first paint — before
-    // the fit runs — is never the plain screen size.
-    fontSize: `${displayStyle.maxFontSize * displayScale}px`, // Refined by useLayoutEffect
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems:
-      displayStyle.verticalAlignment === 'top'
-        ? 'flex-start'
-        : displayStyle.verticalAlignment === 'bottom'
-          ? 'flex-end'
-          : 'center',
-    justifyContent:
-      displayStyle.alignment === 'center'
-        ? 'center'
-        : displayStyle.alignment === 'right'
-          ? 'flex-end'
-          : 'flex-start',
-    whiteSpace: 'pre-wrap',
-    wordWrap: 'break-word',
-  }
-
-  // Hidden element for measurement (same font properties as display)
-  const measureStyle: React.CSSProperties = {
-    ...getTextStyles(displayStyle),
-    position: 'absolute',
-    visibility: 'hidden',
-    pointerEvents: 'none',
-    width: 'auto',
-    height: 'auto',
-    whiteSpace: 'pre-wrap',
-    wordWrap: 'break-word',
-  }
-
-  return (
-    <div style={containerStyle}>
-      {/* Hidden measurement element */}
-      <div ref={measureRef} style={measureStyle} aria-hidden="true" />
-      {/* Visible text - use dangerouslySetInnerHTML if we have styled content */}
-      {finalDisplayContent ? (
-        <div
-          ref={textRef}
-          style={textStyles}
-          data-style-anchor={styleAnchorOffset}
-        >
-          {/* Wrap in span to prevent flexbox from treating inline elements as flex items */}
-          <span dangerouslySetInnerHTML={{ __html: finalDisplayContent }} />
-        </div>
-      ) : (
-        <div
-          ref={textRef}
-          style={textStyles}
-          data-style-anchor={styleAnchorOffset}
-        >
-          {displayContent}
-        </div>
-      )}
-    </div>
-  )
+  return layers.map((layer) => (
+    <TextLayer
+      key={layer.id}
+      content={layer.content}
+      animationStyle={layer.style}
+      styleAnchorOffset={styleAnchorOffset}
+      leaving={layer.leaving}
+    />
+  ))
 }, arePropsEqual)
 
 // Export with the expected name

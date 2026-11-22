@@ -10,9 +10,9 @@ export interface SlideAnimationConfig {
   easing?: string
 }
 
-interface UseSlideAnimationOptions {
+interface UseSlideAnimationOptions<T> {
   /** Current content to display */
-  content: React.ReactNode
+  content: T
   /** Unique key that changes when content changes */
   contentKey: string
   /** Whether the element should be visible */
@@ -27,13 +27,21 @@ interface UseSlideAnimationOptions {
   slideTransitionIn?: SlideAnimationConfig
 }
 
-interface SlideAnimationState {
-  /** The content to actually render (may be cached old content during exit) */
-  displayContent: React.ReactNode
-  /** CSS styles to apply for current animation phase */
+/** One copy of the element on screen: the current slide, or the one leaving. */
+export interface SlideLayer<T> {
+  /** Stable for the layer's life, so its DOM (and fitted text) survives as it leaves */
+  id: number
+  content: T
+  /** CSS styles for the layer's animation phase */
   style: React.CSSProperties
-  /** Whether the element should render at all */
-  shouldRender: boolean
+  /** The previous slide, fading out under the new one */
+  leaving: boolean
+}
+
+interface LeavingLayer<T> {
+  id: number
+  content: T
+  config: SlideAnimationConfig
 }
 
 const DEFAULT_ANIMATION_DURATION = CALM_TRANSITIONS.animationIn.duration
@@ -52,7 +60,11 @@ function toCssTransition(config: SlideAnimationConfig): string {
  * - 'mounting': Element rendered with START styles, waiting for next frame
  * - 'entering': Transitioning from START to END styles
  * - 'visible': Fully visible, idle state
- * - 'exiting': Transitioning from END to START styles
+ * - 'exiting': Transitioning from END to START styles (presentation hidden)
+ *
+ * A slide change crossfades: the old slide becomes a leaving layer that plays
+ * its exit while the new one enters at once, so the new slide starts showing
+ * right away and there is never a blank gap between slides.
  */
 type AnimationPhase = 'hidden' | 'mounting' | 'entering' | 'visible' | 'exiting'
 
@@ -109,14 +121,15 @@ function getAnimationStyles(animType: AnimationType): {
  * Animation scenarios:
  * 1. Presentation starts (becameVisible): Use animationIn
  * 2. Presentation ends (becameHidden): Use animationOut
- * 3. Slide changes (contentChanged while visible): Use slideTransitionOut/In
+ * 3. Slide changes (contentChanged while visible): the old slide leaves with
+ *    slideTransitionOut while the new one enters with slideTransitionIn
  *
  * The key insight is that CSS transitions don't work on initial mount -
  * there's no previous state to transition from. We solve this by:
  * 1. First render: Apply START styles (opacity: 0, etc.)
  * 2. Next frame: Apply END styles with transition
  */
-export function useSlideAnimation({
+export function useSlideAnimation<T>({
   content,
   contentKey,
   isVisible,
@@ -124,10 +137,12 @@ export function useSlideAnimation({
   animationOut,
   slideTransitionOut,
   slideTransitionIn,
-}: UseSlideAnimationOptions): SlideAnimationState {
+}: UseSlideAnimationOptions<T>): SlideLayer<T>[] {
   // Cache content for exit animations (show old content while animating out)
-  const cachedContentRef = useRef<React.ReactNode>(content)
+  const cachedContentRef = useRef<T>(content)
   const cachedKeyRef = useRef(contentKey)
+  const layerIdRef = useRef(0)
+  const [leaving, setLeaving] = useState<LeavingLayer<T> | null>(null)
 
   // Track previous visibility state. An element starts out hidden, so one that
   // mounts already visible (the first slide after an empty screen, or a new
@@ -146,6 +161,7 @@ export function useSlideAnimation({
 
   // Refs for timeouts and animation frames
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const leavingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rafRef = useRef<number | null>(null)
 
   // Get animation configs with fallbacks
@@ -171,6 +187,10 @@ export function useSlideAnimation({
 
   // Clear pending timers
   const clearTimers = useCallback(() => {
+    if (leavingTimeoutRef.current) {
+      clearTimeout(leavingTimeoutRef.current)
+      leavingTimeoutRef.current = null
+    }
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
@@ -224,6 +244,8 @@ export function useSlideAnimation({
       clearTimers()
     }
 
+    if (becameVisible || becameHidden) setLeaving(null)
+
     if (becameVisible) {
       // Presentation starting - update content and animate in
       cachedContentRef.current = content
@@ -253,40 +275,34 @@ export function useSlideAnimation({
         }, exitDuration)
       }
     } else if (contentChanged) {
-      // Slide change - keep OLD content during exit, then show NEW content
+      // Slide change - crossfade: the old content leaves on its own layer
+      // while the new content enters at once
       const exitConfig = getExitAnimation(true)
       const enterConfig = getEnterAnimation(true)
-      setCurrentExitConfig(exitConfig)
-
       const exitType = exitConfig.type ?? 'fade'
       const exitDuration =
         exitConfig.duration ?? DEFAULT_SLIDE_TRANSITION_DURATION
-      const enterType = enterConfig.type ?? 'fade'
 
-      if (exitType === 'none' && enterType === 'none') {
-        // No animations - instant swap
-        cachedContentRef.current = content
-        cachedKeyRef.current = contentKey
-        setPhase('visible')
-      } else if (exitType === 'none') {
-        // Skip exit, just update content and enter
-        cachedContentRef.current = content
-        cachedKeyRef.current = contentKey
-        startEnterAnimation(enterConfig)
+      if (exitType === 'none') {
+        setLeaving(null)
       } else {
-        // Full exit then enter sequence
-        // DON'T update content yet - keep showing old content during exit
-        setPhase('exiting')
-
-        timeoutRef.current = setTimeout(() => {
-          // NOW update to new content after exit completes
-          cachedContentRef.current = content
-          cachedKeyRef.current = contentKey
-          startEnterAnimation(enterConfig)
-        }, exitDuration)
+        setLeaving({
+          id: layerIdRef.current,
+          content: cachedContentRef.current,
+          config: exitConfig,
+        })
+        leavingTimeoutRef.current = setTimeout(
+          () => setLeaving(null),
+          exitDuration,
+        )
       }
-    } else if (isVisible && phase === 'visible') {
-      // Content updated without key change (e.g., clock) - just update cached content
+      layerIdRef.current++
+      cachedContentRef.current = content
+      cachedKeyRef.current = contentKey
+      startEnterAnimation(enterConfig)
+    } else if (isVisible && cachedKeyRef.current === contentKey) {
+      // Content updated without key change (e.g., clock, highlights) - just
+      // update cached content, so a slide that leaves takes its latest look
       cachedContentRef.current = content
     }
 
@@ -313,12 +329,6 @@ export function useSlideAnimation({
   // This happens on the first render after isVisible changes from false to true,
   // before the effect has a chance to update the phase state.
   const isBecomingVisible = isVisible && phase === 'hidden'
-
-  // Detect if content is about to change (contentKey changed but effect hasn't run yet)
-  // This prevents a flash where new content briefly shows at full opacity before
-  // the effect runs and starts the exit animation.
-  const isContentAboutToChange =
-    isVisible && phase === 'visible' && contentKey !== cachedKeyRef.current
 
   // Generate CSS styles based on current phase
   const getStyle = (): React.CSSProperties => {
@@ -367,26 +377,34 @@ export function useSlideAnimation({
   // Also render if we're becoming visible (before effect updates phase)
   const shouldRender = phase !== 'hidden' || isBecomingVisible
 
-  // When in visible phase and not animating, use current content directly.
-  // This ensures content updates are reflected immediately without extra render cycles.
-  // During animations (mounting, entering, exiting), use the cached content to preserve
-  // the correct content for the animation (old content during exit, new during enter).
-  // Special cases:
-  // - When becoming visible: use current content (cached may be stale/empty)
-  // - When content about to change: use cached content (old) to prevent flash
-  const displayContent = isBecomingVisible
-    ? content
-    : isContentAboutToChange
-      ? cachedContentRef.current
-      : phase === 'visible'
-        ? content
-        : cachedContentRef.current
+  // The current content is shown live, so edits and highlights apply at once.
+  // The cached content is shown while it exits (presentation hidden), and on
+  // the render where the key has changed but the effect hasn't run yet, so the
+  // new slide never flashes in at full opacity before its crossfade starts.
+  const showsLiveContent =
+    isBecomingVisible ||
+    (phase !== 'exiting' && cachedKeyRef.current === contentKey)
 
-  const style = getStyle()
-
-  return {
-    displayContent,
-    style,
-    shouldRender,
+  const layers: SlideLayer<T>[] = []
+  if (leaving) {
+    const leavingStyles = getAnimationStyles(leaving.config.type ?? 'fade')
+    layers.push({
+      id: leaving.id,
+      content: leaving.content,
+      style: {
+        ...leavingStyles.start,
+        transition: toCssTransition(leaving.config),
+      },
+      leaving: true,
+    })
   }
+  if (shouldRender) {
+    layers.push({
+      id: layerIdRef.current,
+      content: showsLiveContent ? content : cachedContentRef.current,
+      style: getStyle(),
+      leaving: false,
+    })
+  }
+  return layers
 }

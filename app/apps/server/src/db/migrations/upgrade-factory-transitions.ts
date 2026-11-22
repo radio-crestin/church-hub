@@ -1,7 +1,7 @@
 import type { Database } from 'bun:sqlite'
 import { calmTransitions } from '../../service/presentation/default-design/calmTransitions'
 
-const MIGRATION_KEY = 'calm_factory_transitions_v1'
+const MIGRATION_KEY = 'factory_transitions_v2'
 const DEBUG = process.env.DEBUG === 'true'
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
@@ -15,14 +15,36 @@ type TransitionKey = keyof ReturnType<typeof calmTransitions>
 
 /**
  * Every transition earlier factory designs shipped, as "type/duration": the
- * old fades, the instant cuts (0 ms or none) and the livestream slide-in.
- * A missing slide transition is factory too.
+ * old fades, the instant cuts (0 ms or none), the livestream slide-in and the
+ * slow calm fades of v0.1.104 and before (T-112). A missing slide transition
+ * is factory too.
  */
 const OLD_FACTORY: Record<TransitionKey, string[]> = {
-  animationIn: ['fade/300', 'fade/0', 'none/0', 'slide-up/200'],
-  animationOut: ['fade/200', 'fade/250', 'fade/0', 'none/0', 'slide-down/150'],
-  slideTransitionIn: ['missing', 'fade/250', 'fade/0', 'none/0', 'none/250'],
-  slideTransitionOut: ['missing', 'fade/250', 'fade/0', 'none/0', 'none/250'],
+  animationIn: ['fade/300', 'fade/0', 'none/0', 'slide-up/200', 'fade/500'],
+  animationOut: [
+    'fade/200',
+    'fade/250',
+    'fade/0',
+    'none/0',
+    'slide-down/150',
+    'fade/400',
+  ],
+  slideTransitionIn: [
+    'missing',
+    'fade/250',
+    'fade/0',
+    'none/0',
+    'none/250',
+    'fade/400',
+  ],
+  slideTransitionOut: [
+    'missing',
+    'fade/250',
+    'fade/0',
+    'none/0',
+    'none/250',
+    'fade/300',
+  ],
 }
 
 function signature(transition: Transition): string {
@@ -37,7 +59,7 @@ function hasFactoryTransitions(element: Record<string, unknown>): boolean {
   )
 }
 
-/** Gives every element still on factory transitions the calm ones; true if any changed. */
+/** Gives every element still on factory transitions the current ones; true if any changed. */
 function upgradeConfig(config: Record<string, unknown>): boolean {
   let changed = false
   for (const element of Object.values(config)) {
@@ -52,9 +74,9 @@ function upgradeConfig(config: Record<string, unknown>): boolean {
 
 /**
  * Moves the screens' text elements from the transitions earlier factory
- * designs shipped (quick blinks, hard cuts) to the calm factory fades
- * (default-design/calmTransitions.ts). Transitions someone changed in the
- * screen editor keep their values. Runs once.
+ * designs shipped (quick blinks, hard cuts, slow calm fades) to the current
+ * factory fades (default-design/calmTransitions.ts). Transitions someone
+ * changed in the screen editor keep their values. Runs once per version.
  */
 export function upgradeFactoryTransitions(db: Database): void {
   const applied = db
@@ -95,5 +117,5 @@ export function upgradeFactoryTransitions(db: Database): void {
     log('error', `Failed: ${error}`)
     throw error
   }
-  log('info', `Calm transitions on ${upgraded} screen content config(s)`)
+  log('info', `Factory transitions on ${upgraded} screen content config(s)`)
 }

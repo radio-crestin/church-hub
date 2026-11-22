@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { createLogger } from '~/utils/logger'
-import { useContentTypeHandoff } from './useContentTypeHandoff'
+import {
+  type ShownContent,
+  useContentTypeHandoff,
+} from './useContentTypeHandoff'
 import { usePresentationState } from './usePresentationState'
 import type { NextSlideData } from '../components/rendering/types'
 import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/calculateMaxExitAnimationDuration'
@@ -83,6 +86,11 @@ interface UsePresentationContentResult {
   isVisible: boolean
   isExitAnimating: boolean
   nextSlideData: NextSlideData | undefined
+  /**
+   * The previous content type's content while it fades out under the new one
+   * (a song, then a verse); drawn by ScreenContentLayers. Null otherwise.
+   */
+  leaving: ShownContent<ContentData, NextSlideData | undefined> | null
   presentationState: ReturnType<typeof usePresentationState>['data']
 }
 

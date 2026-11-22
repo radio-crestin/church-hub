@@ -6,18 +6,18 @@ import {
 } from '@playwright/test'
 
 /**
- * Calm factory transitions (T-112): every text element of every new screen
- * fades softly, eased at both ends, and the projected screen plays them so on
- * a verse change: the old verse eases out (300 ms), the new one eases in
- * (400 ms).
+ * Factory transitions (T-112, made quick in T-158): every text element of
+ * every new screen fades, eased at both ends, and the projected screen plays
+ * them so on a verse change: the old verse eases out while the new one eases
+ * in (250 ms each, at the same time).
  */
 
 const SCREEN_TYPES = ['primary', 'stage', 'livestream', 'kiosk'] as const
 const CALM = {
-  animationIn: 500,
-  animationOut: 400,
-  slideTransitionIn: 400,
-  slideTransitionOut: 300,
+  animationIn: 250,
+  animationOut: 200,
+  slideTransitionIn: 250,
+  slideTransitionOut: 250,
 }
 const VERSES = [
   'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu.',
@@ -169,8 +169,7 @@ test.describe('Calm slide transitions', () => {
     expect((await presentVerse(request, 1)).ok()).toBeTruthy()
     const seen = (await transitions).join(' | ')
 
-    expect(seen).toContain('300ms ease-in-out')
-    expect(seen).toContain('400ms ease-in-out')
+    expect(seen).toContain('250ms ease-in-out')
     await expect(page.getByText(VERSES[1]).last()).toBeVisible()
     await expect(page.getByText(VERSES[0])).toHaveCount(0)
   })
@@ -195,7 +194,7 @@ test.describe('Calm slide transitions', () => {
     expect(verse.at(-1)).toBe(1)
   })
 
-  test('a song, then a verse: the song fades out before the verse fades in', async ({
+  test('a song, then a verse: the song fades out as the verse fades in', async ({
     page,
     request,
   }) => {
@@ -233,9 +232,11 @@ test.describe('Calm slide transitions', () => {
       frames.some(([, verse]) => isFading(verse)),
       'verse fades in',
     ).toBe(true)
+    // A crossfade (T-158): the verse comes in while the song leaves, with no
+    // blank screen between them.
     expect(
-      frames.every(([song, verse]) => song === 0 || verse === 0),
-      'never both on screen',
+      frames.some(([song, verse]) => isFading(song) && isFading(verse)),
+      'they cross',
     ).toBe(true)
     expect(frames.at(-1)).toEqual([0, 1])
 

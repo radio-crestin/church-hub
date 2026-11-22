@@ -42,7 +42,7 @@ function hasElement<K extends string>(
   return !!config && key in config
 }
 
-interface ScreenContentProps {
+export interface ScreenContentProps {
   screen: ScreenWithConfigs
   contentType: ContentType
   contentData: ContentData | null
