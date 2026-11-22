@@ -57,6 +57,8 @@ The user's review (22/11): «make sure that each client can modify only what's a
 - **With the PC off**, phones keep full control (D3). They read directly from the bucket, and write through the same service, under the same checks.
 - **Per-request cost stays small**: the service is called **only for writes**, and reads never touch a Worker. On Cloudflare the central state is **D1** (SQLite: 5M row reads and 100k row writes a day free). Self-hosted, the same Hono app runs on Bun with a SQLite file. Both use the same drizzle schema.
 - **Any S3-compatible storage** works, as long as it allows public read without listing. R2 is the default: no egress fees, and the first 10 GB are free.
+  - The spike checked it with a standard AWS bucket policy (anonymous `s3:GetObject` on `churches/*` and `libraries/*`, nothing else) on SeaweedFS: anonymous GET there 200, elsewhere 403, listing 403 with or without a prefix (`app/spikes/cloud-sync/scripts/publicRead.py`).
+  - For self-hosters: MinIO stopped publishing binaries and images in Oct 2025; SeaweedFS, Garage or a MinIO community build (`pgsty/minio`) work.
 
 ## 4. Central state and bucket layout
 
@@ -140,13 +142,27 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - The wasm engine is about 0.4 MB compressed and cached by the service worker.
   - FTS5 and `normalizeForIndex` give the same search results as the desktop, in milliseconds, offline.
 - **Presenting**: a phone can run a presentation and show it on its own screen, or on any display that opens the phone's presenter page. Displays and OBS physically wired to the PC need the PC on.
-- To be measured in the spike (step 1): bundle size, how much of the service layer runs unchanged in the browser, and how long the first sync of 3,000 songs and 27k songs takes.
+- **Measured in the spike** (T-170, `app/spikes/cloud-sync/`):
+  - **The service layer runs unchanged.** In a Worker, sqlite-wasm's oo1 API is synchronous, so a small shim of `bun:sqlite` on it runs the server's synchronous code and drizzle's `bun-sqlite` driver as they are: no async rewrite. Swapped: `db/connection.ts` and the seed fixtures; shimmed: two `node:crypto` calls; stubbed: telemetry.
+  - **Size**: the worker (the server's code included) is 175 KB gzipped, plus 406 KB for `sqlite3.wasm`.
+  - **OPFS**: each autocommit costs 3 to 10 ms, whatever the pragmas. So the first sync is built in memory and written to OPFS in one `importDb`; later edits write through OPFS directly (one song edit: 30 to 40 ms).
+  - **Times** (headless Chromium 147 on a desktop CPU; phones pending):
+
+    | | 3,000 songs | 26,386 songs |
+    |---|---|---|
+    | first sync, download to searchable | 3.7 s | 18 s |
+    | of which applying the snapshot / FTS5 index | 1.1 s / 0.4 s | 9.8 s / 3.9 s |
+    | database on OPFS / wasm memory | 13.5 MB / 25 MB | 95 MB / 157 MB |
+    | app start after a sync (open + migrations) | 2.3 s | 4.1 s |
+    | search, median / max of 8 queries | 34 / 64 ms | 74 / 94 ms |
+  - **Fixed on the way**, for the PC too: a synced song was re-indexed one by one, each DELETE scanning the FTS table (`song_id` is UNINDEXED); now in batches of 500. Bun's statement cache (20 SQL strings, never evicted) was full after the migrations, so every later `db.query()` re-prepared; raised to 1,000. A first sync on Bun: 3,000 songs 12.4 → 1.3 s, 26k 50.8 → 9.7 s.
+  - A church's own library (hundreds to a few thousand songs) syncs in seconds. The 26k-song catalog takes 18 s even on a desktop CPU, which confirms keeping it in shards loaded on demand (section 9), not in a church's snapshot.
 
 ## 9. Compression, download size, the shared library
 
 - **Compression**: gzip everywhere, through `CompressionStream` / `DecompressionStream`, which is native in browsers, Bun and Workers. Lyrics shrink to about 25 to 30 %.
-- **A church's first sync**: one snapshot of about 0.2 to 1 MB gzipped. After that, segments of a few KB.
-- **The curated catalog** (27k songs, about 7 MB gzipped) is split into hash-named shards; an update downloads only the shards that changed. The FTS index is built on the device in a Web Worker, not downloaded.
+- **A church's first sync**: one snapshot, about 0.37 KB gzipped per song (1.95 KB raw): 1.1 MB for 3,000 songs (measured in the spike). After that, segments of a few KB.
+- **The curated catalog** (26k songs, 9.5 MB gzipped as one snapshot) is split into hash-named shards; an update downloads only the shards that changed. The FTS index is built on the device in a Web Worker, not downloaded.
 - **Everything shared is a song source** (the T-120 format) under `libraries/`:
   - **The Church Hub Library** (curated by us).
   - **A church's shared set**: the whole library or chosen categories, unlisted by default or listed in the catalog. Publishing goes through the service; the church needs no S3 keys of its own.
@@ -160,9 +176,9 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
 
 ## 10. Plan (each step a task with its own e2e)
 
-1. **Spike** (T-170, about 1 day):
-   - The service layer + drizzle on sqlite-wasm/OPFS in a Web Worker on a phone: size, search speed, first sync.
-   - Public read without listing on R2 and MinIO; D1 latency for a write with its permission check.
+1. **Spike** (T-170, done; results in section 8):
+   - The service layer + drizzle on sqlite-wasm/OPFS in a Web Worker: size, search speed, first sync.
+   - Public read without listing, on a local S3 server (section 3). Conditional PUT dropped: the service is the only writer. D1 latency is left to T-171, which deploys the service.
 2. **S3 transport + Hono sync service** (T-171):
    - `/sync/*` routes in `churchhub-backend`: register (guest), devices, changes, rotate the path.
    - **The central state** (D1 / SQLite, drizzle): users, roles, permissions, devices, a version per row. **Every change is authorized against the user's permissions and versioned before it is published**; 403 and 409 answers are handled by the client.
