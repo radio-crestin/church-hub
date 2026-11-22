@@ -6,7 +6,7 @@
   "actions": {
     "create": "Program Nou",
     "save": "Salveaza",
-    "delete": "Sterge",
+    "delete": "Șterge",
     "back": "Inapoi la Programe",
     "addItem": "Adauga",
     "importToQueue": "Adauga in prezentare",
@@ -14,7 +14,7 @@
     "loadFromFile": "Incarca din Fisier",
     "importFromFile": "Importa",
     "editAsText": "Editeaza ca Text",
-    "cancel": "Anuleaza",
+    "cancel": "Anulează",
     "expandAll": "Extinde tot",
     "collapseAll": "Restrange tot",
     "rename": "Redenumeste",
@@ -182,8 +182,8 @@
     "errorNoTranslation": "Nicio traducere biblică selectată"
   },
   "modal": {
-    "deleteTitle": "Sterge Programul",
-    "deleteMessage": "Esti sigur ca vrei sa stergi acest program? Aceasta actiune nu poate fi anulata.",
+    "deleteTitle": "Șterge programul",
+    "deleteMessage": "Ești sigur că vrei să ștergi acest program? Această acțiune nu poate fi anulată.",
     "importTitle": "Importa Program",
     "unsavedChangesTitle": "Modificari Nesalvate",
     "unsavedChangesMessage": "Ai modificari nesalvate. Esti sigur ca vrei sa parasesti aceasta pagina?",
@@ -199,7 +199,7 @@
     "createTitle": "Program Nou",
     "scheduleName": "Numele programului",
     "create": "Creeaza",
-    "cancel": "Anuleaza",
+    "cancel": "Anulează",
     "createNew": "Creeaza program nou",
     "searchSchedules": "Cauta programe...",
     "addedToSchedules_one": "Cantarea a fost adaugata in {{count}} program",
@@ -248,7 +248,7 @@
   },
   "contextMenu": {
     "edit": "Editeaza",
-    "delete": "Sterge",
+    "delete": "Șterge",
     "changeSong": "Schimba cantarea",
     "editKeyLine": "Editeaza gama",
     "missingContent": "Continut negasit"
@@ -283,7 +283,7 @@
     "errors_few": "{{count}} erori gasite",
     "errors_other": "{{count}} de erori gasite",
     "save": "Aplica Modificarile",
-    "cancel": "Anuleaza",
+    "cancel": "Anulează",
     "copy": "Copiaza",
     "copied": "Copiat",
     "copyToClipboard": "Copiaza in clipboard",

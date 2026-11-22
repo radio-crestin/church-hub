@@ -934,7 +934,7 @@
         "folderLabel": "Backup folder",
         "noFolder": "No folder chosen",
         "chooseFolder": "Choose folder",
-        "clearFolder": "Clear",
+        "clearFolder": "Remove",
         "pathPlaceholder": "Absolute path, e.g. /Users/me/ChurchHubBackups",
         "folderHint": "Backups are named like the Drive ones and pruned to the same retention setting.",
         "button": "Back up locally",
@@ -960,6 +960,11 @@
           "browsing": "Showing backups in {{path}}",
           "stopBrowsing": "Back to the backup folder",
           "restore": "Restore this backup"
+        },
+        "clearModal": {
+          "title": "Stop backing up to this folder?",
+          "message": "Local backups will no longer be written to this folder. The backups already in it are kept.",
+          "confirm": "Remove folder"
         },
         "restoreModal": {
           "title": "Restore this backup?",

@@ -6,6 +6,7 @@ import type { ScreenBackgroundConfig } from '~/features/presentation'
 import { SongEditor, UnsavedChangesModal } from '~/features/songs/components'
 import { type LocalSlide } from '~/features/songs/components/SongSlideList'
 import {
+  type SongState,
   useDeleteSong,
   useDirtyState,
   useSong,
@@ -47,6 +48,16 @@ const defaultMetadata: SongMetadata = {
   keyLine: null,
   presentationOrder: null,
   sourceFilename: null,
+}
+
+/** A new song's form before anything is typed. */
+const emptySong: SongState = {
+  title: '',
+  categoryId: null,
+  tagIds: [],
+  slides: [],
+  metadata: defaultMetadata,
+  background: null,
 }
 
 export const Route = createFileRoute('/songs/$songId/edit')({
@@ -102,7 +113,7 @@ function SongEditorPage() {
   const [savedSongId, setSavedSongId] = useState<number | null>(null)
 
   // Track dirty state for save button and navigation blocking
-  const { setSavedState, isDirty } = useDirtyState()
+  const { setSavedState, isDirty } = useDirtyState(isNew ? emptySong : null)
   const hasUnsavedChanges = isDirty({
     title,
     categoryId,

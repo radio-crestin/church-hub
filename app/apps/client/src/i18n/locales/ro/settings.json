@@ -932,26 +932,26 @@
         "warningMessage": "Drive-ul tău mai are doar {{free}} liber, dar următorul backup are nevoie de aproximativ {{needed}}. Eliberează spațiu în Google Drive, altfel backupurile vor eșua."
       },
       "local": {
-        "title": "Copie locala",
-        "description": "Pastreaza o copie pe acest calculator sau pe un disc extern. Functioneaza fara cont Google, iar copiile automate se scriu mai intai aici.",
+        "title": "Copie locală",
+        "description": "Păstrează o copie pe acest calculator sau pe un disc extern. Funcționează fără cont Google, iar copiile automate se scriu mai întâi aici.",
         "folderLabel": "Folderul copiilor",
         "noFolder": "Niciun folder ales",
         "chooseFolder": "Alege folder",
-        "clearFolder": "Sterge",
-        "pathPlaceholder": "Cale absoluta, ex. /Users/eu/CopiiChurchHub",
-        "folderHint": "Copiile sunt denumite ca cele din Drive si sunt pastrate dupa aceeasi setare de retentie.",
-        "button": "Fa copie locala",
-        "backingUp": "Se creeaza copia...",
-        "lastBackup": "Ultima copie locala",
+        "clearFolder": "Elimină",
+        "pathPlaceholder": "Cale absolută, ex. /Users/eu/CopiiChurchHub",
+        "folderHint": "Copiile sunt denumite ca cele din Drive și sunt păstrate după aceeași setare de retenție.",
+        "button": "Fă o copie locală",
+        "backingUp": "Se creează copia...",
+        "lastBackup": "Ultima copie locală",
         "listTitle": "Copii locale",
-        "empty": "Nicio copie locala inca",
+        "empty": "Nicio copie locală încă",
         "pathSaved": "Folderul copiilor a fost salvat",
         "pathCleared": "Copiile locale au fost dezactivate",
         "toast": {
-          "success": "Copie locala creata",
-          "failed": "Copia locala a esuat",
-          "deleteSuccess": "Copie locala stearsa",
-          "deleteFailed": "Copia locala nu a putut fi stearsa",
+          "success": "Copie locală creată",
+          "failed": "Copia locală a eșuat",
+          "deleteSuccess": "Copie locală ștearsă",
+          "deleteFailed": "Copia locală nu a putut fi ștearsă",
           "restoreSuccess": "Copia a fost restaurată. Se reîncarcă...",
           "restoreFailed": "Copia nu a putut fi restaurată",
           "restoreNeedsRestart": "Copia a fost restaurată, dar baza de date nu a putut fi redeschisă. Te rugăm să repornești aplicația."
@@ -963,6 +963,11 @@
           "browsing": "Se afișează copiile din {{path}}",
           "stopBrowsing": "Înapoi la folderul copiilor",
           "restore": "Restaurează această copie"
+        },
+        "clearModal": {
+          "title": "Renunți la acest folder?",
+          "message": "Copiile locale nu se vor mai salva în acest folder. Copiile care sunt deja în el rămân.",
+          "confirm": "Elimină folderul"
         },
         "restoreModal": {
           "title": "Restaurezi această copie?",

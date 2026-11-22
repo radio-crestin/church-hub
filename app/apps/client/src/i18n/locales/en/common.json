@@ -38,6 +38,8 @@
     "save": "Save",
     "ok": "OK",
     "retry": "Retry",
+    "remove": "Remove",
+    "settings": "Settings",
     "done": "Done"
   },
   "errors": {
