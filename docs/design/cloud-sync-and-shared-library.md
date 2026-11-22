@@ -1,6 +1,6 @@
 # Cloud sync and a shared song library (T-072): design
 
-Status: **design decided and approved by the user on 2026-11-22** (section 11). Implementation is split into tasks (section 10).
+Status: **design decided and approved by the user on 2026-11-22, revised after their review** (section 11). Implementation is split into tasks (section 10).
 
 ## 1. What is asked
 
@@ -34,68 +34,85 @@ Measured on a real library: 27,320 songs come to **about 1.3 KB of raw data per 
 
 ## 3. The design in one picture
 
+The user's review (22/11): «make sure that each client can modify only what's allowed to modify.. so keep the state somehow centrally and by one update things are updated quick and the backend will verify if the user really has access to modify that».
+
 ```
-            PC online: live, direct                    PC off: through S3
- Phone ──── LAN WebSocket or WebRTC ──── Church PC      Phone ─┐
-   │        (signaling via /signal)        │                   │ writes: POST changes
-   │                                       │ uploads diffs     ▼
-   │                                       └──────────► Hono sync service (tiny; writes only)
-   │                                                           │ conditional PUT
-   │  reads: GET directly from S3 (secret path)                 ▼
-   └──────────────────────────────────────────────────► any S3-compatible bucket
-                                                         (R2, B2, AWS S3, MinIO…) public read, no listing
+            PC online: live, direct                     PC off
+ Phone ──── LAN WebSocket or WebRTC ──── Church PC      Phone
+   │        (signaling via /signal)        │              │
+   │                                       │ every write  │ every write
+   │                                       ▼              ▼
+   │                     Hono sync service: THE ONE WRITER, checks every change
+   │                       central state (D1 / SQLite): users, roles, permissions,
+   │                       devices, the version of every row, the church's seq
+   │                                       │ accepted changes → one segment
+   │  reads: GET directly (secret path)    ▼
+   └─────────────────────────────► any S3-compatible bucket (R2, B2, AWS S3, MinIO…)
+                                    public read, no listing
 ```
 
-- **The PC is the hub while it is on.** Phones talk to it directly: by the existing WebSocket on the LAN, or by **WebRTC** (signaling through the existing `/signal` routes) when they're elsewhere. This is live, as today, and nothing goes through the cloud on the critical path.
-- **The PC uploads the differences to S3 through the Hono service** as they happen, so the bucket always holds the current library.
-- **With the PC off**, phones **read directly from S3** and **write through the Hono service**. When the PC comes back, it pulls what they did, exactly as it does from Drive today.
-- **The service handles writes only**, and writes are rare (edits, not views). Reads, which are the bulk of the traffic, never touch a Worker. Per-request charges therefore stay negligible: the Workers free plan (100k requests a day) covers a lot of churches.
-- **Any S3-compatible storage** works. The only requirement is conditional writes (`If-Match` / `If-None-Match` on PUT), which R2, AWS S3, MinIO and B2 support, plus public read without listing. R2 is the default because it has no egress fees and its first 10 GB are free.
+- **The state is kept centrally**, in the Hono sync service. It is the **only writer** for every church: the PC and the phones alike send their changes to it, and **nothing reaches the bucket without passing its permission check**.
+- **One update, everyone sees it quickly**. A single `POST` is checked, versioned and published as one segment in the bucket. Every client picks it up on its next `head.json` poll, every few seconds while the app is open (an unchanged head costs a 304). Phones on the PC's LAN or WebRTC also get it live from the PC.
+- **The PC is still the hub while it is on**: phones talk to it directly, on the LAN or over **WebRTC** (signaling through the existing `/signal` routes), as today. Even then, its writes go through the service, so the central state and the bucket are always current.
+- **With the PC off**, phones keep full control (D3). They read directly from the bucket, and write through the same service, under the same checks.
+- **Per-request cost stays small**: the service is called **only for writes**, and reads never touch a Worker. On Cloudflare the central state is **D1** (SQLite: 5M row reads and 100k row writes a day free). Self-hosted, the same Hono app runs on Bun with a SQLite file. Both use the same drizzle schema.
+- **Any S3-compatible storage** works, as long as it allows public read without listing. R2 is the default: no egress fees, and the first 10 GB are free.
 
-## 4. Bucket layout (per church)
+## 4. Central state and bucket layout
+
+**Central state** (D1 on Cloudflare, SQLite when self-hosted), one set per church:
+
+| Table | Holds |
+|---|---|
+| `churches` | `churchId`, `pathSecret`, owner (Google `sub` + email, or none for a guest), `seq` |
+| `devices` | an HMAC hash of each device token, its user, its name, when it was revoked |
+| `users`, `roles`, `role_permissions`, `user_permissions` | the church's accounts and permissions, the same model as the app's `db/schema/auth.ts`, kept here as the authority once cloud sync is on |
+| `entities` | for every synced row: `type`, `uuid`, `version`, `updatedAt`, `updatedBy`, the content hash, and the fields a permission rule needs (for example, the schedule's author) |
+
+The lyrics and other content are not stored in the database; they live in the bucket. The database stays small: about 100 bytes per row.
+
+**Bucket** (public read, no listing):
 
 ```
 churches/<churchId>-<pathSecret>/head.json          tiny pointer: { seq, snapshot, segments[] }
 churches/<churchId>-<pathSecret>/snap/<seq>.json.gz full library at seq (the LibraryFile format the Drive sync already writes)
-churches/<churchId>-<pathSecret>/log/<seq>.json.gz  one change segment: the aggregates and tombstones written since seq-1
+churches/<churchId>-<pathSecret>/log/<seq>.json.gz  one accepted write: its changes, versions and author
 libraries/<sourceId>/manifest.json     shared and curated libraries (T-120 format), public
 libraries/<sourceId>/shards/<hash>.json.gz   about 500 songs each, named by content hash, cached forever
 ```
 
-- **A write** (`POST /sync/:church/changes`, from the PC or a phone) works like this:
-  1. The service writes `log/<seq+1>.json.gz`, guarded by `If-None-Match: *`.
-  2. It then updates `head.json`, guarded by `If-Match: <etag>`.
-  3. If two writers race, one gets a 412 and retries with the next `seq`. **No database and no Durable Object**: the bucket is the log.
-- **A read**:
-  1. GET `head.json` straight from the bucket's public URL (with `If-None-Match`, so an unchanged head costs a 304).
-  2. Then fetch only the segments after the device's own `seq`.
-  3. A new device fetches the snapshot plus the segments after it.
-- **Compaction**: past 200 segments (or nightly), the PC writes a new snapshot, points `head.json` at it, and the old segments expire through a bucket lifecycle rule.
-- **The merge stays on the client**, in the existing `mergeLibraries.ts` (last writer wins per aggregate, tombstones), so the PC and the phones resolve conflicts the same way.
+**A write** (`POST /sync/:church/changes`, from the PC or a phone) works like this:
+1. **Authenticate**: the token's hash is found in `devices` and isn't revoked; that gives the user. The PC's server token may act for the user who made the change on the PC, whom it has already logged in.
+2. **Authorize every change**: the user's permissions are mapped from the change, for example `song:update` to `songs.edit`, `schedule:delete` to `schedules.delete`, `role:update` to `users.manage`, using the same permission keys the app checks today. A change the user isn't allowed to make is **rejected with 403 and a reason**, and never reaches the bucket.
+3. **Check the version**: each change carries the `version` it was based on. If the central version is newer, someone else changed the row first, so the change is answered with **409 and the current version**. The client merges it with the existing `mergeLibraries.ts` (last writer wins per field group, or it asks the user) and sends it again.
+4. **Commit in one transaction**: the versions are bumped, `seq + 1` is assigned, then `log/<seq>.json.gz` is written and `head.json` is updated. One writer per church means no race, and no conditional PUT is needed.
+5. **Answer** with the new versions, so the client marks its pending changes as synced.
 
-## 5. Protection (D2 + Q-5: a secret in the path, tokens for writes, no client-side encryption)
+- Permission and role changes go through the same pipeline: changing a role requires `users.manage`. So the central rules can only be changed by someone allowed to change them.
+- **A read**: GET `head.json` straight from the bucket, then only the segments after the device's own `seq`. A new device fetches the snapshot plus the segments after it.
+- **Compaction**: past 200 segments (or nightly), the service writes a new snapshot from the last one plus the segments, points `head.json` at it, and the old segments expire through a bucket lifecycle rule.
+- **Offline phones** (no internet) queue their changes locally, and the UI hides what the user can't do. Once back online, each queued change is checked on arrival like any other; a rejected change is shown to the user and rolled back locally.
 
-The user (Q-5): «the buckets will be kind of public so make sure to have like a secret per server in the file path».
+## 5. Protection (D2 + Q-5 + review: a secret path for reads, the central check for writes)
+
 - **Reads: a public bucket with a secret per server in the path.**
   - The bucket allows public GET but **no listing**.
-  - Each church server lives under `churches/<churchId>-<pathSecret>/`, with `pathSecret` a random 256-bit value (base64url). Knowing the path is the read permission, so **reads never call the service**: a device GETs `head.json` and the segments straight from the bucket, or from its CDN domain.
+  - Each church server lives under `churches/<churchId>-<pathSecret>/`, with `pathSecret` a random 256-bit value (base64url). Knowing the path is the read permission, so **reads never call the service**.
   - The path travels only in the join link's `#` fragment, in the app's local storage and in local backups (section 6). It never goes into a server log or a query string.
-- **Writes: tokens.**
-  - Only the Hono service holds the bucket's write keys.
-  - The PC has a server token; each phone has its own device token, bound to an app user, so that user's role applies.
-  - The service keeps only HMAC hashes of the tokens (as `hashClientIp.ts` does) in a small KV namespace, `CHURCHES_KV`.
-- **Revoking a device** (from the PC's Settings):
-  - Its token stops writing right away.
-  - Because it still knows the path, the PC also **rotates the path secret**: it writes a fresh snapshot under a new `pathSecret`, hands the new path to the remaining devices on their next contact (through the service, by token), and the old prefix is deleted.
-- **Permissions while the PC is off**: the phone enforces the user's permissions in its UI. The PC re-checks every change it pulls against its author's permissions, rejects what that user wasn't allowed to do, and records the rejection in the conflict feed.
+- **Writes: only the service writes, and it checks every change** (section 4).
+  - Only the service holds the bucket's write keys.
+  - Device tokens are bound to a user; the service keeps only their HMAC hashes, as `hashClientIp.ts` does.
+- **Revoking a device or a user** (by someone with `users.manage`, on the PC or a phone):
+  - Their writes are refused from the next request.
+  - Because the device still knows the read path, the service **rotates the path secret**: it writes a fresh snapshot under a new `pathSecret`, and gives the new path to the remaining devices on their next write or check-in (`GET /sync/:church/path`, by token). The old prefix is deleted.
 - **Abuse**: the service's rate limiter and size caps per church, as in the feature-request routes.
-- Shared and curated libraries are public to read (`libraries/*`, no secret), because they are meant to be shared.
+- Shared and curated libraries are public to read (`libraries/*`, no secret), because they are meant to be shared. Publishing to them goes through the same service and its permission check.
 
 ## 6. Owner identity: Google sign-in or guest, kept in local backups
 
 The user (Q-5): «allow the user to login using Google and keep in our backend this reference and also that it's the owner.. but allow also as a guest and later login.. also in local backups make sure to keep this».
 - **Turning on cloud sync** on the PC offers two ways:
-  - **Continue with Google**: the existing Google OAuth broker in `churchhub-backend` (the one Drive already uses) returns the Google account id (`sub`) and email. The backend stores `church → { ownerGoogleSub, ownerEmail, createdAt }` in `CHURCHES_KV`, so that account is **the owner** of that church server.
+  - **Continue with Google**: the existing Google OAuth broker in `churchhub-backend` (the one Drive already uses) returns the Google account id (`sub`) and email. The backend stores `church → { ownerGoogleSub, ownerEmail, createdAt }` in the central `churches` table, so that account is **the owner** of that church server.
   - **Continue as a guest**: the church server is created with no owner. The PC can **sign in with Google later** to claim it, and the guest church becomes owned without moving any data.
 - **What the owner can do** that a token alone can't:
   - Recover the church on a new or reinstalled PC (sign in, pick the church, get a fresh server token and the current path).
@@ -145,13 +162,14 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
 
 1. **Spike** (T-170, about 1 day):
    - The service layer + drizzle on sqlite-wasm/OPFS in a Web Worker on a phone: size, search speed, first sync.
-   - Conditional PUT on R2 and MinIO.
+   - Public read without listing on R2 and MinIO; D1 latency for a write with its permission check.
 2. **S3 transport + Hono sync service** (T-171):
    - `/sync/*` routes in `churchhub-backend`: register (guest), devices, changes, rotate the path.
+   - **The central state** (D1 / SQLite, drizzle): users, roles, permissions, devices, a version per row. **Every change is authorized against the user's permissions and versioned before it is published**; 403 and 409 answers are handled by the client.
    - The `s3` transport in `runSyncCycle` next to `drive`, with the bucket layout and compaction.
    - Drive stays as a backup option (D4).
-3. **Owner identity** (T-172): Google sign-in as the owner (recorded in `CHURCHES_KV`), guest first and claim later, recovery on a new PC; the cloud identity in local backups.
-4. **Sync every table** (T-173, D3): uuids on the remaining root tables, triggers, merge collections, the permission re-check on the PC.
+3. **Owner identity** (T-172): Google sign-in as the owner (recorded in the central `churches` table), guest first and claim later, recovery on a new PC; the cloud identity in local backups.
+4. **Sync every table** (T-173, D3): uuids on the remaining root tables, triggers, merge collections, and a version per row for the central check.
 5. **Public page + join by QR code or link**, bound to the church server (T-168, together with the native apps of T-050).
 6. **WebRTC to the PC when it's online** (T-174) (signaling via `/signal`), next to the LAN WebSocket.
 7. **The phone runs the app on sqlite-wasm** (T-175) when the PC is unreachable: full control.
@@ -165,6 +183,7 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
 | D1 | Architecture | Any S3-compatible storage; a small Hono service for writes; reads directly from S3; WebRTC to the PC when it's on; join by QR code or link; a public page and native apps in a separate task |
 | D2 | Client-side encryption | No. Q-5: a public-read bucket with a secret per server in the path; tokens for writes |
 | Q-5 | Owner identity | Google sign-in, recorded as the owner in our backend; guest first and sign in later; the cloud identity is kept in local backups |
+| Review | Who may change what | The state is kept centrally in the sync service, the only writer: every change is checked against the user's permissions and versioned, then published to all clients as one update |
 | D3 | A phone with the PC off | Everything, full control |
 | D4 | Google Drive sync | Kept as a backup option; cloud is the default |
 
