@@ -143,20 +143,20 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
 
 ## 10. Plan (each step a task with its own e2e)
 
-1. **Spike** (about 1 day):
+1. **Spike** (T-170, about 1 day):
    - The service layer + drizzle on sqlite-wasm/OPFS in a Web Worker on a phone: size, search speed, first sync.
    - Conditional PUT on R2 and MinIO.
-2. **S3 transport + Hono sync service**:
+2. **S3 transport + Hono sync service** (T-171):
    - `/sync/*` routes in `churchhub-backend`: register (guest), devices, changes, rotate the path.
    - The `s3` transport in `runSyncCycle` next to `drive`, with the bucket layout and compaction.
    - Drive stays as a backup option (D4).
-3. **Owner identity**: Google sign-in as the owner (recorded in `CHURCHES_KV`), guest first and claim later, recovery on a new PC; the cloud identity in local backups.
-4. **Sync every table** (D3): uuids on the remaining root tables, triggers, merge collections, the permission re-check on the PC.
+3. **Owner identity** (T-172): Google sign-in as the owner (recorded in `CHURCHES_KV`), guest first and claim later, recovery on a new PC; the cloud identity in local backups.
+4. **Sync every table** (T-173, D3): uuids on the remaining root tables, triggers, merge collections, the permission re-check on the PC.
 5. **Public page + join by QR code or link**, bound to the church server (T-168, together with the native apps of T-050).
-6. **WebRTC to the PC when it's online** (signaling via `/signal`), next to the LAN WebSocket.
-7. **The phone runs the app on sqlite-wasm** when the PC is unreachable: full control.
-8. **Shared libraries on S3**: hash-named shards, lyrics fingerprint and `source_hash`, a church's "Share my songs" button.
-9. **Curated library**: submissions, the curator page.
+6. **WebRTC to the PC when it's online** (T-174) (signaling via `/signal`), next to the LAN WebSocket.
+7. **The phone runs the app on sqlite-wasm** (T-175) when the PC is unreachable: full control.
+8. **Shared libraries on S3** (T-176): hash-named shards, lyrics fingerprint and `source_hash`, a church's "Share my songs" button.
+9. **Curated library** (T-177): submissions, the curator page.
 
 ## 11. Decisions
 
