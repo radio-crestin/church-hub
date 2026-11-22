@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import {
@@ -18,7 +19,17 @@ const USER_QUERY = 'qqzzxx'
 const EXPECTED_SONG = /laud/i
 
 let mockProvider: MockAiProvider
-let originalConfig: string | null = null
+const SHIPPED_CONFIG = (
+  JSON.parse(
+    readFileSync(
+      new URL(
+        '../../server/src/db/fixtures/default-settings.json',
+        import.meta.url,
+      ),
+      'utf8',
+    ),
+  ) as { key: string; value: string }[]
+).find((setting) => setting.key === CONFIG_KEY)?.value as string
 
 async function saveAiSearchConfig(
   request: APIRequestContext,
@@ -40,22 +51,17 @@ async function saveAiSearchConfig(
 test.describe('AI search providers', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeAll(async () => {
     mockProvider = await startMockAiProvider(AI_TERMS)
-    const existing = await request.get(
-      `/api/settings/app_settings/${CONFIG_KEY}`,
-    )
-    if (existing.ok()) originalConfig = (await existing.json()).data?.value
   })
 
+  // Back to the shipped default, not to what was there before: a run stopped
+  // before this hook left this spec's key behind, and restoring "what was
+  // there" kept it in the test database for every later run (T-155).
   test.afterAll(async ({ request }) => {
-    if (originalConfig) {
-      await request.post('/api/settings/app_settings', {
-        data: { key: CONFIG_KEY, value: originalConfig },
-      })
-    } else {
-      await request.delete(`/api/settings/app_settings/${CONFIG_KEY}`)
-    }
+    await request.post('/api/settings/app_settings', {
+      data: { key: CONFIG_KEY, value: SHIPPED_CONFIG },
+    })
     await mockProvider.close()
   })
 
