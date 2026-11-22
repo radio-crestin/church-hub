@@ -1,8 +1,10 @@
 // biome-ignore-all lint/correctness/noUndeclaredDependencies: the spike sits outside the workspaces and uses app/node_modules
 import { fileURLToPath } from 'node:url'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, normalizePath, type Plugin } from 'vite'
 
-const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
+// Forward slashes on Windows too, or a swapped file is a second module instance.
+const here = (path: string) =>
+  normalizePath(fileURLToPath(new URL(path, import.meta.url)))
 
 const NODE_STUB_PREFIX = '\0node-stub:'
 const FIXTURE_FILE_PREFIX = '\0fixture-file:'
@@ -66,7 +68,7 @@ function serverInBrowser(): Plugin {
 const stub = (path) => new Proxy(function () {}, {
   get: (_t, key) => key === Symbol.toPrimitive ? () => path : key === 'then' ? undefined : stub(path + '.' + String(key)),
   apply: () => { (globalThis.__stubCalls ??= new Set()).add(path); return undefined },
-  construct: () => { (globalThis.__stubCalls ??= new Set()).add('new ' + path); return {} },
+  construct: () => { (globalThis.__stubCalls ??= new Set()).add('new ' + path); return stub('new ' + path) },
 })
 export default stub(name)`,
         syntheticNamedExports: 'default',
