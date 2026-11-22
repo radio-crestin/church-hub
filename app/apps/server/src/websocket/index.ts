@@ -10,6 +10,7 @@ import type {
   PresentationState,
   TextStyleRange,
 } from '../service/presentation/types'
+import type { ScheduleAutomationState } from '../service/schedule-automation/types'
 import { wsLogger } from '../utils/fileLogger'
 
 export interface WebSocketData {
@@ -749,6 +750,28 @@ export function broadcastSyncApplied(appliedCount: number) {
   } satisfies SyncAppliedMessage)
 
   wsLogger.debug(`Broadcasting sync_applied to ${clients.size} clients`)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts what the presentation runner is doing (running which
+ * presentation, at which step, when the next one goes up, or stopped).
+ */
+export function broadcastScheduleAutomation(state: ScheduleAutomationState) {
+  const message = JSON.stringify({
+    type: 'schedule_automation',
+    payload: state,
+  })
+
+  wsLogger.debug(`Broadcasting schedule_automation to ${clients.size} clients`)
 
   for (const [clientId, conn] of clients) {
     try {

@@ -1,5 +1,6 @@
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
+import { toScheduleAutomation } from './toScheduleAutomation'
 import type {
   Schedule,
   ScheduleBiblePassageVerse,
@@ -196,6 +197,10 @@ export function getSchedules(): Schedule[] {
         id: schedules.id,
         title: schedules.title,
         description: schedules.description,
+        autoplaySeconds: schedules.autoplaySeconds,
+        loop: schedules.loop,
+        musicVolume: schedules.musicVolume,
+        startOnAppStart: schedules.startOnAppStart,
         createdAt: schedules.createdAt,
         updatedAt: schedules.updatedAt,
         itemCount: sql<number>`CAST(COUNT(${scheduleItems.id}) AS INTEGER)`,
@@ -211,6 +216,7 @@ export function getSchedules(): Schedule[] {
       id: record.id,
       title: record.title,
       description: record.description,
+      automation: toScheduleAutomation(record),
       itemCount: record.itemCount,
       songCount: record.songCount,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
@@ -355,6 +361,7 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
       id: schedule.id,
       title: schedule.title,
       description: schedule.description,
+      automation: toScheduleAutomation(schedule),
       itemCount: items.length,
       songCount,
       createdAt: Math.floor(schedule.createdAt.getTime() / 1000),

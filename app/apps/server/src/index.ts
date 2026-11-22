@@ -231,6 +231,12 @@ import {
   upsertScreen,
 } from './service/presentation'
 import {
+  getScheduleAutomationState,
+  startAppStartSchedule,
+  startScheduleAutomation,
+  stopScheduleAutomation,
+} from './service/schedule-automation'
+import {
   type AddToScheduleInput,
   addItemToSchedule,
   deleteSchedule,
@@ -3049,6 +3055,78 @@ async function startRealServer(): Promise<void> {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // GET /api/schedules/automation - What the presentation runner is doing
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/schedules/automation'
+      ) {
+        const permError = checkPermission('programs.view')
+        if (permError) return permError
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getScheduleAutomationState() }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/schedules/automation/stop - Stop the running presentation
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/schedules/automation/stop'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        const state = stopScheduleAutomation('stopped by an operator', {
+          clear: true,
+        })
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/schedules/:id/run - Start a presentation from its first step
+      const runScheduleMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/run$/,
+      )
+      if (req.method === 'POST' && runScheduleMatch?.[1]) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        const id = parseInt(runScheduleMatch[1], 10)
+        if (!getScheduleById(id)) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Schedule not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+        try {
+          const state = await startScheduleAutomation(id)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: toErrorMessage(error) }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
       }
 
       // GET /api/schedules - List all schedules
@@ -8377,6 +8455,9 @@ async function startRealServer(): Promise<void> {
   // Flip boot state to ready — /health now reports `ready:true` and the client
   // transitions from the boot progress screen into the app.
   setBootReady()
+
+  // The presentation marked "start when Church Hub starts", if any.
+  startAppStartSchedule()
 
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log(

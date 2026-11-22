@@ -12,6 +12,14 @@ export const schedules = sqliteTable(
     uuid: text('uuid').notNull().default(''),
     title: text('title').notNull(),
     description: text('description'),
+    // Automation (see add-schedule-automation migration). Local to this
+    // computer: not part of the Drive library sync.
+    autoplaySeconds: integer('autoplay_seconds'),
+    loop: integer('loop', { mode: 'boolean' }).notNull().default(false),
+    musicVolume: integer('music_volume'),
+    startOnAppStart: integer('start_on_app_start', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),

@@ -51,12 +51,27 @@ export interface ScheduleRecord {
 }
 
 /**
+ * How a presentation runs by itself (see service/schedule-automation).
+ */
+export interface ScheduleAutomationSettings {
+  /** Seconds each step stays up while it runs; null = manual. */
+  autoplaySeconds: number | null
+  /** Past the last step, start again from the first. */
+  loop: boolean
+  /** Music player volume (0-100) set when it starts; null = unchanged. */
+  musicVolume: number | null
+  /** Started by itself when Church Hub starts (one presentation at most). */
+  startOnAppStart: boolean
+}
+
+/**
  * Schedule API response format
  */
 export interface Schedule {
   id: number
   title: string
   description: string | null
+  automation: ScheduleAutomationSettings
   itemCount: number
   songCount: number
   createdAt: number
@@ -140,6 +155,8 @@ export interface UpsertScheduleInput {
   id?: number
   title: string
   description?: string | null
+  /** Only the settings given change; the others keep their value. */
+  automation?: Partial<ScheduleAutomationSettings>
 }
 
 /** A run of verses inside one chapter, both ends included. */
