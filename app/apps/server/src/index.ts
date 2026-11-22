@@ -4,6 +4,7 @@
 // like `-e` and would re-run the whole server (the v0.1.60 regression).
 import './service/midi/coreMidiWarmUpEntry'
 
+import { exitWithParent } from './utils/exitWithParent'
 import { authLogger, logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
 import {
@@ -8394,24 +8395,28 @@ async function startRealServer(): Promise<void> {
     logTiming('fts_warmup', warmupStart)
   }, 0)
 
-  // Graceful shutdown
-  process.on('SIGINT', async () => {
-    clearHistory()
-    shutdownMusicPlayer()
-    shutdownMIDI()
-    closeDatabase()
+  // Graceful shutdown: on a signal, or when the desktop shell that started
+  // this sidecar is gone. A failed cleanup step must not keep the process
+  // (and its port) alive: closeDatabase throws "database is locked" while
+  // prepared statements are alive, which left the server running (T-149).
+  const shutdown = async () => {
+    try {
+      clearHistory()
+      shutdownMusicPlayer()
+      shutdownMIDI()
+      closeDatabase()
+    } catch (error) {
+      // biome-ignore lint/suspicious/noConsole: Shutdown failure for the logs
+      console.error('[shutdown] Cleanup failed, exiting anyway:', error)
+      captureExceptionPostHog(error, { stage: 'shutdown' })
+      process.exitCode = 1
+    }
     await shutdownPostHog()
-    process.exit(0)
-  })
-
-  process.on('SIGTERM', async () => {
-    clearHistory()
-    shutdownMusicPlayer()
-    shutdownMIDI()
-    closeDatabase()
-    await shutdownPostHog()
-    process.exit(0)
-  })
+    process.exit()
+  }
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
+  exitWithParent(shutdown)
 }
 
 main().catch((error) => {

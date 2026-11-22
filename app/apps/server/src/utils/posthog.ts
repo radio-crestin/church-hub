@@ -103,9 +103,16 @@ export async function flushPostHog(): Promise<void> {
   }
 }
 
+/**
+ * posthog-node retries the flush for up to 30 s by default (with no network,
+ * the whole 30 s), and the server holds its port until it exits: the next
+ * launch would find the port taken (T-149). Two seconds sends what it can.
+ */
+const SHUTDOWN_TIMEOUT_MS = 2000
+
 export async function shutdownPostHog(): Promise<void> {
   try {
-    await client.shutdown()
+    await client.shutdown(SHUTDOWN_TIMEOUT_MS)
   } catch {
     // best-effort flush
   }
