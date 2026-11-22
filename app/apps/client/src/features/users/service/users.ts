@@ -182,27 +182,44 @@ export interface LoginResult {
 }
 
 /**
+ * Thrown by {@link login} when a passwordless account signs in from another
+ * device on the LAN: the server now shows a pairing code in the desktop app,
+ * which the user must send back with `pairingId`.
+ */
+export class PairingRequiredError extends Error {
+  constructor(readonly pairingId: string) {
+    super('pairing_required')
+  }
+}
+
+/**
  * Logs in as a local user, establishing the session cookie.
- * Throws when credentials are rejected.
+ * Throws when credentials are rejected, or {@link PairingRequiredError} when a
+ * pairing code is needed.
  */
 export async function login(
   userId: number,
   password?: string,
+  pairing?: { pairingId: string; code: string },
 ): Promise<LoginResult> {
   const response = await fetcher<
     Partial<ApiResponse<CurrentUser | null>> & {
       ticket?: string
       token?: string
       error?: string
+      pairingId?: string
     }
   >('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, password }),
+    body: JSON.stringify({ userId, password, ...pairing }),
   })
   // The server returns `{ data, ticket, token }` on success and `{ error }` on
   // failure (e.g. 401 for wrong credentials). The shared fetcher does not
   // throw on non-ok responses, so we surface failures here ourselves.
+  if (response.error === 'pairing_required' && response.pairingId) {
+    throw new PairingRequiredError(response.pairingId)
+  }
   if (!response.ticket) {
     throw new Error(response.error ?? 'Invalid credentials')
   }

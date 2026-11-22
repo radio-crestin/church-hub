@@ -9,7 +9,7 @@ import { useEffect } from 'react'
 
 import { isTauri } from '~/config'
 import { MobileConnectionGuard } from '~/features/api-url-config'
-import { LoginGate } from '~/features/auth'
+import { LoginGate, LoginPairingPrompt } from '~/features/auth'
 import {
   GlobalAppShortcutManager,
   KeyboardNavigationProvider,
@@ -162,6 +162,7 @@ function MainLayout() {
                 <I18nProvider>
                   <ToastProvider>
                     <ServerChangedNotice />
+                    <LoginPairingPrompt />
                     <LoginGate>
                       <KeyboardNavigationProvider>
                         <MIDISettingsProvider>

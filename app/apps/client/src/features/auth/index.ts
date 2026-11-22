@@ -1,4 +1,5 @@
 export { AccountSection } from './components/AccountSection'
 export { CurrentUserButton } from './components/CurrentUserButton'
 export { LoginGate } from './components/LoginGate'
+export { LoginPairingPrompt } from './components/LoginPairingPrompt'
 export { LoginScreen } from './components/LoginScreen'
