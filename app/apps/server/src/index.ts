@@ -44,6 +44,7 @@ import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
+import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
 import {
@@ -249,6 +250,7 @@ import {
   updateScheduleSlide,
   upsertSchedule,
 } from './service/schedules'
+import { endScreenShareSession } from './service/screen-share'
 import {
   deleteSearch,
   getSearchById,
@@ -378,7 +380,6 @@ import {
   setMIDIMessageHandler,
   setMusicCommandHandler,
   setMusicStateProvider,
-  stopActiveScreenShare,
   type WebSocketData,
 } from './websocket'
 
@@ -4117,7 +4118,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBibleInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBible(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4150,7 +4151,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySongInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporarySong(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4399,7 +4400,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryAnnouncementInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryAnnouncement(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4432,7 +4433,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBiblePassageInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBiblePassage(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4465,7 +4466,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryVerseteTineriInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryVerseteTineri(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4498,7 +4499,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySceneInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryScene(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -8125,6 +8126,15 @@ async function startRealServer(): Promise<void> {
       // MIDI routes
       const midiResponse = await handleMIDIRoutes(req, url, handleCors)
       if (midiResponse) return midiResponse
+
+      // Screen share routes (native capture frames, MJPEG stream)
+      const screenShareResponse = await handleScreenShareRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+      )
+      if (screenShareResponse) return screenShareResponse
 
       // Live translation routes
       if (url.pathname.startsWith('/api/live-translation/')) {
