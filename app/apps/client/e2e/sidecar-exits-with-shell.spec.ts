@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, rmSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -103,6 +103,8 @@ test.describe('The sidecar ends with the desktop shell (T-149)', () => {
     } finally {
       if (isAlive(serverPid)) process.kill(serverPid, 'SIGKILL')
       shell.kill('SIGKILL')
+      // The server's database is ~150 MB: never leave it behind.
+      rmSync(dataDir, { recursive: true, force: true, maxRetries: 10 })
     }
   })
 })
