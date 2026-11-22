@@ -1,6 +1,7 @@
 # The app's own commands (build.rs APP_COMMANDS), for every window that loads
 # Church Hub: the main window and the display, song and page windows, which
-# load it from the sidecar's http://127.0.0.1:<port> (capabilities/remote.json).
+# load it from the sidecar's http://127.0.0.1:<port> (capabilities/remote.json),
+# monitor badges included.
 [[set]]
 identifier = "app-commands"
 description = "Every command of Church Hub itself."
