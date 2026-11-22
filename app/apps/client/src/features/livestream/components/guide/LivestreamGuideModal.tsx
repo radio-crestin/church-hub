@@ -68,13 +68,13 @@ export function LivestreamGuideModal({
             </button>
           </div>
           <ol className="space-y-6 overflow-y-auto p-4 sm:p-6">
-            <ConnectObsStep number={1} />
+            <ConnectObsStep number={1} onNavigate={onClose} />
             <BrowserSourceStep number={2} onNavigate={onClose} />
             <FirstSceneStep number={3} />
             <SwitchScenesStep number={4} onNavigate={onClose} />
             <MidiStep number={5} onNavigate={onClose} />
-            <MixerStep number={6} />
-            <YouTubeStep number={7} />
+            <MixerStep number={6} onNavigate={onClose} />
+            <YouTubeStep number={7} onNavigate={onClose} />
           </ol>
         </div>
       )}

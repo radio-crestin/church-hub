@@ -1,5 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { Link } from '@tanstack/react-router'
 import { GripVertical, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -8,13 +9,9 @@ import type { OBSScene } from '../types'
 
 interface SceneSettingsItemProps {
   scene: OBSScene
-  onOpenSettings: () => void
 }
 
-export function SceneSettingsItem({
-  scene,
-  onOpenSettings,
-}: SceneSettingsItemProps) {
+export function SceneSettingsItem({ scene }: SceneSettingsItemProps) {
   const { t } = useTranslation('livestream')
 
   const {
@@ -79,14 +76,15 @@ export function SceneSettingsItem({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onOpenSettings}
+      <Link
+        to="/livestream/scenes/$sceneId"
+        params={{ sceneId: String(scene.id) }}
+        aria-label={t('scenes.settings')}
         className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
         title={t('scenes.settings')}
       >
         <Settings size={18} />
-      </button>
+      </Link>
     </div>
   )
 }

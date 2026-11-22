@@ -38,7 +38,6 @@ import type {
   ContentType,
   MixerConfig,
   OBSConfig,
-  YouTubeConfig,
 } from '../service/livestream/types'
 import {
   consumePKCESession,
@@ -46,16 +45,19 @@ import {
   endBroadcast,
   getActiveBroadcast,
   getAuthStatus,
+  getBroadcastTemplate,
   getPastBroadcasts,
   getPlaylists,
   getStreamKeys,
   getUpcomingBroadcasts,
+  getVideoCategories,
   getYouTubeConfig,
   logout,
   storePKCESession,
   storeTokens,
   updateYouTubeConfig,
 } from '../service/livestream/youtube'
+import type { YouTubeConfigUpdate } from '../service/livestream/youtube/config'
 import { loadMIDIShortcuts } from '../service/midi/shortcuts'
 import { toErrorMessage } from '../utils/toErrorMessage'
 import {
@@ -585,6 +587,62 @@ export async function handleLivestreamRoutes(
     }
   }
 
+  // GET /api/livestream/youtube/categories?hl=ro
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/youtube/categories'
+  ) {
+    try {
+      const categories = await getVideoCategories(
+        url.searchParams.get('hl') || 'en',
+      )
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: categories }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            error: toErrorMessage(error),
+          }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+    }
+  }
+
+  // GET /api/livestream/youtube/broadcasts/:id/template
+  const templateMatch = url.pathname.match(
+    /^\/api\/livestream\/youtube\/broadcasts\/([^/]+)\/template$/,
+  )
+  if (req.method === 'GET' && templateMatch) {
+    try {
+      const template = await getBroadcastTemplate(
+        decodeURIComponent(templateMatch[1]),
+      )
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ data: template }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    } catch (error) {
+      return handleCors(
+        req,
+        new Response(
+          JSON.stringify({
+            error: toErrorMessage(error),
+          }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+    }
+  }
+
   // YouTube Config endpoints
   // GET /api/livestream/youtube/config
   if (
@@ -605,9 +663,9 @@ export async function handleLivestreamRoutes(
     req.method === 'PUT' &&
     url.pathname === '/api/livestream/youtube/config'
   ) {
-    let body: Partial<YouTubeConfig>
+    let body: YouTubeConfigUpdate
     try {
-      body = (await req.json()) as Partial<YouTubeConfig>
+      body = (await req.json()) as YouTubeConfigUpdate
     } catch {
       return handleCors(
         req,

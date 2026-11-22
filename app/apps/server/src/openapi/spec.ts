@@ -15,6 +15,7 @@ import {
   devicesPaths,
   feedbackPaths,
   healthPaths,
+  livestreamYouTubePaths,
   logsPaths,
   notificationsPaths,
   presentationHighlightsPaths,
@@ -109,6 +110,10 @@ export const openApiSpec = {
     },
     { name: 'Logs', description: 'Application logs access' },
     {
+      name: 'Livestream',
+      description: 'YouTube broadcasts and the settings they are created with',
+    },
+    {
       name: 'Notifications',
       description: 'The notifications history: song syncs and app updates',
     },
@@ -116,6 +121,7 @@ export const openApiSpec = {
   paths: {
     ...healthPaths,
     ...logsPaths,
+    ...livestreamYouTubePaths,
     ...settingsPaths,
     ...databasePaths,
     ...backupPaths,

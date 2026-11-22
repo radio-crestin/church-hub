@@ -13,17 +13,18 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ShortcutRecorder } from '~/features/keyboard-shortcuts'
-import { CONTENT_TYPES, type ContentType } from '../constants/content-types'
-import { useMixerChannels, useMixerConfig } from '../hooks'
-import type { MixerChannelActions, OBSScene, YouTubeConfig } from '../types'
-import { validateShortcut } from '../utils/shortcutValidation'
+import { CONTENT_TYPES, type ContentType } from '../../constants/content-types'
+import { useMixerChannels, useMixerConfig } from '../../hooks'
+import type { YouTubeConfigUpdate } from '../../service'
+import type { MixerChannelActions, OBSScene, YouTubeConfig } from '../../types'
+import { validateShortcut } from '../../utils/shortcutValidation'
 
-interface SceneSettingsPopupProps {
+interface SceneSettingsFormProps {
   scene: OBSScene
   allScenes: OBSScene[]
   youtubeConfig?: YouTubeConfig
-  onUpdateYouTubeConfig?: (config: Partial<YouTubeConfig>) => void
-  onClose: () => void
+  onUpdateYouTubeConfig?: (config: YouTubeConfigUpdate) => void
+  onCancel: () => void
   onSave: (data: {
     displayName: string
     isVisible: boolean
@@ -35,16 +36,17 @@ interface SceneSettingsPopupProps {
   isDeleting?: boolean
 }
 
-export function SceneSettingsPopup({
+/** One scene's name, visibility, shortcuts, content types and mixer actions. */
+export function SceneSettingsForm({
   scene,
   allScenes,
   youtubeConfig,
   onUpdateYouTubeConfig,
-  onClose,
+  onCancel,
   onSave,
   onDelete,
   isDeleting,
-}: SceneSettingsPopupProps) {
+}: SceneSettingsFormProps) {
   const { t } = useTranslation('livestream')
   const { config: mixerConfig } = useMixerConfig()
   const { channels: savedMixerChannels } = useMixerChannels()
@@ -229,25 +231,9 @@ export function SceneSettingsPopup({
   const hasErrors = Object.keys(errors).length > 0
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('scenes.sceneSettings', { defaultValue: 'Scene Settings' })}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+    <div className="flex flex-col gap-4">
+      <div>
+        <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
           <div>
             <label
               htmlFor="displayName"
@@ -608,7 +594,7 @@ export function SceneSettingsPopup({
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-3 pt-4">
           {onDelete ? (
             <button
               type="button"
@@ -625,7 +611,7 @@ export function SceneSettingsPopup({
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={onCancel}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
             >
               {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
