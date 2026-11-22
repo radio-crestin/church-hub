@@ -37,7 +37,8 @@ function main() {
 
   for (const entry of journal.entries) {
     const sqlPath = join(MIGRATIONS_DIR, `${entry.tag}.sql`)
-    const sql = readFileSync(sqlPath, 'utf-8')
+    // LF whatever the checkout's line endings, so the output is byte-stable on every OS
+    const sql = readFileSync(sqlPath, 'utf-8').replace(/\r\n/g, '\n')
     migrations.push({
       tag: entry.tag,
       sql,
@@ -52,15 +53,15 @@ function main() {
 
     if (obj === null) return 'null'
     if (typeof obj === 'string') {
-      let escaped: string
-      // Always use single quotes - Biome prefers escaping single quotes over double quotes
-      escaped = obj
+      // Biome's quotes: single, unless the string has more ' than " (fewer escapes)
+      const quote = obj.split("'").length > obj.split('"').length ? '"' : "'"
+      const escaped = obj
         .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
+        .replaceAll(quote, `\\${quote}`)
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r')
         .replace(/\t/g, '\\t')
-      return `'${escaped}'`
+      return `${quote}${escaped}${quote}`
     }
     if (typeof obj === 'number' || typeof obj === 'boolean') return String(obj)
 
