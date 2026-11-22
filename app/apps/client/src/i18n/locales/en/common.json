@@ -26,6 +26,10 @@
       "description": "Import from an existing schedule"
     }
   },
+  "fontSize": {
+    "increase": "Increase text size",
+    "decrease": "Decrease text size"
+  },
   "search": {
     "clear": "Clear search"
   },
