@@ -142,6 +142,54 @@ test('the frame ingest takes frames only with the running share token', async ({
   expect((await postFrame(request, second, jpeg)).status()).toBe(409)
 })
 
+test('a stream opened before the first frame connects at once and gets it', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/')
+  const jpeg = await makeJpeg(page, '#10c010')
+  const token = await startShare(request)
+
+  // The screens open the stream as the share starts, before any frame.
+  const headersAfterMs = await page.evaluate(async () => {
+    const started = performance.now()
+    const response = await fetch('/api/screen-share/stream.mjpg')
+    const elapsed = performance.now() - started
+    const reader = response.body?.getReader()
+    Object.assign(window, {
+      __mjpeg: { reader, type: response.headers.get('content-type') },
+    })
+    return elapsed
+  })
+  expect(headersAfterMs).toBeLessThan(2_000)
+
+  expect((await postFrame(request, token, jpeg)).status()).toBe(204)
+
+  const firstPart = await page.evaluate(async () => {
+    const { reader, type } = (
+      window as unknown as {
+        __mjpeg: {
+          reader: ReadableStreamDefaultReader<Uint8Array>
+          type: string
+        }
+      }
+    ).__mjpeg
+    let text = ''
+    while (!text.includes('Content-Type: image/jpeg')) {
+      const { value, done } = await reader.read()
+      if (done) break
+      text += new TextDecoder('latin1').decode(value)
+    }
+    await reader.cancel()
+    return {
+      type,
+      hasFrame: text.includes('--frame\r\nContent-Type: image/jpeg'),
+    }
+  })
+  expect(firstPart.type).toContain('multipart/x-mixed-replace')
+  expect(firstPart.hasFrame).toBe(true)
+})
+
 test('other content replacing the share ends it', async ({ page, request }) => {
   await page.goto('/')
   const jpeg = await makeJpeg(page, '#10c010')

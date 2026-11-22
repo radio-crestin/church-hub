@@ -47,6 +47,10 @@ export function openMjpegStream(): Response {
       start(c) {
         controller = c
         viewers.add(c)
+        // Bun sends the response headers only with the first chunk: a
+        // multipart preamble flushes them now, so a viewer opened before the
+        // share's first frame is connected and shows it the moment it lands.
+        c.enqueue(encoder.encode('\r\n'))
         logger.debug(`Viewer joined (${viewers.size} watching)`)
         if (latestFrame) send(c, latestFrame)
       },
