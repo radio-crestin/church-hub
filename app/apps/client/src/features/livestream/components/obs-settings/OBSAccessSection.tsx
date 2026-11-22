@@ -6,21 +6,14 @@ import { SettingsSection } from '~/features/settings/components/SettingsSection'
 import { Button } from '~/ui/button/Button'
 import { Input } from '~/ui/input'
 import { useOBSConfig } from '../../hooks'
+import { generateSecurePassword } from '../../utils'
 import { SettingField } from '../settings-page/SettingField'
-
-function generateRandomPassword(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  return Array.from(
-    { length: 16 },
-    () => chars[Math.floor(Math.random() * chars.length)],
-  ).join('')
-}
 
 /** Where OBS runs and the WebSocket password both sides use. */
 export function OBSAccessSection() {
   const { t } = useTranslation('livestream')
   const { config, update, isUpdating } = useOBSConfig()
-  const generatedPassword = useMemo(() => generateRandomPassword(), [])
+  const generatedPassword = useMemo(() => generateSecurePassword(), [])
   const [host, setHost] = useState('localhost')
   const [port, setPort] = useState(4455)
   const [copied, setCopied] = useState(false)
