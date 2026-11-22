@@ -192,8 +192,14 @@ function compileShell(app: string, targetDir: string, staging: string) {
     [...args, '--config', config, '--', '--profile', 'review'],
     { cwd: app, stdio: 'inherit' },
   )
-  if (result.status !== 0)
-    throw new Error(`review shell build failed (exit ${result.status})`)
+  if (result.status !== 0) {
+    // A missing system library fails in a -sys crate's build script (e.g. alsa-sys: no alsa.pc).
+    const hint =
+      process.platform === 'linux'
+        ? ': see the Rust error above; on Linux, scripts/setup/linux.sh installs the build libraries'
+        : ': see the Rust error above'
+    throw new Error(`review shell build failed (exit ${result.status})${hint}`)
+  }
   const built =
     process.platform === 'darwin'
       ? join(targetDir, 'review', 'bundle', 'macos', 'church-hub.app')
