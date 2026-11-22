@@ -990,7 +990,7 @@ export function SchedulePresenter({
               className="flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
             >
               <X size={16} />
-              {t('actions.cancel', { ns: 'common' })}
+              {tCommon('buttons.cancel')}
             </button>
             <button
               type="button"
@@ -1055,7 +1055,7 @@ export function SchedulePresenter({
               className="flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
             >
               <X size={16} />
-              {t('actions.cancel', { ns: 'common' })}
+              {tCommon('buttons.cancel')}
             </button>
             <button
               type="button"

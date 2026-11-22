@@ -281,7 +281,7 @@ export function FolderCard({
         isOpen={showDeleteConfirm}
         title={t('folders.delete')}
         message={t('folders.deleteConfirm')}
-        confirmLabel={t('common:delete')}
+        confirmLabel={t('common:buttons.delete')}
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
         variant="danger"

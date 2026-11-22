@@ -91,7 +91,7 @@ export function TranslationItemCard({
         type="button"
         onClick={onRemove}
         className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-        title={t('common:buttons.remove', { defaultValue: 'Remove' })}
+        title={t('common:buttons.remove')}
       >
         <X size={18} />
       </button>
