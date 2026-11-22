@@ -173,3 +173,8 @@ export interface MixerChannel {
   channelNumber: number
   label: string
 }
+
+export interface VideoCategory {
+  id: string
+  title: string
+}

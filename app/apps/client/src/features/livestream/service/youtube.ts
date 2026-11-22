@@ -4,6 +4,7 @@ import type {
   PastBroadcast,
   StreamKey,
   UpcomingBroadcast,
+  VideoCategory,
   YouTubeAuthStatus,
   YouTubeConfig,
   YouTubePlaylist,
@@ -75,8 +76,13 @@ export async function getYouTubeConfig(): Promise<YouTubeConfig> {
   return response.data
 }
 
+/** A changed setting; `null` clears an optional one. */
+export type YouTubeConfigUpdate = {
+  [K in keyof Omit<YouTubeConfig, 'id'>]?: YouTubeConfig[K] | null
+}
+
 export async function updateYouTubeConfig(
-  config: Partial<YouTubeConfig>,
+  config: YouTubeConfigUpdate,
 ): Promise<YouTubeConfig> {
   const response = await fetcher<{ data: YouTubeConfig }>(
     '/api/livestream/youtube/config',
@@ -134,6 +140,25 @@ export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
 export async function getYoutubePlaylists(): Promise<YouTubePlaylist[]> {
   const response = await fetcher<{ data: YouTubePlaylist[] }>(
     '/api/livestream/youtube/playlists',
+  )
+  return response.data
+}
+
+/** A past broadcast's settings, to fill the YouTube settings from. */
+export async function getBroadcastTemplate(
+  broadcastId: string,
+): Promise<Partial<YouTubeConfig>> {
+  const response = await fetcher<{ data: Partial<YouTubeConfig> }>(
+    `/api/livestream/youtube/broadcasts/${encodeURIComponent(broadcastId)}/template`,
+  )
+  return response.data
+}
+
+export async function getVideoCategories(
+  language: string,
+): Promise<VideoCategory[]> {
+  const response = await fetcher<{ data: VideoCategory[] }>(
+    `/api/livestream/youtube/categories?hl=${encodeURIComponent(language)}`,
   )
   return response.data
 }

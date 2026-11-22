@@ -44,6 +44,9 @@ import { Route as SettingsAboutRouteImport } from './routes/settings/about'
 import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
 import { Route as MonitorBadgeNumberRouteImport } from './routes/monitor-badge/$number'
+import { Route as LivestreamYoutubeRouteImport } from './routes/livestream/youtube'
+import { Route as LivestreamObsRouteImport } from './routes/livestream/obs'
+import { Route as LivestreamMixerRouteImport } from './routes/livestream/mixer'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
@@ -224,6 +227,21 @@ const MonitorBadgeNumberRoute = MonitorBadgeNumberRouteImport.update({
   path: '/monitor-badge/$number',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LivestreamYoutubeRoute = LivestreamYoutubeRouteImport.update({
+  id: '/livestream/youtube',
+  path: '/livestream/youtube',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivestreamObsRoute = LivestreamObsRouteImport.update({
+  id: '/livestream/obs',
+  path: '/livestream/obs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivestreamMixerRoute = LivestreamMixerRouteImport.update({
+  id: '/livestream/mixer',
+  path: '/livestream/mixer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomPagePageIdRoute = CustomPagePageIdRouteImport.update({
   id: '/custom-page/$pageId',
   path: '/custom-page/$pageId',
@@ -249,6 +267,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/livestream/mixer': typeof LivestreamMixerRoute
+  '/livestream/obs': typeof LivestreamObsRoute
+  '/livestream/youtube': typeof LivestreamYoutubeRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
@@ -289,6 +310,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/livestream/mixer': typeof LivestreamMixerRoute
+  '/livestream/obs': typeof LivestreamObsRoute
+  '/livestream/youtube': typeof LivestreamYoutubeRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
@@ -331,6 +355,9 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/livestream/mixer': typeof LivestreamMixerRoute
+  '/livestream/obs': typeof LivestreamObsRoute
+  '/livestream/youtube': typeof LivestreamYoutubeRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
@@ -374,6 +401,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/notifications'
     | '/custom-page/$pageId'
+    | '/livestream/mixer'
+    | '/livestream/obs'
+    | '/livestream/youtube'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
@@ -414,6 +444,9 @@ export interface FileRouteTypes {
   to:
     | '/notifications'
     | '/custom-page/$pageId'
+    | '/livestream/mixer'
+    | '/livestream/obs'
+    | '/livestream/youtube'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
@@ -455,6 +488,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/notifications'
     | '/custom-page/$pageId'
+    | '/livestream/mixer'
+    | '/livestream/obs'
+    | '/livestream/youtube'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
@@ -497,6 +533,9 @@ export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
+  LivestreamMixerRoute: typeof LivestreamMixerRoute
+  LivestreamObsRoute: typeof LivestreamObsRoute
+  LivestreamYoutubeRoute: typeof LivestreamYoutubeRoute
   MonitorBadgeNumberRoute: typeof MonitorBadgeNumberRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   ScreenScreenIdRoute: typeof ScreenScreenIdRoute
@@ -764,6 +803,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitorBadgeNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/livestream/youtube': {
+      id: '/livestream/youtube'
+      path: '/livestream/youtube'
+      fullPath: '/livestream/youtube'
+      preLoaderRoute: typeof LivestreamYoutubeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livestream/obs': {
+      id: '/livestream/obs'
+      path: '/livestream/obs'
+      fullPath: '/livestream/obs'
+      preLoaderRoute: typeof LivestreamObsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livestream/mixer': {
+      id: '/livestream/mixer'
+      path: '/livestream/mixer'
+      fullPath: '/livestream/mixer'
+      preLoaderRoute: typeof LivestreamMixerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/custom-page/$pageId': {
       id: '/custom-page/$pageId'
       path: '/custom-page/$pageId'
@@ -845,6 +905,9 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   CustomPagePageIdRoute: CustomPagePageIdRoute,
+  LivestreamMixerRoute: LivestreamMixerRoute,
+  LivestreamObsRoute: LivestreamObsRoute,
+  LivestreamYoutubeRoute: LivestreamYoutubeRoute,
   MonitorBadgeNumberRoute: MonitorBadgeNumberRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   ScreenScreenIdRoute: ScreenScreenIdRoute,

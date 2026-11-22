@@ -53,6 +53,6 @@ export function refreshTitleDate(title: string, now: Date): string {
     .replace(
       new RegExp(`\\b(\\d{1,2})(\\s+)(${MONTH_NAMES})(\\s+)(\\d{4})\\b`, 'i'),
       (_, d, s1, name, s2) =>
-        `${sameWidth(day, d)}${s1}${monthName(month - 1, name)}${s2}${year}`,
+        `${d.startsWith('0') ? sameWidth(day, d) : day}${s1}${monthName(month - 1, name)}${s2}${year}`,
     )
 }

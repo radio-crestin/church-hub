@@ -1,27 +1,23 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { GuideSettingsLink } from './GuideSettingsLink'
 import { GuideStep } from './GuideStep'
-import { Button } from '../../../../ui/button/Button'
-import { MixerSetupModal } from '../MixerSetupModal'
 
-export function MixerStep({ number }: { number: number }) {
+interface MixerStepProps {
+  number: number
+  onNavigate: () => void
+}
+
+export function MixerStep({ number, onNavigate }: MixerStepProps) {
   const { t } = useTranslation('livestream')
-  const [isSetupOpen, setIsSetupOpen] = useState(false)
 
   return (
     <GuideStep number={number} title={t('guide.mixer.title')} isOptional>
       <p>{t('guide.mixer.description')}</p>
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => setIsSetupOpen(true)}
-      >
-        {t('guide.mixer.openSetup')}
-      </Button>
-      <MixerSetupModal
-        isOpen={isSetupOpen}
-        onClose={() => setIsSetupOpen(false)}
+      <GuideSettingsLink
+        to="/livestream/mixer"
+        label={t('guide.mixer.openSetup')}
+        onNavigate={onNavigate}
       />
     </GuideStep>
   )
