@@ -6,18 +6,40 @@ import {
 } from '@playwright/test'
 
 /**
- * Factory transitions (T-112, made quick in T-158): every text element of
- * every new screen fades, eased at both ends, and the projected screen plays
- * them so on a verse change: the old verse eases out while the new one eases
- * in (250 ms each, at the same time).
+ * Factory transitions (T-112, made quick and per screen type in T-158): every
+ * text element of a new screen gets its screen type's transitions, eased at
+ * both ends, and the projected screen plays them so on a verse change: the old
+ * verse eases out while the new one eases in (300 ms each, at the same time).
+ * The stage display cuts, so the singers read each line at once.
  */
 
 const SCREEN_TYPES = ['primary', 'stage', 'livestream', 'kiosk'] as const
-const CALM = {
-  animationIn: 250,
-  animationOut: 200,
-  slideTransitionIn: 250,
-  slideTransitionOut: 250,
+const fade = (duration: number) => ({
+  type: 'fade',
+  duration,
+  delay: 0,
+  easing: 'ease-in-out',
+})
+const cut = { type: 'none', duration: 0, delay: 0, easing: 'ease-in-out' }
+const dissolve = (show: number, hide: number, slideChange: number) => ({
+  animationIn: fade(show),
+  animationOut: fade(hide),
+  slideTransitionIn: fade(slideChange),
+  slideTransitionOut: fade(slideChange),
+})
+const FACTORY: Record<
+  (typeof SCREEN_TYPES)[number],
+  Record<string, unknown>
+> = {
+  primary: dissolve(300, 250, 300),
+  kiosk: dissolve(300, 250, 300),
+  livestream: dissolve(250, 200, 250),
+  stage: {
+    animationIn: cut,
+    animationOut: cut,
+    slideTransitionIn: cut,
+    slideTransitionOut: cut,
+  },
 }
 const VERSES = [
   'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu.',
@@ -123,7 +145,7 @@ test.describe('Calm slide transitions', () => {
   })
 
   for (const type of SCREEN_TYPES) {
-    test(`a new ${type} screen fades every text softly`, async ({
+    test(`a new ${type} screen gets its factory transitions on every text`, async ({
       request,
     }) => {
       const screen = await createScreen(request, type)
@@ -139,13 +161,10 @@ test.describe('Calm slide transitions', () => {
         for (const [name, element] of Object.entries(config)) {
           const fields = element as Record<string, Transition> | null
           if (!fields?.animationIn) continue
-          for (const [key, duration] of Object.entries(CALM)) {
-            expect(fields[key], `${contentType}.${name}.${key}`).toEqual({
-              type: 'fade',
-              duration,
-              delay: 0,
-              easing: 'ease-in-out',
-            })
+          for (const [key, transition] of Object.entries(FACTORY[type])) {
+            expect(fields[key], `${contentType}.${name}.${key}`).toEqual(
+              transition,
+            )
           }
           checked++
         }
@@ -169,7 +188,7 @@ test.describe('Calm slide transitions', () => {
     expect((await presentVerse(request, 1)).ok()).toBeTruthy()
     const seen = (await transitions).join(' | ')
 
-    expect(seen).toContain('250ms ease-in-out')
+    expect(seen).toContain('300ms ease-in-out')
     await expect(page.getByText(VERSES[1]).last()).toBeVisible()
     await expect(page.getByText(VERSES[0])).toHaveCount(0)
   })

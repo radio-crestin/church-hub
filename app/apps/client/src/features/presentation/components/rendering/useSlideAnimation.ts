@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { AnimationType } from '../../types'
-import { CALM_TRANSITIONS } from '../../utils/calmTransitions'
+import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
 
 export interface SlideAnimationConfig {
   type?: AnimationType
@@ -44,9 +44,9 @@ interface LeavingLayer<T> {
   config: SlideAnimationConfig
 }
 
-const DEFAULT_ANIMATION_DURATION = CALM_TRANSITIONS.animationIn.duration
+const DEFAULT_ANIMATION_DURATION = FACTORY_TRANSITIONS.animationIn.duration
 const DEFAULT_SLIDE_TRANSITION_DURATION =
-  CALM_TRANSITIONS.slideTransitionOut.duration
+  FACTORY_TRANSITIONS.slideTransitionOut.duration
 
 /** The CSS transition for one animation, with its own duration and easing. */
 function toCssTransition(config: SlideAnimationConfig): string {
@@ -168,9 +168,9 @@ export function useSlideAnimation<T>({
   const getEnterAnimation = useCallback(
     (isSlideChange: boolean): SlideAnimationConfig => {
       if (isSlideChange) {
-        return slideTransitionIn ?? CALM_TRANSITIONS.slideTransitionIn
+        return slideTransitionIn ?? FACTORY_TRANSITIONS.slideTransitionIn
       }
-      return animationIn ?? CALM_TRANSITIONS.animationIn
+      return animationIn ?? FACTORY_TRANSITIONS.animationIn
     },
     [animationIn, slideTransitionIn],
   )
@@ -178,9 +178,9 @@ export function useSlideAnimation<T>({
   const getExitAnimation = useCallback(
     (isSlideChange: boolean): SlideAnimationConfig => {
       if (isSlideChange) {
-        return slideTransitionOut ?? CALM_TRANSITIONS.slideTransitionOut
+        return slideTransitionOut ?? FACTORY_TRANSITIONS.slideTransitionOut
       }
-      return animationOut ?? CALM_TRANSITIONS.animationOut
+      return animationOut ?? FACTORY_TRANSITIONS.animationOut
     },
     [animationOut, slideTransitionOut],
   )

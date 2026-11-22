@@ -1,5 +1,5 @@
 import type { AnimationConfig, ContentTypeConfig } from '../../../types'
-import { CALM_TRANSITIONS } from '../../../utils/calmTransitions'
+import { FACTORY_TRANSITIONS } from '../../../utils/factoryTransitions'
 
 const ANIMATED_ELEMENTS = [
   'mainText',
@@ -28,7 +28,7 @@ export function calculateMaxExitAnimationDuration(
       | undefined
     if (!element) return []
     return [
-      totalDuration(element.animationOut ?? CALM_TRANSITIONS.animationOut),
+      totalDuration(element.animationOut ?? FACTORY_TRANSITIONS.animationOut),
     ]
   })
   return durations.length > 0 ? Math.max(...durations) : 0

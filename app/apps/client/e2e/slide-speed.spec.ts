@@ -19,9 +19,9 @@ const VERSES = [
 
 // v0.1.104 took ~800 ms for a slide change and ~1150 ms for a change of
 // content type (fade out, wait, then fade in).
-const SLIDE_CHANGE_MAX_MS = 450
+const SLIDE_CHANGE_MAX_MS = 500
 const TYPE_CHANGE_MAX_MS = 550
-const FIRST_SLIDE_MAX_MS = 450
+const FIRST_SLIDE_MAX_MS = 500
 
 function verseBody(index: number) {
   return {

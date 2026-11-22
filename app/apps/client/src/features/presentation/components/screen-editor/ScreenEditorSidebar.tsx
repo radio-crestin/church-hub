@@ -45,8 +45,8 @@ import type {
   SongContentConfig,
   TextStyle,
 } from '../../types'
-import { CALM_TRANSITIONS } from '../../utils/calmTransitions'
 import { getDefaultBackground } from '../../utils/defaultConfigs'
+import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
 import { FONT_FAMILY_OPTIONS } from '../../utils/fontFamilyOptions'
 
 interface ScreenEditorSidebarProps {
@@ -133,7 +133,7 @@ const {
   animationOut: DEFAULT_ANIMATION_OUT,
   slideTransitionIn: DEFAULT_SLIDE_TRANSITION_IN,
   slideTransitionOut: DEFAULT_SLIDE_TRANSITION_OUT,
-} = CALM_TRANSITIONS
+} = FACTORY_TRANSITIONS
 
 export function ScreenEditorSidebar({
   screen,
