@@ -36,9 +36,12 @@ test.describe('Screens are always on top by default', () => {
 
       await page.goto('/settings/screens')
       const card = page.locator(`[data-screen-id="${screen.id}"]`)
-      await expect(
-        card.getByRole('button', { name: /Always on top|Mereu deasupra/ }),
-      ).toBeVisible({ timeout: 10000 })
+      // Under "More window options", switched on.
+      await expect(card.getByTestId('screen-always-on-top')).toHaveAttribute(
+        'aria-checked',
+        'true',
+        { timeout: 10000 },
+      )
     } finally {
       await request.delete(`/api/screens/${screen.id}`)
     }
