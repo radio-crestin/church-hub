@@ -144,12 +144,23 @@ test.describe('Identify monitors', () => {
     await card.getByRole('button', { name: /^(Identify|Identifică)$/ }).click()
 
     await expect
-      .poll(async () => (await shellCalls(page, 'plugin:window|show')).length)
+      .poll(
+        async () =>
+          (await shellCalls(page, 'plugin:window|set_position')).length,
+      )
       .toBe(3)
     const created = (await shellCalls(page, 'plugin:webview|create')).map(
       (call) => call.args.options as Record<string, unknown>,
     )
     const placed = await shellCalls(page, 'plugin:window|set_')
+    // Never shown from here: a badge comes up by itself once its number is
+    // drawn, so no empty black plate reaches the projector
+    const shown = await shellCalls(page, 'plugin:window|show')
+    expect(
+      shown.filter((call) =>
+        String(call.args.label).startsWith('monitor-badge-'),
+      ),
+    ).toHaveLength(0)
 
     for (const [index, monitor] of MONITORS.entries()) {
       const number = index + 1
@@ -166,7 +177,8 @@ test.describe('Identify monitors', () => {
       expect(url.searchParams.get('size')).toBe(
         `${monitor.size.width}×${monitor.size.height}`,
       )
-      // Built hidden and out of the keyboard's way, then placed and shown
+      // Built hidden and out of the keyboard's way, then placed; it shows
+      // itself once drawn
       expect(options).toMatchObject({
         visible: false,
         focus: false,
@@ -229,8 +241,12 @@ test.describe('Identify monitors', () => {
       viewport.width * 0.02,
     )
 
-    // It never waited on the server's start-up, and goes after three seconds
+    // It never waited on the server's start-up, comes up once drawn, and goes
+    // after three seconds
     expect(await shellCalls(page, 'get_server_config')).toHaveLength(0)
+    await expect
+      .poll(async () => (await shellCalls(page, 'plugin:window|show')).length)
+      .toBe(1)
     await expect
       .poll(
         async () => (await shellCalls(page, 'plugin:window|close')).length,

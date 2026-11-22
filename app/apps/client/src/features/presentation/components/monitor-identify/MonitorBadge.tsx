@@ -18,16 +18,24 @@ interface MonitorBadgeProps {
  * a laptop and on a projector.
  *
  * Its own window is the plate, so this only has to fill it — no chrome, no
- * providers, nothing that reaches for the app's data. It takes itself away
- * {@link BADGE_MS} after it has drawn.
+ * providers, nothing that reaches for the app's data. It shows itself once it
+ * has drawn and takes itself away {@link BADGE_MS} later.
  */
 export function MonitorBadge({ number, name, size }: MonitorBadgeProps) {
   useEffect(() => {
     if (!isTauri()) return
-    const timer = setTimeout(async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const showThenClose = async () => {
       const { getCurrentWindow } = await import('@tauri-apps/api/window')
-      await getCurrentWindow().close()
-    }, BADGE_MS)
+      const badge = getCurrentWindow()
+      // Built hidden: it comes up only once its number is on screen.
+      await new Promise(requestAnimationFrame)
+      await badge.show()
+      timer = setTimeout(() => {
+        badge.close().catch(logBadgeError)
+      }, BADGE_MS)
+    }
+    showThenClose().catch(logBadgeError)
     return () => clearTimeout(timer)
   }, [])
 
@@ -60,4 +68,9 @@ export function MonitorBadge({ number, name, size }: MonitorBadgeProps) {
       ) : null}
     </div>
   )
+}
+
+function logBadgeError(error: unknown) {
+  // biome-ignore lint/suspicious/noConsole: Error logging
+  console.error('[MonitorBadge] Failed to show or close the badge:', error)
 }

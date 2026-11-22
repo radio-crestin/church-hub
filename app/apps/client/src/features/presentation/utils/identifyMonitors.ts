@@ -10,9 +10,10 @@ import {
 import { getFrontendUrl, isTauri } from './openDisplayWindow'
 
 /**
- * How long a badge stays up once its number shows. The badge counts this
- * itself, from the moment it has drawn: a webview that takes a while to load
- * must not spend the operator's three seconds on a black plate.
+ * How long a badge stays up once its number shows. The badge shows itself and
+ * counts this from the moment it has drawn: a webview that takes a while to
+ * load must not put an empty black plate on the projector, nor spend the
+ * operator's three seconds on one.
  */
 export const BADGE_MS = 3000
 
@@ -122,9 +123,8 @@ async function showBadge(monitor: ScreenMonitor, number: number) {
     await created(badge)
     await setWindowDesktopSize(badge, frame)
     await setWindowDesktopPosition(badge, frame)
-    await badge.show()
   } catch (error) {
-    logError(`show ${label}`)(error)
+    logError(`place ${label}`)(error)
   }
 }
 
