@@ -1112,11 +1112,10 @@
         "error": "Nu s-a putut actualiza setarea"
       },
       "previewScreen": {
-        "label": "Arată în previzualizarea din Camera de control",
-        "description": "Previzualizarea din Camera de control arată acest ecran. Doar un ecran o dată.",
-        "enabled": "Acest ecran este acum afișat în previzualizare",
-        "disabled": "Acest ecran nu mai este afișat în previzualizare",
-        "error": "Nu s-a putut actualiza setarea ecranului de previzualizare"
+        "label": "Afișat în previzualizări",
+        "description": "Previzualizările din Camera de control, Biblie, Cântări și Programe arată acest ecran. Alege alt ecran ca să schimbi; implicit este ecranul principal.",
+        "enabled": "Previzualizările arată acum acest ecran",
+        "error": "Nu s-a putut schimba ecranul afișat în previzualizări"
       },
       "fullscreen": {
         "label": "Ocupă tot monitorul",
