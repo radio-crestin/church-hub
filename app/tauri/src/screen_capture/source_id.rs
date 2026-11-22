@@ -49,7 +49,14 @@ mod tests {
 
     #[test]
     fn rejects_malformed_ids() {
-        for bad in ["", "monitor", "monitor:", "screen:1", "window:-1", "window:x"] {
+        for bad in [
+            "",
+            "monitor",
+            "monitor:",
+            "screen:1",
+            "window:-1",
+            "window:x",
+        ] {
             assert!(bad.parse::<SourceId>().is_err(), "{bad} should be refused");
         }
     }

@@ -78,7 +78,9 @@ pub async fn screen_share_surface_show<R: Runtime>(
     if state.session.lock().is_none() {
         return Ok(false);
     }
-    state.surfaces.show(&window, rect, object_fit, state.hub.clone())
+    state
+        .surfaces
+        .show(&window, rect, object_fit, state.hub.clone())
 }
 
 #[tauri::command]

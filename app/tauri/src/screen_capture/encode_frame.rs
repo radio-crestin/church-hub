@@ -32,7 +32,11 @@ pub struct EncodedFrame {
     pub jpeg: Vec<u8>,
 }
 
-pub fn encode_frame(image: RgbaImage, max_width: u32, max_height: u32) -> Result<EncodedFrame, String> {
+pub fn encode_frame(
+    image: RgbaImage,
+    max_width: u32,
+    max_height: u32,
+) -> Result<EncodedFrame, String> {
     let (w, h) = fit_within(image.width(), image.height(), max_width, max_height);
     let scaled = if (w, h) == image.dimensions() {
         image
@@ -53,7 +57,12 @@ pub fn encode_jpeg(image: &RgbaImage) -> Result<Vec<u8>, String> {
     let rgb = DynamicImage::ImageRgba8(image.clone()).into_rgb8();
     let mut jpeg = Vec::new();
     JpegEncoder::new_with_quality(&mut jpeg, JPEG_QUALITY)
-        .encode(rgb.as_raw(), rgb.width(), rgb.height(), ExtendedColorType::Rgb8)
+        .encode(
+            rgb.as_raw(),
+            rgb.width(),
+            rgb.height(),
+            ExtendedColorType::Rgb8,
+        )
         .map_err(|e| format!("JPEG encode failed: {e}"))?;
     Ok(jpeg)
 }
@@ -95,6 +104,9 @@ mod tests {
             .into_rgb8();
         assert_eq!(decoded.dimensions(), (1920, 1080));
         let px = decoded.get_pixel(960, 540);
-        assert!(px[0] > 180 && px[1] < 60 && px[2] < 60, "red survives: {px:?}");
+        assert!(
+            px[0] > 180 && px[1] < 60 && px[2] < 60,
+            "red survives: {px:?}"
+        );
     }
 }

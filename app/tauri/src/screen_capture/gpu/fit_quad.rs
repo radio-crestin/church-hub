@@ -69,7 +69,10 @@ mod tests {
     fn same_ratio_fills_whatever_the_fit() {
         for fit in [ObjectFit::Contain, ObjectFit::Cover, ObjectFit::Fill] {
             let q = fit_quad(fit, (1920, 1080), (1280, 720));
-            assert!(close(q.scale, [1.0, 1.0]) && close(q.uv_scale, [1.0, 1.0]), "{fit:?}");
+            assert!(
+                close(q.scale, [1.0, 1.0]) && close(q.uv_scale, [1.0, 1.0]),
+                "{fit:?}"
+            );
         }
     }
 

@@ -7,7 +7,6 @@ use super::log::{log, Level};
 use super::source_id::SourceId;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 pub const MIN_FPS: u32 = 1;
@@ -49,7 +48,7 @@ impl Target {
 
 pub struct CaptureLoop {
     stop: Arc<AtomicBool>,
-    handle: Option<JoinHandle<()>>,
+    hub: Arc<FrameHub>,
 }
 
 impl CaptureLoop {
@@ -64,11 +63,12 @@ impl CaptureLoop {
         let interval = Duration::from_secs_f64(1.0 / fps.clamp(MIN_FPS, MAX_FPS) as f64);
         let stop = Arc::new(AtomicBool::new(false));
         let thread_stop = stop.clone();
+        let thread_hub = hub.clone();
         // xcap's handles are not Send (Windows HWNDs): the source is found on
         // the capture thread, which reports back whether it could grab it, so
         // a bad source fails in the operator's face rather than silently.
         let (ready_tx, ready_rx) = std::sync::mpsc::channel();
-        let handle = std::thread::Builder::new()
+        std::thread::Builder::new()
             .name("screen-capture".into())
             .spawn(move || {
                 let target = match Target::find(source).and_then(|t| t.capture().map(|_| t)) {
@@ -81,24 +81,22 @@ impl CaptureLoop {
                         return;
                     }
                 };
-                run(target, interval, &hub, &thread_stop, on_end)
+                run(target, interval, &thread_hub, &thread_stop, on_end)
             })
             .map_err(|e| format!("spawn capture thread: {e}"))?;
         ready_rx
             .recv()
             .map_err(|_| "the capture thread ended before starting".to_string())??;
         log(Level::Info, &format!("capturing {source} at {fps} fps"));
-        Ok(CaptureLoop {
-            stop,
-            handle: Some(handle),
-        })
+        Ok(CaptureLoop { stop, hub })
     }
 
-    pub fn stop(mut self) {
+    /// Stops at once, without waiting for the thread: a hung app's window
+    /// can block a grab forever. The thread ends after its current grab and
+    /// publishes nothing more.
+    pub fn stop(self) {
         self.stop.store(true, Ordering::SeqCst);
-        if let Some(handle) = self.handle.take() {
-            let _ = handle.join();
-        }
+        self.hub.clear();
     }
 }
 
@@ -112,10 +110,14 @@ fn run(
     let mut failures = 0;
     while !stop.load(Ordering::SeqCst) {
         let started = Instant::now();
-        match target
+        let grabbed = target
             .capture()
-            .and_then(|image| encode_frame(image, MAX_WIDTH, MAX_HEIGHT))
-        {
+            .and_then(|image| encode_frame(image, MAX_WIDTH, MAX_HEIGHT));
+        // Stopped during the grab: the hub may already serve the next share.
+        if stop.load(Ordering::SeqCst) {
+            return;
+        }
+        match grabbed {
             Ok(frame) => {
                 failures = 0;
                 hub.publish(frame.width, frame.height, frame.rgba, frame.jpeg);
@@ -135,5 +137,36 @@ fn run(
             std::thread::sleep(rest);
         }
     }
-    hub.clear();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Needs a desktop session: `cargo test -- --ignored`.
+    #[test]
+    #[ignore]
+    fn captures_the_first_screen_into_the_hub() {
+        let monitor = xcap::Monitor::all().unwrap().remove(0);
+        let source = SourceId::Monitor(monitor.id().unwrap());
+        let hub = Arc::new(FrameHub::default());
+        let capture = CaptureLoop::start(source, 10, hub.clone(), |_| {}).unwrap();
+        let frame = hub.wait_newer(0, Duration::from_secs(5)).expect("a frame");
+        assert!(frame.width <= MAX_WIDTH && frame.height <= MAX_HEIGHT);
+        assert_eq!(frame.rgba.len(), (frame.width * frame.height * 4) as usize);
+        assert_eq!(&frame.jpeg[..2], &[0xFF, 0xD8]);
+        let next = hub
+            .wait_newer(frame.seq, Duration::from_secs(5))
+            .expect("a second frame");
+        assert!(next.seq > frame.seq);
+        capture.stop();
+        assert!(hub.latest().is_none(), "stop clears the hub");
+    }
+
+    #[test]
+    fn an_unknown_source_fails_at_start() {
+        let hub = Arc::new(FrameHub::default());
+        let result = CaptureLoop::start(SourceId::Window(u32::MAX), 10, hub, |_| {});
+        assert!(result.is_err());
+    }
 }

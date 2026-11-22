@@ -18,7 +18,10 @@ pub fn gpu_context() -> Option<Arc<GpuContext>> {
         .get_or_init(|| match create() {
             Ok(context) => Some(Arc::new(context)),
             Err(e) => {
-                log(Level::Warning, &format!("no GPU, projector pages draw the share: {e}"));
+                log(
+                    Level::Warning,
+                    &format!("no GPU, projector pages draw the share: {e}"),
+                );
                 None
             }
         })
@@ -26,14 +29,18 @@ pub fn gpu_context() -> Option<Arc<GpuContext>> {
 }
 
 fn create() -> Result<GpuContext, String> {
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+    let instance =
+        wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
         power_preference: wgpu::PowerPreference::HighPerformance,
         ..Default::default()
     }))
     .map_err(|e| format!("no GPU adapter: {e}"))?;
     let info = adapter.get_info();
-    log(Level::Info, &format!("GPU: {} ({:?})", info.name, info.backend));
+    log(
+        Level::Info,
+        &format!("GPU: {} ({:?})", info.name, info.backend),
+    );
     let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
         label: Some("screen-share"),
         ..Default::default()
@@ -45,4 +52,15 @@ fn create() -> Result<GpuContext, String> {
         device,
         queue,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    /// Needs a GPU (or a software adapter): `cargo test -- --ignored`.
+    #[test]
+    #[ignore]
+    fn finds_a_gpu_device() {
+        let gpu = super::gpu_context().expect("a GPU device");
+        println!("GPU: {}", gpu.adapter.get_info().name);
+    }
 }

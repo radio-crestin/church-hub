@@ -90,7 +90,11 @@ struct DrawState {
 }
 
 impl DrawState {
-    fn new(gpu: Arc<GpuContext>, surface: wgpu::Surface<'static>, layout: SurfaceLayout) -> Result<DrawState, String> {
+    fn new(
+        gpu: Arc<GpuContext>,
+        surface: wgpu::Surface<'static>,
+        layout: SurfaceLayout,
+    ) -> Result<DrawState, String> {
         let device = &gpu.device;
         let caps = surface.get_capabilities(&gpu.adapter);
         let format = caps
@@ -206,7 +210,8 @@ impl DrawState {
             .write_buffer(&self.quad_buffer, 0, bytemuck::bytes_of(&quad));
 
         let target = match self.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(t) | wgpu::CurrentSurfaceTexture::Suboptimal(t) => t,
+            wgpu::CurrentSurfaceTexture::Success(t)
+            | wgpu::CurrentSurfaceTexture::Suboptimal(t) => t,
             wgpu::CurrentSurfaceTexture::Outdated | wgpu::CurrentSurfaceTexture::Lost => {
                 self.surface.configure(&self.gpu.device, &self.config);
                 return;
@@ -258,24 +263,27 @@ impl DrawState {
                 view_formats: &[],
             });
             let view = texture.create_view(&Default::default());
-            let bind_group = self.gpu.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("screen-share"),
-                layout: &self.bind_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::TextureView(&view),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::Sampler(&self.sampler),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: self.quad_buffer.as_entire_binding(),
-                    },
-                ],
-            });
+            let bind_group = self
+                .gpu
+                .device
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("screen-share"),
+                    layout: &self.bind_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::TextureView(&view),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::Sampler(&self.sampler),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: self.quad_buffer.as_entire_binding(),
+                        },
+                    ],
+                });
             self.texture = Some((texture, bind_group, size));
         }
         let (texture, _, _) = self.texture.as_ref().expect("texture created above");

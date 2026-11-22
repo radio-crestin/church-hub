@@ -63,7 +63,10 @@ impl<R: Runtime> ShareSurfaces<R> {
             fit,
         };
         if let Some(surface) = self.surfaces.lock().get_mut(&label) {
-            surface.window.set_position(position).map_err(|e| e.to_string())?;
+            surface
+                .window
+                .set_position(position)
+                .map_err(|e| e.to_string())?;
             surface.window.set_size(size).map_err(|e| e.to_string())?;
             surface.renderer.set_layout(layout);
             surface.rect = rect;
@@ -79,12 +82,18 @@ impl<R: Runtime> ShareSurfaces<R> {
         {
             Ok(renderer) => renderer,
             Err(e) => {
-                log(Level::Warning, &format!("GPU surface for {label} failed, page draws instead: {e}"));
+                log(
+                    Level::Warning,
+                    &format!("GPU surface for {label} failed, page draws instead: {e}"),
+                );
                 let _ = window.destroy();
                 return Ok(false);
             }
         };
-        log(Level::Info, &format!("GPU surface over {label}: {}x{}", size.width, size.height));
+        log(
+            Level::Info,
+            &format!("GPU surface over {label}: {}x{}", size.width, size.height),
+        );
         self.surfaces.lock().insert(
             label.clone(),
             ShareSurface {
@@ -204,7 +213,11 @@ fn create_surface<R: Runtime>(
     let (gpu, target) = (gpu.clone(), window.clone());
     display
         .run_on_main_thread(move || {
-            let _ = tx.send(gpu.instance.create_surface(target).map_err(|e| e.to_string()));
+            let _ = tx.send(
+                gpu.instance
+                    .create_surface(target)
+                    .map_err(|e| e.to_string()),
+            );
         })
         .map_err(|e| e.to_string())?;
     rx.recv().map_err(|e| e.to_string())?

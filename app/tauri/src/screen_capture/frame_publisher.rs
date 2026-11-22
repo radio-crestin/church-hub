@@ -19,7 +19,11 @@ pub struct FramePublisher {
 impl FramePublisher {
     /// `token` is the ingest token the sidecar handed out on
     /// POST /api/screen-share/start.
-    pub fn start(hub: Arc<FrameHub>, server_port: u16, token: String) -> Result<FramePublisher, String> {
+    pub fn start(
+        hub: Arc<FrameHub>,
+        server_port: u16,
+        token: String,
+    ) -> Result<FramePublisher, String> {
         let url = format!("http://127.0.0.1:{server_port}/api/screen-share/frame");
         let stop = Arc::new(AtomicBool::new(false));
         let thread_stop = stop.clone();
