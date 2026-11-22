@@ -6,10 +6,23 @@ interface SwitchProps {
   disabled?: boolean
   className?: string
   id?: string
+  'aria-labelledby'?: string
+  'aria-describedby'?: string
+  'data-testid'?: string
 }
 
 export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
-  ({ checked = false, onCheckedChange, disabled, className = '', id }, ref) => {
+  (
+    {
+      checked = false,
+      onCheckedChange,
+      disabled,
+      className = '',
+      id,
+      ...ariaAndTestProps
+    },
+    ref,
+  ) => {
     const inputId = id || `switch-${Math.random().toString(36).slice(2, 9)}`
 
     return (
@@ -19,6 +32,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
         role="switch"
         aria-checked={checked}
         id={inputId}
+        {...ariaAndTestProps}
         disabled={disabled}
         onClick={() => onCheckedChange?.(!checked)}
         className={`
