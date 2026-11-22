@@ -30,6 +30,7 @@ export { useReorderCategories } from './useReorderCategories'
 export { useReorderSlides } from './useReorderSlides'
 export { useReorderTags } from './useReorderTags'
 export { useResetPresentationCount } from './useResetPresentationCount'
+export { useSameThemeSongs } from './useSameThemeSongs'
 export {
   useDeleteSearchHistory,
   useSaveSearchHistory,
