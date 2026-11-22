@@ -11,6 +11,7 @@ import {
 import { useLiveProgramNavigation } from '~/features/schedules'
 import { WebviewRouteManager } from '~/features/sidebar-config/components/WebviewRouteManager'
 import { useDebugMode } from '~/hooks/useDebugMode'
+import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { MobileTabBar } from './mobile-tab-bar'
 import { PhoneBottomBarSlotContext } from './phone-bottom-bar'
 import { Sidebar } from '../sidebar/sidebar'
@@ -26,6 +27,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [phoneBottomBarSlot, setPhoneBottomBarSlot] =
     useState<HTMLElement | null>(null)
+  // Tailwind's `md`: the live strip is a phone's alone, so a larger window
+  // leaves it out of the page instead of only hiding it.
+  const isPhone = !useMediaQuery('(min-width: 768px)')
 
   // Check if running in standalone mode (native window without sidebar)
   const search = useSearch({ strict: false }) as Record<string, unknown>
@@ -85,7 +89,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div ref={setPhoneBottomBarSlot} />
           <div className="md:hidden group-has-[[data-phone-bottom-bar]]:hidden">
             {/* The control room is all about what is live already. */}
-            {location.pathname !== '/present' && (
+            {isPhone && location.pathname !== '/present' && (
               <MobileLiveStrip liveProgram={liveProgram} />
             )}
             <MobileTabBar onOpenMore={() => setIsMobileMenuOpen(true)} />
