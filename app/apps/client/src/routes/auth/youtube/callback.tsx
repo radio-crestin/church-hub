@@ -55,9 +55,9 @@ function YouTubeCallbackPage() {
 
         setStatus('success')
 
-        // Redirect to livestream settings after a short delay
+        // Go on to the YouTube settings, which start from the latest stream
         setTimeout(() => {
-          navigate({ to: '/livestream' })
+          navigate({ to: '/livestream/youtube' })
         }, 1500)
       } catch (err) {
         setStatus('error')

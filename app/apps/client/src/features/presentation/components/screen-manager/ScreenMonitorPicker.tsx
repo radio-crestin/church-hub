@@ -93,41 +93,48 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
         screen.monitorName)
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-gray-500 dark:text-gray-400">
-        {t('presentation:screens.monitor.label')}
-      </span>
-      <Combobox
-        options={
-          options.some((option) => option.value === value)
-            ? options
-            : [
-                ...options,
-                {
-                  value,
-                  label: t('presentation:screens.monitor.disconnected', {
-                    name: screen.monitorName,
-                  }),
-                },
-              ]
-        }
-        value={value}
-        onChange={handleChange}
-        allowClear={false}
-        disabled={upsertScreen.isPending}
-        className="w-56"
-      />
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => identifyMonitors()}
-        title={t('presentation:screens.monitor.identifyTooltip')}
-      >
-        <ScanSearch size={16} />
-        <span className="ml-1">
-          {t('presentation:screens.monitor.identify')}
-        </span>
-      </Button>
+    <div className="py-2 space-y-2">
+      <div>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {t('presentation:screens.monitor.label')}
+        </p>
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          {t('presentation:screens.monitor.description')}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Combobox
+          options={
+            options.some((option) => option.value === value)
+              ? options
+              : [
+                  ...options,
+                  {
+                    value,
+                    label: t('presentation:screens.monitor.disconnected', {
+                      name: screen.monitorName,
+                    }),
+                  },
+                ]
+          }
+          value={value}
+          onChange={handleChange}
+          allowClear={false}
+          disabled={upsertScreen.isPending}
+          className="flex-1 min-w-48"
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => identifyMonitors()}
+          title={t('presentation:screens.monitor.identifyTooltip')}
+        >
+          <ScanSearch size={16} />
+          <span className="ml-1">
+            {t('presentation:screens.monitor.identify')}
+          </span>
+        </Button>
+      </div>
     </div>
   )
 }

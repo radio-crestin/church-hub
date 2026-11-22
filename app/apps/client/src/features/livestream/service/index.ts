@@ -19,9 +19,11 @@ export {
   createBroadcast,
   endBroadcast,
   getActiveBroadcast,
+  getBroadcastTemplate,
   getPastBroadcasts,
   getStreamKeys,
   getUpcomingBroadcasts,
+  getVideoCategories,
   getYouTubeAuthStatus,
   getYouTubeConfig,
   getYoutubePlaylists,
@@ -29,4 +31,5 @@ export {
   storePKCESession,
   storeYouTubeTokens,
   updateYouTubeConfig,
+  type YouTubeConfigUpdate,
 } from './youtube'
