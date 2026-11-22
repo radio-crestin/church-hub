@@ -309,7 +309,12 @@ if (typeof window !== 'undefined') {
   window.__appVersion = __appVersion
   window.__envMode = __envMode
 
-  if (isTauri) {
+  if (window.location.pathname.startsWith('/monitor-badge/')) {
+    // A monitor badge reads nothing from the server and is up for three
+    // seconds: it draws at once instead of waiting through the start-up.
+    hideLoadingScreen()
+    mountReact()
+  } else if (isTauri) {
     logClientTiming('tauri_block_start')
     const startup = isMobile() ? runMobileStartup() : runDesktopStartup()
     startup.catch((error) => {

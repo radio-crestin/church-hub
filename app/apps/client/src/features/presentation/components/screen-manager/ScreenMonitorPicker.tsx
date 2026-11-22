@@ -120,6 +120,7 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
           value={value}
           onChange={handleChange}
           allowClear={false}
+          testId="screen-monitor-picker"
           disabled={upsertScreen.isPending}
           className="flex-1 min-w-48"
         />
