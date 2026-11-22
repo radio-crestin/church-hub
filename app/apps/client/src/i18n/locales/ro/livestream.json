@@ -253,6 +253,17 @@
       "notConnected": "Neconectat",
       "notAnswering": "Nu răspunde",
       "off": "Oprit"
+    },
+    "railTitle": "Setări Live Stream",
+    "groups": {
+      "pages": "Setări",
+      "sections": "Pe această pagină"
+    },
+    "rail": {
+      "youtube": "YouTube",
+      "obs": "OBS",
+      "mixer": "Mixer audio",
+      "scenes": "Scene"
     }
   },
   "youtubeSettings": {

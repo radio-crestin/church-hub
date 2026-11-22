@@ -1,3 +1,12 @@
+import {
+  FileText,
+  History,
+  ImageIcon,
+  MessageSquare,
+  Radio,
+  Users,
+  Youtube,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -43,6 +52,47 @@ export function YouTubeSettingsPage() {
       title={t('youtubeSettings.title')}
       description={t('youtubeSettings.subtitle')}
       testId="youtube-settings-page"
+      sections={[
+        {
+          id: 'youtube-settings-account',
+          label: t('youtubeSettings.account.title'),
+          icon: Youtube,
+        },
+        ...(isAuthenticated && draft
+          ? [
+              {
+                id: 'youtube-settings-template',
+                label: t('youtubeSettings.template.title'),
+                icon: History,
+              },
+              {
+                id: 'youtube-settings-details',
+                label: t('youtubeSettings.details.title'),
+                icon: FileText,
+              },
+              {
+                id: 'youtube-settings-audience',
+                label: t('youtubeSettings.audience.title'),
+                icon: Users,
+              },
+              {
+                id: 'youtube-settings-stream',
+                label: t('youtubeSettings.stream.title'),
+                icon: Radio,
+              },
+              {
+                id: 'youtube-settings-extras',
+                label: t('youtubeSettings.extras.title'),
+                icon: ImageIcon,
+              },
+              {
+                id: 'youtube-settings-chat',
+                label: t('youtubeSettings.chat.title'),
+                icon: MessageSquare,
+              },
+            ]
+          : []),
+      ]}
       footer={
         isAuthenticated && (
           <>

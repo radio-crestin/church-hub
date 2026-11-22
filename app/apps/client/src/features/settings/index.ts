@@ -1,7 +1,10 @@
 export {
   SettingsLayout,
   SettingsLeafGuard,
+  SettingsNavItem,
+  SettingsNavItemContent,
   SettingsSection,
+  settingsNavItemClass,
 } from './components'
 export { getLastSettingsSection, setLastSettingsSection } from './lastSection'
 export type {

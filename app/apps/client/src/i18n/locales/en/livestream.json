@@ -252,6 +252,17 @@
       "notConnected": "Not connected",
       "notAnswering": "Not answering",
       "off": "Off"
+    },
+    "railTitle": "Live Stream settings",
+    "groups": {
+      "pages": "Settings",
+      "sections": "On this page"
+    },
+    "rail": {
+      "youtube": "YouTube",
+      "obs": "OBS",
+      "mixer": "Audio mixer",
+      "scenes": "Scenes"
     }
   },
   "youtubeSettings": {
