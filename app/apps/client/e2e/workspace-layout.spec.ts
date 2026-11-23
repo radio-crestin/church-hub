@@ -306,7 +306,14 @@ test.describe('Workspace layout', () => {
 
     // One handle per panel, and no strays: a second grip drawn on top of the
     // first is exactly what an operator reads as a doubled control.
-    const panelIds = ['slides', 'control', 'bookmarks', 'schedules', 'versions']
+    const panelIds = [
+      'slides',
+      'control',
+      'bookmarks',
+      'schedules',
+      'versions',
+      'same-theme',
+    ]
     for (const panelId of panelIds) {
       await expect(page.getByTestId(`workspace-move-${panelId}`)).toHaveCount(1)
     }
