@@ -58,6 +58,19 @@ async function lyricsOf(request: APIRequestContext, title: string) {
     .join('')
 }
 
+interface PendingNotification {
+  id: string
+  kind: string
+  data: { sources: { updated: { count: number } }[] }
+}
+
+async function pendingNotifications(request: APIRequestContext) {
+  const res = await request.get('/api/notifications')
+  return ((await res.json()).data as PendingNotification[]).filter(
+    (n) => n.kind === 'songs-pending',
+  )
+}
+
 /** Checks the source now even when its checksum did not change. */
 async function forceCheck(request: APIRequestContext, sourceId: string) {
   const run = await request.post('/api/song-sources/updates/run', {
@@ -105,10 +118,10 @@ test.describe('Song updates: review each change', () => {
       [song('a', first, firstNew), song('b', second, secondNew)],
       'two',
     )
+    await clearNotifications(request)
     expect(await checkSource(request, sourceId)).toMatchObject({
       changedCount: 2,
     })
-    await clearNotifications(request)
   })
 
   test.beforeEach(({ page }) => setAppLanguage(page, 'en'))
@@ -134,11 +147,17 @@ test.describe('Song updates: review each change', () => {
     await updates.getByRole('button', { name: new RegExp(first) }).click()
     await expect(page.getByText(firstOld, { exact: true })).toBeVisible()
     await expect(page.getByText(firstNew, { exact: true })).toBeVisible()
+    const [waiting] = await pendingNotifications(request)
     await page.getByRole('button', { name: 'Update', exact: true }).click()
     await expect(
       updates.getByRole('button', { name: new RegExp(first) }),
     ).toHaveCount(0)
     expect(await lyricsOf(request, first)).toContain(firstNew)
+    // The notification of the songs waiting counts one fewer, where it was:
+    // a choice of the user's never pops it up again.
+    const [after] = await pendingNotifications(request)
+    expect(after.id).toBe(waiting.id)
+    expect(after.data.sources[0].updated.count).toBe(1)
 
     // The second: the library's version is kept.
     await updates.getByRole('button', { name: new RegExp(second) }).click()
