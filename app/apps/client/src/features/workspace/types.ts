@@ -33,6 +33,11 @@ export interface WorkspacePanel {
    * leaves this undefined is hidden outright by the same drag.
    */
   collapsed?: boolean
+  /**
+   * On a phone laid out as tabs, the panel stays at the top of the screen
+   * above the tabs (the preview), instead of being a tab of its own.
+   */
+  pinned?: boolean
 }
 
 /** One vertical stack of panels. Columns sit side by side, left to right. */

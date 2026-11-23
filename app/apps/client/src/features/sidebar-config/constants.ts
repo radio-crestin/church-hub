@@ -149,6 +149,12 @@ export const PAGES_WITH_SEARCH: Record<BuiltInMenuItemId, boolean> = {
 }
 
 /**
+ * Built-in pages that act on their own presentation keys (show the selected
+ * slide or verse, next, previous) while they are open
+ */
+export const PAGES_WITH_SLIDE_KEYS: BuiltInMenuItemId[] = ['songs', 'bible']
+
+/**
  * Default focus search behavior for pages with search
  * - Songs, Bible, Music: enabled by default
  * - Schedules: disabled by default (user can enable)
