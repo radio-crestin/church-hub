@@ -232,6 +232,7 @@ import {
   upsertSceneOverride,
   upsertScreen,
 } from './service/presentation'
+import { startVerseLoop } from './service/presentation/verse-loop'
 import {
   type AddToScheduleInput,
   addItemToSchedule,
@@ -829,6 +830,9 @@ async function startRealServer(): Promise<void> {
 
     return res
   }
+
+  // A looping Bible slideshow moves on by itself, wherever the operator is.
+  startVerseLoop()
 
   // Global error handlers to catch unhandled errors. reportError writes to
   // BOTH the on-disk log and PostHog so a fatal is never console-only.

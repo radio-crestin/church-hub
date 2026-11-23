@@ -942,19 +942,32 @@ function navigateTemporaryBiblePassage(
 }
 
 /**
+ * Moves a looping Versete Biblice slideshow on to its next verse. Called by
+ * its timer (verse-loop.ts), so it skips navigateTemporary's check against a
+ * client's request timestamp.
+ */
+export function advanceVerseLoop(): PresentationState {
+  const current = getPresentationState()
+  if (current.temporaryContent?.type !== 'versete_tineri') return current
+  return navigateTemporaryVerseteTineri(current.temporaryContent.data, 'next')
+}
+
+/**
  * Navigates within temporary versete tineri content
  */
 function navigateTemporaryVerseteTineri(
   data: TemporaryVerseteTineriContent,
   direction: 'next' | 'prev',
 ): PresentationState {
-  const newIndex =
-    direction === 'next'
-      ? data.currentEntryIndex + 1
-      : data.currentEntryIndex - 1
+  const step = direction === 'next' ? 1 : -1
+  const count = data.entries.length
+  // A loop wraps around at both ends instead of stopping.
+  const newIndex = data.loop
+    ? (data.currentEntryIndex + step + count) % count
+    : data.currentEntryIndex + step
 
   // If at end of entries, hide presentation
-  if (newIndex >= data.entries.length) {
+  if (newIndex >= count) {
     logger.info('Reached end of versete tineri, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
@@ -1131,6 +1144,7 @@ export function presentTemporaryVerseteTineri(
       data: {
         entries: input.entries,
         currentEntryIndex: startIndex,
+        loop: input.loop,
         nextItemPreview: input.nextItemPreview,
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
