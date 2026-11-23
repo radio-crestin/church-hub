@@ -50,8 +50,9 @@ const SOURCE_PATH = /^\/api\/song-sources\/([\w-]+)$/
 const PUBLICATION_SYNC_PATH = /^\/api\/song-sources\/publications\/(\d+)\/sync$/
 const PUBLICATION_PATH = /^\/api\/song-sources\/publications\/(\d+)$/
 
+/** What a client may read of a failure: an Error's message, never a raw thrown value. */
 const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : String(error)
+  error instanceof Error ? error.message : 'Unexpected error'
 
 /** "Pe Drumul Credinței" → "Pe Drumul Credinței.chsongs" (or `.zip`). */
 function bundleFileName(categoryName: string, format: string | null): string {
