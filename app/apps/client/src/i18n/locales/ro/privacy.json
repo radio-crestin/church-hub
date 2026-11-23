@@ -52,7 +52,7 @@
     "app_started": "Serverul a pornit.",
     "server_message": "O problemă observată de server.",
     "$exception": "O eroare în server: mesajul, tipul ei și locul din cod unde a apărut.",
-    "$feedback_report": "Doar când trimiți o solicitare: jurnalele recente (vezi mai jos)."
+    "$feedback_report": "Doar când trimiți feedback: jurnalele recente (vezi mai jos)."
   },
   "properties": {
     "element": "Numele din cod al butonului (test id), niciodată textul lui",
@@ -75,7 +75,7 @@
     "source": "Ce parte din cod l-a raportat",
     "component": "client sau server",
     "level": "Cât de gravă este problema",
-    "report_id": "Id-ul aleatoriu al dispozitivului tău, trimis odată cu solicitarea",
+    "report_id": "Id-ul aleatoriu al dispozitivului tău, trimis odată cu feedbackul",
     "os_version": "Versiunea sistemului de operare",
     "app_version": "Versiunea aplicației",
     "server_log_tail": "Sfârșitul jurnalului serverului",

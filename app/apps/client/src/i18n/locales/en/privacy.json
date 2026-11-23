@@ -52,7 +52,7 @@
     "app_started": "The server started.",
     "server_message": "A problem the server noticed.",
     "$exception": "An error in the server: its message, its type and where in the code it happened.",
-    "$feedback_report": "Only when you send a feature request: the recent logs (see below)."
+    "$feedback_report": "Only when you send feedback: the recent logs (see below)."
   },
   "properties": {
     "element": "The button's code name (its test id), never its text",
@@ -75,7 +75,7 @@
     "source": "Which part of the code reported it",
     "component": "client or server",
     "level": "How serious it is",
-    "report_id": "Your device's random id, which you send with the request",
+    "report_id": "Your device's random id, sent with your feedback",
     "os_version": "The operating system's version",
     "app_version": "The app's version",
     "server_log_tail": "The end of the server's log",

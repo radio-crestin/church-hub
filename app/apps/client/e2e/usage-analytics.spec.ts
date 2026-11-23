@@ -170,6 +170,12 @@ test.describe('Anonymous usage data', () => {
       route: '/songs',
     })
 
+    // Typing a search changes the address, not the page: one page view.
+    const songsViews = traffic.events.filter(
+      (e) => e.event === '$pageview' && e.properties.route === '/songs',
+    )
+    expect(songsViews).toHaveLength(1)
+
     const sent = JSON.stringify(traffic.events)
     expect(sent).not.toContain('SecretLyricLine')
     expect(sent).not.toContain('192.168.1.77')

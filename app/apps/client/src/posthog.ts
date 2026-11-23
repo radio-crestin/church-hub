@@ -7,6 +7,11 @@ import {
 } from './features/analytics/services/analyticsConsent'
 import { getDeviceId } from './features/analytics/services/deviceId'
 import { installInteractionTracking } from './features/analytics/services/installInteractionTracking'
+import { trackEvent } from './features/analytics/services/trackEvent'
+import {
+  getCurrentFeature,
+  isRouteKnown,
+} from './features/analytics/utils/currentRoute'
 import { sanitizeEvent } from './features/analytics/utils/sanitizeEvent'
 
 export const POSTHOG_TOKEN =
@@ -116,6 +121,9 @@ function startPostHog(installId: string): void {
   // Boot heartbeat — filter `app_started` + `component:"client"` in the
   // PostHog dashboard to confirm the client's capture path is healthy.
   posthog.capture('app_started')
+  // Started after the first page resolved (waiting for the server's
+  // answer): that page's view was not sent yet.
+  if (isRouteKnown()) trackEvent('$pageview', { feature: getCurrentFeature() })
   installInteractionTracking()
 
   // PostHog conversations auto-injects a floating chat button on every

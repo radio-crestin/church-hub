@@ -59,7 +59,7 @@ try {
     const path = event.toLocation?.pathname
     if (path) captureActivity('navigate', { source: 'router', path })
     const routeId = router.state.matches.at(-1)?.routeId
-    if (routeId) trackPageView(routeId)
+    if (routeId) trackPageView(routeId, event.pathChanged)
   })
 } catch {
   // Non-fatal — navigation logging is best-effort.

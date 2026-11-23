@@ -4,11 +4,18 @@
  * analytics. Set by the router each time a page resolves.
  */
 let route = '/'
+let known = false
 
 export function setCurrentRoute(routeId: string): void {
   // Pathless layout groups like `/(root)` are not part of the page's path.
   const path = routeId.replace(/\/\([^)]*\)/g, '').replace(/\/$/, '')
   route = path || '/'
+  known = true
+}
+
+/** Whether a page has resolved yet. */
+export function isRouteKnown(): boolean {
+  return known
 }
 
 export function getCurrentRoute(): string {
