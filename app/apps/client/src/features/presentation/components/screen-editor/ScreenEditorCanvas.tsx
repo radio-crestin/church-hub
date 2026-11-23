@@ -42,12 +42,14 @@ const SAMPLE_CONTENT: Record<
     person?: string
     songKey?: string
     amen?: string
+    songTitle?: string
   }
 > = {
   song: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
     songKey: 'G',
     amen: 'Amin!',
+    songTitle: 'Aleluia, mărire Domnului',
   },
   song_first_slide: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
@@ -521,6 +523,7 @@ export function ScreenEditorCanvas({
       // comes from the sample defaults only. Exposing it here lets the
       // first-slide preview render `sample.songKey` (see the songKey element).
       songKey: defaultSample?.songKey,
+      songTitle: defaultSample?.songTitle,
     }),
     [contentType, previewTexts, defaultSample],
   )
@@ -755,6 +758,51 @@ export function ScreenEditorCanvas({
           <TextContent
             content={sample?.songKey ?? 'G'}
             style={{ ...sk.style, maxFontSize: sk.style.maxFontSize * scale }}
+            containerWidth={bounds.width * scale}
+            containerHeight={bounds.height * scale}
+          />
+        </DraggableElement>,
+      )
+    }
+
+    // Song title — set on the "Cântec" layout alone; every slide of the song,
+    // first and last too, reads it from there.
+    if (
+      config &&
+      'songTitle' in config &&
+      config.songTitle &&
+      contentType === 'song'
+    ) {
+      const st = config.songTitle
+      const bounds = calculatePixelBounds(
+        st.constraints,
+        st.size,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      els.push(
+        <DraggableElement
+          key="songTitle"
+          x={bounds.x * scale}
+          y={bounds.y * scale}
+          width={bounds.width * scale}
+          height={bounds.height * scale}
+          constraints={st.constraints}
+          size={st.size}
+          isSelected={selectedElement?.type === 'songTitle'}
+          isHidden={st.hidden}
+          onClick={() => onSelectElement({ type: 'songTitle' })}
+          onConstraintChange={handleConstraintChange('songTitle')}
+          onSizeChange={handleSizeChange('songTitle')}
+          canvasWidth={displaySize.width}
+          screenWidth={canvasWidth}
+          screenHeight={canvasHeight}
+          canvasRef={canvasRef}
+        >
+          <TextContent
+            content={sample?.songTitle ?? ''}
+            style={{ ...st.style, maxFontSize: st.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}
           />

@@ -48,6 +48,7 @@ const ALWAYS_ANIMATED = new Set([
   'referenceText',
   'songKey',
   'amen',
+  'songTitle',
   'personLabel',
 ])
 

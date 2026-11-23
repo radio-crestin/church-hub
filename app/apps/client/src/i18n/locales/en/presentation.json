@@ -73,6 +73,7 @@
     "elements": {
       "songKey": "Song key",
       "amen": "Amen",
+      "songTitle": "Song title",
       "mainText": "Main Text",
       "contentText": "Content Text",
       "referenceText": "Reference Text",

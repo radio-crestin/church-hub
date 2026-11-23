@@ -38,6 +38,7 @@ const SLIDE_ELEMENTS = [
   'personLabel',
   'songKey',
   'amen',
+  'songTitle',
 ] as const
 
 /** A shared screen with no saved placement fills the slide. */
@@ -81,7 +82,11 @@ export function SlideTypeSettings({
 
   const elements: NonNullable<SelectedElement>['type'][] = [
     ...SLIDE_ELEMENTS.filter(
-      (key) => key in config && !!config[key as keyof typeof config],
+      (key) =>
+        key in config &&
+        !!config[key as keyof typeof config] &&
+        // The song title is set on the song layout alone (every slide reads it).
+        (key !== 'songTitle' || contentType === 'song'),
     ),
     ...(clockEnabled && screen.globalSettings.clockConfig
       ? (['clock'] as const)

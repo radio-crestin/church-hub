@@ -73,6 +73,7 @@
     "elements": {
       "songKey": "Gama",
       "amen": "Amin",
+      "songTitle": "Titlul cântării",
       "mainText": "Text principal",
       "contentText": "Textul versetului",
       "referenceText": "Referința biblică",
