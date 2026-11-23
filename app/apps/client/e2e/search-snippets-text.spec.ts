@@ -28,7 +28,7 @@ test.describe('Search result text', () => {
 
     try {
       await page.goto('/schedules')
-      await page.getByPlaceholder(/search schedules|cauta programe/i).fill(uniq)
+      await page.getByPlaceholder(/search schedules|caută programe/i).fill(uniq)
 
       // Its own program only, for the same reason as the song below.
       const snippet = page

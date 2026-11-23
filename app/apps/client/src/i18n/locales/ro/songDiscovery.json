@@ -25,7 +25,7 @@
   },
   "verdict": {
     "new": "Nouă",
-    "similar": "Există ceva similar",
+    "similar": "Există una similară",
     "exact-title": "Deja în bibliotecă",
     "exact-filename": "Deja în bibliotecă"
   },
@@ -51,7 +51,7 @@
     "applySelected": "Aplică selecția ({{count}})"
   },
   "toast": {
-    "imported": "Au fost importate {{count}} cântări",
+    "imported": "Cântări importate: {{count}}",
     "importFailed": "Importul a eșuat: {{error}}",
     "updated_one": "{{count}} cântare actualizată",
     "updated_few": "{{count}} cântări actualizate",
@@ -62,11 +62,11 @@
     "updateFailed": "Alegerea nu a putut fi salvată: {{error}}"
   },
   "settings": {
-    "title": "Cântări noi",
+    "title": "Actualizări cântări",
     "description": "La scurt timp după pornire, apoi zilnic, Church Hub verifică sursele tale de cântări când ai internet. Cântările noi și versiunile mai recente ale celor pe care nu le-ai modificat se sincronizează automat. Cântările modificate de tine nu sunt înlocuite. Cele pe care s-ar putea să le ai deja sub alt titlu așteaptă la „Descarcă cântări”.",
     "enableLabel": "Sincronizează automat cântările noi și actualizările",
     "checkNow": "Verifică acum",
-    "enableHint": "Când oprești opțiunea, cântările te așteaptă: le poți sincroniza pe toate din notificare sau poți verifica fiecare modificare la „Descarcă cântări”.",
+    "enableHint": "Când e oprită, cântările te așteaptă: le poți sincroniza pe toate din notificare sau poți verifica fiecare modificare la „Descarcă cântări”.",
     "pendingCount_one": "{{count}} cântare de aprobat",
     "pendingCount_few": "{{count}} cântări de aprobat",
     "pendingCount_other": "{{count}} de cântări de aprobat"
@@ -76,16 +76,16 @@
   },
   "songSources": {
     "title": "Surse de cântări",
-    "description": "De unde vin cântările noi la Descarcă cântări. Adaugă surse din linkurile primite și distribuie categoriile tale ca fișier sau prin link.",
+    "description": "De unde vin cântările noi la „Descarcă cântări”. Adaugă surse din linkurile primite și distribuie categoriile tale ca fișier sau prin link.",
     "builtIn": "Surse incluse",
     "links": {
       "title": "Surse adăugate prin link",
-      "description": "Lipește un link primit către un fișier .chsongs sau manifest.json. Cântările din sursă vor apărea la Descarcă cântări.",
+      "description": "Lipește un link primit către un fișier .chsongs sau manifest.json. Cântările din sursă vor apărea la „Descarcă cântări”.",
       "placeholder": "https://…/manifest.json",
       "add": "Adaugă sursa",
       "remove": "Elimină",
       "empty": "Nu ai adăugat încă surse prin link.",
-      "added": "Sursa {{name}} a fost adăugată la Descarcă cântări",
+      "added": "Sursa {{name}} a fost adăugată la „Descarcă cântări”",
       "addFailed": "Nu s-a putut adăuga sursa: {{error}}"
     },
     "export": {
@@ -176,8 +176,8 @@
     "updatedList": "Actualizate ({{count}})",
     "toAddList": "De adăugat ({{count}})",
     "toUpdateList": "De actualizat ({{count}})",
-    "showAll": "Arată toate ({{count}})",
-    "showLess": "Arată mai puține",
+    "showAll": "Afișează toate ({{count}})",
+    "showLess": "Afișează mai puține",
     "andMore_one": "…și încă {{count}} cântare",
     "andMore_few": "…și încă {{count}} cântări",
     "andMore_other": "…și încă {{count}} de cântări",
@@ -195,9 +195,9 @@
   "changed": {
     "title": "Actualizări ({{count}})",
     "selectAll": "Selectează toate actualizările",
-    "select": "Selectează {{title}}",
+    "select": "Selectează „{{title}}”",
     "badge": "Versiune nouă",
-    "subtitle": "{{source}} · versiune nouă față de cea din biblioteca ta",
+    "subtitle": "{{source}} · o versiune mai nouă a cântării din biblioteca ta",
     "update": "Actualizează",
     "keep": "Păstrează-o pe a mea",
     "editedNeverHere": "Cântările modificate de tine nu apar aici: nu sunt înlocuite niciodată."

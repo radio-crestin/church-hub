@@ -162,53 +162,41 @@ export function BibleTranslationsManager({
           {/* Primary Version Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('sections.bible.primaryVersion', {
-                defaultValue: 'Primary Version',
-              })}
+              {t('sections.bible.primaryVersion')}
             </label>
             <Combobox
               options={primaryOptions}
               value={primaryTranslation?.id ?? null}
               onChange={handlePrimaryChange}
               onDelete={handleDeleteRequest}
-              placeholder={t('sections.bible.selectPrimary', {
-                defaultValue: 'Select primary version...',
-              })}
+              placeholder={t('sections.bible.selectPrimary')}
               allowClear
               allowDelete
               portalContainer={portalContainer}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {t('sections.bible.primaryDescription', {
-                defaultValue: 'Main Bible version shown in the app',
-              })}
+              {t('sections.bible.primaryDescription')}
             </p>
           </div>
 
           {/* Secondary Version Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('sections.bible.secondaryVersion', {
-                defaultValue: 'Secondary Version',
-              })}
+              {t('sections.bible.secondaryVersion')}
             </label>
             <Combobox
               options={secondaryOptions}
               value={secondaryTranslation?.id ?? null}
               onChange={handleSecondaryChange}
               onDelete={handleDeleteRequest}
-              placeholder={t('sections.bible.selectSecondary', {
-                defaultValue: 'None (optional)',
-              })}
+              placeholder={t('sections.bible.selectSecondary')}
               disabled={!primaryTranslation}
               allowClear
               allowDelete
               portalContainer={portalContainer}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {t('sections.bible.secondaryDescription', {
-                defaultValue: 'Shown alongside primary in presentation',
-              })}
+              {t('sections.bible.secondaryDescription')}
             </p>
           </div>
         </div>

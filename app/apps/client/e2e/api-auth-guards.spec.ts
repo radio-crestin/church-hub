@@ -96,36 +96,28 @@ async function loginToken(
 const PASSWORD = 'e2e-guard-123'
 
 test.describe('API auth guards', () => {
-  test('a remote request without credentials is refused', async ({
-    baseURL,
-  }) => {
-    const base = baseURL as string
+  test('a remote request without credentials is refused', async () => {
     for (const path of ['/api/songs', '/api/settings/app_settings']) {
-      const res = await rawRequest(lanBaseUrl(base), path, {})
+      const res = await rawRequest(lanBaseUrl(), path, {})
       expect(res.status, path).toBe(401)
     }
     // The "Request a feature" relay never reaches the worker anonymously.
-    const feature = await rawRequest(
-      lanBaseUrl(base),
-      '/api/feature-requests',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      },
-    )
+    const feature = await rawRequest(lanBaseUrl(), '/api/feature-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
     expect(feature.status).toBe(401)
   })
 
-  test('forged or unknown credentials are refused', async ({ baseURL }) => {
-    const base = baseURL as string
+  test('forged or unknown credentials are refused', async () => {
     const forged: Record<string, string>[] = [
       { Authorization: 'Bearer not-a-real-system-token' },
       { Cookie: 'user_auth=not-a-real-user-token' },
       { 'X-User-Auth': 'not-a-real-user-token' },
     ]
     for (const credentials of forged) {
-      const res = await rawRequest(lanBaseUrl(base), '/api/songs', {
+      const res = await rawRequest(lanBaseUrl(), '/api/songs', {
         headers: credentials,
       })
       expect(res.status, JSON.stringify(Object.keys(credentials))).toBe(401)
@@ -159,7 +151,7 @@ test.describe('API auth guards', () => {
     const userId = await createUser(request, ['songs.view'], PASSWORD)
     const token = await loginToken(base, userId, PASSWORD)
 
-    const before = await rawRequest(lanBaseUrl(base), '/api/songs', {
+    const before = await rawRequest(lanBaseUrl(), '/api/songs', {
       headers: { Cookie: `user_auth=${token}` },
     })
     expect(before.status).toBe(200)
@@ -169,7 +161,7 @@ test.describe('API auth guards', () => {
     })
     expect(deactivate.ok()).toBe(true)
 
-    const after = await rawRequest(lanBaseUrl(base), '/api/songs', {
+    const after = await rawRequest(lanBaseUrl(), '/api/songs', {
       headers: { Cookie: `user_auth=${token}` },
     })
     expect(after.status).toBe(401)
@@ -186,7 +178,7 @@ test.describe('API auth guards', () => {
       PASSWORD,
     )
     const token = await loginToken(base, userId, PASSWORD)
-    const res = await rawRequest(lanBaseUrl(base), `/api/users/${userId}`, {
+    const res = await rawRequest(lanBaseUrl(), `/api/users/${userId}`, {
       method: 'PUT',
       headers: {
         Cookie: `user_auth=${token}`,
@@ -257,7 +249,7 @@ test.describe('API auth guards', () => {
     expect(upload.status).toBe(403)
 
     const remoteList = await rawRequest(
-      lanBaseUrl(base),
+      lanBaseUrl(),
       '/api/media/backgrounds',
       {},
     )
@@ -356,7 +348,7 @@ test.describe('API auth guards', () => {
     expect(webkit).toContain('SameSite=Lax')
     expect(webkit).not.toContain('Secure')
 
-    const lan = cookieOf(await loginFrom(lanBaseUrl(base), {}))
+    const lan = cookieOf(await loginFrom(lanBaseUrl(), {}))
     expect(lan).toContain('HttpOnly')
     expect(lan).toContain('SameSite=Lax')
     expect(lan).toContain(`Domain=${lanAddress()}`)

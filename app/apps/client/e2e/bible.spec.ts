@@ -6,11 +6,11 @@ import { expect, type Page, test } from '@playwright/test'
  * so we retry the search if it initially returns no results.
  */
 async function searchBible(page: Page, query: string) {
-  const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+  const searchInput = page.getByPlaceholder(/search|caută/i).first()
   await expect(searchInput).toBeVisible({ timeout: 5000 })
 
   const resultsCountLocator = page.locator(
-    'text=/\\d+ (de )?(versete? gasi(t|te)|verses? found)/i',
+    'text=/\\d+ (de )?(versete? găsite?|verses? found)/i',
   )
 
   // Retry search up to 3 times — FTS index may still be building in CI
@@ -87,7 +87,7 @@ test.describe('Bible Feature', () => {
     await page.goto('/bible')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
 
     if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
       await searchInput.fill('John 3:16')
@@ -268,7 +268,7 @@ test.describe('Bible Feature', () => {
     await page.waitForLoadState('networkidle')
 
     // Type a Romanian reference to trigger smart search (mid-chapter verse)
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     await expect(searchInput).toBeVisible({ timeout: 5000 })
     // Use Evrei 2:14 - the exact user scenario (Hebrews in Romanian)
     await searchInput.fill('Evrei 2:14')
@@ -371,7 +371,7 @@ test.describe('Bible Feature', () => {
     await page.goto('/bible')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     await expect(searchInput).toBeVisible({ timeout: 5000 })
     await searchInput.fill('Geneza 2:25')
 
