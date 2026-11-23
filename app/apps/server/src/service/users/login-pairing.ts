@@ -1,5 +1,3 @@
-import { randomInt } from 'node:crypto'
-
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('login-pairing')
@@ -28,8 +26,16 @@ export interface LoginPairing {
 const pairings = new Map<string, LoginPairing>()
 let recentCreations: number[] = []
 
+/** The largest multiple of 1,000,000 a Uint32 holds: draws at or above it
+ * would make the low codes likelier than the rest, so they are drawn again. */
+const UNBIASED_LIMIT = 4_294_000_000
+
 function generateCode(): string {
-  return String(randomInt(1_000_000)).padStart(6, '0')
+  const draw = new Uint32Array(1)
+  do {
+    crypto.getRandomValues(draw)
+  } while (draw[0] >= UNBIASED_LIMIT)
+  return String(draw[0] % 1_000_000).padStart(6, '0')
 }
 
 function removeExpired(now: number) {

@@ -211,6 +211,9 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     return { db, migrationResult }
   } catch (error) {
     log('error', `Failed to initialize database: ${error}`)
+    // Let go of the file, or a restore can't put the previous one back
+    // (Windows locks an open database).
+    closeDatabase()
     throw error
   }
 }

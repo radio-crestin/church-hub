@@ -1,3 +1,5 @@
+import { removeHtmlTags } from '@church-hub/song-formats'
+
 import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
 
 /**
@@ -9,7 +11,6 @@ const REPETITION_MARKER =
 const MARKER_ONLY_LINE = new RegExp(`^\\s*${REPETITION_MARKER}\\s*$`, 'i')
 const TRAILING_MARKER = new RegExp(`[ \\t]+(${REPETITION_MARKER})[ \\t]*$`, 'i')
 const NBSP = ' '
-const HTML_TAG = /<[^>]*>/g
 
 /**
  * A slide's stored HTML as the plain text the screens draw, which is also the
@@ -32,16 +33,6 @@ export function slidePlainText(html: string): string {
     .trim()
 
   return attachRepetitionMarkers(text)
-}
-
-function removeHtmlTags(html: string): string {
-  let previous: string
-  let text = html
-  do {
-    previous = text
-    text = text.replace(HTML_TAG, '')
-  } while (text !== previous)
-  return text
 }
 
 /** Keeps a repetition marker on the line of the verse it closes. */
