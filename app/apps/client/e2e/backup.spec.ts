@@ -1,7 +1,8 @@
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
+
+import { makeTempDir, removeTempDir } from './helpers/temp-dir'
 
 /**
  * Google Drive backup authenticates through the ChurchHub OAuth worker (the
@@ -169,12 +170,12 @@ test.describe('Backup - local', () => {
   let folder: string
 
   test.beforeEach(() => {
-    folder = mkdtempSync(join(tmpdir(), 'church-hub-e2e-backup-'))
+    folder = makeTempDir('church-hub-e2e-backup-')
   })
 
   test.afterEach(async ({ request }) => {
     await request.put('/api/backup/config', { data: { localBackupPath: null } })
-    rmSync(folder, { recursive: true, force: true })
+    removeTempDir(folder)
   })
 
   test('writes, lists and deletes a backup in the configured folder', async ({

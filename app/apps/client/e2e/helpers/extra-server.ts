@@ -1,6 +1,4 @@
 import { type ChildProcess, spawn } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -9,6 +7,7 @@ import {
   request as playwrightRequest,
 } from '@playwright/test'
 
+import { makeTempDir, removeTempDir } from './temp-dir'
 import { SERVER_READY_LINE } from '../../playwright.config'
 
 const APP_DIR = fileURLToPath(new URL('../../../..', import.meta.url))
@@ -21,7 +20,7 @@ const BOOT_TIMEOUT_MS = 240_000
  * Boot it, stop it, change its database, boot it again on the same folder.
  */
 export class ExtraServer {
-  readonly dataDir = mkdtempSync(join(tmpdir(), 'church-hub-e2e-'))
+  readonly dataDir = makeTempDir('church-hub-e2e-')
   readonly databasePath = join(this.dataDir, 'app.db')
   readonly port = Number(process.env.TEST_PORT ?? '3099') + 600
   readonly baseURL = `http://localhost:${this.port}`
@@ -130,6 +129,6 @@ export class ExtraServer {
 
   async dispose(): Promise<void> {
     await this.stop()
-    rmSync(this.dataDir, { recursive: true, force: true, maxRetries: 3 })
+    removeTempDir(this.dataDir)
   }
 }
