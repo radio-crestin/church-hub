@@ -116,7 +116,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
               onMiddleClick()
             }
           }}
-          className={`flex-1 min-w-0 flex items-center justify-between py-4 pl-4 text-left ${
+          className={`flex-1 min-w-0 flex items-center justify-between py-2.5 pl-3 md:py-4 md:pl-4 text-left ${
             hasRowActions ? 'pr-2' : 'pr-4'
           }`}
         >
@@ -145,7 +145,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 )}
               </h3>
             )}
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <div className="flex items-center gap-2 mt-1 md:mt-1.5 flex-wrap">
               {syncChangeKind && (
                 <SyncUpdateBadge changeKind={syncChangeKind} />
               )}

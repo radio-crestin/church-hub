@@ -1,4 +1,4 @@
-import { chmodSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
@@ -335,9 +335,10 @@ test.describe('Backup - local', () => {
   })
 
   /**
-   * A read-only app.db makes the copy over it fail after the live database
-   * was closed (Windows' file lock did the same, T-145). The server must
-   * reopen the database it had, not stay without one until restart.
+   * A backup that looks like SQLite but isn't one gets copied over app.db
+   * and only fails when the database is reopened, after the live one was
+   * closed (Windows' file lock failed at the same point, T-145). The server
+   * must reopen the database it had, not stay without one until restart.
    */
   test('a restore that fails partway keeps the old database open', async ({
     request,
@@ -345,36 +346,29 @@ test.describe('Backup - local', () => {
     await request.put('/api/backup/config', {
       data: { localBackupPath: folder, maxBackups: 5 },
     })
-    expect((await request.post('/api/backup/local/now')).status()).toBe(200)
-    const fileName = readdirSync(folder).find((n) => n.endsWith('.db'))
-    // A change made after the backup: the data the failed restore must keep.
+    // A change made before the restore: the data the failed restore must keep.
     await request.put('/api/backup/config', { data: { maxBackups: 7 } })
 
-    const dbPath = (await (await request.get('/api/database/info')).json()).data
-      .path as string
-    chmodSync(dbPath, 0o444)
-    try {
-      const failed = await request.post('/api/backup/local/restore', {
-        data: { fileName },
-      })
-      expect(failed.status()).toBe(400)
-      expect((await failed.json()).error).toBe('Failed to import database')
+    // The SQLite header passes the import's check; the rest is not a database.
+    const fileName = 'church-hub-backup-v0.0.0-2026-01-01T00-00-00-000Z.db'
+    writeFileSync(
+      join(folder, fileName),
+      Buffer.concat([
+        Buffer.from('SQLite format 3\0'),
+        Buffer.alloc(4096, 0xab),
+      ]),
+    )
 
-      // Still answering, with the data from before the restore.
-      const config = await request.get('/api/backup/config')
-      expect(config.status()).toBe(200)
-      expect((await config.json()).data.maxBackups).toBe(7)
-    } finally {
-      // The old database was reopened as it is, read-only, and its `.backup`
-      // copy inherited that mode: make both writable, then a restore that
-      // succeeds reopens the database writable for the specs after this one.
-      chmodSync(dbPath, 0o644)
-      chmodSync(`${dbPath}.backup`, 0o644)
-      const restored = await request.post('/api/backup/local/restore', {
-        data: { fileName },
-      })
-      expect(restored.status()).toBe(200)
-    }
+    const failed = await request.post('/api/backup/local/restore', {
+      data: { fileName },
+    })
+    expect(failed.status()).toBe(400)
+    expect((await failed.json()).error).toBe('Failed to import database')
+
+    // Still answering, with the data from before the restore.
+    const config = await request.get('/api/backup/config')
+    expect(config.status()).toBe(200)
+    expect((await config.json()).data.maxBackups).toBe(7)
   })
 
   test('browsing a relative folder lists nothing', async ({ request }) => {
