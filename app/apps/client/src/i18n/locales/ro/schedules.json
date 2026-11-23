@@ -21,7 +21,7 @@
     "renameNamed": "Redenumește prezentarea {{title}}",
     "renameDescription": "Schimbă numele acestei prezentări",
     "saveToFileDescription": "Descarcă prezentarea ca fișier",
-    "loadFromFileDescription": "Adaugă elementele dintr-un fișier de prezentare salvat"
+    "loadFromFileDescription": "Adaugă elementele unei prezentări salvate sau cântările, pasajele și notițele dintr-o listă Markdown, de exemplu Marcaje"
   },
   "editor": {
     "title": "Titlu",
@@ -233,7 +233,7 @@
     "itemCount_one": "{{count}} element va fi importat",
     "itemCount_few": "{{count}} elemente vor fi importate",
     "itemCount_other": "{{count}} de elemente vor fi importate",
-    "confirm": "Importa"
+    "confirm": "Importă"
   },
   "noSchedules": "Nicio prezentare încă",
   "noSchedulesDescription": "Creează prima prezentare ca să pregătești slujba",

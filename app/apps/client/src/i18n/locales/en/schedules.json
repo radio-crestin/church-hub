@@ -21,7 +21,7 @@
     "renameNamed": "Rename presentation {{title}}",
     "renameDescription": "Change the name of this presentation",
     "saveToFileDescription": "Download this presentation as a file",
-    "loadFromFileDescription": "Add the items from a saved presentation file"
+    "loadFromFileDescription": "Add the items from a saved presentation, or the songs, passages and notes of a Markdown list such as Marcaje"
   },
   "editor": {
     "title": "Title",
