@@ -1,7 +1,7 @@
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
+
+import { makeTempDir, removeTempDir } from './helpers/temp-dir'
 
 /**
  * T-165: while the backup status loaded, the local-backup card grew and its
@@ -13,7 +13,7 @@ test.describe('Local backup card', () => {
   let folder: string
 
   test.beforeEach(async ({ request }) => {
-    folder = mkdtempSync(join(tmpdir(), 'ch-backup-stable-'))
+    folder = makeTempDir('ch-backup-stable-')
     await request.put('/api/backup/config', {
       data: { localBackupPath: folder },
     })
@@ -24,7 +24,7 @@ test.describe('Local backup card', () => {
 
   test.afterEach(async ({ request }) => {
     await request.put('/api/backup/config', { data: { localBackupPath: null } })
-    rmSync(folder, { recursive: true, force: true })
+    removeTempDir(folder)
   })
 
   test('nothing moves between loading and loaded, and Remove asks first', async ({
