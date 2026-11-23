@@ -63,6 +63,7 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
+  PreviewModeToggle,
   SameThemeModal,
   SongBookmarksPanel,
   SongControlPanel,
@@ -101,7 +102,6 @@ import { KeyboardShortcutBadge } from '~/ui/kbd'
 import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
-import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
@@ -930,16 +930,10 @@ function SongPreviewPage() {
                 testId="song-phone-stage"
                 isLive={isThisSongLive}
                 headerActions={
-                  <label className="flex items-center gap-1.5 select-none shrink-0">
-                    <Switch
-                      id="song-preview-mode"
-                      checked={previewMode}
-                      onCheckedChange={togglePreviewMode}
-                    />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {t('preview.previewMode')}
-                    </span>
-                  </label>
+                  <PreviewModeToggle
+                    previewMode={previewMode}
+                    onTogglePreviewMode={togglePreviewMode}
+                  />
                 }
                 previewContent={stagedPreviewContent}
                 hideBackground={hidePreviewBackground}

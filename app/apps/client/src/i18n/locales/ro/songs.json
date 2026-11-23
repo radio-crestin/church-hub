@@ -294,10 +294,13 @@
     "slideAdded": "Slide adăugat",
     "presentSlide": "Afișează acest slide",
     "previewMode": "Previzualizare",
-    "previewModeHint": "Mod previzualizare: pregătește un slide înainte de a-l afișa",
+    "previewModeHint": "Previzualizare: pregătește strofa aici, pentru cântăreți, înainte de a o afișa",
     "project": "Afișează",
     "projectHint": "Afișează slide-ul pregătit",
-    "hideBackground": "Ascunde fundalul în previzualizare"
+    "hideBackground": "Ascunde fundalul în previzualizare",
+    "liveMode": "Direct",
+    "liveModeHint": "Direct: un clic pe strofă o afișează pe ecran",
+    "modeLabel": "Ce face un clic pe strofă"
   },
   "metadata": {
     "detailsSection": "Detalii",
