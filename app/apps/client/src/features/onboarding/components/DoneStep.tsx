@@ -1,0 +1,46 @@
+import { CheckCircle2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+
+import { BUILTIN_ITEMS } from '~/features/sidebar-config/constants'
+import type { BuiltInMenuItemId } from '~/features/sidebar-config/types'
+import { ONBOARDING_FEATURES } from '../constants'
+
+interface DoneStepProps {
+  selected: Set<BuiltInMenuItemId>
+}
+
+/** Last step: what the side menu will hold. */
+export function DoneStep({ selected }: DoneStepProps) {
+  const { t } = useTranslation(['onboarding', 'sidebar'])
+
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+          <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-500" />
+          {t('done.title')}
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          {t('done.description')}
+        </p>
+      </div>
+      <ul className="flex flex-wrap gap-2" data-testid="onboarding-summary">
+        {ONBOARDING_FEATURES.filter((id) => selected.has(id)).map((id) => {
+          const { icon: Icon, labelKey } = BUILTIN_ITEMS[id]
+          return (
+            <li
+              key={id}
+              className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+            >
+              <Icon className="h-4 w-4" />
+              {t(labelKey)}
+            </li>
+          )
+        })}
+      </ul>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        {t('done.later')}
+      </p>
+    </div>
+  )
+}
