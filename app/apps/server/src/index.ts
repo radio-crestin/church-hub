@@ -37,6 +37,10 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import {
+  handleAnalyticsConsentRead,
+  handleAnalyticsRoutes,
+} from './routes/analytics'
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
@@ -1346,6 +1350,10 @@ async function startRealServer(): Promise<void> {
           )
         }
       }
+
+      // GET /api/analytics (PUBLIC): may usage data be sent, and the install id
+      const analyticsConsent = handleAnalyticsConsentRead(req, url, handleCors)
+      if (analyticsConsent) return analyticsConsent
 
       // All other /api/* routes require authentication
       if (url.pathname.startsWith('/api/')) {
@@ -8142,7 +8150,6 @@ async function startRealServer(): Promise<void> {
               app_version: body.appVersion ?? 'unknown',
               server_log_tail: logs.serverTail,
               tauri_log_tail: logs.tauriTail,
-              logs_dir: logs.logsDir,
             })
             // Force flush so the logs are durable before we return — the
             // client may close the modal immediately, and Bun's process can
@@ -8246,6 +8253,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (backgroundMediaResponse) return backgroundMediaResponse
+
+      // Usage data on/off (Settings > Privacy)
+      const analyticsResponse = await handleAnalyticsRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (analyticsResponse) return analyticsResponse
 
       // "Request a feature" (relayed to the Cloudflare worker)
       const featureRequestResponse = await handleFeatureRequestRoutes(

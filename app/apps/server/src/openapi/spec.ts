@@ -4,6 +4,7 @@
 
 import { responses, securitySchemes } from './components'
 import {
+  analyticsPaths,
   authPaths,
   backgroundMediaPaths,
   backupPaths,
@@ -120,6 +121,10 @@ export const openApiSpec = {
       name: 'Feedback',
       description: 'Feature requests and user feedback submission',
     },
+    {
+      name: 'Analytics',
+      description: 'Anonymous usage data: on/off and the install id',
+    },
     { name: 'Logs', description: 'Application logs access' },
     {
       name: 'Livestream',
@@ -158,6 +163,7 @@ export const openApiSpec = {
     ...musicPaths,
     ...conversionPaths,
     ...feedbackPaths,
+    ...analyticsPaths,
     ...notificationsPaths,
   },
   components: {
