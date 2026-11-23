@@ -26,6 +26,7 @@ The project's rules for any agent working here: the principles, then the facts o
 
 ## Running and testing
 - Ports 3000 (installed app) and 3001 (dev server, client and API) are the user's: never start or kill them, and never test against 3000. Outside a task worktree, test against the running dev server on 3001; in a worktree, on your own port.
+- Tibi PC (Superfactory machine `tibi-pc`) is the build and test machine, with a copy of Adunare PC's real data in `C:\Users\Tibi\church-hub-data\adunare\`. Adunare PC is the church's live machine: read from it only. How to load and refresh that copy, and what only Adunare can test: `docs/test-machine.md`.
 - Verify changes in a browser driven by Playwright, never by launching, building or clicking through the Tauri desktop app.
 - Every feature and bug fix gets an e2e spec in `app/apps/client/e2e/`; a passing spec is the acceptance signal. The e2e suite is the project's test suite: no new unit tests (the few kept guard what no e2e can reach and run before a release).
 - A task is accepted on the full suite, run locally and serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`.

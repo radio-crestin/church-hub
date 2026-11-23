@@ -23,15 +23,13 @@ import {
   KioskWakeLockManager,
 } from '~/features/kiosk'
 import { OnboardingGate } from '~/features/onboarding'
-import {
-  ScreenShareProvider,
-  WebSocketProvider,
-} from '~/features/presentation/context'
+import { WebSocketProvider } from '~/features/presentation/context'
 import {
   useAutoOpenScreens,
   useCloseScreensOnHide,
   useReopenScreensOnPresentation,
 } from '~/features/presentation/hooks'
+import { ScreenShareProvider } from '~/features/presentation/screen-share'
 import { ServerChangedNotice } from '~/features/server-identity'
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
 import { FileDropZoneProvider } from '~/features/song-import'
@@ -135,12 +133,10 @@ function ScreenLayout() {
     <ThemeProvider>
       <QueryClientProvider>
         <WebSocketProvider>
-          <ScreenShareProvider>
-            <KioskWakeLockManager />
-            <KioskFullscreenManager />
-            <KioskScreenDimManager />
-            <Outlet />
-          </ScreenShareProvider>
+          <KioskWakeLockManager />
+          <KioskFullscreenManager />
+          <KioskScreenDimManager />
+          <Outlet />
         </WebSocketProvider>
       </QueryClientProvider>
     </ThemeProvider>
@@ -155,17 +151,17 @@ function MainLayout() {
     <ThemeProvider>
       <QueryClientProvider>
         <WebSocketProvider>
-          <ScreenShareProvider>
-            <KioskWakeLockManager />
-            <KioskFullscreenManager />
-            <KioskScreenDimManager />
-            <PermissionsProvider>
-              <MobileConnectionGuard>
-                <I18nProvider>
-                  <ToastProvider>
-                    <ServerChangedNotice />
-                    <LoginPairingPrompt />
-                    <LoginGate>
+          <KioskWakeLockManager />
+          <KioskFullscreenManager />
+          <KioskScreenDimManager />
+          <PermissionsProvider>
+            <MobileConnectionGuard>
+              <I18nProvider>
+                <ToastProvider>
+                  <ServerChangedNotice />
+                  <LoginPairingPrompt />
+                  <LoginGate>
+                    <ScreenShareProvider>
                       <KeyboardNavigationProvider>
                         <MIDISettingsProvider>
                           <ShortcutRecordingProvider>
@@ -190,15 +186,15 @@ function MainLayout() {
                           </ShortcutRecordingProvider>
                         </MIDISettingsProvider>
                       </KeyboardNavigationProvider>
-                    </LoginGate>
-                    {isDev ? (
-                      <TanStackRouterDevtools position="bottom-right" />
-                    ) : null}
-                  </ToastProvider>
-                </I18nProvider>
-              </MobileConnectionGuard>
-            </PermissionsProvider>
-          </ScreenShareProvider>
+                    </ScreenShareProvider>
+                  </LoginGate>
+                  {isDev ? (
+                    <TanStackRouterDevtools position="bottom-right" />
+                  ) : null}
+                </ToastProvider>
+              </I18nProvider>
+            </MobileConnectionGuard>
+          </PermissionsProvider>
         </WebSocketProvider>
       </QueryClientProvider>
     </ThemeProvider>

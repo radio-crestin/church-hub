@@ -25,6 +25,11 @@ const APP_COMMANDS: &[&str] = &[
     "prepare_update_install",
     "abort_update_install",
     "take_update_outcome",
+    "screen_capture_sources",
+    "screen_capture_start",
+    "screen_capture_stop",
+    "screen_share_surface_show",
+    "screen_share_surface_hide",
 ];
 
 fn main() {

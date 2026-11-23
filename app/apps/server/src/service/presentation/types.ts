@@ -221,11 +221,12 @@ export interface TemporarySceneContent {
 }
 
 /**
- * Temporary screen share content for WebRTC streaming
+ * Temporary screen share content: the frames come from the screen-share
+ * service (POST /api/screen-share/frame, GET /api/screen-share/stream.mjpg)
  */
 export interface TemporaryScreenShareContent {
-  broadcasterId: string
-  audioEnabled: boolean
+  /** When the share started: a new share opens a new stream on the screens */
+  startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
@@ -347,8 +348,6 @@ export interface PresentTemporarySceneInput {
  * Input for presenting a screen share
  */
 export interface PresentTemporaryScreenShareInput {
-  broadcasterId: string
-  audioEnabled: boolean
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
