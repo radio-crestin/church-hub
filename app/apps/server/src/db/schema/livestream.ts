@@ -43,6 +43,9 @@ export const youtubeConfig = sqliteTable('youtube_config', {
     .notNull()
     .default(true),
   thumbnailUrl: text('thumbnail_url'),
+  descriptionChapters: integer('description_chapters', { mode: 'boolean' })
+    .notNull()
+    .default(true),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

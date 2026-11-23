@@ -7,7 +7,8 @@ import {
 
 /**
  * Below the `lg` breakpoint a Workspace does not form columns: its panels stack
- * in one column and the page scrolls. Every panel must take the height its
+ * in one column (or, on the song page, sit in tabs under the pinned preview)
+ * and the page scrolls. Every panel must take the height its
  * content needs there. Panels are written to fill a desktop column slot
  * (`h-full`, `flex-1 min-h-0`), and a stack sized by the page used to squeeze
  * them into it: the control panel lost its Prev/Next buttons, the slides list
@@ -170,18 +171,19 @@ for (const viewport of VIEWPORTS) {
           }
         })
         await page.goto(`/songs/${fixture.songId}`)
-        await expect(page.getByTestId('song-control-next')).toBeAttached({
+        await expect(page.getByTestId('song-phone-next')).toBeAttached({
           timeout: 15000,
         })
 
-        await expectReachable(page, 'song-control-prev')
-        await expectReachable(page, 'song-control-next')
-        await expectUnclippedStack(page, [
-          'control',
-          'slides',
-          'versions',
-          'same-theme',
-        ])
+        // The preview is pinned above the tabs; previous and next sit at
+        // the bottom of the screen; the side panels are tabs.
+        await expectReachable(page, 'song-phone-prev')
+        await expectReachable(page, 'song-phone-next')
+        await expectUnclippedStack(page, ['control', 'slides'])
+        await page.getByTestId('workspace-tab-versions').click()
+        await expectUnclippedStack(page, ['control', 'versions'])
+        await page.getByTestId('workspace-tab-same-theme').click()
+        await expectUnclippedStack(page, ['control', 'same-theme'])
 
         await page.evaluate(() =>
           window.localStorage.setItem('song-editor-layout', 'powerpoint'),
@@ -190,7 +192,11 @@ for (const viewport of VIEWPORTS) {
         await expect(page.getByTestId('workspace-panel-stage')).toBeAttached({
           timeout: 15000,
         })
-        await expectUnclippedStack(page, ['stage', 'versions', 'same-theme'])
+        await expectUnclippedStack(page, ['stage'])
+        await page.getByTestId('workspace-tab-versions').click()
+        await expectUnclippedStack(page, ['versions'])
+        await page.getByTestId('workspace-tab-same-theme').click()
+        await expectUnclippedStack(page, ['same-theme'])
       } finally {
         await removeFixture(request, fixture)
       }

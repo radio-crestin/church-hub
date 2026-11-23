@@ -49,6 +49,7 @@ function toConfig(row: ConfigRow): YouTubeConfig {
     enableAutoStart: row.enableAutoStart,
     enableAutoStop: row.enableAutoStop,
     thumbnailUrl: row.thumbnailUrl || undefined,
+    descriptionChapters: row.descriptionChapters,
   }
 }
 

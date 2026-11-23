@@ -12,6 +12,7 @@ export function OBSSetupStepsSection() {
       title={t('obsSettings.steps.title')}
       description={t('obs.setup.step1Description')}
       icon={ListChecks}
+      testId="obs-settings-steps"
     >
       <a
         href="https://github.com/obsproject/obs-websocket/releases"

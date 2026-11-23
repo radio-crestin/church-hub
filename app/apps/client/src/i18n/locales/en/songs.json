@@ -2,7 +2,9 @@
   "title": "Songs",
   "layout": {
     "controlPanel": "Control panel",
-    "stage": "Stage"
+    "stage": "Stage",
+    "versesTab": "Verses",
+    "versionsTab": "Versions"
   },
   "actions": {
     "create": "New Song",
@@ -289,8 +291,6 @@
     "editAsText": "Edit as Text",
     "slideAdded": "Slide added",
     "presentSlide": "Present this slide",
-    "increaseFontSize": "Increase text size",
-    "decreaseFontSize": "Decrease text size",
     "previewMode": "Preview",
     "previewModeHint": "Preview mode: stage a slide before projecting it",
     "project": "Project",

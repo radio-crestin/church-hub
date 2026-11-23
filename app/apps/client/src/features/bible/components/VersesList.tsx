@@ -14,6 +14,8 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useFontScale } from '~/hooks/useFontScale'
+import { FontSizeButtons } from '~/ui/button'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { MultiTranslationVerse } from './MultiTranslationVerse'
 import { useLocalizedBookNames } from '../hooks'
@@ -45,6 +47,10 @@ interface VersesListProps {
   isLoadingNext: boolean
 }
 
+// The verses' own size, Tailwind's `text-base`, scaled per device.
+const VERSE_FONT_BASE_REM = 1
+const VERSE_FONT_SCALE_KEY = 'bible-verses-font-scale'
+
 export function VersesList({
   bookId,
   bookCode,
@@ -64,6 +70,8 @@ export function VersesList({
   isLoadingNext,
 }: VersesListProps) {
   const { t } = useTranslation('bible')
+  // The verse text, sized by the A↓/A↑ buttons like the song lyrics.
+  const fontScale = useFontScale(VERSE_FONT_SCALE_KEY, VERSE_FONT_BASE_REM)
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const topSentinelRef = useRef<HTMLDivElement>(null)
@@ -387,21 +395,24 @@ export function VersesList({
           {t('navigation.back')}
           <KeyboardShortcutBadge shortcut="Escape" variant="muted" />
         </button>
-        {presentedIndex !== null && (
-          <button
-            type="button"
-            onClick={() => {
-              highlightedRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-              })
-            }}
-            className="p-1.5 rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
-            title={t('navigation.scrollToVerse')}
-          >
-            <LocateFixed size={16} />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {presentedIndex !== null && (
+            <button
+              type="button"
+              onClick={() => {
+                highlightedRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                })
+              }}
+              className="p-1.5 rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+              title={t('navigation.scrollToVerse')}
+            >
+              <LocateFixed size={16} />
+            </button>
+          )}
+          <FontSizeButtons fontScale={fontScale} testIdPrefix="bible-font" />
+        </div>
       </div>
 
       <div
@@ -541,6 +552,7 @@ export function VersesList({
                             chapterData.bookName,
                           )
                         }
+                        style={fontScale.textStyle}
                         className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
                       >
                         <span

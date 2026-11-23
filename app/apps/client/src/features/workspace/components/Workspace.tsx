@@ -23,6 +23,7 @@ import {
 import { WorkspaceColumnView } from './WorkspaceColumnView'
 import { WorkspaceEditToolbar } from './WorkspaceEditToolbar'
 import { WorkspaceSeparator } from './WorkspaceSeparator'
+import { WorkspaceTabs } from './WorkspaceTabs'
 import { useWorkspaceEditing } from '../hooks/useWorkspaceEditing'
 import { useWorkspaceLayout } from '../hooks/useWorkspaceLayout'
 import { moveWorkspacePanel } from '../service/moveWorkspacePanel'
@@ -47,6 +48,11 @@ interface WorkspaceProps {
    * resizing and no dragging. The stored desktop arrangement is left untouched.
    */
   stacked: boolean
+  /**
+   * When stacked, show the panels as tabs under the `pinned` ones instead of
+   * one long column (see WorkspaceTabs).
+   */
+  stackedAsTabs?: boolean
   className?: string
 }
 
@@ -72,6 +78,7 @@ export function Workspace({
   defaultLayout,
   defaultColumnSizes,
   stacked,
+  stackedAsTabs = false,
   className = '',
 }: WorkspaceProps) {
   const available = panels.filter((panel) => panel.available !== false)
@@ -133,6 +140,10 @@ export function Workspace({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   )
+
+  if (stacked && stackedAsTabs) {
+    return <WorkspaceTabs panels={available} className={className} />
+  }
 
   if (stacked) {
     return (
