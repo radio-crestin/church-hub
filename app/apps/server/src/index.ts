@@ -575,7 +575,8 @@ async function main() {
   // window's loading page reads each step from /health while the heavy init
   // below runs. If any init step throws, the boot server stays up reporting
   // the failure via /health instead of the process dying silently.
-  setBootFirstRun(!existsSync(getDatabasePath()))
+  const firstRun = !existsSync(getDatabasePath())
+  setBootFirstRun(firstRun)
   t = performance.now()
   const bootServer = await startBootServer(serverPort)
   logTiming('boot_server_start', t)
@@ -593,6 +594,14 @@ async function main() {
     t = performance.now()
     await initializeDatabase()
     logTiming('database_init', t)
+    // A new database: its first admin is walked through the onboarding.
+    // Existing installs never get the key, so they never see it.
+    if (firstRun) {
+      upsertSetting('app_settings', {
+        key: 'onboarding_pending',
+        value: 'true',
+      })
+    }
 
     bootPhase = 'indexing'
     setBootPhase('indexing')
