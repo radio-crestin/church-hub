@@ -18,6 +18,7 @@ export function getNowPlayingQueue(): NowPlayingItem[] {
         artist: musicFiles.artist,
         album: musicFiles.album,
         duration: musicFiles.duration,
+        playCount: musicFiles.playCount,
       },
     })
     .from(musicNowPlaying)
@@ -37,30 +38,6 @@ export function getNowPlayingQueue(): NowPlayingItem[] {
 export function clearNowPlayingQueue(): void {
   const db = getDatabase()
   db.delete(musicNowPlaying).run()
-}
-
-export function addToNowPlaying(fileId: number): number {
-  const db = getDatabase()
-
-  const maxSortOrder = db
-    .select({ sortOrder: musicNowPlaying.sortOrder })
-    .from(musicNowPlaying)
-    .orderBy(asc(musicNowPlaying.sortOrder))
-    .all()
-    .pop()
-
-  const nextSortOrder = (maxSortOrder?.sortOrder ?? -1) + 1
-
-  const result = db
-    .insert(musicNowPlaying)
-    .values({
-      fileId,
-      sortOrder: nextSortOrder,
-    })
-    .returning({ id: musicNowPlaying.id })
-    .get()
-
-  return result.id
 }
 
 export function addMultipleToNowPlaying(fileIds: number[]): void {
@@ -97,22 +74,6 @@ export function removeFromNowPlaying(itemId: number): boolean {
   return result.changes > 0
 }
 
-export function setNowPlayingQueue(fileIds: number[]): void {
-  const db = getDatabase()
-
-  db.delete(musicNowPlaying).run()
-
-  if (fileIds.length === 0) return
-
-  // Batch insert all items in a single query
-  const values = fileIds.map((fileId, index) => ({
-    fileId,
-    sortOrder: index,
-  }))
-
-  db.insert(musicNowPlaying).values(values).run()
-}
-
 export function reorderNowPlaying(itemIds: number[]): void {
   if (itemIds.length === 0) return
 
@@ -134,6 +95,21 @@ export function reorderNowPlaying(itemIds: number[]): void {
   )
 }
 
+/** Puts a track at `index` in the queue, moving the ones from there down. */
+export function insertIntoNowPlaying(fileId: number, index: number): void {
+  const db = getDatabase()
+  const { id } = db
+    .insert(musicNowPlaying)
+    .values({ fileId })
+    .returning({ id: musicNowPlaying.id })
+    .get()
+  const itemIds = getNowPlayingQueue()
+    .map((item) => item.id)
+    .filter((itemId) => itemId !== id)
+  itemIds.splice(index, 0, id)
+  reorderNowPlaying(itemIds)
+}
+
 export function getQueueItemAtIndex(index: number): NowPlayingItem | null {
   const db = getDatabase()
 
@@ -148,6 +124,7 @@ export function getQueueItemAtIndex(index: number): NowPlayingItem | null {
         artist: musicFiles.artist,
         album: musicFiles.album,
         duration: musicFiles.duration,
+        playCount: musicFiles.playCount,
       },
     })
     .from(musicNowPlaying)

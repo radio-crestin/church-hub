@@ -253,6 +253,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0033_add_songs_alternate_titles',
       breakpoints: true,
     },
+    {
+      idx: 34,
+      version: '6',
+      when: 1769300000000,
+      tag: '0034_add_music_play_stats',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -426,5 +433,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0033_add_songs_alternate_titles',
     sql: 'ALTER TABLE `songs` ADD `alternate_titles` text;\n',
     when: 1769200000000,
+  },
+  {
+    tag: '0034_add_music_play_stats',
+    sql: "-- How often and when each track was last played, for the Music page's columns and queue orders\nALTER TABLE `music_files` ADD `play_count` integer DEFAULT 0 NOT NULL;\n--> statement-breakpoint\nALTER TABLE `music_files` ADD `last_played_at` integer;\n--> statement-breakpoint\nCREATE INDEX `idx_music_files_last_played_at` ON `music_files` (`last_played_at`);\n",
+    when: 1769300000000,
   },
 ]
