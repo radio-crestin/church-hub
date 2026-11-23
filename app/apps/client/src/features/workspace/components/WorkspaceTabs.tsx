@@ -4,6 +4,9 @@ import type { WorkspacePanel } from '../types'
 
 interface WorkspaceTabsProps {
   panels: WorkspacePanel[]
+  /** The open tab, when the page picks it (see Workspace's `activeTab`). */
+  activeTab?: string
+  onActiveTabChange?: (id: string) => void
   className?: string
 }
 
@@ -17,10 +20,17 @@ interface WorkspaceTabsProps {
  * `group-data-[stuck=true]/pinned:` variants, keeping what is live in view
  * while giving the room back to the tab below.
  */
-export function WorkspaceTabs({ panels, className = '' }: WorkspaceTabsProps) {
+export function WorkspaceTabs({
+  panels,
+  activeTab,
+  onActiveTabChange,
+  className = '',
+}: WorkspaceTabsProps) {
   const pinned = panels.filter((panel) => panel.pinned)
   const tabs = panels.filter((panel) => !panel.pinned)
-  const [activeId, setActiveId] = useState(tabs[0]?.id)
+  const [ownActiveId, setOwnActiveId] = useState(tabs[0]?.id)
+  const activeId = activeTab ?? ownActiveId
+  const setActiveId = onActiveTabChange ?? setOwnActiveId
   const active = tabs.find((panel) => panel.id === activeId) ?? tabs[0]
 
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -40,6 +50,7 @@ export function WorkspaceTabs({ panels, className = '' }: WorkspaceTabsProps) {
       <div ref={sentinelRef} aria-hidden="true" className="h-px -mb-px" />
       <div
         data-stuck={stuck}
+        data-sticky-header=""
         data-testid="workspace-pinned"
         className="group/pinned sticky top-0 z-20 -mx-3 px-3 pb-2 bg-gray-50 dark:bg-gray-950 flex flex-col gap-2"
       >
