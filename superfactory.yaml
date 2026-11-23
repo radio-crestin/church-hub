@@ -22,11 +22,8 @@ machines:
     needs: [bun]
 setup:
   # WebKit's system libraries for Playwright, and the Tauri shell's build libraries (WebKitGTK, ALSA…) for
-  # the review build. macOS and Windows: gitleaks, which the git hooks need on every commit and push
-  # (Windows installs it machine-wide, so Superfactory's own pushes find it too).
+  # the review build; macOS and Windows need none.
   linux: scripts/setup/linux.sh
-  macos: scripts/setup/macos.sh
-  windows: scripts/setup/windows.ps1
   inputs: [app/package.json, app/bun.lock]
 # Per worktree, in bash from its root: the dependencies, then every browser the Playwright projects use
 # (app/apps/client/playwright.config.ts: chromium, webkit), into the shared per-user cache (a no-op when present).
