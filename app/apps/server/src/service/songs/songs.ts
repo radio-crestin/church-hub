@@ -670,12 +670,16 @@ export function deleteSongsByIds(
     const affectedGroupIds = getGroupIdsForSongs(ids)
 
     // Slides are deleted automatically via CASCADE
-    const result = db.delete(songs).where(inArray(songs.id, ids)).run()
+    const deletedCount = db
+      .delete(songs)
+      .where(inArray(songs.id, ids))
+      .returning({ id: songs.id })
+      .all().length
 
     cleanupGroupsAfterSongDelete(affectedGroupIds)
 
-    logger.info(`Songs deleted: ${result.changes}`)
-    return { success: true, deletedCount: result.changes }
+    logger.info(`Songs deleted: ${deletedCount}`)
+    return { success: true, deletedCount }
   } catch (error) {
     logger.error(`Failed to delete songs: ${error}`)
     return { success: false, error: String(error), deletedCount: 0 }
@@ -704,9 +708,9 @@ export function compareSongContent(
     (a, b) => a.sortOrder - b.sortOrder,
   )
 
-  for (let i = 0; i < sortedExisting.length; i++) {
-    const existingContent = sortedExisting[i].content.trim()
-    const importedContent = sortedImported[i].content.trim()
+  for (const [i, existingSlide] of sortedExisting.entries()) {
+    const existingContent = existingSlide.content.trim()
+    const importedContent = sortedImported[i]?.content.trim()
     if (existingContent !== importedContent) {
       return false
     }
@@ -742,7 +746,10 @@ export function batchImportSongs(
 
   try {
     // Use transaction for atomic batch insert
-    rawDb.exec('BEGIN TRANSACTION')
+    // IMMEDIATE: the song updates' worker writes too; a deferred
+    // transaction that read first fails at once ("database is locked")
+    // when another connection wrote meanwhile, instead of waiting its turn.
+    rawDb.exec('BEGIN IMMEDIATE')
 
     // Title uniqueness is no longer enforced at the DB level. Preload existing
     // titles (lower-cased) so we can decide insert / update / skip per row.
@@ -811,9 +818,7 @@ export function batchImportSongs(
 
     // Phase 1: Insert/Update all songs and collect IDs
     const phase1Start = performance.now()
-    for (let i = 0; i < songsInput.length; i++) {
-      const input = songsInput[i]
-
+    for (const [i, input] of songsInput.entries()) {
       try {
         const categoryId = input.categoryId ?? defaultCategoryId ?? null
         // Preserve title verbatim — do not strip numbers or punctuation.

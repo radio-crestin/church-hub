@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 
 import {
   ContentTypeButton,
+  LiveBadge,
   LivePreview,
   usePresentationState,
   useWebSocket,
@@ -20,7 +21,6 @@ import {
 } from '~/features/presentation/hooks/useSlideHighlights'
 import type { TemporaryContent } from '~/features/presentation/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
-import { LiveBadge } from './LiveBadge'
 import { PreviewModeToggle } from './PreviewModeToggle'
 
 interface SongControlPanelProps {

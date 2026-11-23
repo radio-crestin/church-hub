@@ -31,6 +31,8 @@ import {
 } from '~/features/navigation'
 import type { TemporaryContent } from '~/features/presentation'
 import {
+  PhoneSlideControls,
+  PhoneStage,
   useClearTemporaryContent,
   useNavigateTemporary,
   usePresentationState,
@@ -60,11 +62,10 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
+  PreviewModeToggle,
   SongBookmarksPanel,
   SongControlPanel,
   SongLoadError,
-  SongPhoneControls,
-  SongPhoneStage,
   SongSlidesPanel,
   SongStageBoard,
   SongVersionsPanel,
@@ -921,10 +922,15 @@ function SongPreviewPage() {
                 hideBackground={hidePreviewBackground}
               />
             ) : (
-              <SongPhoneStage
-                songId={numericId}
-                previewMode={previewMode}
-                onTogglePreviewMode={togglePreviewMode}
+              <PhoneStage
+                testId="song-phone-stage"
+                isLive={isThisSongLive}
+                headerActions={
+                  <PreviewModeToggle
+                    previewMode={previewMode}
+                    onTogglePreviewMode={togglePreviewMode}
+                  />
+                }
                 previewContent={stagedPreviewContent}
                 hideBackground={hidePreviewBackground}
               />
@@ -1182,7 +1188,8 @@ function SongPreviewPage() {
 
       {/* The PowerPoint stage has its own previous / next. */}
       {!isLargeScreen && !isPowerpointLayout && (
-        <SongPhoneControls
+        <PhoneSlideControls
+          testId="song-phone"
           onPrev={handlePrevSlide}
           onNext={handleNextSlide}
           canPrev={canNavigatePrev}
@@ -1191,13 +1198,16 @@ function SongPreviewPage() {
           isLive={isThisSongLive}
           onHide={handleHidePresentation}
           isHiding={clearTemporary.isPending}
-          canProject={
+          project={
             previewMode &&
             stagedSlideIndex !== null &&
             stagedSlideIndex !== presentedSlideIndex
+              ? {
+                  onClick: handleProjectStaged,
+                  isPending: presentTemporarySong.isPending,
+                }
+              : undefined
           }
-          onProject={handleProjectStaged}
-          isProjecting={presentTemporarySong.isPending}
         />
       )}
 

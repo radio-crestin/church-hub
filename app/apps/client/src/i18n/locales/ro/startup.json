@@ -9,6 +9,7 @@
     "finishing": "Aproape gata"
   },
   "progress": "Cântări: {{done}} din {{total}}",
+  "stepOf": "Pasul {{step}} din {{total}}",
   "firstRunHint": "Prima pornire: pregătim totul. Se întâmplă o singură dată.",
   "longHint": "Durează mai mult decât de obicei…",
   "errorUnreachable": "Nu s-a putut contacta serverul local",

@@ -367,6 +367,9 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
     sidecar = sidecar.env("NODE_ENV", "production");
     sidecar = sidecar.env("TAURI_MODE", "true");
     sidecar = sidecar.env("PORT", server_port.to_string());
+    // The sidecar exits once this process is gone, however it ends: its stdin
+    // pipe closes (apps/server/src/utils/exitWithParent.ts).
+    sidecar = sidecar.env("CHURCH_HUB_EXIT_WITH_PARENT", "true");
     // A local review build's own data folder (see review.rs).
     if let Some(dir) = crate::review::data_dir() {
         sidecar = sidecar.env("CHURCH_HUB_DATA_DIR", dir);
@@ -390,6 +393,13 @@ pub fn start_server(app_handle: &AppHandle, server_port: u16) -> Result<(), Stri
         let resource_path = resource_dir.to_string_lossy().to_string();
         println!("[sidecar] Client dist path: {}", resource_path);
         sidecar = sidecar.env("CLIENT_DIST_PATH", resource_path);
+    }
+
+    // Where this bundle keeps its resources (MIDI module, sample music,
+    // backgrounds): Tauri knows each OS's and installer's layout, e.g.
+    // /usr/lib/church-hub on a Linux .deb, which the sidecar can't guess.
+    if let Ok(resource_dir) = app_handle.path().resource_dir() {
+        sidecar = sidecar.env("CHURCH_HUB_RESOURCES_DIR", resource_dir.to_string_lossy().to_string());
     }
     println!("[startup] sidecar_env_setup: {:?}", t.elapsed());
 

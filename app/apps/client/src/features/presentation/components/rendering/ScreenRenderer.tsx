@@ -6,7 +6,6 @@ import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
 import { ScreenBackground } from './ScreenBackground'
 import { ScreenContentLayers } from './ScreenContentLayers'
-import { ScreenShareReceiver } from './ScreenShareReceiver'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
@@ -14,6 +13,7 @@ import { useClearSlide, useNavigateTemporary, useWebSocket } from '../../hooks'
 import { usePresentationContent } from '../../hooks/usePresentationContent'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
+import { ScreenShareView } from '../../screen-share'
 import type { ScreenShareContentConfig, ScreenWithConfigs } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
@@ -41,7 +41,7 @@ export function ScreenRenderer({
   screenId,
   liveProgram = null,
 }: ScreenRendererProps) {
-  const { debugInfo: wsDebugInfo, send: wsSend } = useWebSocket()
+  const { debugInfo: wsDebugInfo } = useWebSocket()
   const navigate = useNavigate()
 
   const { data: screenData, isLoading, isError } = useScreen(screenId)
@@ -748,14 +748,9 @@ export function ScreenRenderer({
             <>
               {contentType === 'screen_share' &&
               presentationState?.temporaryContent?.type === 'screen_share' ? (
-                <ScreenShareReceiver
-                  broadcasterId={
-                    presentationState.temporaryContent.data.broadcasterId
-                  }
-                  audioEnabled={
-                    screen.globalSettings.screenShareAudioEnabled ?? false
-                  }
-                  send={wsSend}
+                <ScreenShareView
+                  session={presentationState.temporaryContent.data.startedAt}
+                  nativeWindow={isTauri() && isNativeDisplayWindow}
                   videoElement={
                     (
                       screen.contentConfigs

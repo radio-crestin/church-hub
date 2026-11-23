@@ -95,7 +95,6 @@ test.describe('Screen settings are grouped and explained', () => {
       [idle, 'closeOnEscape'],
       [window, 'window'],
       [window, 'openOnStartup'],
-      [window, 'previewScreen'],
     ] as const) {
       const toggle = group.getByRole('switch', {
         name: label('settings', `sections.screens.${key}.label`),
@@ -105,6 +104,14 @@ test.describe('Screen settings are grouped and explained', () => {
         label('settings', `sections.screens.${key}.description`),
       )
     }
+    // One screen at a time is shown in the previews: a radio, not a switch.
+    const shownInPreviews = window.getByRole('radio', {
+      name: label('settings', 'sections.screens.previewScreen.label'),
+    })
+    await expect(shownInPreviews).toBeVisible()
+    await expect(shownInPreviews).toHaveAccessibleDescription(
+      label('settings', 'sections.screens.previewScreen.description'),
+    )
     await expect(
       idle.getByRole('switch', {
         name: label('settings', 'sections.screens.idle.clock.label'),

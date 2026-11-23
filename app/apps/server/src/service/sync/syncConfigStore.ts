@@ -20,10 +20,9 @@ const DEFAULT_CONFIG: SyncConfig = {
 /** Reads the single-row sync configuration, returning defaults when unset. */
 export async function getSyncConfig(): Promise<SyncConfig> {
   const db = getDatabase()
-  const rows = await db.select().from(syncConfig).limit(1)
-  if (rows.length === 0) return { ...DEFAULT_CONFIG }
+  const [row] = await db.select().from(syncConfig).limit(1)
+  if (!row) return { ...DEFAULT_CONFIG }
 
-  const row = rows[0]
   return {
     syncEnabled: row.syncEnabled,
     pollIntervalMinutes: row.pollIntervalMinutes,
@@ -37,7 +36,7 @@ export async function upsertSyncConfig(
   patch: Partial<SyncConfig>,
 ): Promise<SyncConfig> {
   const db = getDatabase()
-  const rows = await db.select().from(syncConfig).limit(1)
+  const [current] = await db.select().from(syncConfig).limit(1)
 
   const lastSyncAt =
     patch.lastSyncAt !== undefined
@@ -46,7 +45,7 @@ export async function upsertSyncConfig(
         : new Date(patch.lastSyncAt)
       : undefined
 
-  if (rows.length === 0) {
+  if (!current) {
     await db.insert(syncConfig).values({
       syncEnabled: patch.syncEnabled ?? DEFAULT_CONFIG.syncEnabled,
       pollIntervalMinutes:
@@ -68,7 +67,7 @@ export async function upsertSyncConfig(
         ...(patch.lastError !== undefined && { lastError: patch.lastError }),
         updatedAt: new Date(),
       })
-      .where(eq(syncConfig.id, rows[0].id))
+      .where(eq(syncConfig.id, current.id))
   }
 
   return getSyncConfig()

@@ -9,6 +9,8 @@ pub mod review;
 #[cfg(desktop)]
 pub mod audio;
 #[cfg(desktop)]
+pub mod screen_capture;
+#[cfg(desktop)]
 pub mod server;
 #[cfg(desktop)]
 pub mod updater;
@@ -334,6 +336,8 @@ pub fn run() {
             zoom_levels: Mutex::new(std::collections::HashMap::new()),
         };
         app.manage(zoom_state);
+        #[cfg(desktop)]
+        app.manage(screen_capture::ScreenCapture::<tauri::Wry>::default());
         println!("[startup] setup_app_state: {:?}", t.elapsed());
 
         // Handle file association - check CLI args for PPTX file
@@ -569,7 +573,12 @@ pub fn run() {
         restart_server,
         updater::prepare_update_install,
         updater::abort_update_install,
-        updater::take_update_outcome
+        updater::take_update_outcome,
+        screen_capture::commands::screen_capture_sources,
+        screen_capture::commands::screen_capture_start,
+        screen_capture::commands::screen_capture_stop,
+        screen_capture::commands::screen_share_surface_show,
+        screen_capture::commands::screen_share_surface_hide
     ]);
 
     // Mobile: only basic commands (no webview management)

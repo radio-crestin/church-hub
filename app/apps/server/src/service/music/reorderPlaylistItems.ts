@@ -28,8 +28,7 @@ export function reorderPlaylistItems(
       }
     }
 
-    for (let i = 0; i < input.itemIds.length; i++) {
-      const itemId = input.itemIds[i]
+    for (const [i, itemId] of input.itemIds.entries()) {
       db.update(musicPlaylistItems)
         .set({ sortOrder: i })
         .where(eq(musicPlaylistItems.id, itemId))

@@ -33,11 +33,11 @@ export async function getBackupConfig(): Promise<BackupConfig> {
   const db = getDatabase()
   const rows = await db.select().from(backupConfig).limit(1)
 
-  if (rows.length === 0) {
+  const row = rows[0]
+  if (!row) {
     return { ...DEFAULT_CONFIG }
   }
 
-  const row = rows[0]
   return {
     autoBackupEnabled: row.autoBackupEnabled,
     intervalHours: row.intervalHours,
@@ -65,7 +65,8 @@ export async function upsertBackupConfig(
   const lastBackupAt = toDate(patch.lastBackupAt)
   const lastLocalBackupAt = toDate(patch.lastLocalBackupAt)
 
-  if (rows.length === 0) {
+  const existing = rows[0]
+  if (!existing) {
     await db.insert(backupConfig).values({
       autoBackupEnabled:
         patch.autoBackupEnabled ?? DEFAULT_CONFIG.autoBackupEnabled,
@@ -95,7 +96,7 @@ export async function upsertBackupConfig(
         ...(lastLocalBackupAt !== undefined && { lastLocalBackupAt }),
         updatedAt: new Date(),
       })
-      .where(eq(backupConfig.id, rows[0].id))
+      .where(eq(backupConfig.id, existing.id))
   }
 
   return getBackupConfig()

@@ -1,11 +1,17 @@
 import { eq } from 'drizzle-orm'
-import { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
 
 import { parseGoogleAuthError, type YouTubeAuthError } from './errors'
 import { getDatabase } from '../../../db'
 import { youtubeAuth } from '../../../db/schema'
 import { broadcastYouTubeAuthStatus } from '../../../websocket'
+
+/**
+ * The OAuth2 client of the `google-auth-library` googleapis itself builds on,
+ * so `google.youtube({ auth })` accepts it.
+ */
+const OAuth2Client = google.auth.OAuth2
+type OAuth2Client = InstanceType<typeof OAuth2Client>
 
 const DEBUG = process.env.DEBUG === 'true'
 const YOUTUBE_OAUTH_SERVER =
@@ -113,13 +119,11 @@ async function refreshTokensViaWorker(
 
 export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
   const db = getDatabase()
-  const authRecords = await db.select().from(youtubeAuth).limit(1)
+  const [auth] = await db.select().from(youtubeAuth).limit(1)
 
-  if (authRecords.length === 0) {
+  if (!auth) {
     return null
   }
-
-  const auth = authRecords[0]
   const needsRefresh = auth.expiresAt.getTime() < Date.now() + 5 * 60 * 1000
 
   // Try to refresh tokens if needed
@@ -267,13 +271,11 @@ export async function getYouTubeService() {
  */
 export async function getAccessToken(): Promise<string | null> {
   const db = getDatabase()
-  const authRecords = await db.select().from(youtubeAuth).limit(1)
+  const [auth] = await db.select().from(youtubeAuth).limit(1)
 
-  if (authRecords.length === 0) {
+  if (!auth) {
     return null
   }
-
-  const auth = authRecords[0]
 
   // Check if token is expired or expiring soon
   if (auth.expiresAt.getTime() < Date.now() + 5 * 60 * 1000) {

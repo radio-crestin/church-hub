@@ -9,6 +9,8 @@ interface DiscoveryHeaderProps {
   onBack?: () => void
   selectedCount: number
   totalCount: number
+  /** The selection updates library songs too, not only adds new ones. */
+  includesUpdates: boolean
   onImport: () => void
   isImporting: boolean
   isChecking: boolean
@@ -17,11 +19,12 @@ interface DiscoveryHeaderProps {
   onCheckAgain: () => void
 }
 
-/** The page's header: back, title, then "import" (primary) and "check again". */
+/** The page's header: back, title, then "import" or "apply" (primary) and "check again". */
 export function DiscoveryHeader({
   onBack,
   selectedCount,
   totalCount,
+  includesUpdates,
   onImport,
   isImporting,
   isChecking,
@@ -67,9 +70,11 @@ export function DiscoveryHeader({
                 ) : (
                   <Download className="h-4 w-4" />
                 )}
-                {selectedCount === totalCount
-                  ? t('toolbar.importAll', { count: selectedCount })
-                  : t('toolbar.importSelected', { count: selectedCount })}
+                {includesUpdates
+                  ? t('toolbar.applySelected', { count: selectedCount })
+                  : selectedCount === totalCount
+                    ? t('toolbar.importAll', { count: selectedCount })
+                    : t('toolbar.importSelected', { count: selectedCount })}
               </Button>
               <Button
                 variant="secondary"

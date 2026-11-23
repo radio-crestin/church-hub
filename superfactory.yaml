@@ -8,7 +8,7 @@ description: >-
   with a Bun-compiled sidecar server and a React client, on macOS, Windows and Linux.
 tags: [typescript, bun, react, tauri, rust, playwright]
 links:
-  repo: https://github.com/bringes/church-hub
+  repo: https://github.com/radio-crestin/church-hub
 machines:
   - os: linux
     default: true
