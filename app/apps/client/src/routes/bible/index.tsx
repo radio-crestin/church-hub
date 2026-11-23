@@ -37,6 +37,7 @@ import {
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
+import { getBookmarkSlideshow } from '~/features/bible/utils/getBookmarkSlideshow'
 import {
   useFocusSearchEvent,
   usePageShortcutEvent,
@@ -437,6 +438,7 @@ function BiblePage() {
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
+  const isSlideshowLive = getBookmarkSlideshow(presentationState) !== null
   const temporaryContent = presentationState?.temporaryContent
 
   /**
@@ -1079,6 +1081,13 @@ function BiblePage() {
       return
     }
 
+    // A bookmark slideshow is on screen — step through the chosen verses, not
+    // the chapter.
+    if (isSlideshowLive) {
+      await navigateTemporary.mutateAsync({ direction: 'next' })
+      return
+    }
+
     // Active navigation clears browse mode so sync works for chapter transitions
     isBrowsingRef.current = false
 
@@ -1108,6 +1117,7 @@ function BiblePage() {
     }
   }, [
     isScheduleLive,
+    isSlideshowLive,
     scheduleNav,
     navigation,
     verses,
@@ -1119,6 +1129,13 @@ function BiblePage() {
     // A program step is live — step back through the program.
     if (isScheduleLive) {
       await scheduleNav.goPrev()
+      return
+    }
+
+    // A bookmark slideshow is on screen — step through the chosen verses, not
+    // the chapter.
+    if (isSlideshowLive) {
+      await navigateTemporary.mutateAsync({ direction: 'prev' })
       return
     }
 
@@ -1151,6 +1168,7 @@ function BiblePage() {
     }
   }, [
     isScheduleLive,
+    isSlideshowLive,
     scheduleNav,
     navigation,
     verses,

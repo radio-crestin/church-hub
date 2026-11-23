@@ -203,6 +203,11 @@ export interface VerseteTineriEntry {
 export interface TemporaryVerseteTineriContent {
   entries: VerseteTineriEntry[]
   currentEntryIndex: number // 0-based index in entries array
+  /**
+   * Plays the entries in a loop: each stays up for its reading time, then the
+   * next one shows, and the last one wraps to the first (verse-loop.ts).
+   */
+  loop?: boolean
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -326,6 +331,7 @@ export interface PresentTemporaryBiblePassageInput {
 export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
+  loop?: boolean // Advance by itself and wrap around (see TemporaryVerseteTineriContent)
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number

@@ -6,6 +6,7 @@ import { AISearchSettings } from '~/features/ai-search'
 import { AlertModal } from '~/ui/modal'
 import { BibleDownloadSection } from './BibleDownloadSection'
 import { BibleTranslationsManager } from './BibleTranslationsManager'
+import { ReadingSpeedSettings } from './ReadingSpeedSettings'
 import { useImportTranslation } from '../hooks'
 
 const cardClass =
@@ -120,6 +121,10 @@ export function BibleSettingsPanel() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className={cardClass}>
+          <ReadingSpeedSettings />
         </div>
 
         <AISearchSettings configKey="bible_ai_search_config" />
