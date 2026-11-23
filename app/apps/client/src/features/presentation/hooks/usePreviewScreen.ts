@@ -2,34 +2,27 @@ import { useMemo } from 'react'
 
 import { useScreen } from './useScreen'
 import { useScreens } from './useScreens'
-import type { ScreenWithConfigs } from '../types'
+import type { Screen, ScreenWithConfigs } from '../types'
+import { resolvePreviewScreen } from '../utils/resolvePreviewScreen'
 
 /**
  * Resolve the screen used for operator-side previews (LivePreview, the song
- * stage editor). Mirrors the projection the operator cares about:
- * 1. the screen explicitly flagged as the preview screen, if any
- * 2. otherwise the first primary screen, by sort order
+ * stage editor), as chosen in Settings > Screens or from the preview's own
+ * picker (see resolvePreviewScreen for the fallback to the main screen).
  *
- * Returns the fully-loaded screen (with content configs) or null while loading.
+ * `screen` is the fully-loaded screen (with content configs), undefined while
+ * loading; `previewScreen` is its entry in the list, known sooner.
  */
 export function usePreviewScreen(): {
   screen: ScreenWithConfigs | undefined
+  previewScreen: Screen | null
   isLoading: boolean
 } {
   const { data: screens } = useScreens()
 
-  const previewScreen = useMemo(() => {
-    if (!screens) return null
-    const flagged = screens.find((s) => s.isPreviewScreen)
-    if (flagged) return flagged
-    return (
-      screens
-        .filter((s) => s.type === 'primary')
-        .sort((a, b) => a.sortOrder - b.sortOrder)[0] || null
-    )
-  }, [screens])
+  const previewScreen = useMemo(() => resolvePreviewScreen(screens), [screens])
 
   const { data: screen, isLoading } = useScreen(previewScreen?.id ?? undefined)
 
-  return { screen, isLoading }
+  return { screen, previewScreen, isLoading }
 }

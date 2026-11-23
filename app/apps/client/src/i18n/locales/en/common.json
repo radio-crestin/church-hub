@@ -83,7 +83,7 @@
     "openIssue": "Open the request",
     "retake": "Retake",
     "noScreenshot": "No screenshot.",
-    "publicNotice": "It will be public on GitHub, with your notes and screenshot, so don't add private details. Your email stays private.",
+    "publicNotice": "It will be public on GitHub, with your notes and screenshot, so don't add private details. Your email and the app's recent logs go only to the developer.",
     "stepShowTitle": "Show us where",
     "toolPen": "Pen",
     "toolNote": "Text note",

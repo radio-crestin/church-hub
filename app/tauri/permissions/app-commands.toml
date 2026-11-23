@@ -24,4 +24,9 @@ permissions = [
   "allow-prepare-update-install",
   "allow-abort-update-install",
   "allow-take-update-outcome",
+  "allow-screen-capture-sources",
+  "allow-screen-capture-start",
+  "allow-screen-capture-stop",
+  "allow-screen-share-surface-show",
+  "allow-screen-share-surface-hide",
 ]

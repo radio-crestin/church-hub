@@ -71,18 +71,3 @@ export async function removeFromPlaylist(
   )
   return response.data?.success ?? false
 }
-
-export async function reorderPlaylistItems(
-  playlistId: number,
-  itemIds: number[],
-): Promise<boolean> {
-  const response = await fetcher<ApiResponse<{ success: boolean }>>(
-    `/api/music/playlists/${playlistId}/items/reorder`,
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemIds }),
-    },
-  )
-  return response.data?.success ?? false
-}

@@ -11,6 +11,7 @@ import {
   PanelLeft,
   Radio,
   ScrollText,
+  ShieldCheck,
   Sliders,
   Tv,
   User,
@@ -40,6 +41,11 @@ export interface SettingsNavItemDef {
   to: string
   /** Defaults to always-visible when omitted. */
   visible?: (ctx: SettingsVisibilityContext) => boolean
+  /**
+   * The settings shown on this page, as `namespace:key` i18n keys of their
+   * visible labels: what the settings search finds and highlights.
+   */
+  settings?: string[]
 }
 
 export interface SettingsNavGroupDef {
@@ -65,6 +71,10 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'sections.appearance.title',
         icon: Palette,
         to: '/settings/appearance',
+        settings: [
+          'settings:sections.language.title',
+          'settings:sections.theme.title',
+        ],
       },
       {
         id: 'connection',
@@ -72,6 +82,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Wifi,
         to: '/settings/connection',
         visible: (ctx) => ctx.isMobile && canEdit(ctx),
+        settings: ['settings:sections.apiUrl.label'],
       },
       {
         id: 'sidebar',
@@ -79,6 +90,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: PanelLeft,
         to: '/settings/sidebar',
         visible: canEdit,
+        settings: ['settings:sections.sidebar.title'],
       },
     ],
   },
@@ -91,6 +103,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'nav.items.profile',
         icon: User,
         to: '/settings/profile',
+        settings: ['users:profile.permissions'],
       },
       {
         id: 'users',
@@ -98,6 +111,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Users,
         to: '/settings/users',
         visible: (ctx) => ctx.hasPermission('users.view'),
+        settings: ['settings:sections.users.title'],
       },
     ],
   },
@@ -111,6 +125,23 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Music,
         to: '/settings/songs',
         visible: canEdit,
+        settings: [
+          'songs:editorLayout.title',
+          'settings:sections.categories.title',
+          'settings:sections.tags.title',
+          'settings:sections.importExport.title',
+          'settings:sections.importExport.import.title',
+          'settings:sections.importExport.resurseCrestine.title',
+          'settings:sections.importExport.export.title',
+          'songDiscovery:settings.title',
+          'songDiscovery:settings.enableLabel',
+          'songDiscovery:songSources.title',
+          'songDiscovery:songSources.links.title',
+          'songDiscovery:songSources.storage.title',
+          'songDiscovery:songSources.publish.title',
+          'settings:sections.synonyms.title',
+          'settings:sections.aiSearch.title',
+        ],
       },
       {
         id: 'bible',
@@ -118,6 +149,12 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: BookOpen,
         to: '/settings/bible',
         visible: canEdit,
+        settings: [
+          'settings:sections.bible.title',
+          'bible:settings.download.title',
+          'bible:settings.import.title',
+          'settings:sections.bibleAiSearch.title',
+        ],
       },
     ],
   },
@@ -131,6 +168,15 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Monitor,
         to: '/settings/screens',
         visible: canEdit,
+        settings: [
+          'settings:sections.screens.idle.clock.label',
+          'settings:sections.screens.closeOnEscape.label',
+          'settings:sections.screens.openOnStartup.label',
+          'presentation:screens.monitor.label',
+          'settings:sections.screens.previewScreen.label',
+          'settings:sections.screens.fullscreen.label',
+          'settings:sections.screens.alwaysOnTop.label',
+        ],
       },
       {
         id: 'kiosk',
@@ -138,6 +184,10 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Tv,
         to: '/settings/kiosk',
         visible: canEdit,
+        settings: [
+          'settings:sections.kiosk.enable.label',
+          'settings:sections.kiosk.startupPage.label',
+        ],
       },
       {
         id: 'livestream',
@@ -145,6 +195,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Radio,
         to: '/settings/livestream',
         visible: canEdit,
+        settings: ['livestream:scenes.title'],
       },
     ],
   },
@@ -158,6 +209,15 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Keyboard,
         to: '/settings/shortcuts',
         visible: canEdit,
+        settings: [
+          'settings:sections.shortcuts.actions.showSlide.label',
+          'settings:sections.shortcuts.actions.nextSlide.label',
+          'settings:sections.shortcuts.actions.prevSlide.label',
+          'settings:sections.shortcuts.actions.startLive.label',
+          'settings:sections.shortcuts.actions.stopLive.label',
+          'settings:sections.sidebarItem.shortcuts.switchTitle',
+          'settings:sections.sidebarItem.shortcuts.focusSearchTitle',
+        ],
       },
       {
         id: 'midi',
@@ -165,6 +225,10 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Sliders,
         to: '/settings/midi',
         visible: canEdit,
+        settings: [
+          'settings:sections.shortcuts.midi.inputDevice',
+          'settings:sections.shortcuts.midi.outputDevice',
+        ],
       },
     ],
   },
@@ -178,6 +242,10 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: ScrollText,
         to: '/settings/logs',
         visible: (ctx) => ctx.hasPermission('logs.view'),
+        settings: [
+          'settings:sections.logs.title',
+          'settings:sections.logs.clear.card.title',
+        ],
       },
       {
         id: 'backup',
@@ -185,6 +253,14 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: CloudUpload,
         to: '/settings/backup',
         visible: (ctx) => ctx.isLocalhost && canEdit(ctx),
+        settings: [
+          'settings:sections.backup.title',
+          'settings:sections.backup.local.title',
+          'settings:sections.backup.auto.title',
+          'settings:sections.backup.retention.title',
+          'settings:sections.sync.title',
+          'settings:sections.sync.toggle.title',
+        ],
       },
       {
         id: 'developer',
@@ -192,6 +268,14 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: Wrench,
         to: '/settings/developer',
         visible: canEdit,
+        settings: [
+          'settings:sections.debug.title',
+          'settings:sections.apiDocs.title',
+          'settings:sections.systemToken.title',
+          'settings:sections.searchIndex.card.title',
+          'settings:sections.database.title',
+          'settings:sections.factoryReset.title',
+        ],
       },
       {
         // Downloading and installing a new version is driven by the sidecar,
@@ -201,12 +285,20 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: DownloadCloud,
         to: '/settings/updates',
         visible: (ctx) => ctx.isLocalhost && canEdit(ctx),
+        settings: ['settings:sections.updates.title'],
+      },
+      {
+        id: 'privacy',
+        labelKey: 'nav.items.privacy',
+        icon: ShieldCheck,
+        to: '/settings/privacy',
       },
       {
         id: 'about',
         labelKey: 'sections.about.title',
         icon: Info,
         to: '/settings/about',
+        settings: ['settings:sections.about.currentVersion'],
       },
     ],
   },

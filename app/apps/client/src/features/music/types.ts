@@ -26,6 +26,8 @@ export interface MusicFile {
   format: AudioFormat
   fileSize: number | null
   lastModified: number | null
+  playCount: number
+  lastPlayedAt: number | null
   createdAt: number
   updatedAt: number
 }
@@ -61,16 +63,6 @@ export interface SyncResult {
   errors: string[]
 }
 
-export interface PlayerState {
-  isPlaying: boolean
-  currentTime: number
-  duration: number
-  volume: number
-  isMuted: boolean
-  isShuffled: boolean
-  currentIndex: number
-}
-
 export interface QueueItem {
   queueId: string
   fileId: number
@@ -91,13 +83,35 @@ export interface QueueItemSummary {
   duration?: number
 }
 
+/** What plays next: as added, at random, or by how often each was played. */
+export const QUEUE_ORDERS = [
+  'in_order',
+  'random',
+  'most_played',
+  'least_played',
+] as const
+
+export type QueueOrder = (typeof QUEUE_ORDERS)[number]
+
+/** What the track list shows: the whole library, the played tracks, a playlist or a folder. */
+export type LibraryView =
+  | { kind: 'all' }
+  | { kind: 'recent' }
+  | { kind: 'playlist'; id: number }
+  | { kind: 'folder'; id: number }
+
+/** A track in the list; `playlistItemId` when it is listed from a playlist. */
+export interface LibraryTrack extends MusicFile {
+  playlistItemId?: number
+}
+
 export interface ServerPlayerState {
   isPlaying: boolean
   currentTime: number
   duration: number
   volume: number
   isMuted: boolean
-  isShuffled: boolean
+  queueOrder: QueueOrder
   currentIndex: number
   queueLength: number
   currentTrack: {

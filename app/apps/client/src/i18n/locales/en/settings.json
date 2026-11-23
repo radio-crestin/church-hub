@@ -21,7 +21,12 @@
       "backup": "Backup",
       "updates": "Updates",
       "logs": "Logs",
-      "shortcuts": "Shortcuts"
+      "shortcuts": "Shortcuts",
+      "privacy": "Privacy"
+    },
+    "search": {
+      "placeholder": "Search settings…",
+      "noResults": "No settings match “{{query}}”"
     }
   },
   "sections": {
@@ -620,19 +625,6 @@
         "saving": "Saving file...",
         "processingProgress": "Processing {{current}} of {{total}}"
       },
-      "resurseCrestine": {
-        "title": "Import from Resurse Crestine",
-        "description": "Download and import songs from Resurse Crestine website",
-        "button": "Import from Resurse Crestine",
-        "importing": "Importing...",
-        "note": "Songs will be imported to the 'Resurse Crestine' category with first verse as title"
-      },
-      "recoverTitles": {
-        "description": "Songs imported before now are filed under their first verse, and the name the source knows them by was lost. Recover it so they can be found by that name again.",
-        "button": "Recover the original titles",
-        "running": "Recovering…",
-        "done": "{{count}} song(s) got their original title back"
-      },
       "toast": {
         "importSuccess": "Successfully imported {{count}} songs",
         "importFailed": "Import failed: {{error}}",
@@ -1106,11 +1098,10 @@
         "error": "Failed to update close-on-escape setting"
       },
       "previewScreen": {
-        "label": "Show in the Control Room preview",
-        "description": "The Control Room preview mirrors this screen. Only one screen at a time.",
-        "enabled": "This screen is now shown in the preview",
-        "disabled": "This screen is no longer shown in the preview",
-        "error": "Failed to update preview screen setting"
+        "label": "Shown in the previews",
+        "description": "The Control Room, Bible, song and program previews mirror this screen. Pick another screen to switch; without a choice, it is the main screen.",
+        "enabled": "The previews now show this screen",
+        "error": "Could not change the screen shown in the previews"
       },
       "fullscreen": {
         "label": "Fill the whole display",

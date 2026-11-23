@@ -52,7 +52,7 @@ function toSlides(lyrics: string): ParsedSlideWithLabel[] {
     .filter(
       (lines) =>
         lines.length > 0 &&
-        !(lines.length === 1 && CHORUS_PLACEHOLDER.test(lines[0])),
+        !(lines.length === 1 && CHORUS_PLACEHOLDER.test(lines[0] ?? '')),
     )
 
   return stanzas.map((lines, index) => ({

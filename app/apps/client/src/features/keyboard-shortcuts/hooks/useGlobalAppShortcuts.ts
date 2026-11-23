@@ -1,4 +1,4 @@
-import { register, unregisterAll } from '@tauri-apps/plugin-global-shortcut'
+import { unregisterAll } from '@tauri-apps/plugin-global-shortcut'
 import { useEffect, useRef } from 'react'
 
 import { createLogger } from '~/utils/logger'
@@ -14,6 +14,7 @@ import {
   offerKeyToPage,
   shortcutScope,
 } from '../utils'
+import { registerTrackedShortcut } from '../utils/registerTrackedShortcut'
 
 const logger = createLogger('app:keyboard:global')
 
@@ -224,7 +225,7 @@ export function useGlobalAppShortcuts({
                   : actionHandlers[actionId as GlobalShortcutActionId]
 
               try {
-                await register(shortcut, (event) => {
+                await registerTrackedShortcut(shortcut, (event) => {
                   if (event.state === 'Pressed') {
                     // Skip if recording a new shortcut (check both global state and ref)
                     if (isGlobalRecordingActive() || isRecordingRef?.current) {
@@ -259,7 +260,7 @@ export function useGlobalAppShortcuts({
           if (isCancelled) return
 
           try {
-            await register(shortcut, (event) => {
+            await registerTrackedShortcut(shortcut, (event) => {
               if (event.state === 'Pressed') {
                 // Skip if recording a new shortcut (check both global state and ref)
                 if (isGlobalRecordingActive() || isRecordingRef?.current) {
@@ -297,7 +298,7 @@ export function useGlobalAppShortcuts({
           if (isCancelled) return
 
           try {
-            await register(shortcut, (event) => {
+            await registerTrackedShortcut(shortcut, (event) => {
               if (event.state === 'Pressed') {
                 // Skip if recording a new shortcut (check both global state and ref)
                 if (isGlobalRecordingActive() || isRecordingRef?.current) {
@@ -341,7 +342,7 @@ export function useGlobalAppShortcuts({
           if (isCancelled) return
 
           try {
-            await register(shortcut, (event) => {
+            await registerTrackedShortcut(shortcut, (event) => {
               if (event.state === 'Pressed') {
                 if (isGlobalRecordingActive() || isRecordingRef?.current) {
                   logger.debug(

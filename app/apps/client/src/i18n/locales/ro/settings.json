@@ -21,7 +21,12 @@
       "backup": "Copie de rezervă",
       "updates": "Actualizari",
       "logs": "Jurnale",
-      "shortcuts": "Scurtături"
+      "shortcuts": "Scurtături",
+      "privacy": "Confidențialitate"
+    },
+    "search": {
+      "placeholder": "Caută în setări…",
+      "noResults": "Nicio setare nu se potrivește cu „{{query}}”"
     }
   },
   "sections": {
@@ -623,19 +628,6 @@
         "saving": "Se salvează fișierul...",
         "processingProgress": "Se procesează {{current}} din {{total}}"
       },
-      "resurseCrestine": {
-        "title": "Import din Resurse Crestine",
-        "description": "Descarcă și importă cântări de pe site-ul Resurse Crestine",
-        "button": "Importă din Resurse Crestine",
-        "importing": "Se importă...",
-        "note": "Cântările vor fi importate în categoria 'Resurse Crestine' cu primul vers ca titlu"
-      },
-      "recoverTitles": {
-        "description": "Cântările importate până acum sunt salvate cu primul vers ca titlu, iar numele sub care le știe sursa s-a pierdut. Recuperează-l ca să poată fi găsite din nou după acel nume.",
-        "button": "Recuperează titlurile originale",
-        "running": "Se recuperează…",
-        "done": "{{count}} cântare(cântări) și-au recuperat titlul original"
-      },
       "toast": {
         "importSuccess": "S-au importat cu succes {{count}} cântări",
         "importFailed": "Importul a eșuat: {{error}}",
@@ -1111,11 +1103,10 @@
         "error": "Nu s-a putut actualiza setarea"
       },
       "previewScreen": {
-        "label": "Arată în previzualizarea din Camera de control",
-        "description": "Previzualizarea din Camera de control arată acest ecran. Doar un ecran o dată.",
-        "enabled": "Acest ecran este acum afișat în previzualizare",
-        "disabled": "Acest ecran nu mai este afișat în previzualizare",
-        "error": "Nu s-a putut actualiza setarea ecranului de previzualizare"
+        "label": "Afișat în previzualizări",
+        "description": "Previzualizările din Camera de control, Biblie, Cântări și Programe arată acest ecran. Alege alt ecran ca să schimbi; implicit este ecranul principal.",
+        "enabled": "Previzualizările arată acum acest ecran",
+        "error": "Nu s-a putut schimba ecranul afișat în previzualizări"
       },
       "fullscreen": {
         "label": "Ocupă tot monitorul",

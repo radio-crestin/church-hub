@@ -1,12 +1,13 @@
-import { AlertTriangle, Shuffle, Trash2 } from 'lucide-react'
+import { AlertTriangle, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { ProgressBar } from './ProgressBar'
 import { QueueList } from './QueueList'
+import { QueueOrderPicker } from './QueueOrderPicker'
 import { VolumeSlider } from './VolumeSlider'
-import type { QueueItem, ServerPlayerState } from '../types'
+import type { QueueItem, QueueOrder, ServerPlayerState } from '../types'
 
 interface PlayerProps {
   state: ServerPlayerState
@@ -20,7 +21,7 @@ interface PlayerProps {
   onClearQueue: () => void
   onPlayAtIndex: (index: number) => void
   onRemoveFromQueue: (itemId: number) => void
-  onToggleShuffle: () => void
+  onQueueOrderChange: (order: QueueOrder) => void
 }
 
 export function Player({
@@ -35,7 +36,7 @@ export function Player({
   onClearQueue,
   onPlayAtIndex,
   onRemoveFromQueue,
-  onToggleShuffle,
+  onQueueOrderChange,
 }: PlayerProps) {
   const { t } = useTranslation('music')
 
@@ -72,39 +73,20 @@ export function Player({
         <div className="flex justify-center">
           <PlayerControls
             isPlaying={state.isPlaying}
-            isShuffled={state.isShuffled}
             canPlayPrevious={state.currentIndex > 0}
-            canPlayNext={
-              state.isShuffled || state.currentIndex < state.queueLength - 1
-            }
+            canPlayNext={state.currentIndex < state.queueLength - 1}
             onPlayPause={onPlayPause}
             onPrevious={onPrevious}
             onNext={onNext}
-            onShuffle={onToggleShuffle}
-            hideShuffle
           />
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-1 lg:min-h-0 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between p-3 sm:p-4 pb-2 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('player.queue')}
-            </span>
-            <button
-              type="button"
-              onClick={onToggleShuffle}
-              className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                state.isShuffled
-                  ? 'text-indigo-600 dark:text-indigo-400'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`}
-              title={t('player.shuffle')}
-            >
-              <Shuffle className="h-4 w-4" />
-            </button>
-          </div>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('player.queue')}
+          </span>
           {state.queueLength > 0 && (
             <button
               type="button"
@@ -115,6 +97,12 @@ export function Player({
               <Trash2 className="h-4 w-4" />
             </button>
           )}
+        </div>
+        <div className="px-3 sm:px-4 pb-2 flex-shrink-0">
+          <QueueOrderPicker
+            order={state.queueOrder}
+            onChange={onQueueOrderChange}
+          />
         </div>
         <div className="lg:flex-1 lg:overflow-y-auto px-3 sm:px-4 pb-4 scrollbar-thin">
           <QueueList

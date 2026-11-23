@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The Linux system libraries this project needs: Playwright's browsers (WebKit's above all), at the version
-# app/bun.lock pins, and the Tauri shell's build libraries (WebKitGTK, tray, rodio's and the MIDI module's ALSA),
-# without which the review build (app/scripts/review-build.ts) fails to compile the shell.
+# app/bun.lock pins, and the Tauri shell's build libraries (WebKitGTK, tray, rodio's and the MIDI module's ALSA)
+# and xdg-utils (the AppImage bundles xdg-open), without which the review build (app/scripts/review-build.ts)
+# fails to compile or bundle the shell.
 # Idempotent: only what isn't there yet, so a ready machine installs nothing. Never requires sudo:
 # gitleaks goes to ~/.local/bin, and libraries apt can't install are reported as a warning.
 set -euo pipefail
@@ -44,10 +45,11 @@ install_gitleaks || echo "warning: could not install gitleaks 8.19+ into ~/.loca
 # Playwright's system packages. Its dry run printed one apt command up to 1.64; from 1.65 it lists
 # "Missing system dependencies (N):" then one package per line and exits 1, or exits 0 when none is missing.
 version=$(grep -oE '"playwright@[0-9.]+"' app/bun.lock | head -1 | grep -oE '[0-9.]+[0-9]')
-dry_run=$(bunx "playwright@$version" install-deps --dry-run chromium webkit 2>&1 || true)
+# `bun x`, not bunx: a machine-wide bun may come without the bunx link.
+dry_run=$(bun x "playwright@$version" install-deps --dry-run chromium webkit 2>&1 || true)
 playwright=$(printf '%s\n' "$dry_run" | sed -n 's/.*--no-install-recommends \([^"]*\)".*/\1/p'
   printf '%s\n' "$dry_run" | awk '/Missing system dependencies/ { on = 1; next } on && NF == 1 && $1 ~ /^[a-z0-9][a-z0-9.+:-]+$/ { print $1 }')
-tauri="build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libasound2-dev"
+tauri="build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libasound2-dev xdg-utils"
 missing=$(for pkg in $playwright $tauri; do dpkg -s "$pkg" >/dev/null 2>&1 || echo "$pkg"; done)
 [ -z "$missing" ] && exit 0
 # shellcheck disable=SC2086

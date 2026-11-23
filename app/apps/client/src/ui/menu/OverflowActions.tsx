@@ -7,10 +7,19 @@ import { countFittingActions } from './countFittingActions'
 import { measureContentWidth } from './measureContentWidth'
 
 /** A header action: an inline control while it fits, a menu row once it does not. */
-export interface OverflowAction extends ActionMenuItem {
-  /** The control shown in the row — normally a small coloured icon button. */
-  inline: React.ReactNode
-}
+export type OverflowAction = ActionMenuItem &
+  (
+    | {
+        /** The control shown in the row — normally a small coloured icon button. */
+        inline: React.ReactNode
+        menuOnly?: false
+      }
+    | {
+        /** Seldom used: always under "More", never in the row. */
+        menuOnly: true
+        inline?: never
+      }
+  )
 
 interface OverflowActionsProps {
   /** The title side of the row: chevron, icon, title, count. */
@@ -45,9 +54,11 @@ const LEADING_MIN_WIDTH = 88
  */
 export function OverflowActions({
   leading,
-  actions,
+  actions: allActions,
   testId,
 }: OverflowActionsProps) {
+  const actions = allActions.filter((action) => !action.menuOnly)
+  const menuOnlyItems = allActions.filter((action) => action.menuOnly)
   const { t } = useTranslation('common')
   const rowRef = useRef<HTMLDivElement>(null)
   const leadingRef = useRef<HTMLDivElement>(null)
@@ -135,9 +146,10 @@ export function OverflowActions({
     return () => observer.disconnect()
   }, [])
 
-  const overflowItems: ActionMenuItem[] = actions
-    .slice(visibleCount)
-    .map(({ inline: _inline, ...item }) => item)
+  const overflowItems: ActionMenuItem[] = [
+    ...actions.slice(visibleCount),
+    ...menuOnlyItems,
+  ].map(({ inline: _inline, menuOnly: _menuOnly, ...item }) => item)
 
   return (
     <div ref={rowRef} className="flex min-w-0 flex-1 items-center gap-2">

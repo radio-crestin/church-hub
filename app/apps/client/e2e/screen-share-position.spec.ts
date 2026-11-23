@@ -1,13 +1,21 @@
 import { expect, test } from '@playwright/test'
 
+import {
+  makeJpeg,
+  readCenterPixel,
+  startFrameFeed,
+  startShare,
+  stopShare,
+} from './helpers/screenShare'
+
 /**
- * A screen's "Screen share" layout places the shared video by its edge
+ * A screen's "Screen share" layout places the shared screen by its edge
  * constraints (left/top/right/bottom, in px or %). The projection must use
  * them, not fill the screen.
  *
- * The share is started the way the operator's app starts it: a
- * `screen_share_start` message on the app's WebSocket. No real stream is
- * needed; the projection shows the video's frame while it waits for one.
+ * The share is started and fed the way the desktop app does it: POST
+ * /api/screen-share/start, then JPEG frames to /api/screen-share/frame with
+ * its token. A browser screen shows them from the MJPEG stream.
  */
 
 const edge = (value: number, unit: 'px' | '%') => ({
@@ -16,7 +24,7 @@ const edge = (value: number, unit: 'px' | '%') => ({
   unit,
 })
 
-test('a screen share is placed by its edge constraints', async ({
+test('a screen share is placed by its edge constraints and shows the frames', async ({
   page,
   browser,
   request,
@@ -49,48 +57,41 @@ test('a screen share is placed by its edge constraints', async ({
     })
 
     await page.goto('/')
-    await page.evaluate(
-      () =>
-        new Promise<void>((resolve, reject) => {
-          const ws = new WebSocket(
-            `${location.origin.replace(/^http/, 'ws')}/ws`,
-          )
-          ws.onopen = () => {
-            ws.send(JSON.stringify({ type: 'screen_share_start', payload: {} }))
-            resolve()
-          }
-          ws.onerror = () => reject(new Error('WebSocket failed'))
-          ;(window as unknown as { __shareSocket: WebSocket }).__shareSocket =
-            ws
-        }),
-    )
+    const red = await makeJpeg(page, '#e01010')
+    const token = await startShare(request)
+    const feed = startFrameFeed(request, token, red)
 
-    const projection = await browser.newPage({
-      viewport: { width: 1000, height: 500 },
-    })
-    await projection.goto(`/screen/${screenId}`)
-    const frame = projection.locator('video').locator('..')
-    await expect(frame).toBeVisible({ timeout: 15_000 })
-
-    const box = await frame.boundingBox()
-    expect(box).not.toBeNull()
-    expect(Math.round(box?.y ?? 0)).toBe(40)
-    expect(Math.round(box?.height ?? 0)).toBe(500 - 80)
-    expect(Math.round(box?.x ?? 0)).toBe(100)
-    expect(Math.round(box?.width ?? 0)).toBe(1000 - 200)
-    await projection.close()
-  } finally {
-    await page
-      .evaluate(() => {
-        const ws = (window as unknown as { __shareSocket?: WebSocket })
-          .__shareSocket
-        ws?.send(JSON.stringify({ type: 'screen_share_stop' }))
-        ws?.close()
+    try {
+      const projection = await browser.newPage({
+        viewport: { width: 1000, height: 500 },
       })
-      .catch(() => undefined)
-    await request
-      .post('/api/presentation/clear-temporary')
-      .catch(() => undefined)
+      await projection.goto(`/screen/${screenId}`)
+      const view = projection.getByTestId('screen-share-view')
+      await expect(view).toBeVisible({ timeout: 15_000 })
+
+      const box = await view.boundingBox()
+      expect(box).not.toBeNull()
+      expect(Math.round(box?.y ?? 0)).toBe(40)
+      expect(Math.round(box?.height ?? 0)).toBe(500 - 80)
+      expect(Math.round(box?.x ?? 0)).toBe(100)
+      expect(Math.round(box?.width ?? 0)).toBe(1000 - 200)
+
+      // The browser screen draws the frames from the stream: red arrives.
+      const stream = view.locator('img')
+      await expect
+        .poll(() => readCenterPixel(stream), { timeout: 15_000 })
+        .toEqual(expect.objectContaining({ isRed: true }))
+      await expect(view.locator('[data-renderer="stream"]')).toBeVisible()
+
+      // Stopping takes it off the screen.
+      await stopShare(request)
+      await expect(view).toBeHidden({ timeout: 10_000 })
+      await projection.close()
+    } finally {
+      feed.stop()
+    }
+  } finally {
+    await stopShare(request).catch(() => undefined)
     await request.delete(`/api/screens/${screenId}`)
   }
 })

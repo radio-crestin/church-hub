@@ -1,5 +1,44 @@
 {
   "title": "Music",
+  "library": {
+    "title": "Library",
+    "all": "All music",
+    "recent": "Recently played"
+  },
+  "tracks": {
+    "title": "Tracks",
+    "search": "Search all music…",
+    "recentSearches": "Recent searches:",
+    "resultsFor": "Results for “{{query}}”",
+    "columns": {
+      "title": "Title",
+      "artist": "Artist",
+      "plays": "Plays",
+      "lastPlayed": "Last played"
+    },
+    "plays_one": "{{count}} play",
+    "plays_other": "{{count}} plays",
+    "queue": "Queue",
+    "more": "More",
+    "viewActions": "Actions for this list",
+    "addToPlaylist": "Add to {{name}}",
+    "newPlaylistWith": "New playlist with this track",
+    "removeFromPlaylist": "Remove from this playlist",
+    "hint": "Click a track to play it · the ⋮ menu adds it to a playlist",
+    "empty": {
+      "all": "No music yet",
+      "recent": "Nothing played yet",
+      "playlist": "This playlist is empty",
+      "folder": "No tracks in this folder",
+      "search": "Nothing found"
+    },
+    "emptyHint": {
+      "all": "Add a folder with audio files",
+      "recent": "Tracks you play show up here",
+      "playlist": "Add tracks from the ⋮ menu of any track",
+      "folder": "Sync the folder to read its files again"
+    }
+  },
   "folders": {
     "title": "Folders",
     "add": "Add Folder",
@@ -31,7 +70,6 @@
     "queueCount": "{{count}} tracks in queue",
     "queueCount_one": "{{count}} track in queue",
     "clearQueue": "Clear Queue",
-    "shuffle": "Shuffle",
     "previous": "Previous",
     "next": "Next",
     "play": "Play",
@@ -43,7 +81,14 @@
     "queueEmpty": "Queue is empty",
     "emptyQueue": "Queue is empty",
     "removeFromQueue": "Remove from queue",
-    "addSongsToQueue": "Add songs to the queue to start playing"
+    "addSongsToQueue": "Add songs to the queue to start playing",
+    "order": "Play order",
+    "orders": {
+      "in_order": "In order",
+      "random": "Random",
+      "most_played": "Most played",
+      "least_played": "Least played"
+    }
   },
   "playlist": {
     "title": "Playlists",
@@ -58,7 +103,10 @@
     "addTo": "Add to Playlist",
     "removeFrom": "Remove from Playlist",
     "items": "{{count}} items",
-    "duration": "{{duration}} total"
+    "duration": "{{duration}} total",
+    "new": "New playlist",
+    "newMessage": "Group tracks you play together, like song categories.",
+    "newWithTrack": "It starts with “{{title}}”."
   },
   "syncResult": {
     "added": "{{count}} files added",

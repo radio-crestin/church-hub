@@ -57,11 +57,18 @@ export function getDatabasePath(): string {
 
 /**
  * Gets the resources directory
- * In production (Tauri mode), returns the path to bundled resources
+ * In production (Tauri mode), returns the path to bundled resources: the one
+ * the desktop shell passes (CHURCH_HUB_RESOURCES_DIR, from Tauri's own
+ * resource_dir; on Linux installers it is <prefix>/lib/church-hub, not next
+ * to the executable), else the layout of the bundle around the executable
+ * (the sidecar started alone, as by the smoke test).
  * In development, returns null (use node_modules instead)
  */
 export function getResourcesDir(): string | null {
   if (process.env.TAURI_MODE === 'true') {
+    if (process.env.CHURCH_HUB_RESOURCES_DIR) {
+      return process.env.CHURCH_HUB_RESOURCES_DIR
+    }
     const execPath = process.execPath
     const platform = process.platform
 

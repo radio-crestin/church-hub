@@ -121,7 +121,7 @@ export const screenSchemas = {
       isPreviewScreen: {
         type: 'boolean',
         description:
-          'If true, this screen is mirrored in the in-app control-room preview panel. At most one screen is the preview screen at a time.',
+          'If true, every in-app preview (Control Room, Bible, songs, programs) mirrors this screen. At most one screen at a time; with none, the previews mirror the first primary screen. Setting it to true clears it on every other screen.',
       },
       openOnStartup: {
         type: 'boolean',

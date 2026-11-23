@@ -8,7 +8,9 @@
  *
  * The binary is laid out like the desktop bundle (macOS: inside
  * `<App>.app/Contents/MacOS/` with resources in `Contents/Resources/`;
- * Windows/Linux: resources next to it), and its database lives in a temp
+ * Windows: resources next to it; Linux, as the .deb and AppImage:
+ * `usr/bin/` with resources in `usr/lib/church-hub/`), it gets the resources
+ * folder as the desktop shell passes it, and its database lives in a temp
  * folder, never in real app data.
  *
  *   bun scripts/smoke-compiled-sidecar.ts      (from app/apps/server)
@@ -68,6 +70,12 @@ function bundleLayout(root: string) {
     return {
       binDir: join(contents, 'MacOS'),
       resourcesDir: join(contents, 'Resources'),
+    }
+  }
+  if (process.platform === 'linux') {
+    return {
+      binDir: join(root, 'usr', 'bin'),
+      resourcesDir: join(root, 'usr', 'lib', 'church-hub'),
     }
   }
   return { binDir: root, resourcesDir: root }
@@ -158,8 +166,12 @@ async function main() {
       cmd: [binaryPath],
       env: {
         ...process.env,
+        // Loopback only: no Windows firewall prompt per smoke run (T-193).
+        CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
         PORT: String(PORT),
         TAURI_MODE: 'true',
+        // As the desktop shell passes it (Tauri's resource_dir)
+        CHURCH_HUB_RESOURCES_DIR: resourcesDir,
         DATABASE_PATH: join(workDir, 'data', 'app.db'),
       },
       stdout: 'pipe',
@@ -250,7 +262,7 @@ async function main() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: admin?.id }),
       })
-      const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0]
+      const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
       // No sources: the worker starts, checks nothing, and reports back.
       const run = await fetch(`${BASE_URL}/api/song-sources/updates/run`, {
         method: 'POST',

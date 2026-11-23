@@ -49,6 +49,8 @@ export function QueueList({
           }}
           role="button"
           tabIndex={0}
+          data-testid="music-queue-item"
+          data-current={index === currentIndex || undefined}
         >
           <div className="w-5 h-5 shrink-0 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
             {index === currentIndex ? (
