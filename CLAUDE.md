@@ -30,7 +30,7 @@ The project's rules for any agent working here: the principles, then the facts o
 - Every feature and bug fix gets an e2e spec in `app/apps/client/e2e/`; a passing spec is the acceptance signal. The e2e suite is the project's test suite: no new unit tests (the few kept guard what no e2e can reach and run before a release).
 - A task is accepted on the full suite, run locally and serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`.
 - GitHub Actions run only before a release (`test.yml`: e2e and the compiled-sidecar smoke on all three OSes, plus CodeQL); nothing runs on PRs. A red gate publishes nothing; run it on main before tagging (`gh workflow run test.yml --ref main`).
-- Security checks are local: `scripts/release.sh` runs `scripts/security-check.sh` before the bump (gitleaks since the last tag, then CodeQL for javascript-typescript, actions and rust with CI's suite) and stops on any finding; it needs gitleaks, the CodeQL CLI and bun.
+- Security checks are local: `scripts/release.sh` runs `scripts/security-check.sh` before the bump (gitleaks since the last tag, then CodeQL for javascript-typescript, actions and rust with CI's suite) and stops on any finding (reviewed false positives go in `.codeql-accepted.txt`); it needs gitleaks, the CodeQL bundle and bun.
 - Temp files, screenshots and traces go in your session scratchpad, never the repo or `$TMPDIR`.
 
 ## Cross-platform
