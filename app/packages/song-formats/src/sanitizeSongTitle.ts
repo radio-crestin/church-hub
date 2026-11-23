@@ -20,8 +20,8 @@ export function sanitizeSongTitle(title: string): string {
   // Normalize multiple spaces/hyphens to single
   cleaned = cleaned.replace(/\s+/g, ' ').replace(/-+/g, '-')
 
-  // Remove leading/trailing hyphens
-  cleaned = cleaned.replace(/^-+|-+$/g, '').trim()
+  // Remove the leading/trailing hyphen (runs are single hyphens by now)
+  cleaned = cleaned.replace(/^-|-$/g, '').trim()
 
   return cleaned || 'Untitled Song'
 }

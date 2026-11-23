@@ -1,4 +1,5 @@
-const HTML_TAG = /<[^>]*>/g
+// No `<` inside a tag: a run of `<` with no `>` stays linear (no ReDoS).
+const HTML_TAG = /<[^<>]*>/g
 
 /**
  * Removes every HTML tag from `html`, replacing each with `replacement`.

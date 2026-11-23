@@ -1,4 +1,6 @@
 import { decodeHtmlEntities } from './decodeHtmlEntities'
+import { removeHtmlTags } from './removeHtmlTags'
+import { replaceSections } from './replaceSections'
 import { sanitizeSongTitle } from './sanitizeSongTitle'
 import type {
   OpenSongMetadata,
@@ -30,14 +32,12 @@ function elementText(xml: string, tagName: string): string {
     new RegExp(`<${tagName}(?:\\s[^>]*)?>([\\s\\S]*?)</${tagName}>`),
   )
   if (!match) return ''
-  const content = match[1]
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (_, cdata: string) =>
-      cdata.replace(/&/g, '&amp;').replace(/</g, '&lt;'),
-    )
-    .replace(/<!--[\s\S]*?-->/g, '')
-    // Markup inside the element (a stray <br />) is not text.
-    .replace(/<[^>]*>/g, '')
-    .replace(/\r\n?/g, '\n')
+  const withoutCdata = replaceSections(match[1], '<![CDATA[', ']]>', (cdata) =>
+    cdata.replace(/&/g, '&amp;').replace(/</g, '&lt;'),
+  )
+  const withoutComments = replaceSections(withoutCdata, '<!--', '-->', () => '')
+  // Markup inside the element (a stray <br />) is not text.
+  const content = removeHtmlTags(withoutComments).replace(/\r\n?/g, '\n')
   return decodeHtmlEntities(content)
 }
 
