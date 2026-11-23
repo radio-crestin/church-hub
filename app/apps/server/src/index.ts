@@ -509,15 +509,19 @@ function killProcessOnPort(port: number): void {
 
   try {
     if (platform === 'darwin' || platform === 'linux') {
-      // macOS/Linux: Find PID using lsof and kill it
+      // macOS/Linux: the process LISTENING on the port, as on Windows. A bare
+      // `lsof -ti :port` also lists every client connected to it (the desktop
+      // shell, a test polling it), which were killed with it.
       // Using execFileSync with args array prevents shell injection
-      const result = execFileSync('lsof', ['-ti', `:${portStr}`], {
-        encoding: 'utf-8',
-      }).trim()
+      const result = execFileSync(
+        'lsof',
+        ['-ti', `tcp:${portStr}`, '-sTCP:LISTEN'],
+        { encoding: 'utf-8' },
+      ).trim()
       if (result) {
         const pids = result.split('\n').filter(Boolean)
         for (const pid of pids) {
-          if (/^\d+$/.test(pid)) {
+          if (/^\d+$/.test(pid) && Number(pid) !== process.pid) {
             try {
               execFileSync('kill', ['-9', pid])
               // biome-ignore lint/suspicious/noConsole: Startup info
@@ -3651,6 +3655,10 @@ async function startRealServer(): Promise<void> {
 
         const id = parseInt(deleteScreenMatch[1], 10)
         const result = deleteScreen(id)
+
+        // Other clients drop it from their lists, and their previews fall back
+        // to the main screen when it was the one shown there.
+        if (result.success) broadcastScreenConfigUpdated(id)
 
         if (!result.success) {
           return handleCors(

@@ -1097,11 +1097,10 @@
         "error": "Failed to update close-on-escape setting"
       },
       "previewScreen": {
-        "label": "Show in the Control Room preview",
-        "description": "The Control Room preview mirrors this screen. Only one screen at a time.",
-        "enabled": "This screen is now shown in the preview",
-        "disabled": "This screen is no longer shown in the preview",
-        "error": "Failed to update preview screen setting"
+        "label": "Shown in the previews",
+        "description": "The Control Room, Bible, song and program previews mirror this screen. Pick another screen to switch; without a choice, it is the main screen.",
+        "enabled": "The previews now show this screen",
+        "error": "Could not change the screen shown in the previews"
       },
       "fullscreen": {
         "label": "Fill the whole display",
