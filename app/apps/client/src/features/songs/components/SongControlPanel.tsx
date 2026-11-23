@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 
 import {
   ContentTypeButton,
+  LiveBadge,
   LivePreview,
   usePresentationState,
   useWebSocket,
@@ -125,30 +126,7 @@ export function SongControlPanel({
               </button>
             )}
           </div>
-          <div
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-md shrink-0 ${
-              isLive
-                ? 'bg-red-100 dark:bg-red-900/30'
-                : 'bg-gray-100 dark:bg-gray-700'
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                isLive
-                  ? 'bg-red-500 animate-pulse'
-                  : 'bg-gray-400 dark:bg-gray-500'
-              }`}
-            />
-            <span
-              className={`text-xs font-semibold ${
-                isLive
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-400 dark:text-gray-500'
-              }`}
-            >
-              LIVE
-            </span>
-          </div>
+          <LiveBadge isLive={isLive} />
         </div>
 
         {/* Divider between the two groups — large screens only, where both

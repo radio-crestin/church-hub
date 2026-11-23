@@ -210,9 +210,9 @@ export function parseHolyBibleXml(xmlContent: string): ParsedBible {
   let bookCount = 0
 
   while ((bookMatch = bookRegex.exec(xmlContent)) !== null) {
-    const bookNumber = Number.parseInt(bookMatch[1], 10)
+    const bookNumber = Number.parseInt(bookMatch[1]!, 10)
     const bookNameFromXml = bookMatch[2] || null
-    const bookContent = bookMatch[3]
+    const bookContent = bookMatch[3]!
 
     const bookCode = BOOK_NUMBER_TO_CODE[bookNumber]
     if (!bookCode) {
@@ -220,7 +220,7 @@ export function parseHolyBibleXml(xmlContent: string): ParsedBible {
       continue
     }
 
-    const bookOrder = BOOK_ORDER[bookCode]
+    const bookOrder = BOOK_ORDER[bookCode] ?? bookNumber
     const bookName =
       bookNameFromXml || DEFAULT_BOOK_NAMES[bookCode] || `Book ${bookNumber}`
 
@@ -258,8 +258,8 @@ function parseChapters(bookContent: string): ParsedChapter[] {
   let chapterMatch: RegExpExecArray | null
 
   while ((chapterMatch = chapterRegex.exec(bookContent)) !== null) {
-    const chapterNumber = Number.parseInt(chapterMatch[1], 10)
-    const chapterContent = chapterMatch[2]
+    const chapterNumber = Number.parseInt(chapterMatch[1]!, 10)
+    const chapterContent = chapterMatch[2]!
 
     const verses = parseVerses(chapterContent)
 
@@ -289,8 +289,8 @@ function parseVerses(chapterContent: string): ParsedVerse[] {
   let verseMatch: RegExpExecArray | null
 
   while ((verseMatch = verseRegex.exec(chapterContent)) !== null) {
-    const verseNumber = Number.parseInt(verseMatch[1], 10)
-    const verseText = verseMatch[2]
+    const verseNumber = Number.parseInt(verseMatch[1]!, 10)
+    const verseText = verseMatch[2]!
 
     const cleanedText = cleanVerseText(verseText)
 

@@ -47,6 +47,16 @@ rodio = { version = "0.20", features = ["symphonia-all"] }
 dirs = "5"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 tauri-plugin-updater = "2"
+# Native screen sharing (src/screen_capture/): xcap captures a screen or
+# window on all three OSes, image scales and JPEG-encodes it, wgpu draws it on
+# the projector windows (pollster blocks on its setup, bytemuck feeds its
+# uniform), base64 carries the picker's thumbnails.
+xcap = "0.9.10"
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
+wgpu = "30"
+pollster = "1.0.3"
+bytemuck = { version = "1.25.2", features = ["derive"] }
+base64 = "0.22"
 
 [features]
 # Local review builds only (app/scripts/review-build.ts, src/review.rs).

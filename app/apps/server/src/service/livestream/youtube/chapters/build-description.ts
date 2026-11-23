@@ -35,7 +35,8 @@ export function buildDescription(
   const last = log.at(-1)
   const entries =
     last && now - last.at < MIN_CHAPTER_MS ? log.slice(0, -1) : log
-  if (!entries.length) return base
+  const [first] = entries
+  if (!first) return base
 
   const chapters = entries.map((entry, i) => {
     // The first chapter starts at 0:00, or YouTube shows no chapters.
@@ -45,7 +46,7 @@ export function buildDescription(
         : entry.at - startedAt
     return `${formatTimestamp(offset)} ${entry.title}`
   })
-  if (entries[0].at - startedAt >= MIN_CHAPTER_MS) {
+  if (first.at - startedAt >= MIN_CHAPTER_MS) {
     chapters.unshift(`0:00 ${streamTitle.replace(/[<>]/g, '')}`)
   }
 

@@ -260,7 +260,7 @@ async function main() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: admin?.id }),
       })
-      const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0]
+      const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
       // No sources: the worker starts, checks nothing, and reports back.
       const run = await fetch(`${BASE_URL}/api/song-sources/updates/run`, {
         method: 'POST',

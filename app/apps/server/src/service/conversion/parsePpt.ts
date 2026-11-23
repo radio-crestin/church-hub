@@ -70,8 +70,8 @@ export async function parsePptFile(
 
     const slides: ParsedPptSlide[] = []
 
-    for (let i = 0; i < slideTexts.length; i++) {
-      const text = slideTexts[i].trim()
+    for (const [i, slideText] of slideTexts.entries()) {
+      const text = slideText.trim()
       if (!text) continue
 
       const lines = text.split('\n').filter((l: string) => l.trim())
@@ -89,13 +89,11 @@ export async function parsePptFile(
     // Determine title: first slide's first line, or filename
     let title = 'Imported Song'
 
-    if (slides.length > 0) {
-      const firstLine = slides[0].text.split('\n')[0].trim()
-      if (firstLine) {
-        const sanitized = sanitizeTitle(firstLine)
-        if (sanitized && sanitized !== 'Untitled Song') {
-          title = sanitized
-        }
+    const firstLine = slides[0]?.text.split('\n')[0]?.trim()
+    if (firstLine) {
+      const sanitized = sanitizeTitle(firstLine)
+      if (sanitized && sanitized !== 'Untitled Song') {
+        title = sanitized
       }
     }
 

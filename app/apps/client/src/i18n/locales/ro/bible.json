@@ -93,6 +93,11 @@
       "loading": "Se încarcă Bibliile disponibile...",
       "selectBible": "Selectează o Biblie pentru descărcare...",
       "button": "Descarcă"
+    },
+    "readingSpeed": {
+      "title": "Viteza de citire",
+      "description": "Cât rămâne fiecare verset pe ecran când marcajele rulează în buclă: după numărul de cuvinte, la această viteză, cel puțin 3 secunde.",
+      "label": "Cuvinte pe minut"
     }
   },
   "translation": {
@@ -153,7 +158,16 @@
         "text_mismatch": "textul nu corespunde acestui verset; versetul a fost importat fără formatare"
       }
     },
-    "exportEmpty": "Nimic de exportat inca"
+    "exportEmpty": "Nimic de exportat inca",
+    "slideshow": {
+      "play": "Prezintă în ordine",
+      "playHint": "Prezintă în ordine: versetele vin unul după altul; → sau Space pentru următorul",
+      "stop": "Oprește",
+      "loop": "Rulează în buclă",
+      "loopHint": "Rulează în buclă: fiecare verset rămâne cât e citit, apoi vine următorul",
+      "stopLoop": "Oprește bucla",
+      "position": "{{current}}/{{count}}"
+    }
   },
   "actionsMenu": {
     "trigger": "Mai multe",

@@ -1,6 +1,6 @@
 import { copyFile, stat, unlink } from 'node:fs/promises'
 
-import { Database } from 'bun:sqlite'
+import { Database, type SQLQueryBindings } from 'bun:sqlite'
 import {
   closeDatabase,
   getRawDatabase,
@@ -506,7 +506,9 @@ export async function selectiveImportDatabase(
         // Read only the common columns from source
         const selectColumns = columnNames.join(', ')
         const rows = sourceDb
-          .query(`SELECT ${selectColumns} FROM ${tableName}`)
+          .query<Record<string, SQLQueryBindings>, []>(
+            `SELECT ${selectColumns} FROM ${tableName}`,
+          )
           .all()
 
         if (rows.length === 0) {
@@ -522,9 +524,7 @@ export async function selectiveImportDatabase(
         // Insert rows in batches
         logger.debug(`Inserting ${rows.length} rows into ${tableName}`)
         for (const row of rows) {
-          const values = columnNames.map(
-            (col) => (row as Record<string, unknown>)[col],
-          )
+          const values = columnNames.map((col) => row[col] ?? null)
           insertStmt.run(...values)
         }
       }

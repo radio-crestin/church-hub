@@ -124,9 +124,7 @@ test.describe('Sidebar notifications bell', () => {
     await addUnread(request)
     await page.goto('/songs')
     await closePopUp(page)
-    await page
-      .getByRole('button', { name: /^(Open menu|Deschide meniu)$/ })
-      .click()
+    await page.getByTestId('mobile-tab-more').click()
     // The drawer slides in: measure once it is in place.
     await expect
       .poll(

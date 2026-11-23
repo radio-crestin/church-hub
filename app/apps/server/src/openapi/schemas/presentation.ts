@@ -118,6 +118,64 @@ export const presentationSchemas = {
       sortOrder: { type: 'integer' },
     },
   },
+  VerseteTineriEntry: {
+    type: 'object',
+    required: [
+      'id',
+      'personName',
+      'reference',
+      'bookCode',
+      'bookName',
+      'startChapter',
+      'startVerse',
+      'endChapter',
+      'endVerse',
+      'text',
+      'sortOrder',
+    ],
+    description: 'One reading shown on a "Versete Biblice" slide',
+    properties: {
+      id: { type: 'integer' },
+      personName: {
+        type: 'string',
+        description: 'Who reads it (may be empty)',
+      },
+      reference: { type: 'string' },
+      bookCode: { type: 'string' },
+      bookName: { type: 'string' },
+      startChapter: { type: 'integer' },
+      startVerse: { type: 'integer' },
+      endChapter: { type: 'integer' },
+      endVerse: { type: 'integer' },
+      text: { type: 'string' },
+      sortOrder: { type: 'integer' },
+    },
+  },
+  PresentTemporaryVerseteTineriInput: {
+    type: 'object',
+    required: ['entries'],
+    properties: {
+      entries: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/VerseteTineriEntry' },
+      },
+      currentEntryIndex: {
+        type: 'integer',
+        description: 'Entry to start from (0-based, default 0)',
+      },
+      loop: {
+        type: 'boolean',
+        description:
+          'Play the entries in a loop: each stays up for its reading time (its words at the bible_reading_speed app setting, words per minute, default 160; at least 3 s), then the next shows, and the last wraps to the first. Hiding or presenting anything else stops it.',
+      },
+      scheduleId: {
+        type: 'integer',
+        description:
+          'Program the slide belongs to (unset for a bookmark slideshow)',
+      },
+      scheduleItemIndex: { type: 'integer' },
+    },
+  },
   PresentTemporaryBibleInput: {
     type: 'object',
     required: [

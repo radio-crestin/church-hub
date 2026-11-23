@@ -36,5 +36,9 @@
   "notifications": {
     "title": "Notificări",
     "unread": "Notificări noi"
+  },
+  "tabs": {
+    "present": "Live",
+    "more": "Mai mult"
   }
 }

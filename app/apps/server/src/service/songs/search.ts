@@ -83,7 +83,7 @@ export function normalizeForIndex(text: string): string {
     expandedWords.push(word)
     if (
       word.length > 2 &&
-      word[0].toLowerCase() === 'n' &&
+      word[0]?.toLowerCase() === 'n' &&
       !/^n[aeiou]/i.test(word)
     ) {
       expandedWords.push(word.substring(1))
@@ -230,7 +230,10 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       content: string
     }>
 
-    db.run('BEGIN TRANSACTION')
+    // IMMEDIATE: the song updates' worker writes too; a deferred
+    // transaction that read first fails at once ("database is locked")
+    // when another connection wrote meanwhile, instead of waiting its turn.
+    db.run('BEGIN IMMEDIATE')
 
     try {
       // Delete existing FTS entries for these songs
