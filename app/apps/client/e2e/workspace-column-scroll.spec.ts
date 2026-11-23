@@ -69,9 +69,6 @@ async function seedPreferences(
       )
       window.localStorage.setItem('song-detail:schedules-open', 'true')
       window.localStorage.setItem('song-detail:versions-open', 'true')
-      // The column's fourth section stays shut: these tests are about the
-      // three above it, and a shut row is only its header.
-      window.localStorage.setItem('song-detail:same-theme-open', 'false')
       window.localStorage.setItem('song-editor-layout', 'normal')
     },
     {

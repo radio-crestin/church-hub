@@ -364,8 +364,8 @@
   },
   "sameTheme": {
     "title": "Same theme",
-    "expand": "Expand",
-    "collapse": "Collapse",
+    "menuDescription": "Other songs on the same theme as this one",
+    "close": "Close",
     "empty": "No other songs found on this theme.",
     "sharedWords": "Shared words: {{words}}",
     "themes": {

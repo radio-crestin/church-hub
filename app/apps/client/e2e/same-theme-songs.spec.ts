@@ -1,5 +1,7 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
+import { selectAction } from './helpers/actions-menu'
+
 /**
  * "Pe aceeași temă" (T-084): the song page suggests other songs on the same
  * theme as the opened one, found through their words (the library carries
@@ -101,7 +103,7 @@ test.describe('Songs on the same theme', () => {
     )
   })
 
-  test('the song page lists it under "Same theme" and opens it', async ({
+  test('the Versiuni button lists it in a modal, and opens it', async ({
     page,
     request,
   }) => {
@@ -109,8 +111,12 @@ test.describe('Songs on the same theme', () => {
     const { word } = songs
 
     await page.goto(`/songs/${songs.subject}`)
-    const panel = page.getByTestId('same-theme-panel')
-    const row = panel
+    // No panel of its own: the list opens on demand.
+    await expect(page.getByTestId('workspace-panel-same-theme')).toHaveCount(0)
+    await page.getByTestId('versions-same-theme').click()
+
+    const modal = page.getByTestId('same-theme-modal')
+    const row = modal
       .getByTestId('same-theme-row')
       .filter({ hasText: `Noapte ${word('senina')}` })
     await expect(row).toBeVisible({ timeout: 15000 })
@@ -120,21 +126,31 @@ test.describe('Songs on the same theme', () => {
     await expect(row.getByTestId('same-theme-words')).toContainText(
       word('colindul'),
     )
-    await expect(panel).not.toContainText(`Pe ${word('marea')} vieții`)
+    await expect(modal).not.toContainText(`Pe ${word('marea')} vieții`)
 
     await row.click()
     await expect(page).toHaveURL(new RegExp(`/songs/${songs.sameTheme}$`))
+    await expect(modal).not.toBeVisible()
   })
 
-  test('a song with nothing in common says so', async ({ page, request }) => {
+  test('the more-actions menu opens it too, and says so when nothing matches', async ({
+    page,
+    request,
+  }) => {
     const lonely = await createSong(request, word('singuratic'), [
       `${word('nimeni')} ${word('altcineva')} ${word('niciodata')}`,
     ])
 
     expect(await sameTheme(request, lonely)).toEqual([])
     await page.goto(`/songs/${lonely}`)
-    await expect(page.getByTestId('same-theme-empty')).toBeVisible({
+    await expect(page.getByTestId('workspace-panel-slides')).toBeVisible({
       timeout: 15000,
     })
+    await selectAction(page, 'song-actions-menu', 'song-same-theme')
+    const modal = page.getByTestId('same-theme-modal')
+    await expect(modal.getByTestId('same-theme-empty')).toBeVisible()
+
+    await modal.getByTestId('same-theme-close').click()
+    await expect(modal).not.toBeVisible()
   })
 })

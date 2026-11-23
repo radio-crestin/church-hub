@@ -366,8 +366,8 @@
   },
   "sameTheme": {
     "title": "Pe aceeași temă",
-    "expand": "Extinde",
-    "collapse": "Restrânge",
+    "menuDescription": "Alte cântări pe aceeași temă cu aceasta",
+    "close": "Închide",
     "empty": "Nu s-au găsit alte cântări pe această temă.",
     "sharedWords": "Cuvinte comune: {{words}}",
     "themes": {

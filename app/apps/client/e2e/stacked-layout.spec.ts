@@ -182,8 +182,6 @@ for (const viewport of VIEWPORTS) {
         await expectUnclippedStack(page, ['control', 'slides'])
         await page.getByTestId('workspace-tab-versions').click()
         await expectUnclippedStack(page, ['control', 'versions'])
-        await page.getByTestId('workspace-tab-same-theme').click()
-        await expectUnclippedStack(page, ['control', 'same-theme'])
 
         await page.evaluate(() =>
           window.localStorage.setItem('song-editor-layout', 'powerpoint'),
@@ -195,8 +193,6 @@ for (const viewport of VIEWPORTS) {
         await expectUnclippedStack(page, ['stage'])
         await page.getByTestId('workspace-tab-versions').click()
         await expectUnclippedStack(page, ['versions'])
-        await page.getByTestId('workspace-tab-same-theme').click()
-        await expectUnclippedStack(page, ['same-theme'])
       } finally {
         await removeFixture(request, fixture)
       }
