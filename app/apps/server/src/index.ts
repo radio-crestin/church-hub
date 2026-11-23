@@ -3651,6 +3651,10 @@ async function startRealServer(): Promise<void> {
         const id = parseInt(deleteScreenMatch[1], 10)
         const result = deleteScreen(id)
 
+        // Other clients drop it from their lists, and their previews fall back
+        // to the main screen when it was the one shown there.
+        if (result.success) broadcastScreenConfigUpdated(id)
+
         if (!result.success) {
           return handleCors(
             req,
