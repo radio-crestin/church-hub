@@ -94,14 +94,16 @@ function parseVotes(text: string): Map<string, Map<string, number>> {
 }
 
 function toReference(passage: string): BibleTopicReferenceFixture | null {
-  const [startId, endId] = passage.split('-')
+  const [startId = '', endId = ''] = passage.split('-')
   const start = parseVerseId(startId)
   const end = parseVerseId(endId)
+  const book = BOOK_CODES[start.book]
+  if (!book) throw new Error(`Unknown book number in ${passage}`)
   const sameChapter = start.book === end.book && start.chapter === end.chapter
   if (!sameChapter || end.verse < start.verse) return null
   if (end.verse - start.verse + 1 > MAX_PASSAGE_VERSES) return null
   return {
-    book: BOOK_CODES[start.book],
+    book,
     chapter: start.chapter,
     startVerse: start.verse,
     endVerse: end.verse,
