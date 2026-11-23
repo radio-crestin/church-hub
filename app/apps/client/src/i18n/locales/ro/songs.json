@@ -367,6 +367,32 @@
     "message": "Ești sigur că vrei să resetezi contorul de prezentări la 0?",
     "confirm": "Resetează"
   },
+  "sameTheme": {
+    "title": "Pe aceeași temă",
+    "menuDescription": "Alte cântări pe aceeași temă cu aceasta",
+    "close": "Închide",
+    "empty": "Nu s-au găsit alte cântări pe această temă.",
+    "sharedWords": "Cuvinte comune: {{words}}",
+    "themes": {
+      "christmas": "Crăciun",
+      "easter": "Învierea",
+      "cross": "Crucea",
+      "lordsSupper": "Cina Domnului",
+      "baptism": "Botez",
+      "pentecost": "Rusalii",
+      "thanksgiving": "Mulțumire",
+      "wedding": "Nuntă",
+      "farewell": "Despărțire și mângâiere",
+      "secondComing": "Revenirea Domnului",
+      "heaven": "Cerul",
+      "shepherd": "Păstorul",
+      "prayer": "Rugăciune",
+      "mother": "Mama",
+      "repentance": "Pocăință",
+      "mission": "Evanghelizare",
+      "scripture": "Cuvântul lui Dumnezeu"
+    }
+  },
   "versions": {
     "title": "Versiuni ale cântării",
     "count_one": "{{count}} versiune",

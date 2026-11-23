@@ -365,6 +365,32 @@
     "message": "Are you sure you want to reset the presentation count to 0?",
     "confirm": "Reset"
   },
+  "sameTheme": {
+    "title": "Same theme",
+    "menuDescription": "Other songs on the same theme as this one",
+    "close": "Close",
+    "empty": "No other songs found on this theme.",
+    "sharedWords": "Shared words: {{words}}",
+    "themes": {
+      "christmas": "Christmas",
+      "easter": "Easter",
+      "cross": "The Cross",
+      "lordsSupper": "The Lord's Supper",
+      "baptism": "Baptism",
+      "pentecost": "Pentecost",
+      "thanksgiving": "Thanksgiving",
+      "wedding": "Wedding",
+      "farewell": "Farewell and comfort",
+      "secondComing": "The Lord's return",
+      "heaven": "Heaven",
+      "shepherd": "The Shepherd",
+      "prayer": "Prayer",
+      "mother": "Mother",
+      "repentance": "Repentance",
+      "mission": "Mission",
+      "scripture": "God's Word"
+    }
+  },
   "versions": {
     "title": "Song versions",
     "count_one": "{{count}} version",

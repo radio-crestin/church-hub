@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import {
   Check,
   ChevronDown,
+  Compass,
   Crown,
   Layers,
   Loader2,
@@ -351,6 +352,8 @@ interface SongVersionsPanelProps {
    * `useUndismissedSuggestionCount` without the panel re-fetching.
    */
   attentionBadge?: string | null
+  /** Opens the other songs on the same theme (a button next to the CTA). */
+  onShowSameTheme?: () => void
 }
 
 /**
@@ -375,6 +378,7 @@ export function SongVersionsPanel({
   isCollapsed = false,
   onToggleCollapse,
   attentionBadge,
+  onShowSameTheme,
 }: SongVersionsPanelProps) {
   const { t } = useTranslation('songs')
   const { data: group, isLoading } = useSongGroup(songId)
@@ -438,16 +442,31 @@ export function SongVersionsPanel({
             </span>
           ) : null}
         </div>
-        {canAdd && !isLoading ? (
-          <button
-            type="button"
-            onClick={() => setLinkModalOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
-          >
-            <Plus size={14} />
-            {t('versions.addButton')}
-          </button>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-3">
+          {onShowSameTheme ? (
+            <button
+              type="button"
+              onClick={onShowSameTheme}
+              title={t('sameTheme.title')}
+              aria-label={t('sameTheme.title')}
+              data-testid="versions-same-theme"
+              className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400"
+            >
+              <Compass size={14} />
+              <span className="hidden xl:inline">{t('sameTheme.title')}</span>
+            </button>
+          ) : null}
+          {canAdd && !isLoading ? (
+            <button
+              type="button"
+              onClick={() => setLinkModalOpen(true)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+            >
+              <Plus size={14} />
+              {t('versions.addButton')}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {/* Body — gated by isCollapsed. The three states (loading / no group /
