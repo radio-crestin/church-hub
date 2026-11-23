@@ -431,5 +431,10 @@
   "contentTypes": {
     "announcement": "Announcement",
     "verseteTineri": "Bible Verses"
+  },
+  "previewScreenPicker": {
+    "label": "Screen shown in the preview",
+    "changed": "Previews now show {{name}}",
+    "error": "Could not change the preview screen"
   }
 }

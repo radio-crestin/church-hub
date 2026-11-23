@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useLocalizedBookNames } from '~/features/bible/hooks'
+import { PreviewScreenPicker } from './PreviewScreenPicker'
 import { ScreenPreview } from './ScreenPreview'
 import { TextStyleContextMenu } from './TextStyleContextMenu'
 import { usePresentationState } from '../hooks'
 import { usePresentationContent } from '../hooks/usePresentationContent'
-import { useScreen } from '../hooks/useScreen'
-import { useScreens } from '../hooks/useScreens'
+import { usePreviewScreen } from '../hooks/usePreviewScreen'
 import {
   useAddSlideHighlight,
   useRemoveSlideHighlight,
@@ -66,7 +66,7 @@ export function LivePreview({
   // Don't call useWebSocket() here as it causes re-renders from debug info state updates
 
   const { data: presentationState } = usePresentationState()
-  const { data: screens } = useScreens()
+  const { screen, previewScreen } = usePreviewScreen()
   const { getBookName } = useLocalizedBookNames()
 
   // Highlight hooks
@@ -86,23 +86,6 @@ export function LivePreview({
     y: number
     clickedHighlightId?: string
   }>({ visible: false, x: 0, y: 0 })
-
-  // Pick which screen to mirror in the preview:
-  // 1. the screen explicitly flagged as the preview screen, if any
-  // 2. otherwise fall back to the first primary screen (by sort order)
-  const previewScreen = useMemo(() => {
-    if (!screens) return null
-    const flagged = screens.find((s) => s.isPreviewScreen)
-    if (flagged) return flagged
-    return (
-      screens
-        .filter((s) => s.type === 'primary')
-        .sort((a, b) => a.sortOrder - b.sortOrder)[0] || null
-    )
-  }, [screens])
-
-  // Get full config for the preview screen (use undefined if none exists)
-  const { data: screen } = useScreen(previewScreen?.id ?? undefined)
 
   // Use shared presentation content hook
   const { contentType, contentData, contentKey, isVisible, leaving } =
@@ -215,36 +198,40 @@ export function LivePreview({
 
   return (
     <div className={FRAME_CLASS} style={{ aspectRatio }}>
-      <div
-        ref={previewContainerRef}
-        data-testid="live-preview"
-        className={BOX_CLASS}
-        style={{ aspectRatio }}
-        onContextMenu={handleContextMenu}
-      >
-        <ScreenPreview
-          screen={screen}
-          contentType={contentType}
-          contentData={contentData}
-          contentKey={contentKey}
-          isVisible={isVisible}
-          leaving={leaving}
-          styleRanges={styleRanges}
-          clockOverride={clockOverride}
-          hideBackground={hideBackground}
-        />
-        {contextMenu.visible && (
-          <TextStyleContextMenu
-            position={{ x: contextMenu.x, y: contextMenu.y }}
-            onClose={handleCloseContextMenu}
-            onHighlight={handleHighlight}
-            onBold={handleBold}
-            onUnderline={handleUnderline}
-            onRemoveStyle={handleRemoveStyle}
-            showRemove={!!contextMenu.clickedHighlightId}
-            highlightColor={DEFAULT_HIGHLIGHT_COLOR}
+      <div className={BOX_CLASS} style={{ aspectRatio }}>
+        {/* The picker sits beside the mirrored content, not in it, so text
+            selection offsets and content checks see only the screen. */}
+        <div
+          ref={previewContainerRef}
+          data-testid="live-preview"
+          className="absolute inset-0"
+          onContextMenu={handleContextMenu}
+        >
+          <ScreenPreview
+            screen={screen}
+            contentType={contentType}
+            contentData={contentData}
+            contentKey={contentKey}
+            isVisible={isVisible}
+            leaving={leaving}
+            styleRanges={styleRanges}
+            clockOverride={clockOverride}
+            hideBackground={hideBackground}
           />
-        )}
+          {contextMenu.visible && (
+            <TextStyleContextMenu
+              position={{ x: contextMenu.x, y: contextMenu.y }}
+              onClose={handleCloseContextMenu}
+              onHighlight={handleHighlight}
+              onBold={handleBold}
+              onUnderline={handleUnderline}
+              onRemoveStyle={handleRemoveStyle}
+              showRemove={!!contextMenu.clickedHighlightId}
+              highlightColor={DEFAULT_HIGHLIGHT_COLOR}
+            />
+          )}
+        </div>
+        <PreviewScreenPicker previewScreenId={screen.id} />
       </div>
     </div>
   )
