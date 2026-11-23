@@ -12,11 +12,13 @@ import {
   getSongUpdatesState,
   listPublications,
   listSongSources,
+  readChangedForReview,
   readLackingSongs,
   readSourceArchive,
   readSourceChecksum,
   readSourceSongs,
   recountSourceSongs,
+  resolveChangedSongs,
   runSongUpdatesInWorker,
   type S3StorageInput,
   SONG_BUNDLE_EXTENSION,
@@ -42,6 +44,7 @@ const SOURCE_SONGS_PATH = /^\/api\/song-sources\/([\w-]+)\/songs$/
 const SOURCE_ARCHIVE_PATH = /^\/api\/song-sources\/([\w-]+)\/archive$/
 const SOURCE_CHECKSUM_PATH = /^\/api\/song-sources\/([\w-]+)\/checksum$/
 const SOURCE_LACKING_PATH = /^\/api\/song-sources\/([\w-]+)\/lacking$/
+const SOURCE_CHANGED_PATH = /^\/api\/song-sources\/([\w-]+)\/changed$/
 const SOURCE_RECOUNT_PATH = /^\/api\/song-sources\/([\w-]+)\/recount$/
 const SOURCE_PATH = /^\/api\/song-sources\/([\w-]+)$/
 const PUBLICATION_SYNC_PATH = /^\/api\/song-sources\/publications\/(\d+)\/sync$/
@@ -67,6 +70,8 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - GET    /api/song-sources/:id/archive         a song file source's .chsongs (songs.create)
  * - GET    /api/song-sources/:id/checksum        what changes when the source's songs do (songs.view)
  * - GET    /api/song-sources/:id/lacking         the songs its last check found the library lacks (songs.create)
+ * - GET    /api/song-sources/:id/changed         library songs its last check found changed, both versions (songs.create)
+ * - POST   /api/song-sources/:id/changed         update or keep some of them `{ songIds, action: 'update'|'keep' }` (songs.create)
  * - POST   /api/song-sources/:id/recount         count its waiting songs again, after an import (songs.create)
  * - GET    /api/song-sources/updates             each source's last check for new songs (songs.view)
  * - POST   /api/song-sources/updates/run         check the sources now `{ force?, sourceIds? }` (songs.create)
@@ -169,6 +174,40 @@ export async function handleSongSourceRoutes(
       deny('songs.create') ??
       respond(200, { data: readLackingSongs(lackingMatch[1]) })
     )
+  }
+
+  const changedId = pathname.match(SOURCE_CHANGED_PATH)?.[1]
+  if (req.method === 'GET' && changedId) {
+    const denied = deny('songs.create')
+    if (denied) return denied
+    try {
+      return respond(200, { data: readChangedForReview(changedId) })
+    } catch (error) {
+      return respond(404, { error: errorMessage(error) })
+    }
+  }
+  if (req.method === 'POST' && changedId) {
+    const denied = deny('songs.create')
+    if (denied) return denied
+    const { songIds, action } = await readJson<{
+      songIds: number[]
+      action: 'update' | 'keep'
+    }>()
+    if (!Array.isArray(songIds) || (action !== 'update' && action !== 'keep')) {
+      return respond(400, {
+        error:
+          "songIds (an array) and action ('update' or 'keep') are required",
+      })
+    }
+    if (getSongUpdatesState().running) {
+      return respond(409, { error: 'The song sources are being checked' })
+    }
+    try {
+      resolveChangedSongs(changedId, songIds, action)
+      return respond(200, { data: getSongUpdatesState() })
+    } catch (error) {
+      return respond(404, { error: errorMessage(error) })
+    }
   }
 
   const recountId = pathname.match(SOURCE_RECOUNT_PATH)?.[1]

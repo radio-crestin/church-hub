@@ -1,5 +1,6 @@
-import { htmlToPlainText, type SourceSong } from '@church-hub/song-formats'
+import type { SourceSong } from '@church-hub/song-formats'
 
+import { lyricsKey, lyricsText, readKeptSongs } from './keptSongsStore'
 import { getRawDatabase } from '../../../db'
 import type { DiscoveryMatchResult } from '../../songs'
 
@@ -10,10 +11,6 @@ export interface ChangedSong {
   songId: number
   song: SourceSong
 }
-
-/** Lyrics as words only, so markup differences never count as a change. */
-const lyricsText = (html: string) =>
-  htmlToPlainText(html).replace(/\s+/g, ' ').trim()
 
 interface LibrarySong {
   id: number
@@ -75,19 +72,23 @@ function sameFileMatches(
  * the library songs nobody edited by hand: a song the user changed is never
  * replaced. Only a library song from the same file, under the same title, so
  * an update always lands on the song it came from, never on another song
- * that only shares its title.
+ * that only shares its title. A version the user turned down (kept their
+ * own over it) is not offered again.
  */
 export function findChangedSongs(
+  sourceId: string,
   songs: SourceSong[],
   verdicts: DiscoveryMatchResult[],
 ): ChangedSong[] {
   const exact = sameFileMatches(verdicts)
   if (exact.size === 0) return []
   const library = readLibrarySongs([...new Set(exact.values())])
+  const kept = new Map(readKeptSongs(sourceId).map((k) => [k.songId, k.lyrics]))
   return songs.flatMap((song) => {
     const id = exact.get(song.id)
     const known = id == null ? undefined : library.get(id)
     if (!known || known.last_manual_edit) return []
+    if (kept.get(known.id) === lyricsKey(song)) return []
     if (known.title.toLowerCase() !== song.parsed.title.toLowerCase()) {
       return []
     }
