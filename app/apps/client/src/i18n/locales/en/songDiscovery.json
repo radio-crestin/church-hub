@@ -18,7 +18,9 @@
     "lastChecked": "Checked {{when}}",
     "checkAll": "Check all sources",
     "checkingAll": "Checking sources…",
-    "upToDate": "Up to date"
+    "upToDate": "Up to date",
+    "downloadFailed": "Download failed: {{status}}",
+    "checkFailed": "Couldn't check it: {{error}}"
   },
   "verdict": {
     "new": "New",
@@ -35,7 +37,7 @@
     "loading": "Loading the library song…",
     "identical": "The lyrics are identical.",
     "inLibrary": "in your library",
-    "inCatalog": "in the catalog"
+    "inCatalog": "in the source"
   },
   "actions": {
     "select": "Select {{title}}"
@@ -43,18 +45,24 @@
   "toolbar": {
     "importSelected": "Import selected ({{count}})",
     "importAll_one": "Import {{count}} song",
-    "importAll_other": "Import all {{count}} songs"
+    "importAll_other": "Import all {{count}} songs",
+    "applySelected": "Apply selection ({{count}})"
   },
   "toast": {
     "imported": "Imported {{count}} song(s)",
-    "importFailed": "Import failed: {{error}}"
+    "importFailed": "Import failed: {{error}}",
+    "updated_one": "Updated {{count}} song",
+    "updated_other": "Updated {{count}} songs",
+    "kept_one": "Kept your version of {{count}} song",
+    "kept_other": "Kept your version of {{count}} songs",
+    "updateFailed": "Couldn't save your choice: {{error}}"
   },
   "settings": {
     "title": "Song updates",
     "description": "A little after the app starts, and then every day, Church Hub checks your song sources when there is internet. New songs, and newer versions of songs you never edited, sync on their own: a song you edited is never replaced. Songs you may already have under another title wait for you in Download songs.",
     "enableLabel": "Sync new songs and updates without asking",
     "checkNow": "Check now",
-    "enableHint": "When off, they wait in the notifications until you sync them.",
+    "enableHint": "When off, they wait for you: sync them all from the notification, or review each change in Download songs.",
     "pendingCount_one": "{{count}} waiting for approval",
     "pendingCount_other": "{{count}} waiting for approval"
   },
@@ -171,5 +179,23 @@
     "checkingTitle": "Checking the song sources…",
     "checkingDescription": "New songs and updates arrive here when it is done. The app stays fast meanwhile.",
     "cancel": "Cancel"
+  },
+  "changed": {
+    "title": "Updates ({{count}})",
+    "selectAll": "Select all updates",
+    "select": "Select {{title}}",
+    "badge": "New version",
+    "subtitle": "{{source}} · a newer version of the song in your library",
+    "update": "Update",
+    "keep": "Keep mine",
+    "editedNeverHere": "Songs you edited never show up here: they are never replaced."
+  },
+  "recoverTitles": {
+    "description": "Songs imported from Resurse Creștine in older versions are filed under their first verse, and the name the source knows them by was lost. Recover it so they can be found by that name again.",
+    "button": "Recover the original titles",
+    "running": "Recovering…",
+    "done_one": "{{count}} song got its original title back",
+    "done_other": "{{count}} songs got their original title back",
+    "failed": "Couldn't recover the titles: {{error}}"
   }
 }

@@ -49,7 +49,10 @@ export function backfillAlternateTitles(
   const changedIds: number[] = []
   let matched = 0
 
-  db.run('BEGIN TRANSACTION')
+  // IMMEDIATE: the song updates' worker writes too; a deferred
+  // transaction that read first fails at once ("database is locked")
+  // when another connection wrote meanwhile, instead of waiting its turn.
+  db.run('BEGIN IMMEDIATE')
   try {
     for (const entry of entries) {
       const filename = entry.sourceFilename?.trim()

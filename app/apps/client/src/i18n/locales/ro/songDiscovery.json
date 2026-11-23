@@ -19,7 +19,9 @@
     "lastChecked": "Verificat {{when}}",
     "checkAll": "Verifică toate sursele",
     "checkingAll": "Se verifică sursele…",
-    "upToDate": "La zi"
+    "upToDate": "La zi",
+    "downloadFailed": "Descărcarea a eșuat: {{status}}",
+    "checkFailed": "Verificarea a eșuat: {{error}}"
   },
   "verdict": {
     "new": "Nouă",
@@ -36,7 +38,7 @@
     "loading": "Se încarcă cântarea din bibliotecă…",
     "identical": "Versurile sunt identice.",
     "inLibrary": "în biblioteca ta",
-    "inCatalog": "în catalog"
+    "inCatalog": "în sursă"
   },
   "actions": {
     "select": "Selectează „{{title}}”"
@@ -45,18 +47,26 @@
     "importSelected": "Importă selecția ({{count}})",
     "importAll_one": "Importă {{count}} cântare",
     "importAll_few": "Importă toate cele {{count}} cântări",
-    "importAll_other": "Importă toate cele {{count}} de cântări"
+    "importAll_other": "Importă toate cele {{count}} de cântări",
+    "applySelected": "Aplică selecția ({{count}})"
   },
   "toast": {
     "imported": "Au fost importate {{count}} cântări",
-    "importFailed": "Importul a eșuat: {{error}}"
+    "importFailed": "Importul a eșuat: {{error}}",
+    "updated_one": "{{count}} cântare actualizată",
+    "updated_few": "{{count}} cântări actualizate",
+    "updated_other": "{{count}} de cântări actualizate",
+    "kept_one": "Ai păstrat versiunea ta pentru {{count}} cântare",
+    "kept_few": "Ai păstrat versiunea ta pentru {{count}} cântări",
+    "kept_other": "Ai păstrat versiunea ta pentru {{count}} de cântări",
+    "updateFailed": "Alegerea nu a putut fi salvată: {{error}}"
   },
   "settings": {
     "title": "Cântări noi",
     "description": "La scurt timp după pornire, apoi zilnic, Church Hub verifică sursele tale de cântări când ai internet. Cântările noi și versiunile mai recente ale celor pe care nu le-ai modificat se sincronizează automat. Cântările modificate de tine nu sunt înlocuite. Cele pe care s-ar putea să le ai deja sub alt titlu așteaptă la „Descarcă cântări”.",
     "enableLabel": "Sincronizează automat cântările noi și actualizările",
     "checkNow": "Verifică acum",
-    "enableHint": "Când oprești opțiunea, cântările așteaptă în Notificări până le sincronizezi.",
+    "enableHint": "Când oprești opțiunea, cântările te așteaptă: le poți sincroniza pe toate din notificare sau poți verifica fiecare modificare la „Descarcă cântări”.",
     "pendingCount_one": "{{count}} cântare de aprobat",
     "pendingCount_few": "{{count}} cântări de aprobat",
     "pendingCount_other": "{{count}} de cântări de aprobat"
@@ -181,5 +191,24 @@
     "checkingTitle": "Se verifică sursele…",
     "checkingDescription": "Cântările noi și actualizările vor apărea aici la final. Verificarea nu încetinește aplicația.",
     "cancel": "Anulează"
+  },
+  "changed": {
+    "title": "Actualizări ({{count}})",
+    "selectAll": "Selectează toate actualizările",
+    "select": "Selectează {{title}}",
+    "badge": "Versiune nouă",
+    "subtitle": "{{source}} · versiune nouă față de cea din biblioteca ta",
+    "update": "Actualizează",
+    "keep": "Păstrează-o pe a mea",
+    "editedNeverHere": "Cântările modificate de tine nu apar aici: nu sunt înlocuite niciodată."
+  },
+  "recoverTitles": {
+    "description": "Cântările importate din Resurse Creștine în versiunile mai vechi sunt salvate cu primul vers ca titlu, iar numele sub care le știe sursa s-a pierdut. Recuperează-l, ca să le poți găsi din nou după acel nume.",
+    "button": "Recuperează titlurile originale",
+    "running": "Se recuperează…",
+    "done_one": "{{count}} cântare și-a recăpătat titlul original",
+    "done_few": "{{count}} cântări și-au recăpătat titlul original",
+    "done_other": "{{count}} de cântări și-au recăpătat titlul original",
+    "failed": "Titlurile nu au putut fi recuperate: {{error}}"
   }
 }

@@ -37,12 +37,15 @@ import {
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
+import { getBookmarkSlideshow } from '~/features/bible/utils/getBookmarkSlideshow'
 import {
   useFocusSearchEvent,
   usePageShortcutEvent,
 } from '~/features/keyboard-shortcuts/utils'
 import { getBibleLastVisited, setBibleLastVisited } from '~/features/navigation'
 import {
+  PhoneSlideControls,
+  PhoneStage,
   useClearSlide,
   useNavigateTemporary,
   usePresentationState,
@@ -204,6 +207,9 @@ function BiblePage() {
     false,
   )
   const [isLargeScreen, setIsLargeScreen] = useState(false)
+  // On a phone the panels are tabs: picking a verse out of Istoric, Marcaje
+  // or Programe opens it in the Bible tab.
+  const [phoneTab, setPhoneTab] = useState('navigation')
   const hasNavigatedOnOpen = useRef(false)
   // Track when user is browsing away from presented verse (disables sync)
   const isBrowsingRef = useRef(false)
@@ -437,6 +443,7 @@ function BiblePage() {
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
+  const isSlideshowLive = getBookmarkSlideshow(presentationState) !== null
   const temporaryContent = presentationState?.temporaryContent
 
   /**
@@ -846,6 +853,7 @@ function BiblePage() {
 
       isBrowsingRef.current = true
       pendingInternalNavRef.current = true
+      setPhoneTab('navigation')
       navigate({
         to: '/bible',
         search: {
@@ -1079,6 +1087,13 @@ function BiblePage() {
       return
     }
 
+    // A bookmark slideshow is on screen — step through the chosen verses, not
+    // the chapter.
+    if (isSlideshowLive) {
+      await navigateTemporary.mutateAsync({ direction: 'next' })
+      return
+    }
+
     // Active navigation clears browse mode so sync works for chapter transitions
     isBrowsingRef.current = false
 
@@ -1108,6 +1123,7 @@ function BiblePage() {
     }
   }, [
     isScheduleLive,
+    isSlideshowLive,
     scheduleNav,
     navigation,
     verses,
@@ -1119,6 +1135,13 @@ function BiblePage() {
     // A program step is live — step back through the program.
     if (isScheduleLive) {
       await scheduleNav.goPrev()
+      return
+    }
+
+    // A bookmark slideshow is on screen — step through the chosen verses, not
+    // the chapter.
+    if (isSlideshowLive) {
+      await navigateTemporary.mutateAsync({ direction: 'prev' })
       return
     }
 
@@ -1151,6 +1174,7 @@ function BiblePage() {
     }
   }, [
     isScheduleLive,
+    isSlideshowLive,
     scheduleNav,
     navigation,
     verses,
@@ -1291,6 +1315,7 @@ function BiblePage() {
 
   const canNavigateVerses =
     isScheduleLive || (navigation.state.level === 'verses' && verses.length > 0)
+  const isLive = !(presentationState?.isHidden ?? true)
 
   // Save Bible navigation state to localStorage when at verses level
   useEffect(() => {
@@ -1321,22 +1346,26 @@ function BiblePage() {
     }
   }, [navigation.state])
 
-  // Every Bible view the operator can rearrange. Istoric, Marcaje and Programe
-  // are desktop-only — a phone has no room for them beside the text — but they
-  // keep their stored slot for when the window grows again.
+  // Every Bible view the operator can rearrange. On a phone the preview stays
+  // pinned on top and the rest are tabs under it (previous, hide and next
+  // move to the bottom bar).
   const workspacePanels: WorkspacePanel[] = [
     {
       id: 'control',
       title: t('controls.title'),
-      render: () => (
-        <BibleControlPanel
-          onPrevVerse={handlePreviousVerse}
-          onNextVerse={handleNextVerse}
-          canNavigate={canNavigateVerses}
-          onHide={handleHidePresentation}
-          isHiding={clearSlide.isPending}
-        />
-      ),
+      pinned: true,
+      render: () =>
+        isLargeScreen ? (
+          <BibleControlPanel
+            onPrevVerse={handlePreviousVerse}
+            onNextVerse={handleNextVerse}
+            canNavigate={canNavigateVerses}
+            onHide={handleHidePresentation}
+            isHiding={clearSlide.isPending}
+          />
+        ) : (
+          <PhoneStage testId="bible-phone-stage" isLive={isLive} />
+        ),
     },
     {
       id: 'navigation',
@@ -1413,16 +1442,18 @@ function BiblePage() {
     {
       id: 'history',
       title: t('history.title'),
-      available: isLargeScreen,
-      collapsed: !historyOpen,
+      collapsed: isLargeScreen && !historyOpen,
       render: () => (
         <BibleHistoryPanel
-          isCollapsed={!historyOpen}
-          onToggleCollapse={() => setHistoryOpen(!historyOpen)}
+          isCollapsed={isLargeScreen && !historyOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setHistoryOpen(!historyOpen) : undefined
+          }
           onSelectVerse={(item: BibleHistoryItem) => {
             // Navigate via URL - select only without presenting
             isBrowsingRef.current = true
             pendingInternalNavRef.current = true
+            setPhoneTab('navigation')
             navigate({
               to: '/bible',
               search: {
@@ -1440,12 +1471,13 @@ function BiblePage() {
     {
       id: 'bookmarks',
       title: t('bookmarks.title'),
-      available: isLargeScreen,
-      collapsed: !bookmarksOpen,
+      collapsed: isLargeScreen && !bookmarksOpen,
       render: () => (
         <BibleBookmarksPanel
-          isCollapsed={!bookmarksOpen}
-          onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+          isCollapsed={isLargeScreen && !bookmarksOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setBookmarksOpen(!bookmarksOpen) : undefined
+          }
           activeVerseId={focusedVerse?.id}
           translationId={primaryTranslation?.id}
           onSelectVerse={(bookmark) => {
@@ -1453,6 +1485,7 @@ function BiblePage() {
             // picking a verse out of the history.
             isBrowsingRef.current = true
             pendingInternalNavRef.current = true
+            setPhoneTab('navigation')
             navigate({
               to: '/bible',
               search: {
@@ -1470,8 +1503,7 @@ function BiblePage() {
     {
       id: 'programs',
       title: tSchedules('panel.title'),
-      available: isLargeScreen,
-      collapsed: !programsOpen,
+      collapsed: isLargeScreen && !programsOpen,
       render: () => (
         <SchedulePanel
           activeReference={activePassageReference}
@@ -1483,8 +1515,10 @@ function BiblePage() {
               params: { scheduleId: String(scheduleId) },
             })
           }
-          isCollapsed={!programsOpen}
-          onToggleCollapse={() => setProgramsOpen(!programsOpen)}
+          isCollapsed={isLargeScreen && !programsOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setProgramsOpen(!programsOpen) : undefined
+          }
         />
       ),
     },
@@ -1521,7 +1555,7 @@ function BiblePage() {
 
   return (
     <PagePermissionGuard permission="bible.view">
-      <div className="flex flex-col gap-4 h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
+      <div className="flex flex-col gap-4 h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
         {/* Same single labelled menu as the song page, so both pages expose
             their actions the same way. */}
         <PageHeader
@@ -1562,14 +1596,43 @@ function BiblePage() {
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
           </div>
         ) : selectedTranslations.length > 0 ? (
-          <Workspace
-            id="bible"
-            panels={workspacePanels}
-            defaultLayout={BIBLE_WORKSPACE_LAYOUT}
-            defaultColumnSizes={['30%', '40%', '30%']}
-            stacked={!isLargeScreen}
-            className="lg:flex-1 lg:min-h-0"
-          />
+          <>
+            <Workspace
+              id="bible"
+              panels={workspacePanels}
+              defaultLayout={BIBLE_WORKSPACE_LAYOUT}
+              defaultColumnSizes={['30%', '40%', '30%']}
+              stacked={!isLargeScreen}
+              stackedAsTabs
+              activeTab={phoneTab}
+              onActiveTabChange={setPhoneTab}
+              className="lg:flex-1 lg:min-h-0"
+            />
+            {!isLargeScreen && (
+              <PhoneSlideControls
+                testId="bible-phone"
+                keepsTabBar
+                onPrev={handlePreviousVerse}
+                onNext={handleNextVerse}
+                canPrev={canNavigateVerses}
+                canNext={canNavigateVerses}
+                isNavigating={false}
+                isLive={isLive}
+                onHide={handleHidePresentation}
+                isHiding={clearSlide.isPending}
+                project={
+                  navigation.state.searchedIndex !== null &&
+                  navigation.state.searchedIndex !==
+                    navigation.state.presentedIndex
+                    ? {
+                        onClick: handleShowSelectedVerse,
+                        isPending: presentTemporaryBible.isPending,
+                      }
+                    : undefined
+                }
+              />
+            )}
+          </>
         ) : translations.length > 0 ? (
           // Translations exist but none selected - prompt to go to settings
           <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
