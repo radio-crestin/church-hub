@@ -40,7 +40,7 @@ The installed app keeps its data in `~/.local/share/com.church-hub/` and serves 
 ## Testing on it
 - Sidecar smoke test (sidecar laid out like the .deb): `cd app/apps/server && bun run smoke:sidecar`
 - Full e2e suite: `cd app/apps/client && CI=1 TEST_PORT=4199 bunx playwright test --workers=1 --retries=2`
-- Linux packages: `cd app && bunx tauri build --bundles deb,appimage --config '{"bundle":{"createUpdaterArtifacts":false}}'`. The bundles land in `app/tauri/target/release/bundle/{deb,appimage}/`. Afterwards run `cargo clean --manifest-path app/tauri/Cargo.toml`.
+- Linux package: `cd app && bunx tauri build --bundles deb --config '{"bundle":{"createUpdaterArtifacts":false}}'`. It lands in `app/tauri/target/release/bundle/deb/`. Afterwards run `cargo clean --manifest-path app/tauri/Cargo.toml`. The AppImage doesn't build on 24.04 yet (CH-196): `ldd` crashes on the Bun-compiled sidecar. CI builds it on 22.04.
 
 ## For people: RDP
 Over the VPN, connect an RDP client to the VM's internal address on port 3389 as `churchhub`. The address and login steps are in the task's private note, never in the repo.
