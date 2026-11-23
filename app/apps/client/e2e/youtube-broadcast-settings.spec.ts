@@ -26,10 +26,12 @@ let api: APIRequestContext
 let context: BrowserContext
 let page: Page
 
-// The hooks too: the extra server's boot outlasts the default 30 s on a busy machine.
-test.describe.configure({ mode: 'serial', timeout: 300_000 })
+test.describe.configure({ mode: 'serial' })
+test.setTimeout(300_000)
 
 test.beforeAll(async ({ browser }) => {
+  // A hook keeps the default 30 s unless set here; the extra server boots slower on a busy machine.
+  test.setTimeout(300_000)
   youtube = await startMockYouTubeApi()
   server = new ExtraServer()
   await server.start({ YOUTUBE_API_ORIGIN: youtube.origin })
