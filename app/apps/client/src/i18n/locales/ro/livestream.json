@@ -51,8 +51,8 @@
     }
   },
   "stream": {
-    "startStream": "Porneste live-ul",
-    "stopStream": "Opreste Stream",
+    "startStream": "Pornește live-ul",
+    "stopStream": "Oprește live-ul",
     "isLive": "LIVE",
     "notStreaming": "Nu transmite",
     "starting": "Se porneste...",
@@ -69,7 +69,7 @@
     "cancelConfirm": {
       "title": "Anulezi pornirea stream-ului?",
       "message": "Stream-ul este in curs de pornire. Esti sigur ca vrei sa anulezi si sa opresti stream-ul?",
-      "confirm": "Opreste stream-ul",
+      "confirm": "Oprește live-ul",
       "cancel": "Continua"
     }
   },
@@ -93,7 +93,7 @@
     "displayName": "Nume afisat",
     "visible": "Vizibila",
     "hidden": "Ascunsa",
-    "current": "Curenta",
+    "current": "Curentă",
     "shortcuts": "Scurtaturi de tastatura",
     "addShortcut": "Adauga scurtatura",
     "removeShortcut": "Sterge",
@@ -120,8 +120,8 @@
     },
     "mixerActions": "Actiuni Mixer",
     "mixerActionsDescription": "Configureaza canalele mixerului cand aceasta scena se activeaza:",
-    "unmute": "Porneste",
-    "mute": "Opreste",
+    "unmute": "Pornește",
+    "mute": "Oprește",
     "selectChannels": "Selecteaza canale...",
     "selectContentTypes": "Selecteaza tipuri de continut...",
     "addMore": "Adauga...",
@@ -224,7 +224,7 @@
     "youtube": {
       "title": "Intră live pe YouTube",
       "signIn": "Deschide Setări YouTube din partea de sus a paginii și conectează canalul bisericii.",
-      "start": "„Porneste live-ul” creează transmisiunea pe YouTube și pornește OBS; „Opreste Stream” încheie transmisiunea.",
+      "start": "„Pornește live-ul” creează transmisiunea pe YouTube și pornește OBS; „Oprește live-ul” încheie transmisiunea.",
       "startStopScenes": "Transmisiunea începe pe scena „{{start}}” și se încheie pe „{{stop}}”.",
       "openSettings": "Deschide setările YouTube"
     }
