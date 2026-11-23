@@ -1,7 +1,7 @@
 import { request as httpRequest } from 'node:http'
 import { expect, type Page, test } from '@playwright/test'
 
-import { lanBaseUrl } from './helpers/lan-address'
+import { lanBaseUrl, lanLookup } from './helpers/lan-address'
 
 /**
  * Signing in from another device on the church network (T-167). A browser
@@ -142,6 +142,7 @@ test.describe('Login from the LAN', () => {
         {
           host: lan.hostname,
           port: lan.port,
+          lookup: lanLookup,
           path: '/api/auth/login',
           method: 'POST',
           headers: {

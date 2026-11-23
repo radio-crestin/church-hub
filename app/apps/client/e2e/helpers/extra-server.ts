@@ -43,6 +43,7 @@ export class ExtraServer {
         cwd: APP_DIR,
         env: {
           ...process.env,
+          CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
           NODE_ENV: 'production',
           CLIENT_DIST_PATH: 'apps/client/dist',
           CHURCH_HUB_DATA_DIR: this.dataDir,

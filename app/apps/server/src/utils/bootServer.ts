@@ -1,6 +1,7 @@
 import { type BootHealth, getBootHealth, onBootHealthChange } from './bootState'
 import { parentToWatch } from './exitWithParent'
 import { logToFile } from './fileLogger'
+import { getListenHost } from './listenHost'
 
 /** The boot state as the boot server answers it; it adds `elapsedMs` itself. */
 type PublishedHealth = Omit<BootHealth, 'elapsedMs'> & {
@@ -58,6 +59,7 @@ function bootServerResponse(
  */
 function bootServerWorkerMain(
   port: number,
+  hostname: string,
   initial: PublishedHealth,
   respond: typeof bootServerResponse,
   parentPid: number,
@@ -79,7 +81,7 @@ function bootServerWorkerMain(
   let health = initial
   const server = Bun.serve({
     port,
-    hostname: '0.0.0.0',
+    hostname,
     reusePort: true,
     fetch: (req) => respond(req, health),
   })
@@ -136,7 +138,7 @@ function waitForWorker(worker: Worker, type: string): Promise<void> {
  * dev and the compiled sidecar load it the same way on every OS.
  */
 async function startBootServerWorker(port: number): Promise<BootServer> {
-  const source = `(${bootServerWorkerMain.toString()})(${port}, ${JSON.stringify(
+  const source = `(${bootServerWorkerMain.toString()})(${port}, ${JSON.stringify(getListenHost())}, ${JSON.stringify(
     publishedHealth(),
   )}, ${bootServerResponse.toString()}, ${parentToWatch()})`
   const url = URL.createObjectURL(
@@ -183,7 +185,7 @@ async function startBootServerInline(port: number): Promise<BootServer> {
     try {
       const server = Bun.serve({
         port,
-        hostname: '0.0.0.0',
+        hostname: getListenHost(),
         reusePort: true,
         fetch: (req) => bootServerResponse(req, publishedHealth()),
       })
