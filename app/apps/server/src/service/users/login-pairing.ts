@@ -1,3 +1,5 @@
+import { randomInt } from 'node:crypto'
+
 import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('login-pairing')
@@ -27,8 +29,7 @@ const pairings = new Map<string, LoginPairing>()
 let recentCreations: number[] = []
 
 function generateCode(): string {
-  const [n] = crypto.getRandomValues(new Uint32Array(1))
-  return String(n % 1_000_000).padStart(6, '0')
+  return String(randomInt(1_000_000)).padStart(6, '0')
 }
 
 function removeExpired(now: number) {
