@@ -353,9 +353,8 @@ function SongsPage() {
     }
   }, [presentedSongId, navigate, searchQuery])
 
-  // Marcaje and Programe are desktop-only: the list needs the whole width on a
-  // phone. Songs reach them from the buttons on each row, which work at every
-  // width.
+  // Marcaje and Programe sit beside the list on a computer; on a phone each is
+  // a tab next to it, always open (the tab is the toggle).
   const workspacePanels: WorkspacePanel[] = [
     {
       id: 'list',
@@ -380,7 +379,6 @@ function SongsPage() {
     {
       id: 'bookmarks',
       title: t('bookmarks.title'),
-      available: isLargeScreen,
       collapsed: !bookmarksOpen,
       render: () => (
         <SongBookmarksPanel
@@ -388,15 +386,16 @@ function SongsPage() {
           onSongPresented={handleScheduleSongClick}
           onAddAllToSchedule={handleAddAllToSchedule}
           acceptsSongDrop
-          isCollapsed={!bookmarksOpen}
-          onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+          isCollapsed={isLargeScreen && !bookmarksOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setBookmarksOpen(!bookmarksOpen) : undefined
+          }
         />
       ),
     },
     {
       id: 'schedules',
       title: tSchedules('panel.title'),
-      available: isLargeScreen,
       collapsed: !schedulesOpen,
       render: () => (
         <SchedulePanel
@@ -410,8 +409,10 @@ function SongsPage() {
               ? () => handleAddAllToSchedule(bookmarks.map((b) => b.songId))
               : undefined
           }
-          isCollapsed={!schedulesOpen}
-          onToggleCollapse={() => setSchedulesOpen(!schedulesOpen)}
+          isCollapsed={isLargeScreen && !schedulesOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setSchedulesOpen(!schedulesOpen) : undefined
+          }
         />
       ),
     },
@@ -480,6 +481,7 @@ function SongsPage() {
           defaultLayout={SONGS_WORKSPACE_LAYOUT}
           defaultColumnSizes={['70%', '30%']}
           stacked={!isLargeScreen}
+          stackedAsTabs
           className="flex-1 min-h-0"
         />
 

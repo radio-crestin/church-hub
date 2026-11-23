@@ -17,6 +17,20 @@ const DEFAULT_SCENES = [
 ]
 
 test.describe('Livestream setup guide', () => {
+  // A spec that timed out before its cleanup (obs-scene-automation-program)
+  // leaves an "E2E …" song scene first in line, which the guide would name.
+  test.beforeEach(async ({ request }) => {
+    const res = await request.get('/api/livestream/obs/scenes')
+    const { data } = (await res.json()) as {
+      data: { id: number; obsSceneName: string }[]
+    }
+    for (const scene of data) {
+      if (scene.obsSceneName.startsWith('E2E ')) {
+        await request.delete(`/api/livestream/obs/scenes/${scene.id}`)
+      }
+    }
+  })
+
   test('a fresh install has the default scenes, songs and Bible switching on their own', async ({
     request,
   }) => {

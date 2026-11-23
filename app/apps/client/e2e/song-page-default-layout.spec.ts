@@ -130,7 +130,10 @@ test.describe('Song page default layout', () => {
     }
   })
 
-  test('stacks all panels on a phone as before', async ({ page, request }) => {
+  test('keeps every panel on a phone, Versiuni as a tab', async ({
+    page,
+    request,
+  }) => {
     const song = await createSong(request)
     try {
       await page.setViewportSize({ width: 390, height: 800 })
@@ -139,6 +142,7 @@ test.describe('Song page default layout', () => {
       })
       await page.goto(`/songs/${song.id}`)
       await expect(page.getByTestId('workspace-panel-control')).toBeVisible()
+      await page.getByTestId('workspace-tab-versions').click()
       await expect(page.getByTestId('workspace-panel-versions')).toBeVisible()
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - window.innerWidth,
