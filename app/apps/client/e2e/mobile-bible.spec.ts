@@ -45,8 +45,11 @@ async function openGenesisOne(page: Page) {
 test.describe('The Bible on a phone', () => {
   test.describe.configure({ mode: 'serial' })
 
+  // Each test starts on a hidden, empty screen: on a screen left showing by an
+  // earlier spec, a searched verse would go live with no button to show it.
   test.beforeEach(async ({ request }) => {
     await request.post('/api/presentation/clear-temporary').catch(() => {})
+    await request.post('/api/presentation/clear').catch(() => {})
   })
 
   test.afterEach(async ({ request }) => {
