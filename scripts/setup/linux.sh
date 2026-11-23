@@ -8,7 +8,9 @@ set -euo pipefail
 if ! command -v gitleaks >/dev/null 2>&1; then
   if [ "${SUPERFACTORY_SETUP_SUDO:-0}" = 1 ] && sudo apt-get install -y gitleaks 2>/dev/null; then :
   else
-    tag=$(curl -fsSL https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep -oE "\"tag_name\": *\"v[0-9.]+\"" | grep -oE "[0-9.]+[0-9]")
+    # The latest release from its page's redirect: GitHub's API answers 403 once a machine's
+    # address used up its unauthenticated rate limit (shared VM networks do).
+    tag=$(curl -fsSIo /dev/null -w '%{redirect_url}' https://github.com/gitleaks/gitleaks/releases/latest | grep -oE "[0-9.]+[0-9]$")
     arch=$(uname -m | sed "s/x86_64/x64/; s/aarch64/arm64/")
     mkdir -p "$HOME/.local/bin"
     curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v$tag/gitleaks_${tag}_linux_${arch}.tar.gz" | tar -xz -C "$HOME/.local/bin" gitleaks
