@@ -56,6 +56,7 @@ export const SERVER_EVENTS = {
 /** Sent with every client event (`distinct_id` is the random device id). */
 export const COMMON_PROPERTIES = [
   'distinct_id',
+  'route',
   'install_id',
   'component',
   'runtime',
