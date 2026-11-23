@@ -355,6 +355,7 @@ import {
 } from './utils/bootState'
 import { DATABASE_ID_HEADER, getDatabaseId } from './utils/databaseId'
 import { isPortFree } from './utils/isPortFree'
+import { getListenHost } from './utils/listenHost'
 import { createLogger } from './utils/logger'
 import { getDatabasePath, getLogsDir } from './utils/paths'
 import { reportError } from './utils/reportError'
@@ -362,6 +363,7 @@ import { logRequest, logResponse } from './utils/request-logger'
 import { setRequestPeer } from './utils/request-peer'
 import { getServerPort } from './utils/serverPort'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
+import { getTestLanPort, peerAddress } from './utils/testLanListener'
 import {
   broadcastMIDIConnectionStatus,
   broadcastMIDIDevices,
@@ -834,9 +836,9 @@ async function startRealServer(): Promise<void> {
     reportError(reason, 'unhandledRejection')
   })
 
-  const server = await serveWithRetry<WebSocketData>({
+  const serveOptions: Parameters<typeof Bun.serve<WebSocketData>>[0] = {
     port: getServerPort(),
-    hostname: '0.0.0.0',
+    hostname: getListenHost(),
     reusePort: true,
     // Bun's 128 MiB default would reject background video uploads (up to
     // 1 GiB) with a bare 413 before the route runs. Uploads are streamed to
@@ -861,7 +863,7 @@ async function startRealServer(): Promise<void> {
     },
     async fetch(req: Request, server) {
       const requestStartTime = performance.now()
-      setRequestPeer(req, server.requestIP(req)?.address)
+      setRequestPeer(req, peerAddress(req, server))
       logRequest(req)
 
       if (req.method === 'OPTIONS') {
@@ -8207,7 +8209,16 @@ async function startRealServer(): Promise<void> {
       message: handleWebSocketMessage,
       close: handleWebSocketClose,
     },
-  })
+  }
+  const server = await serveWithRetry<WebSocketData>(serveOptions)
+  const testLanPort = getTestLanPort()
+  if (testLanPort) {
+    Bun.serve<WebSocketData>({
+      ...serveOptions,
+      port: testLanPort,
+      hostname: '127.0.0.1',
+    })
+  }
 
   logTiming('bun_server_bind', t)
 

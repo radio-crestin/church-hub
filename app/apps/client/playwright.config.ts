@@ -28,9 +28,12 @@ export const WEBKIT_STORAGE_STATE = join(
 // on the running app drove its real projector and database ("slides appear
 // with nobody presenting", T-030).
 const TEST_PORT = process.env.TEST_PORT ?? '3099'
+// The server's LAN stand-in (see apps/server/src/utils/testLanListener.ts).
+export const TEST_LAN_PORT =
+  process.env.TEST_LAN_PORT ?? String(Number(TEST_PORT) + 1)
 // The test server frees its port on start (killProcessOnPort), so there it
 // would kill the installed app or the dev server.
-if (TEST_PORT === '3000' || TEST_PORT === '3001') {
+if ([TEST_PORT, TEST_LAN_PORT].some((p) => p === '3000' || p === '3001')) {
   throw new Error(
     `TEST_PORT=${TEST_PORT} is the installed app / dev server: pick another`,
   )
@@ -87,7 +90,15 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: STORAGE_STATE,
+        // The server's LAN stand-in, by a name the app doesn't take for
+        // localhost (e2e/helpers/lan-address.ts).
+        launchOptions: {
+          args: [`--host-resolver-rules=MAP church-hub-lan.test 127.0.0.1`],
+        },
+      },
       dependencies: ['setup'],
     },
     // The macOS desktop app draws with WebKit, which has laid the previews out
@@ -111,6 +122,10 @@ export default defineConfig({
       CLIENT_DIST_PATH: 'apps/client/dist',
       DATABASE_PATH: TEST_DB_PATH,
       PORT: TEST_PORT,
+      // Loopback only: a test server opens no LAN port, so Windows raises no
+      // firewall prompt (T-193). LAN specs use the stand-in port instead.
+      CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
+      CHURCH_HUB_TEST_LAN_PORT: TEST_LAN_PORT,
       // Song-source specs share links from a stand-in S3 on 127.0.0.1;
       // every other private address stays refused.
       CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
