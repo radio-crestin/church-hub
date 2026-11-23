@@ -28,7 +28,8 @@ if ! command -v gitleaks >/dev/null 2>&1 && ! apt_install gitleaks 2>/dev/null; 
     echo "warning: could not install gitleaks; the git hooks will ask for it" >&2
 fi
 version=$(grep -oE '"playwright@[0-9.]+"' app/bun.lock | head -1 | grep -oE '[0-9.]+[0-9]')
-playwright=$(bunx "playwright@$version" install-deps --dry-run chromium webkit 2>/dev/null |
+# `bun x`, not bunx: a machine-wide bun may come without the bunx link.
+playwright=$(bun x "playwright@$version" install-deps --dry-run chromium webkit 2>/dev/null |
   sed -n 's/.*--no-install-recommends \([^"]*\)".*/\1/p')
 tauri="build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libasound2-dev"
 missing=$(for pkg in $playwright $tauri; do dpkg -s "$pkg" >/dev/null 2>&1 || echo "$pkg"; done)
