@@ -225,6 +225,18 @@ export interface SongGroup {
   updatedAt: number
 }
 
+/** A song on the same theme as another, best first (`/api/songs/:id/same-theme`). */
+export interface SameThemeSong {
+  songId: number
+  title: string
+  hymnNumber: string | null
+  author: string | null
+  categoryName: string | null
+  keyLine: string | null
+  /** How close in theme, 0..1; 1 for a song with the same theme filled in. */
+  score: number
+}
+
 /**
  * A candidate that the server believes is a version of a given song.
  * Surfaced as a "Sugestii" section on the song detail page so the operator

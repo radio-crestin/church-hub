@@ -60,6 +60,7 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
+  SameThemePanel,
   SongBookmarksPanel,
   SongControlPanel,
   SongLoadError,
@@ -113,7 +114,7 @@ interface SongSearchParams {
 const CLASSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
     { id: 'col-1', panelIds: ['slides'] },
-    { id: 'col-2', panelIds: ['control', 'versions'] },
+    { id: 'col-2', panelIds: ['control', 'versions', 'same-theme'] },
     { id: 'col-3', panelIds: ['bookmarks', 'schedules'] },
   ],
 }
@@ -135,7 +136,10 @@ const PREVIOUS_CLASSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
 const POWERPOINT_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
     { id: 'col-1', panelIds: ['stage'] },
-    { id: 'col-2', panelIds: ['bookmarks', 'schedules', 'versions'] },
+    {
+      id: 'col-2',
+      panelIds: ['bookmarks', 'schedules', 'versions', 'same-theme'],
+    },
   ],
 }
 
@@ -265,6 +269,10 @@ function SongPreviewPage() {
   )
   const [versionsOpen, setVersionsOpen] = usePersistedBoolean(
     'song-detail:versions-open',
+    true,
+  )
+  const [sameThemeOpen, setSameThemeOpen] = usePersistedBoolean(
+    'song-detail:same-theme-open',
     true,
   )
   // Plain black behind the lyrics in this page's previews (both layouts), so
@@ -801,9 +809,10 @@ function SongPreviewPage() {
 
   const isPowerpointLayout = editorLayout === 'powerpoint' && canEditSong
 
-  // Marcaje / Programe / Versiuni. Bookmarks and Programe are desktop-only —
-  // the page is too tight for them on a phone — while Versiuni rides along
-  // everywhere. An unavailable panel keeps its stored slot for when it returns.
+  // Marcaje / Programe / Versiuni / Pe aceeași temă. Bookmarks and Programe
+  // are desktop-only — the page is too tight for them on a phone — while
+  // Versiuni and Pe aceeași temă ride along everywhere. An unavailable panel
+  // keeps its stored slot for when it returns.
   const sidePanels: WorkspacePanel[] = [
     {
       id: 'bookmarks',
@@ -870,6 +879,19 @@ function SongPreviewPage() {
               ? `+${undismissedSuggestionCount}`
               : null
           }
+        />
+      ),
+    },
+    {
+      id: 'same-theme',
+      title: t('sameTheme.title'),
+      available: true,
+      collapsed: !sameThemeOpen,
+      render: () => (
+        <SameThemePanel
+          songId={song.id}
+          isCollapsed={!sameThemeOpen}
+          onToggleCollapse={() => setSameThemeOpen(!sameThemeOpen)}
         />
       ),
     },

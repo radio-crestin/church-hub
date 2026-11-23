@@ -176,7 +176,12 @@ for (const viewport of VIEWPORTS) {
 
         await expectReachable(page, 'song-control-prev')
         await expectReachable(page, 'song-control-next')
-        await expectUnclippedStack(page, ['control', 'slides', 'versions'])
+        await expectUnclippedStack(page, [
+          'control',
+          'slides',
+          'versions',
+          'same-theme',
+        ])
 
         await page.evaluate(() =>
           window.localStorage.setItem('song-editor-layout', 'powerpoint'),
@@ -185,7 +190,7 @@ for (const viewport of VIEWPORTS) {
         await expect(page.getByTestId('workspace-panel-stage')).toBeAttached({
           timeout: 15000,
         })
-        await expectUnclippedStack(page, ['stage', 'versions'])
+        await expectUnclippedStack(page, ['stage', 'versions', 'same-theme'])
       } finally {
         await removeFixture(request, fixture)
       }

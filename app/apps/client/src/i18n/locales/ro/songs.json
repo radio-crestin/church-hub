@@ -406,5 +406,11 @@
     "hideBackgroundDescription": "Negru simplu în spatele versurilor aici; ecranele păstrează fundalul",
     "toggleLayoutDescription": "Comută între editorul clasic și cel PowerPoint",
     "editDescription": "Deschide editorul pentru versuri și slide-uri"
+  },
+  "sameTheme": {
+    "title": "Pe aceeași temă",
+    "empty": "Nu am găsit alte cântări pe această temă.",
+    "expand": "Extinde",
+    "collapse": "Restrânge"
   }
 }

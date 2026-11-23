@@ -1,6 +1,7 @@
 import { eq, inArray, sql } from 'drizzle-orm'
 
 import { findLibraryVersions } from './song-versions/findLibraryVersions'
+import { VERSION_MIN_SCORE } from './song-versions/scoreVersionPair'
 import type {
   OperationResult,
   SongGroup,
@@ -477,7 +478,7 @@ function touchGroup(groupId: number): void {
 export function getSimilarSongs(
   songId: number,
   limit = 5,
-  minScore = 0.55,
+  minScore = VERSION_MIN_SCORE,
 ): SongVersionSuggestion[] {
   try {
     const db = getDatabase()

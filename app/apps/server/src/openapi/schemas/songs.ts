@@ -352,6 +352,22 @@ export const songSchemas = {
       songId: { type: 'integer' },
     },
   },
+  SameThemeSong: {
+    type: 'object',
+    properties: {
+      songId: { type: 'integer' },
+      title: { type: 'string' },
+      hymnNumber: { type: 'string', nullable: true },
+      author: { type: 'string', nullable: true },
+      categoryName: { type: 'string', nullable: true },
+      keyLine: { type: 'string', nullable: true },
+      score: {
+        type: 'number',
+        description:
+          'How close in theme, 0..1; 1 for a song with the same theme filled in.',
+      },
+    },
+  },
   SongVersionSuggestion: {
     type: 'object',
     properties: {

@@ -659,6 +659,49 @@ export const songsPaths = {
       },
     },
   },
+  '/api/songs/{id}/same-theme': {
+    get: {
+      tags: ['Songs'],
+      summary: 'Songs on the same theme',
+      description:
+        "The songs that share the rarest words of this song's title and lyrics (a TF-IDF cosine over the library), best first. Songs with the same `theme` filled in come first (score 1). The song itself, its versions (its group, or songs scoring as versions) and songs in hidden categories are left out.",
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+        },
+        {
+          name: 'limit',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', default: 8, minimum: 1, maximum: 20 },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Songs on the same theme, best first',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: { $ref: '#/components/schemas/SameThemeSong' },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+      },
+    },
+  },
   '/api/songs/{id}/slides/reorder': {
     put: {
       tags: ['Song Slides'],

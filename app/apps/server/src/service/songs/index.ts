@@ -24,6 +24,7 @@ export {
   completeSongReplacement,
   type ReplaceSongReferencesResult,
 } from './replaceSongReferences'
+export { findSameThemeSongs } from './same-theme/findSameThemeSongs'
 // Search
 export {
   batchUpdateSearchIndex,

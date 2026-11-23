@@ -38,6 +38,7 @@ export {
   correctLyrics,
   type LyricsCorrection,
 } from './lyricsCorrection'
+export { getSameThemeSongs } from './sameTheme'
 export {
   getGroupForSong,
   getSimilarSongs,

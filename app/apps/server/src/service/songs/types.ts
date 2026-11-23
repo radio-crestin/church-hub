@@ -463,6 +463,18 @@ export interface UpsertSongGroupInput {
  *  - `reason` is a coarse hint ("titlu", "versuri") shown in the UI so the
  *    operator understands *why* the candidate matched (helps trust).
  */
+/** A song on the same theme as another (`GET /api/songs/:id/same-theme`). */
+export interface SameThemeSong {
+  songId: number
+  title: string
+  hymnNumber: string | null
+  author: string | null
+  categoryName: string | null
+  keyLine: string | null
+  /** How close in theme, 0–1; 1 for a song with the same theme filled in. */
+  score: number
+}
+
 export interface SongVersionSuggestion {
   songId: number
   title: string

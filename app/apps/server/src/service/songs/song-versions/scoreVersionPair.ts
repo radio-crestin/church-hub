@@ -22,6 +22,9 @@ export const LYRICS_MATCH_THRESHOLD = 0.7
  */
 export const MIN_LYRICS_CONTENT_WORDS = 4
 
+/** From this score up, two songs are taken for versions of one another. */
+export const VERSION_MIN_SCORE = 0.55
+
 /**
  * How likely two songs are versions of one another, 0–1:
  *  - titles sharing a distinctive word: 60% title Jaccard + 40% lyrics

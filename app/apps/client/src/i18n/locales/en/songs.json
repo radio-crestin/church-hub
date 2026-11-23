@@ -403,5 +403,11 @@
     "hideBackgroundDescription": "Plain black behind the lyrics here; the screens keep the background",
     "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
     "editDescription": "Open the editor to change lyrics and slides"
+  },
+  "sameTheme": {
+    "title": "On the same theme",
+    "empty": "No other songs on this theme were found.",
+    "expand": "Expand",
+    "collapse": "Collapse"
   }
 }

@@ -2,6 +2,8 @@ import { expect, type Page, test } from '@playwright/test'
 
 import { selectAction } from './helpers/actions-menu'
 import {
+  POWERPOINT_PAGE_LAYOUT_KEY,
+  POWERPOINT_SIDE_PANELS_LAYOUT,
   SIDE_PANELS_TOGETHER_LAYOUT,
   SONG_PAGE_LAYOUT_KEY,
 } from './helpers/song-page-layout'
@@ -115,11 +117,12 @@ async function seedPreferences(
   open: Record<PanelId, boolean>,
 ) {
   await page.addInitScript(
-    ({ layout, open, layoutKey, sideLayout }) => {
+    ({ layout, open, layoutKey, sideLayout, pptKey, pptLayout }) => {
       if (window.sessionStorage.getItem('e2e-panel-collapse-seeded')) return
       window.sessionStorage.setItem('e2e-panel-collapse-seeded', '1')
       window.localStorage.setItem('song-editor-layout', layout)
       window.localStorage.setItem(layoutKey, JSON.stringify(sideLayout))
+      window.localStorage.setItem(pptKey, JSON.stringify(pptLayout))
       window.localStorage.setItem(
         'song-detail:bookmarks-open',
         String(open.bookmarks),
@@ -138,6 +141,8 @@ async function seedPreferences(
       open,
       layoutKey: SONG_PAGE_LAYOUT_KEY,
       sideLayout: SIDE_PANELS_TOGETHER_LAYOUT,
+      pptKey: POWERPOINT_PAGE_LAYOUT_KEY,
+      pptLayout: POWERPOINT_SIDE_PANELS_LAYOUT,
     },
   )
 }
