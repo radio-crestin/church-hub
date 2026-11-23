@@ -40,10 +40,10 @@ export function findSameThemeSongs(
   const sharedWeight = new Float64Array(versions.songs.length)
   const sharedCount = new Int32Array(versions.songs.length)
   for (const stem of subjectStems) {
-    const weight = themes.weight[stem] ** 2
-    for (const other of themes.stemPostings[stem]) {
-      sharedWeight[other] += weight
-      sharedCount[other]++
+    const weight = (themes.weight[stem] ?? 0) ** 2
+    for (const other of themes.stemPostings[stem] ?? []) {
+      sharedWeight[other] = (sharedWeight[other] ?? 0) + weight
+      sharedCount[other] = (sharedCount[other] ?? 0) + 1
     }
   }
 
@@ -61,9 +61,10 @@ export function findSameThemeSongs(
     const song = versions.songs[other]
     if (!song || excluded.has(song.id)) return
     if (song.categoryId !== null && hidden.has(song.categoryId)) return
-    const shared = sharedThemes(subjectThemes, themes.songThemes[other])
+    const shared = sharedThemes(subjectThemes, themes.songThemes[other] ?? null)
     const cosine =
-      sharedWeight[other] / (themes.norm[place] * themes.norm[other])
+      (sharedWeight[other] ?? 0) /
+      ((themes.norm[place] ?? 0) * (themes.norm[other] ?? 0))
     const sharesWords = count >= MIN_SHARED_STEMS && cosine >= MIN_SCORE
     if (!sharesWords && shared.length === 0) return
     if (scoreVersionPair(subject, song).score >= VERSION_SCORE) return
@@ -79,10 +80,16 @@ export function findSameThemeSongs(
       songId: found.songId,
       score: Math.round(Math.min(1, found.score) * 100) / 100,
       themes: found.themes,
-      sharedWords: sharedStems(subjectStems, themes.songStems[found.place])
-        .sort((a, b) => themes.weight[b] - themes.weight[a])
+      sharedWords: sharedStems(
+        subjectStems,
+        themes.songStems[found.place] ?? null,
+      )
+        .sort((a, b) => (themes.weight[b] ?? 0) - (themes.weight[a] ?? 0))
         .slice(0, SHARED_WORDS_SHOWN)
-        .map((stem) => wordOf.get(stemNames[stem]) ?? stemNames[stem]),
+        .flatMap((stem) => {
+          const name = stemNames[stem]
+          return name === undefined ? [] : [wordOf.get(name) ?? name]
+        }),
     })),
   )
 }

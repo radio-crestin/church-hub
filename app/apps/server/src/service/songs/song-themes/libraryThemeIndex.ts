@@ -69,9 +69,11 @@ function buildThemeIndex(versions: LibraryVersionIndex): LibraryThemeIndex {
   const allStems = versions.songs.map((song, place) => {
     if (!song) return null
     const stems = new Set<number>()
-    for (const id of song.title.ids) stems.add(stemOfWord[id])
-    for (const id of song.lyrics.ids) stems.add(stemOfWord[id])
-    for (const stem of stems) stemPostings[stem].push(place)
+    for (const id of [...song.title.ids, ...song.lyrics.ids]) {
+      const stem = stemOfWord[id]
+      if (stem !== undefined) stems.add(stem)
+    }
+    for (const stem of stems) stemPostings[stem]?.push(place)
     return stems
   })
 
@@ -80,7 +82,7 @@ function buildThemeIndex(versions: LibraryVersionIndex): LibraryThemeIndex {
   const weight = new Float64Array(stemIds.size)
   stemPostings.forEach((places, stem) => {
     const name = stemNames[stem]
-    if (places.length < 2 || PLAIN_WORDS.has(name)) return
+    if (name === undefined || places.length < 2 || PLAIN_WORDS.has(name)) return
     const idf = Math.log(songCount / places.length)
     if (THEMES_OF_STEM.has(name)) weight[stem] = THEME_WORD_BOOST * idf
     else if (places.length <= cap) weight[stem] = idf
@@ -89,8 +91,10 @@ function buildThemeIndex(versions: LibraryVersionIndex): LibraryThemeIndex {
   const norm = new Float64Array(versions.songs.length)
   const songStems = allStems.map((stems, place) => {
     if (!stems) return null
-    const kept = [...stems].filter((stem) => weight[stem] > 0)
-    norm[place] = Math.sqrt(kept.reduce((sum, s) => sum + weight[s] ** 2, 0))
+    const kept = [...stems].filter((stem) => (weight[stem] ?? 0) > 0)
+    norm[place] = Math.sqrt(
+      kept.reduce((sum, s) => sum + (weight[s] ?? 0) ** 2, 0),
+    )
     return Int32Array.from(kept)
   })
   const songThemes = versions.songs.map((song, place) => {
@@ -98,7 +102,7 @@ function buildThemeIndex(versions: LibraryVersionIndex): LibraryThemeIndex {
     if (!song || !stems) return null
     const titleStems = new Set([...song.title.ids].map((id) => stemOfWord[id]))
     return themesOf(
-      [...stems].map((stem) => stemNames[stem]),
+      [...stems].flatMap((stem) => stemNames[stem] ?? []),
       (stem) => titleStems.has(stemIds.get(stem) ?? -1),
     )
   })
