@@ -102,4 +102,27 @@ test.describe('The control room on a phone', () => {
       page.getByRole('button', { name: 'Pornește live-ul' }),
     ).toBeVisible()
   })
+
+  test('the livestream settings fold under one row on a phone', async ({
+    page,
+  }) => {
+    await onPhone(page)
+    await page.goto('/livestream')
+    const toggle = page.getByTestId('livestream-settings-toggle')
+    await expect(toggle).toBeVisible()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByTestId('livestream-obs-settings')).toHaveCount(0)
+
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await page.getByTestId('livestream-obs-settings').click()
+    await expect(page).toHaveURL(/\/livestream\/obs$/)
+  })
+
+  test('the livestream settings stay open on a desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 900 })
+    await page.goto('/livestream')
+    await expect(page.getByTestId('livestream-obs-settings')).toBeVisible()
+    await expect(page.getByTestId('livestream-settings-toggle')).toHaveCount(0)
+  })
 })
