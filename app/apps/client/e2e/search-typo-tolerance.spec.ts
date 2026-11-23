@@ -9,7 +9,7 @@ import { expect, type Page, test } from '@playwright/test'
 const JOHN_3_16 = /Ioan 3:16/
 
 async function firstBibleResult(page: Page, query: string) {
-  const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+  const searchInput = page.getByPlaceholder(/search|caută/i).first()
   await searchInput.fill(query)
   await page.keyboard.press('Enter')
   const first = page.locator('button.w-full.text-left.px-3.py-2').first()

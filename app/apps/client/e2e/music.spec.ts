@@ -90,7 +90,7 @@ test.describe('Music Player Feature', () => {
     await page.waitForLoadState('networkidle')
 
     // Find and use search input
-    const searchInput = page.getByPlaceholder(/search|cauta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     if (await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
       await searchInput.fill('test')
       // Give time for search results to filter
