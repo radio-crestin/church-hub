@@ -1,200 +1,288 @@
-import { expect, test } from '@playwright/test'
+import {
+  type APIRequestContext,
+  expect,
+  type Page,
+  test,
+} from '@playwright/test'
 
-test.describe('Music Player Feature', () => {
+import { setAppLanguage } from './helpers/app-language'
+
+/**
+ * The Music page, laid out like the Songs page: the library's views on the
+ * left, one track list searched across everything, the player on the right.
+ * The suite's server plays through a stand-in audio server (see
+ * helpers/fake-audio-server.ts), so a click really starts a track and counts it.
+ *
+ * The library is the bundled sample hymns. Play counts add up across runs,
+ * so each test reads them before it acts.
+ */
+
+const AMAZING = 'Amazing Grace'
+const NEARER = 'Nearer, My God, to Thee'
+const BURG = 'Ein feste Burg ist unser Gott'
+
+interface Track {
+  id: number
+  title: string | null
+  playCount: number
+}
+
+async function tracksByTitle(
+  request: APIRequestContext,
+): Promise<Map<string, Track>> {
+  const response = await request.get('/api/music/files')
+  const { data } = (await response.json()) as { data: Track[] }
+  return new Map(data.map((track) => [track.title ?? '', track]))
+}
+
+const row = (page: Page, title: string) =>
+  page.getByTestId('music-track-row').filter({ hasText: title })
+
+async function openMusic(page: Page) {
+  await page.goto('/music')
+  await expect(page.getByTestId('music-track-row')).toHaveCount(3, {
+    timeout: 20_000,
+  })
+}
+
+async function clearQueue(page: Page) {
+  const clear = page.getByTitle('Clear Queue')
+  if (await clear.isVisible()) await clear.click()
+  await expect(page.getByTestId('music-queue-item')).toHaveCount(0)
+}
+
+async function queueTitles(page: Page): Promise<string[]> {
+  return page.getByTestId('music-queue-item').allInnerTexts()
+}
+
+test.describe('Music page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
+    await setAppLanguage(page, 'en')
   })
 
-  test('can navigate to music page', async ({ page }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
+  test('lists all music beside the library views', async ({ page }) => {
+    await openMusic(page)
 
-    await expect(page).toHaveURL(/.*music/)
+    const nav = page.getByTestId('music-library-nav')
+    await expect(nav.getByTestId('music-view-all')).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    await expect(nav.getByTestId('music-view-all')).toContainText('3')
+    await expect(nav.getByTestId('music-view-recent')).toBeVisible()
+    await expect(nav.getByText('Sample Hymns')).toBeVisible()
+    await expect(page.getByTestId('music-view-title')).toHaveText('All music')
+
+    // Sorted by title, with the play count and last played columns.
+    await expect(page.getByTestId('music-track-title')).toHaveText([
+      AMAZING,
+      BURG,
+      NEARER,
+    ])
+    await expect(
+      row(page, AMAZING).getByTestId('music-track-plays'),
+    ).toBeVisible()
   })
 
-  test('music page loads with player and folder browser', async ({ page }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
+  test('a click plays the track and counts it', async ({ page, request }) => {
+    const before = (await tracksByTitle(request)).get(AMAZING)!
+    await openMusic(page)
+    await clearQueue(page)
 
-    // Page should have loaded without errors
-    await expect(page.locator('body')).toBeVisible()
+    await row(page, AMAZING).click()
 
-    // The music page should contain the title
-    const musicTitle = page.locator('h1')
-    await expect(musicTitle).toBeVisible()
+    await expect(row(page, AMAZING)).toHaveAttribute('data-playing', 'true')
+    await expect(page.getByTestId('workspace-panel-player')).toContainText(
+      AMAZING,
+    )
+    await expect(
+      row(page, AMAZING).getByTestId('music-track-plays'),
+    ).toHaveText(String(before.playCount + 1))
+    await expect(
+      row(page, AMAZING).getByTestId('music-track-last-played'),
+    ).toHaveText('today')
+
+    // Recently played lists it, the last played first.
+    await page.getByTestId('music-view-recent').click()
+    await expect(page.getByTestId('music-track-title').first()).toHaveText(
+      AMAZING,
+    )
   })
 
-  test('audio player status endpoint returns valid response', async ({
-    request,
-  }) => {
-    const response = await request.get('/api/music/player/status')
-    expect(response.status()).toBe(200)
+  test('playlists group tracks from the ⋮ menu', async ({ page }) => {
+    const name = `Known ${Date.now()}`
+    await openMusic(page)
 
-    const json = await response.json()
-    // Should have data wrapper with installed and available fields
-    expect(json).toHaveProperty('data')
-    expect(json.data).toHaveProperty('installed')
-    expect(json.data).toHaveProperty('available')
-    expect(typeof json.data.installed).toBe('boolean')
-    expect(typeof json.data.available).toBe('boolean')
+    await row(page, AMAZING).getByTestId('music-track-menu').click()
+    await page.getByTestId('music-new-playlist-with-track').click()
+    const dialog = page.getByTestId('music-name-modal')
+    await dialog.getByRole('textbox').fill(name)
+    await dialog.getByRole('button', { name: 'Create Playlist' }).click()
+
+    // The new playlist opens with the track it was made from.
+    await expect(page.getByTestId('music-view-title')).toHaveText(name)
+    await expect(page.getByTestId('music-track-title')).toHaveText([AMAZING])
+
+    // Another track joins it from the whole library.
+    await page.getByTestId('music-view-all').click()
+    await row(page, NEARER).getByTestId('music-track-menu').click()
+    await page.getByRole('menuitem', { name: `Add to ${name}` }).click()
+    const playlistNav = page
+      .getByTestId('music-library-nav')
+      .getByRole('button', { name })
+    await expect(playlistNav).toContainText('2')
+    await playlistNav.click()
+    await expect(page.getByTestId('music-track-title')).toHaveText([
+      AMAZING,
+      NEARER,
+    ])
+
+    // Out of the playlist, still in the library.
+    await row(page, AMAZING).getByTestId('music-track-menu').click()
+    await page.getByTestId('music-remove-from-playlist').click()
+    await expect(page.getByTestId('music-track-title')).toHaveText([NEARER])
+
+    // The playlist goes, its tracks stay.
+    await page.getByTestId('music-view-actions').click()
+    await page.getByTestId('music-view-delete').click()
+    await page.getByRole('button', { name: 'Delete', exact: true }).click()
+    await expect(page.getByTestId('music-view-title')).toHaveText('All music')
+    await expect(playlistNav).toHaveCount(0)
+    await expect(page.getByTestId('music-track-row')).toHaveCount(3)
   })
 
-  test('music folders API returns valid response', async ({ request }) => {
-    const response = await request.get('/api/music/folders')
-    expect(response.status()).toBe(200)
+  test('search looks through all music and is remembered', async ({ page }) => {
+    await openMusic(page)
+    await page.getByTestId('music-view-recent').click()
 
-    const json = await response.json()
-    expect(json).toHaveProperty('data')
-    expect(Array.isArray(json.data)).toBe(true)
+    const search = page.getByPlaceholder('Search all music…')
+    await search.fill('burg')
+    await search.press('Enter')
+
+    // Whatever view was open, the search covers the whole library.
+    await expect(page.getByTestId('music-view-title')).toHaveText(
+      'Results for “burg”',
+    )
+    await expect(page.getByTestId('music-track-title')).toHaveText([BURG])
+
+    await page.reload()
+    const recent = page.getByTestId('music-recent-searches')
+    await recent.getByRole('button', { name: 'burg' }).click()
+    await expect(search).toHaveValue('burg')
+    await expect(page.getByTestId('music-track-title')).toHaveText([BURG])
   })
 
-  test('music files API returns valid response', async ({ request }) => {
-    const response = await request.get('/api/music/files')
-    expect(response.status()).toBe(200)
+  test('the queue order decides what plays next', async ({ page, request }) => {
+    await openMusic(page)
+    await clearQueue(page)
 
-    const json = await response.json()
-    expect(json).toHaveProperty('data')
-    expect(Array.isArray(json.data)).toBe(true)
-  })
+    // One track plays; two wait in the queue.
+    await row(page, NEARER).click()
+    await expect(page.getByTestId('music-queue-item')).toHaveCount(1)
+    await row(page, AMAZING).getByTestId('music-track-queue').click()
+    await row(page, BURG).getByTestId('music-track-queue').click()
+    await expect(page.getByTestId('music-queue-item')).toHaveCount(3)
 
-  test('WebSocket connects and receives music state', async ({ page }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
+    // Amazing Grace was played by the tests above, the Burg hymn never.
+    const plays = await tracksByTitle(request)
+    expect(plays.get(AMAZING)!.playCount).toBeGreaterThan(
+      plays.get(BURG)!.playCount,
+    )
+    const order = page.getByTestId('music-queue-order')
 
-    // Wait for WebSocket connection by checking if the player UI renders
-    // The player relies on WebSocket for state - if it renders, WS is connected
-    await page.waitForTimeout(2000)
+    await order.getByRole('radio', { name: 'Least played' }).click()
+    await expect(
+      order.getByRole('radio', { name: 'Least played' }),
+    ).toHaveAttribute('aria-checked', 'true')
+    // The playing track keeps its place; only what comes after it moves.
+    await expect
+      .poll(() => queueTitles(page))
+      .toEqual([
+        expect.stringContaining(NEARER),
+        expect.stringContaining(BURG),
+        expect.stringContaining(AMAZING),
+      ])
 
-    // Evaluate WebSocket connection status
-    const wsConnected = await page.evaluate(() => {
-      // Check if React Query has music player state (set via WebSocket)
-      // If no explicit test id, just verify the page is functional
-      return document.body.innerHTML.length > 0
-    })
+    await order.getByRole('radio', { name: 'Most played' }).click()
+    await expect
+      .poll(() => queueTitles(page))
+      .toEqual([
+        expect.stringContaining(NEARER),
+        expect.stringContaining(AMAZING),
+        expect.stringContaining(BURG),
+      ])
 
-    expect(wsConnected).toBe(true)
-  })
+    // Back in the order they were added.
+    await order.getByRole('radio', { name: 'In order' }).click()
+    await expect
+      .poll(() => queueTitles(page))
+      .toEqual([
+        expect.stringContaining(NEARER),
+        expect.stringContaining(AMAZING),
+        expect.stringContaining(BURG),
+      ])
 
-  test('player controls are visible', async ({ page }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
+    await order.getByRole('radio', { name: 'Random' }).click()
+    await expect(order.getByRole('radio', { name: 'Random' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+    await expect(page.getByTestId('music-queue-item').first()).toContainText(
+      NEARER,
+    )
+    await expect(page.getByTestId('music-queue-item')).toHaveCount(3)
 
-    // Look for play/pause button (it's always present in the player)
-
-    // The player should render controls even if no track is loaded
-    await expect(page.locator('body')).toBeVisible()
-  })
-
-  test('search input filters music tracks', async ({ page }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
-
-    // Find and use search input
-    const searchInput = page.getByPlaceholder(/search|cauta/i).first()
-    if (await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await searchInput.fill('test')
-      // Give time for search results to filter
-      await page.waitForTimeout(500)
-    }
-
-    // Page should remain functional after search
-    await expect(page.locator('body')).toBeVisible()
-  })
-
-  test('volume slider is functional', async ({ page }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
-
-    // Look for volume/mute button
-    const muteButton = page
-      .getByRole('button', { name: /volume|mute|sunet/i })
-      .first()
-
-    if (await muteButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Click mute toggle
-      await muteButton.click()
-      await page.waitForTimeout(300)
-
-      // Click again to unmute
-      await muteButton.click()
-      await page.waitForTimeout(300)
-    }
-
-    await expect(page.locator('body')).toBeVisible()
-  })
-
-  test('music playlists API returns valid response', async ({ request }) => {
-    const response = await request.get('/api/music/playlists')
-    expect(response.status()).toBe(200)
-
-    const json = await response.json()
-    expect(json).toHaveProperty('data')
-    expect(Array.isArray(json.data)).toBe(true)
+    // Leave the next tests the default order.
+    await order.getByRole('radio', { name: 'In order' }).click()
+    await expect(
+      order.getByRole('radio', { name: 'In order' }),
+    ).toHaveAttribute('aria-checked', 'true')
   })
 })
 
-test.describe('Music Player Layout (desktop)', () => {
-  test.use({ viewport: { width: 1440, height: 800 } })
+test.describe('Music page on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
 
-  test('player width is capped and the page stays bounded with an internal queue scroller', async ({
+  test('the views scroll in a row and a tap plays a track', async ({
     page,
   }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
-    // The desktop player is a workspace panel; its inner wrapper still carries
-    // the max-width cap we are asserting on.
-    const playerPanel = page.getByTestId('workspace-panel-player')
-    await expect(playerPanel).toBeVisible({ timeout: 15000 })
+    await setAppLanguage(page, 'en')
+    await openMusic(page)
 
-    const metrics = await page.evaluate(() => {
-      const panel = document.querySelector<HTMLElement>(
-        '[data-testid="workspace-panel-player"]',
-      )
-      const wrapper = panel?.querySelector<HTMLElement>(
-        'div[style*="max-width"]',
-      )
-      if (!wrapper) return null
-      const rect = wrapper.getBoundingClientRect()
-      const scroller = [
-        ...wrapper.querySelectorAll<HTMLElement>('.lg\\:overflow-y-auto'),
-      ][0]
+    await expect(page.getByTestId('music-view-all')).toBeVisible()
+    await expect(row(page, BURG)).toBeVisible()
+    // Nothing is wider than the screen.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    )
+    expect(overflow).toBeLessThanOrEqual(0)
+
+    await row(page, NEARER).click()
+    await expect(row(page, NEARER)).toHaveAttribute('data-playing', 'true')
+  })
+})
+
+test.describe('Music page layout (desktop)', () => {
+  test.use({ viewport: { width: 1440, height: 800 } })
+
+  test('the page stays bounded and the queue scrolls inside the player', async ({
+    page,
+  }) => {
+    await openMusic(page)
+    const playerPanel = page.getByTestId('workspace-panel-player')
+    await expect(playerPanel).toBeVisible()
+
+    const metrics = await playerPanel.evaluate((panel) => {
+      const rect = panel.getBoundingClientRect()
+      const scroller = panel.querySelector<HTMLElement>('.lg\\:overflow-y-auto')
       return {
-        width: Math.round(rect.width),
-        height: Math.round(rect.height),
         bottom: Math.round(rect.bottom),
         viewportHeight: window.innerHeight,
         queueOverflowY: scroller ? getComputedStyle(scroller).overflowY : null,
       }
     })
 
-    expect(metrics).not.toBeNull()
-    // Content width never grows larger than the page height (square at most)…
-    expect(metrics!.width).toBeLessThanOrEqual(metrics!.height + 1)
-    // …and never wider than the comfortable reading cap (448px).
-    expect(metrics!.width).toBeLessThanOrEqual(449)
-    // The player is bounded to the viewport so the queue scrolls internally
-    // instead of growing the whole page.
-    expect(metrics!.bottom).toBeLessThanOrEqual(metrics!.viewportHeight + 1)
-    expect(metrics!.queueOverflowY).toBe('auto')
-  })
-})
-
-test.describe('Music Player API - Queue Operations', () => {
-  test('can get player state via WebSocket', async ({ page }) => {
-    await page.goto('/music')
-    await page.waitForLoadState('networkidle')
-
-    // Wait for WebSocket to connect
-    await page.waitForTimeout(2000)
-
-    // The music state should be populated via WebSocket
-    // We verify this by checking the React Query cache
-    const hasState = await page.evaluate(() => {
-      // If the music page rendered without crashing, the state flow works
-      const playerElements = document.querySelectorAll('button')
-      return playerElements.length > 0
-    })
-
-    expect(hasState).toBe(true)
+    expect(metrics.bottom).toBeLessThanOrEqual(metrics.viewportHeight + 1)
+    expect(metrics.queueOverflowY).toBe('auto')
   })
 })
