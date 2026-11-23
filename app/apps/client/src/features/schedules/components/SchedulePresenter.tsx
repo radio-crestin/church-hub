@@ -16,7 +16,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { clearSectionLastVisited } from '~/features/navigation'
-import { useClearTemporaryContent, useWebSocket } from '~/features/presentation'
+import {
+  PhoneSlideControls,
+  PhoneStage,
+  useClearTemporaryContent,
+  usePresentationState,
+  useWebSocket,
+} from '~/features/presentation'
 import {
   type ChurchProgramData,
   type ScheduleExportFormat,
@@ -114,6 +120,10 @@ export function SchedulePresenter({
     onBack()
   }, [onBack])
   const clearTemporary = useClearTemporaryContent()
+  const { data: presentationState } = usePresentationState()
+  const isLive =
+    !(presentationState?.isHidden ?? true) &&
+    !!presentationState?.temporaryContent
   const { saveSchedule, isPending: isSaving } = useSaveScheduleToFile()
   const { loadSchedule, isPending: isLoadingFile } = useLoadScheduleFromFile()
   const { importItems, isPending: isImporting } = useImportScheduleItems()
@@ -640,14 +650,20 @@ export function SchedulePresenter({
     {
       id: 'preview',
       title: t('panel.previewTitle'),
-      render: () => (
-        <SchedulePreviewPanel
-          canNavigatePrev={canNavigatePrev}
-          canNavigateNext={canNavigateNext || currentFlatIndex < 0}
-          onPrevSlide={handlePrevSlide}
-          onNextSlide={handleNextSlide}
-        />
-      ),
+      // On a phone the preview stays on top while the program scrolls, and
+      // previous, hide and next move to the bottom bar.
+      pinned: true,
+      render: () =>
+        isLargeScreen ? (
+          <SchedulePreviewPanel
+            canNavigatePrev={canNavigatePrev}
+            canNavigateNext={canNavigateNext || currentFlatIndex < 0}
+            onPrevSlide={handlePrevSlide}
+            onNextSlide={handleNextSlide}
+          />
+        ) : (
+          <PhoneStage testId="schedule-phone-stage" isLive={isLive} />
+        ),
     },
     {
       id: 'items',
@@ -729,6 +745,40 @@ export function SchedulePresenter({
     },
   ]
 
+  // A phone has no room for the file and delete buttons beside the title:
+  // they join the menu there.
+  const phoneHeaderItems: ActionMenuItem[] = [
+    {
+      id: 'load-schedule-file',
+      label: t('actions.loadFromFile'),
+      icon: <Upload size={18} />,
+      iconClassName:
+        'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
+      disabled: isLoadingFile || isImporting,
+      onSelect: handleLoadFromFile,
+      testId: 'schedule-load-file-action',
+    },
+    {
+      id: 'save-schedule-file',
+      label: t('actions.saveToFile'),
+      icon: <Download size={18} />,
+      iconClassName:
+        'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
+      disabled: isSaving,
+      onSelect: handleOpenExportModal,
+      testId: 'schedule-save-file-action',
+    },
+    {
+      id: 'delete-schedule',
+      label: t('actions.delete'),
+      icon: <Trash2 size={18} />,
+      iconClassName:
+        'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+      onSelect: () => setShowDeleteConfirm(true),
+      testId: 'schedule-delete-action',
+    },
+  ]
+
   // Panels only form movable columns on a large screen; renaming works anywhere.
   const menuItems: ActionMenuItem[] = [
     ...(canEditProgram
@@ -745,11 +795,11 @@ export function SchedulePresenter({
           },
         ]
       : []),
-    ...(isLargeScreen ? [editLayoutAction] : []),
+    ...(isLargeScreen ? [editLayoutAction] : phoneHeaderItems),
   ]
 
   return (
-    <div className="flex flex-col h-full lg:overflow-hidden overflow-auto scrollbar-thin">
+    <div className="flex flex-col h-full lg:overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 lg:mb-4 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -824,42 +874,48 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleLoadFromFile}
-            disabled={isLoadingFile || isImporting}
-            className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {isLoadingFile || isImporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-            <span className="hidden sm:inline">
-              {t('actions.loadFromFile')}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenExportModal}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            <span className="hidden sm:inline">{t('actions.saveToFile')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            title={t('actions.delete')}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {isLargeScreen && (
+            <>
+              <button
+                type="button"
+                onClick={handleLoadFromFile}
+                disabled={isLoadingFile || isImporting}
+                className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isLoadingFile || isImporting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {t('actions.loadFromFile')}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenExportModal}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {t('actions.saveToFile')}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                title={t('actions.delete')}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
           <ActionMenu
             items={menuItems}
             label={tCommon('actionsMenu.trigger')}
@@ -875,8 +931,22 @@ export function SchedulePresenter({
         defaultLayout={SCHEDULE_WORKSPACE_LAYOUT}
         defaultColumnSizes={['40%', '60%']}
         stacked={!isLargeScreen}
+        stackedAsTabs
         className="lg:flex-1 lg:min-h-0"
       />
+      {!isLargeScreen && (
+        <PhoneSlideControls
+          testId="schedule-phone"
+          onPrev={handlePrevSlide}
+          onNext={handleNextSlide}
+          canPrev={canNavigatePrev}
+          canNext={canNavigateNext || currentFlatIndex < 0}
+          isNavigating={false}
+          isLive={isLive}
+          onHide={() => clearTemporary.mutate()}
+          isHiding={clearTemporary.isPending}
+        />
+      )}
 
       {/* Song Picker Modal — only for replacing an existing song; adding a new
           one happens inside AddScheduleItemModal. */}
