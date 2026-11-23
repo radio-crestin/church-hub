@@ -351,8 +351,18 @@ async function playAtIndex(index: number): Promise<void> {
   refreshQueueState()
 }
 
-/** Plays a track now, right after the current one, keeping the queue. */
+/**
+ * Plays a track now, keeping the queue: where it already is in the queue,
+ * else right after the current one.
+ */
 async function playFile(fileId: number): Promise<void> {
+  const queued = getNowPlayingQueue().findIndex(
+    (item) => item.fileId === fileId,
+  )
+  if (queued !== -1) {
+    await playAtIndex(queued)
+    return
+  }
   const index = playerState.currentIndex + 1
   insertIntoNowPlaying(fileId, index)
   await playAtIndex(index)
