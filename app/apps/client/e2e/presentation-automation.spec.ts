@@ -1,5 +1,7 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
+import { selectAction } from './helpers/actions-menu'
+
 /**
  * Presentations run by themselves (T-016): autoplay moves a presentation on
  * every N seconds on the server, loop starts it over, an operator presenting
@@ -193,13 +195,22 @@ test.describe('Presentation automation', () => {
     const { id } = await createPresentation(request)
     await page.goto(`/schedules/${id}`)
 
-    await page.getByTestId('schedule-automation-button').click()
-    const dialog = page.getByTestId('schedule-automation-modal')
-    await expect(dialog).toBeVisible()
+    // Nothing is on yet: the section stays out of the way until it is asked for.
+    const section = page.getByTestId('schedule-automation-section')
+    await expect(page.getByTestId('schedule-run-button')).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(section).toHaveCount(0)
+    await selectAction(
+      page,
+      'schedule-presenter-actions-menu',
+      'schedule-automation-action',
+    )
+    await expect(section).toBeVisible()
 
-    await dialog.getByTestId('automation-autoplay').click()
-    await dialog.getByTestId('automation-seconds').fill('1')
-    await dialog.getByTestId('automation-loop').click()
+    await section.getByTestId('automation-autoplay').click()
+    await section.getByTestId('automation-seconds').fill('1')
+    await section.getByTestId('automation-loop').click()
     await expect
       .poll(
         async () =>
@@ -208,8 +219,19 @@ test.describe('Presentation automation', () => {
         { timeout: 5_000 },
       )
       .toMatchObject({ autoplaySeconds: 1, loop: true })
-    await page.keyboard.press('Escape')
-    await expect(dialog).toBeHidden()
+    await expect(section.getByTestId('schedule-automation-summary')).toHaveText(
+      /1 s/,
+    )
+
+    // While something is on it stays, folded down to what it will do, and
+    // comes back folded after a reload.
+    await section.getByTestId('schedule-automation-toggle').click()
+    await expect(section).toHaveAttribute('data-collapsed', 'true')
+    await expect(section.getByTestId('automation-loop')).toHaveCount(0)
+    await page.reload()
+    await expect(section).toHaveAttribute('data-collapsed', 'true', {
+      timeout: 15_000,
+    })
 
     const runButton = page.getByTestId('schedule-run-button')
     await runButton.click()
@@ -219,9 +241,34 @@ test.describe('Presentation automation', () => {
       timeout: 5_000,
     })
 
+    await expect(section.getByTestId('schedule-automation-running')).toHaveText(
+      /\d\/3/,
+    )
+
     await runButton.click()
     await expect(runButton).toHaveAttribute('data-running', 'false')
     await expect.poll(() => liveStep(request)).toBeNull()
+  })
+
+  test('the section closes again once nothing in it is on', async ({
+    page,
+    request,
+  }) => {
+    const { id } = await createPresentation(request, { loop: true })
+    await page.goto(`/schedules/${id}`)
+
+    const section = page.getByTestId('schedule-automation-section')
+    await expect(section).toBeVisible({ timeout: 15_000 })
+    // Unfold it whatever an earlier test left in this browser's storage.
+    if ((await section.getAttribute('data-collapsed')) === 'true')
+      await section.getByTestId('schedule-automation-toggle').click()
+    await expect(section.getByTestId('schedule-automation-close')).toHaveCount(
+      0,
+    )
+
+    await section.getByTestId('automation-loop').click()
+    await section.getByTestId('schedule-automation-close').click()
+    await expect(section).toHaveCount(0)
   })
 
   test('Next on the last step starts over when the presentation loops', async ({

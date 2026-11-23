@@ -19,7 +19,9 @@
     "collapseAll": "Collapse all",
     "rename": "Rename",
     "renameNamed": "Rename presentation {{title}}",
-    "renameDescription": "Change the name of this presentation"
+    "renameDescription": "Change the name of this presentation",
+    "saveToFileDescription": "Download this presentation as a file",
+    "loadFromFileDescription": "Add the items from a saved presentation file"
   },
   "editor": {
     "title": "Title",
@@ -302,7 +304,6 @@
     "tooltip": "Insert an item after “{{title}}”"
   },
   "automation": {
-    "button": "Automation",
     "title": "Automation",
     "description": "Let this presentation run by itself, before the service for example.",
     "autoplay": "Move on by itself",
@@ -318,6 +319,17 @@
     "runDescription": "Start this presentation from the first slide",
     "stop": "Stop",
     "stopDescription": "Stop the presentation and clear the screens",
-    "runError": "The presentation could not start"
+    "runError": "The presentation could not start",
+    "menuDescription": "Autoplay, loop, music volume, start with Church Hub",
+    "runningStep": "Running · {{step}}/{{count}}",
+    "expand": "Show the automation settings",
+    "collapse": "Fold the automation settings",
+    "hide": "Hide automation",
+    "summary": {
+      "autoplay": "Moves on every {{seconds}} s",
+      "loop": "In a loop",
+      "musicVolume": "Music at {{volume}}%",
+      "startOnAppStart": "Starts with Church Hub"
+    }
   }
 }

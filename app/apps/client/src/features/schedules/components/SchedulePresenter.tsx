@@ -38,7 +38,7 @@ import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScenePickerModal } from './ScenePickerModal'
-import { ScheduleAutomationModal } from './ScheduleAutomationModal'
+import { ScheduleAutomationSection } from './ScheduleAutomationSection'
 import { ScheduleItemsPanel } from './ScheduleItemsPanel'
 import { SchedulePreviewPanel } from './SchedulePreviewPanel'
 import { ScheduleRunButton } from './ScheduleRunButton'
@@ -48,12 +48,14 @@ import {
   useMarkScheduleItemSung,
   useReorderScheduleItems,
   useSchedule,
+  useScheduleAutomation,
   useScheduleFlatNavigation,
   useScheduleKeyboardShortcuts,
   useScheduleKeyLineEditor,
   useUpsertSchedule,
 } from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
+import { isAutomationOn } from '../utils/isAutomationOn'
 
 /**
  * A program opens as the item list beside the live preview. Dragging the
@@ -143,7 +145,17 @@ export function SchedulePresenter({
   const [showImportConfirmModal, setShowImportConfirmModal] = useState(false)
   const [importData, setImportData] = useState<ChurchProgramData | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showAutomation, setShowAutomation] = useState(false)
+  // The automation section shows by itself while anything in it is on or the
+  // presentation runs, or once opened from the menu. Once up it stays, even
+  // after its last setting is turned off, until the operator closes it.
+  const [automationOpen, setAutomationOpen] = useState(false)
+  const { data: runner } = useScheduleAutomation()
+  const automationNeeded =
+    (schedule ? isAutomationOn(schedule.automation) : false) ||
+    (runner?.running === true && runner.scheduleId === scheduleId)
+  useEffect(() => {
+    if (automationNeeded) setAutomationOpen(true)
+  }, [automationNeeded])
   const [showSlideModal, setShowSlideModal] = useState(false)
   const [slideTemplate, setSlideTemplate] =
     useState<SlideTemplate>('announcement')
@@ -733,10 +745,24 @@ export function SchedulePresenter({
     },
   ]
 
+  const showAutomationSection =
+    canEditProgram && (automationOpen || automationNeeded)
+
   // Panels only form movable columns on a large screen; renaming works anywhere.
   const menuItems: ActionMenuItem[] = [
     ...(canEditProgram
       ? [
+          {
+            id: 'automation',
+            label: t('automation.title'),
+            description: t('automation.menuDescription'),
+            icon: <Timer size={18} />,
+            iconClassName:
+              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+            onSelect: () => setAutomationOpen(true),
+            active: showAutomationSection,
+            testId: 'schedule-automation-action',
+          },
           {
             id: 'rename-schedule',
             label: t('actions.rename'),
@@ -749,6 +775,37 @@ export function SchedulePresenter({
           },
         ]
       : []),
+    {
+      id: 'load-from-file',
+      label: t('actions.loadFromFile'),
+      description: t('actions.loadFromFileDescription'),
+      icon:
+        isLoadingFile || isImporting ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          <Upload size={18} />
+        ),
+      iconClassName:
+        'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+      onSelect: handleLoadFromFile,
+      disabled: isLoadingFile || isImporting,
+      testId: 'schedule-load-from-file-action',
+    },
+    {
+      id: 'save-to-file',
+      label: t('actions.saveToFile'),
+      description: t('actions.saveToFileDescription'),
+      icon: isSaving ? (
+        <Loader2 size={18} className="animate-spin" />
+      ) : (
+        <Download size={18} />
+      ),
+      iconClassName:
+        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+      onSelect: handleOpenExportModal,
+      disabled: isSaving,
+      testId: 'schedule-save-to-file-action',
+    },
     ...(isLargeScreen ? [editLayoutAction] : []),
   ]
 
@@ -829,47 +886,6 @@ export function SchedulePresenter({
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
           <ScheduleRunButton scheduleId={scheduleId} />
-          {canEditProgram && (
-            <button
-              type="button"
-              onClick={() => setShowAutomation(true)}
-              aria-label={t('automation.button')}
-              title={t('automation.description')}
-              data-testid="schedule-automation-button"
-              className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
-            >
-              <Timer className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('automation.button')}</span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleLoadFromFile}
-            disabled={isLoadingFile || isImporting}
-            className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {isLoadingFile || isImporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-            <span className="hidden sm:inline">
-              {t('actions.loadFromFile')}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenExportModal}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            <span className="hidden sm:inline">{t('actions.saveToFile')}</span>
-          </button>
           <button
             type="button"
             onClick={() => setShowDeleteConfirm(true)}
@@ -886,6 +902,13 @@ export function SchedulePresenter({
         </div>
       </div>
 
+      {showAutomationSection && (
+        <ScheduleAutomationSection
+          schedule={schedule}
+          onClose={() => setAutomationOpen(false)}
+        />
+      )}
+
       {/* Main Content - Two Panel Layout */}
       <Workspace
         id="schedule-presenter"
@@ -894,11 +917,6 @@ export function SchedulePresenter({
         defaultColumnSizes={['40%', '60%']}
         stacked={!isLargeScreen}
         className="lg:flex-1 lg:min-h-0"
-      />
-
-      <ScheduleAutomationModal
-        schedule={showAutomation ? schedule : null}
-        onClose={() => setShowAutomation(false)}
       />
 
       {/* Song Picker Modal — only for replacing an existing song; adding a new
