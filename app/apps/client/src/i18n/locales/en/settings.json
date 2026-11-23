@@ -152,8 +152,6 @@
     "sidebarItem": {
       "title": "{{itemName}} Settings",
       "shortcuts": {
-        "title": "Keyboard Shortcuts",
-        "description": "Configure shortcuts to navigate to this page",
         "switchTitle": "Switch to Page",
         "switchDescription": "Shortcut to navigate to this page",
         "focusSearchTitle": "Focus Search",
@@ -243,7 +241,8 @@
         "presentationDescription": "Control slides from anywhere in the app.",
         "livestream": "Livestream",
         "livestreamDescription": "Start and stop the live stream with a key or MIDI button.",
-        "pages": "Pages",
+        "otherPages": "Other pages",
+        "otherPagesDescription": "Switch to any other sidebar page with a key or MIDI button, and focus its search where it has one.",
         "pagesDescription": "Switch to a page, focus its search, and keys that only work while that page is open."
       },
       "scope": {

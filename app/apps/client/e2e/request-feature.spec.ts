@@ -457,9 +457,7 @@ test.describe('Request a feature', () => {
       await mockFeatureRequestApi(page)
       await page.setViewportSize(phone)
       await page.goto('/songs')
-      await page
-        .getByRole('button', { name: /Open menu|Deschide meniu/ })
-        .click({ timeout: 15000 })
+      await page.getByTestId('mobile-tab-more').click({ timeout: 15000 })
       const dialog = await openRequestFeature(page)
       const dialogBox = await dialog.boundingBox()
       expect(dialogBox?.width ?? 0).toBeLessThanOrEqual(phone.width)
@@ -495,9 +493,7 @@ test.describe('Request a feature', () => {
     await mockFeatureRequestApi(page)
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/songs')
-    await page
-      .getByRole('button', { name: /Open menu|Deschide meniu/ })
-      .click({ timeout: 15000 })
+    await page.getByTestId('mobile-tab-more').click({ timeout: 15000 })
     await expect(page.getByTestId('main-sidebar')).toBeInViewport()
     await page.waitForTimeout(400)
     const drawerOpen = await viewportImage(page)

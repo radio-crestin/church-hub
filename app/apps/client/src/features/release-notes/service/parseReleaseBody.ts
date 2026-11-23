@@ -1,3 +1,4 @@
+import { readWrittenNotesBlock } from './writtenNotesBlock'
 import type { ChangeCategory, ChangeEntry, VersionNotes } from '../types'
 
 // Headings emitted by app/scripts/generate-changelog.ts into the GitHub
@@ -30,7 +31,8 @@ function parseBullet(line: string): ChangeEntry | null {
 
 /**
  * Parses a GitHub release body (markdown produced by our changelog generator)
- * into structured, categorized notes. Lines outside our known headings — the
+ * into structured, categorized notes, with the written notes when it carries
+ * them. Lines outside our known headings — the
  * download tables, quick-start, etc. — are ignored.
  */
 export function parseReleaseBody(
@@ -60,5 +62,7 @@ export function parseReleaseBody(
     }
   }
 
+  const written = readWrittenNotesBlock(body)
+  if (written) notes.written = written
   return notes
 }
