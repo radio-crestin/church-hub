@@ -112,6 +112,14 @@ export class ExtraServer {
     return api
   }
 
+  /** A fresh install opens on its first-run onboarding; a page spec skips it. */
+  async skipOnboarding(api: APIRequestContext): Promise<void> {
+    const res = await api.post('/api/settings/app_settings', {
+      data: { key: 'onboarding_pending', value: 'false' },
+    })
+    expect(res.ok()).toBe(true)
+  }
+
   async dispose(): Promise<void> {
     await this.stop()
     rmSync(this.dataDir, { recursive: true, force: true, maxRetries: 3 })

@@ -36,6 +36,7 @@ test.beforeAll(async ({ browser }) => {
   server = new ExtraServer()
   await server.start({ YOUTUBE_API_ORIGIN: youtube.origin })
   api = await server.adminRequest()
+  await server.skipOnboarding(api)
   const tokens = await api.post('/api/livestream/youtube/tokens', {
     data: {
       accessToken: 'e2e-access',
