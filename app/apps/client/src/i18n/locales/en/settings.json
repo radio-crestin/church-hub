@@ -340,7 +340,7 @@
         "song_versions": "Song versions",
         "bible": "Bible",
         "control_room": "Control Room",
-        "programs": "Programs",
+        "programs": "Presentations",
         "queue": "Queue",
         "settings": "Settings",
         "displays": "Displays",
@@ -366,11 +366,11 @@
         "bible.present_now": "Present Bible verses immediately",
         "control_room.view": "View control room",
         "control_room.control": "Control presentation",
-        "programs.view": "View programs",
-        "programs.create": "Create programs",
-        "programs.edit": "Edit programs",
-        "programs.delete": "Delete programs",
-        "programs.import_to_queue": "Import programs to queue",
+        "programs.view": "View presentations",
+        "programs.create": "Create presentations",
+        "programs.edit": "Edit presentations",
+        "programs.delete": "Delete presentations",
+        "programs.import_to_queue": "Import presentations to queue",
         "queue.view": "View queue",
         "queue.add": "Add items to queue",
         "queue.remove": "Remove items from queue",
@@ -773,7 +773,7 @@
         "present": "Control Room",
         "songs": "Songs",
         "bible": "Bible",
-        "schedules": "Schedules",
+        "schedules": "Presentations",
         "livestream": "Livestream",
         "settings": "Settings"
       },
@@ -828,8 +828,8 @@
           "songsDescription": "Song categories, songs and slides",
           "bible": "Bible",
           "bibleDescription": "Bible translations and verses",
-          "schedules": "Schedules",
-          "schedulesDescription": "Programs and schedule items",
+          "schedules": "Presentations",
+          "schedulesDescription": "Presentations and their items",
           "configurations": "Configurations",
           "configurationsDescription": "Screens, settings and preferences"
         }
@@ -934,7 +934,7 @@
         "folderLabel": "Backup folder",
         "noFolder": "No folder chosen",
         "chooseFolder": "Choose folder",
-        "clearFolder": "Clear",
+        "clearFolder": "Remove",
         "pathPlaceholder": "Absolute path, e.g. /Users/me/ChurchHubBackups",
         "folderHint": "Backups are named like the Drive ones and pruned to the same retention setting.",
         "button": "Back up locally",
@@ -961,6 +961,11 @@
           "stopBrowsing": "Back to the backup folder",
           "restore": "Restore this backup"
         },
+        "clearModal": {
+          "title": "Stop backing up to this folder?",
+          "message": "Local backups will no longer be written to this folder. The backups already in it are kept.",
+          "confirm": "Remove folder"
+        },
         "restoreModal": {
           "title": "Restore this backup?",
           "message": "The database will be replaced with the copy made on {{date}}.",
@@ -980,7 +985,7 @@
         "loading": "Downloading and reading the backup…",
         "failed": "Could not read the backup contents.",
         "songs": "Songs ({{total}})",
-        "schedules": "Schedules ({{total}})",
+        "schedules": "Presentations ({{total}})",
         "scheduleSongs_one": "{{count}} song",
         "scheduleSongs_other": "{{count}} songs",
         "playlists": "Playlists ({{total}})",
@@ -992,8 +997,8 @@
           "songSlides": "Song slides",
           "songCategories": "Song categories",
           "songBookmarks": "Song bookmarks",
-          "schedules": "Schedules",
-          "scheduleItems": "Schedule items",
+          "schedules": "Presentations",
+          "scheduleItems": "Presentation items",
           "musicPlaylists": "Playlists",
           "musicFiles": "Music files",
           "bibleTranslations": "Bible translations",
@@ -1004,7 +1009,7 @@
     },
     "sync": {
       "title": "Library Sync",
-      "description": "Keep your song library and schedules up to date across all your devices through your Google Drive account.",
+      "description": "Keep your song library and presentations up to date across all your devices through your Google Drive account.",
       "loading": "Loading sync status…",
       "toggle": {
         "title": "Real-time library sync",
@@ -1051,7 +1056,7 @@
           "song": "Song",
           "song_category": "Category",
           "song_group": "Group",
-          "schedule": "Schedule"
+          "schedule": "Presentation"
         }
       }
     },
@@ -1064,61 +1069,71 @@
       "description": "Configure screens for different display purposes. Each screen type has its own layout and configuration options.",
       "addScreen": "Add Screen",
       "noScreens": "No screens configured",
+      "status": {
+        "open": "window open",
+        "closed": "window closed"
+      },
+      "groups": {
+        "idle": "When nothing is shown",
+        "window": "Window",
+        "advanced": "More window options"
+      },
+      "idle": {
+        "summaryOpen": "Between songs and verses the projector shows this empty slide. Click it to change its look.",
+        "summaryClosed": "Between songs and verses the window closes: the projector shows the computer's desktop, with no clock or background.",
+        "windowCloses": "Window closed: the desktop shows",
+        "editEmptySlide": "Edit the empty slide",
+        "clock": {
+          "label": "Clock on the empty slide",
+          "description": "Shows the time when nothing is live, for example before the service."
+        }
+      },
       "window": {
-        "active": "Show in a native window",
-        "inactive": "Show in a native window",
-        "openTooltip": "Open a native display window for this screen",
-        "closeTooltip": "Close the native display window for this screen"
-      },
-      "alwaysOnTop": {
-        "pin": "Make this window stay on top of others",
-        "unpin": "Allow other windows to cover this one",
-        "enabled": "Always on top",
-        "disabled": "Normal stacking",
-        "pinned": "Window set to always on top",
-        "unpinned": "Window no longer always on top",
-        "error": "Failed to update always on top setting"
-      },
-      "fullscreen": {
-        "fill": "Open this screen filling its display",
-        "windowed": "Open this screen as a window instead of filling its display",
-        "on": "Opens fullscreen",
-        "off": "Opens windowed",
-        "enabled": "Screen will open fullscreen",
-        "disabled": "Screen will open as a window",
-        "error": "Failed to update fullscreen setting"
-      },
-      "closeOnEscape": {
-        "tooltip": "Controls whether this screen's native window closes when nothing is being displayed (after Escape / hide). The slide content always clears and the clock shows — this only controls the window itself. Default: window stays open.",
-        "on": "Close window when nothing is displayed",
-        "off": "Keep window open at all times",
-        "enabled": "Window will close when nothing is displayed",
-        "disabled": "Window will stay open at all times",
-        "error": "Failed to update close-on-escape setting"
+        "label": "Window open now",
+        "description": "Shows this screen on its display. Turn it off to close the window."
       },
       "openOnStartup": {
-        "tooltip": "Whether this screen's window opens by itself when the app starts",
-        "on": "Opens at startup",
-        "off": "Opens only when needed",
+        "label": "Open when the app starts",
+        "description": "The window opens by itself at startup, so the projector is ready before the service. Off: it opens with the first slide.",
         "enabled": "This screen will open when the app starts",
         "disabled": "This screen will stay closed at startup and open on first use",
         "error": "Failed to update the startup setting"
       },
+      "closeOnEscape": {
+        "label": "Close the window when nothing is shown",
+        "description": "After Escape or Hide the window closes and the projector shows the desktop until the next slide. Leave it off to keep the clock and background up.",
+        "enabled": "Window will close when nothing is displayed",
+        "disabled": "Window will stay open at all times",
+        "error": "Failed to update close-on-escape setting"
+      },
       "previewScreen": {
-        "set": "Mirror this screen in the in-app preview",
-        "unset": "Stop mirroring this screen in the in-app preview",
-        "on": "Preview screen",
-        "off": "Use as preview",
+        "label": "Show in the Control Room preview",
+        "description": "The Control Room preview mirrors this screen. Only one screen at a time.",
         "enabled": "This screen is now shown in the preview",
         "disabled": "This screen is no longer shown in the preview",
         "error": "Failed to update preview screen setting"
+      },
+      "fullscreen": {
+        "label": "Fill the whole display",
+        "description": "Off: it opens as a normal window you can move and resize.",
+        "enabled": "Screen will open fullscreen",
+        "disabled": "Screen will open as a window",
+        "error": "Failed to update fullscreen setting"
+      },
+      "alwaysOnTop": {
+        "label": "Keep above other windows",
+        "description": "Other programs opened on that display can't cover the slides.",
+        "enabled": "Window set to always on top",
+        "disabled": "Window no longer always on top",
+        "error": "Failed to update always on top setting"
       },
       "actions": {
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
         "duplicate": "Duplicate the screen with all its settings",
-        "edit": "Edit",
-        "delete": "Delete screen"
+        "edit": "Edit layout",
+        "delete": "Delete screen",
+        "editTooltip": "Change what each slide type looks like on this screen: text, background, clock"
       },
       "toast": {
         "created": "Screen created successfully",
@@ -1293,11 +1308,18 @@
           "install": "The update could not be installed and the current version is still running. Try again, or install the release from GitHub. A development instance cannot replace itself."
         }
       },
-      "howItWorks": "Installing closes Church Hub, replaces it with the new version and opens it again by itself. Your songs, schedules and settings are kept. On Windows a short progress window may appear; nothing needs to be clicked.",
+      "howItWorks": "Installing closes Church Hub, replaces it with the new version and opens it again by itself. Your songs, presentations and settings are kept. On Windows a short progress window may appear; nothing needs to be clicked.",
       "outcome": {
         "updated": "Updated to v{{version}}",
         "failed": "The update to v{{version}} did not complete — still running v{{current}}. See the logs for details."
       }
+    },
+    "startup": {
+      "title": "Startup",
+      "description": "What happens when the computer starts.",
+      "openOnLogin": "Open Church Hub when the computer starts",
+      "openOnLoginDescription": "A presentation set to start with Church Hub then begins on its own.",
+      "error": "The startup setting could not be changed"
     },
     "about": {
       "title": "About",

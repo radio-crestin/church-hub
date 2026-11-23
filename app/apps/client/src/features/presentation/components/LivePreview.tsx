@@ -105,7 +105,7 @@ export function LivePreview({
   const { data: screen } = useScreen(previewScreen?.id ?? undefined)
 
   // Use shared presentation content hook
-  const { contentType, contentData, contentKey, isVisible } =
+  const { contentType, contentData, contentKey, isVisible, leaving } =
     usePresentationContent({
       screen,
       includeNextSlide: false,
@@ -228,6 +228,7 @@ export function LivePreview({
           contentData={contentData}
           contentKey={contentKey}
           isVisible={isVisible}
+          leaving={leaving}
           styleRanges={styleRanges}
           clockOverride={clockOverride}
           hideBackground={hideBackground}

@@ -118,6 +118,23 @@ export async function markScheduleItemSung(
   return response.data?.success ?? false
 }
 
+/** Sets how long each slide of an item stays up; null = the presentation's. */
+export async function setScheduleItemAdvance(
+  scheduleId: number,
+  itemId: number,
+  advanceSeconds: number | null,
+): Promise<boolean> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    `/api/schedules/${scheduleId}/items/${itemId}/advance`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ advanceSeconds }),
+    },
+  )
+  return response.data?.success ?? false
+}
+
 export async function updateScheduleSlide(
   scheduleId: number,
   itemId: number,

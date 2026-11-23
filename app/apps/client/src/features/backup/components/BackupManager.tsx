@@ -186,8 +186,26 @@ export function BackupManager() {
     }
   }, [retentionDraft, backup, showToast, t])
 
+  // --- Status still loading: the local card in its loading layout and a
+  // placeholder for Drive, never a guessed state whose buttons then move ---
+  if (backup.isLoadingStatus) {
+    return (
+      <div className="space-y-4">
+        <LocalBackupPanel
+          localBackupPath={null}
+          lastLocalBackupAt={null}
+          isLoading
+        />
+        <div
+          className="h-[74px] animate-pulse rounded-lg bg-gray-50 dark:bg-gray-800"
+          data-testid="backup-drive-loading"
+        />
+      </div>
+    )
+  }
+
   // --- Not connected: either first-time setup, or a session that expired ---
-  if (!backup.connected && !backup.isLoadingStatus) {
+  if (!backup.connected) {
     // If the user previously backed up or has auto-backup on, the connection was
     // lost rather than never made — most commonly the Google refresh token
     // expired (this happens weekly while the OAuth app is in "Testing" mode).
@@ -202,6 +220,7 @@ export function BackupManager() {
         <LocalBackupPanel
           localBackupPath={backup.localBackupPath}
           lastLocalBackupAt={backup.lastLocalBackupAt}
+          isLoading={false}
         />
         <div
           className={`rounded-lg p-4 ${
@@ -306,6 +325,7 @@ export function BackupManager() {
       <LocalBackupPanel
         localBackupPath={backup.localBackupPath}
         lastLocalBackupAt={backup.lastLocalBackupAt}
+        isLoading={false}
       />
 
       {/* Connection status row */}

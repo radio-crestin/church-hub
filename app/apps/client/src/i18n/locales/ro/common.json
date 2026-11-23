@@ -22,8 +22,8 @@
     "scene": "Scenă OBS",
     "sceneDescription": "Comută la o scenă OBS",
     "importSchedule": {
-      "title": "Importă Program",
-      "description": "Importă dintr-un program existent"
+      "title": "Importă prezentare",
+      "description": "Importă dintr-o prezentare existentă"
     }
   },
   "search": {
@@ -38,6 +38,8 @@
     "save": "Salvează",
     "ok": "OK",
     "retry": "Reîncearcă",
+    "remove": "Elimină",
+    "settings": "Setări",
     "done": "Gata"
   },
   "errors": {

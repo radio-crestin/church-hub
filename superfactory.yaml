@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://superfactory.bringes.io/schemas/superfactory.schema.json
+# What Church Hub is, the machines it needs, and how a machine or worktree is made ready for it.
+# The JavaScript dependencies and bun.lock live in app/, not the repo root: the install runs there.
+version: 1
+name: Church Hub
+description: >-
+  A desktop app for churches (songs, Bible, programs, live presentation on screens): a Tauri shell in Rust
+  with a Bun-compiled sidecar server and a React client, on macOS, Windows and Linux.
+tags: [typescript, bun, react, tauri, rust, playwright]
+links:
+  repo: https://github.com/bringes/church-hub
+machines:
+  - os: linux
+    default: true
+    purpose: Most tasks, the e2e suite (chromium and webkit), demo videos
+    needs: [bun]
+  - os: macos
+    purpose: The macOS build, the sidecar smoke test and the e2e suite on macOS
+    needs: [bun]
+  - os: windows
+    purpose: The Windows build, the sidecar smoke test and the e2e suite on Windows
+    needs: [bun]
+setup:
+  # WebKit's system libraries (libevent, gstreamer-plugins-bad, libavif, libwoff…); macOS and Windows need none.
+  linux: scripts/setup/linux.sh
+  inputs: [app/package.json, app/bun.lock]
+# Per worktree, in bash from its root: the dependencies, then every browser the Playwright projects use
+# (app/apps/client/playwright.config.ts: chromium, webkit), into the shared per-user cache (a no-op when present).
+install: cd app && bun install --frozen-lockfile && cd apps/client && bunx playwright install chromium chromium-headless-shell webkit

@@ -7,6 +7,7 @@ import {
   updateUserLastUsed,
 } from '../service/users'
 import { createLogger } from '../utils/logger'
+import { getRequestPeer, isLoopbackAddress } from '../utils/request-peer'
 
 const logger = createLogger('auth')
 
@@ -88,67 +89,21 @@ export function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 /**
- * Check if request is from localhost
- * Uses Host header as primary check since it's always present for HTTP requests
+ * Whether the request comes from this machine, judged by its TCP peer address
+ * (recorded by the server, see utils/request-peer.ts), never by the Host or
+ * Origin header, which any client on the LAN can set to `localhost`.
  *
  * NOTE: localhost no longer grants automatic admin access. Identity always
- * comes from the `user_auth` cookie (or a system bearer token). This helper is
- * only used to decide whether a *passwordless* login is allowed — the local
- * machine is considered physically trusted, so a passwordless owner can sign
- * in without friction, while remote clients must always supply a password.
+ * comes from the `user_auth` cookie (or a system bearer token). This only
+ * decides whether a *passwordless* login is allowed (the local machine is
+ * physically trusted; a remote client needs a password or a pairing code
+ * shown on this machine) and the read-only access of local display windows.
  */
 export function isLocalhost(req: Request): boolean {
-  // Helper to check if a hostname/IP is localhost
-  const isLocalhostValue = (value: string): boolean => {
-    const normalized = value.toLowerCase().trim()
-    return (
-      normalized === 'localhost' ||
-      normalized === '127.0.0.1' ||
-      normalized === '::1' ||
-      normalized === '0.0.0.0' ||
-      normalized.startsWith('127.') ||
-      // Tauri webview uses tauri.localhost as its origin
-      normalized === 'tauri.localhost' ||
-      normalized.endsWith('.localhost')
-    )
-  }
-
-  const host = req.headers.get('Host')
-  const origin = req.headers.get('Origin')
-
-  logger.debug(`Auth check — Host: "${host}", Origin: "${origin}"`)
-
-  // Primary check: Host header (always present for HTTP/1.1+ requests)
-  if (host) {
-    const hostname = host.split(':')[0]
-    if (isLocalhostValue(hostname)) {
-      logger.debug(`Localhost detected via Host: ${host}`)
-      return true
-    }
-  }
-
-  // Secondary check: Origin header (for CORS requests from localhost)
-  if (origin) {
-    try {
-      const originUrl = new URL(origin)
-      if (isLocalhostValue(originUrl.hostname)) {
-        logger.debug(`Localhost detected via Origin: ${origin}`)
-        return true
-      }
-    } catch {
-      // Invalid origin URL, continue checking
-    }
-  }
-
-  // If no Host header (unusual), default to allowing
-  if (!host) {
-    logger.debug('No Host header, defaulting to localhost')
-    return true
-  }
-
-  // Host header exists but doesn't match localhost
-  logger.debug(`Remote access from Host: ${host}`)
-  return false
+  const peer = getRequestPeer(req)
+  const local = !!peer && isLoopbackAddress(peer)
+  logger.debug(`Peer ${peer ?? 'unknown'} is ${local ? 'local' : 'remote'}`)
+  return local
 }
 
 function extractBearerToken(req: Request): string | null {

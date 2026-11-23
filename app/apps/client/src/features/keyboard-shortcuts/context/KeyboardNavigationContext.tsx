@@ -13,6 +13,7 @@ import {
   type HandledNavigationKey,
   isEchoedNavigationKey,
 } from '../utils/isEchoedNavigationKey'
+import { isSearchFieldSlideKey } from '../utils/isSearchFieldSlideKey'
 import { isSlideEditorPageKey } from '../utils/isSlideEditorPageKey'
 import { listenForNavigationShortcuts } from '../utils/navigationShortcutEvent'
 import { shortcutFromKeyboardEvent } from '../utils/shortcutFromKeyboardEvent'
@@ -144,16 +145,16 @@ export function KeyboardNavigationProvider({
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Skip if user is typing in an input field
+      // Skip if user is typing in an input field (except Escape, which should
+      // always close/exit, and the slide keys a search field lets through)
       if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement
+        (event.target instanceof HTMLInputElement ||
+          event.target instanceof HTMLTextAreaElement ||
+          event.target instanceof HTMLSelectElement) &&
+        event.key !== 'Escape' &&
+        !isSearchFieldSlideKey(event)
       ) {
-        // Exception: Escape should always work to close/exit
-        if (event.key !== 'Escape') {
-          return
-        }
+        return
       }
 
       // Skip if user is in a contenteditable element (except Escape, and a

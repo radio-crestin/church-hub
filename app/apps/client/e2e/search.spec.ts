@@ -222,7 +222,7 @@ test.describe('Search clear (X) button', () => {
     await page.goto('/schedules')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     await expect(searchInput).toBeVisible({ timeout: 10000 })
 
     await searchInput.fill('test')

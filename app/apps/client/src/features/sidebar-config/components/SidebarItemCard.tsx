@@ -226,7 +226,7 @@ export function SidebarItemCard({
           type="button"
           onClick={onOpenSettings}
           className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-          title={t('common:buttons.settings', { defaultValue: 'Settings' })}
+          title={t('common:buttons.settings')}
         >
           <Settings size={18} />
         </button>

@@ -44,9 +44,13 @@ import { Route as SettingsAboutRouteImport } from './routes/settings/about'
 import { Route as ScreenScreenIdRouteImport } from './routes/screen/$screenId'
 import { Route as SchedulesScheduleIdRouteImport } from './routes/schedules/$scheduleId'
 import { Route as MonitorBadgeNumberRouteImport } from './routes/monitor-badge/$number'
+import { Route as LivestreamYoutubeRouteImport } from './routes/livestream/youtube'
+import { Route as LivestreamObsRouteImport } from './routes/livestream/obs'
+import { Route as LivestreamMixerRouteImport } from './routes/livestream/mixer'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
+import { Route as LivestreamScenesSceneIdRouteImport } from './routes/livestream/scenes/$sceneId'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
 
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -224,6 +228,21 @@ const MonitorBadgeNumberRoute = MonitorBadgeNumberRouteImport.update({
   path: '/monitor-badge/$number',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LivestreamYoutubeRoute = LivestreamYoutubeRouteImport.update({
+  id: '/livestream/youtube',
+  path: '/livestream/youtube',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivestreamObsRoute = LivestreamObsRouteImport.update({
+  id: '/livestream/obs',
+  path: '/livestream/obs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivestreamMixerRoute = LivestreamMixerRouteImport.update({
+  id: '/livestream/mixer',
+  path: '/livestream/mixer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomPagePageIdRoute = CustomPagePageIdRouteImport.update({
   id: '/custom-page/$pageId',
   path: '/custom-page/$pageId',
@@ -239,6 +258,11 @@ const SongsSongIdEditRoute = SongsSongIdEditRouteImport.update({
   path: '/songs/$songId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LivestreamScenesSceneIdRoute = LivestreamScenesSceneIdRouteImport.update({
+  id: '/livestream/scenes/$sceneId',
+  path: '/livestream/scenes/$sceneId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
   id: '/auth/youtube/callback',
   path: '/auth/youtube/callback',
@@ -249,6 +273,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/livestream/mixer': typeof LivestreamMixerRoute
+  '/livestream/obs': typeof LivestreamObsRoute
+  '/livestream/youtube': typeof LivestreamYoutubeRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
@@ -283,12 +310,16 @@ export interface FileRoutesByFullPath {
   '/song-key/': typeof SongKeyIndexRoute
   '/songs/': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
+  '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/livestream/mixer': typeof LivestreamMixerRoute
+  '/livestream/obs': typeof LivestreamObsRoute
+  '/livestream/youtube': typeof LivestreamYoutubeRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
@@ -323,6 +354,7 @@ export interface FileRoutesByTo {
   '/song-key': typeof SongKeyIndexRoute
   '/songs': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
+  '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
 }
@@ -331,6 +363,9 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/custom-page/$pageId': typeof CustomPagePageIdRoute
+  '/livestream/mixer': typeof LivestreamMixerRoute
+  '/livestream/obs': typeof LivestreamObsRoute
+  '/livestream/youtube': typeof LivestreamYoutubeRoute
   '/monitor-badge/$number': typeof MonitorBadgeNumberRoute
   '/schedules/$scheduleId': typeof SchedulesScheduleIdRoute
   '/screen/$screenId': typeof ScreenScreenIdRoute
@@ -365,6 +400,7 @@ export interface FileRoutesById {
   '/song-key/': typeof SongKeyIndexRoute
   '/songs/': typeof SongsIndexRoute
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
+  '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
 }
@@ -374,6 +410,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/notifications'
     | '/custom-page/$pageId'
+    | '/livestream/mixer'
+    | '/livestream/obs'
+    | '/livestream/youtube'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
@@ -408,12 +447,16 @@ export interface FileRouteTypes {
     | '/song-key/'
     | '/songs/'
     | '/auth/youtube/callback'
+    | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/notifications'
     | '/custom-page/$pageId'
+    | '/livestream/mixer'
+    | '/livestream/obs'
+    | '/livestream/youtube'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
@@ -448,6 +491,7 @@ export interface FileRouteTypes {
     | '/song-key'
     | '/songs'
     | '/auth/youtube/callback'
+    | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId'
   id:
@@ -455,6 +499,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/notifications'
     | '/custom-page/$pageId'
+    | '/livestream/mixer'
+    | '/livestream/obs'
+    | '/livestream/youtube'
     | '/monitor-badge/$number'
     | '/schedules/$scheduleId'
     | '/screen/$screenId'
@@ -489,6 +536,7 @@ export interface FileRouteTypes {
     | '/song-key/'
     | '/songs/'
     | '/auth/youtube/callback'
+    | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
   fileRoutesById: FileRoutesById
@@ -497,6 +545,9 @@ export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   CustomPagePageIdRoute: typeof CustomPagePageIdRoute
+  LivestreamMixerRoute: typeof LivestreamMixerRoute
+  LivestreamObsRoute: typeof LivestreamObsRoute
+  LivestreamYoutubeRoute: typeof LivestreamYoutubeRoute
   MonitorBadgeNumberRoute: typeof MonitorBadgeNumberRoute
   SchedulesScheduleIdRoute: typeof SchedulesScheduleIdRoute
   ScreenScreenIdRoute: typeof ScreenScreenIdRoute
@@ -513,6 +564,7 @@ export interface RootRouteChildren {
   SongKeyIndexRoute: typeof SongKeyIndexRoute
   SongsIndexRoute: typeof SongsIndexRoute
   AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
+  LivestreamScenesSceneIdRoute: typeof LivestreamScenesSceneIdRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
 }
@@ -764,6 +816,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitorBadgeNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/livestream/youtube': {
+      id: '/livestream/youtube'
+      path: '/livestream/youtube'
+      fullPath: '/livestream/youtube'
+      preLoaderRoute: typeof LivestreamYoutubeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livestream/obs': {
+      id: '/livestream/obs'
+      path: '/livestream/obs'
+      fullPath: '/livestream/obs'
+      preLoaderRoute: typeof LivestreamObsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livestream/mixer': {
+      id: '/livestream/mixer'
+      path: '/livestream/mixer'
+      fullPath: '/livestream/mixer'
+      preLoaderRoute: typeof LivestreamMixerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/custom-page/$pageId': {
       id: '/custom-page/$pageId'
       path: '/custom-page/$pageId'
@@ -783,6 +856,13 @@ declare module '@tanstack/react-router' {
       path: '/songs/$songId/edit'
       fullPath: '/songs/$songId/edit'
       preLoaderRoute: typeof SongsSongIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livestream/scenes/$sceneId': {
+      id: '/livestream/scenes/$sceneId'
+      path: '/livestream/scenes/$sceneId'
+      fullPath: '/livestream/scenes/$sceneId'
+      preLoaderRoute: typeof LivestreamScenesSceneIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/youtube/callback': {
@@ -845,6 +925,9 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   CustomPagePageIdRoute: CustomPagePageIdRoute,
+  LivestreamMixerRoute: LivestreamMixerRoute,
+  LivestreamObsRoute: LivestreamObsRoute,
+  LivestreamYoutubeRoute: LivestreamYoutubeRoute,
   MonitorBadgeNumberRoute: MonitorBadgeNumberRoute,
   SchedulesScheduleIdRoute: SchedulesScheduleIdRoute,
   ScreenScreenIdRoute: ScreenScreenIdRoute,
@@ -861,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
   SongKeyIndexRoute: SongKeyIndexRoute,
   SongsIndexRoute: SongsIndexRoute,
   AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,
+  LivestreamScenesSceneIdRoute: LivestreamScenesSceneIdRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,
 }

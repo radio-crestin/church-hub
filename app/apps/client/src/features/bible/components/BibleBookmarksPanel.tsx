@@ -695,6 +695,7 @@ export function BibleBookmarksPanel({
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input
                   ref={searchInputRef}
+                  data-slide-navigation=""
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

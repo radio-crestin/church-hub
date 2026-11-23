@@ -23,6 +23,7 @@ test.use({ viewport: { width: 1440, height: 900 } })
 
 // In the order the buttons sit in each header.
 const SCHEDULE_ACTIONS = [
+  'schedule-run-button',
   'schedule-add-item',
   'schedule-search-toggle',
   'schedule-load-into-bookmarks',
@@ -178,11 +179,12 @@ test.describe('Panel header actions overflow into a More menu', () => {
 
       const schedules = page.getByTestId('schedule-songs-panel')
       const bookmarks = page.getByTestId('bookmarks-drop-zone')
-      await expect(schedules.getByTestId('schedule-rename')).toBeVisible({
+      await expect(schedules.getByTestId('schedule-run-button')).toBeVisible({
         timeout: 15000,
       })
 
       // Wide: every action sits in the header and there is no menu.
+      await resizeSideColumn(page, schedules, 480)
       await expectAllInline(schedules, SCHEDULE_ACTIONS, 'schedule-header-more')
       await expectAllInline(
         bookmarks,
@@ -196,7 +198,7 @@ test.describe('Panel header actions overflow into a More menu', () => {
       // left first; the first stays.
       await resizeSideColumn(page, schedules, 190)
       await expect(schedules.getByTestId('schedule-header-more')).toBeVisible()
-      await expect(schedules.getByTestId('schedule-add-item')).toBeVisible()
+      await expect(schedules.getByTestId(SCHEDULE_ACTIONS[0])).toBeVisible()
       for (const id of SCHEDULE_ACTIONS.slice(1)) {
         await expect(schedules.getByTestId(id)).toBeHidden()
       }

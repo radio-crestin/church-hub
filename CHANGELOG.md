@@ -2,6 +2,119 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
+## v0.1.104 — 2026-11-16
+
+### 🚀 Features
+
+- **review-build**: reuse the cached shell, build only client and sidecar
+- **review-build**: one review shell for every task, settings read at start
+- **dev**: run the dev server on port 3001; the installed app keeps 3000
+- **server**: say on every API response which database answered
+- **feature-request**: name it "Feedback" in the sidebar and dialog
+- **feature-request**: one screen, markup on top; email optional
+- **worker**: email is optional on feature requests
+- **feature-request**: big screenshot preview in step 2, click to enlarge
+- **feature-request**: iPad-style markup bar on the screenshot
+- **worker**: screenshot notes as text, optional description
+- **feature-request**: two steps, text notes on the screenshot, optional description
+- **worker**: feature requests without a title, body size cap
+- **feature-request**: one short form, no title, description required
+- **startup**: loading page lists each start-up step with progress
+- **screens**: professional factory slide design for every screen type
+- **screens**: bundle Source Sans 3, Montserrat and Lora fonts
+
+### 🐛 Bug Fixes
+
+- **websocket**: send the presentation state to a client when it connects
+- **songs**: build the library version index in steps so the first show after start-up is not held
+- **tooltip**: keep tooltips inside the window
+- **search**: one shared way to show highlighted search result text
+- **song-discovery**: read lyrics for Compare from an inert document
+- **programs**: program cards show their real date, not 1970
+- **songs**: song editor window uses most of the screen
+- **review-build**: shell builds on a checkout without dist; clear message when Windows locks a running app
+- **client**: one getServerPort for every link to this window's server
+- **client**: a window taken over by another Church Hub shows that app's data
+- **feature-request**: phone screenshot without the menu drawer
+- **feature-request**: readable note labels on tall phone screenshots
+- **feature-request**: screenshot uses the full width on phones
+- **server**: keep starting when the boot server worker is slow to stop or start
+- **desktop**: show the window at once instead of after the server starts
+- **server**: answer /health with each start-up step while the database is built
+- **songs**: stop turning database errors into "song not found"
+- **songs**: tell a deleted song apart from a song that failed to load
+- **query**: run requests whatever the browser's internet status
+- **fonts**: ship the bundled fonts' OFL licences with the app
+- **screens**: use Fira Sans as the slide text font
+- **screens**: line height 1.3 in the factory design
+- **screens**: keep Source Sans 3 lines inside the text box
+
+### 🔧 Changes
+
+- **release**: every release goes out as a pre-release; release.sh promote makes it Latest
+- **release**: release.sh bumps on a branch for a PR, then tags the merge on main
+- **release**: a normal release is Latest; a draft flagged pre-release stays out of the updater
+- T-140 Search fields let Up/Down and page keys move the live slide
+- T-145 Restoring a backup fails on Windows and leaves the server with no database
+- T-144 superfactory.yaml: task checkouts install app/ deps and every Playwright browser the suite uses
+- T-142 smoke:sidecar: wait for the sidecar to exit before removing its work dir
+- T-138 Clock not shown: projector windows refused by Tauri 2.11's ACL; idle clock on main
+- move from the better-tasks plugin to Superfactory
+- T-137 Shortcuts settings: an added key slot is no longer wiped by a config refetch
+- T-136 e2e: bookmark-drag-to-program sometimes drops onto the Programe panel without effect
+- T-124 Song discovery: comparing a large source is slow (~10 s per 150 songs)
+- T-135 e2e: a song-sources notification toast left on the test DB covers the program panel in bookmark-drag-to-program
+- T-134 Move every page onto the page-layout standard (shared Page, PageHeader, PagePanel, EmptyState)
+- T-132 Client type check: fix the remaining ~220 tsc errors (presentation, Bible routes, song export, songs components, e2e)
+- T-128 Best-in-class search: one fast, typo-tolerant engine for Bible verses and song full text
+- T-133 Sidebar notifications: just a bell icon with a dot, on the Settings line, to the right
+- T-131 e2e: song-sources.spec \"a shared link becomes a source\" is flaky (manifest URL matches 2 elements)
+- T-130 Client type check reports errors in song-import and the songs route
+- T-127 Song categories: priority is interpolated into SQL in the category upsert
+- clean up Rust target/ when a checkout is no longer used
+- T-122 Remove the unused check-libreoffice endpoint; rename convertPptToPptx.ts to parsePptViaServer.ts
+- T-120 Song sources: config files for BCEV Băicoi, Laudele Domnului, Pe drumul credinței; user sources synced to their own S3 and shareable
+- T-125 e2e on main: shortcut-scopes keeps the MIDI note-40 key held after leaving a projection
+- T-126 Song search: category priority only orders equally good matches
+- T-123 Sidebar F4–F12 keys work only while the app is focused, with an option for system-wide
+- T-121 Remove the deprecated LibreOffice PPT conversion from the client
+- T-117 Lint: fix lint errors on main
+- T-119 Songs: F5 as a shortcut
+- T-112 Professional, easy-on-the-eyes transitions for Bible verses and every slide type
+- T-118 e2e: song-key-keeps-scroll times out and leaves its songs behind, breaking song-picker-filters
+- T-114 Fixtures: e2e test content only in the dev env, never in the shipped fixtures
+- T-113 Music: three public-domain sample hymns instead of a test clip
+- T-115 Livestream: good default scenes and a guide to connect everything and create the first scene
+- T-110 Song first/last slide layouts follow the screen's own song design
+- T-109 Simplify the project's agent instructions
+- T-108 Program page: Romanian count for Bible verse entries
+- T-018 Program quick-insert bar between entries
+- T-087 Load a program's songs into Marcaje
+- T-088 Programe panel: make programs there, review fixes
+- T-105 Romanian item counts instead of English
+- T-104 Songs: remove <i>, <b> and similar formatting tags
+- **rules**: drop lines that contradict the better-tasks plugin's own rules
+- Revert "docs(rules): review through the PR + video; local app only on request"
+- **rules**: review through the PR + video; local app only on request
+- **rules**: review builds reuse one shell, ~6 s, several at once
+- **instructions**: e2e-only acceptance, Actions before a release, gitleaks hooks, dev on 3001
+- **tests**: remove the unit tests main gained meanwhile (server port, database tracking)
+- **auto-update**: the updater is tried through its e2e spec, not unit tests
+- **tests**: remove the unit tests; the e2e suite is the project's test suite
+- **server**: compiled-sidecar release smoke check as a script, not a bun test
+- **security**: gitleaks as git hooks on every machine, no GitHub workflow
+- **better-tasks**: review with the local app; installers only on request
+- **review-build**: keep the review app in the main checkout so it outlives the worktree
+- dev server on 3001, installed app on 3000
+- **e2e**: never test against or free the dev port 3001 either
+- **worker**: deploy .prod.vars as Worker secrets
+- **server**: log the port check and boot server start times
+- **server**: read the song and Bible fixtures only when seeding
+- **tooling**: record demo videos at 1080p with the plugin's tool
+- **tooling**: auto-update the better-tasks plugin for the whole team
+- **tooling**: drop the project's own demo recording, use better-tasks' video
+- **tasks**: close T-078
+
 ## v0.1.103 — 2026-10-05
 
 ### 🚀 Features

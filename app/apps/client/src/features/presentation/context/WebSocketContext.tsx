@@ -20,6 +20,7 @@ import { screenQueryKey } from '../hooks/useScreen'
 import { screensQueryKey } from '../hooks/useScreens'
 import { slideHighlightsQueryKey } from '../hooks/useSlideHighlights'
 import type { PresentationState } from '../types'
+import { reloadQueries } from '../utils/reloadQueries'
 
 const logger = createLogger('WebSocket')
 
@@ -214,6 +215,18 @@ interface WebRTCIceCandidateMessage {
   }
 }
 
+/** A pairing code to show in the desktop app (local sockets only). */
+interface LoginPairingRequestMessage {
+  type: 'login_pairing_request'
+  payload: {
+    id: string
+    userName: string
+    code: string
+    requesterIp: string
+    expiresAt: number
+  }
+}
+
 type MessageData =
   | PresentationMessage
   | ScreenConfigUpdatedMessage
@@ -225,6 +238,7 @@ type MessageData =
   | MusicStateMessage
   | SidebarNavigationMessage
   | SyncAppliedMessage
+  | { type: 'schedule_automation'; payload: Record<string, unknown> }
   | ScreenShareStartedMessage
   | ScreenShareStoppedMessage
   | ScreenShareJoinRequestMessage
@@ -235,6 +249,8 @@ type MessageData =
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
   | { type: 'translation_audio_output'; payload: Record<string, unknown> }
+  | LoginPairingRequestMessage
+  | { type: 'login_pairing_closed'; payload: { id: string } }
   | { type: 'pong' }
 
 // Check if we should use Tauri WebSocket plugin (on mobile)
@@ -337,13 +353,11 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (data.type === 'screen_config_updated') {
-          queryClient.invalidateQueries({
-            queryKey: screenQueryKey(data.payload.screenId),
-          })
           // The list carries the per-screen switches (close on hide, always on
           // top, …), so a change made in another window has to land here too —
           // the hooks acting on those flags read the list, not one screen.
-          queryClient.invalidateQueries({ queryKey: screensQueryKey })
+          // The key covers each screen's own query as well.
+          reloadQueries(queryClient, screensQueryKey)
         }
 
         if (data.type === 'screen_config_preview') {
@@ -482,6 +496,12 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           queryClient.invalidateQueries({ queryKey: ['sync'] })
         }
 
+        if (data.type === 'schedule_automation') {
+          // The presentation runner moved on, started or stopped (the query
+          // of the schedules feature's useScheduleAutomation).
+          queryClient.setQueryData(['scheduleAutomation'], data.payload)
+        }
+
         if (data.type === 'sidebar_navigation') {
           window.dispatchEvent(
             new CustomEvent('sidebar-navigation', {
@@ -504,6 +524,15 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
             new CustomEvent('live-translation-message', {
               detail: data,
             }),
+          )
+        }
+
+        if (
+          data.type === 'login_pairing_request' ||
+          data.type === 'login_pairing_closed'
+        ) {
+          window.dispatchEvent(
+            new CustomEvent('login-pairing-message', { detail: data }),
           )
         }
 
@@ -570,6 +599,11 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         // because it causes race conditions with mutations.
         // WebSocket updates will provide real-time state updates, and the
         // refetchInterval in usePresentationState provides fallback polling.
+
+        // The screens were loaded over HTTP before this socket listened (or
+        // while it was down): a screen config saved in that gap was broadcast
+        // to nobody here, so the window would keep the old one. Reload them.
+        reloadQueries(queryClient, screensQueryKey)
 
         // Start ping interval with 3-strike rule
         pingIntervalRef.current = setInterval(() => {
@@ -743,6 +777,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       // because it causes race conditions with mutations.
       // WebSocket updates will provide real-time state updates, and the
       // refetchInterval in usePresentationState provides fallback polling.
+
+      // Same gap as the browser socket: reload the screens once listening.
+      reloadQueries(queryClient, screensQueryKey)
 
       // Listen for messages and connection events
       ws.addListener((message) => {

@@ -4,7 +4,7 @@ import type { ScreenBackgroundConfig } from '~/features/presentation/types'
 import type { SongMetadata } from '../components/SongDetailsSection'
 import type { LocalSlide } from '../components/SongSlideList'
 
-interface SongState {
+export interface SongState {
   title: string
   categoryId: number | null
   tagIds: number[]
@@ -85,8 +85,13 @@ function areStatesEqual(a: SongState, b: SongState): boolean {
   return true
 }
 
-export function useDirtyState() {
-  const savedStateRef = useRef<SongState | null>(null)
+/**
+ * `initialState` is what an untouched form holds — a new song's empty defaults —
+ * so leaving one without typing does not count as unsaved changes. An existing
+ * song passes null and sets its saved state once it loads.
+ */
+export function useDirtyState(initialState: SongState | null) {
+  const savedStateRef = useRef<SongState | null>(initialState)
 
   const setSavedState = useCallback((state: SongState) => {
     savedStateRef.current = {
@@ -106,7 +111,7 @@ export function useDirtyState() {
   }, [])
 
   const isDirty = useCallback((currentState: SongState): boolean => {
-    // New song without saved state is always dirty (needs to be saved)
+    // An existing song that has not loaded yet
     if (!savedStateRef.current) return true
 
     const normalizedCurrent: SongState = {

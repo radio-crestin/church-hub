@@ -1,25 +1,36 @@
 #!/usr/bin/env bash
-# Release helper — bumps app/tauri/tauri.conf.json, commits, tags, pushes.
+# Release helper, in two steps, because main only takes pull requests:
+#
+#   1. On a branch: bumps app/tauri/tauri.conf.json, regenerates the changelog,
+#      commits and pushes the branch. Open (or update) its PR and merge it.
+#   2. `tag`: makes the release a pre-release draft, then tags the merged
+#      commit on origin/main with the version main now carries and pushes the
+#      tag.
+#   3. `promote`: once the pre-release's installers were tested by hand, marks
+#      it Latest, which is what the in-app updater offers (docs/auto-update.md).
+#
 # CI takes over from the tag push (build-release.yml): first the pre-release
 # gate — the e2e suite and the compiled-sidecar smoke on macOS, Windows and
-# Linux, and CodeQL — and only if all are green it builds and publishes the
-# release, then runs `sync-version-back` to commit the bump back to `main`
-# (a no-op here because this script already did it locally).
+# Linux, and CodeQL — and only if all are green it builds the installers for
+# every platform, publishes the release (a pre-release stays one), then runs
+# `sync-version-back` (a no-op: main already has the bump).
 #
 # A red gate publishes nothing: fix main, then tag the next version. To catch
 # a platform failure before tagging, run the gate on main first:
 #   gh workflow run test.yml --ref main
 #
 # Usage:
-#   ./scripts/release.sh patch       # 0.1.71 -> 0.1.72
+#   ./scripts/release.sh patch       # 0.1.71 -> 0.1.72, on the current branch
 #   ./scripts/release.sh minor       # 0.1.71 -> 0.2.0
 #   ./scripts/release.sh major       # 0.1.71 -> 1.0.0
 #   ./scripts/release.sh 0.1.72      # explicit version
+#   ./scripts/release.sh tag         # after the merge: tag origin/main, as a pre-release
+#   ./scripts/release.sh promote     # after testing it: make it Latest for churches
 #
 # Why this exists: previously the version drift between
 # `tauri.conf.json` and the tags meant local builds shipped with an
-# outdated `__appVersion`. Running this script + letting CI sync the
-# bump back keeps the file in lock-step with whatever's actually tagged.
+# outdated `__appVersion`. Bumping here before the tag keeps the file and
+# the bundled release notes in lock-step with whatever's actually tagged.
 
 set -euo pipefail
 
@@ -33,11 +44,88 @@ if [[ ! -f "$CONF_FILE" ]]; then
 fi
 
 if [[ $# -ne 1 ]]; then
-  echo "usage: $0 <patch|minor|major|x.y.z>" >&2
+  echo "usage: $0 <patch|minor|major|x.y.z|tag|promote>" >&2
   exit 1
 fi
 
 ARG="$1"
+
+REPO=radio-crestin/church-hub
+
+# The version origin/main carries: the one `tag` releases and `promote` ships.
+main_version() {
+  git -C "$REPO_ROOT" fetch -q origin main --tags
+  git -C "$REPO_ROOT" show origin/main:app/tauri/tauri.conf.json \
+    | grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]*"' \
+    | head -1 \
+    | sed -E 's/.*"([^"]*)"$/\1/'
+}
+
+confirm() {
+  read -r -p "$1 [y/N] " CONFIRM
+  case "$CONFIRM" in
+    y|Y|yes|YES) ;;
+    *) echo "aborted"; exit 1 ;;
+  esac
+}
+
+# Step 2: tag the merged bump on origin/main, never a local commit. The draft
+# is made first, as a pre-release: CI fills it and publishes it keeping that
+# flag, so the updater never offers a release nobody has tried yet.
+if [[ "$ARG" == "tag" ]]; then
+  VERSION=$(main_version)
+  if git -C "$REPO_ROOT" rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+    echo "error: v$VERSION is already tagged: merge a bump first" >&2
+    exit 1
+  fi
+  COMMIT=$(git -C "$REPO_ROOT" rev-parse origin/main)
+  confirm "Tag v$VERSION on origin/main $(git -C "$REPO_ROOT" log -1 --format='%h %s' "$COMMIT") as a pre-release?"
+  if ! gh release view "v$VERSION" --repo "$REPO" >/dev/null 2>&1; then
+    gh release create "v$VERSION" --repo "$REPO" --draft --prerelease \
+      --target "$COMMIT" --title "Church Hub v$VERSION" \
+      --notes "Being built by CI from the v$VERSION tag."
+  fi
+  if [[ "$(gh release view "v$VERSION" --repo "$REPO" --json isPrerelease -q .isPrerelease)" != "true" ]]; then
+    echo "error: release v$VERSION exists and is not a pre-release" >&2
+    exit 1
+  fi
+  git -C "$REPO_ROOT" tag "v$VERSION" "$COMMIT"
+  git -C "$REPO_ROOT" push origin "v$VERSION"
+  echo
+  echo "Tagged v$VERSION."
+  echo "CI runs the pre-release gate (e2e + smoke on macOS/Windows/Linux, CodeQL);"
+  echo "only if it is green, it builds every platform and publishes v$VERSION as a pre-release."
+  echo "Watch: https://github.com/$REPO/actions"
+  echo "Test its installers: https://github.com/$REPO/releases/tag/v$VERSION"
+  echo "Then ship it to churches: ./scripts/release.sh promote"
+  exit 0
+fi
+
+# Step 3: ship the tested pre-release. Latest is what releases/latest (and so
+# the in-app updater's latest.json) points at.
+if [[ "$ARG" == "promote" ]]; then
+  VERSION=$(main_version)
+  STATE=$(gh release view "v$VERSION" --repo "$REPO" \
+    --json isDraft,isPrerelease,assets \
+    -q '"\(.isDraft) \(.isPrerelease) \([.assets[].name] | index("latest.json") != null)"')
+  case "$STATE" in
+    "false true true") ;;
+    "false false true") echo "v$VERSION is already Latest."; exit 0 ;;
+    *)
+      echo "error: v$VERSION is not a published pre-release with latest.json yet (draft, pre-release, latest.json: $STATE)" >&2
+      exit 1
+      ;;
+  esac
+  confirm "Make v$VERSION Latest, so the in-app updater offers it to every church?"
+  gh release edit "v$VERSION" --repo "$REPO" --prerelease=false --latest
+  SERVED=$(curl -fsSL "https://github.com/$REPO/releases/latest/download/latest.json" \
+    | grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]*"' \
+    | sed -E 's/.*"([^"]*)"$/\1/')
+  echo
+  echo "v$VERSION is Latest; the updater's latest.json reports $SERVED."
+  [[ "$SERVED" == "$VERSION" ]] || { echo "error: latest.json should report $VERSION" >&2; exit 1; }
+  exit 0
+fi
 
 # Read current version with a portable regex (works on macOS bsd-sed +
 # GNU sed without depending on `jq`).
@@ -82,12 +170,10 @@ fi
 
 echo "New version:     $NEW"
 
-# Refuse to bump unless we're on main with a clean working tree —
-# releasing from a feature branch silently drifts the tags and that's
-# exactly the problem this script exists to prevent.
+# The bump goes in through a pull request: main's rule set refuses pushes.
 BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD)
-if [[ "$BRANCH" != "main" ]]; then
-  echo "error: refusing to release from '$BRANCH' (expected 'main')" >&2
+if [[ "$BRANCH" == "main" ]]; then
+  echo "error: main only takes pull requests: bump on a branch (git switch -c release/v$NEW)" >&2
   exit 1
 fi
 
@@ -96,11 +182,7 @@ if [[ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]]; then
   exit 1
 fi
 
-read -r -p "Cut release v$NEW? [y/N] " CONFIRM
-case "$CONFIRM" in
-  y|Y|yes|YES) ;;
-  *) echo "aborted"; exit 1 ;;
-esac
+confirm "Bump to v$NEW on $BRANCH?"
 
 # Patch the file in place.
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -115,19 +197,14 @@ fi
 echo "Regenerating changelog..."
 bun "$REPO_ROOT/app/scripts/generate-changelog.ts"
 
-# Commit, tag, push. The tag push triggers CI which builds + releases +
-# auto-syncs (no-op here because we already committed).
+# Commit and push the branch; the tag comes after the merge (step 2).
 git -C "$REPO_ROOT" add \
   app/tauri/tauri.conf.json \
   CHANGELOG.md \
   app/apps/client/src/features/release-notes/changelog.generated.json
 git -C "$REPO_ROOT" commit -m "chore: bump version to $NEW"
-git -C "$REPO_ROOT" tag "v$NEW"
-git -C "$REPO_ROOT" push origin main
-git -C "$REPO_ROOT" push origin "v$NEW"
+git -C "$REPO_ROOT" push -u origin "$BRANCH"
 
 echo
-echo "Tagged v$NEW."
-echo "CI runs the pre-release gate (e2e + smoke on macOS/Windows/Linux, CodeQL);"
-echo "the release is built and published only if it is green."
-echo "Watch: https://github.com/radio-crestin/church-hub/actions"
+echo "Bumped to v$NEW on $BRANCH."
+echo "Merge its pull request, then tag it: ./scripts/release.sh tag"

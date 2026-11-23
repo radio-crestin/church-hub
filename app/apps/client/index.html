@@ -16,8 +16,10 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <title>Church Hub</title>
     <script>
-      // For screen routes, set pure black background immediately to avoid any flash
-      if (window.location.pathname.startsWith('/screen/')) {
+      // Projection and monitor-badge windows are pure black from the first
+      // frame: the audience sees no flash and no app loading page.
+      window.__blackWindow = /^\/(screen|monitor-badge)\//.test(window.location.pathname);
+      if (window.__blackWindow) {
         document.documentElement.style.backgroundColor = '#000000';
         document.body && (document.body.style.backgroundColor = '#000000');
       } else {
@@ -82,8 +84,8 @@
       </style>
     </div>
     <script>
-      // For screen routes, show only pure black background - no loading content
-      if (window.location.pathname.startsWith('/screen/')) {
+      // Projection and monitor-badge windows show only black - no loading content
+      if (window.__blackWindow) {
         var loadingContent = document.getElementById('loading-content');
         var loadingScreen = document.getElementById('loading-screen');
         if (loadingContent) loadingContent.style.display = 'none';

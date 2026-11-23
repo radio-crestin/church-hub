@@ -16,7 +16,7 @@
     "editAsSlides": "Editează ca slide-uri",
     "addSlide": "Adaugă slide",
     "cloneSlide": "Clonează slide",
-    "addToSchedule": "Adaugă în program",
+    "addToSchedule": "Adaugă în prezentare",
     "saveToFile": "Salvează în fișier",
     "exportPdf": "Exportă ca PDF",
     "exportDocx": "Exportă ca Word",
@@ -103,7 +103,7 @@
     "aiSearchTooltip": "Căutare AI - găsește cântece după temă",
     "aiProcessing": "AI analizează...",
     "presentedOnly": "Cântări prezentate",
-    "inSchedulesOnly": "În programe",
+    "inSchedulesOnly": "În prezentări",
     "hasKeyLine": "Cu gamă",
     "bookmarkedOnly": "Marcate",
     "filters": "Filtre",
@@ -117,7 +117,7 @@
     "label": "Sari la literă",
     "jumpTo": "Sari la cântările care încep cu {{letter}}"
   },
-  "dragToPanel": "Trage in Marcaje sau Programe",
+  "dragToPanel": "Trage în Marcaje sau Prezentări",
   "picker": {
     "selectSong": "Selecteaza Cantare",
     "searchResults": "Se afiseaza {{shown}} din {{total}} rezultate",
@@ -215,7 +215,7 @@
     "collapse": "Restrânge",
     "markSung": "Marchează drept cântată",
     "markNotSung": "Marchează drept necântată",
-    "dragToProgram": "Trage peste un program ca să o adaugi",
+    "dragToProgram": "Trage peste o prezentare ca s-o adaugi",
     "filterAll": "Toate",
     "filterPending": "Rămase",
     "filterSung": "Cântate",
@@ -337,7 +337,7 @@
     "foundMessage": "O cântare cu acest titlu există deja în bibliotecă:",
     "clickToPreview": "Apasă pe titlu pentru a previzualiza cântarea existentă într-o fereastră nouă.",
     "replaceExisting": "Înlocuiește cântarea existentă",
-    "replaceExistingDescription": "Șterge cântarea existentă și salvează aceasta în loc. Toate referințele din program și coadă vor fi actualizate automat să folosească această cântare."
+    "replaceExistingDescription": "Șterge cântarea existentă și salvează aceasta în loc. Toate referințele din prezentări și din coadă vor fi actualizate automat să folosească această cântare."
   },
   "categoryDialog": {
     "title": "Setează categoria",

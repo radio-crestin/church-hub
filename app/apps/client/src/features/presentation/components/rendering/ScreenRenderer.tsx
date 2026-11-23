@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
 import { ScreenBackground } from './ScreenBackground'
-import { ScreenContent } from './ScreenContent'
+import { ScreenContentLayers } from './ScreenContentLayers'
 import { ScreenShareReceiver } from './ScreenShareReceiver'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
@@ -91,6 +91,7 @@ export function ScreenRenderer({
     isVisible: hookIsVisible,
     isExitAnimating,
     nextSlideData,
+    leaving,
     presentationState,
   } = usePresentationContent({
     screen,
@@ -763,7 +764,8 @@ export function ScreenRenderer({
                   }
                 />
               ) : (
-                <ScreenContent
+                <ScreenContentLayers
+                  leaving={leaving}
                   screen={screen}
                   contentType={contentType}
                   contentData={contentData}

@@ -126,6 +126,10 @@ export function setLoadingError(
   detail?: string,
 ): void {
   if (!byId('loading-screen')) return
+  // A projection hides the loading page's content (index.html) so it starts
+  // plain black; a failed start shows there too, never as a black screen (T-138).
+  const content = byId('loading-content')
+  if (content) content.style.display = 'flex'
   const spinner = byId('loading-spinner')
   if (spinner) spinner.style.display = 'none'
   renderProgress(null)

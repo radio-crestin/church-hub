@@ -34,11 +34,17 @@ interface LocalBackupPanelProps {
   /** Currently configured folder, from the backup status payload. */
   localBackupPath: string | null
   lastLocalBackupAt: number | null
+  /** The backup status is still loading: the folder is not known yet. */
+  isLoading: boolean
 }
 
 /**
  * On-disk backups: pick a folder, back up into it on demand, and manage what's
  * there.
+ *
+ * Its layout is the same while the status loads and once it has: every button
+ * keeps its place and the list has a fixed height, so nothing moves under the
+ * pointer (a "Remove" that slid under "Choose folder" once cleared the folder).
  *
  * Rendered above the Drive card and outside its "not connected" early return —
  * a local copy needs no Google account, and it is the only backup an operator
@@ -48,6 +54,7 @@ interface LocalBackupPanelProps {
 export function LocalBackupPanel({
   localBackupPath,
   lastLocalBackupAt,
+  isLoading,
 }: LocalBackupPanelProps) {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
@@ -63,6 +70,7 @@ export function LocalBackupPanel({
   const [pendingRestore, setPendingRestore] = useState<LocalBackupFile | null>(
     null,
   )
+  const [pendingClear, setPendingClear] = useState(false)
   // Non-Tauri (browser) has no folder picker, so the path is typed there.
   const [pathDraft, setPathDraft] = useState(localBackupPath ?? '')
 
@@ -86,6 +94,11 @@ export function LocalBackupPanel({
     },
     [local, showToast, t],
   )
+
+  const handleClearConfirm = useCallback(async () => {
+    await savePath(null)
+    setPendingClear(false)
+  }, [savePath])
 
   /** Native folder picker in the desktop app; typed path in the browser. */
   const handleChooseFolder = useCallback(async () => {
@@ -196,27 +209,34 @@ export function LocalBackupPanel({
                   title={localBackupPath ?? undefined}
                   data-testid="local-backup-path"
                 >
-                  {localBackupPath ?? t('sections.backup.local.noFolder')}
+                  {isLoading ? (
+                    <span className="block h-4 w-2/3 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                  ) : (
+                    (localBackupPath ?? t('sections.backup.local.noFolder'))
+                  )}
                 </code>
                 <button
                   type="button"
                   onClick={handleChooseFolder}
-                  disabled={local.isSettingPath}
+                  disabled={isLoading || local.isSettingPath}
+                  data-testid="local-backup-choose"
                   className="inline-flex shrink-0 items-center gap-2 rounded-md bg-gray-100 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                 >
                   <FolderOpen className="h-4 w-4" />
                   {t('sections.backup.local.chooseFolder')}
                 </button>
-                {hasPath && (
-                  <button
-                    type="button"
-                    onClick={() => savePath(null)}
-                    disabled={local.isSettingPath}
-                    className="shrink-0 rounded-md px-2 py-2 text-xs text-gray-500 hover:text-red-600 disabled:opacity-50 dark:text-gray-400 dark:hover:text-red-400"
-                  >
-                    {t('sections.backup.local.clearFolder')}
-                  </button>
-                )}
+                {/* Always laid out, hidden without a folder, so its arrival
+                    never pushes "Choose folder" aside. */}
+                <button
+                  type="button"
+                  onClick={() => setPendingClear(true)}
+                  disabled={!hasPath || local.isSettingPath}
+                  aria-hidden={!hasPath}
+                  data-testid="local-backup-clear"
+                  className={`shrink-0 rounded-md px-2 py-2 text-xs text-gray-500 hover:text-red-600 disabled:opacity-50 dark:text-gray-400 dark:hover:text-red-400 ${hasPath ? '' : 'invisible'}`}
+                >
+                  {t('sections.backup.local.clearFolder')}
+                </button>
               </div>
             ) : (
               <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -231,6 +251,7 @@ export function LocalBackupPanel({
                     }
                   }}
                   placeholder={t('sections.backup.local.pathPlaceholder')}
+                  disabled={isLoading}
                   data-testid="local-backup-path-input"
                   className="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
                 />
@@ -270,11 +291,13 @@ export function LocalBackupPanel({
                 {t('sections.backup.local.restoreFrom.button')}
               </button>
             )}
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {t('sections.backup.local.lastBackup')}:{' '}
-              {formatDate(lastLocalBackupAt ?? 0)}
-            </span>
           </div>
+          {/* Its own line: a date arriving after the load never wraps the
+              buttons above onto a second row. */}
+          <p className="mt-2 truncate text-xs text-gray-500 dark:text-gray-400">
+            {t('sections.backup.local.lastBackup')}:{' '}
+            {formatDate(lastLocalBackupAt ?? 0)}
+          </p>
 
           {/* Restore-from folder, typed where there is no native picker */}
           {!isTauri() && (
@@ -293,49 +316,56 @@ export function LocalBackupPanel({
             </div>
           )}
 
-          {/* Local backup list */}
-          {(hasPath || browseDir) && (
-            <div className="mt-4">
-              {browseDir && (
-                <div
-                  className="mb-2 flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2 dark:bg-amber-900/20"
-                  data-testid="local-backup-browsing-banner"
-                >
-                  <FolderSearch className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                  <span className="min-w-0 flex-1 truncate text-[11px] text-amber-800 dark:text-amber-200">
-                    {t('sections.backup.local.restoreFrom.browsing', {
-                      path: browseDir,
-                    })}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setBrowseDir(null)}
-                    title={t('sections.backup.local.restoreFrom.stopBrowsing')}
-                    className="shrink-0 rounded p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              )}
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {t('sections.backup.local.listTitle')}
+          {/* Local backup list, always shown so the card keeps its height */}
+          <div className="mt-4">
+            {browseDir && (
+              <div
+                className="mb-2 flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2 dark:bg-amber-900/20"
+                data-testid="local-backup-browsing-banner"
+              >
+                <FolderSearch className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span className="min-w-0 flex-1 truncate text-[11px] text-amber-800 dark:text-amber-200">
+                  {t('sections.backup.local.restoreFrom.browsing', {
+                    path: browseDir,
+                  })}
                 </span>
                 <button
                   type="button"
-                  onClick={() => local.refetch()}
-                  disabled={local.isFetching}
-                  title={t('sections.backup.list.refresh')}
-                  className="rounded-md p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700"
+                  onClick={() => setBrowseDir(null)}
+                  title={t('sections.backup.local.restoreFrom.stopBrowsing')}
+                  className="shrink-0 rounded p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
                 >
-                  <RefreshCw
-                    className={`h-3.5 w-3.5 ${local.isFetching ? 'animate-spin' : ''}`}
-                  />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
-              {local.isLoading ? (
+            )}
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                {t('sections.backup.local.listTitle')}
+              </span>
+              <button
+                type="button"
+                onClick={() => local.refetch()}
+                disabled={!(hasPath || browseDir) || local.isFetching}
+                title={t('sections.backup.list.refresh')}
+                className="rounded-md p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700"
+              >
+                <RefreshCw
+                  className={`h-3.5 w-3.5 ${local.isFetching ? 'animate-spin' : ''}`}
+                />
+              </button>
+            </div>
+            <div
+              className="h-40 overflow-y-auto"
+              data-testid="local-backup-list"
+            >
+              {isLoading || local.isLoading ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {t('sections.backup.list.loading')}
+                </p>
+              ) : !(hasPath || browseDir) ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('sections.backup.local.noFolder')}
                 </p>
               ) : local.backups.length === 0 ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -386,9 +416,57 @@ export function LocalBackupPanel({
                 </ul>
               )}
             </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Removing the folder stops local backups: confirmed, never one click */}
+      {pendingClear && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => !local.isSettingPath && setPendingClear(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setPendingClear(false)}
+          />
+          <div
+            className="relative mx-4 w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-gray-800"
+            role="dialog"
+            data-testid="local-backup-clear-dialog"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t('sections.backup.local.clearModal.title')}
+            </h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              {t('sections.backup.local.clearModal.message')}
+            </p>
+            <p className="mt-2 break-all text-xs text-gray-400 dark:text-gray-500">
+              {localBackupPath}
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingClear(false)}
+                disabled={local.isSettingPath}
+                className="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                {t('common:buttons.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleClearConfirm}
+                disabled={local.isSettingPath}
+                data-testid="local-backup-clear-confirm"
+                className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {local.isSettingPath && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {t('sections.backup.local.clearModal.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Restore confirmation — destructive, so it names the file and warns */}
       {pendingRestore && (

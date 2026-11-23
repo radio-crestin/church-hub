@@ -14,46 +14,16 @@
     }
   },
   "youtube": {
-    "notConnected": "YouTube not connected",
-    "connected": "Connected as {{channelName}}",
     "login": "Login with YouTube",
     "logout": "Disconnect YouTube",
     "authenticating": "Authenticating...",
-    "loggingOut": "Logging out...",
-    "clickToConnect": "Click to connect to YouTube",
-    "clickToDisconnect": "Click to disconnect from YouTube",
-    "openGuide": "Settings",
-    "settings": "YouTube Settings",
-    "titleTemplate": "Title Template",
-    "description": "Description",
     "privacyStatus": "Privacy",
     "privacyPublic": "Public",
     "privacyUnlisted": "Unlisted",
     "privacyPrivate": "Private",
-    "streamKey": "Stream Key",
     "selectStreamKey": "Select stream key",
-    "streamKeySelected": "Selected",
-    "playlist": "Playlist ID",
-    "startScene": "Start Scene",
     "setup": {
-      "title": "YouTube Live Setup",
-      "templateTitle": "Use Previous Broadcast Settings",
-      "templateDescription": "Select settings from a past broadcast:",
-      "selectTemplate": "Select a template...",
-      "noTemplates": "No past broadcasts found",
-      "noTemplatesHint": "Create a live stream in YouTube Studio first. After your broadcast ends, it will appear here.",
-      "completedAt": "Completed",
-      "usingTemplate": "Using broadcast settings",
-      "usingTemplateHint": "These settings will be applied to your next broadcast.",
-      "playlistTitle": "Auto-add to Playlist",
-      "playlistDescription": "Select a playlist to automatically add new broadcasts:",
-      "selectPlaylist": "Select a playlist...",
-      "usingPlaylist": "Using playlist",
-      "usingPlaylistHint": "New broadcasts will be automatically added to this playlist.",
-      "firstTimeTitle": "First time streaming?",
-      "firstTimeDescription": "Create a live stream directly in YouTube Studio. Configure your stream settings, go live from OBS, and your broadcast will be saved here for future use.",
-      "openYouTubeStudio": "Open YouTube Studio",
-      "saveAndClose": "Save & Close"
+      "selectPlaylist": "Select a playlist..."
     }
   },
   "obs": {
@@ -62,35 +32,22 @@
     "connecting": "Connecting...",
     "connect": "Connect to OBS",
     "disconnect": "Disconnect",
-    "disconnecting": "Disconnecting...",
-    "clickToConnect": "Click to connect to OBS",
-    "clickToDisconnect": "Click to disconnect from OBS",
-    "openGuide": "Settings",
-    "settings": "OBS Settings",
-    "host": "Host",
     "port": "Port",
     "password": "Password",
     "autoConnect": "Auto-connect on startup",
     "setup": {
-      "title": "OBS WebSocket Setup",
-      "helpLink": "Need help connecting?",
-      "step1Title": "Step 1: Install OBS WebSocket",
       "step1Description": "OBS WebSocket is required for Church Hub to control OBS Studio. For OBS 28+, it's built-in. For older versions, download and install it:",
       "downloadLink": "Download OBS WebSocket from GitHub",
-      "step2Title": "Step 2: Enable WebSocket Server",
       "step2Instruction1": "Open OBS Studio",
       "step2Instruction2": "Go to Tools → WebSocket Server Settings",
-      "step2Instruction3": "Check \"Enable WebSocket server\" and set the password below",
-      "step3Title": "Step 3: Configure Password",
-      "step3Description": "Copy this password and paste it in OBS WebSocket Server Settings:",
+      "step2Instruction3": "Check \"Enable WebSocket server\" and set the password above",
+      "step3Description": "Copy this password and paste it in OBS → Tools → WebSocket Server Settings:",
       "copy": "Copy",
       "copied": "Copied!",
       "addressTitle": "OBS Address",
       "addressDescription": "Enter the address where OBS is running. Use 'localhost' if OBS is on this computer, or enter an IP address for a remote OBS instance.",
       "addressPlaceholder": "localhost",
-      "noteTitle": "Note:",
-      "noteDescription": "Make sure to use the same password in OBS. Church Hub will automatically use this password when connecting.",
-      "saveAndClose": "Save & Close"
+      "noteDescription": "Make sure to use the same password in OBS. Church Hub will automatically use this password when connecting."
     }
   },
   "stream": {
@@ -154,7 +111,7 @@
     "autoSceneDescription": "Switch to this scene when showing:",
     "contentTypes": {
       "songTemporary": "Songs (manual display)",
-      "songSchedule": "Songs (from schedule)",
+      "songSchedule": "Songs (from presentation)",
       "bible": "Bible Verse",
       "biblePassage": "Bible Passage",
       "announcement": "Announcements",
@@ -179,26 +136,15 @@
     "deleting": "Deleting..."
   },
   "mixer": {
-    "title": "Mixer audio",
     "connected": "Mixer Connected",
-    "disconnected": "Mixer Disconnected",
-    "reconnecting": "Reconnecting...",
-    "testing": "Testing...",
-    "enable": "Enable Mixer",
-    "disable": "Disable Mixer",
-    "settings": "Mixer Settings",
-    "openGuide": "Settings",
     "setup": {
-      "title": "Mixer Setup",
       "description": "Control digital audio mixers via OSC protocol. Automatically mute/unmute channels based on scene changes during livestreams.",
       "supportedMixers": "Supported mixers: Behringer X32, XR18, XR16, XR12, X-AIR series, and other OSC-compatible mixers.",
-      "connectionSettings": "Connection Settings",
       "host": "Host IP",
       "port": "Port",
       "enableControl": "Enable Mixer Control",
-      "channelConfiguration": "Channel Configuration",
+      "channelConfiguration": "Channels",
       "channelCount": "Number of Channels",
-      "channelPlaceholder": "Channel label",
       "testConnection": "Test Connection",
       "testing": "Testing...",
       "testSuccess": "Connection successful!",
@@ -277,9 +223,157 @@
     },
     "youtube": {
       "title": "Go live on YouTube",
-      "signIn": "Click YouTube at the top of this page and sign in with the church's channel.",
+      "signIn": "Open YouTube settings at the top of the page and connect the church's channel.",
       "start": "Start Stream then creates the broadcast on YouTube and starts OBS; Stop Stream ends it.",
-      "startStopScenes": "The stream opens on the “{{start}}” scene and closes on “{{stop}}”."
+      "startStopScenes": "The stream opens on the “{{start}}” scene and closes on “{{stop}}”.",
+      "openSettings": "Open the YouTube settings"
     }
+  },
+  "settingsPages": {
+    "back": "Back to Live Stream",
+    "navLabel": "Livestream settings",
+    "youtube": {
+      "button": "YouTube settings"
+    },
+    "obs": {
+      "button": "OBS settings"
+    },
+    "mixer": {
+      "button": "Audio mixer settings"
+    },
+    "scenes": {
+      "button": "Scene settings",
+      "count_one": "{{count}} scene",
+      "count_other": "{{count}} scenes"
+    },
+    "status": {
+      "connected": "Connected",
+      "connecting": "Connecting…",
+      "notConnected": "Not connected",
+      "notAnswering": "Not answering",
+      "off": "Off"
+    }
+  },
+  "youtubeSettings": {
+    "title": "YouTube settings",
+    "subtitle": "Every new broadcast is created with these settings.",
+    "loading": "Loading…",
+    "save": "Save",
+    "saved": "YouTube settings saved",
+    "unsaved": "Unsaved changes",
+    "account": {
+      "title": "YouTube channel",
+      "description": "The channel Church Hub creates the broadcasts on.",
+      "connectedAs": "Connected to {{channel}}",
+      "notConnected": "Not connected. Connect the church's channel to set up the broadcasts."
+    },
+    "template": {
+      "title": "Start from a previous stream",
+      "description": "Pick a past stream: its title, description, privacy, category, tags, thumbnail and stream settings fill this page. Change what you need, then save.",
+      "pick": "Previous stream",
+      "placeholder": "Pick a previous stream…",
+      "none": "No past streams on this channel yet",
+      "filledFromLatest": "Filled in from your latest stream. Check the settings and press Save to keep them."
+    },
+    "details": {
+      "title": "Title and description",
+      "description": "What viewers see on YouTube.",
+      "streamTitle": "Title",
+      "streamTitleHint": "A date in the title (16.11.2025, 16 noiembrie 2025) changes to the day of the stream.",
+      "streamDescription": "Description",
+      "streamDescriptionHint": "Shown under the video.",
+      "category": "Category",
+      "categoryHint": "Helps YouTube show the stream to the right people.",
+      "categoryPlaceholder": "The channel's default",
+      "tags": "Tags",
+      "tagsHint": "Words people might search for, separated by commas."
+    },
+    "audience": {
+      "title": "Who can watch",
+      "description": "Privacy and audience of each new stream.",
+      "privacy": "Privacy",
+      "privacyHint": {
+        "public": "Anyone can find and watch it.",
+        "unlisted": "Only people with the link can watch it.",
+        "private": "Only you and the people you invite can watch it."
+      },
+      "madeForKids": "Made for kids",
+      "madeForKidsHint": "On only when the stream is made for children. YouTube then turns off comments and the live chat."
+    },
+    "stream": {
+      "title": "Stream",
+      "description": "How the stream reaches YouTube and how it starts and ends.",
+      "streamKey": "Stream key",
+      "streamKeyHint": "The key set in OBS. The broadcast is tied to it.",
+      "latency": "Latency",
+      "latencyNormal": "Normal",
+      "latencyLow": "Low",
+      "latencyUltraLow": "Ultra low",
+      "latencyHint": {
+        "normal": "Best picture quality; viewers are about 15–30 seconds behind.",
+        "low": "Viewers are a few seconds behind; good for talking with the chat.",
+        "ultraLow": "Almost live, at a lower quality; no 1440p or 4K."
+      },
+      "dvr": "Rewind while live (DVR)",
+      "dvrHint": "Off: viewers always watch live and can't rewind during the stream.",
+      "autoStart": "Go live when OBS starts streaming",
+      "autoStartHint": "Off: the stream goes public only when you press Go live in YouTube Studio.",
+      "autoStop": "End when OBS stops streaming",
+      "autoStopHint": "Off: the broadcast stays open after OBS stops, until Church Hub or YouTube Studio ends it."
+    },
+    "extras": {
+      "title": "Thumbnail and playlist",
+      "description": "Where the stream shows up on the channel.",
+      "thumbnail": "Thumbnail",
+      "thumbnailHint": "The previous stream's image, set on each new stream. YouTube takes custom thumbnails only from verified channels.",
+      "thumbnailNone": "No thumbnail: YouTube picks a frame from the stream.",
+      "thumbnailRemove": "Remove",
+      "playlist": "Playlist",
+      "playlistHint": "Each new stream is added to this playlist."
+    },
+    "chat": {
+      "title": "Live chat and comments",
+      "description": "Who can write during and after the stream.",
+      "notByApi": "YouTube doesn't let apps set this. Set it once in YouTube Studio:",
+      "stepChat": "Live chat for subscribers only: in YouTube Studio open the stream in the Live Control Room, then Edit → Live chat → Who can send messages → Subscribers. On the next stream, \"Reuse settings\" keeps it.",
+      "stepComments": "Comments: Settings → Community → Content controls → Comments on new uploads → Hold potentially inappropriate comments for review.",
+      "openStudio": "Open YouTube Studio"
+    }
+  },
+  "obsSettings": {
+    "title": "OBS settings",
+    "subtitle": "How Church Hub reaches OBS Studio to start the stream and switch scenes.",
+    "connection": {
+      "title": "Connection",
+      "description": "Church Hub controls OBS through its WebSocket server.",
+      "autoConnectHint": "Connects to OBS each time Church Hub starts."
+    },
+    "access": {
+      "title": "Address and password",
+      "description": "Use the same port and password in OBS → Tools → WebSocket Server Settings.",
+      "portHint": "4455 unless you changed it in OBS.",
+      "save": "Save"
+    },
+    "steps": {
+      "title": "Set up OBS once"
+    }
+  },
+  "mixerSettings": {
+    "title": "Audio mixer settings",
+    "subtitle": "The digital mixer Church Hub mutes and unmutes with the scenes.",
+    "connection": {
+      "title": "Mixer",
+      "enableHint": "Off: Church Hub never touches the mixer.",
+      "notAnswering": "On, but the mixer isn't answering",
+      "portHint": "10023 for the X32, 10024 for the XR series."
+    },
+    "channels": {
+      "description": "Name the channels so each scene's mute list is easy to read."
+    }
+  },
+  "sceneSettingsPage": {
+    "back": "Back to scene settings",
+    "subtitle": "What this scene shows, its shortcuts, and what the mixer does when it comes on.",
+    "notFound": "This scene no longer exists."
   }
 }

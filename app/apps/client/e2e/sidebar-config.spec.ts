@@ -71,7 +71,7 @@ test.describe('Sidebar Configuration', () => {
     await page.waitForLoadState('networkidle')
 
     const schedulesNav = page.locator(
-      'a[href*="schedules"], button:has-text(/schedules|program/i)',
+      'a[href*="schedules"], button:has-text(/presentations|prezentări/i)',
     )
 
     if (

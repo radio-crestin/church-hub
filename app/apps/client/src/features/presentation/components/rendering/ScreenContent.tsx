@@ -42,7 +42,7 @@ function hasElement<K extends string>(
   return !!config && key in config
 }
 
-interface ScreenContentProps {
+export interface ScreenContentProps {
   screen: ScreenWithConfigs
   contentType: ContentType
   contentData: ContentData | null
@@ -493,16 +493,7 @@ export function ScreenContent({
     if (!clockConfig) return null
     if (clockConfig.hidden) return null
 
-    // Check if clock is enabled for current content type
-    const isClockEnabledForType =
-      currentConfig &&
-      (('clockEnabled' in currentConfig && currentConfig.clockEnabled) ||
-        ('clock' in currentConfig &&
-          currentConfig.clock &&
-          typeof currentConfig.clock === 'object' &&
-          'enabled' in currentConfig.clock &&
-          currentConfig.clock.enabled))
-    if (!isClockEnabledForType) return null
+    if (!currentConfig?.clockEnabled) return null
 
     const clockSize = clockConfig.size ?? {
       width: 10,

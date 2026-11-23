@@ -177,46 +177,37 @@ export async function importDatabase(
     // 5. Close current database connection before file operations
     closeDatabase()
 
-    // 6. Create backup using streaming file copy (avoids loading into memory)
+    // 6. Keep a copy of the current database to fall back on
+    let backedUp = true
     try {
       await copyFile(destPath, backupPath)
-    } catch {
-      // If backup fails, it might be because the database is new/empty
-      // Continue anyway
+    } catch (error) {
+      // A new or empty database may have nothing to copy
+      logger.warning(`Could not back up the current database: ${error}`)
+      backedUp = false
     }
 
     // 7. Remove old WAL and SHM files if they exist
-    try {
-      await unlink(`${destPath}-wal`)
-    } catch {
-      // File might not exist
-    }
-    try {
-      await unlink(`${destPath}-shm`)
-    } catch {
-      // File might not exist
-    }
+    await unlink(`${destPath}-wal`).catch(() => {})
+    await unlink(`${destPath}-shm`).catch(() => {})
 
-    // 8. Copy source database to destination using streaming file copy
-    // This avoids loading the entire database into memory
-    await copyFile(sourcePath, destPath)
-
-    // 9. Reinitialize the database connection with the new database
+    // 8. Swap the source in and reopen; from here on a failure must reopen
+    // the previous database, or the server is left with none until restart
     try {
+      await copyFile(sourcePath, destPath)
       await initializeDatabase()
     } catch (error) {
-      // Restore from backup using file copy (no memory issues)
-      try {
-        const backupFile = Bun.file(backupPath)
-        if (await backupFile.exists()) {
-          await copyFile(backupPath, destPath)
-          await initializeDatabase()
-        }
-      } catch (_restoreError) {}
+      logger.error(
+        `Database import failed after closing the database: ${error}`,
+      )
+      const reopened = await reopenPreviousDatabase(
+        backedUp ? backupPath : null,
+        destPath,
+      )
       return {
         success: false,
-        message: 'Failed to initialize imported database',
-        requiresRestart: true,
+        message: 'Failed to import database',
+        requiresRestart: !reopened,
         error: error instanceof Error ? error.message : 'Unknown error',
       }
     }
@@ -227,6 +218,7 @@ export async function importDatabase(
       requiresRestart: false, // No restart needed - we reinitialized in-process
     }
   } catch (error) {
+    logger.error(`Database import failed: ${error}`)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return {
       success: false,
@@ -234,6 +226,31 @@ export async function importDatabase(
       requiresRestart: false,
       error: message,
     }
+  }
+}
+
+/**
+ * Puts the database that was live before a failed import back in place and
+ * reopens it. Returns whether the server has a database again.
+ */
+async function reopenPreviousDatabase(
+  backupPath: string | null,
+  destPath: string,
+): Promise<boolean> {
+  if (backupPath) {
+    try {
+      await copyFile(backupPath, destPath)
+    } catch (error) {
+      // The failed copy may have left app.db untouched: reopen it as it is
+      logger.error(`Could not put the previous database back: ${error}`)
+    }
+  }
+  try {
+    await initializeDatabase()
+    return true
+  } catch (error) {
+    logger.error(`Could not reopen the previous database: ${error}`)
+    return false
   }
 }
 

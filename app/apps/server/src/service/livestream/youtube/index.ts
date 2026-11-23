@@ -6,7 +6,6 @@ export {
 } from './auth'
 export {
   clearActiveBroadcastCache,
-  createBroadcast,
   deleteUpcomingBroadcasts,
   endBroadcast,
   getActiveBroadcast,
@@ -17,6 +16,9 @@ export {
   setActiveBroadcastCache,
   waitForBroadcastReady,
 } from './broadcast'
+export { getBroadcastTemplate } from './broadcast-template'
 export { getYouTubeConfig, updateYouTubeConfig } from './config'
+export { createBroadcast } from './create-broadcast'
 export { consumePKCESession, storePKCESession } from './pkce-session'
 export { getPlaylists } from './playlists'
+export { getVideoCategories } from './video-categories'

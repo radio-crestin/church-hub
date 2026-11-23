@@ -36,6 +36,7 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
@@ -67,7 +68,6 @@ import {
   updateUser,
   updateUserPermissions,
   upsertSetting,
-  verifyLogin,
 } from './service'
 import { aiBibleSearch } from './service/ai-bible-search'
 import { aiSearchSongs } from './service/ai-search'
@@ -231,6 +231,12 @@ import {
   upsertScreen,
 } from './service/presentation'
 import {
+  getScheduleAutomationState,
+  startAppStartSchedule,
+  startScheduleAutomation,
+  stopScheduleAutomation,
+} from './service/schedule-automation'
+import {
   type AddToScheduleInput,
   addItemToSchedule,
   deleteSchedule,
@@ -244,6 +250,7 @@ import {
   reorderScheduleItems,
   replaceScheduleItems,
   searchSchedules,
+  setScheduleItemAdvance,
   type UpdateScheduleSlideInput,
   type UpsertScheduleInput,
   updateScheduleSlide,
@@ -359,6 +366,7 @@ import { createLogger } from './utils/logger'
 import { getDatabasePath, getLogsDir } from './utils/paths'
 import { reportError } from './utils/reportError'
 import { logRequest, logResponse } from './utils/request-logger'
+import { setRequestPeer } from './utils/request-peer'
 import { getServerPort } from './utils/serverPort'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
 import {
@@ -860,6 +868,7 @@ async function startRealServer(): Promise<void> {
     },
     async fetch(req: Request, server) {
       const requestStartTime = performance.now()
+      setRequestPeer(req, server.requestIP(req)?.address)
       logRequest(req)
 
       if (req.method === 'OPTIONS') {
@@ -872,7 +881,7 @@ async function startRealServer(): Promise<void> {
       // WebSocket upgrade for /ws endpoint
       if (url.pathname === '/ws') {
         const success = server.upgrade(req, {
-          data: { clientId: '' },
+          data: { clientId: '', local: isLocalhost(req) },
         })
 
         if (success) {
@@ -956,10 +965,7 @@ async function startRealServer(): Promise<void> {
       // POST /api/auth/login - verify credentials and set the auth cookie
       if (req.method === 'POST' && url.pathname === '/api/auth/login') {
         try {
-          const body = (await req.json()) as {
-            userId?: number
-            password?: string
-          }
+          const body = (await req.json()) as Partial<LoginBody>
           if (typeof body.userId !== 'number') {
             return handleCors(
               req,
@@ -970,12 +976,27 @@ async function startRealServer(): Promise<void> {
             )
           }
 
-          const result = await verifyLogin(
-            body.userId,
-            body.password,
-            isLocalhost(req),
-          )
-          if (!result) {
+          const outcome = await authenticateLogin(req, body as LoginBody)
+          if (outcome.kind === 'pairing_required') {
+            authLogger.info('Login needs a pairing code', {
+              userId: body.userId,
+            })
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'pairing_required',
+                  pairingId: outcome.pairingId,
+                  expiresAt: outcome.expiresAt,
+                }),
+                {
+                  status: 401,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+          if (outcome.kind === 'refused') {
             authLogger.warn('Login failed: invalid credentials', {
               userId: body.userId,
               localhost: isLocalhost(req),
@@ -988,7 +1009,6 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
-
           const user = getUserById(body.userId)
           const currentUser = user
             ? {
@@ -1009,21 +1029,21 @@ async function startRealServer(): Promise<void> {
 
           // Also issue a one-time ticket so the client can finalize the switch
           // via a top-level navigation (reliable cookie overwrite on desktop).
-          const ticket = createLoginTicket(result.token)
+          const ticket = createLoginTicket(outcome.token)
 
           // On localhost (the packaged desktop app) the cross-site `Secure`
           // cookie can't be stored by macOS WKWebView, so also return the token
           // in the body; the desktop client persists it and sends it back as an
           // `X-User-Auth` header. Remote/LAN clients (same-origin cookie works)
           // never receive it.
-          const token = isLocalhost(req) ? result.token : undefined
+          const token = isLocalhost(req) ? outcome.token : undefined
 
           return handleCors(
             req,
             new Response(JSON.stringify({ data: currentUser, ticket, token }), {
               headers: {
                 'Content-Type': 'application/json',
-                'Set-Cookie': buildAuthCookie(result.token, 31536000),
+                'Set-Cookie': buildAuthCookie(outcome.token, 31536000),
               },
             }),
           )
@@ -3038,6 +3058,78 @@ async function startRealServer(): Promise<void> {
         )
       }
 
+      // GET /api/schedules/automation - What the presentation runner is doing
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/schedules/automation'
+      ) {
+        const permError = checkPermission('programs.view')
+        if (permError) return permError
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getScheduleAutomationState() }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/schedules/automation/stop - Stop the running presentation
+      if (
+        req.method === 'POST' &&
+        url.pathname === '/api/schedules/automation/stop'
+      ) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        const state = stopScheduleAutomation('stopped by an operator', {
+          clear: true,
+        })
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: state }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
+      // POST /api/schedules/:id/run - Start a presentation from its first step
+      const runScheduleMatch = url.pathname.match(
+        /^\/api\/schedules\/(\d+)\/run$/,
+      )
+      if (req.method === 'POST' && runScheduleMatch?.[1]) {
+        const permError = checkPermission('control_room.control')
+        if (permError) return permError
+
+        const id = parseInt(runScheduleMatch[1], 10)
+        if (!getScheduleById(id)) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: 'Schedule not found' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+        try {
+          const state = await startScheduleAutomation(id)
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: state }), {
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        } catch (error) {
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ error: toErrorMessage(error) }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
+        }
+      }
+
       // GET /api/schedules - List all schedules
       if (req.method === 'GET' && url.pathname === '/api/schedules') {
         const permError = checkPermission('programs.view')
@@ -3345,6 +3437,49 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
+        }
+      }
+
+      // PUT /api/schedules/:id/items/:itemId/advance - How long each slide of
+      // an item stays up while the presentation runs by itself.
+      {
+        const advanceMatch = url.pathname.match(
+          /^\/api\/schedules\/(\d+)\/items\/(\d+)\/advance$/,
+        )
+        if (req.method === 'PUT' && advanceMatch?.[1] && advanceMatch?.[2]) {
+          const permError = checkPermission('programs.edit')
+          if (permError) return permError
+
+          const body = (await req.json().catch(() => null)) as {
+            advanceSeconds?: unknown
+          } | null
+          const seconds = body?.advanceSeconds
+          if (seconds !== null && typeof seconds !== 'number') {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'advanceSeconds must be a number or null',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+          const result = setScheduleItemAdvance(
+            parseInt(advanceMatch[1], 10),
+            parseInt(advanceMatch[2], 10),
+            seconds,
+          )
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              status: result.success ? 200 : 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
         }
       }
 
@@ -8365,6 +8500,9 @@ async function startRealServer(): Promise<void> {
   // transitions from the boot progress screen into the app.
   setBootReady()
 
+  // The presentation marked "start when Church Hub starts", if any.
+  startAppStartSchedule()
+
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log(
     `[startup] === Server Ready (total: ${(performance.now() - startupStart).toFixed(1)}ms) ===`,
@@ -8372,11 +8510,12 @@ async function startRealServer(): Promise<void> {
 
   // Load the search vocabularies (the typo lookup, up to a second or two on
   // a large library) once the app is up, not on the boot screen, so the
-  // first search is already fast.
-  setTimeout(() => {
+  // first search is already fast. The song library's part is built in steps,
+  // so a projection opening now is not held behind it.
+  setTimeout(async () => {
     const warmupStart = performance.now()
     warmupBibleSearchIndex()
-    warmupSongsSearchIndex()
+    await warmupSongsSearchIndex()
     logTiming('fts_warmup', warmupStart)
   }, 0)
 

@@ -324,7 +324,7 @@ test.describe('Drag a song out of the list', () => {
       await dragOnto(page, rowOf(first.title), panel)
       // The "added" toast now floats over the bottom of the Programe panel.
       const toast = page.getByText(
-        new RegExp(`${first.title}.*(added|adaugata)`),
+        new RegExp(`${first.title}.*(added|adăugată)`),
       )
       await expect(toast).toBeVisible()
       // Its top edge: the part of the toast that is over the panel.

@@ -1,18 +1,21 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { GuideSettingsLink } from './GuideSettingsLink'
 import { GuideStep } from './GuideStep'
 import { Button } from '../../../../ui/button/Button'
 import { useOBSConnection } from '../../hooks'
 import { openExternalUrl } from '../../utils'
-import { OBSSetupModal } from '../OBSSetupModal'
 
 const OBS_DOWNLOAD_URL = 'https://obsproject.com/download'
 
-export function ConnectObsStep({ number }: { number: number }) {
+interface ConnectObsStepProps {
+  number: number
+  onNavigate: () => void
+}
+
+export function ConnectObsStep({ number, onNavigate }: ConnectObsStepProps) {
   const { t } = useTranslation('livestream')
   const { isConnected } = useOBSConnection()
-  const [isSetupOpen, setIsSetupOpen] = useState(false)
 
   return (
     <GuideStep
@@ -22,10 +25,12 @@ export function ConnectObsStep({ number }: { number: number }) {
     >
       <p>{t('guide.obs.install')}</p>
       <p>{t('guide.obs.connect')}</p>
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => setIsSetupOpen(true)}>
-          {t('guide.obs.openSetup')}
-        </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <GuideSettingsLink
+          to="/livestream/obs"
+          label={t('guide.obs.openSetup')}
+          onNavigate={onNavigate}
+        />
         <Button
           size="sm"
           variant="secondary"
@@ -34,10 +39,6 @@ export function ConnectObsStep({ number }: { number: number }) {
           {t('guide.obs.download')}
         </Button>
       </div>
-      <OBSSetupModal
-        isOpen={isSetupOpen}
-        onClose={() => setIsSetupOpen(false)}
-      />
     </GuideStep>
   )
 }

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, getTableColumns } from 'drizzle-orm'
 
 import { getDatabase } from '../../../db'
 import { youtubeConfig } from '../../../db/schema'
@@ -9,109 +9,87 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [youtube-config] ${message}`)
 }
 
-export async function getYouTubeConfig(): Promise<YouTubeConfig> {
-  const db = getDatabase()
-  const configs = await db.select().from(youtubeConfig).limit(1)
+type ConfigRow = typeof youtubeConfig.$inferSelect
 
-  if (configs.length === 0) {
-    const [newConfig] = await db
-      .insert(youtubeConfig)
-      .values({
-        titleTemplate: 'Live',
-        description: '',
-        privacyStatus: 'unlisted',
-        broadcastMode: 'create',
-      })
-      .returning()
+/** The settings a client may change: every column but the row's own. */
+const SETTABLE = new Set(
+  Object.keys(getTableColumns(youtubeConfig)).filter(
+    (key) => !['id', 'createdAt', 'updatedAt'].includes(key),
+  ),
+)
 
-    return {
-      id: newConfig.id,
-      titleTemplate: newConfig.titleTemplate,
-      description: newConfig.description,
-      privacyStatus: newConfig.privacyStatus as
-        | 'public'
-        | 'unlisted'
-        | 'private',
-      streamKeyId: newConfig.streamKeyId || undefined,
-      playlistId: newConfig.playlistId || undefined,
-      startSceneName: newConfig.startSceneName || undefined,
-      stopSceneName: newConfig.stopSceneName || undefined,
-      selectedBroadcastId: newConfig.selectedBroadcastId || undefined,
-      broadcastMode: (newConfig.broadcastMode || 'create') as
-        | 'create'
-        | 'reuse',
-    }
-  }
+/** A changed setting; `null` clears an optional one. */
+export type YouTubeConfigUpdate = {
+  [K in keyof Omit<YouTubeConfig, 'id'>]?: YouTubeConfig[K] | null
+}
 
-  const config = configs[0]
+function parseTags(tags: string): string[] {
+  const parsed: unknown = JSON.parse(tags)
+  return Array.isArray(parsed) ? parsed.map(String) : []
+}
+
+function toConfig(row: ConfigRow): YouTubeConfig {
   return {
-    id: config.id,
-    titleTemplate: config.titleTemplate,
-    description: config.description,
-    privacyStatus: config.privacyStatus as 'public' | 'unlisted' | 'private',
-    streamKeyId: config.streamKeyId || undefined,
-    playlistId: config.playlistId || undefined,
-    startSceneName: config.startSceneName || undefined,
-    stopSceneName: config.stopSceneName || undefined,
-    selectedBroadcastId: config.selectedBroadcastId || undefined,
-    broadcastMode: (config.broadcastMode || 'create') as 'create' | 'reuse',
+    id: row.id,
+    titleTemplate: row.titleTemplate,
+    description: row.description,
+    privacyStatus: row.privacyStatus as YouTubeConfig['privacyStatus'],
+    streamKeyId: row.streamKeyId || undefined,
+    playlistId: row.playlistId || undefined,
+    startSceneName: row.startSceneName || undefined,
+    stopSceneName: row.stopSceneName || undefined,
+    selectedBroadcastId: row.selectedBroadcastId || undefined,
+    broadcastMode: (row.broadcastMode || 'create') as 'create' | 'reuse',
+    categoryId: row.categoryId || undefined,
+    tags: parseTags(row.tags),
+    madeForKids: row.madeForKids,
+    latencyPreference:
+      row.latencyPreference as YouTubeConfig['latencyPreference'],
+    enableDvr: row.enableDvr,
+    enableAutoStart: row.enableAutoStart,
+    enableAutoStop: row.enableAutoStop,
+    thumbnailUrl: row.thumbnailUrl || undefined,
   }
 }
 
+export async function getYouTubeConfig(): Promise<YouTubeConfig> {
+  const db = getDatabase()
+  const [config] = await db.select().from(youtubeConfig).limit(1)
+  if (config) return toConfig(config)
+
+  const [created] = await db
+    .insert(youtubeConfig)
+    .values({
+      titleTemplate: 'Live',
+      description: '',
+      privacyStatus: 'unlisted',
+      broadcastMode: 'create',
+    })
+    .returning()
+  return toConfig(created)
+}
+
 export async function updateYouTubeConfig(
-  data: Partial<Omit<YouTubeConfig, 'id'>>,
+  data: YouTubeConfigUpdate,
 ): Promise<YouTubeConfig> {
   log('info', `Updating config: ${JSON.stringify(data)}`)
-  if (data.streamKeyId !== undefined) {
-    log('info', `Setting streamKeyId to: ${data.streamKeyId || 'null/empty'}`)
-  }
   const db = getDatabase()
   const current = await getYouTubeConfig()
 
+  const changes = Object.fromEntries(
+    Object.entries(data).filter(
+      ([key, value]) => SETTABLE.has(key) && value !== undefined,
+    ),
+  ) as Partial<ConfigRow>
+  if (data.tags !== undefined) {
+    changes.tags = JSON.stringify(data.tags ?? [])
+  }
+
   const [updated] = await db
     .update(youtubeConfig)
-    .set({
-      ...(data.titleTemplate !== undefined && {
-        titleTemplate: data.titleTemplate,
-      }),
-      ...(data.description !== undefined && { description: data.description }),
-      ...(data.privacyStatus !== undefined && {
-        privacyStatus: data.privacyStatus,
-      }),
-      ...(data.streamKeyId !== undefined && { streamKeyId: data.streamKeyId }),
-      ...(data.playlistId !== undefined && { playlistId: data.playlistId }),
-      ...(data.startSceneName !== undefined && {
-        startSceneName: data.startSceneName,
-      }),
-      ...(data.stopSceneName !== undefined && {
-        stopSceneName: data.stopSceneName,
-      }),
-      ...(data.selectedBroadcastId !== undefined && {
-        selectedBroadcastId: data.selectedBroadcastId,
-      }),
-      ...(data.broadcastMode !== undefined && {
-        broadcastMode: data.broadcastMode,
-      }),
-      updatedAt: new Date(),
-    })
+    .set({ ...changes, updatedAt: new Date() })
     .where(eq(youtubeConfig.id, current.id!))
     .returning()
 
-  log(
-    'info',
-    `Config updated. streamKeyId is now: ${updated.streamKeyId || 'NOT SET'}`,
-  )
-
-  return {
-    id: updated.id,
-    titleTemplate: updated.titleTemplate,
-    description: updated.description,
-    privacyStatus: updated.privacyStatus as 'public' | 'unlisted' | 'private',
-    streamKeyId: updated.streamKeyId || undefined,
-    playlistId: updated.playlistId || undefined,
-    startSceneName: updated.startSceneName || undefined,
-    stopSceneName: updated.stopSceneName || undefined,
-    selectedBroadcastId: updated.selectedBroadcastId || undefined,
-    broadcastMode: (updated.broadcastMode || 'create') as 'create' | 'reuse',
-  }
+  return toConfig(updated)
 }

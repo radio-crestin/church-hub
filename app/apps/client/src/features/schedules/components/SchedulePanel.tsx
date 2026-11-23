@@ -23,7 +23,9 @@ import {
   ExternalLink,
   ListPlus,
   Pencil,
+  Play,
   Search,
+  Square,
   Trash2,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -48,6 +50,7 @@ import {
 } from './ScheduleItemEditors'
 import { SchedulePanelNoPrograms } from './SchedulePanelNoPrograms'
 import { SchedulePanelPicker } from './SchedulePanelPicker'
+import { ScheduleRunButton } from './ScheduleRunButton'
 import { ScheduleSlideRow } from './ScheduleSlideRow'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import { ScheduleVerseRow } from './ScheduleVerseRow'
@@ -57,7 +60,9 @@ import {
   useMarkScheduleItemSung,
   useRemoveItemFromSchedule,
   useReorderScheduleItems,
+  useRunSchedule,
   useSchedule,
+  useScheduleAutomation,
   useScheduleFlatNavigation,
   useScheduleKeyLineEditor,
   useSchedules,
@@ -137,6 +142,8 @@ export function SchedulePanel({
   const canEditProgram = hasPermission('programs.edit')
   const canCreateProgram = hasPermission('programs.create')
   const canDeleteProgram = hasPermission('programs.delete')
+  const { data: automation } = useScheduleAutomation()
+  const runSchedule = useRunSchedule()
   const [isCreatingSchedule, setIsCreatingSchedule] = useState(false)
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
@@ -563,7 +570,31 @@ export function SchedulePanel({
   // The header's actions in the order they sit. A column too narrow for all of
   // them tucks the ones at the end under "More", so the least-used (delete)
   // goes first and adding to the program is the last to leave the row.
+  const isRunningSelected =
+    automation?.running === true && automation.scheduleId === selectedScheduleId
   const headerActions: OverflowAction[] = [
+    ...(selectedScheduleId && hasPermission('control_room.control')
+      ? [
+          {
+            id: 'run',
+            label: isRunningSelected
+              ? t('automation.stop')
+              : t('automation.run'),
+            icon: isRunningSelected ? <Square size={18} /> : <Play size={18} />,
+            iconClassName: isRunningSelected
+              ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+              : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+            onSelect: () =>
+              isRunningSelected
+                ? runSchedule.stop.mutate()
+                : runSchedule.run.mutate(selectedScheduleId),
+            testId: 'schedule-run-menu',
+            inline: (
+              <ScheduleRunButton scheduleId={selectedScheduleId} compact />
+            ),
+          },
+        ]
+      : []),
     ...(selectedScheduleId && canEditProgram
       ? [
           {
@@ -842,6 +873,7 @@ export function SchedulePanel({
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input
                   ref={searchInputRef}
+                  data-slide-navigation=""
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

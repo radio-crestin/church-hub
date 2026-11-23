@@ -77,7 +77,12 @@ test.describe('make a program in the Programe panel', () => {
 
     const plus = panel(page).getByTestId('schedule-picker-new')
     await plus.hover()
-    await expect(page.getByText(/^(New program|Program nou)$/)).toBeVisible()
+    await expect(
+      // The tooltip, not the dialog title that now reads the same.
+      page
+        .getByRole('tooltip')
+        .getByText(/^(New presentation|Prezentare nouă)$/),
+    ).toBeVisible()
     await plus.click()
     const dialog = panel(page).getByTestId('create-schedule-modal')
     await dialog.getByRole('textbox').fill(title)

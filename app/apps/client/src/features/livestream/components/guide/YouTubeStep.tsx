@@ -1,9 +1,15 @@
 import { useTranslation } from 'react-i18next'
 
+import { GuideSettingsLink } from './GuideSettingsLink'
 import { GuideStep } from './GuideStep'
 import { useYouTubeAuth, useYouTubeConfig } from '../../hooks'
 
-export function YouTubeStep({ number }: { number: number }) {
+interface YouTubeStepProps {
+  number: number
+  onNavigate: () => void
+}
+
+export function YouTubeStep({ number, onNavigate }: YouTubeStepProps) {
   const { t } = useTranslation('livestream')
   const { isAuthenticated } = useYouTubeAuth()
   const { config } = useYouTubeConfig()
@@ -24,6 +30,11 @@ export function YouTubeStep({ number }: { number: number }) {
           })}
         </p>
       )}
+      <GuideSettingsLink
+        to="/livestream/youtube"
+        label={t('guide.youtube.openSettings')}
+        onNavigate={onNavigate}
+      />
     </GuideStep>
   )
 }

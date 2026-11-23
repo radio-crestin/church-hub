@@ -2,6 +2,7 @@ import type { ServerWebSocket } from 'bun'
 
 import {
   clearTemporaryContent,
+  getPresentationState,
   presentTemporaryScreenShare,
   setOnSongPresentedCallback,
 } from '../service/presentation/presentation-state'
@@ -9,11 +10,14 @@ import type {
   PresentationState,
   TextStyleRange,
 } from '../service/presentation/types'
+import type { ScheduleAutomationState } from '../service/schedule-automation/types'
 import { wsLogger } from '../utils/fileLogger'
 
 export interface WebSocketData {
   clientId: string
   displayId?: number
+  /** Opened from this machine (loopback peer): the desktop app's own windows. */
+  local?: boolean
 }
 
 export type PresentationMessage = {
@@ -130,6 +134,22 @@ interface ClientConnection {
   lastActivity: number
 }
 const clients = new Map<string, ClientConnection>()
+
+/**
+ * Sends a message only to the sockets opened from this machine, for what a
+ * LAN client must never see (a login pairing code).
+ */
+export function sendToLocalClients(message: string) {
+  for (const [clientId, conn] of clients) {
+    if (!conn.ws.data.local) continue
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
 
 // Track active screen share state
 interface ActiveScreenShare {
@@ -304,6 +324,21 @@ export function handleWebSocketOpen(ws: ServerWebSocket<WebSocketData>) {
   clients.set(clientId, { ws, lastActivity: Date.now() })
 
   wsLogger.info(`Client connected: ${clientId} (total: ${clients.size})`)
+
+  // A screen loads the state over HTTP before its socket opens: a change made
+  // in between was broadcast before it listened, so hand it the current state.
+  try {
+    ws.send(
+      JSON.stringify({
+        type: 'presentation_state',
+        payload: getPresentationState(),
+      } satisfies PresentationMessage),
+    )
+  } catch (error) {
+    wsLogger.error(
+      `Failed to send initial presentation state to ${clientId}: ${error}`,
+    )
+  }
 
   // Send initial OBS status to the new client
   if (getOBSStatusCallback) {
@@ -715,6 +750,28 @@ export function broadcastSyncApplied(appliedCount: number) {
   } satisfies SyncAppliedMessage)
 
   wsLogger.debug(`Broadcasting sync_applied to ${clients.size} clients`)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts what the presentation runner is doing (running which
+ * presentation, at which step, when the next one goes up, or stopped).
+ */
+export function broadcastScheduleAutomation(state: ScheduleAutomationState) {
+  const message = JSON.stringify({
+    type: 'schedule_automation',
+    payload: state,
+  })
+
+  wsLogger.debug(`Broadcasting schedule_automation to ${clients.size} clients`)
 
   for (const [clientId, conn] of clients) {
     try {

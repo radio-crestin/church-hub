@@ -14,83 +14,40 @@
     }
   },
   "youtube": {
-    "notConnected": "YouTube neconectat",
-    "connected": "Conectat ca {{channelName}}",
-    "login": "Conecteaza-te cu YouTube",
-    "logout": "Deconecteaza YouTube",
-    "authenticating": "Se autentifica...",
-    "loggingOut": "Se deconecteaza...",
-    "clickToConnect": "Click pentru a te conecta la YouTube",
-    "clickToDisconnect": "Click pentru a te deconecta de la YouTube",
-    "openGuide": "Setari",
-    "settings": "Setari YouTube",
-    "titleTemplate": "Sablon titlu",
-    "description": "Descriere",
+    "login": "Conectează-te cu YouTube",
+    "logout": "Deconectează YouTube",
+    "authenticating": "Se autentifică...",
     "privacyStatus": "Confidentialitate",
     "privacyPublic": "Public",
     "privacyUnlisted": "Nelistat",
     "privacyPrivate": "Privat",
-    "streamKey": "Cheie Stream",
-    "selectStreamKey": "Selecteaza cheia stream",
-    "streamKeySelected": "Selectat",
-    "playlist": "ID Playlist",
-    "startScene": "Scena de start",
+    "selectStreamKey": "Alege cheia de transmisie",
     "setup": {
-      "title": "Configurare YouTube Live",
-      "templateTitle": "Foloseste setari din transmisii anterioare",
-      "templateDescription": "Selecteaza setari dintr-o transmisie anterioara:",
-      "selectTemplate": "Selecteaza un sablon...",
-      "noTemplates": "Nicio transmisie anterioara gasita",
-      "noTemplatesHint": "Creeaza o transmisie live in YouTube Studio. Dupa ce transmisia se incheie, va aparea aici.",
-      "completedAt": "Finalizat",
-      "usingTemplate": "Foloseste setarile transmisiei",
-      "usingTemplateHint": "Aceste setari vor fi aplicate urmatoarei tale transmisii.",
-      "playlistTitle": "Adauga automat in Playlist",
-      "playlistDescription": "Selecteaza un playlist pentru a adauga automat noile transmisii:",
-      "selectPlaylist": "Selecteaza un playlist...",
-      "usingPlaylist": "Foloseste playlist",
-      "usingPlaylistHint": "Noile transmisii vor fi adaugate automat in acest playlist.",
-      "firstTimeTitle": "Prima transmisie?",
-      "firstTimeDescription": "Creeaza o transmisie live direct in YouTube Studio. Configureaza setarile, porneste live-ul din OBS, iar transmisia va fi salvata aici pentru utilizare viitoare.",
-      "openYouTubeStudio": "Deschide YouTube Studio",
-      "saveAndClose": "Salvează și închide"
+      "selectPlaylist": "Alege un playlist..."
     }
   },
   "obs": {
-    "connected": "OBS Conectat",
-    "disconnected": "OBS Deconectat",
-    "connecting": "Se conecteaza...",
-    "connect": "Conecteaza la OBS",
-    "disconnect": "Deconecteaza",
-    "disconnecting": "Se deconecteaza...",
-    "clickToConnect": "Click pentru a te conecta la OBS",
-    "clickToDisconnect": "Click pentru a te deconecta de la OBS",
-    "openGuide": "Setari",
-    "settings": "Setari OBS",
-    "host": "Host",
+    "connected": "OBS conectat",
+    "disconnected": "OBS deconectat",
+    "connecting": "Se conectează...",
+    "connect": "Conectează la OBS",
+    "disconnect": "Deconectează",
     "port": "Port",
-    "password": "Parola",
-    "autoConnect": "Auto-conectare la pornire",
+    "password": "Parolă",
+    "autoConnect": "Conectare automată la pornire",
     "setup": {
-      "title": "Configurare OBS WebSocket",
-      "helpLink": "Ai nevoie de ajutor pentru conectare?",
-      "step1Title": "Pasul 1: Instaleaza OBS WebSocket",
-      "step1Description": "OBS WebSocket este necesar pentru ca Church Hub sa controleze OBS Studio. Pentru OBS 28+, este inclus. Pentru versiuni mai vechi, descarca si instaleaza:",
-      "downloadLink": "Descarca OBS WebSocket de pe GitHub",
-      "step2Title": "Pasul 2: Activeaza Serverul WebSocket",
+      "step1Description": "Church Hub controlează OBS Studio prin OBS WebSocket. Din OBS 28 este inclus; pentru versiuni mai vechi, descarcă-l și instalează-l:",
+      "downloadLink": "Descarcă OBS WebSocket de pe GitHub",
       "step2Instruction1": "Deschide OBS Studio",
       "step2Instruction2": "Mergi la Tools → WebSocket Server Settings",
-      "step2Instruction3": "Bifeaza \"Enable WebSocket server\" si seteaza parola de mai jos",
-      "step3Title": "Pasul 3: Configureaza Parola",
-      "step3Description": "Copiaza aceasta parola si paste-o in OBS WebSocket Server Settings:",
-      "copy": "Copiaza",
+      "step2Instruction3": "Bifează „Enable WebSocket server” și pune parola de mai sus",
+      "step3Description": "Copiază parola și pune-o în OBS → Tools → WebSocket Server Settings:",
+      "copy": "Copiază",
       "copied": "Copiat!",
       "addressTitle": "Adresa OBS",
-      "addressDescription": "Introdu adresa unde ruleaza OBS. Foloseste 'localhost' daca OBS este pe acest calculator, sau introdu o adresa IP pentru un OBS la distanta.",
+      "addressDescription": "Adresa calculatorului pe care rulează OBS: „localhost” dacă e acesta, altfel adresa lui IP.",
       "addressPlaceholder": "localhost",
-      "noteTitle": "Nota:",
-      "noteDescription": "Asigura-te ca folosesti aceeasi parola in OBS. Church Hub va folosi automat aceasta parola la conectare.",
-      "saveAndClose": "Salveaza si Inchide"
+      "noteDescription": "Folosește aceeași parolă în OBS. Church Hub o folosește automat la conectare."
     }
   },
   "stream": {
@@ -131,8 +88,8 @@
   "scenes": {
     "title": "Scene",
     "noScenes": "Nu există încă scene. Ghidul de configurare îți arată cum să creezi prima scenă.",
-    "settings": "Setari scene",
-    "sceneSettings": "Setari scena",
+    "settings": "Setările scenei",
+    "sceneSettings": "Setările scenei",
     "displayName": "Nume afisat",
     "visible": "Vizibila",
     "hidden": "Ascunsa",
@@ -154,7 +111,7 @@
     "autoSceneDescription": "Schimba la aceasta scena cand afisezi:",
     "contentTypes": {
       "songTemporary": "Cântări (afișat manual)",
-      "songSchedule": "Cântări (din program)",
+      "songSchedule": "Cântări (din prezentare)",
       "bible": "Verset biblic",
       "biblePassage": "Pasaj biblic",
       "announcement": "Anunturi",
@@ -179,31 +136,20 @@
     "deleting": "Se sterge..."
   },
   "mixer": {
-    "title": "Mixer audio",
-    "connected": "Mixer Conectat",
-    "disconnected": "Mixer Deconectat",
-    "reconnecting": "Se reconecteaza...",
-    "testing": "Se testeaza...",
-    "enable": "Activeaza Mixer",
-    "disable": "Dezactiveaza Mixer",
-    "settings": "Setari Mixer",
-    "openGuide": "Setari",
+    "connected": "Mixer conectat",
     "setup": {
-      "title": "Configurare Mixer",
       "description": "Controlează mixere audio digitale prin protocolul OSC. Pornește/oprește automat canalele în funcție de schimbările de scenă în timpul transmisiunilor live.",
       "supportedMixers": "Mixere compatibile: Behringer X32, XR18, XR16, XR12, seria X-AIR și alte mixere compatibile OSC.",
-      "connectionSettings": "Setari Conexiune",
       "host": "Adresa IP",
       "port": "Port",
-      "enableControl": "Activeaza controlul mixerului",
-      "channelConfiguration": "Configurare Canale",
-      "channelCount": "Numar de canale",
-      "channelPlaceholder": "Eticheta canal",
-      "testConnection": "Testeaza conexiunea",
-      "testing": "Se testeaza...",
-      "testSuccess": "Conexiune reusita!",
-      "testFailed": "Conexiune esuata",
-      "save": "Salveaza"
+      "enableControl": "Activează controlul mixerului",
+      "channelConfiguration": "Canale",
+      "channelCount": "Număr de canale",
+      "testConnection": "Testează conexiunea",
+      "testing": "Se testează...",
+      "testSuccess": "Conexiune reușită!",
+      "testFailed": "Conexiunea a eșuat",
+      "save": "Salvează"
     }
   },
   "errors": {
@@ -277,9 +223,158 @@
     },
     "youtube": {
       "title": "Intră live pe YouTube",
-      "signIn": "Apasă YouTube în partea de sus a paginii și conectează-te la canalul bisericii.",
+      "signIn": "Deschide Setări YouTube din partea de sus a paginii și conectează canalul bisericii.",
       "start": "„Porneste live-ul” creează transmisiunea pe YouTube și pornește OBS; „Opreste Stream” încheie transmisiunea.",
-      "startStopScenes": "Transmisiunea începe pe scena „{{start}}” și se încheie pe „{{stop}}”."
+      "startStopScenes": "Transmisiunea începe pe scena „{{start}}” și se încheie pe „{{stop}}”.",
+      "openSettings": "Deschide setările YouTube"
     }
+  },
+  "settingsPages": {
+    "back": "Înapoi la Live Stream",
+    "navLabel": "Setările transmisiunii live",
+    "youtube": {
+      "button": "Setări YouTube"
+    },
+    "obs": {
+      "button": "Setări OBS"
+    },
+    "mixer": {
+      "button": "Setări mixer audio"
+    },
+    "scenes": {
+      "button": "Setări scene",
+      "count_one": "{{count}} scenă",
+      "count_few": "{{count}} scene",
+      "count_other": "{{count}} de scene"
+    },
+    "status": {
+      "connected": "Conectat",
+      "connecting": "Se conectează…",
+      "notConnected": "Neconectat",
+      "notAnswering": "Nu răspunde",
+      "off": "Oprit"
+    }
+  },
+  "youtubeSettings": {
+    "title": "Setări YouTube",
+    "subtitle": "Fiecare transmisiune nouă se creează cu aceste setări.",
+    "loading": "Se încarcă…",
+    "save": "Salvează",
+    "saved": "Setările YouTube au fost salvate",
+    "unsaved": "Modificări nesalvate",
+    "account": {
+      "title": "Canalul YouTube",
+      "description": "Canalul pe care Church Hub creează transmisiunile.",
+      "connectedAs": "Conectat la {{channel}}",
+      "notConnected": "Neconectat. Conectează canalul bisericii ca să configurezi transmisiunile."
+    },
+    "template": {
+      "title": "Pornește de la o transmisiune anterioară",
+      "description": "Alege o transmisiune trecută: titlul, descrierea, confidențialitatea, categoria, etichetele, miniatura și setările de transmisie completează pagina. Schimbă ce e nevoie, apoi salvează.",
+      "pick": "Transmisiune anterioară",
+      "placeholder": "Alege o transmisiune anterioară…",
+      "none": "Canalul nu are încă transmisiuni trecute",
+      "filledFromLatest": "Completat după ultima transmisiune. Verifică setările și apasă Salvează ca să le păstrezi."
+    },
+    "details": {
+      "title": "Titlu și descriere",
+      "description": "Ce văd oamenii pe YouTube.",
+      "streamTitle": "Titlu",
+      "streamTitleHint": "O dată din titlu (16.11.2025, 16 noiembrie 2025) devine ziua transmisiunii.",
+      "streamDescription": "Descriere",
+      "streamDescriptionHint": "Apare sub videoclip.",
+      "category": "Categorie",
+      "categoryHint": "Ajută YouTube să arate transmisiunea oamenilor potriviți.",
+      "categoryPlaceholder": "Cea implicită a canalului",
+      "tags": "Etichete",
+      "tagsHint": "Cuvinte pe care oamenii le-ar putea căuta, despărțite prin virgulă."
+    },
+    "audience": {
+      "title": "Cine poate urmări",
+      "description": "Confidențialitatea și publicul fiecărei transmisiuni noi.",
+      "privacy": "Confidențialitate",
+      "privacyHint": {
+        "public": "Oricine o poate găsi și urmări.",
+        "unlisted": "O pot urmări doar cei care au linkul.",
+        "private": "O poți urmări doar tu și cei pe care îi inviți."
+      },
+      "madeForKids": "Conținut pentru copii",
+      "madeForKidsHint": "Pornește doar dacă transmisiunea este făcută pentru copii. Atunci YouTube oprește comentariile și chatul live."
+    },
+    "stream": {
+      "title": "Transmisie",
+      "description": "Cum ajunge transmisiunea pe YouTube, cum începe și cum se încheie.",
+      "streamKey": "Cheie de transmisie",
+      "streamKeyHint": "Cheia setată în OBS. Transmisiunea se leagă de ea.",
+      "latency": "Întârziere",
+      "latencyNormal": "Normală",
+      "latencyLow": "Mică",
+      "latencyUltraLow": "Foarte mică",
+      "latencyHint": {
+        "normal": "Cea mai bună calitate a imaginii; oamenii văd cu 15–30 de secunde mai târziu.",
+        "low": "Oamenii văd cu câteva secunde mai târziu; potrivit când vorbești cu cei din chat.",
+        "ultraLow": "Aproape în timp real, la o calitate mai slabă; fără 1440p sau 4K."
+      },
+      "dvr": "Derulare înapoi în timpul live-ului (DVR)",
+      "dvrHint": "Oprit: oamenii urmăresc mereu în direct și nu pot derula înapoi în timpul transmisiunii.",
+      "autoStart": "Intră live când OBS începe transmisia",
+      "autoStartHint": "Oprit: transmisiunea devine publică doar când apeși „Intră live” în YouTube Studio.",
+      "autoStop": "Încheie când OBS oprește transmisia",
+      "autoStopHint": "Oprit: transmisiunea rămâne deschisă după ce OBS se oprește, până o încheie Church Hub sau YouTube Studio."
+    },
+    "extras": {
+      "title": "Miniatură și playlist",
+      "description": "Unde apare transmisiunea pe canal.",
+      "thumbnail": "Miniatură",
+      "thumbnailHint": "Imaginea transmisiunii anterioare, pusă pe fiecare transmisiune nouă. YouTube acceptă miniaturi personalizate doar de la canale verificate.",
+      "thumbnailNone": "Fără miniatură: YouTube alege un cadru din transmisiune.",
+      "thumbnailRemove": "Elimină",
+      "playlist": "Playlist",
+      "playlistHint": "Fiecare transmisiune nouă se adaugă în acest playlist."
+    },
+    "chat": {
+      "title": "Chat live și comentarii",
+      "description": "Cine poate scrie în timpul transmisiunii și după.",
+      "notByApi": "YouTube nu permite aplicațiilor să seteze asta. Setează o dată în YouTube Studio:",
+      "stepChat": "Chat live doar pentru abonați: în YouTube Studio deschide transmisiunea în Live Control Room, apoi Edit → Live chat → „Who can send messages” → Subscribers. La transmisiunea următoare, „Reuse settings” o păstrează.",
+      "stepComments": "Comentarii: Settings → Community → Content controls → „Comments on new uploads” → „Hold potentially inappropriate comments for review”.",
+      "openStudio": "Deschide YouTube Studio"
+    }
+  },
+  "obsSettings": {
+    "title": "Setări OBS",
+    "subtitle": "Cum ajunge Church Hub la OBS Studio ca să pornească transmisia și să schimbe scenele.",
+    "connection": {
+      "title": "Conexiune",
+      "description": "Church Hub controlează OBS prin serverul lui WebSocket.",
+      "autoConnectHint": "Se conectează la OBS de fiecare dată când pornește Church Hub."
+    },
+    "access": {
+      "title": "Adresă și parolă",
+      "description": "Folosește același port și aceeași parolă în OBS → Tools → WebSocket Server Settings.",
+      "portHint": "4455, dacă nu l-ai schimbat în OBS.",
+      "save": "Salvează"
+    },
+    "steps": {
+      "title": "Configurează OBS o singură dată"
+    }
+  },
+  "mixerSettings": {
+    "title": "Setări mixer audio",
+    "subtitle": "Mixerul digital pe care Church Hub îl pune pe mut și îl pornește odată cu scenele.",
+    "connection": {
+      "title": "Mixer",
+      "enableHint": "Oprit: Church Hub nu atinge niciodată mixerul.",
+      "notAnswering": "Pornit, dar mixerul nu răspunde",
+      "portHint": "10023 pentru X32, 10024 pentru seria XR."
+    },
+    "channels": {
+      "description": "Denumește canalele, ca lista de canale oprite a fiecărei scene să fie ușor de citit."
+    }
+  },
+  "sceneSettingsPage": {
+    "back": "Înapoi la setările scenelor",
+    "subtitle": "Ce arată scena, scurtăturile ei și ce face mixerul când pornește.",
+    "notFound": "Scena aceasta nu mai există."
   }
 }

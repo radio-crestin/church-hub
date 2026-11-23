@@ -272,6 +272,8 @@ async function main() {
     )
   } finally {
     proc?.kill()
+    // Windows keeps the .exe locked until the process has exited
+    await proc?.exited
     rmSync(workDir, { recursive: true, force: true, maxRetries: 3 })
   }
 }
