@@ -221,11 +221,12 @@ export interface TemporarySceneContent {
 }
 
 /**
- * Temporary screen share content for WebRTC streaming
+ * Temporary screen share content: the frames come as an MJPEG stream from
+ * /api/screen-share/stream.mjpg (or the GPU in a desktop projector window)
  */
 export interface TemporaryScreenShareContent {
-  broadcasterId: string
-  audioEnabled: boolean
+  /** When the share started: a new share opens a new stream */
+  startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
@@ -711,7 +712,6 @@ export interface NextSlideSectionConfig {
 export interface ScreenGlobalSettings {
   defaultBackground: ScreenBackgroundConfig
   clockConfig?: ClockElementConfig // Shared clock config (position, style, format) - enable is per-content-type
-  screenShareAudioEnabled?: boolean // Whether to play audio when receiving screen share (default: false)
 }
 
 /**

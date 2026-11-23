@@ -44,6 +44,7 @@ import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
+import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
 import {
@@ -249,6 +250,7 @@ import {
   updateScheduleSlide,
   upsertSchedule,
 } from './service/schedules'
+import { endScreenShareSession } from './service/screen-share'
 import {
   deleteSearch,
   getSearchById,
@@ -378,7 +380,6 @@ import {
   setMIDIMessageHandler,
   setMusicCommandHandler,
   setMusicStateProvider,
-  stopActiveScreenShare,
   type WebSocketData,
 } from './websocket'
 
@@ -1586,7 +1587,7 @@ async function startRealServer(): Promise<void> {
       function isStrictLocalhost(): boolean {
         const host = req.headers.get('Host')
         if (!host) return true
-        const hostname = host.split(':')[0].toLowerCase()
+        const hostname = (host.split(':')[0] ?? '').toLowerCase()
         return (
           hostname === 'localhost' ||
           hostname === '127.0.0.1' ||
@@ -3909,7 +3910,12 @@ async function startRealServer(): Promise<void> {
       const sceneOverrideMatch = url.pathname.match(
         /^\/api\/screens\/(\d+)\/scene-overrides\/([^/]+)\/([^/]+)$/,
       )
-      if (req.method === 'PUT' && sceneOverrideMatch?.[1]) {
+      if (
+        req.method === 'PUT' &&
+        sceneOverrideMatch?.[1] &&
+        sceneOverrideMatch[2] &&
+        sceneOverrideMatch[3]
+      ) {
         const permError = checkPermission('displays.edit')
         if (permError) return permError
 
@@ -4121,7 +4127,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBibleInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBible(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4154,7 +4160,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySongInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporarySong(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4403,7 +4409,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryAnnouncementInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryAnnouncement(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4436,7 +4442,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBiblePassageInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBiblePassage(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4469,7 +4475,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryVerseteTineriInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryVerseteTineri(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4502,7 +4508,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySceneInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryScene(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4870,7 +4876,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'GET' &&
         url.pathname === '/api/songs/debug/analyze-keylines'
       ) {
-        const permError = checkPermission('songs.manage')
+        const permError = checkPermission('songs.edit')
         if (permError) return permError
 
         // Musical key patterns - solfège (Romanian/Italian) and letter notation
@@ -4883,8 +4889,8 @@ async function startRealServer(): Promise<void> {
         const extractLastParagraph = (html: string): string | null => {
           const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
           if (!paragraphs || paragraphs.length === 0) return null
-          const lastP = paragraphs[paragraphs.length - 1]
-          return lastP.replace(/<\/?p>/gi, '').trim()
+          const lastP = paragraphs.at(-1)
+          return lastP ? lastP.replace(/<\/?p>/gi, '').trim() : null
         }
 
         // Filter by category names if provided
@@ -4979,7 +4985,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'GET' &&
         url.pathname === '/api/songs/debug/sample-last-lines'
       ) {
-        const permError = checkPermission('songs.manage')
+        const permError = checkPermission('songs.edit')
         if (permError) return permError
 
         const limitParam = url.searchParams.get('limit')
@@ -4989,8 +4995,8 @@ async function startRealServer(): Promise<void> {
         const extractLastParagraph = (html: string): string | null => {
           const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
           if (!paragraphs || paragraphs.length === 0) return null
-          const lastP = paragraphs[paragraphs.length - 1]
-          return lastP.replace(/<\/?p>/gi, '').trim()
+          const lastP = paragraphs.at(-1)
+          return lastP ? lastP.replace(/<\/?p>/gi, '').trim() : null
         }
 
         const allSongs = getAllSongsWithSlides(null)
@@ -8130,6 +8136,15 @@ async function startRealServer(): Promise<void> {
       const midiResponse = await handleMIDIRoutes(req, url, handleCors)
       if (midiResponse) return midiResponse
 
+      // Screen share routes (native capture frames, MJPEG stream)
+      const screenShareResponse = await handleScreenShareRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+      )
+      if (screenShareResponse) return screenShareResponse
+
       // Live translation routes
       if (url.pathname.startsWith('/api/live-translation/')) {
         const translationResponse = await handleLiveTranslationRoutes(
@@ -8251,7 +8266,10 @@ async function startRealServer(): Promise<void> {
   // Wire up MIDI devices changed callback to WebSocket broadcast
   // This is called when devices reconnect so clients can update their device lists
   setDevicesChangedCallback((devices) => {
-    broadcastMIDIDevices(devices)
+    broadcastMIDIDevices({
+      inputs: devices.inputs.map((device) => ({ ...device, type: 'input' })),
+      outputs: devices.outputs.map((device) => ({ ...device, type: 'output' })),
+    })
   })
 
   // Wire up MIDI WebSocket message handler for LED control

@@ -164,11 +164,11 @@ export async function handleSongSourceRoutes(
     return respond(200, { data: getSongUpdatesState() })
   }
 
-  const lackingMatch = pathname.match(SOURCE_LACKING_PATH)
-  if (req.method === 'GET' && lackingMatch) {
+  const lackingId = pathname.match(SOURCE_LACKING_PATH)?.[1]
+  if (req.method === 'GET' && lackingId) {
     return (
       deny('songs.create') ??
-      respond(200, { data: readLackingSongs(lackingMatch[1]) })
+      respond(200, { data: readLackingSongs(lackingId) })
     )
   }
 
@@ -209,7 +209,7 @@ export async function handleSongSourceRoutes(
     const file = await zipBundleFiles(bundle)
     return handleCors(
       req,
-      new Response(file, {
+      new Response(file.slice(), {
         headers: {
           'Content-Type': 'application/zip',
           'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(bundleFileName(categoryName, url.searchParams.get('format')))}`,
@@ -292,27 +292,27 @@ export async function handleSongSourceRoutes(
     return respond(200, { data: publicationsView() })
   }
 
-  const songsMatch = pathname.match(SOURCE_SONGS_PATH)
-  if (req.method === 'GET' && songsMatch) {
+  const songsId = pathname.match(SOURCE_SONGS_PATH)?.[1]
+  if (req.method === 'GET' && songsId) {
     const denied = deny('songs.create')
     if (denied) return denied
     try {
-      return respond(200, { data: await readSourceSongs(songsMatch[1]) })
+      return respond(200, { data: await readSourceSongs(songsId) })
     } catch (error) {
-      logger.warning(`Reading source ${songsMatch[1]} failed: ${error}`)
+      logger.warning(`Reading source ${songsId} failed: ${error}`)
       return respond(502, { error: errorMessage(error) })
     }
   }
 
-  const archiveMatch = pathname.match(SOURCE_ARCHIVE_PATH)
-  if (req.method === 'GET' && archiveMatch) {
+  const archiveId = pathname.match(SOURCE_ARCHIVE_PATH)?.[1]
+  if (req.method === 'GET' && archiveId) {
     const denied = deny('songs.create')
     if (denied) return denied
     try {
-      const archive = await readSourceArchive(archiveMatch[1])
+      const archive = await readSourceArchive(archiveId)
       return handleCors(
         req,
-        new Response(archive, {
+        new Response(archive.slice(), {
           headers: {
             'Content-Type': 'application/zip',
             'Content-Length': String(archive.byteLength),
@@ -320,30 +320,30 @@ export async function handleSongSourceRoutes(
         }),
       )
     } catch (error) {
-      logger.warning(`Reading source ${archiveMatch[1]} failed: ${error}`)
+      logger.warning(`Reading source ${archiveId} failed: ${error}`)
       return respond(502, { error: errorMessage(error) })
     }
   }
 
-  const checksumMatch = pathname.match(SOURCE_CHECKSUM_PATH)
-  if (req.method === 'GET' && checksumMatch) {
+  const checksumId = pathname.match(SOURCE_CHECKSUM_PATH)?.[1]
+  if (req.method === 'GET' && checksumId) {
     const denied = deny('songs.view')
     if (denied) return denied
     try {
       return respond(200, {
-        data: { checksum: await readSourceChecksum(checksumMatch[1]) },
+        data: { checksum: await readSourceChecksum(checksumId) },
       })
     } catch (error) {
-      logger.warning(`Checksum of ${checksumMatch[1]} failed: ${error}`)
+      logger.warning(`Checksum of ${checksumId} failed: ${error}`)
       return respond(502, { error: errorMessage(error) })
     }
   }
 
-  const sourceMatch = pathname.match(SOURCE_PATH)
-  if (req.method === 'DELETE' && sourceMatch) {
+  const sourceId = pathname.match(SOURCE_PATH)?.[1]
+  if (req.method === 'DELETE' && sourceId) {
     const denied = deny('songs.create')
     if (denied) return denied
-    deleteLinkSource(sourceMatch[1])
+    deleteLinkSource(sourceId)
     return respond(200, { data: listSongSources() })
   }
 

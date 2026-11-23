@@ -13,7 +13,10 @@ import type {
   PresentTemporarySongInput,
   PresentTemporaryVerseteTineriInput,
   TemporaryBibleContent,
+  TemporaryBiblePassageContent,
   TemporaryContent,
+  TemporarySongContent,
+  TemporaryVerseteTineriContent,
   UpdatePresentationStateInput,
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
@@ -590,7 +593,7 @@ export function navigateTemporary(
  * Navigates within temporary Bible content
  */
 function navigateTemporaryBible(
-  data: TemporaryContent extends { type: 'bible'; data: infer D } ? D : never,
+  data: TemporaryBibleContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const rawDb = getRawDatabase()
@@ -617,8 +620,8 @@ function navigateTemporaryBible(
       : data.currentVerseIndex - 1
 
   // If within current chapter
-  if (newIndex >= 0 && newIndex < chapterVerses.length) {
-    const newVerse = chapterVerses[newIndex]
+  const newVerse = chapterVerses[newIndex]
+  if (newVerse) {
     const reference = `${data.bookName} ${data.chapter}:${newVerse.verse} - ${data.translationAbbreviation}`
 
     const temporaryContent: TemporaryContent = {
@@ -827,11 +830,11 @@ function navigateToChapterLastVerse(
     text: string
   }[]
 
-  if (verses.length === 0) {
+  const lastVerse = verses.at(-1)
+  if (!lastVerse) {
     return getPresentationState()
   }
 
-  const lastVerse = verses[verses.length - 1]
   const reference = `${bookName} ${chapter}:${lastVerse.verse} - ${data.translationAbbreviation}`
   return updatePresentationState({
     temporaryContent: {
@@ -858,7 +861,7 @@ function navigateToChapterLastVerse(
  * Navigates within temporary song content
  */
 function navigateTemporarySong(
-  data: TemporaryContent extends { type: 'song'; data: infer D } ? D : never,
+  data: TemporarySongContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const newIndex =
@@ -900,9 +903,7 @@ function navigateTemporarySong(
  * Navigates within temporary Bible passage content
  */
 function navigateTemporaryBiblePassage(
-  data: TemporaryContent extends { type: 'bible_passage'; data: infer D }
-    ? D
-    : never,
+  data: TemporaryBiblePassageContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const newIndex =
@@ -944,9 +945,7 @@ function navigateTemporaryBiblePassage(
  * Navigates within temporary versete tineri content
  */
 function navigateTemporaryVerseteTineri(
-  data: TemporaryContent extends { type: 'versete_tineri'; data: infer D }
-    ? D
-    : never,
+  data: TemporaryVerseteTineriContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const newIndex =
@@ -1193,15 +1192,12 @@ export function presentTemporaryScreenShare(
   input: PresentTemporaryScreenShareInput,
 ): PresentationState {
   try {
-    logger.debug(
-      `Presenting temporary screen share from: ${input.broadcasterId}`,
-    )
+    logger.debug('Presenting temporary screen share')
 
     const temporaryContent: TemporaryContent = {
       type: 'screen_share',
       data: {
-        broadcasterId: input.broadcasterId,
-        audioEnabled: input.audioEnabled,
+        startedAt: Date.now(),
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
       },

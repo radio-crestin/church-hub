@@ -32,10 +32,12 @@ const UNBIASED_LIMIT = 4_294_000_000
 
 function generateCode(): string {
   const draw = new Uint32Array(1)
+  let n: number
   do {
     crypto.getRandomValues(draw)
-  } while (draw[0] >= UNBIASED_LIMIT)
-  return String(draw[0] % 1_000_000).padStart(6, '0')
+    n = draw[0] ?? 0
+  } while (n >= UNBIASED_LIMIT)
+  return String(n % 1_000_000).padStart(6, '0')
 }
 
 function removeExpired(now: number) {
