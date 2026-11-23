@@ -22,6 +22,10 @@
       "updates": "Actualizari",
       "logs": "Jurnale",
       "shortcuts": "Scurtături"
+    },
+    "search": {
+      "placeholder": "Caută în setări…",
+      "noResults": "Nicio setare nu se potrivește cu „{{query}}”"
     }
   },
   "sections": {

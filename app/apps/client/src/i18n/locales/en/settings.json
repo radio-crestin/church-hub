@@ -22,6 +22,10 @@
       "updates": "Updates",
       "logs": "Logs",
       "shortcuts": "Shortcuts"
+    },
+    "search": {
+      "placeholder": "Search settings…",
+      "noResults": "No settings match “{{query}}”"
     }
   },
   "sections": {
