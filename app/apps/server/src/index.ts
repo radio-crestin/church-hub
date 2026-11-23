@@ -4,6 +4,7 @@
 // like `-e` and would re-run the whole server (the v0.1.60 regression).
 import './service/midi/coreMidiWarmUpEntry'
 
+import { exitWithParent } from './utils/exitWithParent'
 import { authLogger, logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
 import {
@@ -561,6 +562,13 @@ function killProcessOnPort(port: number): void {
 async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log('[startup] === Server Starting ===')
+
+  // Before anything else: the boot server holds the port from the start, and
+  // a first boot (or a failed one, which stays up) can last a long time. A
+  // shell that is gone by then must not leave the sidecar holding it.
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
+  exitWithParent(shutdown)
 
   // A stale server on the port (a crashed run) is killed first. The kill
   // looks it up with lsof/netstat (slow on Windows), so only when it is held.
@@ -8411,25 +8419,28 @@ async function startRealServer(): Promise<void> {
     await warmupSongsSearchIndex()
     logTiming('fts_warmup', warmupStart)
   }, 0)
+}
 
-  // Graceful shutdown
-  process.on('SIGINT', async () => {
+/**
+ * Graceful shutdown: on a signal, or when the desktop shell that started this
+ * sidecar is gone. A failed cleanup step must not keep the process (and its
+ * port) alive: closeDatabase throws "database is locked" while prepared
+ * statements are alive, which left the server running (T-149).
+ */
+async function shutdown() {
+  try {
     clearHistory()
     shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
-    await shutdownPostHog()
-    process.exit(0)
-  })
-
-  process.on('SIGTERM', async () => {
-    clearHistory()
-    shutdownMusicPlayer()
-    shutdownMIDI()
-    closeDatabase()
-    await shutdownPostHog()
-    process.exit(0)
-  })
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Shutdown failure for the logs
+    console.error('[shutdown] Cleanup failed, exiting anyway:', error)
+    captureExceptionPostHog(error, { stage: 'shutdown' })
+    process.exitCode = 1
+  }
+  await shutdownPostHog()
+  process.exit()
 }
 
 main().catch((error) => {
