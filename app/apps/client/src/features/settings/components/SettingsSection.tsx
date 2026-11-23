@@ -9,7 +9,10 @@ interface SettingsSectionProps {
   testId?: string
 }
 
-/** Consistent titled card wrapper for a settings panel. */
+/**
+ * Consistent titled card wrapper for a settings panel; highlighted while it
+ * carries `data-active` (the section in view on a Live Stream settings page).
+ */
 export function SettingsSection({
   title,
   description,
@@ -39,7 +42,7 @@ export function SettingsSection({
   return (
     <div
       data-testid={testId}
-      className="flex-1 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900"
+      className="flex-1 rounded-lg border border-gray-200 bg-white p-6 transition-colors data-[active]:border-indigo-400 data-[active]:ring-1 data-[active]:ring-indigo-400/40 dark:border-gray-800 dark:bg-gray-900 dark:data-[active]:border-indigo-500 dark:data-[active]:ring-indigo-500/40"
     >
       {header}
       {children}

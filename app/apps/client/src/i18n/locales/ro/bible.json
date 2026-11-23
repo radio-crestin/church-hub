@@ -157,7 +157,6 @@
   },
   "actionsMenu": {
     "trigger": "Mai multe",
-    "bookmarkDescription": "Marchează versetul deschis acum",
     "addToScheduleDescription": "Adaugă versetul deschis în programul selectat",
     "addToSchedule": "Adaugă versetul în program"
   }

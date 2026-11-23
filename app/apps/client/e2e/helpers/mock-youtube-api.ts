@@ -6,7 +6,8 @@ import type { AddressInfo } from 'node:net'
  * A local stand-in for the YouTube Data API (the server's
  * `YOUTUBE_API_ORIGIN`): a channel with two past broadcasts, two stream keys
  * and two playlists. It records every request, so a spec can check what the
- * server sent when it created a broadcast.
+ * server sent when it created a broadcast. The broadcast it creates is a
+ * video too: listed and updated (its description) like YouTube's.
  */
 export interface YouTubeRequest {
   method: string
@@ -74,6 +75,7 @@ function json(res: import('node:http').ServerResponse, body: unknown) {
 export async function startMockYouTubeApi(): Promise<MockYouTubeApi> {
   const requests: YouTubeRequest[] = []
   let origin = ''
+  let created: { title: string; description: string } | null = null
 
   const thumbnails = (id: string) => ({
     high: { url: `${origin}/thumbs/${id}-high.jpg` },
@@ -136,10 +138,23 @@ export async function startMockYouTubeApi(): Promise<MockYouTubeApi> {
         return json(res, { items: [] })
       }
       if (path === '/youtube/v3/liveBroadcasts' && method === 'POST') {
+        const { snippet } = JSON.parse(body.toString())
+        created = { title: snippet.title, description: snippet.description }
         return json(res, {
           id: CREATED_BROADCAST_ID,
           ...JSON.parse(body.toString()),
         })
+      }
+      if (path === '/youtube/v3/videos' && method === 'GET' && created) {
+        if (id === CREATED_BROADCAST_ID) {
+          return json(res, { items: [{ id, snippet: created }] })
+        }
+      }
+      if (path === '/youtube/v3/videos' && method === 'PUT' && created) {
+        const video = JSON.parse(body.toString())
+        if (video.id === CREATED_BROADCAST_ID) {
+          created = { ...created, ...video.snippet }
+        }
       }
       if (path === '/youtube/v3/videos' && method === 'GET') {
         const found = PAST_BROADCASTS.filter((b) => b.id === id)

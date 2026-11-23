@@ -8,6 +8,7 @@ import { Input } from '~/ui/input'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { useMixerConfig, useMixerConnectionStatus } from '../../hooks'
 import { SettingField } from '../settings-page/SettingField'
+import { SettingFieldRow } from '../settings-page/SettingFieldRow'
 
 /** Whether Church Hub controls the mixer, and where it is on the network. */
 export function MixerConnectionSection() {
@@ -56,34 +57,36 @@ export function MixerConnectionSection() {
         onCheckedChange={(isEnabled) => update({ ...config, isEnabled })}
         testId="mixer-enabled"
       />
-      <SettingField
-        label={t('mixer.setup.host')}
-        description={t('mixer.setup.supportedMixers')}
-      >
-        {(id) => (
-          <Input
-            id={id}
-            value={host}
-            onChange={(e) => setHost(e.target.value)}
-            placeholder="192.168.0.50"
-          />
-        )}
-      </SettingField>
-      <SettingField
-        label={t('mixer.setup.port')}
-        description={t('mixerSettings.connection.portHint')}
-      >
-        {(id) => (
-          <Input
-            id={id}
-            type="number"
-            value={port}
-            onChange={(e) =>
-              setPort(Number.parseInt(e.target.value, 10) || 10024)
-            }
-          />
-        )}
-      </SettingField>
+      <SettingFieldRow>
+        <SettingField
+          label={t('mixer.setup.host')}
+          description={t('mixer.setup.supportedMixers')}
+        >
+          {(id) => (
+            <Input
+              id={id}
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              placeholder="192.168.0.50"
+            />
+          )}
+        </SettingField>
+        <SettingField
+          label={t('mixer.setup.port')}
+          description={t('mixerSettings.connection.portHint')}
+        >
+          {(id) => (
+            <Input
+              id={id}
+              type="number"
+              value={port}
+              onChange={(e) =>
+                setPort(Number.parseInt(e.target.value, 10) || 10024)
+              }
+            />
+          )}
+        </SettingField>
+      </SettingFieldRow>
       <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
         {testStatus === 'success' && (
           <span className="text-sm text-green-600 dark:text-green-400">

@@ -2,7 +2,7 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
-## v0.1.104 — 2026-11-16
+## v0.1.105 — 2026-11-22
 
 ### 🚀 Features
 
@@ -51,9 +51,17 @@
 
 ### 🔧 Changes
 
-- **release**: every release goes out as a pre-release; release.sh promote makes it Latest
-- **release**: release.sh bumps on a branch for a PR, then tags the merge on main
-- **release**: a normal release is Latest; a draft flagged pre-release stays out of the updater
+- T-147 e2e: program-gama edit-as-text waits for the textarea's text before reading it
+- T-166 Identifică: each display shows its number and name again
+- T-167 Login from the LAN: pairing code for passwordless accounts (Super Admin included)
+- T-165 Pre-release fixes: backup card layout shift + Remove confirmation, translated Cancel, no discard prompt on an untouched new song
+- T-164 OBS WebSocket password from crypto.getRandomValues, not Math.random
+- T-161 Romanian texts: agents write them themselves, no Codex
+- T-163 e2e: fake desktop shells report the test server's port
+- T-158 Slides appear on the projector much faster
+- CH-160 Livestream: separate buttons, settings pages, every YouTube setting configurable (template, DVR off)
+- T-159 Screen settings: grouped, explained and fitted
+- T-148 v0.1.104: pre-release first, release.sh promote to Latest
 - T-140 Search fields let Up/Down and page keys move the live slide
 - T-145 Restoring a backup fails on Windows and leaves the server with no database
 - T-144 superfactory.yaml: task checkouts install app/ deps and every Playwright browser the suite uses

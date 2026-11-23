@@ -1,9 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Page, PageHeader } from '~/ui/page'
+import { PageHeader } from '~/ui/page'
+import { SettingsPageRail } from './SettingsPageRail'
+import { useActiveSection } from './useActiveSection'
 
 interface SettingsPageLayoutProps {
   /** Where the back link goes: Live Stream unless given. */
@@ -12,13 +14,18 @@ interface SettingsPageLayoutProps {
   description: string
   /** Buttons on the right of the title. */
   actions?: ReactNode
-  /** A bar kept at the bottom of the window (e.g. Save). */
+  /** A bar kept at the bottom of the pane (e.g. Save). */
   footer?: ReactNode
   children: ReactNode
   testId?: string
 }
 
-/** A livestream settings page: a back link, its title, its sections. */
+/**
+ * A livestream settings page, laid out like the app settings: a rail on the
+ * left with the settings pages, and the page's sections full width beside it,
+ * the one in view highlighted; each column scrolls on its own. On a phone the
+ * rail is hidden and the back link leads out.
+ */
 export function SettingsPageLayout({
   back,
   title,
@@ -29,31 +36,62 @@ export function SettingsPageLayout({
   testId,
 }: SettingsPageLayoutProps) {
   const { t } = useTranslation('livestream')
+  const pane = useRef<HTMLDivElement>(null)
+  const content = useRef<HTMLDivElement>(null)
+  useActiveSection(pane, content)
 
   return (
-    <Page testId={testId}>
-      <div className="mx-auto flex w-full max-w-3xl shrink-0 flex-col gap-2">
-        <Link
-          to={back?.to ?? '/livestream'}
-          className="inline-flex w-fit items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          {back?.label ?? t('settingsPages.back')}
-        </Link>
-        <PageHeader title={title} description={description} actions={actions} />
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 pb-4">
-          {children}
+    <div
+      data-testid={testId}
+      className="flex min-h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:h-[calc(100dvh_-_3rem)] md:flex-row dark:border-gray-800 dark:bg-gray-900"
+    >
+      <aside className="hidden min-h-0 w-56 shrink-0 flex-col border-r border-gray-200 bg-white md:flex lg:w-60 dark:border-gray-800 dark:bg-gray-900">
+        <div className="shrink-0 px-4 pb-3 pt-4">
+          <Link
+            to={back?.to ?? '/livestream'}
+            className="mb-2 inline-flex w-fit items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            {back?.label ?? t('settingsPages.back')}
+          </Link>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t('settingsPages.railTitle')}
+          </h2>
         </div>
-      </div>
-      {footer && (
-        <div className="shrink-0 border-t border-gray-200 pt-3 dark:border-gray-700">
-          <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-end gap-3">
-            {footer}
+        <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+          <SettingsPageRail />
+        </div>
+      </aside>
+
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-gray-50 dark:bg-gray-950">
+        <div
+          ref={pane}
+          className="scrollbar-thin min-h-0 flex-1 overflow-y-auto"
+        >
+          <div className="flex w-full flex-col gap-4 p-4 md:p-6">
+            <Link
+              to={back?.to ?? '/livestream'}
+              className="inline-flex w-fit items-center gap-1 text-sm font-medium text-indigo-600 hover:underline md:hidden dark:text-indigo-400"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              {back?.label ?? t('settingsPages.back')}
+            </Link>
+            <PageHeader
+              title={title}
+              description={description}
+              actions={actions}
+            />
+            <div ref={content} className="flex flex-col gap-4">
+              {children}
+            </div>
           </div>
         </div>
-      )}
-    </Page>
+        {footer && (
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-gray-200 bg-white px-4 py-3 md:px-6 dark:border-gray-800 dark:bg-gray-900">
+            {footer}
+          </div>
+        )}
+      </section>
+    </div>
   )
 }

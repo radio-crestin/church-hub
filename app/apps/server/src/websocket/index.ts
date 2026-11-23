@@ -379,9 +379,32 @@ export function handleWebSocketClose(ws: ServerWebSocket<WebSocketData>) {
 /**
  * Broadcasts presentation state to all connected clients
  */
+type PresentationStateListener = (state: PresentationState) => void
+const presentationStateListeners = new Set<PresentationStateListener>()
+
+/**
+ * Calls `listener` with every presentation state sent to the clients (each
+ * change of what the screens show). Returns the function that stops it.
+ */
+export function onPresentationStateBroadcast(
+  listener: PresentationStateListener,
+): () => void {
+  presentationStateListeners.add(listener)
+  return () => presentationStateListeners.delete(listener)
+}
+
 export function broadcastPresentationState(
   state: PresentationMessage['payload'],
 ) {
+  for (const listener of presentationStateListeners) {
+    // A failing listener must not keep the state from the screens.
+    try {
+      listener(state)
+    } catch (error) {
+      wsLogger.error(`Presentation state listener failed: ${error}`)
+    }
+  }
+
   const message = JSON.stringify({
     type: 'presentation_state',
     payload: state,

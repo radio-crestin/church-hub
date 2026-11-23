@@ -221,14 +221,19 @@ test.describe('Page actions menu', () => {
   test('the Bible page uses the same menu, disabled until a verse is open', async ({
     page,
   }) => {
+    // No verse left on screen by an earlier test, so none is in focus.
+    await page.request.post('/api/presentation/clear-temporary')
     await page.setViewportSize({ width: 1400, height: 900 })
     await page.goto('/bible')
     await expect(page.getByTestId('bible-actions-menu')).toBeVisible({
       timeout: 15000,
     })
 
+    // Like the song page, the bookmark toggle sits in the header itself.
+    await expect(page.getByTestId('bible-bookmark-toggle')).toBeDisabled()
+
     const panel = await openActionsMenu(page, 'bible-actions-menu')
-    await expect(panel.getByTestId('bible-bookmark-toggle')).toBeVisible()
+    await expect(panel.getByTestId('bible-bookmark-toggle')).toHaveCount(0)
     await expect(panel.getByTestId('bible-add-to-schedule')).toBeVisible()
 
     // Nothing is in focus yet, so both rows explain themselves rather than

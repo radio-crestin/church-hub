@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import { isTauri } from '~/config'
 import { MobileConnectionGuard } from '~/features/api-url-config'
 import { LoginGate, LoginPairingPrompt } from '~/features/auth'
+import { HistoryNavigationManager } from '~/features/history-navigation'
 import {
   GlobalAppShortcutManager,
   KeyboardNavigationProvider,
@@ -174,6 +175,7 @@ function MainLayout() {
                               <AutoOpenPageWindows />
                               <SidebarNavigationListener />
                               <GlobalAppShortcutManager />
+                              <HistoryNavigationManager />
                               <AppLayout>
                                 <Outlet />
                               </AppLayout>
