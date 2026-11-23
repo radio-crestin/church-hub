@@ -64,17 +64,19 @@ export function updateScheduleSearchIndex(scheduleId: number): void {
     const combinedContent = songContentResults.map((s) => s.content).join(' ')
 
     // Remove existing index entry (FTS operation - use raw DB)
-    rawDb.run('DELETE FROM schedules_fts WHERE schedule_id = ?', scheduleId)
+    rawDb.run('DELETE FROM schedules_fts WHERE schedule_id = ?', [scheduleId])
 
     // Insert new index entry (FTS operation - use raw DB)
     rawDb.run(
       `INSERT INTO schedules_fts (schedule_id, title, description, song_titles, song_content)
        VALUES (?, ?, ?, ?, ?)`,
-      scheduleId,
-      schedule.title,
-      schedule.description ?? '',
-      combinedTitles,
-      combinedContent,
+      [
+        scheduleId,
+        schedule.title,
+        schedule.description ?? '',
+        combinedTitles,
+        combinedContent,
+      ],
     )
 
     log('debug', `Search index updated for schedule: ${scheduleId}`)
@@ -92,7 +94,7 @@ export function removeFromScheduleSearchIndex(scheduleId: number): void {
     log('debug', `Removing schedule from search index: ${scheduleId}`)
 
     const rawDb = getRawDatabase()
-    rawDb.run('DELETE FROM schedules_fts WHERE schedule_id = ?', scheduleId)
+    rawDb.run('DELETE FROM schedules_fts WHERE schedule_id = ?', [scheduleId])
 
     log('debug', `Schedule removed from search index: ${scheduleId}`)
   } catch (error) {

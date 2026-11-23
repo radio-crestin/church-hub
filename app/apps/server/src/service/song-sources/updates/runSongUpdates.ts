@@ -6,6 +6,7 @@ import {
 import { getStoredSourceUpdates, saveSourceUpdates } from './sourceUpdatesStore'
 import type { SongUpdatesRun, SourceSongChanges, SourceUpdate } from './types'
 import { createLogger } from '../../../utils/logger'
+import { DownloadError } from '../links/DownloadError'
 import { listSongSources } from '../listSongSources'
 
 const logger = createLogger('song-updates')
@@ -27,7 +28,8 @@ function failedCheck(
     imported: 0,
     updated: 0,
     checkedAt: last?.checkedAt ?? 0,
-    error: String(error),
+    error: error instanceof Error ? error.message : String(error),
+    httpStatus: error instanceof DownloadError ? error.status : undefined,
   }
 }
 

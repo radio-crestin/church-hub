@@ -619,7 +619,7 @@ export async function handleLivestreamRoutes(
   const templateMatch = url.pathname.match(
     /^\/api\/livestream\/youtube\/broadcasts\/([^/]+)\/template$/,
   )
-  if (req.method === 'GET' && templateMatch) {
+  if (req.method === 'GET' && templateMatch?.[1]) {
     try {
       const template = await getBroadcastTemplate(
         decodeURIComponent(templateMatch[1]),

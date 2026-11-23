@@ -1,34 +1,25 @@
-import {
-  Eraser,
-  Eye,
-  EyeOff,
-  Loader2,
-  MonitorOff,
-  MonitorPlay,
-} from 'lucide-react'
-import { useCallback, useEffect, useMemo } from 'react'
+import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
   formatShortcutForDisplay,
   useAppShortcuts,
 } from '~/features/keyboard-shortcuts'
-import { Button } from '~/ui/button'
 import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
-import { useScreenShareContext } from '../context'
 import {
   useClearSlide,
   useClearTemporaryContent,
   usePresentationState,
   useShowSlide,
-  useWebSocket,
 } from '../hooks'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '../hooks/useSlideHighlights'
+import { ScreenShareButton } from '../screen-share'
 import type { ClockOverride } from '../types'
 
 // The operators read the time from the Control Room, so its clock is large and
@@ -41,42 +32,6 @@ const CONTROL_ROOM_CLOCK: ClockOverride = {
 
 export function ControlRoom() {
   const { t } = useTranslation(['presentation', 'common'])
-
-  // Connect to WebSocket for real-time updates
-  const { send: wsSend } = useWebSocket()
-
-  // Get screen share context (persists across page navigations)
-  const {
-    state: screenShareState,
-    startScreenShare,
-    stopScreenShare,
-    setClientId,
-    setSend,
-  } = useScreenShareContext()
-
-  // Generate a stable client ID for this session
-  const clientId = useMemo(() => {
-    return `control-room-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-  }, [])
-
-  // Initialize the screen share context with client ID and send function
-  useEffect(() => {
-    setClientId(clientId)
-    setSend(wsSend)
-  }, [clientId, wsSend, setClientId, setSend])
-
-  // Start screen share with audio always enabled (audio playback controlled per-screen)
-  const handleStartScreenShare = useCallback(() => {
-    startScreenShare({ audio: true })
-  }, [startScreenShare])
-
-  // Stop screen share (any client can stop)
-  const handleStopScreenShare = useCallback(() => {
-    // Send stop command - works for both broadcaster and other clients
-    wsSend({ type: 'screen_share_stop' })
-    // If we're the broadcaster, also stop our local stream
-    stopScreenShare()
-  }, [wsSend, stopScreenShare])
 
   const { data: state } = usePresentationState()
   const clearSlide = useClearSlide()
@@ -142,34 +97,7 @@ export function ControlRoom() {
     <div className="flex flex-col h-full gap-4">
       <PageHeader
         title={t('presentation:controlRoom.title')}
-        actions={
-          // Screen Share Button - synced across all clients
-          screenShareState.isActive ? (
-            <Button
-              variant="danger"
-              onClick={handleStopScreenShare}
-              aria-label={t('presentation:controlRoom.screenShare.stop')}
-              className="gap-2"
-            >
-              <MonitorOff className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t('presentation:controlRoom.screenShare.stop')}
-              </span>
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
-              onClick={handleStartScreenShare}
-              aria-label={t('presentation:controlRoom.screenShare.start')}
-              className="gap-2"
-            >
-              <MonitorPlay className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t('presentation:controlRoom.screenShare.start')}
-              </span>
-            </Button>
-          )
-        }
+        actions={<ScreenShareButton />}
       />
 
       {/* Preview Section */}

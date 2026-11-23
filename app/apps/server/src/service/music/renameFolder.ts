@@ -14,7 +14,7 @@ export interface RenameFolderInput {
 
 export function renameFolder(
   input: RenameFolderInput,
-): OperationResult<MusicFolder> {
+): OperationResult & { data?: MusicFolder } {
   const db = getDatabase()
 
   try {

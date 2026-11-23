@@ -8,7 +8,10 @@ import { createLogger } from '../../utils/logger'
 
 const logger = createLogger('bible:verses')
 
-type VerseWithBook = typeof bibleVerses.$inferSelect & {
+type VerseWithBook = Pick<
+  typeof bibleVerses.$inferSelect,
+  'id' | 'translationId' | 'bookId' | 'chapter' | 'verse' | 'text'
+> & {
   bookCode: string
   bookName: string
 }

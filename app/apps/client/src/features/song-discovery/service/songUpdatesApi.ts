@@ -16,7 +16,10 @@ export interface SourceUpdate {
   /** Library songs it brought up to date then. */
   updated: number
   checkedAt: number
+  /** Why the source could not be checked, when it could not. */
   error?: string
+  /** The HTTP status its download got, when that was why, e.g. "403 Forbidden". */
+  httpStatus?: string
 }
 
 /** A song in a notification; `id` once it is in the library. */
@@ -86,6 +89,20 @@ export const cancelSongUpdates = () =>
 /** Syncs the songs waiting for approval: new songs and updates. */
 export const syncPendingSongs = () =>
   call('/api/song-sources/updates/sync', 'POST')
+
+/**
+ * Gives some library songs a source changed its newer lyrics (`update`), or
+ * keeps the library's and stops offering that version (`keep`).
+ */
+export const resolveChangedSongs = (
+  sourceId: string,
+  songIds: number[],
+  action: 'update' | 'keep',
+) =>
+  call(`/api/song-sources/${encodeURIComponent(sourceId)}/changed`, 'POST', {
+    songIds,
+    action,
+  })
 
 /** Counts a source's waiting songs again, after an import here. */
 export const recountSourceSongs = (sourceId: string) =>
