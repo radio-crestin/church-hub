@@ -223,15 +223,15 @@ test.describe('Presentation automation', () => {
       /1 s/,
     )
 
-    // While something is on it stays, folded down to what it will do, and
-    // comes back folded after a reload.
-    await section.getByTestId('schedule-automation-toggle').click()
-    await expect(section).toHaveAttribute('data-collapsed', 'true')
-    await expect(section.getByTestId('automation-loop')).toHaveCount(0)
+    // It is a panel to the right of the preview, and while something is on
+    // it is there by itself after a reload.
     await page.reload()
-    await expect(section).toHaveAttribute('data-collapsed', 'true', {
-      timeout: 15_000,
-    })
+    await expect(section).toBeVisible({ timeout: 15_000 })
+    const preview = await page
+      .getByTestId('schedule-preview-next')
+      .boundingBox()
+    const panel = await section.boundingBox()
+    expect(preview && panel && panel.x > preview.x + preview.width).toBe(true)
 
     const runButton = page.getByTestId('schedule-run-button')
     await runButton.click()
@@ -250,7 +250,7 @@ test.describe('Presentation automation', () => {
     await expect.poll(() => liveStep(request)).toBeNull()
   })
 
-  test('the section closes again once nothing in it is on', async ({
+  test('the panel closes again once nothing in it is on', async ({
     page,
     request,
   }) => {
@@ -259,9 +259,6 @@ test.describe('Presentation automation', () => {
 
     const section = page.getByTestId('schedule-automation-section')
     await expect(section).toBeVisible({ timeout: 15_000 })
-    // Unfold it whatever an earlier test left in this browser's storage.
-    if ((await section.getAttribute('data-collapsed')) === 'true')
-      await section.getByTestId('schedule-automation-toggle').click()
     await expect(section.getByTestId('schedule-automation-close')).toHaveCount(
       0,
     )

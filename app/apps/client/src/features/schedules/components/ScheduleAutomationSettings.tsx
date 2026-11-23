@@ -19,7 +19,7 @@ interface ScheduleAutomationSettingsProps {
 }
 
 /**
- * The four automation settings side by side (stacked on a phone): autoplay,
+ * The four automation settings, one under the other: autoplay,
  * loop, the music volume and starting with Church Hub. Each change is saved as
  * it is made.
  */
@@ -80,7 +80,7 @@ export function ScheduleAutomationSettings({
   }, [volumeOn, volume, automation.musicVolume])
 
   return (
-    <div className="grid gap-x-6 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="divide-y divide-gray-100 dark:divide-gray-700">
       <div>
         <SwitchRow
           label={t('automation.autoplay')}

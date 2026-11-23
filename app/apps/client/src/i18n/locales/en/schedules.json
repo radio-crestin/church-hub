@@ -12,7 +12,6 @@
     "importToQueue": "Import to Queue",
     "saveToFile": "Save to File",
     "loadFromFile": "Load from File",
-    "importFromFile": "Import",
     "editAsText": "Edit as Text",
     "cancel": "Cancel",
     "expandAll": "Expand all",
@@ -21,7 +20,8 @@
     "renameNamed": "Rename presentation {{title}}",
     "renameDescription": "Change the name of this presentation",
     "saveToFileDescription": "Download this presentation as a file",
-    "loadFromFileDescription": "Add the items from a saved presentation, or the songs, passages and notes of a Markdown list such as Marcaje"
+    "loadFromFileDescription": "Add the items from a saved presentation, or the songs, passages and notes of a Markdown list such as Marcaje",
+    "importFromFileDescription": "Create a presentation from a saved .churchprogram file"
   },
   "editor": {
     "title": "Title",
@@ -322,8 +322,6 @@
     "runError": "The presentation could not start",
     "menuDescription": "Autoplay, loop, music volume, start with Church Hub",
     "runningStep": "Running · {{step}}/{{count}}",
-    "expand": "Show the automation settings",
-    "collapse": "Fold the automation settings",
     "hide": "Hide automation",
     "summary": {
       "autoplay": "Moves on every {{seconds}} s",

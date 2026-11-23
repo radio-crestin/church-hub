@@ -66,6 +66,7 @@ const SCHEDULE_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
     { id: 'col-1', panelIds: ['items'] },
     { id: 'col-2', panelIds: ['preview'] },
+    { id: 'col-3', panelIds: ['automation'] },
   ],
 }
 
@@ -650,6 +651,9 @@ export function SchedulePresenter({
     )
   }
 
+  const showAutomationSection =
+    canEditProgram && (automationOpen || automationNeeded)
+
   // The item list and the live preview are both movable: an operator who wants
   // the preview under the list rather than beside it just drags it there.
   const workspacePanels: WorkspacePanel[] = [
@@ -743,10 +747,18 @@ export function SchedulePresenter({
         </div>
       ),
     },
+    {
+      id: 'automation',
+      title: t('automation.title'),
+      available: showAutomationSection,
+      render: () => (
+        <ScheduleAutomationSection
+          schedule={schedule}
+          onClose={() => setAutomationOpen(false)}
+        />
+      ),
+    },
   ]
-
-  const showAutomationSection =
-    canEditProgram && (automationOpen || automationNeeded)
 
   // Panels only form movable columns on a large screen; renaming works anywhere.
   const menuItems: ActionMenuItem[] = [
@@ -902,19 +914,14 @@ export function SchedulePresenter({
         </div>
       </div>
 
-      {showAutomationSection && (
-        <ScheduleAutomationSection
-          schedule={schedule}
-          onClose={() => setAutomationOpen(false)}
-        />
-      )}
-
       {/* Main Content - Two Panel Layout */}
       <Workspace
         id="schedule-presenter"
         panels={workspacePanels}
         defaultLayout={SCHEDULE_WORKSPACE_LAYOUT}
-        defaultColumnSizes={['40%', '60%']}
+        defaultColumnSizes={
+          showAutomationSection ? ['35%', '43%', '22%'] : ['40%', '60%']
+        }
         stacked={!isLargeScreen}
         className="lg:flex-1 lg:min-h-0"
       />

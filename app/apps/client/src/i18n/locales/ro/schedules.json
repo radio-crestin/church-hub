@@ -12,7 +12,6 @@
     "importToQueue": "Adaugă în coadă",
     "saveToFile": "Salvează în fișier",
     "loadFromFile": "Încarcă din fișier",
-    "importFromFile": "Importa",
     "editAsText": "Editeaza ca Text",
     "cancel": "Anulează",
     "expandAll": "Extinde tot",
@@ -21,7 +20,8 @@
     "renameNamed": "Redenumește prezentarea {{title}}",
     "renameDescription": "Schimbă numele acestei prezentări",
     "saveToFileDescription": "Descarcă prezentarea ca fișier",
-    "loadFromFileDescription": "Adaugă elementele unei prezentări salvate sau cântările, pasajele și notițele dintr-o listă Markdown, de exemplu Marcaje"
+    "loadFromFileDescription": "Adaugă elementele unei prezentări salvate sau cântările, pasajele și notițele dintr-o listă Markdown, de exemplu Marcaje",
+    "importFromFileDescription": "Creează o prezentare dintr-un fișier .churchprogram salvat"
   },
   "editor": {
     "title": "Titlu",
@@ -338,8 +338,6 @@
     "runError": "Prezentarea nu a putut porni",
     "menuDescription": "Trecere automată, buclă, volumul muzicii, pornire cu Church Hub",
     "runningStep": "Rulează · {{step}}/{{count}}",
-    "expand": "Arată setările de automatizare",
-    "collapse": "Restrânge setările de automatizare",
     "hide": "Ascunde automatizarea",
     "summary": {
       "autoplay": "Trece singură la {{seconds}} s",

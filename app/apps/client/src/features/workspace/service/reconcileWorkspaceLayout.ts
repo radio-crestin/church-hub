@@ -29,10 +29,27 @@ export function reconcileWorkspaceLayout(
   for (const panelId of availableIds) {
     if (placed.has(panelId)) continue
 
+    const fallbackIndex = fallback.columns.findIndex((column) =>
+      column.panelIds.includes(panelId),
+    )
+    const fallbackColumn = fallback.columns[fallbackIndex]
     const neighbours =
-      fallback.columns
-        .find((column) => column.panelIds.includes(panelId))
-        ?.panelIds.filter((id) => id !== panelId) ?? []
+      fallbackColumn?.panelIds.filter((id) => id !== panelId) ?? []
+
+    // A panel the page gives a column of its own (automation beside the
+    // preview) gets that column back, in its default place.
+    if (
+      fallbackColumn &&
+      neighbours.length === 0 &&
+      !columns.some((column) => column.id === fallbackColumn.id)
+    ) {
+      columns.splice(Math.min(fallbackIndex, columns.length), 0, {
+        id: fallbackColumn.id,
+        panelIds: [panelId],
+      })
+      placed.add(panelId)
+      continue
+    }
 
     const target =
       columns.find((column) =>
