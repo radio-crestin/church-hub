@@ -3,14 +3,14 @@ import { ChevronRight, type LucideIcon } from 'lucide-react'
 
 export type StatusTone = 'ok' | 'busy' | 'off' | 'error'
 
-const DOT: Record<StatusTone, string> = {
+export const STATUS_DOT: Record<StatusTone, string> = {
   ok: 'bg-green-500',
   busy: 'bg-yellow-500 animate-pulse',
   off: 'bg-gray-400 dark:bg-gray-500',
   error: 'bg-red-500',
 }
 
-interface SettingsLinkButtonProps {
+export interface SettingsLinkButtonProps {
   to:
     | '/livestream/youtube'
     | '/livestream/obs'
@@ -48,7 +48,7 @@ export function SettingsLinkButton({
         </span>
         <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           <span
-            className={`h-2 w-2 shrink-0 rounded-full ${DOT[tone]}`}
+            className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[tone]}`}
             aria-hidden
           />
           <span className="truncate">{status}</span>

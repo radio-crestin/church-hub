@@ -30,10 +30,13 @@ test.describe.configure({ mode: 'serial' })
 test.setTimeout(300_000)
 
 test.beforeAll(async ({ browser }) => {
+  // A hook keeps the default 30 s unless set here; the extra server boots slower on a busy machine.
+  test.setTimeout(300_000)
   youtube = await startMockYouTubeApi()
   server = new ExtraServer()
   await server.start({ YOUTUBE_API_ORIGIN: youtube.origin })
   api = await server.adminRequest()
+  await server.skipOnboarding(api)
   const tokens = await api.post('/api/livestream/youtube/tokens', {
     data: {
       accessToken: 'e2e-access',
