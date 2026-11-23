@@ -41,23 +41,56 @@ export function updateLoadingHint(message: string) {
   if (el) el.textContent = message
 }
 
-function renderProgress(progress: HealthSnapshot['progress']) {
+function showProgressBar(percent: number, label: string) {
   const box = byId('loading-progress')
   const bar = byId('loading-progress-bar')
-  const label = byId('loading-progress-label')
-  if (!box || !bar || !label) return
-  if (!progress || progress.total <= 0) {
-    box.style.display = 'none'
-    return
-  }
+  const labelEl = byId('loading-progress-label')
+  if (!box || !bar || !labelEl) return
   box.style.display = ''
-  const percent = Math.min(100, (progress.done / progress.total) * 100)
-  bar.style.width = `${percent.toFixed(1)}%`
-  box.setAttribute('aria-valuenow', String(Math.round(percent)))
-  label.textContent = startupText('progress', {
+  bar.style.width = `${Math.min(100, percent).toFixed(1)}%`
+  box.setAttribute('aria-valuenow', String(Math.round(Math.min(100, percent))))
+  labelEl.textContent = label
+}
+
+function hideProgressBar() {
+  const box = byId('loading-progress')
+  if (box) box.style.display = 'none'
+}
+
+function countText(progress: { done: number; total: number }) {
+  return startupText('progress', {
     done: formatCount(progress.done),
     total: formatCount(progress.total),
   })
+}
+
+/** The current step's own progress (song search), when it reports one. */
+function renderProgress(progress: HealthSnapshot['progress']) {
+  if (!progress || progress.total <= 0) return hideProgressBar()
+  showProgressBar((progress.done / progress.total) * 100, countText(progress))
+}
+
+/**
+ * A first start's progress across all its steps: the steps done, plus the
+ * part of the current step that reports a count.
+ */
+function renderOverallProgress(
+  stepIndex: number,
+  progress: HealthSnapshot['progress'],
+) {
+  const stepPart =
+    progress && progress.total > 0 ? progress.done / progress.total : 0
+  const percent = ((stepIndex + stepPart) / STEP_ORDER.length) * 100
+  const stepLabel = startupText('stepOf', {
+    step: String(stepIndex + 1),
+    total: String(STEP_ORDER.length),
+  })
+  showProgressBar(
+    percent,
+    progress && progress.total > 0
+      ? `${stepLabel} · ${countText(progress)}`
+      : stepLabel,
+  )
 }
 
 function renderStepList(currentIndex: number) {
@@ -92,11 +125,11 @@ export function renderStartupProgress(health: HealthSnapshot) {
   furthestStepIndex = Math.max(furthestStepIndex, STEP_ORDER.indexOf(step))
   const shownStep = STEP_ORDER[furthestStepIndex] ?? step
   updateLoadingMessage(startupStepText(shownStep))
-  renderProgress(shownStep === step ? health.progress : null)
-  if (health.firstRun) {
-    renderStepList(furthestStepIndex)
-    updateLoadingHint(startupText('firstRunHint'))
-  }
+  const progress = shownStep === step ? health.progress : null
+  if (!health.firstRun) return renderProgress(progress)
+  renderOverallProgress(furthestStepIndex, progress)
+  renderStepList(furthestStepIndex)
+  updateLoadingHint(startupText('firstRunHint'))
 }
 
 export interface LoadingAction {
