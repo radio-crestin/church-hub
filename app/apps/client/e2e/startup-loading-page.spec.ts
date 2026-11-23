@@ -98,12 +98,14 @@ test.describe('start-up loading page', () => {
       progress: { done: 12000, total: 26463 },
     }
     await expect(loadingMessage(page)).toHaveText('Preparing song search')
+    // A first start's bar covers all its steps: 3 of 5 done, plus 45% of
+    // the song search.
     await expect(page.locator('#loading-progress-label')).toHaveText(
-      '12,000 of 26,463 songs',
+      'Step 4 of 5 · 12,000 of 26,463 songs',
     )
     await expect(page.locator('#loading-progress')).toHaveAttribute(
       'aria-valuenow',
-      '45',
+      '69',
     )
     await expect(stepState(page, 'bibles')).toHaveAttribute(
       'data-state',
@@ -197,7 +199,7 @@ test.describe('start-up loading page', () => {
       'Pregătim căutarea cântărilor',
     )
     await expect(page.locator('#loading-progress-label')).toHaveText(
-      'Cântări: 12.000 din 26.463',
+      'Pasul 4 din 5 · Cântări: 12.000 din 26.463',
     )
     health.next = null
     await expect(page.locator('#loading-screen')).toHaveCount(0)

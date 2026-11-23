@@ -3,6 +3,7 @@ import { readLackingSongs } from './lackingSongsStore'
 import type { SongRef, SongSet, SourceSongChanges } from './types'
 import {
   deleteNotificationsOfKind,
+  listNotifications,
   upsertNotification,
 } from '../../notifications'
 import { listSongSources } from '../listSongSources'
@@ -52,12 +53,26 @@ function pendingChanges(): SourceSongChanges[] {
 
 /**
  * The one "songs waiting for your approval" notification, matching what
- * waits now: a new one when more songs wait, none when nothing does.
+ * waits now: a new one when a check found other songs, none when nothing
+ * waits. `fewer`: only some of them are left (the user imported, updated
+ * or kept some), so it is updated where it is, if still there, and never
+ * pops up again.
  */
-export function refreshPendingNotification(): void {
+export function refreshPendingNotification(fewer = false): void {
   const sources = pendingChanges().filter(hasChanges)
   if (sources.length === 0) {
     deleteNotificationsOfKind('songs-pending')
+    return
+  }
+  if (fewer) {
+    const current = listNotifications().find((n) => n.kind === 'songs-pending')
+    if (current) {
+      upsertNotification({
+        id: current.id,
+        kind: current.kind,
+        data: { sources },
+      })
+    }
     return
   }
   const id = `songs-pending:${Bun.hash(JSON.stringify(sources)).toString(36)}`

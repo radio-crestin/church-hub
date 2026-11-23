@@ -18,7 +18,8 @@ export const vettedLookup: LookupFunction = (hostname, options, callback) => {
       return
     }
     const list = addresses as LookupAddress[]
-    if (list.length === 0 || list.some((a) => isBlockedAddress(a.address))) {
+    const [first] = list
+    if (!first || list.some((a) => isBlockedAddress(a.address))) {
       callback(new Error(PRIVATE_ADDRESS_ERROR), '', 0)
       return
     }
@@ -29,6 +30,6 @@ export const vettedLookup: LookupFunction = (hostname, options, callback) => {
       )
       return
     }
-    callback(null, list[0].address, list[0].family)
+    callback(null, first.address, first.family)
   })
 }

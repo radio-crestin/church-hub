@@ -18,7 +18,7 @@ interface OBSMessage {
   d: Record<string, unknown>
 }
 
-interface HelloData {
+type HelloData = {
   obsStudioVersion: string
   obsWebSocketVersion: string
   rpcVersion: number
@@ -28,7 +28,7 @@ interface HelloData {
   }
 }
 
-interface IdentifiedData {
+type IdentifiedData = {
   negotiatedRpcVersion: number
 }
 

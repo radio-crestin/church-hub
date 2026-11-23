@@ -27,12 +27,12 @@ export function documentFrequency(
   const { terms, docCounts, documentCount } = vocabulary
   const start = lowerBound(terms, variant.text)
   if (!variant.prefix) {
-    return terms[start] === variant.text ? docCounts[start] : 0
+    return terms[start] === variant.text ? (docCounts[start] ?? 0) : 0
   }
   const end = lowerBound(terms, variant.text + PAST_EVERY_CHAR)
   let sum = 0
   for (let index = start; index < end && sum < documentCount; index++) {
-    sum += docCounts[index]
+    sum += docCounts[index] ?? 0
   }
   return Math.min(sum, documentCount)
 }

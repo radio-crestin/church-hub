@@ -20,8 +20,8 @@ const KEY_REGEX =
  */
 function extractLastParagraph(html: string): string | null {
   const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
-  if (!paragraphs || paragraphs.length === 0) return null
-  const lastP = paragraphs[paragraphs.length - 1]
+  const lastP = paragraphs?.at(-1)
+  if (lastP === undefined) return null
   return lastP.replace(/<\/?p>/gi, '').trim()
 }
 
@@ -30,9 +30,9 @@ function extractLastParagraph(html: string): string | null {
  */
 function removeLastParagraph(html: string): string {
   const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
-  if (!paragraphs || paragraphs.length === 0) return html
+  const lastP = paragraphs?.at(-1)
+  if (lastP === undefined) return html
 
-  const lastP = paragraphs[paragraphs.length - 1]
   const lastIndex = html.lastIndexOf(lastP)
 
   if (lastIndex === -1) return html

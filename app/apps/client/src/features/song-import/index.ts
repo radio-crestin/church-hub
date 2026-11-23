@@ -28,7 +28,6 @@ export type {
 } from './types'
 export type { ParsedPptx, ParsedSlide } from './utils'
 export {
-  downloadFromUrl,
   extractPptxFromZip,
   parsePptxFile,
   processImportFiles,

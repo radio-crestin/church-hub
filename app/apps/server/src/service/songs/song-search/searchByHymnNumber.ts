@@ -26,9 +26,8 @@ export function searchByHymnNumber(
   filter: SongFilterSql,
   limit: number,
 ): SongSearchResult[] | null {
-  const match = query.trim().match(HYMN_NUMBER_RE)
-  if (!match) return null
-  const typed = match[1]
+  const typed = query.trim().match(HYMN_NUMBER_RE)?.[1]
+  if (!typed) return null
   const value = Number.parseInt(typed, 10).toString()
 
   const rows = getRawDatabase()

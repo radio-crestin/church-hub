@@ -1,57 +1,53 @@
 import { Eraser, Loader2 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  ContentTypeButton,
-  LivePreview,
-  usePresentationState,
-  useWebSocket,
-} from '~/features/presentation'
+import { ContentTypeButton } from './ContentTypeButton'
+import { LiveBadge } from './LiveBadge'
+import { LivePreview } from './LivePreview'
+import { usePresentationState } from '../hooks/usePresentationState'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
-} from '~/features/presentation/hooks/useSlideHighlights'
-import type { TemporaryContent } from '~/features/presentation/types'
-import { Switch } from '~/ui/switch/Switch'
-import { LiveBadge } from './LiveBadge'
+} from '../hooks/useSlideHighlights'
+import { useWebSocket } from '../hooks/useWebSocket'
+import type { TemporaryContent } from '../types'
 
-interface SongPhoneStageProps {
-  songId: number
-  previewMode: boolean
-  onTogglePreviewMode: () => void
+interface PhoneStageProps {
+  /** What this page shows is on the screens: the LIVE chip lights up. */
+  isLive: boolean
+  testId: string
+  /** The page's own switches beside the LIVE chip (the song's Preview mode). */
+  headerActions?: ReactNode
   /** Staged content shown in the preview while not yet projected. */
-  previewContent: TemporaryContent | null
-  hideBackground: boolean
+  previewContent?: TemporaryContent | null
+  hideBackground?: boolean
 }
 
 /**
- * The song page's preview on a phone, pinned at the top while the verses
- * scroll under it (see WorkspaceTabs). Once the page scrolls it shrinks to a
- * thumbnail beside what is live, so it never leaves the screen. Previous,
- * hide and next sit at the bottom instead (SongPhoneControls).
+ * A page's preview on a phone, pinned at the top while the page scrolls under
+ * it (see WorkspaceTabs). Once the page scrolls it shrinks to a thumbnail
+ * beside what is live, so it never leaves the screen. Previous, hide and next
+ * sit at the bottom instead (PhoneSlideControls).
  */
-export function SongPhoneStage({
-  songId,
-  previewMode,
-  onTogglePreviewMode,
+export function PhoneStage({
+  isLive,
+  testId,
+  headerActions,
   previewContent,
   hideBackground,
-}: SongPhoneStageProps) {
-  const { t } = useTranslation(['songs', 'bible'])
+}: PhoneStageProps) {
+  const { t } = useTranslation('bible')
   useWebSocket()
   const { data: state } = usePresentationState()
   const { data: highlights } = useSlideHighlights()
   const clearHighlights = useClearSlideHighlights()
 
   const content = state?.temporaryContent
-  const isLive =
-    !(state?.isHidden ?? true) &&
-    content?.type === 'song' &&
-    content.data.songId === songId
 
   return (
     <div
-      data-testid="song-phone-stage"
+      data-testid={testId}
       className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
     >
       <div className="flex items-center gap-2 p-2 border-b border-gray-200 dark:border-gray-700 group-data-[stuck=true]/pinned:hidden">
@@ -63,7 +59,7 @@ export function SongPhoneStage({
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
               className="flex items-center p-1.5 text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 shrink-0"
-              aria-label={t('bible:controls.clearHighlights')}
+              aria-label={t('controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -74,16 +70,7 @@ export function SongPhoneStage({
           )}
         </div>
         <LiveBadge isLive={isLive} />
-        <label className="flex items-center gap-1.5 select-none shrink-0">
-          <Switch
-            id="song-preview-mode"
-            checked={previewMode}
-            onCheckedChange={onTogglePreviewMode}
-          />
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {t('preview.previewMode')}
-          </span>
-        </label>
+        {headerActions}
       </div>
       <div className="flex items-center gap-3 p-2">
         <div className="w-full shrink-0 transition-[width] duration-200 group-data-[stuck=true]/pinned:w-2/5">

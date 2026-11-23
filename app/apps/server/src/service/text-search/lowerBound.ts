@@ -4,7 +4,8 @@ export function lowerBound(sorted: string[], value: string): number {
   let high = sorted.length
   while (low < high) {
     const mid = (low + high) >>> 1
-    if (sorted[mid] < value) low = mid + 1
+    const entry = sorted[mid]
+    if (entry !== undefined && entry < value) low = mid + 1
     else high = mid
   }
   return low

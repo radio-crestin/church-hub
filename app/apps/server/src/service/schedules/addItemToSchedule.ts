@@ -170,9 +170,7 @@ export function addItemToSchedule(
         sortOrder: number
       }> = []
 
-      for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i]
-
+      for (const [i, entry] of entries.entries()) {
         // Fetch verses for this entry
         const verses = getEntryVerses(entry)
 
