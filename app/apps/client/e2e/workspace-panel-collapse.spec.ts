@@ -7,7 +7,7 @@ import {
 } from './helpers/song-page-layout'
 
 /**
- * Marcaje / Programe / Versiuni share one column, and each shuts down to its
+ * Marcaje / Programe / Versiuni (and Pe aceeași temă) share one column, and each shuts down to its
  * header with its own chevron. However the column got into its state — one
  * section shut or two, in any order, after resizing by hand, after a reload or
  * a trip through the other editing layout — it never shows a band of nothing:
@@ -23,13 +23,14 @@ import {
 // The workspace only renders as columns on large (lg) screens.
 test.use({ viewport: { width: 1440, height: 900 } })
 
-const PANEL_IDS = ['bookmarks', 'schedules', 'versions'] as const
+const PANEL_IDS = ['bookmarks', 'schedules', 'versions', 'same-theme'] as const
 type PanelId = (typeof PANEL_IDS)[number]
 
 const TOGGLES: Record<PanelId, string> = {
   bookmarks: 'bookmarks-collapse-toggle',
   schedules: 'schedule-collapse-toggle',
   versions: 'versions-collapse-toggle',
+  'same-theme': 'same-theme-collapse-toggle',
 }
 
 /** Height of the divider drawn between two rows (`WorkspaceSeparator`). */
@@ -132,6 +133,10 @@ async function seedPreferences(
         'song-detail:versions-open',
         String(open.versions),
       )
+      window.localStorage.setItem(
+        'song-detail:same-theme-open',
+        String(open['same-theme']),
+      )
     },
     {
       layout,
@@ -142,7 +147,17 @@ async function seedPreferences(
   )
 }
 
-const ALL_OPEN = { bookmarks: true, schedules: true, versions: true }
+/**
+ * Marcaje, Programe and Versiuni open. Pe aceeași temă, the column's fourth
+ * section, stays shut so these tests keep to the three they are about; it is
+ * still measured, so its header must sit in the column without a gap too.
+ */
+const ALL_OPEN = {
+  bookmarks: true,
+  schedules: true,
+  versions: true,
+  'same-theme': false,
+}
 
 test.describe('Shutting side panels', () => {
   let songId: number
@@ -205,7 +220,7 @@ test.describe('Shutting side panels', () => {
           .toBeLessThan(90)
 
         const shut = await expectColumnFilled(page)
-        const room = roomForOpenRows(shut, ['versions'])
+        const room = roomForOpenRows(shut, ['versions', 'same-theme'])
         expect(
           shut.rows.bookmarks.height + shut.rows.schedules.height,
         ).toBeCloseTo(room, -1)
@@ -231,7 +246,7 @@ test.describe('Shutting side panels', () => {
         expect(shut.rows.schedules.height).toBeLessThan(90)
         expect(shut.rows.versions.height).toBeLessThan(90)
         expect(shut.rows.bookmarks.height).toBeCloseTo(
-          roomForOpenRows(shut, ['schedules', 'versions']),
+          roomForOpenRows(shut, ['schedules', 'versions', 'same-theme']),
           -1,
         )
 
@@ -241,7 +256,7 @@ test.describe('Shutting side panels', () => {
         })
         const reloaded = await expectColumnFilled(page)
         expect(reloaded.rows.bookmarks.height).toBeCloseTo(
-          roomForOpenRows(reloaded, ['schedules', 'versions']),
+          roomForOpenRows(reloaded, ['schedules', 'versions', 'same-theme']),
           -1,
         )
       })
@@ -255,6 +270,7 @@ test.describe('Shutting side panels', () => {
           bookmarks: true,
           schedules: false,
           versions: true,
+          'same-theme': false,
         })
         await openPage(page, songId)
         await expectColumnFilled(page)
@@ -263,7 +279,7 @@ test.describe('Shutting side panels', () => {
         const shut = await expectColumnFilled(page)
         expect(shut.rows.bookmarks.height).toBeLessThan(90)
         expect(shut.rows.versions.height).toBeCloseTo(
-          roomForOpenRows(shut, ['bookmarks', 'schedules']),
+          roomForOpenRows(shut, ['bookmarks', 'schedules', 'same-theme']),
           -1,
         )
 
@@ -283,7 +299,7 @@ test.describe('Shutting side panels', () => {
           })
           .toBeGreaterThan(150)
         const allOpen = await expectColumnFilled(page)
-        for (const id of PANEL_IDS) {
+        for (const id of ['bookmarks', 'schedules', 'versions'] as const) {
           expect(allOpen.rows[id].height).toBeGreaterThan(150)
         }
       })

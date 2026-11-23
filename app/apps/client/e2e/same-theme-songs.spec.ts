@@ -6,7 +6,7 @@ import { type APIRequestContext, expect, test } from '@playwright/test'
  * no theme data), never its versions (those stay in Versiuni).
  */
 
-const suffix = Math.random().toString(36).replace(/\d/g, '').slice(0, 6)
+const suffix = Math.random().toString(36).replace(/[^a-z]/g, '').slice(0, 6)
 /** Words no other song holds, so these songs only meet each other. */
 const word = (base: string) => `${base}${suffix}`
 
