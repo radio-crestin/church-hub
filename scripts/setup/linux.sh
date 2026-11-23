@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The Linux system libraries this project needs: Playwright's browsers (WebKit's above all), at the version
-# app/bun.lock pins, and the Tauri shell's build libraries (WebKitGTK, tray, rodio's and the MIDI module's ALSA),
-# without which the review build (app/scripts/review-build.ts) fails to compile the shell.
+# app/bun.lock pins, and the Tauri shell's build libraries (WebKitGTK, tray, rodio's and the MIDI module's ALSA)
+# and xdg-utils (the AppImage bundles xdg-open), without which the review build (app/scripts/review-build.ts)
+# fails to compile or bundle the shell.
 # Idempotent: only the packages dpkg doesn't have yet, so a ready machine installs nothing.
 set -euo pipefail
 # apt is usable as root, or through sudo when Superfactory allows it.
@@ -31,7 +32,7 @@ version=$(grep -oE '"playwright@[0-9.]+"' app/bun.lock | head -1 | grep -oE '[0-
 # `bun x`, not bunx: a machine-wide bun may come without the bunx link.
 playwright=$(bun x "playwright@$version" install-deps --dry-run chromium webkit 2>/dev/null |
   sed -n 's/.*--no-install-recommends \([^"]*\)".*/\1/p')
-tauri="build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libasound2-dev"
+tauri="build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libasound2-dev xdg-utils"
 missing=$(for pkg in $playwright $tauri; do dpkg -s "$pkg" >/dev/null 2>&1 || echo "$pkg"; done)
 [ -z "$missing" ] && exit 0
 # shellcheck disable=SC2086
