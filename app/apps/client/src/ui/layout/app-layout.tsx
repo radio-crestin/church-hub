@@ -82,16 +82,19 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
         </div>
         {/* Phones: the tab bar and what is live, or the page's own controls
-            when it has a PhoneBottomBar (the slot then hides the rest). A
-            page keeps its phone layout, and so its bar, up to `lg`; the tab
-            bar gives way to the sidebar from `md`. */}
+            when it has a PhoneBottomBar (they stand in for the live strip,
+            and for the tab bar too unless the bar keeps it). A page keeps its
+            phone layout, and so its bar, up to `lg`; the tab bar gives way to
+            the sidebar from `md`. */}
         <div className="group lg:hidden shrink-0">
           <div ref={setPhoneBottomBarSlot} />
           {isPhone && (
-            <div className="group-has-[[data-phone-bottom-bar]]:hidden">
+            <div className="group-has-[[data-replaces-tab-bar]]:hidden">
               {/* The control room is all about what is live already. */}
               {location.pathname !== '/present' && (
-                <MobileLiveStrip liveProgram={liveProgram} />
+                <div className="group-has-[[data-phone-bottom-bar]]:hidden">
+                  <MobileLiveStrip liveProgram={liveProgram} />
+                </div>
               )}
               <MobileTabBar onOpenMore={() => setIsMobileMenuOpen(true)} />
             </div>
