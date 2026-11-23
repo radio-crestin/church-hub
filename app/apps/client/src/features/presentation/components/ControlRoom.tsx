@@ -13,14 +13,18 @@ import {
   formatShortcutForDisplay,
   useAppShortcuts,
 } from '~/features/keyboard-shortcuts'
+import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { Button } from '~/ui/button'
 import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
+import { PhoneSlideControls } from './PhoneSlideControls'
 import { useScreenShareContext } from '../context'
 import {
+  type LiveProgramSteps,
   useClearSlide,
   useClearTemporaryContent,
+  useMoveLive,
   usePresentationState,
   useShowSlide,
   useWebSocket,
@@ -39,8 +43,16 @@ const CONTROL_ROOM_CLOCK: ClockOverride = {
   fontSize: 140,
 }
 
-export function ControlRoom() {
+interface ControlRoomProps {
+  /** The program whose step is on the screens: the phone's arrows walk it. */
+  liveProgram: LiveProgramSteps | null
+}
+
+export function ControlRoom({ liveProgram }: ControlRoomProps) {
   const { t } = useTranslation(['presentation', 'common'])
+  // A phone has no arrow keys: previous, hide and next sit at the bottom.
+  const isPhone = !useMediaQuery('(min-width: 1024px)')
+  const { goNext, goPrev, isMoving } = useMoveLive(liveProgram)
 
   // Connect to WebSocket for real-time updates
   const { send: wsSend } = useWebSocket()
@@ -173,7 +185,7 @@ export function ControlRoom() {
       />
 
       {/* Preview Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4 lg:flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-4 shrink-0 gap-4">
           {/* LEFT: Content Button */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -225,8 +237,8 @@ export function ControlRoom() {
                 )}
               </button>
             )}
-            {/* Hide/Show Button */}
-            {!isHidden ? (
+            {/* Hide/Show Button (on a phone, in the bottom bar) */}
+            {isPhone ? null : !isHidden ? (
               <button
                 type="button"
                 onClick={handleHide}
@@ -266,12 +278,32 @@ export function ControlRoom() {
           </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+        <div className="lg:flex-1 flex items-center justify-center min-h-0 overflow-hidden">
           <div className="w-full h-full flex items-center justify-center">
             <LivePreview clockOverride={CONTROL_ROOM_CLOCK} />
           </div>
         </div>
       </div>
+
+      {isPhone && (
+        <PhoneSlideControls
+          testId="control-room-phone"
+          keepsTabBar
+          onPrev={goPrev}
+          onNext={goNext}
+          canPrev={hasTemporaryContent && !isHidden}
+          canNext={hasTemporaryContent && !isHidden}
+          isNavigating={isMoving}
+          isLive={isLive}
+          onHide={handleHide}
+          isHiding={clearSlide.isPending || clearTemporary.isPending}
+          project={
+            isHidden && !!state?.lastSongSlideId
+              ? { onClick: handleShow, isPending: showSlideCommand.isPending }
+              : undefined
+          }
+        />
+      )}
     </div>
   )
 }

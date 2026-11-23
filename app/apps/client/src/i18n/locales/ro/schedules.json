@@ -76,7 +76,7 @@
     "noResults": "Nicio cantare gasita",
     "openSearch": "Cauta in acest program",
     "closeSearch": "Inchide cautarea",
-    "stopLiveItem": "Opreste afisarea programului",
+    "stopLiveItem": "Oprește afișarea programului",
     "itemsTitle": "Elementele programului",
     "previewTitle": "Previzualizare",
     "presentItem": "Afiseaza pe ecran",
@@ -140,7 +140,7 @@
   "scenePicker": {
     "title": "Selecteaza Scena",
     "noScenes": "Nu sunt scene OBS disponibile. Conecteaza-te la OBS pentru a vedea scenele.",
-    "current": "Curenta"
+    "current": "Curentă"
   },
   "insertSlide": {
     "title": "Insereaza Slide",
