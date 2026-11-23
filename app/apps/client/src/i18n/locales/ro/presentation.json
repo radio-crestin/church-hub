@@ -95,7 +95,16 @@
       "left": "Stânga",
       "right": "Dreapta",
       "stretchHorizontal": "Lățimea se întinde între constrângerile stânga și dreapta",
-      "stretchVertical": "Înălțimea se întinde între constrângerile sus și jos"
+      "stretchVertical": "Înălțimea se întinde între constrângerile sus și jos",
+      "copy": "Copiază poziția",
+      "paste": "Lipește poziția",
+      "nothingCopied": "Copiază întâi poziția unui element",
+      "copied": "Poziția a fost copiată. Lipește-o pe alt element, tip de slide sau ecran.",
+      "lock": "Blochează",
+      "locked": "Blocat",
+      "lockHint": "Blochează-l, ca să nu fie mutat din greșeală",
+      "unlockHint": "Deblochează-l ca să-l poți muta sau redimensiona",
+      "lockedDescription": "Poziția e blocată. Deblochează elementul ca să-l muți sau să-i schimbi mărimea."
     },
     "textStyle": {
       "fontFamily": "Font",
