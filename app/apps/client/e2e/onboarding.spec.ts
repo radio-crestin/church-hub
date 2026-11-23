@@ -69,7 +69,7 @@ test.describe('first-run onboarding', () => {
 
     await onboarding
       .getByRole('button', {
-        name: /^(Start using Church Hub|Începeți să folosiți Church Hub)$/,
+        name: /^(Start using Church Hub|Începe să folosești Church Hub)$/,
       })
       .click()
     await expect(onboarding).toHaveCount(0)

@@ -1,5 +1,5 @@
 {
-  "starting": "Se pornește Church Hub",
+  "starting": "Church Hub pornește",
   "connecting": "Se conectează la server",
   "steps": {
     "database": "Pregătim baza de date",
@@ -18,7 +18,7 @@
   "errorServerStopped": "Serverul local Church Hub s-a oprit",
   "retry": "Reîncearcă",
   "restart": "Repornește serverul",
-  "retryHint": "Apasă reîncearcă mai jos — sau închide complet și redeschide Church Hub.",
-  "restartHint": "Repornește-l mai jos — sau închide complet și redeschide Church Hub.",
+  "retryHint": "Apasă „Reîncearcă” mai jos sau închide complet Church Hub și deschide-l din nou.",
+  "restartHint": "Repornește-l mai jos sau închide complet Church Hub și deschide-l din nou.",
   "reported": "Eroarea a fost raportată automat echipei."
 }

@@ -6,7 +6,7 @@
   "title": "Istoricul cântării",
   "description": "Cine a modificat „{{title}}” și când",
   "close": "Închide",
-  "empty": "Nicio modificare înregistrată încă. Fiecare modificare salvată de acum încolo va apărea aici.",
+  "empty": "Încă nu s-a înregistrat nicio modificare. Fiecare modificare pe care o salvezi de acum încolo va apărea aici.",
   "kind": {
     "created": "A creat cântarea",
     "edited": "A editat",
@@ -37,7 +37,7 @@
     "before": "Restaurează versiunea de dinainte de această modificare",
     "after": "Restaurează această versiune",
     "confirmTitle": "Restaurezi această versiune?",
-    "confirmMessage": "Cântarea revine la această versiune. Versiunea de acum rămâne în istoric, deci poți anula această acțiune.",
+    "confirmMessage": "Cântarea revine la această versiune. Versiunea de acum rămâne în istoric, așa că poți reveni oricând la ea.",
     "confirm": "Restaurează",
     "success": "Versiune restaurată",
     "error": "Nu am putut restaura această versiune"
