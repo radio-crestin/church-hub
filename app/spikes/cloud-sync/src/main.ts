@@ -1,15 +1,5 @@
+import { QUERIES } from './queries'
 import type { BenchMessage, BenchRequest } from './worker/bench.worker'
-
-const QUERIES = [
-  'isus',
-  'harul tau',
-  'cat de mare esti',
-  'doamne esti bun',
-  'aleluia',
-  'mielul lui dumnezeu',
-  'ader',
-  'slava',
-]
 
 const steps = document.querySelector('#steps') as HTMLTableSectionElement
 const status = document.querySelector('#status') as HTMLDivElement

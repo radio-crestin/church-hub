@@ -26,12 +26,8 @@ import {
   getSongWithSlides,
   upsertSong,
 } from '../../../../apps/server/src/service/songs/songs'
-import { adoptRemoteIdentities } from '../../../../apps/server/src/service/sync/adoptRemoteIdentities'
-import { applyRemoteChanges } from '../../../../apps/server/src/service/sync/applyRemoteChanges'
-import { mergeLibraries } from '../../../../apps/server/src/service/sync/mergeLibraries'
-import { serializeLibrary } from '../../../../apps/server/src/service/sync/serializeLibrary'
-import { getSyncState } from '../../../../apps/server/src/service/sync/syncStateStore'
 import type { LibraryFile } from '../../../../apps/server/src/service/sync/types'
+import { applySnapshot } from '../applySnapshot'
 
 export interface BenchRequest {
   snapshotUrl: string | null
@@ -54,6 +50,9 @@ export type BenchMessage =
     }
 
 const POOL_NAME = 'church-hub-spike'
+
+/** Set by the build: true when it carries the song-index fix preview. */
+declare const __FTS_ROWID_PREVIEW__: boolean
 
 function post(message: BenchMessage): void {
   self.postMessage(message)
@@ -212,16 +211,6 @@ async function firstSyncInto(
   await timed(results, 'reopen', () => connectDatabase())
 }
 
-/** Adopt, merge, apply: the Drive cycle's steps between download and upload. */
-function applySnapshot(remote: LibraryFile) {
-  const state = getSyncState()
-  adoptRemoteIdentities(remote)
-  const local = serializeLibrary(state.deviceId, state.deviceName, new Set())
-  const now = Math.floor(Date.now() / 1000)
-  const { applyOps } = mergeLibraries(local, remote, new Set(), now)
-  return applyRemoteChanges(applyOps)
-}
-
 async function run(request: BenchRequest): Promise<void> {
   const mode = request.mode ?? 'memory-import'
   const results: Record<string, unknown> = {
@@ -230,6 +219,7 @@ async function run(request: BenchRequest): Promise<void> {
     deviceMemory: (navigator as { deviceMemory?: number }).deviceMemory ?? null,
     snapshotUrl: request.snapshotUrl,
     mode: request.snapshotUrl ? mode : 'reopen',
+    ftsRowidPreview: __FTS_ROWID_PREVIEW__,
     pragmas: request.pragmas ?? [],
   }
   try {
