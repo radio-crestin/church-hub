@@ -59,6 +59,11 @@ test.describe('Bible topics', () => {
     await request.post('/api/presentation/clear-temporary')
   })
 
+  // The next spec's Bible page would open on the verse left on screen.
+  test.afterEach(async ({ request }) => {
+    await request.post('/api/presentation/clear-temporary')
+  })
+
   test('the bundled topics are there on a fresh install', async ({
     request,
   }) => {
