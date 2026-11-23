@@ -109,7 +109,7 @@ export function UserCard({
             {t('sections.users.lastUsed')}: {formatDate(user.lastUsedAt)}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {permissionCount} {t('sections.users.permissions').toLowerCase()}
+            {t('sections.users.permissionCount', { count: permissionCount })}
           </p>
         </div>
 

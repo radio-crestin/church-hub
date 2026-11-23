@@ -141,7 +141,9 @@ export function UserPermissions({
             {t('sections.users.permissions')}
           </h4>
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {permissions.length} {t('sections.users.permissionsSelected')}
+            {t('sections.users.permissionsSelectedCount', {
+              count: permissions.length,
+            })}
           </span>
         </div>
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">

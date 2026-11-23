@@ -6,18 +6,18 @@
   },
   "addMenu": {
     "button": "Adaugă",
-    "title": "Adaugă Element",
+    "title": "Adaugă element",
     "song": "Cântare",
     "songDescription": "Adaugă o cântare din bibliotecă",
-    "searchSong": "Caută Cântare",
+    "searchSong": "Caută cântare",
     "searchSongDescription": "Găsește și adaugă o cântare din bibliotecă",
     "bibleVerse": "Verset Biblic",
     "bibleVerseDescription": "Adaugă un singur verset biblic",
-    "biblePassage": "Pasaj Biblic",
+    "biblePassage": "Pasaj biblic",
     "biblePassageDescription": "Adaugă un pasaj biblic cu mai multe versete",
     "announcement": "Anunț",
     "announcementDescription": "Adaugă un slide de anunț",
-    "verseteTineri": "Versete Biblice",
+    "verseteTineri": "Versete biblice",
     "verseteTineriDescription": "Adaugă versete biblice cu nume",
     "scene": "Scenă OBS",
     "sceneDescription": "Comută la o scenă OBS",
@@ -47,12 +47,12 @@
     "done": "Gata"
   },
   "errors": {
-    "pageNotFound": "Pagina pe care o căutați nu există.",
-    "noPermission": "Nu aveți permisiunea de a accesa această pagină.",
+    "pageNotFound": "Pagina căutată nu există.",
+    "noPermission": "Nu ai permisiunea să deschizi această pagină.",
     "noPermissionTitle": "Acces interzis",
-    "contactAdmin": "Vă rugăm să contactați administratorul dacă credeți că aceasta este o eroare.",
+    "contactAdmin": "Dacă crezi că e o greșeală, vorbește cu administratorul.",
     "connectionLostTitle": "Conexiune pierdută",
-    "connectionLost": "Nu s-a putut conecta la server. Verificați conexiunea la rețea și încercați din nou."
+    "connectionLost": "Nu s-a putut face conexiunea la server. Verifică rețeaua și încearcă din nou."
   },
   "theme": {
     "system": "Sistem",
@@ -82,7 +82,7 @@
     "successBody": "Am publicat-o. Urmărește-o acolo pentru răspunsuri și noutăți.",
     "openIssue": "Deschide solicitarea",
     "retake": "Refă captura",
-    "noScreenshot": "Nu s-a putut face captura.",
+    "noScreenshot": "Fără captură de ecran.",
     "publicNotice": "Solicitarea va fi publică pe GitHub, cu notele și captura de ecran, așa că nu include informații personale. Adresa ta de e-mail și jurnalele recente ale aplicației ajung doar la dezvoltator.",
     "stepShowTitle": "Arată-ne unde",
     "toolPen": "Creion",
@@ -107,7 +107,7 @@
   },
   "contact": {
     "title": "Contactează-ne",
-    "email": "Email",
+    "email": "E-mail",
     "whatsapp": "WhatsApp"
   },
   "connection": {
@@ -132,7 +132,7 @@
     "newPosition": "Poziția nouă",
     "layout": "Aranjare",
     "hideColumn": "Ascunde coloana laterală",
-    "showColumn": "Arată coloana laterală"
+    "showColumn": "Afișează coloana laterală"
   },
   "actionsMenu": {
     "trigger": "Mai multe"
