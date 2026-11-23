@@ -120,6 +120,8 @@ export interface NextItemPreview {
 export interface TemporarySongContent {
   songId: number
   title: string
+  /** The title as the projector's corner shows it: "PDC 19 · La masa Ta…" */
+  titleLabel?: string
   keyLine?: string | null // Musical key (e.g., "C Major", "Am")
   slides: TemporarySongSlide[]
   currentSlideIndex: number // 0-based index

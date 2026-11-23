@@ -53,8 +53,12 @@ function songTitle(layout: ScreenLayout) {
     'songTitle',
     {
       fontFamily: FONTS.title,
+      bold: true,
       color: COLORS.muted,
-      autoScale: false,
+      // A long title shrinks (and at worst wraps) to stay inside its corner.
+      autoScale: true,
+      minFontSize: 14,
+      lineHeight: 1.15,
       shadow: layout.shadow,
     },
     { hidden: true },

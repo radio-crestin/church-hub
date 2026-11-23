@@ -50,7 +50,8 @@ const primary: ScreenLayout = {
     alignment: 'center',
   },
   songKey: { box: box(3, 50, 90, 6), maxFontSize: 52, alignment: 'left' },
-  songTitle: { box: box(91, 60, 3, 3), maxFontSize: 40, alignment: 'left' },
+  // Bottom-left, below the lyrics and clear of the centred Amin.
+  songTitle: { box: box(91.5, 56, 2.5, 3), maxFontSize: 38, alignment: 'left' },
   amen: { box: box(88, 6, 3, 6), maxFontSize: 52, alignment: 'center' },
   reference: { box: box(6, 6, 85, 6), maxFontSize: 64, alignment: 'left' },
   scripture: {
@@ -104,7 +105,12 @@ const stage: ScreenLayout = {
     verticalAlignment: 'top',
   },
   songKey: { box: box(3, 40, 89, 4), maxFontSize: 52, alignment: 'left' },
-  songTitle: { box: box(92, 60, 2, 4), maxFontSize: 40, alignment: 'left' },
+  // Top, between the gama/Amin and the clock: the next-slide strip owns the bottom.
+  songTitle: {
+    box: box(3, 32, 89, 30),
+    maxFontSize: 40,
+    alignment: 'center',
+  },
   amen: { box: box(3, 40, 89, 4), maxFontSize: 52, alignment: 'left' },
   reference: { box: box(3, 30, 89, 4), maxFontSize: 56, alignment: 'left' },
   scripture: {
@@ -150,7 +156,7 @@ const livestream: ScreenLayout = {
     maxFontSize: 64,
     alignment: 'center',
   },
-  songTitle: { box: box(84, 60, 4, 5), maxFontSize: 26, alignment: 'left' },
+  songTitle: { box: box(87, 55, 5, 5), maxFontSize: 28, alignment: 'left' },
   songKey: {
     box: box(4, 50, 84, 5),
     maxFontSize: 28,
@@ -200,7 +206,8 @@ const kiosk: ScreenLayout = {
     alignment: 'center',
   },
   songKey: { box: box(4, 40, 91, 7), maxFontSize: 60, alignment: 'left' },
-  songTitle: { box: box(95, 40, 2, 7), maxFontSize: 44, alignment: 'left' },
+  // Bottom edge, under the Amin.
+  songTitle: { box: box(96, 7, 1, 7), maxFontSize: 36, alignment: 'center' },
   amen: { box: box(91, 7, 4, 7), maxFontSize: 60, alignment: 'center' },
   reference: { box: box(8, 7, 86, 7), maxFontSize: 64, alignment: 'left' },
   scripture: {

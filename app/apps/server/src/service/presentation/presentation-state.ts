@@ -20,8 +20,14 @@ import type {
   UpdatePresentationStateInput,
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
-import { presentationState, songSlides, songs } from '../../db/schema'
+import {
+  presentationState,
+  songCategories,
+  songSlides,
+  songs,
+} from '../../db/schema'
 import { createLogger } from '../../utils/logger'
+import { formatSongTitleLabel } from '../songs/formatSongTitleLabel'
 import { parseSongBackground } from '../songs/parseSongBackground'
 import { parseStyleOverrides } from '../songs/song-slides'
 
@@ -391,6 +397,25 @@ export function presentTemporaryBible(
 }
 
 /**
+ * The title shown in the projector's corner, with the songbook and number
+ * ("PDC 19 · La masa Ta noi azi venim"), read fresh so an edit reaches it.
+ */
+function readSongTitleLabel(songId: number): string | undefined {
+  const song = getDatabase()
+    .select({
+      title: songs.title,
+      hymnNumber: songs.hymnNumber,
+      sourceFilename: songs.sourceFilename,
+      categoryName: songCategories.name,
+    })
+    .from(songs)
+    .leftJoin(songCategories, eq(songCategories.id, songs.categoryId))
+    .where(eq(songs.id, songId))
+    .get()
+  return song ? formatSongTitleLabel(song) : undefined
+}
+
+/**
  * Presents a song temporarily
  * Fetches song and slides from database
  */
@@ -456,6 +481,7 @@ export function presentTemporarySong(
       data: {
         songId: song.id,
         title: song.title,
+        titleLabel: readSongTitleLabel(song.id),
         keyLine: song.keyLine,
         background: parseSongBackground(song.background),
         slides: expandedSlides.map((s, idx) => {
@@ -1259,7 +1285,11 @@ export function refreshPresentedSongSlides(
     // Fetch the song's keyLine and background override — both are rendered
     // on the projection, so an edit to either must reach the live snapshot.
     const song = db
-      .select({ keyLine: songs.keyLine, background: songs.background })
+      .select({
+        title: songs.title,
+        keyLine: songs.keyLine,
+        background: songs.background,
+      })
       .from(songs)
       .where(eq(songs.id, songId))
       .get()
@@ -1323,6 +1353,8 @@ export function refreshPresentedSongSlides(
           }
         }),
         currentSlideIndex,
+        title: song?.title ?? currentState.temporaryContent.data.title,
+        titleLabel: readSongTitleLabel(songId),
         keyLine: song?.keyLine ?? null,
         background: parseSongBackground(song?.background),
       },

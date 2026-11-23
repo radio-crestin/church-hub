@@ -49,7 +49,7 @@ const SAMPLE_CONTENT: Record<
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
     songKey: 'G',
     amen: 'Amin!',
-    songTitle: 'Aleluia, mărire Domnului',
+    songTitle: 'PDC 19 · Aleluia, mărire Domnului',
   },
   song_first_slide: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',

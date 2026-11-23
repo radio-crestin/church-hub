@@ -39,9 +39,14 @@ async function showTitle(request: APIRequestContext, screenId: number) {
   expect(put.ok()).toBeTruthy()
 }
 
-async function createSong(request: APIRequestContext, title: string) {
+async function createSong(
+  request: APIRequestContext,
+  title: string,
+  extra: Record<string, unknown> = {},
+) {
   const response = await request.post('/api/songs', {
     data: {
+      ...extra,
       title,
       keyLine: KEY,
       slides: LYRICS.map((text, i) => ({
@@ -166,6 +171,54 @@ test.describe('Song title on the projector', () => {
     // ("Amin" stays in the verse's text unless the screen's Amin is on.)
     await expect(page.getByText(LYRICS[2]).last()).toBeVisible()
     await expect(shown(page, title)).toBeVisible()
+  })
+
+  test('a numbered song shows its songbook and number', async ({
+    page,
+    request,
+  }) => {
+    // The songbook "Pe Drumul Credinței" (PDC), as the church's songs are
+    // stored: the number leads the title, "019 - La masa Ta…".
+    const name = 'Pe Drumul Credinței'
+    const { data: categories } = await (
+      await request.get('/api/categories')
+    ).json()
+    let category = categories.find((c: { name: string }) => c.name === name)
+    const created = !category
+    if (created) {
+      category = (
+        await (await request.post('/api/categories', { data: { name } })).json()
+      ).data
+    }
+    const stamp = Date.now()
+    const numbered = await createSong(request, `019 - La masa Ta ${stamp}`, {
+      categoryId: category.id,
+    })
+    // A number kept only as the hymn number counts too.
+    const hymn = await createSong(request, `Cântare cu număr ${stamp}`, {
+      hymnNumber: '12',
+    })
+
+    try {
+      await showTitle(request, screenId)
+      await request.post('/api/presentation/temporary-song', {
+        data: { songId: numbered, slideIndex: 1 },
+      })
+      await page.goto(`/screen/${screenId}`)
+      await expect(shown(page, `PDC 19 · La masa Ta ${stamp}`)).toBeVisible({
+        timeout: 15000,
+      })
+
+      await request.post('/api/presentation/temporary-song', {
+        data: { songId: hymn, slideIndex: 1 },
+      })
+      await expect(shown(page, `12 · Cântare cu număr ${stamp}`)).toBeVisible()
+    } finally {
+      await request.post('/api/presentation/stop')
+      await request.delete(`/api/songs/${numbered}`)
+      await request.delete(`/api/songs/${hymn}`)
+      if (created) await request.delete(`/api/categories/${category.id}`)
+    }
   })
 
   test('is turned on from the screen editor', async ({ page, request }) => {

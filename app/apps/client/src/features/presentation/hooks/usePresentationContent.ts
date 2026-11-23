@@ -164,7 +164,7 @@ function buildSongSlideContent(
       chords: resolvedChords,
       songKey: songKeyValue,
       amen: amenValue,
-      songTitle: data.title,
+      songTitle: data.titleLabel ?? data.title,
       styleOverrides: currentSlide.styleOverrides ?? null,
       songBackground: data.background ?? null,
     },

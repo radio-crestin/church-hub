@@ -94,6 +94,11 @@ export const presentationSchemas = {
     properties: {
       songId: { type: 'integer' },
       title: { type: 'string' },
+      titleLabel: {
+        type: 'string',
+        description:
+          "The title as the projector's corner shows it: the songbook's initials and the song's number before the title (\"PDC 19 · La masa Ta noi azi venim\"), or the title alone for a song without a number.",
+      },
       background: {
         oneOf: [
           { $ref: '#/components/schemas/ScreenBackgroundConfig' },
