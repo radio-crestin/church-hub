@@ -22,8 +22,6 @@ import {
   useYouTubeAuth,
 } from '../../hooks'
 
-type SettingsLink = SettingsLinkButtonProps & { short: string }
-
 /**
  * One button per settings page, each with the state of what it sets up.
  * A phone keeps them folded under one row, so the scenes come first.
@@ -37,12 +35,11 @@ export function LivestreamSettingsLinks() {
   const isPhone = !useMediaQuery('(min-width: 1024px)')
   const [isOpen, setIsOpen] = useState(false)
 
-  const links: SettingsLink[] = [
+  const links: SettingsLinkButtonProps[] = [
     {
       to: '/livestream/youtube',
       icon: Youtube,
       label: t('settingsPages.youtube.button'),
-      short: t('settingsPages.rail.youtube'),
       testId: 'livestream-youtube-settings',
       tone: youtube.isAuthenticated
         ? 'ok'
@@ -57,7 +54,6 @@ export function LivestreamSettingsLinks() {
       to: '/livestream/obs',
       icon: Monitor,
       label: t('settingsPages.obs.button'),
-      short: t('settingsPages.rail.obs'),
       testId: 'livestream-obs-settings',
       tone: obs.isConnected ? 'ok' : obs.isConnecting ? 'busy' : 'off',
       status: obs.isConnected
@@ -70,7 +66,6 @@ export function LivestreamSettingsLinks() {
       to: '/livestream/mixer',
       icon: SlidersHorizontal,
       label: t('settingsPages.mixer.button'),
-      short: t('settingsPages.rail.mixer'),
       testId: 'livestream-mixer-settings',
       tone: !mixer.isEnabled ? 'off' : mixer.isConnected ? 'ok' : 'error',
       status: !mixer.isEnabled
@@ -83,7 +78,6 @@ export function LivestreamSettingsLinks() {
       to: '/settings/livestream',
       icon: Clapperboard,
       label: t('settingsPages.scenes.button'),
-      short: t('settingsPages.rail.scenes'),
       testId: 'livestream-scene-settings',
       tone: scenes.length ? 'ok' : 'off',
       status: t('settingsPages.scenes.count', { count: scenes.length }),
@@ -109,14 +103,18 @@ export function LivestreamSettingsLinks() {
           <span className="text-sm font-medium text-gray-900 dark:text-white">
             {t('settingsPages.railGroup')}
           </span>
-          <span className="flex min-w-0 flex-1 items-center justify-end gap-2.5 overflow-hidden text-xs text-gray-500 dark:text-gray-400">
-            {links.map((link) => (
-              <span key={link.to} className="flex shrink-0 items-center gap-1">
+          <span className="flex min-w-0 flex-1 items-center justify-end gap-3 overflow-hidden text-xs text-gray-500 dark:text-gray-400">
+            {links.map(({ to, icon: Icon, label, tone }) => (
+              <span
+                key={to}
+                title={label}
+                className="flex shrink-0 items-center gap-1"
+              >
+                <Icon className="h-4 w-4" aria-hidden />
                 <span
-                  className={`h-2 w-2 rounded-full ${STATUS_DOT[link.tone]}`}
+                  className={`h-2 w-2 rounded-full ${STATUS_DOT[tone]}`}
                   aria-hidden
                 />
-                {link.short}
               </span>
             ))}
           </span>
@@ -128,7 +126,7 @@ export function LivestreamSettingsLinks() {
       )}
       {isShown && (
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:mt-0 xl:grid-cols-4">
-          {links.map(({ short: _short, ...link }) => (
+          {links.map((link) => (
             <SettingsLinkButton key={link.to} {...link} />
           ))}
         </div>

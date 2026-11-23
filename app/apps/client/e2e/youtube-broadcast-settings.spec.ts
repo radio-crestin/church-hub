@@ -26,8 +26,8 @@ let api: APIRequestContext
 let context: BrowserContext
 let page: Page
 
-test.describe.configure({ mode: 'serial' })
-test.setTimeout(300_000)
+// The hooks too: the extra server's boot outlasts the default 30 s on a busy machine.
+test.describe.configure({ mode: 'serial', timeout: 300_000 })
 
 test.beforeAll(async ({ browser }) => {
   youtube = await startMockYouTubeApi()
