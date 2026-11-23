@@ -1,7 +1,7 @@
 import { asc, eq } from 'drizzle-orm'
 
+import { toMusicFile } from './toMusicFile'
 import type {
-  MusicFile,
   MusicPlaylist,
   MusicPlaylistItem,
   MusicPlaylistWithItems,
@@ -53,26 +53,7 @@ export function getPlaylistById(id: number): MusicPlaylistWithItems | null {
     fileId: row.item.fileId,
     sortOrder: row.item.sortOrder,
     createdAt: row.item.createdAt.getTime(),
-    file: {
-      id: row.file.id,
-      folderId: row.file.folderId,
-      path: row.file.path,
-      filename: row.file.filename,
-      title: row.file.title,
-      artist: row.file.artist,
-      album: row.file.album,
-      genre: row.file.genre,
-      year: row.file.year,
-      trackNumber: row.file.trackNumber,
-      duration: row.file.duration,
-      format: row.file.format as MusicFile['format'],
-      fileSize: row.file.fileSize,
-      lastModified: row.file.lastModified
-        ? row.file.lastModified.getTime()
-        : null,
-      createdAt: row.file.createdAt.getTime(),
-      updatedAt: row.file.updatedAt.getTime(),
-    },
+    file: toMusicFile(row.file),
   }))
 
   return {

@@ -2,24 +2,32 @@ import {
   getNowPlayingQueue,
   getQueueItemAtIndex,
   getQueueLength,
+  insertIntoNowPlaying,
 } from './now-playing'
-import type {
-  CurrentTrack,
-  MusicPlayerCommand,
-  MusicPlayerState,
-  QueueItemSummary,
+import { orderUpcoming } from './queue-order'
+import {
+  type CurrentTrack,
+  type MusicPlayerCommand,
+  type MusicPlayerState,
+  QUEUE_ORDERS,
+  type QueueItemSummary,
+  type QueueOrder,
 } from './types'
+import { recordPlay } from '../music/recordPlay'
 import { getSetting, upsertSetting } from '../settings'
 
 const LOG_PREFIX = '[MusicPlayer]'
 
 // Settings keys for persistence
 const SETTING_VOLUME = 'music_player_volume'
-const SETTING_SHUFFLE = 'music_player_shuffle'
+const SETTING_QUEUE_ORDER = 'music_player_queue_order'
 const SETTING_CURRENT_INDEX = 'music_player_current_index'
 
-// Audio server URL (Tauri's embedded rodio audio server)
-const AUDIO_SERVER_PORT = 3199
+// Audio server URL (Tauri's embedded rodio audio server; the e2e suite points
+// it at a stand-in)
+const AUDIO_SERVER_PORT = Number(
+  process.env.CHURCH_HUB_AUDIO_SERVER_PORT ?? 3199,
+)
 const AUDIO_SERVER_URL = `http://127.0.0.1:${AUDIO_SERVER_PORT}`
 
 let stateCallback: ((state: MusicPlayerState) => void) | null = null
@@ -32,7 +40,7 @@ let playerState: MusicPlayerState = {
   duration: 0,
   volume: 0,
   isMuted: false,
-  isShuffled: false,
+  queueOrder: 'in_order',
   currentIndex: -1,
   queueLength: 0,
   currentTrack: null,
@@ -78,8 +86,8 @@ function persistPlayerSettings(): void {
     value: String(playerState.volume),
   })
   upsertSetting('app_settings', {
-    key: SETTING_SHUFFLE,
-    value: String(playerState.isShuffled),
+    key: SETTING_QUEUE_ORDER,
+    value: playerState.queueOrder,
   })
   upsertSetting('app_settings', {
     key: SETTING_CURRENT_INDEX,
@@ -89,18 +97,19 @@ function persistPlayerSettings(): void {
 
 function loadPersistedSettings(): {
   volume: number
-  isShuffled: boolean
+  queueOrder: QueueOrder
   currentIndex: number
 } {
   const volumeSetting = getSetting('app_settings', SETTING_VOLUME)
-  const shuffleSetting = getSetting('app_settings', SETTING_SHUFFLE)
+  const orderSetting = getSetting('app_settings', SETTING_QUEUE_ORDER)
   const indexSetting = getSetting('app_settings', SETTING_CURRENT_INDEX)
 
   const volume = volumeSetting ? Number(volumeSetting.value) : 50
-  const isShuffled = shuffleSetting ? shuffleSetting.value === 'true' : false
+  const queueOrder =
+    QUEUE_ORDERS.find((order) => order === orderSetting?.value) ?? 'in_order'
   const currentIndex = indexSetting ? Number(indexSetting.value) : -1
 
-  return { volume, isShuffled, currentIndex }
+  return { volume, queueOrder, currentIndex }
 }
 
 /**
@@ -194,6 +203,15 @@ export async function initializeMusicPlayer(): Promise<boolean> {
     return false
   }
 
+  await connectAudioServer()
+  return true
+}
+
+/**
+ * Restores the player's settings and queue on the audio server and starts
+ * following its state.
+ */
+async function connectAudioServer(): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Audio server connected')
 
@@ -206,7 +224,7 @@ export async function initializeMusicPlayer(): Promise<boolean> {
   // Restore persisted state
   updateState({
     volume: persisted.volume,
-    isShuffled: persisted.isShuffled,
+    queueOrder: persisted.queueOrder,
   })
 
   // Load persisted queue from database
@@ -238,7 +256,6 @@ export async function initializeMusicPlayer(): Promise<boolean> {
 
   // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Music player initialized')
-  return true
 }
 
 export function shutdownMusicPlayer(): void {
@@ -260,7 +277,7 @@ export function shutdownMusicPlayer(): void {
     duration: 0,
     volume: 0,
     isMuted: false,
-    isShuffled: false,
+    queueOrder: 'in_order',
     currentIndex: -1,
     queueLength: 0,
     currentTrack: null,
@@ -277,18 +294,10 @@ async function loadAndPlayFile(filePath: string): Promise<void> {
   await audioRequest('POST', '/play', { path: filePath })
 }
 
+// The queue is kept in its chosen order (see setQueueOrder), so the next
+// track is always the one after the current.
 async function playNext(): Promise<void> {
   const queueLength = getQueueLength()
-
-  if (playerState.isShuffled && queueLength > 1) {
-    let randomIndex: number
-    do {
-      randomIndex = Math.floor(Math.random() * queueLength)
-    } while (randomIndex === playerState.currentIndex && queueLength > 1)
-    await playAtIndex(randomIndex)
-    return
-  }
-
   const nextIndex = playerState.currentIndex + 1
 
   if (nextIndex < queueLength) {
@@ -346,11 +355,35 @@ async function playAtIndex(index: number): Promise<void> {
   persistPlayerSettings()
 
   await loadAndPlayFile(item.file.path)
+  recordPlay(item.fileId)
+  refreshQueueState()
+}
+
+/**
+ * Plays a track now, keeping the queue: where it already is in the queue,
+ * else right after the current one.
+ */
+async function playFile(fileId: number): Promise<void> {
+  const queued = getNowPlayingQueue().findIndex(
+    (item) => item.fileId === fileId,
+  )
+  if (queued !== -1) {
+    await playAtIndex(queued)
+    return
+  }
+  const index = playerState.currentIndex + 1
+  insertIntoNowPlaying(fileId, index)
+  await playAtIndex(index)
 }
 
 export async function executeCommand(
   command: MusicPlayerCommand,
 ): Promise<void> {
+  // An audio server that came up after the start is taken on at first use.
+  if (!audioServerAvailable && (await waitForAudioServer(1, 0))) {
+    audioServerAvailable = true
+    await connectAudioServer()
+  }
   if (!audioServerAvailable) {
     // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
     console.warn(
@@ -413,11 +446,28 @@ export async function executeCommand(
       await playAtIndex(command.index)
       break
 
-    case 'shuffle':
-      updateState({ isShuffled: command.enabled })
-      persistPlayerSettings()
+    case 'play_file':
+      await playFile(command.fileId)
       break
   }
+}
+
+/**
+ * Sets what plays next and orders the tracks after the current one by it.
+ * Only the queue changes, so it works with no audio server too.
+ */
+export function setQueueOrder(order: QueueOrder): void {
+  updateState({ queueOrder: order })
+  persistPlayerSettings()
+  orderUpcoming(order, playerState.currentIndex)
+  refreshQueueState()
+}
+
+/** Orders newly added tracks among the upcoming ones by the queue order. */
+export function applyQueueOrder(): void {
+  // In order, a new track simply goes last, where it was added.
+  if (playerState.queueOrder === 'in_order') return
+  orderUpcoming(playerState.queueOrder, playerState.currentIndex)
 }
 
 function getQueueSummary(): QueueItemSummary[] {
@@ -462,7 +512,21 @@ export function getMpvStatus(): MpvStatus {
   }
 }
 
+/**
+ * Reloads the queue into the state. The current track keeps its place by its
+ * id, so removing or reordering tracks before it never changes what plays.
+ */
 export function refreshQueueState(): void {
   const queue = getQueueSummary()
-  updateState({ queueLength: queue.length, queue })
+  const currentId = playerState.currentTrack?.id
+  const currentIndex =
+    currentId === undefined
+      ? playerState.currentIndex
+      : queue.findIndex((item) => item.id === currentId)
+  updateState({
+    queueLength: queue.length,
+    queue,
+    currentIndex,
+    ...(currentIndex === -1 && { currentTrack: null }),
+  })
 }

@@ -114,7 +114,7 @@ interface MusicStateMessage {
     duration: number
     volume: number
     isMuted: boolean
-    isShuffled: boolean
+    queueOrder: 'in_order' | 'random' | 'most_played' | 'least_played'
     currentIndex: number
     queueLength: number
     currentTrack: {
