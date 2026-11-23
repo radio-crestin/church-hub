@@ -1,10 +1,10 @@
 import { type ChildProcess, spawn } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
 import { createServer } from 'node:net'
-import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
+
+import { killAndWait, makeTempDir, removeTempDir } from './helpers/temp-dir'
 
 /**
  * T-099: a starting server kills a stale server that still holds its port.
@@ -53,7 +53,7 @@ test.describe('A starting server frees its port (T-099)', () => {
   test('kills the stale server on its port, not the clients connected to it', async () => {
     test.setTimeout(120_000)
     const port = await freePort()
-    const dataDir = mkdtempSync(join(tmpdir(), 'church-hub-port-'))
+    const dataDir = makeTempDir('church-hub-port-')
     const children: ChildProcess[] = []
 
     try {
@@ -98,8 +98,9 @@ test.describe('A starting server frees its port (T-099)', () => {
         true,
       )
     } finally {
-      for (const child of children) child.kill('SIGKILL')
-      rmSync(dataDir, { recursive: true, force: true })
+      // The server's database is ~147 MB: never leave it behind.
+      await killAndWait(children)
+      removeTempDir(dataDir)
     }
   })
 })

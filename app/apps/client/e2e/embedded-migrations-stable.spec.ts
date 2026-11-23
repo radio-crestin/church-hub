@@ -1,16 +1,10 @@
 import { spawnSync } from 'node:child_process'
-import {
-  cpSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs'
-import { tmpdir } from 'node:os'
+import { cpSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
+
+import { makeTempDir, removeTempDir } from './helpers/temp-dir'
 
 const SERVER_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -29,7 +23,7 @@ const EMBEDDED = join(SERVER_DIR, 'src', 'db', 'migrations', 'embedded.ts')
  */
 test.describe('embedded migrations', () => {
   test('are generated exactly as committed, even from CRLF migrations', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'embedded-migrations-'))
+    const dir = makeTempDir('embedded-migrations-')
     try {
       const crlf = join(dir, 'migrations')
       cpSync(MIGRATIONS, crlf, { recursive: true })
@@ -47,7 +41,7 @@ test.describe('embedded migrations', () => {
       expect(run.status, run.stderr).toBe(0)
       expect(readFileSync(out, 'utf8')).toBe(readFileSync(EMBEDDED, 'utf8'))
     } finally {
-      rmSync(dir, { recursive: true, force: true })
+      removeTempDir(dir)
     }
   })
 })
