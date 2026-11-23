@@ -22,6 +22,8 @@ import { useLocalizedBookNames } from '../hooks'
 import type { ChapterData } from '../hooks/useInfiniteChapters'
 import { useMultiTranslationVerse } from '../hooks/useMultiTranslationVerse'
 import type { BibleTranslation } from '../types'
+import { getScrollContainer } from '../utils/getScrollContainer'
+import { getVisibleScrollArea } from '../utils/getVisibleScrollArea'
 
 interface VersesListProps {
   bookId: number
@@ -214,10 +216,15 @@ export function VersesList({
     let timeoutId: ReturnType<typeof setTimeout> | null = null
     let cancelled = false
 
+    // The list's own box on a desktop; on a phone the list grows with its
+    // verses and the page scrolls, so the page is what has to move.
+    const scroller = () =>
+      containerRef.current ? getScrollContainer(containerRef.current) : null
+
     const isInView = (el: HTMLElement) => {
-      const container = containerRef.current
+      const container = scroller()
       if (!container) return false
-      const c = container.getBoundingClientRect()
+      const c = getVisibleScrollArea(container)
       const r = el.getBoundingClientRect()
       return r.top >= c.top - 1 && r.bottom <= c.bottom + 1
     }
@@ -227,18 +234,18 @@ export function VersesList({
     // offsetTop math fails when an intermediate ancestor (e.g., a chapter
     // wrapper) is positioned and breaks the offsetParent chain.
     const scrollElementToCenter = (el: HTMLElement) => {
-      const container = containerRef.current
+      const container = scroller()
       if (!container) return
-      const cRect = container.getBoundingClientRect()
+      const cRect = getVisibleScrollArea(container)
       const eRect = el.getBoundingClientRect()
       const delta = eRect.top - cRect.top - cRect.height / 2 + eRect.height / 2
       container.scrollTop += delta
     }
 
     const scrollElementToStart = (el: HTMLElement) => {
-      const container = containerRef.current
+      const container = scroller()
       if (!container) return
-      const cRect = container.getBoundingClientRect()
+      const cRect = getVisibleScrollArea(container)
       const eRect = el.getBoundingClientRect()
       container.scrollTop += eRect.top - cRect.top
     }
