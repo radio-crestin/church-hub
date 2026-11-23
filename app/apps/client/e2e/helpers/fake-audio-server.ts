@@ -2,7 +2,8 @@
  * A stand-in for the desktop app's audio server (Tauri's rodio player on
  * 127.0.0.1:3199), for the suite's server to "play" music in a browser-only
  * run: it answers the same HTTP calls and keeps a clock, without any sound.
- * The playwright config starts it on the suite's port + 1, before the server.
+ * A spec starts it with startFakeAudioServer (fake-audio.ts) on the port the
+ * test server looks at; the server takes it on at its first music command.
  *
  * Usage: bun e2e/helpers/fake-audio-server.ts <port>
  */
@@ -80,5 +81,5 @@ Bun.serve({
   },
 })
 
-// biome-ignore lint/suspicious/noConsole: the playwright config waits for this line
+// biome-ignore lint/suspicious/noConsole: startFakeAudioServer waits for this line
 console.log(`[fake-audio] listening on 127.0.0.1:${port}`)

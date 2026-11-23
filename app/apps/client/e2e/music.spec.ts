@@ -6,16 +6,23 @@ import {
 } from '@playwright/test'
 
 import { setAppLanguage } from './helpers/app-language'
+import { startFakeAudioServer } from './helpers/fake-audio'
 
 /**
  * The Music page, laid out like the Songs page: the library's views on the
  * left, one track list searched across everything, the player on the right.
- * The suite's server plays through a stand-in audio server (see
- * helpers/fake-audio-server.ts), so a click really starts a track and counts it.
+ * The suite's server plays through a stand-in audio server this spec starts
+ * (helpers/fake-audio-server.ts), so a click really starts a track and counts it.
  *
  * The library is the bundled sample hymns. Play counts add up across runs,
  * so each test reads them before it acts.
  */
+
+let stopFakeAudio: (() => void) | undefined
+test.beforeAll(async () => {
+  stopFakeAudio = await startFakeAudioServer()
+})
+test.afterAll(() => stopFakeAudio?.())
 
 const AMAZING = 'Amazing Grace'
 const NEARER = 'Nearer, My God, to Thee'

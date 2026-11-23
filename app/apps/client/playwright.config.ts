@@ -36,8 +36,11 @@ if (TEST_PORT === '3000' || TEST_PORT === '3001') {
   )
 }
 const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
-// The stand-in for the desktop app's audio server, so music really "plays".
-const FAKE_AUDIO_PORT = String(Number(TEST_PORT) + 1)
+/**
+ * Where the test server looks for the desktop app's audio server: the music
+ * spec starts a stand-in there, so music really "plays" (fake-audio-server.ts).
+ */
+export const FAKE_AUDIO_PORT = Number(TEST_PORT) + 1
 
 /**
  * The line the server prints once the real server is bound and boot is done
@@ -105,41 +108,31 @@ export default defineConfig({
       dependencies: ['setup'],
     },
   ],
-  webServer: [
-    {
-      command: `bun e2e/helpers/fake-audio-server.ts ${FAKE_AUDIO_PORT}`,
-      cwd: ROOT_DIR,
-      wait: { stdout: /\[fake-audio\] listening/ },
-      reuseExistingServer: false,
-      timeout: 30000,
-      stdout: 'pipe',
+  webServer: {
+    command: webServerCommand,
+    cwd: join(ROOT_DIR, '../..'),
+    env: {
+      NODE_ENV: 'production',
+      CLIENT_DIST_PATH: 'apps/client/dist',
+      DATABASE_PATH: TEST_DB_PATH,
+      PORT: TEST_PORT,
+      // Song-source specs share links from a stand-in S3 on 127.0.0.1;
+      // every other private address stays refused.
+      CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
+      // Tests start the song-source checks they need (no network at start).
+      CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
+      CHURCH_HUB_AUDIO_SERVER_PORT: String(FAKE_AUDIO_PORT),
     },
-    {
-      command: webServerCommand,
-      cwd: join(ROOT_DIR, '../..'),
-      env: {
-        NODE_ENV: 'production',
-        CLIENT_DIST_PATH: 'apps/client/dist',
-        DATABASE_PATH: TEST_DB_PATH,
-        PORT: TEST_PORT,
-        // Song-source specs share links from a stand-in S3 on 127.0.0.1;
-        // every other private address stays refused.
-        CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
-        // Tests start the song-source checks they need (no network at start).
-        CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
-        CHURCH_HUB_AUDIO_SERVER_PORT: FAKE_AUDIO_PORT,
-      },
-      // Ready when OUR server says so, not when an HTTP probe of the URL
-      // answers: Playwright's probe (and its "port already used" pre-check) has
-      // no socket timeout, so one request that never gets an answer stalled the
-      // whole start for the full timeout while the server was long ready (T-056).
-      // Whatever else held the port is gone by then: the server frees its port
-      // before binding, so the suite never drives a server it did not start.
-      wait: { stdout: SERVER_READY_LINE },
-      reuseExistingServer: false,
-      timeout: 180000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-    },
-  ],
+    // Ready when OUR server says so, not when an HTTP probe of the URL
+    // answers: Playwright's probe (and its "port already used" pre-check) has
+    // no socket timeout, so one request that never gets an answer stalled the
+    // whole start for the full timeout while the server was long ready (T-056).
+    // Whatever else held the port is gone by then: the server frees its port
+    // before binding, so the suite never drives a server it did not start.
+    wait: { stdout: SERVER_READY_LINE },
+    reuseExistingServer: false,
+    timeout: 180000,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  },
 })

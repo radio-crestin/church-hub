@@ -203,6 +203,15 @@ export async function initializeMusicPlayer(): Promise<boolean> {
     return false
   }
 
+  await connectAudioServer()
+  return true
+}
+
+/**
+ * Restores the player's settings and queue on the audio server and starts
+ * following its state.
+ */
+async function connectAudioServer(): Promise<void> {
   // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Audio server connected')
 
@@ -247,7 +256,6 @@ export async function initializeMusicPlayer(): Promise<boolean> {
 
   // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Music player initialized')
-  return true
 }
 
 export function shutdownMusicPlayer(): void {
@@ -371,6 +379,11 @@ async function playFile(fileId: number): Promise<void> {
 export async function executeCommand(
   command: MusicPlayerCommand,
 ): Promise<void> {
+  // An audio server that came up after the start is taken on at first use.
+  if (!audioServerAvailable && (await waitForAudioServer(1, 0))) {
+    audioServerAvailable = true
+    await connectAudioServer()
+  }
   if (!audioServerAvailable) {
     // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
     console.warn(
