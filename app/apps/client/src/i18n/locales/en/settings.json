@@ -1316,6 +1316,14 @@
       "viewReleaseNotes": "View release notes on GitHub",
       "devInstance": "Development instance",
       "devInstanceDescription": "You're running a dev build — update checks are disabled."
+    },
+    "credits": {
+      "title": "Credits",
+      "description": "Content the app bundles from others",
+      "bibleTopics": {
+        "title": "Bible verses by topic",
+        "attribution": "The topics and their verses come from the <source>OpenBible.info topical Bible</source>, licensed under <licence>CC BY 4.0</licence>. The Romanian titles are our translation; the verse texts come from your installed Bibles."
+      }
     }
   }
 }

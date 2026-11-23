@@ -171,5 +171,20 @@
     "trigger": "More",
     "addToScheduleDescription": "Add the open verse to the selected program",
     "addToSchedule": "Add verse to program"
+  },
+  "topics": {
+    "title": "Topics",
+    "searchPlaceholder": "Search topics...",
+    "empty": "No topics",
+    "noResults": "No topic found",
+    "verseCount_one": "{{count}} verse",
+    "verseCount_other": "{{count}} verses",
+    "back": "Back to topics",
+    "previous": "Present the previous passage",
+    "next": "Present the next passage",
+    "present": "Present",
+    "openInBible": "Open in the Bible",
+    "expand": "Expand topics",
+    "collapse": "Collapse topics"
   }
 }

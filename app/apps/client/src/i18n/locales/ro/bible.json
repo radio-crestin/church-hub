@@ -173,5 +173,21 @@
     "trigger": "Mai multe",
     "addToScheduleDescription": "Adaugă versetul deschis în programul selectat",
     "addToSchedule": "Adaugă versetul în program"
+  },
+  "topics": {
+    "title": "Teme",
+    "searchPlaceholder": "Caută o temă...",
+    "empty": "Nicio temă",
+    "noResults": "Nicio temă găsită",
+    "verseCount_one": "{{count}} verset",
+    "verseCount_few": "{{count}} versete",
+    "verseCount_other": "{{count}} de versete",
+    "back": "Înapoi la teme",
+    "previous": "Prezintă pasajul anterior",
+    "next": "Prezintă pasajul următor",
+    "present": "Prezintă",
+    "openInBible": "Deschide în Biblie",
+    "expand": "Extinde temele",
+    "collapse": "Restrânge temele"
   }
 }
