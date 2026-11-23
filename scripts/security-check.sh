@@ -62,7 +62,7 @@ run_gitleaks() {
   last_tag=$(git -C "$REPO_ROOT" describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
   range="${last_tag:+$last_tag..}HEAD"
   echo "== gitleaks: commits $range"
-  if ! gitleaks git --redact --no-banner --config "$REPO_ROOT/.gitleaks.toml" \
+  if ! gitleaks git --redact --verbose --no-banner --config "$REPO_ROOT/.gitleaks.toml" \
     --log-opts="$range" "$REPO_ROOT"; then
     echo "error: gitleaks found a secret in $range: remove it from history before releasing." >&2
     return 1
@@ -112,10 +112,12 @@ EOF
   bun "$SCRIPT_DIR/codeql-serious-alerts.ts" "${sarifs[@]}"
 }
 
+# Each check exits on failure itself: `set -e` doesn't stop at a function
+# that fails inside an `&&` list, so they are never chained.
 case "$ONLY" in
-  gitleaks) run_gitleaks ;;
-  codeql) run_codeql ;;
-  all) run_gitleaks && run_codeql ;;
+  gitleaks | codeql | all) ;;
   *) echo "usage: $0 [gitleaks|codeql]" >&2; exit 1 ;;
 esac
+if [[ "$ONLY" != codeql ]]; then run_gitleaks || exit 1; fi
+if [[ "$ONLY" != gitleaks ]]; then run_codeql || exit 1; fi
 echo "Security check passed."
