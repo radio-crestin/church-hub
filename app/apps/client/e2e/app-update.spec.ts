@@ -106,7 +106,7 @@ test.describe('App update - page', () => {
     // Grouped, with scopes pulled out of the bold prefix.
     await expect(card).toContainText(/(Features|Funcționalități) \(2\)/)
     await expect(card).toContainText('songs: transpose from the stage view')
-    await expect(card).toContainText(/(Bug Fixes|Corectări de erori) \(1\)/)
+    await expect(card).toContainText(/(Bug Fixes|Erori corectate) \(1\)/)
     await expect(card).toContainText('bible: verse search ignored diacritics')
     await expect(card).toContainText(/(Changes|Modificări) \(1\)/)
     // No markdown leaks through, and the download table stays out.
