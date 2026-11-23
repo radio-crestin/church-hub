@@ -49,8 +49,7 @@ export function parseBookmarksText(text: string): ParsedBookmarkLine[] {
     paragraph = []
   }
 
-  for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i]
+  for (const [i, raw] of lines.entries()) {
     const lineNumber = i + 1
     const trimmed = raw.trim()
 
@@ -62,7 +61,7 @@ export function parseBookmarksText(text: string): ParsedBookmarkLine[] {
     const headingMatch = trimmed.match(HEADING)
     if (headingMatch) {
       closeParagraph()
-      heading = toVerse(headingMatch[1].trim(), lineNumber)
+      heading = toVerse((headingMatch[1] ?? '').trim(), lineNumber)
       if (heading.reference) results.push(heading)
       continue
     }
@@ -99,9 +98,9 @@ export function parseBookmarksText(text: string): ParsedBookmarkLine[] {
  */
 function readNote(line: string): string | null {
   const quote = line.match(QUOTE_NOTE)
-  if (quote) return quote[1].trim()
+  if (quote) return (quote[1] ?? '').trim()
   const dashed = line.match(DASHED_NOTE)
-  if (dashed) return dashed[1].trim()
+  if (dashed) return (dashed[1] ?? '').trim()
   if (/^-{3,}$/.test(line)) return ''
   return null
 }
@@ -119,7 +118,7 @@ function toVerse(
     kind: 'verse',
     line,
     content,
-    reference: suffixMatch ? suffixMatch[1].trim() : content,
-    translationAbbreviation: suffixMatch ? suffixMatch[2] : undefined,
+    reference: suffixMatch?.[1]?.trim() ?? content,
+    translationAbbreviation: suffixMatch?.[2],
   }
 }

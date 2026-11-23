@@ -80,8 +80,9 @@ export async function warmUpLibraryVersionIndex(): Promise<void> {
     if (stale()) return
     const rows = page.all(lastId, WARMUP_SONGS_PER_STEP) as SongRow[]
     for (const row of rows) addSong(index, row)
-    if (rows.length < WARMUP_SONGS_PER_STEP) break
-    lastId = rows[rows.length - 1].id
+    const last = rows.at(-1)
+    if (!last || rows.length < WARMUP_SONGS_PER_STEP) break
+    lastId = last.id
     await new Promise((resolve) => setTimeout(resolve, 0))
   }
   if (stale()) return
@@ -159,6 +160,7 @@ function addSong(index: LibraryVersionIndex, row: SongRow): void {
   const place = index.songs.length
   index.songs.push(song)
   index.placeOf.set(song.id, place)
-  for (const id of song.title.ids) index.titlePostings[id].push(place)
-  for (const id of song.lyrics.ids) index.lyricsPostings[id].push(place)
+  // `assign` gave every id of the song its postings lists.
+  for (const id of song.title.ids) index.titlePostings[id]!.push(place)
+  for (const id of song.lyrics.ids) index.lyricsPostings[id]!.push(place)
 }

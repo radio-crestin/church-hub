@@ -67,6 +67,7 @@ export async function getYouTubeConfig(): Promise<YouTubeConfig> {
       broadcastMode: 'create',
     })
     .returning()
+  if (!created) throw new Error('Inserting the YouTube config failed')
   return toConfig(created)
 }
 
@@ -91,6 +92,7 @@ export async function updateYouTubeConfig(
     .set({ ...changes, updatedAt: new Date() })
     .where(eq(youtubeConfig.id, current.id!))
     .returning()
+  if (!updated) throw new Error('Updating the YouTube config failed')
 
   return toConfig(updated)
 }

@@ -124,8 +124,7 @@ export function updateScheduleSlide(
         .run()
 
       // Insert new verses
-      for (let i = 0; i < verses.length; i++) {
-        const verse = verses[i]
+      for (const [i, verse] of verses.entries()) {
         const verseReference = `${verse.bookName} ${verse.chapter}:${verse.verse}`
 
         db.insert(scheduleBiblePassageVerses)
@@ -181,9 +180,7 @@ export function updateScheduleSlide(
 
       // Insert new entries
       const entries = input.verseteTineriEntries
-      for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i]
-
+      for (const [i, entry] of entries.entries()) {
         // Fetch verses for this entry
         const verses = getEntryVerses(entry)
 

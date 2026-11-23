@@ -208,6 +208,42 @@ export const presentationPaths = {
       },
     },
   },
+  '/api/presentation/temporary-versete-tineri': {
+    post: {
+      tags: ['Presentation'],
+      summary: 'Present Bible readings in order',
+      description:
+        'Present a list of Bible readings as a "Versete Biblice" slide, one at a time; navigate-temporary steps through them. With loop, they advance by themselves and start over (the slideshow of the Bible page bookmarks).',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/PresentTemporaryVerseteTineriInput',
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Readings presented',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/PresentationState' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
   '/api/presentation/temporary-song': {
     post: {
       tags: ['Presentation'],

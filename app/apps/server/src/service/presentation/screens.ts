@@ -252,12 +252,8 @@ export function getScreenWithConfigs(id: number): ScreenWithConfigs | null {
       Record<string, Record<string, unknown>>
     > = {}
     for (const record of overrideRecords) {
-      if (!sceneOverrides[record.obsSceneName]) {
-        sceneOverrides[record.obsSceneName] = {}
-      }
-      sceneOverrides[record.obsSceneName][record.contentType] = parseConfig(
-        record.config,
-      )
+      const overrides = (sceneOverrides[record.obsSceneName] ??= {})
+      overrides[record.contentType] = parseConfig(record.config)
     }
 
     return {
@@ -786,7 +782,9 @@ export function batchUpdateScreenConfigs(
       .run()
 
     // Update each content config
-    for (const [contentType, config] of Object.entries(input.contentConfigs)) {
+    for (const contentType of contentTypes) {
+      const config = input.contentConfigs[contentType]
+      if (config === undefined) continue
       const configJson = JSON.stringify(config)
 
       // Check if config exists - use and() to combine conditions
@@ -813,7 +811,7 @@ export function batchUpdateScreenConfigs(
         db.insert(screenContentConfigs)
           .values({
             screenId: input.screenId,
-            contentType: contentType as ContentType,
+            contentType,
             config: configJson,
           })
           .run()

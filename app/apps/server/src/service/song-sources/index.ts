@@ -36,7 +36,12 @@ export {
   type LackingSong,
   readLackingSongs,
 } from './updates/lackingSongsStore'
+export {
+  type ChangedSongReview,
+  readChangedForReview,
+} from './updates/readChangedForReview'
 export { recountSourceSongs } from './updates/recountSourceSongs'
+export { resolveChangedSongs } from './updates/resolveChangedSongs'
 export {
   cancelSongUpdates,
   runSongUpdatesInWorker,
