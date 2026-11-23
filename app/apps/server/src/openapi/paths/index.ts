@@ -1,3 +1,4 @@
+export { analyticsPaths } from './analytics'
 export { authPaths } from './auth'
 export { backgroundMediaPaths } from './background-media'
 export { backupPaths } from './backup'

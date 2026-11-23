@@ -11,6 +11,7 @@ import {
   PanelLeft,
   Radio,
   ScrollText,
+  ShieldCheck,
   Sliders,
   Tv,
   User,
@@ -201,6 +202,12 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         icon: DownloadCloud,
         to: '/settings/updates',
         visible: (ctx) => ctx.isLocalhost && canEdit(ctx),
+      },
+      {
+        id: 'privacy',
+        labelKey: 'nav.items.privacy',
+        icon: ShieldCheck,
+        to: '/settings/privacy',
       },
       {
         id: 'about',

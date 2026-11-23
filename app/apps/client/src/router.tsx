@@ -20,6 +20,7 @@ try {
 }
 
 import { getApiUrl, isMobile, needsApiUrlConfiguration } from './config'
+import { trackPageView } from './features/analytics'
 import { ApiUrlSetup } from './features/api-url-config'
 import {
   hideLoadingScreen,
@@ -57,6 +58,8 @@ try {
   router.subscribe('onResolved', (event) => {
     const path = event.toLocation?.pathname
     if (path) captureActivity('navigate', { source: 'router', path })
+    const routeId = router.state.matches.at(-1)?.routeId
+    if (routeId) trackPageView(routeId)
   })
 } catch {
   // Non-fatal — navigation logging is best-effort.

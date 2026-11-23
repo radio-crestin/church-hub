@@ -12,6 +12,7 @@ import liveTranslationEN from './locales/en/liveTranslation.json'
 import musicEN from './locales/en/music.json'
 import notificationsEN from './locales/en/notifications.json'
 import presentationEN from './locales/en/presentation.json'
+import privacyEN from './locales/en/privacy.json'
 import queueEN from './locales/en/queue.json'
 import releaseNotesEN from './locales/en/releaseNotes.json'
 import schedulesEN from './locales/en/schedules.json'
@@ -31,6 +32,7 @@ import liveTranslationRO from './locales/ro/liveTranslation.json'
 import musicRO from './locales/ro/music.json'
 import notificationsRO from './locales/ro/notifications.json'
 import presentationRO from './locales/ro/presentation.json'
+import privacyRO from './locales/ro/privacy.json'
 import queueRO from './locales/ro/queue.json'
 import releaseNotesRO from './locales/ro/releaseNotes.json'
 import schedulesRO from './locales/ro/schedules.json'
@@ -53,6 +55,7 @@ export const resources = {
     music: musicEN,
     notifications: notificationsEN,
     presentation: presentationEN,
+    privacy: privacyEN,
     queue: queueEN,
     releaseNotes: releaseNotesEN,
     schedules: schedulesEN,
@@ -74,6 +77,7 @@ export const resources = {
     music: musicRO,
     notifications: notificationsRO,
     presentation: presentationRO,
+    privacy: privacyRO,
     queue: queueRO,
     releaseNotes: releaseNotesRO,
     schedules: schedulesRO,
@@ -105,6 +109,7 @@ i18n
       'music',
       'notifications',
       'presentation',
+      'privacy',
       'queue',
       'releaseNotes',
       'schedules',
