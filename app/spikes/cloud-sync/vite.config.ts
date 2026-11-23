@@ -83,41 +83,6 @@ export default stub(name)`,
   }
 }
 
-/**
- * SPIKE_FTS_ROWID=1: a preview of the fix the spike proposes for the song
- * index. songs_fts.song_id is UNINDEXED, so `DELETE … WHERE song_id = ?` scans
- * the whole index, once per song in a sync (quadratic). Keyed by rowid = song
- * id, the same delete is a lookup.
- */
-function ftsRowidPreview(): Plugin {
-  return {
-    name: 'fts-rowid-preview',
-    enforce: 'pre',
-    transform(code, id) {
-      if (!id.endsWith('/apps/server/src/service/songs/search.ts')) return null
-      return code
-        .replaceAll(
-          'DELETE FROM songs_fts WHERE song_id = ?',
-          'DELETE FROM songs_fts WHERE rowid = ?',
-        )
-        .replaceAll(
-          'DELETE FROM songs_fts WHERE song_id IN (',
-          'DELETE FROM songs_fts WHERE rowid IN (',
-        )
-        .replace(
-          /INSERT INTO songs_fts \(song_id, title, category_name, content\)\s*VALUES \(\?, \?, \?, \?\)/g,
-          'INSERT INTO songs_fts (rowid, song_id, title, category_name, content) VALUES (?1, ?1, ?2, ?3, ?4)',
-        )
-    },
-  }
-}
-
-const FTS_ROWID = process.env.SPIKE_FTS_ROWID === '1'
-const plugins = () => [
-  serverInBrowser(),
-  ...(FTS_ROWID ? [ftsRowidPreview()] : []),
-]
-
 /** Server-side packages with no use on a phone (telemetry): stubbed too. */
 const SERVER_ONLY_PACKAGES = new Set(['posthog-node'])
 
@@ -149,9 +114,8 @@ const NODE_BUILTINS = new Set([
 export default defineConfig({
   root: here('.'),
   base: process.env.SPIKE_BASE ?? '/',
-  plugins: plugins(),
-  worker: { format: 'es', plugins },
-  define: { __FTS_ROWID_PREVIEW__: JSON.stringify(FTS_ROWID) },
+  plugins: [serverInBrowser()],
+  worker: { format: 'es', plugins: () => [serverInBrowser()] },
   optimizeDeps: { exclude: ['@sqlite.org/sqlite-wasm'] },
   build: {
     outDir: process.env.SPIKE_OUT ?? here('./dist'),
