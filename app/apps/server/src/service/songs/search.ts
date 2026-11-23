@@ -230,7 +230,10 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       content: string
     }>
 
-    db.run('BEGIN TRANSACTION')
+    // IMMEDIATE: the song updates' worker writes too; a deferred
+    // transaction that read first fails at once ("database is locked")
+    // when another connection wrote meanwhile, instead of waiting its turn.
+    db.run('BEGIN IMMEDIATE')
 
     try {
       // Delete existing FTS entries for these songs

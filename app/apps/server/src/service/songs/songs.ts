@@ -742,7 +742,10 @@ export function batchImportSongs(
 
   try {
     // Use transaction for atomic batch insert
-    rawDb.exec('BEGIN TRANSACTION')
+    // IMMEDIATE: the song updates' worker writes too; a deferred
+    // transaction that read first fails at once ("database is locked")
+    // when another connection wrote meanwhile, instead of waiting its turn.
+    rawDb.exec('BEGIN IMMEDIATE')
 
     // Title uniqueness is no longer enforced at the DB level. Preload existing
     // titles (lower-cased) so we can decide insert / update / skip per row.

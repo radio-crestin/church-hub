@@ -1,5 +1,6 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
+import { setAppLanguage } from './helpers/app-language'
 import { FakeS3 } from './helpers/fake-s3'
 import {
   addLinkSource,
@@ -109,6 +110,8 @@ test.describe('Song updates: review each change', () => {
     })
     await clearNotifications(request)
   })
+
+  test.beforeEach(({ page }) => setAppLanguage(page, 'en'))
 
   test.afterAll(async ({ request }) => {
     await stopSongUpdates(request)
