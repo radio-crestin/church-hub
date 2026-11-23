@@ -22,6 +22,10 @@
       "updates": "Updates",
       "logs": "Logs",
       "shortcuts": "Shortcuts"
+    },
+    "search": {
+      "placeholder": "Search settings…",
+      "noResults": "No settings match “{{query}}”"
     }
   },
   "sections": {
@@ -152,8 +156,6 @@
     "sidebarItem": {
       "title": "{{itemName}} Settings",
       "shortcuts": {
-        "title": "Keyboard Shortcuts",
-        "description": "Configure shortcuts to navigate to this page",
         "switchTitle": "Switch to Page",
         "switchDescription": "Shortcut to navigate to this page",
         "focusSearchTitle": "Focus Search",
@@ -243,7 +245,8 @@
         "presentationDescription": "Control slides from anywhere in the app.",
         "livestream": "Livestream",
         "livestreamDescription": "Start and stop the live stream with a key or MIDI button.",
-        "pages": "Pages",
+        "otherPages": "Other pages",
+        "otherPagesDescription": "Switch to any other sidebar page with a key or MIDI button, and focus its search where it has one.",
         "pagesDescription": "Switch to a page, focus its search, and keys that only work while that page is open."
       },
       "scope": {
@@ -620,19 +623,6 @@
         "writing": "Writing files...",
         "saving": "Saving file...",
         "processingProgress": "Processing {{current}} of {{total}}"
-      },
-      "resurseCrestine": {
-        "title": "Import from Resurse Crestine",
-        "description": "Download and import songs from Resurse Crestine website",
-        "button": "Import from Resurse Crestine",
-        "importing": "Importing...",
-        "note": "Songs will be imported to the 'Resurse Crestine' category with first verse as title"
-      },
-      "recoverTitles": {
-        "description": "Songs imported before now are filed under their first verse, and the name the source knows them by was lost. Recover it so they can be found by that name again.",
-        "button": "Recover the original titles",
-        "running": "Recovering…",
-        "done": "{{count}} song(s) got their original title back"
       },
       "toast": {
         "importSuccess": "Successfully imported {{count}} songs",

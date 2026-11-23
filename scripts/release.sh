@@ -11,6 +11,9 @@
 #   3. `promote`: once the pre-release's installers were tested by hand, marks
 #      it Latest, which is what the in-app updater offers (docs/auto-update.md).
 #
+# Before the bump it runs scripts/security-check.sh (gitleaks since the last
+# tag, CodeQL locally); any finding stops the release.
+#
 # CI takes over from the tag push (build-release.yml): first the pre-release
 # gate — the e2e suite and the compiled-sidecar smoke on macOS, Windows and
 # Linux, and CodeQL — and only if all are green it builds the installers for
@@ -201,6 +204,11 @@ if [[ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]]; then
   echo "error: working tree not clean — commit or stash first" >&2
   exit 1
 fi
+
+# No release without the security checks, run here because main's rule set
+# no longer requires them on pull requests: gitleaks over every commit since
+# the last tag, and CodeQL with the same suite as CI. Any finding stops it.
+"$SCRIPT_DIR/security-check.sh"
 
 confirm "Bump to v$NEW on $BRANCH?"
 

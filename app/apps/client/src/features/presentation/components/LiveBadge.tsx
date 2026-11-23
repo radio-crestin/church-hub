@@ -1,8 +1,8 @@
-/** The LIVE chip: red and pulsing while this song is on the screens. */
+/** The LIVE chip: red and pulsing while what it stands for is on the screens. */
 export function LiveBadge({ isLive }: { isLive: boolean }) {
   return (
     <div
-      data-testid="song-live-badge"
+      data-testid="live-badge"
       data-live={isLive}
       className={`flex items-center gap-1.5 px-2 py-1 rounded-md shrink-0 ${
         isLive

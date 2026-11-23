@@ -205,12 +205,15 @@ export async function initializeDatabase(): Promise<InitializeResult> {
 
     // Run migrations
     t = performance.now()
-    const migrationResult = runMigrations(db, sqlite)
+    const migrationResult = runMigrations(sqlite)
     logTiming('run_migrations', t)
 
     return { db, migrationResult }
   } catch (error) {
     log('error', `Failed to initialize database: ${error}`)
+    // Let go of the file, or a restore can't put the previous one back
+    // (Windows locks an open database).
+    closeDatabase()
     throw error
   }
 }

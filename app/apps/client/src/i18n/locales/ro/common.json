@@ -26,6 +26,10 @@
       "description": "Importă dintr-un program existent"
     }
   },
+  "fontSize": {
+    "increase": "Mărește textul",
+    "decrease": "Micșorează textul"
+  },
   "search": {
     "clear": "Șterge căutarea"
   },

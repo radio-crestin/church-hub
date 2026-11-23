@@ -7,15 +7,36 @@ const logger = {
   error: (msg: string, data?: unknown) => log('audio-io', 'error', msg, data),
 }
 
-let RtAudio: typeof import('audify').RtAudio | null = null
-let RtAudioFormat: typeof import('audify').RtAudioFormat | null = null
+type Audify = typeof import('audify')
+/**
+ * audify exports RtAudioFormat at runtime, but its typings declare it as a
+ * module-private const enum: naming it as `import('audify').RtAudioFormat`
+ * crashed tsc (T-146). Its type is taken from where the typings use it.
+ */
+type RtAudioFormatValue = Parameters<
+  InstanceType<Audify['RtAudio']>['openStream']
+>[2]
+/**
+ * The stream-flags bitmask; its typings list only the single flags, not the
+ * empty mask 0 ("no flags") that rt_audio.cpp reads as a plain number.
+ */
+type RtAudioStreamFlagsValue = NonNullable<
+  Parameters<InstanceType<Audify['RtAudio']>['openStream']>[8]
+>
+const NO_STREAM_FLAGS = 0 as RtAudioStreamFlagsValue
+type AudifyRuntime = Audify & {
+  RtAudioFormat: Record<'RTAUDIO_SINT16', RtAudioFormatValue>
+}
+
+let RtAudio: Audify['RtAudio'] | null = null
+let RtAudioFormat: AudifyRuntime['RtAudioFormat'] | null = null
 
 async function loadAudify() {
   if (RtAudio) return
   try {
     // Use require() instead of dynamic import to avoid module cache issues
     // when the native binary becomes available after initial failure
-    const audify = require('audify') as typeof import('audify')
+    const audify = require('audify') as AudifyRuntime
     RtAudio = audify.RtAudio
     RtAudioFormat = audify.RtAudioFormat
     logger.info('Audio library (audify) loaded successfully')
@@ -29,8 +50,8 @@ async function loadAudify() {
   }
 }
 
-let inputAudio: InstanceType<typeof import('audify').RtAudio> | null = null
-let outputAudio: InstanceType<typeof import('audify').RtAudio> | null = null
+let inputAudio: InstanceType<Audify['RtAudio']> | null = null
+let outputAudio: InstanceType<Audify['RtAudio']> | null = null
 
 /** Hardware capture rate (most devices support 48kHz) */
 const HARDWARE_RATE = 48000
@@ -107,7 +128,7 @@ export async function startAudioCapture(
       onChunk(resampled)
     },
     null,
-    0,
+    NO_STREAM_FLAGS,
     (type, msg) => {
       logger.error('RtAudio input error', { type, msg })
     },
@@ -170,7 +191,7 @@ export async function startAudioPlayback(
     'translation-output',
     null,
     null,
-    0,
+    NO_STREAM_FLAGS,
     (type, msg) => {
       logger.error('RtAudio output error', { type, msg })
     },

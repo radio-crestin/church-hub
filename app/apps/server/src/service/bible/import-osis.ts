@@ -146,9 +146,9 @@ function findBookDivs(
     const tagText = match[0]
     // Extract osisID from the tag
     const osisIdMatch = tagText.match(/osisID\s*=\s*['"]([^'"]+)['"]/)
-    if (!osisIdMatch) continue
 
-    const bookId = osisIdMatch[1]
+    const bookId = osisIdMatch?.[1]
+    if (!bookId) continue
     const startPos = match.index + match[0].length
 
     // Find matching </div> by counting nesting
@@ -163,9 +163,9 @@ function findBookDivs(
     while ((match = bookDivPattern2.exec(xmlContent)) !== null) {
       const tagText = match[0]
       const osisIdMatch = tagText.match(/osisID\s*=\s*['"]([^'"]+)['"]/)
-      if (!osisIdMatch) continue
 
-      const bookId = osisIdMatch[1]
+      const bookId = osisIdMatch?.[1]
+      if (!bookId) continue
       const startPos = match.index + match[0].length
       const endPos = findMatchingCloseDiv(xmlContent, startPos)
       if (endPos > startPos) {
@@ -270,7 +270,7 @@ function processBook(
 
   // Extract book name from title element if present
   const titleMatch = bookContent.match(/<title[^>]*>([^<]+)<\/title>/)
-  const bookName = titleMatch ? titleMatch[1].trim() : osisBookId
+  const bookName = titleMatch?.[1]?.trim() ?? osisBookId
 
   const chapters: ParsedChapter[] = []
 
@@ -307,10 +307,11 @@ function parseContainerVerses(bookContent: string, chapters: ParsedChapter[]) {
 
   while ((match = verseOpenRegex.exec(bookContent)) !== null) {
     // Check if this is a self-closing tag (milestoned style)
-    if (match[0].endsWith('/>')) continue
+    const ref = match[1]
+    if (match[0].endsWith('/>') || !ref) continue
 
     versePositions.push({
-      ref: match[1],
+      ref,
       contentStart: match.index + match[0].length,
     })
   }
@@ -343,11 +344,11 @@ function parseContainerVerses(bookContent: string, chapters: ParsedChapter[]) {
     const verseText = bookContent.substring(versePos.contentStart, closePos)
 
     // Parse the osisID: Book.Chapter.Verse
-    const parts = versePos.ref.split('.')
-    if (parts.length < 3) continue
+    const [, chapterPart, versePart] = versePos.ref.split('.')
+    if (chapterPart === undefined || versePart === undefined) continue
 
-    const chapter = Number.parseInt(parts[1], 10)
-    const verse = Number.parseInt(parts[2], 10)
+    const chapter = Number.parseInt(chapterPart, 10)
+    const verse = Number.parseInt(versePart, 10)
 
     if (Number.isNaN(chapter) || Number.isNaN(verse)) continue
 
@@ -394,8 +395,10 @@ function parseMilestonedVerses(bookContent: string, chapters: ParsedChapter[]) {
   const starts: { ref: string; position: number; endPosition: number }[] = []
   let match: RegExpExecArray | null
   while ((match = verseStartRegex.exec(bookContent)) !== null) {
+    const ref = match[1]
+    if (!ref) continue
     starts.push({
-      ref: match[1],
+      ref,
       position: match.index,
       endPosition: match.index + match[0].length,
     })
@@ -406,18 +409,19 @@ function parseMilestonedVerses(bookContent: string, chapters: ParsedChapter[]) {
   // Get all end positions
   const ends: Map<string, number> = new Map()
   while ((match = verseEndRegex.exec(bookContent)) !== null) {
-    ends.set(match[1], match.index)
+    const ref = match[1]
+    if (ref) ends.set(ref, match.index)
   }
 
   let currentChapter = 0
   let currentVerses: ParsedVerse[] = []
 
   for (const start of starts) {
-    const parts = start.ref.split('.')
-    if (parts.length < 3) continue
+    const [, chapterPart, versePart] = start.ref.split('.')
+    if (chapterPart === undefined || versePart === undefined) continue
 
-    const chapter = Number.parseInt(parts[1], 10)
-    const verse = Number.parseInt(parts[2], 10)
+    const chapter = Number.parseInt(chapterPart, 10)
+    const verse = Number.parseInt(versePart, 10)
 
     if (Number.isNaN(chapter) || Number.isNaN(verse)) continue
 

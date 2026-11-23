@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 
 import {
   ContentTypeButton,
+  LiveBadge,
   LivePreview,
   usePresentationState,
   useWebSocket,
@@ -22,7 +23,6 @@ import {
 import type { TemporaryContent } from '~/features/presentation/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { Switch } from '~/ui/switch/Switch'
-import { LiveBadge } from './LiveBadge'
 
 interface SongControlPanelProps {
   songId: number

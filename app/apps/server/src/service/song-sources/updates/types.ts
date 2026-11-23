@@ -17,6 +17,8 @@ export interface SourceUpdate {
   checkedAt: number
   /** Why the source could not be checked, when it could not. */
   error?: string
+  /** The HTTP status its download got, when that was why, e.g. "403 Forbidden". */
+  httpStatus?: string
 }
 
 /** The song updates: the last run's results and whether one is running. */
