@@ -224,8 +224,6 @@
     },
     "screenShare": {
       "title": "Partajare Ecran",
-      "enableAudio": "Activează redarea audio",
-      "enableAudioDescription": "Când primiți o partajare de ecran cu audio, redați audio pe acest ecran",
       "videoSettings": "Setări Afișare Video",
       "videoPosition": "Poziție și Dimensiune",
       "objectFit": "Scalare Video",
@@ -408,14 +406,21 @@
     "screenShare": {
       "start": "Partajare Ecran",
       "stop": "Oprește Partajarea",
-      "startNow": "Începe Partajarea",
-      "includeAudio": "Include Audio",
-      "sharing": "Partajare Ecran Activă",
-      "connecting": "Se conectează...",
       "error": {
         "notSupported": "Partajarea ecranului nu este suportată în acest browser",
-        "permissionDenied": "Permisiunea de partajare a fost refuzată",
         "failed": "Eroare la pornirea partajării ecranului"
+      },
+      "waiting": "Se așteaptă ecranul partajat…",
+      "picker": {
+        "title": "Partajează un ecran sau o fereastră",
+        "screens": "Ecrane",
+        "windows": "Ferestre",
+        "refresh": "Reîmprospătează",
+        "loading": "Se caută ecranele și ferestrele…",
+        "empty": "Nu s-a găsit niciun ecran sau fereastră.",
+        "error": "Ecranele și ferestrele nu au putut fi afișate.",
+        "noPreview": "Fără previzualizare",
+        "permissionHint": "Nu apar previzualizări? Pe macOS, permite Church Hub în Setări sistem → Confidențialitate și securitate → Înregistrare ecran, apoi redeschide aplicația."
       }
     }
   },

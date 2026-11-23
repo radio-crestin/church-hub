@@ -54,7 +54,6 @@ import { upsertSetting, getSetting, deleteSetting, getAllSettings } from './serv
 
 // Initialize on startup
 const db = await initializeDatabase();
-runMigrations(db);
 
 // Upsert a setting
 upsertSetting('app_settings', { key: 'theme', value: 'dark' });

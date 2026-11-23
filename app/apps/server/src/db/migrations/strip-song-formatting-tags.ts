@@ -65,19 +65,23 @@ function cleanTable(
     .all()
   const changed: Row[] = []
   for (const row of rows) {
-    const updates: Record<string, string> = {}
+    const names: string[] = []
+    const values: string[] = []
     for (const column of columns) {
       const value = row[column]
       if (typeof value !== 'string') continue
       const cleaned = clean(column, value)
       // Never blank a required field: a title made only of tags stays as is.
-      if (cleaned !== value && cleaned !== '') updates[column] = cleaned
+      if (cleaned !== value && cleaned !== '') {
+        names.push(column)
+        values.push(cleaned)
+      }
     }
-    const names = Object.keys(updates)
     if (names.length === 0) continue
+    const id: number = row.id
     db.run(
       `UPDATE ${table} SET ${names.map((n) => `${n} = ?`).join(', ')}, updated_at = unixepoch() WHERE id = ?`,
-      [...names.map((n) => updates[n]), row.id],
+      [...values, id],
     )
     changed.push(row)
   }

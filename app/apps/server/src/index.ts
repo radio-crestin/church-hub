@@ -4,6 +4,7 @@
 // like `-e` and would re-run the whole server (the v0.1.60 regression).
 import './service/midi/coreMidiWarmUpEntry'
 
+import { exitWithParent } from './utils/exitWithParent'
 import { authLogger, logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
 import {
@@ -44,6 +45,7 @@ import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
+import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
 import {
@@ -249,6 +251,7 @@ import {
   updateScheduleSlide,
   upsertSchedule,
 } from './service/schedules'
+import { endScreenShareSession } from './service/screen-share'
 import {
   deleteSearch,
   getSearchById,
@@ -378,7 +381,6 @@ import {
   setMIDIMessageHandler,
   setMusicCommandHandler,
   setMusicStateProvider,
-  stopActiveScreenShare,
   type WebSocketData,
 } from './websocket'
 
@@ -560,6 +562,13 @@ function killProcessOnPort(port: number): void {
 async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log('[startup] === Server Starting ===')
+
+  // Before anything else: the boot server holds the port from the start, and
+  // a first boot (or a failed one, which stays up) can last a long time. A
+  // shell that is gone by then must not leave the sidecar holding it.
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
+  exitWithParent(shutdown)
 
   // A stale server on the port (a crashed run) is killed first. The kill
   // looks it up with lsof/netstat (slow on Windows), so only when it is held.
@@ -1586,7 +1595,7 @@ async function startRealServer(): Promise<void> {
       function isStrictLocalhost(): boolean {
         const host = req.headers.get('Host')
         if (!host) return true
-        const hostname = host.split(':')[0].toLowerCase()
+        const hostname = (host.split(':')[0] ?? '').toLowerCase()
         return (
           hostname === 'localhost' ||
           hostname === '127.0.0.1' ||
@@ -3905,7 +3914,12 @@ async function startRealServer(): Promise<void> {
       const sceneOverrideMatch = url.pathname.match(
         /^\/api\/screens\/(\d+)\/scene-overrides\/([^/]+)\/([^/]+)$/,
       )
-      if (req.method === 'PUT' && sceneOverrideMatch?.[1]) {
+      if (
+        req.method === 'PUT' &&
+        sceneOverrideMatch?.[1] &&
+        sceneOverrideMatch[2] &&
+        sceneOverrideMatch[3]
+      ) {
         const permError = checkPermission('displays.edit')
         if (permError) return permError
 
@@ -4117,7 +4131,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBibleInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBible(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4150,7 +4164,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySongInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporarySong(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4399,7 +4413,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryAnnouncementInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryAnnouncement(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4432,7 +4446,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBiblePassageInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBiblePassage(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4465,7 +4479,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryVerseteTineriInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryVerseteTineri(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4498,7 +4512,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySceneInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryScene(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4866,7 +4880,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'GET' &&
         url.pathname === '/api/songs/debug/analyze-keylines'
       ) {
-        const permError = checkPermission('songs.manage')
+        const permError = checkPermission('songs.edit')
         if (permError) return permError
 
         // Musical key patterns - solfège (Romanian/Italian) and letter notation
@@ -4879,8 +4893,8 @@ async function startRealServer(): Promise<void> {
         const extractLastParagraph = (html: string): string | null => {
           const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
           if (!paragraphs || paragraphs.length === 0) return null
-          const lastP = paragraphs[paragraphs.length - 1]
-          return lastP.replace(/<\/?p>/gi, '').trim()
+          const lastP = paragraphs.at(-1)
+          return lastP ? lastP.replace(/<\/?p>/gi, '').trim() : null
         }
 
         // Filter by category names if provided
@@ -4975,7 +4989,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'GET' &&
         url.pathname === '/api/songs/debug/sample-last-lines'
       ) {
-        const permError = checkPermission('songs.manage')
+        const permError = checkPermission('songs.edit')
         if (permError) return permError
 
         const limitParam = url.searchParams.get('limit')
@@ -4985,8 +4999,8 @@ async function startRealServer(): Promise<void> {
         const extractLastParagraph = (html: string): string | null => {
           const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
           if (!paragraphs || paragraphs.length === 0) return null
-          const lastP = paragraphs[paragraphs.length - 1]
-          return lastP.replace(/<\/?p>/gi, '').trim()
+          const lastP = paragraphs.at(-1)
+          return lastP ? lastP.replace(/<\/?p>/gi, '').trim() : null
         }
 
         const allSongs = getAllSongsWithSlides(null)
@@ -8126,6 +8140,15 @@ async function startRealServer(): Promise<void> {
       const midiResponse = await handleMIDIRoutes(req, url, handleCors)
       if (midiResponse) return midiResponse
 
+      // Screen share routes (native capture frames, MJPEG stream)
+      const screenShareResponse = await handleScreenShareRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+      )
+      if (screenShareResponse) return screenShareResponse
+
       // Live translation routes
       if (url.pathname.startsWith('/api/live-translation/')) {
         const translationResponse = await handleLiveTranslationRoutes(
@@ -8247,7 +8270,10 @@ async function startRealServer(): Promise<void> {
   // Wire up MIDI devices changed callback to WebSocket broadcast
   // This is called when devices reconnect so clients can update their device lists
   setDevicesChangedCallback((devices) => {
-    broadcastMIDIDevices(devices)
+    broadcastMIDIDevices({
+      inputs: devices.inputs.map((device) => ({ ...device, type: 'input' })),
+      outputs: devices.outputs.map((device) => ({ ...device, type: 'output' })),
+    })
   })
 
   // Wire up MIDI WebSocket message handler for LED control
@@ -8393,25 +8419,28 @@ async function startRealServer(): Promise<void> {
     await warmupSongsSearchIndex()
     logTiming('fts_warmup', warmupStart)
   }, 0)
+}
 
-  // Graceful shutdown
-  process.on('SIGINT', async () => {
+/**
+ * Graceful shutdown: on a signal, or when the desktop shell that started this
+ * sidecar is gone. A failed cleanup step must not keep the process (and its
+ * port) alive: closeDatabase throws "database is locked" while prepared
+ * statements are alive, which left the server running (T-149).
+ */
+async function shutdown() {
+  try {
     clearHistory()
     shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
-    await shutdownPostHog()
-    process.exit(0)
-  })
-
-  process.on('SIGTERM', async () => {
-    clearHistory()
-    shutdownMusicPlayer()
-    shutdownMIDI()
-    closeDatabase()
-    await shutdownPostHog()
-    process.exit(0)
-  })
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Shutdown failure for the logs
+    console.error('[shutdown] Cleanup failed, exiting anyway:', error)
+    captureExceptionPostHog(error, { stage: 'shutdown' })
+    process.exitCode = 1
+  }
+  await shutdownPostHog()
+  process.exit()
 }
 
 main().catch((error) => {

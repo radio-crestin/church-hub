@@ -1,4 +1,4 @@
-import { Clock, Eye, MonitorPlay, Ruler } from 'lucide-react'
+import { Clock, Eye, Ruler } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Input } from '~/ui/input/Input'
@@ -114,24 +114,6 @@ export function WholeScreenSettings({
             />
           </div>
         )}
-      </SettingsSection>
-
-      <SettingsSection
-        title={t('screens.screenShare.title')}
-        icon={MonitorPlay}
-        defaultOpen={false}
-      >
-        <SwitchRow
-          label={t('screens.screenShare.enableAudio')}
-          description={t('screens.screenShare.enableAudioDescription')}
-          checked={globalSettings.screenShareAudioEnabled ?? false}
-          onCheckedChange={(screenShareAudioEnabled) =>
-            onUpdateGlobalSettings({
-              ...globalSettings,
-              screenShareAudioEnabled,
-            })
-          }
-        />
       </SettingsSection>
 
       <SettingsSection

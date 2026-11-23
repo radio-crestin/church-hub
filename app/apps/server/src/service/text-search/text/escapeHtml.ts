@@ -9,5 +9,5 @@ const ESCAPES: Record<string, string> = {
 
 /** Text made safe to place inside HTML: every markup character escaped. */
 export function escapeHtml(text: string): string {
-  return text.replace(HTML_SPECIAL_RE, (char) => ESCAPES[char])
+  return text.replace(HTML_SPECIAL_RE, (char) => ESCAPES[char] ?? char)
 }

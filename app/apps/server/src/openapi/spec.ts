@@ -21,6 +21,7 @@ import {
   presentationHighlightsPaths,
   presentationPaths,
   schedulesPaths,
+  screenSharePaths,
   screensPaths,
   settingsPaths,
   songBookmarksPaths,
@@ -99,6 +100,11 @@ export const openApiSpec = {
       description: 'Screen configuration and rendering settings',
     },
     {
+      name: 'Screen Share',
+      description:
+        'Native screen sharing: start/stop, frame ingest, MJPEG stream for the screens',
+    },
+    {
       name: 'Background Media',
       description: 'Uploaded background images and videos for screens',
     },
@@ -138,6 +144,7 @@ export const openApiSpec = {
     ...biblePaths,
     ...bibleBookmarksPaths,
     ...schedulesPaths,
+    ...screenSharePaths,
     ...screensPaths,
     ...backgroundMediaPaths,
     ...presentationPaths,

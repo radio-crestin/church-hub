@@ -43,14 +43,14 @@ export function parseSongBookmarksText(text: string): ParsedSongBookmarkLine[] {
   let underHeading = false
   let inLyrics = false
 
-  for (let i = 0; i < lines.length; i++) {
+  for (const [i, line] of lines.entries()) {
     const lineNumber = i + 1
-    const trimmed = lines[i].trim()
+    const trimmed = line.trim()
     if (!trimmed) continue
 
     const heading = trimmed.match(HEADING)
     if (heading) {
-      results.push(toSong(heading[1], trimmed, lineNumber))
+      results.push(toSong(heading[1] ?? '', trimmed, lineNumber))
       underHeading = true
       inLyrics = false
       continue
@@ -86,9 +86,9 @@ export function parseSongBookmarksText(text: string): ParsedSongBookmarkLine[] {
  */
 function readNote(line: string): string | null {
   const quote = line.match(QUOTE_NOTE)
-  if (quote) return quote[1].trim()
+  if (quote) return (quote[1] ?? '').trim()
   const dashed = line.match(DASHED_NOTE)
-  if (dashed) return dashed[1].trim()
+  if (dashed) return (dashed[1] ?? '').trim()
   if (/^-{3,}$/.test(line)) return ''
   return null
 }

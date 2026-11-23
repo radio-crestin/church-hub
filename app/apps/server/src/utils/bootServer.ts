@@ -1,4 +1,5 @@
 import { type BootHealth, getBootHealth, onBootHealthChange } from './bootState'
+import { parentToWatch } from './exitWithParent'
 import { logToFile } from './fileLogger'
 
 /** The boot state as the boot server answers it; it adds `elapsedMs` itself. */
@@ -40,7 +41,7 @@ function bootServerResponse(
   if (pathname === '/ping' || pathname === '/api/ping') {
     return new Response(JSON.stringify({ data: 'pong' }), { headers: json })
   }
-  return new Response(JSON.stringify({ error: 'Server starting', ...health }), {
+  return new Response(JSON.stringify(health), {
     status: 503,
     headers: { ...json, 'Retry-After': '1' },
   })
@@ -49,12 +50,32 @@ function bootServerResponse(
 /**
  * The worker's body. Self-contained like `bootServerResponse`, which it gets
  * as an argument: both are passed to the worker as source text.
+ *
+ * With a `parentPid` (the desktop shell), it also ends the whole process once
+ * the shell is gone: the main thread, busy with synchronous boot work, cannot
+ * notice until boot ends, and the port stays held meanwhile (T-149). A hard
+ * exit mid-boot is safe: SQLite's journal rolls it back like a crash.
  */
 function bootServerWorkerMain(
   port: number,
   initial: PublishedHealth,
   respond: typeof bootServerResponse,
+  parentPid: number,
 ): void {
+  if (parentPid) {
+    setInterval(() => {
+      let gone = process.ppid !== parentPid // POSIX: reparented
+      try {
+        process.kill(parentPid, 0)
+      } catch {
+        gone = true
+      }
+      if (!gone) return
+      // biome-ignore lint/suspicious/noConsole: Shutdown reason for the logs
+      console.log('[shutdown] The desktop shell is gone during boot: exiting')
+      process.kill(process.pid, 'SIGKILL')
+    }, 500)
+  }
   let health = initial
   const server = Bun.serve({
     port,
@@ -117,7 +138,7 @@ function waitForWorker(worker: Worker, type: string): Promise<void> {
 async function startBootServerWorker(port: number): Promise<BootServer> {
   const source = `(${bootServerWorkerMain.toString()})(${port}, ${JSON.stringify(
     publishedHealth(),
-  )}, ${bootServerResponse.toString()})`
+  )}, ${bootServerResponse.toString()}, ${parentToWatch()})`
   const url = URL.createObjectURL(
     new Blob([source], { type: 'application/javascript' }),
   )
