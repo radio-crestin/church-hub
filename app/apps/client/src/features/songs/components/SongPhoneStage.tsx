@@ -12,8 +12,8 @@ import {
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
 import type { TemporaryContent } from '~/features/presentation/types'
-import { Switch } from '~/ui/switch/Switch'
 import { LiveBadge } from './LiveBadge'
+import { PreviewModeToggle } from './PreviewModeToggle'
 
 interface SongPhoneStageProps {
   songId: number
@@ -74,16 +74,10 @@ export function SongPhoneStage({
           )}
         </div>
         <LiveBadge isLive={isLive} />
-        <label className="flex items-center gap-1.5 select-none shrink-0">
-          <Switch
-            id="song-preview-mode"
-            checked={previewMode}
-            onCheckedChange={onTogglePreviewMode}
-          />
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {t('preview.previewMode')}
-          </span>
-        </label>
+        <PreviewModeToggle
+          previewMode={previewMode}
+          onTogglePreviewMode={onTogglePreviewMode}
+        />
       </div>
       <div className="flex items-center gap-3 p-2">
         <div className="w-full shrink-0 transition-[width] duration-200 group-data-[stuck=true]/pinned:w-2/5">
