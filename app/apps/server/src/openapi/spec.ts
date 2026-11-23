@@ -4,6 +4,7 @@
 
 import { responses, securitySchemes } from './components'
 import {
+  analyticsPaths,
   authPaths,
   backgroundMediaPaths,
   backupPaths,
@@ -17,6 +18,7 @@ import {
   healthPaths,
   livestreamYouTubePaths,
   logsPaths,
+  musicPaths,
   notificationsPaths,
   presentationHighlightsPaths,
   presentationPaths,
@@ -37,6 +39,7 @@ import {
   bibleSchemas,
   commonSchemas,
   deviceSchemas,
+  musicSchemas,
   presentationSchemas,
   scheduleSchemas,
   screenSchemas,
@@ -109,10 +112,18 @@ export const openApiSpec = {
       description: 'Uploaded background images and videos for screens',
     },
     { name: 'Presentation', description: 'Presentation state control' },
+    {
+      name: 'Music',
+      description: "The music library, playlists and the audio player's status",
+    },
     { name: 'Conversion', description: 'File format conversion utilities' },
     {
       name: 'Feedback',
       description: 'Feature requests and user feedback submission',
+    },
+    {
+      name: 'Analytics',
+      description: 'Anonymous usage data: on/off and the install id',
     },
     { name: 'Logs', description: 'Application logs access' },
     {
@@ -149,8 +160,10 @@ export const openApiSpec = {
     ...backgroundMediaPaths,
     ...presentationPaths,
     ...presentationHighlightsPaths,
+    ...musicPaths,
     ...conversionPaths,
     ...feedbackPaths,
+    ...analyticsPaths,
     ...notificationsPaths,
   },
   components: {
@@ -166,6 +179,7 @@ export const openApiSpec = {
       ...screenSchemas,
       ...backgroundMediaSchemas,
       ...presentationSchemas,
+      ...musicSchemas,
       ...userSchemas,
     },
     responses,

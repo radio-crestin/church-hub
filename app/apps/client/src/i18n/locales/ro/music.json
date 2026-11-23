@@ -1,5 +1,45 @@
 {
   "title": "Muzică",
+  "library": {
+    "title": "Bibliotecă",
+    "all": "Toată muzica",
+    "recent": "Ascultate recent"
+  },
+  "tracks": {
+    "title": "Piese",
+    "search": "Caută în toată muzica…",
+    "recentSearches": "Căutări recente:",
+    "resultsFor": "Rezultate pentru „{{query}}”",
+    "columns": {
+      "title": "Titlu",
+      "artist": "Artist",
+      "plays": "Ascultări",
+      "lastPlayed": "Ultima dată"
+    },
+    "plays_one": "o ascultare",
+    "plays_few": "{{count}} ascultări",
+    "plays_other": "{{count}} de ascultări",
+    "queue": "Coadă",
+    "more": "Mai multe",
+    "viewActions": "Acțiuni pentru listă",
+    "addToPlaylist": "Adaugă în {{name}}",
+    "newPlaylistWith": "Playlist nou cu această piesă",
+    "removeFromPlaylist": "Scoate din playlist",
+    "hint": "Clic pe o piesă o pornește · meniul ⋮ o adaugă într-un playlist",
+    "empty": {
+      "all": "Încă nu există muzică",
+      "recent": "Nu s-a ascultat nimic încă",
+      "playlist": "Playlistul e gol",
+      "folder": "Folderul nu are piese",
+      "search": "Nu s-a găsit nimic"
+    },
+    "emptyHint": {
+      "all": "Adaugă un folder cu fișiere audio",
+      "recent": "Piesele ascultate apar aici",
+      "playlist": "Adaugă piese din meniul ⋮ al oricărei piese",
+      "folder": "Sincronizează folderul ca să-i citească din nou fișierele"
+    }
+  },
   "folders": {
     "title": "Foldere",
     "add": "Adaugă folder",
@@ -31,7 +71,6 @@
     "queueCount": "{{count}} piese în coadă",
     "queueCount_one": "{{count}} piesă în coadă",
     "clearQueue": "Golește coada",
-    "shuffle": "Amestecă",
     "previous": "Piesa anterioară",
     "next": "Piesa următoare",
     "play": "Redă",
@@ -43,7 +82,14 @@
     "queueEmpty": "Coada este goală",
     "emptyQueue": "Coada este goală",
     "removeFromQueue": "Șterge din coadă",
-    "addSongsToQueue": "Adaugă piese în coadă pentru a începe redarea"
+    "addSongsToQueue": "Adaugă piese în coadă pentru a începe redarea",
+    "order": "Ordinea de redare",
+    "orders": {
+      "in_order": "În ordine",
+      "random": "Aleator",
+      "most_played": "Cele mai ascultate",
+      "least_played": "Cele mai puțin ascultate"
+    }
   },
   "playlist": {
     "title": "Playlisturi",
@@ -58,7 +104,10 @@
     "addTo": "Adaugă în playlist",
     "removeFrom": "Elimină din playlist",
     "items": "{{count}} elemente",
-    "duration": "{{duration}} total"
+    "duration": "{{duration}} total",
+    "new": "Playlist nou",
+    "newMessage": "Grupează piesele care merg împreună, ca la categoriile de cântări.",
+    "newWithTrack": "Începe cu „{{title}}”."
   },
   "syncResult": {
     "added": "{{count}} fișiere adăugate",

@@ -83,7 +83,7 @@
     "openIssue": "Deschide solicitarea",
     "retake": "Refă captura",
     "noScreenshot": "Fără captură de ecran.",
-    "publicNotice": "Solicitarea va fi publică pe GitHub, cu notele și captura de ecran, așa că nu include informații personale. Adresa ta de e-mail rămâne privată.",
+    "publicNotice": "Solicitarea va fi publică pe GitHub, cu notele și captura de ecran, așa că nu include informații personale. Adresa ta de e-mail și jurnalele recente ale aplicației ajung doar la dezvoltator.",
     "stepShowTitle": "Arată-ne unde",
     "toolPen": "Creion",
     "toolNote": "Notă",

@@ -37,6 +37,10 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import {
+  handleAnalyticsConsentRead,
+  handleAnalyticsRoutes,
+} from './routes/analytics'
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
@@ -170,14 +174,16 @@ import { handleMIDIShortcut, loadMIDIShortcuts } from './service/midi/shortcuts'
 import { getFileById } from './service/music/getFiles'
 import {
   addMultipleToNowPlaying,
+  applyQueueOrder,
   clearNowPlayingQueue,
   executeCommand,
   getPlayerState,
   initializeMusicPlayer,
+  QUEUE_ORDERS,
+  type QueueOrder,
   refreshQueueState,
   removeFromNowPlaying,
-  reorderNowPlaying,
-  setNowPlayingQueue,
+  setQueueOrder,
   setStateCallback,
   shutdownMusicPlayer,
 } from './service/music-player'
@@ -359,6 +365,7 @@ import {
 } from './utils/bootState'
 import { DATABASE_ID_HEADER, getDatabaseId } from './utils/databaseId'
 import { isPortFree } from './utils/isPortFree'
+import { getListenHost } from './utils/listenHost'
 import { createLogger } from './utils/logger'
 import { getDatabasePath, getLogsDir } from './utils/paths'
 import { reportError } from './utils/reportError'
@@ -366,6 +373,7 @@ import { logRequest, logResponse } from './utils/request-logger'
 import { setRequestPeer } from './utils/request-peer'
 import { getServerPort } from './utils/serverPort'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
+import { getTestLanPort, peerAddress } from './utils/testLanListener'
 import {
   broadcastMIDIConnectionStatus,
   broadcastMIDIDevices,
@@ -860,9 +868,9 @@ async function startRealServer(): Promise<void> {
     reportError(reason, 'unhandledRejection')
   })
 
-  const server = await serveWithRetry<WebSocketData>({
+  const serveOptions: Parameters<typeof Bun.serve<WebSocketData>>[0] = {
     port: getServerPort(),
-    hostname: '0.0.0.0',
+    hostname: getListenHost(),
     reusePort: true,
     // Bun's 128 MiB default would reject background video uploads (up to
     // 1 GiB) with a bare 413 before the route runs. Uploads are streamed to
@@ -887,7 +895,7 @@ async function startRealServer(): Promise<void> {
     },
     async fetch(req: Request, server) {
       const requestStartTime = performance.now()
-      setRequestPeer(req, server.requestIP(req)?.address)
+      setRequestPeer(req, peerAddress(req, server))
       logRequest(req)
 
       if (req.method === 'OPTIONS') {
@@ -1341,6 +1349,10 @@ async function startRealServer(): Promise<void> {
           )
         }
       }
+
+      // GET /api/analytics (PUBLIC): may usage data be sent, and the install id
+      const analyticsConsent = handleAnalyticsConsentRead(req, url, handleCors)
+      if (analyticsConsent) return analyticsConsent
 
       // All other /api/* routes require authentication
       if (url.pathname.startsWith('/api/')) {
@@ -8115,7 +8127,6 @@ async function startRealServer(): Promise<void> {
               app_version: body.appVersion ?? 'unknown',
               server_log_tail: logs.serverTail,
               tauri_log_tail: logs.tauriTail,
-              logs_dir: logs.logsDir,
             })
             // Force flush so the logs are durable before we return — the
             // client may close the modal immediately, and Bun's process can
@@ -8220,6 +8231,15 @@ async function startRealServer(): Promise<void> {
       )
       if (backgroundMediaResponse) return backgroundMediaResponse
 
+      // Usage data on/off (Settings > Privacy)
+      const analyticsResponse = await handleAnalyticsRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (analyticsResponse) return analyticsResponse
+
       // "Request a feature" (relayed to the Cloudflare worker)
       const featureRequestResponse = await handleFeatureRequestRoutes(
         req,
@@ -8251,7 +8271,16 @@ async function startRealServer(): Promise<void> {
       message: handleWebSocketMessage,
       close: handleWebSocketClose,
     },
-  })
+  }
+  const server = await serveWithRetry<WebSocketData>(serveOptions)
+  const testLanPort = getTestLanPort()
+  if (testLanPort) {
+    Bun.serve<WebSocketData>({
+      ...serveOptions,
+      port: testLanPort,
+      hostname: '127.0.0.1',
+    })
+  }
 
   logTiming('bun_server_bind', t)
 
@@ -8358,11 +8387,8 @@ async function startRealServer(): Promise<void> {
       }
       case 'music_play_file': {
         const { fileId } = payload as { fileId: number }
-        const file = getFileById(fileId)
-        if (file) {
-          setNowPlayingQueue([fileId])
-          refreshQueueState()
-          await executeCommand({ type: 'play_index', index: 0 })
+        if (getFileById(fileId)) {
+          await executeCommand({ type: 'play_file', fileId })
           broadcastMusicState(getPlayerState())
         }
         break
@@ -8370,6 +8396,7 @@ async function startRealServer(): Promise<void> {
       case 'music_add_to_queue': {
         const { fileIds } = payload as { fileIds: number[] }
         addMultipleToNowPlaying(fileIds)
+        applyQueueOrder()
         refreshQueueState()
         broadcastMusicState(getPlayerState())
         break
@@ -8387,23 +8414,12 @@ async function startRealServer(): Promise<void> {
         refreshQueueState()
         broadcastMusicState(getPlayerState())
         break
-      case 'music_set_queue': {
-        const { fileIds } = payload as { fileIds: number[] }
-        setNowPlayingQueue(fileIds)
-        refreshQueueState()
-        broadcastMusicState(getPlayerState())
-        break
-      }
-      case 'music_reorder_queue': {
-        const { itemIds } = payload as { itemIds: number[] }
-        reorderNowPlaying(itemIds)
-        refreshQueueState()
-        broadcastMusicState(getPlayerState())
-        break
-      }
-      case 'music_shuffle': {
-        const { enabled } = payload as { enabled: boolean }
-        await executeCommand({ type: 'shuffle', enabled })
+      case 'music_queue_order': {
+        const { order } = payload as { order: QueueOrder }
+        if (QUEUE_ORDERS.includes(order)) {
+          setQueueOrder(order)
+          broadcastMusicState(getPlayerState())
+        }
         break
       }
       case 'music_get_state':

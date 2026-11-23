@@ -1,3 +1,2 @@
-export * from './audioFormats'
 export * from './formatDuration'
-export * from './shuffleArray'
+export * from './formatLastPlayed'

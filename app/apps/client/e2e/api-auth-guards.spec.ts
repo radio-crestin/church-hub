@@ -1,7 +1,7 @@
 import { request as httpRequest } from 'node:http'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
-import { lanAddress, lanBaseUrl } from './helpers/lan-address'
+import { lanAddress, lanBaseUrl, lanLookup } from './helpers/lan-address'
 
 /**
  * The server's auth guards, end to end over HTTP: who may read, who may write,
@@ -37,6 +37,7 @@ function rawRequest(
       {
         host: url.hostname,
         port: url.port,
+        lookup: lanLookup,
         path: url.pathname + url.search,
         method: options.method ?? 'GET',
         headers: options.headers,

@@ -38,6 +38,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
     "@playwright/test": "^1.65.1",
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1",
     "@tauri-apps/cli": "^2.10.1",
     "bun-types": "^1.4.2",
     "client": "workspace:*",
