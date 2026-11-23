@@ -31,7 +31,7 @@ async function bibleShortcut(request: APIRequestContext): Promise<string> {
 }
 
 const searchBox = (page: Page) =>
-  page.getByPlaceholder(/search|cauta|căuta/i).first()
+  page.getByPlaceholder(/search|caut[aă]|căuta/i).first()
 
 async function searchAndShow(page: Page, reference: string) {
   const search = searchBox(page)

@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
+import { startFakeAudioServer } from './helpers/fake-audio'
+
 /**
  * Settings and Music on a phone (CH-049): Settings opens on its list of
  * sections in a phone's browser, every settings page fits the screen with
@@ -111,38 +113,48 @@ test.describe('Settings and Music on a phone', () => {
     ).toBeInViewport({ ratio: 1 })
   })
 
-  test('Music keeps the player on top of Piese, Bibliotecă and Coadă', async ({
-    page,
-  }) => {
-    await onPhone(page)
-    await page.goto('/music')
-    await expect(page.getByTestId('workspace-panel-deck')).toBeVisible()
-    const tracksTab = page.getByTestId('workspace-tab-tracks')
-    await expect(tracksTab).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByTestId('workspace-panel-tracks')).toBeVisible()
+  test.describe('Music', () => {
+    // The page asks the server's audio player for its state; without this
+    // stand-in the server starts a real one on the port the next spec needs.
+    let stopFakeAudio: (() => void) | undefined
+    test.beforeAll(async () => {
+      stopFakeAudio = await startFakeAudioServer()
+    })
+    test.afterAll(() => stopFakeAudio?.())
 
-    await page.getByTestId('workspace-tab-queue').click()
-    await expect(page.getByTestId('workspace-panel-queue')).toBeVisible()
-    await expect(page.getByTestId('workspace-panel-tracks')).toBeHidden()
+    test('Music keeps the player on top of Piese, Bibliotecă and Coadă', async ({
+      page,
+    }) => {
+      await onPhone(page)
+      await page.goto('/music')
+      await expect(page.getByTestId('workspace-panel-deck')).toBeVisible()
+      const tracksTab = page.getByTestId('workspace-tab-tracks')
+      await expect(tracksTab).toHaveAttribute('aria-selected', 'true')
+      await expect(page.getByTestId('workspace-panel-tracks')).toBeVisible()
 
-    // A view picked in the library opens its tracks.
-    await page.getByTestId('workspace-tab-library').click()
-    await page.getByTestId('music-view-recent').click()
-    await expect(tracksTab).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByTestId('workspace-panel-tracks')).toBeVisible()
-    expect(await cutOff(page)).toEqual([])
-  })
+      await page.getByTestId('workspace-tab-queue').click()
+      await expect(page.getByTestId('workspace-panel-queue')).toBeVisible()
+      await expect(page.getByTestId('workspace-panel-tracks')).toBeHidden()
 
-  test('Music on a desktop keeps its three columns', async ({ page }) => {
-    await page.setViewportSize({ width: 1400, height: 900 })
-    await page.goto('/music')
-    await expect(page.getByTestId('workspace-tab-tracks')).toHaveCount(0)
-    await expect(page.getByTestId('workspace-panel-deck')).toHaveCount(0)
-    await expect(page.getByTestId('music-view-recent')).toBeVisible()
-    await expect(
-      page.getByTestId('workspace-panel-player').getByText('Coadă', {
-        exact: true,
-      }),
-    ).toBeVisible()
+      // A view picked in the library opens its tracks.
+      await page.getByTestId('workspace-tab-library').click()
+      await page.getByTestId('music-view-recent').click()
+      await expect(tracksTab).toHaveAttribute('aria-selected', 'true')
+      await expect(page.getByTestId('workspace-panel-tracks')).toBeVisible()
+      expect(await cutOff(page)).toEqual([])
+    })
+
+    test('Music on a desktop keeps its three columns', async ({ page }) => {
+      await page.setViewportSize({ width: 1400, height: 900 })
+      await page.goto('/music')
+      await expect(page.getByTestId('workspace-tab-tracks')).toHaveCount(0)
+      await expect(page.getByTestId('workspace-panel-deck')).toHaveCount(0)
+      await expect(page.getByTestId('music-view-recent')).toBeVisible()
+      await expect(
+        page.getByTestId('workspace-panel-player').getByText('Coadă', {
+          exact: true,
+        }),
+      ).toBeVisible()
+    })
   })
 })

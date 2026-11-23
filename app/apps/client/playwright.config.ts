@@ -42,8 +42,14 @@ const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
 /**
  * Where the test server looks for the desktop app's audio server: the music
  * spec starts a stand-in there, so music really "plays" (fake-audio-server.ts).
+ * Past TEST_LAN_PORT, which the test server itself listens on.
  */
-export const FAKE_AUDIO_PORT = Number(TEST_PORT) + 1
+export const FAKE_AUDIO_PORT = Number(TEST_PORT) + 2
+if ([3000, 3001].includes(FAKE_AUDIO_PORT)) {
+  throw new Error(
+    `TEST_PORT=${TEST_PORT} puts the fake audio server on the installed app / dev server: pick another`,
+  )
+}
 
 /**
  * The line the server prints once the real server is bound and boot is done

@@ -216,7 +216,7 @@ test.describe('Keyboard Shortcuts - Global', () => {
     await page.goto('/songs')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caut[aă]/i).first()
     if (!(await searchInput.isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Search input not visible')
       return
