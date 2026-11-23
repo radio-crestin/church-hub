@@ -299,8 +299,7 @@ export function reorderCategories(
       const db = getDatabase()
 
       // Assign priorities in descending order (first = highest)
-      for (let i = 0; i < input.categoryIds.length; i++) {
-        const id = input.categoryIds[i]
+      for (const [i, id] of input.categoryIds.entries()) {
         const priority = input.categoryIds.length - i
 
         db.update(songCategories)

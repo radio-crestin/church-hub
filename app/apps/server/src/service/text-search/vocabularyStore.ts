@@ -37,8 +37,9 @@ export function addVocabularyWords(ftsTable: string, words: string[]): void {
   if (!vocabulary) return
   for (const word of new Set(words)) {
     const at = lowerBound(vocabulary.terms, word)
-    if (vocabulary.terms[at] === word) {
-      vocabulary.docCounts[at]++
+    const count = vocabulary.docCounts[at]
+    if (vocabulary.terms[at] === word && count !== undefined) {
+      vocabulary.docCounts[at] = count + 1
     } else {
       vocabulary.terms.splice(at, 0, word)
       vocabulary.docCounts.splice(at, 0, 1)

@@ -10,16 +10,16 @@
     "back": "Inapoi la Programe",
     "addItem": "Adauga",
     "importToQueue": "Adauga in prezentare",
-    "saveToFile": "Salveaza in Fisier",
-    "loadFromFile": "Incarca din Fisier",
+    "saveToFile": "Salvează în fișier",
+    "loadFromFile": "Încarcă din fișier",
     "importFromFile": "Importa",
     "editAsText": "Editeaza ca Text",
     "cancel": "Anulează",
     "expandAll": "Extinde tot",
     "collapseAll": "Restrange tot",
-    "rename": "Redenumeste",
+    "rename": "Redenumește",
     "renameNamed": "Redenumeste programul {{title}}",
-    "renameDescription": "Schimba numele acestui program"
+    "renameDescription": "Schimbă numele acestui program"
   },
   "editor": {
     "title": "Titlu",
@@ -76,7 +76,7 @@
     "noResults": "Nicio cantare gasita",
     "openSearch": "Cauta in acest program",
     "closeSearch": "Inchide cautarea",
-    "stopLiveItem": "Opreste afisarea programului",
+    "stopLiveItem": "Oprește afișarea programului",
     "itemsTitle": "Elementele programului",
     "previewTitle": "Previzualizare",
     "presentItem": "Afiseaza pe ecran",
@@ -140,7 +140,7 @@
   "scenePicker": {
     "title": "Selecteaza Scena",
     "noScenes": "Nu sunt scene OBS disponibile. Conecteaza-te la OBS pentru a vedea scenele.",
-    "current": "Curenta"
+    "current": "Curentă"
   },
   "insertSlide": {
     "title": "Insereaza Slide",

@@ -41,10 +41,12 @@ export function findSimilarTerms(
 
   outer: while (index < terms.length) {
     const term = terms[index]
+    if (term === undefined) break
     const shared = commonPrefixLength(previous, term)
     for (let depth = shared + 1; depth <= term.length; depth++) {
       const row = nextRow(rows, depth, term, word)
-      const distance = row[word.length]
+      // Every row is `width` cells long, so its last cell is there
+      const distance = row[word.length]!
       if (
         asPrefix &&
         depth >= word.length &&
@@ -55,7 +57,7 @@ export function findSimilarTerms(
           text: term.slice(0, depth),
           prefix: true,
           edits: distance,
-          docCount: docCounts[index],
+          docCount: docCounts[index] ?? 0,
         })
         skipBeginning(term, depth)
         continue outer
@@ -65,13 +67,13 @@ export function findSimilarTerms(
         continue outer
       }
     }
-    const distance = rows[term.length][word.length]
-    if (distance <= maxEdits) {
+    const distance = rows[term.length]?.[word.length]
+    if (distance !== undefined && distance <= maxEdits) {
       found.push({
         text: term,
         prefix: false,
         edits: distance,
-        docCount: docCounts[index],
+        docCount: docCounts[index] ?? 0,
       })
     }
     previous = term
@@ -92,21 +94,23 @@ function nextRow(
   word: string,
 ): Int32Array {
   const above = rows[depth - 1]
+  if (!above) throw new Error(`Edit-distance row ${depth - 1} is missing`)
   const twoAbove = depth >= 2 ? rows[depth - 2] : null
   const row = rows[depth] ?? new Int32Array(word.length + 1)
   rows[depth] = row
   const char = term.charCodeAt(depth - 1)
   row[0] = depth
+  // Every row is `word.length + 1` cells long, so each cell read is there
   for (let j = 1; j <= word.length; j++) {
     const cost = word.charCodeAt(j - 1) === char ? 0 : 1
-    let best = Math.min(above[j] + 1, row[j - 1] + 1, above[j - 1] + cost)
+    let best = Math.min(above[j]! + 1, row[j - 1]! + 1, above[j - 1]! + cost)
     if (
       twoAbove &&
       j >= 2 &&
       char === word.charCodeAt(j - 2) &&
       term.charCodeAt(depth - 2) === word.charCodeAt(j - 1)
     ) {
-      best = Math.min(best, twoAbove[j - 2] + 1)
+      best = Math.min(best, twoAbove[j - 2]! + 1)
     }
     row[j] = best
   }
@@ -121,7 +125,7 @@ function commonPrefixLength(a: string, b: string): number {
 }
 
 function minOf(row: Int32Array): number {
-  let min = row[0]
-  for (let j = 1; j < row.length; j++) if (row[j] < min) min = row[j]
+  let min = Number.POSITIVE_INFINITY
+  for (const cell of row) if (cell < min) min = cell
   return min
 }

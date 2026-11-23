@@ -158,13 +158,13 @@ function createEasymidiWrapper(nativeMidi: {
     }
 
     private parseMessage(bytes: number[]): Record<string, unknown> | null {
-      if (bytes.length < 1) return null
-
       const status = bytes[0]
+      if (status === undefined) return null
+
       const type = status & 0xf0
       const channel = status & 0x0f
 
-      if (type === 0x90 && bytes[2] > 0) {
+      if (type === 0x90 && bytes[2] !== undefined && bytes[2] > 0) {
         return { _type: 'noteon', channel, note: bytes[1], velocity: bytes[2] }
       }
       if (type === 0x80 || (type === 0x90 && bytes[2] === 0)) {

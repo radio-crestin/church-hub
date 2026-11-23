@@ -13,7 +13,10 @@ import type {
   PresentTemporarySongInput,
   PresentTemporaryVerseteTineriInput,
   TemporaryBibleContent,
+  TemporaryBiblePassageContent,
   TemporaryContent,
+  TemporarySongContent,
+  TemporaryVerseteTineriContent,
   UpdatePresentationStateInput,
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
@@ -590,7 +593,7 @@ export function navigateTemporary(
  * Navigates within temporary Bible content
  */
 function navigateTemporaryBible(
-  data: TemporaryContent extends { type: 'bible'; data: infer D } ? D : never,
+  data: TemporaryBibleContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const rawDb = getRawDatabase()
@@ -617,8 +620,8 @@ function navigateTemporaryBible(
       : data.currentVerseIndex - 1
 
   // If within current chapter
-  if (newIndex >= 0 && newIndex < chapterVerses.length) {
-    const newVerse = chapterVerses[newIndex]
+  const newVerse = chapterVerses[newIndex]
+  if (newVerse) {
     const reference = `${data.bookName} ${data.chapter}:${newVerse.verse} - ${data.translationAbbreviation}`
 
     const temporaryContent: TemporaryContent = {
@@ -827,11 +830,11 @@ function navigateToChapterLastVerse(
     text: string
   }[]
 
-  if (verses.length === 0) {
+  const lastVerse = verses.at(-1)
+  if (!lastVerse) {
     return getPresentationState()
   }
 
-  const lastVerse = verses[verses.length - 1]
   const reference = `${bookName} ${chapter}:${lastVerse.verse} - ${data.translationAbbreviation}`
   return updatePresentationState({
     temporaryContent: {
@@ -858,7 +861,7 @@ function navigateToChapterLastVerse(
  * Navigates within temporary song content
  */
 function navigateTemporarySong(
-  data: TemporaryContent extends { type: 'song'; data: infer D } ? D : never,
+  data: TemporarySongContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const newIndex =
@@ -900,9 +903,7 @@ function navigateTemporarySong(
  * Navigates within temporary Bible passage content
  */
 function navigateTemporaryBiblePassage(
-  data: TemporaryContent extends { type: 'bible_passage'; data: infer D }
-    ? D
-    : never,
+  data: TemporaryBiblePassageContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const newIndex =
@@ -941,21 +942,32 @@ function navigateTemporaryBiblePassage(
 }
 
 /**
+ * Moves a looping Versete Biblice slideshow on to its next verse. Called by
+ * its timer (verse-loop.ts), so it skips navigateTemporary's check against a
+ * client's request timestamp.
+ */
+export function advanceVerseLoop(): PresentationState {
+  const current = getPresentationState()
+  if (current.temporaryContent?.type !== 'versete_tineri') return current
+  return navigateTemporaryVerseteTineri(current.temporaryContent.data, 'next')
+}
+
+/**
  * Navigates within temporary versete tineri content
  */
 function navigateTemporaryVerseteTineri(
-  data: TemporaryContent extends { type: 'versete_tineri'; data: infer D }
-    ? D
-    : never,
+  data: TemporaryVerseteTineriContent,
   direction: 'next' | 'prev',
 ): PresentationState {
-  const newIndex =
-    direction === 'next'
-      ? data.currentEntryIndex + 1
-      : data.currentEntryIndex - 1
+  const step = direction === 'next' ? 1 : -1
+  const count = data.entries.length
+  // A loop wraps around at both ends instead of stopping.
+  const newIndex = data.loop
+    ? (data.currentEntryIndex + step + count) % count
+    : data.currentEntryIndex + step
 
   // If at end of entries, hide presentation
-  if (newIndex >= data.entries.length) {
+  if (newIndex >= count) {
     logger.info('Reached end of versete tineri, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
@@ -1132,6 +1144,7 @@ export function presentTemporaryVerseteTineri(
       data: {
         entries: input.entries,
         currentEntryIndex: startIndex,
+        loop: input.loop,
         nextItemPreview: input.nextItemPreview,
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
@@ -1193,15 +1206,12 @@ export function presentTemporaryScreenShare(
   input: PresentTemporaryScreenShareInput,
 ): PresentationState {
   try {
-    logger.debug(
-      `Presenting temporary screen share from: ${input.broadcasterId}`,
-    )
+    logger.debug('Presenting temporary screen share')
 
     const temporaryContent: TemporaryContent = {
       type: 'screen_share',
       data: {
-        broadcasterId: input.broadcasterId,
-        audioEnabled: input.audioEnabled,
+        startedAt: Date.now(),
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
       },

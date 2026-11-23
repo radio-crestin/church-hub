@@ -34,13 +34,13 @@ export function scoreTextMatch(
     // A letter on its own ("a", "o") is marked only as part of the typed
     // phrase, never wherever it stands alone.
     let worthMarking = false
-    for (let group = 0; group < groupCount; group++) {
-      const cost = atUnit[group]
-      if (cost === NO_MATCH) continue
-      if (groups[group].required) worthMarking = true
+    groups.forEach((termGroup, group) => {
+      const cost = atUnit[group] ?? NO_MATCH
+      if (cost === NO_MATCH) return
+      if (termGroup.required) worthMarking = true
       edits[group * units.length + position] = cost
-      if (cost < best[group]) best[group] = cost
-    }
+      if (cost < (best[group] ?? NO_MATCH)) best[group] = cost
+    })
     if (worthMarking) matchedForms.add(unit)
   })
 
@@ -58,10 +58,11 @@ export function scoreTextMatch(
 
 function matchClassOf(groups: TermGroup[], best: Int8Array): MatchClass {
   let typos = false
-  for (let index = 0; index < groups.length; index++) {
-    if (!groups[index].required) continue
-    if (best[index] === NO_MATCH) return MatchClass.PARTIAL
-    if (best[index] > 0) typos = true
+  for (const [index, group] of groups.entries()) {
+    if (!group.required) continue
+    const cost = best[index] ?? NO_MATCH
+    if (cost === NO_MATCH) return MatchClass.PARTIAL
+    if (cost > 0) typos = true
   }
   return typos ? MatchClass.TYPOS : MatchClass.EXACT
 }
@@ -72,8 +73,9 @@ function coverage(groups: TermGroup[], best: Int8Array): number {
   groups.forEach((group, index) => {
     const weight = group.weight * (group.required ? 1 : OPTIONAL_WEIGHT_SHARE)
     total += weight
-    if (best[index] !== NO_MATCH) {
-      found += weight * Math.max(0, 1 - TYPO_COST * best[index])
+    const cost = best[index] ?? NO_MATCH
+    if (cost !== NO_MATCH) {
+      found += weight * Math.max(0, 1 - TYPO_COST * cost)
     }
   })
   return total > 0 ? found / total : 0
@@ -95,11 +97,13 @@ function longestPhrase(
     for (let position = 0; position < unitCount; position++) {
       const at = group * unitCount + position
       if (edits[at] === NO_MATCH) continue
-      const previous = group > 0 && position > 0 ? run[at - unitCount - 1] : 0
-      run[at] = previous + 1
-      if (run[at] > length) {
-        length = run[at]
-        start = position - run[at] + 1
+      const previous =
+        group > 0 && position > 0 ? (run[at - unitCount - 1] ?? 0) : 0
+      const current = previous + 1
+      run[at] = current
+      if (current > length) {
+        length = current
+        start = position - current + 1
       }
     }
   }

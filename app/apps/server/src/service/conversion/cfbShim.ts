@@ -20,9 +20,7 @@ export async function installCfbGlobals(): Promise<void> {
   if (!installPromise) {
     installPromise = (async () => {
       const [CFB, cptable] = await Promise.all([
-        // @ts-expect-error - cfb has no published types
         import('cfb'),
-        // @ts-expect-error - codepage has no published types
         import('codepage'),
       ])
       const g = globalThis as { CFB?: unknown; cptable?: unknown }

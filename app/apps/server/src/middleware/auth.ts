@@ -111,7 +111,7 @@ function extractBearerToken(req: Request): string | null {
   if (!authHeader) return null
 
   const match = authHeader.match(/^Bearer\s+(.+)$/i)
-  return match ? match[1] : null
+  return match?.[1] ?? null
 }
 
 /**

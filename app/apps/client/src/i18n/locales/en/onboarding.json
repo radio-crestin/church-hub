@@ -1,0 +1,41 @@
+{
+  "steps": {
+    "welcome": "Welcome",
+    "features": "Features",
+    "done": "Ready"
+  },
+  "stepOf": "Step {{step}} of {{total}}",
+  "welcome": {
+    "title": "Welcome to Church Hub",
+    "description": "A few choices to set Church Hub up for your church. You can change all of them later in Settings.",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "features": {
+    "title": "What will you use?",
+    "description": "Pick the pages you need. The others are hidden from the side menu; you can bring them back anytime in Settings › Sidebar.",
+    "selected": "{{count}} of {{total}} selected",
+    "items": {
+      "present": "Show songs, verses and announcements on the screens",
+      "songs": "Search, edit and present the songs",
+      "bible": "Find and present Bible verses",
+      "schedules": "Plan the order of the service",
+      "gallery": "Show photos and videos",
+      "livestream": "Run the live stream on YouTube with OBS",
+      "music": "Play music before and after the service",
+      "song_key": "The key each song was sung in",
+      "live_translation": "Translate the sermon live for listeners",
+      "feedback": "Send ideas and problems to the Church Hub team"
+    }
+  },
+  "done": {
+    "title": "All set",
+    "description": "Church Hub is ready. Your side menu will have:",
+    "later": "You can change all of this anytime in Settings."
+  },
+  "back": "Back",
+  "next": "Next",
+  "finish": "Start using Church Hub",
+  "skip": "Skip for now",
+  "saveError": "Couldn't save your choices. Please try again."
+}

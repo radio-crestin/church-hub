@@ -33,7 +33,10 @@ export async function aiBibleSearch(
 
   // Step 2: Search with each term and combine results
   // Bible FTS doesn't handle OR queries as well, so we search each term separately
-  const allResults = new Map<number, (typeof ftsResults)[0]>()
+  const allResults = new Map<
+    number,
+    ReturnType<typeof searchVersesByText>[number]
+  >()
 
   // Search with original query first
   const originalResults = searchVersesByText({

@@ -84,9 +84,8 @@ export async function startStream(): Promise<{
     let broadcast: Awaited<ReturnType<typeof createBroadcast>>
 
     // Check for an existing upcoming broadcast before creating a new one
-    const upcomingBroadcasts = await getUpcomingBroadcasts()
-    if (upcomingBroadcasts.length > 0) {
-      const upcoming = upcomingBroadcasts[0]
+    const [upcoming] = await getUpcomingBroadcasts()
+    if (upcoming) {
       log(
         'info',
         `Using existing upcoming broadcast: ${upcoming.broadcastId} (${upcoming.title})`,

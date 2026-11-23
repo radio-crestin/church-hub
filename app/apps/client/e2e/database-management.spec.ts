@@ -1,3 +1,4 @@
+import { rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
@@ -112,15 +113,19 @@ test.describe('Database Management - API', () => {
       `church-hub-e2e-export-${Date.now()}.sqlite`,
     )
 
-    const response = await request.post('/api/database/export', {
-      data: { destinationPath: exportPath },
-    })
+    try {
+      const response = await request.post('/api/database/export', {
+        data: { destinationPath: exportPath },
+      })
 
-    expect(response.status()).toBe(200)
-    const json = await response.json()
-    expect(json.data).toHaveProperty('success')
-    expect(json.data.success).toBe(true)
-    expect(json.data).toHaveProperty('exportedPath')
+      expect(response.status()).toBe(200)
+      const json = await response.json()
+      expect(json.data).toHaveProperty('success')
+      expect(json.data.success).toBe(true)
+      expect(json.data).toHaveProperty('exportedPath')
+    } finally {
+      rmSync(exportPath, { force: true })
+    }
   })
 })
 

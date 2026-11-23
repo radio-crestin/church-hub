@@ -52,7 +52,16 @@ const songUpdates = {
           imported: { type: 'integer' },
           updated: { type: 'integer' },
           checkedAt: { type: 'integer' },
-          error: { type: 'string' },
+          error: {
+            type: 'string',
+            description:
+              'Why the source could not be checked, when it could not',
+          },
+          httpStatus: {
+            type: 'string',
+            description:
+              'The HTTP status its download got, when that was why, e.g. "403 Forbidden"',
+          },
         },
       },
     },
@@ -209,6 +218,77 @@ export const songSourcesPaths = {
             },
           }),
         },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/{id}/changed': {
+    get: {
+      tags,
+      summary: 'Get the library songs a source changed, for review',
+      description:
+        'From the last check, while syncing without approval is off: each library song (never one edited by hand) with its current title and slides beside the source’s newer version. Requires `songs.create`.',
+      security,
+      parameters: [idParameter('string')],
+      responses: {
+        '200': {
+          description: 'The changed songs',
+          content: dataOf({
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                songId: { type: 'integer' },
+                library: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    slides: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+                song: {
+                  type: 'object',
+                  description:
+                    'The source’s version: id, sourceFilename, parsed',
+                },
+              },
+            },
+          }),
+        },
+        '404': { description: 'No such source' },
+        ...errors,
+      },
+    },
+    post: {
+      tags,
+      summary: 'Update or keep some of the library songs a source changed',
+      description:
+        '`update` gives them the source’s lyrics (a song edited by hand is never replaced); `keep` keeps the library’s, and that version of the source’s is not offered again. Either way they stop waiting for approval. Requires `songs.create`.',
+      security,
+      parameters: [idParameter('string')],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['songIds', 'action'],
+              properties: {
+                songIds: { type: 'array', items: { type: 'integer' } },
+                action: { type: 'string', enum: ['update', 'keep'] },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'The song updates',
+          content: dataOf(songUpdates),
+        },
+        '400': { description: 'songIds or action missing' },
+        '404': { description: 'No such source' },
+        '409': { description: 'The song sources are being checked' },
         ...errors,
       },
     },

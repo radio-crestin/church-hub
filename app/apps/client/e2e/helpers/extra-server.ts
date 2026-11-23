@@ -43,6 +43,7 @@ export class ExtraServer {
         cwd: APP_DIR,
         env: {
           ...process.env,
+          CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
           NODE_ENV: 'production',
           CLIENT_DIST_PATH: 'apps/client/dist',
           CHURCH_HUB_DATA_DIR: this.dataDir,
@@ -109,6 +110,14 @@ export class ExtraServer {
     })
     expect(login.ok()).toBe(true)
     return api
+  }
+
+  /** A fresh install opens on its first-run onboarding; a page spec skips it. */
+  async skipOnboarding(api: APIRequestContext): Promise<void> {
+    const res = await api.post('/api/settings/app_settings', {
+      data: { key: 'onboarding_pending', value: 'false' },
+    })
+    expect(res.ok()).toBe(true)
   }
 
   async dispose(): Promise<void> {

@@ -92,6 +92,11 @@
       "loading": "Loading available Bibles...",
       "selectBible": "Select a Bible to download...",
       "button": "Download"
+    },
+    "readingSpeed": {
+      "title": "Reading speed",
+      "description": "How long each verse stays on screen when bookmarks play in a loop: its words at this speed, at least 3 seconds.",
+      "label": "Words per minute"
     }
   },
   "translation": {
@@ -151,7 +156,16 @@
         "text_mismatch": "not the text of this verse, imported without its styles"
       }
     },
-    "exportEmpty": "Nothing to export yet"
+    "exportEmpty": "Nothing to export yet",
+    "slideshow": {
+      "play": "Present in order",
+      "playHint": "Present in order: shows the verses one after another; → or Space for the next",
+      "stop": "Stop",
+      "loop": "Play in a loop",
+      "loopHint": "Play in a loop: each verse stays up while it is read, then the next one comes",
+      "stopLoop": "Stop the loop",
+      "position": "{{current}}/{{count}}"
+    }
   },
   "actionsMenu": {
     "trigger": "More",

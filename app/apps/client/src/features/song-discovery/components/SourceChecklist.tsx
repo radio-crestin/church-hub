@@ -11,6 +11,8 @@ interface SourceChecklistProps {
   counts: Map<string, number>
   isLoading: boolean
   failed: SongSource[]
+  /** Why the server's last check of a source failed, by source id. */
+  errors: Map<string, string>
 }
 
 /** Names more than one source goes by, e.g. a link named like a built-in. */
@@ -33,6 +35,7 @@ export function SourceChecklist({
   counts,
   isLoading,
   failed,
+  errors,
 }: SourceChecklistProps) {
   const { t } = useTranslation('songDiscovery')
   const shared = sharedNames(sources)
@@ -46,6 +49,14 @@ export function SourceChecklist({
   }
 
   const status = (source: SongSource) => {
+    if (errors.has(source.id)) {
+      return (
+        <AlertTriangle
+          aria-hidden
+          className="h-4 w-4 shrink-0 text-red-500 dark:text-red-400"
+        />
+      )
+    }
     if (failed.includes(source)) {
       return (
         <AlertTriangle
@@ -83,6 +94,7 @@ export function SourceChecklist({
       {sources.map((source) => {
         const from = origin(source)
         const label = from ? `${source.name} ${from}` : source.name
+        const error = errors.get(source.id)
         return (
           <label
             key={source.id}
@@ -95,10 +107,20 @@ export function SourceChecklist({
               onChange={() => onToggle(source.id)}
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
             />
-            <span className="min-w-0 flex-1 truncate text-sm text-gray-800 dark:text-gray-100">
-              {source.name}
-              {from && (
-                <span className="ml-1 text-xs text-gray-500">{from}</span>
+            <span className="min-w-0 flex-1 text-sm text-gray-800 dark:text-gray-100">
+              <span className="block truncate">
+                {source.name}
+                {from && (
+                  <span className="ml-1 text-xs text-gray-500">{from}</span>
+                )}
+              </span>
+              {error && (
+                <span
+                  data-testid={`source-error-${source.id}`}
+                  className="block break-words text-xs text-red-600 dark:text-red-400"
+                >
+                  {error}
+                </span>
               )}
             </span>
             {status(source)}

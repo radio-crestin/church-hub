@@ -1,34 +1,29 @@
-import {
-  Eraser,
-  Eye,
-  EyeOff,
-  Loader2,
-  MonitorOff,
-  MonitorPlay,
-} from 'lucide-react'
-import { useCallback, useEffect, useMemo } from 'react'
+import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
   formatShortcutForDisplay,
   useAppShortcuts,
 } from '~/features/keyboard-shortcuts'
-import { Button } from '~/ui/button'
+import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
-import { useScreenShareContext } from '../context'
+import { PhoneSlideControls } from './PhoneSlideControls'
 import {
+  type LiveProgramSteps,
   useClearSlide,
   useClearTemporaryContent,
+  useMoveLive,
   usePresentationState,
   useShowSlide,
-  useWebSocket,
 } from '../hooks'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
 } from '../hooks/useSlideHighlights'
+import { ScreenShareButton } from '../screen-share'
 import type { ClockOverride } from '../types'
 
 // The operators read the time from the Control Room, so its clock is large and
@@ -39,44 +34,16 @@ const CONTROL_ROOM_CLOCK: ClockOverride = {
   fontSize: 140,
 }
 
-export function ControlRoom() {
+interface ControlRoomProps {
+  /** The program whose step is on the screens: the phone's arrows walk it. */
+  liveProgram: LiveProgramSteps | null
+}
+
+export function ControlRoom({ liveProgram }: ControlRoomProps) {
   const { t } = useTranslation(['presentation', 'common'])
-
-  // Connect to WebSocket for real-time updates
-  const { send: wsSend } = useWebSocket()
-
-  // Get screen share context (persists across page navigations)
-  const {
-    state: screenShareState,
-    startScreenShare,
-    stopScreenShare,
-    setClientId,
-    setSend,
-  } = useScreenShareContext()
-
-  // Generate a stable client ID for this session
-  const clientId = useMemo(() => {
-    return `control-room-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-  }, [])
-
-  // Initialize the screen share context with client ID and send function
-  useEffect(() => {
-    setClientId(clientId)
-    setSend(wsSend)
-  }, [clientId, wsSend, setClientId, setSend])
-
-  // Start screen share with audio always enabled (audio playback controlled per-screen)
-  const handleStartScreenShare = useCallback(() => {
-    startScreenShare({ audio: true })
-  }, [startScreenShare])
-
-  // Stop screen share (any client can stop)
-  const handleStopScreenShare = useCallback(() => {
-    // Send stop command - works for both broadcaster and other clients
-    wsSend({ type: 'screen_share_stop' })
-    // If we're the broadcaster, also stop our local stream
-    stopScreenShare()
-  }, [wsSend, stopScreenShare])
+  // A phone has no arrow keys: previous, hide and next sit at the bottom.
+  const isPhone = !useMediaQuery('(min-width: 1024px)')
+  const { goNext, goPrev, isMoving } = useMoveLive(liveProgram)
 
   const { data: state } = usePresentationState()
   const clearSlide = useClearSlide()
@@ -142,38 +109,11 @@ export function ControlRoom() {
     <div className="flex flex-col h-full gap-4">
       <PageHeader
         title={t('presentation:controlRoom.title')}
-        actions={
-          // Screen Share Button - synced across all clients
-          screenShareState.isActive ? (
-            <Button
-              variant="danger"
-              onClick={handleStopScreenShare}
-              aria-label={t('presentation:controlRoom.screenShare.stop')}
-              className="gap-2"
-            >
-              <MonitorOff className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t('presentation:controlRoom.screenShare.stop')}
-              </span>
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
-              onClick={handleStartScreenShare}
-              aria-label={t('presentation:controlRoom.screenShare.start')}
-              className="gap-2"
-            >
-              <MonitorPlay className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {t('presentation:controlRoom.screenShare.start')}
-              </span>
-            </Button>
-          )
-        }
+        actions={<ScreenShareButton />}
       />
 
       {/* Preview Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4 lg:flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-4 shrink-0 gap-4">
           {/* LEFT: Content Button */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -225,8 +165,8 @@ export function ControlRoom() {
                 )}
               </button>
             )}
-            {/* Hide/Show Button */}
-            {!isHidden ? (
+            {/* Hide/Show Button (on a phone, in the bottom bar) */}
+            {isPhone ? null : !isHidden ? (
               <button
                 type="button"
                 onClick={handleHide}
@@ -266,12 +206,32 @@ export function ControlRoom() {
           </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+        <div className="lg:flex-1 flex items-center justify-center min-h-0 overflow-hidden">
           <div className="w-full h-full flex items-center justify-center">
             <LivePreview clockOverride={CONTROL_ROOM_CLOCK} />
           </div>
         </div>
       </div>
+
+      {isPhone && (
+        <PhoneSlideControls
+          testId="control-room-phone"
+          keepsTabBar
+          onPrev={goPrev}
+          onNext={goNext}
+          canPrev={hasTemporaryContent && !isHidden}
+          canNext={hasTemporaryContent && !isHidden}
+          isNavigating={isMoving}
+          isLive={isLive}
+          onHide={handleHide}
+          isHiding={clearSlide.isPending || clearTemporary.isPending}
+          project={
+            isHidden && !!state?.lastSongSlideId
+              ? { onClick: handleShow, isPending: showSlideCommand.isPending }
+              : undefined
+          }
+        />
+      )}
     </div>
   )
 }

@@ -37,9 +37,9 @@ export function buildMatchTiers(groups: TermGroup[]): MatchTiers {
 }
 
 function phraseExpression(groups: TermGroup[]): string {
-  const typed = groups.map((group) => group.variants[0])
-  const last = typed[typed.length - 1]
-  return `"${typed.map((variant) => variant.text).join(' ')}"${last.prefix ? '*' : ''}`
+  const typed = groups.flatMap((group) => group.variants.slice(0, 1))
+  const last = typed.at(-1)
+  return `"${typed.map((variant) => variant.text).join(' ')}"${last?.prefix ? '*' : ''}`
 }
 
 function allOf(groups: TermGroup[]): string {

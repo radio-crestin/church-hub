@@ -1,19 +1,23 @@
-import { Loader2, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { formatRelativeTime } from '~/features/sync/utils/formatRelativeTime'
 import { Switch } from '~/ui/switch/Switch'
+import { RecoverTitlesButton } from './RecoverTitlesButton'
 import { useSongUpdates } from '../hooks/useSongUpdates'
+import { useSourceErrors } from '../hooks/useSourceErrors'
 
 /**
  * Settings card for the song sync: syncing new songs and updates without
- * asking (on by default), and checking the sources now. The checks run on
- * the server, in a worker thread, a bit after start and then daily.
+ * asking (on by default), checking the sources now, why a source's last
+ * check failed, and recovering the original titles. The checks run on the
+ * server, in a worker thread, a bit after start and then daily.
  */
 export function DiscoverySyncSettings() {
   const { t, i18n } = useTranslation('songDiscovery')
   const { state, isRunning, checkNow, setAutoUpdate, pendingCount } =
     useSongUpdates()
+  const errors = useSourceErrors()
 
   return (
     <div className="space-y-4">
@@ -69,6 +73,31 @@ export function DiscoverySyncSettings() {
                 })}${pendingCount > 0 ? ` · ${t('settings.pendingCount', { count: pendingCount })}` : ''}`
               : null}
         </span>
+      </div>
+
+      {errors.size > 0 && (
+        <ul className="space-y-1">
+          {state?.sources
+            .filter((source) => errors.has(source.sourceId))
+            .map((source) => (
+              <li
+                key={source.sourceId}
+                data-testid={`source-error-${source.sourceId}`}
+                className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span className="min-w-0 break-words">
+                  <span className="font-medium">{source.name}</span>
+                  {': '}
+                  {errors.get(source.sourceId)}
+                </span>
+              </li>
+            ))}
+        </ul>
+      )}
+
+      <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+        <RecoverTitlesButton />
       </div>
     </div>
   )

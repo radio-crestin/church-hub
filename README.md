@@ -19,7 +19,7 @@
 
 ## 🎯 Overview
 
-Church Hub is a comprehensive church presentation software designed to streamline worship services. It combines song lyrics management, Bible verse display, service scheduling, multi-screen presentation, YouTube/OBS livestream integration, background music player, and song key tracking into a single, elegant application.
+Church Hub is a comprehensive church presentation software designed to streamline worship services. It combines song lyrics management, Bible verse display, service scheduling, multi-screen presentation, YouTube/OBS livestream integration, background music player, song key tracking, image and video backgrounds, and backups into a single, elegant application.
 
 Built with modern web technologies and powered by Tauri, Church Hub runs as a native desktop application on Windows, macOS, and Linux, while also being accessible via web browser.
 
@@ -69,11 +69,12 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 <img src="docs/screenshots/control-room.png" alt="Control Room" width="100%">
 
-> Main presentation interface with live preview and presentation queue
+> Main presentation interface with live preview
 
 - ▶️ **Live Preview** — See exactly what's displayed on screen
-- 📋 **Presentation Queue** — Drag & drop to reorder items
-- ⌨️ **Keyboard Navigation** — Quick slide control with hotkeys
+- ⌨️ **Keyboard Navigation** — Arrow and page keys move the live slide, even from a search box
+- 🖱️ **Presenter Remote** — A clicker moves the slides; its black button hides the screen
+- 🌫️ **Smooth Transitions** — Slides and Bible verses fade in calmly
 - 🖥️ **Multi-Screen** — Primary, stage, livestream & kiosk outputs
 
 ---
@@ -82,11 +83,14 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 <img src="docs/screenshots/songs-list.png" alt="Songs Library" width="100%">
 
-> Browse and search through 40,000+ songs instantly
+> Browse and search through 26,000+ songs instantly
 
-- 🔍 **Fast Search** — Full-text search across all songs
-- 🏷️ **Categories** — Organize with custom tags
-- 📥 **Smart Import** — OpenSong & PowerPoint formats
+- 🔍 **Typo-Tolerant Search** — Finds a word in any spelling, title matches first
+- 🏷️ **Categories & Tags** — Organize with categories and audience tags (youth, choir, children)
+- 🔖 **Marcaje** — Bookmark the songs for the service, also editable as plain text (Markdown)
+- 📋 **Programs Panel** — Load a program's songs into Marcaje in one click
+- 🌐 **Download Songs** — Find and import new songs from online sources
+- 📥 **Smart Import** — OpenSong & PowerPoint formats, or drop the files on the window
 - 🔄 **Duplicate Detection** — Prevents duplicates automatically
 
 ---
@@ -98,9 +102,28 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 > View and present song lyrics with slide navigation
 
 - 📑 **Slide Navigation** — Easy verse/chorus switching
-- ✏️ **Slide Editor** — Edit lyrics with markers (V1, C, B)
+- 🎼 **Song Key** — The key shows next to the title, in Marcaje and on program rows
+- 🔗 **Song Versions** — Link versions of the same song, with suggested matches
+- 📄 **PDF & Word Export** — Print a song's lyrics in one click
+- ➕ **Add to Program** — One-click add to a service program
+
+---
+
+### ✏️ Song Editor
+
+<img src="docs/screenshots/song-editor.png" alt="Song Editor" width="100%">
+
+> Edit lyrics, details and the background of a song
+
+- 🧩 **Side-by-Side Layout** — Slides on the right with a fixed title; panels can be moved and resized
+- 📝 **Edit as Text** — Write the whole song as plain text with markers (V1, C, B)
+- ▶️ **Present Any Slide** — A Present button on each slide
+- 🖼️ **Song Background** — Pick an image or video for each song
 - 📋 **CCLI Support** — Track license & copyright info
-- ➕ **Add to Queue** — One-click add to presentation
+
+<img src="docs/screenshots/song-history.png" alt="Song History" width="100%">
+
+- 🕓 **Song History** — See who changed a song and when, and restore an older version
 
 ---
 
@@ -110,9 +133,10 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 > Search and display Bible verses with live preview
 
-- 🔎 **Smart Search** — By reference (`Gen 1:1`) or keyword
+- 🔎 **Smart Search** — By reference (`Ioan 3:16`, `Ioan 3:16,17`) or keyword
 - 📚 **Multiple Translations** — Support for various versions
-- 📑 **Quick Navigation** — Browse all books easily
+- 🔖 **Verse Bookmarks** — Bookmark verses, import and export them as text
+- 🕓 **History** — The verses shown, exportable after the service
 - 👁️ **Live Preview** — See verses before presenting
 
 ---
@@ -124,10 +148,11 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 > Create and manage service schedules
 
-- 📝 **Schedule Builder** — Songs, verses & custom slides
+- 📝 **Schedule Builder** — Songs, Bible readings & custom slides in one list
+- 🎼 **Song Keys** — Each song's key on its row, editable in place and kept in exports
+- ⚡ **Quick Insert** — Add a song or verse between any two entries
 - 🖱️ **Drag & Drop** — Intuitive item reordering
-- 💾 **Import/Export** — Share programs as files
-- ⚡ **Quick Load** — Import entire program to queue
+- 💾 **Import/Export** — Share programs as files or text
 
 ---
 
@@ -138,7 +163,8 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 > YouTube livestream and OBS Studio integration
 
 - ▶️ **One-Click Start** — Launch YouTube broadcasts
-- 🎬 **OBS Scenes** — Switch scenes from the app
+- 🎬 **OBS Scenes** — Ready-made scenes, switched from the app
+- 🧭 **Setup Guide** — Step by step from OBS to the first scene
 - 🤖 **Auto-Switch** — Scenes change with content type
 - 🎚️ **Mixer Control** — Audio mixer integration (16+ ch)
 
@@ -158,9 +184,9 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 ---
 
-### 🎹 Song Key
+### 🎹 Song Keys
 
-<img src="docs/screenshots/song-key.png" alt="Song Key" width="100%">
+<img src="docs/screenshots/song-key.png" alt="Song Keys" width="100%">
 
 > Track recently presented songs with their musical keys
 
@@ -171,6 +197,17 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 ---
 
+### 🖼️ Gallery
+
+<img src="docs/screenshots/gallery.png" alt="Gallery" width="100%">
+
+> Every background image and video in one place
+
+- 📤 **Upload** — Images and videos for screens and songs
+- 🎞️ **Video Backgrounds** — Looping videos behind the lyrics
+
+---
+
 ### 🎨 Screen Editor
 
 <img src="docs/screenshots/screen-editor.png" alt="Screen Editor" width="100%">
@@ -178,28 +215,27 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 > Visual WYSIWYG editor for customizing presentation layouts
 
 - 📐 **Visual Positioning** — Drag & resize elements on canvas
-- 🔤 **Text Styling** — Font, size, color, alignment & shadows
+- 🔤 **Text Styling** — Font, size, color, alignment & shadows, with bundled fonts
+- 🎼 **First & Last Slides** — Key and "Amin" layouts for the start and end of a song
 - ✨ **Animations** — Fade, slide & zoom transitions for elements
 - 📏 **Auto-Scaling** — Text automatically fits container bounds
-- 📝 **Compress Lines** — Optimize text density for readability
 - 🎬 **OBS Browser Source** — Embed URL for livestream captions
-- 👁️ **Live Preview** — See changes with real content types
 - 🖥️ **Multi-Layout** — Edit primary, stage & livestream screens
 
 ---
 
-### 🖥️ Control Room Settings
+### 🖥️ Screens
 
-<img src="docs/screenshots/control-room-settings.png" alt="Control Room Settings" width="100%">
+<img src="docs/screenshots/control-room-settings.png" alt="Screens" width="100%">
 
-> Configure presentation screens and keyboard shortcuts
+> Configure presentation screens
 
-- ⌨️ **Keyboard Shortcuts** — Custom shortcuts for next/previous slide
-- 🎹 **MIDI Support** — Use MIDI controllers for slide navigation
 - 📺 **Multi-Screen Setup** — Main, Stage, Livestream & Kiosk displays
+- 🚀 **Open at Startup** — Each screen can open by itself when the app starts
+- 🕐 **Clock** — The time on the empty slide, before the service
+- 🔢 **Identify** — Each display shows its number and name
 - 🪟 **Window Management** — Launch screens as separate windows
 - 📤 **Export/Import** — Share screen configurations
-- 🔗 **OBS Browser Source** — Copy URLs for livestream overlays
 
 ---
 
@@ -207,16 +243,46 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 <img src="docs/screenshots/settings.png" alt="Settings" width="100%">
 
-> Configure screens, users, and preferences
+> Configure users, shortcuts and preferences
 
-- 🖥️ **Screen Setup** — Configure multiple displays
-- 👥 **User Management** — Roles & 34+ permissions
-- 📱 **QR Login** — Easy mobile authentication
+- 👥 **User Management** — Roles & permissions
+- 📱 **QR & LAN Login** — Phones and tablets sign in with a pairing code
+- ⌨️ **Shortcuts & MIDI** — Custom keys and MIDI controllers for slides and the live stream
+- 🧭 **Sidebar Editor** — Reorder the menu, add custom pages with icons and colours
+- 🔄 **In-App Updates** — Download and install new versions, with release notes
+- 📜 **Logs** — Colour-coded logs with level filters and search
 - 🌙 **Dark Mode** — Beautiful dark interface
 - 🌍 **Multi-Language** — English & Romanian
-- 📄 **Custom Pages** — Add custom menu items with embedded web pages
-- 🎛️ **MIDI Controller** — Configure hardware controllers
-- 🗄️ **Database Management** — Export/import database backups
+
+---
+
+### 💾 Backup
+
+<img src="docs/screenshots/backup.png" alt="Backup" width="100%">
+
+> Keep the library safe
+
+- 📁 **Local Backups** — To any folder or external drive, and restore from one
+- ☁️ **Google Drive** — Back up and restore on any computer
+- 🔄 **Library Sync** — Keep songs and programs in step across devices
+
+---
+
+### 💬 Feedback
+
+<img src="docs/screenshots/feedback.png" alt="Feedback" width="100%">
+
+> Request a feature or report a bug from inside the app
+
+- 📸 **Screenshot & Notes** — Capture the page, draw on it and add a note
+- 🔔 **Notifications** — Updates and replies in one place, behind the bell in the sidebar
+
+---
+
+### 🌐 More
+
+- 🗣️ **Live Translation** — Translated sermon text and audio for listeners on their own phones
+- ↩️ **Back & Forward** — Mouse side buttons, Alt+Left/Right (Cmd+[ / Cmd+] on macOS), everywhere
 
 ---
 

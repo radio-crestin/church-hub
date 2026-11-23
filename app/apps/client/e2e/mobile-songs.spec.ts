@@ -158,7 +158,8 @@ test.describe('Songs on a phone', () => {
       data: { songId, slideIndex: 0 },
     })
     await onPhone(page)
-    await page.goto('/bible')
+    // A page with no controls of its own (the Bible has its own bar).
+    await page.goto('/schedules')
     const strip = page.getByTestId('mobile-live-strip')
     await expect(strip).toBeInViewport()
     await expect(strip.getByText(title)).toBeVisible()
