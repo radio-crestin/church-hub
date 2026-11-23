@@ -1,4 +1,4 @@
-import { MAX_SYNC_UPDATES } from './constants'
+import { MAX_SYNC_UPDATES, SEARCH_INDEX_BATCH } from './constants'
 import { withTriggersSuppressed } from './syncStateStore'
 import type {
   ApplyOp,
@@ -18,7 +18,7 @@ import {
   removeFromScheduleSearchIndex,
   updateScheduleSearchIndex,
 } from '../schedules/search'
-import { removeFromSearchIndex, updateSearchIndex } from '../songs/search'
+import { batchUpdateSearchIndex, removeFromSearchIndex } from '../songs/search'
 
 const logger = createLogger('sync')
 
@@ -399,7 +399,9 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
 
   withTriggersSuppressed(() => run())
 
-  for (const songId of songFtsUpdates) updateSearchIndex(songId)
+  for (let i = 0; i < songFtsUpdates.length; i += SEARCH_INDEX_BATCH) {
+    batchUpdateSearchIndex(songFtsUpdates.slice(i, i + SEARCH_INDEX_BATCH))
+  }
   for (const scheduleId of scheduleFtsUpdates) {
     updateScheduleSearchIndex(scheduleId)
   }
