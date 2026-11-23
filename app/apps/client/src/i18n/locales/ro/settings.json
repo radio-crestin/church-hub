@@ -152,8 +152,6 @@
     "sidebarItem": {
       "title": "Setări {{itemName}}",
       "shortcuts": {
-        "title": "Scurtături de Tastatură",
-        "description": "Configurează scurtături pentru a naviga la această pagină",
         "switchTitle": "Comută la Pagină",
         "switchDescription": "Scurtătură pentru a naviga la această pagină",
         "focusSearchTitle": "Focusează Căutarea",
@@ -243,7 +241,8 @@
         "presentationDescription": "Controlează slide-urile din orice ecran al aplicației.",
         "livestream": "Live Stream",
         "livestreamDescription": "Pornește și oprește transmisiunea cu o tastă sau buton MIDI.",
-        "pages": "Pagini",
+        "otherPages": "Alte pagini",
+        "otherPagesDescription": "Comută la orice altă pagină din bara laterală cu o tastă sau un buton MIDI și focusează căutarea ei, unde există.",
         "pagesDescription": "Comută la o pagină, focusează căutarea și taste care funcționează doar cât timp pagina e deschisă."
       },
       "scope": {
