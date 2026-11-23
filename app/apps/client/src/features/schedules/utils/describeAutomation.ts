@@ -13,7 +13,12 @@ export function describeAutomation(
   const parts: string[] = []
   if (automation.autoplaySeconds != null)
     parts.push(
-      t('automation.summary.autoplay', { seconds: automation.autoplaySeconds }),
+      t(
+        automation.autoplayByText
+          ? 'automation.summary.autoplayByText'
+          : 'automation.summary.autoplay',
+        { seconds: automation.autoplaySeconds },
+      ),
     )
   if (automation.loop) parts.push(t('automation.summary.loop'))
   if (automation.musicVolume != null)

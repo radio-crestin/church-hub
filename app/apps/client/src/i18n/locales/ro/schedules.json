@@ -323,7 +323,7 @@
     "title": "Automatizare",
     "description": "Prezentarea rulează singură, de exemplu înainte de începerea slujbei.",
     "autoplay": "Avansează singură",
-    "autoplayDescription": "Fiecare slide rămâne afișat câte secunde alegi mai jos, apoi urmează următorul.",
+    "autoplayDescription": "Fiecare slide rămâne afișat cât îi este timpul, apoi urmează următorul. Poți da unui element timpul lui din cronometrul de lângă el.",
     "seconds": "Secunde pe slide",
     "loop": "Redă în buclă",
     "loopDescription": "După ultimul slide, reia de la primul.",
@@ -340,10 +340,20 @@
     "runningStep": "Rulează · {{step}}/{{count}}",
     "hide": "Ascunde automatizarea",
     "summary": {
-      "autoplay": "Trece singură la {{seconds}} s",
+      "autoplay": "{{seconds}} s pe slide",
       "loop": "În buclă",
       "musicVolume": "Muzica la {{volume}}%",
-      "startOnAppStart": "Pornește cu Church Hub"
+      "startOnAppStart": "Pornește cu Church Hub",
+      "autoplayByText": "Cel puțin {{seconds}} s pe slide, mai mult pentru textul lung",
+      "duration": "O trecere: {{duration}}"
+    },
+    "byText": "Mai mult pentru textul lung",
+    "byTextDescription": "Un slide cu mai multe cuvinte rămâne mai mult, ca să poată fi citit. Secundele de mai sus sunt minimul.",
+    "advance": {
+      "title": "Timp pe slide",
+      "description": "Fiecare slide al acestui element rămâne afișat atât, apoi urmează următorul.",
+      "reset": "Automat",
+      "save": "Salvează"
     }
   }
 }

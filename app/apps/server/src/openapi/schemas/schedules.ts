@@ -8,7 +8,13 @@ export const scheduleSchemas = {
         nullable: true,
         minimum: 1,
         maximum: 3600,
-        description: 'Seconds each step stays up while it runs; null = manual',
+        description:
+          "Seconds each slide stays up while it runs; null = manual. An item's own advanceSeconds wins over it",
+      },
+      autoplayByText: {
+        type: 'boolean',
+        description:
+          'A slide with more text stays up longer than autoplaySeconds, so it can be read',
       },
       loop: {
         type: 'boolean',
@@ -42,7 +48,10 @@ export const scheduleSchemas = {
         description: 'Position of the step on screen in the running order',
       },
       stepCount: { type: 'integer' },
-      autoplaySeconds: { type: 'integer' },
+      stepSeconds: {
+        type: 'integer',
+        description: 'How long the step on screen stays up',
+      },
       loop: { type: 'boolean' },
       nextStepAt: {
         type: 'integer',
@@ -85,6 +94,12 @@ export const scheduleSchemas = {
         items: { $ref: '#/components/schemas/SongSlide' },
       },
       keyLine: { type: 'string', nullable: true },
+      advanceSeconds: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "Seconds each slide of this item stays up when the presentation runs by itself; null = the presentation's timing",
+      },
       isSung: {
         type: 'boolean',
         description: 'Manual "already sung" marker, scoped to this schedule',

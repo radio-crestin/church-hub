@@ -1,5 +1,6 @@
 import { buildScheduleSteps } from './buildScheduleSteps'
 import { presentScheduleStep } from './presentScheduleStep'
+import { stepSeconds } from './stepSeconds'
 import type { ScheduleAutomationState } from './types'
 import { createLogger } from '../../utils/logger'
 import {
@@ -74,7 +75,8 @@ async function setMusicVolume(volume: number | null) {
 
 /**
  * Starts a presentation from its first step. With autoplay on, the server
- * then moves it on by itself every `autoplaySeconds`, whether or not a page is
+ * then moves it on by itself, each step after its own time (`stepSeconds`),
+ * whether or not a page is
  * open, until it is stopped, an operator presents something else (which takes
  * it over), or it ends. With autoplay off this only puts its first step up.
  */
@@ -98,8 +100,12 @@ export async function startScheduleAutomation(
   const { autoplaySeconds, loop } = schedule.automation
   if (!autoplaySeconds) return state
 
+  const seconds = stepSeconds(steps[0], {
+    ...schedule.automation,
+    autoplaySeconds,
+  })
   logger.info(
-    `Presentation ${scheduleId} running: ${steps.length} steps, ${autoplaySeconds}s each${loop ? ', in a loop' : ''}`,
+    `Presentation ${scheduleId} running: ${steps.length} steps, at least ${autoplaySeconds}s each${loop ? ', in a loop' : ''}`,
   )
   setState({
     running: true,
@@ -107,9 +113,9 @@ export async function startScheduleAutomation(
     title: schedule.title,
     stepIndex: 0,
     stepCount: steps.length,
-    autoplaySeconds,
+    stepSeconds: seconds,
     loop,
-    nextStepAt: Date.now() + autoplaySeconds * 1000,
+    nextStepAt: Date.now() + seconds * 1000,
   })
   timer = setInterval(() => {
     tick().catch((error) => {
@@ -152,8 +158,11 @@ async function tick() {
       stepIndex = 0
     }
 
-    const autoplaySeconds =
-      schedule.automation.autoplaySeconds ?? run.autoplaySeconds
+    // Autoplay turned off while it runs: finish with the last time it had.
+    const seconds = stepSeconds(steps[stepIndex], {
+      ...schedule.automation,
+      autoplaySeconds: schedule.automation.autoplaySeconds ?? run.stepSeconds,
+    })
     broadcastPresentationState(
       await presentScheduleStep(
         run.scheduleId,
@@ -169,9 +178,9 @@ async function tick() {
       title: schedule.title,
       stepIndex,
       stepCount: steps.length,
-      autoplaySeconds,
+      stepSeconds: seconds,
       loop: schedule.automation.loop,
-      nextStepAt: Date.now() + autoplaySeconds * 1000,
+      nextStepAt: Date.now() + seconds * 1000,
     })
   } finally {
     busy = false

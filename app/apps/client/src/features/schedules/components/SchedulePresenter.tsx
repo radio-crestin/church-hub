@@ -52,6 +52,7 @@ import {
   useScheduleFlatNavigation,
   useScheduleKeyboardShortcuts,
   useScheduleKeyLineEditor,
+  useSetScheduleItemAdvance,
   useUpsertSchedule,
 } from '../hooks'
 import type { ScheduleItem, SlideTemplate } from '../types'
@@ -127,6 +128,7 @@ export function SchedulePresenter({
   const deleteSchedule = useDeleteSchedule()
   const reorderItems = useReorderScheduleItems()
   const markSung = useMarkScheduleItemSung()
+  const setItemAdvance = useSetScheduleItemAdvance()
   const addItemMutation = useAddItemToSchedule()
 
   // Layout state
@@ -438,6 +440,32 @@ export function SchedulePresenter({
     [markSung, scheduleId],
   )
 
+  // While autoplay is on, each item shows how long its slides stay up and
+  // can be given its own time, like PowerPoint's "After" per slide.
+  const autoplaySeconds = schedule?.automation.autoplaySeconds ?? null
+  const autoplayByText = schedule?.automation.autoplayByText ?? true
+  const itemAdvance = useMemo(
+    () =>
+      canEditProgram && autoplaySeconds != null
+        ? {
+            timing: { autoplaySeconds, autoplayByText },
+            onChange: (item: ScheduleItem, advanceSeconds: number | null) =>
+              setItemAdvance.mutate({
+                scheduleId,
+                itemId: item.id,
+                advanceSeconds,
+              }),
+          }
+        : undefined,
+    [
+      canEditProgram,
+      autoplaySeconds,
+      autoplayByText,
+      setItemAdvance.mutate,
+      scheduleId,
+    ],
+  )
+
   // Edit song handler (double-click)
   const handleEditSong = useCallback((songId: number) => {
     setEditingSongId(songId)
@@ -739,6 +767,7 @@ export function SchedulePresenter({
               onChangeSong={handleChangeSong}
               onEditKeyLine={handleEditKeyLine}
               onToggleSung={handleToggleSung}
+              itemAdvance={itemAdvance}
               onQuickInsert={canEditProgram ? handleQuickInsert : undefined}
               expandAllTrigger={expandAllTrigger}
               collapseAllTrigger={collapseAllTrigger}
@@ -754,6 +783,7 @@ export function SchedulePresenter({
       render: () => (
         <ScheduleAutomationSection
           schedule={schedule}
+          items={items}
           onClose={() => setAutomationOpen(false)}
         />
       ),

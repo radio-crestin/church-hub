@@ -8,7 +8,8 @@ export type ScheduleAutomationState =
       /** Position of the step on screen in the presentation's running order. */
       stepIndex: number
       stepCount: number
-      autoplaySeconds: number
+      /** How long the step on screen stays up (see `stepSeconds`). */
+      stepSeconds: number
       loop: boolean
       /** When the next step goes up (epoch ms). */
       nextStepAt: number

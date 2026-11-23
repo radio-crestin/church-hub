@@ -7,7 +7,7 @@ import { useToast } from '~/ui/toast'
 import { useUpsertSchedule } from '../hooks'
 import type { Schedule, ScheduleAutomationSettings as Settings } from '../types'
 
-const DEFAULT_AUTOPLAY_SECONDS = 8
+const DEFAULT_AUTOPLAY_SECONDS = 5
 const DEFAULT_MUSIC_VOLUME = 50
 /** Typing a number or dragging the volume saves once it settles. */
 const SAVE_DELAY_MS = 500
@@ -19,9 +19,10 @@ interface ScheduleAutomationSettingsProps {
 }
 
 /**
- * The four automation settings, one under the other: autoplay,
- * loop, the music volume and starting with Church Hub. Each change is saved as
- * it is made.
+ * The automation settings, one under the other: autoplay (seconds per slide,
+ * longer for more text), loop, the music volume and starting with Church Hub.
+ * Each change is saved as it is made. An item's own time is set beside it in
+ * the items list.
  */
 export function ScheduleAutomationSettings({
   schedule,
@@ -104,6 +105,15 @@ export function ScheduleAutomationSettings({
               className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </label>
+        )}
+        {autoplayOn && (
+          <SwitchRow
+            label={t('automation.byText')}
+            description={t('automation.byTextDescription')}
+            checked={automation.autoplayByText}
+            onCheckedChange={(autoplayByText) => save({ autoplayByText })}
+            testId="automation-by-text"
+          />
         )}
       </div>
       <SwitchRow

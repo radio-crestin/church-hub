@@ -3,12 +3,16 @@ import { useTranslation } from 'react-i18next'
 
 import { ScheduleAutomationSettings } from './ScheduleAutomationSettings'
 import { useScheduleAutomation } from '../hooks'
-import type { Schedule } from '../types'
+import type { Schedule, ScheduleItem } from '../types'
 import { describeAutomation } from '../utils/describeAutomation'
+import { formatDuration } from '../utils/formatDuration'
 import { isAutomationOn } from '../utils/isAutomationOn'
+import { itemStepSeconds } from '../utils/itemStepSeconds'
 
 interface ScheduleAutomationSectionProps {
   schedule: Pick<Schedule, 'id' | 'title' | 'description' | 'automation'>
+  /** Its items, for how long one pass through them takes. */
+  items: ScheduleItem[]
   /** Hides the panel; offered only while nothing in it is on. */
   onClose: () => void
 }
@@ -21,6 +25,7 @@ interface ScheduleAutomationSectionProps {
  */
 export function ScheduleAutomationSection({
   schedule,
+  items,
   onClose,
 }: ScheduleAutomationSectionProps) {
   const { t } = useTranslation('schedules')
@@ -29,6 +34,18 @@ export function ScheduleAutomationSection({
   const running = runner?.running && runner.scheduleId === schedule.id
   const on = isAutomationOn(schedule.automation) || running
   const summary = describeAutomation(schedule.automation, t)
+  const { autoplaySeconds, autoplayByText } = schedule.automation
+  if (autoplaySeconds != null) {
+    // One pass through the presentation, as PowerPoint's slide timings add up.
+    const total = items
+      .flatMap((item) =>
+        itemStepSeconds(item, { autoplaySeconds, autoplayByText }),
+      )
+      .reduce((sum, seconds) => sum + seconds, 0)
+    summary.push(
+      t('automation.summary.duration', { duration: formatDuration(total) }),
+    )
+  }
 
   return (
     <section

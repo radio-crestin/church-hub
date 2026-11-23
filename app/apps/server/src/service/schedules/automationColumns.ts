@@ -1,11 +1,5 @@
+import { clampSeconds } from './clampSeconds'
 import type { ScheduleAutomationSettings } from './types'
-
-const MIN_AUTOPLAY_SECONDS = 1
-const MAX_AUTOPLAY_SECONDS = 3600
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, Math.round(value)))
-}
 
 /**
  * The `schedules` columns to write for the automation settings given: only
@@ -20,18 +14,17 @@ export function automationColumns(
     columns.autoplaySeconds =
       automation.autoplaySeconds === null
         ? null
-        : clamp(
-            automation.autoplaySeconds,
-            MIN_AUTOPLAY_SECONDS,
-            MAX_AUTOPLAY_SECONDS,
-          )
+        : clampSeconds(automation.autoplaySeconds)
+  }
+  if (automation.autoplayByText !== undefined) {
+    columns.autoplayByText = !!automation.autoplayByText
   }
   if (automation.loop !== undefined) columns.loop = !!automation.loop
   if (automation.musicVolume !== undefined) {
     columns.musicVolume =
       automation.musicVolume === null
         ? null
-        : clamp(automation.musicVolume, 0, 100)
+        : Math.min(100, Math.max(0, Math.round(automation.musicVolume)))
   }
   if (automation.startOnAppStart !== undefined) {
     columns.startOnAppStart = !!automation.startOnAppStart

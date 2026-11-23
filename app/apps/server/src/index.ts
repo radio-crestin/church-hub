@@ -250,6 +250,7 @@ import {
   reorderScheduleItems,
   replaceScheduleItems,
   searchSchedules,
+  setScheduleItemAdvance,
   type UpdateScheduleSlideInput,
   type UpsertScheduleInput,
   updateScheduleSlide,
@@ -3436,6 +3437,49 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
+        }
+      }
+
+      // PUT /api/schedules/:id/items/:itemId/advance - How long each slide of
+      // an item stays up while the presentation runs by itself.
+      {
+        const advanceMatch = url.pathname.match(
+          /^\/api\/schedules\/(\d+)\/items\/(\d+)\/advance$/,
+        )
+        if (req.method === 'PUT' && advanceMatch?.[1] && advanceMatch?.[2]) {
+          const permError = checkPermission('programs.edit')
+          if (permError) return permError
+
+          const body = (await req.json().catch(() => null)) as {
+            advanceSeconds?: unknown
+          } | null
+          const seconds = body?.advanceSeconds
+          if (seconds !== null && typeof seconds !== 'number') {
+            return handleCors(
+              req,
+              new Response(
+                JSON.stringify({
+                  error: 'advanceSeconds must be a number or null',
+                }),
+                {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                },
+              ),
+            )
+          }
+          const result = setScheduleItemAdvance(
+            parseInt(advanceMatch[1], 10),
+            parseInt(advanceMatch[2], 10),
+            seconds,
+          )
+          return handleCors(
+            req,
+            new Response(JSON.stringify({ data: result }), {
+              status: result.success ? 200 : 404,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          )
         }
       }
 

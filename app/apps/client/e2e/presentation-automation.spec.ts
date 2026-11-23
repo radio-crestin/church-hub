@@ -4,7 +4,7 @@ import { selectAction } from './helpers/actions-menu'
 
 /**
  * Presentations run by themselves (T-016): autoplay moves a presentation on
- * every N seconds on the server, loop starts it over, an operator presenting
+ * by itself on the server (slide timing has its own spec), loop starts it over, an operator presenting
  * anything else takes it over, Stop clears the screens, and one presentation
  * at most starts with Church Hub.
  */
@@ -23,8 +23,9 @@ async function createPresentation(
   automation: Record<string, unknown> = {},
 ): Promise<{ id: number; title: string }> {
   const title = `E2E Automation ${Date.now()}`
+  // Fixed timing, so these short slides move on as fast as they are told.
   const res = await request.post('/api/schedules', {
-    data: { title, automation },
+    data: { title, automation: { autoplayByText: false, ...automation } },
   })
   expect(res.ok()).toBeTruthy()
   const id: number = (await res.json()).data.id
@@ -174,6 +175,7 @@ test.describe('Presentation automation', () => {
     })
     expect((await clamped.json()).data.automation).toEqual({
       autoplaySeconds: 1,
+      autoplayByText: false,
       loop: false,
       musicVolume: 100,
       startOnAppStart: true,

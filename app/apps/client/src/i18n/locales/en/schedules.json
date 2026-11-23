@@ -307,7 +307,7 @@
     "title": "Automation",
     "description": "Let this presentation run by itself, before the service for example.",
     "autoplay": "Move on by itself",
-    "autoplayDescription": "Each slide stays up for the seconds below, then the next one goes up.",
+    "autoplayDescription": "Each slide stays up for its time, then the next one goes up. Give an item its own time from the timer beside it.",
     "seconds": "Seconds per slide",
     "loop": "Play in a loop",
     "loopDescription": "After the last slide, start again from the first.",
@@ -324,10 +324,20 @@
     "runningStep": "Running · {{step}}/{{count}}",
     "hide": "Hide automation",
     "summary": {
-      "autoplay": "Moves on every {{seconds}} s",
+      "autoplay": "{{seconds}} s per slide",
       "loop": "In a loop",
       "musicVolume": "Music at {{volume}}%",
-      "startOnAppStart": "Starts with Church Hub"
+      "startOnAppStart": "Starts with Church Hub",
+      "autoplayByText": "At least {{seconds}} s per slide, longer for more text",
+      "duration": "One pass: {{duration}}"
+    },
+    "byText": "Longer for more text",
+    "byTextDescription": "A slide with more words stays up longer, so it can be read. The seconds above are the least.",
+    "advance": {
+      "title": "Time per slide",
+      "description": "Each slide of this item stays up this long, then the next one goes up.",
+      "reset": "Automatic",
+      "save": "Save"
     }
   }
 }

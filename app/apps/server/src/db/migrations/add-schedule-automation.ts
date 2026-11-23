@@ -8,21 +8,43 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[add-schedule-automation:${level}] ${message}`)
 }
 
-const MIGRATION_KEY = 'add_schedule_automation_v1'
+// v2 adds the per-slide timing (autoplay_by_text, advance_seconds).
+const MIGRATION_KEY = 'add_schedule_automation_v2'
 
-const COLUMNS: { name: string; definition: string }[] = [
-  // Seconds each step stays up while the presentation runs; NULL = manual.
-  { name: 'autoplay_seconds', definition: 'INTEGER' },
+const COLUMNS: {
+  table: 'schedules' | 'schedule_items'
+  name: string
+  definition: string
+}[] = [
+  // Seconds each slide stays up while the presentation runs; NULL = manual.
+  { table: 'schedules', name: 'autoplay_seconds', definition: 'INTEGER' },
+  // A slide with more text stays up longer than autoplay_seconds.
+  {
+    table: 'schedules',
+    name: 'autoplay_by_text',
+    definition: 'INTEGER NOT NULL DEFAULT 1',
+  },
   // Past the last step, go back to the first instead of ending.
-  { name: 'loop', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  {
+    table: 'schedules',
+    name: 'loop',
+    definition: 'INTEGER NOT NULL DEFAULT 0',
+  },
   // Music player volume (0-100) set when it starts; NULL = leave as it is.
-  { name: 'music_volume', definition: 'INTEGER' },
+  { table: 'schedules', name: 'music_volume', definition: 'INTEGER' },
   // Started by itself once the server is ready (one presentation at most).
-  { name: 'start_on_app_start', definition: 'INTEGER NOT NULL DEFAULT 0' },
+  {
+    table: 'schedules',
+    name: 'start_on_app_start',
+    definition: 'INTEGER NOT NULL DEFAULT 0',
+  },
+  // Seconds each slide of this item stays up; NULL = the presentation's.
+  { table: 'schedule_items', name: 'advance_seconds', definition: 'INTEGER' },
 ]
 
 /**
- * Adds the automation settings of a presentation (stored in `schedules`).
+ * Adds the automation settings of a presentation (in `schedules`) and each
+ * item's own slide timing (in `schedule_items`).
  * Idempotent — safe to run on every boot.
  */
 export function addScheduleAutomation(db: Database): void {
@@ -37,18 +59,14 @@ export function addScheduleAutomation(db: Database): void {
     return
   }
 
-  const existing = new Set(
-    db
-      .query<{ name: string }, []>('PRAGMA table_info(schedules)')
-      .all()
-      .map((col) => col.name),
-  )
-
   for (const column of COLUMNS) {
-    if (existing.has(column.name)) continue
-    log('info', `Adding "${column.name}" column to schedules...`)
+    const existing = db
+      .query<{ name: string }, []>(`PRAGMA table_info(${column.table})`)
+      .all()
+    if (existing.some((col) => col.name === column.name)) continue
+    log('info', `Adding "${column.name}" column to ${column.table}...`)
     db.run(
-      `ALTER TABLE schedules ADD COLUMN ${column.name} ${column.definition}`,
+      `ALTER TABLE ${column.table} ADD COLUMN ${column.name} ${column.definition}`,
     )
   }
 
