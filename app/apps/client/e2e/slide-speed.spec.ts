@@ -18,10 +18,23 @@ const VERSES = [
 ]
 
 // v0.1.104 took ~800 ms for a slide change and ~1150 ms for a change of
-// content type (fade out, wait, then fade in).
-const SLIDE_CHANGE_MAX_MS = 500
-const TYPE_CHANGE_MAX_MS = 550
-const FIRST_SLIDE_MAX_MS = 500
+// content type: a ~500 ms fade in, after waiting for the old slide's fade
+// out. Now the fade is 250-300 ms and starts at once (T-158).
+//
+// Request-to-screen latency (server, websocket, React) depends on the
+// machine: a busy runner adds 100-500 ms to every slide alike, which broke
+// absolute bounds on the whole time (T-188). So the fade and the start are
+// bounded on their own, the start relative to this machine's latency.
+/** Fully visible this long after it first shows: the fade itself. */
+const FADE_MAX_MS = 400
+/**
+ * A change may start this much later than a slide on a blank screen: the
+ * latency jitters by up to ~200 ms on a loaded machine, while waiting for the
+ * old slide's ~400 ms fade out, as before T-158, adds more than this.
+ */
+const START_SLACK_MS = 250
+/** Request to first pixel on a blank screen: only a real regression is slower. */
+const LATENCY_MAX_MS = 400
 
 function verseBody(index: number) {
   return {
@@ -148,6 +161,19 @@ test.describe('Slides appear on the projector fast', () => {
     await page.goto(`/screen/${screenId}`)
     await expect(page.locator('[data-style-anchor]')).toHaveCount(0)
 
+    // Warm up: the screen's very first slide also loads code and fonts,
+    // which took ~600 ms on a cold windows-latest runner (230-300 ms on the
+    // church's PC). What is timed is a slide appearing on a blank screen,
+    // the way it does each time the operator starts presenting.
+    await timeSlide(
+      page,
+      '/api/presentation/temporary-song',
+      { songId, slideIndex: 0 },
+      lyrics[0],
+    )
+    await request.post('/api/presentation/stop')
+    await expect(page.locator('[data-style-anchor]')).toHaveCount(0)
+
     const first = await timeSlide(
       page,
       '/api/presentation/temporary-song',
@@ -185,13 +211,15 @@ test.describe('Slides appear on the projector fast', () => {
       description: JSON.stringify(timings),
     })
 
-    expect(first.visibleMs).toBeLessThan(FIRST_SLIDE_MAX_MS)
-    expect(next.visibleMs).toBeLessThan(SLIDE_CHANGE_MAX_MS)
-    expect(verseChange.visibleMs).toBeLessThan(SLIDE_CHANGE_MAX_MS)
-    expect(typeChange.visibleMs).toBeLessThan(TYPE_CHANGE_MAX_MS)
+    // A slide on a blank screen waits for nothing: its start is the latency.
+    const latency = first.firstShowsMs
+    expect(latency).toBeLessThan(LATENCY_MAX_MS)
+    for (const timing of [first, next, typeChange, verseChange]) {
+      expect(timing.visibleMs - timing.firstShowsMs).toBeLessThan(FADE_MAX_MS)
+    }
     // The new slide starts at once, without waiting for the old one to leave.
     for (const timing of [next, typeChange, verseChange]) {
-      expect(timing.firstShowsMs).toBeLessThan(150)
+      expect(timing.firstShowsMs - latency).toBeLessThan(START_SLACK_MS)
       expect(timing.blankGapMs).toBeLessThan(50)
     }
   })

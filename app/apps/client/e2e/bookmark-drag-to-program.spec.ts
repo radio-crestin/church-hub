@@ -327,6 +327,12 @@ test.describe('Drag a song out of the list', () => {
         new RegExp(`${first.title}.*(added|adaugata)`),
       )
       await expect(toast).toBeVisible()
+      // It slides in from the right: measured mid-slide (a slow runner), the
+      // drop point lands right of the panel and the song is dropped nowhere.
+      await toast.evaluate(async (element) => {
+        const sliding = element.closest('.animate-slide-in') ?? element
+        await Promise.all(sliding.getAnimations().map((a) => a.finished))
+      })
       // Its top edge: the part of the toast that is over the panel.
       await dragOnto(page, rowOf(second.title), toast, 0.15)
 
