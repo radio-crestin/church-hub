@@ -64,6 +64,8 @@ export function addBookmark(
         songKeyLine: song?.keyLine ?? null,
         songTagNames,
         sortOrder: inserted.sortOrder,
+        isSung: inserted.isSung,
+        sungAt: inserted.sungAt ? inserted.sungAt.getTime() : null,
         createdAt: inserted.createdAt.getTime(),
       },
     }

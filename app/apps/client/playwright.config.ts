@@ -36,6 +36,11 @@ if (TEST_PORT === '3000' || TEST_PORT === '3001') {
   )
 }
 const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
+/**
+ * Where the test server looks for the desktop app's audio server: the music
+ * spec starts a stand-in there, so music really "plays" (fake-audio-server.ts).
+ */
+export const FAKE_AUDIO_PORT = Number(TEST_PORT) + 1
 
 /**
  * The line the server prints once the real server is bound and boot is done
@@ -116,6 +121,7 @@ export default defineConfig({
       CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
       // Tests start the song-source checks they need (no network at start).
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
+      CHURCH_HUB_AUDIO_SERVER_PORT: String(FAKE_AUDIO_PORT),
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has

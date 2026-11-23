@@ -53,6 +53,13 @@ interface WorkspaceProps {
    * one long column (see WorkspaceTabs).
    */
   stackedAsTabs?: boolean
+  /**
+   * The open tab when stacked as tabs, for a page that switches it itself
+   * (a verse picked from Istoric opens the Bible tab). Left out, the tabs
+   * keep their own.
+   */
+  activeTab?: string
+  onActiveTabChange?: (id: string) => void
   className?: string
 }
 
@@ -79,6 +86,8 @@ export function Workspace({
   defaultColumnSizes,
   stacked,
   stackedAsTabs = false,
+  activeTab,
+  onActiveTabChange,
   className = '',
 }: WorkspaceProps) {
   const available = panels.filter((panel) => panel.available !== false)
@@ -142,7 +151,14 @@ export function Workspace({
   )
 
   if (stacked && stackedAsTabs) {
-    return <WorkspaceTabs panels={available} className={className} />
+    return (
+      <WorkspaceTabs
+        panels={available}
+        activeTab={activeTab}
+        onActiveTabChange={onActiveTabChange}
+        className={className}
+      />
+    )
   }
 
   if (stacked) {

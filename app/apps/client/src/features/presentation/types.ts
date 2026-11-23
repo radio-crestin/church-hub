@@ -203,6 +203,8 @@ export interface VerseteTineriEntry {
 export interface TemporaryVerseteTineriContent {
   entries: VerseteTineriEntry[]
   currentEntryIndex: number // 0-based index in entries array
+  /** Advances by itself after each verse's reading time, and wraps around. */
+  loop?: boolean
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -221,11 +223,12 @@ export interface TemporarySceneContent {
 }
 
 /**
- * Temporary screen share content for WebRTC streaming
+ * Temporary screen share content: the frames come as an MJPEG stream from
+ * /api/screen-share/stream.mjpg (or the GPU in a desktop projector window)
  */
 export interface TemporaryScreenShareContent {
-  broadcasterId: string
-  audioEnabled: boolean
+  /** When the share started: a new share opens a new stream */
+  startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
@@ -325,6 +328,7 @@ export interface PresentTemporaryBiblePassageInput {
 export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
+  loop?: boolean // Advance by itself and wrap around
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -711,7 +715,6 @@ export interface NextSlideSectionConfig {
 export interface ScreenGlobalSettings {
   defaultBackground: ScreenBackgroundConfig
   clockConfig?: ClockElementConfig // Shared clock config (position, style, format) - enable is per-content-type
-  screenShareAudioEnabled?: boolean // Whether to play audio when receiving screen share (default: false)
 }
 
 /**

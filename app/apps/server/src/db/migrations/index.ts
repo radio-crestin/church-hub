@@ -1,5 +1,4 @@
 import { join } from 'node:path'
-import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
 
 import { addBackupConfig } from './add-backup-config'
 import { addCategoryHiddenFlag } from './add-category-hidden-flag'
@@ -156,10 +155,7 @@ function runStep(key: string, label: string, fn: () => void): void {
   console.log(`[startup] ${key}: ${(performance.now() - start).toFixed(1)}ms`)
 }
 
-export function runMigrations(
-  _drizzleDb: BunSQLiteDatabase,
-  rawDb: Database,
-): MigrationResult {
+export function runMigrations(rawDb: Database): MigrationResult {
   // Always use embedded migrations for consistency between dev and production
   // (same hash-based tracking regardless of environment).
   runStep('drizzle_migrations', 'Running Drizzle migrations', () =>

@@ -68,7 +68,7 @@ test.describe('Program gama', () => {
       timeout: 15000,
     })
     await page
-      .getByRole('button', { name: /Save to File|Salveaza in Fisier/ })
+      .getByRole('button', { name: /Save to File|Salvează în fișier/ })
       .click()
     const downloadPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: /^(Export|Exporta)$/ }).click()

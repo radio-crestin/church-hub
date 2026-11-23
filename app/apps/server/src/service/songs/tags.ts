@@ -205,13 +205,13 @@ export function reorderTags(input: ReorderTagsInput): OperationResult {
     rawDb.exec('BEGIN TRANSACTION')
     try {
       const db = getDatabase()
-      for (let i = 0; i < input.tagIds.length; i++) {
+      for (const [i, tagId] of input.tagIds.entries()) {
         db.update(songTags)
           .set({
             sortOrder: i,
             updatedAt: sql`(unixepoch())` as unknown as Date,
           })
-          .where(eq(songTags.id, input.tagIds[i]))
+          .where(eq(songTags.id, tagId))
           .run()
       }
       rawDb.exec('COMMIT')

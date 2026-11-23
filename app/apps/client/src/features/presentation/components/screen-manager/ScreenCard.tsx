@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '~/ui/button/Button'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { useToast } from '~/ui/toast/useToast'
+import { PreviewScreenRadio } from './PreviewScreenRadio'
 import { ScreenIdlePreview } from './ScreenIdlePreview'
 import { ScreenMonitorPicker } from './ScreenMonitorPicker'
 import {
@@ -42,7 +43,6 @@ const SWITCH_MESSAGES = {
   isFullscreen: 'fullscreen',
   alwaysOnTop: 'alwaysOnTop',
   closeOnEscape: 'closeOnEscape',
-  isPreviewScreen: 'previewScreen',
 } as const
 
 type ScreenSwitch = keyof typeof SWITCH_MESSAGES
@@ -55,6 +55,8 @@ interface ScreenCardProps {
   onDuplicate: () => void
   onDelete: () => void
   isDuplicating: boolean
+  /** The previews mirror this screen (chosen, or the main one by default). */
+  isShownInPreviews: boolean
 }
 
 function SettingsGroup({
@@ -90,6 +92,7 @@ export function ScreenCard({
   onDuplicate,
   onDelete,
   isDuplicating,
+  isShownInPreviews,
 }: ScreenCardProps) {
   const { t } = useTranslation(['settings', 'presentation'])
   const { showToast } = useToast()
@@ -304,14 +307,7 @@ export function ScreenCard({
             testId="screen-open-on-startup"
           />
           <ScreenMonitorPicker screen={screen} />
-          <SwitchRow
-            label={t('sections.screens.previewScreen.label')}
-            description={t('sections.screens.previewScreen.description')}
-            checked={screen.isPreviewScreen}
-            onCheckedChange={(value) => save('isPreviewScreen', value)}
-            disabled={busy}
-            testId="screen-preview-screen"
-          />
+          <PreviewScreenRadio screen={screen} checked={isShownInPreviews} />
           <details data-testid="screen-group-advanced" className="group py-2">
             <summary className="flex items-center gap-1 cursor-pointer list-none text-sm font-medium text-gray-700 dark:text-gray-300 [&::-webkit-details-marker]:hidden">
               <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />

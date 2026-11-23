@@ -7,14 +7,22 @@ import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
 import { AddSourceLink } from './AddSourceLink'
 import { CandidateEditorPanel } from './CandidateEditorPanel'
+import { ChangedSongList } from './ChangedSongList'
+import { ChangedSongPanel } from './ChangedSongPanel'
 import { DiscoveryHeader } from './DiscoveryHeader'
 import { SongChecklist } from './SongChecklist'
 import { SourceChecklist } from './SourceChecklist'
+import {
+  type ChangedItem,
+  useChangedSelection,
+} from '../hooks/useChangedSelection'
+import { useChangedSongs } from '../hooks/useChangedSongs'
 import { useDiscoverySelection } from '../hooks/useDiscoverySelection'
 import { useImportSelected } from '../hooks/useImportSelected'
 import { useLackingSongs } from '../hooks/useLackingSongs'
 import { useSongSources } from '../hooks/useSongSources'
 import { useSongUpdates } from '../hooks/useSongUpdates'
+import { useSourceErrors } from '../hooks/useSourceErrors'
 import { useOpenedSongFileSources } from '../opened-files/openedSongFiles'
 import { foldForSearch } from '../utils/foldForSearch'
 
@@ -26,8 +34,10 @@ interface SongDiscoveryScreenProps {
 
 /**
  * Song discovery: every source's songs the library lacks, in one list, all
- * picked at first. Untick a source or a song to leave it out, search on the
- * left, review a song on the right, then import them all with one button.
+ * picked at first, and (with syncing without approval off) the library songs
+ * a source changed, each with its old and new lyrics to update or keep.
+ * Untick a source or a song to leave it out, search on the left, review a
+ * song on the right, then apply them all with one button.
  */
 export function SongDiscoveryScreen({
   focusSourceId,
@@ -49,9 +59,13 @@ export function SongDiscoveryScreen({
     focusSourceId,
   )
   const { importSelected, isImporting } = useImportSelected(sources)
+  const changedEntries = useChangedSongs(sources, state?.finishedAt ?? null)
+  const changed = useChangedSelection(changedEntries, selection.isSourceChecked)
+  const errors = useSourceErrors()
 
   const [query, setQuery] = useState('')
   const [openTempId, setOpenTempId] = useState<string | null>(null)
+  const [openChangedKey, setOpenChangedKey] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const visible = useMemo(() => {
@@ -61,14 +75,27 @@ export function SongDiscoveryScreen({
       foldForSearch(item.draft.title).includes(folded),
     )
   }, [selection.items, query])
+  const visibleChanged = useMemo(() => {
+    const folded = foldForSearch(query.trim())
+    if (!folded) return changed.items
+    return changed.items.filter((item) =>
+      foldForSearch(item.library.title).includes(folded),
+    )
+  }, [changed.items, query])
   const picked = selection.items.filter((item) => item.selected)
+  const pickedChanged = changed.items.filter((item) => item.selected)
   const openItem = selection.items.find((item) => item.tempId === openTempId)
+  const openChanged = changed.items.find((item) => item.key === openChangedKey)
   const sourceNames = useMemo(
     () => new Map(sources.map((s) => [s.id, s.name])),
     [sources],
   )
   const counts = new Map(
-    lacking.loaded.map((s) => [s.id, selection.countBySource.get(s.id) ?? 0]),
+    lacking.loaded.map((s) => [
+      s.id,
+      (selection.countBySource.get(s.id) ?? 0) +
+        (changed.countBySource.get(s.id) ?? 0),
+    ]),
   )
 
   const checkAgain = () =>
@@ -78,6 +105,40 @@ export function SongDiscoveryScreen({
         .filter((s) => s.origin !== 'file' && selection.isSourceChecked(s.id))
         .map((s) => s.id),
     })
+
+  const openSong = (tempId: string) => {
+    setOpenTempId(tempId)
+    setOpenChangedKey(null)
+  }
+  const openChangedSong = (key: string) => {
+    setOpenChangedKey(key)
+    setOpenTempId(null)
+  }
+
+  const resolveChanged = async (
+    items: ChangedItem[],
+    action: 'update' | 'keep',
+  ) => {
+    try {
+      await changed.resolve(items, action)
+      if (items.some((item) => item.key === openChangedKey)) {
+        setOpenChangedKey(null)
+      }
+      showToast(
+        t(action === 'update' ? 'toast.updated' : 'toast.kept', {
+          count: items.length,
+        }),
+        'success',
+      )
+    } catch (error) {
+      showToast(t('toast.updateFailed', { error: String(error) }), 'error')
+    }
+  }
+
+  const handleApply = async () => {
+    if (pickedChanged.length > 0) await resolveChanged(pickedChanged, 'update')
+    if (picked.length > 0) await handleImport()
+  }
 
   const handleImport = async () => {
     try {
@@ -97,7 +158,7 @@ export function SongDiscoveryScreen({
 
   const emptyText = lacking.isLoading
     ? null
-    : selection.items.length === 0
+    : selection.items.length === 0 && changed.items.length === 0
       ? t('allPresent')
       : null
 
@@ -105,10 +166,11 @@ export function SongDiscoveryScreen({
     <Page>
       <DiscoveryHeader
         onBack={onBack}
-        selectedCount={picked.length}
-        totalCount={selection.items.length}
-        onImport={handleImport}
-        isImporting={isImporting}
+        selectedCount={picked.length + pickedChanged.length}
+        totalCount={selection.items.length + changed.items.length}
+        includesUpdates={pickedChanged.length > 0}
+        onImport={() => void handleApply()}
+        isImporting={isImporting || changed.isResolving}
         isChecking={isRunning}
         checkedAt={state?.finishedAt ?? null}
         onCheckAgain={checkAgain}
@@ -141,19 +203,37 @@ export function SongDiscoveryScreen({
             counts={counts}
             isLoading={lacking.isLoading || isRunning}
             failed={lacking.failed}
+            errors={errors}
           />
           <AddSourceLink />
+          {changed.items.length > 0 && (
+            <ChangedSongList
+              items={visibleChanged}
+              sourceNames={sourceNames}
+              openKey={openChangedKey}
+              onOpen={openChangedSong}
+              onSelect={changed.setSelected}
+            />
+          )}
           <SongChecklist
             items={visible}
             sourceNames={sourceNames}
             openTempId={openTempId}
-            onOpen={setOpenTempId}
+            onOpen={openSong}
             onSelect={selection.setSelected}
           />
         </aside>
 
         <main className="min-h-0 flex-1 overflow-y-auto">
-          {openItem ? (
+          {openChanged ? (
+            <ChangedSongPanel
+              item={openChanged}
+              sourceName={sourceNames.get(openChanged.sourceId) ?? ''}
+              onUpdate={() => void resolveChanged([openChanged], 'update')}
+              onKeep={() => void resolveChanged([openChanged], 'keep')}
+              isResolving={changed.isResolving}
+            />
+          ) : openItem ? (
             <CandidateEditorPanel
               item={openItem}
               onDraftChange={selection.setDraft}

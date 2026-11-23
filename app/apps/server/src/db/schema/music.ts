@@ -49,6 +49,8 @@ export const musicFiles = sqliteTable(
     }).notNull(),
     fileSize: integer('file_size'),
     lastModified: integer('last_modified', { mode: 'timestamp' }),
+    playCount: integer('play_count').notNull().default(0),
+    lastPlayedAt: integer('last_played_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -62,6 +64,7 @@ export const musicFiles = sqliteTable(
     index('idx_music_files_title').on(table.title),
     index('idx_music_files_artist').on(table.artist),
     index('idx_music_files_album').on(table.album),
+    index('idx_music_files_last_played_at').on(table.lastPlayedAt),
   ],
 )
 

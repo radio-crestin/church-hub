@@ -102,3 +102,18 @@ export const getLackingSongs = (sourceId: string) =>
   call<LackingSong[]>(
     `/api/song-sources/${encodeURIComponent(sourceId)}/lacking`,
   )
+
+/** A library song a source changed, with both versions (the server's last check). */
+export interface ChangedSong {
+  songId: number
+  /** The library song as it is now: title and slides (HTML). */
+  library: { title: string; slides: string[] }
+  /** The source's newer version. */
+  song: { id: string; sourceFilename: string | null; parsed: ParsedOpenSong }
+}
+
+/** The library songs a source changed, waiting for the user's choice. */
+export const getChangedSongs = (sourceId: string) =>
+  call<ChangedSong[]>(
+    `/api/song-sources/${encodeURIComponent(sourceId)}/changed`,
+  )

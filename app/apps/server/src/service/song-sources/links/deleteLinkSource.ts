@@ -17,5 +17,5 @@ export function deleteLinkSource(id: string): void {
     row.url,
   )
   db.query('DELETE FROM song_source_subscriptions WHERE id = ?').run(id)
-  refreshPendingNotification()
+  refreshPendingNotification(true)
 }

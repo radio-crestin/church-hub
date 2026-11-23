@@ -114,7 +114,7 @@ interface MusicStateMessage {
     duration: number
     volume: number
     isMuted: boolean
-    isShuffled: boolean
+    queueOrder: 'in_order' | 'random' | 'most_played' | 'least_played'
     currentIndex: number
     queueLength: number
     currentTrack: {
@@ -157,64 +157,6 @@ interface SyncAppliedMessage {
   }
 }
 
-// Screen share message types (for WebRTC signaling)
-interface ScreenShareStartedMessage {
-  type: 'screen_share_started'
-  payload: {
-    broadcasterId: string
-    audioEnabled: boolean
-    startedAt: number
-  }
-}
-
-interface ScreenShareStoppedMessage {
-  type: 'screen_share_stopped'
-  payload: {
-    broadcasterId: string
-    stoppedAt: number
-    stoppedBy?: string
-  }
-}
-
-interface ScreenShareJoinRequestMessage {
-  type: 'screen_share_join_request'
-  payload: {
-    viewerId: string
-  }
-}
-
-interface WebRTCOfferMessage {
-  type: 'webrtc_offer'
-  payload: {
-    broadcasterId: string
-    targetClientId: string
-    sdp: string
-  }
-}
-
-interface WebRTCAnswerMessage {
-  type: 'webrtc_answer'
-  payload: {
-    viewerId: string
-    targetClientId: string
-    sdp: string
-  }
-}
-
-interface WebRTCIceCandidateMessage {
-  type: 'webrtc_ice_candidate'
-  payload: {
-    fromClientId: string
-    targetClientId: string
-    candidate: {
-      candidate: string
-      sdpMid: string | null
-      sdpMLineIndex: number | null
-      usernameFragment: string | null
-    }
-  }
-}
-
 /** A pairing code to show in the desktop app (local sockets only). */
 interface LoginPairingRequestMessage {
   type: 'login_pairing_request'
@@ -238,12 +180,6 @@ type MessageData =
   | MusicStateMessage
   | SidebarNavigationMessage
   | SyncAppliedMessage
-  | ScreenShareStartedMessage
-  | ScreenShareStoppedMessage
-  | ScreenShareJoinRequestMessage
-  | WebRTCOfferMessage
-  | WebRTCAnswerMessage
-  | WebRTCIceCandidateMessage
   | { type: 'translation_state'; payload: Record<string, unknown> }
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
@@ -526,22 +462,6 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         ) {
           window.dispatchEvent(
             new CustomEvent('login-pairing-message', { detail: data }),
-          )
-        }
-
-        // Handle screen share WebRTC signaling messages
-        if (
-          data.type === 'screen_share_started' ||
-          data.type === 'screen_share_stopped' ||
-          data.type === 'screen_share_join_request' ||
-          data.type === 'webrtc_offer' ||
-          data.type === 'webrtc_answer' ||
-          data.type === 'webrtc_ice_candidate'
-        ) {
-          window.dispatchEvent(
-            new CustomEvent('screen-share-message', {
-              detail: data,
-            }),
           )
         }
       } catch {

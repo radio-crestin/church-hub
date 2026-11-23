@@ -9,12 +9,15 @@ interface SearchInputProps {
   value: string
   onChange: (value: string) => void
   placeholder?: string
+  /** Enter: the search is meant, e.g. to remember it. */
+  onSubmit?: (value: string) => void
 }
 
 export function SearchInput({
   value,
   onChange,
   placeholder,
+  onSubmit,
 }: SearchInputProps) {
   const { t } = useTranslation('music')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -28,6 +31,9 @@ export function SearchInput({
         placeholder={placeholder ?? t('files.search')}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onSubmit?.(value)
+        }}
         className="pl-10 pr-10"
       />
       {value && (

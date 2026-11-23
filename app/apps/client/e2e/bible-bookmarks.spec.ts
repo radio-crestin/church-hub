@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
+import { openActionsMenu } from './helpers/actions-menu'
+
 /**
  * Bible bookmarks: the list itself, and moving it in and out as text.
  *
@@ -11,6 +13,12 @@ test.describe('Bible bookmarks', () => {
   /** Empties the list so a test starts from a known state. */
   async function clearBookmarks(page: Page) {
     await page.request.delete('/api/bible-bookmarks').catch(() => {})
+  }
+
+  /** Import is a seldom-used action, so it waits under the header's "More". */
+  async function openImport(page: Page) {
+    const menu = await openActionsMenu(page, 'bible-bookmarks-header-more')
+    await menu.getByTestId('bible-bookmarks-import-menu').click()
   }
 
   /** Opens /bible with the Marcaje panel already expanded. */
@@ -113,7 +121,7 @@ test.describe('Bible bookmarks', () => {
   }) => {
     await openBibleWithBookmarks(page)
 
-    await page.getByTestId('bible-bookmarks-import').click()
+    await openImport(page)
     await page
       .getByTestId('bible-bookmarks-import-textarea')
       .fill(
@@ -144,7 +152,7 @@ test.describe('Bible bookmarks', () => {
   test('import closes itself when every line lands', async ({ page }) => {
     await openBibleWithBookmarks(page)
 
-    await page.getByTestId('bible-bookmarks-import').click()
+    await openImport(page)
     await page
       .getByTestId('bible-bookmarks-import-textarea')
       .fill('Ioan 3:16\nPsalmi 23:1')

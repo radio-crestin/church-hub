@@ -1,43 +1,44 @@
 import { useTranslation } from 'react-i18next'
 
-import { TrackCard } from './TrackCard'
-import type { MusicFile } from '../types'
+import { TRACK_GRID, TrackRow } from './TrackRow'
+import type { LibraryTrack, MusicPlaylist } from '../types'
 
 interface TrackListProps {
-  tracks: MusicFile[]
-  onPlay: (track: MusicFile) => void
-  onAddToQueue: (track: MusicFile) => void
-  maxHeight?: string
+  tracks: LibraryTrack[]
+  playingFileId: number | null
+  playlists: MusicPlaylist[]
+  onPlay: (track: LibraryTrack) => void
+  onAddToQueue: (track: LibraryTrack) => void
+  onAddToPlaylist: (track: LibraryTrack, playlistId: number) => void
+  onCreatePlaylistWith: (track: LibraryTrack) => void
+  onRemoveFromPlaylist?: (track: LibraryTrack) => void
 }
 
+/** The tracks under their column titles. */
 export function TrackList({
   tracks,
-  onPlay,
-  onAddToQueue,
-  maxHeight = '400px',
+  playingFileId,
+  ...rowProps
 }: TrackListProps) {
   const { t } = useTranslation('music')
 
-  if (tracks.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
-        {t('files.empty')}
-      </div>
-    )
-  }
-
   return (
-    <div
-      className="w-full overflow-y-auto scrollbar-thin"
-      style={{ maxHeight }}
-    >
-      <div className="space-y-1 pr-1">
+    <div className="@container">
+      <div
+        className={`${TRACK_GRID} hidden px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 @md:grid dark:text-gray-400`}
+      >
+        <span>{t('tracks.columns.title')}</span>
+        <span className="hidden @3xl:block">{t('tracks.columns.artist')}</span>
+        <span>{t('tracks.columns.plays')}</span>
+        <span>{t('tracks.columns.lastPlayed')}</span>
+      </div>
+      <div className="space-y-0.5" data-testid="music-track-list">
         {tracks.map((track) => (
-          <TrackCard
-            key={track.id}
+          <TrackRow
+            key={track.playlistItemId ?? track.id}
             track={track}
-            onPlay={onPlay}
-            onAddToQueue={onAddToQueue}
+            isPlaying={track.id === playingFileId}
+            {...rowProps}
           />
         ))}
       </div>

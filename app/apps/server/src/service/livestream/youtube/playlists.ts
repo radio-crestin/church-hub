@@ -41,7 +41,7 @@ export async function getPlaylists(): Promise<YouTubePlaylist[]> {
       title: playlist.snippet?.title || '',
       description: playlist.snippet?.description || '',
       itemCount: playlist.contentDetails?.itemCount || 0,
-      thumbnailUrl: playlist.snippet?.thumbnails?.default?.url,
+      thumbnailUrl: playlist.snippet?.thumbnails?.default?.url ?? undefined,
     }))
   }
 

@@ -34,11 +34,17 @@ export function buildVariantMatcher(groups: TermGroup[]): VariantMatcher {
     const entries = words.get(form)
     if (entries) {
       for (const [group, cost] of entries) {
-        if (cost < edits[group]) edits[group] = cost
+        const current = edits[group]
+        if (current !== undefined && cost < current) edits[group] = cost
       }
     }
     for (const prefix of prefixes) {
-      if (prefix.edits < edits[prefix.group] && form.startsWith(prefix.text)) {
+      const current = edits[prefix.group]
+      if (
+        current !== undefined &&
+        prefix.edits < current &&
+        form.startsWith(prefix.text)
+      ) {
         edits[prefix.group] = prefix.edits
       }
     }

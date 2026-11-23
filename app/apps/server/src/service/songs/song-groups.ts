@@ -147,10 +147,11 @@ function collapseStaleGroup(
   surviving: readonly number[],
 ): void {
   const db = getDatabase()
-  if (surviving.length === 1) {
+  const [survivor] = surviving
+  if (surviving.length === 1 && survivor !== undefined) {
     db.update(songs)
       .set({ songGroupId: null })
-      .where(eq(songs.id, surviving[0]))
+      .where(eq(songs.id, survivor))
       .run()
   }
   db.delete(songGroups).where(eq(songGroups.id, groupId)).run()
@@ -357,7 +358,8 @@ export function unlinkSong(songId: number): OperationResult {
       .orderBy(songs.title)
       .all()
 
-    if (remaining.length === 0) {
+    const [first] = remaining
+    if (!first) {
       db.delete(songGroups).where(eq(songGroups.id, groupId)).run()
       logger.info(`Deleted empty group ${groupId}`)
       return { success: true }
@@ -367,7 +369,7 @@ export function unlinkSong(songId: number): OperationResult {
     if (remaining.length === 1) {
       db.update(songs)
         .set({ songGroupId: null })
-        .where(eq(songs.id, remaining[0].id))
+        .where(eq(songs.id, first.id))
         .run()
       db.delete(songGroups).where(eq(songGroups.id, groupId)).run()
       logger.info(`Collapsed single-member group ${groupId}`)
@@ -376,7 +378,7 @@ export function unlinkSong(songId: number): OperationResult {
 
     if (group.primarySongId === songId) {
       db.update(songGroups)
-        .set({ primarySongId: remaining[0].id, updatedAt: new Date() })
+        .set({ primarySongId: first.id, updatedAt: new Date() })
         .where(eq(songGroups.id, groupId))
         .run()
     } else {

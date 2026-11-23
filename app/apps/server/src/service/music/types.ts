@@ -40,20 +40,15 @@ export interface MusicFile {
   format: AudioFormat
   fileSize: number | null
   lastModified: number | null
+  playCount: number
+  lastPlayedAt: number | null
   createdAt: number
   updatedAt: number
 }
 
-export interface MusicFileWithFolder extends MusicFile {
-  folder: {
-    id: number
-    name: string
-    path: string
-  }
-}
-
 export interface GetFilesInput {
   folderId?: number
+  recent?: boolean
   search?: string
   artist?: string
   album?: string
