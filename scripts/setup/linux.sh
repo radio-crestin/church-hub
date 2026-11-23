@@ -6,7 +6,9 @@
 set -euo pipefail
 # gitleaks: the pre-commit and pre-push hooks (.githooks/) refuse to run without it.
 if ! command -v gitleaks >/dev/null 2>&1; then
-  if [ "${SUPERFACTORY_SETUP_SUDO:-0}" = 1 ] && sudo apt-get install -y gitleaks 2>/dev/null; then :
+  # A fresh image has no package lists yet: update them first, or the install finds nothing.
+  if [ "${SUPERFACTORY_SETUP_SUDO:-0}" = 1 ] && sudo apt-get update -qq &&
+    sudo apt-get install -y gitleaks 2>/dev/null; then :
   else
     # The latest release from its page's redirect: GitHub's API answers 403 once a machine's
     # address used up its unauthenticated rate limit (shared VM networks do).
