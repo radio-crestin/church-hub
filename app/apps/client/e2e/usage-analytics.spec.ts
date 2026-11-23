@@ -1,14 +1,13 @@
 import { gunzipSync } from 'node:zlib'
-
 import { expect, type Page, type Request, test } from '@playwright/test'
 
+import { setAppLanguage } from './helpers/app-language'
 import {
   CLIENT_EVENTS,
   COMMON_PROPERTIES,
   POSTHOG_PROPERTIES,
   POSTHOG_PROPERTY_PREFIXES,
 } from '../src/features/analytics/analyticsEvents'
-import { setAppLanguage } from './helpers/app-language'
 
 /**
  * Anonymous usage data (T-195): every press goes to PostHog as
@@ -40,10 +39,9 @@ function decodeBody(request: Request): unknown[] {
     text = buffer.toString('utf8')
   }
   if (text.startsWith('data=')) {
-    text = Buffer.from(
-      decodeURIComponent(text.slice(5)),
-      'base64',
-    ).toString('utf8')
+    text = Buffer.from(decodeURIComponent(text.slice(5)), 'base64').toString(
+      'utf8',
+    )
   }
   const parsed = JSON.parse(text) as unknown
   if (Array.isArray(parsed)) return parsed
@@ -51,9 +49,22 @@ function decodeBody(request: Request): unknown[] {
   return batch ?? [parsed]
 }
 
-/** Answers every PostHog request and keeps what was sent. */
+/**
+ * Answers every PostHog request and keeps what was sent. The page looks like
+ * a person's browser, not an automated one: PostHog drops a bot's events.
+ */
 async function interceptPostHog(page: Page): Promise<PostHogTraffic> {
   const traffic: PostHogTraffic = { requests: [], events: [] }
+  await page.addInitScript(() => {
+    const ua = navigator.userAgent.replace('HeadlessChrome', 'Chrome')
+    Object.defineProperty(Navigator.prototype, 'webdriver', {
+      get: () => false,
+    })
+    Object.defineProperty(Navigator.prototype, 'userAgent', { get: () => ua })
+    Object.defineProperty(Navigator.prototype, 'userAgentData', {
+      get: () => undefined,
+    })
+  })
   await page.route(/posthog\.com/, async (route) => {
     const request = route.request()
     traffic.requests.push(request.url())
@@ -63,8 +74,11 @@ async function interceptPostHog(page: Page): Promise<PostHogTraffic> {
         if (event) traffic.events.push({ event, properties: properties ?? {} })
       }
     }
-    if (request.url().endsWith('.js')) {
+    if (request.url().includes('.js')) {
       return route.fulfill({ contentType: 'text/javascript', body: '' })
+    }
+    if (request.url().includes('/flags')) {
+      return route.fulfill({ json: { featureFlags: {}, flags: {} } })
     }
     return route.fulfill({ json: { status: 1 } })
   })
@@ -99,10 +113,11 @@ test.describe('Anonymous usage data', () => {
     baseURL,
   }) => {
     await setUsageData(page, true)
+    await setAppLanguage(page, 'en')
     const traffic = await interceptPostHog(page)
 
     await page.goto('/songs')
-    const search = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const search = page.getByPlaceholder(/search/i).first()
     await expect(search).toBeVisible({ timeout: 15000 })
     await search.fill(TYPED_TEXT)
     await search.press('PageDown') // typed in a field: not a shortcut
@@ -115,7 +130,11 @@ test.describe('Anonymous usage data', () => {
     await expect
       .poll(() => traffic.events.map((e) => e.event), { timeout: 20000 })
       .toEqual(
-        expect.arrayContaining(['button_pressed', 'shortcut_used', '$pageview']),
+        expect.arrayContaining([
+          'button_pressed',
+          'shortcut_used',
+          '$pageview',
+        ]),
       )
 
     for (const { event, properties } of traffic.events) {
@@ -127,15 +146,21 @@ test.describe('Anonymous usage data', () => {
       expect(properties.$ip).toBeNull()
     }
 
-    const press = traffic.events.find(
-      (e) =>
-        e.event === 'button_pressed' &&
-        e.properties.route === '/settings/privacy',
+    // A press is counted on the page it happened on: the Settings link on
+    // the songs page, then the Privacy link on a settings page.
+    const presses = traffic.events
+      .filter((e) => e.event === 'button_pressed')
+      .map((e) => e.properties)
+    expect(presses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: 'a',
+          feature: 'songs',
+          route: '/songs',
+        }),
+        expect.objectContaining({ role: 'a', feature: 'settings' }),
+      ]),
     )
-    expect(press?.properties).toMatchObject({
-      role: 'a',
-      feature: 'settings',
-    })
 
     const shortcuts = traffic.events.filter((e) => e.event === 'shortcut_used')
     expect(shortcuts).toHaveLength(1)
@@ -158,6 +183,10 @@ test.describe('Anonymous usage data', () => {
 
     const toggle = page.getByTestId('usage-data-toggle')
     await expect(toggle).toHaveAttribute('aria-checked', 'true')
+    // On: events flow (so "nothing" below means something).
+    await expect
+      .poll(() => traffic.events.length, { timeout: 20000 })
+      .toBeGreaterThan(0)
     await toggle.click()
     await expect(toggle).toHaveAttribute('aria-checked', 'false')
 
@@ -182,7 +211,11 @@ test.describe('Anonymous usage data', () => {
 
   for (const [lang, title, toggleLabel] of [
     ['en', 'Privacy policy', 'Share anonymous usage data'],
-    ['ro', 'Politica de confidențialitate', 'Trimite date anonime de utilizare'],
+    [
+      'ro',
+      'Politica de confidențialitate',
+      'Trimite date anonime de utilizare',
+    ],
   ] as const) {
     test(`the privacy page renders in ${lang}`, async ({ page }) => {
       await setAppLanguage(page, lang)
