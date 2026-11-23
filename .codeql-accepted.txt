@@ -1,0 +1,6 @@
+# CodeQL alerts reviewed and accepted, so scripts/security-check.sh lets a
+# release through with them (on GitHub, dismiss them the same way). One per
+# line: <rule id> <path>  # why it is safe. Add one only after a review; a
+# real finding gets fixed, not listed.
+
+js/insufficient-password-hash app/apps/server/src/service/livestream/obs/websocket-client.ts  # OBS WebSocket v5 authentication is defined as base64(SHA-256(password + salt)): the protocol picks the hash, not us, and nothing is stored.

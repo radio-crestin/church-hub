@@ -5,12 +5,12 @@
 #   1. gitleaks over every commit since the last release tag (.gitleaks.toml).
 #   2. CodeQL, the same languages and query suite as .github/workflows/codeql.yml
 #      (javascript-typescript, actions, rust; build-mode none; the default
-#      code-scanning suite; the same paths-ignore), from source.
+#      code-scanning suite, the CLI's default as in CI; the same paths-ignore).
 #
 # Fails on any gitleaks finding and on any error- or warning-level CodeQL
 # alert (or one rated high/critical security severity). Works on macOS, Linux
-# and Windows (Git Bash). Needs gitleaks, the CodeQL CLI and bun on PATH
-# (or CODEQL=<path to the codeql binary>).
+# and Windows (Git Bash). Needs gitleaks, bun and the CodeQL bundle (the CLI
+# with its query packs, offline) on PATH, or CODEQL=<path to its codeql>.
 #
 # Usage: ./scripts/security-check.sh [gitleaks|codeql]   (default: both)
 
@@ -41,10 +41,9 @@ install_hint() {
     gitleaks:macos) echo "Install it:  brew install gitleaks" >&2 ;;
     gitleaks:linux) echo "Install it:  sudo apt install gitleaks   (or a release binary: https://github.com/gitleaks/gitleaks/releases)" >&2 ;;
     gitleaks:windows) echo "Install it:  winget install Gitleaks.Gitleaks   (or: scoop install gitleaks)" >&2 ;;
-    codeql:macos) echo "Install it:  brew install --cask codeql" >&2 ;;
-    codeql:linux | codeql:windows)
-      local bundle=linux64
-      [[ "$(os_name)" == windows ]] && bundle=win64
+    codeql:*)
+      local bundle
+      case "$(os_name)" in macos) bundle=osx64 ;; windows) bundle=win64 ;; *) bundle=linux64 ;; esac
       {
         echo "Install the CodeQL bundle (the CLI and its query packs), then put its folder on PATH:"
         echo "  curl -fsSLO https://github.com/github/codeql-action/releases/latest/download/codeql-bundle-$bundle.tar.gz"
@@ -87,19 +86,27 @@ paths-ignore:
   - 'app/apps/server/src/db/migrations/embedded.ts'
 EOF
 
+  # The Rust extractor runs `cargo check` on the Tauri shell: a fresh target
+  # dir costs over an hour; this one (gitignored, `cargo clean` empties it)
+  # makes the next run take minutes.
+  export CODEQL_EXTRACTOR_RUST_OPTION_CARGO_TARGET_DIR="${CODEQL_EXTRACTOR_RUST_OPTION_CARGO_TARGET_DIR:-$(native_path "$REPO_ROOT/app/tauri/target/codeql")}"
+
   local lang sarifs=()
   for lang in "${LANGUAGES[@]}"; do
     echo "== CodeQL: $lang"
+    SECONDS=0
     "$codeql" database create "$(native_path "$work/db-$lang")" \
       --language="$lang" --build-mode=none --overwrite --threads=0 \
       --source-root="$(native_path "$REPO_ROOT")" \
       --codescanning-config="$(native_path "$work/config.yml")" >"$work/create-$lang.log" 2>&1 \
       || { cat "$work/create-$lang.log" >&2; echo "error: CodeQL could not build the $lang database" >&2; return 1; }
+    echo "   database: ${SECONDS}s"
+    SECONDS=0
     "$codeql" database analyze "$(native_path "$work/db-$lang")" \
-      "codeql/$lang-queries:codeql-suites/$lang-code-scanning.qls" \
-      --download --threads=0 --format=sarif-latest \
+      --threads=0 --format=sarif-latest \
       --output="$(native_path "$work/$lang.sarif")" >"$work/analyze-$lang.log" 2>&1 \
       || { cat "$work/analyze-$lang.log" >&2; echo "error: CodeQL could not analyse $lang" >&2; return 1; }
+    echo "   analysis: ${SECONDS}s"
     sarifs+=("$work/$lang.sarif")
   done
   bun "$SCRIPT_DIR/codeql-serious-alerts.ts" "${sarifs[@]}"
