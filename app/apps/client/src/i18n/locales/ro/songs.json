@@ -2,7 +2,9 @@
   "title": "Cântări",
   "layout": {
     "controlPanel": "Panou de control",
-    "stage": "Scenă"
+    "stage": "Scenă",
+    "versesTab": "Versuri",
+    "versionsTab": "Versiuni"
   },
   "actions": {
     "create": "Cântare nouă",
