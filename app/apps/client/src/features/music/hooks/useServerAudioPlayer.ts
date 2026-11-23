@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { useWebSocket } from '~/features/presentation/hooks/useWebSocket'
-import type { ServerPlayerState } from '../types'
+import type { QueueOrder, ServerPlayerState } from '../types'
 
 const VOLUME_STORAGE_KEY = 'music-player-volume'
 
@@ -16,7 +16,7 @@ const defaultState: ServerPlayerState = {
   duration: 0,
   volume: 0,
   isMuted: false,
-  isShuffled: false,
+  queueOrder: 'in_order',
   currentIndex: -1,
   queueLength: 0,
   currentTrack: null,
@@ -27,6 +27,7 @@ const defaultState: ServerPlayerState = {
 
 export function useServerAudioPlayer() {
   const { send, status } = useWebSocket()
+  const queryClient = useQueryClient()
 
   const { data: state } = useQuery<ServerPlayerState>({
     queryKey: ['music', 'playerState'],
@@ -50,6 +51,15 @@ export function useServerAudioPlayer() {
       send({ type: 'music_get_state' })
     }
   }, [status, state?.updatedAt, send])
+
+  // A track that starts was counted as played: refresh the lists' play
+  // counts and "last played".
+  const playingItemId = state?.currentTrack?.id
+  useEffect(() => {
+    if (playingItemId === undefined) return
+    queryClient.invalidateQueries({ queryKey: ['music', 'files'] })
+    queryClient.invalidateQueries({ queryKey: ['music', 'playlist'] })
+  }, [playingItemId, queryClient])
 
   const play = useCallback(() => {
     send({ type: 'music_play' })
@@ -133,24 +143,12 @@ export function useServerAudioPlayer() {
     send({ type: 'music_clear_queue' })
   }, [send])
 
-  const setQueue = useCallback(
-    (fileIds: number[]) => {
-      send({ type: 'music_set_queue', payload: { fileIds } })
+  const setQueueOrder = useCallback(
+    (order: QueueOrder) => {
+      send({ type: 'music_queue_order', payload: { order } })
     },
     [send],
   )
-
-  const reorderQueue = useCallback(
-    (itemIds: number[]) => {
-      send({ type: 'music_reorder_queue', payload: { itemIds } })
-    },
-    [send],
-  )
-
-  const toggleShuffle = useCallback(() => {
-    const newShuffled = !state?.isShuffled
-    send({ type: 'music_shuffle', payload: { enabled: newShuffled } })
-  }, [send, state?.isShuffled])
 
   const currentTrack = state?.currentTrack
     ? {
@@ -183,8 +181,6 @@ export function useServerAudioPlayer() {
     addToQueue,
     removeFromQueue,
     clearQueue,
-    setQueue,
-    reorderQueue,
-    toggleShuffle,
+    setQueueOrder,
   }
 }

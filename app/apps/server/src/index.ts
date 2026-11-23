@@ -170,14 +170,16 @@ import { handleMIDIShortcut, loadMIDIShortcuts } from './service/midi/shortcuts'
 import { getFileById } from './service/music/getFiles'
 import {
   addMultipleToNowPlaying,
+  applyQueueOrder,
   clearNowPlayingQueue,
   executeCommand,
   getPlayerState,
   initializeMusicPlayer,
+  QUEUE_ORDERS,
+  type QueueOrder,
   refreshQueueState,
   removeFromNowPlaying,
-  reorderNowPlaying,
-  setNowPlayingQueue,
+  setQueueOrder,
   setStateCallback,
   shutdownMusicPlayer,
 } from './service/music-player'
@@ -8358,11 +8360,8 @@ async function startRealServer(): Promise<void> {
       }
       case 'music_play_file': {
         const { fileId } = payload as { fileId: number }
-        const file = getFileById(fileId)
-        if (file) {
-          setNowPlayingQueue([fileId])
-          refreshQueueState()
-          await executeCommand({ type: 'play_index', index: 0 })
+        if (getFileById(fileId)) {
+          await executeCommand({ type: 'play_file', fileId })
           broadcastMusicState(getPlayerState())
         }
         break
@@ -8370,6 +8369,7 @@ async function startRealServer(): Promise<void> {
       case 'music_add_to_queue': {
         const { fileIds } = payload as { fileIds: number[] }
         addMultipleToNowPlaying(fileIds)
+        applyQueueOrder()
         refreshQueueState()
         broadcastMusicState(getPlayerState())
         break
@@ -8387,23 +8387,12 @@ async function startRealServer(): Promise<void> {
         refreshQueueState()
         broadcastMusicState(getPlayerState())
         break
-      case 'music_set_queue': {
-        const { fileIds } = payload as { fileIds: number[] }
-        setNowPlayingQueue(fileIds)
-        refreshQueueState()
-        broadcastMusicState(getPlayerState())
-        break
-      }
-      case 'music_reorder_queue': {
-        const { itemIds } = payload as { itemIds: number[] }
-        reorderNowPlaying(itemIds)
-        refreshQueueState()
-        broadcastMusicState(getPlayerState())
-        break
-      }
-      case 'music_shuffle': {
-        const { enabled } = payload as { enabled: boolean }
-        await executeCommand({ type: 'shuffle', enabled })
+      case 'music_queue_order': {
+        const { order } = payload as { order: QueueOrder }
+        if (QUEUE_ORDERS.includes(order)) {
+          setQueueOrder(order)
+          broadcastMusicState(getPlayerState())
+        }
         break
       }
       case 'music_get_state':

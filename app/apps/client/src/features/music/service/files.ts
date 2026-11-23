@@ -8,6 +8,7 @@ interface ApiResponse<T> {
 
 interface GetFilesParams {
   folderId?: number
+  recent?: boolean
   search?: string
   artist?: string
   album?: string
@@ -20,6 +21,7 @@ export async function getFiles(
 ): Promise<MusicFile[]> {
   const searchParams = new URLSearchParams()
   if (params.folderId) searchParams.set('folderId', String(params.folderId))
+  if (params.recent) searchParams.set('recent', 'true')
   if (params.search) searchParams.set('search', params.search)
   if (params.artist) searchParams.set('artist', params.artist)
   if (params.album) searchParams.set('album', params.album)
