@@ -201,6 +201,7 @@ export async function handleMusicRoutes(
     const offset = url.searchParams.get('offset')
 
     if (folderId) input.folderId = parseInt(folderId, 10)
+    if (url.searchParams.get('recent') === 'true') input.recent = true
     if (search) input.search = search
     if (artist) input.artist = artist
     if (album) input.album = album

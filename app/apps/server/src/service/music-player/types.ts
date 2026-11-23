@@ -1,3 +1,13 @@
+/** What plays next: as added, at random, or by how often each was played. */
+export type QueueOrder = 'in_order' | 'random' | 'most_played' | 'least_played'
+
+export const QUEUE_ORDERS: QueueOrder[] = [
+  'in_order',
+  'random',
+  'most_played',
+  'least_played',
+]
+
 export interface QueueItemSummary {
   id: number
   fileId: number
@@ -13,7 +23,7 @@ export interface MusicPlayerState {
   duration: number
   volume: number
   isMuted: boolean
-  isShuffled: boolean
+  queueOrder: QueueOrder
   currentIndex: number
   queueLength: number
   currentTrack: CurrentTrack | null
@@ -46,6 +56,7 @@ export interface NowPlayingItem {
     artist: string | null
     album: string | null
     duration: number | null
+    playCount: number
   }
 }
 
@@ -59,4 +70,4 @@ export type MusicPlayerCommand =
   | { type: 'next' }
   | { type: 'previous' }
   | { type: 'play_index'; index: number }
-  | { type: 'shuffle'; enabled: boolean }
+  | { type: 'play_file'; fileId: number }
