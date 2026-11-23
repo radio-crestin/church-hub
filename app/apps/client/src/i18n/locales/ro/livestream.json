@@ -51,8 +51,8 @@
     }
   },
   "stream": {
-    "startStream": "Pornește transmisiunea",
-    "stopStream": "Oprește transmisiunea",
+    "startStream": "Pornește live-ul",
+    "stopStream": "Oprește live-ul",
     "isLive": "LIVE",
     "notStreaming": "Nu se transmite",
     "starting": "Se pornește...",
@@ -69,7 +69,7 @@
     "cancelConfirm": {
       "title": "Anulezi pornirea transmisiunii?",
       "message": "Transmisiunea tocmai pornește. Sigur vrei să anulezi și să o oprești?",
-      "confirm": "Oprește transmisiunea",
+      "confirm": "Oprește live-ul",
       "cancel": "Continuă"
     }
   },
@@ -224,7 +224,7 @@
     "youtube": {
       "title": "Intră live pe YouTube",
       "signIn": "Deschide Setări YouTube din partea de sus a paginii și conectează canalul bisericii.",
-      "start": "„Pornește transmisiunea” o creează pe YouTube și pornește OBS; „Oprește transmisiunea” o încheie.",
+      "start": "„Pornește live-ul” creează transmisiunea pe YouTube și pornește OBS; „Oprește live-ul” încheie transmisiunea.",
       "startStopScenes": "Transmisiunea începe pe scena „{{start}}” și se încheie pe „{{stop}}”.",
       "openSettings": "Deschide setările YouTube"
     }
