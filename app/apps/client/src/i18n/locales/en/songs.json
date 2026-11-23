@@ -2,7 +2,9 @@
   "title": "Songs",
   "layout": {
     "controlPanel": "Control panel",
-    "stage": "Stage"
+    "stage": "Stage",
+    "versesTab": "Verses",
+    "versionsTab": "Versions"
   },
   "actions": {
     "create": "New Song",
