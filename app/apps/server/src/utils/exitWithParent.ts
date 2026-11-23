@@ -24,3 +24,12 @@ export function exitWithParent(shutdown: () => Promise<void>): void {
   // The shell writes nothing the sidecar needs: drain it so 'end' can fire.
   process.stdin.resume()
 }
+
+/**
+ * The shell's pid while it asks the sidecar to end with it, else 0. The boot
+ * server's worker watches it: the main thread's long synchronous boot work
+ * (migrations, seeding, search index) holds back the stdin 'end' event.
+ */
+export function parentToWatch(): number {
+  return process.env.CHURCH_HUB_EXIT_WITH_PARENT === 'true' ? process.ppid : 0
+}
