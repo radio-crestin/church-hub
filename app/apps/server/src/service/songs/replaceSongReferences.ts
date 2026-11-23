@@ -37,13 +37,12 @@ export function completeSongReplacement(
       const db = getDatabase()
 
       // Update schedule items
-      const scheduleResult = db
+      const scheduleItemsUpdated = db
         .update(scheduleItems)
         .set({ songId: newSongId })
         .where(eq(scheduleItems.songId, oldSongId))
-        .run()
-
-      const scheduleItemsUpdated = scheduleResult.changes
+        .returning({ id: scheduleItems.id })
+        .all().length
 
       log('info', `Updated ${scheduleItemsUpdated} schedule items`)
 

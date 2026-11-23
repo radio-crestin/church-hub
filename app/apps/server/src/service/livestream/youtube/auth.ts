@@ -38,9 +38,9 @@ export async function storeTokens(
   const channelId = tokens.channelId || null
   const channelName = tokens.channelName || null
 
-  const existingAuth = await db.select().from(youtubeAuth).limit(1)
+  const [existingAuth] = await db.select().from(youtubeAuth).limit(1)
 
-  if (existingAuth.length > 0) {
+  if (existingAuth) {
     await db
       .update(youtubeAuth)
       .set({
@@ -51,7 +51,7 @@ export async function storeTokens(
         channelName,
         updatedAt: new Date(),
       })
-      .where(eq(youtubeAuth.id, existingAuth[0].id))
+      .where(eq(youtubeAuth.id, existingAuth.id))
   } else {
     await db.insert(youtubeAuth).values({
       accessToken: tokens.accessToken,
@@ -85,15 +85,14 @@ export async function getAuthStatus(): Promise<YouTubeAuthStatus> {
   }
 
   const db = getDatabase()
-  const authRecords = await db.select().from(youtubeAuth).limit(1)
+  const [auth] = await db.select().from(youtubeAuth).limit(1)
 
-  if (authRecords.length === 0) {
+  if (!auth) {
     const result: YouTubeAuthStatus = { isAuthenticated: false }
     authStatusCache = { data: result, timestamp: Date.now() }
     return result
   }
 
-  const auth = authRecords[0]
   const isExpired = auth.expiresAt.getTime() < Date.now()
 
   if (isExpired) {
@@ -125,16 +124,16 @@ export async function logout(): Promise<void> {
   clearAuthStatusCache()
 
   const db = getDatabase()
-  const authRecords = await db.select().from(youtubeAuth).limit(1)
+  const [auth] = await db.select().from(youtubeAuth).limit(1)
 
-  if (authRecords.length > 0) {
+  if (auth) {
     // Try to revoke credentials if OAuth client is available
     const client = getOAuth2Client()
     if (client) {
       try {
         client.setCredentials({
-          access_token: authRecords[0].accessToken,
-          refresh_token: authRecords[0].refreshToken,
+          access_token: auth.accessToken,
+          refresh_token: auth.refreshToken,
         })
         await client.revokeCredentials()
       } catch {
@@ -142,6 +141,6 @@ export async function logout(): Promise<void> {
       }
     }
 
-    await db.delete(youtubeAuth).where(eq(youtubeAuth.id, authRecords[0].id))
+    await db.delete(youtubeAuth).where(eq(youtubeAuth.id, auth.id))
   }
 }

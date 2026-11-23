@@ -1,6 +1,6 @@
 import { elisionVariants } from './elisionVariants'
 import { escapeHtml } from './escapeHtml'
-import { foldText } from './foldText'
+import { type FoldedText, foldText } from './foldText'
 import { joinedWordVariants, WORD_JOINERS } from './joinedWordVariants'
 
 export interface TextRange {
@@ -24,6 +24,17 @@ function removeDiacritics(text: string): string {
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** The original-text range under `length` folded characters from `at`. */
+function originalRange(
+  folded: FoldedText,
+  at: number,
+  length: number,
+): TextRange | null {
+  const start = folded.starts[at]
+  const end = folded.ends[at + length - 1]
+  return start === undefined || end === undefined ? null : { start, end }
 }
 
 const JOINER_SPLIT_RE = new RegExp(`[${WORD_JOINERS}]+`, 'u')
@@ -136,10 +147,7 @@ function findFoldedPhrase(text: string, rawQuery: string): TextRange | null {
     .join(' ')
   const match = new RegExp(pattern, 'u').exec(folded.folded)
   if (!match || match[0].length === 0) return null
-  return {
-    start: folded.starts[match.index],
-    end: folded.ends[match.index + match[0].length - 1],
-  }
+  return originalRange(folded, match.index, match[0].length)
 }
 
 /**
@@ -212,10 +220,8 @@ export function findHighlightRanges(
         pattern.lastIndex++
         continue
       }
-      ranges.push({
-        start: kept.starts[match.index],
-        end: kept.ends[match.index + match[0].length - 1],
-      })
+      const range = originalRange(kept, match.index, match[0].length)
+      if (range) ranges.push(range)
     }
   }
 
@@ -228,10 +234,8 @@ export function findHighlightRanges(
       for (const variant of spellingVariants(word)) {
         let pos = dropped.folded.indexOf(variant)
         while (pos !== -1) {
-          ranges.push({
-            start: dropped.starts[pos],
-            end: dropped.ends[pos + variant.length - 1],
-          })
+          const range = originalRange(dropped, pos, variant.length)
+          if (range) ranges.push(range)
           pos = dropped.folded.indexOf(variant, pos + 1)
         }
       }

@@ -1,5 +1,4 @@
-import { OAuth2Client } from 'google-auth-library'
-import { type drive_v3, google } from 'googleapis'
+import { type Common, type drive_v3, google } from 'googleapis'
 
 import {
   clearDriveAuth,
@@ -56,13 +55,14 @@ async function refreshViaWorker(
  * Returns null when not connected or the refresh token is no longer valid (in
  * which case the connection is cleared and a reconnect is required).
  */
-async function getAuthenticatedDriveClient(): Promise<OAuth2Client | null> {
+async function getAuthenticatedDriveClient(): Promise<Common.OAuth2Client | null> {
   const record = await getDriveAuth()
   if (!record) return null
 
   // No client id/secret here — token refresh goes through the worker, the
-  // client only carries the access token for API calls.
-  const client = new OAuth2Client()
+  // client only carries the access token for API calls. It comes from
+  // googleapis, whose google-auth-library copy is the one google.drive accepts.
+  const client = new google.auth.OAuth2()
 
   const needsRefresh = record.expiresAt.getTime() < Date.now() + 5 * 60 * 1000
   if (!needsRefresh) {

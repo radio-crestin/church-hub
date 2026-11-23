@@ -40,7 +40,7 @@ function bootServerResponse(
   if (pathname === '/ping' || pathname === '/api/ping') {
     return new Response(JSON.stringify({ data: 'pong' }), { headers: json })
   }
-  return new Response(JSON.stringify({ error: 'Server starting', ...health }), {
+  return new Response(JSON.stringify(health), {
     status: 503,
     headers: { ...json, 'Retry-After': '1' },
   })
