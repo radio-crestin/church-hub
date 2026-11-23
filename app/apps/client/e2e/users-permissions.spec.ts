@@ -462,7 +462,7 @@ test.describe('Users & permissions', () => {
       expect(names[0]).toMatch(/Super Admin/)
 
       // Search filters by name.
-      const search = page.getByPlaceholder(/search users|caută/i)
+      const search = page.getByPlaceholder(/search users|caută utilizatori/i)
       await search.fill(`ZetaActive ${stamp}`)
       await expect(
         page.getByRole('heading', { name: `ZetaActive ${stamp}` }),

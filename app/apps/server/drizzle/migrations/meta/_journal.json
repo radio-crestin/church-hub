@@ -239,6 +239,13 @@
       "when": 1769200000000,
       "tag": "0033_add_songs_alternate_titles",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1769300000000,
+      "tag": "0034_add_music_play_stats",
+      "breakpoints": true
     }
   ]
 }

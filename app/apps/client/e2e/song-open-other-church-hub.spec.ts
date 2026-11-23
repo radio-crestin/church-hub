@@ -26,7 +26,7 @@ function freePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const server = createServer()
     server.on('error', reject)
-    server.listen(0, () => {
+    server.listen(0, '127.0.0.1', () => {
       const { port } = server.address() as { port: number }
       server.close(() => resolve(port))
     })
@@ -38,7 +38,12 @@ async function startOtherChurchHub(databasePath: string) {
   const port = await freePort()
   const server = spawn('bun', ['run', 'apps/server/src/index.ts'], {
     cwd: APP_ROOT,
-    env: { ...process.env, PORT: String(port), DATABASE_PATH: databasePath },
+    env: {
+      ...process.env,
+      PORT: String(port),
+      DATABASE_PATH: databasePath,
+      CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
+    },
     stdio: 'ignore',
   })
   const url = `http://localhost:${port}`

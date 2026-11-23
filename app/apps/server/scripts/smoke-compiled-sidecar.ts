@@ -166,6 +166,8 @@ async function main() {
       cmd: [binaryPath],
       env: {
         ...process.env,
+        // Loopback only: no Windows firewall prompt per smoke run (T-193).
+        CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
         PORT: String(PORT),
         TAURI_MODE: 'true',
         // As the desktop shell passes it (Tauri's resource_dir)

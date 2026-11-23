@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Church Hub · sqlite-wasm spike</title>
+    <style>
+      body { font: 15px/1.4 system-ui, sans-serif; margin: 0; padding: 16px; background: #0f172a; color: #e2e8f0; }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      p { margin: 0 0 12px; color: #94a3b8; }
+      .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      button { font: inherit; padding: 10px 14px; border-radius: 8px; border: 0; background: #2563eb; color: white; }
+      button:disabled { opacity: 0.5; }
+      table { border-collapse: collapse; width: 100%; max-width: 640px; }
+      td { padding: 4px 8px; border-bottom: 1px solid #1e293b; vertical-align: top; }
+      td:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      #status { margin: 12px 0; font-weight: 600; }
+      pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <h1>Church Hub on sqlite-wasm + OPFS</h1>
+    <p>The server's songs list, search, edit and sync engine, running unchanged in a Web Worker on this device.</p>
+    <div class="buttons">
+      <button data-snapshot="snapshot-3000.json.gz" data-wipe="1">First sync: 3,000 songs</button>
+      <button data-snapshot="snapshot-26k.json.gz" data-wipe="1">First sync: 26k songs</button>
+      <button data-wipe="0">Reopen (no download)</button>
+    </div>
+    <div id="status">Ready.</div>
+    <table><tbody id="steps"></tbody></table>
+    <pre id="raw"></pre>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
