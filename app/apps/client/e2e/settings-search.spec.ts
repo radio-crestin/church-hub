@@ -48,7 +48,7 @@ test.describe('Settings search', () => {
     const search = page.getByTestId('settings-search')
     await search.fill('qwertyuiop')
     await expect(page.getByTestId('settings-search-results')).toContainText(
-      /(No settings match|Nicio setare nu se potrivește)/,
+      /(No settings match|Nu s-a găsit nicio setare)/,
     )
     await search.press('Escape')
     await expect(search).toHaveValue('')

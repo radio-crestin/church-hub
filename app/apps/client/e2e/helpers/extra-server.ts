@@ -43,6 +43,7 @@ export class ExtraServer {
         cwd: APP_DIR,
         env: {
           ...process.env,
+          CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
           NODE_ENV: 'production',
           CLIENT_DIST_PATH: 'apps/client/dist',
           CHURCH_HUB_DATA_DIR: this.dataDir,
@@ -94,7 +95,11 @@ export class ExtraServer {
     await exited
   }
 
-  /** A session signed in as the install's super admin (passwordless on localhost). */
+  /**
+   * A session signed in as the install's super admin (passwordless on
+   * localhost). Like the suite's auth setup, it marks the first-run
+   * onboarding done, so pages open straight instead of on the wizard.
+   */
   async adminRequest(): Promise<APIRequestContext> {
     const api = await playwrightRequest.newContext({ baseURL: this.baseURL })
     const users = (await (await api.get('/api/auth/local-users')).json())
@@ -108,7 +113,19 @@ export class ExtraServer {
       data: { userId: admin!.id },
     })
     expect(login.ok()).toBe(true)
+    const onboarding = await api.post('/api/settings/app_settings', {
+      data: { key: 'onboarding_pending', value: 'false' },
+    })
+    expect(onboarding.ok()).toBe(true)
     return api
+  }
+
+  /** A fresh install opens on its first-run onboarding; a page spec skips it. */
+  async skipOnboarding(api: APIRequestContext): Promise<void> {
+    const res = await api.post('/api/settings/app_settings', {
+      data: { key: 'onboarding_pending', value: 'false' },
+    })
+    expect(res.ok()).toBe(true)
   }
 
   async dispose(): Promise<void> {

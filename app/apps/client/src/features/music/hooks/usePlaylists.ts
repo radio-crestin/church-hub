@@ -6,7 +6,6 @@ import {
   getPlaylistById,
   getPlaylists,
   removeFromPlaylist,
-  reorderPlaylistItems,
   upsertPlaylist,
 } from '../service'
 import type { MusicPlaylist, MusicPlaylistWithItems } from '../types'
@@ -85,25 +84,6 @@ export function useRemoveFromPlaylist() {
         queryKey: ['music', 'playlist', variables.playlistId],
       })
       queryClient.invalidateQueries({ queryKey: ['music', 'playlists'] })
-    },
-  })
-}
-
-export function useReorderPlaylistItems() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({
-      playlistId,
-      itemIds,
-    }: {
-      playlistId: number
-      itemIds: number[]
-    }) => reorderPlaylistItems(playlistId, itemIds),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['music', 'playlist', variables.playlistId],
-      })
     },
   })
 }

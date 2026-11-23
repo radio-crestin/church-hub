@@ -1,14 +1,11 @@
-import { posthog } from '~/posthog'
+import { getDeviceId } from '~/features/analytics/services/deviceId'
+import { POSTHOG_TOKEN } from '~/posthog'
 
 /**
- * The PostHog distinct id: the key under which `attachFeedbackLogs` stores
- * this user's log tails. Sent privately to the maintainer (WhatsApp only)
- * so they can find the logs for a request.
+ * The random device id (PostHog distinct id): the key under which
+ * `attachFeedbackLogs` stores the log tails when the user sends a request.
+ * Sent privately to the maintainer (WhatsApp only) so they can find them.
  */
-export function getSupportId(): string | null {
-  try {
-    return posthog?.get_distinct_id?.() ?? null
-  } catch {
-    return null
-  }
+export function getSupportId(): string {
+  return getDeviceId(POSTHOG_TOKEN)
 }

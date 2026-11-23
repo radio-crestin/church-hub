@@ -29,11 +29,15 @@ test.describe('Song Preview Mode', () => {
     await expect(page).toHaveURL(/\/songs\/\d+/, { timeout: 5000 })
     await page.waitForTimeout(800)
 
-    const toggle = page.locator('#song-preview-mode')
-    if (!(await toggle.isVisible({ timeout: 3000 }).catch(() => false))) {
-      test.skip(true, 'Preview toggle not found')
-      return
-    }
+    // Two icons instead of a labelled switch: live (a click projects) and
+    // preview (a click stages). No "Previzualizare" text in the header.
+    const live = page.getByTestId('song-mode-live')
+    const preview = page.getByTestId('song-mode-preview')
+    await expect(live).toBeVisible({ timeout: 3000 })
+    await expect(preview).toBeVisible()
+    await expect(page.getByTestId('song-mode-toggle')).not.toContainText(
+      /previzualizare|preview/i,
+    )
 
     const slide0 = page.locator('[data-testid="song-slide-0"]')
     if (!(await slide0.isVisible({ timeout: 3000 }).catch(() => false))) {
@@ -42,14 +46,16 @@ test.describe('Song Preview Mode', () => {
     }
 
     // Start from a clean OFF state so toggling ON is a real OFF->ON transition.
-    if ((await toggle.getAttribute('aria-checked')) === 'true') {
-      await toggle.click()
-      await page.waitForTimeout(200)
+    if ((await preview.getAttribute('aria-checked')) === 'true') {
+      await live.click()
     }
+    await expect(live).toHaveAttribute('aria-checked', 'true')
+    await expect(preview).toHaveAttribute('aria-checked', 'false')
 
     // Enabling Preview auto-stages a slide (indigo) without any click.
-    await toggle.click()
-    await expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await preview.click()
+    await expect(preview).toHaveAttribute('aria-checked', 'true')
+    await expect(live).toHaveAttribute('aria-checked', 'false')
     await expect(slide0).toHaveClass(/ring-indigo-500/)
 
     // The Afișează (Project) button is available for the staged slide.
@@ -82,7 +88,8 @@ test.describe('Song Preview Mode', () => {
     await expect(liveSlide).toHaveClass(/ring-indigo-500/)
     await expect(projectBtn).toBeVisible()
 
-    // Clean up: turn Preview mode back off.
-    await toggle.click()
+    // Clean up: back to live, where a click projects straight away.
+    await live.click()
+    await expect(live).toHaveAttribute('aria-checked', 'true')
   })
 })

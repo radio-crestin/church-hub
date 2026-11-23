@@ -1,5 +1,6 @@
-export * from './useAudioPlayer'
+export * from './useLibraryTracks'
 export * from './useMusicFiles'
 export * from './useMusicFolders'
 export * from './usePlaylists'
+export * from './useRecentMusicSearches'
 export * from './useServerAudioPlayer'
