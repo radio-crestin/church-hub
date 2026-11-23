@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ChangeCategoryList } from './ChangeCategoryList'
-import type { VersionNotes } from '../types'
+import type { ChangeEntry, VersionNotes } from '../types'
 
 /**
  * How the card is framed: a past version, the one running now, or one that is
@@ -46,6 +46,24 @@ function formatDate(date: string | null, language: string): string {
   })
 }
 
+function toEntry(message: string): ChangeEntry {
+  return { scope: null, message }
+}
+
+/**
+ * What the card lists: the written notes in the app's language when the
+ * version has them, else its commits.
+ */
+function listedChanges(notes: VersionNotes, language: string) {
+  const written = notes.written?.[language.startsWith('ro') ? 'ro' : 'en']
+  if (!written) return notes
+  return {
+    features: written.features.map(toEntry),
+    bugFixes: written.bugFixes.map(toEntry),
+    changes: [],
+  }
+}
+
 export function VersionNotesCard({
   notes,
   variant = 'default',
@@ -54,8 +72,8 @@ export function VersionNotesCard({
 }: VersionNotesCardProps) {
   const { t, i18n } = useTranslation('releaseNotes')
 
-  const isEmpty =
-    notes.features.length + notes.bugFixes.length + notes.changes.length === 0
+  const { features, bugFixes, changes } = listedChanges(notes, i18n.language)
+  const isEmpty = features.length + bugFixes.length + changes.length === 0
   const formattedDate = formatDate(notes.date, i18n.language)
 
   return (
@@ -94,19 +112,19 @@ export function VersionNotesCard({
             icon={Sparkles}
             label={t('categories.features')}
             accentClassName="text-green-600 dark:text-green-400"
-            entries={notes.features}
+            entries={features}
           />
           <ChangeCategoryList
             icon={Bug}
             label={t('categories.bugFixes')}
             accentClassName="text-red-600 dark:text-red-400"
-            entries={notes.bugFixes}
+            entries={bugFixes}
           />
           <ChangeCategoryList
             icon={Wrench}
             label={t('categories.changes')}
             accentClassName="text-amber-600 dark:text-amber-400"
-            entries={notes.changes}
+            entries={changes}
           />
         </div>
       )}

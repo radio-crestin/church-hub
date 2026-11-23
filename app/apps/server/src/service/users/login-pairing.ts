@@ -26,8 +26,17 @@ export interface LoginPairing {
 const pairings = new Map<string, LoginPairing>()
 let recentCreations: number[] = []
 
+/** The largest multiple of 1,000,000 a Uint32 holds: draws at or above it
+ * would make the low codes likelier than the rest, so they are drawn again. */
+const UNBIASED_LIMIT = 4_294_000_000
+
 function generateCode(): string {
-  const [n = 0] = crypto.getRandomValues(new Uint32Array(1))
+  const draw = new Uint32Array(1)
+  let n: number
+  do {
+    crypto.getRandomValues(draw)
+    n = draw[0] ?? 0
+  } while (n >= UNBIASED_LIMIT)
   return String(n % 1_000_000).padStart(6, '0')
 }
 

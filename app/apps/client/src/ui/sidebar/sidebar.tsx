@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from '@tanstack/react-router'
+import { useLocation } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,15 +13,14 @@ import { useTranslation } from 'react-i18next'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { useSidebarCollapsed } from './use-sidebar-collapsed'
+import { useSidebarItemClick } from './use-sidebar-item-click'
+import { useSidebarMenuItems } from './use-sidebar-menu-items'
 import { CurrentUserButton } from '../../features/auth'
 import { RequestFeatureTool } from '../../features/feature-request'
 import { useKioskSettings } from '../../features/kiosk'
 import { NotificationsBell } from '../../features/notifications/components/NotificationsBell'
-import { usePresentationState } from '../../features/presentation'
 import {
-  hideAllCustomPageWebviews,
   updateCurrentWebviewBounds,
-  useResolvedSidebarItems,
   useSidebarConfig,
   useSidebarItemShortcuts,
 } from '../../features/sidebar-config'
@@ -32,7 +31,6 @@ import type {
   IconColor,
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
-import type { Permission } from '../../features/users/types'
 import { usePermissions } from '../../provider/permissions-provider'
 
 interface SidebarProps {
@@ -55,13 +53,11 @@ export function Sidebar({
   // a future layout wrapper), this guard keeps the support surface off
   // projector windows. Hiding the button is non-negotiable for screens.
   const isScreenRoute = location.pathname.startsWith('/screen/')
-  const navigate = useNavigate()
   const { t } = useTranslation(['sidebar', 'common'])
   const { hasPermission } = usePermissions()
 
   // Get sidebar configuration
   const { config } = useSidebarConfig()
-  const resolvedItems = useResolvedSidebarItems(config?.items)
 
   // Get keyboard shortcuts for sidebar items from sidebar config
   const sidebarShortcuts = useSidebarItemShortcuts()
@@ -129,26 +125,7 @@ export function Sidebar({
   // Get kiosk settings to determine if kiosk menu item should be visible
   const { data: kioskSettings } = useKioskSettings()
 
-  // Get presentation state to redirect Bible menu to current verse
-  const { data: presentationState } = usePresentationState()
-
-  // Filter items by permission (excluding settings, kiosk and feedback -
-  // they're rendered separately as special-case buttons below)
-  const menuItems = resolvedItems.filter((item) => {
-    if (
-      item.id === 'settings' ||
-      item.id === 'kiosk' ||
-      item.id === 'feedback'
-    ) {
-      return false
-    }
-    // Custom pages: check dynamic permission
-    if (item.isCustom) {
-      return hasPermission(item.permission as Permission)
-    }
-    // Built-in items: check their permission
-    return item.permission ? hasPermission(item.permission) : true
-  })
+  const menuItems = useSidebarMenuItems()
 
   // Feedback visibility comes from sidebar config so the user can toggle it
   // in "Sidebar configuration" settings like any other built-in item.
@@ -163,56 +140,7 @@ export function Sidebar({
   const showKiosk =
     kioskSettings?.enabled === true && hasPermission('settings.view')
 
-  // Hide webview when clicking on non-custom-page items (keep running in background)
-  // For kiosk item, navigate to the configured startup page
-  // For Bible item, navigate to currently displayed/selected verse if available
-  const handleSidebarItemClick = useCallback(
-    (destinationPath: string, e?: React.MouseEvent<HTMLAnchorElement>) => {
-      // If navigating to a non-custom-page, hide ALL custom page webviews
-      if (!destinationPath.startsWith('/custom-page/')) {
-        void hideAllCustomPageWebviews()
-      }
-
-      // Handle Bible navigation - go to currently displayed verse if available
-      // But only if not currently viewing search results (URL has ?q= param)
-      if (destinationPath === '/bible') {
-        const hasSearchQuery =
-          'q' in (location.search as Record<string, unknown>)
-        const tempContent = presentationState?.temporaryContent
-        if (
-          !hasSearchQuery &&
-          tempContent?.type === 'bible' &&
-          !presentationState?.isHidden
-        ) {
-          e?.preventDefault()
-          const { bookId, bookName, chapter, currentVerseIndex } =
-            tempContent.data
-          navigate({
-            to: '/bible',
-            search: {
-              book: bookId,
-              bookName: bookName,
-              chapter: chapter,
-              verse: currentVerseIndex + 1, // Convert 0-based index to 1-based verse
-            },
-          })
-          return
-        }
-      }
-
-      // Handle kiosk navigation - go to configured startup page instead of /kiosk
-      if (destinationPath === '/kiosk' && kioskSettings?.enabled) {
-        e?.preventDefault()
-        const { startupPage } = kioskSettings
-        if (startupPage.type === 'screen') {
-          navigate({ to: `/screen/${startupPage.screenId}` })
-        } else {
-          navigate({ to: startupPage.path })
-        }
-      }
-    },
-    [kioskSettings, navigate, presentationState],
-  )
+  const handleSidebarItemClick = useSidebarItemClick()
 
   // Close mobile menu on route change
   useEffect(() => {

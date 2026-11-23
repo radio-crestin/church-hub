@@ -63,6 +63,8 @@ import {
   SongBookmarksPanel,
   SongControlPanel,
   SongLoadError,
+  SongPhoneControls,
+  SongPhoneStage,
   SongSlidesPanel,
   SongStageBoard,
   SongVersionsPanel,
@@ -70,6 +72,7 @@ import {
 import {
   useAddBookmark,
   useHasMediaPreviewBackground,
+  useIsLargeScreen,
   usePreviewMode,
   useRemoveBookmark,
   useResetPresentationCount,
@@ -242,7 +245,7 @@ function SongPreviewPage() {
   const [bookmarkSongIds, setBookmarkSongIds] = useState<number[]>([])
   const [showExportFormatModal, setShowExportFormatModal] = useState(false)
   const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
-  const [isLargeScreen, setIsLargeScreen] = useState(false)
+  const isLargeScreen = useIsLargeScreen()
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
   // Preview mode (persisted globally): when ON, clicking a verse stages it in
@@ -358,16 +361,6 @@ function SongPreviewPage() {
       })
     }
   }, [song, isLoading, numericId, searchQuery])
-
-  // Track screen size for responsive layout
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024)
-    }
-    checkScreenSize()
-    window.addEventListener('resize', checkScreenSize)
-    return () => window.removeEventListener('resize', checkScreenSize)
-  }, [])
 
   // Get the currently presented slide index from presentation state
   const presentedSlideIndex =
@@ -801,14 +794,13 @@ function SongPreviewPage() {
 
   const isPowerpointLayout = editorLayout === 'powerpoint' && canEditSong
 
-  // Marcaje / Programe / Versiuni. Bookmarks and Programe are desktop-only —
-  // the page is too tight for them on a phone — while Versiuni rides along
-  // everywhere. An unavailable panel keeps its stored slot for when it returns.
+  // Marcaje / Programe / Versiuni: side panels on a computer, tabs under the
+  // verses on a phone, where each is always open (the tab is the toggle). An
+  // unavailable panel keeps its stored slot for when it returns.
   const sidePanels: WorkspacePanel[] = [
     {
       id: 'bookmarks',
       title: t('bookmarks.title'),
-      available: isLargeScreen,
       collapsed: !bookmarksOpen,
       render: () => (
         <SongBookmarksPanel
@@ -817,15 +809,17 @@ function SongPreviewPage() {
             bookmarks.length > 0 ? handleAddAllBookmarksToSchedule : undefined
           }
           activeSongId={song.id}
-          isCollapsed={!bookmarksOpen}
-          onToggleCollapse={() => setBookmarksOpen(!bookmarksOpen)}
+          isCollapsed={isLargeScreen && !bookmarksOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setBookmarksOpen(!bookmarksOpen) : undefined
+          }
         />
       ),
     },
     {
       id: 'schedules',
       title: tSchedules('panel.title'),
-      available: canViewSchedules && isLargeScreen,
+      available: canViewSchedules,
       collapsed: !schedulesOpen,
       render: () => (
         <SchedulePanel
@@ -840,14 +834,16 @@ function SongPreviewPage() {
           onAddAllBookmarks={
             bookmarks.length > 0 ? handleAddAllBookmarksToSchedule : undefined
           }
-          isCollapsed={!schedulesOpen}
-          onToggleCollapse={() => setSchedulesOpen(!schedulesOpen)}
+          isCollapsed={isLargeScreen && !schedulesOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setSchedulesOpen(!schedulesOpen) : undefined
+          }
         />
       ),
     },
     {
       id: 'versions',
-      title: t('versions.title'),
+      title: isLargeScreen ? t('versions.title') : t('layout.versionsTab'),
       available: canViewSongVersions,
       collapsed: !versionsOpen,
       render: () => (
@@ -863,8 +859,10 @@ function SongPreviewPage() {
           canAdd={canAddSongVersion}
           canEdit={canEditSongVersion}
           canDelete={canDeleteSongVersion}
-          isCollapsed={!versionsOpen}
-          onToggleCollapse={() => setVersionsOpen(!versionsOpen)}
+          isCollapsed={isLargeScreen && !versionsOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setVersionsOpen(!versionsOpen) : undefined
+          }
           attentionBadge={
             undismissedSuggestionCount > 0
               ? `+${undismissedSuggestionCount}`
@@ -898,33 +896,43 @@ function SongPreviewPage() {
           id: 'control',
           title: t('layout.controlPanel'),
           defaultSize: '62%',
-          render: () => (
-            <SongControlPanel
-              songId={numericId}
-              onPrevSlide={handlePrevSlide}
-              onNextSlide={handleNextSlide}
-              canNavigatePrev={canNavigatePrev}
-              canNavigateNext={canNavigateNext}
-              isNavigating={navigateTemporary.isPending}
-              previewMode={previewMode}
-              onTogglePreviewMode={togglePreviewMode}
-              previewContent={stagedPreviewContent}
-              canProject={
-                previewMode &&
-                stagedSlideIndex !== null &&
-                stagedSlideIndex !== presentedSlideIndex
-              }
-              onProject={handleProjectStaged}
-              isProjecting={presentTemporarySong.isPending}
-              onHide={handleHidePresentation}
-              isHiding={clearTemporary.isPending}
-              hideBackground={hidePreviewBackground}
-            />
-          ),
+          pinned: true,
+          render: () =>
+            isLargeScreen ? (
+              <SongControlPanel
+                songId={numericId}
+                onPrevSlide={handlePrevSlide}
+                onNextSlide={handleNextSlide}
+                canNavigatePrev={canNavigatePrev}
+                canNavigateNext={canNavigateNext}
+                isNavigating={navigateTemporary.isPending}
+                previewMode={previewMode}
+                onTogglePreviewMode={togglePreviewMode}
+                previewContent={stagedPreviewContent}
+                canProject={
+                  previewMode &&
+                  stagedSlideIndex !== null &&
+                  stagedSlideIndex !== presentedSlideIndex
+                }
+                onProject={handleProjectStaged}
+                isProjecting={presentTemporarySong.isPending}
+                onHide={handleHidePresentation}
+                isHiding={clearTemporary.isPending}
+                hideBackground={hidePreviewBackground}
+              />
+            ) : (
+              <SongPhoneStage
+                songId={numericId}
+                previewMode={previewMode}
+                onTogglePreviewMode={togglePreviewMode}
+                previewContent={stagedPreviewContent}
+                hideBackground={hidePreviewBackground}
+              />
+            ),
         },
         {
           id: 'slides',
-          title: t('preview.slides'),
+          title: isLargeScreen ? t('preview.slides') : t('layout.versesTab'),
           render: () => (
             <div
               className={`overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 ${
@@ -1042,7 +1050,7 @@ function SongPreviewPage() {
   ]
 
   return (
-    <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)] overflow-auto scrollbar-thin">
+    <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
       {/* Header - Back button, title, and action buttons */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 lg:mb-4 flex-shrink-0">
         <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 lg:gap-4 min-w-0 flex-1">
@@ -1168,8 +1176,30 @@ function SongPreviewPage() {
           isPowerpointLayout ? ['74%', '26%'] : ['30%', '40%', '30%']
         }
         stacked={!isLargeScreen}
+        stackedAsTabs
         className="flex-1 lg:min-h-0"
       />
+
+      {/* The PowerPoint stage has its own previous / next. */}
+      {!isLargeScreen && !isPowerpointLayout && (
+        <SongPhoneControls
+          onPrev={handlePrevSlide}
+          onNext={handleNextSlide}
+          canPrev={canNavigatePrev}
+          canNext={canNavigateNext}
+          isNavigating={navigateTemporary.isPending}
+          isLive={isThisSongLive}
+          onHide={handleHidePresentation}
+          isHiding={clearTemporary.isPending}
+          canProject={
+            previewMode &&
+            stagedSlideIndex !== null &&
+            stagedSlideIndex !== presentedSlideIndex
+          }
+          onProject={handleProjectStaged}
+          isProjecting={presentTemporarySong.isPending}
+        />
+      )}
 
       <AddSongToScheduleModal
         isOpen={showAddToScheduleModal}

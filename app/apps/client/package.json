@@ -74,15 +74,17 @@
     }
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.10.2",
     "@types/pdfmake": "^0.3.3",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^5.0.4",
     "elysia": "^1.4.28",
     "vite": "^7.3.1",
-    "web-vitals": "^5.2.0"
+    "web-vitals": "^5.2.0",
+    "ws": "8.21.0"
   }
 }

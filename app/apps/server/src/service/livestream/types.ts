@@ -77,6 +77,8 @@ export interface YouTubeConfig {
   enableAutoStart: boolean
   enableAutoStop: boolean
   thumbnailUrl?: string
+  /** The songs and verses shown go into the description: chapters and full text. */
+  descriptionChapters: boolean
 }
 
 export type LatencyPreference = 'normal' | 'low' | 'ultraLow'

@@ -937,7 +937,7 @@ export function SongList({
                 onClear={handleClearSearch}
               />
             ) : searchSongShortcut ? (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 hidden md:block">
                 <KeyboardShortcutBadge shortcut={searchSongShortcut} />
               </div>
             ) : null}
