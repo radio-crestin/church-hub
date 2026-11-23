@@ -9,6 +9,7 @@
     "finishing": "Almost ready"
   },
   "progress": "{{done}} of {{total}} songs",
+  "stepOf": "Step {{step}} of {{total}}",
   "firstRunHint": "First start: setting everything up. This happens only once.",
   "longHint": "This is taking longer than usual…",
   "errorUnreachable": "Couldn't reach the local server",
