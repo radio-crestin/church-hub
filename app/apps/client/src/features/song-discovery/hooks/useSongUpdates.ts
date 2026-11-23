@@ -6,6 +6,7 @@ import {
   cancelSongUpdates,
   getSongUpdates,
   recountSourceSongs,
+  resolveChangedSongs,
   runSongUpdates,
   type SongUpdatesState,
   setAutoUpdateSongs,
@@ -57,6 +58,20 @@ export function useSongUpdates() {
     onSuccess: setState,
   })
 
+  const resolve = useMutation({
+    mutationFn: (choice: {
+      sourceId: string
+      songIds: number[]
+      action: 'update' | 'keep'
+    }) => resolveChangedSongs(choice.sourceId, choice.songIds, choice.action),
+    onSuccess: (state, choice) => {
+      setState(state)
+      if (choice.action === 'update') {
+        void queryClient.invalidateQueries({ queryKey: ['songs'] })
+      }
+    },
+  })
+
   const sources = query.data?.sources ?? []
   return {
     state: query.data,
@@ -73,5 +88,8 @@ export function useSongUpdates() {
     isSyncing: sync.isPending,
     setAutoUpdate: autoUpdate.mutate,
     recount: (sourceId: string) => recount.mutate(sourceId),
+    /** Updates or keeps some library songs a source changed. */
+    resolveChanged: resolve.mutateAsync,
+    isResolving: resolve.isPending,
   }
 }
