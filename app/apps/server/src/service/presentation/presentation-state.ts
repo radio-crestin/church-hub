@@ -1193,15 +1193,12 @@ export function presentTemporaryScreenShare(
   input: PresentTemporaryScreenShareInput,
 ): PresentationState {
   try {
-    logger.debug(
-      `Presenting temporary screen share from: ${input.broadcasterId}`,
-    )
+    logger.debug('Presenting temporary screen share')
 
     const temporaryContent: TemporaryContent = {
       type: 'screen_share',
       data: {
-        broadcasterId: input.broadcasterId,
-        audioEnabled: input.audioEnabled,
+        startedAt: Date.now(),
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
       },
