@@ -50,6 +50,13 @@ setup('authenticate as super admin', async ({ request, baseURL }) => {
   })
   expect(loginRes.ok()).toBeTruthy()
 
+  // A fresh test database waits for its first-run onboarding, which would
+  // stand in front of every page spec; the onboarding spec brings it back.
+  const onboardingRes = await request.post('/api/settings/app_settings', {
+    data: { key: 'onboarding_pending', value: 'false' },
+  })
+  expect(onboardingRes.ok()).toBeTruthy()
+
   mkdirSync(dirname(STORAGE_STATE), { recursive: true })
   await request.storageState({ path: STORAGE_STATE })
 
