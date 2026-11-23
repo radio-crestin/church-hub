@@ -19,7 +19,7 @@
       "sidebar": "Bara Laterală",
       "developer": "Dezvoltatori",
       "backup": "Copie de rezervă",
-      "updates": "Actualizari",
+      "updates": "Actualizări",
       "logs": "Jurnale",
       "shortcuts": "Scurtături",
       "privacy": "Confidențialitate"
@@ -44,6 +44,12 @@
       "noTranslationsDescription": "Adaugă o traducere biblică pentru a începe",
       "maxReached": "Maximum 3 traduceri",
       "translationsSelected": "traduceri selectate",
+      "primaryVersion": "Versiunea principală",
+      "selectPrimary": "Alege versiunea principală...",
+      "primaryDescription": "Versiunea Bibliei afișată în aplicație",
+      "secondaryVersion": "Versiunea secundară",
+      "selectSecondary": "Niciuna (opțional)",
+      "secondaryDescription": "Afișată alături de cea principală pe ecran",
       "modals": {
         "add": {
           "title": "Adaugă Traducere",
@@ -636,29 +642,29 @@
       }
     },
     "apiDocs": {
-      "title": "Documentatie API",
-      "description": "Acceseaza documentatia API REST pentru dezvoltatori",
-      "link": "Deschide Documentatia API"
+      "title": "Documentație API",
+      "description": "Accesează documentația API REST pentru dezvoltatori",
+      "link": "Deschide Documentația API"
     },
     "systemToken": {
       "title": "Token API de Sistem",
-      "description": "Foloseste acest token pentru a accesa API-ul cu privilegii de superutilizator din aplicatii externe. Aceasta sectiune este vizibila doar pe localhost.",
+      "description": "Folosește acest token pentru a accesa API-ul cu privilegii de superutilizator din aplicații externe. Această secțiune este vizibilă doar pe localhost.",
       "token": "Token",
-      "showToken": "Afiseaza Token",
-      "loading": "Se incarca...",
-      "show": "Afiseaza token",
+      "showToken": "Afișează Token",
+      "loading": "Se încarcă...",
+      "show": "Afișează token",
       "hide": "Ascunde token",
-      "copy": "Copiaza in clipboard",
-      "regenerate": "Regenereaza Token",
-      "regenerating": "Se regenereaza...",
+      "copy": "Copiază în clipboard",
+      "regenerate": "Regenerează Token",
+      "regenerating": "Se regenerează...",
       "regenerateWarning": "Regenerarea va invalida tokenul curent",
       "createdAt": "Creat",
       "lastUsed": "Ultima utilizare",
-      "never": "Niciodata",
+      "never": "Niciodată",
       "toast": {
-        "copied": "Token copiat in clipboard",
+        "copied": "Token copiat în clipboard",
         "regenerated": "Token de sistem regenerat cu succes",
-        "fetchError": "Nu s-a putut obtine tokenul de sistem",
+        "fetchError": "Nu s-a putut obține tokenul de sistem",
         "regenerateError": "Nu s-a putut regenera tokenul de sistem"
       }
     },
@@ -980,9 +986,9 @@
         "failed": "Conținutul backupului nu a putut fi citit.",
         "songs": "Cântări ({{total}})",
         "schedules": "Programe ({{total}})",
-        "scheduleSongs_one": "{{count}} cantare",
-        "scheduleSongs_few": "{{count}} cantari",
-        "scheduleSongs_other": "{{count}} de cantari",
+        "scheduleSongs_one": "{{count}} cântare",
+        "scheduleSongs_few": "{{count}} cântări",
+        "scheduleSongs_other": "{{count}} de cântări",
         "playlists": "Playlisturi ({{total}})",
         "more": "…și încă {{total}}",
         "playlistItems_one": "{{count}} element",

@@ -119,14 +119,14 @@
     "label": "Sari la literă",
     "jumpTo": "Sari la cântările care încep cu {{letter}}"
   },
-  "dragToPanel": "Trage in Marcaje sau Programe",
+  "dragToPanel": "Trage în Marcaje sau Programe",
   "picker": {
-    "selectSong": "Selecteaza Cantare",
-    "searchResults": "Se afiseaza {{shown}} din {{total}} rezultate",
-    "loadedCount_one": "{{count}} cantare incarcata",
-    "loadedCount_few": "{{count}} cantari incarcate",
-    "loadedCount_other": "{{count}} de cantari incarcate",
-    "loadMore": "Incarca inca {{count}}"
+    "selectSong": "Selectează Cântare",
+    "searchResults": "Se afișează {{shown}} din {{total}} rezultate",
+    "loadedCount_one": "{{count}} cântare încărcată",
+    "loadedCount_few": "{{count}} cântări încărcate",
+    "loadedCount_other": "{{count}} de cântări încărcate",
+    "loadMore": "Încarcă încă {{count}}"
   },
   "import": {
     "title": "Importă din text",

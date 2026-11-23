@@ -44,6 +44,12 @@
       "noTranslationsDescription": "Add a Bible translation to get started",
       "maxReached": "Maximum 3 translations",
       "translationsSelected": "translations selected",
+      "primaryVersion": "Primary Version",
+      "selectPrimary": "Select primary version...",
+      "primaryDescription": "Main Bible version shown in the app",
+      "secondaryVersion": "Secondary Version",
+      "selectSecondary": "None (optional)",
+      "secondaryDescription": "Shown alongside primary in presentation",
       "modals": {
         "add": {
           "title": "Add Translation",

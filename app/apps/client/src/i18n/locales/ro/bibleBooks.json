@@ -24,7 +24,7 @@
     "short": "Ios"
   },
   "JDG": {
-    "name": "Judecatori",
+    "name": "Judecători",
     "short": "Jud"
   },
   "RUT": {
@@ -40,12 +40,12 @@
     "short": "2Sam"
   },
   "1KI": {
-    "name": "1 Imparati",
-    "short": "1Imp"
+    "name": "1 Împărați",
+    "short": "1Împ"
   },
   "2KI": {
-    "name": "2 Imparati",
-    "short": "2Imp"
+    "name": "2 Împărați",
+    "short": "2Împ"
   },
   "1CH": {
     "name": "1 Cronici",
@@ -84,8 +84,8 @@
     "short": "Ecc"
   },
   "SNG": {
-    "name": "Cantarea Cantarilor",
-    "short": "Can"
+    "name": "Cântarea Cântărilor",
+    "short": "Cân"
   },
   "ISA": {
     "name": "Isaia",
@@ -96,8 +96,8 @@
     "short": "Ier"
   },
   "LAM": {
-    "name": "Plangerile lui Ieremia",
-    "short": "Pla"
+    "name": "Plângerile lui Ieremia",
+    "short": "Plâ"
   },
   "EZK": {
     "name": "Ezechiel",
@@ -140,8 +140,8 @@
     "short": "Hab"
   },
   "ZEP": {
-    "name": "Tefania",
-    "short": "Tef"
+    "name": "Țefania",
+    "short": "Țef"
   },
   "HAG": {
     "name": "Hagai",

@@ -140,7 +140,7 @@ test.describe('program readings accept comma verse lists', () => {
         button: 'right',
       })
       await page
-        .getByText(/^(Editeaza|Edit)$/)
+        .getByText(/^(Editează|Edit)$/)
         .first()
         .click()
       await expect(modal).toBeVisible()
