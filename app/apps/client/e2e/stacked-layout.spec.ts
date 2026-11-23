@@ -272,12 +272,14 @@ for (const viewport of VIEWPORTS) {
       try {
         await createFixture(request, fixture)
         await page.goto(`/schedules/${fixture.scheduleId}`)
-        await expect(page.getByTestId('schedule-preview-next')).toBeAttached({
+        await expect(page.getByTestId('schedule-phone-next')).toBeAttached({
           timeout: 15000,
         })
 
-        await expectReachable(page, 'schedule-preview-prev')
-        await expectReachable(page, 'schedule-preview-next')
+        // The preview is pinned above the program; previous and next sit at
+        // the bottom of the screen.
+        await expectReachable(page, 'schedule-phone-prev')
+        await expectReachable(page, 'schedule-phone-next')
         await expectUnclippedStack(page, ['preview', 'items'])
       } finally {
         await removeFixture(request, fixture)
