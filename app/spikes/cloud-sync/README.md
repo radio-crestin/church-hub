@@ -91,4 +91,4 @@ anonymous `s3:GetObject` on `churches/*` and `libraries/*` only: GET there 200, 
 ListObjectsV2 403 with or without a prefix. MinIO stopped publishing binaries and images in Oct
 2025; `pgsty/minio` (a community build) works on Linux and macOS.
 
-Not measured: real phones (asked on the task), Safari, D1 latency (T-171 deploys the service).
+Not measured: real phones and Safari (skipped; T-175 measures them on devices), D1 latency (T-171 deploys the service).

@@ -146,7 +146,7 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - **The service layer runs unchanged.** In a Worker, sqlite-wasm's oo1 API is synchronous, so a small shim of `bun:sqlite` on it runs the server's synchronous code and drizzle's `bun-sqlite` driver as they are: no async rewrite. Swapped: `db/connection.ts` and the seed fixtures; shimmed: two `node:crypto` calls; stubbed: telemetry.
   - **Size**: the worker (the server's code included) is 175 KB gzipped, plus 406 KB for `sqlite3.wasm`.
   - **OPFS**: each autocommit costs 3 to 10 ms, whatever the pragmas. So the first sync is built in memory and written to OPFS in one `importDb`; later edits write through OPFS directly (one song edit: 30 to 40 ms).
-  - **Times** (headless Chromium 147 on a desktop CPU; phones pending):
+  - **Times** (headless Chromium 147 on a desktop CPU; not run on phones, which are slower: T-175 measures them on devices):
 
     | | 3,000 songs | 26,386 songs |
     |---|---|---|
