@@ -1,5 +1,5 @@
 {
-  "title": "Game Cantari",
+  "title": "Game cântări",
   "dateGroups": {
     "today": "Astăzi",
     "yesterday": "Ieri"
@@ -17,14 +17,14 @@
     "refresh": "Reîmprospătează lista"
   },
   "emptyState": {
-    "title": "Nicio cântare prezentată",
-    "description": "Cântările vor apărea aici după ce sunt prezentate"
+    "title": "Încă nu s-a prezentat nicio cântare",
+    "description": "Cântările apar aici după ce le prezinți"
   },
   "dialog": {
-    "title": "Setează Gama Cântării",
+    "title": "Gama cântării",
     "songTitle": "Cântare",
-    "keyLine": "Gama",
-    "keyLinePlaceholder": "ex: Do Major, La minor",
+    "keyLine": "Gamă",
+    "keyLinePlaceholder": "ex.: Do major, La minor",
     "cancel": "Anulează",
     "save": "Salvează",
     "saving": "Se salvează...",

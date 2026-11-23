@@ -16,16 +16,16 @@
       "songs": "Cântări",
       "bible": "Biblia",
       "livestream": "Live Stream",
-      "sidebar": "Bara Laterală",
+      "sidebar": "Bara laterală",
       "developer": "Dezvoltatori",
       "backup": "Copie de rezervă",
-      "updates": "Actualizari",
+      "updates": "Actualizări",
       "logs": "Jurnale",
       "shortcuts": "Scurtături"
     },
     "search": {
       "placeholder": "Caută în setări…",
-      "noResults": "Nicio setare nu se potrivește cu „{{query}}”"
+      "noResults": "Nu s-a găsit nicio setare pentru „{{query}}”"
     }
   },
   "sections": {
@@ -33,72 +33,78 @@
       "title": "Aspect"
     },
     "bible": {
-      "title": "Traduceri Biblice",
-      "description": "Selectează până la 3 traduceri pentru afișare. Trage pentru a reordona.",
-      "addTranslation": "Adaugă Traducere",
-      "primary": "Principal",
-      "secondary": "Secundar",
-      "tertiary": "Terțiar",
+      "title": "Traduceri ale Bibliei",
+      "description": "Alege până la 3 traduceri de afișat. Trage ca să schimbi ordinea.",
+      "addTranslation": "Adaugă traducere",
+      "primary": "Principală",
+      "secondary": "Secundară",
+      "tertiary": "A treia",
       "noTranslations": "Nicio traducere selectată",
-      "noTranslationsDescription": "Adaugă o traducere biblică pentru a începe",
+      "noTranslationsDescription": "Adaugă o traducere a Bibliei ca să începi",
       "maxReached": "Maximum 3 traduceri",
       "translationsSelected": "traduceri selectate",
       "modals": {
         "add": {
-          "title": "Adaugă Traducere",
-          "selectLabel": "Selectează o traducere",
+          "title": "Adaugă traducere",
+          "selectLabel": "Alege o traducere",
           "submit": "Adaugă"
         },
         "delete": {
-          "title": "Șterge Traducere",
-          "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Toate versetele vor fi șterse permanent.",
+          "title": "Șterge traducerea",
+          "message": "Sigur vrei să ștergi „{{name}}”? Toate versetele ei vor fi șterse definitiv.",
           "confirm": "Șterge"
         }
       },
       "toast": {
-        "saved": "Traduceri salvate",
-        "removed": "Traducere eliminată",
-        "added": "Traducere adăugată",
-        "deleted": "Traducere ștearsă",
+        "saved": "Traducerile au fost salvate",
+        "removed": "Traducerea a fost scoasă",
+        "added": "Traducerea a fost adăugată",
+        "deleted": "Traducerea a fost ștearsă",
         "error": "A apărut o eroare"
-      }
+      },
+      "primaryVersion": "Traducerea principală",
+      "selectPrimary": "Alege traducerea principală…",
+      "primaryDescription": "Traducerea Bibliei folosită în aplicație",
+      "secondaryVersion": "A doua traducere",
+      "selectSecondary": "Niciuna (opțional)",
+      "secondaryDescription": "Apare pe ecran lângă cea principală"
     },
     "application": {
       "title": "Setări aplicație",
-      "description": "Configurează preferințele tale pentru Church Hub"
+      "description": "Configurează aici preferințele pentru Church Hub"
     },
     "language": {
       "title": "Limbă",
-      "description": "Selectează limba preferată",
+      "description": "Alege limba aplicației",
       "options": {
-        "system": "Implicit din sistem",
+        "system": "Ca în sistem",
         "english": "Engleză",
         "romanian": "Română"
       }
     },
     "theme": {
       "title": "Temă",
-      "description": "Alege tema de culoare preferată",
+      "description": "Alege tema de culori",
       "options": {
-        "system": "Implicit din sistem",
-        "light": "Luminos",
-        "dark": "Întunecat"
+        "system": "Ca în sistem",
+        "light": "Luminoasă",
+        "dark": "Întunecată"
       }
     },
     "aiSearch": {
-      "title": "Căutare AI Cântece",
-      "description": "Configurează căutarea semantică cu AI pentru cântece. Folosește AI pentru a înțelege intenția căutării și a găsi cântece relevante după temă.",
+      "title": "Căutare AI în cântări",
+      "description": "Configurează căutarea cu AI pentru cântări. AI-ul înțelege ce cauți și găsește cântări potrivite după temă.",
       "enable": {
-        "label": "Activează Căutarea AI",
-        "description": "Adaugă un buton de căutare AI în bara de căutare cântece"
+        "label": "Activează căutarea AI",
+        "description": "Adaugă un buton de căutare AI în bara de căutare a cântărilor"
       },
       "analyzeResults": {
-        "label": "Analizează Rezultatele cu AI",
-        "description": "Folosește AI pentru a evalua și ordona rezultatele după relevanță (mai lent dar mai precis)"
+        "label": "Analizează rezultatele cu AI",
+        "description": "AI-ul dă note rezultatelor și le ordonează după relevanță (mai lent, dar mai precis)"
       },
       "provider": {
         "label": "Furnizor AI",
-        "description": "Selectează furnizorul serviciului AI"
+        "description": "Alege furnizorul serviciului AI"
       },
       "model": {
         "label": "Model",
@@ -110,27 +116,27 @@
         "placeholder": "sk-..."
       },
       "baseUrl": {
-        "label": "URL Personalizat",
-        "description": "Pentru endpoint-uri self-hosted sau compatibile OpenAI",
+        "label": "URL de bază personalizat",
+        "description": "Pentru servere proprii sau compatibile cu OpenAI",
         "placeholder": "https://api.example.com/v1"
       },
-      "save": "Salvează Setările",
+      "save": "Salvează setările",
       "saving": "Se salvează..."
     },
     "bibleAiSearch": {
-      "title": "Căutare AI Biblie",
-      "description": "Configurează căutarea semantică cu AI pentru versete biblice. Folosește AI pentru a înțelege intenția căutării și a găsi versete relevante după temă.",
+      "title": "Căutare AI în Biblie",
+      "description": "Configurează căutarea cu AI pentru versete. AI-ul înțelege ce cauți și găsește versete potrivite după temă.",
       "enable": {
-        "label": "Activează Căutarea AI",
-        "description": "Adaugă un buton de căutare AI în bara de căutare Biblie"
+        "label": "Activează căutarea AI",
+        "description": "Adaugă un buton de căutare AI în bara de căutare din Biblie"
       },
       "analyzeResults": {
-        "label": "Analizează Rezultatele cu AI",
-        "description": "Folosește AI pentru a evalua și ordona rezultatele după relevanță (mai lent dar mai precis)"
+        "label": "Analizează rezultatele cu AI",
+        "description": "AI-ul dă note rezultatelor și le ordonează după relevanță (mai lent, dar mai precis)"
       },
       "provider": {
         "label": "Furnizor AI",
-        "description": "Selectează furnizorul serviciului AI"
+        "description": "Alege furnizorul serviciului AI"
       },
       "model": {
         "label": "Model",
@@ -142,11 +148,11 @@
         "placeholder": "sk-..."
       },
       "baseUrl": {
-        "label": "URL Personalizat",
-        "description": "Pentru endpoint-uri self-hosted sau compatibile OpenAI",
+        "label": "URL de bază personalizat",
+        "description": "Pentru servere proprii sau compatibile cu OpenAI",
         "placeholder": "https://api.example.com/v1"
       },
-      "save": "Salvează Setările",
+      "save": "Salvează setările",
       "saving": "Se salvează..."
     },
     "midi": {
@@ -156,18 +162,18 @@
     "sidebarItem": {
       "title": "Setări {{itemName}}",
       "shortcuts": {
-        "switchTitle": "Comută la Pagină",
-        "switchDescription": "Scurtătură pentru a naviga la această pagină",
-        "focusSearchTitle": "Focusează Căutarea",
-        "focusSearchDescription": "Scurtătură pentru a naviga la pagină și a focusa câmpul de căutare",
-        "sameShortcutHint": "Poți folosi aceeași scurtătură pentru a comuta la pagină și a focusa căutarea.",
+        "switchTitle": "Mergi la pagină",
+        "switchDescription": "Scurtătura care deschide această pagină",
+        "focusSearchTitle": "Mergi la căutare",
+        "focusSearchDescription": "Scurtătura care deschide pagina și pune cursorul în căutare",
+        "sameShortcutHint": "Poți folosi aceeași scurtătură ca să deschizi pagina și să pui cursorul în căutare.",
         "duplicateError": "Scurtătura există deja",
-        "conflictGlobal": "Folosită deja de acțiunea globală \"{{action}}\"",
-        "conflictScene": "Folosită deja de scena \"{{scene}}\"",
-        "conflictSidebar": "Folosită deja de \"{{item}}\"",
+        "conflictGlobal": "Folosită deja de acțiunea globală „{{action}}”",
+        "conflictScene": "Folosită deja de scena „{{scene}}”",
+        "conflictSidebar": "Folosită deja de „{{item}}”",
         "page": {
           "title": "Doar pe această pagină",
-          "description": "Aceste taste funcționează doar cât timp pagina e deschisă, așa că aceeași tastă poate face altceva pe altă pagină. Doar tastatură — butoanele MIDI sunt globale.",
+          "description": "Aceste taste funcționează doar cât timp pagina e deschisă, așa că aceeași tastă poate face altceva pe altă pagină. Doar tastatura — butoanele MIDI sunt globale.",
           "default": {
             "showSlide": {
               "title": "Afișează elementul selectat",
@@ -213,41 +219,41 @@
         }
       },
       "visibility": {
-        "label": "Vizibil în Bara Laterală",
+        "label": "Vizibil în bara laterală",
         "description": "Afișează acest element în navigarea din bara laterală"
       },
       "customPage": {
-        "title": "Setări Pagină",
-        "dangerZone": "Zonă Periculoasă",
+        "title": "Setări pagină",
+        "dangerZone": "Zonă periculoasă",
         "deleteDescription": "Șterge permanent această pagină personalizată"
       },
       "nativeWindow": {
-        "title": "Fereastră Nativă",
-        "enableLabel": "Activează Fereastra Nativă",
-        "enableDescription": "Permite deschiderea acestei pagini într-o fereastră separată (click mijloc)",
-        "autoOpenLabel": "Deschide Automat la Pornire",
+        "title": "Fereastră nativă",
+        "enableLabel": "Activează fereastra nativă",
+        "enableDescription": "Permite deschiderea acestei pagini într-o fereastră separată (clic cu rotița mouse-ului)",
+        "autoOpenLabel": "Deschide automat la pornire",
         "autoOpenDescription": "Deschide automat această pagină într-o fereastră nativă când pornește aplicația",
-        "forceLabel": "Deschide Mereu în Fereastră Nativă",
-        "forceDescription": "Deschide întotdeauna această pagină într-o fereastră nativă în loc de fereastra principală (orice click)"
+        "forceLabel": "Deschide mereu în fereastră nativă",
+        "forceDescription": "Deschide mereu această pagină într-o fereastră nativă, nu în fereastra principală (orice clic)"
       },
       "iconColor": {
-        "title": "Culoarea Iconiței",
-        "description": "Alege o culoare pentru iconița din bara laterală",
+        "title": "Culoarea pictogramei",
+        "description": "Alege o culoare pentru pictograma din bara laterală",
         "default": "Implicit",
         "custom": "Culoare personalizată"
       }
     },
     "shortcuts": {
-      "title": "Scurtături de Tastatură",
-      "description": "Configurează scurtături globale de tastatură pentru acțiuni rapide. Aceste scurtături funcționează de oriunde în aplicație.",
+      "title": "Scurtături de tastatură",
+      "description": "Configurează scurtături globale de tastatură pentru acțiuni rapide. Funcționează de oriunde din aplicație.",
       "groups": {
         "presentation": "Prezentare",
-        "presentationDescription": "Controlează slide-urile din orice ecran al aplicației.",
+        "presentationDescription": "Controlează slide-urile de oriunde din aplicație.",
         "livestream": "Live Stream",
-        "livestreamDescription": "Pornește și oprește transmisiunea cu o tastă sau buton MIDI.",
+        "livestreamDescription": "Pornește și oprește transmisiunea cu o tastă sau un buton MIDI.",
         "otherPages": "Alte pagini",
-        "otherPagesDescription": "Comută la orice altă pagină din bara laterală cu o tastă sau un buton MIDI și focusează căutarea ei, unde există.",
-        "pagesDescription": "Comută la o pagină, focusează căutarea și taste care funcționează doar cât timp pagina e deschisă."
+        "otherPagesDescription": "Mergi la orice altă pagină din bara laterală cu o tastă sau un buton MIDI și pune cursorul în căutarea ei, unde există.",
+        "pagesDescription": "Mergi la o pagină, pune cursorul în căutare și alege taste care funcționează doar pe pagina deschisă."
       },
       "scope": {
         "app": "Doar în Church Hub",
@@ -258,55 +264,55 @@
       },
       "actions": {
         "startLive": {
-          "label": "Pornește Transmisiunea",
+          "label": "Pornește transmisiunea",
           "description": "Pornește transmisiunea YouTube (doar când este pregătită)"
         },
         "stopLive": {
-          "label": "Oprește Transmisiunea",
+          "label": "Oprește transmisiunea",
           "description": "Oprește transmisiunea YouTube curentă"
         },
         "showSlide": {
-          "label": "Afișează Slide",
-          "description": "Afișează slide-ul curent (arată prezentarea)"
+          "label": "Afișează slide-ul",
+          "description": "Afișează slide-ul curent (scoate prezentarea din ascuns)"
         },
         "nextSlide": {
-          "label": "Slide Următor",
-          "description": "Navighează la slide-ul următor din prezentare"
+          "label": "Slide-ul următor",
+          "description": "Trece la slide-ul următor din prezentare"
         },
         "prevSlide": {
-          "label": "Slide Anterior",
-          "description": "Navighează la slide-ul anterior din prezentare"
+          "label": "Slide-ul anterior",
+          "description": "Trece la slide-ul anterior din prezentare"
         }
       },
-      "addShortcut": "Adaugă Scurtătură",
+      "addShortcut": "Adaugă scurtătură",
       "noShortcuts": "Nicio scurtătură configurată",
       "enabled": "Activat",
       "disabled": "Dezactivat",
-      "clickToRecord": "Click pentru înregistrare",
-      "recording": "Înregistrare...",
+      "clickToRecord": "Dă clic ca să înregistrezi",
+      "recording": "Se înregistrează...",
       "recordShortcut": "Apasă tastele...",
-      "recordShortcutOrMidi": "Apasă tastă sau buton MIDI...",
-      "removeShortcut": "Șterge",
+      "recordShortcutOrMidi": "Apasă o tastă sau un buton MIDI...",
+      "removeShortcut": "Elimină",
       "conflicts": {
-        "global": "Folosită deja de \"{{action}}\"",
-        "scene": "Folosită deja de scena \"{{scene}}\"",
-        "sidebar": "Folosită deja de \"{{item}}\""
+        "global": "Folosită deja de „{{action}}”",
+        "scene": "Folosită deja de scena „{{scene}}”",
+        "sidebar": "Folosită deja de „{{item}}”"
       },
       "midi": {
         "title": "Controller MIDI",
         "description": "Folosește controllere MIDI hardware pentru scurtături cu feedback LED",
-        "notSupported": "API-ul Web MIDI nu este suportat în acest browser. Funcțiile controller MIDI nu sunt disponibile.",
-        "inputDevice": "Dispozitiv Intrare",
-        "outputDevice": "Dispozitiv Ieșire (LED-uri)",
-        "selectDevice": "Selectează dispozitiv...",
+        "notSupported": "Acest browser nu are Web MIDI API, deci controllerele MIDI nu pot fi folosite.",
+        "inputDevice": "Dispozitiv de intrare",
+        "outputDevice": "Dispozitiv de ieșire (LED-uri)",
+        "selectDevice": "Alege dispozitivul...",
         "noInputDevices": "Niciun dispozitiv MIDI de intrare detectat",
         "noOutputDevices": "Niciun dispozitiv MIDI de ieșire detectat",
-        "refresh": "Reîmprospătează dispozitive",
-        "requestPermission": "Acordă Acces MIDI",
+        "refresh": "Reîmprospătează dispozitivele",
+        "requestPermission": "Permite accesul MIDI",
         "permissionError": "Acces MIDI refuzat: {{error}}",
         "fullyConnected": "Intrare și ieșire conectate",
         "inputOnly": "Intrare conectată (fără feedback LED)",
-        "outputOnly": "Ieșire conectată (fără declanșatoare)",
+        "outputOnly": "Ieșire conectată (butoanele nu trimit comenzi)",
         "reconnecting": "Se reconectează la {{device}}...",
         "device": "dispozitiv"
       }
@@ -316,13 +322,18 @@
       "description": "Administrează utilizatorii care pot accesa Church Hub",
       "addUser": "Adaugă utilizator",
       "searchPlaceholder": "Caută utilizatori…",
-      "noResults": "Niciun utilizator nu corespunde căutării",
+      "noResults": "Nu s-a găsit niciun utilizator",
       "noUsers": "Niciun utilizator configurat",
-      "noUsersDescription": "Adaugă un utilizator pentru a permite acces extern la Church Hub",
+      "noUsersDescription": "Adaugă un utilizator ca să permiți accesul din afară la Church Hub",
       "userName": "Nume utilizator",
-      "userNamePlaceholder": "ex., Tableta lui Ion",
+      "userNamePlaceholder": "ex.: Tableta lui Ion",
       "permissions": "Permisiuni",
-      "permissionsSelected": "Permisiuni selectate",
+      "permissionCount_one": "{{count}} permisiune",
+      "permissionCount_few": "{{count}} permisiuni",
+      "permissionCount_other": "{{count}} de permisiuni",
+      "permissionsSelectedCount_one": "{{count}} permisiune selectată",
+      "permissionsSelectedCount_few": "{{count}} permisiuni selectate",
+      "permissionsSelectedCount_other": "{{count}} de permisiuni selectate",
       "status": "Stare",
       "active": "Activ",
       "inactive": "Inactiv",
@@ -330,25 +341,25 @@
       "never": "Niciodată",
       "createdAt": "Creat la",
       "roleTemplate": "Șablon rol",
-      "roleTemplateHint": "Pornește de la un preset, apoi ajustează permisiunile mai jos.",
+      "roleTemplateHint": "Pornește de la un rol predefinit, apoi ajustează permisiunile de mai jos.",
       "roles": {
         "admin": "Administrator",
         "presenter": "Prezentator",
-        "viewer": "Vizualizator",
-        "queue_manager": "Manager coadă",
-        "song_key_only": "Doar Gama Cântări"
+        "viewer": "Doar vizualizare",
+        "queue_manager": "Responsabil coadă",
+        "song_key_only": "Doar game cântări"
       },
       "groups": {
         "songs": "Cântări",
-        "song_versions": "Versiuni ale cântării",
-        "bible": "Biblie",
-        "control_room": "Cameră de control",
+        "song_versions": "Versiuni de cântări",
+        "bible": "Biblia",
+        "control_room": "Camera de control",
         "programs": "Programe",
         "queue": "Coadă",
         "settings": "Setări",
-        "displays": "Afișaje",
+        "displays": "Ecrane",
         "users": "Administrare utilizatori",
-        "song_key": "Gama cântări",
+        "song_key": "Game cântări",
         "logs": "Jurnale"
       },
       "permissionLabels": {
@@ -358,22 +369,22 @@
         "songs.delete": "Ștergere cântări",
         "songs.add_to_queue": "Adăugare cântări în coadă",
         "songs.present_now": "Prezentare cântări imediat",
-        "song_versions.view": "Vizualizare versiuni ale cântării",
-        "song_versions.create": "Adăugare versiune la cântare",
-        "song_versions.edit": "Setare versiune principală",
-        "song_versions.delete": "Ștergere versiune din grup",
+        "song_versions.view": "Vizualizare versiuni de cântări",
+        "song_versions.create": "Adăugare versiune la o cântare",
+        "song_versions.edit": "Alegere versiune principală",
+        "song_versions.delete": "Scoatere cântare din grupul de versiuni",
         "bible.view": "Vizualizare Biblie",
-        "bible.import": "Import traduceri Biblie",
-        "bible.delete": "Ștergere traduceri Biblie",
+        "bible.import": "Importare traduceri ale Bibliei",
+        "bible.delete": "Ștergere traduceri ale Bibliei",
         "bible.add_to_queue": "Adăugare versete în coadă",
         "bible.present_now": "Prezentare versete imediat",
-        "control_room.view": "Vizualizare cameră de control",
-        "control_room.control": "Control prezentare",
+        "control_room.view": "Vizualizare Camera de control",
+        "control_room.control": "Controlul prezentării",
         "programs.view": "Vizualizare programe",
         "programs.create": "Creare programe",
         "programs.edit": "Editare programe",
         "programs.delete": "Ștergere programe",
-        "programs.import_to_queue": "Import programe în coadă",
+        "programs.import_to_queue": "Importare programe în coadă",
         "queue.view": "Vizualizare coadă",
         "queue.add": "Adăugare în coadă",
         "queue.remove": "Eliminare din coadă",
@@ -382,27 +393,27 @@
         "settings.view": "Vizualizare setări",
         "settings.edit": "Editare setări",
         "settings.edit_appearance": "Editare aspect (temă și limbă)",
-        "displays.view": "Vizualizare afișaje",
-        "displays.create": "Creare afișaje",
-        "displays.edit": "Editare afișaje",
-        "displays.delete": "Ștergere afișaje",
+        "displays.view": "Vizualizare ecrane",
+        "displays.create": "Creare ecrane",
+        "displays.edit": "Editare ecrane",
+        "displays.delete": "Ștergere ecrane",
         "users.view": "Vizualizare utilizatori",
         "users.create": "Creare utilizatori",
         "users.edit": "Editare utilizatori",
         "users.delete": "Ștergere utilizatori",
-        "song_key.view": "Vizualizare gama cântări",
-        "song_key.edit": "Editare gama cântări",
+        "song_key.view": "Vizualizare game cântări",
+        "song_key.edit": "Editare game cântări",
         "logs.view": "Vizualizare jurnale aplicație",
         "logs.clear": "Ștergere jurnale aplicație"
       },
       "actions": {
         "edit": "Editează",
         "delete": "Șterge",
-        "regenerateToken": "Regenerează token",
+        "regenerateToken": "Regenerează tokenul",
         "showQRCode": "Afișează cod QR",
         "deactivate": "Dezactivează",
         "activate": "Activează",
-        "copyUrl": "Copiază URL"
+        "copyUrl": "Copiază URL-ul"
       },
       "modals": {
         "cancel": "Anulează",
@@ -416,7 +427,7 @@
         },
         "delete": {
           "title": "Șterge utilizator",
-          "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
+          "message": "Sigur vrei să ștergi „{{name}}”? Această acțiune nu poate fi anulată.",
           "confirm": "Șterge"
         },
         "qrCode": {
@@ -424,67 +435,67 @@
           "userName": "Utilizator",
           "description": "Scanează acest cod QR cu dispozitivul pe care vrei să îl autorizezi",
           "networkInterface": "Interfață de rețea",
-          "warning": "Acest token va fi afișat o singură dată. Salvează-l dacă este necesar.",
-          "manualUrl": "Sau vizitează manual acest URL:",
+          "warning": "Tokenul se afișează o singură dată. Salvează-l dacă ai nevoie de el.",
+          "manualUrl": "Sau deschide manual acest URL:",
           "done": "Gata"
         },
         "regenerate": {
-          "title": "Regenerează token",
-          "message": "Aceasta va invalida tokenul curent pentru \"{{name}}\". Utilizatorul va trebui re-autentificat.",
+          "title": "Regenerează tokenul",
+          "message": "Tokenul actual al lui „{{name}}” nu va mai funcționa. Utilizatorul va trebui să se autentifice din nou.",
           "confirm": "Regenerează"
         }
       },
       "toast": {
-        "created": "Utilizator creat cu succes",
-        "updated": "Utilizator actualizat cu succes",
-        "deleted": "Utilizator șters cu succes",
-        "tokenRegenerated": "Token regenerat cu succes",
-        "urlCopied": "URL copiat în clipboard",
+        "created": "Utilizatorul a fost creat",
+        "updated": "Utilizatorul a fost actualizat",
+        "deleted": "Utilizatorul a fost șters",
+        "tokenRegenerated": "Tokenul a fost regenerat",
+        "urlCopied": "URL-ul a fost copiat",
         "error": "A apărut o eroare"
       }
     },
     "categories": {
-      "title": "Categorii Cântări",
-      "description": "Administrează categoriile de cântări și prioritatea lor în căutare. Poziție mai sus = prioritate mai mare în rezultatele căutării.",
-      "addCategory": "Adaugă Categorie",
+      "title": "Categorii de cântări",
+      "description": "Administrează categoriile de cântări și prioritatea lor în căutare. Cu cât o categorie e mai sus, cu atât cântările ei apar mai devreme în rezultate.",
+      "addCategory": "Adaugă categorie",
       "noCategories": "Nicio categorie configurată",
-      "noCategoriesDescription": "Adaugă o categorie pentru a organiza cântările tale",
-      "categoryName": "Nume Categorie",
-      "categoryNamePlaceholder": "ex., Închinare, Imnuri, Crăciun",
+      "noCategoriesDescription": "Adaugă o categorie ca să-ți organizezi cântările",
+      "categoryName": "Numele categoriei",
+      "categoryNamePlaceholder": "ex.: Închinare, Imnuri, Crăciun",
       "priority": "Prioritate",
       "value": "Prioritate",
       "songCount_one": "{{count}} cântare",
       "songCount_few": "{{count}} cântări",
-      "songCount_other": "{{count}} cântări",
+      "songCount_other": "{{count}} de cântări",
       "actions": {
         "edit": "Editează",
         "delete": "Șterge",
         "hide": "Ascunde",
-        "show": "Arată"
+        "show": "Afișează"
       },
       "hiddenBadge": "Ascunsă",
       "modals": {
         "create": {
-          "title": "Adaugă Categorie Nouă",
-          "submit": "Creează Categorie"
+          "title": "Adaugă categorie nouă",
+          "submit": "Creează categoria"
         },
         "edit": {
-          "title": "Editează Categorie",
-          "submit": "Salvează Modificările"
+          "title": "Editează categoria",
+          "submit": "Salvează modificările"
         },
         "delete": {
-          "title": "Șterge Categorie",
-          "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Cântările din această categorie vor deveni necategorizate.",
+          "title": "Șterge categoria",
+          "message": "Sigur vrei să ștergi „{{name}}”? Cântările din această categorie vor rămâne fără categorie.",
           "confirm": "Șterge"
         }
       },
       "toast": {
-        "created": "Categorie creată cu succes",
-        "updated": "Categorie actualizată cu succes",
-        "deleted": "Categorie ștearsă cu succes",
-        "reordered": "Ordinea categoriilor actualizată",
-        "hidden": "Categorie ascunsă",
-        "shown": "Categorie afișată",
+        "created": "Categoria a fost creată",
+        "updated": "Categoria a fost actualizată",
+        "deleted": "Categoria a fost ștearsă",
+        "reordered": "Ordinea categoriilor a fost salvată",
+        "hidden": "Categoria a fost ascunsă",
+        "shown": "Categoria este din nou afișată",
         "error": "A apărut o eroare"
       },
       "uncategorized": {
@@ -492,35 +503,35 @@
         "count": "{{count}} cântare fără categorie",
         "count_few": "{{count}} cântări fără categorie",
         "count_other": "{{count}} de cântări fără categorie",
-        "deleteSong": "Șterge cântare",
-        "deleteAll": "Șterge Tot",
+        "deleteSong": "Șterge cântarea",
+        "deleteAll": "Șterge tot",
         "modals": {
           "delete": {
-            "title": "Șterge Cântare",
-            "message": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
+            "title": "Șterge cântarea",
+            "message": "Sigur vrei să ștergi „{{name}}”? Această acțiune nu poate fi anulată.",
             "confirm": "Șterge"
           },
           "deleteAll": {
-            "title": "Șterge Toate Cântările Fără Categorie",
-            "message": "Ești sigur că vrei să ștergi toate cele {{count}} cântări fără categorie? Această acțiune nu poate fi anulată.",
-            "confirm": "Șterge {{count}} cântări",
+            "title": "Șterge toate cântările fără categorie",
+            "message": "Sigur vrei să ștergi toate cântările fără categorie ({{count}})? Această acțiune nu poate fi anulată.",
+            "confirm": "Șterge toate ({{count}})",
             "deleting": "Se șterg..."
           }
         },
         "toast": {
-          "deleted": "Cântare ștearsă cu succes",
-          "deletedAll": "{{count}} cântări șterse cu succes"
+          "deleted": "Cântarea a fost ștearsă",
+          "deletedAll": "Cântări șterse: {{count}}"
         }
       }
     },
     "tags": {
       "title": "Etichete cântări",
-      "description": "Etichete suplimentare alături de categorii — o cântare poate avea mai multe etichete (ex: tineret, bărbați, surori, copii).",
+      "description": "Etichete pentru public, separate de categorii — o cântare poate avea mai multe (ex.: tineret, bărbați, surori, copii).",
       "addTag": "Adaugă etichetă",
       "noTags": "Nicio etichetă configurată",
-      "noTagsDescription": "Adaugă o etichetă pentru a marca cântările după audiență (tineret, surori etc.)",
+      "noTagsDescription": "Adaugă o etichetă ca să marchezi cântările după public (tineret, surori etc.)",
       "tagName": "Nume etichetă",
-      "tagNamePlaceholder": "ex: Tineret, Bărbați, Surori, Copii",
+      "tagNamePlaceholder": "ex.: Tineret, Bărbați, Surori, Copii",
       "songCount_one": "{{count}} cântare",
       "songCount_few": "{{count}} cântări",
       "songCount_other": "{{count}} de cântări",
@@ -531,7 +542,7 @@
       "modals": {
         "create": {
           "title": "Adaugă etichetă nouă",
-          "submit": "Creează etichetă"
+          "submit": "Creează eticheta"
         },
         "edit": {
           "title": "Editează eticheta",
@@ -539,82 +550,82 @@
         },
         "delete": {
           "title": "Șterge eticheta",
-          "message": "Sigur vrei să ștergi „{{name}}\"? Cântările vor pierde asocierea cu această etichetă, dar nu vor fi șterse.",
+          "message": "Sigur vrei să ștergi „{{name}}”? Cântările vor pierde această etichetă, dar nu vor fi șterse.",
           "confirm": "Șterge"
         }
       },
       "toast": {
-        "created": "Etichetă creată cu succes",
-        "updated": "Etichetă actualizată cu succes",
-        "deleted": "Etichetă ștearsă cu succes",
+        "created": "Eticheta a fost creată",
+        "updated": "Eticheta a fost actualizată",
+        "deleted": "Eticheta a fost ștearsă",
         "error": "A apărut o eroare"
       }
     },
     "synonyms": {
-      "title": "Sinonime Căutare",
-      "description": "Definește sinonime pentru cuvinte pentru a îmbunătăți rezultatele căutării. Când cauți un cuvânt, vor apărea și rezultatele cu sinonimele acestuia.",
-      "addSynonym": "Adaugă Sinonim",
+      "title": "Sinonime pentru căutare",
+      "description": "Adaugă sinonime ca să găsești mai ușor ce cauți. Când cauți un cuvânt, apar și rezultatele cu sinonimele lui.",
+      "addSynonym": "Adaugă sinonim",
       "noSynonyms": "Niciun sinonim configurat",
-      "noSynonymsDescription": "Adaugă sinonime pentru a găsi cântări cu ortografii alternative",
-      "primaryTerm": "Termen Principal",
-      "primaryTermPlaceholder": "ex., cristos",
-      "synonymTerms": "Termeni Sinonimi",
-      "synonymTermsPlaceholder": "ex., hristos, christ",
-      "synonymTermsHint": "Separă sinonimele multiple cu virgulă",
+      "noSynonymsDescription": "Adaugă sinonime ca să găsești cântări scrise în alt fel",
+      "primaryTerm": "Termen principal",
+      "primaryTermPlaceholder": "ex.: cristos",
+      "synonymTerms": "Sinonime",
+      "synonymTermsPlaceholder": "ex.: hristos, christ",
+      "synonymTermsHint": "Separă sinonimele prin virgulă",
       "actions": {
         "edit": "Editează",
         "delete": "Șterge"
       },
       "modals": {
         "create": {
-          "title": "Adaugă Sinonim Nou",
-          "submit": "Creează Sinonim"
+          "title": "Adaugă sinonim nou",
+          "submit": "Creează sinonimul"
         },
         "edit": {
-          "title": "Editează Sinonim",
-          "submit": "Salvează Modificările"
+          "title": "Editează sinonimul",
+          "submit": "Salvează modificările"
         },
         "delete": {
-          "title": "Șterge Sinonim",
-          "message": "Ești sigur că vrei să ștergi grupul de sinonime pentru \"{{primary}}\"?",
+          "title": "Șterge sinonimul",
+          "message": "Sigur vrei să ștergi grupul de sinonime pentru „{{primary}}”?",
           "confirm": "Șterge"
         }
       },
       "toast": {
-        "created": "Sinonim creat cu succes",
-        "updated": "Sinonim actualizat cu succes",
-        "deleted": "Sinonim șters cu succes",
+        "created": "Sinonimul a fost creat",
+        "updated": "Sinonimul a fost actualizat",
+        "deleted": "Sinonimul a fost șters",
         "error": "A apărut o eroare"
       }
     },
     "importExport": {
-      "title": "Import & Export Cântări",
-      "description": "Importă cântări din fișiere sau exportă biblioteca de cântări",
+      "title": "Import și export cântări",
+      "description": "Importă cântări din fișiere sau exportă colecția de cântări",
       "import": {
-        "title": "Import Cântări",
+        "title": "Import cântări",
         "description": "Importă cântări din fișiere OpenSong XML, PPTX sau ZIP",
-        "button": "Selectează Fișiere",
+        "button": "Alege fișiere",
         "supportedFormats": "Formate acceptate: OpenSong XML, PPTX, PPT, ZIP",
-        "noSongsTitle": "Nicio Cântare Găsită",
+        "noSongsTitle": "Nu s-a găsit nicio cântare",
         "noSongsMessage": "Nu s-au găsit cântări valide în fișierele selectate."
       },
       "export": {
-        "title": "Export Cântări",
+        "title": "Export cântări",
         "description": "Exportă cântările în format OpenSong sau PowerPoint",
-        "button": "Exportă Cântări",
+        "button": "Exportă cântările",
         "allSongs": "Toate cântările",
         "byCategory": "După categorie",
-        "fileFormatLabel": "Format Fișier",
+        "fileFormatLabel": "Formatul fișierului",
         "fileFormats": {
           "opensong": "OpenSong",
           "opensongDescription": "Format XML pentru OpenSong",
           "pptx": "PowerPoint",
           "pptxDescription": "Prezentare PPTX cu slide-uri"
         },
-        "destinationLabel": "Destinație Export",
+        "destinationLabel": "Unde se exportă",
         "destinations": {
           "folder": "Folder",
-          "folderDescription": "Mai rapid, export direct",
+          "folderDescription": "Mai rapid, fișierele merg direct în folder",
           "folderUnavailable": "Doar în aplicația desktop",
           "zip": "Arhivă ZIP",
           "zipDescription": "Un singur fișier comprimat"
@@ -628,59 +639,59 @@
         "processingProgress": "Se procesează {{current}} din {{total}}"
       },
       "toast": {
-        "importSuccess": "S-au importat cu succes {{count}} cântări",
+        "importSuccess": "Cântări importate: {{count}}",
         "importFailed": "Importul a eșuat: {{error}}",
-        "exportSuccess": "S-au exportat cu succes {{count}} cântări",
+        "exportSuccess": "Cântări exportate: {{count}}",
         "exportFailed": "Exportul a eșuat: {{error}}"
       }
     },
     "apiDocs": {
-      "title": "Documentatie API",
-      "description": "Acceseaza documentatia API REST pentru dezvoltatori",
-      "link": "Deschide Documentatia API"
+      "title": "Documentație API",
+      "description": "Deschide documentația API REST pentru dezvoltatori",
+      "link": "Deschide documentația API"
     },
     "systemToken": {
-      "title": "Token API de Sistem",
-      "description": "Foloseste acest token pentru a accesa API-ul cu privilegii de superutilizator din aplicatii externe. Aceasta sectiune este vizibila doar pe localhost.",
+      "title": "Token API de sistem",
+      "description": "Folosește acest token ca să accesezi API-ul cu drepturi de superutilizator din aplicații externe. Secțiunea e vizibilă doar pe localhost.",
       "token": "Token",
-      "showToken": "Afiseaza Token",
-      "loading": "Se incarca...",
-      "show": "Afiseaza token",
-      "hide": "Ascunde token",
-      "copy": "Copiaza in clipboard",
-      "regenerate": "Regenereaza Token",
-      "regenerating": "Se regenereaza...",
-      "regenerateWarning": "Regenerarea va invalida tokenul curent",
+      "showToken": "Afișează tokenul",
+      "loading": "Se încarcă...",
+      "show": "Afișează tokenul",
+      "hide": "Ascunde tokenul",
+      "copy": "Copiază",
+      "regenerate": "Regenerează tokenul",
+      "regenerating": "Se regenerează...",
+      "regenerateWarning": "După regenerare, tokenul actual nu mai funcționează",
       "createdAt": "Creat",
       "lastUsed": "Ultima utilizare",
-      "never": "Niciodata",
+      "never": "Niciodată",
       "toast": {
-        "copied": "Token copiat in clipboard",
-        "regenerated": "Token de sistem regenerat cu succes",
-        "fetchError": "Nu s-a putut obtine tokenul de sistem",
+        "copied": "Tokenul a fost copiat",
+        "regenerated": "Tokenul de sistem a fost regenerat",
+        "fetchError": "Nu s-a putut obține tokenul de sistem",
         "regenerateError": "Nu s-a putut regenera tokenul de sistem"
       }
     },
     "sidebar": {
-      "title": "Configurare Bară Laterală",
-      "description": "Personalizează elementele meniului din bara laterală, ordinea lor și adaugă pagini personalizate",
+      "title": "Configurare bară laterală",
+      "description": "Alege paginile din bara laterală, ordinea lor și adaugă pagini personalizate",
       "builtIn": "Predefinit",
-      "custom": "Pagină Personalizată",
-      "addCustomPage": "Adaugă Pagină Personalizată",
+      "custom": "Pagină personalizată",
+      "addCustomPage": "Adaugă pagină personalizată",
       "visible": "Vizibil",
       "hidden": "Ascuns",
       "pageNotFound": "Pagina nu a fost găsită",
-      "openInNewTab": "Deschide în tab nou",
+      "openInNewTab": "Deschide într-un tab nou",
       "openInWindow": "Deschide în fereastră",
       "openInBrowser": "Deschide în browser",
       "loadingPage": "Se încarcă pagina...",
       "loadError": "Această pagină nu poate fi încorporată",
-      "loadErrorDescription": "Unele site-uri web blochează încorporarea din motive de securitate. Deschide într-un tab nou.",
-      "nativeWindowTitle": "Pagina externă deschisă în fereastră nativă",
-      "nativeWindowDescription": "Această pagină a fost deschisă într-o fereastră separată pentru a asigura funcționalitatea completă. Apasă butonul de mai sus pentru a o redeschide dacă este necesar.",
+      "loadErrorDescription": "Unele site-uri nu permit încorporarea, din motive de securitate. Deschide pagina într-un tab nou.",
+      "nativeWindowTitle": "Pagina externă s-a deschis într-o fereastră nativă",
+      "nativeWindowDescription": "Pagina s-a deschis într-o fereastră separată, ca să funcționeze complet. Apasă butonul de mai sus ca s-o redeschizi, dacă e nevoie.",
       "fields": {
         "title": "Titlu",
-        "titlePlaceholder": "ex., Calendar Biserică",
+        "titlePlaceholder": "ex.: Calendarul bisericii",
         "url": "URL",
         "urlPlaceholder": "https://exemplu.com/calendar",
         "urlHint": "URL-ul va fi încorporat într-un iframe",
@@ -689,98 +700,98 @@
         "iconSourceDescription": "Alege să folosești favicon-ul site-ului sau o pictogramă personalizată",
         "useFavicon": "Favicon",
         "useCustomIcon": "Personalizată",
-        "fetchFavicon": "Preia Favicon",
+        "fetchFavicon": "Preia favicon",
         "refetchFavicon": "Reîncarcă",
         "faviconHint": "Introdu un URL mai sus pentru a prelua automat favicon-ul site-ului",
-        "useIframeEmbedding": "Folosește încorporare iframe",
-        "useIframeEmbeddingHint": "Încorporează folosind un iframe în loc de webview nativ. Recomandat pentru site-uri ca YouTube care suportă încorporarea iframe."
+        "useIframeEmbedding": "Încorporează prin iframe",
+        "useIframeEmbeddingHint": "Încorporează printr-un iframe, nu prin webview nativ. Recomandat pentru site-uri ca YouTube, care permit încorporarea iframe."
       },
       "validation": {
         "titleRequired": "Titlul este obligatoriu",
         "urlRequired": "URL-ul este obligatoriu",
-        "urlInvalid": "Te rog introdu un URL valid"
+        "urlInvalid": "Introdu un URL valid"
       },
       "modals": {
         "create": {
-          "title": "Adaugă Pagină Personalizată",
-          "submit": "Adaugă Pagina"
+          "title": "Adaugă pagină personalizată",
+          "submit": "Adaugă pagina"
         },
         "edit": {
-          "title": "Editează Pagină Personalizată",
-          "submit": "Salvează Modificările"
+          "title": "Editează pagina personalizată",
+          "submit": "Salvează modificările"
         },
         "delete": {
-          "title": "Șterge Pagină Personalizată",
-          "message": "Ești sigur că vrei să ștergi \"{{name}}\"?",
+          "title": "Șterge pagina personalizată",
+          "message": "Sigur vrei să ștergi „{{name}}”?",
           "confirm": "Șterge"
         }
       },
       "toast": {
-        "saved": "Configurare bară laterală salvată",
-        "customPageCreated": "Pagină personalizată adăugată",
-        "customPageUpdated": "Pagină personalizată actualizată",
-        "customPageDeleted": "Pagină personalizată ștearsă",
+        "saved": "Bara laterală a fost salvată",
+        "customPageCreated": "Pagina personalizată a fost adăugată",
+        "customPageUpdated": "Pagina personalizată a fost actualizată",
+        "customPageDeleted": "Pagina personalizată a fost ștearsă",
         "error": "A apărut o eroare"
       }
     },
     "apiUrl": {
-      "title": "Conexiune Server",
-      "label": "URL Server",
-      "hint": "Introdu URL-ul de autentificare din Church Hub (ex., http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
+      "title": "Conexiune la server",
+      "label": "URL-ul serverului",
+      "hint": "Introdu URL-ul de autentificare din Church Hub (ex.: http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
       "settingsDescription": "Configurează serverul la care se conectează aplicația mobilă",
-      "testConnection": "Testează Conexiunea",
+      "testConnection": "Testează conexiunea",
       "testing": "Se testează...",
       "retry": "Reîncearcă",
-      "save": "Salvează și Continuă",
-      "saved": "URL-ul serverului salvat cu succes",
-      "connectionSuccess": "Conexiune reușită",
+      "save": "Salvează și continuă",
+      "saved": "URL-ul serverului a fost salvat",
+      "connectionSuccess": "Conexiunea a reușit",
       "authTokenDetected": "Token de autentificare detectat",
       "reconnect": "Reconectează",
       "setup": {
-        "title": "Conectare la Server",
+        "title": "Conectare la server",
         "description": "Scanează codul QR sau lipește URL-ul de autentificare din Church Hub"
       },
       "modal": {
-        "title": "Reconectare la Server",
+        "title": "Reconectare la server",
         "description": "Actualizează URL-ul serverului pentru a restabili conexiunea"
       },
       "errors": {
-        "emptyUrl": "Te rugăm să introduci un URL de server",
-        "invalidUrl": "Te rugăm să introduci un URL valid (ex., http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
+        "emptyUrl": "Introdu URL-ul serverului",
+        "invalidUrl": "Introdu un URL valid (ex.: http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
         "connectionFailed": "Nu s-a putut conecta la server. Verifică URL-ul și încearcă din nou.",
-        "testFirst": "Te rugăm să testezi conexiunea înainte de a salva"
+        "testFirst": "Testează conexiunea înainte să salvezi"
       }
     },
     "kiosk": {
-      "title": "Mod Kiosk",
-      "description": "Configurează modul kiosk pentru a porni aplicația pe o pagină sau ecran specific în modul fullscreen.",
+      "title": "Mod kiosk",
+      "description": "Configurează modul kiosk ca aplicația să pornească pe tot ecranul, pe o anumită pagină sau ecran.",
       "enable": {
-        "label": "Activează Modul Kiosk",
-        "description": "Când este activat, aplicația va porni pe pagina de start configurată"
+        "label": "Activează modul kiosk",
+        "description": "Când e activ, aplicația pornește pe pagina de start aleasă"
       },
       "startupPage": {
-        "label": "Pagina de Start",
-        "description": "Selectează pagina sau ecranul de afișat când pornește aplicația"
+        "label": "Pagina de start",
+        "description": "Alege pagina sau ecranul afișat la pornirea aplicației"
       },
       "routes": {
-        "present": "Cameră de Control",
+        "present": "Camera de control",
         "songs": "Cântări",
-        "bible": "Biblie",
+        "bible": "Biblia",
         "schedules": "Programe",
-        "livestream": "Transmisiune Live",
+        "livestream": "Live Stream",
         "settings": "Setări"
       },
       "screenPrefix": "Ecran",
-      "noKioskScreens": "Niciun ecran kiosk configurat. Creează un ecran de tip 'Kiosk' în secțiunea Ecrane de mai sus pentru a-l folosi ca afișaj de pornire.",
+      "noKioskScreens": "Niciun ecran kiosk configurat. Creează un ecran de tip „Kiosk” în secțiunea Ecrane de mai sus ca să-l folosești la pornire.",
       "debug": {
-        "title": "Instrumente de Depanare",
-        "testOverlay": "Testează Suprapunerea de Estompare",
-        "tapToDismiss": "Atinge oriunde pe suprapunere pentru a o închide",
-        "brightnessControl": "Control Luminozitate (doar iOS):",
-        "supported": "Suportat",
-        "notSupported": "Nesuportat",
-        "dimScreen": "Întunecă Ecranul",
-        "restoreBrightness": "Restaurează Luminozitatea"
+        "title": "Instrumente de depanare",
+        "testOverlay": "Testează stratul de întunecare",
+        "tapToDismiss": "Atinge oriunde pe strat ca să-l închizi",
+        "brightnessControl": "Control luminozitate (doar iOS):",
+        "supported": "Disponibil",
+        "notSupported": "Indisponibil",
+        "dimScreen": "Întunecă ecranul",
+        "restoreBrightness": "Refă luminozitatea"
       },
       "toast": {
         "saved": "Setările kiosk au fost salvate",
@@ -788,39 +799,39 @@
       }
     },
     "database": {
-      "title": "Administrare Bază de Date",
-      "description": "Administrează locația și backup-ul bazei de date SQLite",
-      "path": "Calea Bazei de Date",
+      "title": "Administrare bază de date",
+      "description": "Administrează locația și copiile de rezervă ale bazei de date SQLite",
+      "path": "Calea bazei de date",
       "copyPath": "Copiază calea",
-      "openFolder": "Deschide în Explorator",
+      "openFolder": "Deschide folderul",
       "size": "Dimensiune",
       "export": {
-        "title": "Exportă Baza de Date",
-        "description": "Creează o copie de siguranță a bazei de date",
-        "button": "Exportă Baza de Date",
+        "title": "Exportă baza de date",
+        "description": "Creează o copie de rezervă a bazei de date",
+        "button": "Exportă baza de date",
         "exporting": "Se exportă..."
       },
       "import": {
-        "title": "Importă Baza de Date",
-        "description": "Restaurează dintr-o copie de siguranță",
-        "button": "Importă Baza de Date",
+        "title": "Importă baza de date",
+        "description": "Restaurează dintr-o copie de rezervă",
+        "button": "Importă baza de date",
         "importing": "Se importă...",
         "confirm": {
-          "title": "Importă Baza de Date",
-          "message": "Aceasta va înlocui baza de date curentă cu fișierul selectat. O copie de siguranță a bazei de date curente va fi creată. Aplicația va trebui repornită după import.",
+          "title": "Importă baza de date",
+          "message": "Baza de date curentă va fi înlocuită cu fișierul selectat. Înainte se face o copie de rezervă a ei. După import, aplicația trebuie repornită.",
           "warning": "Această acțiune nu poate fi anulată.",
           "confirm": "Importă",
           "cancel": "Anulează"
         },
         "categories": {
-          "title": "Selectează datele de importat:",
-          "copyAndMigrate": "Copiere & Migrare (Recomandat)",
-          "copyAndMigrateDescription": "Copiază întreaga bază de date și rulează migrațiile pentru a actualiza schema. Ideal pentru importul din versiuni mai vechi.",
-          "orSelectiveImport": "Sau selectează date specifice",
+          "title": "Alege ce date imporți:",
+          "copyAndMigrate": "Copiere și migrare (recomandat)",
+          "copyAndMigrateDescription": "Copiază toată baza de date și rulează migrările ca să actualizeze structura. Ideal pentru import din versiuni mai vechi.",
+          "orSelectiveImport": "Sau alege doar anumite date",
           "songs": "Cântări",
-          "songsDescription": "Categorii de cântări, cântări și versuri",
-          "bible": "Biblie",
-          "bibleDescription": "Traduceri biblice și versete",
+          "songsDescription": "Categorii de cântări, cântări și slide-uri",
+          "bible": "Biblia",
+          "bibleDescription": "Traduceri ale Bibliei și versete",
           "schedules": "Programe",
           "schedulesDescription": "Programe și elemente de program",
           "configurations": "Configurări",
@@ -828,23 +839,23 @@
         }
       },
       "restart": {
-        "title": "Import Reușit",
-        "message": "Baza de date a fost importată cu succes. Apasă butonul de mai jos pentru a reporni serverul și a aplica modificările.",
-        "confirm": "Repornește Acum",
+        "title": "Import reușit",
+        "message": "Baza de date a fost importată. Apasă butonul de mai jos ca să repornești serverul și să aplici modificările.",
+        "confirm": "Repornește acum",
         "restarting": "Se repornește..."
       },
       "toast": {
-        "pathCopied": "Calea bazei de date copiată în clipboard",
-        "exportSuccess": "Baza de date exportată cu succes în {{path}}",
-        "exportFailed": "Exportul a eșuat: {{error}}",
-        "openFolderFailed": "Nu s-a putut deschide exploratorul de fișiere",
-        "importSuccess": "Baza de date importată cu succes. Se reîncarcă...",
-        "importFailed": "Importul a eșuat: {{error}}",
+        "pathCopied": "Calea bazei de date a fost copiată",
+        "exportSuccess": "Baza de date a fost exportată în {{path}}",
+        "exportFailed": "Exportul bazei de date a eșuat: {{error}}",
+        "openFolderFailed": "Nu s-a putut deschide folderul",
+        "importSuccess": "Baza de date a fost importată. Se reîncarcă...",
+        "importFailed": "Importul bazei de date a eșuat: {{error}}",
         "restartFailed": "Repornirea serverului a eșuat: {{error}}"
       }
     },
     "backup": {
-      "title": "Copie de rezervă Google Drive",
+      "title": "Copie de rezervă în Google Drive",
       "description": "Fă o copie de rezervă a bazei de date în Google Drive și restaureaz-o pe orice calculator conectat cu același cont Google.",
       "localhostOnly": "Copiile de rezervă pot fi gestionate doar de pe calculatorul pe care rulează Church Hub.",
       "connect": {
@@ -854,7 +865,7 @@
       },
       "expired": {
         "title": "Reconectează Google Drive",
-        "description": "Sesiunea Google a expirat și backupurile sunt pe pauză. Reconectează pentru a relua backupul.",
+        "description": "Sesiunea Google a expirat, iar copiile de rezervă s-au oprit. Reconectează-te ca să le reiei.",
         "button": "Reconectează"
       },
       "status": {
@@ -862,64 +873,64 @@
         "disconnect": "Deconectează"
       },
       "reconnect": {
-        "message": "Contul tău Google trebuie să acorde acces la Drive înainte ca backupul să funcționeze. Te rugăm să reconectezi.",
+        "message": "Copiile de rezervă au nevoie de acces la Google Drive. Reconectează contul și permite accesul.",
         "button": "Reconectează"
       },
       "now": {
-        "title": "Fă backup acum",
-        "lastBackup": "Ultimul backup",
-        "button": "Fă backup acum",
-        "backingUp": "Se salvează…"
+        "title": "Fă o copie acum",
+        "lastBackup": "Ultima copie",
+        "button": "Fă o copie acum",
+        "backingUp": "Se face copia…"
       },
       "auto": {
-        "title": "Backup automat",
-        "description": "Salvează periodic în fundal.",
-        "interval": "Frecvența backupului",
-        "everyHours": "La fiecare {{hours}} ore"
+        "title": "Copii automate",
+        "description": "Face periodic o copie, în fundal.",
+        "interval": "Frecvența copiilor",
+        "everyHours": "O copie la fiecare {{hours}} h"
       },
       "list": {
-        "title": "Backupuri disponibile",
-        "loading": "Se încarcă backupurile…",
-        "empty": "Încă nu există backupuri.",
+        "title": "Copii disponibile",
+        "loading": "Se încarcă copiile…",
+        "empty": "Nu există încă nicio copie.",
         "restore": "Restaurează",
         "delete": "Șterge",
         "refresh": "Reîmprospătează",
         "inspect": "Vezi conținutul"
       },
       "restoreModal": {
-        "title": "Restaurezi backupul?",
-        "message": "Restaurezi backupul din {{date}}?",
-        "warning": "Aceasta va înlocui toate datele curente de pe acest calculator. Se păstrează o copie de siguranță a bazei de date curente.",
+        "title": "Restaurezi copia?",
+        "message": "Restaurezi copia din {{date}}?",
+        "warning": "Toate datele de pe acest calculator vor fi înlocuite. Baza de date actuală se păstrează într-o copie separată.",
         "cancel": "Anulează",
         "confirm": "Restaurează",
         "restoring": "Se restaurează…"
       },
       "toast": {
-        "backupSuccess": "Backup încărcat în Google Drive",
-        "backupFailed": "Backup eșuat: {{error}}",
-        "restoreSuccess": "Backup restaurat. Se reîncarcă…",
-        "restoreFailed": "Restaurare eșuată: {{error}}",
-        "reconnectNeeded": "Te rugăm să reconectezi Google Drive pentru a acorda acces la backup.",
-        "configFailed": "Actualizarea setărilor de backup a eșuat",
-        "linkCopied": "Link de conectare copiat — lipește-l într-o fereastră privată",
+        "backupSuccess": "Copia a fost încărcată în Google Drive",
+        "backupFailed": "Copia de rezervă a eșuat: {{error}}",
+        "restoreSuccess": "Copia a fost restaurată. Se reîncarcă…",
+        "restoreFailed": "Restaurarea a eșuat: {{error}}",
+        "reconnectNeeded": "Reconectează Google Drive și permite accesul pentru copiile de rezervă.",
+        "configFailed": "Setările copiilor de rezervă nu au putut fi salvate",
+        "linkCopied": "Linkul de conectare a fost copiat — lipește-l într-o fereastră privată",
         "linkCopyFailed": "Linkul nu a putut fi copiat",
-        "linkShown": "Link de conectare gata — copiază-l și deschide-l într-o fereastră privată",
-        "deleteSuccess": "Backup șters",
-        "deleteFailed": "Ștergere eșuată: {{error}}",
-        "insufficientSpace": "Backup eșuat: spațiu liber insuficient în Google Drive"
+        "linkShown": "Linkul de conectare e gata — copiază-l și deschide-l într-o fereastră privată",
+        "deleteSuccess": "Copia a fost ștearsă",
+        "deleteFailed": "Ștergerea a eșuat: {{error}}",
+        "insufficientSpace": "Copia a eșuat: nu e destul spațiu liber în Google Drive"
       },
       "copyLink": "Copiază linkul",
-      "copyLinkHint": "Copiază linkul de conectare pentru a-l deschide într-o fereastră privată/incognito (de ex. pentru alt cont Google).",
+      "copyLinkHint": "Copiază linkul de conectare ca să-l deschizi într-o fereastră privată/incognito (de ex. pentru alt cont Google).",
       "deleteModal": {
-        "title": "Ștergi backupul?",
-        "message": "Ștergi definitiv backupul din {{date}}? Această acțiune nu poate fi anulată.",
+        "title": "Ștergi copia?",
+        "message": "Ștergi definitiv copia din {{date}}? Această acțiune nu poate fi anulată.",
         "cancel": "Anulează",
         "confirm": "Șterge"
       },
       "storage": {
-        "summary": "{{used}} din {{total}} folosiți · {{free}} liber",
-        "warningTitle": "Spațiu insuficient în Google Drive pentru backup",
-        "warningMessage": "Drive-ul tău mai are doar {{free}} liber, dar următorul backup are nevoie de aproximativ {{needed}}. Eliberează spațiu în Google Drive, altfel backupurile vor eșua."
+        "summary": "{{used}} folosit din {{total}} · {{free}} liber",
+        "warningTitle": "Nu e destul spațiu în Google Drive pentru copii",
+        "warningMessage": "Drive-ul mai are doar {{free}} liber, dar următoarea copie are nevoie de aproximativ {{needed}}. Eliberează spațiu în Google Drive, altfel copiile vor eșua."
       },
       "local": {
         "title": "Copie locală",
@@ -929,7 +940,7 @@
         "chooseFolder": "Alege folder",
         "clearFolder": "Elimină",
         "pathPlaceholder": "Cale absolută, ex. /Users/eu/CopiiChurchHub",
-        "folderHint": "Copiile sunt denumite ca cele din Drive și sunt păstrate după aceeași setare de retenție.",
+        "folderHint": "Copiile au aceleași nume ca cele din Drive, iar cele vechi se șterg după aceeași regulă.",
         "button": "Fă o copie locală",
         "backingUp": "Se creează copia...",
         "lastBackup": "Ultima copie locală",
@@ -949,7 +960,7 @@
         "restoreFrom": {
           "button": "Restaurează dintr-un folder",
           "choose": "Alege folderul care conține copia",
-          "label": "Restaurează din folderul",
+          "label": "Restaurează din folder",
           "browsing": "Se afișează copiile din {{path}}",
           "stopBrowsing": "Înapoi la folderul copiilor",
           "restore": "Restaurează această copie"
@@ -969,19 +980,19 @@
         }
       },
       "retention": {
-        "title": "Backupuri păstrate",
-        "description": "Păstrează cele mai recente {{total}} backupuri în Drive; când unul nou depășește limita, cel mai vechi este șters automat."
+        "title": "Copii păstrate",
+        "description": "Păstrează în Drive cele mai recente copii (maximum {{total}}); când se face una nouă peste limită, cea mai veche se șterge automat."
       },
       "inspectModal": {
-        "title": "Conținutul backupului",
+        "title": "Conținutul copiei",
         "close": "Închide",
-        "loading": "Se descarcă și se citește backupul…",
-        "failed": "Conținutul backupului nu a putut fi citit.",
+        "loading": "Se descarcă și se citește copia…",
+        "failed": "Conținutul copiei nu a putut fi citit.",
         "songs": "Cântări ({{total}})",
         "schedules": "Programe ({{total}})",
-        "scheduleSongs_one": "{{count}} cantare",
-        "scheduleSongs_few": "{{count}} cantari",
-        "scheduleSongs_other": "{{count}} de cantari",
+        "scheduleSongs_one": "{{count}} cântare",
+        "scheduleSongs_few": "{{count}} cântări",
+        "scheduleSongs_other": "{{count}} de cântări",
         "playlists": "Playlisturi ({{total}})",
         "more": "…și încă {{total}}",
         "playlistItems_one": "{{count}} element",
@@ -991,7 +1002,7 @@
           "songs": "Cântări",
           "songSlides": "Slide-uri de cântări",
           "songCategories": "Categorii de cântări",
-          "songBookmarks": "Cântări marcate",
+          "songBookmarks": "Marcaje cântări",
           "schedules": "Programe",
           "scheduleItems": "Elemente de program",
           "musicPlaylists": "Playlisturi",
@@ -1004,16 +1015,16 @@
     },
     "sync": {
       "title": "Sincronizare bibliotecă",
-      "description": "Menține biblioteca de cântări și programele actualizate pe toate dispozitivele tale prin contul Google Drive.",
+      "description": "Ține colecția de cântări și programele la zi pe toate dispozitivele tale, prin contul Google Drive.",
       "loading": "Se încarcă starea sincronizării…",
       "toggle": {
         "title": "Sincronizare în timp real",
-        "description": "Aplică automat modificările făcute pe celelalte dispozitive și trimite-le pe ale tale.",
-        "notConnectedHint": "Conectează Google Drive mai sus pentru a activa sincronizarea."
+        "description": "Preia automat modificările făcute pe celelalte dispozitive și le trimite pe ale tale.",
+        "notConnectedHint": "Conectează Google Drive mai sus ca să activezi sincronizarea."
       },
       "interval": {
-        "label": "Verifică modificările",
-        "everyMinutes": "La fiecare {{minutes}} minute"
+        "label": "Verificare modificări",
+        "everyMinutes": "Verifică o dată la {{minutes}} min"
       },
       "status": {
         "lastSync": "Ultima sincronizare",
@@ -1026,11 +1037,11 @@
         "syncing": "Se sincronizează…"
       },
       "toast": {
-        "syncApplied": "Sincronizare finalizată — {{count}} modificări aplicate.",
+        "syncApplied": "Sincronizare finalizată — modificări aplicate: {{count}}.",
         "syncComplete": "Sincronizare finalizată.",
-        "syncUpToDate": "Totul este deja actualizat.",
+        "syncUpToDate": "Totul este deja la zi.",
         "syncDisabled": "Sincronizarea este dezactivată.",
-        "syncNotConnected": "Conectează Google Drive pentru a sincroniza.",
+        "syncNotConnected": "Conectează Google Drive ca să sincronizezi.",
         "syncFailed": "Sincronizarea a eșuat: {{error}}",
         "configFailed": "Nu s-au putut salva setările de sincronizare"
       },
@@ -1040,7 +1051,7 @@
         "empty": "Totul este sincronizat.",
         "receivedEmpty": "Nicio modificare primită încă.",
         "onDevice": "pe {{device}}",
-        "markAllSeen": "Marchează tot ca văzut",
+        "markAllSeen": "Marchează toate ca văzute",
         "kind": {
           "added": "Adăugat",
           "updated": "Modificat",
@@ -1056,13 +1067,13 @@
       }
     },
     "debug": {
-      "title": "Mod Depanare",
+      "title": "Mod depanare",
       "description": "Afișează panoul de depanare WebSocket cu starea conexiunii și numărul de mesaje"
     },
     "screens": {
       "title": "Ecrane",
-      "description": "Configurează ecranele pentru diferite scopuri de afișare. Fiecare tip de ecran are propriile opțiuni de configurare.",
-      "addScreen": "Adaugă Ecran",
+      "description": "Configurează ecranele după rolul fiecăruia. Fiecare tip de ecran are propriul aspect și propriile opțiuni.",
+      "addScreen": "Adaugă ecran",
       "noScreens": "Niciun ecran configurat",
       "status": {
         "open": "fereastră deschisă",
@@ -1070,7 +1081,7 @@
       },
       "groups": {
         "idle": "Când nu se afișează nimic",
-        "window": "Fereastra",
+        "window": "Fereastră",
         "advanced": "Mai multe opțiuni pentru fereastră"
       },
       "idle": {
@@ -1097,47 +1108,47 @@
       "closeOnEscape": {
         "label": "Închide fereastra când nu se afișează nimic",
         "description": "După Escape sau Ascunde, fereastra se închide și pe proiector se vede desktopul până la următorul slide. Lasă-l oprit ca să rămână ceasul și fundalul.",
-        "enabled": "Fereastra se va închide când nu este afișat ceva",
+        "enabled": "Fereastra se va închide când nu se afișează nimic",
         "disabled": "Fereastra va rămâne deschisă tot timpul",
         "error": "Nu s-a putut actualiza setarea"
       },
       "previewScreen": {
         "label": "Afișat în previzualizări",
-        "description": "Previzualizările din Camera de control, Biblie, Cântări și Programe arată acest ecran. Alege alt ecran ca să schimbi; implicit este ecranul principal.",
+        "description": "Previzualizările din Camera de control, Biblia, Cântări și Programe arată acest ecran. Alege alt ecran ca să schimbi; implicit este ecranul principal.",
         "enabled": "Previzualizările arată acum acest ecran",
         "error": "Nu s-a putut schimba ecranul afișat în previzualizări"
       },
       "fullscreen": {
         "label": "Ocupă tot monitorul",
         "description": "Oprit: se deschide ca fereastră obișnuită, pe care o poți muta și redimensiona.",
-        "enabled": "Ecranul se va deschide pe tot ecranul",
+        "enabled": "Ecranul se va deschide pe tot monitorul",
         "disabled": "Ecranul se va deschide ca fereastră",
         "error": "Nu s-a putut actualiza setarea"
       },
       "alwaysOnTop": {
         "label": "Deasupra celorlalte ferestre",
         "description": "Alte programe deschise pe acel monitor nu pot acoperi slide-urile.",
-        "enabled": "Fereastra setată mereu deasupra",
+        "enabled": "Fereastra va sta mereu deasupra",
         "disabled": "Fereastra nu mai este mereu deasupra",
         "error": "Nu s-a putut actualiza setarea"
       },
       "actions": {
-        "openInNewTab": "Deschide în tab nou",
-        "copyUrl": "Copiază URL în clipboard",
+        "openInNewTab": "Deschide într-un tab nou",
+        "copyUrl": "Copiază URL-ul",
         "duplicate": "Duplică ecranul cu toate setările",
         "edit": "Editează aspectul",
-        "delete": "Șterge ecran",
+        "delete": "Șterge ecranul",
         "editTooltip": "Schimbă cum arată fiecare tip de slide pe acest ecran: text, fundal, ceas"
       },
       "toast": {
-        "created": "Ecran creat cu succes",
-        "saved": "Ecran salvat cu succes",
-        "deleted": "Ecran șters cu succes",
-        "duplicated": "Ecran duplicat: \"{{name}}\"",
-        "windowOpened": "Fereastra \"{{name}}\" deschisă",
-        "windowClosed": "Fereastra \"{{name}}\" închisă",
-        "urlCopied": "URL copiat în clipboard",
-        "toggleError": "Nu s-a putut comuta fereastra",
+        "created": "Ecranul a fost creat",
+        "saved": "Ecranul a fost salvat",
+        "deleted": "Ecranul a fost șters",
+        "duplicated": "Ecranul a fost duplicat: „{{name}}”",
+        "windowOpened": "Fereastra „{{name}}” s-a deschis",
+        "windowClosed": "Fereastra „{{name}}” s-a închis",
+        "urlCopied": "URL-ul a fost copiat",
+        "toggleError": "Fereastra nu a putut fi deschisă sau închisă",
         "copyError": "Nu s-a putut copia URL-ul",
         "deleteError": "Nu s-a putut șterge ecranul",
         "duplicateError": "Nu s-a putut duplica ecranul",
@@ -1145,31 +1156,31 @@
         "createError": "Nu s-a putut crea ecranul"
       },
       "export": {
-        "title": "Exportă Ecran",
-        "description": "Alege cum să accesezi acest ecran",
+        "title": "Exportă ecranul",
+        "description": "Alege cum deschizi acest ecran",
         "options": {
           "url": {
-            "title": "Deschide în Browser",
+            "title": "Deschide în browser",
             "description": "Deschide ecranul în browserul implicit"
           },
           "staticFile": {
-            "title": "Generează Fișier Static",
+            "title": "Generează fișier static",
             "description": "Creează un fișier HTML local pentru OBS Browser Source",
             "recommended": "Recomandat pentru OBS"
           }
         },
-        "note": "Fișierele statice funcționează mai bine cu OBS - încărcare mai rapidă, fără browser necesar.",
+        "note": "Fișierele statice merg mai bine cu OBS: se încarcă mai repede și nu au nevoie de browser.",
         "serverUrl": {
-          "label": "Conexiune Server",
+          "label": "Conexiune la server",
           "localhost": "Localhost",
-          "networkInterface": "Interfață de Rețea",
-          "custom": "URL Personalizat",
-          "result": "URL Server"
+          "networkInterface": "Interfață de rețea",
+          "custom": "URL personalizat",
+          "result": "URL-ul serverului"
         },
         "generating": "Se generează fișierul...",
-        "success": "Fișier salvat cu succes!",
+        "success": "Fișierul a fost salvat!",
         "filePath": "Salvat în: {{path}}",
-        "openFolder": "Deschide Folder",
+        "openFolder": "Deschide folderul",
         "retry": "Reîncearcă",
         "cancel": "Anulează",
         "export": "Exportă",
@@ -1181,41 +1192,41 @@
       }
     },
     "developer": {
-      "title": "Instrumente pentru Dezvoltatori",
+      "title": "Instrumente pentru dezvoltatori",
       "description": "Setări avansate pentru dezvoltatori și depanare"
     },
     "factoryReset": {
-      "title": "Resetare la Setări Fabrică",
-      "description": "Resetează configurația aplicației la setările implicite",
+      "title": "Resetare la setările din fabrică",
+      "description": "Readuce configurația aplicației la setările implicite",
       "card": {
-        "title": "Resetare la Setări Implicite",
-        "description": "Șterge ecranele și setările, apoi restaurează valorile implicite. Cântările și traducerile biblice sunt păstrate."
+        "title": "Revenire la setările implicite",
+        "description": "Șterge ecranele și setările, apoi pune la loc valorile din fabrică. Cântările și traducerile Bibliei rămân."
       },
       "button": {
-        "reset": "Resetare Fabrică",
+        "reset": "Resetează setările",
         "resetting": "Se resetează..."
       },
       "confirm": {
-        "title": "Resetare la Setări Fabrică",
-        "message": "Aceasta va reseta toate ecranele și setările aplicației la valorile implicite. Cântările, categoriile și traducerile biblice vor fi păstrate.",
+        "title": "Resetare la setările din fabrică",
+        "message": "Toate ecranele și setările aplicației revin la valorile implicite. Cântările, categoriile și traducerile Bibliei rămân.",
         "warning": "Această acțiune nu poate fi anulată.",
         "cancel": "Anulează",
-        "confirm": "Resetează la Setări Implicite"
+        "confirm": "Resetează setările"
       },
       "toast": {
-        "success": "Resetare completă. Setările au fost restaurate la valorile implicite.",
+        "success": "Resetarea s-a încheiat. Setările au revenit la valorile implicite.",
         "failed": "Resetarea a eșuat: {{error}}"
       }
     },
     "searchIndex": {
-      "title": "Index de Căutare",
+      "title": "Index de căutare",
       "description": "Reconstruiește indexul de căutare dacă cântările nu apar în rezultate",
       "card": {
-        "title": "Reconstruiește Indexul",
-        "description": "Reconstruiește indexul FTS pentru toate cântările. Folosiți dacă rezultatele căutării par incorecte."
+        "title": "Reconstruiește indexul de căutare",
+        "description": "Reconstruiește indexul FTS pentru toate cântările. Folosește-l dacă rezultatele căutării par greșite."
       },
       "button": {
-        "rebuild": "Reconstruiește",
+        "rebuild": "Reconstruiește indexul",
         "rebuilding": "Se reconstruiește..."
       },
       "toast": {
@@ -1224,19 +1235,19 @@
       }
     },
     "logs": {
-      "title": "Jurnale Aplicație",
-      "description": "Vizualizează fișierele de jurnal locale ale aplicației și șterge-le. Util pentru diagnosticarea problemelor și erorilor.",
+      "title": "Jurnalele aplicației",
+      "description": "Vezi fișierele de jurnal ale aplicației și șterge-le. Te ajută să găsești cauza problemelor și erorilor.",
       "card": {
-        "title": "Jurnale Aplicație",
+        "title": "Jurnalele aplicației",
         "description": "Deschide folderul cu jurnalele aplicației. Atașează ultimele fișiere când raportezi o problemă."
       },
       "button": {
-        "open": "Deschide Folderul cu Jurnale",
+        "open": "Deschide folderul cu jurnale",
         "opening": "Se deschide..."
       },
       "viewer": {
         "empty": "Nu există jurnale de afișat.",
-        "noMatches": "Niciun jurnal nu corespunde filtrelor.",
+        "noMatches": "Niciun jurnal nu se potrivește cu filtrele.",
         "search": "Caută în jurnale…",
         "refresh": "Reîmprospătează",
         "refreshing": "Se reîmprospătează...",
@@ -1260,7 +1271,7 @@
         },
         "confirm": {
           "title": "Ștergi toate jurnalele?",
-          "message": "Aceasta golește fiecare fișier de jurnal local de pe acest dispozitiv.",
+          "message": "Toate fișierele de jurnal de pe acest dispozitiv vor fi golite.",
           "warning": "Această acțiune nu poate fi anulată.",
           "cancel": "Anulează",
           "confirm": "Șterge jurnalele"
@@ -1292,32 +1303,32 @@
         "readyToInstall": "Gata de instalare",
         "install": "Instalează și repornește",
         "installing": "Se instalează...",
-        "unavailable": "Nu s-a putut determina ce installer se potrivește acestei mașini, deci nu există ce descărca automat.",
-        "openRelease": "Deschide release-ul pe GitHub",
+        "unavailable": "Nu s-a putut stabili ce program de instalare se potrivește acestui calculator, așa că nu se poate descărca nimic automat.",
+        "openRelease": "Deschide versiunea pe GitHub",
         "errors": {
-          "network": "Nu s-a putut ajunge la GitHub pentru a descărca programul de instalare. Verifică dacă acest calculator este conectat la internet (și că niciun proxy sau firewall nu blochează), apoi încearcă din nou.",
-          "http": "GitHub nu a livrat programul de instalare. Așteaptă puțin și încearcă din nou.",
+          "network": "Nu s-a putut ajunge la GitHub pentru descărcarea programului de instalare. Verifică dacă acest calculator e conectat la internet (și că nu blochează vreun proxy sau firewall), apoi încearcă din nou.",
+          "http": "GitHub nu a trimis programul de instalare. Așteaptă puțin și încearcă din nou.",
           "unknown": "Descărcarea a eșuat.",
-          "signature": "Fișierul descărcat nu a trecut verificarea semnăturii, așa că nu a fost instalat. Încearcă din nou; dacă se repetă, ia release-ul de pe GitHub.",
-          "install": "Actualizarea nu a putut fi instalată și versiunea curentă rulează în continuare. Încearcă din nou sau instalează release-ul de pe GitHub. O instanță de dezvoltare nu se poate înlocui pe sine."
+          "signature": "Fișierul descărcat nu a trecut verificarea semnăturii, așa că nu a fost instalat. Încearcă din nou; dacă se repetă, descarcă versiunea de pe GitHub.",
+          "install": "Actualizarea nu a putut fi instalată; rulează în continuare versiunea curentă. Încearcă din nou sau instalează versiunea de pe GitHub. O instanță de dezvoltare nu se poate înlocui singură."
         }
       },
-      "howItWorks": "Instalarea închide Church Hub, îl înlocuiește cu noua versiune și îl redeschide singură. Cântările, programele și setările rămân. Pe Windows poate apărea scurt o fereastră de progres; nu trebuie apăsat nimic.",
+      "howItWorks": "La instalare, Church Hub se închide, se înlocuiește cu noua versiune și se redeschide singur. Cântările, programele și setările rămân. Pe Windows poate apărea pentru scurt timp o fereastră de progres; nu trebuie să apeși nimic.",
       "outcome": {
         "updated": "Actualizat la v{{version}}",
-        "failed": "Actualizarea la v{{version}} nu s-a finalizat — rulează în continuare v{{current}}. Detalii în loguri."
+        "failed": "Actualizarea la v{{version}} nu s-a finalizat — rulează în continuare v{{current}}. Detalii în jurnale."
       }
     },
     "about": {
       "title": "Despre",
       "description": "Versiunea aplicației și informații despre actualizări",
-      "currentVersion": "Versiunea Curentă",
+      "currentVersion": "Versiunea curentă",
       "checkForUpdates": "Verifică actualizări",
-      "updateAvailable": "Actualizare Disponibilă",
-      "updateDescription": "O nouă versiune este disponibilă. Descarcă și instalează pentru a obține cele mai noi funcționalități și corecții.",
+      "updateAvailable": "Actualizare disponibilă",
+      "updateDescription": "Este disponibilă o versiune nouă. Descarc-o și instaleaz-o ca să ai cele mai noi funcții și remedieri.",
       "openUpdates": "Deschide pagina de actualizări",
-      "upToDate": "Rulezi cea mai recentă versiune.",
-      "viewReleaseNotes": "Vezi notele versiunii pe GitHub",
+      "upToDate": "Ai cea mai recentă versiune.",
+      "viewReleaseNotes": "Vezi noutățile pe GitHub",
       "devInstance": "Instanță de dezvoltare",
       "devInstanceDescription": "Rulezi o versiune de dezvoltare — verificarea actualizărilor este dezactivată."
     }
