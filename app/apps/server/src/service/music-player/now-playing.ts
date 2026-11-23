@@ -89,12 +89,13 @@ export function addMultipleToNowPlaying(fileIds: number[]): void {
 export function removeFromNowPlaying(itemId: number): boolean {
   const db = getDatabase()
 
-  const result = db
+  const removed = db
     .delete(musicNowPlaying)
     .where(eq(musicNowPlaying.id, itemId))
-    .run()
+    .returning({ id: musicNowPlaying.id })
+    .all()
 
-  return result.changes > 0
+  return removed.length > 0
 }
 
 export function setNowPlayingQueue(fileIds: number[]): void {

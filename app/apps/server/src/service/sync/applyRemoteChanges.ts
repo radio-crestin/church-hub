@@ -7,6 +7,7 @@ import type {
   LibrarySchedule,
   LibrarySong,
 } from './types'
+import type { SQLQueryBindings } from 'bun:sqlite'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import {
@@ -168,7 +169,7 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
   // Items (and their nested verses, via CASCADE) are replaced wholesale.
   db.query('DELETE FROM schedule_items WHERE schedule_id = ?').run(scheduleId)
 
-  const insertItem = db.query<{ id: number }, unknown[]>(
+  const insertItem = db.query<{ id: number }, SQLQueryBindings[]>(
     `INSERT INTO schedule_items (
        schedule_id, item_type, song_id, slide_type, slide_content,
        bible_passage_reference, bible_passage_translation, obs_scene_name,

@@ -36,6 +36,9 @@ export async function updateMixerChannel(
       .set({ label, updatedAt: new Date() })
       .where(eq(mixerChannels.channelNumber, channelNumber))
       .returning()
+    if (!updated) {
+      throw new Error(`Updating mixer channel ${channelNumber} failed`)
+    }
 
     return {
       id: updated.id,
@@ -48,6 +51,9 @@ export async function updateMixerChannel(
     .insert(mixerChannels)
     .values({ channelNumber, label })
     .returning()
+  if (!created) {
+    throw new Error(`Inserting mixer channel ${channelNumber} failed`)
+  }
 
   return {
     id: created.id,

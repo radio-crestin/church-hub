@@ -107,7 +107,7 @@ export async function checkSourceForUpdates(
   recoverTitles(songs)
   const verdicts = matchSongs(songs)
   const lacking = findLacking(songs, verdicts)
-  const changed = findChangedSongs(songs, verdicts)
+  const changed = findChangedSongs(source.id, songs, verdicts)
   saveLackingSongs(source.id, lacking)
   saveChangedSongs(source.id, changed)
   const changes = run.autoUpdate

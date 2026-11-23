@@ -28,11 +28,11 @@ export async function handleSceneMixerActions(
     .where(eq(obsScenes.obsSceneName, sceneName))
     .limit(1)
 
-  if (scenes.length === 0) {
+  const scene = scenes[0]
+  if (!scene) {
     return
   }
 
-  const scene = scenes[0]
   let actions: MixerChannelActions
 
   try {

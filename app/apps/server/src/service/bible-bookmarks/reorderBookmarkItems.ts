@@ -22,8 +22,7 @@ export function reorderBookmarkItems(
     const db = getDatabase()
 
     db.transaction((tx) => {
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i]
+      for (const [i, item] of items.entries()) {
         if (item.type === 'verse') {
           tx.update(bibleBookmarks)
             .set({ sortOrder: i })

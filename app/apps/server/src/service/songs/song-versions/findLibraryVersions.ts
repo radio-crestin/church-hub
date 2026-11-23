@@ -70,7 +70,7 @@ function candidatePlaces(subject: VersionWords): Set<number> {
   const { songs, titlePostings, lyricsPostings } = getLibraryVersionIndex()
   const places = new Set<number>()
   for (const id of subject.title.ids) {
-    for (const place of titlePostings[id]) places.add(place)
+    for (const place of titlePostings[id] ?? []) places.add(place)
   }
 
   const lyricsSize = wordSetSize(subject.lyrics)
@@ -79,8 +79,10 @@ function candidatePlaces(subject: VersionWords): Set<number> {
   if (needed > subject.lyrics.ids.length) return places
   const shared = new Int32Array(songs.length)
   for (const id of subject.lyrics.ids) {
-    for (const place of lyricsPostings[id]) {
-      if (++shared[place] === needed) places.add(place)
+    for (const place of lyricsPostings[id] ?? []) {
+      const count = (shared[place] ?? 0) + 1
+      shared[place] = count
+      if (count === needed) places.add(place)
     }
   }
   return places

@@ -32,6 +32,8 @@ import {
 } from '~/features/navigation'
 import type { TemporaryContent } from '~/features/presentation'
 import {
+  PhoneSlideControls,
+  PhoneStage,
   useClearTemporaryContent,
   useNavigateTemporary,
   usePresentationState,
@@ -65,8 +67,6 @@ import {
   SongBookmarksPanel,
   SongControlPanel,
   SongLoadError,
-  SongPhoneControls,
-  SongPhoneStage,
   SongSlidesPanel,
   SongStageBoard,
   SongVersionsPanel,
@@ -101,6 +101,7 @@ import { KeyboardShortcutBadge } from '~/ui/kbd'
 import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
+import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
@@ -925,10 +926,21 @@ function SongPreviewPage() {
                 hideBackground={hidePreviewBackground}
               />
             ) : (
-              <SongPhoneStage
-                songId={numericId}
-                previewMode={previewMode}
-                onTogglePreviewMode={togglePreviewMode}
+              <PhoneStage
+                testId="song-phone-stage"
+                isLive={isThisSongLive}
+                headerActions={
+                  <label className="flex items-center gap-1.5 select-none shrink-0">
+                    <Switch
+                      id="song-preview-mode"
+                      checked={previewMode}
+                      onCheckedChange={togglePreviewMode}
+                    />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('preview.previewMode')}
+                    </span>
+                  </label>
+                }
                 previewContent={stagedPreviewContent}
                 hideBackground={hidePreviewBackground}
               />
@@ -1196,7 +1208,8 @@ function SongPreviewPage() {
 
       {/* The PowerPoint stage has its own previous / next. */}
       {!isLargeScreen && !isPowerpointLayout && (
-        <SongPhoneControls
+        <PhoneSlideControls
+          testId="song-phone"
           onPrev={handlePrevSlide}
           onNext={handleNextSlide}
           canPrev={canNavigatePrev}
@@ -1205,13 +1218,16 @@ function SongPreviewPage() {
           isLive={isThisSongLive}
           onHide={handleHidePresentation}
           isHiding={clearTemporary.isPending}
-          canProject={
+          project={
             previewMode &&
             stagedSlideIndex !== null &&
             stagedSlideIndex !== presentedSlideIndex
+              ? {
+                  onClick: handleProjectStaged,
+                  isPending: presentTemporarySong.isPending,
+                }
+              : undefined
           }
-          onProject={handleProjectStaged}
-          isProjecting={presentTemporarySong.isPending}
         />
       )}
 

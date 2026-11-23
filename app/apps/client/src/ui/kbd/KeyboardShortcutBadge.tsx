@@ -21,9 +21,10 @@ export function KeyboardShortcutBadge({
       ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
       : 'bg-gray-100/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-500'
 
+  // A touch screen has no keys to press: the hint only takes room there.
   return (
     <kbd
-      className={`font-sans font-medium rounded ${sizeClasses} ${variantClasses} ${className}`}
+      className={`font-sans font-medium rounded [@media(hover:none)]:hidden ${sizeClasses} ${variantClasses} ${className}`}
     >
       {formatShortcutForDisplay(shortcut)}
     </kbd>

@@ -38,9 +38,12 @@ export function buildTermGroup(
   const lastPiece = pieces[pieces.length - 1] ?? ''
   const piecesTyping =
     typing && (pieces.length === 1 || lastPiece.length >= MIN_PREFIX_PIECE)
-  const variants: TermVariant[] = [
-    { text: pieces.join(' '), prefix: piecesTyping, edits: 0 },
-  ]
+  const written: TermVariant = {
+    text: pieces.join(' '),
+    prefix: piecesTyping,
+    edits: 0,
+  }
+  const variants: TermVariant[] = [written]
   for (const spelling of [
     ...joinedWordVariants(unit),
     ...elisionVariants(compact),
@@ -49,7 +52,7 @@ export function buildTermGroup(
     variants.push({ text: spelling, prefix: typing, edits: 0 })
   }
   if (pieces.length === 1) {
-    variants.push(...typoVariants(vocabulary, variants[0]))
+    variants.push(...typoVariants(vocabulary, written))
   }
 
   const required = compact.length >= (typing ? 3 : 2)

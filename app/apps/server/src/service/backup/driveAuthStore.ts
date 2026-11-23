@@ -39,11 +39,12 @@ export async function storeDriveAuth(tokens: DriveTokens): Promise<void> {
     email: tokens.email ?? null,
   }
 
-  if (existing.length > 0) {
+  const [current] = existing
+  if (current) {
     await db
       .update(googleDriveAuth)
       .set({ ...values, updatedAt: new Date() })
-      .where(eq(googleDriveAuth.id, existing[0].id))
+      .where(eq(googleDriveAuth.id, current.id))
   } else {
     await db.insert(googleDriveAuth).values(values)
   }
