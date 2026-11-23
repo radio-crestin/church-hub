@@ -64,6 +64,10 @@ test.describe('Back and forward navigation', () => {
   })
 
   test('Alt+Left and Alt+Right go back and forward', async ({ page }) => {
+    // Alt+←/→ is the Windows/Linux shortcut; on a Mac runner it would be ⌘[ / ⌘].
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'platform', { get: () => 'Win32' })
+    })
     await visitThreePages(page)
     await pause(page)
 

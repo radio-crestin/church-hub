@@ -8,7 +8,7 @@ export const songGroupsPaths = {
       tags: ['Song Versions'],
       summary: 'Suggest songs that look like versions of this one',
       description:
-        'On-demand similarity ranking. Uses FTS for recall and a bigram-similarity title pass for precision. Filters out the song itself and any existing group members. Returns up to `limit` candidates sorted by descending blended score.',
+        'On-demand similarity ranking: songs sharing a distinctive title word (60% title + 40% lyrics word overlap), or holding at least 70% of the lyrics words (a re-titled version). Filters out the song itself, its group members and songs in hidden categories. Returns up to `limit` candidates sorted by descending score.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {
@@ -37,6 +37,43 @@ export const songGroupsPaths = {
                     items: {
                       $ref: '#/components/schemas/SongVersionSuggestion',
                     },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/songs/{id}/same-theme': {
+    get: {
+      tags: ['Songs'],
+      summary: 'Other songs on the same theme as this one',
+      description:
+        "Ranks the library by how much of this song's distinctive vocabulary each song shares (idf-weighted word stems, words naming a theme such as Christmas or the Cross weighing double), plus a bonus per named theme both are on. Leaves out the song, its versions (its group and what /similar would suggest) and songs in hidden categories.",
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+        {
+          name: 'limit',
+          in: 'query',
+          required: false,
+          schema: { type: 'integer', default: 8, minimum: 1, maximum: 20 },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Songs on the same theme, closest first',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: { $ref: '#/components/schemas/SongThemeSuggestion' },
                   },
                 },
               },

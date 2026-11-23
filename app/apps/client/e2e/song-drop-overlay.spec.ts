@@ -66,7 +66,7 @@ async function emitTauri(page: Page, event: string, payload: unknown) {
   )
 }
 
-const DROP_HINT = /Drop PPTX file to import as song|Trage/i
+const DROP_HINT = /Drop PPTX file to import as song|Lasă aici fișierul PPTX/i
 
 test('the drop overlay hides when files are dragged back out of the window', async ({
   page,

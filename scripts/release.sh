@@ -12,7 +12,7 @@
 #      it Latest, which is what the in-app updater offers (docs/auto-update.md).
 #
 # Before the bump it runs scripts/security-check.sh (gitleaks since the last
-# tag, CodeQL locally); any finding stops the release.
+# tag, CodeQL locally on Linux only); any finding stops the release.
 #
 # CI takes over from the tag push (build-release.yml): first the pre-release
 # gate — the e2e suite and the compiled-sidecar smoke on macOS, Windows and

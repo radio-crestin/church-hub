@@ -142,7 +142,7 @@ test.describe('OBS scene automation in a program', () => {
         .toBe(songSceneName)
 
       // Next walks the program the way the operator does: slide 2, the scene, song B.
-      const next = page.getByRole('button', { name: /^(Next|Următor)$/ })
+      const next = page.getByRole('button', { name: /^(Next|Următorul?)$/ })
       await next.click()
       await expect
         .poll(() => readLiveIndex(request), { timeout: 10000 })

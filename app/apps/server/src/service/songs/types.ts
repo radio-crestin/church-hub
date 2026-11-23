@@ -463,7 +463,12 @@ export interface UpsertSongGroupInput {
  *  - `reason` is a coarse hint ("titlu", "versuri") shown in the UI so the
  *    operator understands *why* the candidate matched (helps trust).
  */
-export interface SongVersionSuggestion {
+export interface SongVersionSuggestion extends SuggestedSong {
+  reason: 'title' | 'lyrics' | 'mixed'
+}
+
+/** What a list of suggested songs shows for each one. */
+export interface SuggestedSong {
   songId: number
   title: string
   hymnNumber: string | null
@@ -472,5 +477,16 @@ export interface SongVersionSuggestion {
   /** The song's musical key ("gama melodie"), free-text. */
   keyLine: string | null
   score: number
-  reason: 'title' | 'lyrics' | 'mixed'
+}
+
+/**
+ * A song on the same theme as a given one: a different song (never one of
+ * its versions) whose words share the given song's distinctive ones.
+ * `sharedWords` are those words, as the given song writes them, most
+ * distinctive first: with `themes`, they tell the operator what the theme is.
+ */
+export interface SongThemeSuggestion extends SuggestedSong {
+  /** The named themes both songs are on (see `themeLexicon`). */
+  themes: string[]
+  sharedWords: string[]
 }

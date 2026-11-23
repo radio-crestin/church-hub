@@ -114,7 +114,7 @@ test.describe('Bible Search', () => {
     await page.goto('/bible')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     if (!(await searchInput.isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Search input not visible')
       return
@@ -132,7 +132,7 @@ test.describe('Bible Search', () => {
     await page.goto('/bible')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     if (!(await searchInput.isVisible({ timeout: 5000 }).catch(() => false))) {
       test.skip(true, 'Search input not visible')
       return
@@ -184,7 +184,7 @@ test.describe('Search clear (X) button', () => {
     await page.goto('/bible')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     await expect(searchInput).toBeVisible({ timeout: 10000 })
 
     await searchInput.fill('Dumnezeu')
@@ -222,7 +222,7 @@ test.describe('Search clear (X) button', () => {
     await page.goto('/schedules')
     await page.waitForLoadState('networkidle')
 
-    const searchInput = page.getByPlaceholder(/search|cauta|căuta/i).first()
+    const searchInput = page.getByPlaceholder(/search|caută/i).first()
     await expect(searchInput).toBeVisible({ timeout: 10000 })
 
     await searchInput.fill('test')

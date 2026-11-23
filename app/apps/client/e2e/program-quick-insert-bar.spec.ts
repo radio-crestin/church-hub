@@ -87,10 +87,10 @@ test('the bar between entries inserts a song and verses right there', async ({
     const verses = page.getByTestId('insert-slide-modal')
     await expect(verses).toBeVisible()
     await verses
-      .getByRole('button', { name: /Adaug[aă] Intrare|Add Entry/ })
+      .getByRole('button', { name: /Adaugă intrare|Add Entry/ })
       .click()
     await verses
-      .getByPlaceholder(/Nume persoan[aă]|Person name/)
+      .getByPlaceholder(/Numele persoanei|Person name/)
       .first()
       .fill('Timeea')
     await verses

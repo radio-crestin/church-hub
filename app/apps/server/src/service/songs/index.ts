@@ -56,6 +56,8 @@ export {
   reorderSongSlides,
   upsertSongSlide,
 } from './song-slides'
+// Songs on the same theme
+export { findSameThemeSongs } from './song-themes/findSameThemeSongs'
 // Songs
 export {
   batchImportSongs,

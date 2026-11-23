@@ -171,7 +171,7 @@ test.describe('Settings · Logs', () => {
     await expect(
       page.getByRole('heading', {
         level: 2,
-        name: /application logs|jurnale aplica/i,
+        name: /application logs|jurnalele aplicației/i,
       }),
     ).toBeVisible({ timeout: 10000 })
 

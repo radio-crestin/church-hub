@@ -7,12 +7,17 @@
 #      (javascript-typescript, actions, rust; build-mode none; the default
 #      code-scanning suite, the CLI's default as in CI; the same paths-ignore).
 #
+# CodeQL runs by default only on Linux (the release machine): on macOS and
+# Windows it needs ~2 GB for the bundle plus a Rust build, so there `all`
+# runs gitleaks only; `codeql` runs it there on purpose. CI's CodeQL still
+# gates every tag (build-release.yml).
+#
 # Fails on any gitleaks finding and on any error- or warning-level CodeQL
 # alert (or one rated high/critical security severity). Works on macOS, Linux
 # and Windows (Git Bash). Needs gitleaks, bun and the CodeQL bundle (the CLI
 # with its query packs, offline) on PATH, or CODEQL=<path to its codeql>.
 #
-# Usage: ./scripts/security-check.sh [gitleaks|codeql]   (default: both)
+# Usage: ./scripts/security-check.sh [gitleaks|codeql]   (default: both on Linux, gitleaks elsewhere)
 
 set -euo pipefail
 
@@ -119,5 +124,9 @@ case "$ONLY" in
   *) echo "usage: $0 [gitleaks|codeql]" >&2; exit 1 ;;
 esac
 if [[ "$ONLY" != codeql ]]; then run_gitleaks || exit 1; fi
-if [[ "$ONLY" != gitleaks ]]; then run_codeql || exit 1; fi
+if [[ "$ONLY" == all && "$(os_name)" != linux ]]; then
+  echo "== CodeQL: skipped on $(os_name) (Linux only by default; CI runs it on the tag). Run it here: $0 codeql"
+elif [[ "$ONLY" != gitleaks ]]; then
+  run_codeql || exit 1
+fi
 echo "Security check passed."
