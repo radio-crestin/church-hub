@@ -69,7 +69,7 @@ function DeveloperSettings() {
 
             {/* API Documentation Card */}
             <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <ExternalLink className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   <div>

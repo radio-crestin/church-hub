@@ -66,8 +66,8 @@ export function UserCard({
             actions dropdown stays opaque and isn't trapped under sibling cards
             (opacity on the root would create a stacking context). */}
         <div className={`flex-1 min-w-0 ${user.isActive ? '' : 'opacity-60'}`}>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-medium text-gray-900 dark:text-white truncate">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h3 className="min-w-0 max-w-full truncate text-base font-medium text-gray-900 dark:text-white">
               {user.name}
             </h3>
             <span

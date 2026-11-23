@@ -13,7 +13,9 @@ import { Page, PageHeader } from '~/ui/page'
 import { AddFolderButton } from './AddFolderButton'
 import { LibraryNav } from './LibraryNav'
 import { NameModal } from './NameModal'
-import { Player } from './ServerMusicPlayer'
+import { PlayerCard } from './PlayerCard'
+import { PlayerDeck } from './PlayerDeck'
+import { PlayerQueue } from './PlayerQueue'
 import { TrackPanel } from './TrackPanel'
 import {
   useAddToPlaylist,
@@ -28,7 +30,8 @@ const WORKSPACE_ID = 'music-library'
 
 /**
  * Like the Songs page: the library's views on the left, the chosen view's
- * tracks in the middle, the player and its queue on the right.
+ * tracks in the middle, the player and its queue on the right. On a phone the
+ * player stays pinned on top, over the tracks, library and queue as tabs.
  */
 const MUSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
@@ -63,6 +66,7 @@ export function MusicPage() {
   const player = useServerAudioPlayer()
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const [view, setView] = useState<LibraryView>({ kind: 'all' })
+  const [phoneTab, setPhoneTab] = useState('tracks')
   const [search, setSearch] = useState('')
   // The new playlist being named, and the track it starts with, if any.
   const [newPlaylist, setNewPlaylist] = useState<{
@@ -82,9 +86,11 @@ export function MusicPage() {
           ? (playlists.find((p) => p.id === view.id)?.name ?? '')
           : (folders.find((f) => f.id === view.id)?.name ?? '')
 
+  // Picking a view on a phone opens its tracks.
   const selectView = useCallback((next: LibraryView) => {
     setView(next)
     setSearch('')
+    setPhoneTab('tracks')
   }, [])
 
   const handleAddToQueue = useCallback(
@@ -109,32 +115,27 @@ export function MusicPage() {
 
   const workspacePanels: WorkspacePanel[] = [
     {
-      id: 'player',
+      id: 'deck',
       title: t('player.title'),
+      pinned: true,
+      available: !isLargeScreen,
       render: () => (
-        <Player
-          state={player.state}
-          currentTrack={player.currentTrack}
-          onPlayPause={player.togglePlayPause}
-          onPrevious={player.previous}
-          onNext={player.next}
-          onSeek={player.seek}
-          onVolumeChange={player.setVolume}
-          onToggleMute={player.toggleMute}
-          onClearQueue={player.clearQueue}
-          onPlayAtIndex={player.playAtIndex}
-          onRemoveFromQueue={player.removeFromQueue}
-          onQueueOrderChange={player.setQueueOrder}
-        />
+        <PlayerCard>
+          <PlayerDeck player={player} />
+        </PlayerCard>
       ),
     },
     {
-      id: 'library',
-      title: t('library.title'),
+      id: 'player',
+      title: t('player.title'),
+      available: isLargeScreen,
       render: () => (
-        <Scrollable enabled={isLargeScreen}>
-          <LibraryNav view={view} onSelect={selectView} />
-        </Scrollable>
+        <PlayerCard>
+          <PlayerDeck player={player} />
+          <div className="flex flex-col lg:flex-1 lg:min-h-0 border-t border-gray-200 dark:border-gray-700">
+            <PlayerQueue player={player} />
+          </div>
+        </PlayerCard>
       ),
     },
     {
@@ -155,6 +156,25 @@ export function MusicPage() {
             onViewRemoved={() => selectView({ kind: 'all' })}
           />
         </Scrollable>
+      ),
+    },
+    {
+      id: 'library',
+      title: t('library.title'),
+      render: () => (
+        <Scrollable enabled={isLargeScreen}>
+          <LibraryNav view={view} onSelect={selectView} />
+        </Scrollable>
+      ),
+    },
+    {
+      id: 'queue',
+      title: t('player.queue'),
+      available: !isLargeScreen,
+      render: () => (
+        <PlayerCard>
+          <PlayerQueue player={player} />
+        </PlayerCard>
       ),
     },
   ]
@@ -193,6 +213,9 @@ export function MusicPage() {
         defaultLayout={MUSIC_WORKSPACE_LAYOUT}
         defaultColumnSizes={['20%', '52%', '28%']}
         stacked={!isLargeScreen}
+        stackedAsTabs
+        activeTab={phoneTab}
+        onActiveTabChange={setPhoneTab}
         className="flex-1 lg:min-h-0"
       />
 

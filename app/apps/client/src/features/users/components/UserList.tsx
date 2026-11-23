@@ -2,6 +2,7 @@ import { Plus, Search, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SectionHeader } from '~/ui/page'
 import { UserCard } from './UserCard'
 import { UserForm, type UserFormData } from './UserForm'
 import { UserQRModal } from './UserQRModal'
@@ -166,24 +167,21 @@ export function UserList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            {t('sections.users.title')}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('sections.users.description')}
-          </p>
-        </div>
-        <button
-          onClick={() => setModal({ type: 'create' })}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700
+      <SectionHeader
+        title={t('sections.users.title')}
+        description={t('sections.users.description')}
+        actions={
+          <button
+            type="button"
+            onClick={() => setModal({ type: 'create' })}
+            className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700
             text-white rounded-lg transition-colors text-sm"
-        >
-          <Plus size={16} />
-          {t('sections.users.addUser')}
-        </button>
-      </div>
+          >
+            <Plus size={16} />
+            {t('sections.users.addUser')}
+          </button>
+        }
+      />
 
       {users && users.length > 0 && (
         <div className="relative">

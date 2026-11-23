@@ -7,6 +7,7 @@ import {
   getLastSettingsSection,
   isVisibleLeafPath,
 } from '~/features/settings'
+import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { usePermissions } from '~/provider/permissions-provider'
 
 export const Route = createFileRoute('/settings/')({
@@ -16,6 +17,9 @@ export const Route = createFileRoute('/settings/')({
 function SettingsIndex() {
   const { hasPermission, isLoading } = usePermissions()
   const navigate = useNavigate()
+  // Side by side (md and up) the list sits next to a section, so one opens;
+  // narrower, the index is the list itself, in a phone's browser too.
+  const isWide = useMediaQuery('(min-width: 768px)')
 
   // Reopen the section the operator last had open (if it's still visible),
   // otherwise fall back to the first category the user can access.
@@ -37,12 +41,9 @@ function SettingsIndex() {
       : getFirstVisibleLeaf(ctx)
 
   useEffect(() => {
-    // On mobile the index route IS the master category list (rendered by
-    // SettingsLayout); don't redirect. Desktop jumps to the first category once
-    // permissions have loaded.
-    if (isMobile() || isLoading) return
+    if (!isWide || isLoading) return
     navigate({ to: target, replace: true })
-  }, [isLoading, navigate, target])
+  }, [isWide, isLoading, navigate, target])
 
   return null
 }

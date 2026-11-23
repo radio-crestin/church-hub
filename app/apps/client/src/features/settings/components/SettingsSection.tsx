@@ -1,11 +1,15 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { SectionHeader } from '~/ui/page'
+
 interface SettingsSectionProps {
   title?: string
   description?: string
   icon?: LucideIcon
   children: ReactNode
+  /** Buttons on the right of the title. */
+  actions?: ReactNode
   testId?: string
 }
 
@@ -16,35 +20,24 @@ interface SettingsSectionProps {
 export function SettingsSection({
   title,
   description,
-  icon: Icon,
+  icon,
+  actions,
   children,
   testId,
 }: SettingsSectionProps) {
-  const header =
-    title || description ? (
-      <div className="mb-4">
-        {title && (
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-            {Icon && (
-              <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            )}
-            {title}
-          </h2>
-        )}
-        {description && (
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {description}
-          </p>
-        )}
-      </div>
-    ) : null
-
   return (
     <div
       data-testid={testId}
-      className="flex-1 rounded-lg border border-gray-200 bg-white p-6 transition-colors data-[active]:border-indigo-400 data-[active]:ring-1 data-[active]:ring-indigo-400/40 dark:border-gray-800 dark:bg-gray-900 dark:data-[active]:border-indigo-500 dark:data-[active]:ring-indigo-500/40"
+      className="flex-1 rounded-lg border border-gray-200 bg-white p-4 transition-colors sm:p-6 data-[active]:border-indigo-400 data-[active]:ring-1 data-[active]:ring-indigo-400/40 dark:border-gray-800 dark:bg-gray-900 dark:data-[active]:border-indigo-500 dark:data-[active]:ring-indigo-500/40"
     >
-      {header}
+      {(title || description || actions) && (
+        <SectionHeader
+          title={title}
+          description={description}
+          icon={icon}
+          actions={actions}
+        />
+      )}
       {children}
     </div>
   )
