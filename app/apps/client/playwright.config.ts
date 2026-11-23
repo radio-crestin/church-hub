@@ -28,9 +28,25 @@ export const WEBKIT_STORAGE_STATE = join(
 // on the running app drove its real projector and database ("slides appear
 // with nobody presenting", T-030).
 const TEST_PORT = process.env.TEST_PORT ?? '3099'
-// The server's LAN stand-in (see apps/server/src/utils/testLanListener.ts).
+/**
+ * Every other port a run uses, as an offset from TEST_PORT: one row each, so
+ * two features never take the same port (T-206: the LAN stand-in and the fake
+ * audio server both took +1, and music.spec failed with EADDRINUSE). Keep the
+ * offsets under 10: a Superfactory worktree owns ten ports from $PORT, so a run
+ * on TEST_PORT=$PORT stays inside its own range (task builds use 3100+n and
+ * 4100+n, out of the way of those ranges).
+ */
+const PORT_OFFSETS = {
+  // The server's LAN stand-in (see apps/server/src/utils/testLanListener.ts).
+  lan: 1,
+  // The desktop app's audio server stand-in (fake-audio-server.ts).
+  fakeAudio: 2,
+} as const
+const derivedPort = (name: keyof typeof PORT_OFFSETS) =>
+  Number(TEST_PORT) + PORT_OFFSETS[name]
+
 export const TEST_LAN_PORT =
-  process.env.TEST_LAN_PORT ?? String(Number(TEST_PORT) + 1)
+  process.env.TEST_LAN_PORT ?? String(derivedPort('lan'))
 // The test server frees its port on start (killProcessOnPort), so there it
 // would kill the installed app or the dev server.
 if ([TEST_PORT, TEST_LAN_PORT].some((p) => p === '3000' || p === '3001')) {
@@ -43,7 +59,7 @@ const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
  * Where the test server looks for the desktop app's audio server: the music
  * spec starts a stand-in there, so music really "plays" (fake-audio-server.ts).
  */
-export const FAKE_AUDIO_PORT = Number(TEST_PORT) + 1
+export const FAKE_AUDIO_PORT = derivedPort('fakeAudio')
 
 /**
  * The line the server prints once the real server is bound and boot is done

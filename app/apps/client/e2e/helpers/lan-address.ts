@@ -1,5 +1,7 @@
 import type { LookupFunction } from 'node:net'
 
+import { TEST_LAN_PORT } from '../../playwright.config'
+
 /**
  * The test server's LAN stand-in (T-193). The server listens on loopback only,
  * so Windows raises no firewall prompt, and requests on its second port
@@ -16,10 +18,8 @@ export function lanAddress(): string {
 }
 
 /** The test server's URL as a LAN device reaches it. */
-export function lanBaseUrl(baseURL: string): string {
-  const lanPort =
-    process.env.TEST_LAN_PORT ?? String(Number(new URL(baseURL).port) + 1)
-  return `http://${LAN_HOST}:${lanPort}`
+export function lanBaseUrl(): string {
+  return `http://${LAN_HOST}:${TEST_LAN_PORT}`
 }
 
 /** A `lookup` for Node's http client that resolves LAN_HOST to 127.0.0.1. */
