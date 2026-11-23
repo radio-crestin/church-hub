@@ -22,6 +22,7 @@ import {
   KioskScreenDimManager,
   KioskWakeLockManager,
 } from '~/features/kiosk'
+import { OnboardingGate } from '~/features/onboarding'
 import { WebSocketProvider } from '~/features/presentation/context'
 import {
   useAutoOpenScreens,
@@ -176,9 +177,11 @@ function MainLayout() {
                               <SidebarNavigationListener />
                               <GlobalAppShortcutManager />
                               <HistoryNavigationManager />
-                              <AppLayout>
-                                <Outlet />
-                              </AppLayout>
+                              <OnboardingGate>
+                                <AppLayout>
+                                  <Outlet />
+                                </AppLayout>
+                              </OnboardingGate>
                             </FileDropZoneProvider>
                           </ShortcutRecordingProvider>
                         </MIDISettingsProvider>

@@ -510,15 +510,19 @@ function killProcessOnPort(port: number): void {
 
   try {
     if (platform === 'darwin' || platform === 'linux') {
-      // macOS/Linux: Find PID using lsof and kill it
+      // macOS/Linux: the process LISTENING on the port, as on Windows. A bare
+      // `lsof -ti :port` also lists every client connected to it (the desktop
+      // shell, a test polling it), which were killed with it.
       // Using execFileSync with args array prevents shell injection
-      const result = execFileSync('lsof', ['-ti', `:${portStr}`], {
-        encoding: 'utf-8',
-      }).trim()
+      const result = execFileSync(
+        'lsof',
+        ['-ti', `tcp:${portStr}`, '-sTCP:LISTEN'],
+        { encoding: 'utf-8' },
+      ).trim()
       if (result) {
         const pids = result.split('\n').filter(Boolean)
         for (const pid of pids) {
-          if (/^\d+$/.test(pid)) {
+          if (/^\d+$/.test(pid) && Number(pid) !== process.pid) {
             try {
               execFileSync('kill', ['-9', pid])
               // biome-ignore lint/suspicious/noConsole: Startup info
@@ -587,7 +591,8 @@ async function main() {
   // window's loading page reads each step from /health while the heavy init
   // below runs. If any init step throws, the boot server stays up reporting
   // the failure via /health instead of the process dying silently.
-  setBootFirstRun(!existsSync(getDatabasePath()))
+  const firstRun = !existsSync(getDatabasePath())
+  setBootFirstRun(firstRun)
   t = performance.now()
   const bootServer = await startBootServer(serverPort)
   logTiming('boot_server_start', t)
@@ -605,6 +610,14 @@ async function main() {
     t = performance.now()
     await initializeDatabase()
     logTiming('database_init', t)
+    // A new database: its first admin is walked through the onboarding.
+    // Existing installs never get the key, so they never see it.
+    if (firstRun) {
+      upsertSetting('app_settings', {
+        key: 'onboarding_pending',
+        value: 'true',
+      })
+    }
 
     bootPhase = 'indexing'
     setBootPhase('indexing')
@@ -3643,6 +3656,10 @@ async function startRealServer(): Promise<void> {
 
         const id = parseInt(deleteScreenMatch[1], 10)
         const result = deleteScreen(id)
+
+        // Other clients drop it from their lists, and their previews fall back
+        // to the main screen when it was the one shown there.
+        if (result.success) broadcastScreenConfigUpdated(id)
 
         if (!result.success) {
           return handleCors(

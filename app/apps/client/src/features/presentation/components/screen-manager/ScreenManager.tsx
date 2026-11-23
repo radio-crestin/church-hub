@@ -26,6 +26,7 @@ import {
   closeDisplayWindow,
   getFrontendUrl,
 } from '../../utils/openDisplayWindow'
+import { resolvePreviewScreen } from '../../utils/resolvePreviewScreen'
 import { ScreenEditor } from '../screen-editor'
 
 export function ScreenManager() {
@@ -56,6 +57,7 @@ export function ScreenManager() {
   )
 
   const { data: screens, isLoading } = useScreens()
+  const previewScreenId = resolvePreviewScreen(screens)?.id
   const upsertScreen = useUpsertScreen()
   const deleteScreen = useDeleteScreen()
   const duplicateScreen = useDuplicateScreen()
@@ -220,6 +222,7 @@ export function ScreenManager() {
               onDuplicate={() => handleDuplicate(screen)}
               onDelete={() => handleDelete(screen)}
               isDuplicating={duplicateScreen.isPending}
+              isShownInPreviews={screen.id === previewScreenId}
             />
           ))}
         </div>
