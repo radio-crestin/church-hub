@@ -29,7 +29,7 @@ Turning remote access off closes the room and disconnects the phones.
 
 ## Building
 
-The phone builds compile the client only (`tauri.android.conf.json`, `tauri.ios.conf.json`). The sidecar, projector windows, screen sharing and audio player are desktop-only (`[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]` in `app/tauri/Cargo.toml`). `app/tauri/gen/` is generated and not committed: run `init` first in a fresh checkout, and again (after deleting `gen/android` or `gen/apple`) whenever `@tauri-apps/cli` is upgraded, since its project templates change with it. Both phone configs set the desktop `bundle.resources` to `null`, so the client dist, MIDI, sample music and backgrounds stay out of the phone bundles.
+The phone builds compile the client only (`tauri.android.conf.json`, `tauri.ios.conf.json`). The sidecar, projector windows, screen sharing and audio player are desktop-only (`[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]` in `app/tauri/Cargo.toml`). `app/tauri/gen/` is generated and not committed: run `init` first in a fresh checkout, and again (after deleting `gen/android` or `gen/apple`) whenever `@tauri-apps/cli` is upgraded, since its project templates change with it. Both phone configs set the desktop `bundle.resources` to `null`, so the client dist, MIDI, sample music and backgrounds stay out of the phone bundles. `tauri-plugin-keep-screen-on` is vendored in `app/tauri-plugins/` because the published 0.1.4 sets `targetSdk` in its Android library, which the Android Gradle Plugin 9 template rejects.
 
 ### Android (Windows, Linux or macOS)
 

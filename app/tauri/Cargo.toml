@@ -28,7 +28,7 @@ tauri-plugin-http = { version = "2.5.4", features = ["unsafe-headers", "cookies"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-websocket = "2"
-tauri-plugin-keep-screen-on = "0.1.2"
+tauri-plugin-keep-screen-on = { path = "../tauri-plugins/tauri-plugin-keep-screen-on" }
 tauri-plugin-screen-brightness = { path = "../tauri-plugins/tauri-plugin-screen-brightness" }
 tauri-plugin-process = "2"
 # Used by the update check (asset selection), the feedback report and the
