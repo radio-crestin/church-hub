@@ -31,24 +31,26 @@ function stop() {
 }
 
 /**
- * Times the verse on screen when a looping Versete Biblice slideshow shows
- * one: after its reading time, the next verse goes up. Anything else on
- * screen, or a hidden screen, stops the loop.
+ * Times the verse on screen when a looping or auto-advancing Versete Biblice
+ * slideshow shows one: after its reading time, the next verse goes up. An
+ * auto-advancing one stays on its last verse. Anything else on screen, or a
+ * hidden screen, stops the timer.
  */
 function follow(state: PresentationState) {
   const content = state.temporaryContent
   if (
     state.isHidden ||
     content?.type !== 'versete_tineri' ||
-    !content.data.loop
+    !(content.data.loop || content.data.autoAdvance)
   ) {
     stop()
     return
   }
 
-  const { entries, currentEntryIndex } = content.data
+  const { entries, currentEntryIndex, loop } = content.data
   const entry = entries[currentEntryIndex]
-  if (!entry) {
+  const isLastOfRun = !loop && currentEntryIndex === entries.length - 1
+  if (!entry || isLastOfRun) {
     stop()
     return
   }

@@ -10,7 +10,7 @@ import {
 import { useShortcutPages } from '../hooks/useShortcutPages'
 
 const cardClass =
-  'rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900'
+  'rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-800 dark:bg-gray-900'
 
 /**
  * The consolidated Shortcuts settings page: every configurable keyboard/MIDI

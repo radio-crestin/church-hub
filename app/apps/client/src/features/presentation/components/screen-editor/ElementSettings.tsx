@@ -49,6 +49,7 @@ const ALWAYS_ANIMATED = new Set([
   'referenceText',
   'songKey',
   'amen',
+  'songTitle',
   'personLabel',
 ])
 
@@ -163,6 +164,16 @@ export function ElementSettings({
             checked={elementConfig.hidden ?? false}
             onCheckedChange={(checked) => update({ hidden: !!checked })}
             label={t('screens.visibility.hideElement')}
+          />
+        </div>
+      )}
+
+      {element.type === 'songTitle' && (
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <Checkbox
+            checked={elementConfig.showNumber ?? false}
+            onCheckedChange={(checked) => update({ showNumber: !!checked })}
+            label={t('screens.songTitle.showNumber')}
           />
         </div>
       )}

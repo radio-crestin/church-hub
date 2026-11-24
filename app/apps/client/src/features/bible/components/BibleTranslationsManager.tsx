@@ -204,17 +204,11 @@ export function BibleTranslationsManager({
 
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
-        title={t('sections.bible.modals.delete.title', {
-          defaultValue: 'Delete Translation',
-        })}
+        title={t('sections.bible.modals.delete.title')}
         message={t('sections.bible.modals.delete.message', {
-          defaultValue:
-            'Are you sure you want to delete "{{name}}"? All verses will be permanently removed.',
           name: deleteConfirm.translationName,
         })}
-        confirmLabel={t('sections.bible.modals.delete.confirm', {
-          defaultValue: 'Delete',
-        })}
+        confirmLabel={t('sections.bible.modals.delete.confirm')}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
         variant="danger"

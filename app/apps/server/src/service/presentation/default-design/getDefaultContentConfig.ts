@@ -43,10 +43,34 @@ function referenceStyle(layout: ScreenLayout) {
   }
 }
 
+/**
+ * The song's title in a corner. Off until a screen turns it on; it lives in
+ * the `song` layout only and shows on every slide of the song (T-029).
+ */
+function songTitle(layout: ScreenLayout) {
+  return textElement(
+    layout,
+    'songTitle',
+    {
+      fontFamily: FONTS.title,
+      bold: true,
+      color: COLORS.muted,
+      // A long title shrinks (and at worst wraps) to stay inside its corner.
+      autoScale: true,
+      minFontSize: 14,
+      lineHeight: 1.15,
+      shadow: layout.shadow,
+    },
+    // Off until a screen turns it on; the songbook and number too.
+    { hidden: true, showNumber: false },
+  )
+}
+
 function songConfig(layout: ScreenLayout, screenType: ScreenType) {
   return {
     background: background(layout),
     ...songElements(layout),
+    songTitle: songTitle(layout),
     clockEnabled: layout.clockWithContent,
     // The stream audience doesn't need the song key (gama).
     ...(screenType === 'livestream' ? { displayKeyLine: false } : {}),

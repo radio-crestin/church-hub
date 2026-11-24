@@ -28,6 +28,12 @@ export function getMissingContentConfig(
   if (!omitted || !savedSongConfig) {
     return getDefaultContentConfig(contentType, screenType)
   }
-  const { [omitted]: _omitted, ...inherited } = savedSongConfig
+  // The song title is set on the `song` layout alone and read from there on
+  // every slide, so the first/last layouts never carry a copy of it.
+  const {
+    [omitted]: _omitted,
+    songTitle: _songTitle,
+    ...inherited
+  } = savedSongConfig
   return inherited
 }

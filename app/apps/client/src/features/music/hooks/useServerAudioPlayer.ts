@@ -184,3 +184,5 @@ export function useServerAudioPlayer() {
     setQueueOrder,
   }
 }
+
+export type ServerAudioPlayer = ReturnType<typeof useServerAudioPlayer>

@@ -10,6 +10,7 @@ import {
   backupPaths,
   bibleBookmarksPaths,
   biblePaths,
+  bibleTopicsPaths,
   categoriesPaths,
   conversionPaths,
   databasePaths,
@@ -137,6 +138,11 @@ export const openApiSpec = {
       description: 'YouTube broadcasts and the settings they are created with',
     },
     {
+      name: 'Bible Topics',
+      description:
+        'Bible verses by topic (OpenBible.info topical data, CC BY 4.0)',
+    },
+    {
       name: 'Notifications',
       description: 'The notifications history: song syncs and app updates',
     },
@@ -161,6 +167,7 @@ export const openApiSpec = {
     ...categoriesPaths,
     ...biblePaths,
     ...bibleBookmarksPaths,
+    ...bibleTopicsPaths,
     ...schedulesPaths,
     ...screenSharePaths,
     ...screensPaths,

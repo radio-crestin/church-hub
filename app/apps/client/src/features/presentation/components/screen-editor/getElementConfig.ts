@@ -25,6 +25,8 @@ export interface ElementConfig {
   /** The clock's own */
   format?: ClockElementConfig['format']
   showSeconds?: boolean
+  /** The song title's songbook and number */
+  showNumber?: boolean
   /** The "Amin" element's saved text */
   text?: string
 }

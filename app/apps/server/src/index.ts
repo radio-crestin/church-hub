@@ -43,6 +43,7 @@ import {
 } from './routes/analytics'
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
+import { handleBibleTopicRoutes } from './routes/bible-topics'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
@@ -8255,6 +8256,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (songSourcesResponse) return songSourcesResponse
+
+      // Bible verses by topic
+      const bibleTopicsResponse = await handleBibleTopicRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (bibleTopicsResponse) return bibleTopicsResponse
 
       // The notifications history (song syncs, app updates)
       const notificationsResponse = await handleNotificationRoutes(

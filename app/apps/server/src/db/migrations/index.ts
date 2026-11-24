@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 
 import { addBackupConfig } from './add-backup-config'
+import { addBibleTopics } from './add-bible-topics'
 import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
 import { addLastPresentedAt } from './add-last-presented-at'
@@ -37,6 +38,7 @@ import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
 import { removeSeededSecrets } from './remove-seeded-secrets'
 import { removeSeededTestSong } from './remove-seeded-test-song'
 import { seedSystemRoles } from './seed'
+import { seedBibleTopics } from './seed-bible-topics'
 import { seedBibleTranslations } from './seed-bibles'
 import { seedSampleMusic } from './seed-music'
 import { seedDefaultObsScenes } from './seed-obs-scenes'
@@ -434,6 +436,15 @@ export function runMigrations(rawDb: Database): MigrationResult {
   // The notifications history (song syncs, app updates), kept 60 days.
   runStep('add_notifications', 'Running add notifications migration', () =>
     addNotifications(rawDb),
+  )
+
+  // Bible verses by topic (T-203): the bundled topics, added on the first
+  // start and refreshed on upgrade, the user's changes kept.
+  runStep('add_bible_topics', 'Running add bible topics migration', () =>
+    addBibleTopics(rawDb),
+  )
+  runStep('seed_bible_topics', 'Seeding Bible topics', () =>
+    seedBibleTopics(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and

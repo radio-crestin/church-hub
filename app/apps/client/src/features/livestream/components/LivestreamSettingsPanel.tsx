@@ -21,7 +21,7 @@ import { SceneSettingsItem } from './SceneSettingsItem'
 import { useOBSConnection, useOBSScenes } from '../hooks'
 
 const cardClass =
-  'rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900'
+  'rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-800 dark:bg-gray-900'
 
 /**
  * Livestream settings panel: OBS scene management. Start/stop stream shortcuts
@@ -71,7 +71,7 @@ export function LivestreamSettingsPanel() {
 
   return (
     <div className={`flex-1 ${cardClass}`}>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-medium text-gray-900 dark:text-white">
           {t('scenes.title')}
         </h3>

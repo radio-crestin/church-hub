@@ -1351,6 +1351,14 @@
       "viewReleaseNotes": "Vezi noutățile pe GitHub",
       "devInstance": "Instanță de dezvoltare",
       "devInstanceDescription": "Rulezi o versiune de dezvoltare — verificarea actualizărilor este dezactivată."
+    },
+    "credits": {
+      "title": "Mulțumiri",
+      "description": "Conținut preluat din alte surse",
+      "bibleTopics": {
+        "title": "Versete biblice pe teme",
+        "attribution": "Temele și versetele lor provin din <source>Biblia pe teme de la OpenBible.info</source>, sub licența <licence>CC BY 4.0</licence>. Titlurile în română sunt traducerea noastră; textul versetelor vine din Bibliile instalate."
+      }
     }
   }
 }

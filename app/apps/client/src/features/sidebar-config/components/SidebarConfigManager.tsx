@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
+import { SectionHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast'
 import { CustomPageFormModal } from './CustomPageFormModal'
 import { SidebarItemCard } from './SidebarItemCard'
@@ -233,26 +234,21 @@ export function SidebarConfigManager() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <PanelLeft className="w-5 h-5" />
-            {t('sections.sidebar.title')}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {t('sections.sidebar.description')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          {t('sections.sidebar.addCustomPage')}
-        </button>
-      </div>
+      <SectionHeader
+        title={t('sections.sidebar.title')}
+        description={t('sections.sidebar.description')}
+        icon={PanelLeft}
+        actions={
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            {t('sections.sidebar.addCustomPage')}
+          </button>
+        }
+      />
 
       {/* Items List with Drag and Drop */}
       <DndContext

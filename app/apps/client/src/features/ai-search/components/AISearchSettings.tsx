@@ -81,7 +81,7 @@ export function AISearchSettings({
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 animate-pulse">
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-800 animate-pulse">
         <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
         <div className="space-y-3">
           <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded" />
@@ -92,7 +92,7 @@ export function AISearchSettings({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 space-y-6">
+    <div className="bg-white dark:bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-800 space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-indigo-500" />

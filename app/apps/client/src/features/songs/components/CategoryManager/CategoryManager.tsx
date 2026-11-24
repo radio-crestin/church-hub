@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
+import { SectionHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast'
 import { CategoryCard } from './CategoryCard'
 import { CategoryForm } from './CategoryForm'
@@ -103,24 +104,20 @@ export function CategoryManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {t('sections.categories.title')}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('sections.categories.description')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setModal({ type: 'create' })}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm whitespace-nowrap shrink-0"
-        >
-          <Plus size={16} />
-          {t('sections.categories.addCategory')}
-        </button>
-      </div>
+      <SectionHeader
+        title={t('sections.categories.title')}
+        description={t('sections.categories.description')}
+        actions={
+          <button
+            type="button"
+            onClick={() => setModal({ type: 'create' })}
+            className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm whitespace-nowrap shrink-0"
+          >
+            <Plus size={16} />
+            {t('sections.categories.addCategory')}
+          </button>
+        }
+      />
 
       {/* Uncategorized Songs */}
       <UncategorizedSongsCard />
