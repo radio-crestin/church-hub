@@ -813,6 +813,8 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="songTitle"
+          elementType="songTitle"
+          isLocked={st.locked}
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
