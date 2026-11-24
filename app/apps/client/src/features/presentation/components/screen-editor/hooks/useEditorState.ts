@@ -14,6 +14,7 @@ export type SelectedElement =
   | { type: 'referenceText' }
   | { type: 'songKey' }
   | { type: 'amen' }
+  | { type: 'songTitle' }
   | { type: 'personLabel' }
   | { type: 'clock' }
   | { type: 'nextSlide' }

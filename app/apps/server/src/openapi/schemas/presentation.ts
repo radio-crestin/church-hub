@@ -94,6 +94,16 @@ export const presentationSchemas = {
     properties: {
       songId: { type: 'integer' },
       title: { type: 'string' },
+      displayTitle: {
+        type: 'string',
+        description:
+          'The title without its leading number ("019 - La masa Ta" → "La masa Ta"), as the projector\'s corner shows it.',
+      },
+      titleNumber: {
+        type: 'string',
+        description:
+          'The songbook\'s initials and the song\'s number ("PDC 19"), from the title, the hymn number or the source file name; absent when the song has none. A screen shows it before the title when its song-title element has showNumber on.',
+      },
       background: {
         oneOf: [
           { $ref: '#/components/schemas/ScreenBackgroundConfig' },
