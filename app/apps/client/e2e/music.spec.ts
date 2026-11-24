@@ -250,13 +250,16 @@ test.describe('Music page', () => {
 test.describe('Music page on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('the views scroll in a row and a tap plays a track', async ({
+  test('the tracks open first, the views sit in the Library tab, and a tap plays a track', async ({
     page,
   }) => {
     await setAppLanguage(page, 'en')
     await openMusic(page)
 
+    await expect(row(page, BURG)).toBeVisible()
+    await page.getByTestId('workspace-tab-library').click()
     await expect(page.getByTestId('music-view-all')).toBeVisible()
+    await page.getByTestId('music-view-all').click()
     await expect(row(page, BURG)).toBeVisible()
     // Nothing is wider than the screen.
     const overflow = await page.evaluate(

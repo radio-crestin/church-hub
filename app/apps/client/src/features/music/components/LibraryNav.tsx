@@ -20,8 +20,8 @@ function isView(view: LibraryView, other: LibraryView): boolean {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="contents lg:block lg:space-y-1">
-      <h3 className="hidden px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 lg:block dark:text-gray-400">
+    <section className="space-y-1">
+      <h3 className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {title}
       </h3>
       {children}
@@ -63,7 +63,7 @@ export function LibraryNav({ view, onSelect }: LibraryNavProps) {
     <nav
       aria-label={t('library.title')}
       data-testid="music-library-nav"
-      className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-4 lg:overflow-x-visible lg:pb-0"
+      className="flex flex-col gap-4"
     >
       <Section title={t('library.title')}>
         {item(
@@ -83,7 +83,7 @@ export function LibraryNav({ view, onSelect }: LibraryNavProps) {
       </Section>
       <Section title={t('playlist.title')}>
         {playlists.length === 0 && (
-          <p className="hidden px-3 text-sm text-gray-500 lg:block dark:text-gray-400">
+          <p className="px-3 text-sm text-gray-500 dark:text-gray-400">
             {t('playlist.empty')}
           </p>
         )}

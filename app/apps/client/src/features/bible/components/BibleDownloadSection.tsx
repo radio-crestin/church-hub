@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { getApiUrl } from '~/config'
 import { Combobox } from '~/ui/combobox'
+import { SectionHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast'
 import { useAvailableBibles, useImportTranslation } from '../hooks'
 
@@ -103,13 +104,11 @@ export function BibleDownloadSection({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Globe className="w-5 h-5" />
-            {t('settings.download.title')}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+      <SectionHeader
+        title={t('settings.download.title')}
+        icon={Globe}
+        description={
+          <>
             {t('settings.download.description')}
             {biblesData && (
               <span className="ml-1 text-indigo-600 dark:text-indigo-400">
@@ -117,9 +116,9 @@ export function BibleDownloadSection({
                 {t('settings.download.translationsAvailable')})
               </span>
             )}
-          </p>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {biblesError ? (
         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
@@ -128,8 +127,8 @@ export function BibleDownloadSection({
         </div>
       ) : (
         <>
-          <div className="flex gap-3">
-            <div className="flex-1">
+          <div className="flex flex-wrap gap-3">
+            <div className="min-w-0 flex-1 basis-60">
               <Combobox
                 options={bibleOptions}
                 value={selectedBible || null}
