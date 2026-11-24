@@ -20,9 +20,15 @@ import type {
   UpdatePresentationStateInput,
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
-import { presentationState, songSlides, songs } from '../../db/schema'
+import {
+  presentationState,
+  songCategories,
+  songSlides,
+  songs,
+} from '../../db/schema'
 import { createLogger } from '../../utils/logger'
 import { parseSongBackground } from '../songs/parseSongBackground'
+import { resolveSongTitleParts } from '../songs/resolveSongTitleParts'
 import { parseStyleOverrides } from '../songs/song-slides'
 
 const logger = createLogger('presentation-state')
@@ -391,6 +397,26 @@ export function presentTemporaryBible(
 }
 
 /**
+ * The title shown in the projector's corner and the songbook and number a
+ * screen may show before it, read fresh so an edit reaches them.
+ */
+function readSongTitleParts(songId: number) {
+  const song = getDatabase()
+    .select({
+      title: songs.title,
+      hymnNumber: songs.hymnNumber,
+      sourceFilename: songs.sourceFilename,
+      categoryName: songCategories.name,
+    })
+    .from(songs)
+    .leftJoin(songCategories, eq(songCategories.id, songs.categoryId))
+    .where(eq(songs.id, songId))
+    .get()
+  const parts = song ? resolveSongTitleParts(song) : undefined
+  return { displayTitle: parts?.title, titleNumber: parts?.number }
+}
+
+/**
  * Presents a song temporarily
  * Fetches song and slides from database
  */
@@ -456,6 +482,7 @@ export function presentTemporarySong(
       data: {
         songId: song.id,
         title: song.title,
+        ...readSongTitleParts(song.id),
         keyLine: song.keyLine,
         background: parseSongBackground(song.background),
         slides: expandedSlides.map((s, idx) => {
@@ -1259,7 +1286,11 @@ export function refreshPresentedSongSlides(
     // Fetch the song's keyLine and background override — both are rendered
     // on the projection, so an edit to either must reach the live snapshot.
     const song = db
-      .select({ keyLine: songs.keyLine, background: songs.background })
+      .select({
+        title: songs.title,
+        keyLine: songs.keyLine,
+        background: songs.background,
+      })
       .from(songs)
       .where(eq(songs.id, songId))
       .get()
@@ -1323,6 +1354,8 @@ export function refreshPresentedSongSlides(
           }
         }),
         currentSlideIndex,
+        title: song?.title ?? currentState.temporaryContent.data.title,
+        ...readSongTitleParts(songId),
         keyLine: song?.keyLine ?? null,
         background: parseSongBackground(song?.background),
       },

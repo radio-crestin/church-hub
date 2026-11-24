@@ -73,6 +73,7 @@
     "elements": {
       "songKey": "Gama",
       "amen": "Amin",
+      "songTitle": "Titlul cântării",
       "mainText": "Text principal",
       "contentText": "Textul versetului",
       "referenceText": "Referința biblică",
@@ -311,6 +312,9 @@
       "clockSettings": "Setări ceas",
       "clock": "Ceas",
       "screenSettings": "Setări ecran"
+    },
+    "songTitle": {
+      "showNumber": "Arată cartea și numărul cântării (PDC 19)"
     }
   },
   "displays": {

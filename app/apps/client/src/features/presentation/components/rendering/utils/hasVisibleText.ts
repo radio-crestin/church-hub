@@ -8,6 +8,7 @@ const TEXT_ELEMENTS = [
   'referenceText',
   'songKey',
   'amen',
+  'songTitle',
   'personLabel',
 ] as const
 
