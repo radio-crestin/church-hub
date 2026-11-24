@@ -41,6 +41,8 @@ const PORT_OFFSETS = {
   lan: 1,
   // The desktop app's audio server stand-in (fake-audio-server.ts).
   fakeAudio: 2,
+  // The church's signaling relay stand-in (fake-signaling-relay.ts).
+  fakeRelay: 3,
 } as const
 const derivedPort = (name: keyof typeof PORT_OFFSETS) =>
   Number(TEST_PORT) + PORT_OFFSETS[name]
@@ -60,6 +62,9 @@ const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
  * spec starts a stand-in there, so music really "plays" (fake-audio-server.ts).
  */
 export const FAKE_AUDIO_PORT = derivedPort('fakeAudio')
+
+/** Where the test server finds the signaling relay (remote access, CH-050). */
+export const FAKE_RELAY_URL = `http://127.0.0.1:${derivedPort('fakeRelay')}`
 
 /**
  * The line the server prints once the real server is bound and boot is done
@@ -153,6 +158,7 @@ export default defineConfig({
       // Tests start the song-source checks they need (no network at start).
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
       CHURCH_HUB_AUDIO_SERVER_PORT: String(FAKE_AUDIO_PORT),
+      CHURCH_HUB_SIGNALING_URL: FAKE_RELAY_URL,
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has

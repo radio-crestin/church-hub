@@ -110,6 +110,23 @@ test.describe('API auth guards', () => {
     expect(feature.status).toBe(401)
   })
 
+  test('a LAN device naming itself localhost gets no localhost-only route', async ({
+    request,
+  }) => {
+    // Even the super admin's own session: the system token, the database and
+    // the backups are for the computer itself, judged by the connection (a
+    // phone's remote-access tunnel arrives the same way, CH-050).
+    const { cookies } = await request.storageState()
+    const session = cookies.find((cookie) => cookie.name === 'user_auth')
+    expect(session).toBeTruthy()
+    for (const path of ['/api/system-token', '/api/database/info']) {
+      const res = await rawRequest(lanBaseUrl(), path, {
+        headers: { Cookie: `user_auth=${session?.value}`, Host: 'localhost' },
+      })
+      expect(res.status, path).toBe(403)
+    }
+  })
+
   test('forged or unknown credentials are refused', async () => {
     const forged: Record<string, string>[] = [
       { Authorization: 'Bearer not-a-real-system-token' },
