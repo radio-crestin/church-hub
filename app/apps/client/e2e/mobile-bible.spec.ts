@@ -102,8 +102,9 @@ test.describe('The Bible on a phone', () => {
     await onPhone(page)
     await page.goto('/bible')
     const search = page.getByPlaceholder(/Cauta|Caută/).first()
+    // A typed reference opens on its own; Enter would show it as soon as it
+    // has opened, so it is left out: the bar's button shows it instead.
     await search.fill('Ioan 3:16')
-    await search.press('Enter')
 
     const verse16 = verses(page).getByText(
       'Fiindcă atât de mult a iubit Dumnezeu',
