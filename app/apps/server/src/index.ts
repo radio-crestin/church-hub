@@ -50,6 +50,7 @@ import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
+import { handleRemoteAccessRoutes } from './routes/remote-access'
 import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
@@ -241,6 +242,10 @@ import {
 } from './service/presentation'
 import { startVerseLoop } from './service/presentation/verse-loop'
 import {
+  applyRemoteAccess,
+  registerRemoteAccessListener,
+} from './service/remote-access'
+import {
   type AddToScheduleInput,
   addItemToSchedule,
   deleteSchedule,
@@ -370,12 +375,13 @@ import { isPortFree } from './utils/isPortFree'
 import { getListenHost } from './utils/listenHost'
 import { createLogger } from './utils/logger'
 import { getDatabasePath, getLogsDir } from './utils/paths'
+import { peerAddress, registerStandInListener } from './utils/peerAddress'
 import { reportError } from './utils/reportError'
 import { logRequest, logResponse } from './utils/request-logger'
 import { setRequestPeer } from './utils/request-peer'
 import { getServerPort } from './utils/serverPort'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
-import { getTestLanPort, peerAddress } from './utils/testLanListener'
+import { getTestLanPort, TEST_LAN_PEER } from './utils/testLanListener'
 import {
   broadcastMIDIConnectionStatus,
   broadcastMIDIDevices,
@@ -1622,8 +1628,12 @@ async function startRealServer(): Promise<void> {
         )
       }
 
-      // Strict localhost check (no system token allowed)
+      // Strict localhost check (no system token allowed): this machine by its
+      // TCP peer, which a LAN client or a phone's tunnel can't fake (the Host
+      // header alone let any signed-in LAN account read the system token),
+      // and addressed as localhost.
       function isStrictLocalhost(): boolean {
+        if (!isLocalhost(req)) return false
         const host = req.headers.get('Host')
         if (!host) return true
         const hostname = (host.split(':')[0] ?? '').toLowerCase()
@@ -8205,6 +8215,16 @@ async function startRealServer(): Promise<void> {
       )
       if (screenShareResponse) return screenShareResponse
 
+      // Remote access (phones reaching this computer over WebRTC)
+      if (url.pathname.startsWith('/api/remote-access')) {
+        const remoteAccessResponse = await handleRemoteAccessRoutes(
+          req,
+          url,
+          checkPermission,
+        )
+        if (remoteAccessResponse) return handleCors(req, remoteAccessResponse)
+      }
+
       // Live translation routes
       if (url.pathname.startsWith('/api/live-translation/')) {
         const translationResponse = await handleLiveTranslationRoutes(
@@ -8313,7 +8333,16 @@ async function startRealServer(): Promise<void> {
       port: testLanPort,
       hostname: '127.0.0.1',
     })
+    registerStandInListener(testLanPort, TEST_LAN_PEER)
   }
+  // The phones' WebRTC tunnel reaches the server here (service/remote-access).
+  const remoteAccessListener = Bun.serve<WebSocketData>({
+    ...serveOptions,
+    port: 0,
+    hostname: '127.0.0.1',
+  })
+  registerRemoteAccessListener(remoteAccessListener.port as number)
+  void applyRemoteAccess()
 
   logTiming('bun_server_bind', t)
 

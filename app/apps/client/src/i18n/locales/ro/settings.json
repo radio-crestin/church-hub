@@ -735,6 +735,22 @@
         "error": "A apărut o eroare"
       }
     },
+    "phones": {
+      "title": "Telefoane",
+      "description": "Conectează un telefon scanând un cod de pe acest calculator.",
+      "steps": {
+        "wifi": "Conectează telefonul la aceeași rețea Wi-Fi ca acest calculator.",
+        "account": "Alege contul cu care intră telefonul.",
+        "scan": "Scanează codul cu camera telefonului sau cu „Scanează codul QR” din aplicația Church Hub."
+      },
+      "remote": {
+        "label": "Acces de oriunde",
+        "description": "Telefoanele conectate cu codul ajung la acest calculator prin internet și când nu sunt în rețeaua Wi-Fi a bisericii. Telefoanele conectate înainte trebuie să scaneze din nou codul."
+      },
+      "account": "Contul",
+      "noAccounts": "Nu există încă niciun cont cu care să intre telefonul.",
+      "createAccount": "Creează unul la Utilizatori"
+    },
     "apiUrl": {
       "title": "Conexiune la server",
       "label": "URL-ul serverului",
@@ -746,6 +762,7 @@
       "save": "Salvează și continuă",
       "saved": "URL-ul serverului a fost salvat",
       "connectionSuccess": "Conexiunea a reușit",
+      "scan": "Scanează codul QR",
       "authTokenDetected": "Token de autentificare detectat",
       "reconnect": "Reconectează",
       "setup": {
@@ -760,7 +777,9 @@
         "emptyUrl": "Introdu URL-ul serverului",
         "invalidUrl": "Introdu un URL valid (ex.: http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
         "connectionFailed": "Nu s-a putut conecta la server. Verifică URL-ul și încearcă din nou.",
-        "testFirst": "Testează conexiunea înainte să salvezi"
+        "testFirst": "Testează conexiunea înainte să salvezi",
+        "cameraDenied": "Church Hub are nevoie de cameră ca să scaneze codul. Permite accesul din setările telefonului.",
+        "scanFailed": "Codul nu a putut fi citit. Încearcă din nou sau scrie linkul mai jos."
       }
     },
     "kiosk": {

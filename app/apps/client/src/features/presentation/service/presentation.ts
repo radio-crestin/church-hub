@@ -1,7 +1,6 @@
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
-
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
+import { apiFetch } from '~/utils/apiFetch'
 import { createLogger } from '~/utils/logger'
 import type {
   PresentationState,
@@ -18,9 +17,6 @@ const logger = createLogger('app:presentation:service')
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
-const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 
 // Get headers with auth token for mobile
 function getHeaders(contentType?: string): Record<string, string> {
@@ -50,7 +46,7 @@ function getHeaders(contentType?: string): Record<string, string> {
  */
 export async function getPresentationState(): Promise<PresentationState> {
   logger.debug('GET /api/presentation/state')
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/state`, {
+  const response = await apiFetch(`${getApiUrl()}/api/presentation/state`, {
     credentials: 'include',
     headers: getHeaders(),
   })
@@ -72,7 +68,7 @@ export async function updatePresentationState(
   input: UpdatePresentationStateInput,
 ): Promise<PresentationState> {
   logger.debug('PUT /api/presentation/state', input)
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/state`, {
+  const response = await apiFetch(`${getApiUrl()}/api/presentation/state`, {
     method: 'PUT',
     headers: getHeaders('application/json'),
     body: JSON.stringify(input),
@@ -94,7 +90,7 @@ export async function updatePresentationState(
  */
 export async function stopPresentation(): Promise<PresentationState> {
   logger.info('POST /api/presentation/stop')
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/stop`, {
+  const response = await apiFetch(`${getApiUrl()}/api/presentation/stop`, {
     method: 'POST',
     headers: getHeaders(),
     credentials: 'include',
@@ -115,7 +111,7 @@ export async function stopPresentation(): Promise<PresentationState> {
  */
 export async function clearSlide(): Promise<PresentationState> {
   logger.info('POST /api/presentation/clear')
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/clear`, {
+  const response = await apiFetch(`${getApiUrl()}/api/presentation/clear`, {
     method: 'POST',
     headers: getHeaders(),
     credentials: 'include',
@@ -136,7 +132,7 @@ export async function clearSlide(): Promise<PresentationState> {
  */
 export async function showSlide(): Promise<PresentationState> {
   logger.info('POST /api/presentation/show')
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/show`, {
+  const response = await apiFetch(`${getApiUrl()}/api/presentation/show`, {
     method: 'POST',
     headers: getHeaders(),
     credentials: 'include',
@@ -159,7 +155,7 @@ export async function navigateQueueSlide(
   direction: 'next' | 'prev',
 ): Promise<PresentationState> {
   logger.info(`POST /api/presentation/navigate-queue direction=${direction}`)
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/navigate-queue`,
     {
       method: 'POST',
@@ -190,7 +186,7 @@ export async function presentTemporaryBible(
   input: PresentTemporaryBibleInput,
 ): Promise<PresentationState> {
   logger.info('POST /api/presentation/temporary-bible', input.reference)
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/temporary-bible`,
     {
       method: 'POST',
@@ -217,7 +213,7 @@ export async function presentTemporarySong(
   input: PresentTemporarySongInput,
 ): Promise<PresentationState> {
   logger.info('POST /api/presentation/temporary-song', input.songId)
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/temporary-song`,
     {
       method: 'POST',
@@ -248,7 +244,7 @@ export async function navigateTemporary(input: {
   logger.info(
     `POST /api/presentation/navigate-temporary direction=${input.direction} ts=${input.requestTimestamp}`,
   )
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/navigate-temporary`,
     {
       method: 'POST',
@@ -276,7 +272,7 @@ export async function navigateTemporary(input: {
  */
 export async function clearTemporaryContent(): Promise<PresentationState> {
   logger.info('POST /api/presentation/clear-temporary')
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/clear-temporary`,
     {
       method: 'POST',
@@ -302,7 +298,7 @@ export async function presentTemporaryAnnouncement(
   input: PresentTemporaryAnnouncementInput,
 ): Promise<PresentationState> {
   logger.info('POST /api/presentation/temporary-announcement')
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/temporary-announcement`,
     {
       method: 'POST',
@@ -329,7 +325,7 @@ export async function presentTemporaryBiblePassage(
   input: PresentTemporaryBiblePassageInput,
 ): Promise<PresentationState> {
   logger.info('POST /api/presentation/temporary-bible-passage')
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/temporary-bible-passage`,
     {
       method: 'POST',
@@ -358,7 +354,7 @@ export async function presentTemporaryVerseteTineri(
   input: PresentTemporaryVerseteTineriInput,
 ): Promise<PresentationState> {
   logger.info('POST /api/presentation/temporary-versete-tineri')
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/temporary-versete-tineri`,
     {
       method: 'POST',
@@ -387,7 +383,7 @@ export async function presentTemporaryScene(
   input: PresentTemporarySceneInput,
 ): Promise<PresentationState> {
   logger.info('POST /api/presentation/temporary-scene', input.obsSceneName)
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/temporary-scene`,
     {
       method: 'POST',

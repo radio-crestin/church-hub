@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-keep-screen-on"
+description = "Enables the keep_screen_on command without any pre-configured scope."
+commands.allow = ["keep_screen_on"]
+
+[[permission]]
+identifier = "deny-keep-screen-on"
+description = "Denies the keep_screen_on command without any pre-configured scope."
+commands.deny = ["keep_screen_on"]

@@ -730,6 +730,22 @@
         "error": "An error occurred"
       }
     },
+    "phones": {
+      "title": "Phones",
+      "description": "Sign in on a phone by scanning a code from this computer.",
+      "steps": {
+        "wifi": "Connect the phone to the same Wi-Fi as this computer.",
+        "account": "Choose the account the phone signs in with.",
+        "scan": "Scan the code with the phone camera, or with \"Scan the QR code\" in the Church Hub app."
+      },
+      "remote": {
+        "label": "Reach this computer from anywhere",
+        "description": "Phones paired with the code connect over the internet when they are away from the church Wi-Fi. Phones paired before this must scan the code again."
+      },
+      "account": "Account",
+      "noAccounts": "There is no account to sign in with yet.",
+      "createAccount": "Create one in Users"
+    },
     "apiUrl": {
       "title": "Server Connection",
       "label": "Server URL",
@@ -741,6 +757,7 @@
       "save": "Save & Continue",
       "saved": "Server URL saved successfully",
       "connectionSuccess": "Connection successful",
+      "scan": "Scan the QR code",
       "authTokenDetected": "Authentication token detected",
       "reconnect": "Reconnect",
       "setup": {
@@ -755,7 +772,9 @@
         "emptyUrl": "Please enter a server URL",
         "invalidUrl": "Please enter a valid URL (e.g., http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
         "connectionFailed": "Could not connect to the server. Please check the URL and try again.",
-        "testFirst": "Please test the connection before saving"
+        "testFirst": "Please test the connection before saving",
+        "cameraDenied": "Church Hub needs the camera to scan the code. Allow it in the phone settings.",
+        "scanFailed": "The code could not be read. Try again, or type the link below."
       }
     },
     "kiosk": {

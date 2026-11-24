@@ -11,6 +11,7 @@ import {
 } from 'react'
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
+import { isTunnelOpen } from '~/features/remote-access/tunnel/tunnelState'
 import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
@@ -188,8 +189,9 @@ type MessageData =
   | { type: 'login_pairing_closed'; payload: { id: string } }
   | { type: 'pong' }
 
-// Check if we should use Tauri WebSocket plugin (on mobile)
-const useTauriWebSocket = isMobile()
+// The phone app uses Tauri's WebSocket plugin, unless its WebRTC tunnel is
+// open: then the browser's WebSocket, which the tunnel carries.
+const usesTauriWebSocket = () => isMobile() && !isTunnelOpen()
 
 // Ping configuration for connection health check
 const PING_INTERVAL_MS = 3000 // Send ping every 3 seconds
@@ -840,7 +842,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [handleMessage, queryClient])
 
   const connect = useCallback(() => {
-    if (useTauriWebSocket) {
+    if (usesTauriWebSocket()) {
       connectTauri()
     } else {
       connectNative()
@@ -863,7 +865,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       pongTimeoutRef.current = null
     }
 
-    if (useTauriWebSocket) {
+    if (usesTauriWebSocket()) {
       if (tauriWsRef.current) {
         try {
           await tauriWsRef.current.disconnect()
@@ -883,7 +885,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const send = useCallback(async (message: Record<string, unknown>) => {
     const messageStr = JSON.stringify(message)
 
-    if (useTauriWebSocket) {
+    if (usesTauriWebSocket()) {
       if (tauriWsRef.current) {
         try {
           await tauriWsRef.current.send(messageStr)

@@ -23,6 +23,7 @@ import {
   notificationsPaths,
   presentationHighlightsPaths,
   presentationPaths,
+  remoteAccessPaths,
   schedulesPaths,
   screenSharePaths,
   screensPaths,
@@ -104,6 +105,11 @@ export const openApiSpec = {
       description: 'Screen configuration and rendering settings',
     },
     {
+      name: 'Remote Access',
+      description:
+        'Phones reaching this computer from anywhere: a WebRTC tunnel through the signaling relay',
+    },
+    {
       name: 'Screen Share',
       description:
         'Native screen sharing: start/stop, frame ingest, MJPEG stream for the screens',
@@ -151,6 +157,7 @@ export const openApiSpec = {
     ...syncPaths,
     ...devicesPaths,
     ...authPaths,
+    ...remoteAccessPaths,
     ...usersPaths,
     ...songsPaths,
     ...songGroupsPaths,

@@ -1,12 +1,13 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router'
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './styles.css'
 import './features/presentation/utils/bundledFonts'
 
+import { reachComputer } from './features/remote-access'
 // Initialize PostHog early for error tracking
 import { initPostHog, posthog } from './posthog'
+import { apiFetch } from './utils/apiFetch'
 
 initPostHog()
 
@@ -67,9 +68,6 @@ try {
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
-const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 
 // Startup timing
 const clientStartTime = performance.now()
@@ -251,7 +249,7 @@ async function runDesktopStartup(): Promise<void> {
   const apiUrl = getApiUrl() as string
   logClientTiming('before_pollServerHealth')
   const result = await pollServerHealth(apiUrl, {
-    fetchFn,
+    fetchFn: apiFetch,
     retryDelayMs,
     isServerStopped,
   })
@@ -288,7 +286,12 @@ async function runMobileStartup(): Promise<void> {
   }
 
   updateLoadingMessage(startupText('connecting'))
-  const result = await pollServerHealth(apiUrl, { fetchFn, retryDelayMs })
+  // Away from the church Wi-Fi, over the WebRTC tunnel (Settings > Phones).
+  await reachComputer(apiUrl)
+  const result = await pollServerHealth(apiUrl, {
+    fetchFn: apiFetch,
+    retryDelayMs,
+  })
 
   if (result.status === 'ready') {
     hideLoadingScreen()

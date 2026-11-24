@@ -13,6 +13,7 @@ import {
   ScrollText,
   ShieldCheck,
   Sliders,
+  Smartphone,
   Tv,
   User,
   Users,
@@ -83,6 +84,15 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         to: '/settings/connection',
         visible: (ctx) => ctx.isMobile && canEdit(ctx),
         settings: ['settings:sections.apiUrl.label'],
+      },
+      {
+        id: 'phones',
+        labelKey: 'sections.phones.title',
+        icon: Smartphone,
+        to: '/settings/phones',
+        // The computer shows the code; a phone in the app connects itself.
+        visible: (ctx) => !ctx.isMobile && ctx.hasPermission('users.view'),
+        settings: ['settings:sections.phones.account'],
       },
       {
         id: 'sidebar',
