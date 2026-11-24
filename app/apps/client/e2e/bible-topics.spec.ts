@@ -161,6 +161,129 @@ test.describe('Bible topics', () => {
     await expect(page.locator('body')).toContainText('Romani 5:8')
   })
 
+  test.describe('as a slideshow timed to the text', () => {
+    const READING_SPEED = 'bible_reading_speed'
+
+    /** The slideshow on screen: its list, place and mode, or null. */
+    async function slideshowOnScreen(request: APIRequestContext) {
+      const state = (
+        await (await request.get('/api/presentation/state')).json()
+      ).data
+      const content = state.temporaryContent
+      if (state.isHidden || content?.type !== 'versete_tineri') return null
+      return {
+        slideshow: content.data.slideshow as string,
+        index: content.data.currentEntryIndex as number,
+        reference: content.data.entries[content.data.currentEntryIndex]
+          .reference as string,
+        autoAdvance: !!content.data.autoAdvance,
+        loop: !!content.data.loop,
+      }
+    }
+
+    test.beforeAll(async ({ request }) => {
+      // Every verse then gets the shortest time on screen, 3 s.
+      const saved = await request.post('/api/settings/app_settings', {
+        data: { key: READING_SPEED, value: '6000' },
+      })
+      expect(saved.ok()).toBe(true)
+    })
+
+    test.afterAll(async ({ request }) => {
+      await request.delete(`/api/settings/app_settings/${READING_SPEED}`)
+    })
+
+    test('▶ presents the whole topic, moving on by itself, and ■ stops it', async ({
+      page,
+      request,
+    }) => {
+      const love = (await topics(request)).find((t) => t.key === 'gods-love')!
+      const panel = await openTopicsPanel(page)
+      await panel.getByTestId('bible-topic-gods-love').click()
+      await expect(panel.getByTestId('bible-topic-passage')).toHaveCount(
+        love.referenceCount,
+      )
+
+      await panel.getByTestId('bible-topic-play').click()
+      await expect
+        .poll(() => slideshowOnScreen(request))
+        .toMatchObject({
+          slideshow: `topic:${love.id}`,
+          index: 0,
+          reference: 'Ioan 3:16',
+          autoAdvance: true,
+          loop: false,
+        })
+      const position = panel.getByTestId('bible-topic-play-position')
+      await expect(position).toHaveText(`1/${love.referenceCount}`)
+      await expect(
+        panel.getByTestId('bible-topic-passage').first(),
+      ).toHaveAttribute('data-active', 'true')
+
+      // After the first verse's reading time, the second goes up on its own.
+      await expect
+        .poll(async () => (await slideshowOnScreen(request))?.index, {
+          timeout: 10_000,
+        })
+        .toBe(1)
+      await expect(position).toHaveText(`2/${love.referenceCount}`)
+
+      await panel.getByTestId('bible-topic-stop').click()
+      await expect.poll(() => slideshowOnScreen(request)).toBeNull()
+      await expect(panel.getByTestId('bible-topic-play')).toBeVisible()
+    })
+
+    test('🔁 plays the topic in a loop', async ({ page, request }) => {
+      const panel = await openTopicsPanel(page)
+      await panel.getByTestId('bible-topic-gods-love').click()
+      const loop = panel.getByTestId('bible-topic-loop')
+      await loop.click()
+      await expect
+        .poll(async () => (await slideshowOnScreen(request))?.loop)
+        .toBe(true)
+      await expect(loop).toHaveAttribute('aria-pressed', 'true')
+      await loop.click()
+      await expect.poll(() => slideshowOnScreen(request)).toBeNull()
+    })
+
+    test('a slideshow played once stays on its last verse', async ({
+      request,
+    }) => {
+      const entry = (reference: string, text: string) => ({
+        id: 1,
+        personName: '',
+        reference,
+        bookCode: 'JHN',
+        bookName: 'Ioan',
+        startChapter: 3,
+        startVerse: 16,
+        endChapter: 3,
+        endVerse: 16,
+        text,
+        sortOrder: 0,
+      })
+      const presented = await request.post(
+        '/api/presentation/temporary-versete-tineri',
+        {
+          data: {
+            entries: [entry('A 1:1', 'unu'), entry('B 2:2', 'doi')],
+            autoAdvance: true,
+            slideshow: 'topic:test',
+          },
+        },
+      )
+      expect(presented.ok()).toBe(true)
+      await expect
+        .poll(async () => (await slideshowOnScreen(request))?.reference, {
+          timeout: 10_000,
+        })
+        .toBe('B 2:2')
+      // Two more reading times later it still shows the last verse.
+      await new Promise((resolve) => setTimeout(resolve, 7000))
+      expect((await slideshowOnScreen(request))?.reference).toBe('B 2:2')
+    })
+  })
+
   test('on a phone, Teme is a tab whose verses present on tap', async ({
     page,
     request,

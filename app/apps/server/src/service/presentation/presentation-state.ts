@@ -1145,6 +1145,8 @@ export function presentTemporaryVerseteTineri(
         entries: input.entries,
         currentEntryIndex: startIndex,
         loop: input.loop,
+        autoAdvance: input.autoAdvance,
+        slideshow: input.slideshow,
         nextItemPreview: input.nextItemPreview,
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,

@@ -1,10 +1,16 @@
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useNavigateTemporary } from '~/features/presentation'
+import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
+import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
 import type { BibleTopicPassage } from '../types'
+import { toSlideshowEntries } from '../utils/toSlideshowEntries'
 
 interface BibleTopicPassagesProps {
+  topicId: number
   title: string
   passages: BibleTopicPassage[]
   isLoading: boolean
@@ -18,9 +24,11 @@ interface BibleTopicPassagesProps {
 /**
  * A topic's passages in the current translation, best first. A passage
  * presents its first verse (the Bible's next verse continues it);
- * Previous / Next present the topic's passages one by one.
+ * Previous / Next present the topic's passages one by one, and the bar above
+ * plays them all as a slideshow timed to each passage's length.
  */
 export function BibleTopicPassages({
+  topicId,
   title,
   passages,
   isLoading,
@@ -30,11 +38,23 @@ export function BibleTopicPassages({
   onOpenVerse,
 }: BibleTopicPassagesProps) {
   const { t } = useTranslation('bible')
-  const activeIndex = passages.findIndex((passage) =>
-    passage.verses.some((verse) => verse.id === activeVerseId),
-  )
+  const entries = useMemo(() => toSlideshowEntries(passages), [passages])
+  const slideshow = useVerseSlideshow(`topic:${topicId}`, entries)
+  const navigateSlideshow = useNavigateTemporary()
+  const activeIndex =
+    slideshow.position?.index ??
+    passages.findIndex((passage) =>
+      passage.verses.some((verse) => verse.id === activeVerseId),
+    )
 
+  // While the slideshow plays, the arrows step it (its timer starts over).
   const present = (index: number) => {
+    if (slideshow.isPlaying) {
+      navigateSlideshow.mutate({
+        direction: index > activeIndex ? 'next' : 'prev',
+      })
+      return
+    }
     const verse = passages[index]?.verses[0]
     if (verse) onPresentVerse(verse)
   }
@@ -84,6 +104,8 @@ export function BibleTopicPassages({
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
+
+      {passages.length > 0 && <BibleTopicSlideshowBar slideshow={slideshow} />}
 
       <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
         {isLoading ? (

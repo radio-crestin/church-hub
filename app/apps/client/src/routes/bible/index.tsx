@@ -38,7 +38,7 @@ import {
   useVerses,
 } from '~/features/bible'
 import { BibleTopicsPanel } from '~/features/bible/topics'
-import { getBookmarkSlideshow } from '~/features/bible/utils/getBookmarkSlideshow'
+import { getVerseSlideshow } from '~/features/bible/utils/getVerseSlideshow'
 import {
   useFocusSearchEvent,
   usePageShortcutEvent,
@@ -448,7 +448,7 @@ function BiblePage() {
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
-  const isSlideshowLive = getBookmarkSlideshow(presentationState) !== null
+  const isSlideshowLive = getVerseSlideshow(presentationState) !== null
   const temporaryContent = presentationState?.temporaryContent
 
   /**

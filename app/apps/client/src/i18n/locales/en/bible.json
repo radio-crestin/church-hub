@@ -95,7 +95,7 @@
     },
     "readingSpeed": {
       "title": "Reading speed",
-      "description": "How long each verse stays on screen when bookmarks play in a loop: its words at this speed, at least 3 seconds.",
+      "description": "How long each verse stays on screen when bookmarks or a topic play by themselves: its words at this speed, at least 3 seconds.",
       "label": "Words per minute"
     }
   },
@@ -185,6 +185,13 @@
     "present": "Present",
     "openInBible": "Open in the Bible",
     "expand": "Expand topics",
-    "collapse": "Collapse topics"
+    "collapse": "Collapse topics",
+    "slideshow": {
+      "play": "Play",
+      "playHint": "Present every verse, one after another, each for the time it takes to read it; stops on the last one",
+      "loop": "Loop",
+      "loopHint": "Present the verses over and over, each for the time it takes to read it",
+      "stop": "Stop"
+    }
   }
 }
