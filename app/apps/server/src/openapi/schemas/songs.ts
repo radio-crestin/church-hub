@@ -376,6 +376,54 @@ export const songSchemas = {
       },
     },
   },
+  SongThemeSuggestion: {
+    type: 'object',
+    properties: {
+      songId: { type: 'integer' },
+      title: { type: 'string' },
+      hymnNumber: { type: 'string', nullable: true },
+      author: { type: 'string', nullable: true },
+      categoryName: { type: 'string', nullable: true },
+      keyLine: { type: 'string', nullable: true },
+      score: {
+        type: 'number',
+        description:
+          "Cosine of the two songs' weighted word stems, plus 0.1 per shared named theme, capped at 1.",
+      },
+      themes: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: [
+            'christmas',
+            'easter',
+            'cross',
+            'lordsSupper',
+            'baptism',
+            'pentecost',
+            'thanksgiving',
+            'wedding',
+            'farewell',
+            'secondComing',
+            'heaven',
+            'shepherd',
+            'prayer',
+            'mother',
+            'repentance',
+            'mission',
+            'scripture',
+          ],
+        },
+        description: 'Named themes both songs are on.',
+      },
+      sharedWords: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          'The distinctive words both songs hold, as the given song writes them, most distinctive first (up to 4).',
+      },
+    },
+  },
   DiscoveryCandidateInput: {
     type: 'object',
     required: ['tempId', 'title', 'lyrics'],

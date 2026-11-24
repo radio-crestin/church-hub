@@ -30,8 +30,7 @@ async function bibleShortcut(request: APIRequestContext): Promise<string> {
   return shortcut as string
 }
 
-const searchBox = (page: Page) =>
-  page.getByPlaceholder(/search|caut[aă]|căuta/i).first()
+const searchBox = (page: Page) => page.getByPlaceholder(/search|caută/i).first()
 
 async function searchAndShow(page: Page, reference: string) {
   const search = searchBox(page)

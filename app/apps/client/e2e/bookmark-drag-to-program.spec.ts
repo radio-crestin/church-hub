@@ -324,7 +324,7 @@ test.describe('Drag a song out of the list', () => {
       await dragOnto(page, rowOf(first.title), panel)
       // The "added" toast now floats over the bottom of the Programe panel.
       const toast = page.getByText(
-        new RegExp(`${first.title}.*(added|adaugata|adăugată)`),
+        new RegExp(`${first.title}.*(added|adăugată)`),
       )
       await expect(toast).toBeVisible()
       // It slides in from the right: measured mid-slide (a slow runner), the

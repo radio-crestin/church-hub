@@ -17,7 +17,7 @@
     "editAsText": "Editează ca text",
     "editAsSlides": "Editează ca slide-uri",
     "addSlide": "Adaugă slide",
-    "cloneSlide": "Clonează slide",
+    "cloneSlide": "Duplică slide-ul",
     "addToSchedule": "Adaugă în program",
     "saveToFile": "Salvează în fișier",
     "exportPdf": "Exportă ca PDF",
@@ -29,8 +29,8 @@
     "categoryPlaceholder": "Selectează categoria...",
     "slides": "Slide-uri",
     "slideNumber": "Slide {{number}}",
-    "emptySlide": "Slide gol - click pentru a edita",
-    "noSlides": "Nu există slide-uri încă",
+    "emptySlide": "Slide gol – apasă ca să-l editezi",
+    "noSlides": "Încă nu ai niciun slide",
     "formPanel": "Formular cântare",
     "saveFirst": "Salvează cântarea pentru a adăuga slide-uri",
     "undo": "Anulează",
@@ -39,7 +39,7 @@
     "viewStage": "Slide-uri",
     "background": {
       "title": "Fundal",
-      "helper": "Apare în spatele versurilor acestei cântări pe ecranele pentru audiență și pe cele Kiosk. Monitoarele de scenă și transmisia live își păstrează fundalul propriu."
+      "helper": "Apare în spatele versurilor acestei cântări pe ecranele din sală și pe Kiosk. Monitoarele de scenă și transmisiunea live își păstrează fundalul lor."
     }
   },
   "stageEditor": {
@@ -57,7 +57,7 @@
     "editModeOn": "Editare",
     "editModeOff": "Navigare",
     "projectSlide": "Afișează acest slide pe ecran",
-    "toggleLayout": "Comută layout PowerPoint",
+    "toggleLayout": "Comută la aspectul PowerPoint",
     "style": {
       "increaseFontSize": "Mărește textul",
       "decreaseFontSize": "Micșorează textul",
@@ -70,8 +70,8 @@
       "case": {
         "lower": "toate literele mici",
         "upper": "TOATE LITERELE MARI",
-        "sentence": "Doar prima literă majusculă",
-        "lineStart": "Prima literă majusculă din fiecare rând"
+        "sentence": "Doar prima literă mare",
+        "lineStart": "Literă mare la începutul fiecărui rând"
       },
       "correct": "Corectează automat versurile selectate",
       "correctNothingToDo": "Nu a fost nimic de corectat",
@@ -88,22 +88,22 @@
     }
   },
   "editorLayout": {
-    "title": "Layout editare",
+    "title": "Aspectul editorului",
     "description": "Alege cum editezi cântările pe acest dispozitiv.",
-    "normal": "Layout normal",
+    "normal": "Aspect normal",
     "normalDesc": "Editezi slide-urile în panoul cântării, ca acum.",
-    "powerpoint": "Layout PowerPoint",
+    "powerpoint": "Aspect PowerPoint",
     "powerpointDesc": "Editezi slide-urile direct pe pagina cântării, stil PowerPoint."
   },
   "search": {
     "placeholder": "Caută cântări...",
-    "noResults": "Nu s-au găsit cântări pentru \"{{query}}\"",
-    "resultsCount": "{{count}} cântări găsite",
-    "showingCount": "Se afișează {{showing}} din {{total}} cântări",
-    "moreResults": "{{count}} cântări în plus nu sunt afișate. Folosește căutarea pentru a găsi cântări specifice.",
+    "noResults": "Nu s-au găsit cântări pentru „{{query}}”",
+    "resultsCount": "Cântări găsite: {{count}}",
+    "showingCount": "Cântări afișate: {{showing}} din {{total}}",
+    "moreResults": "Încă {{count}} cântări nu sunt afișate. Folosește căutarea ca să găsești ce cauți.",
     "allCategories": "Toate categoriile",
-    "aiSearchTooltip": "Căutare AI - găsește cântece după temă",
-    "aiProcessing": "AI analizează...",
+    "aiSearchTooltip": "Căutare AI – găsește cântări după temă",
+    "aiProcessing": "AI-ul analizează...",
     "presentedOnly": "Cântări prezentate",
     "inSchedulesOnly": "În programe",
     "hasKeyLine": "Cu gamă",
@@ -111,8 +111,8 @@
     "filters": "Filtre",
     "clearFiltersForMore": "Șterge toate filtrele pentru mai multe rezultate",
     "sortBy": "Sortare",
-    "sortLastPlayed": "Ultima redare",
-    "sortMostPlayed": "Cele mai redate",
+    "sortLastPlayed": "Cântate recent",
+    "sortMostPlayed": "Cele mai cântate",
     "sortTitle": "Titlu (A-Z)"
   },
   "alphabetScroll": {
@@ -121,8 +121,8 @@
   },
   "dragToPanel": "Trage în Marcaje sau Programe",
   "picker": {
-    "selectSong": "Selectează Cântare",
-    "searchResults": "Se afișează {{shown}} din {{total}} rezultate",
+    "selectSong": "Selectează cântarea",
+    "searchResults": "Rezultate afișate: {{shown}} din {{total}}",
     "loadedCount_one": "{{count}} cântare încărcată",
     "loadedCount_few": "{{count}} cântări încărcate",
     "loadedCount_other": "{{count}} de cântări încărcate",
@@ -130,15 +130,15 @@
   },
   "import": {
     "title": "Importă din text",
-    "description": "Introdu textul cântecului mai jos. Fiecare paragraf va deveni un slide separat.",
-    "placeholder": "Introdu versurile aici...",
-    "preview": "Previzualizare: {{count}} slide-uri",
+    "description": "Lipește mai jos textul cântării. Fiecare paragraf devine un slide separat.",
+    "placeholder": "Lipește versurile aici...",
+    "preview": "Slide-uri în previzualizare: {{count}}",
     "confirm": "Importă",
     "cancel": "Anulează"
   },
   "editAsText": {
     "placeholder": "Versurile primului slide\nA doua linie din primul slide\n\n---\n\nAl doilea slide începe aici\nAltă linie",
-    "formatHelp": "Folosește **bold**, *italic*, __subliniat__. Liniile goale sau --- separă slide-urile.",
+    "formatHelp": "Folosește **îngroșat**, *cursiv*, __subliniat__. Liniile goale sau --- separă slide-urile.",
     "preview": "{{count}} slide-uri",
     "preview_one": "{{count}} slide",
     "preview_few": "{{count}} slide-uri",
@@ -151,13 +151,13 @@
   },
   "tags": {
     "name": "Etichete",
-    "helper": "Etichete suplimentare (ex: tineret, bărbați, surori, copii). O cântare poate avea mai multe etichete.",
+    "helper": "Etichete pentru public (ex.: tineret, bărbați, surori, copii). O cântare poate avea mai multe.",
     "add": "Adaugă etichetă",
     "addFirst": "Adaugă etichetă",
     "removeTag": "Elimină {{name}}",
     "searchPlaceholder": "Caută sau creează...",
-    "empty": "Nicio etichetă încă — scrie un nume pentru a o crea.",
-    "createNamed": "Creează „{{name}}\"",
+    "empty": "Încă nu ai etichete — scrie un nume ca să creezi una.",
+    "createNamed": "Creează „{{name}}”",
     "filterPlaceholder": "Toate etichetele",
     "filterAll": "Toate etichetele"
   },
@@ -169,29 +169,29 @@
   },
   "messages": {
     "saving": "Se salvează cântarea...",
-    "saved": "Cântarea a fost salvată cu succes",
-    "deleted": "Cântarea a fost ștearsă cu succes",
+    "saved": "Cântarea a fost salvată",
+    "deleted": "Cântarea a fost ștearsă",
     "error": "A apărut o eroare",
     "notFound": "Cântarea nu mai există. Poate a fost ștearsă.",
     "slideSaved": "Slide salvat",
     "slideDeleted": "Slide șters",
-    "slideCloned": "Slide clonat",
-    "reorderFailed": "Nu s-a putut reordona slide-urile",
+    "slideCloned": "Slide duplicat",
+    "reorderFailed": "Nu s-au putut reordona slide-urile",
     "categoryCreated": "Categoria a fost creată",
     "savedToFile": "Cântarea a fost salvată în fișier",
     "presentationCountReset": "Contorul de prezentări a fost resetat"
   },
   "modal": {
     "deleteTitle": "Șterge cântarea",
-    "deleteMessage": "Ești sigur că vrei să ștergi această cântare? Această acțiune nu poate fi anulată.",
-    "deleteSlideTitle": "Șterge slide",
+    "deleteMessage": "Ești sigur că vrei să ștergi această cântare? Nu mai poate fi recuperată.",
+    "deleteSlideTitle": "Șterge slide-ul",
     "deleteSlideMessage": "Ești sigur că vrei să ștergi acest slide?",
     "unsavedChangesTitle": "Modificări nesalvate",
     "unsavedChangesMessage": "Ai modificări nesalvate. Ești sigur că vrei să părăsești pagina?",
     "unsavedBeforeActionMessage": "Ai modificări nesalvate. Ce vrei să faci?",
-    "discardChanges": "Pierde modificările",
+    "discardChanges": "Renunță la modificări",
     "saveAndContinue": "Salvează și continuă",
-    "continueWithoutSaving": "Continuă fără a salva",
+    "continueWithoutSaving": "Continuă fără să salvezi",
     "cancel": "Anulează"
   },
   "bookmarks": {
@@ -201,12 +201,12 @@
     "present": "Afișează pe ecran",
     "title": "Marcaje",
     "searchPlaceholder": "Caută în marcaje...",
-    "noResults": "Niciun marcaj găsit",
+    "noResults": "Nu s-a găsit niciun marcaj",
     "clear": "Șterge toate marcajele",
-    "empty": "Nicio cântare marcată",
-    "emptyDescription": "Marchează cântări din pagina cântării pentru a le vedea aici",
+    "empty": "Nu ai cântări marcate",
+    "emptyDescription": "Marchează cântări din pagina cântării ca să le vezi aici",
     "addNote": "Adaugă notă",
-    "notePlaceholder": "Introdu nota...",
+    "notePlaceholder": "Scrie o notă...",
     "editNote": "Editează nota",
     "deleteNote": "Șterge nota",
     "exportAsMarkdown": "Exportă în Markdown",
@@ -224,7 +224,7 @@
     "textEdit": {
       "open": "Editează ca text",
       "title": "Editează Marcajele ca text",
-      "description": "Câte o cântare pe rând, în formatul Markdown al Marcajelor: \"## Titlu {#song-12}\" alege exact acea cântare, iar un titlu simplu o caută după nume. Începe o notă cu \">\". La salvare, lista va conține doar ce ai scris aici, în aceeași ordine. Poți încărca și un fișier exportat din Marcaje: versurile sunt ignorate.",
+      "description": "Câte o cântare pe rând, în formatul Markdown al Marcajelor: „## Titlu {#song-12}” alege exact acea cântare, iar un titlu simplu o caută după nume. Începe o notă cu „>”. La salvare, lista va conține doar ce ai scris aici, în aceeași ordine. Poți încărca și un fișier exportat din Marcaje: versurile sunt ignorate.",
       "placeholder": "## Cât de mare ești {#song-12}\n> Final\nHar minunat",
       "chooseFile": "Încarcă un fișier Markdown sau text",
       "cancel": "Anulează",
@@ -236,36 +236,36 @@
       }
     }
   },
-  "noSongs": "Nu există cântări încă",
-  "noSongsDescription": "Creează prima ta cântare pentru a începe",
+  "noSongs": "Încă nu ai cântări",
+  "noSongsDescription": "Creează prima cântare ca să începi",
   "pptxImport": {
     "title": "Importă PowerPoint",
-    "description": "S-au găsit {{count}} slide-uri. Importă ca o cântare nouă?",
+    "description": "Slide-uri găsite: {{count}}. Le imporți ca o cântare nouă?",
     "songTitle": "Titlul cântării",
     "createSong": "Creează cântare",
-    "dropHint": "Trage fișierul PPTX pentru a importa ca cântare",
+    "dropHint": "Lasă aici fișierul PPTX ca să-l imporți ca o cântare",
     "slideNumber": "Slide {{number}}",
-    "duplicateIdentical": "O cântare cu numele \"{{title}}\" există deja cu conținut identic. Importul a fost omis.",
-    "duplicateDifferent": "O cântare cu numele \"{{title}}\" există deja dar cu conținut diferit. Importă ca o cântare nouă cu titlu numerotat automat?",
-    "importAsNew": "Importă ca nou"
+    "duplicateIdentical": "Există deja o cântare „{{title}}” cu același conținut. Importul a fost omis.",
+    "duplicateDifferent": "Există deja o cântare „{{title}}”, dar cu alt conținut. O imporți ca o cântare nouă, cu titlu numerotat automat?",
+    "importAsNew": "Importă ca nouă"
   },
   "batchImport": {
     "title": "Importă cântări",
-    "description": "Pregătit pentru importul a {{count}} cântare/cântări",
+    "description": "Cântări pregătite pentru import: {{count}}",
     "categoryLabel": "Categorie (opțional)",
     "songsList": "Cântări de importat:",
-    "confirmButton": "Importă {{count}} cântare/cântări",
+    "confirmButton": "Importă cântările ({{count}})",
     "importing": "Se importă...",
     "noSongsFound": "Nu s-au găsit fișiere de cântări",
-    "noSongsFoundDescription": "Fișierele selectate nu au putut fi interpretate ca și cântări. Te rugăm să te asiguri că importezi fișiere de cântări valide (OpenSong XML sau fișiere PowerPoint).",
-    "successMessage": "S-au importat cu succes {{count}} cântare/cântări",
+    "noSongsFoundDescription": "Fișierele selectate nu au putut fi citite ca cântări. Verifică dacă sunt fișiere de cântări valide (OpenSong XML sau PowerPoint).",
+    "successMessage": "Cântări importate: {{count}}",
     "processing": "Se procesează fișierele...",
     "processingProgress": "Procesare: {{current}} din {{total}} fișiere",
     "downloading": "Se descarcă...",
     "extracting": "Se extrage arhiva...",
     "converting": "Se convertesc fișierele PPT...",
     "convertingProgress": "Conversie: {{current}} din {{total}} fișiere PPT",
-    "parsing": "Se parsează cântările...",
+    "parsing": "Se citesc cântările...",
     "saving": "Se salvează în baza de date...",
     "useFirstVerseAsTitle": "Folosește primul vers ca titlu",
     "overwriteDuplicates": "Suprascrie cântările existente cu același titlu",
@@ -294,10 +294,13 @@
     "slideAdded": "Slide adăugat",
     "presentSlide": "Afișează acest slide",
     "previewMode": "Previzualizare",
-    "previewModeHint": "Mod previzualizare: pregătește un slide înainte de a-l afișa",
+    "previewModeHint": "Previzualizare: pregătește strofa aici, pentru cântăreți, înainte de a o afișa",
     "project": "Afișează",
     "projectHint": "Afișează slide-ul pregătit",
-    "hideBackground": "Ascunde fundalul în previzualizare"
+    "hideBackground": "Ascunde fundalul în previzualizare",
+    "liveMode": "Direct",
+    "liveModeHint": "Direct: un clic pe strofă o afișează pe ecran",
+    "modeLabel": "Ce face un clic pe strofă"
   },
   "metadata": {
     "detailsSection": "Detalii",
@@ -309,13 +312,13 @@
     "timeSignature": "Măsură",
     "theme": "Temă",
     "altTheme": "Temă alternativă",
-    "keyLine": "Gama melodie",
-    "keyLinePlaceholder": "Do Major",
+    "keyLine": "Gamă",
+    "keyLinePlaceholder": "Do major",
     "presentationOrder": "Ordinea prezentării",
     "sourceFilename": "Fișier sursă",
     "presentationCount": "Număr prezentări",
     "lastManualEdit": "Ultima editare manuală",
-    "neverEdited": "Needitat"
+    "neverEdited": "Nu a fost editată"
   },
   "export": {
     "formatTitle": "Format de export",
@@ -324,7 +327,7 @@
     "formats": {
       "opensong": {
         "name": "OpenSong",
-        "description": "Format XML compatibil cu OpenSong și alte programe de închinare. Ideal pentru portabilitatea datelor."
+        "description": "Format XML compatibil cu OpenSong și alte programe pentru biserici. Bun pentru a muta cântările în alt program."
       },
       "pptx": {
         "name": "PowerPoint",
@@ -333,11 +336,11 @@
     }
   },
   "duplicateDialog": {
-    "title": "Cântare duplicată găsită",
+    "title": "Cântarea există deja",
     "foundMessage": "O cântare cu acest titlu există deja în bibliotecă:",
-    "clickToPreview": "Apasă pe titlu pentru a previzualiza cântarea existentă într-o fereastră nouă.",
+    "clickToPreview": "Apasă pe titlul de mai sus ca să vezi cântarea existentă într-o fereastră nouă.",
     "replaceExisting": "Înlocuiește cântarea existentă",
-    "replaceExistingDescription": "Șterge cântarea existentă și salvează aceasta în loc. Toate referințele din program și coadă vor fi actualizate automat să folosească această cântare."
+    "replaceExistingDescription": "Șterge cântarea existentă și salvează-o pe aceasta în locul ei. Toate referințele din programe și din coadă vor folosi automat această cântare."
   },
   "categoryDialog": {
     "title": "Setează categoria",
@@ -348,21 +351,47 @@
     "saving": "Se salvează..."
   },
   "chords": {
-    "editChords": "Editează acorduri",
+    "editChords": "Editează acordurile",
     "setLabel": "Setează tipul slide-ului",
     "removeLabel": "Elimină eticheta",
     "searchChord": "Caută acord...",
-    "removeChord": "Click pentru a elimina acordul",
+    "removeChord": "Apasă ca să elimini acordul",
     "clearAll": "Șterge toate acordurile",
-    "useCustom": "Folosește \"{{chord}}\"",
+    "useCustom": "Folosește „{{chord}}”",
     "guitar": "Chitară",
     "piano": "Pian",
-    "noChordData": "Nicio diagramă disponibilă"
+    "noChordData": "Nu există diagramă"
   },
   "resetCountDialog": {
     "title": "Resetează contorul de prezentări",
     "message": "Ești sigur că vrei să resetezi contorul de prezentări la 0?",
     "confirm": "Resetează"
+  },
+  "sameTheme": {
+    "title": "Pe aceeași temă",
+    "menuDescription": "Alte cântări pe aceeași temă cu aceasta",
+    "close": "Închide",
+    "empty": "Nu s-au găsit alte cântări pe această temă.",
+    "sharedWords": "Cuvinte comune: {{words}}",
+    "themes": {
+      "christmas": "Crăciun",
+      "easter": "Învierea",
+      "cross": "Crucea",
+      "lordsSupper": "Cina Domnului",
+      "baptism": "Botez",
+      "pentecost": "Rusalii",
+      "thanksgiving": "Mulțumire",
+      "wedding": "Nuntă",
+      "farewell": "Despărțire și mângâiere",
+      "secondComing": "Revenirea Domnului",
+      "heaven": "Cerul",
+      "shepherd": "Păstorul",
+      "prayer": "Rugăciune",
+      "mother": "Mama",
+      "repentance": "Pocăință",
+      "mission": "Evanghelizare",
+      "scripture": "Cuvântul lui Dumnezeu"
+    }
   },
   "versions": {
     "title": "Versiuni ale cântării",
@@ -377,8 +406,8 @@
     "unlinkConfirm": "Scoți această cântare din grupul de versiuni?",
     "addButton": "Adaugă o versiune",
     "linkModalTitle": "Marchează ca aceeași cântare",
-    "linkModalDescription": "Alege o altă cântare care e o versiune a „{{title}}”. Vor fi legate ca versiuni ale aceleași piese — nu se șterge nimic, poți reveni oricând.",
-    "linkSearchPlaceholder": "Tastează numele cântării pe care dorești să o marchezi ca variantă…",
+    "linkModalDescription": "Alege o altă cântare care e o versiune a cântării „{{title}}”. Vor fi legate ca versiuni ale aceleiași cântări — nu se șterge nimic, poți reveni oricând.",
+    "linkSearchPlaceholder": "Scrie numele cântării pe care vrei s-o marchezi ca versiune…",
     "linkSubmit": "Leagă",
     "linkCancel": "Anulează",
     "linkSuccess": "„{{title}}” a fost legată ca versiune",
@@ -388,13 +417,13 @@
     "unlinkSuccess": "Scoasă din versiuni",
     "unlinkError": "Nu s-a putut dezlega: {{error}}",
     "setPrimarySuccess": "Versiunea principală a fost actualizată",
-    "setPrimaryError": "Nu s-a putut seta principala: {{error}}",
-    "emptyPicker": "Nicio altă cântare găsită",
+    "setPrimaryError": "Nu s-a putut seta versiunea principală: {{error}}",
+    "emptyPicker": "Nu s-a găsit nicio altă cântare",
     "selfPickerHint": "Nu poți lega o cântare cu ea însăși.",
     "suggestionsTitle": "Posibile potriviri",
     "suggestionAccept": "Aceeași cântare — leagă-le",
     "suggestionDismiss": "Nu e aceeași — ascunde sugestia",
-    "percentSimilar": "{{percent}}% similar",
+    "percentSimilar": "Asemănare {{percent}}%",
     "currentBadge": "Curentă",
     "noSuggestions": "Nu s-au găsit alte versiuni ale acestei cântări."
   },

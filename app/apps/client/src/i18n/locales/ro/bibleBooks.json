@@ -4,11 +4,11 @@
     "short": "Gen"
   },
   "EXO": {
-    "name": "Exod",
+    "name": "Exodul",
     "short": "Exo"
   },
   "LEV": {
-    "name": "Levitic",
+    "name": "Leviticul",
     "short": "Lev"
   },
   "NUM": {
@@ -16,7 +16,7 @@
     "short": "Num"
   },
   "DEU": {
-    "name": "Deuteronom",
+    "name": "Deuteronomul",
     "short": "Deu"
   },
   "JOS": {
@@ -72,7 +72,7 @@
     "short": "Iov"
   },
   "PSA": {
-    "name": "Psalmi",
+    "name": "Psalmii",
     "short": "Psa"
   },
   "PRO": {
@@ -80,12 +80,12 @@
     "short": "Pro"
   },
   "ECC": {
-    "name": "Ecclesiast",
-    "short": "Ecc"
+    "name": "Eclesiastul",
+    "short": "Ecl"
   },
   "SNG": {
-    "name": "Cântarea Cântărilor",
-    "short": "Cân"
+    "name": "Cântarea cântărilor",
+    "short": "Cânt"
   },
   "ISA": {
     "name": "Isaia",
@@ -97,7 +97,7 @@
   },
   "LAM": {
     "name": "Plângerile lui Ieremia",
-    "short": "Plâ"
+    "short": "Plâng"
   },
   "EZK": {
     "name": "Ezechiel",
@@ -172,7 +172,7 @@
     "short": "Ioa"
   },
   "ACT": {
-    "name": "Faptele Apostolilor",
+    "name": "Faptele apostolilor",
     "short": "Fap"
   },
   "ROM": {
@@ -225,14 +225,14 @@
   },
   "PHM": {
     "name": "Filimon",
-    "short": "Fil"
+    "short": "Flm"
   },
   "HEB": {
     "name": "Evrei",
     "short": "Evr"
   },
   "JAS": {
-    "name": "Iacob",
+    "name": "Iacov",
     "short": "Iac"
   },
   "1PE": {

@@ -10,6 +10,7 @@ import {
   Bookmark,
   BookmarkCheck,
   CalendarPlus,
+  Compass,
   Download,
   Eye,
   FileText,
@@ -62,6 +63,8 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
+  PreviewModeToggle,
+  SameThemeModal,
   SongBookmarksPanel,
   SongControlPanel,
   SongLoadError,
@@ -99,7 +102,6 @@ import { KeyboardShortcutBadge } from '~/ui/kbd'
 import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
-import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
@@ -271,6 +273,7 @@ function SongPreviewPage() {
     'song-detail:versions-open',
     true,
   )
+  const [showSameThemeModal, setShowSameThemeModal] = useState(false)
   // Plain black behind the lyrics in this page's previews (both layouts), so
   // they are easy to read. Never changes what the screens show. Only an image
   // or a video has anything to hide: without one the "More" menu drops the
@@ -864,6 +867,7 @@ function SongPreviewPage() {
           onToggleCollapse={
             isLargeScreen ? () => setVersionsOpen(!versionsOpen) : undefined
           }
+          onShowSameTheme={() => setShowSameThemeModal(true)}
           attentionBadge={
             undismissedSuggestionCount > 0
               ? `+${undismissedSuggestionCount}`
@@ -926,16 +930,10 @@ function SongPreviewPage() {
                 testId="song-phone-stage"
                 isLive={isThisSongLive}
                 headerActions={
-                  <label className="flex items-center gap-1.5 select-none shrink-0">
-                    <Switch
-                      id="song-preview-mode"
-                      checked={previewMode}
-                      onCheckedChange={togglePreviewMode}
-                    />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {t('preview.previewMode')}
-                    </span>
-                  </label>
+                  <PreviewModeToggle
+                    previewMode={previewMode}
+                    onTogglePreviewMode={togglePreviewMode}
+                  />
                 }
                 previewContent={stagedPreviewContent}
                 hideBackground={hidePreviewBackground}
@@ -1055,6 +1053,16 @@ function SongPreviewPage() {
           },
         ]
       : []),
+    {
+      id: 'same-theme',
+      label: t('sameTheme.title'),
+      description: t('sameTheme.menuDescription'),
+      icon: <Compass size={18} />,
+      iconClassName:
+        'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+      onSelect: () => setShowSameThemeModal(true),
+      testId: 'song-same-theme',
+    },
     ...(songHistory.menuItem ? [songHistory.menuItem] : []),
     // Panels only form movable columns on a large screen; on a phone they are
     // a plain stack, so there is nothing to rearrange.
@@ -1234,6 +1242,13 @@ function SongPreviewPage() {
         isOpen={showExportFormatModal}
         onConfirm={handleExportFormatConfirm}
         onCancel={() => setShowExportFormatModal(false)}
+      />
+
+      <SameThemeModal
+        isOpen={showSameThemeModal}
+        onClose={() => setShowSameThemeModal(false)}
+        songId={song.id}
+        songTitle={song.title}
       />
 
       {songHistory.dialog}

@@ -1,15 +1,15 @@
 {
-  "title": "Biblie",
+  "title": "Biblia",
   "search": {
-    "placeholder": "Caută versete (ex: \"Gen 1:1\" sau \"La început\")",
-    "hint": "Scrie o referință precum \"Gen 1:1\" sau caută un text",
-    "noResults": "Niciun rezultat găsit",
+    "placeholder": "Caută versete (ex.: „Gen 1:1” sau „La început”)",
+    "hint": "Scrie o referință, ca „Gen 1:1”, sau caută un text",
+    "noResults": "Nu s-a găsit nimic",
     "searching": "Se caută...",
     "directReference": "Referință directă",
     "resultsCount": "{{count}} verset găsit",
     "resultsCount_few": "{{count}} versete găsite",
     "resultsCount_other": "{{count}} de versete găsite",
-    "aiSearchTooltip": "Căutare inteligentă cu AI - găsește versete relevante semantic",
+    "aiSearchTooltip": "Căutare cu AI: găsește versete după înțeles",
     "aiProcessing": "AI...",
     "fullTextSearchTooltip": "Caută în textul versetelor"
   },
@@ -17,67 +17,67 @@
     "back": "Înapoi",
     "oldTestament": "Vechiul Testament",
     "newTestament": "Noul Testament",
-    "noBooks": "Nicio carte disponibilă",
+    "noBooks": "Nu există nicio carte",
     "previousChapter": "Capitolul anterior",
     "nextChapter": "Capitolul următor",
-    "scrollToVerse": "Derulează la versetul curent",
+    "scrollToVerse": "Mergi la versetul curent",
     "loadPrevious": "Încarcă versetele anterioare",
     "loadNext": "Încarcă mai multe versete"
   },
   "queue": {
     "title": "Lista versete",
     "empty": "Niciun verset în listă",
-    "removed": "Versetul a fost eliminat din listă",
-    "remove": "Elimină"
+    "removed": "Versetul a fost scos din listă",
+    "remove": "Scoate"
   },
   "controls": {
     "title": "Previzualizare",
-    "prev": "Anterior",
-    "next": "Următor",
+    "prev": "Anteriorul",
+    "next": "Următorul",
     "prevVerse": "Versetul anterior",
     "nextVerse": "Versetul următor",
     "show": "Afișează",
     "hide": "Ascunde",
-    "clearHighlights": "Șterge Evidențierile"
+    "clearHighlights": "Șterge evidențierile"
   },
   "shortcuts": {
-    "title": "Scurtături tastatură",
-    "navigate": "Navighează versete",
+    "title": "Scurtături de tastatură",
+    "navigate": "Navighează prin versete",
     "back": "Înapoi",
-    "hide": "Ascunde afișajul",
+    "hide": "Ascunde ecranul",
     "present": "Prezintă versetul"
   },
   "actions": {
     "presentNow": "Prezintă acum",
     "addToQueue": "Adaugă în listă",
     "import": "Importă",
-    "importFirst": "Importă traducere Biblie",
+    "importFirst": "Importă o traducere a Bibliei",
     "settings": "Setări",
-    "openSettings": "Deschide Setări"
+    "openSettings": "Deschide setările"
   },
   "empty": {
-    "title": "Nicio traducere disponibilă",
-    "description": "Importă o traducere a Bibliei în format USFX XML pentru a începe.",
+    "title": "Nicio traducere a Bibliei",
+    "description": "Importă o traducere a Bibliei în format USFX XML ca să începi.",
     "noTranslationsSelected": "Nicio traducere selectată",
-    "noTranslationsSelectedDescription": "Mergi la Setări > Traduceri Biblice pentru a selecta traducerile dorite."
+    "noTranslationsSelectedDescription": "Mergi la Setări > Traduceri Biblie și alege traducerile pe care le folosești."
   },
   "import": {
-    "title": "Importă traducere Biblie",
+    "title": "Importă o traducere a Bibliei",
     "error": "Importul traducerii a eșuat",
     "errorTitle": "Eroare la import",
-    "success": "Traducerea a fost importată cu succes"
+    "success": "Traducerea a fost importată"
   },
   "settings": {
     "title": "Setări Biblie",
     "import": {
-      "title": "Importă Traducere",
+      "title": "Importă traducere",
       "description": "Importă o traducere a Bibliei dintr-un fișier OSIS XML.",
-      "button": "Selectează Fișier",
-      "formatTitle": "Formate Acceptate",
+      "button": "Alege fișierul",
+      "formatTitle": "Formate acceptate",
       "formatDescription": "Traducerea Bibliei trebuie să fie în format OSIS (Open Scripture Information Standard) XML.",
       "formatSimple": "Încarcă fișiere Biblie în format USFX, OSIS sau Zefania XML. Formatul este detectat automat.",
       "formatExamples": "Pentru exemple de format, vezi:",
-      "structureTitle": "Exemplu Structură Fișier:",
+      "structureTitle": "Exemplu de structură a fișierului:",
       "hints": {
         "rootElement": "Elementul rădăcină trebuie să fie <osis>",
         "bookElement": "Fiecare carte folosește <div type=\"book\" osisID=\"Gen\">",
@@ -86,27 +86,27 @@
       }
     },
     "download": {
-      "title": "Descarcă Biblie",
-      "description": "Descarcă Biblii din depozitul Holy Bible XML Format",
+      "title": "Descarcă o Biblie",
+      "description": "Descarcă Biblii din colecția Holy Bible XML Format",
       "translationsAvailable": "traduceri disponibile",
       "fetchError": "Nu s-au putut încărca Bibliile disponibile. Încearcă din nou mai târziu.",
       "loading": "Se încarcă Bibliile disponibile...",
-      "selectBible": "Selectează o Biblie pentru descărcare...",
+      "selectBible": "Alege o Biblie de descărcat...",
       "button": "Descarcă"
     },
     "readingSpeed": {
       "title": "Viteza de citire",
-      "description": "Cât rămâne fiecare verset pe ecran când marcajele rulează în buclă: după numărul de cuvinte, la această viteză, cel puțin 3 secunde.",
+      "description": "Cât rămâne fiecare verset pe ecran când marcajele rulează în buclă: după numărul de cuvinte, la această viteză, dar cel puțin 3 secunde.",
       "label": "Cuvinte pe minut"
     }
   },
   "translation": {
-    "select": "Selectează traducerea",
+    "select": "Alege traducerea",
     "loading": "Se încarcă traducerile..."
   },
   "history": {
     "title": "Istoric",
-    "empty": "Niciun verset afișat",
+    "empty": "Niciun verset afișat încă",
     "clear": "Șterge",
     "today": "Azi",
     "yesterday": "Ieri",
@@ -116,13 +116,13 @@
     "exportVerseCount_one": "{{count}} verset",
     "exportVerseCount_few": "{{count}} versete",
     "exportVerseCount_other": "{{count}} de versete",
-    "exportTitleSession": "Istoric Versete Biblice - ultima sesiune",
-    "exportTitle": "Istoric Versete Biblice",
-    "exportHelp": "Folosește [V] pentru versete biblice",
+    "exportTitleSession": "Istoric Biblie - ultima sesiune",
+    "exportTitle": "Istoric Biblie",
+    "exportHelp": "Folosește [V] pentru versete din Biblie",
     "expand": "Extinde",
     "collapse": "Restrânge",
     "searchPlaceholder": "Caută în istoric...",
-    "noResults": "Niciun verset găsit"
+    "noResults": "Nu s-a găsit niciun verset"
   },
   "bookmarks": {
     "title": "Marcaje",
@@ -130,9 +130,9 @@
     "remove": "Șterge marcajul",
     "clear": "Șterge tot",
     "empty": "Niciun verset marcat",
-    "emptyDescription": "Marchează un verset ca să îți faci lista",
+    "emptyDescription": "Marchează un verset ca să-ți faci lista de citire",
     "searchPlaceholder": "Caută în marcaje...",
-    "noResults": "Niciun marcaj găsit",
+    "noResults": "Nu s-a găsit niciun marcaj",
     "addNote": "Adaugă titlu",
     "notePlaceholder": "Textul titlului...",
     "editNote": "Editează titlul",
@@ -148,17 +148,17 @@
       "chooseFile": "Alege un fișier Markdown sau text",
       "cancel": "Anulează",
       "confirm": "Importă",
-      "partial": "Importate {{imported}}, sărite {{skipped}}",
+      "partial": "Importate: {{imported}}, sărite: {{skipped}}",
       "line": "Rândul {{line}}:",
       "errors": {
         "unknown_reference": "cartea nu a fost recunoscută",
         "verse_required": "adaugă numărul versetului",
         "verse_not_found": "nu există în această traducere",
-        "no_translation": "nicio traducere disponibilă",
+        "no_translation": "nu există nicio traducere",
         "text_mismatch": "textul nu corespunde acestui verset; versetul a fost importat fără formatare"
       }
     },
-    "exportEmpty": "Nimic de exportat încă",
+    "exportEmpty": "Nu e nimic de exportat încă",
     "slideshow": {
       "play": "Prezintă în ordine",
       "playHint": "Prezintă în ordine: versetele vin unul după altul; → sau Space pentru următorul",

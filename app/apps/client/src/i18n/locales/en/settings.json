@@ -44,12 +44,6 @@
       "noTranslationsDescription": "Add a Bible translation to get started",
       "maxReached": "Maximum 3 translations",
       "translationsSelected": "translations selected",
-      "primaryVersion": "Primary Version",
-      "selectPrimary": "Select primary version...",
-      "primaryDescription": "Main Bible version shown in the app",
-      "secondaryVersion": "Secondary Version",
-      "selectSecondary": "None (optional)",
-      "secondaryDescription": "Shown alongside primary in presentation",
       "modals": {
         "add": {
           "title": "Add Translation",
@@ -68,7 +62,13 @@
         "added": "Translation added",
         "deleted": "Translation deleted",
         "error": "An error occurred"
-      }
+      },
+      "primaryVersion": "Primary Version",
+      "selectPrimary": "Select primary version...",
+      "primaryDescription": "Main Bible version shown in the app",
+      "secondaryVersion": "Secondary Version",
+      "selectSecondary": "None (optional)",
+      "secondaryDescription": "Shown alongside primary in presentation"
     },
     "application": {
       "title": "Application Settings",
@@ -329,7 +329,10 @@
       "userName": "User Name",
       "userNamePlaceholder": "e.g., John's Tablet",
       "permissions": "permissions",
-      "permissionsSelected": "permissions selected",
+      "permissionCount_one": "{{count}} permission",
+      "permissionCount_other": "{{count}} permissions",
+      "permissionsSelectedCount_one": "{{count}} permission selected",
+      "permissionsSelectedCount_other": "{{count}} permissions selected",
       "status": "Status",
       "active": "Active",
       "inactive": "Inactive",

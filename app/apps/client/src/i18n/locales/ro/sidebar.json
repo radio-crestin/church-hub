@@ -9,8 +9,8 @@
     "present": "Camera de control",
     "livestream": "Live Stream",
     "music": "Muzică",
-    "songKey": "Game Cântări",
-    "liveTranslation": "Traducere Live",
+    "songKey": "Game cântări",
+    "liveTranslation": "Traducere live",
     "kiosk": "Kiosk",
     "settings": "Setări",
     "feedback": "Feedback"
@@ -20,12 +20,12 @@
     "expand": "Extinde bara laterală",
     "collapseSidebar": "Restrânge bara laterală",
     "openMenu": "Deschide meniu",
-    "closeMenu": "Închide meniu"
+    "closeMenu": "Închide meniul"
   },
   "version": {
     "updateAvailable": "v{{version}} disponibilă",
     "readyToInstall": "v{{version}} gata de instalare",
-    "clickToInstall": "Descărcată - instaleaz-o acum",
+    "clickToInstall": "Descărcată — instaleaz-o acum",
     "viewUpdate": "Vezi ce e nou",
     "install": "Instalează acum",
     "download": "Descarcă actualizarea",
@@ -39,6 +39,6 @@
   },
   "tabs": {
     "present": "Live",
-    "more": "Mai mult"
+    "more": "Mai multe"
   }
 }

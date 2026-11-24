@@ -509,6 +509,8 @@ export interface TextElementConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**
@@ -522,6 +524,8 @@ export interface ClockElementConfig {
   format: '12h' | '24h'
   showSeconds: boolean
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**
@@ -549,6 +553,8 @@ export interface ReferenceTextConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
   /**
    * Custom label text. Used by the "Amin" element so the operator can replace
    * the default "Amin!" with their own text. Empty/undefined keeps the default
@@ -570,6 +576,8 @@ export interface PersonLabelConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**
@@ -707,6 +715,8 @@ export interface NextSlideSectionConfig {
   animationIn?: AnimationConfig
   animationOut?: AnimationConfig
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**

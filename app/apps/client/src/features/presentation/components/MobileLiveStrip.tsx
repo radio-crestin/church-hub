@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 
 import { ContentTypeButton } from './ContentTypeButton'
 import {
+  type LiveProgramSteps,
   useClearSlide,
-  useNavigateTemporary,
+  useMoveLive,
   usePresentationState,
 } from '../hooks'
 
@@ -13,10 +14,7 @@ interface MobileLiveStripProps {
    * The program whose step is on the screens, if any: next and previous walk
    * it, as the arrow keys do.
    */
-  liveProgram: {
-    goNext: () => Promise<void>
-    goPrev: () => Promise<void>
-  } | null
+  liveProgram: LiveProgramSteps | null
 }
 
 /**
@@ -27,19 +25,11 @@ interface MobileLiveStripProps {
 export function MobileLiveStrip({ liveProgram }: MobileLiveStripProps) {
   const { t } = useTranslation('bible')
   const { data: state } = usePresentationState()
-  const navigateTemporary = useNavigateTemporary()
+  const { goNext, goPrev } = useMoveLive(liveProgram)
   const clearSlide = useClearSlide()
 
   const content = state?.temporaryContent
   if (!content || state.isHidden) return null
-
-  const go = (direction: 'next' | 'prev') => {
-    if (liveProgram) {
-      void (direction === 'next' ? liveProgram.goNext() : liveProgram.goPrev())
-    } else {
-      navigateTemporary.mutate({ direction })
-    }
-  }
 
   const buttonClass =
     'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:active:bg-gray-700'
@@ -55,7 +45,7 @@ export function MobileLiveStrip({ liveProgram }: MobileLiveStripProps) {
       </div>
       <button
         type="button"
-        onClick={() => go('prev')}
+        onClick={goPrev}
         aria-label={t('controls.prev')}
         className={buttonClass}
       >
@@ -63,7 +53,7 @@ export function MobileLiveStrip({ liveProgram }: MobileLiveStripProps) {
       </button>
       <button
         type="button"
-        onClick={() => go('next')}
+        onClick={goNext}
         aria-label={t('controls.next')}
         data-testid="mobile-live-strip-next"
         className={buttonClass}
