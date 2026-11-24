@@ -113,7 +113,9 @@ test.describe('Bible topics', () => {
       ).json()
     ).data
     expect(inEnglish.passages[0].reference).toBe('John 3:16')
-    expect(inEnglish.passages[0].verses[0].text).toContain('For God so loved the world')
+    expect(inEnglish.passages[0].verses[0].text).toContain(
+      'For God so loved the world',
+    )
 
     // On the page, in its (Romanian) translation
     const panel = await openTopicsPanel(page)
@@ -150,8 +152,10 @@ test.describe('Bible topics', () => {
     await expect.poll(() => presentedReference(request)).toBe('Romani 5:8')
     await expect(passages.nth(1)).toHaveAttribute('data-active', 'true')
 
-    const screens = (await (await request.get('/api/screens')).json())
-      .data as { id: number; type: string }[]
+    const screens = (await (await request.get('/api/screens')).json()).data as {
+      id: number
+      type: string
+    }[]
     const primary = screens.find((screen) => screen.type === 'primary')
     expect(primary, 'the default primary screen').toBeTruthy()
     await page.goto(`/screen/${primary!.id}`)
