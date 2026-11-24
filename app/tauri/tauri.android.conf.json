@@ -7,7 +7,12 @@
   },
   "bundle": {
     "externalBin": [],
-    "resources": {},
+    "resources": {
+      "../apps/client/dist": null,
+      "resources/midi-native": null,
+      "resources/sample-music": null,
+      "resources/default-backgrounds": null
+    },
     "android": {
       "minSdkVersion": 24
     }

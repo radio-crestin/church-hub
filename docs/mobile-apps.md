@@ -29,7 +29,7 @@ Turning remote access off closes the room and disconnects the phones.
 
 ## Building
 
-The phone builds compile the client only (`tauri.android.conf.json`, `tauri.ios.conf.json`). The sidecar, projector windows, screen sharing and audio player are desktop-only (`[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]` in `app/tauri/Cargo.toml`). `app/tauri/gen/` is generated and not committed: run `init` first in a fresh checkout.
+The phone builds compile the client only (`tauri.android.conf.json`, `tauri.ios.conf.json`). The sidecar, projector windows, screen sharing and audio player are desktop-only (`[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]` in `app/tauri/Cargo.toml`). `app/tauri/gen/` is generated and not committed: run `init` first in a fresh checkout, and again (after deleting `gen/android` or `gen/apple`) whenever `@tauri-apps/cli` is upgraded, since its project templates change with it. Both phone configs set the desktop `bundle.resources` to `null`, so the client dist, MIDI, sample music and backgrounds stay out of the phone bundles.
 
 ### Android (Windows, Linux or macOS)
 
@@ -65,7 +65,7 @@ To install on a phone: open the APK on the phone and allow installing from that 
 ```sh
 rustup target add aarch64-apple-ios aarch64-apple-ios-sim
 bun run ios:init                                         # once: generates tauri/gen/apple
-bunx tauri ios build --debug --target aarch64-sim --ci   # simulator, no signing
+bunx tauri ios build --debug --target aarch64-sim --ci   # simulator, no signing (Xcode 27 needs CLI ≥ 2.12.6)
 ```
 
 Installing on an iPhone needs an Apple Developer account (TestFlight or the App Store). Publishing to the stores comes later.
