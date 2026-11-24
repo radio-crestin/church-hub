@@ -2,6 +2,11 @@ import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import {
+  RemoteAccessSwitch,
+  remotePairingFragment,
+  useRemoteAccess,
+} from '~/features/remote-access'
 import { PairingQRCode, useUsers } from '~/features/users'
 import { usePermissions } from '~/provider/permissions-provider'
 import { Combobox } from '~/ui/combobox'
@@ -14,6 +19,7 @@ export function ConnectPhone() {
   const { t } = useTranslation('settings')
   const { userId } = usePermissions()
   const { data: users = [], isLoading } = useUsers()
+  const { remoteAccess } = useRemoteAccess()
   const accounts = users.filter((user) => user.isActive)
   const [chosenId, setChosenId] = useState<number | null>(null)
   const account =
@@ -48,8 +54,15 @@ export function ConnectPhone() {
               allowClear={false}
             />
           </div>
+          <RemoteAccessSwitch />
           <div className="max-w-md">
-            <PairingQRCode key={account.id} token={account.token} />
+            <PairingQRCode
+              key={account.id}
+              token={account.token}
+              fragment={
+                remoteAccess?.enabled ? remotePairingFragment(remoteAccess) : ''
+              }
+            />
           </div>
         </>
       ) : (

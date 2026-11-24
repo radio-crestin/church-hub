@@ -743,6 +743,10 @@
         "account": "Alege contul cu care intră telefonul.",
         "scan": "Scanează codul cu camera telefonului sau cu „Scanează codul QR” din aplicația Church Hub."
       },
+      "remote": {
+        "label": "Acces de oriunde",
+        "description": "Telefoanele conectate cu codul ajung la acest calculator prin internet și când nu sunt în rețeaua Wi-Fi a bisericii. Telefoanele conectate înainte trebuie să scaneze din nou codul."
+      },
       "account": "Contul",
       "noAccounts": "Nu există încă niciun cont cu care să intre telefonul.",
       "createAccount": "Creează unul la Utilizatori"

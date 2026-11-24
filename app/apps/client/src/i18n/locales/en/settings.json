@@ -738,6 +738,10 @@
         "account": "Choose the account the phone signs in with.",
         "scan": "Scan the code with the phone camera, or with \"Scan the QR code\" in the Church Hub app."
       },
+      "remote": {
+        "label": "Reach this computer from anywhere",
+        "description": "Phones paired with the code connect over the internet when they are away from the church Wi-Fi. Phones paired before this must scan the code again."
+      },
       "account": "Account",
       "noAccounts": "There is no account to sign in with yet.",
       "createAccount": "Create one in Users"

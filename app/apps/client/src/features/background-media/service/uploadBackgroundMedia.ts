@@ -1,6 +1,5 @@
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
-
-import { getApiUrl, isMobile, isTauri } from '~/config'
+import { getApiUrl } from '~/config'
+import { apiFetch } from '~/utils/apiFetch'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
 import { createLogger } from '~/utils/logger'
 import { BackgroundMediaUploadError } from './BackgroundMediaUploadError'
@@ -8,10 +7,6 @@ import type { BackgroundMedia, BackgroundMediaErrorCode } from './types'
 import { getBackgroundMediaMimeType } from '../utils/getBackgroundMediaMimeType'
 
 const logger = createLogger('app:background-media')
-
-// Same transport as every other API call: the Tauri HTTP plugin on mobile
-// (iOS WKWebView blocks plain-HTTP fetch), the webview's own fetch elsewhere.
-const fetchFn = isTauri() && isMobile() ? tauriFetch : window.fetch.bind(window)
 
 const STATUS_ERROR_CODES: Record<number, BackgroundMediaErrorCode> = {
   413: 'fileTooLarge',
@@ -37,7 +32,7 @@ export async function uploadBackgroundMedia(
 
   logger.debug(`Uploading ${file.name} (${file.size} bytes)`)
 
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${apiUrl}/api/media/backgrounds?name=${encodeURIComponent(file.name)}`,
     {
       method: 'POST',

@@ -2,8 +2,8 @@ import { X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useMediaUrl } from '~/features/background-media/hooks/useMediaUrl'
 import type { BackgroundMedia } from '~/features/background-media/service/types'
-import { resolveMediaUrl } from '~/features/background-media/utils/resolveMediaUrl'
 import { GalleryKindBadge } from './GalleryKindBadge'
 import { GalleryMediaMeta } from './GalleryMediaMeta'
 
@@ -43,7 +43,7 @@ export function GalleryPreviewModal({
     }
   }
 
-  const src = media ? resolveMediaUrl(media.url) : ''
+  const src = useMediaUrl(media?.url) ?? ''
 
   return (
     <dialog

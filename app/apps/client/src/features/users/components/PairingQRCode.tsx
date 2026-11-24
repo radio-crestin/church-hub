@@ -15,11 +15,17 @@ import {
 
 const logger = createLogger('pairing')
 
+interface PairingQRCodeProps {
+  token: string
+  /** Appended to the link for the phone app (remote access: #remote=…). */
+  fragment?: string
+}
+
 /**
  * The QR code another device scans to sign in as the user with `token`: the
  * computer's address on the chosen network, and the same link to copy.
  */
-export function PairingQRCode({ token }: { token: string }) {
+export function PairingQRCode({ token, fragment = '' }: PairingQRCodeProps) {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
@@ -46,9 +52,10 @@ export function PairingQRCode({ token }: { token: string }) {
     [interfaces],
   )
 
-  const authUrl = selected
-    ? getUserAuthUrlForIp(token, selected.address)
-    : getUserAuthUrl(token)
+  const authUrl =
+    (selected
+      ? getUserAuthUrlForIp(token, selected.address)
+      : getUserAuthUrl(token)) + fragment
   const { qrDataUrl, isLoading } = useQRCode(authUrl)
 
   const copyUrl = async () => {

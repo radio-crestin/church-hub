@@ -1,4 +1,4 @@
-import { resolveMediaUrl } from '~/features/background-media/utils/resolveMediaUrl'
+import { useMediaUrl } from '~/features/background-media/hooks/useMediaUrl'
 import { ScreenBackgroundStill } from './ScreenBackgroundStill'
 import { ScreenBackgroundVideo } from './ScreenBackgroundVideo'
 import type { ScreenBackgroundConfig } from '../../types'
@@ -30,13 +30,13 @@ export function ScreenBackground({
 }: ScreenBackgroundProps) {
   const type = background?.type ?? 'color'
   const opacity = background?.opacity ?? 1
+  const src = useMediaUrl(
+    type === 'image' ? background?.imageUrl : background?.videoUrl,
+  )
 
   if (type === 'transparent') return null
 
   if (type === 'image' || type === 'video') {
-    const url = type === 'image' ? background?.imageUrl : background?.videoUrl
-    const src = url ? resolveMediaUrl(url) : null
-
     return (
       <div
         data-testid="screen-background"
