@@ -1,25 +1,31 @@
 # Cross-platform line endings.
 #
-# On Windows, core.autocrlf=true checks text files out with CRLF. For the DB
-# migration sources and the file generated from them, that CRLF leaks into the
-# generated `embedded.ts` (every \n becomes \r\n) the next time the sidecar is
-# compiled, producing a spurious cross-platform diff. Force LF for these so the
-# generated output is byte-identical on macOS, Windows and Linux.
-app/apps/server/drizzle/migrations/*.sql text eol=lf
-app/apps/server/src/db/migrations/embedded.ts text eol=lf
+# Every text file is checked out with LF on every OS, whatever core.autocrlf
+# says. Git for Windows sets core.autocrlf=true system-wide, which would give
+# CRLF: biome (lineEnding "lf") then fails `bun run lint` on the whole tree,
+# shell scripts get a `bash\r` shebang that does not run, and the migrations
+# leak CRLF into the generated embedded.ts. Git detects binaries itself.
+* text=auto eol=lf
 
-# Shell scripts must be LF everywhere. With core.autocrlf=true — which a
-# contributor may well have set globally, and which is the default on a Windows
-# checkout — a script comes back with CRLF and its shebang becomes
-# `#!/usr/bin/env bash\r`, so running it fails with
-# `env: bash\r: No such file or directory`. That made scripts/release.sh
-# unrunnable on macOS.
-*.sh text eol=lf
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
 
-# Native modules are binary — never apply text/EOL conversion to them.
+# Binaries: never convert.
 *.node binary
-# So are the videos shipped with the app (tauri/resources/default-backgrounds).
 *.mp4 binary
-# Shell scripts and git hooks must stay LF: a CRLF shebang line does not run on macOS or Linux.
-*.sh text eol=lf
-.githooks/** text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.sqlite binary
+*.db binary
