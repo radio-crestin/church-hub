@@ -3,6 +3,8 @@ import { type RTCDataChannel, RTCPeerConnection } from 'werift'
 
 import { log } from '../../utils/fileLogger'
 import { getSetting, upsertSetting } from '../settings'
+import { ICE_SERVERS } from '../signaling/iceServers'
+import { getSignalingBaseUrl } from '../signaling/signalingBaseUrl'
 
 const logger = {
   debug: (msg: string, data?: unknown) =>
@@ -16,12 +18,6 @@ const logger = {
 }
 
 const SETTINGS_KEY = 'live_translation_stream_secret'
-const SIGNALING_BASE_URL = 'https://churchub-backend.radiocrestin.ro'
-
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-]
 
 interface AvailableLanguage {
   targetId: string
@@ -121,7 +117,7 @@ function notifyListenerCounts(): void {
 export async function startSignalingRelay(): Promise<void> {
   const secret = getStreamSecret()
   try {
-    const res = await fetch(`${SIGNALING_BASE_URL}/signal/register`, {
+    const res = await fetch(`${getSignalingBaseUrl()}/signal/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret }),
@@ -155,7 +151,7 @@ export async function stopSignalingRelay(): Promise<void> {
 
   const secret = getStreamSecret()
   try {
-    await fetch(`${SIGNALING_BASE_URL}/signal/unregister`, {
+    await fetch(`${getSignalingBaseUrl()}/signal/unregister`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret }),
@@ -172,7 +168,7 @@ export async function stopSignalingRelay(): Promise<void> {
 
 async function pollForOffers(secret: string): Promise<void> {
   try {
-    const res = await fetch(`${SIGNALING_BASE_URL}/signal/${secret}/offers`)
+    const res = await fetch(`${getSignalingBaseUrl()}/signal/${secret}/offers`)
     if (!res.ok) return
     const data = (await res.json()) as {
       offers: Array<{ sessionId: string; offer: string }>
@@ -183,7 +179,7 @@ async function pollForOffers(secret: string): Promise<void> {
     for (const { sessionId, offer } of data.offers) {
       try {
         const result = await handleListenerOffer(offer)
-        await fetch(`${SIGNALING_BASE_URL}/signal/${secret}/answer`, {
+        await fetch(`${getSignalingBaseUrl()}/signal/${secret}/answer`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId, answer: result.answer }),
