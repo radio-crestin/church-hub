@@ -1,17 +1,17 @@
 export const authPaths = {
-  '/api/auth/device/{token}': {
+  '/api/auth/user/{token}': {
     get: {
       tags: ['Authentication'],
-      summary: 'Authenticate device',
+      summary: 'Sign a device in as a user',
       description:
-        'Authenticates a device using its token and sets an authentication cookie. Redirects to the main app on success.',
+        "The link in a user's QR code (Settings > Users, Settings > Phones): sets the user's authentication cookie and redirects to the app on the host it was opened from.",
       parameters: [
         {
           name: 'token',
           in: 'path',
           required: true,
           schema: { type: 'string' },
-          description: 'Device authentication token',
+          description: "The user's token (usr_...)",
         },
       ],
       responses: {
@@ -29,7 +29,7 @@ export const authPaths = {
           },
         },
         '401': {
-          description: 'Invalid or inactive device token',
+          description: 'Invalid or inactive user token',
           content: {
             'application/json': {
               schema: { $ref: '#/components/schemas/Error' },

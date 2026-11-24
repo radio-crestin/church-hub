@@ -2,14 +2,12 @@ import { KeyRound, Loader2, Server, Wifi, WifiOff } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  isValidApiUrl,
-  parseAuthUrl,
-  setApiUrl,
-  testApiConnection,
-} from '~/service/api-url'
+import { isMobile } from '~/config'
+import { parseAuthUrl, setApiUrl } from '~/service/api-url'
 import { Button } from '~/ui/button'
 import { Input } from '~/ui/input'
+import { ScanPairingCodeButton } from './ScanPairingCodeButton'
+import { useConnectionTest } from '../hooks/useConnectionTest'
 
 interface ApiUrlSetupProps {
   onComplete: () => void
@@ -22,11 +20,14 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
   const { t } = useTranslation('settings')
 
   const [url, setUrlState] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<
-    'idle' | 'testing' | 'success' | 'error'
-  >('idle')
-  const [errorMessage, setErrorMessage] = useState('')
+  const {
+    status: connectionStatus,
+    isLoading,
+    errorMessage,
+    setErrorMessage,
+    test,
+    reset,
+  } = useConnectionTest()
 
   // Check if the URL contains an auth token
   const hasAuthToken = useMemo(() => {
@@ -35,34 +36,15 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
     return userToken !== null
   }, [url])
 
-  const handleTestConnection = async () => {
-    if (!url.trim()) {
-      setErrorMessage(t('sections.apiUrl.errors.emptyUrl'))
-      return
+  const handleTestConnection = () => test(url)
+
+  // A scanned code connects at once: nothing left to type or confirm.
+  const handleScanned = async (scanned: string) => {
+    setUrlState(scanned)
+    if (await test(scanned)) {
+      setApiUrl(scanned)
+      onComplete()
     }
-
-    if (!isValidApiUrl(url)) {
-      setErrorMessage(t('sections.apiUrl.errors.invalidUrl'))
-      return
-    }
-
-    setIsLoading(true)
-    setConnectionStatus('testing')
-    setErrorMessage('')
-
-    const result = await testApiConnection(url)
-
-    if (result.success) {
-      setConnectionStatus('success')
-    } else {
-      setConnectionStatus('error')
-      // Show the actual error message for debugging
-      setErrorMessage(
-        result.error || t('sections.apiUrl.errors.connectionFailed'),
-      )
-    }
-
-    setIsLoading(false)
   }
 
   const handleSave = () => {
@@ -91,6 +73,14 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
         </div>
 
         <div className="space-y-4">
+          {isMobile() && (
+            <ScanPairingCodeButton
+              onScanned={handleScanned}
+              onError={setErrorMessage}
+              disabled={isLoading}
+            />
+          )}
+
           <div className="space-y-2">
             <label
               htmlFor="api-url"
@@ -105,8 +95,7 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
               value={url}
               onChange={(e) => {
                 setUrlState(e.target.value)
-                setConnectionStatus('idle')
-                setErrorMessage('')
+                reset()
               }}
               disabled={isLoading}
             />
