@@ -96,7 +96,7 @@
     },
     "readingSpeed": {
       "title": "Viteza de citire",
-      "description": "Cât rămâne fiecare verset pe ecran când marcajele rulează în buclă: după numărul de cuvinte, la această viteză, dar cel puțin 3 secunde.",
+      "description": "Cât rămâne fiecare verset pe ecran când marcajele sau o temă rulează singure: după numărul de cuvinte, la această viteză, dar cel puțin 3 secunde.",
       "label": "Cuvinte pe minut"
     }
   },
@@ -173,5 +173,28 @@
     "trigger": "Mai multe",
     "addToScheduleDescription": "Adaugă versetul deschis în programul selectat",
     "addToSchedule": "Adaugă versetul în program"
+  },
+  "topics": {
+    "title": "Teme",
+    "searchPlaceholder": "Caută o temă...",
+    "empty": "Nicio temă",
+    "noResults": "Nicio temă găsită",
+    "verseCount_one": "{{count}} verset",
+    "verseCount_few": "{{count}} versete",
+    "verseCount_other": "{{count}} de versete",
+    "back": "Înapoi la teme",
+    "previous": "Prezintă pasajul anterior",
+    "next": "Prezintă pasajul următor",
+    "present": "Prezintă",
+    "openInBible": "Deschide în Biblie",
+    "expand": "Extinde temele",
+    "collapse": "Restrânge temele",
+    "slideshow": {
+      "play": "Prezintă automat",
+      "playHint": "Prezintă versetele pe rând, fiecare cât durează să fie citit; se oprește la ultimul",
+      "loop": "În buclă",
+      "loopHint": "Prezintă versetele iar și iar, fiecare cât durează să fie citit",
+      "stop": "Oprește"
+    }
   }
 }

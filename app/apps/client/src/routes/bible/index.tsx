@@ -37,7 +37,8 @@ import {
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
-import { getBookmarkSlideshow } from '~/features/bible/utils/getBookmarkSlideshow'
+import { BibleTopicsPanel } from '~/features/bible/topics'
+import { getVerseSlideshow } from '~/features/bible/utils/getVerseSlideshow'
 import {
   useFocusSearchEvent,
   usePageShortcutEvent,
@@ -77,13 +78,13 @@ import { useToast } from '~/ui/toast'
 
 /**
  * The Bible page opens as navigation | control panel | the Istoric / Marcaje /
- * Programe stack. Everything after that is the operator's to rearrange.
+ * Teme / Programe stack. Everything after that is the operator's to rearrange.
  */
 const BIBLE_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
     { id: 'col-1', panelIds: ['navigation'] },
     { id: 'col-2', panelIds: ['control'] },
-    { id: 'col-3', panelIds: ['history', 'bookmarks', 'programs'] },
+    { id: 'col-3', panelIds: ['history', 'bookmarks', 'topics', 'programs'] },
   ],
 }
 
@@ -200,6 +201,10 @@ function BiblePage() {
   )
   const [bookmarksOpen, setBookmarksOpen] = usePersistedBoolean(
     'bible:bookmarks-open',
+    false,
+  )
+  const [topicsOpen, setTopicsOpen] = usePersistedBoolean(
+    'bible:topics-open',
     false,
   )
   const [programsOpen, setProgramsOpen] = usePersistedBoolean(
@@ -443,7 +448,7 @@ function BiblePage() {
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
-  const isSlideshowLive = getBookmarkSlideshow(presentationState) !== null
+  const isSlideshowLive = getVerseSlideshow(presentationState) !== null
   const temporaryContent = presentationState?.temporaryContent
 
   /**
@@ -1050,6 +1055,17 @@ function BiblePage() {
     [navigation, presentVerseToScreen, urlSelectOnly, navigate],
   )
 
+  // A verse presented from a topic: the page follows the screen to its
+  // chapter (the server sync), so the next verse continues the passage.
+  const handlePresentTopicVerse = useCallback(
+    async (verse: BibleVerse) => {
+      isBrowsingRef.current = false
+      hasNavigatedOnOpen.current = true
+      await presentVerseToScreen(verse, verse.verse - 1)
+    },
+    [presentVerseToScreen],
+  )
+
   // Handle search result selection - navigate to verse via URL and select it (without presenting)
   const handleSelectSearchResult = useCallback(
     (result: BibleSearchResult) => {
@@ -1493,6 +1509,39 @@ function BiblePage() {
                 bookName: bookmark.bookName,
                 chapter: bookmark.chapter,
                 verse: bookmark.verse,
+                select: true,
+              },
+            })
+          }}
+        />
+      ),
+    },
+    {
+      id: 'topics',
+      title: t('topics.title'),
+      collapsed: isLargeScreen && !topicsOpen,
+      render: () => (
+        <BibleTopicsPanel
+          isCollapsed={isLargeScreen && !topicsOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setTopicsOpen(!topicsOpen) : undefined
+          }
+          translationId={primaryTranslation?.id}
+          activeVerseId={focusedVerse?.id}
+          onPresentVerse={handlePresentTopicVerse}
+          onOpenVerse={(verse) => {
+            // Select only, the same as a bookmark: the operator reads it in
+            // its chapter before presenting it.
+            isBrowsingRef.current = true
+            pendingInternalNavRef.current = true
+            setPhoneTab('navigation')
+            navigate({
+              to: '/bible',
+              search: {
+                book: verse.bookId,
+                bookName: verse.bookName,
+                chapter: verse.chapter,
+                verse: verse.verse,
                 select: true,
               },
             })

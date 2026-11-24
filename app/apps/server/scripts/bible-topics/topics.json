@@ -1,0 +1,644 @@
+[
+  {
+    "key": "love",
+    "en": "Love",
+    "ro": "Dragostea",
+    "sources": ["love"],
+    "exclude": ["LEV.20.13"]
+  },
+  {
+    "key": "gods-love",
+    "en": "God's love",
+    "ro": "Dragostea lui Dumnezeu",
+    "sources": ["gods love"]
+  },
+  {
+    "key": "loving-others",
+    "en": "Loving others",
+    "ro": "Dragostea față de aproapele",
+    "sources": ["loving others"]
+  },
+  { "key": "faith", "en": "Faith", "ro": "Credința", "sources": ["faith"] },
+  { "key": "hope", "en": "Hope", "ro": "Nădejdea", "sources": ["hope"] },
+  { "key": "grace", "en": "Grace", "ro": "Harul", "sources": ["grace"] },
+  { "key": "mercy", "en": "Mercy", "ro": "Îndurarea", "sources": ["mercy"] },
+  {
+    "key": "salvation",
+    "en": "Salvation",
+    "ro": "Mântuirea",
+    "sources": ["salvation"]
+  },
+  {
+    "key": "assurance-of-salvation",
+    "en": "Assurance of salvation",
+    "ro": "Siguranța mântuirii",
+    "sources": ["assurance of salvation"]
+  },
+  {
+    "key": "born-again",
+    "en": "Born again",
+    "ro": "Nașterea din nou",
+    "sources": ["born again"]
+  },
+  {
+    "key": "new-life",
+    "en": "New life in Christ",
+    "ro": "Viața nouă în Hristos",
+    "sources": ["new life"]
+  },
+  {
+    "key": "repentance",
+    "en": "Repentance",
+    "ro": "Pocăința",
+    "sources": ["repentance"]
+  },
+  {
+    "key": "forgiveness",
+    "en": "Forgiveness",
+    "ro": "Iertarea",
+    "sources": ["forgiveness"]
+  },
+  {
+    "key": "forgiving-others",
+    "en": "Forgiving others",
+    "ro": "Iertarea aproapelui",
+    "sources": ["forgiving others"]
+  },
+  { "key": "sin", "en": "Sin", "ro": "Păcatul", "sources": ["sin"] },
+  {
+    "key": "temptation",
+    "en": "Temptation",
+    "ro": "Ispita",
+    "sources": ["temptation"]
+  },
+  {
+    "key": "holiness",
+    "en": "Holiness",
+    "ro": "Sfințenia",
+    "sources": ["holiness"]
+  },
+  { "key": "purity", "en": "Purity", "ro": "Curăția", "sources": ["purity"] },
+  {
+    "key": "obedience",
+    "en": "Obedience",
+    "ro": "Ascultarea",
+    "sources": ["obedience"]
+  },
+  {
+    "key": "prayer",
+    "en": "Prayer",
+    "ro": "Rugăciunea",
+    "sources": ["prayer"]
+  },
+  {
+    "key": "praying-for-others",
+    "en": "Praying for others",
+    "ro": "Rugăciunea pentru alții",
+    "sources": ["praying for others"]
+  },
+  { "key": "fasting", "en": "Fasting", "ro": "Postul", "sources": ["fasting"] },
+  { "key": "praise", "en": "Praise", "ro": "Lauda", "sources": ["praise"] },
+  {
+    "key": "worship",
+    "en": "Worship",
+    "ro": "Închinarea",
+    "sources": ["worship"]
+  },
+  {
+    "key": "singing",
+    "en": "Singing to the Lord",
+    "ro": "Cântarea înaintea Domnului",
+    "sources": ["singing"]
+  },
+  {
+    "key": "thankfulness",
+    "en": "Thankfulness",
+    "ro": "Recunoștința",
+    "sources": ["thankfulness"]
+  },
+  {
+    "key": "giving-thanks",
+    "en": "Giving thanks",
+    "ro": "Mulțumirea adusă lui Dumnezeu",
+    "sources": ["giving thanks"]
+  },
+  { "key": "peace", "en": "Peace", "ro": "Pacea", "sources": ["peace"] },
+  { "key": "joy", "en": "Joy", "ro": "Bucuria", "sources": ["joy"] },
+  {
+    "key": "patience",
+    "en": "Patience",
+    "ro": "Răbdarea",
+    "sources": ["patience"]
+  },
+  {
+    "key": "waiting-on-god",
+    "en": "Waiting on God",
+    "ro": "Așteptarea în Domnul",
+    "sources": ["waiting on god"]
+  },
+  {
+    "key": "kindness",
+    "en": "Kindness",
+    "ro": "Bunătatea",
+    "sources": ["kindness"]
+  },
+  {
+    "key": "gentleness",
+    "en": "Gentleness",
+    "ro": "Blândețea",
+    "sources": ["gentleness"]
+  },
+  {
+    "key": "self-control",
+    "en": "Self-control",
+    "ro": "Înfrânarea poftelor",
+    "sources": ["self control"]
+  },
+  {
+    "key": "humility",
+    "en": "Humility",
+    "ro": "Smerenia",
+    "sources": ["humility"]
+  },
+  { "key": "pride", "en": "Pride", "ro": "Mândria", "sources": ["pride"] },
+  {
+    "key": "compassion",
+    "en": "Compassion",
+    "ro": "Mila față de alții",
+    "sources": ["compassion"],
+    "exclude": ["GEN.6.6"]
+  },
+  {
+    "key": "fruit-of-the-spirit",
+    "en": "Fruit of the Spirit",
+    "ro": "Roada Duhului",
+    "sources": ["fruit of the spirit"]
+  },
+  {
+    "key": "holy-spirit",
+    "en": "The Holy Spirit",
+    "ro": "Duhul Sfânt",
+    "sources": ["holy spirit"]
+  },
+  {
+    "key": "spiritual-gifts",
+    "en": "Spiritual gifts",
+    "ro": "Darurile duhovnicești",
+    "sources": ["spiritual gifts"]
+  },
+  {
+    "key": "trinity",
+    "en": "The Trinity",
+    "ro": "Sfânta Treime",
+    "sources": ["trinity"]
+  },
+  {
+    "key": "jesus",
+    "en": "Jesus Christ",
+    "ro": "Domnul Isus Hristos",
+    "sources": ["jesus"]
+  },
+  {
+    "key": "christmas",
+    "en": "Christmas",
+    "ro": "Nașterea Domnului",
+    "sources": ["birth of jesus", "jesus birth", "birth of christ"]
+  },
+  {
+    "key": "the-cross",
+    "en": "The cross",
+    "ro": "Crucea",
+    "sources": ["cross", "the cross"]
+  },
+  {
+    "key": "blood-of-jesus",
+    "en": "The blood of Jesus",
+    "ro": "Sângele Domnului Isus",
+    "sources": ["blood of jesus", "the blood of jesus"]
+  },
+  {
+    "key": "easter",
+    "en": "Easter",
+    "ro": "Paștele",
+    "sources": ["easter"],
+    "exclude": ["ACT.12.4"]
+  },
+  {
+    "key": "resurrection",
+    "en": "The resurrection",
+    "ro": "Învierea",
+    "sources": ["resurrection"]
+  },
+  {
+    "key": "lords-supper",
+    "en": "The Lord's Supper",
+    "ro": "Cina Domnului",
+    "sources": ["lords supper", "communion"]
+  },
+  {
+    "key": "baptism",
+    "en": "Baptism",
+    "ro": "Botezul",
+    "sources": ["baptism", "water baptism"]
+  },
+  {
+    "key": "second-coming",
+    "en": "The second coming",
+    "ro": "A doua venire a Domnului",
+    "sources": ["second coming"]
+  },
+  {
+    "key": "end-times",
+    "en": "The end times",
+    "ro": "Vremurile din urmă",
+    "sources": ["end times"]
+  },
+  {
+    "key": "judgment",
+    "en": "Judgment",
+    "ro": "Judecata",
+    "sources": ["judgment"]
+  },
+  { "key": "heaven", "en": "Heaven", "ro": "Cerul", "sources": ["heaven"] },
+  { "key": "hell", "en": "Hell", "ro": "Iadul", "sources": ["hell"] },
+  {
+    "key": "eternal-life",
+    "en": "Eternal life",
+    "ro": "Viața veșnică",
+    "sources": ["eternal life"]
+  },
+  {
+    "key": "kingdom-of-god",
+    "en": "The kingdom of God",
+    "ro": "Împărăția lui Dumnezeu",
+    "sources": ["kingdom of god"]
+  },
+  { "key": "angels", "en": "Angels", "ro": "Îngerii", "sources": ["angels"] },
+  {
+    "key": "creation",
+    "en": "Creation",
+    "ro": "Creația",
+    "sources": ["creation"]
+  },
+  {
+    "key": "word-of-god",
+    "en": "The word of God",
+    "ro": "Cuvântul lui Dumnezeu",
+    "sources": ["word of god", "scripture"]
+  },
+  {
+    "key": "gods-promises",
+    "en": "God's promises",
+    "ro": "Promisiunile lui Dumnezeu",
+    "sources": ["promises of god", "gods promises"]
+  },
+  {
+    "key": "gods-faithfulness",
+    "en": "God's faithfulness",
+    "ro": "Credincioșia lui Dumnezeu",
+    "sources": ["gods faithfulness"]
+  },
+  {
+    "key": "gods-will",
+    "en": "God's will",
+    "ro": "Voia lui Dumnezeu",
+    "sources": ["gods will", "will of god"]
+  },
+  {
+    "key": "trusting-god",
+    "en": "Trusting God",
+    "ro": "Încrederea în Dumnezeu",
+    "sources": ["trusting god", "trust"]
+  },
+  {
+    "key": "seeking-god",
+    "en": "Seeking God",
+    "ro": "Căutarea lui Dumnezeu",
+    "sources": ["seeking god"]
+  },
+  {
+    "key": "fear-of-the-lord",
+    "en": "The fear of the Lord",
+    "ro": "Frica de Domnul",
+    "sources": ["fear of the lord"]
+  },
+  {
+    "key": "guidance",
+    "en": "Guidance",
+    "ro": "Călăuzirea",
+    "sources": ["guidance"]
+  },
+  {
+    "key": "wisdom",
+    "en": "Wisdom",
+    "ro": "Înțelepciunea",
+    "sources": ["wisdom"]
+  },
+  { "key": "truth", "en": "Truth", "ro": "Adevărul", "sources": ["truth"] },
+  {
+    "key": "righteousness",
+    "en": "Righteousness",
+    "ro": "Neprihănirea",
+    "sources": ["righteousness"]
+  },
+  {
+    "key": "justice",
+    "en": "Justice",
+    "ro": "Dreptatea",
+    "sources": ["justice"]
+  },
+  {
+    "key": "honesty",
+    "en": "Honesty",
+    "ro": "Cinstea",
+    "sources": ["honesty"]
+  },
+  {
+    "key": "power-of-words",
+    "en": "The power of words",
+    "ro": "Puterea cuvintelor",
+    "sources": ["power of words"]
+  },
+  { "key": "gossip", "en": "Gossip", "ro": "Bârfa", "sources": ["gossip"] },
+  { "key": "anger", "en": "Anger", "ro": "Mânia", "sources": ["anger"] },
+  { "key": "fear", "en": "Fear", "ro": "Frica", "sources": ["fear"] },
+  {
+    "key": "anxiety",
+    "en": "Anxiety and worry",
+    "ro": "Îngrijorarea",
+    "sources": ["anxiety", "worry"]
+  },
+  {
+    "key": "strength",
+    "en": "Strength",
+    "ro": "Puterea de la Dumnezeu",
+    "sources": ["strength"]
+  },
+  {
+    "key": "courage",
+    "en": "Courage",
+    "ro": "Curajul",
+    "sources": ["courage"]
+  },
+  {
+    "key": "comfort",
+    "en": "Comfort",
+    "ro": "Mângâierea",
+    "sources": ["comfort"]
+  },
+  {
+    "key": "encouragement",
+    "en": "Encouragement",
+    "ro": "Încurajarea",
+    "sources": ["encouragement"]
+  },
+  {
+    "key": "hard-times",
+    "en": "Hard times",
+    "ro": "Vremurile grele",
+    "sources": ["hard times"]
+  },
+  {
+    "key": "trials",
+    "en": "Trials",
+    "ro": "Încercările",
+    "sources": ["trials"]
+  },
+  {
+    "key": "suffering",
+    "en": "Suffering",
+    "ro": "Suferința",
+    "sources": ["suffering"]
+  },
+  {
+    "key": "persecution",
+    "en": "Persecution",
+    "ro": "Prigoana",
+    "sources": ["persecution"]
+  },
+  {
+    "key": "perseverance",
+    "en": "Perseverance",
+    "ro": "Statornicia",
+    "sources": ["perseverance"]
+  },
+  {
+    "key": "victory",
+    "en": "Victory",
+    "ro": "Biruința",
+    "sources": ["victory"]
+  },
+  {
+    "key": "spiritual-warfare",
+    "en": "Spiritual warfare",
+    "ro": "Lupta duhovnicească",
+    "sources": ["spiritual warfare"]
+  },
+  {
+    "key": "armor-of-god",
+    "en": "The armor of God",
+    "ro": "Armura lui Dumnezeu",
+    "sources": ["armor of god"]
+  },
+  {
+    "key": "protection",
+    "en": "Protection",
+    "ro": "Ocrotirea lui Dumnezeu",
+    "sources": ["protection"]
+  },
+  {
+    "key": "gods-provision",
+    "en": "God's provision",
+    "ro": "Purtarea de grijă a lui Dumnezeu",
+    "sources": ["gods provision", "provision"]
+  },
+  {
+    "key": "healing",
+    "en": "Healing",
+    "ro": "Vindecarea",
+    "sources": ["healing"]
+  },
+  {
+    "key": "depression",
+    "en": "Despair and depression",
+    "ro": "Deznădejdea",
+    "sources": ["depression"]
+  },
+  {
+    "key": "loneliness",
+    "en": "Loneliness",
+    "ro": "Singurătatea",
+    "sources": ["loneliness"]
+  },
+  { "key": "death", "en": "Death", "ro": "Moartea", "sources": ["death"] },
+  {
+    "key": "grief",
+    "en": "Grief",
+    "ro": "Durerea pierderii",
+    "sources": ["grief"]
+  },
+  {
+    "key": "blessings",
+    "en": "Blessings",
+    "ro": "Binecuvântările",
+    "sources": ["blessings"]
+  },
+  { "key": "rest", "en": "Rest", "ro": "Odihna", "sources": ["rest"] },
+  {
+    "key": "contentment",
+    "en": "Contentment",
+    "ro": "Mulțumirea cu ce ai",
+    "sources": ["contentment"]
+  },
+  {
+    "key": "giving",
+    "en": "Giving",
+    "ro": "Dărnicia",
+    "sources": ["giving", "generosity"]
+  },
+  {
+    "key": "tithing",
+    "en": "Tithing",
+    "ro": "Zeciuiala",
+    "sources": ["tithing"]
+  },
+  { "key": "money", "en": "Money", "ro": "Banii", "sources": ["money"] },
+  { "key": "work", "en": "Work", "ro": "Munca", "sources": ["work"] },
+  {
+    "key": "good-works",
+    "en": "Good works",
+    "ro": "Faptele bune",
+    "sources": ["good works"]
+  },
+  {
+    "key": "serving",
+    "en": "Serving others",
+    "ro": "Slujirea",
+    "sources": ["serving", "servanthood"]
+  },
+  {
+    "key": "hospitality",
+    "en": "Hospitality",
+    "ro": "Primirea de oaspeți",
+    "sources": ["hospitality"]
+  },
+  {
+    "key": "church",
+    "en": "The church",
+    "ro": "Biserica",
+    "sources": ["church"]
+  },
+  { "key": "unity", "en": "Unity", "ro": "Unitatea", "sources": ["unity"] },
+  {
+    "key": "fellowship",
+    "en": "Fellowship",
+    "ro": "Părtășia",
+    "sources": ["fellowship"]
+  },
+  {
+    "key": "leadership",
+    "en": "Leadership",
+    "ro": "Conducerea",
+    "sources": ["leadership"]
+  },
+  {
+    "key": "pastors",
+    "en": "Pastors and elders",
+    "ro": "Păstorii și prezbiterii",
+    "sources": ["pastors"]
+  },
+  {
+    "key": "discipleship",
+    "en": "Discipleship",
+    "ro": "Ucenicia",
+    "sources": ["discipleship"]
+  },
+  {
+    "key": "spiritual-growth",
+    "en": "Spiritual growth",
+    "ro": "Creșterea spirituală",
+    "sources": ["spiritual growth"]
+  },
+  {
+    "key": "evangelism",
+    "en": "Evangelism",
+    "ro": "Evanghelizarea",
+    "sources": ["evangelism", "great commission"]
+  },
+  {
+    "key": "missions",
+    "en": "Missions",
+    "ro": "Misiunea",
+    "sources": ["missions"]
+  },
+  {
+    "key": "being-a-light",
+    "en": "Being a light",
+    "ro": "Lumina lumii",
+    "sources": ["being a light"]
+  },
+  { "key": "family", "en": "Family", "ro": "Familia", "sources": ["family"] },
+  {
+    "key": "marriage",
+    "en": "Marriage",
+    "ro": "Căsătoria",
+    "sources": ["marriage"]
+  },
+  {
+    "key": "husbands",
+    "en": "Husbands",
+    "ro": "Îndemnuri pentru soți",
+    "sources": ["husbands"]
+  },
+  {
+    "key": "wives",
+    "en": "Wives",
+    "ro": "Îndemnuri pentru soții",
+    "sources": ["wives"]
+  },
+  {
+    "key": "children",
+    "en": "Children",
+    "ro": "Copiii",
+    "sources": ["children"]
+  },
+  {
+    "key": "parents",
+    "en": "Parents",
+    "ro": "Părinții",
+    "sources": ["parents"]
+  },
+  { "key": "mothers", "en": "Mothers", "ro": "Mamele", "sources": ["mothers"] },
+  { "key": "fathers", "en": "Fathers", "ro": "Tații", "sources": ["fathers"] },
+  {
+    "key": "youth",
+    "en": "Youth",
+    "ro": "Tinerii",
+    "sources": ["youth"],
+    "exclude": ["LEV.19.28"]
+  },
+  {
+    "key": "old-age",
+    "en": "Old age",
+    "ro": "Bătrânețea",
+    "sources": ["old age", "aging"]
+  },
+  {
+    "key": "widows-and-orphans",
+    "en": "Widows and orphans",
+    "ro": "Văduvele și orfanii",
+    "sources": ["widows", "orphans"]
+  },
+  {
+    "key": "friendship",
+    "en": "Friendship",
+    "ro": "Prietenia",
+    "sources": ["friendship"]
+  },
+  {
+    "key": "new-year",
+    "en": "New year",
+    "ro": "Anul nou",
+    "sources": ["new year"]
+  }
+]

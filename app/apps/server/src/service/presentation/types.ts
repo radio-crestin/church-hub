@@ -212,6 +212,13 @@ export interface TemporaryVerseteTineriContent {
    * next one shows, and the last one wraps to the first (verse-loop.ts).
    */
   loop?: boolean
+  /**
+   * Advances by itself after each entry's reading time like `loop`, but stops
+   * on the last entry instead of wrapping (verse-loop.ts).
+   */
+  autoAdvance?: boolean
+  /** The list that started this slideshow, e.g. `bookmarks` or `topic:12` */
+  slideshow?: string
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -337,6 +344,8 @@ export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
   loop?: boolean // Advance by itself and wrap around (see TemporaryVerseteTineriContent)
+  autoAdvance?: boolean // Advance by itself, stop on the last entry
+  slideshow?: string // The list that started it (bookmarks, topic:<id>)
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number

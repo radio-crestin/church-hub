@@ -178,6 +178,16 @@ export const presentationSchemas = {
         description:
           'Play the entries in a loop: each stays up for its reading time (its words at the bible_reading_speed app setting, words per minute, default 160; at least 3 s), then the next shows, and the last wraps to the first. Hiding or presenting anything else stops it.',
       },
+      autoAdvance: {
+        type: 'boolean',
+        description:
+          'Advance by itself after the reading time of each entry, as loop does, but stop on the last entry instead of wrapping (the Bible topics slideshow).',
+      },
+      slideshow: {
+        type: 'string',
+        description:
+          'The list that started the slideshow, so its panel shows it as playing: `bookmarks` or `topic:<id>`.',
+      },
       scheduleId: {
         type: 'integer',
         description:
