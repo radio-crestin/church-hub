@@ -11,6 +11,7 @@ import type {
   SizeWithUnits,
 } from '../../types'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { formatSongTitle } from '../../utils/formatSongTitle'
 import { ScreenBackground } from '../rendering/ScreenBackground'
 import { TextContent } from '../rendering/TextContent'
 import {
@@ -43,13 +44,15 @@ const SAMPLE_CONTENT: Record<
     songKey?: string
     amen?: string
     songTitle?: string
+    songTitleNumber?: string
   }
 > = {
   song: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
     songKey: 'G',
     amen: 'Amin!',
-    songTitle: 'PDC 19 · Aleluia, mărire Domnului',
+    songTitle: 'Aleluia, mărire Domnului',
+    songTitleNumber: 'PDC 19',
   },
   song_first_slide: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
@@ -524,6 +527,7 @@ export function ScreenEditorCanvas({
       // first-slide preview render `sample.songKey` (see the songKey element).
       songKey: defaultSample?.songKey,
       songTitle: defaultSample?.songTitle,
+      songTitleNumber: defaultSample?.songTitleNumber,
     }),
     [contentType, previewTexts, defaultSample],
   )
@@ -801,7 +805,11 @@ export function ScreenEditorCanvas({
           canvasRef={canvasRef}
         >
           <TextContent
-            content={sample?.songTitle ?? ''}
+            content={formatSongTitle(
+              sample?.songTitle,
+              sample?.songTitleNumber,
+              st.showNumber,
+            )}
             style={{ ...st.style, maxFontSize: st.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}

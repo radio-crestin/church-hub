@@ -30,9 +30,13 @@ async function songConfig(request: APIRequestContext, screenId: number) {
   return data.contentConfigs
 }
 
-async function showTitle(request: APIRequestContext, screenId: number) {
+async function showTitle(
+  request: APIRequestContext,
+  screenId: number,
+  extra: Record<string, unknown> = {},
+) {
   const { song } = await songConfig(request, screenId)
-  song.songTitle = { ...song.songTitle, hidden: false }
+  song.songTitle = { ...song.songTitle, hidden: false, ...extra }
   const put = await request.put(`/api/screens/${screenId}/config/song`, {
     data: { config: song },
   })
@@ -129,7 +133,10 @@ test.describe('Song title on the projector', () => {
     request,
   }) => {
     const configs = await songConfig(request, screenId)
-    expect(configs.song.songTitle).toMatchObject({ hidden: true })
+    expect(configs.song.songTitle).toMatchObject({
+      hidden: true,
+      showNumber: false,
+    })
     expect(configs.song.songTitle).toHaveProperty('constraints')
     expect(configs.song_first_slide.songTitle).toBeUndefined()
     expect(configs.song_last_slide.songTitle).toBeUndefined()
@@ -173,7 +180,7 @@ test.describe('Song title on the projector', () => {
     await expect(shown(page, title)).toBeVisible()
   })
 
-  test('a numbered song shows its songbook and number', async ({
+  test('a numbered song shows its songbook and number once turned on', async ({
     page,
     request,
   }) => {
@@ -200,11 +207,20 @@ test.describe('Song title on the projector', () => {
     })
 
     try {
+      // By default: the title alone, without its "019 - ".
       await showTitle(request, screenId)
       await request.post('/api/presentation/temporary-song', {
         data: { songId: numbered, slideIndex: 1 },
       })
       await page.goto(`/screen/${screenId}`)
+      await expect(shown(page, `La masa Ta ${stamp}`)).toBeVisible({
+        timeout: 15000,
+      })
+      await expect(page.getByText(/PDC 19|019 -/)).toHaveCount(0)
+
+      // Turned on for this screen: the songbook and number before it.
+      await showTitle(request, screenId, { showNumber: true })
+      await page.reload()
       await expect(shown(page, `PDC 19 · La masa Ta ${stamp}`)).toBeVisible({
         timeout: 15000,
       })
@@ -248,10 +264,13 @@ test.describe('Song title on the projector', () => {
     await element
       .getByText(label('presentation', 'screens.visibility.hideElement'))
       .click()
+    await element
+      .getByText(label('presentation', 'screens.songTitle.showNumber'))
+      .click()
     await page.getByTestId('screen-editor-save').click()
 
     await expect
       .poll(async () => (await songConfig(request, screenId)).song.songTitle)
-      .toMatchObject({ hidden: false })
+      .toMatchObject({ hidden: false, showNumber: true })
   })
 })

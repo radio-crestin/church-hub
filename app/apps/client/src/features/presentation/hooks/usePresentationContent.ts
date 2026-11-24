@@ -46,6 +46,7 @@ export interface ContentData {
   songKey?: string // Song key ("gama"), populated only on the first slide
   amen?: string // "Amin", populated only on the last slide
   songTitle?: string // The song's title, on every slide of a song
+  songTitleNumber?: string // Its songbook and number ("PDC 19"), if it has one
   /**
    * Per-slide text styling for the main text, merged over the screen's own
    * style by the renderer. Undefined means the screen settings apply as-is.
@@ -164,7 +165,8 @@ function buildSongSlideContent(
       chords: resolvedChords,
       songKey: songKeyValue,
       amen: amenValue,
-      songTitle: data.titleLabel ?? data.title,
+      songTitle: data.displayTitle ?? data.title,
+      songTitleNumber: data.titleNumber,
       styleOverrides: currentSlide.styleOverrides ?? null,
       songBackground: data.background ?? null,
     },

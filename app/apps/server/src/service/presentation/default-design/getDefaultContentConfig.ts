@@ -61,7 +61,8 @@ function songTitle(layout: ScreenLayout) {
       lineHeight: 1.15,
       shadow: layout.shadow,
     },
-    { hidden: true },
+    // Off until a screen turns it on; the songbook and number too.
+    { hidden: true, showNumber: false },
   )
 }
 

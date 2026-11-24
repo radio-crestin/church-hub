@@ -120,8 +120,10 @@ export interface NextItemPreview {
 export interface TemporarySongContent {
   songId: number
   title: string
-  /** The title as the projector's corner shows it: "PDC 19 · La masa Ta…" */
-  titleLabel?: string
+  /** The title without its leading number: "La masa Ta noi azi venim" */
+  displayTitle?: string
+  /** The songbook's initials and the song's number: "PDC 19" */
+  titleNumber?: string
   keyLine?: string | null // Musical key (e.g., "C Major", "Am")
   /**
    * The song's own background, shown instead of the screen's background while

@@ -34,6 +34,7 @@ import {
   resolveSlideFontScale,
 } from '../../utils/applySlideStyleOverride'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { formatSongTitle } from '../../utils/formatSongTitle'
 import { offsetStyleRanges } from '../../utils/offsetStyleRanges'
 import { toTextStyleRanges } from '../../utils/toTextStyleRanges'
 
@@ -387,6 +388,7 @@ export function ScreenContent({
     name: 'songKey' | 'amen' | 'songTitle',
     element: ReferenceTextConfig | undefined,
     elementContentKey: string,
+    content = contentData?.[name] ?? '',
   ) => {
     if (!element || element.hidden) return null
 
@@ -401,7 +403,7 @@ export function ScreenContent({
     return (
       <AnimatedText
         key={name}
-        content={contentData?.[name] ?? ''}
+        content={content}
         contentKey={elementContentKey}
         isVisible={isVisible}
         style={scaleTextStyle(element.style, fontScale)}
@@ -437,12 +439,19 @@ export function ScreenContent({
   // The song's title, set on the `song` layout alone and shown on every slide
   // of the song. Keyed by the title, so it stays put from verse to verse and
   // only changes with the song.
-  const renderSongTitle = () =>
-    renderSongElement(
+  const renderSongTitle = () => {
+    const title = formatSongTitle(
+      contentData?.songTitle,
+      contentData?.songTitleNumber,
+      songConfig?.songTitle?.showNumber,
+    )
+    return renderSongElement(
       'songTitle',
       songConfig?.songTitle,
-      `songTitle-${contentData?.songTitle ?? ''}`,
+      `songTitle-${title}`,
+      title,
     )
+  }
 
   // Render person label
   const renderPersonLabel = () => {

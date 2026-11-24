@@ -120,8 +120,10 @@ export interface NextItemPreview {
 export interface TemporarySongContent {
   songId: number
   title: string
-  /** The title as the projector's corner shows it: "PDC 19 · La masa Ta…" */
-  titleLabel?: string
+  /** The title without its leading number: "La masa Ta noi azi venim" */
+  displayTitle?: string
+  /** The songbook's initials and the song's number: "PDC 19" */
+  titleNumber?: string
   keyLine?: string | null // Musical key (e.g., "C Major", "Am")
   slides: TemporarySongSlide[]
   currentSlideIndex: number // 0-based index
@@ -578,13 +580,19 @@ export interface PersonLabelConfig {
  * Content type configuration - different for each content type
  * Clock is enabled per-content-type but uses shared global config for position/style
  */
+/** The song-title element: a text element that may show the songbook and number. */
+export interface SongTitleConfig extends ReferenceTextConfig {
+  /** The songbook's initials and the song's number before the title ("PDC 19 · …"); off by default. */
+  showNumber?: boolean
+}
+
 export interface SongContentConfig {
   background: ScreenBackgroundConfig
   mainText: TextElementConfig
   songKey?: ReferenceTextConfig // Song key ("gama") element, shown on the first slide
   amen?: ReferenceTextConfig // "Amin" element, shown on the last slide
   /** The song's title in a corner, on every slide (first and last too). */
-  songTitle?: ReferenceTextConfig
+  songTitle?: SongTitleConfig
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
   displayKeyLine?: boolean // Whether to display the song key line on the first slide (default: true)
   displayChords?: boolean // Whether to display chord annotations above lyrics (default: false)

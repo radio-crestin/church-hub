@@ -300,6 +300,9 @@
       "clockSettings": "Clock Settings",
       "clock": "Clock",
       "screenSettings": "Screen Settings"
+    },
+    "songTitle": {
+      "showNumber": "Show the songbook and number (PDC 19)"
     }
   },
   "displays": {

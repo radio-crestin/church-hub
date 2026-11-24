@@ -27,8 +27,8 @@ import {
   songs,
 } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
-import { formatSongTitleLabel } from '../songs/formatSongTitleLabel'
 import { parseSongBackground } from '../songs/parseSongBackground'
+import { resolveSongTitleParts } from '../songs/resolveSongTitleParts'
 import { parseStyleOverrides } from '../songs/song-slides'
 
 const logger = createLogger('presentation-state')
@@ -397,10 +397,10 @@ export function presentTemporaryBible(
 }
 
 /**
- * The title shown in the projector's corner, with the songbook and number
- * ("PDC 19 · La masa Ta noi azi venim"), read fresh so an edit reaches it.
+ * The title shown in the projector's corner and the songbook and number a
+ * screen may show before it, read fresh so an edit reaches them.
  */
-function readSongTitleLabel(songId: number): string | undefined {
+function readSongTitleParts(songId: number) {
   const song = getDatabase()
     .select({
       title: songs.title,
@@ -412,7 +412,8 @@ function readSongTitleLabel(songId: number): string | undefined {
     .leftJoin(songCategories, eq(songCategories.id, songs.categoryId))
     .where(eq(songs.id, songId))
     .get()
-  return song ? formatSongTitleLabel(song) : undefined
+  const parts = song ? resolveSongTitleParts(song) : undefined
+  return { displayTitle: parts?.title, titleNumber: parts?.number }
 }
 
 /**
@@ -481,7 +482,7 @@ export function presentTemporarySong(
       data: {
         songId: song.id,
         title: song.title,
-        titleLabel: readSongTitleLabel(song.id),
+        ...readSongTitleParts(song.id),
         keyLine: song.keyLine,
         background: parseSongBackground(song.background),
         slides: expandedSlides.map((s, idx) => {
@@ -1354,7 +1355,7 @@ export function refreshPresentedSongSlides(
         }),
         currentSlideIndex,
         title: song?.title ?? currentState.temporaryContent.data.title,
-        titleLabel: readSongTitleLabel(songId),
+        ...readSongTitleParts(songId),
         keyLine: song?.keyLine ?? null,
         background: parseSongBackground(song?.background),
       },

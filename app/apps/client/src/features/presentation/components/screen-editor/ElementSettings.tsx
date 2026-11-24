@@ -167,6 +167,16 @@ export function ElementSettings({
         </div>
       )}
 
+      {element.type === 'songTitle' && (
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <Checkbox
+            checked={elementConfig.showNumber ?? false}
+            onCheckedChange={(checked) => update({ showNumber: !!checked })}
+            label={t('screens.songTitle.showNumber')}
+          />
+        </div>
+      )}
+
       {elementConfig.style && (
         <SettingsSection title={t('screens.panels.textStyle')} icon={Type}>
           <TextStyleControls
