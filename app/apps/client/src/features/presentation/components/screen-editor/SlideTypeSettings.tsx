@@ -2,6 +2,7 @@ import {
   BookOpen,
   Clock,
   Layers,
+  Lock,
   MonitorPlay,
   Music,
   Palette,
@@ -13,6 +14,7 @@ import { Label } from '~/ui/label/Label'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { BackgroundSongTypesHint } from './BackgroundSongTypesHint'
 import { ConstraintControls } from './ConstraintControls'
+import { getElementConfig } from './getElementConfig'
 import type { SelectedElement } from './hooks/useEditorState'
 import { SegmentedControl } from './SegmentedControl'
 import { SettingsSection } from './SettingsSection'
@@ -118,8 +120,14 @@ export function SlideTypeSettings({
                 type="button"
                 data-testid={`screen-editor-element-${type}`}
                 onClick={() => onSelectElement({ type })}
-                className="px-2.5 py-1 text-xs font-medium rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
               >
+                {getElementConfig(screen, config, type)?.locked && (
+                  <Lock
+                    className="w-3 h-3"
+                    aria-label={t('screens.position.locked')}
+                  />
+                )}
                 {t(`screens.elements.${type}`)}
               </button>
             ))}
