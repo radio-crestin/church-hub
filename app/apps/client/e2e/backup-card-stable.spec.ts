@@ -1,4 +1,3 @@
-import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 
 import { makeTempDir, removeTempDir } from './helpers/temp-dir'
