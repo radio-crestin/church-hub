@@ -96,7 +96,16 @@
       "left": "Left",
       "right": "Right",
       "stretchHorizontal": "Width stretches between left and right constraints",
-      "stretchVertical": "Height stretches between top and bottom constraints"
+      "stretchVertical": "Height stretches between top and bottom constraints",
+      "copy": "Copy position",
+      "paste": "Paste position",
+      "nothingCopied": "Copy an element's position first",
+      "copied": "Position copied. Paste it on another element, slide type or screen.",
+      "lock": "Lock",
+      "locked": "Locked",
+      "lockHint": "Lock it so it can't be moved by mistake",
+      "unlockHint": "Unlock to move or resize it",
+      "lockedDescription": "The position is locked. Unlock it to move or resize the element."
     },
     "textStyle": {
       "fontFamily": "Font Family",

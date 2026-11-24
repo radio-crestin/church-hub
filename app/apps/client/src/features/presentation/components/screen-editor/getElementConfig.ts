@@ -14,6 +14,7 @@ export interface ElementConfig {
   constraints?: Constraints
   size?: SizeWithUnits
   hidden?: boolean
+  locked?: boolean
   style?: TextStyle
   labelStyle?: TextStyle
   contentStyle?: TextStyle
