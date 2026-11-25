@@ -8,6 +8,8 @@ import {
   FileText,
   Loader2,
   Pencil,
+  Play,
+  Square,
   Timer,
   Trash2,
   Upload,
@@ -58,6 +60,7 @@ import {
   useScheduleFlatNavigation,
   useScheduleKeyboardShortcuts,
   useScheduleKeyLineEditor,
+  useScheduleRunToggle,
   useSetScheduleItemAdvance,
   useUpsertSchedule,
 } from '../hooks'
@@ -140,6 +143,7 @@ export function SchedulePresenter({
   const markSung = useMarkScheduleItemSung()
   const setItemAdvance = useSetScheduleItemAdvance()
   const addItemMutation = useAddItemToSchedule()
+  const runToggle = useScheduleRunToggle(scheduleId)
 
   // Layout state
   const [isLargeScreen, setIsLargeScreen] = useState(false)
@@ -813,9 +817,20 @@ export function SchedulePresenter({
     },
   ]
 
-  // A phone has no room for the file and delete buttons beside the title:
-  // they join the menu there.
-  // On a phone the header has no room for Delete, so it moves into the menu.
+  // A phone has room only for the menu beside the title, so the program's
+  // whole name stays readable: Run and Delete join the menu there.
+  const phoneRunActions: ActionMenuItem[] = runToggle.canRun
+    ? [
+        {
+          id: 'run-schedule',
+          label: runToggle.label,
+          icon: runToggle.isRunning ? <Square size={18} /> : <Play size={18} />,
+          onSelect: runToggle.toggle,
+          disabled: runToggle.isPending,
+          testId: 'schedule-run-action',
+        },
+      ]
+    : []
   const phoneDeleteAction: ActionMenuItem = {
     id: 'delete-schedule',
     label: t('actions.delete'),
@@ -826,6 +841,7 @@ export function SchedulePresenter({
 
   // Panels only form movable columns on a large screen; renaming works anywhere.
   const menuItems: ActionMenuItem[] = [
+    ...(isLargeScreen ? [] : phoneRunActions),
     ...(canEditProgram
       ? [
           {
@@ -957,12 +973,12 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
-          <ScheduleRunButton scheduleId={scheduleId} />
+          {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
           {isLargeScreen && (
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
               title={t('actions.delete')}
             >
               <Trash2 className="w-4 h-4" strokeWidth={1.5} />
