@@ -82,6 +82,7 @@ export function VideoItemDialog({
               role="radio"
               aria-checked={video.id === mediaId}
               data-testid="video-item-option"
+              data-media-id={video.id}
               onClick={() => setMediaId(video.id)}
               className={`relative aspect-video overflow-hidden rounded-lg border-2 bg-black ${
                 video.id === mediaId
