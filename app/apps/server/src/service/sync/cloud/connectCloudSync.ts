@@ -42,8 +42,7 @@ export async function connectCloudSync(
     { name: getInstallation().name, ...(ownerTicket && { ownerTicket }) },
   )
   if (response.status !== 201) throw serviceError(response)
-  const { churchId, readUrl, deviceId, serverToken, ownerEmail } =
-    response.body
+  const { churchId, readUrl, deviceId, serverToken, ownerEmail } = response.body
 
   await saveCloudIdentity({
     serviceUrl,

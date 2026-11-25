@@ -32,7 +32,8 @@ const STATUS_BY_ERROR: Record<string, number> = {
 function failure(error: unknown): Response {
   const message = toErrorMessage(error)
   const status = STATUS_BY_ERROR[message] ?? 502
-  if (status === 502) logger.error(`Cloud sync owner request failed: ${message}`)
+  if (status === 502)
+    logger.error(`Cloud sync owner request failed: ${message}`)
   return Response.json({ error: message }, { status })
 }
 

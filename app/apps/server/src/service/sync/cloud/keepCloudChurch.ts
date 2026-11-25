@@ -26,7 +26,10 @@ export async function keepCloudChurch(here: boolean): Promise<void> {
   if (response.status !== 200) throw serviceError(response)
   setServerConflict(null)
   if (response.body.readUrl !== identity.readUrl) {
-    await updateCloudIdentity({ readUrl: response.body.readUrl, headEtag: null })
+    await updateCloudIdentity({
+      readUrl: response.body.readUrl,
+      headEtag: null,
+    })
   }
   void runSyncCycle()
 }

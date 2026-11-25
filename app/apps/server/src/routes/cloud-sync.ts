@@ -1,3 +1,4 @@
+import { handleCloudSyncOwnerRoutes } from './cloud-sync-owner'
 import {
   addCloudDevice,
   connectCloudSync,
@@ -7,7 +8,6 @@ import {
 import type { Permission } from '../service/users/types'
 import { createLogger } from '../utils/logger'
 import { toErrorMessage } from '../utils/toErrorMessage'
-import { handleCloudSyncOwnerRoutes } from './cloud-sync-owner'
 
 const logger = createLogger('sync')
 

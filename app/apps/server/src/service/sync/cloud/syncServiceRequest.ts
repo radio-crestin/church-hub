@@ -25,7 +25,11 @@ interface ServerInUseBody {
  * (getServerConflict) and thrown as `server_in_use`.
  */
 export async function syncServiceRequest<T>(
-  target: { serviceUrl: string; identity?: CloudIdentity; ownerTicket?: string },
+  target: {
+    serviceUrl: string
+    identity?: CloudIdentity
+    ownerTicket?: string
+  },
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   body?: unknown,
