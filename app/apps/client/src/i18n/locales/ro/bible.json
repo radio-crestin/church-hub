@@ -110,7 +110,7 @@
     "clear": "Șterge",
     "today": "Azi",
     "yesterday": "Ieri",
-    "export": "Exportă ca program",
+    "export": "Exportă ca prezentare",
     "exportLastSession": "Ultima sesiune",
     "exportEntireHistory": "Tot istoricul",
     "exportVerseCount_one": "{{count}} verset",
@@ -171,8 +171,8 @@
   },
   "actionsMenu": {
     "trigger": "Mai multe",
-    "addToScheduleDescription": "Adaugă versetul deschis în programul selectat",
-    "addToSchedule": "Adaugă versetul în program"
+    "addToScheduleDescription": "Adaugă versetul deschis în prezentarea selectată",
+    "addToSchedule": "Adaugă versetul în prezentare"
   },
   "topics": {
     "title": "Teme",

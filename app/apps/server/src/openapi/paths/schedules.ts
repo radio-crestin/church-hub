@@ -1,4 +1,99 @@
 export const schedulesPaths = {
+  '/api/schedules/automation': {
+    get: {
+      tags: ['Schedules'],
+      summary: 'Presentation runner state',
+      description:
+        'Whether a presentation is running by itself, at which step, and when the next one goes up',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The runner state',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/ScheduleAutomationState',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/schedules/automation/stop': {
+    post: {
+      tags: ['Schedules'],
+      summary: 'Stop the running presentation',
+      description:
+        'Stops the presentation running by itself and takes its content off the screens. Needs control_room.control',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The runner state',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/ScheduleAutomationState',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+      },
+    },
+  },
+  '/api/schedules/{id}/run': {
+    post: {
+      tags: ['Schedules'],
+      summary: 'Run a presentation',
+      description:
+        'Presents the first step of the presentation. With autoplay on, the server then moves it on by itself, each step after its own time (the item advanceSeconds, else autoplaySeconds, longer for more text with autoplayByText), looping if set, until it is stopped, ends, or an operator presents something else. Sets the music volume first when the presentation has one. Needs control_room.control',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'The runner state',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/ScheduleAutomationState',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'The presentation has nothing to show',
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': { $ref: '#/components/responses/Forbidden' },
+        '404': { description: 'Presentation not found' },
+      },
+    },
+  },
   '/api/schedules/search': {
     get: {
       tags: ['Schedules'],
@@ -318,6 +413,68 @@ export const schedulesPaths = {
             },
           },
         },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
+  '/api/schedules/{id}/items/{itemId}/advance': {
+    put: {
+      tags: ['Schedules'],
+      summary: 'Set how long each slide of an item stays up',
+      description:
+        "Like PowerPoint's 'advance after': while the presentation runs by itself, each slide of this item stays up advanceSeconds (1-3600). null gives the item back the presentation's timing. Needs programs.edit",
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Presentation ID',
+        },
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Presentation item ID',
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['advanceSeconds'],
+              properties: {
+                advanceSeconds: {
+                  type: 'integer',
+                  nullable: true,
+                  minimum: 1,
+                  maximum: 3600,
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Timing saved',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/OperationResult' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
         '401': { $ref: '#/components/responses/Unauthorized' },
         '404': { $ref: '#/components/responses/NotFound' },
       },

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { clickHeaderAction } from './helpers/actions-menu'
 import { pressNavigationShortcut } from './helpers/navigation-shortcut'
 
 /**
@@ -1457,7 +1458,13 @@ test.describe("a program's Next and Prev carry on from the song on screen", () =
           scheduleId: undefined,
           scheduleItemIndex: undefined,
         })
-      await panel.getByTestId('schedule-open').click()
+      // Run sits first in the header, so at this width "open" may be under More.
+      await clickHeaderAction(
+        page,
+        panel,
+        'schedule-open',
+        'schedule-header-more',
+      )
       await expect(page).toHaveURL(new RegExp(`/schedules/${schedule.id}`))
       await expect(page.getByTitle(opening.title, { exact: true })).toBeVisible(
         { timeout: 10000 },

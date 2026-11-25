@@ -16,12 +16,16 @@ export function measureContentWidth(row: HTMLElement): number {
   return children.reduce(
     (total, child) => {
       const style = getComputedStyle(child)
-      // scrollWidth is rounded to a whole pixel; the extra one keeps a title a
-      // fraction wider than that from still ending in an ellipsis.
+      // A child that clips (a `truncate` title) is measured the same way cut or
+      // whole: its scrollWidth, rounded to a whole pixel, plus one so a title a
+      // fraction wider than that does not still end in an ellipsis. Measuring
+      // it by its box only while whole made the answer differ by a pixel
+      // between the two layouts it decides between, and the header flipped
+      // between them until React gave up (T-016).
       const width =
-        child.scrollWidth > child.clientWidth
-          ? child.scrollWidth + 1
-          : child.getBoundingClientRect().width
+        style.overflowX === 'visible'
+          ? child.getBoundingClientRect().width
+          : child.scrollWidth + 1
       return (
         total +
         width +

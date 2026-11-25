@@ -22,8 +22,8 @@
     "scene": "OBS Scene",
     "sceneDescription": "Switch to an OBS scene",
     "importSchedule": {
-      "title": "Import Schedule",
-      "description": "Import from an existing schedule"
+      "title": "Import Presentation",
+      "description": "Import from an existing presentation"
     }
   },
   "fontSize": {

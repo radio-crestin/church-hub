@@ -18,7 +18,7 @@
     "editAsSlides": "Editează ca slide-uri",
     "addSlide": "Adaugă slide",
     "cloneSlide": "Duplică slide-ul",
-    "addToSchedule": "Adaugă în program",
+    "addToSchedule": "Adaugă în prezentare",
     "saveToFile": "Salvează în fișier",
     "exportPdf": "Exportă ca PDF",
     "exportDocx": "Exportă ca Word",
@@ -105,7 +105,7 @@
     "aiSearchTooltip": "Căutare AI – găsește cântări după temă",
     "aiProcessing": "AI-ul analizează...",
     "presentedOnly": "Cântări prezentate",
-    "inSchedulesOnly": "În programe",
+    "inSchedulesOnly": "În prezentări",
     "hasKeyLine": "Cu gamă",
     "bookmarkedOnly": "Marcate",
     "filters": "Filtre",
@@ -119,7 +119,7 @@
     "label": "Sari la literă",
     "jumpTo": "Sari la cântările care încep cu {{letter}}"
   },
-  "dragToPanel": "Trage în Marcaje sau Programe",
+  "dragToPanel": "Trage în Marcaje sau Prezentări",
   "picker": {
     "selectSong": "Selectează cântarea",
     "searchResults": "Rezultate afișate: {{shown}} din {{total}}",
@@ -217,7 +217,7 @@
     "collapse": "Restrânge",
     "markSung": "Marchează drept cântată",
     "markNotSung": "Marchează drept necântată",
-    "dragToProgram": "Trage peste un program ca să o adaugi",
+    "dragToProgram": "Trage peste o prezentare ca s-o adaugi",
     "filterAll": "Toate",
     "filterPending": "Rămase",
     "filterSung": "Cântate",
@@ -340,7 +340,7 @@
     "foundMessage": "O cântare cu acest titlu există deja în bibliotecă:",
     "clickToPreview": "Apasă pe titlul de mai sus ca să vezi cântarea existentă într-o fereastră nouă.",
     "replaceExisting": "Înlocuiește cântarea existentă",
-    "replaceExistingDescription": "Șterge cântarea existentă și salvează-o pe aceasta în locul ei. Toate referințele din programe și din coadă vor folosi automat această cântare."
+    "replaceExistingDescription": "Șterge cântarea existentă și salvează-o pe aceasta în locul ei. Toate referințele din prezentări și din coadă vor folosi automat această cântare."
   },
   "categoryDialog": {
     "title": "Setează categoria",
