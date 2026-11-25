@@ -12,6 +12,17 @@ export const schedules = sqliteTable(
     uuid: text('uuid').notNull().default(''),
     title: text('title').notNull(),
     description: text('description'),
+    // Automation (see add-schedule-automation migration). Local to this
+    // computer: not part of the Drive library sync.
+    autoplaySeconds: integer('autoplay_seconds'),
+    autoplayByText: integer('autoplay_by_text', { mode: 'boolean' })
+      .notNull()
+      .default(true),
+    loop: integer('loop', { mode: 'boolean' }).notNull().default(false),
+    musicVolume: integer('music_volume'),
+    startOnAppStart: integer('start_on_app_start', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -44,6 +55,9 @@ export const scheduleItems = sqliteTable(
     biblePassageTranslation: text('bible_passage_translation'),
     // Scene fields (when slideType === 'scene')
     obsSceneName: text('obs_scene_name'),
+    // Seconds each slide of this item stays up while the presentation runs by
+    // itself; NULL = the presentation's timing.
+    advanceSeconds: integer('advance_seconds'),
     // Manual "already sung" marker, per schedule (mirrors song_bookmarks).
     // Only meaningful for itemType === 'song'.
     isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),

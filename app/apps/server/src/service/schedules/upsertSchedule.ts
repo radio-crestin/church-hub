@@ -1,6 +1,8 @@
-import { eq, sql } from 'drizzle-orm'
+import { eq, ne, sql } from 'drizzle-orm'
 
+import { automationColumns } from './automationColumns'
 import { updateScheduleSearchIndex } from './search'
+import { toScheduleAutomation } from './toScheduleAutomation'
 import type { Schedule, UpsertScheduleInput } from './types'
 import { getDatabase } from '../../db'
 import { scheduleItems, schedules } from '../../db/schema'
@@ -26,6 +28,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
         .set({
           title: input.title,
           description: input.description ?? null,
+          ...automationColumns(input.automation),
           updatedAt: now,
         })
         .where(eq(schedules.id, input.id))
@@ -39,6 +42,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
         .values({
           title: input.title,
           description: input.description ?? null,
+          ...automationColumns(input.automation),
           createdAt: now,
           updatedAt: now,
         })
@@ -46,6 +50,14 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
         .get()
       scheduleId = result.id
       logger.info(`Schedule created: ${scheduleId}`)
+    }
+
+    // One presentation at most starts with the app.
+    if (input.automation?.startOnAppStart) {
+      db.update(schedules)
+        .set({ startOnAppStart: false })
+        .where(ne(schedules.id, scheduleId))
+        .run()
     }
 
     // Update search index
@@ -77,6 +89,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
       id: schedule.id,
       title: schedule.title,
       description: schedule.description,
+      automation: toScheduleAutomation(schedule),
       itemCount: counts?.itemCount ?? 0,
       songCount: counts?.songCount ?? 0,
       createdAt: Math.floor(schedule.createdAt.getTime() / 1000),

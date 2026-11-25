@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
+import { selectAction } from './helpers/actions-menu'
+
 /**
  * The gama ("key line") of program songs:
  *  1. T-017 — the saved program file keeps each song's gama.
@@ -67,9 +69,11 @@ test.describe('Program gama', () => {
     await expect(programRow(page, f.withKey.title)).toBeVisible({
       timeout: 15000,
     })
-    await page
-      .getByRole('button', { name: /Save to File|Salvează în fișier/ })
-      .click()
+    await selectAction(
+      page,
+      'schedule-presenter-actions-menu',
+      'schedule-save-to-file-action',
+    )
     const downloadPromise = page.waitForEvent('download')
     await page.getByRole('button', { name: /^(Export|Exportă)$/ }).click()
     const download = await downloadPromise

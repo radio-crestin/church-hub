@@ -18,7 +18,7 @@
     "editAsSlides": "Edit as Slides",
     "addSlide": "Add Slide",
     "cloneSlide": "Clone Slide",
-    "addToSchedule": "Add to Schedule",
+    "addToSchedule": "Add to Presentation",
     "saveToFile": "Save to File",
     "exportPdf": "Export as PDF",
     "exportDocx": "Export as Word",
@@ -105,7 +105,7 @@
     "aiSearchTooltip": "AI Search - find songs by topic",
     "aiProcessing": "AI analyzing...",
     "presentedOnly": "Presented songs",
-    "inSchedulesOnly": "In schedules",
+    "inSchedulesOnly": "In presentations",
     "hasKeyLine": "Has key line",
     "bookmarkedOnly": "Bookmarked",
     "filters": "Filters",
@@ -119,7 +119,7 @@
     "label": "Jump to letter",
     "jumpTo": "Jump to songs starting with {{letter}}"
   },
-  "dragToPanel": "Drag onto Marcaje or Programe",
+  "dragToPanel": "Drag onto Marcaje or Presentations",
   "picker": {
     "selectSong": "Select Song",
     "searchResults": "Showing {{shown}} of {{total}} results",
@@ -215,7 +215,7 @@
     "collapse": "Collapse",
     "markSung": "Mark as sung",
     "markNotSung": "Mark as not sung",
-    "dragToProgram": "Drag onto a program to add it",
+    "dragToProgram": "Drag onto a presentation to add it",
     "filterAll": "All",
     "filterPending": "Pending",
     "filterSung": "Sung",
@@ -338,7 +338,7 @@
     "foundMessage": "A song with this title already exists in the library:",
     "clickToPreview": "Click the title above to preview the existing song in a new window.",
     "replaceExisting": "Replace Existing Song",
-    "replaceExistingDescription": "Delete the existing song and save this one instead. All schedule and queue references will be automatically updated to use this song."
+    "replaceExistingDescription": "Delete the existing song and save this one instead. All presentation and queue references will be automatically updated to use this song."
   },
   "categoryDialog": {
     "title": "Set Category",

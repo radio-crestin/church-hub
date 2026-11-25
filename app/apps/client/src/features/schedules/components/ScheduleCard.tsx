@@ -10,8 +10,8 @@ import { useTranslation } from 'react-i18next'
 
 import type { SyncChangeKind } from '~/features/sync'
 import { SyncUpdateBadge } from '~/features/sync'
+import { ActionMenu } from '~/ui/menu'
 import { HighlightedText } from '~/ui/search'
-import { Tooltip } from '~/ui/tooltip/Tooltip'
 
 interface ScheduleCardProps {
   schedule: {
@@ -38,6 +38,7 @@ export function ScheduleCard({
   syncChangeKind,
 }: ScheduleCardProps) {
   const { t, i18n } = useTranslation('schedules')
+  const { t: tCommon } = useTranslation('common')
 
   // The API sends Unix seconds, like every other timestamp it returns.
   const formatDate = (unixSeconds: number) => {
@@ -112,23 +113,35 @@ export function ScheduleCard({
       </div>
       <div className="flex items-center gap-1 flex-shrink-0 ml-2">
         {onSaveClick && (
-          <Tooltip content={t('actions.saveToFile')} position="left">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onSaveClick(schedule.id)
-              }}
-              disabled={isSaving}
-              className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors disabled:opacity-50"
-            >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-            </button>
-          </Tooltip>
+          // The menu sits inside the clickable card: its clicks and keys
+          // (portal included) must not open the presentation as well.
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <ActionMenu
+              items={[
+                {
+                  id: 'save-to-file',
+                  label: t('actions.saveToFile'),
+                  description: t('actions.saveToFileDescription'),
+                  icon: isSaving ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Download size={18} />
+                  ),
+                  iconClassName:
+                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+                  onSelect: () => onSaveClick(schedule.id),
+                  disabled: isSaving,
+                  testId: 'schedule-card-save-to-file-action',
+                },
+              ]}
+              label={tCommon('actionsMenu.trigger')}
+              testId="schedule-card-actions-menu"
+              size="compact"
+            />
+          </div>
         )}
         <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
       </div>

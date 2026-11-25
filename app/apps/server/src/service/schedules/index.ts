@@ -28,6 +28,7 @@ export {
   searchSchedules,
   updateScheduleSearchIndex,
 } from './search'
+export { setScheduleItemAdvance } from './setScheduleItemAdvance'
 export * from './types'
 export { updateScheduleSlide } from './updateScheduleSlide'
 export { upsertSchedule } from './upsertSchedule'
