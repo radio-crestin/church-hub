@@ -8,7 +8,7 @@ import {
 } from '@playwright/test'
 
 import { makeTempDir, removeTempDir } from './temp-dir'
-import { SERVER_READY_LINE } from '../../playwright.config'
+import { SERVER_PORT, SERVER_READY_LINE } from '../../playwright.config'
 
 const APP_DIR = fileURLToPath(new URL('../../../..', import.meta.url))
 const BOOT_TIMEOUT_MS = 240_000
@@ -16,13 +16,13 @@ const BOOT_TIMEOUT_MS = 240_000
 /**
  * A second server for a spec that must restart one, e.g. to prove data
  * survives the start-up migrations. It has its own data folder and port
- * (the suite's port + 600, never 3000), so the suite's server is untouched.
+ * (this worker's server port + 600, never 3000), so the suite's server is untouched.
  * Boot it, stop it, change its database, boot it again on the same folder.
  */
 export class ExtraServer {
   readonly dataDir = makeTempDir('church-hub-e2e-')
   readonly databasePath = join(this.dataDir, 'app.db')
-  readonly port = Number(process.env.TEST_PORT ?? '3099') + 600
+  readonly port = SERVER_PORT + 600
   readonly baseURL = `http://localhost:${this.port}`
   private process: ChildProcess | undefined
   private output = ''
