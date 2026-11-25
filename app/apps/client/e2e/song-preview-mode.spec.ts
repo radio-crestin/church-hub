@@ -71,7 +71,7 @@ test.describe('Song Preview Mode', () => {
     const slide1 = page.locator('[data-testid="song-slide-1"]')
     if (await slide1.isVisible({ timeout: 1000 }).catch(() => false)) {
       await slide1.click()
-        await expect(slide1).toHaveClass(/ring-green-500/)
+      await expect(slide1).toHaveClass(/ring-green-500/)
       await expect(slide0).not.toHaveClass(/ring-green-500/)
       liveSlide = slide1
     }
