@@ -1,0 +1,42 @@
+{
+  "appName": "Church Hub",
+  "loading": "Loading…",
+  "retry": "Try again",
+  "notJoined": {
+    "title": "Open the link from your church",
+    "body": "On the church computer, open Settings > Phones > Join with a link, then scan the code or open the link on this device."
+  },
+  "removed": {
+    "title": "This device was removed",
+    "body": "The church took back this device's access. Ask for a new link to join again."
+  },
+  "joinFailed": {
+    "invalid": {
+      "title": "This is not a Church Hub link",
+      "body": "Check that the whole link was copied, or scan the code again."
+    },
+    "refused": {
+      "title": "This link no longer works",
+      "body": "It was revoked. Ask for a new link."
+    },
+    "offline": {
+      "title": "Could not reach Church Hub Cloud",
+      "body": "Check the internet connection and try again."
+    }
+  },
+  "leave": {
+    "button": "Leave",
+    "title": "Leave this church?",
+    "message": "This device will need a new link to join again.",
+    "cancel": "Cancel"
+  },
+  "songs": {
+    "search": "Search songs",
+    "count_one": "{{count}} song",
+    "count_other": "{{count}} songs",
+    "empty": "The church has no songs yet.",
+    "noMatch": "No song matches.",
+    "loadFailed": "Could not load the songs. Check the internet connection.",
+    "back": "Songs"
+  }
+}
