@@ -48,7 +48,7 @@ const PORT_OFFSETS = {
   // The self-hosted cloud sync service (sync-service.ts, T-171).
   syncService: 4,
 } as const
-const PORTS_PER_SERVER = 4
+const PORTS_PER_SERVER = 5
 
 /** Everything one worker's test server is reached by. */
 function testServer(index: number) {
@@ -59,6 +59,7 @@ function testServer(index: number) {
     lanPort: port + PORT_OFFSETS.lan,
     fakeAudioPort: port + PORT_OFFSETS.fakeAudio,
     fakeRelayUrl: `http://127.0.0.1:${port + PORT_OFFSETS.fakeRelay}`,
+    syncServicePort: port + PORT_OFFSETS.syncService,
     // Run tests against an isolated, freshly-seeded database so they neither
     // depend on nor mutate the developer's real dev DB (which may, for
     // example, have a password set on the super admin, breaking the login).
@@ -109,7 +110,7 @@ export const FAKE_AUDIO_PORT = SERVER.fakeAudioPort
 export const FAKE_RELAY_URL = SERVER.fakeRelayUrl
 
 /** Where the cloud sync spec runs churchhub-backend's sync service. */
-export const SYNC_SERVICE_PORT = derivedPort('syncService')
+export const SYNC_SERVICE_PORT = SERVER.syncServicePort
 
 /**
  * The line the server prints once the real server is bound and boot is done
