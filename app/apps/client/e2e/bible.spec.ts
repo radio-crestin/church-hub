@@ -131,7 +131,7 @@ test.describe('Bible Feature', () => {
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2)
 
     // Wait for verse list to show (search results disappear, verse list appears)
-    const highlightedVerse = page.locator('.ring-indigo-500')
+    const highlightedVerse = page.locator('button[data-verse].bg-selected')
     await expect(highlightedVerse).toBeVisible({ timeout: 10000 })
 
     // The highlighted verse number must match the clicked search result
@@ -176,7 +176,7 @@ test.describe('Bible Feature', () => {
     await page.keyboard.press('Enter')
 
     // Wait for the verse list with highlighted verse to appear
-    const highlightedVerse = page.locator('.ring-indigo-500')
+    const highlightedVerse = page.locator('button[data-verse].bg-selected')
     await expect(highlightedVerse).toBeVisible({ timeout: 10000 })
 
     // The highlighted verse must match the SECOND result, not the first
@@ -238,7 +238,7 @@ test.describe('Bible Feature', () => {
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2)
 
     // Wait for verse list with highlighted verse (not search results)
-    const highlightedVerse = page.locator('.ring-indigo-500')
+    const highlightedVerse = page.locator('button[data-verse].bg-selected')
     await expect(highlightedVerse).toBeVisible({ timeout: 10000 })
 
     // Verify the correct verse is highlighted (not the pre-search chapter's verse)
@@ -274,7 +274,7 @@ test.describe('Bible Feature', () => {
     await searchInput.fill('Evrei 2:14')
 
     // Wait for smart search to navigate (indigo highlight)
-    const indigoHighlight = page.locator('button.ring-indigo-500')
+    const indigoHighlight = page.locator('button[data-verse].bg-selected')
     await expect(indigoHighlight).toBeVisible({ timeout: 15000 })
 
     // Verify URL has select=true
@@ -375,7 +375,7 @@ test.describe('Bible Feature', () => {
     await expect(searchInput).toBeVisible({ timeout: 5000 })
     await searchInput.fill('Geneza 2:25')
 
-    const indigoHighlight = page.locator('button.ring-indigo-500')
+    const indigoHighlight = page.locator('button[data-verse].bg-selected')
     await expect(indigoHighlight).toBeVisible({ timeout: 15000 })
     await expect(page).toHaveURL(/select=true/)
 

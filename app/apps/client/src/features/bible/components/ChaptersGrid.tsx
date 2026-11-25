@@ -23,7 +23,7 @@ export function ChaptersGrid({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
@@ -33,15 +33,13 @@ export function ChaptersGrid({
       <button
         type="button"
         onClick={onGoBack}
-        className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+        className="flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg transition-colors"
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={16} strokeWidth={1.5} />
         {t('navigation.back')}
       </button>
 
-      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-        {bookName}
-      </h3>
+      <h3 className="text-[13px] font-medium text-fg">{bookName}</h3>
 
       <div className="grid grid-cols-6 gap-1.5">
         {chapters.map((chapter) => (
@@ -49,7 +47,7 @@ export function ChaptersGrid({
             key={chapter.chapter}
             type="button"
             onClick={() => onSelectChapter(chapter.chapter)}
-            className="aspect-square flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-md transition-colors"
+            className="aspect-square flex items-center justify-center text-[13px] font-medium text-fg-body bg-field hover:bg-hover rounded-md transition-colors"
           >
             {chapter.chapter}
           </button>

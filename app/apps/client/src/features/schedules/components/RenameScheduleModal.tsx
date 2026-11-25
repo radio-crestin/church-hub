@@ -85,7 +85,7 @@ export function RenameScheduleModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-sm p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-sm p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose()
       }}
@@ -93,8 +93,8 @@ export function RenameScheduleModal({
     >
       <form onSubmit={handleSubmit} className="flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 border-b border-line">
+          <h2 className="text-base font-semibold text-fg">
             {t('modal.renameTitle')}
           </h2>
           <button
@@ -102,9 +102,9 @@ export function RenameScheduleModal({
             onClick={handleClose}
             disabled={upsertSchedule.isPending}
             aria-label={t('modal.cancel')}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-1 rounded hover:bg-hover disabled:opacity-50"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-fg-hint" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -112,7 +112,7 @@ export function RenameScheduleModal({
         <div className="p-4">
           <label
             htmlFor="rename-schedule-title"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-[13px] font-medium text-fg-body mb-2"
           >
             {t('modal.scheduleName')}
           </label>
@@ -125,18 +125,18 @@ export function RenameScheduleModal({
             disabled={upsertSchedule.isPending}
             placeholder={t('editor.titlePlaceholder')}
             data-testid="rename-schedule-input"
-            className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white disabled:opacity-50"
+            className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus text-fg disabled:opacity-50"
             autoComplete="off"
           />
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-2 p-4 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
             disabled={upsertSchedule.isPending}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
           >
             {t('modal.cancel')}
           </button>
@@ -144,10 +144,10 @@ export function RenameScheduleModal({
             type="submit"
             disabled={!canSave}
             data-testid="rename-schedule-save"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
           >
             {upsertSchedule.isPending && (
-              <Loader2 size={16} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
             )}
             {t('actions.save')}
           </button>

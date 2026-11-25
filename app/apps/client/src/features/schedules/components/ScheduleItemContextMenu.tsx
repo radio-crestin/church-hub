@@ -106,14 +106,14 @@ export function ScheduleItemContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 min-w-[180px] py-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
+      className="fixed z-50 min-w-[180px] py-1 bg-panel rounded-lg shadow-lg border border-line"
       style={{ left: position.x, top: position.y }}
     >
       {/* Warning section for missing content */}
       {hasMissingContent && (
-        <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-3 py-2 border-b border-line">
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-            <AlertTriangle size={14} />
+            <AlertTriangle size={14} strokeWidth={1.75} />
             <span className="text-xs font-medium">
               {t('contextMenu.missingContent')}
             </span>
@@ -125,9 +125,9 @@ export function ScheduleItemContextMenu({
       <button
         type="button"
         onClick={handleEdit}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
       >
-        <Edit size={14} />
+        <Edit size={14} strokeWidth={1.75} />
         {t('contextMenu.edit')}
       </button>
 
@@ -136,9 +136,9 @@ export function ScheduleItemContextMenu({
         <button
           type="button"
           onClick={handleChangeSong}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
         >
-          <RefreshCw size={14} />
+          <RefreshCw size={14} strokeWidth={1.75} />
           {t('contextMenu.changeSong')}
         </button>
       )}
@@ -148,9 +148,9 @@ export function ScheduleItemContextMenu({
         <button
           type="button"
           onClick={handleEditKeyLine}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
         >
-          <Music2 size={14} />
+          <Music2 size={14} strokeWidth={1.75} />
           {t('contextMenu.editKeyLine')}
         </button>
       )}
@@ -159,9 +159,9 @@ export function ScheduleItemContextMenu({
       <button
         type="button"
         onClick={handleDelete}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
       >
-        <Trash2 size={14} />
+        <Trash2 size={14} strokeWidth={1.75} />
         {t('contextMenu.delete')}
       </button>
     </div>

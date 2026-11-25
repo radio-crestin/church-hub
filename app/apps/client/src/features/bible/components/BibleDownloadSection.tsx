@@ -111,7 +111,7 @@ export function BibleDownloadSection({
           <>
             {t('settings.download.description')}
             {biblesData && (
-              <span className="ml-1 text-indigo-600 dark:text-indigo-400">
+              <span className="ml-1 text-fg">
                 ({biblesData.metadata.totalTranslations}{' '}
                 {t('settings.download.translationsAvailable')})
               </span>
@@ -122,8 +122,8 @@ export function BibleDownloadSection({
 
       {biblesError ? (
         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">{t('settings.download.fetchError')}</p>
+          <AlertCircle className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
+          <p className="text-[13px]">{t('settings.download.fetchError')}</p>
         </div>
       ) : (
         <>
@@ -148,19 +148,19 @@ export function BibleDownloadSection({
               type="button"
               onClick={handleDownload}
               disabled={!selectedBible || isLoading || isLoadingBibles}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 bg-primary hover:bg-indigo-700 disabled:bg-line-strong disabled:cursor-not-allowed text-white text-[13px] font-medium rounded-lg transition-colors"
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
               ) : (
-                <Download className="w-4 h-4" />
+                <Download className="w-4 h-4" strokeWidth={1.5} />
               )}
               {t('settings.download.button')}
             </button>
           </div>
 
           {selectedBibleInfo && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
+            <div className="text-xs text-fg-hint mt-2 space-y-1">
               <p>
                 {t('settings.download.willImport', {
                   defaultValue: 'Will import as:',
@@ -180,13 +180,13 @@ export function BibleDownloadSection({
         </>
       )}
 
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+      <p className="text-xs text-fg-hint mt-3">
         {t('settings.download.source', { defaultValue: 'Source:' })}{' '}
         <a
           href="https://github.com/radio-crestin/Holy-Bible-XML-Format"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-indigo-600 dark:text-indigo-400 hover:underline"
+          className="text-fg hover:underline"
         >
           github.com/radio-crestin/Holy-Bible-XML-Format
         </a>

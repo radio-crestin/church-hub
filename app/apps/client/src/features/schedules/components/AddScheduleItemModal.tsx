@@ -43,8 +43,6 @@ interface AddScheduleItemModalProps {
 interface MenuOption {
   key: string
   icon: typeof Music
-  iconClass: string
-  bgClass: string
   titleKey: string
   descriptionKey: string
   onSelect: () => void
@@ -148,8 +146,6 @@ export function AddScheduleItemModal({
     {
       key: 'song',
       icon: Music,
-      iconClass: 'text-indigo-600 dark:text-indigo-400',
-      bgClass: 'bg-indigo-100 dark:bg-indigo-900/30',
       titleKey: 'addMenu.song',
       descriptionKey: 'addMenu.songDescription',
       onSelect: () => setStep('song'),
@@ -157,8 +153,6 @@ export function AddScheduleItemModal({
     {
       key: 'verseteTineri',
       icon: FileText,
-      iconClass: 'text-green-600 dark:text-green-400',
-      bgClass: 'bg-green-100 dark:bg-green-900/30',
       titleKey: 'addMenu.verseteTineri',
       descriptionKey: 'addMenu.verseteTineriDescription',
       onSelect: () => handHandoff(() => onAddSlide('versete_tineri')),
@@ -166,8 +160,6 @@ export function AddScheduleItemModal({
     {
       key: 'announcement',
       icon: Megaphone,
-      iconClass: 'text-orange-600 dark:text-orange-400',
-      bgClass: 'bg-orange-100 dark:bg-orange-900/30',
       titleKey: 'addMenu.announcement',
       descriptionKey: 'addMenu.announcementDescription',
       onSelect: () => handHandoff(() => onAddSlide('announcement')),
@@ -177,8 +169,6 @@ export function AddScheduleItemModal({
           {
             key: 'scene',
             icon: Camera,
-            iconClass: 'text-violet-600 dark:text-violet-400',
-            bgClass: 'bg-violet-100 dark:bg-violet-900/30',
             titleKey: 'addMenu.scene',
             descriptionKey: 'addMenu.sceneDescription',
             onSelect: () => handHandoff(onAddScene),
@@ -200,9 +190,9 @@ export function AddScheduleItemModal({
             type="button"
             onClick={() => onOpenChange(true)}
             data-testid="schedule-add-item"
-            className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+            className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-[13px] text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
           >
-            <Plus size={16} />
+            <Plus size={16} strokeWidth={1.5} />
             <span className="hidden sm:inline">{t('addMenu.button')}</span>
           </button>
         </Tooltip>
@@ -216,7 +206,7 @@ export function AddScheduleItemModal({
         }}
         // The menu stays compact; the song step expands to ~90% of the viewport
         // so searching the library doesn't happen through a keyhole.
-        className={`fixed inset-0 m-auto p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50 ${
+        className={`fixed inset-0 m-auto p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50 ${
           isLargeStep
             ? 'h-[90vh] w-[90vw] max-w-none'
             : 'w-full max-w-sm max-h-[90vh]'
@@ -230,7 +220,7 @@ export function AddScheduleItemModal({
             an auto-height parent is a dependency worth not having. */}
         <div className={`flex flex-col ${isLargeStep ? 'h-full' : ''}`}>
           {/* Header */}
-          <div className="flex items-center justify-between gap-2 p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-center justify-between gap-2 p-4 border-b border-line flex-shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               {isLargeStep && (
                 <button
@@ -242,12 +232,12 @@ export function AddScheduleItemModal({
                       ? t('addMenu.searchSong')
                       : tSchedules('actions.back')
                   }
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                  className="p-1 rounded hover:bg-hover text-fg-hint"
                 >
-                  <ArrowLeft size={20} />
+                  <ArrowLeft size={20} strokeWidth={1.5} />
                 </button>
               )}
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              <h2 className="text-base font-semibold text-fg truncate">
                 {isPreviewStep
                   ? (previewSong?.title ?? t('addMenu.searchSong'))
                   : isSongStep
@@ -258,9 +248,9 @@ export function AddScheduleItemModal({
             <button
               type="button"
               onClick={handleClose}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-1 rounded hover:bg-hover"
             >
-              <X size={20} className="text-gray-500" />
+              <X size={20} className="text-fg-hint" strokeWidth={1.5} />
             </button>
           </div>
 
@@ -286,13 +276,13 @@ export function AddScheduleItemModal({
                   >
                     {previewLoading || !previewSong ? (
                       <div className="flex items-center justify-center py-10">
-                        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                        <Loader2 className="w-6 h-6 animate-spin text-fg" />
                       </div>
                     ) : (
                       <div className="mx-auto max-w-3xl">
                         <div className="mb-3 flex flex-wrap items-center gap-2">
                           {previewSong.category?.name && (
-                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                            <span className="rounded-full bg-field px-2 py-0.5 text-xs text-fg-label">
                               {previewSong.category.name}
                             </span>
                           )}
@@ -301,7 +291,7 @@ export function AddScheduleItemModal({
                               {previewSong.keyLine}
                             </span>
                           )}
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                          <span className="text-xs text-fg-hint">
                             {tSchedules('modal.slideCount', {
                               count: previewSong.slides.length,
                             })}
@@ -309,7 +299,7 @@ export function AddScheduleItemModal({
                         </div>
 
                         {previewSong.slides.length === 0 ? (
-                          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                          <p className="py-8 text-center text-[13px] text-fg-hint">
                             {tSchedules('modal.previewEmpty')}
                           </p>
                         ) : (
@@ -318,12 +308,12 @@ export function AddScheduleItemModal({
                               <div
                                 key={slide.id}
                                 data-testid="add-schedule-item-preview-slide"
-                                className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40"
+                                className="rounded-lg border border-line bg-app p-3"
                               >
-                                <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                                <div className="mb-1 text-[10px] font-medium text-fg-hint">
                                   {slide.label || `${index + 1}`}
                                 </div>
-                                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+                                <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-fg-body">
                                   {stripHtmlTags(slide.content)}
                                 </p>
                               </div>
@@ -336,13 +326,13 @@ export function AddScheduleItemModal({
 
                   {/* Footer — adding is deliberate, never a side effect of
                       clicking a search result. */}
-                  <div className="flex flex-shrink-0 items-center justify-between gap-3 border-t border-gray-200 p-4 dark:border-gray-700">
+                  <div className="flex flex-shrink-0 items-center justify-between gap-3 border-t border-line p-4">
                     <button
                       type="button"
                       onClick={() => setStep('song')}
                       disabled={isAdding}
                       data-testid="add-schedule-item-preview-back"
-                      className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      className="rounded-lg bg-field h-9 px-3.5 text-[13px] font-medium text-fg-body transition-colors hover:bg-selected disabled:opacity-50"
                     >
                       {t('addMenu.searchSong')}
                     </button>
@@ -351,12 +341,16 @@ export function AddScheduleItemModal({
                       onClick={handleConfirmAdd}
                       disabled={isAdding || !previewSong}
                       data-testid="add-schedule-item-preview-add"
-                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                     >
                       {isAdding ? (
-                        <Loader2 size={16} className="animate-spin" />
+                        <Loader2
+                          size={16}
+                          className="animate-spin"
+                          strokeWidth={1.5}
+                        />
                       ) : (
-                        <Check size={16} />
+                        <Check size={16} strokeWidth={1.5} />
                       )}
                       {tSchedules('modal.addToProgram')}
                     </button>
@@ -374,16 +368,18 @@ export function AddScheduleItemModal({
                     type="button"
                     onClick={option.onSelect}
                     data-testid={`add-schedule-item-${option.key}`}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-fg-body hover:bg-hover rounded-lg transition-colors"
                   >
-                    <div
-                      className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${option.bgClass}`}
-                    >
-                      <Icon size={20} className={option.iconClass} />
+                    <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center">
+                      <Icon
+                        size={20}
+                        strokeWidth={1.5}
+                        className="text-fg-label"
+                      />
                     </div>
                     <div className="min-w-0">
                       <div className="font-medium">{t(option.titleKey)}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-[13px] text-fg-hint">
                         {t(option.descriptionKey)}
                       </div>
                     </div>

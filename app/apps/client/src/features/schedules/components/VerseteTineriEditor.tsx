@@ -108,8 +108,8 @@ export function VerseteTineriEditor({
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-        <Users size={16} />
+      <div className="flex items-center gap-2 text-[13px] text-fg-label">
+        <Users size={16} strokeWidth={1.5} />
         <span>
           {t('verseteTineri.entriesCount', { count: entries.length })}
         </span>
@@ -145,9 +145,9 @@ export function VerseteTineriEditor({
           </SortableContext>
         </DndContext>
       ) : (
-        <div className="flex flex-col items-center justify-center py-6 text-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-          <Users className="w-8 h-8 text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col items-center justify-center py-6 text-center border-2 border-dashed border-line rounded-lg">
+          <Users className="w-8 h-8 text-fg-hint mb-2" />
+          <p className="text-[13px] text-fg-hint">
             {t('verseteTineri.noEntries')}
           </p>
         </div>
@@ -157,7 +157,7 @@ export function VerseteTineriEditor({
       <button
         type="button"
         onClick={handleAddEntry}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-line rounded-lg text-fg-label hover:border-line-strong hover:text-fg transition-colors"
       >
         <Plus size={18} />
         {t('verseteTineri.addEntry')}
