@@ -455,7 +455,10 @@
       "classic": "Classic",
       "stage": "Stage",
       "lower_third": "Lower third",
-      "kiosk": "Kiosk"
+      "kiosk": "Kiosk",
+      "verses_evening": "Verses · Evening",
+      "verses_light": "Verses · Light",
+      "verses_calm": "Verses · Calm"
     },
     "bundledBadge": "Built-in",
     "sample": {

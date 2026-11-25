@@ -458,7 +458,10 @@
       "classic": "Clasic",
       "stage": "Scenă",
       "lower_third": "Bandă jos",
-      "kiosk": "Kiosk"
+      "kiosk": "Kiosk",
+      "verses_evening": "Versete · Seară",
+      "verses_light": "Versete · Lumină",
+      "verses_calm": "Versete · Liniște"
     },
     "bundledBadge": "Inclus",
     "sample": {

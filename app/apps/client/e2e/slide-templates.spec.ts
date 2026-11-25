@@ -85,8 +85,16 @@ test.describe('Slide templates', () => {
       )
       await expect(own).toBeVisible()
       await expect(own.getByTestId('template-thumbnail')).toBeVisible()
-      // The four built-in designs, without rename or delete.
-      for (const key of ['classic', 'stage', 'lower_third', 'kiosk']) {
+      // The built-in designs, without rename or delete.
+      for (const key of [
+        'classic',
+        'stage',
+        'lower_third',
+        'kiosk',
+        'verses_evening',
+        'verses_light',
+        'verses_calm',
+      ]) {
         const bundled = (await templates(request)).find(
           (template) => template.bundledKey === key,
         ) as Template
