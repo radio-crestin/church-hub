@@ -103,7 +103,7 @@ test.describe('Settings and Music on a phone', () => {
     await onPhone(page)
     await page.goto('/settings/sidebar')
     const panel = page.getByTestId('settings-panel')
-    for (const name of ['Cântări', 'Biblia', 'Programe']) {
+    for (const name of ['Cântări', 'Biblia', 'Prezentări']) {
       const label = panel.getByText(name, { exact: true }).first()
       await expect(label).toBeVisible()
       expect((await label.boundingBox())?.width ?? 0).toBeGreaterThan(30)

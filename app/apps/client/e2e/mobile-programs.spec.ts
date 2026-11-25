@@ -152,8 +152,9 @@ test.describe('A program on a phone', () => {
     await page.goto(`/schedules/${scheduleId}`)
     await expect(page.getByTestId('workspace-panel-preview')).toBeVisible()
     await expect(page.getByTestId('schedule-phone-controls')).toHaveCount(0)
-    await expect(
-      page.getByRole('button', { name: /Save to File|Salvează în fișier/ }),
-    ).toBeVisible()
+    await expect(page.getByTestId('schedule-run-button')).toBeVisible()
+    await page.getByTestId('schedule-presenter-actions-menu').click()
+    await expect(page.getByTestId('schedule-save-to-file-action')).toBeVisible()
+    await expect(page.getByTestId('schedule-run-action')).toHaveCount(0)
   })
 })
