@@ -207,8 +207,8 @@ test.describe('Presentation MIDI music', () => {
     const timeOf = (index: number) =>
       rows.nth(index).getByTestId('schedule-midi-sync-time')
     await expect(rows).toHaveCount(3)
-    await expect(timeOf(1)).toHaveText('2.0')
-    await expect(timeOf(2)).toHaveText('4.0')
+    await expect(timeOf(1)).toHaveText('0:02.0')
+    await expect(timeOf(2)).toHaveText('0:04.0')
     await expect(modal.getByTestId('schedule-midi-sync-now')).toHaveAttribute(
       'data-verse',
       '0',
@@ -216,7 +216,7 @@ test.describe('Presentation MIDI music', () => {
 
     // A single verse is nudged without playing anything.
     await rows.nth(2).getByTestId('schedule-midi-sync-later').click()
-    await expect(timeOf(2)).toHaveText('4.5')
+    await expect(timeOf(2)).toHaveText('0:04.5')
     // Nothing to tap until the music plays.
     const next = modal.getByTestId('schedule-midi-sync-next')
     await expect(next).toBeDisabled()
@@ -229,7 +229,7 @@ test.describe('Presentation MIDI music', () => {
     )
     await page.waitForTimeout(700)
     await next.click()
-    await expect(timeOf(1)).not.toHaveText('2.0')
+    await expect(timeOf(1)).not.toHaveText('0:02.0')
     await expect(modal.getByTestId('schedule-midi-sync-now')).toHaveAttribute(
       'data-verse',
       '1',
@@ -237,13 +237,13 @@ test.describe('Presentation MIDI music', () => {
 
     // A wrong tap is undone: the old time comes back.
     await page.keyboard.press('Backspace')
-    await expect(timeOf(1)).toHaveText('2.0')
+    await expect(timeOf(1)).toHaveText('0:02.0')
     await expect(rows.nth(1)).toHaveAttribute('data-next', 'true')
 
     // Tapped again with Space: only that verse changes.
     await page.waitForTimeout(700)
     await page.keyboard.press('Space')
-    await expect(timeOf(1)).not.toHaveText('2.0')
+    await expect(timeOf(1)).not.toHaveText('0:02.0')
     await modal.getByTestId('schedule-midi-sync-save').click()
     await expect(modal).toHaveCount(0)
 

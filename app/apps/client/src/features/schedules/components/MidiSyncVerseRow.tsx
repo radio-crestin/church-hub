@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { SyncVerse } from './MidiSyncNowNext'
 import { NUDGE_SECONDS } from '../hooks/useMidiSyncSession'
+import { formatClock } from '../utils/formatClock'
 
 interface MidiSyncVerseRowProps {
   index: number
@@ -74,10 +75,10 @@ export function MidiSyncVerseRow({
         <Minus size={14} />
       </button>
       <span
-        className="w-12 shrink-0 text-center text-sm tabular-nums text-gray-700 dark:text-gray-200"
+        className="w-14 shrink-0 text-center text-sm tabular-nums text-gray-700 dark:text-gray-200"
         data-testid="schedule-midi-sync-time"
       >
-        {time.toFixed(1)}
+        {formatClock(time, true)}
       </span>
       <button
         type="button"
