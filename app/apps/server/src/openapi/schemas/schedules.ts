@@ -136,6 +136,12 @@ export const scheduleSchemas = {
         description:
           "Seconds each slide of this item stays up when the presentation runs by itself; null = the presentation's timing",
       },
+      midi: {
+        allOf: [{ $ref: '#/components/schemas/ScheduleItemMidi' }],
+        nullable: true,
+        description:
+          'A MIDI file played when the running presentation reaches this song item, its slides following the music',
+      },
       isSung: {
         type: 'boolean',
         description: 'Manual "already sung" marker, scoped to this schedule',
@@ -150,6 +156,23 @@ export const scheduleSchemas = {
       sortOrder: { type: 'integer' },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
+    },
+  },
+  ScheduleItemMidi: {
+    type: 'object',
+    description:
+      "A song item's MIDI file: rendered with the bundled GeneralUser GS SoundFont and played through the music player; each slide goes up at its time in the music",
+    properties: {
+      hash: { type: 'string', description: 'SHA-256 of the stored file' },
+      fileName: { type: 'string' },
+      durationSeconds: { type: 'number' },
+      verseTimes: {
+        type: 'array',
+        items: { type: 'number' },
+        nullable: true,
+        description:
+          'The second each slide (choruses expanded) starts at, as synced; null = the song split evenly across its slides',
+      },
     },
   },
   ScheduleWithItems: {

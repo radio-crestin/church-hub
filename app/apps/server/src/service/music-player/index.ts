@@ -6,6 +6,7 @@ export {
   getPlayerState,
   initializeMusicPlayer,
   isPlayerAvailable,
+  playAudioFile,
   refreshQueueState,
   setQueueOrder,
   setStateCallback,

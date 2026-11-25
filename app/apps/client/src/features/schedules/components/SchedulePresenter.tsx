@@ -792,6 +792,7 @@ export function SchedulePresenter({
               onEditKeyLine={handleEditKeyLine}
               onToggleSung={handleToggleSung}
               itemAdvance={itemAdvance}
+              midiScheduleId={canEditProgram ? scheduleId : undefined}
               onQuickInsert={canEditProgram ? handleQuickInsert : undefined}
               selectedItemId={selectedItemId}
               onSelectItem={selectItem}

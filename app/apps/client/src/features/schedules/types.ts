@@ -144,9 +144,23 @@ export interface ScheduleItem {
   obsSceneName: string | null
   /** Seconds each slide of this item stays up when it runs by itself; null = the presentation's. */
   advanceSeconds: number | null
+  /** A MIDI file played when the running presentation reaches this song item. */
+  midi: ScheduleItemMidi | null
   sortOrder: number
   createdAt: number
   updatedAt: number
+}
+
+/**
+ * A song item's MIDI file: played when the running presentation reaches the
+ * item, each slide going up at its time in the music.
+ */
+export interface ScheduleItemMidi {
+  hash: string
+  fileName: string
+  durationSeconds: number
+  /** The second each slide (choruses expanded) starts at; null = split evenly. */
+  verseTimes: number[] | null
 }
 
 /**
