@@ -990,7 +990,7 @@ export function SongList({
                   onClick={() => setIsCategoryOpen(false)}
                 />
                 <div
-                  className="md:hidden absolute right-0 top-full mt-1 z-20 bg-panel border border-line rounded-lg shadow-lg overflow-hidden"
+                  className="md:hidden absolute right-0 top-full mt-1 z-20 bg-panel border border-line rounded-[10px] shadow-popover overflow-hidden"
                   style={{ minWidth: 200, maxWidth: 'calc(100vw - 24px)' }}
                 >
                   <div className="p-1 max-h-64 overflow-y-auto">

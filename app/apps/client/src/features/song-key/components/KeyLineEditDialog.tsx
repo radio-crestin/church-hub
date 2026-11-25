@@ -130,7 +130,7 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
     return (
       <dialog
         ref={dialogRef}
-        className="fixed p-0 rounded-xl shadow-2xl backdrop:bg-black/50 max-w-md w-[calc(100vw-2rem)]"
+        className="fixed p-0 rounded-xl shadow-popover backdrop:bg-black/50 max-w-md w-[calc(100vw-2rem)]"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) + 3rem)',
           left: '50%',

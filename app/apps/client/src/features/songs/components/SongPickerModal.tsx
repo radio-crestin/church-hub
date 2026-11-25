@@ -69,7 +69,7 @@ export function SongPickerModal({
       ref={dialogRef}
       // Near-full-screen with a ~5% margin: searching a song library inside a
       // small box was the main complaint about this picker.
-      className="fixed inset-0 m-auto h-[90vh] w-[90vw] max-w-none p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
+      className="fixed inset-0 m-auto h-[90vh] w-[90vw] max-w-none p-0 bg-panel rounded-xl shadow-popover backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose()
       }}

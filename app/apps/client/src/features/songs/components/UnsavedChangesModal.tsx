@@ -43,7 +43,7 @@ export function UnsavedChangesModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-xl shadow-xl backdrop:bg-black/50 bg-panel"
+      className="fixed inset-0 m-auto p-0 rounded-xl shadow-popover backdrop:bg-black/50 bg-panel"
       onClose={onCancel}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}

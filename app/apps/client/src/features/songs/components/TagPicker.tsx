@@ -166,7 +166,7 @@ export function TagPicker({
           <div
             ref={dropdownRef}
             data-testid="tag-picker-dropdown"
-            className="fixed z-[9999] bg-panel border border-line rounded-lg shadow-lg overflow-hidden"
+            className="fixed z-[9999] bg-panel border border-line rounded-[10px] shadow-popover overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
                 ? { bottom: dropdownPosition.bottom }

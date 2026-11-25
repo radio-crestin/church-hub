@@ -66,7 +66,7 @@ export function SongHistoryDialog({
     <dialog
       ref={dialogRef}
       data-testid="song-history-dialog"
-      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-2xl rounded-xl bg-panel p-0 shadow-xl backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-2xl rounded-xl bg-panel p-0 shadow-popover backdrop:bg-black/50"
       onClick={(event) => {
         if (event.target === dialogRef.current) onClose()
       }}

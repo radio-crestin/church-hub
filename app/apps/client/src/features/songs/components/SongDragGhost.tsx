@@ -26,7 +26,7 @@ export function SongDragGhost() {
   return createPortal(
     <div
       data-testid="song-drag-ghost"
-      className="pointer-events-none fixed z-[100] flex max-w-xs items-center gap-2 rounded-[10px] border border-line bg-panel px-3 py-2 text-[13px] shadow-[0_12px_32px_rgba(0,0,0,0.25)]"
+      className="pointer-events-none fixed z-[100] flex max-w-xs items-center gap-2 rounded-[10px] border border-line bg-panel px-3 py-2 text-[13px] shadow-popover"
       style={{
         // Offset so the card sits under the cursor rather than on top of it.
         left: state.x + 12,

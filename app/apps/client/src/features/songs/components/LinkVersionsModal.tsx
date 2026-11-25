@@ -81,7 +81,7 @@ export function LinkVersionsModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto w-full max-w-lg rounded-xl bg-panel p-0 shadow-xl backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-full max-w-lg rounded-xl bg-panel p-0 shadow-popover backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current && !linkMutation.isPending) {
           onClose()

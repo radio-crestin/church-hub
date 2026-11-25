@@ -55,7 +55,7 @@ export function CategoryForm({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-xl shadow-xl backdrop:bg-black/50 bg-panel max-w-md w-full"
+      className="fixed inset-0 m-auto p-0 rounded-xl shadow-popover backdrop:bg-black/50 bg-panel max-w-md w-full"
       onClose={onCancel}
       onClick={handleDialogClick}
     >

@@ -117,7 +117,7 @@ export function EditSongBookmarksTextModal({
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
-      <div className="bg-panel rounded-lg shadow-xl flex flex-col max-h-[90vh]">
+      <div className="bg-panel rounded-lg shadow-popover flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2 min-w-0">
             <FileText

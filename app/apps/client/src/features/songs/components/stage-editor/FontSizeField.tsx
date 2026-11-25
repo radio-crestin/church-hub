@@ -118,7 +118,7 @@ export function FontSizeField({
           <ul
             ref={menuRef}
             data-testid="slide-style-font-size-list"
-            className="fixed z-[100] max-h-64 w-20 overflow-y-auto rounded-lg border border-line bg-panel py-1 shadow-lg"
+            className="fixed z-[100] max-h-64 w-20 overflow-y-auto rounded-[10px] border border-line bg-panel py-1 shadow-popover"
             style={{ top: menuAt.top, left: menuAt.left }}
           >
             {FONT_SIZE_PRESETS.map((preset) => (

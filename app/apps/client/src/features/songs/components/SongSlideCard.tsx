@@ -351,7 +351,7 @@ export function SongSlideCard({
               labelPickerPos &&
               createPortal(
                 <div
-                  className="fixed bg-panel border border-line rounded-[10px] shadow-[0_12px_32px_rgba(0,0,0,0.25)] z-[100] p-1.5 min-w-[120px]"
+                  className="fixed bg-panel border border-line rounded-[10px] shadow-popover z-[100] p-1.5 min-w-[120px]"
                   style={{
                     top: labelPickerPos.top,
                     left: labelPickerPos.left,
@@ -503,7 +503,7 @@ export function SongSlideCard({
                     createPortal(
                       <div
                         ref={chordPickerRef}
-                        className="fixed bg-panel border border-line rounded-[10px] shadow-[0_12px_32px_rgba(0,0,0,0.25)] z-[100] p-2 min-w-[200px]"
+                        className="fixed bg-panel border border-line rounded-[10px] shadow-popover z-[100] p-2 min-w-[200px]"
                         style={{
                           top: chordPickerPos.top,
                           left: chordPickerPos.left,

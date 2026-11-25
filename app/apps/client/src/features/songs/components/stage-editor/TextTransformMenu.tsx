@@ -54,7 +54,7 @@ export function TextTransformMenu({
           <ul
             ref={panelRef}
             data-testid="slide-style-transform-list"
-            className="fixed z-[100] w-56 rounded-lg border border-line bg-panel py-1 shadow-lg"
+            className="fixed z-[100] w-56 rounded-[10px] border border-line bg-panel py-1 shadow-popover"
             style={{ top: at.top, left: at.left }}
           >
             {TRANSFORMS.map(({ id, icon: Icon }) => (

@@ -532,7 +532,7 @@ export function SongEditor({
       {/* Unsaved Changes Confirmation Modal */}
       <dialog
         ref={unsavedChangesDialogRef}
-        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl shadow-popover backdrop:bg-black/50"
         onClick={(e) => {
           if (
             e.target === unsavedChangesDialogRef.current &&

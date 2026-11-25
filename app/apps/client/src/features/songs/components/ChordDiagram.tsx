@@ -360,7 +360,7 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
       onClick={onClose}
     >
       <div
-        className="bg-panel rounded-xl shadow-2xl p-6 min-w-[220px] max-w-[280px]"
+        className="bg-panel rounded-xl shadow-popover p-6 min-w-[220px] max-w-[280px]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Chord name */}

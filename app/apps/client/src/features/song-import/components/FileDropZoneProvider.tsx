@@ -929,7 +929,7 @@ export function FileDropZoneProvider({ children }: Props) {
       {/* Drag overlay */}
       {isDragging && (
         <div className="fixed inset-0 z-50 bg-app/70 border-2 border-dashed border-focus pointer-events-none flex items-center justify-center">
-          <div className="bg-panel rounded-lg p-8 shadow-xl">
+          <div className="bg-panel rounded-lg p-8 shadow-popover">
             <p className="text-xl font-semibold text-fg">
               {t('pptxImport.dropHint')}
             </p>

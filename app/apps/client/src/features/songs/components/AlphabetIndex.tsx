@@ -38,7 +38,7 @@ export function AlphabetIndex({
     <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex items-center">
       {/* Floating letter bubble while dragging */}
       {isDragging && indicatorLetter && (
-        <div className="pointer-events-none absolute right-9 flex h-16 w-16 items-center justify-center rounded-xl bg-panel text-3xl font-semibold text-fg shadow-[0_12px_32px_rgba(0,0,0,0.25)] ring-1 ring-line">
+        <div className="pointer-events-none absolute right-9 flex h-16 w-16 items-center justify-center rounded-xl bg-panel text-3xl font-semibold text-fg shadow-popover ring-1 ring-line">
           {indicatorLetter}
         </div>
       )}
