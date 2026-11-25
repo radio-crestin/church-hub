@@ -45,7 +45,7 @@ async function placeSongLyrics(
 }
 
 async function openEditor(page: Page, screenId: number) {
-  await page.goto('/settings/screens')
+  await page.goto(`/settings/screens?screen=${screenId}`)
   await page
     .locator(`[data-testid="screen-card"][data-screen-id="${screenId}"]`)
     .getByRole('button', {

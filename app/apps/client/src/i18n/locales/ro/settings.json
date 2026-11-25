@@ -1092,7 +1092,7 @@
     },
     "screens": {
       "title": "Ecrane",
-      "description": "Configurează ecranele după rolul fiecăruia. Fiecare tip de ecran are propriul aspect și propriile opțiuni.",
+      "description": "Fiecare ecran e o fereastră: pe proiector, pe monitorul de scenă sau în transmisiune. Alege unul ca să stabilești cum arată și unde apare.",
       "addScreen": "Adaugă ecran",
       "noScreens": "Niciun ecran configurat",
       "status": {
@@ -1100,23 +1100,20 @@
         "closed": "fereastră închisă"
       },
       "groups": {
+        "look": "Aspect",
         "idle": "Când nu se afișează nimic",
-        "window": "Fereastră",
-        "advanced": "Mai multe opțiuni pentru fereastră"
+        "where": "Unde apare",
+        "more": "Mai multe opțiuni"
       },
       "idle": {
-        "summaryOpen": "Între cântări și versete, pe proiector rămâne acest slide gol. Apasă pe el ca să-i schimbi aspectul.",
-        "summaryClosed": "Între cântări și versete fereastra se închide: pe proiector se vede desktopul calculatorului, fără ceas și fără fundal.",
-        "windowCloses": "Fereastra se închide: se vede desktopul",
-        "editEmptySlide": "Editează slide-ul gol",
         "clock": {
           "label": "Ceas pe slide-ul gol",
           "description": "Arată ora când nu se afișează nimic, de exemplu înainte de serviciu."
         }
       },
       "window": {
-        "label": "Fereastra deschisă acum",
-        "description": "Afișează acest ecran pe monitorul lui. Oprește-l ca să închizi fereastra."
+        "open": "Deschide fereastra",
+        "close": "Închide fereastra"
       },
       "openOnStartup": {
         "label": "Se deschide la pornirea aplicației",
@@ -1158,7 +1155,8 @@
         "duplicate": "Duplică ecranul cu toate setările",
         "edit": "Editează șablonul",
         "delete": "Șterge ecranul",
-        "editTooltip": "Schimbă șablonul ecranului: cum arată fiecare tip de slide (text, fundal, ceas)"
+        "editTooltip": "Schimbă șablonul ecranului: cum arată fiecare tip de slide (text, fundal, ceas)",
+        "menu": "Alte acțiuni pentru ecran"
       },
       "toast": {
         "created": "Ecranul a fost creat",

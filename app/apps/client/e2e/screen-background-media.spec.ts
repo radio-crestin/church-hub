@@ -41,7 +41,7 @@ function lyric(page: Page, text: string) {
 
 /** Opens the full-screen editor of one screen from Settings → Screens. */
 async function openScreenEditor(page: Page, screenId: number) {
-  await page.goto('/settings/screens')
+  await page.goto(`/settings/screens?screen=${screenId}`)
   const card = page.locator(
     `[data-testid="screen-card"][data-screen-id="${screenId}"]`,
   )

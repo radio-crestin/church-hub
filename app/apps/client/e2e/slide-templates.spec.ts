@@ -122,17 +122,23 @@ test.describe('Slide templates', () => {
     const screen = await createScreen(request, name)
     const red = await redTemplate(request, `${name} red`)
     try {
-      await page.goto('/settings/screens')
+      await page.goto(`/settings/screens?screen=${screen.id}`)
       const card = screenCard(page, screen.id)
-      await card.getByTestId('screen-template-picker').click()
-      await page.getByTestId(`template-choice-${red.id}`).click()
-      await expect(card.getByTestId('screen-template-picker-value')).toHaveText(
+      // Every template is drawn on the screen's page: one click uses it.
+      await card
+        .getByTestId('screen-template-gallery')
+        .getByTestId(`template-choice-${red.id}`)
+        .click()
+      await expect(card.getByTestId('screen-template-name')).toHaveText(
         red.name,
       )
-      const saved = (
-        await (await request.get(`/api/screens/${screen.id}`)).json()
-      ).data
-      expect(saved.templateId).toBe(red.id)
+      await expect
+        .poll(
+          async () =>
+            (await (await request.get(`/api/screens/${screen.id}`)).json()).data
+              .templateId,
+        )
+        .toBe(red.id)
 
       // The projection draws the template's background.
       const display = await context.newPage()
@@ -174,14 +180,18 @@ test.describe('Slide templates', () => {
     const screen = await createScreen(request, name)
     const red = await redTemplate(request, `${name} red`)
     try {
-      await page.goto('/settings/screens')
+      await page.goto(`/settings/screens?screen=${screen.id}`)
       const card = screenCard(page, screen.id)
+      // Under "More options": rarely needed.
       await card
-        .getByTestId('screen-scene-templates')
-        .locator('summary')
+        .getByTestId('screen-group-advanced')
+        .getByText(label('settings', 'sections.screens.groups.more'))
         .click()
+      const sceneDialog = page.getByTestId(
+        `scene-template-picker-${SCENE}-dialog`,
+      )
       await card.getByTestId(`scene-template-picker-${SCENE}`).click()
-      await page.getByTestId(`template-choice-${red.id}`).click()
+      await sceneDialog.getByTestId(`template-choice-${red.id}`).click()
       await expect
         .poll(
           async () =>
@@ -192,7 +202,7 @@ test.describe('Slide templates', () => {
 
       // Back to the screen's own template.
       await card.getByTestId(`scene-template-picker-${SCENE}`).click()
-      await page.getByTestId('template-choice-none').click()
+      await sceneDialog.getByTestId('template-choice-none').click()
       await expect
         .poll(
           async () =>

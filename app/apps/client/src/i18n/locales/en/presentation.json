@@ -508,11 +508,10 @@
       "error": "The template couldn't be saved"
     },
     "screen": {
-      "title": "Template",
-      "description": "How this screen draws every slide.",
+      "description": "Click a template: this screen shows every slide with it.",
       "follows": {
-        "label": "Follows the presentation's template",
-        "description": "While a presentation with its own template runs, this screen shows it with that template."
+        "label": "Presentations can change its look",
+        "description": "A presentation with its own template shows here in that template."
       },
       "scenes": {
         "title": "Per OBS scene",

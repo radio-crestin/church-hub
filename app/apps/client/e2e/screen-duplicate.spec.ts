@@ -144,12 +144,16 @@ test.describe('Duplicate screen', () => {
     }
 
     try {
-      await page.goto('/settings/screens')
+      await page.goto(`/settings/screens?screen=${source.id}`)
       await page.waitForLoadState('networkidle')
 
-      const card = page.locator(`[data-screen-id="${source.id}"]`)
+      const card = page.locator(
+        `[data-testid="screen-card"][data-screen-id="${source.id}"]`,
+      )
       await expect(card).toBeVisible({ timeout: 10000 })
-      await card.getByTestId('screen-duplicate').click()
+      // In the screen's menu, beside its window button.
+      await card.getByTestId('screen-actions-menu').click()
+      await page.getByTestId('screen-duplicate').click()
 
       await expect
         .poll(async () => (await copies()).length, { timeout: 10000 })

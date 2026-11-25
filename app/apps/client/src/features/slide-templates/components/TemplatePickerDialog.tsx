@@ -1,12 +1,9 @@
 import { Link } from '@tanstack/react-router'
-import { Check, LayoutTemplate, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { TemplateThumbnail } from './TemplateThumbnail'
-import { useSlideTemplates } from '../hooks/useSlideTemplates'
-import type { SlideTemplate } from '../types'
-import { templateDisplayName } from '../utils/templateDisplayName'
+import { TemplateGrid } from './TemplateGrid'
 
 interface TemplatePickerDialogProps {
   open: boolean
@@ -19,49 +16,6 @@ interface TemplatePickerDialogProps {
   testId?: string
 }
 
-function Choice({
-  selected,
-  label,
-  detail,
-  onClick,
-  children,
-  testId,
-}: {
-  selected: boolean
-  label: string
-  detail?: string
-  onClick: () => void
-  children: React.ReactNode
-  testId: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      data-testid={testId}
-      aria-pressed={selected}
-      className={`relative flex flex-col gap-1.5 rounded-lg border-2 p-2 text-left transition-colors ${
-        selected
-          ? 'border-indigo-500 ring-2 ring-indigo-500/30'
-          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-      }`}
-    >
-      {children}
-      <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
-        {label}
-      </span>
-      {detail && (
-        <span className="-mt-1 text-xs text-gray-500 dark:text-gray-400">
-          {detail}
-        </span>
-      )}
-      {selected && (
-        <Check className="absolute top-3 right-3 h-5 w-5 rounded-full bg-indigo-600 p-0.5 text-white" />
-      )}
-    </button>
-  )
-}
-
 /** Every template drawn as it looks; a click chooses one and closes. */
 export function TemplatePickerDialog({
   open,
@@ -72,7 +26,6 @@ export function TemplatePickerDialog({
   testId = 'template-picker',
 }: TemplatePickerDialogProps) {
   const { t } = useTranslation('presentation')
-  const { data: templates = [] } = useSlideTemplates()
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -86,8 +39,6 @@ export function TemplatePickerDialog({
     onClose()
     if (templateId !== value) onChange(templateId)
   }
-  const detail = (template: SlideTemplate) =>
-    template.bundledKey ? t('templates.bundledBadge') : undefined
 
   return (
     <dialog
@@ -114,31 +65,12 @@ export function TemplatePickerDialog({
               <X className="h-5 w-5" />
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-3 overflow-y-auto p-5 sm:grid-cols-3 lg:grid-cols-4">
-            {noneLabel && (
-              <Choice
-                selected={value === null}
-                label={noneLabel}
-                onClick={() => choose(null)}
-                testId="template-choice-none"
-              >
-                <span className="flex aspect-video items-center justify-center rounded-md bg-gray-100 dark:bg-gray-900">
-                  <LayoutTemplate className="h-6 w-6 text-gray-400" />
-                </span>
-              </Choice>
-            )}
-            {templates.map((template) => (
-              <Choice
-                key={template.id}
-                selected={template.id === value}
-                label={templateDisplayName(template, t)}
-                detail={detail(template)}
-                onClick={() => choose(template.id)}
-                testId={`template-choice-${template.id}`}
-              >
-                <TemplateThumbnail template={template} />
-              </Choice>
-            ))}
+          <div className="overflow-y-auto p-5">
+            <TemplateGrid
+              value={value}
+              onChoose={choose}
+              noneLabel={noneLabel}
+            />
           </div>
           <div className="border-t border-gray-200 px-5 py-3 text-right dark:border-gray-700">
             <Link

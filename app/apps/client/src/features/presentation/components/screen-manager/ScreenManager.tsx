@@ -10,6 +10,7 @@ import { PageHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast/useToast'
 import { ScreenCard } from './ScreenCard'
 import { ScreenExportModal } from './ScreenExportModal'
+import { ScreenTabs } from './ScreenTabs'
 import {
   useBatchUpdateScreenConfig,
   useDeleteScreen,
@@ -18,12 +19,7 @@ import {
   useScreens,
   useUpsertScreen,
 } from '../../hooks'
-import type {
-  ContentType,
-  Screen,
-  ScreenType,
-  ScreenWithConfigs,
-} from '../../types'
+import type { Screen, ScreenType, ScreenWithConfigs } from '../../types'
 import {
   closeDisplayWindow,
   getFrontendUrl,
@@ -31,7 +27,16 @@ import {
 import { resolvePreviewScreen } from '../../utils/resolvePreviewScreen'
 import { ScreenEditor } from '../screen-editor'
 
-export function ScreenManager() {
+export interface ScreenManagerProps {
+  /** The screen whose settings show; the first one when not given. */
+  selectedId?: number
+  onSelect: (screenId: number) => void
+}
+
+/**
+ * Settings → Screens: a tab per screen, and the chosen screen's settings.
+ */
+export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
   const { t } = useTranslation(['settings', 'presentation'])
   const { showToast } = useToast()
 
@@ -60,6 +65,8 @@ export function ScreenManager() {
 
   const { data: screens, isLoading } = useScreens()
   const previewScreenId = resolvePreviewScreen(screens)?.id
+  const selected =
+    screens?.find((screen) => screen.id === selectedId) ?? screens?.[0]
   const upsertScreen = useUpsertScreen()
   const deleteScreen = useDeleteScreen()
   const duplicateScreen = useDuplicateScreen()
@@ -69,10 +76,6 @@ export function ScreenManager() {
   const [newScreenName, setNewScreenName] = useState('')
   const [newScreenType, setNewScreenType] = useState<ScreenType>('primary')
   const [editingScreenId, setEditingScreenId] = useState<number | null>(null)
-  // The slide type the editor opens on (the empty slide from its thumbnail)
-  const [editingContentType, setEditingContentType] = useState<
-    ContentType | undefined
-  >()
   const [deleteConfirm, setDeleteConfirm] = useState<Screen | null>(null)
   const [exportScreen, setExportScreen] = useState<Screen | null>(null)
 
@@ -96,17 +99,13 @@ export function ScreenManager() {
       })
       setIsAddModalOpen(false)
       if (screen) {
+        onSelect(screen.id)
         setEditingScreenId(screen.id)
       }
       showToast(t('settings:sections.screens.toast.created'), 'success')
     } catch {
       showToast(t('settings:sections.screens.toast.createError'), 'error')
     }
-  }
-
-  const handleEdit = (screen: Screen, contentType?: ContentType) => {
-    setEditingContentType(contentType)
-    setEditingScreenId(screen.id)
   }
 
   const handleSaveScreen = useCallback(
@@ -153,6 +152,7 @@ export function ScreenManager() {
   const handleDuplicate = async (screen: Screen) => {
     try {
       const copy = await duplicateScreen.mutateAsync(screen.id)
+      onSelect(copy.id)
       showToast(
         t('settings:sections.screens.toast.duplicated', { name: copy.name }),
         'success',
@@ -196,7 +196,6 @@ export function ScreenManager() {
               ? templateDisplayName(editingTemplate, t)
               : editingScreen.name
           }
-          initialContentType={editingContentType}
           onSave={handleSaveScreen}
           onClose={handleCloseEditor}
         />
@@ -218,21 +217,24 @@ export function ScreenManager() {
       />
 
       {/* Screens List */}
-      {screens && screens.length > 0 ? (
+      {screens && selected ? (
         <div className="space-y-3">
-          {screens.map((screen) => (
-            <ScreenCard
-              key={screen.id}
-              screen={screen}
-              onEdit={(contentType) => handleEdit(screen, contentType)}
-              onExport={() => setExportScreen(screen)}
-              onCopyUrl={() => handleCopyUrl(screen)}
-              onDuplicate={() => handleDuplicate(screen)}
-              onDelete={() => handleDelete(screen)}
-              isDuplicating={duplicateScreen.isPending}
-              isShownInPreviews={screen.id === previewScreenId}
-            />
-          ))}
+          <ScreenTabs
+            screens={screens}
+            selectedId={selected.id}
+            onSelect={onSelect}
+          />
+          <ScreenCard
+            key={selected.id}
+            screen={selected}
+            onEdit={() => setEditingScreenId(selected.id)}
+            onExport={() => setExportScreen(selected)}
+            onCopyUrl={() => handleCopyUrl(selected)}
+            onDuplicate={() => handleDuplicate(selected)}
+            onDelete={() => handleDelete(selected)}
+            isDuplicating={duplicateScreen.isPending}
+            isShownInPreviews={selected.id === previewScreenId}
+          />
         </div>
       ) : (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">

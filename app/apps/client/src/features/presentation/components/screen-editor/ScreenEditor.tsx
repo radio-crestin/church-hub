@@ -24,8 +24,6 @@ interface ScreenEditorProps {
   screen: ScreenWithConfigs
   /** The template's name, shown as the title. */
   title: string
-  /** The slide type shown first (the song by default). */
-  initialContentType?: ContentType
   onSave: (screen: ScreenWithConfigs) => Promise<void>
   onClose: () => void
 }
@@ -58,7 +56,6 @@ const getContentTypeOptions = (
 export function ScreenEditor({
   screen,
   title,
-  initialContentType,
   onSave,
   onClose,
 }: ScreenEditorProps) {
@@ -76,7 +73,6 @@ export function ScreenEditor({
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
     actions.setScreen(screen)
-    if (initialContentType) actions.setSelectedContentType(initialContentType)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

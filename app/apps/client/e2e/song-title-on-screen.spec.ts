@@ -238,7 +238,7 @@ test.describe('Song title on the projector', () => {
   })
 
   test('is turned on from the screen editor', async ({ page, request }) => {
-    await page.goto('/settings/screens')
+    await page.goto(`/settings/screens?screen=${screenId}`)
     await page
       .locator(`[data-testid="screen-card"][data-screen-id="${screenId}"]`)
       .getByRole('button', {

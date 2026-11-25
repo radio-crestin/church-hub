@@ -511,11 +511,10 @@
       "error": "Șablonul nu s-a putut salva"
     },
     "screen": {
-      "title": "Șablon",
-      "description": "Cum arată slide-urile pe acest ecran.",
+      "description": "Alege un șablon: ecranul arată toate slide-urile cu el.",
       "follows": {
-        "label": "Urmează șablonul prezentării",
-        "description": "Când rulează o prezentare cu șablon propriu, ecranul o arată cu șablonul ei."
+        "label": "Prezentările îi pot schimba aspectul",
+        "description": "O prezentare cu șablon propriu apare aici în șablonul ei."
       },
       "scenes": {
         "title": "Pe scene OBS",
