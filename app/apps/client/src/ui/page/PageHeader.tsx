@@ -7,18 +7,24 @@ interface PageHeaderProps {
   actions?: ReactNode
 }
 
-/** The page's title row: the title (and a line under it) left, actions right. */
+/**
+ * The page's title row: the title (and a line under it) left, actions right.
+ * The title and the actions share the first 40px line, so every page title
+ * sits at the same height whether or not a description follows it.
+ */
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <header className="flex min-h-10 shrink-0 flex-wrap items-center justify-between gap-2">
-      <div className="min-w-0 flex-1 basis-48">
+    <header className="flex shrink-0 flex-wrap items-start justify-between gap-2">
+      <div className="min-h-10 min-w-0 flex-1 basis-48 pt-2">
         <h1 className="truncate text-base font-semibold text-fg">{title}</h1>
         {description && (
           <p className="text-[13px] text-fg-hint">{description}</p>
         )}
       </div>
       {actions && (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+        <div className="flex min-h-10 shrink-0 items-center gap-2">
+          {actions}
+        </div>
       )}
     </header>
   )
