@@ -10,7 +10,12 @@ import { ScreenEditorSidebar } from './ScreenEditorSidebar'
 import { SlideTypeStrip } from './SlideTypeStrip'
 import { toTemplateDesign } from './toTemplateDesign'
 import { useWebSocket } from '../../hooks'
-import type { Constraints, ScreenWithConfigs, SizeWithUnits } from '../../types'
+import type {
+  Constraints,
+  ContentType,
+  ScreenWithConfigs,
+  SizeWithUnits,
+} from '../../types'
 
 interface ScreenEditorProps {
   /**
@@ -20,6 +25,8 @@ interface ScreenEditorProps {
   screen: ScreenWithConfigs
   /** The template's name, shown as the title. */
   title: string
+  /** The slide shown first (the song by default). */
+  initialContentType?: ContentType
   onSave: (screen: ScreenWithConfigs) => Promise<void>
   onClose: () => void
 }
@@ -32,6 +39,7 @@ interface ScreenEditorProps {
 export function ScreenEditor({
   screen,
   title,
+  initialContentType,
   onSave,
   onClose,
 }: ScreenEditorProps) {
@@ -50,6 +58,7 @@ export function ScreenEditor({
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
     actions.setScreen(screen)
+    if (initialContentType) actions.setSelectedContentType(initialContentType)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -8,6 +8,7 @@ import {
   FileText,
   LayoutTemplate,
   Loader2,
+  Paintbrush,
   Pencil,
   Play,
   Square,
@@ -35,6 +36,7 @@ import {
   useLoadScheduleFromFile,
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
+import { PresentationThemeEditor } from '~/features/slide-templates/components/PresentationThemeEditor'
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { TemplatePickerDialog } from '~/features/slide-templates/components/TemplatePickerDialog'
 import { KeyLineEditDialog } from '~/features/song-key'
@@ -175,6 +177,8 @@ export function SchedulePresenter({
   const [automationOpen, setAutomationOpen] = useState(false)
   // On a phone the template is chosen from the menu, so the name keeps its room.
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
+  // Its own theme, open in the theme editor.
+  const [themeEditorOpen, setThemeEditorOpen] = useState(false)
   const { data: runner } = useScheduleAutomation()
   const automationNeeded =
     (schedule ? isAutomationOn(schedule.automation) : false) ||
@@ -910,6 +914,22 @@ export function SchedulePresenter({
                   testId: 'schedule-template-action',
                 },
               ]),
+          ...(schedule?.templateId
+            ? [
+                {
+                  id: 'edit-theme',
+                  label: t('presentation:templates.presentation.edit'),
+                  description: t(
+                    'presentation:templates.presentation.editDescription',
+                  ),
+                  icon: <Paintbrush size={18} />,
+                  iconClassName:
+                    'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+                  onSelect: () => setThemeEditorOpen(true),
+                  testId: 'schedule-edit-theme-action',
+                },
+              ]
+            : []),
         ]
       : []),
     {
@@ -1033,6 +1053,18 @@ export function SchedulePresenter({
               testId="schedule-template-picker"
             />
           )}
+          {canEditProgram && isLargeScreen && schedule.templateId && (
+            <button
+              type="button"
+              onClick={() => setThemeEditorOpen(true)}
+              title={t('presentation:templates.presentation.editDescription')}
+              data-testid="schedule-edit-theme"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm text-gray-700 hover:border-indigo-400 dark:border-gray-600 dark:text-gray-200"
+            >
+              <Paintbrush className="h-4 w-4" />
+              {t('presentation:templates.presentation.edit')}
+            </button>
+          )}
           {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
           {isLargeScreen && (
             <button
@@ -1064,6 +1096,12 @@ export function SchedulePresenter({
         stackedAsTabs
         className="lg:flex-1 lg:min-h-0"
       />
+      {themeEditorOpen && schedule.templateId && (
+        <PresentationThemeEditor
+          templateId={schedule.templateId}
+          onClose={() => setThemeEditorOpen(false)}
+        />
+      )}
       {canEditProgram && !isLargeScreen && (
         <TemplatePickerDialog
           open={templateDialogOpen}

@@ -52,6 +52,24 @@ async function colourTemplate(
   return copy.id
 }
 
+/** The background colour of a presentation's own theme (a copy, its own). */
+async function ownThemeColour(
+  request: APIRequestContext,
+  scheduleId: number,
+): Promise<string | null> {
+  const schedule = (
+    await (await request.get(`/api/schedules/${scheduleId}`)).json()
+  ).data as { templateId: number | null }
+  if (schedule.templateId === null) return null
+  const own = (
+    await (
+      await request.get(`/api/slide-templates/${schedule.templateId}`)
+    ).json()
+  ).data as Template & { scheduleId: number | null }
+  if (own.scheduleId !== scheduleId) return 'not its own'
+  return (own.layouts.song?.background as { color?: string })?.color ?? null
+}
+
 async function createScreen(
   request: APIRequestContext,
   name: string,
@@ -111,13 +129,10 @@ test.describe('Templates in presentations', () => {
       await page.goto(`/schedules/${schedule.id}`)
       await page.getByTestId('schedule-template-picker').click()
       await page.getByTestId(`template-choice-${red}`).click()
+      // The presentation gets its own copy of it.
       await expect
-        .poll(
-          async () =>
-            (await (await request.get(`/api/schedules/${schedule.id}`)).json())
-              .data.templateId,
-        )
-        .toBe(red)
+        .poll(() => ownThemeColour(request, schedule.id))
+        .toBe('#ff0000')
 
       // The second item gets its own, from the chip beside it.
       await page.getByTestId(`schedule-item-template-${itemIds[1]}`).click()
@@ -195,13 +210,10 @@ test.describe('Templates in presentations', () => {
       await page.getByTestId('schedule-presenter-actions-menu').click()
       await page.getByTestId('schedule-template-action').click()
       await page.getByTestId(`template-choice-${red}`).click()
+      // The presentation gets its own copy of it.
       await expect
-        .poll(
-          async () =>
-            (await (await request.get(`/api/schedules/${schedule.id}`)).json())
-              .data.templateId,
-        )
-        .toBe(red)
+        .poll(() => ownThemeColour(request, schedule.id))
+        .toBe('#ff0000')
     } finally {
       await request.delete(`/api/schedules/${schedule.id}`)
       await request.delete(`/api/slide-templates/${red}`)

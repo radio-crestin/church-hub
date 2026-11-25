@@ -21,6 +21,8 @@ const COLUMNS: { table: string; name: string; definition: string }[] = [
   { table: 'schedules', name: 'template_id', definition: 'INTEGER' },
   // One item's own template; NULL = the presentation's.
   { table: 'schedule_items', name: 'template_id', definition: 'INTEGER' },
+  // The presentation a theme belongs to (its own copy); NULL = shared.
+  { table: 'slide_templates', name: 'schedule_id', definition: 'INTEGER' },
 ]
 
 /**

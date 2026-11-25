@@ -1096,7 +1096,8 @@
         "look": "Look",
         "idle": "When nothing is shown",
         "where": "Where it shows",
-        "more": "More options"
+        "more": "More options",
+        "slides": "Slides"
       },
       "idle": {
         "clock": {
@@ -1200,6 +1201,9 @@
           "saveFailed": "Failed to save file",
           "cancelled": "Export cancelled"
         }
+      },
+      "slides": {
+        "description": "Every kind of slide, as this screen shows it. Click one to edit it."
       }
     },
     "developer": {

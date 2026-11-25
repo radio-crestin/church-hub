@@ -217,13 +217,8 @@ test.describe('Screen settings are grouped and explained', () => {
       .click()
 
     // On a song: the slide type's own settings, then the whole screen's.
-    await page.getByTestId('screen-editor-content-type').click()
-    await page
-      .getByTestId('screen-editor-content-type-option')
-      .filter({ hasText: label('presentation', 'screens.contentTypes.song') })
-      .locator('button')
-      .first()
-      .click()
+    // The slide, from the theme's slides on the left.
+    await page.getByTestId('screen-editor-slide-song').click()
     const slideType = page.getByTestId('screen-editor-slide-type-settings')
     const wholeScreen = page.getByTestId('screen-editor-whole-screen-settings')
     await expect(slideType).toBeVisible()
@@ -275,7 +270,7 @@ test.describe('Screen settings are grouped and explained', () => {
     await expect(page.getByTestId('screen-editor-save')).toBeVisible({
       timeout: 10000,
     })
-    for (const testId of ['screen-editor-save', 'screen-editor-content-type']) {
+    for (const testId of ['screen-editor-save', 'screen-editor-tab-design']) {
       const box = await page.getByTestId(testId).boundingBox()
       expect(box!.x + box!.width, testId).toBeLessThanOrEqual(390)
     }

@@ -1097,6 +1097,7 @@ export function ScreenEditorCanvas({
     >
       <div
         ref={canvasRef}
+        data-testid="screen-editor-canvas"
         className="relative rounded-lg overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-600"
         style={{
           width: displaySize.width,

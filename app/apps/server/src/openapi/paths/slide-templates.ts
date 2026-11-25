@@ -40,6 +40,12 @@ const template = {
       example: 'classic',
       description: 'Set on the designs that ship with the app (read-only)',
     },
+    scheduleId: {
+      type: 'integer',
+      nullable: true,
+      description:
+        "The presentation whose own theme this is (read and changed with the presentation's permissions); null: a shared theme",
+    },
     ...design,
     sortOrder: { type: 'integer' },
     createdAt: { type: 'integer', description: 'Unix timestamp' },
@@ -106,7 +112,8 @@ export const slideTemplatesPaths = {
     get: {
       tags,
       summary: 'List the slide templates',
-      description: "The church's own templates first, then the bundled ones.",
+      description:
+        "The shared templates: the church's own first, then the bundled ones. A presentation's own theme is not listed; read it by id.",
       security,
       responses: {
         '200': data({ type: 'array', items: template }, 'The templates'),
@@ -245,9 +252,9 @@ export const slideTemplatesPaths = {
   '/api/schedules/{id}/template': {
     put: {
       tags,
-      summary: "Set a presentation's slide template",
+      summary: "Set a presentation's theme",
       description:
-        'Screens that follow presentations draw its slides with this template; `null` leaves each screen its own. A presentation on screen redraws at once.',
+        "The presentation gets its own copy of the shared template given (its `templateId` becomes the copy's), which it can then change without touching anyone else's; choosing again replaces the copy. Screens that follow presentations draw its slides with it; `null` leaves each screen its own and deletes the copy. A presentation on screen redraws at once.",
       security,
       parameters: [idParam],
       requestBody: {

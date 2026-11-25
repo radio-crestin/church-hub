@@ -14,6 +14,8 @@ export interface SlideTemplate {
   name: string
   /** Set on the designs that ship with the app: read-only. */
   bundledKey: string | null
+  /** The presentation whose own theme this is; null: a shared theme. */
+  scheduleId: number | null
   /** The design canvas in px. */
   width: number
   height: number

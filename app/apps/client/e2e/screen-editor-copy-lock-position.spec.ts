@@ -58,13 +58,8 @@ async function openEditor(page: Page, screenId: number) {
 }
 
 async function pickSlideType(page: Page, type: string) {
-  await page.getByTestId('screen-editor-content-type').click()
-  await page
-    .getByTestId('screen-editor-content-type-option')
-    .filter({ hasText: label('presentation', `screens.contentTypes.${type}`) })
-    .locator('button')
-    .first()
-    .click()
+  // The slide, from the theme's slides on the left.
+  await page.getByTestId(`screen-editor-slide-${type}`).click()
 }
 
 async function save(page: Page) {

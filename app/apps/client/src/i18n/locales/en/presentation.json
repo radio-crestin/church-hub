@@ -523,7 +523,10 @@
       "none": "Each screen's own",
       "itemNone": "The presentation's theme",
       "menu": "Theme",
-      "menuDescription": "How this presentation's slides look"
+      "menuDescription": "How this presentation's slides look",
+      "own": "This presentation's theme",
+      "edit": "Edit theme",
+      "editDescription": "Colours, fonts, background and every slide, for this presentation only"
     },
     "design": {
       "title": "Design (all slides)",

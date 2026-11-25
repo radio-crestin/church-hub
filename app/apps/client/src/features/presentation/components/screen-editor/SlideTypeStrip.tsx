@@ -24,6 +24,8 @@ interface SlideTypeStripProps {
   onSelect?: (contentType: ContentType) => void
   /** A row that scrolls sideways instead of a column (a settings page). */
   horizontal?: boolean
+  /** Names each slide for tests: `<prefix>-<slide type>`. */
+  testIdPrefix?: string
 }
 
 /**
@@ -35,6 +37,7 @@ export function SlideTypeStrip({
   selected,
   onSelect,
   horizontal = false,
+  testIdPrefix = 'screen-editor-slide',
 }: SlideTypeStripProps) {
   const { t } = useTranslation('presentation')
 
@@ -84,7 +87,7 @@ export function SlideTypeStrip({
             key={contentType}
             type="button"
             aria-pressed={isSelected}
-            data-testid={`screen-editor-slide-${contentType}`}
+            data-testid={`${testIdPrefix}-${contentType}`}
             onClick={() => onSelect(contentType)}
             className={className}
           >

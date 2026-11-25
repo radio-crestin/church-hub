@@ -526,7 +526,10 @@
       "none": "Al fiecărui ecran",
       "itemNone": "Tema prezentării",
       "menu": "Temă",
-      "menuDescription": "Cum arată slide-urile acestei prezentări"
+      "menuDescription": "Cum arată slide-urile acestei prezentări",
+      "own": "Tema acestei prezentări",
+      "edit": "Editează tema",
+      "editDescription": "Culori, fonturi, fundal și fiecare slide, doar pentru această prezentare"
     },
     "design": {
       "title": "Design (toate slide-urile)",

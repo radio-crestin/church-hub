@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 
 import { removeFromScheduleSearchIndex } from './search'
 import { getDatabase } from '../../db'
-import { schedules } from '../../db/schema'
+import { schedules, slideTemplates } from '../../db/schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -24,8 +24,11 @@ export function deleteSchedule(id: number): boolean {
     // Remove from search index first
     removeFromScheduleSearchIndex(id)
 
-    // Delete schedule (cascade will delete items)
-    db.delete(schedules).where(eq(schedules.id, id)).run()
+    // Delete schedule (cascade will delete items) and its own theme
+    db.transaction(() => {
+      db.delete(schedules).where(eq(schedules.id, id)).run()
+      db.delete(slideTemplates).where(eq(slideTemplates.scheduleId, id)).run()
+    })
 
     log('info', `Schedule deleted: ${id}`)
     return true

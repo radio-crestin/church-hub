@@ -14,6 +14,7 @@ export function toSlideTemplate(
     id: record.id,
     name: record.name,
     bundledKey: record.bundledKey,
+    scheduleId: record.scheduleId,
     width: record.width,
     height: record.height,
     layouts: parseLayouts(record.layouts),

@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next'
 
 import { ScreenSceneTemplates } from '~/features/slide-templates/components/ScreenSceneTemplates'
 import { ScreenTemplateSettings } from '~/features/slide-templates/components/ScreenTemplateSettings'
-import { TemplateThumbnail } from '~/features/slide-templates/components/TemplateThumbnail'
 import { useSlideTemplate } from '~/features/slide-templates/hooks/useSlideTemplates'
 import { templateDisplayName } from '~/features/slide-templates/utils/templateDisplayName'
 import { Button } from '~/ui/button/Button'
@@ -27,12 +26,13 @@ import {
   useUpdateScreenContentConfig,
   useUpsertScreen,
 } from '../../hooks'
-import type { Screen } from '../../types'
+import type { ContentType, Screen } from '../../types'
 import {
   closeDisplayWindow,
   openDisplayWindow,
   setDisplayAlwaysOnTop,
 } from '../../utils/openDisplayWindow'
+import { SlideTypeStrip } from '../screen-editor/SlideTypeStrip'
 
 /**
  * The per-screen switches saved straight from the card, each with the i18n
@@ -49,7 +49,8 @@ type ScreenSwitch = keyof typeof SWITCH_MESSAGES
 
 interface ScreenCardProps {
   screen: Screen
-  onEdit: () => void
+  /** Opens its theme in the editor, on this slide when given. */
+  onEdit: (contentType?: ContentType) => void
   onExport: () => void
   onCopyUrl: () => void
   onDuplicate: () => void
@@ -240,34 +241,46 @@ export function ScreenCard({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        {/* How it looks, large, with the way into its template */}
-        <div className="space-y-2 lg:sticky lg:top-4 lg:self-start">
-          {template && (
-            <TemplateThumbnail
-              template={template}
-              className="w-full shadow-sm"
-            />
-          )}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span
-              data-testid="screen-template-name"
-              className="truncate text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              {template ? templateDisplayName(template, t) : ''}
-            </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onEdit}
-              title={t('sections.screens.actions.editTooltip')}
-            >
-              <Edit size={16} />
-              <span className="ml-1">{t('sections.screens.actions.edit')}</span>
-            </Button>
+      {/* Its theme as a presentation: every kind of slide, as it shows it */}
+      <section data-testid="screen-theme-slides" className="mt-4">
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {t('sections.screens.groups.slides')}
+              {template && (
+                <span
+                  data-testid="screen-template-name"
+                  className="ml-2 normal-case tracking-normal text-gray-700 dark:text-gray-300"
+                >
+                  {templateDisplayName(template, t)}
+                </span>
+              )}
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {t('sections.screens.slides.description')}
+            </p>
           </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onEdit()}
+            title={t('sections.screens.actions.editTooltip')}
+          >
+            <Edit size={16} />
+            <span className="ml-1">{t('sections.screens.actions.edit')}</span>
+          </Button>
         </div>
+        {screenWithConfigs && (
+          <SlideTypeStrip
+            screen={screenWithConfigs}
+            horizontal
+            onSelect={onEdit}
+            testIdPrefix="screen-slide"
+          />
+        )}
+      </section>
 
+      <div className="mt-4 grid gap-6 lg:grid-cols-2">
         <div className="space-y-5 min-w-0">
           <SettingsGroup
             title={t('sections.screens.groups.look')}

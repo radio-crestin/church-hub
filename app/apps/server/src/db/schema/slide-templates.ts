@@ -21,6 +21,11 @@ export const slideTemplates = sqliteTable(
     name: text('name').notNull(),
     /** Set on the designs that ship with the app: read-only, refreshed on start. */
     bundledKey: text('bundled_key'),
+    /**
+     * The presentation this theme belongs to: its own copy, changed from the
+     * presentation and deleted with it. NULL: a shared theme.
+     */
+    scheduleId: integer('schedule_id'),
     /** The design canvas in px; positions and font sizes are on it. */
     width: integer('width').notNull().default(1920),
     height: integer('height').notNull().default(1080),

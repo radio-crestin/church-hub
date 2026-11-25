@@ -55,8 +55,16 @@ export async function handleSlideTemplateRoutes(
       }),
     )
   if (!context) return respond(401, { error: 'Unauthorized' })
-  const permission =
-    req.method === 'GET'
+  // A presentation's own theme is the presentation's: whoever edits it does.
+  const idMatch = pathname.match(TEMPLATE_PATH)
+  const owned =
+    idMatch !== null &&
+    (getSlideTemplate(Number(idMatch[1]))?.scheduleId ?? null) !== null
+  const permission = owned
+    ? req.method === 'GET'
+      ? 'programs.view'
+      : 'programs.edit'
+    : req.method === 'GET'
       ? 'displays.view'
       : req.method === 'DELETE'
         ? 'displays.delete'

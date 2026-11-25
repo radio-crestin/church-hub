@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { TemplatePickerDialog } from './TemplatePickerDialog'
 import { TemplateThumbnail } from './TemplateThumbnail'
-import { useSlideTemplates } from '../hooks/useSlideTemplates'
+import { useSlideTemplate, useSlideTemplates } from '../hooks/useSlideTemplates'
 import { templateDisplayName } from '../utils/templateDisplayName'
 
 interface TemplatePickerProps {
@@ -47,7 +47,10 @@ export function TemplatePicker({
   const { t } = useTranslation('presentation')
   const { data: templates = [] } = useSlideTemplates()
   const [open, setOpen] = useState(false)
-  const current = templates.find((template) => template.id === value) ?? null
+  const listed = templates.find((template) => template.id === value)
+  // A presentation's own theme isn't among the shared ones: read it by id.
+  const { data: own } = useSlideTemplate(listed ? null : value)
+  const current = listed ?? own ?? null
 
   return (
     <>

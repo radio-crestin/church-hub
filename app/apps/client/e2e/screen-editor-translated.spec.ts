@@ -57,14 +57,9 @@ test('the screen editor sidebar has no English leftovers in Romanian', async ({
     ).toBeVisible()
 
     // Select the lyrics so the element's style panels show.
-    await page.getByTestId('screen-editor-content-type').click()
-    await page
-      .getByTestId('screen-editor-content-type-option')
-      .filter({ hasText: label('presentation', 'screens.contentTypes.song') })
-      .locator('button')
-      .first()
-      .click()
-    await page.getByText('Mărire Domnului!').first().click()
+    // The slide, from the theme's slides on the left; then its lyrics.
+    await page.getByTestId('screen-editor-slide-song').click()
+    await page.getByTestId('screen-editor-canvas-mainText').click()
     await expect(
       sidebar
         .getByText(label('presentation', 'screens.textStyle.fontFamily'))

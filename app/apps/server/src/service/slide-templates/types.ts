@@ -24,6 +24,8 @@ export interface SlideTemplate extends TemplateDesign {
   name: string
   /** Set on the designs that ship with the app: read-only. */
   bundledKey: string | null
+  /** The presentation whose own theme this is; null: shared. */
+  scheduleId: number | null
   sortOrder: number
   createdAt: number
   updatedAt: number

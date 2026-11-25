@@ -19,7 +19,12 @@ import {
   useScreens,
   useUpsertScreen,
 } from '../../hooks'
-import type { Screen, ScreenType, ScreenWithConfigs } from '../../types'
+import type {
+  ContentType,
+  Screen,
+  ScreenType,
+  ScreenWithConfigs,
+} from '../../types'
 import {
   closeDisplayWindow,
   getFrontendUrl,
@@ -76,6 +81,10 @@ export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
   const [newScreenName, setNewScreenName] = useState('')
   const [newScreenType, setNewScreenType] = useState<ScreenType>('primary')
   const [editingScreenId, setEditingScreenId] = useState<number | null>(null)
+  // The slide the editor opens on (a slide picked from the screen's theme)
+  const [editingContentType, setEditingContentType] = useState<
+    ContentType | undefined
+  >()
   const [deleteConfirm, setDeleteConfirm] = useState<Screen | null>(null)
   const [exportScreen, setExportScreen] = useState<Screen | null>(null)
 
@@ -191,6 +200,7 @@ export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
       <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950">
         <ScreenEditor
           screen={editingScreen}
+          initialContentType={editingContentType}
           title={
             editingTemplate
               ? templateDisplayName(editingTemplate, t)
@@ -227,7 +237,10 @@ export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
           <ScreenCard
             key={selected.id}
             screen={selected}
-            onEdit={() => setEditingScreenId(selected.id)}
+            onEdit={(contentType) => {
+              setEditingContentType(contentType)
+              setEditingScreenId(selected.id)
+            }}
             onExport={() => setExportScreen(selected)}
             onCopyUrl={() => handleCopyUrl(selected)}
             onDuplicate={() => handleDuplicate(selected)}

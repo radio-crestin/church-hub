@@ -1103,7 +1103,8 @@
         "look": "Aspect",
         "idle": "Când nu se afișează nimic",
         "where": "Unde apare",
-        "more": "Mai multe opțiuni"
+        "more": "Mai multe opțiuni",
+        "slides": "Slide-uri"
       },
       "idle": {
         "clock": {
@@ -1207,6 +1208,9 @@
           "saveFailed": "Nu s-a putut salva fișierul",
           "cancelled": "Export anulat"
         }
+      },
+      "slides": {
+        "description": "Fiecare tip de slide, cum îl arată acest ecran. Apasă pe unul ca să-l editezi."
       }
     },
     "developer": {
