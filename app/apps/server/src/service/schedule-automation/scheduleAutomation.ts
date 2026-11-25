@@ -41,6 +41,11 @@ function liveStep(): { scheduleId?: number; stepIndex?: number } {
   return { scheduleId: data.scheduleId, stepIndex: data.scheduleItemIndex }
 }
 
+/** The presentation on the projector right now, running or not. */
+export function liveScheduleId(): number | undefined {
+  return state.running ? state.scheduleId : liveStep().scheduleId
+}
+
 function stopTimer() {
   if (timer) clearInterval(timer)
   timer = null
@@ -62,6 +67,19 @@ export function stopScheduleAutomation(
   }
   setState({ running: false })
   return state
+}
+
+/**
+ * Takes a presentation off: stops its run, or, one shown without autoplay,
+ * clears its step from the screens.
+ */
+export function stopSchedule(scheduleId: number, reason: string): void {
+  if (state.running && state.scheduleId === scheduleId) {
+    stopScheduleAutomation(reason, { clear: true })
+  } else if (liveStep().scheduleId === scheduleId) {
+    logger.info(`Presentation ${scheduleId} taken off: ${reason}`)
+    broadcastPresentationState(clearTemporaryContent())
+  }
 }
 
 async function setMusicVolume(volume: number | null) {

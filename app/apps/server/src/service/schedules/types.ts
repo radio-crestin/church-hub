@@ -50,6 +50,29 @@ export interface ScheduleRecord {
   updated_at: number
 }
 
+/** What happens in OBS that can start or stop a presentation. */
+export type AutomationTriggerEvent =
+  | 'scene_selected'
+  | 'stream_started'
+  | 'stream_stopped'
+  | 'recording_started'
+  | 'recording_stopped'
+
+export const AUTOMATION_TRIGGER_EVENTS: AutomationTriggerEvent[] = [
+  'scene_selected',
+  'stream_started',
+  'stream_stopped',
+  'recording_started',
+  'recording_stopped',
+]
+
+/** A presentation's start or stop trigger. */
+export interface AutomationTrigger {
+  event: AutomationTriggerEvent
+  /** The scene that fires it (`scene_selected` only); null otherwise. */
+  sceneName: string | null
+}
+
 /**
  * How a presentation runs by itself (see service/schedule-automation).
  */
@@ -67,6 +90,10 @@ export interface ScheduleAutomationSettings {
   musicVolume: number | null
   /** Started by itself when Church Hub starts (one presentation at most). */
   startOnAppStart: boolean
+  /** Started by itself when this happens in OBS; null = never. */
+  startTrigger: AutomationTrigger | null
+  /** Stopped (and taken off the screens) when this happens; null = never. */
+  stopTrigger: AutomationTrigger | null
 }
 
 /**
