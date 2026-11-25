@@ -46,12 +46,12 @@ test.describe('Song editor layout', () => {
       await page.setViewportSize({ width: 1600, height: 900 })
       await openEditor(page, song.id)
 
-      // Only the form and the rail are panels; Programe is gone.
+      // Only the form and the rail are panels; Prezentări is gone.
       await expect(
         page.locator('[data-testid^="workspace-panel-"]'),
       ).toHaveCount(2)
       await expect(
-        page.locator('main').getByText('Programe', { exact: true }),
+        page.locator('main').getByText(/^(Prezentări|Presentations)$/),
       ).toHaveCount(0)
 
       const rail = page.getByTestId('workspace-panel-rail')

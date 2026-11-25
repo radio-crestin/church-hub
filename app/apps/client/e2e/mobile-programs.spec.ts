@@ -117,8 +117,10 @@ test.describe('A program on a phone', () => {
     expect(titleBox?.width ?? 0).toBeGreaterThan(250)
 
     await page.getByTestId('schedule-presenter-actions-menu').click()
-    await expect(page.getByTestId('schedule-load-file-action')).toBeVisible()
-    await expect(page.getByTestId('schedule-save-file-action')).toBeVisible()
+    await expect(
+      page.getByTestId('schedule-load-from-file-action'),
+    ).toBeVisible()
+    await expect(page.getByTestId('schedule-save-to-file-action')).toBeVisible()
     await page.getByTestId('schedule-delete-action').click()
     await expect(page.getByRole('dialog')).toBeVisible()
   })

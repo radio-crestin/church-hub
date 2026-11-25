@@ -109,7 +109,7 @@
     "clear": "Clear",
     "today": "Today",
     "yesterday": "Yesterday",
-    "export": "Export as schedule",
+    "export": "Export as presentation",
     "exportLastSession": "Last session",
     "exportEntireHistory": "Entire history",
     "exportVerseCount_one": "{{count}} verse",
@@ -169,8 +169,8 @@
   },
   "actionsMenu": {
     "trigger": "More",
-    "addToScheduleDescription": "Add the open verse to the selected program",
-    "addToSchedule": "Add verse to program"
+    "addToScheduleDescription": "Add the open verse to the selected presentation",
+    "addToSchedule": "Add verse to presentation"
   },
   "topics": {
     "title": "Topics",
