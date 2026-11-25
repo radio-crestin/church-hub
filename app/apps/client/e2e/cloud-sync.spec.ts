@@ -61,7 +61,6 @@ async function publishedChanges(readUrl: string): Promise<Change[][]> {
 async function syncUntil(
   request: APIRequestContext,
   check: () => Promise<boolean>,
-  timeout = 30_000,
 ): Promise<void> {
   await expect
     .poll(
@@ -69,7 +68,7 @@ async function syncUntil(
         await request.post('/api/sync/now')
         return check()
       },
-      { timeout, intervals: [300, 500, 1000] },
+      { timeout: 30_000, intervals: [300, 500, 1000] },
     )
     .toBe(true)
 }
@@ -150,18 +149,12 @@ test.describe
         },
       })
       songId = (await created.json()).data.id
-      // The first cycle uploads the suite's whole library (~28k songs), on a
-      // server that may still be warming up: a longer wait.
-      await syncUntil(
-        request,
-        async () => {
-          const segments = await publishedChanges(readUrl)
-          const change = segments.flat().find((c) => c.data?.title === title)
-          if (change) songUuid = change.uuid
-          return change !== undefined
-        },
-        90_000,
-      )
+      await syncUntil(request, async () => {
+        const segments = await publishedChanges(readUrl)
+        const change = segments.flat().find((c) => c.data?.title === title)
+        if (change) songUuid = change.uuid
+        return change !== undefined
+      })
 
       const renamed = `${title} renamed`
       await request.post('/api/songs', { data: { id: songId, title: renamed } })
