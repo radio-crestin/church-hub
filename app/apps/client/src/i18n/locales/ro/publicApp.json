@@ -38,6 +38,7 @@
     "empty": "Biserica nu are încă nicio cântare.",
     "noMatch": "Nicio cântare nu se potrivește.",
     "loadFailed": "Cântările nu s-au putut încărca. Verifică conexiunea la internet.",
-    "back": "Cântări"
+    "back": "Cântări",
+    "more": "Caută ca să le găsești pe celelalte {{count}}."
   }
 }
