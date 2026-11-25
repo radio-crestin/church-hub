@@ -525,7 +525,9 @@
     },
     "presentation": {
       "none": "Al fiecărui ecran",
-      "itemNone": "Șablonul prezentării"
+      "itemNone": "Șablonul prezentării",
+      "menu": "Șablon",
+      "menuDescription": "Cum arată slide-urile acestei prezentări"
     }
   }
 }

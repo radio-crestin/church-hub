@@ -522,7 +522,9 @@
     },
     "presentation": {
       "none": "Each screen's own",
-      "itemNone": "The presentation's template"
+      "itemNone": "The presentation's template",
+      "menu": "Template",
+      "menuDescription": "How this presentation's slides look"
     }
   }
 }

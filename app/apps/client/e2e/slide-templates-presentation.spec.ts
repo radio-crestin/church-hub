@@ -174,6 +174,40 @@ test.describe('Templates in presentations', () => {
     }
   })
 
+  test("on a phone the presentation's template is chosen from its menu", async ({
+    page,
+    request,
+  }) => {
+    const name = `E2E Tpl Phone ${Date.now()}`
+    const red = await colourTemplate(request, `${name} red`, '#ff0000')
+    const schedule = (
+      await (
+        await request.post('/api/schedules', { data: { title: name } })
+      ).json()
+    ).data as { id: number }
+    try {
+      await page.setViewportSize({ width: 390, height: 844 })
+      await page.goto(`/schedules/${schedule.id}`)
+      // The header leaves the name its room: no picker beside it.
+      await expect(page.getByTestId('schedule-title-edit')).toBeVisible()
+      await expect(page.getByTestId('schedule-template-picker')).toHaveCount(0)
+
+      await page.getByTestId('schedule-presenter-actions-menu').click()
+      await page.getByTestId('schedule-template-action').click()
+      await page.getByTestId(`template-choice-${red}`).click()
+      await expect
+        .poll(
+          async () =>
+            (await (await request.get(`/api/schedules/${schedule.id}`)).json())
+              .data.templateId,
+        )
+        .toBe(red)
+    } finally {
+      await request.delete(`/api/schedules/${schedule.id}`)
+      await request.delete(`/api/slide-templates/${red}`)
+    }
+  })
+
   test("a topic's verse loop draws with the template chosen for it", async ({
     context,
     request,

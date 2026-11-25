@@ -6,6 +6,7 @@ import {
   ChevronsUpDown,
   Download,
   FileText,
+  LayoutTemplate,
   Loader2,
   Pencil,
   Timer,
@@ -33,6 +34,7 @@ import {
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
+import { TemplatePickerDialog } from '~/features/slide-templates/components/TemplatePickerDialog'
 import { KeyLineEditDialog } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
@@ -167,6 +169,8 @@ export function SchedulePresenter({
   // presentation runs, or once opened from the menu. Once up it stays, even
   // after its last setting is turned off, until the operator closes it.
   const [automationOpen, setAutomationOpen] = useState(false)
+  // On a phone the template is chosen from the menu, so the name keeps its room.
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
   const { data: runner } = useScheduleAutomation()
   const automationNeeded =
     (schedule ? isAutomationOn(schedule.automation) : false) ||
@@ -861,6 +865,22 @@ export function SchedulePresenter({
             onSelect: handleStartEditTitle,
             testId: 'schedule-rename-action',
           },
+          ...(isLargeScreen
+            ? []
+            : [
+                {
+                  id: 'template',
+                  label: t('presentation:templates.presentation.menu'),
+                  description: t(
+                    'presentation:templates.presentation.menuDescription',
+                  ),
+                  icon: <LayoutTemplate size={18} />,
+                  iconClassName:
+                    'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+                  onSelect: () => setTemplateDialogOpen(true),
+                  testId: 'schedule-template-action',
+                },
+              ]),
         ]
       : []),
     {
@@ -973,7 +993,7 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
-          {canEditProgram && (
+          {canEditProgram && isLargeScreen && (
             <TemplatePicker
               variant="compact"
               value={schedule.templateId}
@@ -1015,6 +1035,18 @@ export function SchedulePresenter({
         stackedAsTabs
         className="lg:flex-1 lg:min-h-0"
       />
+      {canEditProgram && !isLargeScreen && (
+        <TemplatePickerDialog
+          open={templateDialogOpen}
+          onClose={() => setTemplateDialogOpen(false)}
+          value={schedule.templateId}
+          noneLabel={t('presentation:templates.presentation.none')}
+          onChange={(templateId) =>
+            setScheduleTemplate.mutate({ scheduleId, templateId })
+          }
+          testId="schedule-template-picker"
+        />
+      )}
       {!isLargeScreen && (
         <PhoneSlideControls
           testId="schedule-phone"
