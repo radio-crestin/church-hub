@@ -173,17 +173,16 @@ test.describe('The control room playlist', () => {
     const presentation = await createPresentation(request)
     created.push(presentation)
     await page.setViewportSize(PHONE)
-    await request.post('/api/presentation/temporary-song', {
-      data: {
-        songId: presentation.songId,
-        slideIndex: 0,
-        scheduleId: presentation.id,
-        scheduleItemIndex: 0,
-      },
-    })
     await page.goto('/present')
 
+    // The operator puts a slide up from the playlist, with a tap.
     const entry = entryOf(page, presentation)
+    await entry.getByTestId('playlist-entry-toggle').click()
+    await entry.getByTestId('schedule-item').first().click()
+    await entry.getByTestId('schedule-sub-item-0').click()
+    await expect
+      .poll(() => liveStep(request))
+      .toEqual({ scheduleId: presentation.id, index: 0 })
     await expect(entry).toHaveAttribute('data-live', 'true')
     const preview = await page.getByTestId('control-room-live').boundingBox()
     const playlist = await entry.boundingBox()
