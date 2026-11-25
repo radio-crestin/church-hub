@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { stripHtmlTags } from '~/features/songs/utils/stripHtmlTags'
 import { useToast } from '~/ui/toast'
 import { useScheduleItemMidi } from '../hooks/useScheduleItemMidi'
 import { playScheduleItemMidi, stopScheduleItemMidi } from '../service'
@@ -159,7 +160,7 @@ export function ScheduleMidiSyncModal({
                 {slide.label ?? index + 1}
               </span>
               <span className="min-w-0 flex-1 truncate">
-                {slide.content.split('\n')[0]}
+                {stripHtmlTags(slide.content).split('\n')[0]}
               </span>
               <span className="shrink-0 text-xs tabular-nums text-gray-500 dark:text-gray-400">
                 {times[index] !== undefined ? formatClock(times[index]) : ''}
