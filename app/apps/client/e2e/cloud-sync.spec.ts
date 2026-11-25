@@ -223,6 +223,14 @@ test.describe
       expect(minted).toMatchObject({ churchId, readUrl })
       phone = { deviceId: minted.deviceId, token: minted.token }
 
+      // The PC has sent all it queued (an edit queued in the second a cycle
+      // starts goes out once more), so the version read here is the latest.
+      await syncUntil(
+        request,
+        async () =>
+          (await (await request.get('/api/sync/status')).json()).data
+            .pendingCount === 0,
+      )
       const latest = (await publishedChanges(readUrl))
         .flat()
         .filter((c) => c.uuid === songUuid)
