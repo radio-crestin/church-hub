@@ -4,6 +4,7 @@ import { expandSongSlidesWithChoruses } from './expand-song-slides'
 import { clearSlideHighlights, parseSlideHighlights } from './highlights'
 import { stepScheduleItemIndex } from './step-schedule-item-index'
 import type {
+  PresentationBackground,
   PresentationState,
   PresentTemporaryAnnouncementInput,
   PresentTemporaryBibleInput,
@@ -66,6 +67,44 @@ export function setOnScheduleStepPresentedCallback(
   callback: ((scheduleId: number, stepIndex: number) => void) | null,
 ): void {
   onScheduleStepPresentedCallback = callback
+}
+
+// Finds the background video behind a presentation's step
+let scheduleBackgroundResolver:
+  | ((scheduleId: number, stepIndex: number) => PresentationBackground | null)
+  | null = null
+
+/** Sets how the background video behind a presentation's step is found. */
+export function setScheduleBackgroundResolver(
+  resolver:
+    | ((scheduleId: number, stepIndex: number) => PresentationBackground | null)
+    | null,
+): void {
+  scheduleBackgroundResolver = resolver
+}
+
+/**
+ * The content with its presentation's background video: the one it had for
+ * the same step, else found anew; none outside a presentation.
+ */
+function withPresentationBackground(
+  content: TemporaryContent | null,
+  before: TemporaryContent | null,
+): TemporaryContent | null {
+  if (!content) return content
+  const step = scheduleStepOf(content)
+  if (!step) return { ...content, presentationBackground: null }
+  const sameStep = scheduleStepOf(before)
+  const presentationBackground =
+    before?.presentationBackground !== undefined &&
+    sameStep?.scheduleId === step.scheduleId &&
+    sameStep.scheduleItemIndex === step.scheduleItemIndex
+      ? before.presentationBackground
+      : (scheduleBackgroundResolver?.(
+          step.scheduleId,
+          step.scheduleItemIndex,
+        ) ?? null)
+  return { ...content, presentationBackground }
 }
 
 /** The presentation step a temporary content is, if it is one. */
@@ -255,7 +294,10 @@ export function updatePresentationState(
     // Handle temporary content
     const temporaryContent: TemporaryContent | null =
       input.temporaryContent !== undefined
-        ? input.temporaryContent
+        ? withPresentationBackground(
+            input.temporaryContent,
+            current.temporaryContent,
+          )
         : current.temporaryContent
 
     const temporaryContentJson = temporaryContent

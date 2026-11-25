@@ -1,5 +1,10 @@
 import type { ConfigurableItemType, ItemConfigs } from './types'
 
+/** A switch an older item may not have yet (off). */
+function isOptionalFlag(value: unknown): boolean {
+  return value === undefined || typeof value === 'boolean'
+}
+
 function isCount(value: unknown): boolean {
   return value === null || (Number.isInteger(value) && (value as number) > 0)
 }
@@ -27,8 +32,10 @@ export function parseItemConfig<T extends ConfigurableItemType>(
         )
       case 'video':
         return (
-          c.source === 'random' ||
-          (c.source === 'file' && typeof c.mediaId === 'string')
+          isOptionalFlag(c.loop) &&
+          isOptionalFlag(c.background) &&
+          (c.source === 'random' ||
+            (c.source === 'file' && typeof c.mediaId === 'string'))
         )
       case 'verses':
         return (
@@ -46,5 +53,12 @@ export function parseItemConfig<T extends ConfigurableItemType>(
     }
   })()
   if (!valid) throw new Error(`Invalid ${type} item settings`)
+  if (type === 'video' && c) {
+    return {
+      ...c,
+      loop: c.loop === true,
+      background: c.background === true,
+    } as ItemConfigs[T]
+  }
   return c as ItemConfigs[T]
 }

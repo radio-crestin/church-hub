@@ -814,7 +814,11 @@ export function ScreenContent({
       {/* First, so the content's text is drawn over it; the screen background
           belongs to the parent and stays below */}
       {contentData?.videoUrl && (
-        <ScreenVideo url={contentData.videoUrl} withSound={videoSound} />
+        <ScreenVideo
+          url={contentData.videoUrl}
+          loop={contentData.videoLoop === true}
+          withSound={videoSound}
+        />
       )}
       {renderClockOverride()}
       {renderMainText()}

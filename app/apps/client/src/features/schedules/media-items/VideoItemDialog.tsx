@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { BackgroundMediaThumbnail } from '~/features/background-media/components/BackgroundMediaThumbnail'
 import { useBackgroundMediaList } from '~/features/background-media/hooks/useBackgroundMediaList'
+import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { ItemDialog } from './ItemDialog'
 import { SourceTabs } from './SourceTabs'
 import type { VideoItemConfig } from './types'
@@ -15,7 +16,10 @@ interface VideoItemDialogProps {
   onClose: () => void
 }
 
-/** A video item's settings: a video of the gallery, or a random one. */
+/**
+ * A video item's settings: a video of the gallery, or a random one, shown
+ * full screen (once or looping) or looping behind the slides after it.
+ */
 export function VideoItemDialog({
   initial,
   isSaving,
@@ -27,15 +31,17 @@ export function VideoItemDialog({
   const [mediaId, setMediaId] = useState<string | null>(
     initial?.source === 'file' ? initial.mediaId : null,
   )
+  const [loop, setLoop] = useState(initial?.loop ?? false)
+  const [background, setBackground] = useState(initial?.background ?? false)
   const { data: media = [] } = useBackgroundMediaList()
   const videos = media.filter((m) => m.kind === 'video')
 
   const config: VideoItemConfig | null =
     source === 'random'
-      ? { source }
+      ? { source, loop, background }
       : mediaId === null
         ? null
-        : { source, mediaId }
+        : { source, mediaId, loop, background }
 
   return (
     <ItemDialog
@@ -92,6 +98,22 @@ export function VideoItemDialog({
             </button>
           ))}
         </div>
+      )}
+      <SwitchRow
+        label={t('mediaItems.video.background')}
+        description={t('mediaItems.video.backgroundDescription')}
+        checked={background}
+        onCheckedChange={setBackground}
+        testId="video-item-background"
+      />
+      {!background && (
+        <SwitchRow
+          label={t('mediaItems.video.loop')}
+          description={t('mediaItems.video.loopDescription')}
+          checked={loop}
+          onCheckedChange={setLoop}
+          testId="video-item-loop"
+        />
       )}
     </ItemDialog>
   )

@@ -229,6 +229,7 @@ import {
   removeSlideHighlight,
   type ScreenGlobalSettings,
   setOnScheduleStepPresentedCallback,
+  setScheduleBackgroundResolver,
   setSlideHighlights,
   showSlide,
   stopPresentation,
@@ -252,6 +253,7 @@ import {
   getScheduleAutomationState,
   startAppStartSchedule,
   startScheduleAutomation,
+  stepBackground,
   stopScheduleAutomation,
 } from './service/schedule-automation'
 import {
@@ -8547,6 +8549,9 @@ async function startRealServer(): Promise<void> {
       console.error(`[schedule-automation] Music did not start: ${error}`)
     })
   })
+
+  // A presentation's steps show the background video set before them
+  setScheduleBackgroundResolver(stepBackground)
 
   // Register music state provider for new WebSocket clients
   setMusicStateProvider(() => getPlayerState())

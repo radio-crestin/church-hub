@@ -36,6 +36,7 @@ import { ScheduleQuickInsertBar } from './ScheduleQuickInsertBar'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
 import { useMediaItemText } from '../media-items/hooks/useMediaItemText'
+import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import type { ScheduleItem } from '../types'
 import { itemStepSeconds } from '../utils/itemStepSeconds'
 import {
@@ -550,16 +551,18 @@ function SortableItemWrapper({
         )}
 
         {/* Music shows nothing, so it has no time on screen. */}
-        {itemAdvance && item.itemType !== 'music' && (
-          <ScheduleItemAdvance
-            advanceSeconds={item.advanceSeconds}
-            defaultSeconds={itemStepSeconds(
-              { ...item, advanceSeconds: null },
-              itemAdvance.timing,
-            )}
-            onChange={(seconds) => itemAdvance.onChange(item, seconds)}
-          />
-        )}
+        {itemAdvance &&
+          item.itemType !== 'music' &&
+          !isBackgroundVideo(item) && (
+            <ScheduleItemAdvance
+              advanceSeconds={item.advanceSeconds}
+              defaultSeconds={itemStepSeconds(
+                { ...item, advanceSeconds: null },
+                itemAdvance.timing,
+              )}
+              onChange={(seconds) => itemAdvance.onChange(item, seconds)}
+            />
+          )}
 
         {/* Options Menu Button */}
         <button

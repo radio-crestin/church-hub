@@ -19,12 +19,13 @@ const SONG_CONTENT_TYPES: ContentType[] = [
 interface ResolveScreenBackgroundInput {
   screen: Pick<ScreenWithConfigs, 'type' | 'contentConfigs'>
   contentType: ContentType
-  contentData: Pick<ContentData, 'songBackground'>
+  contentData: Pick<ContentData, 'songBackground' | 'presentationBackground'>
 }
 
 /**
- * The background a screen draws behind the content on it: the song's own
- * background while one of its slides is on a primary or kiosk screen, else the
+ * The background a screen draws behind the content on it: on a primary or
+ * kiosk screen, a presentation's background video behind the steps it covers,
+ * or the song's own background while one of its slides is up; else the
  * screen's background for the content type, falling back to its empty one.
  * Undefined when the screen has neither (`ScreenBackground` then draws black).
  */
@@ -33,9 +34,18 @@ export function resolveScreenBackground({
   contentType,
   contentData,
 }: ResolveScreenBackgroundInput): ScreenBackgroundConfig | undefined {
+  const onMainScreen = SONG_BACKGROUND_SCREEN_TYPES.includes(screen.type)
+  if (contentData.presentationBackground && onMainScreen) {
+    return {
+      type: 'video',
+      videoUrl: contentData.presentationBackground.url,
+      color: '#000000',
+      opacity: 1,
+    }
+  }
   if (
     contentData.songBackground &&
-    SONG_BACKGROUND_SCREEN_TYPES.includes(screen.type) &&
+    onMainScreen &&
     SONG_CONTENT_TYPES.includes(contentType)
   ) {
     return contentData.songBackground

@@ -7,10 +7,18 @@ export type MusicItemConfig = (
   shuffle: boolean
 }
 
-/** Video: one from the video library, or a random one each time. */
-export type VideoItemConfig =
+/**
+ * Video: one from the video library, or a random one each time. Shown full
+ * screen as a step (once, or `loop`ed for the item's time), or, as
+ * `background`, looping behind the steps after it, with no step of its own.
+ */
+export type VideoItemConfig = (
   | { source: 'file'; mediaId: string }
   | { source: 'random' }
+) & {
+  loop: boolean
+  background: boolean
+}
 
 /**
  * Verses: from a book, or from a topic of the bundled lists, in

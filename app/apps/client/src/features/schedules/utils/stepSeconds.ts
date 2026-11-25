@@ -1,5 +1,6 @@
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
 import type { ScheduleFlatItem } from './scheduleFlatItems'
+import type { VideoItemConfig } from '../media-items/types'
 import type { ScheduleAutomationSettings } from '../types'
 
 /** A room reads about 180 words a minute off a screen. */
@@ -25,8 +26,9 @@ export function stepSeconds(
   automation: AutoplayTiming,
 ): number {
   if (step.item.advanceSeconds != null) return step.item.advanceSeconds
-  // A video stays up until it ends.
-  if (step.type === 'video' && step.item.video?.seconds) {
+  // A video stays up until it ends, unless it loops.
+  const loops = (step.item.itemConfig as VideoItemConfig | null)?.loop
+  if (step.type === 'video' && !loops && step.item.video?.seconds) {
     return Math.ceil(step.item.video.seconds)
   }
   if (!automation.autoplayByText) return automation.autoplaySeconds

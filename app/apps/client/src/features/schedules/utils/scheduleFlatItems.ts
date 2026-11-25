@@ -1,4 +1,5 @@
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import type { ScheduleItem } from '../types'
 
 /** Which kind of sub-item a flat entry points at. */
@@ -39,7 +40,10 @@ export function countScheduleItemSteps(item: ScheduleItem): number {
   }
   // Music is no step: it starts as the presentation reaches the next one.
   if (item.itemType === 'music') return 0
-  if (item.itemType === 'video') return item.video ? 1 : 0
+  // A background video is no step either: it loops behind the next ones.
+  if (item.itemType === 'video') {
+    return item.video && !isBackgroundVideo(item) ? 1 : 0
+  }
   // announcement, scene — a single step
   return 1
 }
@@ -68,7 +72,9 @@ export function buildScheduleFlatItems(
         result.push({ item, type: 'entry', index })
       })
     } else if (item.itemType === 'video') {
-      if (item.video) result.push({ item, type: 'video', index: 0 })
+      if (item.video && !isBackgroundVideo(item)) {
+        result.push({ item, type: 'video', index: 0 })
+      }
     } else if (item.itemType === 'slide') {
       if (item.slideType === 'versete_tineri') {
         item.verseteTineriEntries.forEach((_, index) => {

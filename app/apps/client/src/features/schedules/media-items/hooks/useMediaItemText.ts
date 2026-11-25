@@ -48,10 +48,18 @@ export function useMediaItemText(item: ScheduleItem): MediaItemText | null {
     const config = item.itemConfig as VideoItemConfig | null
     return {
       title: t('mediaItems.video.title'),
-      detail:
+      detail: [
         config?.source === 'random'
           ? t('mediaItems.video.random')
           : t('mediaItems.video.chosen'),
+        config?.background
+          ? t('mediaItems.video.asBackground')
+          : config?.loop
+            ? t('mediaItems.video.looping')
+            : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
     }
   }
 

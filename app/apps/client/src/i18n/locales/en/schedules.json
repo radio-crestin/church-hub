@@ -367,7 +367,13 @@
       "randomDescription_one": "The only video in the Gallery.",
       "randomDescription_other": "One of the {{count}} videos in the Gallery, a different one each time.",
       "noVideos": "The Gallery has no videos yet. Upload one there first.",
-      "playFullScreen": "Play full screen"
+      "playFullScreen": "Play full screen",
+      "loop": "Loop",
+      "loopDescription": "Plays again from the start until the presentation moves on. While the presentation runs, it stays for the item's time, or the presentation's slide time.",
+      "background": "Background for the slides after it",
+      "backgroundDescription": "Plays silently in a loop behind the songs, verses and slides that follow, on the main screens. It is not a slide of its own.",
+      "asBackground": "Background",
+      "looping": "Loops"
     },
     "verses": {
       "title": "Verses",

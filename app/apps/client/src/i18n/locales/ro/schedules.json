@@ -386,7 +386,13 @@
       "randomDescription_few": "Unul dintre cele {{count}} videoclipuri din Galerie, altul de fiecare dată.",
       "randomDescription_other": "Unul dintre cele {{count}} de videoclipuri din Galerie, altul de fiecare dată.",
       "noVideos": "Galeria nu are încă niciun video. Încarcă unul acolo mai întâi.",
-      "playFullScreen": "Rulează pe tot ecranul"
+      "playFullScreen": "Rulează pe tot ecranul",
+      "loop": "În buclă",
+      "loopDescription": "Pornește iar de la început până se trece mai departe. Când prezentarea rulează singură, rămâne cât timpul elementului sau cât timpul unui slide din prezentare.",
+      "background": "Fundal pentru ce urmează",
+      "backgroundDescription": "Rulează fără sunet, în buclă, în spatele cântărilor, versetelor și slide-urilor care urmează, pe ecranele principale. Nu e un slide separat.",
+      "asBackground": "Fundal",
+      "looping": "În buclă"
     },
     "verses": {
       "title": "Versete",

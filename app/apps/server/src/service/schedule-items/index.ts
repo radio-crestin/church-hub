@@ -1,3 +1,4 @@
+export { isBackgroundVideo } from './isBackgroundVideo'
 export { forgetItemPicks } from './itemPicks'
 export { parseItemConfig } from './parseItemConfig'
 export { startMusicItems } from './startMusicItems'

@@ -10,9 +10,15 @@ export type MusicItemConfig = (
 }
 
 /** Video: one from the gallery, or a random one each time. */
-export type VideoItemConfig =
+export type VideoItemConfig = (
   | { source: 'file'; mediaId: string }
   | { source: 'random' }
+) & {
+  /** Plays again from the start until the step changes. */
+  loop: boolean
+  /** No step of its own: loops behind the steps after it. */
+  background: boolean
+}
 
 /**
  * Verses from a book, or from a topic of the bundled lists, in

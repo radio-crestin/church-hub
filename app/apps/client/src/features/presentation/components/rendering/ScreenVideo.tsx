@@ -10,13 +10,15 @@ interface ScreenVideoProps {
   url: string
   /** Only the main displays play its sound; previews and the others are muted. */
   withSound: boolean
+  /** Plays again from the start until the step changes. */
+  loop: boolean
 }
 
 /**
  * A presentation's video item, full screen over the background, from its
- * start, once (the presentation moves on when it ends).
+ * start, once (the presentation moves on when it ends) or looping.
  */
-export function ScreenVideo({ url, withSound }: ScreenVideoProps) {
+export function ScreenVideo({ url, withSound, loop }: ScreenVideoProps) {
   const src = useMediaUrl(url)
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -40,6 +42,7 @@ export function ScreenVideo({ url, withSound }: ScreenVideoProps) {
       data-testid="screen-video"
       src={src}
       autoPlay
+      loop={loop}
       playsInline
       preload="auto"
       className="absolute inset-0 h-full w-full bg-black object-contain"

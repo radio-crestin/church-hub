@@ -370,6 +370,80 @@ test.describe('Presentation video items', () => {
     })
   })
 
+  test('a looping video plays again for the presentation slide time', async ({
+    request,
+  }) => {
+    const id = await createPresentation(request, { autoplaySeconds: 2 })
+    await addMedia(request, id, 'video', {
+      source: 'file',
+      mediaId: BUILT_IN_VIDEO.id,
+      loop: true,
+    })
+
+    const run = await request.post(`/api/schedules/${id}/run`)
+    expect((await run.json()).data).toMatchObject({ stepSeconds: 2 })
+    expect((await presentationState(request)).temporaryContent).toMatchObject({
+      type: 'video',
+      data: { mediaId: BUILT_IN_VIDEO.id, loop: true },
+    })
+  })
+
+  test('a background video is no step: it loops behind the slides after it', async ({
+    request,
+  }) => {
+    const id = await createPresentation(request, { autoplaySeconds: 2 })
+    await addAnnouncement(request, id, 'Before')
+    await addMedia(request, id, 'video', {
+      source: 'file',
+      mediaId: BUILT_IN_VIDEO.id,
+      background: true,
+    })
+    await addAnnouncement(request, id, 'After')
+
+    // The slide before it has no background video.
+    await request.post(`/api/schedules/${id}/run`)
+    expect((await presentationState(request)).temporaryContent).toMatchObject({
+      type: 'announcement',
+      data: { content: '<p>Before</p>', scheduleItemIndex: 0 },
+      presentationBackground: null,
+    })
+
+    // The next step is the slide after it, with the video behind it.
+    const present = await request.post(`/api/schedules/${id}/steps/1/present`)
+    expect(present.ok()).toBeTruthy()
+    expect((await presentationState(request)).temporaryContent).toMatchObject({
+      type: 'announcement',
+      data: { content: '<p>After</p>', scheduleItemIndex: 1 },
+      presentationBackground: {
+        url: `/api/media/backgrounds/${BUILT_IN_VIDEO.id}`,
+      },
+    })
+
+    // Anything shown outside the presentation drops it.
+    await request.post('/api/presentation/temporary-announcement', {
+      data: { content: '<p>Elsewhere</p>' },
+    })
+    expect(
+      (await presentationState(request)).temporaryContent
+        ?.presentationBackground ?? null,
+    ).toBeNull()
+  })
+
+  test('settings with a loop or background that is not a switch are refused', async ({
+    request,
+  }) => {
+    const id = await createPresentation(request)
+    const res = await request.post(`/api/schedules/${id}/items`, {
+      data: {
+        media: {
+          itemType: 'video',
+          itemConfig: { source: 'random', background: 'yes' },
+        },
+      },
+    })
+    expect(res.ok()).toBeFalsy()
+  })
+
   test('a random video is one of the gallery', async ({ request }) => {
     const id = await createPresentation(request)
     const item = await addMedia(request, id, 'video', { source: 'random' })
@@ -427,8 +501,10 @@ test.describe('Presentation page', () => {
     await open('video')
     const video = page.getByTestId('video-item-dialog')
     await video.getByTestId('video-item-option').first().click()
+    await video.getByTestId('video-item-loop').click()
     await video.getByTestId('video-item-dialog-save').click()
     await expect(rows.nth(2)).toContainText('Video')
+    await expect(rows.nth(2)).toContainText('This video · Loops')
 
     // Its step puts it on the screens, full screen.
     await rows.nth(2).click()
@@ -437,5 +513,54 @@ test.describe('Presentation page', () => {
       .poll(async () => (await presentationState(request)).temporaryContent)
       .toMatchObject({ type: 'video', data: { scheduleItemIndex: 2 } })
     await expect(page.getByTestId('screen-video').first()).toBeVisible()
+    await expect(page.getByTestId('screen-video').first()).toHaveAttribute(
+      'loop',
+      '',
+    )
+  })
+
+  test('a video set as the background shows behind the slide after it', async ({
+    page,
+    request,
+  }) => {
+    const id = await createPresentation(request)
+    await addAnnouncement(request, id, 'Before')
+    await page.goto(`/schedules/${id}`)
+
+    await page.getByTestId('schedule-add-item').click()
+    await page
+      .getByTestId('add-schedule-item-modal')
+      .getByTestId('add-schedule-item-video')
+      .click()
+    const video = page.getByTestId('video-item-dialog')
+    await video.getByTestId('video-item-option').first().click()
+    await video.getByTestId('video-item-background').click()
+    // A background always loops: there is nothing to choose.
+    await expect(video.getByTestId('video-item-loop')).toHaveCount(0)
+    await video.getByTestId('video-item-dialog-save').click()
+    const rows = page.getByTestId('schedule-item')
+    await expect(rows.nth(1)).toContainText('This video · Background')
+    await addAnnouncement(request, id, 'After')
+    await page.reload()
+
+    // The slide after it is step 1: the video item has no step of its own.
+    await rows.nth(2).click()
+    await page.getByTestId('schedule-sub-item-1').click()
+    await expect
+      .poll(async () => (await presentationState(request)).temporaryContent)
+      .toMatchObject({
+        type: 'announcement',
+        data: { scheduleItemIndex: 1 },
+        presentationBackground: {
+          url: `/api/media/backgrounds/${BUILT_IN_VIDEO.id}`,
+        },
+      })
+    await expect(
+      page
+        .locator(
+          '[data-testid="screen-background"][data-background-type="video"]',
+        )
+        .first(),
+    ).toBeVisible()
   })
 })

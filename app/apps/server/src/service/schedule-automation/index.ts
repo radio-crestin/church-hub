@@ -7,4 +7,5 @@ export {
   stopScheduleAutomation,
 } from './scheduleAutomation'
 export { startAppStartSchedule } from './startAppStartSchedule'
+export { stepBackground } from './stepBackground'
 export type { ScheduleAutomationState } from './types'

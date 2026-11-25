@@ -15,6 +15,7 @@ import {
 } from '~/features/presentation'
 import { createLogger } from '~/utils/logger'
 import { useSchedule } from './useSchedule'
+import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import { presentScheduleStep } from '../media-items/service/scheduleItemsApi'
 import {
   readProgramPosition,
@@ -391,7 +392,9 @@ export function useScheduleFlatNavigation({
   // A video goes up through the server, which builds it as its runner does.
   const presentVideo = useCallback(
     async (item: ScheduleItem) => {
+      // A background video has no step: the steps after it show it.
       if (item.itemType !== 'video' || !item.video || !scheduleId) return
+      if (isBackgroundVideo(item)) return
       const flatIndex = getFlatItemIndex(item, 0)
       onBeforeNavigate?.(flatIndex, { item, type: 'video', index: 0 })
       await presentScheduleStep(scheduleId, flatIndex)

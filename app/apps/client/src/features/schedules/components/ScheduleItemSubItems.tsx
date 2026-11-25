@@ -3,6 +3,7 @@ import { ScheduleBiblePassageVerseList } from './ScheduleBiblePassageVerseList'
 import { ScheduleSceneSlideRow } from './ScheduleSceneSlideRow'
 import { ScheduleSongSlideList } from './ScheduleSongSlideList'
 import { ScheduleVerseteTineriEntryList } from './ScheduleVerseteTineriEntryList'
+import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import { isRandomItem } from '../media-items/isRandomItem'
 import { MusicPlayRow } from '../media-items/MusicPlayRow'
 import { RepickButton } from '../media-items/RepickButton'
@@ -115,7 +116,7 @@ function ItemSteps({
     )
   }
 
-  if (item.itemType === 'video') {
+  if (item.itemType === 'video' && !isBackgroundVideo(item)) {
     return (
       <VideoStepRow
         item={item}

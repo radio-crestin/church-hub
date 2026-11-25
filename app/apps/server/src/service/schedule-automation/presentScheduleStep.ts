@@ -12,6 +12,7 @@ import {
 } from '../presentation/presentation-state'
 import { presentTemporaryVideo } from '../presentation/presentTemporaryVideo'
 import type { PresentationState } from '../presentation/types'
+import type { VideoItemConfig } from '../schedule-items'
 import type { ScheduleItem } from '../schedules/types'
 
 const logger = createLogger('schedule-automation')
@@ -108,6 +109,7 @@ export async function presentScheduleStep(
       return presentTemporaryVideo({
         mediaId: item.video?.mediaId ?? '',
         url: item.video?.url ?? '',
+        loop: (item.itemConfig as VideoItemConfig | null)?.loop === true,
         ...common,
       })
     case 'announcement':
