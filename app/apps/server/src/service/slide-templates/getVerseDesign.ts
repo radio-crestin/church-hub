@@ -92,10 +92,26 @@ export function getVerseDesign(palette: VersePalette): TemplateDesign {
       includeReferenceInContent: kind === 'versete_tineri' ? undefined : false,
     }
   }
-  for (const kind of ['song', 'announcement'] as const) {
+  // Songs and announcements shown in between read in the same palette.
+  const textKinds = [
+    'song',
+    'song_first_slide',
+    'song_last_slide',
+    'announcement',
+  ] as const
+  for (const kind of textKinds) {
     const layout = layouts[kind] as Layout
+    const accented = Object.fromEntries(
+      ['songKey', 'amen', 'songTitle']
+        .filter((name) => layout[name])
+        .map((name) => [
+          name,
+          restyle(layout[name], { color: palette.accent, shadow: false }),
+        ]),
+    )
     layouts[kind] = {
       ...layout,
+      ...accented,
       mainText: restyle(layout.mainText, {
         fontFamily: palette.fontFamily,
         color: palette.text,
