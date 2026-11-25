@@ -64,6 +64,10 @@ interface EditorActions {
   ) => void
   updateNextSlideConfig: (config: Partial<NextSlideSectionConfig>) => void
   updateGlobalSettings: (settings: ScreenGlobalSettings) => void
+  /** A change across the whole theme (the Design panel). */
+  updateScreen: (
+    update: (screen: ScreenWithConfigs) => ScreenWithConfigs,
+  ) => void
   updateScreenDimensions: (width: number, height: number) => void
   clearSelection: () => void
   markClean: () => void
@@ -141,6 +145,14 @@ export function useEditorState(): [EditorState, EditorActions] {
     setIsDirty(true)
   }, [])
 
+  const updateScreen = useCallback(
+    (update: (screen: ScreenWithConfigs) => ScreenWithConfigs) => {
+      setScreenState((prev) => (prev ? update(prev) : prev))
+      setIsDirty(true)
+    },
+    [],
+  )
+
   const updateScreenDimensions = useCallback(
     (width: number, height: number) => {
       setScreenState((prev) => {
@@ -194,6 +206,7 @@ export function useEditorState(): [EditorState, EditorActions] {
       updateContentConfig,
       updateNextSlideConfig,
       updateGlobalSettings,
+      updateScreen,
       updateScreenDimensions,
       clearSelection,
       markClean,
@@ -209,6 +222,7 @@ export function useEditorState(): [EditorState, EditorActions] {
       updateContentConfig,
       updateNextSlideConfig,
       updateGlobalSettings,
+      updateScreen,
       updateScreenDimensions,
       clearSelection,
       markClean,

@@ -74,7 +74,7 @@ export function TemplatePickerDialog({
           </div>
           <div className="border-t border-gray-200 px-5 py-3 text-right dark:border-gray-700">
             <Link
-              to="/settings/templates"
+              to="/settings/themes"
               className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
             >
               {t('templates.picker.manage')}

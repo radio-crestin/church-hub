@@ -469,17 +469,17 @@
     "unused": "Not used yet",
     "copyName": "{{name}} (copy)",
     "picker": {
-      "title": "Choose a template",
-      "change": "Change template",
+      "title": "Choose a theme",
+      "change": "Change theme",
       "close": "Close",
-      "manage": "Manage templates"
+      "manage": "Manage themes"
     },
     "page": {
-      "title": "Templates",
-      "description": "How slides look: background, text, positions, transitions. Choose one for each screen and presentation.",
-      "new": "New template",
-      "newName": "New template",
-      "empty": "No templates yet."
+      "title": "Themes",
+      "description": "How slides look: colours, fonts, background, positions, transitions. Choose one for each screen and presentation.",
+      "new": "New theme",
+      "newName": "New theme",
+      "empty": "No themes yet."
     },
     "actions": {
       "edit": "Edit",
@@ -488,42 +488,62 @@
       "delete": "Delete"
     },
     "rename": {
-      "title": "Rename template",
+      "title": "Rename theme",
       "label": "Name",
       "save": "Save"
     },
     "delete": {
-      "title": "Delete this template?",
+      "title": "Delete this theme?",
       "message": "\"{{name}}\" will be deleted.",
-      "inUse": "Used by {{names}}: choose another template there first.",
-      "bundled": "Built-in templates can't be deleted."
+      "inUse": "Used by {{names}}: choose another theme there first.",
+      "bundled": "Built-in themes can't be deleted."
     },
     "toast": {
-      "saved": "Template saved",
-      "savedAsCopy": "Built-in templates don't change: saved as \"{{name}}\"",
-      "duplicated": "Template \"{{name}}\" created",
-      "renamed": "Template renamed",
-      "deleted": "Template deleted",
-      "changed": "Template changed",
-      "error": "The template couldn't be saved"
+      "saved": "Theme saved",
+      "savedAsCopy": "Built-in themes don't change: saved as \"{{name}}\"",
+      "duplicated": "Theme \"{{name}}\" created",
+      "renamed": "Theme renamed",
+      "deleted": "Theme deleted",
+      "changed": "Theme changed",
+      "error": "The theme couldn't be saved"
     },
     "screen": {
-      "description": "Click a template: this screen shows every slide with it.",
+      "description": "Click a theme: this screen shows every slide with it.",
       "follows": {
         "label": "Presentations can change its look",
-        "description": "A presentation with its own template shows here in that template."
+        "description": "A presentation with its own theme shows here in that theme."
       },
       "scenes": {
         "title": "Per OBS scene",
-        "description": "While a scene is live, the screen draws with another template.",
-        "own": "The screen's template"
+        "description": "While a scene is live, the screen draws with another theme.",
+        "own": "The screen's theme"
       }
     },
     "presentation": {
       "none": "Each screen's own",
-      "itemNone": "The presentation's template",
-      "menu": "Template",
+      "itemNone": "The presentation's theme",
+      "menu": "Theme",
       "menuDescription": "How this presentation's slides look"
+    },
+    "design": {
+      "title": "Design (all slides)",
+      "description": "Colours, fonts, background and transition, changed on every slide of the theme at once.",
+      "colors": "Colours",
+      "textColor": "Text",
+      "accentColor": "Accent: reference, title, key",
+      "shadow": "Text shadow",
+      "shadowDescription": "Keeps the words readable on photos and videos.",
+      "fonts": "Fonts",
+      "textFont": "Text font",
+      "accentFont": "Accent font",
+      "background": "Background for all slides",
+      "transition": "Transition between slides",
+      "duration": "Duration"
+    },
+    "editor": {
+      "design": "Design",
+      "slide": "This slide",
+      "slides": "Slides"
     }
   }
 }

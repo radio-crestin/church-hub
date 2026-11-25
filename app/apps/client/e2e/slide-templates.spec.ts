@@ -76,7 +76,7 @@ test.describe('Slide templates', () => {
   }) => {
     const screen = await createScreen(request, `E2E Tpl Screen ${Date.now()}`)
     try {
-      await page.goto('/settings/templates')
+      await page.goto('/settings/themes')
       const cards = page.getByTestId('template-card')
       await expect(cards.first()).toBeVisible()
       // The screen's own template, named after it and used by it.
@@ -154,7 +154,7 @@ test.describe('Slide templates', () => {
         .toBe(true)
 
       // A template in use can't be deleted: the page says who uses it.
-      await page.goto('/settings/templates')
+      await page.goto('/settings/themes')
       await page
         .locator(`[data-testid="template-card"][data-template-id="${red.id}"]`)
         .getByRole('button', {
@@ -224,7 +224,7 @@ test.describe('Slide templates', () => {
     const classic = before.find(
       (template) => template.bundledKey === 'classic',
     ) as Template
-    await page.goto('/settings/templates')
+    await page.goto('/settings/themes')
     await page
       .locator(
         `[data-testid="template-card"][data-template-id="${classic.id}"]`,

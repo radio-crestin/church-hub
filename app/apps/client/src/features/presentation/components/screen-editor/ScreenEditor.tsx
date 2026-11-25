@@ -1,20 +1,16 @@
 import { RotateCcw, Save, X, ZoomIn, ZoomOut } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
-import { Combobox } from '~/ui/combobox/Combobox'
+import { DesignPanel } from './design/DesignPanel'
 import { useEditorState } from './hooks/useEditorState'
 import { ScreenEditorCanvas } from './ScreenEditorCanvas'
 import { ScreenEditorSidebar } from './ScreenEditorSidebar'
+import { SlideTypeStrip } from './SlideTypeStrip'
 import { toTemplateDesign } from './toTemplateDesign'
 import { useWebSocket } from '../../hooks'
-import type {
-  Constraints,
-  ContentType,
-  ScreenWithConfigs,
-  SizeWithUnits,
-} from '../../types'
+import type { Constraints, ScreenWithConfigs, SizeWithUnits } from '../../types'
 
 interface ScreenEditorProps {
   /**
@@ -27,26 +23,6 @@ interface ScreenEditorProps {
   onSave: (screen: ScreenWithConfigs) => Promise<void>
   onClose: () => void
 }
-
-const CONTENT_TYPE_VALUES: ContentType[] = [
-  'song',
-  'song_first_slide',
-  'song_last_slide',
-  'bible',
-  'bible_passage',
-  'announcement',
-  'versete_tineri',
-  'empty',
-  'screen_share',
-]
-
-const getContentTypeOptions = (
-  t: (key: string) => string,
-): { value: ContentType; label: string }[] =>
-  CONTENT_TYPE_VALUES.map((value) => ({
-    value,
-    label: t(`screens.contentTypes.${value}`),
-  }))
 
 /**
  * Edits a slide template: one layout per slide type, the clock and the
@@ -61,7 +37,6 @@ export function ScreenEditor({
 }: ScreenEditorProps) {
   const [state, actions] = useEditorState()
   const { t } = useTranslation('presentation')
-  const contentTypeOptions = useMemo(() => getContentTypeOptions(t), [t])
   const { send } = useWebSocket()
   const lastEmitRef = useRef<number>(0)
   const savingRef = useRef(false)
@@ -69,6 +44,8 @@ export function ScreenEditor({
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
     null,
   )
+  // The right pane: the whole theme's design, or the chosen slide's own.
+  const [pane, setPane] = useState<'design' | 'slide'>('slide')
 
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
@@ -254,24 +231,6 @@ export function ScreenEditor({
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 order-last sm:order-none w-full sm:w-auto sm:ml-auto">
-          {/* The slide type whose layout is being edited */}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-              {t('screens.editor.slideType')}
-            </span>
-            <Combobox
-              value={state.selectedContentType}
-              onChange={(value) => {
-                actions.setSelectedContentType(value as ContentType)
-                actions.clearSelection()
-              }}
-              options={contentTypeOptions}
-              className="flex-1 min-w-0 sm:flex-none sm:w-56"
-              portalContainer={portalContainer}
-              testId="screen-editor-content-type"
-            />
-          </div>
-
           {/* Zoom controls: pinch zoom does it on a phone */}
           <div className="hidden sm:flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-4">
             <Button
@@ -342,6 +301,16 @@ export function ScreenEditor({
       {/* Main content: stacked on mobile (canvas on top, controls below),
           side-by-side from md up */}
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
+        {/* Every slide type as a slide, like PowerPoint's slide list */}
+        <SlideTypeStrip
+          screen={state.screen}
+          selected={state.selectedContentType}
+          onSelect={(contentType) => {
+            actions.setSelectedContentType(contentType)
+            actions.clearSelection()
+          }}
+        />
+
         {/* Canvas area */}
         <ScreenEditorCanvas
           screen={state.screen}
@@ -349,29 +318,64 @@ export function ScreenEditor({
           selectedElement={state.selectedElement}
           zoom={state.zoom}
           previewTexts={state.previewTexts[state.selectedContentType]}
-          onSelectElement={actions.setSelectedElement}
+          onSelectElement={(element) => {
+            actions.setSelectedElement(element)
+            if (element) setPane('slide')
+          }}
           onUpdateElement={handleUpdateElement}
         />
 
-        {/* Right sidebar */}
-        <ScreenEditorSidebar
-          screen={state.screen}
-          contentType={state.selectedContentType}
-          selectedElement={state.selectedElement}
-          previewTexts={state.previewTexts[state.selectedContentType]}
-          onSetPreviewText={(key, text) =>
-            actions.setPreviewText(state.selectedContentType, key, text)
-          }
-          onResetPreviewTexts={() =>
-            actions.resetPreviewTexts(state.selectedContentType)
-          }
-          onSelectElement={actions.setSelectedElement}
-          onUpdateContentConfig={actions.updateContentConfig}
-          onUpdateNextSlideConfig={actions.updateNextSlideConfig}
-          onUpdateGlobalSettings={actions.updateGlobalSettings}
-          onUpdateScreenDimensions={actions.updateScreenDimensions}
-          portalContainer={portalContainer}
-        />
+        {/* Right pane: the theme's design, or this slide's settings */}
+        <div className="w-full flex-1 min-h-0 md:flex-none md:w-96 md:flex-shrink-0 bg-white dark:bg-gray-900 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-800 overflow-y-auto">
+          <div
+            role="tablist"
+            className="sticky top-0 z-10 flex gap-1 border-b border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900"
+          >
+            {(['design', 'slide'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={pane === value}
+                data-testid={`screen-editor-tab-${value}`}
+                onClick={() => setPane(value)}
+                className={`flex-1 rounded-md py-1.5 text-sm font-medium ${
+                  pane === value
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                }`}
+              >
+                {t(`templates.editor.${value}`)}
+              </button>
+            ))}
+          </div>
+          {pane === 'design' ? (
+            <DesignPanel
+              screen={state.screen}
+              onChange={actions.updateScreen}
+              portalContainer={portalContainer}
+            />
+          ) : (
+            <ScreenEditorSidebar
+              screen={state.screen}
+              contentType={state.selectedContentType}
+              selectedElement={state.selectedElement}
+              previewTexts={state.previewTexts[state.selectedContentType]}
+              onSetPreviewText={(key, text) =>
+                actions.setPreviewText(state.selectedContentType, key, text)
+              }
+              onResetPreviewTexts={() =>
+                actions.resetPreviewTexts(state.selectedContentType)
+              }
+              onSelectElement={actions.setSelectedElement}
+              onUpdateContentConfig={actions.updateContentConfig}
+              onUpdateNextSlideConfig={actions.updateNextSlideConfig}
+              onUpdateGlobalSettings={actions.updateGlobalSettings}
+              onUpdateScreenDimensions={actions.updateScreenDimensions}
+              portalContainer={portalContainer}
+            />
+          )}
+        </div>
       </div>
       {/* Portal container for dropdowns - rendered last to be on top */}
       <div

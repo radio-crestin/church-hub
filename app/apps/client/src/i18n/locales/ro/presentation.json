@@ -463,26 +463,26 @@
       "verses_light": "Versete · Lumină",
       "verses_calm": "Versete · Liniște"
     },
-    "bundledBadge": "Inclus",
+    "bundledBadge": "Inclusă",
     "sample": {
       "reference": "Ioan 3:16",
       "verse": "Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu."
     },
-    "usedBy": "Folosit de {{names}}",
-    "unused": "Nefolosit încă",
+    "usedBy": "Folosită de {{names}}",
+    "unused": "Nefolosită încă",
     "copyName": "{{name}} (copie)",
     "picker": {
-      "title": "Alege un șablon",
-      "change": "Schimbă șablonul",
+      "title": "Alege o temă",
+      "change": "Schimbă tema",
       "close": "Închide",
-      "manage": "Gestionează șabloanele"
+      "manage": "Gestionează temele"
     },
     "page": {
-      "title": "Șabloane",
-      "description": "Cum arată slide-urile: fundal, text, poziții, tranziții. Alegi câte unul pentru fiecare ecran și prezentare.",
-      "new": "Șablon nou",
-      "newName": "Șablon nou",
-      "empty": "Încă nu există șabloane."
+      "title": "Teme",
+      "description": "Cum arată slide-urile: culori, fonturi, fundal, poziții, tranziții. Alegi câte una pentru fiecare ecran și prezentare.",
+      "new": "Temă nouă",
+      "newName": "Temă nouă",
+      "empty": "Încă nu există teme."
     },
     "actions": {
       "edit": "Editează",
@@ -491,42 +491,62 @@
       "delete": "Șterge"
     },
     "rename": {
-      "title": "Redenumește șablonul",
+      "title": "Redenumește tema",
       "label": "Nume",
       "save": "Salvează"
     },
     "delete": {
-      "title": "Ștergi acest șablon?",
-      "message": "„{{name}}” va fi șters.",
-      "inUse": "Folosit de {{names}}: alege acolo alt șablon mai întâi.",
-      "bundled": "Șabloanele incluse nu se pot șterge."
+      "title": "Ștergi această temă?",
+      "message": "„{{name}}” va fi ștearsă.",
+      "inUse": "Folosită de {{names}}: alege acolo altă temă mai întâi.",
+      "bundled": "Temele incluse nu se pot șterge."
     },
     "toast": {
-      "saved": "Șablonul a fost salvat",
-      "savedAsCopy": "Șabloanele incluse nu se schimbă: salvat ca „{{name}}”",
-      "duplicated": "Șablonul „{{name}}” a fost creat",
-      "renamed": "Șablonul a fost redenumit",
-      "deleted": "Șablonul a fost șters",
-      "changed": "Șablonul a fost schimbat",
-      "error": "Șablonul nu s-a putut salva"
+      "saved": "Tema a fost salvată",
+      "savedAsCopy": "Temele incluse nu se schimbă: salvată ca „{{name}}”",
+      "duplicated": "Tema „{{name}}” a fost creată",
+      "renamed": "Tema a fost redenumită",
+      "deleted": "Tema a fost ștearsă",
+      "changed": "Tema a fost schimbată",
+      "error": "Tema nu s-a putut salva"
     },
     "screen": {
-      "description": "Alege un șablon: ecranul arată toate slide-urile cu el.",
+      "description": "Alege o temă: ecranul arată toate slide-urile cu ea.",
       "follows": {
         "label": "Prezentările îi pot schimba aspectul",
-        "description": "O prezentare cu șablon propriu apare aici în șablonul ei."
+        "description": "O prezentare cu temă proprie apare aici în tema ei."
       },
       "scenes": {
         "title": "Pe scene OBS",
-        "description": "Cât timp o scenă e live, ecranul folosește alt șablon.",
-        "own": "Șablonul ecranului"
+        "description": "Cât timp o scenă e live, ecranul folosește altă temă.",
+        "own": "Tema ecranului"
       }
     },
     "presentation": {
       "none": "Al fiecărui ecran",
-      "itemNone": "Șablonul prezentării",
-      "menu": "Șablon",
+      "itemNone": "Tema prezentării",
+      "menu": "Temă",
       "menuDescription": "Cum arată slide-urile acestei prezentări"
+    },
+    "design": {
+      "title": "Design (toate slide-urile)",
+      "description": "Culori, fonturi, fundal și tranziție, schimbate deodată pe toate slide-urile temei.",
+      "colors": "Culori",
+      "textColor": "Text",
+      "accentColor": "Accent: referință, titlu, gamă",
+      "shadow": "Umbră sub text",
+      "shadowDescription": "Textul rămâne lizibil pe poze și video.",
+      "fonts": "Fonturi",
+      "textFont": "Fontul textului",
+      "accentFont": "Fontul accentului",
+      "background": "Fundal pentru toate slide-urile",
+      "transition": "Tranziție între slide-uri",
+      "duration": "Durată"
+    },
+    "editor": {
+      "design": "Design",
+      "slide": "Slide-ul acesta",
+      "slides": "Slide-uri"
     }
   }
 }

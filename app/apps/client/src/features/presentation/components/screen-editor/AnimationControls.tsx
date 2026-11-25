@@ -6,7 +6,7 @@ import { Slider } from '~/ui/slider/Slider'
 import type { AnimationConfig } from '../../types'
 import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
 
-const ANIMATION_TYPES = [
+export const ANIMATION_TYPES = [
   { value: 'none', labelKey: 'screens.animation.types.none' },
   { value: 'fade', labelKey: 'screens.animation.types.fade' },
   { value: 'slide-left', labelKey: 'screens.animation.types.slideLeft' },

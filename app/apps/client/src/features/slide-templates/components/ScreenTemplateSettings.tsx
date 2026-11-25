@@ -47,7 +47,7 @@ export function ScreenTemplateSettings({
           {t('templates.screen.description')}
         </p>
         <Link
-          to="/settings/templates"
+          to="/settings/themes"
           className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
         >
           {t('templates.picker.manage')}
