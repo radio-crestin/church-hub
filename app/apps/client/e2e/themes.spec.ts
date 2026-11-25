@@ -53,6 +53,37 @@ async function scheduleThemeId(request: APIRequestContext, id: number) {
 }
 
 test.describe('Themes', () => {
+  test('the built-in themes draw on their own photos and videos', async ({
+    request,
+  }) => {
+    const sunrise = await bundled(request, 'photo_mountain_sunrise')
+    const background = (
+      sunrise.layouts.song as unknown as {
+        background: { type: string; imageUrl: string }
+      }
+    ).background
+    expect(background.type).toBe('image')
+    const photo = await request.get(background.imageUrl)
+    expect(photo.status()).toBe(200)
+    expect(photo.headers()['content-type']).toBe('image/jpeg')
+
+    const ocean = await bundled(request, 'video_ocean_horizon')
+    const video = (
+      ocean.layouts.bible as unknown as { background: { videoUrl: string } }
+    ).background.videoUrl
+    // WebKit plays a video only from byte ranges.
+    const range = await request.get(video, { headers: { Range: 'bytes=0-99' } })
+    expect(range.status()).toBe(206)
+    expect(range.headers()['content-type']).toBe('video/mp4')
+
+    // Only the folder's own files.
+    expect(
+      (
+        await request.get('/api/media/theme-backgrounds/..%2Fdefault.json')
+      ).status(),
+    ).toBe(400)
+  })
+
   test('a display shows its theme as its slides, and one opens in the editor', async ({
     page,
     request,

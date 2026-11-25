@@ -458,7 +458,17 @@
       "kiosk": "Kiosk",
       "verses_evening": "Verses · Evening",
       "verses_light": "Verses · Light",
-      "verses_calm": "Verses · Calm"
+      "verses_calm": "Verses · Calm",
+      "photo_mountain_sunrise": "Mountain sunrise",
+      "photo_misty_forest": "Misty forest",
+      "photo_golden_wheat": "Golden wheat",
+      "photo_calm_sea": "Calm sea",
+      "photo_starry_night": "Starry night",
+      "photo_sea_of_clouds": "Sea of clouds",
+      "video_ocean_horizon": "Ocean horizon · video",
+      "video_golden_clouds": "Golden clouds · video",
+      "video_forest_light": "Forest light · video",
+      "video_blue_particles": "Blue particles · video"
     },
     "bundledBadge": "Built-in",
     "sample": {

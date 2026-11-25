@@ -461,7 +461,17 @@
       "kiosk": "Kiosk",
       "verses_evening": "Versete · Seară",
       "verses_light": "Versete · Lumină",
-      "verses_calm": "Versete · Liniște"
+      "verses_calm": "Versete · Liniște",
+      "photo_mountain_sunrise": "Răsărit pe munte",
+      "photo_misty_forest": "Pădure în ceață",
+      "photo_golden_wheat": "Lan de grâu",
+      "photo_calm_sea": "Mare liniștită",
+      "photo_starry_night": "Noapte înstelată",
+      "photo_sea_of_clouds": "Mare de nori",
+      "video_ocean_horizon": "Orizont pe mare · video",
+      "video_golden_clouds": "Nori aurii · video",
+      "video_forest_light": "Lumină în pădure · video",
+      "video_blue_particles": "Particule albastre · video"
     },
     "bundledBadge": "Inclusă",
     "sample": {

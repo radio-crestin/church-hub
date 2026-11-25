@@ -94,6 +94,10 @@ test.describe('Slide templates', () => {
         'verses_evening',
         'verses_light',
         'verses_calm',
+        'photo_mountain_sunrise',
+        'photo_starry_night',
+        'video_ocean_horizon',
+        'video_blue_particles',
       ]) {
         const bundled = (await templates(request)).find(
           (template) => template.bundledKey === key,

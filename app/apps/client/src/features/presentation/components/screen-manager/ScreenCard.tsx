@@ -280,15 +280,15 @@ export function ScreenCard({
         )}
       </section>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-2">
-        <div className="space-y-5 min-w-0">
-          <SettingsGroup
-            title={t('sections.screens.groups.look')}
-            testId="screen-group-look"
-          >
-            <ScreenTemplateSettings screen={screen} />
-          </SettingsGroup>
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <SettingsGroup
+          title={t('sections.screens.groups.look')}
+          testId="screen-group-look"
+        >
+          <ScreenTemplateSettings screen={screen} />
+        </SettingsGroup>
 
+        <div className="space-y-5 min-w-0">
           <SettingsGroup
             title={t('sections.screens.groups.idle')}
             testId="screen-group-idle"

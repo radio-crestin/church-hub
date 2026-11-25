@@ -56,6 +56,7 @@ import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSlideTemplateRoutes } from './routes/slide-templates'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
+import { handleThemeBackgroundRoutes } from './routes/theme-backgrounds'
 import {
   ALL_PERMISSIONS,
   type CreateUserInput,
@@ -8319,6 +8320,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (backgroundMediaResponse) return backgroundMediaResponse
+
+      // The built-in themes' photos and videos (read-only)
+      const themeBackgroundResponse = await handleThemeBackgroundRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (themeBackgroundResponse) return themeBackgroundResponse
 
       // Usage data on/off (Settings > Privacy)
       const analyticsResponse = await handleAnalyticsRoutes(

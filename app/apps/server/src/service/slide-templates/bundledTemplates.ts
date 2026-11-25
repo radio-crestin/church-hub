@@ -1,5 +1,5 @@
 import { getFactoryDesign } from './getFactoryDesign'
-import { getVerseDesign } from './getVerseDesign'
+import { getPaletteDesign, type Palette } from './getPaletteDesign'
 import type { TemplateDesign } from './types'
 import type { ScreenType } from '../presentation/types'
 
@@ -14,6 +14,23 @@ export interface BundledTemplate {
  * The designs that ship with the app, refreshed on every start
  * (seed-bundled-templates): read-only, duplicated to be edited.
  */
+/** White words on a darkened photo or video, the accent drawn from it. */
+function onMedia(
+  file: string,
+  opacity: number,
+  accent: string,
+  fontFamily: Palette['fontFamily'],
+): TemplateDesign {
+  return getPaletteDesign({
+    background: { file, opacity },
+    text: '#ffffff',
+    accent,
+    fontFamily,
+    italic: false,
+    onMedia: true,
+  })
+}
+
 export const BUNDLED_TEMPLATES: BundledTemplate[] = [
   {
     key: 'classic',
@@ -32,7 +49,7 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
     key: 'verses_evening',
     name: 'Verses · Evening',
     design: () =>
-      getVerseDesign({
+      getPaletteDesign({
         background: '#141a33',
         text: '#f5f1e8',
         accent: '#e8c27a',
@@ -44,7 +61,7 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
     key: 'verses_light',
     name: 'Verses · Light',
     design: () =>
-      getVerseDesign({
+      getPaletteDesign({
         background: '#f7efdc',
         text: '#3b2a17',
         accent: '#9a5b1e',
@@ -56,13 +73,68 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
     key: 'verses_calm',
     name: 'Verses · Calm',
     design: () =>
-      getVerseDesign({
+      getPaletteDesign({
         background: '#123330',
         text: '#e9f4ef',
         accent: '#8fd3bd',
         fontFamily: 'Fira Sans',
         italic: false,
       }),
+  },
+  // Worship themes on a photo or a looping video, like a projection
+  // program's: white words, bold with a soft shadow, the accent from the
+  // picture (backgrounds: tauri/resources/theme-backgrounds, see CREDITS.md).
+  {
+    key: 'photo_mountain_sunrise',
+    name: 'Mountain sunrise',
+    design: () =>
+      onMedia('mountain-sunrise.jpg', 0.75, '#E8B04A', 'Montserrat'),
+  },
+  {
+    key: 'photo_misty_forest',
+    name: 'Misty forest',
+    design: () => onMedia('misty-forest.jpg', 0.7, '#B9D3C4', 'Fira Sans'),
+  },
+  {
+    key: 'photo_golden_wheat',
+    name: 'Golden wheat',
+    design: () => onMedia('golden-wheat.jpg', 0.6, '#F0A54A', 'Lora'),
+  },
+  {
+    key: 'photo_calm_sea',
+    name: 'Calm sea',
+    design: () => onMedia('calm-ocean.jpg', 0.6, '#E9B872', 'Montserrat'),
+  },
+  {
+    key: 'photo_starry_night',
+    name: 'Starry night',
+    design: () => onMedia('starry-night.jpg', 0.85, '#C4B5FD', 'Montserrat'),
+  },
+  {
+    key: 'photo_sea_of_clouds',
+    name: 'Sea of clouds',
+    design: () => onMedia('sea-of-clouds.jpg', 0.55, '#F2B8A0', 'Lora'),
+  },
+  {
+    key: 'video_ocean_horizon',
+    name: 'Ocean horizon · video',
+    design: () => onMedia('ocean-horizon.mp4', 0.75, '#A9C8EE', 'Montserrat'),
+  },
+  {
+    key: 'video_golden_clouds',
+    name: 'Golden clouds · video',
+    design: () => onMedia('golden-clouds.mp4', 0.6, '#F0A848', 'Montserrat'),
+  },
+  {
+    key: 'video_forest_light',
+    name: 'Forest light · video',
+    design: () =>
+      onMedia('forest-light-rays.mp4', 0.55, '#E8D9A8', 'Fira Sans'),
+  },
+  {
+    key: 'video_blue_particles',
+    name: 'Blue particles · video',
+    design: () => onMedia('blue-particles.mp4', 0.7, '#8FA5FF', 'Montserrat'),
   },
 ]
 

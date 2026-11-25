@@ -75,13 +75,15 @@ export function SlideTypeStrip({
             </span>
           </>
         )
-        const className = `block w-36 md:w-full shrink-0 rounded-md p-1.5 text-left ${
+        const className = `block shrink-0 rounded-md p-1.5 text-left ${
+          horizontal ? 'w-48' : 'w-36 md:w-full'
+        } ${
           isSelected
             ? 'bg-indigo-50 ring-2 ring-indigo-500 dark:bg-indigo-950/40'
             : onSelect
               ? 'hover:bg-gray-100 dark:hover:bg-gray-800'
               : ''
-        } ${horizontal ? 'w-44 md:w-44' : ''}`
+        }`
         return onSelect ? (
           <button
             key={contentType}
