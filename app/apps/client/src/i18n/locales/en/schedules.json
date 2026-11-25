@@ -339,5 +339,13 @@
       "reset": "Automatic",
       "save": "Save"
     }
+  },
+  "playlist": {
+    "title": "Presentations",
+    "empty": "No presentations yet",
+    "open": "Open the presentation",
+    "showAll": "Show all presentations ({{count}})",
+    "showFewer": "Show fewer",
+    "running": "Running"
   }
 }
