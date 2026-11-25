@@ -27,6 +27,7 @@ import { Fragment, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
+import { ScheduleItemAdvance } from './ScheduleItemAdvance'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import { ScheduleItemSubItems } from './ScheduleItemSubItems'
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
@@ -35,12 +36,14 @@ import { ScheduleQuickInsertBar } from './ScheduleQuickInsertBar'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
 import type { ScheduleItem } from '../types'
+import { itemStepSeconds } from '../utils/itemStepSeconds'
 import {
   derivePresentedScheduleInfo,
   type PresentedScheduleInfo,
 } from '../utils/presentedScheduleInfo'
 import { buildItemStartFlatIndex } from '../utils/scheduleFlatItems'
 import { scheduleItemShortTitle } from '../utils/scheduleItemShortTitle'
+import type { AutoplayTiming } from '../utils/stepSeconds'
 
 interface ScheduleItemsPanelProps {
   scheduleId: number
@@ -62,8 +65,18 @@ interface ScheduleItemsPanelProps {
   onToggleSung?: (item: ScheduleItem) => void
   /** Inserts right after an entry, from the bar between entries; absent hides the bar. */
   onQuickInsert?: (afterItemId: number) => void
+  /**
+   * While autoplay is on: each item shows how long its slides stay up, and
+   * can be given its own time. Absent hides it.
+   */
+  itemAdvance?: ItemAdvance
   expandAllTrigger?: number
   collapseAllTrigger?: number
+}
+
+interface ItemAdvance {
+  timing: AutoplayTiming
+  onChange: (item: ScheduleItem, advanceSeconds: number | null) => void
 }
 
 interface ContextMenuState {
@@ -89,6 +102,7 @@ export function ScheduleItemsPanel({
   onEditKeyLine,
   onToggleSung,
   onQuickInsert,
+  itemAdvance,
   expandAllTrigger,
   collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
@@ -271,6 +285,7 @@ export function ScheduleItemsPanel({
                   onSceneClick={onSceneClick}
                   onToggleSung={onToggleSung}
                   onEditKeyLine={onEditKeyLine}
+                  itemAdvance={itemAdvance}
                   t={t}
                 />
                 {onQuickInsert && index < items.length - 1 ? (
@@ -319,6 +334,7 @@ interface SortableItemWrapperProps {
   onSceneClick?: (item: ScheduleItem) => void
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
+  itemAdvance?: ItemAdvance
   t: TFunction
 }
 
@@ -339,6 +355,7 @@ function SortableItemWrapper({
   onSceneClick,
   onToggleSung,
   onEditKeyLine,
+  itemAdvance,
   t,
 }: SortableItemWrapperProps) {
   const {
@@ -518,6 +535,17 @@ function SortableItemWrapper({
               className="text-amber-600 dark:text-amber-400"
             />
           </div>
+        )}
+
+        {itemAdvance && (
+          <ScheduleItemAdvance
+            advanceSeconds={item.advanceSeconds}
+            defaultSeconds={itemStepSeconds(
+              { ...item, advanceSeconds: null },
+              itemAdvance.timing,
+            )}
+            onChange={(seconds) => itemAdvance.onChange(item, seconds)}
+          />
         )}
 
         {/* Options Menu Button */}
