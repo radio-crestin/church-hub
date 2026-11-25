@@ -18,7 +18,6 @@ export function useEditLayoutAction(workspaceId: string): ActionMenuItem {
     label: t('workspace.editLayout'),
     description: t('workspace.editLayoutDescription'),
     icon: <LayoutGrid size={16} strokeWidth={1.5} />,
-    iconClassName: 'text-fg-label',
     active: editing,
     onSelect: toggleEditing,
     testId: 'workspace-edit-layout',

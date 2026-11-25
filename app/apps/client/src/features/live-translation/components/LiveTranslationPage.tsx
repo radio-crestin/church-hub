@@ -229,7 +229,7 @@ export function LiveTranslationPage() {
         onClose={() => setShowSettings(false)}
         onMouseDown={handleSettingsBackdropMouseDown}
         onClick={handleSettingsBackdropClick}
-        className="m-auto p-0 rounded-xl border border-line shadow-[0_12px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.55)] backdrop:bg-black/60 bg-panel text-fg w-full max-w-3xl overflow-hidden"
+        className="m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/60 bg-panel text-fg w-full max-w-3xl overflow-hidden"
       >
         <div className="flex flex-col max-h-[85vh]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-line flex-shrink-0">

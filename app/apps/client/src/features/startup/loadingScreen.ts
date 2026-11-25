@@ -179,7 +179,7 @@ export function setLoadingError(
   const button = ensureChild(
     'loading-retry',
     'button',
-    'margin-top:16px;padding:10px 20px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;',
+    'margin-top:16px;padding:10px 20px;border:none;border-radius:8px;background:#0070dd;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;',
   ) as HTMLButtonElement
   button.textContent = action.label
   button.disabled = false

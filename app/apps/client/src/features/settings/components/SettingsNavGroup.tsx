@@ -13,7 +13,7 @@ export function SettingsNavGroup({ group }: SettingsNavGroupProps) {
 
   return (
     <div>
-      <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+      <div className="px-2.5 py-1.5 text-xs font-medium text-fg-hint">
         {t(group.labelKey)}
       </div>
       <div className="mt-0.5 space-y-0.5">

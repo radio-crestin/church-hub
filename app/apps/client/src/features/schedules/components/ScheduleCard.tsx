@@ -128,7 +128,6 @@ export function ScheduleCard({
                   ) : (
                     <Download size={18} />
                   ),
-                  iconClassName: 'text-fg-label',
                   onSelect: () => onSaveClick(schedule.id),
                   disabled: isSaving,
                   testId: 'schedule-card-save-to-file-action',

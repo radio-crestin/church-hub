@@ -1584,7 +1584,6 @@ function BiblePage() {
         ? tSchedules('panel.addVerse', { reference: candidatePassage.label })
         : tSchedules('panel.addVerseDisabled'),
       icon: <CalendarPlus size={18} />,
-      iconClassName: 'text-fg-label',
       disabled: !candidatePassage,
       onSelect: handleAddCurrentVerseToProgram,
       testId: 'bible-add-to-schedule',

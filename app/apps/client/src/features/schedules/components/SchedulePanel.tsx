@@ -586,9 +586,6 @@ export function SchedulePanel({
               ? t('automation.stop')
               : t('automation.run'),
             icon: isRunningSelected ? <Square size={18} /> : <Play size={18} />,
-            iconClassName: isRunningSelected
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-fg-label',
             onSelect: () =>
               isRunningSelected
                 ? runSchedule.stop.mutate()
@@ -606,7 +603,6 @@ export function SchedulePanel({
             id: 'add-item',
             label: tCommon('addMenu.title'),
             icon: <ListPlus size={18} />,
-            iconClassName: 'text-fg-label',
             onSelect: () => editorsRef.current?.addItem(),
             testId: 'schedule-add-item-menu',
             inline: (
@@ -633,7 +629,6 @@ export function SchedulePanel({
             id: 'search',
             label: t('panel.openSearch'),
             icon: <Search size={18} />,
-            iconClassName: 'text-fg-label',
             active: isSearchOpen,
             onSelect: toggleSearch,
             testId: 'schedule-search-toggle-menu',
@@ -670,7 +665,6 @@ export function SchedulePanel({
             id: 'load-into-bookmarks',
             label: t('panel.loadIntoBookmarks'),
             icon: <BookmarkPlus size={18} />,
-            iconClassName: 'text-fg-label',
             onSelect: loadIntoBookmarks.load,
             disabled: loadIntoBookmarks.isPending,
             testId: 'schedule-load-into-bookmarks-menu',
@@ -697,7 +691,6 @@ export function SchedulePanel({
             id: 'add-all-bookmarks',
             label: t('panel.addAllBookmarks'),
             icon: <CalendarPlus size={18} />,
-            iconClassName: 'text-fg-label',
             onSelect: onAddAllBookmarks,
             testId: 'schedule-add-all-bookmarks-menu',
             inline: (
@@ -723,7 +716,6 @@ export function SchedulePanel({
             id: 'open',
             label: t('panel.openSchedule'),
             icon: <ExternalLink size={18} />,
-            iconClassName: 'text-fg-label',
             onSelect: () => onOpenSchedule(selectedScheduleId),
             testId: 'schedule-open-menu',
             inline: (
@@ -774,7 +766,6 @@ export function SchedulePanel({
             id: 'delete',
             label: t('panel.deleteSchedule'),
             icon: <Trash2 size={18} />,
-            iconClassName: 'text-red-600 dark:text-red-400',
             onSelect: () => setPendingDelete(true),
             testId: 'schedule-delete-menu',
             inline: (

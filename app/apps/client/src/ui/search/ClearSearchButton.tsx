@@ -21,7 +21,7 @@ export function ClearSearchButton({
   inputRef,
   onClear,
   size = 16,
-  className = 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300',
+  className = 'absolute right-3 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg',
 }: ClearSearchButtonProps) {
   const { t } = useTranslation('common')
 
@@ -38,7 +38,7 @@ export function ClearSearchButton({
       }}
       className={className}
     >
-      <X size={size} />
+      <X size={size} strokeWidth={1.5} />
     </button>
   )
 }

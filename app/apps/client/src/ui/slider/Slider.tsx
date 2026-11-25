@@ -44,10 +44,10 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
           max={max}
           step={step}
           disabled={disabled}
-          className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-1.5 bg-field rounded-lg appearance-none cursor-pointer accent-primary disabled:opacity-50 disabled:cursor-not-allowed"
         />
         {showValue && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">
+          <span className="text-xs tabular-nums text-fg-hint w-12 text-right">
             {formatValue ? formatValue(value[0]) : Math.round(value[0])}
           </span>
         )}

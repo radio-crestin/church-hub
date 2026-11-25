@@ -118,7 +118,6 @@ function SchedulesPage() {
                     ) : (
                       <Upload size={18} />
                     ),
-                    iconClassName: 'text-fg-label',
                     onSelect: handleImportSchedule,
                     disabled: isImporting,
                     testId: 'schedules-import-from-file-action',

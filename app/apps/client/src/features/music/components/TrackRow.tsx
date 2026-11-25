@@ -62,7 +62,6 @@ export function TrackRow({
             id: 'remove-from-playlist',
             label: t('tracks.removeFromPlaylist'),
             icon: <ListMinus className="h-4 w-4" strokeWidth={1.5} />,
-            iconClassName: 'text-red-600 dark:text-red-400',
             onSelect: () => onRemoveFromPlaylist(track),
             testId: 'music-remove-from-playlist',
           },

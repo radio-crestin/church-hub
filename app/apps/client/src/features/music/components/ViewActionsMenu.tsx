@@ -75,7 +75,6 @@ export function ViewActionsMenu({
       id: 'delete',
       label: isPlaylist ? t('playlist.delete') : t('folders.delete'),
       icon: <Trash2 className="h-4 w-4" strokeWidth={1.5} />,
-      iconClassName: 'text-red-600 dark:text-red-400',
       onSelect: () => setDialog('delete'),
       testId: 'music-view-delete',
     })

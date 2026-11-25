@@ -5,13 +5,12 @@ import { useTranslation } from 'react-i18next'
 
 import { formatRelativeTime } from '~/features/sync/utils/formatRelativeTime'
 
-export type NotificationTone = 'indigo' | 'emerald' | 'amber'
+export type NotificationTone = 'neutral' | 'attention'
 
 /** A plain line icon: grey, or amber when it needs attention. */
 const TONES: Record<NotificationTone, string> = {
-  indigo: 'text-fg-label',
-  emerald: 'text-fg-label',
-  amber: 'text-amber-600 dark:text-amber-400',
+  neutral: 'text-fg-label',
+  attention: 'text-amber-600 dark:text-amber-400',
 }
 
 interface NotificationShellProps {

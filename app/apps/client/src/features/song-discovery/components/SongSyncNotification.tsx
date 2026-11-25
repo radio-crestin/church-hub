@@ -77,7 +77,7 @@ export function SongSyncNotification({
     <NotificationShell
       testId={`notification-${notification.kind}`}
       icon={isPending ? Download : Music}
-      tone={isPending ? 'amber' : 'indigo'}
+      tone={isPending ? 'attention' : 'neutral'}
       title={t(
         isPending ? 'notification.pendingTitle' : 'notification.syncedTitle',
       )}

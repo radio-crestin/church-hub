@@ -377,8 +377,6 @@ button {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  }
 
 /*
  * A song dropped onto the Marcaje / Programe panels: the panel pulses once so

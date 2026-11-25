@@ -2,14 +2,12 @@ import { useTranslation } from 'react-i18next'
 
 import type { SyncChangeKind } from '../service'
 
-/** Same visual language as SyncUpdateBadge: small rounded chip per kind. */
+/** Same visual language as SyncUpdateBadge: plain meta text, amber only for a conflict. */
 const KIND_STYLES: Record<SyncChangeKind, string> = {
-  added:
-    'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
-  updated: 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300',
-  removed: 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
-  conflict:
-    'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+  added: 'text-fg-label',
+  updated: 'text-fg-label',
+  removed: 'text-fg-hint',
+  conflict: 'text-amber-700 dark:text-amber-400',
 }
 
 interface SyncChangeKindBadgeProps {
@@ -22,7 +20,7 @@ export function SyncChangeKindBadge({ changeKind }: SyncChangeKindBadgeProps) {
 
   return (
     <span
-      className={`inline-flex flex-shrink-0 items-center rounded px-1.5 py-0.5 text-xs font-medium ${KIND_STYLES[changeKind]}`}
+      className={`inline-flex flex-shrink-0 items-center text-xs font-medium ${KIND_STYLES[changeKind]}`}
     >
       {t(`sections.sync.changes.kind.${changeKind}`)}
     </span>

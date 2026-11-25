@@ -51,7 +51,7 @@ export function NotificationPopUp() {
     <div
       role="status"
       data-testid="notification-popup"
-      className="fixed right-4 bottom-20 z-[9999] flex max-h-[70vh] w-[26rem] max-w-[calc(100vw-2rem)] flex-col overflow-y-auto rounded-[10px] border border-line bg-panel shadow-[0_12px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.55)]"
+      className="fixed right-4 bottom-20 z-[9999] flex max-h-[70vh] w-[26rem] max-w-[calc(100vw-2rem)] flex-col overflow-y-auto rounded-[10px] border border-line bg-panel shadow-popover"
     >
       <NotificationItem
         notification={next}

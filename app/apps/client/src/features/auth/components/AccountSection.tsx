@@ -50,35 +50,38 @@ export function AccountSection() {
       <div className="flex items-center gap-4">
         <UserAvatar name={displayName} isSuperAdmin={isApp} size="lg" />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="truncate text-base font-semibold text-fg">
             {displayName}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-[13px] text-fg-hint">
             {isApp ? t('superAdmin') : t('profile.user')}
           </p>
         </div>
         <button
           type="button"
           onClick={handleLogout}
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20"
+          className="inline-flex h-8 shrink-0 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-red-600 transition-colors hover:bg-hover dark:text-red-400"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut strokeWidth={1.5} className="h-4 w-4" />
           <span className="hidden sm:inline">{t('logout')}</span>
         </button>
       </div>
 
       {/* Permissions */}
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+        <h4 className="mb-3 text-[13px] font-semibold text-fg">
           {t('profile.permissions')}
         </h4>
         {hasFullAccess ? (
-          <div className="flex items-center gap-2 rounded-lg bg-indigo-50 p-3 text-sm text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300">
-            <ShieldCheck className="h-5 w-5 shrink-0" />
+          <div className="flex items-center gap-2 rounded-lg bg-field p-3 text-[13px] text-fg-body">
+            <ShieldCheck
+              strokeWidth={1.5}
+              className="h-4 w-4 shrink-0 text-fg-label"
+            />
             {t('profile.fullAccess')}
           </div>
         ) : permissions.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-[13px] text-fg-hint">
             {t('profile.noPermissions')}
           </p>
         ) : (
@@ -90,16 +93,19 @@ export function AccountSection() {
               if (granted.length === 0) return null
               return (
                 <div key={group}>
-                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  <p className="mb-1.5 text-xs font-medium text-fg-hint">
                     {t(`settings:sections.users.groups.${group}`)}
                   </p>
                   <ul className="space-y-1">
                     {granted.map((permission) => (
                       <li
                         key={permission}
-                        className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                        className="flex items-center gap-2 text-[13px] text-fg-body"
                       >
-                        <Check className="h-4 w-4 shrink-0 text-green-500" />
+                        <Check
+                          strokeWidth={1.5}
+                          className="h-4 w-4 shrink-0 text-ok"
+                        />
                         {t(
                           `settings:sections.users.permissionLabels.${permission}`,
                         )}

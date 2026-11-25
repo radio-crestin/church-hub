@@ -66,7 +66,10 @@ export const DEFAULT_ICON_COLORS: Record<BuiltInMenuItemId, IconColor> = {
  * same neutral line icon, so the UI stays monochrome. */
 const NEUTRAL_ICON = { bg: 'bg-transparent', text: 'text-fg-label' }
 
-export const ICON_COLOR_CLASSES: Record<IconColor, { bg: string; text: string }> = {
+export const ICON_COLOR_CLASSES: Record<
+  IconColor,
+  { bg: string; text: string }
+> = {
   gray: NEUTRAL_ICON,
   indigo: NEUTRAL_ICON,
   blue: NEUTRAL_ICON,

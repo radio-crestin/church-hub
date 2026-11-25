@@ -19,7 +19,7 @@ export function EmailField({ value, onChange, disabled }: EmailFieldProps) {
     <div>
       <label htmlFor="feature-request-email" className={labelClass}>
         {t('common:featureRequest.emailLabel')}
-        <span className="font-normal text-gray-500 dark:text-gray-400">
+        <span className="font-normal text-fg-hint">
           {` ${t('common:featureRequest.optional')}`}
         </span>
       </label>
@@ -35,7 +35,7 @@ export function EmailField({ value, onChange, disabled }: EmailFieldProps) {
         disabled={disabled}
         className={inputClass}
       />
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+      <p className="mt-1 text-xs text-fg-hint">
         {t('common:featureRequest.emailHint')}
       </p>
     </div>

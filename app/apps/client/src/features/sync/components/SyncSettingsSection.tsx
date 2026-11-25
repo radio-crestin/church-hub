@@ -99,7 +99,7 @@ export function SyncSettingsSection() {
 
   if (statusQuery.isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-4 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+      <div className="flex items-center gap-2 rounded-xl border border-line p-4 text-[13px] text-fg-hint">
         <Loader2 className="h-4 w-4 animate-spin" />
         {t('sections.sync.loading')}
       </div>
@@ -109,17 +109,17 @@ export function SyncSettingsSection() {
   return (
     <div className="space-y-4">
       {/* Enable toggle */}
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+      <div className="rounded-xl border border-line p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+            <h4 className="text-[13px] font-medium text-fg">
               {t('sections.sync.toggle.title')}
             </h4>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-0.5 text-xs text-fg-hint">
               {t('sections.sync.toggle.description')}
             </p>
             {!connected && (
-              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
                 {t('sections.sync.toggle.notConnectedHint')}
               </p>
             )}
@@ -129,12 +129,12 @@ export function SyncSettingsSection() {
             onClick={handleToggle}
             disabled={!connected || isUpdating}
             aria-label={t('sections.sync.toggle.title')}
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-              enabled ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+              enabled ? 'bg-primary' : 'bg-line-strong'
             } ${!connected || isUpdating ? 'cursor-not-allowed opacity-50' : ''}`}
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-panel shadow ring-0 transition duration-200 ease-in-out ${
                 enabled ? 'translate-x-5' : 'translate-x-0'
               }`}
             />
@@ -144,10 +144,10 @@ export function SyncSettingsSection() {
         {/* Poll interval */}
         {enabled && (
           <div className="mt-3">
-            <p className="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+            <p className="mb-1.5 text-xs font-medium text-fg-label">
               {t('sections.sync.interval.label')}
             </p>
-            <div className="inline-flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-900">
+            <div className="inline-flex flex-wrap gap-1 rounded-lg bg-field p-1">
               {POLL_INTERVAL_OPTIONS_MINUTES.map((minutes) => {
                 const selected = status?.pollIntervalMinutes === minutes
                 return (
@@ -157,10 +157,10 @@ export function SyncSettingsSection() {
                     onClick={() => handleIntervalChange(minutes)}
                     disabled={isUpdating}
                     aria-pressed={selected}
-                    className={`min-w-[3rem] rounded-md px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                    className={`min-w-[3rem] rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                       selected
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-gray-600 hover:bg-white hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+                        ? 'bg-selected text-fg'
+                        : 'text-fg-label hover:bg-hover hover:text-fg'
                     }`}
                   >
                     {minutes}m
@@ -168,7 +168,7 @@ export function SyncSettingsSection() {
                 )
               })}
             </div>
-            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1.5 text-xs text-fg-hint">
               {t('sections.sync.interval.everyMinutes', {
                 minutes: status?.pollIntervalMinutes ?? 5,
               })}
@@ -178,17 +178,17 @@ export function SyncSettingsSection() {
       </div>
 
       {/* Status + manual sync */}
-      <div className="flex flex-col items-start gap-3 rounded-lg bg-gray-50 p-4 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col items-start gap-3 rounded-xl border border-line p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-            <Clock className="h-3.5 w-3.5" />
+          <p className="flex items-center gap-1.5 text-xs text-fg-hint">
+            <Clock strokeWidth={1.75} className="h-3.5 w-3.5" />
             {t('sections.sync.status.lastSync')}:{' '}
             {status?.lastSyncAt
               ? formatDate(status.lastSyncAt)
               : t('sections.sync.status.never')}
           </p>
           {(status?.pendingCount ?? 0) > 0 && (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-fg-hint">
               {t('sections.sync.status.pendingCount', {
                 count: status?.pendingCount ?? 0,
               })}
@@ -196,7 +196,10 @@ export function SyncSettingsSection() {
           )}
           {status?.lastError && (
             <p className="mt-1 flex items-start gap-1.5 text-xs text-red-600 dark:text-red-400">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+              <AlertTriangle
+                strokeWidth={1.75}
+                className="mt-0.5 h-3.5 w-3.5 flex-shrink-0"
+              />
               {t('sections.sync.status.lastError')}: {status.lastError}
             </p>
           )}
@@ -205,12 +208,12 @@ export function SyncSettingsSection() {
           type="button"
           onClick={handleSyncNow}
           disabled={!connected || !enabled || syncNowMutation.isPending}
-          className="inline-flex items-center gap-2 self-stretch justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50 sm:self-auto"
+          className="inline-flex h-8 items-center gap-2 self-stretch justify-center rounded-lg bg-primary px-3 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50 sm:self-auto"
         >
           {syncNowMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw strokeWidth={1.5} className="h-4 w-4" />
           )}
           {syncNowMutation.isPending
             ? t('sections.sync.now.syncing')

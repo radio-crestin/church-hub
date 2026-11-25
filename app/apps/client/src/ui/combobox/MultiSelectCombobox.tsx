@@ -197,13 +197,13 @@ export function MultiSelectCombobox({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full h-9 flex items-center justify-between gap-2 px-3 text-[13px] bg-field rounded-[10px] text-left text-fg focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <span
           className={
             value.length > 0 || (emptyMeansAll && value.length === 0)
               ? 'truncate'
-              : 'text-gray-400 dark:text-gray-500'
+              : 'text-fg-hint'
           }
         >
           {getDisplayText()}
@@ -211,12 +211,14 @@ export function MultiSelectCombobox({
         <div className="flex items-center gap-1 flex-shrink-0">
           {value.length > 0 && !isAllSelected && (
             <X
-              className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              strokeWidth={1.5}
+              className="w-4 h-4 text-fg-hint hover:text-fg"
               onClick={handleClear}
             />
           )}
           <ChevronDown
-            className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            strokeWidth={1.5}
+            className={`w-4 h-4 text-fg-label transition-transform ${isOpen ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
@@ -225,7 +227,7 @@ export function MultiSelectCombobox({
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+            className="fixed z-[9999] bg-panel border border-line rounded-[10px] shadow-popover overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
                 ? { bottom: dropdownPosition.bottom }
@@ -234,7 +236,7 @@ export function MultiSelectCombobox({
               width: dropdownPosition.width,
             }}
           >
-            <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-1.5 border-b border-line">
               <div className="relative">
                 <input
                   ref={inputRef}
@@ -243,7 +245,7 @@ export function MultiSelectCombobox({
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Search..."
-                  className={`w-full pl-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                  className={`w-full h-8 pl-2.5 bg-field rounded-lg text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
                     search ? 'pr-7' : 'pr-2'
                   }`}
                 />
@@ -252,41 +254,41 @@ export function MultiSelectCombobox({
                     inputRef={inputRef}
                     onClear={() => setSearch('')}
                     size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg"
                   />
                 )}
               </div>
             </div>
 
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto scrollbar-thin p-1">
               {allOptionLabel && (
                 <button
                   type="button"
                   onClick={() => {
                     if (value.length > 0) onChange([])
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-left ${
                     value.length === 0
-                      ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium'
-                      : 'text-gray-900 dark:text-white'
+                      ? 'bg-selected text-fg font-medium'
+                      : 'text-fg-body hover:bg-hover'
                   }`}
                 >
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
                       value.length === 0
-                        ? 'border-indigo-600'
-                        : 'border-gray-300 dark:border-gray-500'
+                        ? 'border-primary'
+                        : 'border-line-strong'
                     }`}
                   >
                     {value.length === 0 && (
-                      <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                      <div className="w-2 h-2 rounded-full bg-primary" />
                     )}
                   </div>
                   <span className="truncate">{allOptionLabel}</span>
                 </button>
               )}
               {filteredOptions.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="px-2.5 py-1.5 text-[13px] text-fg-hint">
                   No options found
                 </div>
               ) : (
@@ -300,20 +302,23 @@ export function MultiSelectCombobox({
                       key={option.value}
                       type="button"
                       onClick={() => handleToggle(option.value)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                        isSelected
-                          ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-                          : 'text-gray-900 dark:text-white'
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-left hover:bg-hover ${
+                        isSelected ? 'text-fg' : 'text-fg-body'
                       }`}
                     >
                       <div
                         className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
                           isSelected
-                            ? 'bg-indigo-600 border-indigo-600'
-                            : 'border-gray-300 dark:border-gray-500'
+                            ? 'bg-primary border-primary'
+                            : 'border-line-strong'
                         }`}
                       >
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                        {isSelected && (
+                          <Check
+                            strokeWidth={2}
+                            className="w-3 h-3 text-white"
+                          />
+                        )}
                       </div>
                       <span className="truncate">{option.label}</span>
                     </button>

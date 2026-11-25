@@ -820,7 +820,6 @@ export function SchedulePresenter({
     id: 'delete-schedule',
     label: t('actions.delete'),
     icon: <Trash2 size={18} />,
-    iconClassName: 'text-red-600 dark:text-red-400',
     onSelect: () => setShowDeleteConfirm(true),
     testId: 'schedule-delete-action',
   }
@@ -834,7 +833,6 @@ export function SchedulePresenter({
             label: t('automation.title'),
             description: t('automation.menuDescription'),
             icon: <Timer size={18} />,
-            iconClassName: 'text-fg-label',
             onSelect: () => setAutomationOpen(true),
             active: showAutomationSection,
             testId: 'schedule-automation-action',
@@ -844,7 +842,6 @@ export function SchedulePresenter({
             label: t('actions.rename'),
             description: t('actions.renameDescription'),
             icon: <Pencil size={18} />,
-            iconClassName: 'text-fg-label',
             onSelect: handleStartEditTitle,
             testId: 'schedule-rename-action',
           },
@@ -860,7 +857,6 @@ export function SchedulePresenter({
         ) : (
           <Upload size={18} />
         ),
-      iconClassName: 'text-fg-label',
       onSelect: handleLoadFromFile,
       disabled: isLoadingFile || isImporting,
       testId: 'schedule-load-from-file-action',
@@ -874,7 +870,6 @@ export function SchedulePresenter({
       ) : (
         <Download size={18} />
       ),
-      iconClassName: 'text-fg-label',
       onSelect: handleOpenExportModal,
       disabled: isSaving,
       testId: 'schedule-save-to-file-action',
