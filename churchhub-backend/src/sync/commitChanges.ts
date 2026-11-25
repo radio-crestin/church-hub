@@ -15,7 +15,13 @@ import type { ChangeInput, PublishedChange, Segment, SyncCaller } from './types'
 import { IMMUTABLE_CACHE_CONTROL } from './writeSnapshot'
 
 /** A write that keeps losing the race for the next seq gives up (503). */
-const MAX_ATTEMPTS = 5
+const MAX_ATTEMPTS = 8
+
+/** Waits a random, growing while, so racing writers stop colliding. */
+function backOff(attempt: number): Promise<void> {
+  const ms = (attempt + 1) * (20 + Math.random() * 80)
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 export interface CommitResult {
   seq: number
@@ -152,6 +158,7 @@ export async function commitChanges(
       )
     if (!claimed) {
       await bucket.delete(`${prefix}/${key}`)
+      await backOff(attempt)
       continue
     }
 
