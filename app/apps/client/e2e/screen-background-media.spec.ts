@@ -5,7 +5,7 @@ import {
   backgroundImageStyle,
   backgroundTypeLabel,
   chooseBackgroundType,
-  deleteMediaExcept,
+  deleteUploadedMedia,
   HEAVY_GIF,
   heavyGifDetails,
   JPEG_FIXTURE,
@@ -115,9 +115,6 @@ function canvasHasPicture(canvas: HTMLCanvasElement): boolean {
 test.describe('Screen background media', () => {
   let screenId: number
   let songId: number
-  // Uploads that existed before this file ran; everything else is removed
-  // afterwards, including an upload whose test failed before noting its id.
-  let preexistingMediaIds = new Set<string>()
   const suffix = Date.now()
   const lyrics = [
     `Background verse one ${suffix}`,
@@ -126,8 +123,6 @@ test.describe('Screen background media', () => {
   ]
 
   test.beforeAll(async ({ request }) => {
-    preexistingMediaIds = new Set(await listMediaIds(request))
-
     const screenRes = await request.post('/api/screens', {
       data: { name: `E2E Background Media ${suffix}`, type: 'primary' },
     })
@@ -147,13 +142,14 @@ test.describe('Screen background media', () => {
     songId = (await songRes.json()).data.id
   })
 
+  // Each test's uploads go with it, so its videos never reach other specs.
   test.afterEach(async ({ request }) => {
     await request.post('/api/presentation/stop')
+    await deleteUploadedMedia(request)
   })
 
   test.afterAll(async ({ request }) => {
     await request.post('/api/presentation/stop')
-    await deleteMediaExcept(request, preexistingMediaIds)
     if (screenId) await request.delete(`/api/screens/${screenId}`)
     if (songId) await request.delete(`/api/songs/${songId}`)
   })

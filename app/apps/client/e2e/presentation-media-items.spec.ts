@@ -1,4 +1,9 @@
-import { type APIRequestContext, expect, test } from '@playwright/test'
+import {
+  type APIRequestContext,
+  expect,
+  type Locator,
+  test,
+} from '@playwright/test'
 
 import { setAppLanguage } from './helpers/app-language'
 import { BUILT_IN_VIDEO } from './helpers/background-media'
@@ -42,6 +47,13 @@ test.afterEach(async ({ request }) => {
   await request.post('/api/schedules/automation/stop')
   await request.post('/api/presentation/clear-temporary')
 })
+
+/** The built-in video in the video dialog, whatever else the gallery holds. */
+function builtInVideoOption(dialog: Locator): Locator {
+  return dialog.locator(
+    `[data-testid="video-item-option"][data-media-id="${BUILT_IN_VIDEO.id}"]`,
+  )
+}
 
 async function createPresentation(
   request: APIRequestContext,
@@ -500,7 +512,7 @@ test.describe('Presentation page', () => {
     // Video: the built-in one.
     await open('video')
     const video = page.getByTestId('video-item-dialog')
-    await video.getByTestId('video-item-option').first().click()
+    await builtInVideoOption(video).click()
     await video.getByTestId('video-item-loop').click()
     await video.getByTestId('video-item-dialog-save').click()
     await expect(rows.nth(2)).toContainText('Video')
@@ -533,7 +545,7 @@ test.describe('Presentation page', () => {
       .getByTestId('add-schedule-item-video')
       .click()
     const video = page.getByTestId('video-item-dialog')
-    await video.getByTestId('video-item-option').first().click()
+    await builtInVideoOption(video).click()
     await video.getByTestId('video-item-background').click()
     // A background always loops: there is nothing to choose.
     await expect(video.getByTestId('video-item-loop')).toHaveCount(0)
