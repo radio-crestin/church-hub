@@ -3,6 +3,10 @@ import { ScheduleBiblePassageVerseList } from './ScheduleBiblePassageVerseList'
 import { ScheduleSceneSlideRow } from './ScheduleSceneSlideRow'
 import { ScheduleSongSlideList } from './ScheduleSongSlideList'
 import { ScheduleVerseteTineriEntryList } from './ScheduleVerseteTineriEntryList'
+import { isRandomItem } from '../media-items/isRandomItem'
+import { MusicPlayRow } from '../media-items/MusicPlayRow'
+import { RepickButton } from '../media-items/RepickButton'
+import { VideoStepRow } from '../media-items/VideoStepRow'
 import type { ScheduleItem } from '../types'
 import type { PresentedScheduleInfo } from '../utils/presentedScheduleInfo'
 
@@ -18,6 +22,7 @@ interface ScheduleItemSubItemsProps {
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
+  onVideoClick?: (item: ScheduleItem) => void
 }
 
 /**
@@ -25,7 +30,17 @@ interface ScheduleItemSubItemsProps {
  * One place decides which sub-list a kind gets, so the program page and the
  * Programe panel can never drift apart.
  */
-export function ScheduleItemSubItems({
+export function ScheduleItemSubItems(props: ScheduleItemSubItemsProps) {
+  if (!isRandomItem(props.item)) return <ItemSteps {...props} />
+  return (
+    <>
+      <RepickButton scheduleId={props.item.scheduleId} />
+      <ItemSteps {...props} />
+    </>
+  )
+}
+
+function ItemSteps({
   item,
   presentedInfo,
   itemStartFlatIndex,
@@ -35,6 +50,7 @@ export function ScheduleItemSubItems({
   onEntryClick,
   onAnnouncementClick,
   onSceneClick,
+  onVideoClick,
 }: ScheduleItemSubItemsProps) {
   if (item.itemType === 'song') {
     return (
@@ -60,7 +76,10 @@ export function ScheduleItemSubItems({
     )
   }
 
-  if (item.itemType === 'slide' && item.slideType === 'versete_tineri') {
+  if (
+    (item.itemType === 'slide' && item.slideType === 'versete_tineri') ||
+    item.itemType === 'verses'
+  ) {
     return (
       <ScheduleVerseteTineriEntryList
         item={item}
@@ -95,6 +114,20 @@ export function ScheduleItemSubItems({
       />
     )
   }
+
+  if (item.itemType === 'video') {
+    return (
+      <VideoStepRow
+        item={item}
+        presentedInfo={presentedInfo}
+        itemStartFlatIndex={itemStartFlatIndex}
+        highlightedRef={highlightedRef}
+        onVideoClick={onVideoClick}
+      />
+    )
+  }
+
+  if (item.itemType === 'music') return <MusicPlayRow item={item} />
 
   return null
 }

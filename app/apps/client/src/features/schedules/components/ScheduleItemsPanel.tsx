@@ -35,6 +35,7 @@ import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
 import { ScheduleQuickInsertBar } from './ScheduleQuickInsertBar'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
+import { useMediaItemText } from '../media-items/hooks/useMediaItemText'
 import type { ScheduleItem } from '../types'
 import { itemStepSeconds } from '../utils/itemStepSeconds'
 import {
@@ -54,6 +55,7 @@ interface ScheduleItemsPanelProps {
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
+  onVideoClick?: (item: ScheduleItem) => void
   onReorder?: (oldIndex: number, newIndex: number) => void
   onEditSong?: (songId: number) => void
   onNavigateToSong?: (songId: number) => void
@@ -93,6 +95,7 @@ export function ScheduleItemsPanel({
   onEntryClick,
   onAnnouncementClick,
   onSceneClick,
+  onVideoClick,
   onReorder,
   onEditSong,
   onNavigateToSong,
@@ -283,6 +286,7 @@ export function ScheduleItemsPanel({
                   onEntryClick={onEntryClick}
                   onAnnouncementClick={onAnnouncementClick}
                   onSceneClick={onSceneClick}
+                  onVideoClick={onVideoClick}
                   onToggleSung={onToggleSung}
                   onEditKeyLine={onEditKeyLine}
                   itemAdvance={itemAdvance}
@@ -332,6 +336,7 @@ interface SortableItemWrapperProps {
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
+  onVideoClick?: (item: ScheduleItem) => void
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
   itemAdvance?: ItemAdvance
@@ -353,6 +358,7 @@ function SortableItemWrapper({
   onEntryClick,
   onAnnouncementClick,
   onSceneClick,
+  onVideoClick,
   onToggleSung,
   onEditKeyLine,
   itemAdvance,
@@ -372,8 +378,12 @@ function SortableItemWrapper({
     transition,
   }
 
+  const mediaText = useMediaItemText(item)
   // Check if item has missing content
   const hasMissingContent =
+    (item.itemType === 'verses' && item.verseteTineriEntries.length === 0) ||
+    (item.itemType === 'video' && !item.video) ||
+    (item.itemType === 'music' && !item.music?.trackCount) ||
     (item.itemType === 'song' && item.slides.length === 0) ||
     (item.itemType === 'bible_passage' &&
       item.biblePassageVerses.length === 0) ||
@@ -457,6 +467,7 @@ function SortableItemWrapper({
                 />
               </span>
             )}
+            {mediaText?.title}
             {item.itemType === 'slide' &&
               item.slideType === 'announcement' &&
               t('presenter.announcement')}
@@ -493,6 +504,7 @@ function SortableItemWrapper({
               and the slides underneath are the whole story while running a
               program. */}
           <div className="text-xs text-gray-500 dark:text-gray-400">
+            {mediaText?.detail}
             {item.itemType === 'bible_passage' && (
               <>
                 {t('presenter.versesCount', {
@@ -580,6 +592,7 @@ function SortableItemWrapper({
             onEntryClick={onEntryClick}
             onAnnouncementClick={onAnnouncementClick}
             onSceneClick={onSceneClick}
+            onVideoClick={onVideoClick}
           />
         </div>
       )}

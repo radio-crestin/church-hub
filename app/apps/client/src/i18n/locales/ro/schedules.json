@@ -356,5 +356,58 @@
       "reset": "Automat",
       "save": "Salvează"
     }
+  },
+  "mediaItems": {
+    "pickAgain": "Alege din nou",
+    "music": {
+      "title": "Muzică",
+      "folderTitle": "Muzică: {{name}}",
+      "folder": "Un dosar",
+      "tracks": "Piese alese de mine",
+      "noFolders": "Biblioteca de muzică nu are încă niciun dosar. Adaugă unul mai întâi în pagina Muzică.",
+      "trackCount_one": "{{count}} piesă",
+      "trackCount_few": "{{count}} piese",
+      "trackCount_other": "{{count}} de piese",
+      "searchTracks": "Caută piese",
+      "picked_one": "{{count}} piesă aleasă",
+      "picked_few": "{{count}} piese alese",
+      "picked_other": "{{count}} de piese alese",
+      "shuffle": "Amestecă",
+      "shuffleDescription": "Altă ordine la fiecare pornire",
+      "shuffled": "amestecate",
+      "inOrder": "în ordine",
+      "playNow": "Pornește acum (pornește singură la slide-ul următor)",
+      "playing": "Muzica a pornit"
+    },
+    "video": {
+      "title": "Video",
+      "chosen": "Acest video",
+      "random": "Un video la întâmplare",
+      "randomDescription_one": "Singurul video din Galerie.",
+      "randomDescription_few": "Unul dintre cele {{count}} videoclipuri din Galerie, altul de fiecare dată.",
+      "randomDescription_other": "Unul dintre cele {{count}} de videoclipuri din Galerie, altul de fiecare dată.",
+      "noVideos": "Galeria nu are încă niciun video. Încarcă unul acolo mai întâi.",
+      "playFullScreen": "Rulează pe tot ecranul"
+    },
+    "verses": {
+      "title": "Versete",
+      "topic": "Dintr-o temă",
+      "book": "Dintr-o carte",
+      "translation": "Traducere",
+      "pickBook": "Alege o carte",
+      "searchTopics": "Caută o temă (în română sau engleză)",
+      "pickedTopic_one": "{{title}}: {{count}} pasaj",
+      "pickedTopic_few": "{{title}}: {{count}} pasaje",
+      "pickedTopic_other": "{{title}}: {{count}} de pasaje",
+      "rowTitle": "Versete: {{source}}",
+      "randomCount_one": "{{count}} la întâmplare la fiecare reluare",
+      "randomCount_few": "{{count}} la întâmplare la fiecare reluare",
+      "randomCount_other": "{{count}} la întâmplare la fiecare reluare"
+    },
+    "count": {
+      "all": "Toate, în ordine",
+      "random": "la întâmplare, alese din nou la fiecare reluare",
+      "label": "Câte"
+    }
   }
 }

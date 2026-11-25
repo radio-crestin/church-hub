@@ -161,6 +161,11 @@ export interface ScheduleItem {
    * `verseteTineriEntries`.
    */
   itemConfig: ItemConfig | null
+  /**
+   * Every passage of a Versete Biblice slide that shows only some of them at
+   * random (its `itemConfig.count`), for its editor; null otherwise.
+   */
+  allVerseteTineriEntries: ScheduleVerseteTineriEntry[] | null
   /** A music item's tracks (itemType === 'music'). */
   music: ScheduleMusicSummary | null
   /** The video a video item shows this run; null when the gallery has none. */

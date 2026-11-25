@@ -39,8 +39,10 @@ export function withItemPicks(item: ScheduleItem): ScheduleItem {
     case 'slide': {
       if (item.slideType !== 'versete_tineri') return item
       const all = item.verseteTineriEntries
+      if (!(config as VerseteItemConfig).count) return item
       return {
         ...item,
+        allVerseteTineriEntries: all,
         verseteTineriEntries: pickedEntries(item.id, [config, all], () =>
           pickSomeEntries(all, config as VerseteItemConfig),
         ),

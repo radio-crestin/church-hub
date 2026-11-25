@@ -47,6 +47,7 @@ function stepText({ item, type, index }: ScheduleFlatItem): string {
     case 'announcement':
       return plainText(item.slideContent ?? '')
     case 'scene':
+    case 'video':
       return ''
   }
 }

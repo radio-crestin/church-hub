@@ -15,7 +15,9 @@ export function scheduleItemShortTitle(item: ScheduleItem): string {
   if (item.itemType === 'bible_passage') {
     return shorten(item.biblePassageReference ?? '')
   }
-  if (item.slideType === 'versete_tineri') {
+  if (item.itemType === 'music') return shorten(item.music?.folderName ?? '')
+  if (item.itemType === 'video') return ''
+  if (item.slideType === 'versete_tineri' || item.itemType === 'verses') {
     return shorten(item.verseteTineriEntries.map((e) => e.reference).join(', '))
   }
   if (item.slideType === 'scene') return shorten(item.obsSceneName ?? '')

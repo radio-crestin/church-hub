@@ -15,6 +15,7 @@ import {
 } from '~/features/presentation'
 import { createLogger } from '~/utils/logger'
 import { useSchedule } from './useSchedule'
+import { presentScheduleStep } from '../media-items/service/scheduleItemsApi'
 import {
   readProgramPosition,
   rememberProgramPosition,
@@ -79,6 +80,7 @@ export interface ScheduleFlatNavigation {
   presentVerseteEntry: (item: ScheduleItem, entryIndex: number) => Promise<void>
   presentAnnouncement: (item: ScheduleItem) => Promise<void>
   presentScene: (item: ScheduleItem) => Promise<void>
+  presentVideo: (item: ScheduleItem) => Promise<void>
   navigateToFlatItem: (
     flatItem: ScheduleFlatItem,
     flatIndex: number,
@@ -280,11 +282,9 @@ export function useScheduleFlatNavigation({
 
   const presentVerseteEntry = useCallback(
     async (item: ScheduleItem, entryIndex: number) => {
-      if (
-        item.itemType !== 'slide' ||
-        item.slideType !== 'versete_tineri' ||
-        !item.verseteTineriEntries.length
-      ) {
+      const isEntries =
+        item.slideType === 'versete_tineri' || item.itemType === 'verses'
+      if (!isEntries || !item.verseteTineriEntries.length) {
         return
       }
 
@@ -388,6 +388,17 @@ export function useScheduleFlatNavigation({
     ],
   )
 
+  // A video goes up through the server, which builds it as its runner does.
+  const presentVideo = useCallback(
+    async (item: ScheduleItem) => {
+      if (item.itemType !== 'video' || !item.video || !scheduleId) return
+      const flatIndex = getFlatItemIndex(item, 0)
+      onBeforeNavigate?.(flatIndex, { item, type: 'video', index: 0 })
+      await presentScheduleStep(scheduleId, flatIndex)
+    },
+    [getFlatItemIndex, onBeforeNavigate, scheduleId],
+  )
+
   const navigateToFlatItem = useCallback(
     async (flatItem: ScheduleFlatItem, _flatIndex: number) => {
       const { item, type, index } = flatItem
@@ -402,12 +413,15 @@ export function useScheduleFlatNavigation({
           return presentAnnouncement(item)
         case 'scene':
           return presentScene(item)
+        case 'video':
+          return presentVideo(item)
       }
     },
     [
       presentAnnouncement,
       presentPassageVerse,
       presentScene,
+      presentVideo,
       presentSongSlide,
       presentVerseteEntry,
     ],
@@ -497,6 +511,7 @@ export function useScheduleFlatNavigation({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
     navigateToFlatItem,
     presentFlatIndex,
     goNext,

@@ -8,6 +8,7 @@ export type ScheduleFlatItemType =
   | 'entry'
   | 'announcement'
   | 'scene'
+  | 'video'
 
 /**
  * One presentable step of a program. A program item is rarely a single step:
@@ -30,9 +31,15 @@ export function countScheduleItemSteps(item: ScheduleItem): number {
   if (item.itemType === 'bible_passage') {
     return item.biblePassageVerses.length
   }
-  if (item.itemType === 'slide' && item.slideType === 'versete_tineri') {
+  if (
+    (item.itemType === 'slide' && item.slideType === 'versete_tineri') ||
+    item.itemType === 'verses'
+  ) {
     return item.verseteTineriEntries.length
   }
+  // Music is no step: it starts as the presentation reaches the next one.
+  if (item.itemType === 'music') return 0
+  if (item.itemType === 'video') return item.video ? 1 : 0
   // announcement, scene — a single step
   return 1
 }
@@ -56,6 +63,12 @@ export function buildScheduleFlatItems(
       item.biblePassageVerses.forEach((_, index) => {
         result.push({ item, type: 'verse', index })
       })
+    } else if (item.itemType === 'verses') {
+      item.verseteTineriEntries.forEach((_, index) => {
+        result.push({ item, type: 'entry', index })
+      })
+    } else if (item.itemType === 'video') {
+      if (item.video) result.push({ item, type: 'video', index: 0 })
     } else if (item.itemType === 'slide') {
       if (item.slideType === 'versete_tineri') {
         item.verseteTineriEntries.forEach((_, index) => {

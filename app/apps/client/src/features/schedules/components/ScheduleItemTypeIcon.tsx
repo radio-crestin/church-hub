@@ -1,4 +1,13 @@
-import { Book, Camera, Megaphone, Music, User } from 'lucide-react'
+import {
+  Book,
+  BookOpen,
+  Camera,
+  Film,
+  ListMusic,
+  Megaphone,
+  Music,
+  User,
+} from 'lucide-react'
 
 import type { ScheduleItem } from '../types'
 
@@ -18,6 +27,27 @@ function describeKind(item: ScheduleItem) {
       Icon: Music,
       tint: 'text-indigo-600 dark:text-indigo-400',
       disc: 'bg-indigo-100 dark:bg-indigo-900/30',
+    }
+  }
+  if (item.itemType === 'music') {
+    return {
+      Icon: ListMusic,
+      tint: 'text-pink-600 dark:text-pink-400',
+      disc: 'bg-pink-100 dark:bg-pink-900/30',
+    }
+  }
+  if (item.itemType === 'video') {
+    return {
+      Icon: Film,
+      tint: 'text-sky-600 dark:text-sky-400',
+      disc: 'bg-sky-100 dark:bg-sky-900/30',
+    }
+  }
+  if (item.itemType === 'verses') {
+    return {
+      Icon: BookOpen,
+      tint: 'text-emerald-600 dark:text-emerald-400',
+      disc: 'bg-emerald-100 dark:bg-emerald-900/30',
     }
   }
   if (item.itemType === 'bible_passage') {
