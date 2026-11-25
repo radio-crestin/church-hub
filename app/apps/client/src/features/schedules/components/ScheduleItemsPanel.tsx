@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next'
 import { usePresentationState } from '~/features/presentation'
 import { ScheduleItemAdvance } from './ScheduleItemAdvance'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
+import { ScheduleItemMidi } from './ScheduleItemMidi'
 import { ScheduleItemSubItems } from './ScheduleItemSubItems'
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
 import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
@@ -70,6 +71,11 @@ interface ScheduleItemsPanelProps {
    * can be given its own time. Absent hides it.
    */
   itemAdvance?: ItemAdvance
+  /**
+   * The presentation whose song items show their MIDI music and can be given
+   * one (editors only). Absent hides it.
+   */
+  midiScheduleId?: number
   expandAllTrigger?: number
   collapseAllTrigger?: number
 }
@@ -103,6 +109,7 @@ export function ScheduleItemsPanel({
   onToggleSung,
   onQuickInsert,
   itemAdvance,
+  midiScheduleId,
   expandAllTrigger,
   collapseAllTrigger,
 }: ScheduleItemsPanelProps) {
@@ -286,6 +293,7 @@ export function ScheduleItemsPanel({
                   onToggleSung={onToggleSung}
                   onEditKeyLine={onEditKeyLine}
                   itemAdvance={itemAdvance}
+                  midiScheduleId={midiScheduleId}
                   t={t}
                 />
                 {onQuickInsert && index < items.length - 1 ? (
@@ -335,6 +343,7 @@ interface SortableItemWrapperProps {
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
   itemAdvance?: ItemAdvance
+  midiScheduleId?: number
   t: TFunction
 }
 
@@ -356,6 +365,7 @@ function SortableItemWrapper({
   onToggleSung,
   onEditKeyLine,
   itemAdvance,
+  midiScheduleId,
   t,
 }: SortableItemWrapperProps) {
   const {
@@ -537,7 +547,12 @@ function SortableItemWrapper({
           </div>
         )}
 
-        {itemAdvance && (
+        {midiScheduleId !== undefined && item.itemType === 'song' && (
+          <ScheduleItemMidi scheduleId={midiScheduleId} item={item} />
+        )}
+
+        {/* A MIDI item's slides follow its music, not a time per slide. */}
+        {itemAdvance && !item.midi && (
           <ScheduleItemAdvance
             advanceSeconds={item.advanceSeconds}
             defaultSeconds={itemStepSeconds(

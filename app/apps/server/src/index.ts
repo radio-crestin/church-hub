@@ -51,6 +51,7 @@ import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
 import { handleRemoteAccessRoutes } from './routes/remote-access'
+import { handleScheduleMidiRoutes } from './routes/schedule-midi'
 import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
@@ -8396,6 +8397,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (notificationsResponse) return notificationsResponse
+
+      // A presentation song item's MIDI file, its slides synced to it
+      const scheduleMidiResponse = await handleScheduleMidiRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (scheduleMidiResponse) return scheduleMidiResponse
 
       // Background media routes (screen background image/video uploads)
       const backgroundMediaResponse = await handleBackgroundMediaRoutes(

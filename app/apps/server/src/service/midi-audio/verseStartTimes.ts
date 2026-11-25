@@ -20,8 +20,8 @@ export function slideAtTime(
   seconds: number,
 ): number {
   let slide = 0
-  for (let index = 0; index < startTimes.length; index++) {
-    if (seconds >= startTimes[index]) slide = index
-  }
+  startTimes.forEach((start, index) => {
+    if (seconds >= start) slide = index
+  })
   return slide
 }

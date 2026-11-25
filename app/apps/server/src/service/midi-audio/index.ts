@@ -1,4 +1,4 @@
-export { isMidiHash, saveMidiFile } from './midiStore'
+export { isMidiHash, midiFilePath, saveMidiFile } from './midiStore'
 export {
   type MidiAudioPosition,
   midiAudioPosition,

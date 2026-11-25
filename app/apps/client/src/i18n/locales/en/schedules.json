@@ -339,5 +339,27 @@
       "reset": "Automatic",
       "save": "Save"
     }
+  },
+  "midi": {
+    "title": "MIDI music",
+    "short": "MIDI",
+    "description": "Plays when the running presentation reaches this song; its verses go up in time with the music.",
+    "choose": "Choose MIDI file",
+    "replace": "Replace file",
+    "remove": "Remove",
+    "sync": "Sync verses",
+    "resetSync": "Split evenly",
+    "synced": "Verses synced by hand",
+    "splitEvenly": "Verses split evenly across the music",
+    "attached": "MIDI file attached",
+    "notMidi": "This is not a MIDI file",
+    "noAudio": "No audio output: the music is silent here, but the verses still change on time",
+    "syncTitle": "Sync verses to the music",
+    "syncHelp": "Press Start: the music plays and the first verse is up. Press Next verse (or Space) when each next verse begins.",
+    "syncStart": "Start",
+    "syncNext": "Next verse",
+    "syncAgain": "Again",
+    "syncSave": "Save",
+    "syncSaved": "Verse times saved"
   }
 }

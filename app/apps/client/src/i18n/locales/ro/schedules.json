@@ -356,5 +356,27 @@
       "reset": "Automat",
       "save": "Salvează"
     }
+  },
+  "midi": {
+    "title": "Muzică MIDI",
+    "short": "MIDI",
+    "description": "Pornește când prezentarea ajunge la această cântare; strofele apar în ritmul muzicii.",
+    "choose": "Alege fișier MIDI",
+    "replace": "Înlocuiește fișierul",
+    "remove": "Elimină",
+    "sync": "Sincronizează strofele",
+    "resetSync": "Împarte egal",
+    "synced": "Strofe sincronizate manual",
+    "splitEvenly": "Strofe împărțite egal pe durata muzicii",
+    "attached": "Fișierul MIDI a fost adăugat",
+    "notMidi": "Acesta nu este un fișier MIDI",
+    "noAudio": "Nu există ieșire audio: muzica nu se aude aici, dar strofele se schimbă la timp",
+    "syncTitle": "Sincronizează strofele cu muzica",
+    "syncHelp": "Apasă Start: muzica pornește și apare prima strofă. Apasă Strofa următoare (sau Space) când începe fiecare strofă nouă.",
+    "syncStart": "Start",
+    "syncNext": "Strofa următoare",
+    "syncAgain": "Din nou",
+    "syncSave": "Salvează",
+    "syncSaved": "Timpii strofelor au fost salvați"
   }
 }

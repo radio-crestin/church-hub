@@ -358,7 +358,6 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         obsSceneName: record.obsSceneName,
         advanceSeconds: record.advanceSeconds,
         midi: toScheduleItemMidi(record),
-        midi: toScheduleItemMidi(record),
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
