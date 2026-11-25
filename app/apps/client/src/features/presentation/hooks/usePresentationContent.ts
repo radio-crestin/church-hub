@@ -201,7 +201,13 @@ export function usePresentationContent({
   previewContent = null,
 }: UsePresentationContentOptions): UsePresentationContentResult {
   const { data: presentationState } = usePresentationState()
-  const screen = useTemplatedScreen(ownScreen, obsSceneName, null)
+  // A presentation's (or its item's) template, carried by what is shown
+  const shownTemplateId = (
+    (previewContent ?? presentationState?.temporaryContent)?.data as
+      | { templateId?: number | null }
+      | undefined
+  )?.templateId
+  const screen = useTemplatedScreen(ownScreen, obsSceneName, shownTemplateId)
   const includeNextSlide =
     includeNextSlideOption ?? screen?.nextSlideConfig?.enabled ?? false
   const songUpdateTimestamp = useSongUpdateTimestamp()

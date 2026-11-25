@@ -135,6 +135,8 @@ export interface TemporarySongContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last slide)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -146,6 +148,8 @@ export interface TemporaryAnnouncementContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -181,6 +185,8 @@ export interface TemporaryBiblePassageContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last verse)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -222,6 +228,8 @@ export interface TemporaryVerseteTineriContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -233,6 +241,8 @@ export interface TemporarySceneContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -245,6 +255,8 @@ export interface TemporaryScreenShareContent {
   startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -289,6 +301,8 @@ export interface PresentTemporarySongInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -308,6 +322,8 @@ export interface PresentTemporaryAnnouncementInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -334,6 +350,8 @@ export interface PresentTemporaryBiblePassageInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -349,6 +367,8 @@ export interface PresentTemporaryVerseteTineriInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -360,6 +380,8 @@ export interface PresentTemporarySceneInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -369,6 +391,8 @@ export interface PresentTemporarySceneInput {
 export interface PresentTemporaryScreenShareInput {
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 

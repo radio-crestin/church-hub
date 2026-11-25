@@ -516,6 +516,10 @@
         "description": "While a scene is live, the screen draws with another template.",
         "own": "The screen's template"
       }
+    },
+    "presentation": {
+      "none": "Each screen's own",
+      "itemNone": "The presentation's template"
     }
   }
 }

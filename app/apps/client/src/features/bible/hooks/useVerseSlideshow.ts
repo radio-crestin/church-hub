@@ -22,6 +22,8 @@ export type VerseSlideshowMode = 'manual' | 'once' | 'loop'
 export function useVerseSlideshow(
   slideshow: string,
   entries: VerseteTineriEntry[],
+  /** The slide template the verses are drawn with; none: each screen's own. */
+  templateId: number | null = null,
 ) {
   const { data: state } = usePresentationState()
   const present = usePresentTemporaryVerseteTineri()
@@ -36,6 +38,7 @@ export function useVerseSlideshow(
       loop: mode === 'loop',
       autoAdvance: mode === 'once',
       slideshow,
+      templateId,
     })
   }
 

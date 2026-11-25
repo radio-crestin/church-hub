@@ -51,6 +51,7 @@ import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
 import { handleRemoteAccessRoutes } from './routes/remote-access'
+import { handleScheduleTemplateRoutes } from './routes/schedule-templates'
 import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSlideTemplateRoutes } from './routes/slide-templates'
 import { handleSongHistoryRoutes } from './routes/song-history'
@@ -8291,6 +8292,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (slideTemplatesResponse) return slideTemplatesResponse
+
+      // A presentation's and its items' slide templates (CH-184)
+      const scheduleTemplatesResponse = await handleScheduleTemplateRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (scheduleTemplatesResponse) return scheduleTemplatesResponse
 
       // The notifications history (song syncs, app updates)
       const notificationsResponse = await handleNotificationRoutes(

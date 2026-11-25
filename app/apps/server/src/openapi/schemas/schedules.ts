@@ -66,6 +66,12 @@ export const scheduleSchemas = {
       title: { type: 'string' },
       description: { type: 'string', nullable: true },
       automation: { $ref: '#/components/schemas/ScheduleAutomationSettings' },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          'The slide template its slides are drawn with on screens that follow presentations; null = each screen’s own',
+      },
       itemCount: { type: 'integer' },
       songCount: { type: 'integer' },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
@@ -94,6 +100,12 @@ export const scheduleSchemas = {
         items: { $ref: '#/components/schemas/SongSlide' },
       },
       keyLine: { type: 'string', nullable: true },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          'This item’s own slide template; null = the presentation’s',
+      },
       advanceSeconds: {
         type: 'integer',
         nullable: true,

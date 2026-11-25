@@ -66,7 +66,7 @@ export function LivePreview({
   // Don't call useWebSocket() here as it causes re-renders from debug info state updates
 
   const { data: presentationState } = usePresentationState()
-  const { screen, previewScreen } = usePreviewScreen()
+  const { screen: ownScreen, previewScreen } = usePreviewScreen()
   const { getBookName } = useLocalizedBookNames()
 
   // Highlight hooks
@@ -88,9 +88,10 @@ export function LivePreview({
   }>({ visible: false, x: 0, y: 0 })
 
   // Use shared presentation content hook
-  const { contentType, contentData, contentKey, isVisible, leaving } =
+  // `screen`: the preview screen with the template the content is drawn with
+  const { screen, contentType, contentData, contentKey, isVisible, leaving } =
     usePresentationContent({
-      screen,
+      screen: ownScreen,
       includeNextSlide: false,
       getBookName,
       previewContent,

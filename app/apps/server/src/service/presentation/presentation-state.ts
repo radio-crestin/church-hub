@@ -19,6 +19,7 @@ import type {
   TemporaryVerseteTineriContent,
   UpdatePresentationStateInput,
 } from './types'
+import { withPresentationTemplate } from './withPresentationTemplate'
 import { getDatabase, getRawDatabase } from '../../db'
 import {
   presentationState,
@@ -231,7 +232,7 @@ export function updatePresentationState(
     // Handle temporary content
     const temporaryContent: TemporaryContent | null =
       input.temporaryContent !== undefined
-        ? input.temporaryContent
+        ? withPresentationTemplate(input.temporaryContent)
         : current.temporaryContent
 
     const temporaryContentJson = temporaryContent
@@ -1177,6 +1178,8 @@ export function presentTemporaryVerseteTineri(
         nextItemPreview: input.nextItemPreview,
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
+        // A topic's verse loop is drawn with the template chosen for it.
+        templateId: input.templateId,
       },
     }
 

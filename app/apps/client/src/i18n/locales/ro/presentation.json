@@ -519,6 +519,10 @@
         "description": "Cât timp o scenă e live, ecranul folosește alt șablon.",
         "own": "Șablonul ecranului"
       }
+    },
+    "presentation": {
+      "none": "Al fiecărui ecran",
+      "itemNone": "Șablonul prezentării"
     }
   }
 }

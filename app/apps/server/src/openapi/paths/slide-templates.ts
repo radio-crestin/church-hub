@@ -241,4 +241,77 @@ export const slideTemplatesPaths = {
       },
     },
   },
+
+  '/api/schedules/{id}/template': {
+    put: {
+      tags,
+      summary: "Set a presentation's slide template",
+      description:
+        'Screens that follow presentations draw its slides with this template; `null` leaves each screen its own. A presentation on screen redraws at once.',
+      security,
+      parameters: [idParam],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                templateId: { type: 'integer', nullable: true },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': data(
+          { type: 'object', properties: { success: { type: 'boolean' } } },
+          'Set',
+        ),
+        '400': failed('templateId is neither a number nor null'),
+        '404': failed('No such presentation or template'),
+        ...errors,
+      },
+    },
+  },
+  '/api/schedules/{id}/items/{itemId}/template': {
+    put: {
+      tags,
+      summary: "Set one presentation item's slide template",
+      description:
+        "The item's slides are drawn with this template; `null` gives it back the presentation's.",
+      security,
+      parameters: [
+        idParam,
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                templateId: { type: 'integer', nullable: true },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': data(
+          { type: 'object', properties: { success: { type: 'boolean' } } },
+          'Set',
+        ),
+        '400': failed('templateId is neither a number nor null'),
+        '404': failed('No such presentation, item or template'),
+        ...errors,
+      },
+    },
+  },
 }

@@ -77,6 +77,8 @@ export interface Schedule {
   title: string
   description: string | null
   automation: ScheduleAutomationSettings
+  /** The slide template for all its slides; null = each screen's own. */
+  templateId: number | null
   itemCount: number
   songCount: number
   createdAt: number
@@ -142,6 +144,8 @@ export interface ScheduleItem {
   obsSceneName: string | null
   /** Seconds each slide of this item stays up when it runs by itself; null = the presentation's. */
   advanceSeconds: number | null
+  /** This item's own slide template; null = the presentation's. */
+  templateId: number | null
   // Common fields
   sortOrder: number
   createdAt: number

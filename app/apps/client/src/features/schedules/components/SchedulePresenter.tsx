@@ -32,6 +32,7 @@ import {
   useLoadScheduleFromFile,
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
+import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { KeyLineEditDialog } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
@@ -61,6 +62,10 @@ import {
   useSetScheduleItemAdvance,
   useUpsertSchedule,
 } from '../hooks'
+import {
+  useSetScheduleItemTemplate,
+  useSetScheduleTemplate,
+} from '../hooks/useSetScheduleTemplates'
 import type { ScheduleItem, SlideTemplate } from '../types'
 import { isAutomationOn } from '../utils/isAutomationOn'
 
@@ -454,6 +459,8 @@ export function SchedulePresenter({
   // can be given its own time, like PowerPoint's "After" per slide.
   const autoplaySeconds = schedule?.automation.autoplaySeconds ?? null
   const autoplayByText = schedule?.automation.autoplayByText ?? true
+  const setScheduleTemplate = useSetScheduleTemplate()
+  const setItemTemplate = useSetScheduleItemTemplate()
   const itemAdvance = useMemo(
     () =>
       canEditProgram && autoplaySeconds != null
@@ -784,6 +791,16 @@ export function SchedulePresenter({
               onEditKeyLine={handleEditKeyLine}
               onToggleSung={handleToggleSung}
               itemAdvance={itemAdvance}
+              onItemTemplateChange={
+                canEditProgram
+                  ? (item, templateId) =>
+                      setItemTemplate.mutate({
+                        scheduleId,
+                        itemId: item.id,
+                        templateId,
+                      })
+                  : undefined
+              }
               onQuickInsert={canEditProgram ? handleQuickInsert : undefined}
               expandAllTrigger={expandAllTrigger}
               collapseAllTrigger={collapseAllTrigger}
@@ -956,6 +973,17 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
+          {canEditProgram && (
+            <TemplatePicker
+              variant="compact"
+              value={schedule.templateId}
+              noneLabel={t('presentation:templates.presentation.none')}
+              onChange={(templateId) =>
+                setScheduleTemplate.mutate({ scheduleId, templateId })
+              }
+              testId="schedule-template-picker"
+            />
+          )}
           <ScheduleRunButton scheduleId={scheduleId} />
           {isLargeScreen && (
             <button

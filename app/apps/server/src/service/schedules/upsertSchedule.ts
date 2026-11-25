@@ -90,6 +90,7 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
       title: schedule.title,
       description: schedule.description,
       automation: toScheduleAutomation(schedule),
+      templateId: schedule.templateId,
       itemCount: counts?.itemCount ?? 0,
       songCount: counts?.songCount ?? 0,
       createdAt: Math.floor(schedule.createdAt.getTime() / 1000),
