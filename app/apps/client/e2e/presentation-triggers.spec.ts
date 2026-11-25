@@ -1,7 +1,7 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { selectAction } from './helpers/actions-menu'
-import { FakeOBS } from './helpers/fake-obs'
+import { type MockObs, startMockObs } from './helpers/mock-obs-websocket'
 
 /**
  * Presentations started and stopped by what happens in OBS (T-182): a scene
@@ -112,25 +112,12 @@ test.describe('Presentation triggers', () => {
   })
 
   test.describe('with OBS', () => {
-    const obs = new FakeOBS()
+    let obs: MockObs | undefined
     let savedConfig: { host: string; port: number } | undefined
-
-    test.beforeEach(async ({ request }) => {
-      const port = await obs.start()
-      savedConfig = (
-        await (await request.get('/api/livestream/obs/config')).json()
-      ).data
-      const config = await request.put('/api/livestream/obs/config', {
-        data: { host: '127.0.0.1', port, password: '' },
-      })
-      expect(config.ok()).toBeTruthy()
-    })
 
     test.afterEach(async ({ request }) => {
       await request.post('/api/livestream/obs/disconnect')
-      await obs.stop()
-      obs.streaming = false
-      obs.recording = false
+      await obs?.close()
       if (savedConfig) {
         await request.put('/api/livestream/obs/config', {
           data: { host: savedConfig.host, port: savedConfig.port },
@@ -138,16 +125,37 @@ test.describe('Presentation triggers', () => {
       }
     })
 
-    async function connect(request: Request) {
+    async function obsStatus(request: Request) {
+      const res = await request.get('/api/livestream/obs/status')
+      return (await res.json()).data as {
+        connected: boolean
+        isStreaming: boolean
+        isRecording: boolean
+      }
+    }
+
+    /** Points Church Hub at a mock OBS and connects, OBS's state read. */
+    async function connectObs(
+      request: Request,
+      options: { streaming?: boolean } = {},
+    ): Promise<MockObs> {
+      obs = await startMockObs(options)
+      savedConfig = (
+        await (await request.get('/api/livestream/obs/config')).json()
+      ).data
+      const config = await request.put('/api/livestream/obs/config', {
+        data: { host: '127.0.0.1', port: obs.port, password: '' },
+      })
+      expect(config.ok()).toBeTruthy()
       const res = await request.post('/api/livestream/obs/connect')
       expect(res.ok()).toBeTruthy()
-      // Connected once OBS's outputs have been read.
       await expect
         .poll(async () => {
-          const status = await request.get('/api/livestream/obs/status')
-          return (await status.json()).data.connected
+          const status = await obsStatus(request)
+          return status.connected && status.isStreaming
         })
-        .toBe(true)
+        .toBe(!!options.streaming)
+      return obs
     }
 
     test('the livestream starting starts it, and ending stops it', async ({
@@ -158,7 +166,7 @@ test.describe('Presentation triggers', () => {
         stopTrigger: { event: 'stream_stopped' },
       })
       presentations.push(id)
-      await connect(request)
+      const obs = await connectObs(request)
 
       obs.setStreaming(true)
       await expect.poll(() => livePresentation(request)).toBe(id)
@@ -174,16 +182,12 @@ test.describe('Presentation triggers', () => {
         startTrigger: { event: 'stream_started' },
       })
       presentations.push(id)
-      obs.streaming = true
-      await connect(request)
+      const obs = await connectObs(request, { streaming: true })
 
       // The recording starting is a change, so it is seen; the stream is not.
       obs.setRecording(true)
       await expect
-        .poll(async () => {
-          const status = await request.get('/api/livestream/obs/status')
-          return (await status.json()).data.isRecording
-        })
+        .poll(async () => (await obsStatus(request)).isRecording)
         .toBe(true)
       expect(await livePresentation(request)).toBeNull()
     })
@@ -193,7 +197,7 @@ test.describe('Presentation triggers', () => {
         startTrigger: { event: 'recording_started' },
       })
       presentations.push(id)
-      await connect(request)
+      const obs = await connectObs(request)
 
       obs.setRecording(true)
       await expect.poll(() => livePresentation(request)).toBe(id)
