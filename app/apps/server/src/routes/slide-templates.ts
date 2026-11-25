@@ -28,7 +28,7 @@ const SCENE_TEMPLATE_PATH = /^\/api\/screens\/(\d+)\/scene-templates\/([^/]+)$/
 /**
  * Slide templates (CH-184), for who can see or change the displays.
  *
- * - GET    /api/slide-templates          every template
+ * - GET    /api/slide-templates          every template, with who draws with it
  * - GET    /api/slide-templates/:id      one, with who draws with it (`usage`)
  * - POST   /api/slide-templates          a new one: `{ name, fromId? }` copies fromId
  * - PUT    /api/slide-templates/:id      save its name and/or design
@@ -79,8 +79,13 @@ export async function handleSlideTemplateRoutes(
     }
 
     if (pathname === '/api/slide-templates') {
-      if (req.method === 'GET')
-        return respond(200, { data: getSlideTemplates() })
+      if (req.method === 'GET') {
+        const templates = getSlideTemplates().map((template) => ({
+          ...template,
+          usage: getTemplateUsage(template.id),
+        }))
+        return respond(200, { data: templates })
+      }
       if (req.method === 'POST') {
         const body = (await req.json()) as { name?: string; fromId?: number }
         const template =

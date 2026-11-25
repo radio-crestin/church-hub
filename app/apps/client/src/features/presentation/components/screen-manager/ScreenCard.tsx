@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ScreenTemplateSettings } from '~/features/slide-templates/components/ScreenTemplateSettings'
 import { Button } from '~/ui/button/Button'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { useToast } from '~/ui/toast/useToast'
@@ -248,6 +249,16 @@ export function ScreenCard({
             <Trash2 size={16} />
           </Button>
         </div>
+      </div>
+
+      {/* How the screen draws slides: its template */}
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60">
+        <SettingsGroup
+          title={t('presentation:templates.screen.title')}
+          testId="screen-group-template"
+        >
+          <ScreenTemplateSettings screen={screen} />
+        </SettingsGroup>
       </div>
 
       <div className="grid gap-x-8 gap-y-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 lg:grid-cols-2">

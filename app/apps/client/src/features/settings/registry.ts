@@ -5,6 +5,7 @@ import {
   DownloadCloud,
   Info,
   Keyboard,
+  LayoutTemplate,
   Monitor,
   Music,
   Palette,
@@ -187,6 +188,14 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
           'settings:sections.screens.fullscreen.label',
           'settings:sections.screens.alwaysOnTop.label',
         ],
+      },
+      {
+        id: 'templates',
+        labelKey: 'sections.templates.title',
+        icon: LayoutTemplate,
+        to: '/settings/templates',
+        visible: canEdit,
+        settings: ['presentation:templates.page.title'],
       },
       {
         id: 'kiosk',

@@ -18,7 +18,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return body.data
 }
 
-export function getSlideTemplates(): Promise<SlideTemplate[]> {
+export function getSlideTemplates(): Promise<SlideTemplateWithUsage[]> {
   return request('/api/slide-templates')
 }
 

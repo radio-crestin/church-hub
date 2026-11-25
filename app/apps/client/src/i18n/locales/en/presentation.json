@@ -449,5 +449,73 @@
     "label": "Screen shown in the preview",
     "changed": "Previews now show {{name}}",
     "error": "Could not change the preview screen"
+  },
+  "templates": {
+    "bundled": {
+      "classic": "Classic",
+      "stage": "Stage",
+      "lower_third": "Lower third",
+      "kiosk": "Kiosk"
+    },
+    "bundledBadge": "Built-in",
+    "sample": {
+      "reference": "John 3:16",
+      "verse": "For God so loved the world, that he gave his only begotten Son."
+    },
+    "usedBy": "Used by {{names}}",
+    "unused": "Not used yet",
+    "copyName": "{{name}} (copy)",
+    "picker": {
+      "title": "Choose a template",
+      "change": "Change template",
+      "close": "Close",
+      "manage": "Manage templates"
+    },
+    "page": {
+      "title": "Templates",
+      "description": "How slides look: background, text, positions, transitions. Choose one for each screen and presentation.",
+      "new": "New template",
+      "newName": "New template",
+      "empty": "No templates yet."
+    },
+    "actions": {
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "rename": "Rename",
+      "delete": "Delete"
+    },
+    "rename": {
+      "title": "Rename template",
+      "label": "Name",
+      "save": "Save"
+    },
+    "delete": {
+      "title": "Delete this template?",
+      "message": "\"{{name}}\" will be deleted.",
+      "inUse": "Used by {{names}}: choose another template there first.",
+      "bundled": "Built-in templates can't be deleted."
+    },
+    "toast": {
+      "saved": "Template saved",
+      "savedAsCopy": "Built-in templates don't change: saved as \"{{name}}\"",
+      "duplicated": "Template \"{{name}}\" created",
+      "renamed": "Template renamed",
+      "deleted": "Template deleted",
+      "changed": "Template changed",
+      "error": "The template couldn't be saved"
+    },
+    "screen": {
+      "title": "Template",
+      "description": "How this screen draws every slide.",
+      "follows": {
+        "label": "Follows the presentation's template",
+        "description": "While a presentation with its own template runs, this screen shows it with that template."
+      },
+      "scenes": {
+        "title": "Per OBS scene",
+        "description": "While a scene is live, the screen draws with another template.",
+        "own": "The screen's template"
+      }
+    }
   }
 }

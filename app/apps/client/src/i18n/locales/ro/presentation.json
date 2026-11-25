@@ -452,5 +452,73 @@
     "label": "Ecranul afișat în previzualizare",
     "changed": "Previzualizările arată acum {{name}}",
     "error": "Nu s-a putut schimba ecranul din previzualizare"
+  },
+  "templates": {
+    "bundled": {
+      "classic": "Clasic",
+      "stage": "Scenă",
+      "lower_third": "Bandă jos",
+      "kiosk": "Kiosk"
+    },
+    "bundledBadge": "Inclus",
+    "sample": {
+      "reference": "Ioan 3:16",
+      "verse": "Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu."
+    },
+    "usedBy": "Folosit de {{names}}",
+    "unused": "Nefolosit încă",
+    "copyName": "{{name}} (copie)",
+    "picker": {
+      "title": "Alege un șablon",
+      "change": "Schimbă șablonul",
+      "close": "Închide",
+      "manage": "Gestionează șabloanele"
+    },
+    "page": {
+      "title": "Șabloane",
+      "description": "Cum arată slide-urile: fundal, text, poziții, tranziții. Alegi câte unul pentru fiecare ecran și prezentare.",
+      "new": "Șablon nou",
+      "newName": "Șablon nou",
+      "empty": "Încă nu există șabloane."
+    },
+    "actions": {
+      "edit": "Editează",
+      "duplicate": "Duplică",
+      "rename": "Redenumește",
+      "delete": "Șterge"
+    },
+    "rename": {
+      "title": "Redenumește șablonul",
+      "label": "Nume",
+      "save": "Salvează"
+    },
+    "delete": {
+      "title": "Ștergi acest șablon?",
+      "message": "„{{name}}” va fi șters.",
+      "inUse": "Folosit de {{names}}: alege acolo alt șablon mai întâi.",
+      "bundled": "Șabloanele incluse nu se pot șterge."
+    },
+    "toast": {
+      "saved": "Șablonul a fost salvat",
+      "savedAsCopy": "Șabloanele incluse nu se schimbă: salvat ca „{{name}}”",
+      "duplicated": "Șablonul „{{name}}” a fost creat",
+      "renamed": "Șablonul a fost redenumit",
+      "deleted": "Șablonul a fost șters",
+      "changed": "Șablonul a fost schimbat",
+      "error": "Șablonul nu s-a putut salva"
+    },
+    "screen": {
+      "title": "Șablon",
+      "description": "Cum arată slide-urile pe acest ecran.",
+      "follows": {
+        "label": "Urmează șablonul prezentării",
+        "description": "Când rulează o prezentare cu șablon propriu, ecranul o arată cu șablonul ei."
+      },
+      "scenes": {
+        "title": "Pe scene OBS",
+        "description": "Cât timp o scenă e live, ecranul folosește alt șablon.",
+        "own": "Șablonul ecranului"
+      }
+    }
   }
 }

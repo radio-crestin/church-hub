@@ -1149,9 +1149,9 @@
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
         "duplicate": "Duplicate the screen with all its settings",
-        "edit": "Edit layout",
+        "edit": "Edit template",
         "delete": "Delete screen",
-        "editTooltip": "Change what each slide type looks like on this screen: text, background, clock"
+        "editTooltip": "Change this screen's template: what each slide type looks like (text, background, clock)"
       },
       "toast": {
         "created": "Screen created successfully",
@@ -1359,6 +1359,9 @@
         "title": "Bible verses by topic",
         "attribution": "The topics and their verses come from the <source>OpenBible.info topical Bible</source>, licensed under <licence>CC BY 4.0</licence>. The Romanian titles are our translation; the verse texts come from your installed Bibles."
       }
+    },
+    "templates": {
+      "title": "Templates"
     }
   }
 }

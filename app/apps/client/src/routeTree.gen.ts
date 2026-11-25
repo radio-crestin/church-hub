@@ -26,6 +26,7 @@ import { Route as rootIndexRouteImport } from './routes/(root)/index'
 import { Route as SongsDiscoverRouteImport } from './routes/songs/discover'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsUpdatesRouteImport } from './routes/settings/updates'
+import { Route as SettingsTemplatesRouteImport } from './routes/settings/templates'
 import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
 import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
 import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
@@ -138,6 +139,11 @@ const SettingsUsersRoute = SettingsUsersRouteImport.update({
 const SettingsUpdatesRoute = SettingsUpdatesRouteImport.update({
   id: '/updates',
   path: '/updates',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsTemplatesRoute = SettingsTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsSongsRoute = SettingsSongsRouteImport.update({
@@ -308,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/templates': typeof SettingsTemplatesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
@@ -354,6 +361,7 @@ export interface FileRoutesByTo {
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/templates': typeof SettingsTemplatesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
@@ -402,6 +410,7 @@ export interface FileRoutesById {
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/templates': typeof SettingsTemplatesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
@@ -451,6 +460,7 @@ export interface FileRouteTypes {
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/templates'
     | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
@@ -497,6 +507,7 @@ export interface FileRouteTypes {
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/templates'
     | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
@@ -544,6 +555,7 @@ export interface FileRouteTypes {
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/templates'
     | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
@@ -712,6 +724,13 @@ declare module '@tanstack/react-router' {
       path: '/updates'
       fullPath: '/settings/updates'
       preLoaderRoute: typeof SettingsUpdatesRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/templates': {
+      id: '/settings/templates'
+      path: '/templates'
+      fullPath: '/settings/templates'
+      preLoaderRoute: typeof SettingsTemplatesRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/songs': {
@@ -931,6 +950,7 @@ interface SettingsRouteRouteChildren {
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
   SettingsSidebarRoute: typeof SettingsSidebarRoute
   SettingsSongsRoute: typeof SettingsSongsRoute
+  SettingsTemplatesRoute: typeof SettingsTemplatesRoute
   SettingsUpdatesRoute: typeof SettingsUpdatesRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -954,6 +974,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsShortcutsRoute: SettingsShortcutsRoute,
   SettingsSidebarRoute: SettingsSidebarRoute,
   SettingsSongsRoute: SettingsSongsRoute,
+  SettingsTemplatesRoute: SettingsTemplatesRoute,
   SettingsUpdatesRoute: SettingsUpdatesRoute,
   SettingsUsersRoute: SettingsUsersRoute,
   SettingsIndexRoute: SettingsIndexRoute,
