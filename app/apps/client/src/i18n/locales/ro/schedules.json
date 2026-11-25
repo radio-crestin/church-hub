@@ -355,5 +355,13 @@
       "reset": "Automat",
       "save": "Salvează"
     }
+  },
+  "playlist": {
+    "title": "Prezentări",
+    "empty": "Nicio prezentare încă",
+    "open": "Deschide prezentarea",
+    "showAll": "Arată toate prezentările ({{count}})",
+    "showFewer": "Arată mai puține",
+    "running": "Rulează"
   }
 }

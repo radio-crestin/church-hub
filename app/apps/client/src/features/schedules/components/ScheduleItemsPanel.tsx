@@ -72,6 +72,12 @@ interface ScheduleItemsPanelProps {
   itemAdvance?: ItemAdvance
   expandAllTrigger?: number
   collapseAllTrigger?: number
+  /**
+   * Follow and present only, as in the control room's playlist: no dragging,
+   * no edit menu, and the list scrolls on its own so it can follow the live
+   * step inside a longer page.
+   */
+  readOnly?: boolean
 }
 
 interface ItemAdvance {
@@ -105,6 +111,7 @@ export function ScheduleItemsPanel({
   itemAdvance,
   expandAllTrigger,
   collapseAllTrigger,
+  readOnly = false,
 }: ScheduleItemsPanelProps) {
   const { t } = useTranslation('schedules')
   const { data: presentationState } = usePresentationState()
@@ -264,7 +271,11 @@ export function ScheduleItemsPanel({
         >
           <div
             ref={containerRef}
-            className="flex-1 min-h-0 space-y-2 overflow-hidden lg:overflow-y-auto p-1"
+            className={`flex-1 min-h-0 space-y-2 p-1 ${
+              readOnly
+                ? 'max-h-[60vh] overflow-y-auto'
+                : 'overflow-hidden lg:overflow-y-auto'
+            }`}
           >
             {items.map((item, index) => (
               <Fragment key={item.id}>
@@ -286,6 +297,7 @@ export function ScheduleItemsPanel({
                   onToggleSung={onToggleSung}
                   onEditKeyLine={onEditKeyLine}
                   itemAdvance={itemAdvance}
+                  readOnly={readOnly}
                   t={t}
                 />
                 {onQuickInsert && index < items.length - 1 ? (
@@ -335,6 +347,7 @@ interface SortableItemWrapperProps {
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
   itemAdvance?: ItemAdvance
+  readOnly: boolean
   t: TFunction
 }
 
@@ -356,6 +369,7 @@ function SortableItemWrapper({
   onToggleSung,
   onEditKeyLine,
   itemAdvance,
+  readOnly,
   t,
 }: SortableItemWrapperProps) {
   const {
@@ -399,20 +413,22 @@ function SortableItemWrapper({
         className="w-full flex items-center gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
         onClick={(e) => onHeaderClick(e, item)}
         onAuxClick={(e) => onAuxClick(e, item)}
-        onDoubleClick={() => onDoubleClick(item)}
-        onContextMenu={(e) => onContextMenu(e, item)}
+        onDoubleClick={readOnly ? undefined : () => onDoubleClick(item)}
+        onContextMenu={readOnly ? undefined : (e) => onContextMenu(e, item)}
       >
         {/* Drag Handle */}
-        <div
-          className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical
-            size={16}
-            className="text-gray-400 dark:text-gray-500"
-          />
-        </div>
+        {!readOnly && (
+          <div
+            className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical
+              size={16}
+              className="text-gray-400 dark:text-gray-500"
+            />
+          </div>
+        )}
 
         {/* Done-marker — every kind of item can be ticked off a program. */}
         {onToggleSung ? (
@@ -549,22 +565,24 @@ function SortableItemWrapper({
         )}
 
         {/* Options Menu Button */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onContextMenu(e, item)
-          }}
-          className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          title={t('common:options')}
-          aria-label={t('common:options')}
-          data-testid="schedule-item-options"
-        >
-          <MoreVertical
-            size={16}
-            className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
-          />
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onContextMenu(e, item)
+            }}
+            className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title={t('common:options')}
+            aria-label={t('common:options')}
+            data-testid="schedule-item-options"
+          >
+            <MoreVertical
+              size={16}
+              className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+            />
+          </button>
+        )}
       </div>
 
       {/* Expanded Content — the item's presentable steps */}
