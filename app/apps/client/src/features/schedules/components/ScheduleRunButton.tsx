@@ -1,6 +1,12 @@
 import { Loader2, Play, Square } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-import { useScheduleRunToggle } from '../hooks'
+import { usePermissions } from '~/provider/permissions-provider'
+import { useToast } from '~/ui/toast'
+import { createLogger } from '~/utils/logger'
+import { useRunSchedule, useScheduleAutomation } from '../hooks'
+
+const logger = createLogger('schedules:run')
 
 interface ScheduleRunButtonProps {
   scheduleId: number
@@ -17,27 +23,41 @@ export function ScheduleRunButton({
   scheduleId,
   compact = false,
 }: ScheduleRunButtonProps) {
-  const {
-    allowed,
-    isRunning,
-    isPending,
-    progress,
-    label,
-    description,
-    toggle,
-  } = useScheduleRunToggle(scheduleId)
+  const { t } = useTranslation('schedules')
+  const { showToast } = useToast()
+  const { hasPermission } = usePermissions()
+  const { data: automation } = useScheduleAutomation()
+  const { run, stop } = useRunSchedule()
 
-  if (!allowed) return null
+  if (!hasPermission('control_room.control')) return null
 
+  const isRunning = automation?.running && automation.scheduleId === scheduleId
+  const isPending = run.isPending || stop.isPending
+
+  const handleClick = async () => {
+    try {
+      if (isRunning) await stop.mutateAsync()
+      else await run.mutateAsync(scheduleId)
+    } catch (error) {
+      logger.error('Run/Stop failed:', error)
+      showToast(t('automation.runError'), 'error')
+    }
+  }
+
+  const label = isRunning ? t('automation.stop') : t('automation.run')
   const Icon = isPending ? Loader2 : isRunning ? Square : Play
 
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={handleClick}
       disabled={isPending}
       aria-label={label}
-      title={description}
+      title={
+        isRunning
+          ? t('automation.stopDescription')
+          : t('automation.runDescription')
+      }
       data-testid="schedule-run-button"
       data-running={isRunning ? 'true' : 'false'}
       className={`flex items-center gap-2 rounded-lg text-sm text-white transition-colors disabled:opacity-50 ${
@@ -53,12 +73,12 @@ export function ScheduleRunButton({
         fill={isRunning && !isPending ? 'currentColor' : 'none'}
       />
       {!compact && <span className="hidden sm:inline">{label}</span>}
-      {progress && (
+      {isRunning && automation.running && (
         <span
           className="rounded bg-white/20 px-1.5 text-xs tabular-nums"
           data-testid="schedule-run-progress"
         >
-          {progress}
+          {automation.stepIndex + 1}/{automation.stepCount}
         </span>
       )}
     </button>
