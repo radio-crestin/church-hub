@@ -1,3 +1,4 @@
+import type { DeckSlide } from '../slides-deck/types'
 import type { SlideStyleOverride } from '../songs/types'
 
 /**
@@ -272,6 +273,7 @@ export type TemporaryContent = (
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
   | { type: 'video'; data: TemporaryVideoContent }
+  | { type: 'deck_slide'; data: TemporaryDeckSlideContent }
 ) & {
   /**
    * The looping video a presentation shows behind its steps after a video
@@ -300,6 +302,30 @@ export interface TemporaryVideoContent {
 }
 
 export type PresentTemporaryVideoInput = TemporaryVideoContent
+
+/**
+ * One slide of a presentation's Slides item (service/slides-deck), with its
+ * click groups up to `buildIndex` played: only that slide travels, drawn on
+ * the deck's design size.
+ */
+export interface TemporaryDeckSlideContent {
+  itemId: number
+  /** The deck's design size. */
+  width: number
+  height: number
+  slide: DeckSlide
+  slideIndex: number
+  slideCount: number
+  /** 0: the slide as it comes in; each Down plays one more click group. */
+  buildIndex: number
+  nextItemPreview?: NextItemPreview
+  scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+export type PresentTemporaryDeckSlideInput = TemporaryDeckSlideContent
 
 /**
  * Input for presenting a temporary Bible verse

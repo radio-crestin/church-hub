@@ -10,10 +10,13 @@ import {
   presentTemporarySong,
   presentTemporaryVerseteTineri,
 } from '../presentation/presentation-state'
+import { presentTemporaryDeckSlide } from '../presentation/presentTemporaryDeckSlide'
 import { presentTemporaryVideo } from '../presentation/presentTemporaryVideo'
 import type { PresentationState } from '../presentation/types'
 import type { VideoItemConfig } from '../schedule-items'
 import type { ScheduleItem } from '../schedules/types'
+import { deckSteps } from '../slides-deck/deckSteps'
+import type { SlideDeck } from '../slides-deck/types'
 
 const logger = createLogger('schedule-automation')
 
@@ -112,6 +115,24 @@ export async function presentScheduleStep(
         loop: (item.itemConfig as VideoItemConfig | null)?.loop === true,
         ...common,
       })
+    case 'deck': {
+      const deck = item.itemConfig as SlideDeck
+      const at = deckSteps(deck)[index]
+      const slide = at && deck.slides[at.slideIndex]
+      if (!at || !slide) {
+        throw new Error(`Deck item ${item.id} has no step ${index}`)
+      }
+      return presentTemporaryDeckSlide({
+        itemId: item.id,
+        width: deck.width,
+        height: deck.height,
+        slide,
+        slideIndex: at.slideIndex,
+        slideCount: deck.slides.length,
+        buildIndex: at.buildIndex,
+        ...common,
+      })
+    }
     case 'announcement':
       return presentTemporaryAnnouncement({
         content: item.slideContent ?? '',

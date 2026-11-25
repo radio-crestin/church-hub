@@ -289,6 +289,11 @@ export const schedulesPaths = {
                   items: { $ref: '#/components/schemas/BibleReadingInput' },
                   description: 'Readings of a "Versete Biblice" slide',
                 },
+                slides: {
+                  $ref: '#/components/schemas/SlideDeck',
+                  description:
+                    'A Slides item: its deck, checked and its HTML sanitized (400 when it does not fit)',
+                },
                 media: {
                   type: 'object',
                   description: 'A music, video or verses item and its settings',
@@ -308,7 +313,7 @@ export const schedulesPaths = {
         },
       },
       responses: {
-        '200': {
+        '201': {
           description: 'Item added',
           content: {
             'application/json': {

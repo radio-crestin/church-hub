@@ -3362,13 +3362,20 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
-        } catch {
+        } catch (error) {
+          // A body that is no JSON, or settings (a deck) that don't fit.
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error ? error.message : 'Invalid JSON body',
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         }
       }

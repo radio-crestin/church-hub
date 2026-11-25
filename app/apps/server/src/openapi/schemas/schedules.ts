@@ -117,7 +117,7 @@ export const scheduleSchemas = {
   ScheduleItemConfig: {
     type: 'object',
     description:
-      "An item's settings. Music: { source: 'folder', folderId } or { source: 'tracks', fileIds }, with shuffle. Video: { source: 'file', mediaId } or { source: 'random' }, with loop (plays again until the step changes) and background (no step of its own: loops behind the steps after it). Verses: { source: 'book', bookCode } or { source: 'topic', topicKey }, with translationId and count (null = all of a topic's passages in order, else that many at random each loop). A Versete Biblice slide: { count }",
+      "An item's settings. Music: { source: 'folder', folderId } or { source: 'tracks', fileIds }, with shuffle. Video: { source: 'file', mediaId } or { source: 'random' }, with loop (plays again until the step changes) and background (no step of its own: loops behind the steps after it). Verses: { source: 'book', bookCode } or { source: 'topic', topicKey }, with translationId and count (null = all of a topic's passages in order, else that many at random each loop). A Versete Biblice slide: { count }. A Slides item: its deck (SlideDeck)",
     additionalProperties: true,
   },
   ScheduleItem: {
@@ -127,7 +127,15 @@ export const scheduleSchemas = {
       scheduleId: { type: 'integer' },
       itemType: {
         type: 'string',
-        enum: ['song', 'slide', 'bible_passage', 'music', 'video', 'verses'],
+        enum: [
+          'song',
+          'slide',
+          'bible_passage',
+          'music',
+          'video',
+          'verses',
+          'slides',
+        ],
       },
       itemConfig: {
         allOf: [{ $ref: '#/components/schemas/ScheduleItemConfig' }],

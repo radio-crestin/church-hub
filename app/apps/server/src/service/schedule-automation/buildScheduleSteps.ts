@@ -1,6 +1,8 @@
 import { expandSongSlidesWithChoruses } from '../presentation/expand-song-slides'
 import { isBackgroundVideo } from '../schedule-items/isBackgroundVideo'
 import type { ScheduleItem } from '../schedules/types'
+import { deckSteps } from '../slides-deck/deckSteps'
+import type { SlideDeck } from '../slides-deck/types'
 
 export type ScheduleStepType =
   | 'slide'
@@ -9,10 +11,12 @@ export type ScheduleStepType =
   | 'announcement'
   | 'scene'
   | 'video'
+  | 'deck'
 
 /**
- * One presentable step of a presentation: a slide, verse, entry, slide item
- * or video. A music item is no step: it starts playing as the presentation
+ * One presentable step of a presentation: a slide, verse, entry, slide item,
+ * video, or a Slides item's slide with its animations up to a click (`deck`,
+ * one step per slide and click: deckSteps). A music item is no step: it starts playing as the presentation
  * reaches the step after it (see `musicCue`); nor is a background video,
  * shown behind the steps after it (see `stepBackground`).
  */
@@ -51,6 +55,10 @@ export function buildScheduleSteps(items: ScheduleItem[]): ScheduleStep[] {
     } else if (item.itemType === 'video') {
       if (item.video && !isBackgroundVideo(item))
         steps.push({ item, type: 'video', index: 0 })
+    } else if (item.itemType === 'slides') {
+      deckSteps(item.itemConfig as SlideDeck).forEach((_, index) => {
+        steps.push({ item, type: 'deck', index })
+      })
     } else if (item.itemType === 'slide') {
       steps.push({ item, type: 'announcement', index: 0 })
     }

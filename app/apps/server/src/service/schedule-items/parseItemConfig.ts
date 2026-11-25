@@ -1,4 +1,5 @@
 import type { ConfigurableItemType, ItemConfigs } from './types'
+import { parseSlideDeck } from '../slides-deck/parseSlideDeck'
 
 /** A switch an older item may not have yet (off). */
 function isOptionalFlag(value: unknown): boolean {
@@ -10,13 +11,15 @@ function isCount(value: unknown): boolean {
 }
 
 /**
- * Checks an item's settings as the API receives them; throws on anything
- * else, so a bad item is refused instead of stored.
+ * Checks an item's settings (a Slides item's deck) as the API receives them;
+ * throws on anything else, so a bad item is refused instead of stored.
  */
 export function parseItemConfig<T extends ConfigurableItemType>(
   type: T,
   value: unknown,
 ): ItemConfigs[T] {
+  // A deck is rebuilt field by field, its HTML sanitized.
+  if (type === 'slides') return parseSlideDeck(value) as ItemConfigs[T]
   const c = value as Record<string, unknown> | null
   const valid = (() => {
     if (!c || typeof c !== 'object') return false

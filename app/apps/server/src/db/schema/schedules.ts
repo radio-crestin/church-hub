@@ -57,7 +57,15 @@ export const scheduleItems = sqliteTable(
       .notNull()
       .references(() => schedules.id, { onDelete: 'cascade' }),
     itemType: text('item_type', {
-      enum: ['song', 'slide', 'bible_passage', 'music', 'video', 'verses'],
+      enum: [
+        'song',
+        'slide',
+        'bible_passage',
+        'music',
+        'video',
+        'verses',
+        'slides',
+      ],
     }).notNull(),
     songId: integer('song_id').references(() => songs.id, {
       onDelete: 'cascade',

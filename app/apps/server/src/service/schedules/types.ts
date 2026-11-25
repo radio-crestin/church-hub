@@ -16,6 +16,7 @@ export type ScheduleItemType =
   | 'music'
   | 'video'
   | 'verses'
+  | 'slides'
 
 /**
  * Slide template types for standalone slides (same as queue)
@@ -296,6 +297,8 @@ export interface AddToScheduleInput {
   obsSceneName?: string
   /** A music, video or verses item and its settings. */
   media?: { itemType: MediaItemType; itemConfig: unknown }
+  /** A Slides item: its deck (service/slides-deck), checked before it is stored. */
+  slides?: unknown
 }
 
 /**

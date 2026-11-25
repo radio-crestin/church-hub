@@ -1,3 +1,5 @@
+import type { SlideDeck } from '../slides-deck/types'
+
 /** Music: a whole folder of the Music library, or tracks picked by hand. */
 export type MusicItemConfig = (
   | { source: 'folder'; folderId: number }
@@ -43,8 +45,11 @@ export interface VerseteItemConfig {
 /** The item types that are only their settings. */
 export type MediaItemType = 'music' | 'video' | 'verses'
 
-/** `versete`: a Versete Biblice slide (how many of its passages it shows). */
-export type ConfigurableItemType = MediaItemType | 'versete'
+/**
+ * `versete`: a Versete Biblice slide (how many of its passages it shows);
+ * `slides`: a Slides item's deck.
+ */
+export type ConfigurableItemType = MediaItemType | 'versete' | 'slides'
 
 export type ItemConfig = ItemConfigs[ConfigurableItemType]
 
@@ -53,6 +58,7 @@ export interface ItemConfigs {
   video: VideoItemConfig
   verses: VersesItemConfig
   versete: VerseteItemConfig
+  slides: SlideDeck
 }
 
 /** What a music item plays, as the list shows it. */
