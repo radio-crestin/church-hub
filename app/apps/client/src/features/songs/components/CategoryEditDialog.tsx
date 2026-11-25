@@ -94,15 +94,15 @@ export const CategoryEditDialog = forwardRef<CategoryEditDialogHandle>(
         onClose={handleClose}
         onClick={handleBackdropClick}
       >
-        <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-panel rounded-xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-line">
+            <h2 className="text-base font-semibold text-fg truncate">
               {t('categoryDialog.title')}
             </h2>
             <button
               onClick={handleClose}
-              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-1.5 rounded-lg text-fg-hint hover:bg-hover transition-colors"
             >
               <X size={20} />
             </button>
@@ -112,17 +112,15 @@ export const CategoryEditDialog = forwardRef<CategoryEditDialogHandle>(
           <div className="px-4 sm:px-6 py-4 space-y-4">
             {song && (
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-fg-body mb-1">
                   {t('categoryDialog.songTitle')}
                 </label>
-                <p className="text-gray-900 dark:text-white font-medium break-words">
-                  {song.title}
-                </p>
+                <p className="text-fg font-medium break-words">{song.title}</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-fg-body mb-1">
                 {t('categoryDialog.category')}
               </label>
               <CategoryPicker
@@ -134,11 +132,11 @@ export const CategoryEditDialog = forwardRef<CategoryEditDialogHandle>(
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-line">
             <button
               onClick={handleClose}
-              className="px-5 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300
-                bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600
+              className="px-5 py-2.5 text-base font-medium text-fg-body
+                bg-field rounded-lg hover:bg-hover
                 transition-colors min-w-[90px]"
             >
               {t('categoryDialog.cancel')}
@@ -146,7 +144,7 @@ export const CategoryEditDialog = forwardRef<CategoryEditDialogHandle>(
             <button
               onClick={handleSave}
               disabled={upsertSong.isPending}
-              className="px-5 py-2.5 text-base font-medium text-white bg-indigo-600 rounded-lg
+              className="px-5 py-2.5 text-base font-medium text-white bg-primary rounded-lg
                 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[90px]"
             >
               {upsertSong.isPending

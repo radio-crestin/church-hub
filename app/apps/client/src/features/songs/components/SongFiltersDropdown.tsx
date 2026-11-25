@@ -187,10 +187,10 @@ export function SongFiltersDropdown({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
-        className={`px-2 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors flex items-center justify-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+        className={`px-2 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors flex items-center justify-center gap-1.5 focus:ring-2 focus:ring-focus focus:border-focus ${
           activeFiltersCount > 0
-            ? 'bg-indigo-600 text-white border-indigo-600'
-            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+            ? 'bg-selected text-fg border-transparent'
+            : 'bg-panel border-line text-fg-hint'
         }`}
         title={t('search.filters')}
       >
@@ -206,7 +206,7 @@ export function SongFiltersDropdown({
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+            className="fixed z-[9999] bg-panel border border-line rounded-lg shadow-lg overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
                 ? { bottom: dropdownPosition.bottom }
@@ -223,17 +223,13 @@ export function SongFiltersDropdown({
                     key={option.key}
                     type="button"
                     onClick={() => handleToggle(option.key)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                      isSelected
-                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-                        : 'text-gray-900 dark:text-white'
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded hover:bg-hover ${
+                      isSelected ? 'bg-selected text-fg' : 'text-fg'
                     }`}
                   >
                     <div
                       className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
-                        isSelected
-                          ? 'bg-indigo-600 border-indigo-600'
-                          : 'border-gray-300 dark:border-gray-500'
+                        isSelected ? 'bg-primary border-primary' : 'border-line'
                       }`}
                     >
                       {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -245,8 +241,8 @@ export function SongFiltersDropdown({
                   </button>
                 )
               })}
-              <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
-              <div className="px-3 py-1 text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">
+              <div className="border-t border-line my-1" />
+              <div className="px-3 py-1 text-xs font-medium text-fg-hint">
                 {t('search.sortBy')}
               </div>
               {SORT_OPTIONS.map((option) => {
@@ -257,21 +253,17 @@ export function SongFiltersDropdown({
                     key={option.value}
                     type="button"
                     onClick={() => handleSortChange(option.value)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                      isActive
-                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-                        : 'text-gray-900 dark:text-white'
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded hover:bg-hover ${
+                      isActive ? 'bg-selected text-fg' : 'text-fg'
                     }`}
                   >
                     <div
                       className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                        isActive
-                          ? 'border-indigo-600'
-                          : 'border-gray-300 dark:border-gray-500'
+                        isActive ? 'border-primary' : 'border-line'
                       }`}
                     >
                       {isActive && (
-                        <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
                       )}
                     </div>
                     <span className="flex items-center gap-2">

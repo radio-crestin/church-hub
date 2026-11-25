@@ -27,13 +27,11 @@ export function SongLoadError({
       className="flex h-full items-center justify-center p-4"
     >
       <div className="flex max-w-md flex-col items-center gap-3 text-center">
-        <CloudOff className="h-10 w-10 text-gray-400 dark:text-gray-500" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <CloudOff className="h-10 w-10 text-fg-hint" />
+        <h2 className="text-base font-semibold text-fg">
           {t('loadError.title')}
         </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {t('loadError.description')}
-        </p>
+        <p className="text-sm text-fg-label">{t('loadError.description')}</p>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
           <Button
             data-testid="song-load-retry"

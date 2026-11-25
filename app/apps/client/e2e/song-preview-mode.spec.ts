@@ -56,7 +56,7 @@ test.describe('Song Preview Mode', () => {
     await preview.click()
     await expect(preview).toHaveAttribute('aria-checked', 'true')
     await expect(live).toHaveAttribute('aria-checked', 'false')
-    await expect(slide0).toHaveClass(/ring-indigo-500/)
+    await expect(slide0).toHaveClass(/bg-selected/)
 
     // The Afișează (Project) button is available for the staged slide.
     const projectBtn = page.locator('[data-testid="song-project-staged"]')
@@ -85,7 +85,7 @@ test.describe('Song Preview Mode', () => {
     await expect(hideBtn).toBeVisible({ timeout: 3000 })
     await hideBtn.click()
     await page.waitForTimeout(600)
-    await expect(liveSlide).toHaveClass(/ring-indigo-500/)
+    await expect(liveSlide).toHaveClass(/bg-selected/)
     await expect(projectBtn).toBeVisible()
 
     // Clean up: back to live, where a click projects straight away.

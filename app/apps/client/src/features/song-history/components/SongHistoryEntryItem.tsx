@@ -36,25 +36,25 @@ export function SongHistoryEntryItem({
       >
         <Chevron
           size={16}
-          className="mt-1 shrink-0 text-gray-400"
+          className="mt-1 shrink-0 text-fg-hint"
           aria-hidden="true"
         />
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-baseline gap-x-2">
             <span
-              className="font-medium text-gray-900 dark:text-white"
+              className="font-medium text-fg"
               data-testid="song-history-author"
             >
               {entry.editedByName}
             </span>
-            <span className="text-xs text-indigo-600 dark:text-indigo-300">
+            <span className="text-xs text-fg-label">
               {t(`kind.${entry.kind}`)}
             </span>
           </span>
-          <span className="block text-xs text-gray-500 dark:text-gray-400">
+          <span className="block text-xs text-fg-hint">
             {formatHistoryDate(entry.createdAt, i18n.language)}
           </span>
-          <span className="block text-sm text-gray-600 dark:text-gray-300">
+          <span className="block text-sm text-fg-label">
             <SongHistoryChangeSummary entry={entry} />
           </span>
         </span>

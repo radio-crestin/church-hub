@@ -41,7 +41,7 @@ export function LinkSourcesSection() {
         title={t('songSources.links.title')}
         description={t('songSources.links.description')}
       />
-      <p className="text-sm text-gray-600 dark:text-gray-300">
+      <p className="text-sm text-fg-label">
         <span className="font-medium">{t('songSources.builtIn')}:</span>{' '}
         {builtIn.map((s) => s.name).join(', ')}
       </p>
@@ -70,11 +70,9 @@ export function LinkSourcesSection() {
       </form>
 
       {fromLinks.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t('songSources.links.empty')}
-        </p>
+        <p className="text-sm text-fg-hint">{t('songSources.links.empty')}</p>
       ) : (
-        <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-700">
+        <ul className="divide-y divide-line rounded-lg border border-line">
           {fromLinks.map((source) => (
             <li
               key={source.id}
@@ -82,12 +80,10 @@ export function LinkSourcesSection() {
               data-testid="song-source-link"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                <p className="truncate text-sm font-medium text-fg">
                   {source.name}
                 </p>
-                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                  {source.url}
-                </p>
+                <p className="truncate text-xs text-fg-hint">{source.url}</p>
               </div>
               <button
                 type="button"

@@ -117,11 +117,14 @@ export function EditSongBookmarksTextModal({
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-panel rounded-lg shadow-xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2 min-w-0">
-            <FileText className="w-5 h-5 shrink-0 text-amber-500" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+            <FileText
+              className="w-4 h-4 shrink-0 text-fg-label"
+              strokeWidth={1.5}
+            />
+            <h2 className="text-base font-semibold text-fg truncate">
               {t('bookmarks.textEdit.title')}
             </h2>
           </div>
@@ -129,14 +132,14 @@ export function EditSongBookmarksTextModal({
             type="button"
             onClick={handleClose}
             aria-label={t('bookmarks.textEdit.cancel')}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1 hover:bg-hover rounded transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-fg-hint" />
           </button>
         </div>
 
         <div className="p-4 space-y-3 overflow-y-auto">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-fg-label">
             {t('bookmarks.textEdit.description')}
           </p>
 
@@ -151,13 +154,13 @@ export function EditSongBookmarksTextModal({
             spellCheck={false}
             disabled={loadMutation.isPending}
             data-testid="bookmarks-text-textarea"
-            className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-y font-mono text-sm"
+            className="w-full px-3 py-2 bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-y font-mono text-[13px]"
           />
 
           <button
             type="button"
             onClick={handlePickFile}
-            className="inline-flex items-center gap-1.5 text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+            className="inline-flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg"
           >
             <FolderOpen className="w-4 h-4" />
             {t('bookmarks.textEdit.chooseFile')}
@@ -198,11 +201,11 @@ export function EditSongBookmarksTextModal({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-2 px-4 py-3 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('bookmarks.textEdit.cancel')}
           </button>
@@ -211,7 +214,7 @@ export function EditSongBookmarksTextModal({
             onClick={handleSave}
             disabled={loadMutation.isPending || replaceMutation.isPending}
             data-testid="bookmarks-text-save"
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('bookmarks.textEdit.save')}
           </button>

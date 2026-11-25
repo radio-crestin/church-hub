@@ -44,7 +44,7 @@ export function TextTransformMenu({
         disabled={disabled}
         title={t('stageEditor.style.changeCase')}
         aria-label={t('stageEditor.style.changeCase')}
-        className="flex items-center justify-center rounded-md border border-gray-300 p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+        className="flex items-center justify-center rounded-md border border-line p-1.5 text-fg-label transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
         <CaseSensitive size={16} />
       </button>
@@ -54,7 +54,7 @@ export function TextTransformMenu({
           <ul
             ref={panelRef}
             data-testid="slide-style-transform-list"
-            className="fixed z-[100] w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            className="fixed z-[100] w-56 rounded-lg border border-line bg-panel py-1 shadow-lg"
             style={{ top: at.top, left: at.left }}
           >
             {TRANSFORMS.map(({ id, icon: Icon }) => (
@@ -67,9 +67,9 @@ export function TextTransformMenu({
                     close()
                     onTransform(id)
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-fg-body transition-colors hover:bg-hover"
                 >
-                  <Icon size={14} className="shrink-0 text-gray-400" />
+                  <Icon size={14} className="shrink-0 text-fg-hint" />
                   {t(`stageEditor.style.case.${id}`)}
                 </button>
               </li>

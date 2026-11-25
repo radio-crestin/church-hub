@@ -26,7 +26,7 @@ export function SongDragGhost() {
   return createPortal(
     <div
       data-testid="song-drag-ghost"
-      className="pointer-events-none fixed z-[100] flex max-w-xs items-center gap-2 rounded-lg border border-indigo-300 bg-white px-3 py-2 shadow-lg dark:border-indigo-500 dark:bg-gray-800"
+      className="pointer-events-none fixed z-[100] flex max-w-xs items-center gap-2 rounded-[10px] border border-line bg-panel px-3 py-2 text-[13px] shadow-[0_12px_32px_rgba(0,0,0,0.25)]"
       style={{
         // Offset so the card sits under the cursor rather than on top of it.
         left: state.x + 12,
@@ -37,12 +37,9 @@ export function SongDragGhost() {
         transition: 'transform 120ms ease-out',
       }}
     >
-      <GripVertical size={14} className="shrink-0 text-gray-400" />
-      <Music
-        size={14}
-        className="shrink-0 text-indigo-500 dark:text-indigo-400"
-      />
-      <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
+      <GripVertical size={14} className="shrink-0 text-fg-hint" />
+      <Music size={14} className="shrink-0 text-fg-label" />
+      <span className="truncate text-sm font-medium text-fg">
         {state.song.title}
       </span>
     </div>,

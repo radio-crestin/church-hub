@@ -20,10 +20,10 @@ export function SongBackgroundField({
 
   return (
     <fieldset data-testid="song-background-section">
-      <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <legend className="block text-sm font-medium text-fg-body mb-1">
         {t('editor.background.title')}
       </legend>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+      <p className="text-xs text-fg-hint mb-2">
         {t('editor.background.helper')}
       </p>
       <BackgroundEditor

@@ -83,7 +83,7 @@ export function ExportOptionsModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto"
+      className="fixed inset-0 m-auto p-0 rounded-xl shadow-xl backdrop:bg-black/50 bg-panel max-h-[90vh] overflow-y-auto"
       onClose={onCancel}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
@@ -91,21 +91,21 @@ export function ExportOptionsModal({
       <div className="p-6 min-w-[400px] max-w-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Download className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <Download className="w-5 h-5 text-fg-label" />
+            <h2 className="text-base font-semibold text-fg">
               {t('sections.importExport.export.title')}
             </h2>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-fg-label mb-6">
           {t('sections.importExport.export.description')}
         </p>
 
@@ -117,9 +117,9 @@ export function ExportOptionsModal({
               name="exportScope"
               checked={exportScope === 'all'}
               onChange={() => setExportScope('all')}
-              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              className="w-4 h-4 text-primary bg-field border-line focus:ring-focus"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-fg-body">
               {t('sections.importExport.export.allSongs')}
             </span>
           </label>
@@ -130,9 +130,9 @@ export function ExportOptionsModal({
               name="exportScope"
               checked={exportScope === 'category'}
               onChange={() => setExportScope('category')}
-              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              className="w-4 h-4 text-primary bg-field border-line focus:ring-focus"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-fg-body">
               {t('sections.importExport.export.byCategory')}
             </span>
           </label>
@@ -150,36 +150,32 @@ export function ExportOptionsModal({
 
         {/* File Format Selection */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <h3 className="text-sm font-medium text-fg-body mb-3">
             {t('sections.importExport.export.fileFormatLabel')}
           </h3>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setFileFormat('opensong')}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors cursor-pointer ${
                 fileFormat === 'opensong'
-                  ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-line-strong bg-selected'
+                  : 'border-line hover:bg-hover'
               }`}
             >
               <FileText
                 className={`w-8 h-8 ${
-                  fileFormat === 'opensong'
-                    ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                  fileFormat === 'opensong' ? 'text-fg' : 'text-fg-hint'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
-                  fileFormat === 'opensong'
-                    ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-700 dark:text-gray-300'
+                  fileFormat === 'opensong' ? 'text-fg' : 'text-fg-body'
                 }`}
               >
                 {t('sections.importExport.export.fileFormats.opensong')}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <span className="text-xs text-fg-hint text-center">
                 {t(
                   'sections.importExport.export.fileFormats.opensongDescription',
                 )}
@@ -189,29 +185,25 @@ export function ExportOptionsModal({
             <button
               type="button"
               onClick={() => setFileFormat('pptx')}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors cursor-pointer ${
                 fileFormat === 'pptx'
-                  ? 'border-orange-600 bg-orange-50 dark:bg-orange-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-line-strong bg-selected'
+                  : 'border-line hover:bg-hover'
               }`}
             >
               <Presentation
                 className={`w-8 h-8 ${
-                  fileFormat === 'pptx'
-                    ? 'text-orange-600 dark:text-orange-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                  fileFormat === 'pptx' ? 'text-fg' : 'text-fg-hint'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
-                  fileFormat === 'pptx'
-                    ? 'text-orange-600 dark:text-orange-400'
-                    : 'text-gray-700 dark:text-gray-300'
+                  fileFormat === 'pptx' ? 'text-fg' : 'text-fg-body'
                 }`}
               >
                 {t('sections.importExport.export.fileFormats.pptx')}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <span className="text-xs text-fg-hint text-center">
                 {t('sections.importExport.export.fileFormats.pptxDescription')}
               </span>
             </button>
@@ -220,7 +212,7 @@ export function ExportOptionsModal({
 
         {/* Destination Selection */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <h3 className="text-sm font-medium text-fg-body mb-3">
             {t('sections.importExport.export.destinationLabel')}
           </h3>
           <div className="grid grid-cols-2 gap-3">
@@ -228,29 +220,29 @@ export function ExportOptionsModal({
               type="button"
               onClick={() => isTauri && setDestination('folder')}
               disabled={!isTauri}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors ${
                 destination === 'folder' && isTauri
-                  ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-line-strong bg-selected'
+                  : 'border-line hover:bg-hover'
               } ${!isTauri ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <FolderOpen
                 className={`w-8 h-8 ${
                   destination === 'folder' && isTauri
-                    ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                    ? 'text-fg'
+                    : 'text-fg-hint'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
                   destination === 'folder' && isTauri
-                    ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-700 dark:text-gray-300'
+                    ? 'text-fg'
+                    : 'text-fg-body'
                 }`}
               >
                 {t('sections.importExport.export.destinations.folder')}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <span className="text-xs text-fg-hint text-center">
                 {isTauri
                   ? t(
                       'sections.importExport.export.destinations.folderDescription',
@@ -264,29 +256,25 @@ export function ExportOptionsModal({
             <button
               type="button"
               onClick={() => setDestination('zip')}
-              className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors cursor-pointer ${
                 destination === 'zip'
-                  ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-line-strong bg-selected'
+                  : 'border-line hover:bg-hover'
               }`}
             >
               <Package
                 className={`w-8 h-8 ${
-                  destination === 'zip'
-                    ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                  destination === 'zip' ? 'text-fg' : 'text-fg-hint'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
-                  destination === 'zip'
-                    ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-gray-700 dark:text-gray-300'
+                  destination === 'zip' ? 'text-fg' : 'text-fg-body'
                 }`}
               >
                 {t('sections.importExport.export.destinations.zip')}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              <span className="text-xs text-fg-hint text-center">
                 {t('sections.importExport.export.destinations.zipDescription')}
               </span>
             </button>
@@ -297,7 +285,7 @@ export function ExportOptionsModal({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('common:buttons.cancel', { ns: 'common' })}
           </button>
@@ -305,7 +293,7 @@ export function ExportOptionsModal({
             type="button"
             onClick={handleConfirm}
             disabled={exportScope === 'category' && categoryId === null}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('sections.importExport.export.button')}
           </button>

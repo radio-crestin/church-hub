@@ -69,24 +69,24 @@ export function SongPickerModal({
       ref={dialogRef}
       // Near-full-screen with a ~5% margin: searching a song library inside a
       // small box was the main complaint about this picker.
-      className="fixed inset-0 m-auto h-[90vh] w-[90vw] max-w-none p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+      className="fixed inset-0 m-auto h-[90vh] w-[90vw] max-w-none p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose()
       }}
     >
       <div className="flex h-full flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 border-b border-line flex-shrink-0">
+          <h2 className="text-base font-semibold text-fg">
             {t('picker.selectSong')}
           </h2>
           <button
             type="button"
             onClick={handleClose}
             disabled={isProcessing}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-1 rounded hover:bg-hover disabled:opacity-50"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-fg-hint" />
           </button>
         </div>
 
@@ -94,7 +94,7 @@ export function SongPickerModal({
         <div className="flex flex-1 min-h-0 flex-col p-4">
           {isProcessing ? (
             <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-fg-hint" />
             </div>
           ) : (
             <SongSearchPicker

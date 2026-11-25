@@ -55,15 +55,13 @@ export function SongHistoryEntryDetails({
   if (isLoading) {
     return (
       <div className="flex justify-center py-4">
-        <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+        <Loader2 className="h-5 w-5 animate-spin text-fg-hint" />
       </div>
     )
   }
   if (!entry) {
     return (
-      <p className="py-3 text-sm text-gray-500 dark:text-gray-400">
-        {t('details.unavailable')}
-      </p>
+      <p className="py-3 text-sm text-fg-hint">{t('details.unavailable')}</p>
     )
   }
 
@@ -75,7 +73,7 @@ export function SongHistoryEntryDetails({
     <div className="space-y-3 pt-3" data-testid="song-history-details">
       {titleChanged && (
         <div>
-          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <h4 className="mb-1 text-xs font-medium text-fg-hint">
             {t('details.title')}
           </h4>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -95,7 +93,7 @@ export function SongHistoryEntryDetails({
 
       {changedSlides.map((changed) => (
         <div key={changed.index}>
-          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <h4 className="mb-1 text-xs font-medium text-fg-hint">
             {t('details.slide', { number: changed.index + 1 })}
           </h4>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -120,7 +118,7 @@ export function SongHistoryEntryDetails({
               type="button"
               onClick={() => onRestore('before')}
               data-testid="song-history-restore-before"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-line px-3 py-2 text-sm font-medium text-fg-body hover:bg-hover"
             >
               <RotateCcw size={14} />
               {t('restore.before')}
@@ -130,7 +128,7 @@ export function SongHistoryEntryDetails({
             type="button"
             onClick={() => onRestore('after')}
             data-testid="song-history-restore-after"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
             <RotateCcw size={14} />
             {t('restore.after')}

@@ -863,13 +863,13 @@ export function SongList({
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex-shrink-0 pb-3 space-y-2 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col h-full min-h-0 bg-panel p-3 rounded-lg border border-line">
+      <div className="flex-shrink-0 pb-3 space-y-2 border-b border-line">
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-hint"
             />
             <input
               ref={searchInputRef}
@@ -904,16 +904,16 @@ export function SongList({
               w-full 
               pl-9 
               py-2 
-              text-sm 
-              bg-gray-50 dark:bg-gray-700 
-              border border-gray-200 dark:border-gray-600 
-              rounded-lg 
-              focus:ring-2 f
-              ocus:ring-indigo-500 
-              focus:border-indigo-500 
-              text-gray-900 
-              dark:text-white 
-              placeholder-gray-400
+              text-[13px]
+              bg-field
+              border-0
+              rounded-[10px]
+              focus:outline-none
+              focus:ring-1
+              focus:ring-inset
+              focus:ring-focus
+              text-fg
+              placeholder:text-fg-hint
               ${searchSongShortcut && !localQuery ? 'pr-20' : 'pr-9'}
               `}
             />
@@ -921,13 +921,13 @@ export function SongList({
               <div className="absolute top-1/2 transform -translate-y-1/2 flex items-center gap-1 right-9">
                 {aiSearchMutation.isPending ? (
                   <>
-                    <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
-                    <span className="text-xs text-indigo-500">
+                    <Sparkles className="w-4 h-4 text-fg-label animate-pulse" />
+                    <span className="text-xs text-fg-hint">
                       {t('search.aiProcessing')}
                     </span>
                   </>
                 ) : (
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                  <div className="w-2 h-2 bg-fg-hint rounded-full" />
                 )}
               </div>
             )}
@@ -947,10 +947,10 @@ export function SongList({
               type="button"
               onClick={handleAISearch}
               disabled={!localQuery.trim() || aiSearchMutation.isPending}
-              className={`px-2 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+              className={`px-2 py-1.5 md:px-3 md:py-2 rounded-lg border transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-focus focus:border-focus ${
                 isAISearchActive
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+                  ? 'bg-selected text-fg border-transparent'
+                  : 'bg-panel border-line text-fg-hint'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
               title={t('search.aiSearchTooltip')}
             >
@@ -971,8 +971,8 @@ export function SongList({
               onClick={() => setIsCategoryOpen(!isCategoryOpen)}
               className={`px-2 py-1.5 rounded-lg border transition-colors flex items-center ${
                 categoryIds.length > 0
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
+                  ? 'bg-selected border-transparent text-fg'
+                  : 'bg-panel border-line text-fg-hint'
               }`}
               title={t('search.allCategories')}
             >
@@ -990,7 +990,7 @@ export function SongList({
                   onClick={() => setIsCategoryOpen(false)}
                 />
                 <div
-                  className="md:hidden absolute right-0 top-full mt-1 z-20 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+                  className="md:hidden absolute right-0 top-full mt-1 z-20 bg-panel border border-line rounded-lg shadow-lg overflow-hidden"
                   style={{ minWidth: 200, maxWidth: 'calc(100vw - 24px)' }}
                 >
                   <div className="p-1 max-h-64 overflow-y-auto">
@@ -1006,17 +1006,15 @@ export function SongList({
                               : [...categoryIds, category.id]
                             handleCategoryChange(next)
                           }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                            isSelected
-                              ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-                              : 'text-gray-900 dark:text-white'
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded hover:bg-hover ${
+                            isSelected ? 'bg-selected text-fg' : 'text-fg'
                           }`}
                         >
                           <div
                             className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
                               isSelected
-                                ? 'bg-indigo-600 border-indigo-600'
-                                : 'border-gray-300 dark:border-gray-500'
+                                ? 'bg-primary border-primary'
+                                : 'border-line'
                             }`}
                           >
                             {isSelected && <X className="w-3 h-3 text-white" />}
@@ -1050,10 +1048,7 @@ export function SongList({
       {isLoading ? (
         <div className="flex-1 mt-4 grid gap-3 content-start">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"
-            />
+            <div key={i} className="h-20 bg-field rounded-lg animate-pulse" />
           ))}
         </div>
       ) : displaySongs.length === 0 ? (
@@ -1071,7 +1066,7 @@ export function SongList({
                 <button
                   type="button"
                   onClick={handleClearAllFilters}
-                  className="mt-2 py-2 px-4 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex items-center gap-2"
+                  className="mt-2 py-2 px-4 text-sm text-fg-label hover:text-fg hover:bg-hover rounded-lg transition-colors inline-flex items-center gap-2"
                 >
                   <X className="w-4 h-4" />
                   {t('search.clearFiltersForMore')}
@@ -1082,7 +1077,7 @@ export function SongList({
         </div>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 mt-4">
-          <p className="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400 truncate mb-3 flex items-center gap-1.5">
+          <p className="flex-shrink-0 text-sm text-fg-hint truncate mb-3 flex items-center gap-1.5">
             <span>
               {isSearching
                 ? t('search.resultsCount', { count: totalCount })
@@ -1092,7 +1087,7 @@ export function SongList({
                   })}
             </span>
             {!isSearching && (!sortBy || sortBy === 'lastPlayed') && (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+              <span className="inline-flex items-center gap-1 text-xs text-fg-hint">
                 <Clock className="w-3 h-3" />
                 {t('search.sortLastPlayed')}
               </span>

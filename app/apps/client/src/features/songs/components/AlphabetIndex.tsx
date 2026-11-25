@@ -38,7 +38,7 @@ export function AlphabetIndex({
     <div className="pointer-events-none absolute inset-y-0 right-0 z-20 flex items-center">
       {/* Floating letter bubble while dragging */}
       {isDragging && indicatorLetter && (
-        <div className="pointer-events-none absolute right-9 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-3xl font-bold text-white shadow-xl shadow-indigo-500/30">
+        <div className="pointer-events-none absolute right-9 flex h-16 w-16 items-center justify-center rounded-xl bg-panel text-3xl font-semibold text-fg shadow-[0_12px_32px_rgba(0,0,0,0.25)] ring-1 ring-line">
           {indicatorLetter}
         </div>
       )}
@@ -53,7 +53,7 @@ export function AlphabetIndex({
         onPointerUp={railHandlers.onPointerUp}
         onPointerCancel={railHandlers.onPointerCancel}
         style={{ touchAction: 'none' }}
-        className="pointer-events-auto flex select-none flex-col items-center justify-center rounded-full bg-white/70 px-0.5 py-1 dark:bg-gray-800/70"
+        className="pointer-events-auto flex select-none flex-col items-center justify-center rounded-full bg-panel/70 px-0.5 py-1"
       >
         {letters.map((letter) => {
           const isAvailable = availableLetters.has(letter)
@@ -70,10 +70,10 @@ export function AlphabetIndex({
               onClick={() => isAvailable && onJumpToLetter(letter)}
               className={`flex h-[3.4vh] max-h-5 min-h-3.5 w-5 items-center justify-center rounded-full text-[10px] font-semibold leading-none transition-colors sm:text-xs ${
                 isActive
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-primary text-white'
                   : isAvailable
-                    ? 'text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-indigo-900/40'
-                    : 'text-gray-300 dark:text-gray-600'
+                    ? 'text-fg-label hover:bg-hover hover:text-fg'
+                    : 'text-fg-hint'
               }`}
             >
               {letter}

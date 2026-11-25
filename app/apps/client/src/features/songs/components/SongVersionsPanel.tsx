@@ -26,12 +26,11 @@ import { useUnlinkSong } from '../hooks/useUnlinkSong'
 import { dismissSuggestion, isDismissed } from '../utils/dismissedSuggestions'
 
 /**
- * Row chrome for the currently-opened song — an indigo tint + ring so the
- * "you are here" row pops out of the list without screaming. Shared by the
+ * Row chrome for the currently-opened song — the grey selected fill, so the
+ * "you are here" row stands out of the list without shouting. Shared by the
  * grouped member row and the standalone (suggestions-only) state.
  */
-const currentRowClasses =
-  'border-indigo-300 bg-indigo-50/70 ring-1 ring-indigo-200/60 dark:border-indigo-500/50 dark:bg-indigo-900/25 dark:ring-indigo-500/20'
+const currentRowClasses = 'bg-selected'
 
 /**
  * Title + badges + author/hymn + category/key chips for one version row.
@@ -59,39 +58,39 @@ function VersionRowInfo({
   return (
     <>
       <div className="flex items-center gap-2">
-        <span className="truncate text-sm font-medium text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+        <span className="truncate text-[13px] font-medium text-fg">
           {title}
         </span>
         {isCurrent ? (
-          <span className="inline-flex items-center rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white dark:bg-indigo-500">
+          <span className="shrink-0 text-xs text-fg-hint">
             {t('versions.currentBadge')}
           </span>
         ) : null}
         {isPrimary ? (
           <span
             title={t('versions.primary')}
-            className="inline-flex items-center gap-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+            className="inline-flex shrink-0 items-center gap-1 text-xs text-fg-label"
           >
-            <Crown size={10} />
+            <Crown size={12} strokeWidth={2} />
             {t('versions.primary')}
           </span>
         ) : null}
       </div>
       {author || hymnNumber ? (
-        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+        <p className="truncate text-xs text-fg-hint">
           {[hymnNumber, author].filter(Boolean).join(' · ')}
         </p>
       ) : null}
       {categoryName || keyLine ? (
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
           {categoryName ? (
-            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+            <span className="inline-flex items-center gap-1 text-fg-hint">
               <Tag className="h-3 w-3" />
               {categoryName}
             </span>
           ) : null}
           {keyLine ? (
-            <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+            <span className="inline-flex items-center gap-1 font-medium text-key">
               <Music2 className="h-3 w-3" />
               {keyLine}
             </span>
@@ -171,7 +170,7 @@ function SuggestionsSection({
     return (
       <p
         data-testid="versions-empty-state"
-        className="mt-3 px-1 text-xs italic text-gray-400 dark:text-gray-500"
+        className="mt-3 px-1 text-xs italic text-fg-hint"
       >
         {t('versions.noSuggestions')}
       </p>
@@ -221,15 +220,9 @@ function SuggestionsSection({
   }
 
   return (
-    <div
-      className={
-        topBorder
-          ? 'mt-3 border-t border-gray-200 pt-3 dark:border-gray-700'
-          : ''
-      }
-    >
-      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        <Sparkles size={12} />
+    <div className={topBorder ? 'mt-3 border-t border-line pt-3' : ''}>
+      <div className="mb-1.5 flex items-center gap-1.5 px-2 text-xs font-medium text-fg-label">
+        <Sparkles size={12} strokeWidth={2} />
         {t('versions.suggestionsTitle')}
       </div>
       <ul className="space-y-1">
@@ -239,10 +232,10 @@ function SuggestionsSection({
             <li
               key={s.songId}
               data-testid="version-suggestion-row"
-              className={`flex items-center gap-2 rounded-md px-2 py-1.5 transition-all duration-200 ${
+              className={`flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-200 ${
                 isAccepting
                   ? 'translate-x-2 opacity-0'
-                  : 'opacity-100 hover:bg-gray-50 dark:hover:bg-gray-700/40'
+                  : 'opacity-100 hover:bg-hover'
               }`}
             >
               <Link
@@ -250,18 +243,18 @@ function SuggestionsSection({
                 params={{ songId: String(s.songId) }}
                 className="min-w-0 flex-1"
               >
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                <p className="truncate text-[13px] font-medium text-fg">
                   {s.title}
                 </p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-fg-hint">
                   {s.categoryName ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    <span className="inline-flex items-center gap-1 text-fg-hint">
                       <Tag className="h-3 w-3" />
                       {s.categoryName}
                     </span>
                   ) : null}
                   {s.keyLine ? (
-                    <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                    <span className="inline-flex items-center gap-1 font-medium text-key">
                       <Music2 className="h-3 w-3" />
                       {s.keyLine}
                     </span>
@@ -280,17 +273,17 @@ function SuggestionsSection({
                     onClick={() => handleAccept(s.songId, s.title)}
                     disabled={linkMutation.isPending || isAccepting}
                     title={t('versions.suggestionAccept')}
-                    className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg disabled:opacity-50"
                   >
-                    <Check size={14} />
+                    <Check size={16} strokeWidth={1.5} />
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDismiss(s.songId)}
                     title={t('versions.suggestionDismiss')}
-                    className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg disabled:opacity-50"
                   >
-                    <X size={14} />
+                    <X size={16} strokeWidth={1.5} />
                   </button>
                 </>
               ) : null}
@@ -400,12 +393,12 @@ export function SongVersionsPanel({
   }, [group, songId])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-line bg-panel">
       {/* Header — mirrors SongBookmarksPanel: chevron (optional) + icon +
           title + count + attention badge + CTA on the right. */}
       <div
         data-panel-header
-        className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700"
+        className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-line px-3 py-2"
       >
         <div className="flex min-w-0 items-center gap-2">
           {onToggleCollapse ? (
@@ -419,7 +412,7 @@ export function SongVersionsPanel({
                   : t('versions.collapse', 'Collapse')
               }
               data-testid="versions-collapse-toggle"
-              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-fg-hint transition-transform hover:bg-hover"
             >
               <ChevronDown
                 size={14}
@@ -427,22 +420,25 @@ export function SongVersionsPanel({
               />
             </button>
           ) : null}
-          <Layers className="h-4 w-4 shrink-0 text-indigo-500 dark:text-indigo-400" />
-          <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Layers
+            className="h-4 w-4 shrink-0 text-fg-label"
+            strokeWidth={1.5}
+          />
+          <span className="truncate text-[13px] font-medium text-fg">
             {t('versions.title')}
           </span>
           {memberCount > 0 ? (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-fg-hint tabular-nums">
               ({memberCount})
             </span>
           ) : null}
           {attentionBadge ? (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+            <span className="text-xs font-medium text-fg-label">
               {attentionBadge}
             </span>
           ) : null}
         </div>
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1">
           {onShowSameTheme ? (
             <button
               type="button"
@@ -450,9 +446,9 @@ export function SongVersionsPanel({
               title={t('sameTheme.title')}
               aria-label={t('sameTheme.title')}
               data-testid="versions-same-theme"
-              className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400"
+              className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-label transition-colors hover:bg-hover hover:text-fg"
             >
-              <Compass size={14} />
+              <Compass size={14} strokeWidth={1.75} />
               <span className="hidden xl:inline">{t('sameTheme.title')}</span>
             </button>
           ) : null}
@@ -460,9 +456,9 @@ export function SongVersionsPanel({
             <button
               type="button"
               onClick={() => setLinkModalOpen(true)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+              className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-label transition-colors hover:bg-hover hover:text-fg"
             >
-              <Plus size={14} />
+              <Plus size={14} strokeWidth={1.75} />
               {t('versions.addButton')}
             </button>
           ) : null}
@@ -474,7 +470,7 @@ export function SongVersionsPanel({
       {isCollapsed ? null : (
         <div className="flex-1 min-h-0 overflow-y-auto p-3">
           {isLoading ? (
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-2 text-[13px] text-fg-hint">
               <Loader2 size={14} className="animate-spin" />
             </div>
           ) : !group ? (
@@ -487,7 +483,7 @@ export function SongVersionsPanel({
             <>
               <div
                 data-testid="version-current-row"
-                className={`relative flex items-center gap-3 rounded-lg border px-3 py-2 ${currentRowClasses}`}
+                className={`relative flex items-center gap-3 rounded-lg px-2.5 py-2 ${currentRowClasses}`}
               >
                 <div className="min-w-0 flex-1">
                   <VersionRowInfo
@@ -508,7 +504,7 @@ export function SongVersionsPanel({
             </>
           ) : (
             <>
-              <ul className="space-y-1.5">
+              <ul className="space-y-0.5">
                 {sortedMembers.map((member) => {
                   const isCurrent = member.songId === songId
                   return (
@@ -517,10 +513,10 @@ export function SongVersionsPanel({
                       data-testid={
                         isCurrent ? 'version-current-row' : 'version-member-row'
                       }
-                      className={`relative flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
+                      className={`relative flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors ${
                         isCurrent
                           ? currentRowClasses
-                          : 'group cursor-pointer border-gray-200 hover:border-indigo-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-indigo-500/40 dark:hover:bg-gray-700/40'
+                          : 'group cursor-pointer hover:bg-hover'
                       }`}
                     >
                       {/* Whole-box click target (non-current). Sits beneath the
@@ -537,7 +533,7 @@ export function SongVersionsPanel({
                       ) : null}
                       {/* Title + badges + author/hymn line. For other members
                           the stretched Link above makes the whole row a click
-                          target; the title tints via the row's `group` hover. */}
+                          target. */}
                       <div className="min-w-0 flex-1">
                         <VersionRowInfo
                           title={member.title}
@@ -562,9 +558,9 @@ export function SongVersionsPanel({
                             }
                             disabled={setPrimary.isPending}
                             title={t('versions.setAsPrimary')}
-                            className="rounded p-1.5 text-gray-500 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:hover:bg-amber-900/30 dark:hover:text-amber-300"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg disabled:opacity-50"
                           >
-                            <Crown size={14} />
+                            <Crown size={16} strokeWidth={1.5} />
                           </button>
                         ) : null}
                         {canDelete ? (
@@ -577,9 +573,9 @@ export function SongVersionsPanel({
                             }}
                             disabled={unlink.isPending}
                             title={t('versions.unlink')}
-                            className="rounded p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-red-600 disabled:opacity-50"
                           >
-                            <Unlink size={14} />
+                            <Unlink size={16} strokeWidth={1.5} />
                           </button>
                         ) : null}
                       </div>

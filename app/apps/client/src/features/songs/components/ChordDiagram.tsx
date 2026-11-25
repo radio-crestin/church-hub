@@ -360,23 +360,23 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 min-w-[220px] max-w-[280px]"
+        className="bg-panel rounded-xl shadow-2xl p-6 min-w-[220px] max-w-[280px]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Chord name */}
-        <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-4">
+        <h3 className="text-2xl font-bold text-center text-fg mb-4">
           {localizeChordName(chord, language)}
         </h3>
 
         {/* View toggle */}
-        <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 mb-4">
+        <div className="flex gap-0.5 rounded-lg bg-field p-0.5 mb-4">
           <button
             type="button"
             onClick={() => setView('guitar')}
-            className={`flex-1 px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex-1 h-7 rounded-md px-3 text-[13px] font-medium transition-colors ${
               view === 'guitar'
-                ? 'bg-amber-500 text-white'
-                : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                ? 'bg-selected text-fg'
+                : 'text-fg-label hover:text-fg'
             }`}
           >
             {t('chords.guitar')}
@@ -384,10 +384,10 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
           <button
             type="button"
             onClick={() => setView('piano')}
-            className={`flex-1 px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex-1 h-7 rounded-md px-3 text-[13px] font-medium transition-colors ${
               view === 'piano'
-                ? 'bg-amber-500 text-white'
-                : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                ? 'bg-selected text-fg'
+                : 'text-fg-label hover:text-fg'
             }`}
           >
             {t('chords.piano')}
@@ -395,9 +395,9 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
         </div>
 
         {/* Diagram */}
-        <div className="flex justify-center text-gray-900 dark:text-white">
+        <div className="flex justify-center text-fg">
           {!hasData ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 py-8">
+            <p className="text-sm text-fg-hint py-8">
               {t('chords.noChordData')}
             </p>
           ) : view === 'guitar' && guitarFrets ? (
@@ -405,7 +405,7 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
           ) : pianoNotes ? (
             <PianoDiagram notes={pianoNotes} />
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400 py-8">
+            <p className="text-sm text-fg-hint py-8">
               {t('chords.noChordData')}
             </p>
           )}

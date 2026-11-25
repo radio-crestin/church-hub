@@ -121,7 +121,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                   <HighlightedText text={song.highlightedTitle!} />
                 </span>
                 {categorySuffix && (
-                  <span className="text-gray-400 dark:text-gray-500 font-normal">
+                  <span className="text-fg-hint font-normal">
                     {categorySuffix}
                   </span>
                 )}
@@ -130,7 +130,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
               <h3 className="text-[13px] font-medium text-fg truncate">
                 {song.title}
                 {categorySuffix && (
-                  <span className="text-gray-400 dark:text-gray-500 font-normal">
+                  <span className="text-fg-hint font-normal">
                     {categorySuffix}
                   </span>
                 )}
@@ -178,7 +178,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
             {song.matchedContent && (
               <p
                 data-testid="song-card-snippet"
-                className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
+                className="text-sm text-fg-hint mt-1 line-clamp-2 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
               >
                 <HighlightedText text={song.matchedContent} />
               </p>

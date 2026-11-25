@@ -253,34 +253,34 @@ export function ImportExportManager() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-fg">
           {t('sections.importExport.title')}
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-sm text-fg-hint mt-1">
           {t('sections.importExport.description')}
         </p>
       </div>
 
       <div className="space-y-4">
         {/* Import Section */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="border border-line rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <FileUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h4 className="font-medium text-gray-900 dark:text-white">
+            <FileUp className="w-5 h-5 text-fg-label" />
+            <h4 className="font-medium text-fg">
               {t('sections.importExport.import.title')}
             </h4>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-sm text-fg-hint mb-4">
             {t('sections.importExport.import.description')}
           </p>
           <button
             type="button"
             onClick={handleImport}
-            className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="w-full h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             {t('sections.importExport.import.button')}
           </button>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+          <p className="text-xs text-fg-hint mt-2">
             {t('sections.importExport.import.supportedFormats')}
           </p>
           {/* Hidden file input for web browser fallback */}
@@ -295,20 +295,20 @@ export function ImportExportManager() {
         </div>
 
         {/* Export Section */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="border border-line rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Download className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h4 className="font-medium text-gray-900 dark:text-white">
+            <Download className="w-5 h-5 text-fg-label" />
+            <h4 className="font-medium text-fg">
               {t('sections.importExport.export.title')}
             </h4>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-sm text-fg-hint mb-4">
             {t('sections.importExport.export.description')}
           </p>
           <button
             type="button"
             onClick={handleExport}
-            className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="w-full h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             {t('sections.importExport.export.button')}
           </button>

@@ -174,7 +174,7 @@ export function SongSearchPicker({
   return (
     <div ref={rootRef} className={`flex flex-col min-h-0 ${className}`}>
       <div className="relative flex-shrink-0 mb-3">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-hint" />
         <input
           ref={searchInputRef}
           type="text"
@@ -185,7 +185,7 @@ export function SongSearchPicker({
           }}
           placeholder={t('search.placeholder')}
           data-testid="song-picker-search"
-          className="w-full pl-9 pr-8 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full pl-9 pr-8 py-2 text-sm bg-app border border-line rounded-lg text-fg placeholder:text-fg-hint focus:ring-1 focus:ring-focus focus:border-focus"
         />
         {query && (
           <ClearSearchButton
@@ -195,7 +195,7 @@ export function SongSearchPicker({
               setVisibleCount(PAGE_SIZE)
             }}
             size={16}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg"
           />
         )}
       </div>
@@ -224,7 +224,7 @@ export function SongSearchPicker({
           first revealed page. */}
       {!isLoading && totalRows > 0 && (
         <p
-          className="flex-shrink-0 mb-2 text-xs text-gray-500 dark:text-gray-400"
+          className="flex-shrink-0 mb-2 text-xs text-fg-hint"
           data-testid="song-picker-count"
         >
           {isSearching
@@ -238,17 +238,17 @@ export function SongSearchPicker({
 
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto scrollbar-thin rounded-lg border border-gray-200 dark:border-gray-700"
+        className="flex-1 min-h-0 overflow-y-auto scrollbar-thin rounded-lg border border-line"
         data-testid="song-picker-list"
       >
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-fg-hint" />
           </div>
         ) : rows.length === 0 ? (
           <div className="px-4 py-10 text-center">
-            <Music className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <Music className="w-8 h-8 mx-auto mb-2 text-fg-hint" />
+            <p className="text-sm text-fg-hint">
               {isSearching
                 ? t('search.noResults', { query: debouncedQuery })
                 : t('noSongs')}
@@ -261,7 +261,7 @@ export function SongSearchPicker({
                   setTagIds([])
                 }}
                 data-testid="song-picker-clear-filters"
-                className="mt-3 py-2 px-4 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors inline-flex items-center gap-2"
+                className="mt-3 py-2 px-4 text-sm text-fg-label hover:bg-hover hover:text-fg rounded-lg transition-colors inline-flex items-center gap-2"
               >
                 <X className="w-4 h-4" />
                 {t('search.clearFiltersForMore')}
@@ -297,22 +297,22 @@ export function SongSearchPicker({
                       type="button"
                       onClick={() => onSongSelect(row.id)}
                       data-testid="song-picker-row"
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left border-b border-gray-100 dark:border-gray-700/60 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2 text-left border-b border-line hover:bg-hover transition-colors"
                     >
-                      <Music className="w-4 h-4 shrink-0 text-indigo-500 dark:text-indigo-400" />
+                      <Music className="w-4 h-4 shrink-0 text-fg-label" />
                       <span className="flex-1 min-w-0">
-                        <span className="block text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <span className="block text-sm font-medium text-fg truncate">
                           {row.title}
                         </span>
                         {(row.categoryName || row.keyLine) && (
                           <span className="flex items-center gap-2">
                             {row.categoryName && (
-                              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              <span className="text-xs text-fg-hint truncate">
                                 {row.categoryName}
                               </span>
                             )}
                             {row.keyLine && (
-                              <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0">
+                              <span className="text-xs font-medium text-key shrink-0">
                                 {row.keyLine}
                               </span>
                             )}
@@ -331,7 +331,7 @@ export function SongSearchPicker({
                 onClick={loadMore}
                 disabled={isLoadingMore}
                 data-testid="song-picker-load-more"
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-fg-label hover:bg-hover hover:text-fg transition-colors disabled:opacity-50"
               >
                 {isLoadingMore ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

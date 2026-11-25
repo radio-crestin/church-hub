@@ -40,16 +40,16 @@ export function PublicationRow({ publication }: { publication: Publication }) {
   return (
     <li className="space-y-2 px-3 py-3" data-testid="song-source-publication">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">
+        <p className="text-sm font-medium text-fg">
           {publication.categoryName}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-fg-hint">
           {t('songSources.publish.songs', { count: publication.songCount })} ·{' '}
           {syncedAt}
         </p>
       </div>
       {publication.shareUrl && (
-        <p className="break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+        <p className="break-all rounded-md bg-field px-2 py-1 font-mono text-xs text-fg-body">
           {publication.shareUrl}
         </p>
       )}

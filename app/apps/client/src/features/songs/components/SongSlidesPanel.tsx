@@ -247,7 +247,7 @@ export function SongSlidesPanel({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-fg-hint" />
       </div>
     )
   }
@@ -255,20 +255,20 @@ export function SongSlidesPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-line shrink-0">
         <div className="flex items-center gap-2">
           {canEdit && (
             <button
               type="button"
               data-testid="toggle-slides-edit-mode"
               onClick={onToggleEditMode}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
+              className={`flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg transition-colors ${
                 isEditMode
-                  ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-900/60'
-                  : 'text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  ? 'bg-selected text-fg'
+                  : 'bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover'
               }`}
             >
-              <Pencil size={14} />
+              <Pencil size={14} strokeWidth={1.75} />
               <span>{t('preview.editMode')}</span>
             </button>
           )}
@@ -293,25 +293,23 @@ export function SongSlidesPanel({
               <button
                 type="button"
                 onClick={onToggleEditMode}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg transition-colors bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover"
               >
-                <X size={14} />
+                <X size={14} strokeWidth={1.75} />
                 <span>{t('preview.discardChanges')}</span>
               </button>
               <button
                 type="button"
                 data-testid="save-slides-edit-mode"
                 onClick={handleSaveClick}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-lg border transition-colors ${
-                  isSaving
-                    ? 'bg-green-200 dark:bg-green-900/60 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 cursor-wait'
-                    : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600 hover:bg-green-200 dark:hover:bg-green-900/60'
+                className={`flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg transition-colors bg-primary text-white ${
+                  isSaving ? 'opacity-70 cursor-wait' : 'hover:bg-indigo-700'
                 }`}
               >
                 {isSaving ? (
                   <Loader2 size={14} className="animate-spin" />
                 ) : (
-                  <Check size={14} />
+                  <Check size={14} strokeWidth={1.75} />
                 )}
                 <span>
                   {isSaving ? t('preview.saving') : t('preview.exitEditMode')}
@@ -346,7 +344,7 @@ export function SongSlidesPanel({
                   paddingTop: `${TEXTAREA_PADDING_TOP_PX}px`,
                   paddingBottom: `${TEXTAREA_PADDING_TOP_PX}px`,
                 }}
-                className="absolute inset-0 w-full h-full pl-3 pr-16 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm resize-none whitespace-pre"
+                className="absolute inset-0 w-full h-full pl-3 pr-16 bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus font-mono text-[13px] resize-none whitespace-pre"
               />
               {/* Gutter overlay with per-block Play buttons — offset to clear the textarea scrollbar */}
               <div
@@ -370,17 +368,21 @@ export function SongSlidesPanel({
                           top: `${TEXTAREA_PADDING_TOP_PX + line * TEXTAREA_LINE_HEIGHT_PX}px`,
                           height: `${TEXTAREA_LINE_HEIGHT_PX}px`,
                         }}
-                        className={`pointer-events-auto absolute left-1 right-1 flex items-center justify-center gap-0.5 px-1 text-[10px] font-semibold rounded transition-colors ${
+                        className={`pointer-events-auto absolute left-1 right-1 flex items-center justify-center gap-0.5 px-1 text-[11px] font-medium tabular-nums rounded-md transition-colors ${
                           isLive
-                            ? 'bg-green-500 text-white shadow-sm hover:bg-green-600'
-                            : 'bg-white dark:bg-gray-800 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 shadow-sm'
+                            ? 'bg-live-tint text-live ring-1 ring-inset ring-live'
+                            : 'bg-panel text-fg-label ring-1 ring-inset ring-line hover:bg-hover hover:text-fg'
                         } disabled:opacity-60`}
                         title={t('preview.presentSlide')}
                       >
                         {isLoading ? (
-                          <Loader2 size={10} className="animate-spin" />
+                          <Loader2
+                            size={10}
+                            strokeWidth={2.4}
+                            className="animate-spin"
+                          />
                         ) : (
-                          <Play size={10} />
+                          <Play size={10} strokeWidth={2.4} />
                         )}
                         <span>{blockIdx + 1}</span>
                       </button>
@@ -389,9 +391,7 @@ export function SongSlidesPanel({
                 </div>
               </div>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('editAsText.formatHelp')}
-            </p>
+            <p className="text-xs text-fg-hint">{t('editAsText.formatHelp')}</p>
           </div>
         ) : (
           <SongSlideRailList

@@ -53,6 +53,7 @@ Both themes use the same names. The light values are darker so that every text r
 | `keycap-ring` | `rgba(255,255,255,0.08)` | `rgba(0,0,0,0.12)` | Keycap outline (inset 1px) |
 | `scrollbar` | `#333333`, hover `#4a4a4a` | `#c4c4c4`, hover `#a8a8a8` | Thin scrollbar thumb |
 | `slide` | `#000000` | `#000000` | Projector preview, the same in both themes |
+| `shadow-popover` | `0 12px 32px rgba(0,0,0,0.55)` | `0 12px 32px rgba(0,0,0,0.12)` | Popovers, menus, modals, tooltips |
 
 Never use a raw hex or a palette class (`bg-zinc-800`, `text-purple-500`) in a component. Add or reuse a token instead.
 
