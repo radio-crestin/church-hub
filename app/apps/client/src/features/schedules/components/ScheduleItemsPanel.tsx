@@ -27,6 +27,7 @@ import { Fragment, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
+import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { ScheduleItemAdvance } from './ScheduleItemAdvance'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import { ScheduleItemMidi } from './ScheduleItemMidi'
@@ -78,6 +79,8 @@ interface ScheduleItemsPanelProps {
    * can be given its own time. Absent hides it.
    */
   itemAdvance?: ItemAdvance
+  /** Gives an item its own slide template (null: the presentation's). */
+  onItemTemplateChange?: (item: ScheduleItem, templateId: number | null) => void
   /**
    * The presentation whose song items show their MIDI music and can be given
    * one (editors only). Absent hides it.
@@ -125,6 +128,7 @@ export function ScheduleItemsPanel({
   selectedItemId = null,
   onSelectItem,
   itemAdvance,
+  onItemTemplateChange,
   midiScheduleId,
   expandAllTrigger,
   collapseAllTrigger,
@@ -317,6 +321,7 @@ export function ScheduleItemsPanel({
                   onToggleSung={onToggleSung}
                   onEditKeyLine={onEditKeyLine}
                   itemAdvance={itemAdvance}
+                  onItemTemplateChange={onItemTemplateChange}
                   midiScheduleId={midiScheduleId}
                   readOnly={readOnly}
                   t={t}
@@ -370,6 +375,7 @@ interface SortableItemWrapperProps {
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
   itemAdvance?: ItemAdvance
+  onItemTemplateChange?: (item: ScheduleItem, templateId: number | null) => void
   midiScheduleId?: number
   readOnly: boolean
   t: TFunction
@@ -395,6 +401,7 @@ function SortableItemWrapper({
   onToggleSung,
   onEditKeyLine,
   itemAdvance,
+  onItemTemplateChange,
   midiScheduleId,
   readOnly,
   t,
@@ -606,6 +613,16 @@ function SortableItemWrapper({
               onChange={(seconds) => itemAdvance.onChange(item, seconds)}
             />
           )}
+
+        {onItemTemplateChange && (
+          <TemplatePicker
+            variant="chip"
+            value={item.templateId}
+            noneLabel={t('presentation:templates.presentation.itemNone')}
+            onChange={(templateId) => onItemTemplateChange(item, templateId)}
+            testId={`schedule-item-template-${item.id}`}
+          />
+        )}
 
         {/* Options Menu Button */}
         {!readOnly && (

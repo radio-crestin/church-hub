@@ -35,6 +35,10 @@ export {
   setScheduleItemMidi,
   setScheduleItemMidiVerseTimes,
 } from './setScheduleItemMidi'
+export {
+  setScheduleItemTemplate,
+  setScheduleTemplate,
+} from './setScheduleTemplate'
 export * from './types'
 export { updateScheduleSlide } from './updateScheduleSlide'
 export { upsertSchedule } from './upsertSchedule'

@@ -135,7 +135,7 @@ test.describe('Identify monitors', () => {
     page,
   }) => {
     await fakeDesktopShell(page)
-    await page.goto('/settings/screens')
+    await page.goto(`/settings/screens?screen=${screenId}`)
     const card = page.locator(
       `[data-testid="screen-card"][data-screen-id="${screenId}"]`,
     )

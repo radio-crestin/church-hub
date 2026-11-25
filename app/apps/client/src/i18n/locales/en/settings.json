@@ -1085,7 +1085,7 @@
     },
     "screens": {
       "title": "Screens",
-      "description": "Configure screens for different display purposes. Each screen type has its own layout and configuration options.",
+      "description": "Each screen is a window: on the projector, the stage monitor or the stream. Pick one to choose how it looks and where it shows.",
       "addScreen": "Add Screen",
       "noScreens": "No screens configured",
       "status": {
@@ -1093,23 +1093,21 @@
         "closed": "window closed"
       },
       "groups": {
+        "look": "Look",
         "idle": "When nothing is shown",
-        "window": "Window",
-        "advanced": "More window options"
+        "where": "Where it shows",
+        "more": "More options",
+        "slides": "Slides"
       },
       "idle": {
-        "summaryOpen": "Between songs and verses the projector shows this empty slide. Click it to change its look.",
-        "summaryClosed": "Between songs and verses the window closes: the projector shows the computer's desktop, with no clock or background.",
-        "windowCloses": "Window closed: the desktop shows",
-        "editEmptySlide": "Edit the empty slide",
         "clock": {
           "label": "Clock on the empty slide",
           "description": "Shows the time when nothing is live, for example before the service."
         }
       },
       "window": {
-        "label": "Window open now",
-        "description": "Shows this screen on its display. Turn it off to close the window."
+        "open": "Open window",
+        "close": "Close window"
       },
       "openOnStartup": {
         "label": "Open when the app starts",
@@ -1149,9 +1147,10 @@
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
         "duplicate": "Duplicate the screen with all its settings",
-        "edit": "Edit layout",
+        "edit": "Edit theme",
         "delete": "Delete screen",
-        "editTooltip": "Change what each slide type looks like on this screen: text, background, clock"
+        "editTooltip": "Change this screen's theme: what each slide type looks like (colours, text, background, clock)",
+        "menu": "More screen actions"
       },
       "toast": {
         "created": "Screen created successfully",
@@ -1202,6 +1201,9 @@
           "saveFailed": "Failed to save file",
           "cancelled": "Export cancelled"
         }
+      },
+      "slides": {
+        "description": "Every kind of slide, as this screen shows it. Click one to edit it."
       }
     },
     "developer": {
@@ -1359,6 +1361,9 @@
         "title": "Bible verses by topic",
         "attribution": "The topics and their verses come from the <source>OpenBible.info topical Bible</source>, licensed under <licence>CC BY 4.0</licence>. The Romanian titles are our translation; the verse texts come from your installed Bibles."
       }
+    },
+    "themes": {
+      "title": "Themes"
     }
   }
 }

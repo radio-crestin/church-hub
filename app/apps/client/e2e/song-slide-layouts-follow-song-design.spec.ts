@@ -32,9 +32,11 @@ async function createScreenWithoutSongSlideLayouts(
 
   const db = new DatabaseSync(TEST_DB_PATH)
   try {
+    // The screen's own template, without the two layouts.
     db.prepare(
-      `DELETE FROM screen_content_configs
-       WHERE screen_id = ? AND content_type IN ('song_first_slide', 'song_last_slide')`,
+      `UPDATE slide_templates
+       SET layouts = json_remove(layouts, '$.song_first_slide', '$.song_last_slide')
+       WHERE id = (SELECT template_id FROM screens WHERE id = ?)`,
     ).run(screenId)
   } finally {
     db.close()

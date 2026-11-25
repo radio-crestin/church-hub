@@ -14,6 +14,7 @@ import { addScheduleItemMidi } from './add-schedule-item-midi'
 import { addScheduleItemSung } from './add-schedule-item-sung'
 import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
+import { addSlideTemplates } from './add-slide-templates'
 import { addSongBackground } from './add-song-background'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongEditHistory } from './add-song-edit-history'
@@ -37,12 +38,14 @@ import { mergeBiblePassagesIntoVerseteTineri } from './merge-bible-passages-into
 import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { moveFocusOnlyToKeyScopes } from './move-focus-only-to-key-scopes'
+import { moveScreenLayoutsIntoTemplates } from './move-screen-layouts-into-templates'
 import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
 import { removeSeededSecrets } from './remove-seeded-secrets'
 import { removeSeededTestSong } from './remove-seeded-test-song'
 import { seedSystemRoles } from './seed'
 import { seedBibleTopics } from './seed-bible-topics'
 import { seedBibleTranslations } from './seed-bibles'
+import { seedBundledTemplates } from './seed-bundled-templates'
 import { seedSampleMusic } from './seed-music'
 import { seedDefaultObsScenes } from './seed-obs-scenes'
 import { seedDefaultScreens } from './seed-screens'
@@ -260,6 +263,15 @@ export function runMigrations(rawDb: Database): MigrationResult {
     'add_youtube_broadcast_settings',
     'Running add YouTube broadcast settings migration',
     () => addYouTubeBroadcastSettings(rawDb),
+  )
+
+  // Slide templates (CH-184): the tables, then the bundled designs, before
+  // seed-screens gives each new screen a template of its own.
+  runStep('add_slide_templates', 'Running add slide templates migration', () =>
+    addSlideTemplates(rawDb),
+  )
+  runStep('seed_bundled_templates', 'Seeding bundled slide templates', () =>
+    seedBundledTemplates(rawDb),
   )
 
   // Seed default screens
@@ -496,6 +508,14 @@ export function runMigrations(rawDb: Database): MigrationResult {
     'upgrade_factory_transitions',
     'Running upgrade factory transitions migration',
     () => upgradeFactoryTransitions(rawDb),
+  )
+
+  // Every screen's own layouts become its template (after the steps above
+  // that still upgrade those layouts in place).
+  runStep(
+    'move_screen_layouts_into_templates',
+    'Moving screen layouts into slide templates',
+    () => moveScreenLayoutsIntoTemplates(rawDb),
   )
 
   // Song typos are found through the songs_fts vocabulary now (T-128).

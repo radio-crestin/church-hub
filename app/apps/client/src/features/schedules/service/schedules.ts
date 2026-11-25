@@ -135,6 +135,39 @@ export async function setScheduleItemAdvance(
   return response.data?.success ?? false
 }
 
+/** The template a presentation's slides are drawn with; null: each screen's own. */
+export async function setScheduleTemplate(
+  scheduleId: number,
+  templateId: number | null,
+): Promise<boolean> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    `/api/schedules/${scheduleId}/template`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templateId }),
+    },
+  )
+  return response.data?.success ?? false
+}
+
+/** One item's own template; null: the presentation's. */
+export async function setScheduleItemTemplate(
+  scheduleId: number,
+  itemId: number,
+  templateId: number | null,
+): Promise<boolean> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    `/api/schedules/${scheduleId}/items/${itemId}/template`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templateId }),
+    },
+  )
+  return response.data?.success ?? false
+}
+
 export async function updateScheduleSlide(
   scheduleId: number,
   itemId: number,

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { useTemplatedScreen } from '~/features/slide-templates/hooks/useTemplatedScreen'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { createLogger } from '~/utils/logger'
 import {
@@ -64,9 +65,11 @@ export interface ContentData {
 }
 
 interface UsePresentationContentOptions {
-  /** Screen config for animation duration calculation */
+  /** The screen drawing the content, with its own template's layouts. */
   screen: ScreenWithConfigs | null | undefined
-  /** Whether to calculate next slide data (for preview) */
+  /** The live OBS scene: a screen may draw with another template for it. */
+  obsSceneName?: string | null
+  /** Whether to build the next slide's data; left out, the template decides. */
   includeNextSlide?: boolean
   /** Function to get next verse for bible passages */
   getNextVerse?: (verseId: number) => Promise<{
@@ -88,6 +91,11 @@ interface UsePresentationContentOptions {
 }
 
 interface UsePresentationContentResult {
+  /**
+   * The screen with the template the content is drawn with (an OBS scene's,
+   * a presentation's): draw with this one, not the screen passed in.
+   */
+  screen: ScreenWithConfigs | null | undefined
   contentType: ContentType
   contentData: ContentData
   /** Identity-based key that only changes on slide navigation, not content edits */
@@ -192,13 +200,23 @@ function buildSongSlideContent(
  * 3. Visibility calculation - determines if content should be visible
  */
 export function usePresentationContent({
-  screen,
-  includeNextSlide = false,
+  screen: ownScreen,
+  obsSceneName = null,
+  includeNextSlide: includeNextSlideOption,
   getNextVerse,
   getBookName,
   previewContent = null,
 }: UsePresentationContentOptions): UsePresentationContentResult {
   const { data: presentationState } = usePresentationState()
+  // A presentation's (or its item's) template, carried by what is shown
+  const shownTemplateId = (
+    (previewContent ?? presentationState?.temporaryContent)?.data as
+      | { templateId?: number | null }
+      | undefined
+  )?.templateId
+  const screen = useTemplatedScreen(ownScreen, obsSceneName, shownTemplateId)
+  const includeNextSlide =
+    includeNextSlideOption ?? screen?.nextSlideConfig?.enabled ?? false
   const songUpdateTimestamp = useSongUpdateTimestamp()
 
   const [contentType, setContentType] = useState<ContentType>('empty')
@@ -637,5 +655,5 @@ export function usePresentationContent({
     screen?.contentConfigs,
   )
 
-  return { ...shown, isExitAnimating, presentationState }
+  return { ...shown, screen, isExitAnimating, presentationState }
 }

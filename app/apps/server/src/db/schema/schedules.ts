@@ -30,6 +30,9 @@ export const schedules = sqliteTable(
     startOnAppStart: integer('start_on_app_start', { mode: 'boolean' })
       .notNull()
       .default(false),
+    // The slide template for all its slides (slide_templates.id); NULL = each
+    // screen's own. Local to this computer, like the automation.
+    templateId: integer('template_id'),
     startTrigger: text('start_trigger', {
       mode: 'json',
     }).$type<AutomationTrigger>(),
@@ -74,6 +77,8 @@ export const scheduleItems = sqliteTable(
     // Seconds each slide of this item stays up while the presentation runs by
     // itself; NULL = the presentation's timing.
     advanceSeconds: integer('advance_seconds'),
+    // This item's own slide template; NULL = the presentation's.
+    templateId: integer('template_id'),
     // A MIDI file played with a song item while the presentation runs, its
     // slides following the music (service/midi-audio): the file's content
     // hash (data/midi/<hash>.mid), its name, length, and the second each

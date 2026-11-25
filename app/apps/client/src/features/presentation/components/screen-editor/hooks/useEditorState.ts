@@ -43,10 +43,9 @@ const createEmptyPreviewTexts = (): PreviewTextsMap => ({
 })
 
 interface EditorState {
+  /** The screen with the template being edited, unsaved changes included. */
   screen: ScreenWithConfigs | null
-  effectiveScreen: ScreenWithConfigs | null
   selectedContentType: ContentType
-  selectedScene: string | null
   selectedElement: SelectedElement
   zoom: number
   isDirty: boolean
@@ -57,7 +56,6 @@ interface EditorActions {
   setScreen: (screen: ScreenWithConfigs) => void
   setScreenExternal: (screen: ScreenWithConfigs) => void
   setSelectedContentType: (contentType: ContentType) => void
-  setSelectedScene: (scene: string | null) => void
   setSelectedElement: (element: SelectedElement) => void
   setZoom: (zoom: number) => void
   updateContentConfig: (
@@ -66,6 +64,10 @@ interface EditorActions {
   ) => void
   updateNextSlideConfig: (config: Partial<NextSlideSectionConfig>) => void
   updateGlobalSettings: (settings: ScreenGlobalSettings) => void
+  /** A change across the whole theme (the Design panel). */
+  updateScreen: (
+    update: (screen: ScreenWithConfigs) => ScreenWithConfigs,
+  ) => void
   updateScreenDimensions: (width: number, height: number) => void
   clearSelection: () => void
   markClean: () => void
@@ -81,28 +83,12 @@ export function useEditorState(): [EditorState, EditorActions] {
   const [screen, setScreenState] = useState<ScreenWithConfigs | null>(null)
   const [selectedContentType, setSelectedContentType] =
     useState<ContentType>('song')
-  const [selectedScene, setSelectedScene] = useState<string | null>(null)
   const [selectedElement, setSelectedElement] = useState<SelectedElement>(null)
   const [zoom, setZoom] = useState(1)
   const [isDirty, setIsDirty] = useState(false)
   const [previewTexts, setPreviewTexts] = useState<PreviewTextsMap>(
     createEmptyPreviewTexts,
   )
-
-  // Compute effective screen with scene overrides applied to contentConfigs
-  const effectiveScreen = useMemo(() => {
-    if (!screen || !selectedScene) return screen
-    const overrides = screen.sceneOverrides?.[selectedScene]
-    if (!overrides) return screen
-    const merged = { ...screen.contentConfigs } as Record<string, unknown>
-    for (const [ct, config] of Object.entries(overrides)) {
-      merged[ct] = config
-    }
-    return {
-      ...screen,
-      contentConfigs: merged as unknown as ScreenWithConfigs['contentConfigs'],
-    }
-  }, [screen, selectedScene])
 
   const setScreen = useCallback((newScreen: ScreenWithConfigs) => {
     setScreenState(newScreen)
@@ -118,21 +104,6 @@ export function useEditorState(): [EditorState, EditorActions] {
     (contentType: ContentType, config: ContentTypeConfig) => {
       setScreenState((prev) => {
         if (!prev) return prev
-        if (selectedScene) {
-          // Update scene override - store as Record<string, unknown>
-          const existingOverrides = prev.sceneOverrides ?? {}
-          const sceneConfigs = existingOverrides[selectedScene] ?? {}
-          return {
-            ...prev,
-            sceneOverrides: {
-              ...existingOverrides,
-              [selectedScene]: {
-                ...sceneConfigs,
-                [contentType]: config as unknown as Record<string, unknown>,
-              },
-            },
-          }
-        }
         return {
           ...prev,
           contentConfigs: {
@@ -143,13 +114,13 @@ export function useEditorState(): [EditorState, EditorActions] {
       })
       setIsDirty(true)
     },
-    [selectedScene],
+    [],
   )
 
   const updateNextSlideConfig = useCallback(
     (config: Partial<NextSlideSectionConfig>) => {
       setScreenState((prev) => {
-        if (!prev || !prev.nextSlideConfig) return prev
+        if (!prev) return prev
         return {
           ...prev,
           nextSlideConfig: {
@@ -173,6 +144,14 @@ export function useEditorState(): [EditorState, EditorActions] {
     })
     setIsDirty(true)
   }, [])
+
+  const updateScreen = useCallback(
+    (update: (screen: ScreenWithConfigs) => ScreenWithConfigs) => {
+      setScreenState((prev) => (prev ? update(prev) : prev))
+      setIsDirty(true)
+    },
+    [],
+  )
 
   const updateScreenDimensions = useCallback(
     (width: number, height: number) => {
@@ -222,12 +201,12 @@ export function useEditorState(): [EditorState, EditorActions] {
       setScreen,
       setScreenExternal,
       setSelectedContentType,
-      setSelectedScene,
       setSelectedElement,
       setZoom,
       updateContentConfig,
       updateNextSlideConfig,
       updateGlobalSettings,
+      updateScreen,
       updateScreenDimensions,
       clearSelection,
       markClean,
@@ -238,12 +217,12 @@ export function useEditorState(): [EditorState, EditorActions] {
       setScreen,
       setScreenExternal,
       setSelectedContentType,
-      setSelectedScene,
       setSelectedElement,
       setZoom,
       updateContentConfig,
       updateNextSlideConfig,
       updateGlobalSettings,
+      updateScreen,
       updateScreenDimensions,
       clearSelection,
       markClean,
@@ -255,9 +234,7 @@ export function useEditorState(): [EditorState, EditorActions] {
   return [
     {
       screen,
-      effectiveScreen,
       selectedContentType,
-      selectedScene,
       selectedElement,
       zoom,
       isDirty,

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { PreviewTexts, SelectedElement } from './hooks/useEditorState'
+import { SAMPLE_CONTENT } from './sampleContent'
 import type {
   BibleContentConfig,
   Constraints,
@@ -33,54 +34,6 @@ interface ScreenEditorCanvasProps {
     elementType: string,
     updates: { constraints?: Constraints; size?: SizeWithUnits },
   ) => void
-}
-
-// Sample content for preview
-const SAMPLE_CONTENT: Record<
-  ContentType,
-  {
-    main?: string
-    reference?: string
-    person?: string
-    songKey?: string
-    amen?: string
-    songTitle?: string
-    songTitleNumber?: string
-  }
-> = {
-  song: {
-    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
-    songKey: 'G',
-    amen: 'Amin!',
-    songTitle: 'Aleluia, mărire Domnului',
-    songTitleNumber: 'PDC 19',
-  },
-  song_first_slide: {
-    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
-    songKey: 'G',
-  },
-  song_last_slide: {
-    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
-    amen: 'Amin!',
-  },
-  bible: {
-    reference: 'Ioan 3:16',
-    main: 'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu, pentru ca oricine crede în El să nu piară, ci să aibă viață veșnică.',
-  },
-  bible_passage: {
-    reference: 'Psalmul 23:1-3',
-    main: 'Domnul este Păstorul meu: nu voi duce lipsă de nimic. El mă paște în pășuni verzi și mă duce la ape de odihnă; îmi înviorează sufletul.',
-  },
-  announcement: {
-    main: '<h1>Anunț Important</h1><p>Program special duminica viitoare!</p>',
-  },
-  versete_tineri: {
-    person: 'Andrei Popescu',
-    reference: 'Romani 8:28',
-    main: 'De altă parte, știm că toate lucrurile lucrează împreună spre binele celor ce iubesc pe Dumnezeu.',
-  },
-  empty: {},
-  screen_share: {},
 }
 
 interface DraggableElementProps {
@@ -1144,6 +1097,7 @@ export function ScreenEditorCanvas({
     >
       <div
         ref={canvasRef}
+        data-testid="screen-editor-canvas"
         className="relative rounded-lg overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-600"
         style={{
           width: displaySize.width,

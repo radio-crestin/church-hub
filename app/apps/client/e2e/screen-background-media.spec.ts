@@ -41,7 +41,7 @@ function lyric(page: Page, text: string) {
 
 /** Opens the full-screen editor of one screen from Settings → Screens. */
 async function openScreenEditor(page: Page, screenId: number) {
-  await page.goto('/settings/screens')
+  await page.goto(`/settings/screens?screen=${screenId}`)
   const card = page.locator(
     `[data-testid="screen-card"][data-screen-id="${screenId}"]`,
   )
@@ -56,15 +56,10 @@ async function openScreenEditor(page: Page, screenId: number) {
 
   // Song layout, with no element selected so the sidebar shows the screen's
   // own settings (Background among them).
-  await page.getByTestId('screen-editor-content-type').click()
-  const song = label('presentation', 'screens.contentTypes.song')
-  await page
-    .getByTestId('screen-editor-content-type-option')
-    .filter({ hasText: song })
-    .locator('button')
-    .first()
-    .click()
-  await expect(page.getByTestId('screen-editor-content-type')).toHaveText(song)
+  // The song slide, from the theme's slides on the left.
+  const song = page.getByTestId('screen-editor-slide-song')
+  await song.click()
+  await expect(song).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByTestId('background-song-types-hint')).toBeVisible()
 }
 
@@ -253,7 +248,9 @@ test.describe('Screen background media', () => {
       buffer: PNG,
     })
     expect(media).toMatchObject({ kind: 'image', size: PNG.length })
-    const canvasImage = page.getByTestId('screen-background-image')
+    const canvasImage = page
+      .getByTestId('screen-editor-canvas')
+      .getByTestId('screen-background-image')
     await expect(canvasImage).toHaveCount(1)
     await expect(canvasImage).toHaveAttribute(
       'style',
@@ -507,10 +504,11 @@ test.describe('Screen background media', () => {
     const tile = page.locator(
       `[data-testid="background-media-item"][data-media-id="${media.id}"]`,
     )
-    await expect(page.getByTestId('screen-background-video')).toHaveAttribute(
-      'src',
-      new RegExp(`${media.url}$`),
-    )
+    await expect(
+      page
+        .getByTestId('screen-editor-canvas')
+        .getByTestId('screen-background-video'),
+    ).toHaveAttribute('src', new RegExp(`${media.url}$`))
 
     await tile.getByTestId('background-media-delete').click()
     const dialog = page.locator('dialog[open]')
@@ -532,7 +530,11 @@ test.describe('Screen background media', () => {
     await expect(tile).toHaveCount(0)
     await expect(dialog).toHaveCount(0)
     // The screen no longer points at the deleted file.
-    await expect(page.getByTestId('screen-background-video')).toHaveCount(0)
+    await expect(
+      page
+        .getByTestId('screen-editor-canvas')
+        .getByTestId('screen-background-video'),
+    ).toHaveCount(0)
     expect(await listMediaIds(request)).not.toContain(media.id)
   })
 
@@ -562,10 +564,11 @@ test.describe('Screen background media', () => {
         })),
       ),
     ).toBeVisible()
-    await expect(page.getByTestId('screen-background-image')).toHaveAttribute(
-      'style',
-      backgroundImageStyle(image.url),
-    )
+    await expect(
+      page
+        .getByTestId('screen-editor-canvas')
+        .getByTestId('screen-background-image'),
+    ).toHaveAttribute('style', backgroundImageStyle(image.url))
 
     // And a WebM picked while choosing an image switches it back to Video.
     const video = await uploadThroughPicker(page, request, WEBM_FIXTURE)
@@ -582,11 +585,16 @@ test.describe('Screen background media', () => {
         })),
       ),
     ).toBeVisible()
-    await expect(page.getByTestId('screen-background-video')).toHaveAttribute(
-      'src',
-      new RegExp(`${video.url}$`),
-    )
-    await expect(page.getByTestId('screen-background-image')).toHaveCount(0)
+    await expect(
+      page
+        .getByTestId('screen-editor-canvas')
+        .getByTestId('screen-background-video'),
+    ).toHaveAttribute('src', new RegExp(`${video.url}$`))
+    await expect(
+      page
+        .getByTestId('screen-editor-canvas')
+        .getByTestId('screen-background-image'),
+    ).toHaveCount(0)
   })
 
   test('the editor warns before uploading a heavy animated GIF, and Cancel keeps the background', async ({
@@ -601,7 +609,9 @@ test.describe('Screen background media', () => {
       opacity: 1,
     })
     await openScreenEditor(page, screenId)
-    const canvasImage = page.getByTestId('screen-background-image')
+    const canvasImage = page
+      .getByTestId('screen-editor-canvas')
+      .getByTestId('screen-background-image')
     const tile = page.locator(
       `[data-testid="background-media-item"][data-media-id="${media.id}"]`,
     )
