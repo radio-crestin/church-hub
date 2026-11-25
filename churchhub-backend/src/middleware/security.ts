@@ -35,8 +35,10 @@ export function createCorsMiddleware(): MiddlewareHandler<{
       }
       return null
     },
-    allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['Content-Type'],
+    // PUT, DELETE and Authorization: the cloud sync routes, called by phones
+    // from the public page (T-168) with a device token.
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     maxAge: 86400,
   })

@@ -23,6 +23,24 @@ export interface Bindings {
   // Cloudflare Access service token, only when WAHA sits behind Access.
   WAHA_ACCESS_CLIENT_ID?: string
   WAHA_ACCESS_CLIENT_SECRET?: string
+  // Cloud sync (T-171): the central state, the bucket and the token key.
+  // Unset = the /sync routes answer 503 not_configured.
+  SYNC_DB?: D1Database
+  /** HMAC key of the device token hashes (generate: openssl rand -hex 32). */
+  SYNC_TOKEN_SECRET?: string
+  /** Any S3-compatible endpoint, e.g. https://<account>.r2.cloudflarestorage.com */
+  S3_ENDPOINT?: string
+  S3_BUCKET?: string
+  /** 'auto' for R2 (the default), the bucket's region elsewhere. */
+  S3_REGION?: string
+  S3_ACCESS_KEY_ID?: string
+  S3_SECRET_ACCESS_KEY?: string
+  /** Public, unlisted read URL of the bucket's root (readers GET from it). */
+  S3_PUBLIC_URL?: string
+  /** Log segments after which the service writes a snapshot (default 40). */
+  SYNC_COMPACT_AFTER?: string
+  /** Abuse guard for registering a church (optional binding). */
+  SYNC_RATE_LIMITER?: RateLimit
 }
 
 export interface OAuthState {
