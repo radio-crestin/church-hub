@@ -200,10 +200,10 @@ export function AddScheduleItemModal({
             type="button"
             onClick={() => onOpenChange(true)}
             data-testid="schedule-add-item"
-            className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+            aria-label={t('addMenu.button')}
+            className="flex items-center p-2 text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
           >
             <Plus size={16} />
-            <span className="hidden sm:inline">{t('addMenu.button')}</span>
           </button>
         </Tooltip>
       )}
