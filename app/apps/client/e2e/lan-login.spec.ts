@@ -1,6 +1,7 @@
 import { request as httpRequest } from 'node:http'
 import { expect, type Page, test } from '@playwright/test'
 
+import { setAppLanguage } from './helpers/app-language'
 import { lanBaseUrl, lanLookup } from './helpers/lan-address'
 
 /**
@@ -24,6 +25,8 @@ interface LocalUser {
 const PASSWORD = 'lan-login-123'
 
 async function openLoginFromLan(page: Page) {
+  // The shipped fixtures save Romanian; the assertions read English.
+  await setAppLanguage(page, 'en')
   await page.goto(`${lanBaseUrl()}/present`)
   await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible()
 }
@@ -83,6 +86,7 @@ test.describe('Login from the LAN', () => {
     const superAdmin = users.find((u) => u.isSuperAdmin) as LocalUser
 
     // The desktop app, signed in on the Church Hub computer.
+    await setAppLanguage(desktop, 'en')
     await desktop.goto('/')
     await expect(desktop.getByRole('heading', { name: 'Welcome' })).toBeHidden()
 
@@ -92,11 +96,14 @@ test.describe('Login from the LAN', () => {
     const page = await remote.newPage()
     try {
       await openLoginFromLan(page)
-      await page
+      // The only account, it skips the picker and asks for the code at once.
+      const pairing = page.getByText('Pairing code')
+      const pick = page
         .getByRole('button', { name: new RegExp(superAdmin.name) })
         .first()
-        .click()
-      await expect(page.getByText('Pairing code')).toBeVisible()
+      await expect(pairing.or(pick).first()).toBeVisible()
+      if (!(await pairing.isVisible())) await pick.click()
+      await expect(pairing).toBeVisible()
 
       const shown = desktop.getByTestId('login-pairing-code')
       await expect(shown).toHaveText(/^\d{6}$/)
