@@ -1,6 +1,6 @@
 Third-party fonts bundled with Church Hub
 Registered in app/apps/client/src/features/presentation/utils/bundledFonts.ts (Fontsource packages).
-All three are licensed under the SIL Open Font License 1.1 (full text below).
+All eight are licensed under the SIL Open Font License 1.1 (full text below).
 They ship inside the app only, are never sold on their own, and keep their original names.
 
 Fira Sans (@fontsource/fira-sans)
@@ -12,6 +12,21 @@ Montserrat (@fontsource-variable/montserrat)
 
 Lora (@fontsource-variable/lora)
   Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name "Lora".
+
+Carlito (@fontsource/carlito), metric-compatible with Calibri
+  Copyright 2013 The Carlito Project Authors (https://github.com/googlefonts/carlito)
+
+Caladea (@fontsource/caladea), metric-compatible with Cambria
+  Copyright 2012 The Caladea Project Authors (https://github.com/huertatipografica/Caladea)
+
+Arimo (@fontsource/arimo), metric-compatible with Arial
+  Copyright 2020 The Arimo Project Authors (https://github.com/googlefonts/arimo)
+
+Tinos (@fontsource/tinos), metric-compatible with Times New Roman
+  Copyright The Tinos Project Authors (https://github.com/googlefonts/tinos)
+
+Cousine (@fontsource/cousine), metric-compatible with Courier New
+  Copyright The Cousine Project Authors (https://github.com/googlefonts/cousine)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

@@ -19,3 +19,5 @@ import '@fontsource-variable/montserrat/wght.css'
 import '@fontsource-variable/montserrat/wght-italic.css'
 import '@fontsource-variable/lora/wght.css'
 import '@fontsource-variable/lora/wght-italic.css'
+// Office's fonts' stand-ins, for imported PowerPoint slides.
+import '../fonts/officeFonts.css'
