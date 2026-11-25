@@ -49,7 +49,7 @@ interface ControlRoomProps {
    * phone): what the operator follows and steps through.
    */
   playlist?: ReactNode
-  /** The playlist's heading. */
+  /** The playlist's name, read out by screen readers (it shows no heading). */
   playlistTitle?: string
 }
 
@@ -263,14 +263,10 @@ export function ControlRoom({
         {playlist && (
           <aside
             aria-label={playlistTitle}
-            className="flex flex-col gap-2 lg:order-first lg:w-[26rem] lg:shrink-0 lg:min-h-0"
+            data-testid="control-room-playlist"
+            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4 lg:order-first lg:w-[30rem] lg:shrink-0 lg:min-h-0 lg:overflow-y-auto"
           >
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              {playlistTitle}
-            </h2>
-            <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
-              {playlist}
-            </div>
+            {playlist}
           </aside>
         )}
       </div>
