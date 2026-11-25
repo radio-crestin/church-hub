@@ -8,8 +8,29 @@ export type SyncEntityType =
 
 export type SyncChangeKind = 'added' | 'updated' | 'removed' | 'conflict'
 
+/** Another PC holds this church's token (a backup restored there). */
+export interface CloudServerConflict {
+  otherPcName: string | null
+  /** Unix SECONDS the other PC last called the sync service. */
+  otherPcLastSeenAt: number | null
+}
+
+/** This server's church on the cloud sync service. */
+export interface CloudSyncInfo {
+  churchId: string
+  serviceUrl: string
+  seq: number
+  /** The Google account owning the church; null for a guest church. */
+  ownerEmail: string | null
+  serverConflict: CloudServerConflict | null
+}
+
 export interface SyncStatus {
   enabled: boolean
+  transport: 'drive' | 'cloud'
+  cloud: CloudSyncInfo | null
+  /** The owner signed in on this PC (for an hour). */
+  ownerSession: { email: string; expiresAt: number } | null
   /** A Google account (the backup connection) is available for sync. */
   connected: boolean
   accountEmail: string | null
