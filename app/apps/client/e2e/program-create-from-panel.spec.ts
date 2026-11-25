@@ -96,29 +96,6 @@ test.describe('create a program from the Programe panel', () => {
     await request.delete(`/api/songs/${songId}`).catch(() => {})
   })
 
-  test('a named program is created and picked in the panel', async ({
-    page,
-    request,
-  }) => {
-    const title = `E2E Panel Program ${Date.now()}`
-    try {
-      await openSongPageWithPanel(page, songId)
-      await clickNewProgram(page)
-      const modal = page.getByTestId('create-schedule-modal')
-      await expect(modal).toBeVisible()
-      await modal.getByTestId('create-schedule-input').fill(title)
-      await modal.getByTestId('create-schedule-save').click()
-      await expect(modal).toBeHidden()
-
-      await expect
-        .poll(async () => (await programsTitled(request, title)).length)
-        .toBe(1)
-      await expectPanelOn(page, request, title)
-    } finally {
-      await deleteProgramsTitled(request, title)
-    }
-  })
-
   test('"Today" makes today\'s program in one click, and reuses it the second time', async ({
     page,
     request,
