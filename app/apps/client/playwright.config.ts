@@ -45,6 +45,8 @@ const PORT_OFFSETS = {
   fakeRelay: 3,
   // The self-hosted cloud sync service (sync-service.ts, T-171).
   syncService: 4,
+  // The public web app, built and served statically (public-app.ts, T-168).
+  publicApp: 5,
 } as const
 const derivedPort = (name: keyof typeof PORT_OFFSETS) =>
   Number(TEST_PORT) + PORT_OFFSETS[name]
@@ -70,6 +72,9 @@ export const FAKE_RELAY_URL = `http://127.0.0.1:${derivedPort('fakeRelay')}`
 
 /** Where the cloud sync spec runs churchhub-backend's sync service. */
 export const SYNC_SERVICE_PORT = derivedPort('syncService')
+
+/** Where the join spec serves the public web app; join links point there. */
+export const PUBLIC_APP_URL = `http://127.0.0.1:${derivedPort('publicApp')}`
 
 /**
  * The line the server prints once the real server is bound and boot is done
@@ -164,6 +169,10 @@ export default defineConfig({
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
       CHURCH_HUB_AUDIO_SERVER_PORT: String(FAKE_AUDIO_PORT),
       CHURCH_HUB_SIGNALING_URL: FAKE_RELAY_URL,
+      // Cloud sync goes to the spec's self-hosted service, and its join
+      // links open the spec's public app (cloud-sync, public-join).
+      CHURCH_HUB_SYNC_URL: `http://127.0.0.1:${SYNC_SERVICE_PORT}`,
+      CHURCH_HUB_PUBLIC_APP_URL: PUBLIC_APP_URL,
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has

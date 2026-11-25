@@ -37,6 +37,7 @@
     "empty": "The church has no songs yet.",
     "noMatch": "No song matches.",
     "loadFailed": "Could not load the songs. Check the internet connection.",
-    "back": "Songs"
+    "back": "Songs",
+    "more": "Search to find the other {{count}}."
   }
 }

@@ -6,6 +6,9 @@ import { SongLyrics } from './SongLyrics'
 import { useChurchSongs } from '../hooks/useChurchSongs'
 import { matchesSearch } from '../utils/matchesSearch'
 
+/** Enough to scroll on a phone; a search finds the rest. */
+const MAX_SHOWN = 200
+
 /** The church's songs: search by title or author, open one to read it. */
 export function ChurchSongs({ readUrl }: { readUrl: string }) {
   const { t } = useTranslation('publicApp')
@@ -45,7 +48,7 @@ export function ChurchSongs({ readUrl }: { readUrl: string }) {
         <Message text={t(songs.length ? 'songs.noMatch' : 'songs.empty')} />
       ) : (
         <ul className="divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
-          {shown.map((song) => (
+          {shown.slice(0, MAX_SHOWN).map((song) => (
             <li key={song.uuid}>
               <button
                 type="button"
@@ -65,6 +68,9 @@ export function ChurchSongs({ readUrl }: { readUrl: string }) {
             </li>
           ))}
         </ul>
+      )}
+      {shown.length > MAX_SHOWN && (
+        <Message text={t('songs.more', { count: shown.length - MAX_SHOWN })} />
       )}
     </div>
   )
