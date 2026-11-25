@@ -29,9 +29,15 @@ const STATUS_BY_ERROR: Record<string, number> = {
   owner_sign_in_required: 401,
 }
 
+/**
+ * The answer to a failed owner action: the user's own errors as mapped, the
+ * service's refusals of the owner (401 sign in again, 403 not the owner,
+ * 409…) with their status, anything else 502.
+ */
 function failure(error: unknown): Response {
   const message = toErrorMessage(error)
-  const status = STATUS_BY_ERROR[message] ?? 502
+  const refused = Number(message.match(/^Sync service (4\d\d) /)?.[1])
+  const status = STATUS_BY_ERROR[message] ?? (refused || 502)
   if (status === 502)
     logger.error(`Cloud sync owner request failed: ${message}`)
   return Response.json({ error: message }, { status })
