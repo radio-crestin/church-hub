@@ -355,11 +355,21 @@
     "notMidi": "This is not a MIDI file",
     "noAudio": "No audio output: the music is silent here, but the verses still change on time",
     "syncTitle": "Sync verses to the music",
-    "syncHelp": "Press Start: the music plays and the first verse is up. Press Next verse (or Space) when each next verse begins.",
-    "syncStart": "Start",
+    "syncHelp": "Press play and tap Next verse (or Space) the moment each verse begins. Got one wrong? Undo it, or press ▶ beside a verse to hear it again and re-tap it. − and + move a verse half a second.",
+    "syncStart": "Play",
     "syncNext": "Next verse",
-    "syncAgain": "Again",
     "syncSave": "Save",
-    "syncSaved": "Verse times saved"
+    "syncSaved": "Verse times saved",
+    "pause": "Pause",
+    "undo": "Undo the last tap",
+    "verseOf": "Verse {{current}} of {{total}}",
+    "nextVerse": "Next",
+    "lastVerse": "Last verse",
+    "seek": "Jump to this point in the music",
+    "playFromHere": "Play from just before this verse and tap again from it",
+    "earlier": "Half a second earlier",
+    "later": "Half a second later",
+    "allMarked": "All verses marked",
+    "keys": "Space: next verse · Backspace: undo · ← →: 3 seconds · Esc: pause"
   }
 }

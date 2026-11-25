@@ -201,21 +201,49 @@ test.describe('Presentation MIDI music', () => {
     ).toHaveAttribute('data-synced', 'false')
     await popover.getByTestId('schedule-item-midi-sync').click()
 
+    // It opens with the current times: split evenly, 2 s a verse.
     const modal = page.getByTestId('schedule-midi-sync-modal')
-    await expect(modal.getByTestId('schedule-midi-sync-slide')).toHaveCount(3)
-    await modal.getByTestId('schedule-midi-sync-start').click()
+    const rows = modal.getByTestId('schedule-midi-sync-slide')
+    const timeOf = (index: number) =>
+      rows.nth(index).getByTestId('schedule-midi-sync-time')
+    await expect(rows).toHaveCount(3)
+    await expect(timeOf(1)).toHaveText('2.0')
+    await expect(timeOf(2)).toHaveText('4.0')
+    await expect(modal.getByTestId('schedule-midi-sync-now')).toHaveAttribute(
+      'data-verse',
+      '0',
+    )
+
+    // A single verse is nudged without playing anything.
+    await rows.nth(2).getByTestId('schedule-midi-sync-later').click()
+    await expect(timeOf(2)).toHaveText('4.5')
+    // Nothing to tap until the music plays.
     const next = modal.getByTestId('schedule-midi-sync-next')
-    await expect(next).toBeVisible({ timeout: 60_000 })
-    await expect(modal.locator('[data-current="true"]')).toContainText(
-      'Prima strofă',
+    await expect(next).toBeDisabled()
+
+    await modal.getByTestId('schedule-midi-sync-start').click()
+    await expect(modal.getByTestId('schedule-midi-sync-start')).toHaveAttribute(
+      'data-playing',
+      'true',
+      { timeout: 60_000 },
     )
     await page.waitForTimeout(700)
     await next.click()
-    await expect(modal.locator('[data-current="true"]')).toContainText(
-      'A doua strofă',
+    await expect(timeOf(1)).not.toHaveText('2.0')
+    await expect(modal.getByTestId('schedule-midi-sync-now')).toHaveAttribute(
+      'data-verse',
+      '1',
     )
+
+    // A wrong tap is undone: the old time comes back.
+    await page.keyboard.press('Backspace')
+    await expect(timeOf(1)).toHaveText('2.0')
+    await expect(rows.nth(1)).toHaveAttribute('data-next', 'true')
+
+    // Tapped again with Space: only that verse changes.
     await page.waitForTimeout(700)
     await page.keyboard.press('Space')
+    await expect(timeOf(1)).not.toHaveText('2.0')
     await modal.getByTestId('schedule-midi-sync-save').click()
     await expect(modal).toHaveCount(0)
 
@@ -224,8 +252,9 @@ test.describe('Presentation MIDI music', () => {
     const times: number[] = items[0].midi.verseTimes
     expect(times).toHaveLength(3)
     expect(times[0]).toBe(0)
-    expect(times[1]).toBeGreaterThan(0.5)
-    expect(times[2]).toBeGreaterThan(times[1] as number)
+    expect(times[1]).toBeGreaterThan(0.3)
+    expect(times[1]).toBeLessThan(2)
+    expect(times[2]).toBe(4.5)
 
     await chip.click()
     await expect(

@@ -175,7 +175,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
       {syncing && midi && (
         <ScheduleMidiSyncModal
           scheduleId={scheduleId}
-          item={item}
+          item={{ ...item, midi }}
           onClose={() => setSyncing(false)}
         />
       )}

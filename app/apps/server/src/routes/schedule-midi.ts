@@ -29,7 +29,7 @@ const MIDI_PATH = /^\/api\/schedules\/(\d+)\/items\/(\d+)\/midi(\/[a-z-]+)?$/
  * - PUT    …/items/:itemId/midi?name=  raw .mid body → the item's midi
  * - DELETE …/items/:itemId/midi
  * - PUT    …/items/:itemId/midi/verse-times  { verseTimes: number[] | null }
- * - POST   …/items/:itemId/midi/play   plays it from the start (to sync)
+ * - POST   …/items/:itemId/midi/play   { fromSeconds? } plays it (to sync)
  * - POST   …/items/:itemId/midi/stop
  * Reads of the item come with the presentation (GET /api/schedules/:id).
  */
@@ -121,9 +121,17 @@ export async function handleScheduleMidiRoutes(
   }
 
   if (req.method === 'POST' && action === '/play') {
+    const body = (await req.json().catch(() => null)) as {
+      fromSeconds?: unknown
+    } | null
+    const from = body?.fromSeconds ?? 0
+    if (typeof from !== 'number' || from < 0) {
+      return respond(400, { error: 'fromSeconds must be 0 or more' })
+    }
     const audible = await playMidiAudio(
       item.midi.hash,
       item.song?.title ?? item.midi.fileName,
+      Math.min(from, item.midi.durationSeconds),
     )
     return respond(200, { data: { audible } })
   }

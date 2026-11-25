@@ -773,7 +773,7 @@ export const schedulesPaths = {
   '/api/schedules/{id}/items/{itemId}/midi/play': {
     post: {
       tags: ['Schedules'],
-      summary: "Play a song item's MIDI music from the start",
+      summary: "Play a song item's MIDI music (from a given second)",
       description:
         'Through the music player, to sync its slides by hand; audible is false with no audio server. Needs programs.edit',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
@@ -793,6 +793,23 @@ export const schedulesPaths = {
           description: 'Song item ID',
         },
       ],
+      requestBody: {
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                fromSeconds: {
+                  type: 'number',
+                  minimum: 0,
+                  description: 'Where to start; 0 by default',
+                },
+              },
+            },
+          },
+        },
+      },
       responses: {
         '200': {
           description: 'Playing',

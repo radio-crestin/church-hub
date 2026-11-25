@@ -66,15 +66,21 @@ export async function setScheduleItemMidiVerseTimes(
   )
 }
 
-/** Plays the item's MIDI from the start; false with no audio server. */
+/** Plays the item's MIDI from a second on; false with no audio server. */
 export async function playScheduleItemMidi(
   scheduleId: number,
   itemId: number,
+  fromSeconds = 0,
 ): Promise<boolean> {
   const data = unwrap(
     await fetcher<ApiResponse<{ audible: boolean }>>(
       midiUrl(scheduleId, itemId, '/play'),
-      { method: 'POST', timeout: PLAY_TIMEOUT_MS },
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromSeconds }),
+        timeout: PLAY_TIMEOUT_MS,
+      },
     ),
   )
   return data.audible

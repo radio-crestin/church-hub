@@ -7,13 +7,19 @@ const END_SLACK_SECONDS = 0.5
 
 /**
  * Plays a MIDI file's audio through the music player (rendered first if it
- * isn't cached yet). False when there is no audio server to play it on.
+ * isn't cached yet), from `fromSeconds` on. False when there is no audio
+ * server to play it on.
  */
 export async function playMidiAudio(
   hash: string,
   title: string,
+  fromSeconds = 0,
 ): Promise<boolean> {
-  return playAudioFile(await renderMidiAudio(hash), title)
+  const audible = await playAudioFile(await renderMidiAudio(hash), title)
+  if (audible && fromSeconds > 0) {
+    await executeCommand({ type: 'seek', time: fromSeconds })
+  }
+  return audible
 }
 
 export type MidiAudioPosition =

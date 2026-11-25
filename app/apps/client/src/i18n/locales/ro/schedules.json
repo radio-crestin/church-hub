@@ -372,11 +372,21 @@
     "notMidi": "Acesta nu este un fișier MIDI",
     "noAudio": "Nu există ieșire audio: muzica nu se aude aici, dar strofele se schimbă la timp",
     "syncTitle": "Sincronizează strofele cu muzica",
-    "syncHelp": "Apasă Start: muzica pornește și apare prima strofă. Apasă Strofa următoare (sau Space) când începe fiecare strofă nouă.",
-    "syncStart": "Start",
+    "syncHelp": "Apasă play și atinge Strofa următoare (sau Space) exact când începe fiecare strofă. Ai greșit? Anulează, sau apasă ▶ lângă o strofă ca s-o asculți din nou și s-o marchezi iar. − și + mută strofa cu o jumătate de secundă.",
+    "syncStart": "Pornește",
     "syncNext": "Strofa următoare",
-    "syncAgain": "Din nou",
     "syncSave": "Salvează",
-    "syncSaved": "Timpii strofelor au fost salvați"
+    "syncSaved": "Timpii strofelor au fost salvați",
+    "pause": "Pauză",
+    "undo": "Anulează ultima atingere",
+    "verseOf": "Strofa {{current}} din {{total}}",
+    "nextVerse": "Urmează",
+    "lastVerse": "Ultima strofă",
+    "seek": "Sari la acest loc din muzică",
+    "playFromHere": "Redă de puțin înainte de această strofă și marcheaz-o din nou",
+    "earlier": "Cu o jumătate de secundă mai devreme",
+    "later": "Cu o jumătate de secundă mai târziu",
+    "allMarked": "Toate strofele sunt marcate",
+    "keys": "Space: strofa următoare · Backspace: anulează · ← →: 3 secunde · Esc: pauză"
   }
 }
