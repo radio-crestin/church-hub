@@ -92,8 +92,11 @@ export async function runSyncCycle(): Promise<SyncCycleResult> {
     }
     updateRemoteFileRef(newRef?.fileId ?? null, newRef?.version ?? null)
 
-    // Everything queued before this cycle is now reflected in the shared file.
-    db.query('DELETE FROM sync_pending WHERE queued_at <= ?').run(
+    // Everything queued before this cycle is now reflected in the shared
+    // file. Strictly before its first second: queued_at is in seconds, so an
+    // edit made later in that second, after the pending rows were read, stays
+    // queued for the next cycle instead of being lost.
+    db.query('DELETE FROM sync_pending WHERE queued_at < ?').run(
       cycleStartSeconds,
     )
     db.query('DELETE FROM sync_tombstones WHERE deleted_at < ?').run(

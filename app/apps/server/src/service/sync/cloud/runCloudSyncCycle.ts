@@ -96,8 +96,11 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
     logger.info(`Published ${changes.length} change(s) to cloud sync`)
   }
 
+  // Only what was queued before this cycle's first second: queued_at is in
+  // seconds, so an edit made later in that second, after the pending rows
+  // were read, stays queued for the next cycle instead of being lost.
   const db = getRawDatabase()
-  db.query('DELETE FROM sync_pending WHERE queued_at <= ?').run(
+  db.query('DELETE FROM sync_pending WHERE queued_at < ?').run(
     cycleStartSeconds,
   )
   db.query('DELETE FROM sync_tombstones WHERE deleted_at < ?').run(

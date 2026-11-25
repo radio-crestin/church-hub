@@ -51,9 +51,11 @@ export async function connectCloudSync(
   })
   const db = getRawDatabase()
   for (const [entityType, table] of ROOT_TABLES) {
+    // Dated a second back, so the first cycle clears them once it has
+    // published them (it clears what was queued before its first second).
     db.query(
-      `INSERT OR IGNORE INTO sync_pending (entity_type, entity_uuid)
-       SELECT ?, uuid FROM ${table} WHERE uuid != ''`,
+      `INSERT OR IGNORE INTO sync_pending (entity_type, entity_uuid, queued_at)
+       SELECT ?, uuid, unixepoch() - 1 FROM ${table} WHERE uuid != ''`,
     ).run(entityType)
   }
   await upsertSyncConfig({
