@@ -1,4 +1,6 @@
 import type { CloudIdentity } from './cloudIdentityStore'
+import { getInstallation } from './getInstallation'
+import { setServerConflict } from './serverConflict'
 
 /** Requests to the sync service give up after this long. */
 const REQUEST_TIMEOUT_MS = 60_000
@@ -9,26 +11,39 @@ export interface SyncServiceResponse<T> {
   body: T & { error?: string; code?: string }
 }
 
+interface ServerInUseBody {
+  code?: string
+  otherPc?: { name?: string | null; lastSeenAt?: number | null }
+}
+
 /**
  * Calls the sync service (churchhub-backend's /sync routes). With an
- * identity, `path` is under the church and the server token authenticates.
+ * identity, `path` is under the church and the server token authenticates;
+ * `ownerTicket` signs in as the church's owner instead. Every call names
+ * this installation, so the service can tell a second PC holding the same
+ * token (a restored backup) from this one: its 409 server_in_use is kept
+ * (getServerConflict) and thrown as `server_in_use`.
  */
 export async function syncServiceRequest<T>(
-  target: { serviceUrl: string; identity?: CloudIdentity },
+  target: { serviceUrl: string; identity?: CloudIdentity; ownerTicket?: string },
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<SyncServiceResponse<T>> {
-  const { serviceUrl, identity } = target
+  const { serviceUrl, identity, ownerTicket } = target
   const base = serviceUrl.replace(/\/+$/, '')
   const url = identity
     ? `${base}/sync/churches/${encodeURIComponent(identity.churchId)}${path}`
     : `${base}/sync${path}`
+  const token = identity?.serverToken ?? ownerTicket
+  const installation = getInstallation()
   const response = await fetch(url, {
     method,
     headers: {
       'Content-Type': 'application/json',
-      ...(identity && { Authorization: `Bearer ${identity.serverToken}` }),
+      'X-Church-Hub-Installation': installation.id,
+      'X-Church-Hub-Installation-Name': encodeURIComponent(installation.name),
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -37,6 +52,15 @@ export async function syncServiceRequest<T>(
     error?: string
     code?: string
   }
+  if (identity && response.status === 409 && json.code === 'server_in_use') {
+    const { otherPc } = json as ServerInUseBody
+    setServerConflict({
+      otherPcName: otherPc?.name ?? null,
+      otherPcLastSeenAt: otherPc?.lastSeenAt ?? null,
+    })
+    throw new Error('server_in_use')
+  }
+  if (identity && response.ok) setServerConflict(null)
   return { status: response.status, body: json }
 }
 

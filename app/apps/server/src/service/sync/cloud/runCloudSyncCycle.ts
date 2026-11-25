@@ -7,6 +7,8 @@ import {
 import { fetchRemoteChanges } from './fetchRemoteChanges'
 import { pushAccessIfChanged } from './pushAccessIfChanged'
 import { pushChanges } from './pushChanges'
+import { refreshReadUrl } from './refreshReadUrl'
+import { getServerConflict } from './serverConflict'
 import { getSyncVersions, setSyncVersions } from './syncVersionsStore'
 import { getRawDatabase } from '../../../db'
 import { createLogger } from '../../../utils/logger'
@@ -26,8 +28,11 @@ const logger = createLogger('sync')
 
 /** A write refused as a conflict is pulled, merged and sent again this often. */
 const MAX_CONFLICT_ROUNDS = 3
+/** The PC checks in with the service at least this often (reads skip it). */
+const CHECK_IN_EVERY_MS = 15 * 60 * 1000
 
 let isRunning = false
+let lastCheckInAt = 0
 
 interface RoundResult {
   outcome: 'done' | 'conflict' | 'unchanged'
@@ -129,8 +134,19 @@ export async function runCloudSyncCycle(): Promise<SyncCycleResult> {
     return { success: false, skipped: 'not_connected', error: 'not_connected' }
   }
 
+  if (getServerConflict()) {
+    await upsertSyncConfig({ lastError: 'server_in_use' })
+    return { success: false, error: 'server_in_use' }
+  }
+
   isRunning = true
   try {
+    // Reads go to the bucket alone; checking in finds another PC holding
+    // this church's token, a new read path and a new owner.
+    if (Date.now() - lastCheckInAt > CHECK_IN_EVERY_MS) {
+      await refreshReadUrl(identity)
+      lastCheckInAt = Date.now()
+    }
     let applied = 0
     let reported = 0
     for (let round = 0; round < MAX_CONFLICT_ROUNDS; round++) {

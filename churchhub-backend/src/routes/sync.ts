@@ -135,11 +135,17 @@ sync.post('/sync/churches/:churchId/takeover', async (c) => {
   return c.json(readLocation(store, church.state))
 })
 
-/** GET /sync/churches/:churchId/path: where to read, after a rotation. */
+/**
+ * GET /sync/churches/:churchId/path: where to read, after a rotation, and
+ * who owns the church. The church PC checks in with it now and then.
+ */
 sync.get('/sync/churches/:churchId/path', async (c) => {
   const store = createSyncStore(c.env)
   const { church } = await caller(c, store)
-  return c.json(readLocation(store, church.state))
+  return c.json({
+    ...readLocation(store, church.state),
+    ownerEmail: church.state.owner?.email ?? null,
+  })
 })
 
 /** PUT /sync/churches/:churchId/access: the church's roles and users. */
