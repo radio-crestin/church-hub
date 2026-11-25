@@ -15,8 +15,8 @@ import {
 } from '~/features/presentation'
 import { createLogger } from '~/utils/logger'
 import { useSchedule } from './useSchedule'
+import { usePresentScheduleStep } from '../media-items/hooks/usePresentScheduleStep'
 import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
-import { presentScheduleStep } from '../media-items/service/scheduleItemsApi'
 import {
   readProgramPosition,
   rememberProgramPosition,
@@ -82,6 +82,8 @@ export interface ScheduleFlatNavigation {
   presentAnnouncement: (item: ScheduleItem) => Promise<void>
   presentScene: (item: ScheduleItem) => Promise<void>
   presentVideo: (item: ScheduleItem) => Promise<void>
+  /** A Slides item's step `stepIndex` (a slide, with its clicks up to one). */
+  presentDeckStep: (item: ScheduleItem, stepIndex: number) => Promise<void>
   navigateToFlatItem: (
     flatItem: ScheduleFlatItem,
     flatIndex: number,
@@ -125,6 +127,8 @@ export function useScheduleFlatNavigation({
   const presentTemporaryAnnouncement = usePresentTemporaryAnnouncement()
   const presentTemporaryScene = usePresentTemporaryScene()
   const clearTemporary = useClearTemporaryContent()
+  // `mutateAsync` stays the same function, so the callbacks using it do too.
+  const { mutateAsync: presentStep } = usePresentScheduleStep()
 
   // A plain mutation rather than `useOBSScenes`, whose 30s poll has no place on
   // the song or Bible page — the scene list itself is never read here.
@@ -426,9 +430,21 @@ export function useScheduleFlatNavigation({
       if (isBackgroundVideo(item)) return
       const flatIndex = getFlatItemIndex(item, 0)
       onBeforeNavigate?.(flatIndex, { item, type: 'video', index: 0 })
-      await presentScheduleStep(scheduleId, flatIndex)
+      await presentStep({ scheduleId, stepIndex: flatIndex })
     },
-    [getFlatItemIndex, onBeforeNavigate, scheduleId],
+    [getFlatItemIndex, onBeforeNavigate, presentStep, scheduleId],
+  )
+
+  // A deck's step goes up through the server too: it holds the deck.
+  const presentDeckStep = useCallback(
+    async (item: ScheduleItem, stepIndex: number) => {
+      if (item.itemType !== 'slides' || !scheduleId) return
+      const flatIndex = getFlatItemIndex(item, stepIndex)
+      if (flatIndex < 0) return
+      beforeNavigate(flatIndex, { item, type: 'deck', index: stepIndex })
+      await presentStep({ scheduleId, stepIndex: flatIndex })
+    },
+    [getFlatItemIndex, beforeNavigate, presentStep, scheduleId],
   )
 
   const navigateToFlatItem = useCallback(
@@ -447,10 +463,13 @@ export function useScheduleFlatNavigation({
           return presentScene(item)
         case 'video':
           return presentVideo(item)
+        case 'deck':
+          return presentDeckStep(item, index)
       }
     },
     [
       presentAnnouncement,
+      presentDeckStep,
       presentPassageVerse,
       presentScene,
       presentVideo,
@@ -563,6 +582,7 @@ export function useScheduleFlatNavigation({
     presentAnnouncement,
     presentScene,
     presentVideo,
+    presentDeckStep,
     navigateToFlatItem,
     presentFlatIndex,
     goNext,

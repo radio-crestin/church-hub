@@ -124,6 +124,7 @@ export function ScheduleLiveItemPanel({
           onAnnouncementClick={nav.presentAnnouncement}
           onSceneClick={nav.presentScene}
           onVideoClick={nav.presentVideo}
+          onDeckStepClick={nav.presentDeckStep}
         />
       </div>
     </div>

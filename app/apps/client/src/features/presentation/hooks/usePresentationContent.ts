@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { useTemplatedScreen } from '~/features/slide-templates/hooks/useTemplatedScreen'
+import type { DeckShownSlide } from '~/features/slides-deck/types'
+import {
+  type DeckShownBefore,
+  deckShownSlide,
+} from '~/features/slides-deck/utils/deckShownSlide'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { createLogger } from '~/utils/logger'
 import {
@@ -62,6 +67,8 @@ export interface ContentData {
   videoLoop?: boolean
   /** A presentation's looping background video (see `resolveScreenBackground`). */
   presentationBackground?: PresentationBackground | null
+  /** A Slides item's slide (DeckSlideRenderer). */
+  deck?: DeckShownSlide
 }
 
 interface UsePresentationContentOptions {
@@ -240,6 +247,9 @@ export function usePresentationContent({
   // we can clear the stage when preview is dismissed while the real projection
   // is hidden (no visible -> hidden transition to drive the exit animation).
   const prevPreviewRef = useRef<TemporaryContent | null>(previewContent)
+  // What this screen showed last, for how a deck slide comes on (played, or
+  // drawn as it stands); null until it has seen a presentation state.
+  const deckBeforeRef = useRef<DeckShownBefore | null>(null)
 
   // Keep track of current content type for exit animation calculation
   if (contentType !== 'empty') {
@@ -427,6 +437,19 @@ export function usePresentationContent({
         return
       }
 
+      // How a deck step comes on depends on what was shown before it.
+      const live = presentationState.temporaryContent
+      const deck =
+        live?.type === 'deck_slide' && !presentationState.isHidden
+          ? deckShownSlide(live.data, deckBeforeRef.current)
+          : null
+      if (!presentationState.isHidden || !deckBeforeRef.current) {
+        const data = live?.data as DeckShownBefore['step'] | undefined
+        deckBeforeRef.current = presentationState.isHidden
+          ? { deck: null, step: null }
+          : { deck, step: data ?? null }
+      }
+
       // When hidden, don't fetch new content - check isHidden directly here because
       // isExitAnimating may still be false in the same render cycle that triggered
       // the exit animation (stale closure). isHidden is always current.
@@ -583,6 +606,14 @@ export function usePresentationContent({
             { videoUrl: temp.data.url, videoLoop: temp.data.loop === true },
             `video|${temp.data.url}`,
           )
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A Slides item's slide draws itself, with its own design.
+        if (deck) {
+          if (isCancelled) return
+          showContent('deck_slide', { deck }, deck.key)
           setNextSlideData(undefined)
           return
         }

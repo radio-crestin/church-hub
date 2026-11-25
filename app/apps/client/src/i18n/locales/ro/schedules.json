@@ -439,6 +439,15 @@
       "label": "Câte"
     }
   },
+  "slidesDeck": {
+    "title": "Diapozitive",
+    "slideCount_one": "{{count}} diapozitiv",
+    "slideCount_few": "{{count}} diapozitive",
+    "slideCount_other": "{{count}} de diapozitive",
+    "noSlides": "Niciun diapozitiv încă",
+    "untitledSlide": "Diapozitiv fără text",
+    "titlePlaceholder": "Apasă ca să adaugi un titlu"
+  },
   "midi": {
     "title": "Muzică MIDI",
     "short": "MIDI",

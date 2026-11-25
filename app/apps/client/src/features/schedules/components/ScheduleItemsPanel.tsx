@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
+import type { SlideDeck } from '~/features/slides-deck/types'
 import { ScheduleItemAdvance } from './ScheduleItemAdvance'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
 import { ScheduleItemMidi } from './ScheduleItemMidi'
@@ -59,6 +60,7 @@ interface ScheduleItemsPanelProps {
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
   onVideoClick?: (item: ScheduleItem) => void
+  onDeckStepClick?: (item: ScheduleItem, stepIndex: number) => void
   onReorder?: (oldIndex: number, newIndex: number) => void
   onEditSong?: (songId: number) => void
   onNavigateToSong?: (songId: number) => void
@@ -116,6 +118,7 @@ export function ScheduleItemsPanel({
   onAnnouncementClick,
   onSceneClick,
   onVideoClick,
+  onDeckStepClick,
   onReorder,
   onEditSong,
   onNavigateToSong,
@@ -318,6 +321,7 @@ export function ScheduleItemsPanel({
                   onAnnouncementClick={onAnnouncementClick}
                   onSceneClick={onSceneClick}
                   onVideoClick={onVideoClick}
+                  onDeckStepClick={onDeckStepClick}
                   onToggleSung={onToggleSung}
                   onEditKeyLine={onEditKeyLine}
                   itemAdvance={itemAdvance}
@@ -372,6 +376,7 @@ interface SortableItemWrapperProps {
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
   onVideoClick?: (item: ScheduleItem) => void
+  onDeckStepClick?: (item: ScheduleItem, stepIndex: number) => void
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
   itemAdvance?: ItemAdvance
@@ -398,6 +403,7 @@ function SortableItemWrapper({
   onAnnouncementClick,
   onSceneClick,
   onVideoClick,
+  onDeckStepClick,
   onToggleSung,
   onEditKeyLine,
   itemAdvance,
@@ -425,6 +431,8 @@ function SortableItemWrapper({
   const hasMissingContent =
     (item.itemType === 'verses' && item.verseteTineriEntries.length === 0) ||
     (item.itemType === 'video' && !item.video) ||
+    (item.itemType === 'slides' &&
+      (item.itemConfig as SlideDeck | null)?.slides.length === 0) ||
     (item.itemType === 'music' && !item.music?.trackCount) ||
     (item.itemType === 'song' && item.slides.length === 0) ||
     (item.itemType === 'bible_passage' &&
@@ -659,6 +667,7 @@ function SortableItemWrapper({
             onAnnouncementClick={onAnnouncementClick}
             onSceneClick={onSceneClick}
             onVideoClick={onVideoClick}
+            onDeckStepClick={onDeckStepClick}
           />
         </div>
       )}

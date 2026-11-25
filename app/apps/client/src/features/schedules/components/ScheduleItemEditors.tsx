@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
 import { SongEditorModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
@@ -68,6 +69,7 @@ export const ScheduleItemEditors = forwardRef<
   const [showScenePicker, setShowScenePicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
   const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
+  const addDeck = useAddDeckItem(scheduleId, onChanged)
 
   useImperativeHandle(
     ref,
@@ -75,6 +77,8 @@ export const ScheduleItemEditors = forwardRef<
       addItem: () => setShowAddMenu(true),
       editItem: (item: ScheduleItem) => {
         if (mediaEditorsRef.current?.edit(item)) return
+        // A Slides item: the deck editor (CH-183 phase 2) opens here.
+        if (item.itemType === 'slides') return
         if (item.itemType === 'song' && item.songId) {
           setEditingSongId(item.songId)
         } else if (item.itemType === 'bible_passage') {
@@ -123,6 +127,7 @@ export const ScheduleItemEditors = forwardRef<
         }}
         onAddScene={() => setShowScenePicker(true)}
         onAddMedia={(type) => mediaEditorsRef.current?.add(type)}
+        onAddDeck={() => addDeck()}
         showTrigger={false}
       />
 

@@ -27,6 +27,8 @@
     "videoDescription": "Play a video from the Gallery full screen",
     "verses": "Verses",
     "versesDescription": "Verses from a topic or a book, all or some at random",
+    "slides": "Slides",
+    "slidesDescription": "Your own slides, with text, pictures, videos and animations",
     "importSchedule": {
       "title": "Import Presentation",
       "description": "Import from an existing presentation"

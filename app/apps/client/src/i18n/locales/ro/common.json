@@ -27,6 +27,8 @@
     "videoDescription": "Rulează pe tot ecranul un video din Galerie",
     "verses": "Versete",
     "versesDescription": "Versete dintr-o temă sau dintr-o carte, toate sau câteva la întâmplare",
+    "slides": "Diapozitive",
+    "slidesDescription": "Diapozitive proprii, cu text, imagini, video și animații",
     "importSchedule": {
       "title": "Importă prezentare",
       "description": "Importă dintr-o prezentare existentă"

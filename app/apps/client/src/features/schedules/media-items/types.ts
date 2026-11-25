@@ -1,5 +1,7 @@
 /** Mirrors the server's service/schedule-items/types.ts. */
 
+import type { SlideDeck } from '~/features/slides-deck/types'
+
 /** Music: a whole folder of the Music library, or tracks picked by hand. */
 export type MusicItemConfig = (
   | { source: 'folder'; folderId: number }
@@ -43,6 +45,7 @@ export type ItemConfig =
   | VideoItemConfig
   | VersesItemConfig
   | VerseteItemConfig
+  | SlideDeck
 
 /** What a music item plays, as the list shows it. */
 export interface ScheduleMusicSummary {

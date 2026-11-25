@@ -228,6 +228,7 @@ export function SchedulePanel({
     presentAnnouncement,
     presentScene,
     presentVideo,
+    presentDeckStep,
   } = useScheduleFlatNavigation({
     scheduleId: selectedScheduleId,
     items: allItems,
@@ -341,6 +342,7 @@ export function SchedulePanel({
       }
       if (item.slideType === 'scene') return presentScene(item)
       if (item.itemType === 'video') return presentVideo(item)
+      if (item.itemType === 'slides') return presentDeckStep(item, 0)
       if (item.itemType === 'music') {
         return playMusicItem(item.scheduleId, item.id)
       }
@@ -352,6 +354,7 @@ export function SchedulePanel({
       presentPassageVerse,
       presentScene,
       presentVideo,
+      presentDeckStep,
       presentSongSlide,
       presentVerseteEntry,
     ],

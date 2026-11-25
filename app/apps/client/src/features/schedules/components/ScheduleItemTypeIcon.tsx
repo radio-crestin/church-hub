@@ -6,6 +6,7 @@ import {
   ListMusic,
   Megaphone,
   Music,
+  Presentation,
   User,
 } from 'lucide-react'
 
@@ -41,6 +42,13 @@ function describeKind(item: ScheduleItem) {
       Icon: Film,
       tint: 'text-sky-600 dark:text-sky-400',
       disc: 'bg-sky-100 dark:bg-sky-900/30',
+    }
+  }
+  if (item.itemType === 'slides') {
+    return {
+      Icon: Presentation,
+      tint: 'text-amber-600 dark:text-amber-400',
+      disc: 'bg-amber-100 dark:bg-amber-900/30',
     }
   }
   if (item.itemType === 'verses') {

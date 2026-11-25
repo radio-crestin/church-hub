@@ -47,6 +47,8 @@ export const SAMPLE_CONTENT: Record<
   },
   empty: {},
   screen_share: {},
+  // A deck slide brings its own design: there is no layout to edit.
+  deck_slide: {},
 }
 
 /** A slide type's sample, as the renderer takes it. */

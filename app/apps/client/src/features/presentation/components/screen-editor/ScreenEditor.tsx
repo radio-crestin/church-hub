@@ -129,6 +129,8 @@ export function ScreenEditor({
       if (!state.screen) return
 
       const config = state.screen.contentConfigs[state.selectedContentType]
+      // A deck slide has no layout to edit.
+      if (!config) return
       const newConfig = { ...config }
 
       // Update the specific element with constraints and size

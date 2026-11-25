@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next'
 
 import { useBibleTopics } from '~/features/bible/topics'
+import type { SlideDeck } from '~/features/slides-deck/types'
+import { deckFirstText } from '~/features/slides-deck/utils/deckFirstText'
 import type { ScheduleItem } from '../../types'
 import type {
   MusicItemConfig,
@@ -16,9 +18,9 @@ export interface MediaItemText {
 }
 
 /**
- * How a music, video or verses item reads in a presentation's lists; null for
- * other items. One place, so the presentation page and the Prezentări panel
- * describe them the same way.
+ * How a music, video, verses or Slides item reads in a presentation's lists;
+ * null for other items. One place, so the presentation page and the
+ * Prezentări panel describe them the same way.
  */
 export function useMediaItemText(item: ScheduleItem): MediaItemText | null {
   const { t, i18n } = useTranslation('schedules')
@@ -60,6 +62,14 @@ export function useMediaItemText(item: ScheduleItem): MediaItemText | null {
       ]
         .filter(Boolean)
         .join(' · '),
+    }
+  }
+
+  if (item.itemType === 'slides') {
+    const deck = item.itemConfig as SlideDeck | null
+    return {
+      title: deckFirstText(deck) || t('slidesDeck.title'),
+      detail: t('slidesDeck.slideCount', { count: deck?.slides.length ?? 0 }),
     }
   }
 

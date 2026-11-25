@@ -417,6 +417,14 @@
       "label": "How many"
     }
   },
+  "slidesDeck": {
+    "title": "Slides",
+    "slideCount_one": "{{count}} slide",
+    "slideCount_other": "{{count}} slides",
+    "noSlides": "No slides yet",
+    "untitledSlide": "Slide with no text",
+    "titlePlaceholder": "Click to add title"
+  },
   "midi": {
     "title": "MIDI music",
     "short": "MIDI",

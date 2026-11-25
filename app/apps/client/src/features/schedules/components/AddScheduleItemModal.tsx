@@ -10,6 +10,7 @@ import {
   Megaphone,
   Music,
   Plus,
+  Presentation,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -39,6 +40,8 @@ interface AddScheduleItemModalProps {
   onAddScene?: () => void
   /** A music, video or verses item: its settings dialog. */
   onAddMedia?: (type: MediaItemType) => void
+  /** A Slides item: added with one title slide. */
+  onAddDeck?: () => void
   /**
    * `false` for a host that opens the modal from its own control — the
    * Programe panel, whose "+" can move into its header's "More" menu.
@@ -103,6 +106,7 @@ export function AddScheduleItemModal({
   onAddSlide,
   onAddScene,
   onAddMedia,
+  onAddDeck,
   showTrigger = true,
 }: AddScheduleItemModalProps) {
   const { t } = useTranslation('common')
@@ -229,6 +233,19 @@ export function AddScheduleItemModal({
             onSelect: () => handHandoff(() => onAddMedia(option.type)),
           }),
         )
+      : []),
+    ...(onAddDeck
+      ? [
+          {
+            key: 'slides',
+            icon: Presentation,
+            iconClass: 'text-amber-600 dark:text-amber-400',
+            bgClass: 'bg-amber-100 dark:bg-amber-900/30',
+            titleKey: 'addMenu.slides',
+            descriptionKey: 'addMenu.slidesDescription',
+            onSelect: () => handHandoff(onAddDeck),
+          } satisfies MenuOption,
+        ]
       : []),
   ]
 

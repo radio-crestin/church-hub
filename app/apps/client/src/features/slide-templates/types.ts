@@ -1,12 +1,13 @@
 import type {
   ContentConfigMap,
-  ContentType,
   NextSlideSectionConfig,
   ScreenGlobalSettings,
 } from '~/features/presentation/types'
 
 /** One layout per slide kind. */
-export type TemplateLayouts = { [K in ContentType]: ContentConfigMap[K] }
+export type TemplateLayouts = {
+  [K in keyof ContentConfigMap]: ContentConfigMap[K]
+}
 
 /** A slide template (CH-184): how every kind of slide looks. */
 export interface SlideTemplate {

@@ -39,6 +39,7 @@ import {
 import { PresentationThemeEditor } from '~/features/slide-templates/components/PresentationThemeEditor'
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { TemplatePickerDialog } from '~/features/slide-templates/components/TemplatePickerDialog'
+import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
 import { KeyLineEditDialog } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
@@ -164,6 +165,8 @@ export function SchedulePresenter({
   // URL sync tracking - prevents loops when URL changes
   const lastUrlItemIndexRef = useRef<number | undefined>(undefined)
   const isInternalNavigationRef = useRef(false)
+  // The ?itemIndex= the effect below last acted on.
+  const handledUrlItemIndexRef = useRef<number | undefined>(undefined)
 
   // Title editing state
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -220,6 +223,7 @@ export function SchedulePresenter({
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
+  const addDeck = useAddDeckItem(scheduleId, refetch)
   const importDialogRef = useRef<HTMLDialogElement>(null)
   const { keyLineDialogRef, editKeyLine: handleEditKeyLine } =
     useScheduleKeyLineEditor()
@@ -289,6 +293,7 @@ export function SchedulePresenter({
     presentAnnouncement,
     presentScene,
     presentVideo,
+    presentDeckStep,
     presentFlatIndex,
     goNext,
     goPrev,
@@ -301,7 +306,15 @@ export function SchedulePresenter({
   })
 
   // Someone arrived on (or navigated to) a ?itemIndex= URL — put that step up.
+  // Only a new URL counts: the URL lags behind quick presses, and taking an
+  // old one again whenever `presentFlatIndex` changed put a step back up.
   useEffect(() => {
+    if (
+      flatItems.length === 0 ||
+      urlItemIndex === handledUrlItemIndexRef.current
+    )
+      return
+    handledUrlItemIndexRef.current = urlItemIndex
     if (
       urlItemIndex === lastUrlItemIndexRef.current ||
       isInternalNavigationRef.current
@@ -312,9 +325,7 @@ export function SchedulePresenter({
 
     lastUrlItemIndexRef.current = urlItemIndex
 
-    if (urlItemIndex !== undefined && flatItems.length > 0) {
-      void presentFlatIndex(urlItemIndex)
-    }
+    if (urlItemIndex !== undefined) void presentFlatIndex(urlItemIndex)
   }, [urlItemIndex, flatItems.length, presentFlatIndex])
 
   // Title editing handlers
@@ -526,6 +537,8 @@ export function SchedulePresenter({
   // Edit item handler (for non-song items)
   const handleEditItem = useCallback((item: ScheduleItem) => {
     if (mediaEditorsRef.current?.edit(item)) return
+    // A Slides item: the deck editor (CH-183 phase 2) opens here.
+    if (item.itemType === 'slides') return
     if (item.itemType === 'song' && item.songId) {
       setEditingSongId(item.songId)
     } else if (item.itemType === 'bible_passage') {
@@ -798,6 +811,7 @@ export function SchedulePresenter({
                     quickInsertAfterId ?? undefined,
                   )
                 }
+                onAddDeck={() => addDeck(quickInsertAfterId ?? undefined)}
               />
             </div>
           </div>
@@ -812,6 +826,7 @@ export function SchedulePresenter({
               onAnnouncementClick={handleAnnouncementClick}
               onSceneClick={handleSceneClick}
               onVideoClick={presentVideo}
+              onDeckStepClick={presentDeckStep}
               onReorder={handleReorder}
               onEditSong={handleEditSong}
               onNavigateToSong={handleNavigateToSong}
