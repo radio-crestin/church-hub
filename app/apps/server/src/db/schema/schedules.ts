@@ -23,6 +23,9 @@ export const schedules = sqliteTable(
     startOnAppStart: integer('start_on_app_start', { mode: 'boolean' })
       .notNull()
       .default(false),
+    // The slide template for all its slides (slide_templates.id); NULL = each
+    // screen's own. Local to this computer, like the automation.
+    templateId: integer('template_id'),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -58,6 +61,8 @@ export const scheduleItems = sqliteTable(
     // Seconds each slide of this item stays up while the presentation runs by
     // itself; NULL = the presentation's timing.
     advanceSeconds: integer('advance_seconds'),
+    // This item's own slide template; NULL = the presentation's.
+    templateId: integer('template_id'),
     // Manual "already sung" marker, per schedule (mirrors song_bookmarks).
     // Only meaningful for itemType === 'song'.
     isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),

@@ -2,6 +2,8 @@ import { Loader2, MonitorUp, Plus } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSlideTemplate } from '~/features/slide-templates/hooks/useSlideTemplates'
+import { templateDisplayName } from '~/features/slide-templates/utils/templateDisplayName'
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { PageHeader } from '~/ui/page'
@@ -76,6 +78,7 @@ export function ScreenManager() {
 
   // Fetch full screen config when editing
   const { data: editingScreen } = useScreen(editingScreenId)
+  const { data: editingTemplate } = useSlideTemplate(editingScreen?.templateId)
 
   const handleAddNew = () => {
     setNewScreenName('')
@@ -188,6 +191,11 @@ export function ScreenManager() {
       <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950">
         <ScreenEditor
           screen={editingScreen}
+          title={
+            editingTemplate
+              ? templateDisplayName(editingTemplate, t)
+              : editingScreen.name
+          }
           initialContentType={editingContentType}
           onSave={handleSaveScreen}
           onClose={handleCloseEditor}

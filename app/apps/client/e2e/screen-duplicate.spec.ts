@@ -2,8 +2,9 @@ import { expect, test } from '@playwright/test'
 
 /**
  * Duplicating a screen must carry every setting over: the row's own options,
- * all content configs, the next-slide config and the OBS scene overrides — while
- * leaving the copy inactive and never handing it the preview-screen role.
+ * a copy of its template (every layout, the next-slide config) and its OBS
+ * scene templates — while leaving the copy inactive and never handing it the
+ * preview-screen role.
  */
 test.describe('Duplicate screen', () => {
   test('clones a screen with all of its settings', async ({ request }) => {
@@ -18,12 +19,15 @@ test.describe('Duplicate screen', () => {
     }
 
     const copyIds: number[] = []
+    // The screens' own templates and the scene's, deleted with them.
+    const templateIds: number[] = []
 
     try {
       // Give the source a non-default look, an OBS scene override and a
       // next-slide config, so a shallow copy would be visibly wrong.
       const sourceWithConfigs = await request.get(`/api/screens/${source.id}`)
       const { data: full } = await sourceWithConfigs.json()
+      templateIds.push(full.templateId)
       const songConfig = full.contentConfigs.song
       songConfig.mainText.style.maxFontSize = 123
       songConfig.mainText.style.alignment = 'left'
@@ -49,11 +53,17 @@ test.describe('Duplicate screen', () => {
         ).status(),
       ).toBe(200)
 
+      const sceneTemplate = await request.post('/api/slide-templates', {
+        data: { name: `${name} scene`, fromId: full.templateId },
+      })
+      expect(sceneTemplate.status()).toBe(201)
+      const sceneTemplateId = (await sceneTemplate.json()).data.id as number
+      templateIds.push(sceneTemplateId)
       expect(
         (
           await request.put(
-            `/api/screens/${source.id}/scene-overrides/E2E%20Scene/song`,
-            { data: { config: songConfig } },
+            `/api/screens/${source.id}/scene-templates/E2E%20Scene`,
+            { data: { templateId: sceneTemplateId } },
           )
         ).status(),
       ).toBe(200)
@@ -90,22 +100,27 @@ test.describe('Duplicate screen', () => {
       expect(copied.contentConfigs.song.mainText.style.alignment).toBe('left')
       expect(copied.globalSettings.defaultBackground.color).toBe('#123456')
       expect(copied.nextSlideConfig).toEqual(full.nextSlideConfig)
-      expect(Object.keys(copied.sceneOverrides)).toContain('E2E Scene')
-      expect(
-        copied.sceneOverrides['E2E Scene'].song.mainText.style.maxFontSize,
-      ).toBe(123)
+      expect(copied.sceneTemplates).toEqual({ 'E2E Scene': sceneTemplateId })
+      // Its own template is a copy: changing one never changes the other.
+      expect(copied.templateId).not.toBe(full.templateId)
+      templateIds.push(copied.templateId)
 
       // The source keeps its own configs — the copy is independent.
       const secondCopy = await request.post(
         `/api/screens/${source.id}/duplicate`,
       )
       expect(secondCopy.status()).toBe(201)
-      copyIds.push((await secondCopy.json()).data.id)
+      const second = (await secondCopy.json()).data
+      copyIds.push(second.id)
+      templateIds.push(second.templateId)
     } finally {
       for (const id of copyIds) {
         await request.delete(`/api/screens/${id}`).catch(() => {})
       }
       await request.delete(`/api/screens/${source.id}`).catch(() => {})
+      for (const id of templateIds) {
+        await request.delete(`/api/slide-templates/${id}`).catch(() => {})
+      }
     }
   })
 

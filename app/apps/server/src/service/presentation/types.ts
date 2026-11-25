@@ -404,47 +404,6 @@ export type ContentType =
   | 'screen_share'
 
 /**
- * Screen record from database
- */
-export interface ScreenRecord {
-  id: number
-  name: string
-  type: string
-  is_active: number
-  open_mode: string
-  is_fullscreen: number
-  width: number
-  height: number
-  global_settings: string
-  sort_order: number
-  created_at: number
-  updated_at: number
-}
-
-/**
- * Screen content config record from database
- */
-export interface ScreenContentConfigRecord {
-  id: number
-  screen_id: number
-  content_type: string
-  config: string
-  created_at: number
-  updated_at: number
-}
-
-/**
- * Screen next slide config record from database
- */
-export interface ScreenNextSlideConfigRecord {
-  id: number
-  screen_id: number
-  config: string
-  created_at: number
-  updated_at: number
-}
-
-/**
  * Screen API response format
  */
 export interface Screen {
@@ -464,6 +423,13 @@ export interface Screen {
    * null to open wherever the window lands.
    */
   monitorName: string | null
+  /** The slide template this screen draws with. */
+  templateId: number
+  /** A running presentation restyles this screen with its own template. */
+  followsPresentation: boolean
+  /** While one of these OBS scenes is live, the screen draws with its template. */
+  sceneTemplates: Record<string, number>
+  /** The design canvas, the clock and fallback background: its template's. */
   width: number
   height: number
   globalSettings: ScreenGlobalSettings
@@ -604,10 +570,10 @@ export interface ScreenContentConfig {
 /**
  * Screen with all configurations loaded
  */
+/** A screen with its template's layouts: what it draws each slide kind with. */
 export interface ScreenWithConfigs extends Screen {
   contentConfigs: Record<ContentType, Record<string, unknown>>
-  nextSlideConfig?: NextSlideSectionConfig
-  sceneOverrides?: Record<string, Record<string, Record<string, unknown>>>
+  nextSlideConfig: NextSlideSectionConfig
 }
 
 /**
@@ -642,6 +608,10 @@ export interface UpsertScreenInput {
   openOnStartup?: boolean
   /** Monitor to project onto, or null to open wherever the window lands. */
   monitorName?: string | null
+  /** Draw with this template (slide_templates.id). */
+  templateId?: number
+  followsPresentation?: boolean
+  /** Written to the screen's own template (copied first when bundled). */
   width?: number
   height?: number
   globalSettings?: ScreenGlobalSettings

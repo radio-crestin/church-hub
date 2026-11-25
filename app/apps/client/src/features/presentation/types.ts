@@ -770,6 +770,13 @@ export interface Screen {
    * null to open wherever the window lands.
    */
   monitorName: string | null
+  /** The slide template this screen draws with. */
+  templateId: number
+  /** A running presentation restyles this screen with its own template. */
+  followsPresentation: boolean
+  /** While one of these OBS scenes is live, the screen draws with its template. */
+  sceneTemplates: Record<string, number>
+  /** The design canvas, the clock and fallback background: its template's. */
   width: number
   height: number
   globalSettings: ScreenGlobalSettings
@@ -797,8 +804,7 @@ export interface ScreenWithConfigs extends Screen {
   contentConfigs: {
     [K in ContentType]: ContentConfigMap[K]
   }
-  nextSlideConfig?: NextSlideSectionConfig
-  sceneOverrides?: Record<string, Record<string, Record<string, unknown>>>
+  nextSlideConfig: NextSlideSectionConfig
 }
 
 /**
@@ -817,6 +823,10 @@ export interface UpsertScreenInput {
   openOnStartup?: boolean
   /** Monitor to project onto, or null to open wherever the window lands. */
   monitorName?: string | null
+  /** Draw with this template. */
+  templateId?: number
+  followsPresentation?: boolean
+  /** Written to the screen's own template (copied first when bundled). */
   width?: number
   height?: number
   globalSettings?: ScreenGlobalSettings

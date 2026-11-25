@@ -52,6 +52,7 @@ import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
 import { handleRemoteAccessRoutes } from './routes/remote-access'
 import { handleScreenShareRoutes } from './routes/screen-share'
+import { handleSlideTemplateRoutes } from './routes/slide-templates'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
 import {
@@ -198,8 +199,6 @@ import {
   clearSlide,
   clearSlideHighlights,
   clearTemporaryContent,
-  deleteAllSceneOverrides,
-  deleteSceneOverride,
   deleteScreen,
   duplicateScreen,
   getAllScreens,
@@ -212,6 +211,7 @@ import {
   type NavigateTemporaryInput,
   type NextSlideSectionConfig,
   navigateTemporary,
+  notifyScreenDesignChanged,
   type PresentTemporaryAnnouncementInput,
   type PresentTemporaryBibleInput,
   type PresentTemporaryBiblePassageInput,
@@ -237,7 +237,6 @@ import {
   updateGlobalSettings,
   updateNextSlideConfig,
   updatePresentationState,
-  upsertSceneOverride,
   upsertScreen,
 } from './service/presentation'
 import { startVerseLoop } from './service/presentation/verse-loop'
@@ -3740,7 +3739,7 @@ async function startRealServer(): Promise<void> {
 
           // Broadcast screen config update if updating existing screen
           if (body.id) {
-            broadcastScreenConfigUpdated(screen.id)
+            notifyScreenDesignChanged(screen.id)
           }
 
           return handleCors(
@@ -3867,7 +3866,7 @@ async function startRealServer(): Promise<void> {
           }
 
           // Broadcast screen config update to all connected clients
-          broadcastScreenConfigUpdated(screenId)
+          notifyScreenDesignChanged(screenId)
 
           const config = getContentConfig(screenId, contentType)
           return handleCors(
@@ -3925,7 +3924,7 @@ async function startRealServer(): Promise<void> {
           }
 
           // Broadcast screen config update to all connected clients
-          broadcastScreenConfigUpdated(screenId)
+          notifyScreenDesignChanged(screenId)
 
           const config = getNextSlideConfig(screenId)
           return handleCors(
@@ -3980,7 +3979,7 @@ async function startRealServer(): Promise<void> {
           }
 
           // Broadcast screen config update to all connected clients
-          broadcastScreenConfigUpdated(screenId)
+          notifyScreenDesignChanged(screenId)
 
           const screen = getScreenById(screenId)
           return handleCors(
@@ -4053,7 +4052,7 @@ async function startRealServer(): Promise<void> {
           }
 
           // Broadcast screen config update to all connected clients
-          broadcastScreenConfigUpdated(screenId)
+          notifyScreenDesignChanged(screenId)
 
           const screen = getScreenWithConfigs(screenId)
           return handleCors(
@@ -4071,110 +4070,6 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
-      }
-
-      // ============================================================
-      // Screen Scene Override API Endpoints
-      // ============================================================
-
-      // PUT /api/screens/:id/scene-overrides/:sceneName/:contentType - Upsert scene override
-      const sceneOverrideMatch = url.pathname.match(
-        /^\/api\/screens\/(\d+)\/scene-overrides\/([^/]+)\/([^/]+)$/,
-      )
-      if (
-        req.method === 'PUT' &&
-        sceneOverrideMatch?.[1] &&
-        sceneOverrideMatch[2] &&
-        sceneOverrideMatch[3]
-      ) {
-        const permError = checkPermission('displays.edit')
-        if (permError) return permError
-
-        try {
-          const screenId = parseInt(sceneOverrideMatch[1], 10)
-          const obsSceneName = decodeURIComponent(sceneOverrideMatch[2])
-          const contentType = sceneOverrideMatch[3] as ContentType
-          const body = (await req.json()) as { config: Record<string, unknown> }
-
-          const result = upsertSceneOverride(
-            screenId,
-            obsSceneName,
-            contentType,
-            body.config,
-          )
-
-          if (!result.success) {
-            return handleCors(
-              req,
-              new Response(JSON.stringify({ error: result.error }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' },
-              }),
-            )
-          }
-
-          broadcastScreenConfigUpdated(screenId)
-
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ success: true }), {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        } catch {
-          return handleCors(
-            req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
-          )
-        }
-      }
-
-      // DELETE /api/screens/:id/scene-overrides/:sceneName/:contentType - Delete specific override
-      if (req.method === 'DELETE' && sceneOverrideMatch?.[1]) {
-        const permError = checkPermission('displays.edit')
-        if (permError) return permError
-
-        const screenId = parseInt(sceneOverrideMatch[1], 10)
-        const obsSceneName = decodeURIComponent(sceneOverrideMatch[2]!)
-        const contentType = sceneOverrideMatch[3] as ContentType
-
-        const result = deleteSceneOverride(screenId, obsSceneName, contentType)
-
-        broadcastScreenConfigUpdated(screenId)
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ success: result.success }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-      }
-
-      // DELETE /api/screens/:id/scene-overrides - Clear all overrides for a screen
-      const clearSceneOverridesMatch = url.pathname.match(
-        /^\/api\/screens\/(\d+)\/scene-overrides$/,
-      )
-      if (req.method === 'DELETE' && clearSceneOverridesMatch?.[1]) {
-        const permError = checkPermission('displays.edit')
-        if (permError) return permError
-
-        const screenId = parseInt(clearSceneOverridesMatch[1], 10)
-        const result = deleteAllSceneOverrides(screenId)
-
-        broadcastScreenConfigUpdated(screenId)
-
-        return handleCors(
-          req,
-          new Response(JSON.stringify({ success: result.success }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
       }
 
       // ============================================================
@@ -8387,6 +8282,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (bibleTopicsResponse) return bibleTopicsResponse
+
+      // Slide templates and the screens' OBS scene templates (CH-184)
+      const slideTemplatesResponse = await handleSlideTemplateRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (slideTemplatesResponse) return slideTemplatesResponse
 
       // The notifications history (song syncs, app updates)
       const notificationsResponse = await handleNotificationRoutes(

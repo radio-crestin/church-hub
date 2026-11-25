@@ -12,12 +12,16 @@ import {
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
 import { isTunnelOpen } from '~/features/remote-access/tunnel/tunnelState'
+import { slideTemplatesQueryKey } from '~/features/slide-templates/hooks/useSlideTemplates'
+import {
+  applyTemplatePreview,
+  type TemplateDesign,
+} from '~/features/slide-templates/utils/applyTemplatePreview'
 import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import { updateStateIfNewer } from '../hooks/usePresentationControls'
 import { presentationStateQueryKey } from '../hooks/usePresentationState'
-import { screenQueryKey } from '../hooks/useScreen'
 import { screensQueryKey } from '../hooks/useScreens'
 import { slideHighlightsQueryKey } from '../hooks/useSlideHighlights'
 import type { PresentationState } from '../types'
@@ -53,11 +57,19 @@ interface ScreenConfigUpdatedMessage {
   }
 }
 
-interface ScreenConfigPreviewMessage {
-  type: 'screen_config_preview'
+interface SlideTemplateUpdatedMessage {
+  type: 'slide_template_updated'
   payload: {
-    screenId: number
-    config: Record<string, unknown>
+    templateId: number
+    updatedAt: number
+  }
+}
+
+interface SlideTemplatePreviewMessage {
+  type: 'slide_template_preview'
+  payload: {
+    templateId: number
+    design: TemplateDesign | null
     updatedAt: number
   }
 }
@@ -173,7 +185,8 @@ interface LoginPairingRequestMessage {
 type MessageData =
   | PresentationMessage
   | ScreenConfigUpdatedMessage
-  | ScreenConfigPreviewMessage
+  | SlideTemplatePreviewMessage
+  | SlideTemplateUpdatedMessage
   | HighlightColorsUpdatedMessage
   | SlideHighlightsUpdatedMessage
   | SongUpdatedMessage
@@ -298,10 +311,15 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           reloadQueries(queryClient, screensQueryKey)
         }
 
-        if (data.type === 'screen_config_preview') {
-          queryClient.setQueryData(
-            screenQueryKey(data.payload.screenId),
-            data.payload.config,
+        if (data.type === 'slide_template_updated') {
+          reloadQueries(queryClient, slideTemplatesQueryKey)
+        }
+
+        if (data.type === 'slide_template_preview') {
+          applyTemplatePreview(
+            queryClient,
+            data.payload.templateId,
+            data.payload.design,
           )
         }
 

@@ -1,9 +1,10 @@
 import type { Database } from 'bun:sqlite'
-import { getDefaultContentConfig } from '../../service/presentation/default-design/getDefaultContentConfig'
-import { getDefaultGlobalSettings } from '../../service/presentation/default-design/getDefaultGlobalSettings'
-import { getDefaultNextSlideConfig } from '../../service/presentation/default-design/getDefaultNextSlideConfig'
+import {
+  BUNDLED_KEY_FOR_SCREEN,
+  BUNDLED_TEMPLATES,
+} from '../../service/slide-templates/bundledTemplates'
+import type { TemplateDesign } from '../../service/slide-templates/types'
 import defaultScreens from '../fixtures/default-screens.json'
-import { contentTypes } from '../schema'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -13,9 +14,11 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[seed-screens:${level}] ${message}`)
 }
 
+type ScreenType = 'primary' | 'stage' | 'livestream' | 'kiosk'
+
 interface ScreenFixture {
   name: string
-  type: 'primary' | 'stage' | 'livestream' | 'kiosk'
+  type: ScreenType
   isActive: boolean
   openMode: string
   isFullscreen: boolean
@@ -23,120 +26,79 @@ interface ScreenFixture {
   alwaysOnTop?: boolean
   isPreviewScreen?: boolean
   openOnStartup?: boolean
-  width: number
-  height: number
   sortOrder: number
-  /** Designs: left out, the factory design (default-design/) applies. */
-  globalSettings?: Record<string, unknown>
-  contentConfigs?: Record<string, Record<string, unknown>>
-  nextSlideConfig?: Record<string, unknown>
+  /** Its own design: left out, the bundled design of its type applies. */
+  design?: TemplateDesign
+}
+
+function bundledDesign(type: ScreenType): TemplateDesign {
+  const key = BUNDLED_KEY_FOR_SCREEN[type]
+  const bundled = BUNDLED_TEMPLATES.find((template) => template.key === key)
+  if (!bundled) throw new Error(`No bundled template "${key}"`)
+  return bundled.design()
+}
+
+/** The screen's own template, named after it: its design to change. */
+function insertTemplate(db: Database, screen: ScreenFixture): number {
+  const design = screen.design ?? bundledDesign(screen.type)
+  const row = db
+    .query<{ id: number }, (string | number)[]>(
+      `INSERT INTO slide_templates (name, width, height, layouts, global_settings, next_slide)
+        VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+    )
+    .get(
+      screen.name,
+      design.width,
+      design.height,
+      JSON.stringify(design.layouts),
+      JSON.stringify(design.globalSettings),
+      JSON.stringify(design.nextSlide),
+    )
+  return (row as { id: number }).id
 }
 
 /**
- * Seeds default screens with their configurations from fixture file.
- * Uses count check to avoid duplicates on subsequent runs.
- *
- * The fixture lists the screens; their designs come from the factory design
- * in service/presentation/default-design/ unless the fixture carries its own
- * (as `bun run apps/server/src/db/fixtures/dump-fixtures.ts` writes them).
+ * Seeds the default screens (default-screens.json) on an install without
+ * screens, each with a template of its own: the fixture's design when it has
+ * one (`bun run fixtures` writes them), else the bundled one of its type.
  * @throws Error if seeding fails
  */
 export function seedDefaultScreens(db: Database): void {
-  log('debug', 'Checking if screens need to be seeded...')
-
-  try {
-    // Check if any screens already exist
-    const existingCount = db
-      .query('SELECT COUNT(*) as count FROM screens')
-      .get() as { count: number }
-
-    if (existingCount.count > 0) {
-      log(
-        'debug',
-        `Screens already exist (${existingCount.count}), skipping seed`,
-      )
-      return
-    }
-
-    log('info', 'Seeding default screens from fixtures...')
-
-    const screens = defaultScreens as ScreenFixture[]
-
-    for (const screen of screens) {
-      // Insert screen. close_on_escape defaults to off (window stays open when
-      // nothing is displayed) and is_preview_screen marks the screen mirrored
-      // in the in-app preview — both come straight from the factory fixture.
-      db.run(
-        `INSERT INTO screens
-          (name, type, is_active, open_mode, is_fullscreen, always_on_top, close_on_escape, is_preview_screen, open_on_startup, width, height, global_settings, sort_order, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
-        [
-          screen.name,
-          screen.type,
-          screen.isActive ? 1 : 0,
-          screen.openMode,
-          // A projection screen fills its display unless the fixture opts out.
-          screen.isFullscreen === false ? 0 : 1,
-          // Above other windows, so a web page can't cover the projection.
-          screen.alwaysOnTop === false ? 0 : 1,
-          screen.closeOnEscape ? 1 : 0,
-          screen.isPreviewScreen ? 1 : 0,
-          screen.openOnStartup === false ? 0 : 1,
-          screen.width,
-          screen.height,
-          JSON.stringify(
-            screen.globalSettings ?? getDefaultGlobalSettings(screen.type),
-          ),
-          screen.sortOrder,
-        ],
-      )
-
-      // Get the inserted screen ID
-      const inserted = db
-        .query('SELECT id FROM screens WHERE name = ?')
-        .get(screen.name) as { id: number } | null
-
-      if (!inserted) {
-        throw new Error(
-          `[seed-screens] Failed to insert screen '${screen.name}'. The screens table may be missing required columns.`,
-        )
-      }
-
-      // Content configs for all content types: the fixture's own design when
-      // it has one, else the factory design for this screen type.
-      for (const contentType of contentTypes) {
-        const config =
-          screen.contentConfigs?.[contentType] ??
-          getDefaultContentConfig(contentType, screen.type)
-        db.run(
-          `INSERT INTO screen_content_configs
-            (screen_id, content_type, config, created_at, updated_at)
-            VALUES (?, ?, ?, unixepoch(), unixepoch())`,
-          [inserted.id, contentType, JSON.stringify(config)],
-        )
-      }
-
-      // The "next slide" strip, described but switched off.
-      const nextSlideConfig = screen.nextSlideConfig ?? {
-        ...getDefaultNextSlideConfig(),
-        enabled: false,
-      }
-      db.run(
-        `INSERT INTO screen_next_slide_configs
-          (screen_id, config, created_at, updated_at)
-          VALUES (?, ?, unixepoch(), unixepoch())`,
-        [inserted.id, JSON.stringify(nextSlideConfig)],
-      )
-
-      log('debug', `Seeded screen: ${screen.name} (${screen.type})`)
-    }
-
-    log('info', `Seeded ${screens.length} default screens from fixtures`)
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown error during seeding'
-    throw new Error(
-      `[seed-screens] Failed to seed default screens: ${message}. Ensure the 'screens', 'screen_content_configs', and 'screen_next_slide_configs' tables exist with correct schema.`,
-    )
+  const existing = db
+    .query<{ count: number }, []>('SELECT COUNT(*) as count FROM screens')
+    .get()
+  if (existing && existing.count > 0) {
+    log('debug', `Screens already exist (${existing.count}), skipping seed`)
+    return
   }
+
+  log('info', 'Seeding default screens from fixtures...')
+  const screens = defaultScreens as ScreenFixture[]
+  for (const screen of screens) {
+    db.run(
+      `INSERT INTO screens
+          (name, type, is_active, open_mode, is_fullscreen, always_on_top, close_on_escape,
+           is_preview_screen, open_on_startup, template_id, follows_presentation, sort_order,
+           created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())`,
+      [
+        screen.name,
+        screen.type,
+        screen.isActive ? 1 : 0,
+        screen.openMode,
+        // A projection screen fills its display unless the fixture opts out.
+        screen.isFullscreen === false ? 0 : 1,
+        // Above other windows, so a web page can't cover the projection.
+        screen.alwaysOnTop === false ? 0 : 1,
+        screen.closeOnEscape ? 1 : 0,
+        screen.isPreviewScreen ? 1 : 0,
+        screen.openOnStartup === false ? 0 : 1,
+        insertTemplate(db, screen),
+        screen.type === 'primary' || screen.type === 'kiosk' ? 1 : 0,
+        screen.sortOrder,
+      ],
+    )
+    log('debug', `Seeded screen: ${screen.name} (${screen.type})`)
+  }
+  log('info', `Seeded ${screens.length} default screens from fixtures`)
 }
