@@ -65,3 +65,7 @@ COOKIE_MAX_AGE = 600
 # - WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID (+ optional WAHA_SESSION,
 #   WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) for the WhatsApp
 #   notice of each feature request. Unset = WhatsApp is skipped.
+# - Cloud sync (no database: each church's state is an encrypted object in
+#   the bucket): SYNC_SECRET, S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID,
+#   S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL (+ optional S3_REGION,
+#   S3_STATE_BUCKET, SYNC_COMPACT_AFTER). Unset = /sync/* answers 503.

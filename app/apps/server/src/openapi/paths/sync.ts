@@ -10,6 +10,16 @@ const localhostError = {
   },
 }
 
+/** An error answer of the cloud sync routes. */
+const cloudError = (description: string) => ({
+  description,
+  content: {
+    'application/json': {
+      schema: { type: 'object', properties: { error: { type: 'string' } } },
+    },
+  },
+})
+
 const syncConfigSchema = {
   type: 'object',
   properties: {
@@ -20,6 +30,11 @@ const syncConfigSchema = {
     },
     lastSyncAt: { type: ['integer', 'null'], description: 'Unix ms' },
     lastError: { type: ['string', 'null'] },
+    transport: {
+      type: 'string',
+      enum: ['drive', 'cloud'],
+      description: 'Cloud: the sync service. Drive: the backup option.',
+    },
   },
 }
 
@@ -83,7 +98,23 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
                     type: 'object',
                     properties: {
                       enabled: { type: 'boolean' },
-                      connected: { type: 'boolean' },
+                      transport: { type: 'string', enum: ['drive', 'cloud'] },
+                      connected: {
+                        type: 'boolean',
+                        description:
+                          'Cloud: a church on the sync service. Drive: a connected Google account.',
+                      },
+                      cloud: {
+                        type: ['object', 'null'],
+                        properties: {
+                          churchId: { type: 'string' },
+                          serviceUrl: { type: 'string' },
+                          seq: {
+                            type: 'integer',
+                            description: 'Last segment applied here.',
+                          },
+                        },
+                      },
                       accountEmail: { type: ['string', 'null'] },
                       pollIntervalMinutes: { type: 'integer' },
                       lastSyncAt: { type: ['integer', 'null'] },
@@ -320,6 +351,172 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
           },
         },
         '403': localhostError,
+      },
+    },
+  },
+  '/api/sync/cloud': {
+    post: {
+      tags: ['Sync'],
+      summary: 'Connect to cloud sync',
+      description:
+        'Registers this server on the cloud sync service as a guest church (churchhub-backend /sync/churches, or CHURCH_HUB_SYNC_URL), keeps its identity, queues the whole library for the first upload, makes cloud the sync transport and starts a first cycle in the background. Google Drive stays available as the backup option. Only accessible from localhost.',
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                serviceUrl: {
+                  type: 'string',
+                  description:
+                    'A self-hosted sync service; default: the Church Hub one.',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Connected',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      churchId: { type: 'string' },
+                      readUrl: {
+                        type: 'string',
+                        description:
+                          'Public, unlisted bucket path the library is read from.',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': localhostError,
+        '409': cloudError('Already connected'),
+        '502': cloudError('The sync service refused or failed'),
+      },
+    },
+    delete: {
+      tags: ['Sync'],
+      summary: 'Disconnect from cloud sync',
+      description:
+        'Forgets the church and the central versions, and goes back to the Drive transport, disabled. The church stays on the service. Only accessible from localhost.',
+      responses: {
+        '200': {
+          description: 'Disconnected',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      connected: { type: 'boolean', const: false },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': localhostError,
+      },
+    },
+  },
+  '/api/sync/cloud/devices': {
+    post: {
+      tags: ['Sync'],
+      summary: 'Add a cloud sync device',
+      description:
+        'Mints a device token on the sync service for one of this server’s users: the device reads the church path and writes with that user’s permissions (the join link of T-168 carries it). The roles and users are mirrored to the service first. Requires users.edit.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                userId: { type: 'integer' },
+                name: { type: 'string' },
+              },
+              required: ['userId', 'name'],
+            },
+          },
+        },
+      },
+      responses: {
+        '201': {
+          description: 'The device and its token (shown once)',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      deviceId: { type: 'string' },
+                      token: { type: 'string' },
+                      churchId: { type: 'string' },
+                      readUrl: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': cloudError('userId and name are required'),
+        '403': cloudError('Requires users.edit'),
+        '409': cloudError('Not connected to cloud sync'),
+        '502': cloudError('The sync service refused or failed'),
+      },
+    },
+  },
+  '/api/sync/cloud/devices/{deviceId}': {
+    delete: {
+      tags: ['Sync'],
+      summary: 'Revoke a cloud sync device',
+      description:
+        'The service refuses the device’s writes from now on and moves the church to a new secret read path, which this server keeps at once. Requires users.edit.',
+      parameters: [
+        {
+          name: 'deviceId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string' },
+        },
+      ],
+      responses: {
+        '200': {
+          description: 'Revoked; the new read path',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { readUrl: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': cloudError('Requires users.edit'),
+        '409': cloudError('Not connected to cloud sync'),
+        '502': cloudError('The sync service refused or failed'),
       },
     },
   },

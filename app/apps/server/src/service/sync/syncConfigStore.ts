@@ -8,13 +8,18 @@ export interface SyncConfig {
   pollIntervalMinutes: number
   lastSyncAt: number | null
   lastError: string | null
+  transport: SyncTransport
 }
+
+/** Cloud: the sync service and its bucket (T-171). Drive: the backup option. */
+export type SyncTransport = 'drive' | 'cloud'
 
 const DEFAULT_CONFIG: SyncConfig = {
   syncEnabled: false,
   pollIntervalMinutes: 5,
   lastSyncAt: null,
   lastError: null,
+  transport: 'drive',
 }
 
 /** Reads the single-row sync configuration, returning defaults when unset. */
@@ -28,6 +33,7 @@ export async function getSyncConfig(): Promise<SyncConfig> {
     pollIntervalMinutes: row.pollIntervalMinutes,
     lastSyncAt: row.lastSyncAt ? row.lastSyncAt.getTime() : null,
     lastError: row.lastError,
+    transport: row.transport,
   }
 }
 
@@ -52,6 +58,7 @@ export async function upsertSyncConfig(
         patch.pollIntervalMinutes ?? DEFAULT_CONFIG.pollIntervalMinutes,
       lastSyncAt: lastSyncAt ?? null,
       lastError: patch.lastError ?? null,
+      transport: patch.transport ?? DEFAULT_CONFIG.transport,
     })
   } else {
     await db
@@ -65,6 +72,7 @@ export async function upsertSyncConfig(
         }),
         ...(lastSyncAt !== undefined && { lastSyncAt }),
         ...(patch.lastError !== undefined && { lastError: patch.lastError }),
+        ...(patch.transport !== undefined && { transport: patch.transport }),
         updatedAt: new Date(),
       })
       .where(eq(syncConfig.id, current.id))

@@ -1,0 +1,62 @@
+import {
+  type CloudIdentity,
+  getCloudIdentity,
+  updateCloudIdentity,
+} from './cloudIdentityStore'
+import { pushAccessIfChanged } from './pushAccessIfChanged'
+import { serviceError, syncServiceRequest } from './syncServiceRequest'
+
+async function requireIdentity(): Promise<CloudIdentity> {
+  const identity = await getCloudIdentity()
+  if (!identity) throw new Error('not_connected')
+  return identity
+}
+
+/**
+ * Mints a device token for one of this server's users, so a phone writes
+ * with their permissions (the join link of T-168 carries it). The users are
+ * mirrored first, so a user added a moment ago is known to the service.
+ */
+export async function addCloudDevice(input: {
+  userId: number
+  name: string
+}): Promise<{
+  deviceId: string
+  token: string
+  churchId: string
+  readUrl: string
+}> {
+  const identity = await requireIdentity()
+  await pushAccessIfChanged(identity)
+  const response = await syncServiceRequest<{
+    deviceId: string
+    token: string
+  }>({ serviceUrl: identity.serviceUrl, identity }, 'POST', '/devices', {
+    userId: String(input.userId),
+    name: input.name,
+  })
+  if (response.status !== 201) throw serviceError(response)
+  return {
+    ...response.body,
+    churchId: identity.churchId,
+    readUrl: identity.readUrl,
+  }
+}
+
+/**
+ * Revokes a device: the service refuses its writes and moves the church to
+ * a new read path, which this server keeps at once.
+ */
+export async function revokeCloudDevice(
+  deviceId: string,
+): Promise<{ readUrl: string }> {
+  const identity = await requireIdentity()
+  const response = await syncServiceRequest<{ readUrl: string }>(
+    { serviceUrl: identity.serviceUrl, identity },
+    'DELETE',
+    `/devices/${encodeURIComponent(deviceId)}`,
+  )
+  if (response.status !== 200) throw serviceError(response)
+  await updateCloudIdentity({ readUrl: response.body.readUrl, headEtag: null })
+  return { readUrl: response.body.readUrl }
+}
