@@ -28,6 +28,7 @@
     "@tanstack/react-virtual": "^3",
     "@tanstack/router-plugin": "^1.167.12",
     "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-autostart": "~2.5.1",
     "@tauri-apps/plugin-barcode-scanner": "^2.5.3",
     "@tauri-apps/plugin-dialog": "^2.0.0",
     "@tauri-apps/plugin-fs": "^2.0.0",
