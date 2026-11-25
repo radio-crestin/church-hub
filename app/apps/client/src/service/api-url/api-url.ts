@@ -4,18 +4,12 @@
  * Supports auth URLs like: http://server:3000/api/auth/user/usr_TOKEN
  */
 
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
-
-import { isMobile } from '~/config'
+import { storeRemotePairing } from '~/features/remote-access/service/remotePairing'
+import { apiFetch } from '~/utils/apiFetch'
 import { toSafeHttpUrl } from '~/utils/toSafeHttpUrl'
 
 const API_URL_STORAGE_KEY = 'church-hub-api-url'
 const USER_AUTH_STORAGE_KEY = 'church-hub-user-auth'
-
-// Check if running in Tauri (v2 uses __TAURI_INTERNALS__)
-const isTauri =
-  typeof window !== 'undefined' &&
-  ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
 
 // Pattern to match auth URL: /api/auth/user/{token}
 // Token uses base64url encoding which includes A-Za-z0-9_- characters
@@ -26,10 +20,12 @@ const AUTH_URL_PATTERN = /\/api\/auth\/user\/(usr_[A-Za-z0-9_-]+)$/
  * Input: http://192.168.88.12:3000/api/auth/user/usr_exampleToken123
  * Returns: { baseUrl: 'http://192.168.88.12:3000', userToken: 'usr_exampleToken123' }
  */
-export function parseAuthUrl(url: string): {
+export function parseAuthUrl(link: string): {
   baseUrl: string
   userToken: string | null
 } {
+  // The fragment (#remote=…, remote access) is the phone's, not the server's.
+  const url = link.split('#')[0] ?? ''
   const match = url.match(AUTH_URL_PATTERN)
   if (match) {
     const userToken = match[1]
@@ -115,6 +111,8 @@ export function setApiUrl(url: string): void {
 
     // Store base URL
     localStorage.setItem(API_URL_STORAGE_KEY, safeBaseUrl)
+    // And how to find the computer away from the church Wi-Fi, if it says
+    storeRemotePairing(url)
 
     // Store and set user token if present
     if (userToken) {
@@ -169,12 +167,8 @@ export async function testApiConnection(
   try {
     const { baseUrl, userToken } = parseAuthUrl(url)
 
-    // Use Tauri HTTP plugin only on mobile (bypasses WKWebView restrictions on iOS)
-    // On desktop Tauri, use window.fetch which shares the webview's cookie jar
-    const fetchFn = isTauri && isMobile() ? tauriFetch : fetch
-
     // Test basic connectivity
-    const pingResponse = await fetchFn(`${baseUrl}/ping`, {
+    const pingResponse = await apiFetch(`${baseUrl}/ping`, {
       method: 'GET',
     })
 

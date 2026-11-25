@@ -32,11 +32,14 @@ export function intersectionSize(a: WordSet, b: WordSet): number {
   let j = 0
   let shared = 0
   while (i < a.ids.length && j < b.ids.length) {
-    if (a.ids[i] === b.ids[j]) {
+    const x = a.ids[i]
+    const y = b.ids[j]
+    if (x === undefined || y === undefined) break
+    if (x === y) {
       shared++
       i++
       j++
-    } else if (a.ids[i] < b.ids[j]) i++
+    } else if (x < y) i++
     else j++
   }
   return shared

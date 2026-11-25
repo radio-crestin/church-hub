@@ -1,6 +1,4 @@
 import { type ChildProcess, spawn } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -9,6 +7,7 @@ import {
   request as playwrightRequest,
 } from '@playwright/test'
 
+import { makeTempDir, removeTempDir } from './temp-dir'
 import { SERVER_READY_LINE } from '../../playwright.config'
 
 const APP_DIR = fileURLToPath(new URL('../../../..', import.meta.url))
@@ -21,7 +20,7 @@ const BOOT_TIMEOUT_MS = 240_000
  * Boot it, stop it, change its database, boot it again on the same folder.
  */
 export class ExtraServer {
-  readonly dataDir = mkdtempSync(join(tmpdir(), 'church-hub-e2e-'))
+  readonly dataDir = makeTempDir('church-hub-e2e-')
   readonly databasePath = join(this.dataDir, 'app.db')
   readonly port = Number(process.env.TEST_PORT ?? '3099') + 600
   readonly baseURL = `http://localhost:${this.port}`
@@ -43,6 +42,7 @@ export class ExtraServer {
         cwd: APP_DIR,
         env: {
           ...process.env,
+          CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
           NODE_ENV: 'production',
           CLIENT_DIST_PATH: 'apps/client/dist',
           CHURCH_HUB_DATA_DIR: this.dataDir,
@@ -94,7 +94,11 @@ export class ExtraServer {
     await exited
   }
 
-  /** A session signed in as the install's super admin (passwordless on localhost). */
+  /**
+   * A session signed in as the install's super admin (passwordless on
+   * localhost). Like the suite's auth setup, it marks the first-run
+   * onboarding done, so pages open straight instead of on the wizard.
+   */
   async adminRequest(): Promise<APIRequestContext> {
     const api = await playwrightRequest.newContext({ baseURL: this.baseURL })
     const users = (await (await api.get('/api/auth/local-users')).json())
@@ -108,11 +112,23 @@ export class ExtraServer {
       data: { userId: admin!.id },
     })
     expect(login.ok()).toBe(true)
+    const onboarding = await api.post('/api/settings/app_settings', {
+      data: { key: 'onboarding_pending', value: 'false' },
+    })
+    expect(onboarding.ok()).toBe(true)
     return api
+  }
+
+  /** A fresh install opens on its first-run onboarding; a page spec skips it. */
+  async skipOnboarding(api: APIRequestContext): Promise<void> {
+    const res = await api.post('/api/settings/app_settings', {
+      data: { key: 'onboarding_pending', value: 'false' },
+    })
+    expect(res.ok()).toBe(true)
   }
 
   async dispose(): Promise<void> {
     await this.stop()
-    rmSync(this.dataDir, { recursive: true, force: true, maxRetries: 3 })
+    removeTempDir(this.dataDir)
   }
 }

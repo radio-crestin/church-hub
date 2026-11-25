@@ -2,7 +2,55 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
-## v0.1.104 — 2026-11-16
+## v0.1.106 — 2026-11-23
+
+### What's new
+
+**New**
+
+- Share a screen or window on the projector and on browser screens, straight from the app.
+- Present Bible bookmarks one after another, or let them loop on a timer.
+- A bookmark button in the Bible page header, and the bookmark list scrolls to the verse you just added.
+- Make Bible verses bigger or smaller on screen with the new font-size buttons.
+- When a song source changes a song, review each change and choose to update it or keep yours.
+- The YouTube stream description now lists a chapter and the full text of every song and verse shown.
+- Go back and forward between pages with the mouse side buttons or Alt+Left/Right (Cmd+[ / Cmd+] on Mac).
+- Search in Settings to find an option quickly.
+- Settings > Shortcuts now lists the shortcuts of every page in the sidebar.
+- On a phone: a bottom tab bar, a live strip with previous / next / hide on every page, and phone layouts for songs, the Bible and programs.
+
+**Fixed**
+
+- Closing the app (even a force quit) now also stops its background server, so it starts again cleanly next time.
+- Songs with dots in their names (like "Isaia 38.9-20") are now imported from Resurse Creștine.
+- Resurse Creștine downloads use a working link, and a failed download says why.
+- Song search updates much faster after importing many songs.
+
+### Ce e nou
+
+**Noutăți**
+
+- Poți proiecta un ecran sau o fereastră pe proiector și pe ecranele din browser, direct din aplicație.
+- Versetele marcate din Biblie se pot prezenta pe rând sau în buclă, cu temporizator.
+- Buton de marcaj în antetul paginii Biblia, iar lista de marcaje derulează la versetul tocmai adăugat.
+- Butoane noi pentru a mări sau micșora textul versetelor pe ecran.
+- Când o sursă de cântări modifică o cântare, vezi fiecare schimbare și alegi dacă o actualizezi sau o păstrezi pe a ta.
+- Descrierea transmisiunii pe YouTube conține acum un capitol și textul complet pentru fiecare cântare și verset afișat.
+- Te întorci înapoi sau mergi înainte între pagini cu butoanele laterale ale mouse-ului sau cu Alt+Stânga/Dreapta (Cmd+[ / Cmd+] pe Mac).
+- Căutare în Setări, ca să găsești repede o opțiune.
+- Setări > Scurtături arată acum scurtăturile tuturor paginilor din meniu.
+- Pe telefon: bară de file jos, bandă cu ce e pe ecran (înapoi / înainte / ascunde) pe fiecare pagină, și pagini adaptate pentru cântări, Biblie și programe.
+
+**Corectări**
+
+- La închiderea aplicației (chiar și forțată) se oprește și serverul din fundal, așa că pornește curat data viitoare.
+- Cântările cu puncte în nume (de exemplu „Isaia 38.9-20”) se importă acum de pe Resurse Creștine.
+- Descărcarea de pe Resurse Creștine folosește un link care merge, iar o descărcare eșuată spune de ce.
+- Căutarea cântărilor se actualizează mult mai repede după importul multor cântări.
+
+<!-- church-hub-notes {"en":{"features":["Share a screen or window on the projector and on browser screens, straight from the app.","Present Bible bookmarks one after another, or let them loop on a timer.","A bookmark button in the Bible page header, and the bookmark list scrolls to the verse you just added.","Make Bible verses bigger or smaller on screen with the new font-size buttons.","When a song source changes a song, review each change and choose to update it or keep yours.","The YouTube stream description now lists a chapter and the full text of every song and verse shown.","Go back and forward between pages with the mouse side buttons or Alt+Left/Right (Cmd+[ / Cmd+] on Mac).","Search in Settings to find an option quickly.","Settings > Shortcuts now lists the shortcuts of every page in the sidebar.","On a phone: a bottom tab bar, a live strip with previous / next / hide on every page, and phone layouts for songs, the Bible and programs."],"bugFixes":["Closing the app (even a force quit) now also stops its background server, so it starts again cleanly next time.","Songs with dots in their names (like \"Isaia 38.9-20\") are now imported from Resurse Creștine.","Resurse Creștine downloads use a working link, and a failed download says why.","Song search updates much faster after importing many songs."]},"ro":{"features":["Poți proiecta un ecran sau o fereastră pe proiector și pe ecranele din browser, direct din aplicație.","Versetele marcate din Biblie se pot prezenta pe rând sau în buclă, cu temporizator.","Buton de marcaj în antetul paginii Biblia, iar lista de marcaje derulează la versetul tocmai adăugat.","Butoane noi pentru a mări sau micșora textul versetelor pe ecran.","Când o sursă de cântări modifică o cântare, vezi fiecare schimbare și alegi dacă o actualizezi sau o păstrezi pe a ta.","Descrierea transmisiunii pe YouTube conține acum un capitol și textul complet pentru fiecare cântare și verset afișat.","Te întorci înapoi sau mergi înainte între pagini cu butoanele laterale ale mouse-ului sau cu Alt+Stânga/Dreapta (Cmd+[ / Cmd+] pe Mac).","Căutare în Setări, ca să găsești repede o opțiune.","Setări > Scurtături arată acum scurtăturile tuturor paginilor din meniu.","Pe telefon: bară de file jos, bandă cu ce e pe ecran (înapoi / înainte / ascunde) pe fiecare pagină, și pagini adaptate pentru cântări, Biblie și programe."],"bugFixes":["La închiderea aplicației (chiar și forțată) se oprește și serverul din fundal, așa că pornește curat data viitoare.","Cântările cu puncte în nume (de exemplu „Isaia 38.9-20”) se importă acum de pe Resurse Creștine.","Descărcarea de pe Resurse Creștine folosește un link care merge, iar o descărcare eșuată spune de ce.","Căutarea cântărilor se actualizează mult mai repede după importul multor cântări."]}} -->
+
+## v0.1.105 — 2026-11-22
 
 ### 🚀 Features
 
@@ -51,9 +99,17 @@
 
 ### 🔧 Changes
 
-- **release**: every release goes out as a pre-release; release.sh promote makes it Latest
-- **release**: release.sh bumps on a branch for a PR, then tags the merge on main
-- **release**: a normal release is Latest; a draft flagged pre-release stays out of the updater
+- T-147 e2e: program-gama edit-as-text waits for the textarea's text before reading it
+- T-166 Identifică: each display shows its number and name again
+- T-167 Login from the LAN: pairing code for passwordless accounts (Super Admin included)
+- T-165 Pre-release fixes: backup card layout shift + Remove confirmation, translated Cancel, no discard prompt on an untouched new song
+- T-164 OBS WebSocket password from crypto.getRandomValues, not Math.random
+- T-161 Romanian texts: agents write them themselves, no Codex
+- T-163 e2e: fake desktop shells report the test server's port
+- T-158 Slides appear on the projector much faster
+- CH-160 Livestream: separate buttons, settings pages, every YouTube setting configurable (template, DVR off)
+- T-159 Screen settings: grouped, explained and fitted
+- T-148 v0.1.104: pre-release first, release.sh promote to Latest
 - T-140 Search fields let Up/Down and page keys move the live slide
 - T-145 Restoring a backup fails on Windows and leaves the server with no database
 - T-144 superfactory.yaml: task checkouts install app/ deps and every Playwright browser the suite uses

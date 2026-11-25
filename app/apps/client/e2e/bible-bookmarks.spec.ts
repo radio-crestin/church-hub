@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test'
 
-import { actionsMenuItem, selectAction } from './helpers/actions-menu'
+import { openActionsMenu } from './helpers/actions-menu'
 
 /**
  * Bible bookmarks: the list itself, and moving it in and out as text.
@@ -13,6 +13,12 @@ test.describe('Bible bookmarks', () => {
   /** Empties the list so a test starts from a known state. */
   async function clearBookmarks(page: Page) {
     await page.request.delete('/api/bible-bookmarks').catch(() => {})
+  }
+
+  /** Import is a seldom-used action, so it waits under the header's "More". */
+  async function openImport(page: Page) {
+    const menu = await openActionsMenu(page, 'bible-bookmarks-header-more')
+    await menu.getByTestId('bible-bookmarks-import-menu').click()
   }
 
   /** Opens /bible with the Marcaje panel already expanded. */
@@ -42,17 +48,16 @@ test.describe('Bible bookmarks', () => {
       .first()
       .click()
 
-    const bookmarkRow = await actionsMenuItem(
-      page,
-      'bible-actions-menu',
-      'bible-bookmark-toggle',
-    )
-    await expect(bookmarkRow).toBeEnabled({ timeout: 10000 })
-    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('bible-bookmark-toggle')).toBeEnabled({
+      timeout: 10000,
+    })
   }
 
   test.beforeEach(async ({ page }) => {
     await clearBookmarks(page)
+    // A verse left on screen by an earlier test opens /bible on it instead of
+    // on the book list the tests walk down from.
+    await page.request.post('/api/presentation/clear-temporary').catch(() => {})
   })
 
   test.afterAll(async ({ request }) => {
@@ -65,27 +70,50 @@ test.describe('Bible bookmarks', () => {
     await openBibleWithBookmarks(page)
     await selectVerse(page, 'Ioan', '3')
 
-    // The toggle sits in the page actions menu now, so each press means
-    // opening the menu again — the menu closes as soon as a row is chosen.
-    const toggle = () =>
-      actionsMenuItem(page, 'bible-actions-menu', 'bible-bookmark-toggle')
+    // The toggle sits in the page header, next to the actions menu.
+    const toggle = page.getByTestId('bible-bookmark-toggle')
 
-    await expect(await toggle()).toHaveAttribute('aria-checked', 'false')
-    await page.keyboard.press('Escape')
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await toggle.click()
 
-    await selectAction(page, 'bible-actions-menu', 'bible-bookmark-toggle')
-
-    await expect(await toggle()).toHaveAttribute('aria-checked', 'true')
-    await page.keyboard.press('Escape')
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByTestId('bible-bookmark-item')).toHaveCount(1)
 
     // Turning it off again empties the list, so a second press cannot leave a
     // stray duplicate behind.
-    await selectAction(page, 'bible-actions-menu', 'bible-bookmark-toggle')
+    await toggle.click()
 
-    await expect(await toggle()).toHaveAttribute('aria-checked', 'false')
-    await page.keyboard.press('Escape')
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
     await expect(page.getByTestId('bible-bookmark-item')).toHaveCount(0)
+  })
+
+  test('a verse just bookmarked is scrolled into view at the bottom of a long list', async ({
+    page,
+  }) => {
+    // Enough rows that the list overflows its panel.
+    await page.request.post('/api/bible-bookmarks/import', {
+      data: { text: 'Psalmi 23:1-6\nIoan 1:1-14', translationId: 1 },
+    })
+    await openBibleWithBookmarks(page)
+    const rows = page.getByTestId('bible-bookmark-item')
+    await expect(rows).toHaveCount(20)
+    await selectVerse(page, 'Ioan', '3')
+
+    const list = page.getByTestId('bible-bookmarks-list')
+    const isScrolledToBottom = () =>
+      list.evaluate(
+        (el) => el.scrollHeight - el.scrollTop - el.clientHeight < 2,
+      )
+    expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(
+      true,
+    )
+    expect(await isScrolledToBottom()).toBe(false)
+
+    await page.getByTestId('bible-bookmark-toggle').click()
+
+    await expect(rows).toHaveCount(21)
+    await expect.poll(isScrolledToBottom).toBe(true)
+    await expect(rows.last()).toBeInViewport()
   })
 
   test('import turns pasted references into bookmarks and reports bad lines', async ({
@@ -93,7 +121,7 @@ test.describe('Bible bookmarks', () => {
   }) => {
     await openBibleWithBookmarks(page)
 
-    await page.getByTestId('bible-bookmarks-import').click()
+    await openImport(page)
     await page
       .getByTestId('bible-bookmarks-import-textarea')
       .fill(
@@ -124,7 +152,7 @@ test.describe('Bible bookmarks', () => {
   test('import closes itself when every line lands', async ({ page }) => {
     await openBibleWithBookmarks(page)
 
-    await page.getByTestId('bible-bookmarks-import').click()
+    await openImport(page)
     await page
       .getByTestId('bible-bookmarks-import-textarea')
       .fill('Ioan 3:16\nPsalmi 23:1')

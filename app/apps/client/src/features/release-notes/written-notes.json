@@ -1,0 +1,44 @@
+{
+  "0.1.106": {
+    "en": {
+      "features": [
+        "Share a screen or window on the projector and on browser screens, straight from the app.",
+        "Present Bible bookmarks one after another, or let them loop on a timer.",
+        "A bookmark button in the Bible page header, and the bookmark list scrolls to the verse you just added.",
+        "Make Bible verses bigger or smaller on screen with the new font-size buttons.",
+        "When a song source changes a song, review each change and choose to update it or keep yours.",
+        "The YouTube stream description now lists a chapter and the full text of every song and verse shown.",
+        "Go back and forward between pages with the mouse side buttons or Alt+Left/Right (Cmd+[ / Cmd+] on Mac).",
+        "Search in Settings to find an option quickly.",
+        "Settings > Shortcuts now lists the shortcuts of every page in the sidebar.",
+        "On a phone: a bottom tab bar, a live strip with previous / next / hide on every page, and phone layouts for songs, the Bible and programs."
+      ],
+      "bugFixes": [
+        "Closing the app (even a force quit) now also stops its background server, so it starts again cleanly next time.",
+        "Songs with dots in their names (like \"Isaia 38.9-20\") are now imported from Resurse Creștine.",
+        "Resurse Creștine downloads use a working link, and a failed download says why.",
+        "Song search updates much faster after importing many songs."
+      ]
+    },
+    "ro": {
+      "features": [
+        "Poți proiecta un ecran sau o fereastră pe proiector și pe ecranele din browser, direct din aplicație.",
+        "Versetele marcate din Biblie se pot prezenta pe rând sau în buclă, cu temporizator.",
+        "Buton de marcaj în antetul paginii Biblia, iar lista de marcaje derulează la versetul tocmai adăugat.",
+        "Butoane noi pentru a mări sau micșora textul versetelor pe ecran.",
+        "Când o sursă de cântări modifică o cântare, vezi fiecare schimbare și alegi dacă o actualizezi sau o păstrezi pe a ta.",
+        "Descrierea transmisiunii pe YouTube conține acum un capitol și textul complet pentru fiecare cântare și verset afișat.",
+        "Te întorci înapoi sau mergi înainte între pagini cu butoanele laterale ale mouse-ului sau cu Alt+Stânga/Dreapta (Cmd+[ / Cmd+] pe Mac).",
+        "Căutare în Setări, ca să găsești repede o opțiune.",
+        "Setări > Scurtături arată acum scurtăturile tuturor paginilor din meniu.",
+        "Pe telefon: bară de file jos, bandă cu ce e pe ecran (înapoi / înainte / ascunde) pe fiecare pagină, și pagini adaptate pentru cântări, Biblie și programe."
+      ],
+      "bugFixes": [
+        "La închiderea aplicației (chiar și forțată) se oprește și serverul din fundal, așa că pornește curat data viitoare.",
+        "Cântările cu puncte în nume (de exemplu „Isaia 38.9-20”) se importă acum de pe Resurse Creștine.",
+        "Descărcarea de pe Resurse Creștine folosește un link care merge, iar o descărcare eșuată spune de ce.",
+        "Căutarea cântărilor se actualizează mult mai repede după importul multor cântări."
+      ]
+    }
+  }
+}

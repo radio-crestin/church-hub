@@ -443,10 +443,13 @@ function SortableItemWrapper({
 
         {/* Item Title & Info */}
         <div className="flex-1 min-w-0 text-left">
-          <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
+          <div className="font-medium text-sm sm:truncate text-gray-900 dark:text-white">
             {item.itemType === 'song' && (
               <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate">{item.song?.title}</span>
+                {/* A phone has no room for one line: the title takes two. */}
+                <span className="line-clamp-2 break-words sm:truncate">
+                  {item.song?.title}
+                </span>
                 <ScheduleKeyLineChip
                   keyLine={item.keyLine}
                   onEdit={onEditKeyLine ? () => onEditKeyLine(item) : undefined}
@@ -553,7 +556,9 @@ function SortableItemWrapper({
             onContextMenu(e, item)
           }}
           className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          title={t('common.options')}
+          title={t('common:options')}
+          aria-label={t('common:options')}
+          data-testid="schedule-item-options"
         >
           <MoreVertical
             size={16}

@@ -11,6 +11,7 @@ import {
 } from 'react'
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
+import { isTunnelOpen } from '~/features/remote-access/tunnel/tunnelState'
 import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
@@ -114,7 +115,7 @@ interface MusicStateMessage {
     duration: number
     volume: number
     isMuted: boolean
-    isShuffled: boolean
+    queueOrder: 'in_order' | 'random' | 'most_played' | 'least_played'
     currentIndex: number
     queueLength: number
     currentTrack: {
@@ -157,64 +158,6 @@ interface SyncAppliedMessage {
   }
 }
 
-// Screen share message types (for WebRTC signaling)
-interface ScreenShareStartedMessage {
-  type: 'screen_share_started'
-  payload: {
-    broadcasterId: string
-    audioEnabled: boolean
-    startedAt: number
-  }
-}
-
-interface ScreenShareStoppedMessage {
-  type: 'screen_share_stopped'
-  payload: {
-    broadcasterId: string
-    stoppedAt: number
-    stoppedBy?: string
-  }
-}
-
-interface ScreenShareJoinRequestMessage {
-  type: 'screen_share_join_request'
-  payload: {
-    viewerId: string
-  }
-}
-
-interface WebRTCOfferMessage {
-  type: 'webrtc_offer'
-  payload: {
-    broadcasterId: string
-    targetClientId: string
-    sdp: string
-  }
-}
-
-interface WebRTCAnswerMessage {
-  type: 'webrtc_answer'
-  payload: {
-    viewerId: string
-    targetClientId: string
-    sdp: string
-  }
-}
-
-interface WebRTCIceCandidateMessage {
-  type: 'webrtc_ice_candidate'
-  payload: {
-    fromClientId: string
-    targetClientId: string
-    candidate: {
-      candidate: string
-      sdpMid: string | null
-      sdpMLineIndex: number | null
-      usernameFragment: string | null
-    }
-  }
-}
-
 /** A pairing code to show in the desktop app (local sockets only). */
 interface LoginPairingRequestMessage {
   type: 'login_pairing_request'
@@ -239,12 +182,6 @@ type MessageData =
   | SidebarNavigationMessage
   | SyncAppliedMessage
   | { type: 'schedule_automation'; payload: Record<string, unknown> }
-  | ScreenShareStartedMessage
-  | ScreenShareStoppedMessage
-  | ScreenShareJoinRequestMessage
-  | WebRTCOfferMessage
-  | WebRTCAnswerMessage
-  | WebRTCIceCandidateMessage
   | { type: 'translation_state'; payload: Record<string, unknown> }
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
@@ -253,8 +190,9 @@ type MessageData =
   | { type: 'login_pairing_closed'; payload: { id: string } }
   | { type: 'pong' }
 
-// Check if we should use Tauri WebSocket plugin (on mobile)
-const useTauriWebSocket = isMobile()
+// The phone app uses Tauri's WebSocket plugin, unless its WebRTC tunnel is
+// open: then the browser's WebSocket, which the tunnel carries.
+const usesTauriWebSocket = () => isMobile() && !isTunnelOpen()
 
 // Ping configuration for connection health check
 const PING_INTERVAL_MS = 3000 // Send ping every 3 seconds
@@ -533,22 +471,6 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         ) {
           window.dispatchEvent(
             new CustomEvent('login-pairing-message', { detail: data }),
-          )
-        }
-
-        // Handle screen share WebRTC signaling messages
-        if (
-          data.type === 'screen_share_started' ||
-          data.type === 'screen_share_stopped' ||
-          data.type === 'screen_share_join_request' ||
-          data.type === 'webrtc_offer' ||
-          data.type === 'webrtc_answer' ||
-          data.type === 'webrtc_ice_candidate'
-        ) {
-          window.dispatchEvent(
-            new CustomEvent('screen-share-message', {
-              detail: data,
-            }),
           )
         }
       } catch {
@@ -927,7 +849,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [handleMessage, queryClient])
 
   const connect = useCallback(() => {
-    if (useTauriWebSocket) {
+    if (usesTauriWebSocket()) {
       connectTauri()
     } else {
       connectNative()
@@ -950,7 +872,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       pongTimeoutRef.current = null
     }
 
-    if (useTauriWebSocket) {
+    if (usesTauriWebSocket()) {
       if (tauriWsRef.current) {
         try {
           await tauriWsRef.current.disconnect()
@@ -970,7 +892,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const send = useCallback(async (message: Record<string, unknown>) => {
     const messageStr = JSON.stringify(message)
 
-    if (useTauriWebSocket) {
+    if (usesTauriWebSocket()) {
       if (tauriWsRef.current) {
         try {
           await tauriWsRef.current.send(messageStr)

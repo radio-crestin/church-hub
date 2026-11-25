@@ -50,12 +50,14 @@ export function formatStyledMarkdown(
   const segments: string[] = []
   const boundaries: Boundary[] = []
   let current = UNSTYLED
+  let start = 0
 
-  for (let i = 0; i < cuts.length - 1; i++) {
-    const next = styleOver(usable, cuts[i], cuts[i + 1])
+  for (const end of cuts.slice(1)) {
+    const next = styleOver(usable, start, end)
     boundaries.push(switchMarkers(current, next))
-    segments.push(text.slice(cuts[i], cuts[i + 1]))
+    segments.push(text.slice(start, end))
     current = next
+    start = end
   }
   boundaries.push(switchMarkers(current, UNSTYLED))
 
@@ -82,14 +84,16 @@ function joinKeepingEmphasisOffSpaces(
 
   boundaries.forEach((boundary, i) => {
     if (!/\*/.test(boundary.close + boundary.open)) return
-    if (i > 0) {
-      const tail = texts[i - 1].match(/\s*$/)?.[0] ?? ''
-      texts[i - 1] = texts[i - 1].slice(0, texts[i - 1].length - tail.length)
+    const before = texts[i - 1]
+    if (before !== undefined) {
+      const tail = before.match(/\s*$/)?.[0] ?? ''
+      texts[i - 1] = before.slice(0, before.length - tail.length)
       spaces[i] += tail
     }
-    if (i < texts.length) {
-      const head = texts[i].match(/^\s*/)?.[0] ?? ''
-      texts[i] = texts[i].slice(head.length)
+    const after = texts[i]
+    if (after !== undefined) {
+      const head = after.match(/^\s*/)?.[0] ?? ''
+      texts[i] = after.slice(head.length)
       spaces[i] += head
     }
   })
@@ -97,7 +101,8 @@ function joinKeepingEmphasisOffSpaces(
   return boundaries
     .map((boundary, i) => {
       const marked = boundary.close + spaces[i] + boundary.open
-      return i < texts.length ? marked + escapeMarkdown(texts[i]) : marked
+      const segment = texts[i]
+      return segment === undefined ? marked : marked + escapeMarkdown(segment)
     })
     .join('')
 }
@@ -109,8 +114,8 @@ function shrinkToVisible(
 ): MarkdownStyleRange | null {
   let start = Math.max(0, Math.min(range.start, text.length))
   let end = Math.max(start, Math.min(range.end, text.length))
-  while (start < end && /\s/.test(text[start])) start++
-  while (end > start && /\s/.test(text[end - 1])) end--
+  while (start < end && /\s/.test(text.charAt(start))) start++
+  while (end > start && /\s/.test(text.charAt(end - 1))) end--
   const styled =
     range.bold || range.italic || range.underline || range.highlight
   return start < end && styled ? { ...range, start, end } : null
@@ -143,12 +148,13 @@ function switchMarkers(from: SegmentStyle, to: SegmentStyle): Boundary {
   if (firstChanged === -1) return { close: '', open: '' }
 
   let close = ''
-  for (let i = LAYERS.length - 1; i >= firstChanged; i--) {
-    if (from[LAYERS[i]]) close += closeMarker(LAYERS[i])
+  const changed = LAYERS.slice(firstChanged)
+  for (const layer of [...changed].reverse()) {
+    if (from[layer]) close += closeMarker(layer)
   }
   let open = ''
-  for (let i = firstChanged; i < LAYERS.length; i++) {
-    if (to[LAYERS[i]]) open += openMarker(LAYERS[i], to)
+  for (const layer of changed) {
+    if (to[layer]) open += openMarker(layer, to)
   }
   return { close, open }
 }

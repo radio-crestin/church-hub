@@ -24,12 +24,14 @@ export { useDeleteSong } from './useDeleteSong'
 export { useDeleteTag } from './useDeleteTag'
 export { type SongState, useDirtyState } from './useDirtyState'
 export { useHasMediaPreviewBackground } from './useHasMediaPreviewBackground'
+export { useIsLargeScreen } from './useIsLargeScreen'
 export { useLinkSongs } from './useLinkSongs'
 export { usePreviewMode } from './usePreviewMode'
 export { useReorderCategories } from './useReorderCategories'
 export { useReorderSlides } from './useReorderSlides'
 export { useReorderTags } from './useReorderTags'
 export { useResetPresentationCount } from './useResetPresentationCount'
+export { useSameThemeSongs } from './useSameThemeSongs'
 export {
   useDeleteSearchHistory,
   useSaveSearchHistory,

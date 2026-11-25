@@ -4,6 +4,7 @@
 // like `-e` and would re-run the whole server (the v0.1.60 regression).
 import './service/midi/coreMidiWarmUpEntry'
 
+import { exitWithParent } from './utils/exitWithParent'
 import { authLogger, logToFile } from './utils/fileLogger'
 // PostHog client (errors + events) — initialised on import.
 import {
@@ -36,14 +37,21 @@ import {
   requirePermission,
 } from './middleware'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
+import {
+  handleAnalyticsConsentRead,
+  handleAnalyticsRoutes,
+} from './routes/analytics'
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
+import { handleBibleTopicRoutes } from './routes/bible-topics'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
+import { handleRemoteAccessRoutes } from './routes/remote-access'
+import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
 import {
@@ -168,14 +176,16 @@ import { handleMIDIShortcut, loadMIDIShortcuts } from './service/midi/shortcuts'
 import { getFileById } from './service/music/getFiles'
 import {
   addMultipleToNowPlaying,
+  applyQueueOrder,
   clearNowPlayingQueue,
   executeCommand,
   getPlayerState,
   initializeMusicPlayer,
+  QUEUE_ORDERS,
+  type QueueOrder,
   refreshQueueState,
   removeFromNowPlaying,
-  reorderNowPlaying,
-  setNowPlayingQueue,
+  setQueueOrder,
   setStateCallback,
   shutdownMusicPlayer,
 } from './service/music-player'
@@ -230,6 +240,11 @@ import {
   upsertSceneOverride,
   upsertScreen,
 } from './service/presentation'
+import { startVerseLoop } from './service/presentation/verse-loop'
+import {
+  applyRemoteAccess,
+  registerRemoteAccessListener,
+} from './service/remote-access'
 import {
   getScheduleAutomationState,
   startAppStartSchedule,
@@ -256,6 +271,7 @@ import {
   updateScheduleSlide,
   upsertSchedule,
 } from './service/schedules'
+import { endScreenShareSession } from './service/screen-share'
 import {
   deleteSearch,
   getSearchById,
@@ -301,6 +317,7 @@ import {
   deleteSongsByIds,
   deleteTag,
   deleteUncategorizedSongs,
+  findSameThemeSongs,
   getAllCategories,
   getAllSongsWithSlides,
   getAllTags,
@@ -362,13 +379,16 @@ import {
 } from './utils/bootState'
 import { DATABASE_ID_HEADER, getDatabaseId } from './utils/databaseId'
 import { isPortFree } from './utils/isPortFree'
+import { getListenHost } from './utils/listenHost'
 import { createLogger } from './utils/logger'
 import { getDatabasePath, getLogsDir } from './utils/paths'
+import { peerAddress, registerStandInListener } from './utils/peerAddress'
 import { reportError } from './utils/reportError'
 import { logRequest, logResponse } from './utils/request-logger'
 import { setRequestPeer } from './utils/request-peer'
 import { getServerPort } from './utils/serverPort'
 import { proxyToVite, serveStaticFile } from './utils/static-server'
+import { getTestLanPort, TEST_LAN_PEER } from './utils/testLanListener'
 import {
   broadcastMIDIConnectionStatus,
   broadcastMIDIDevices,
@@ -385,7 +405,6 @@ import {
   setMIDIMessageHandler,
   setMusicCommandHandler,
   setMusicStateProvider,
-  stopActiveScreenShare,
   type WebSocketData,
 } from './websocket'
 
@@ -512,15 +531,19 @@ function killProcessOnPort(port: number): void {
 
   try {
     if (platform === 'darwin' || platform === 'linux') {
-      // macOS/Linux: Find PID using lsof and kill it
+      // macOS/Linux: the process LISTENING on the port, as on Windows. A bare
+      // `lsof -ti :port` also lists every client connected to it (the desktop
+      // shell, a test polling it), which were killed with it.
       // Using execFileSync with args array prevents shell injection
-      const result = execFileSync('lsof', ['-ti', `:${portStr}`], {
-        encoding: 'utf-8',
-      }).trim()
+      const result = execFileSync(
+        'lsof',
+        ['-ti', `tcp:${portStr}`, '-sTCP:LISTEN'],
+        { encoding: 'utf-8' },
+      ).trim()
       if (result) {
         const pids = result.split('\n').filter(Boolean)
         for (const pid of pids) {
-          if (/^\d+$/.test(pid)) {
+          if (/^\d+$/.test(pid) && Number(pid) !== process.pid) {
             try {
               execFileSync('kill', ['-9', pid])
               // biome-ignore lint/suspicious/noConsole: Startup info
@@ -568,6 +591,13 @@ async function main() {
   // biome-ignore lint/suspicious/noConsole: Startup timing logs
   console.log('[startup] === Server Starting ===')
 
+  // Before anything else: the boot server holds the port from the start, and
+  // a first boot (or a failed one, which stays up) can last a long time. A
+  // shell that is gone by then must not leave the sidecar holding it.
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
+  exitWithParent(shutdown)
+
   // A stale server on the port (a crashed run) is killed first. The kill
   // looks it up with lsof/netstat (slow on Windows), so only when it is held.
   const serverPort = getServerPort()
@@ -582,7 +612,8 @@ async function main() {
   // window's loading page reads each step from /health while the heavy init
   // below runs. If any init step throws, the boot server stays up reporting
   // the failure via /health instead of the process dying silently.
-  setBootFirstRun(!existsSync(getDatabasePath()))
+  const firstRun = !existsSync(getDatabasePath())
+  setBootFirstRun(firstRun)
   t = performance.now()
   const bootServer = await startBootServer(serverPort)
   logTiming('boot_server_start', t)
@@ -600,6 +631,14 @@ async function main() {
     t = performance.now()
     await initializeDatabase()
     logTiming('database_init', t)
+    // A new database: its first admin is walked through the onboarding.
+    // Existing installs never get the key, so they never see it.
+    if (firstRun) {
+      upsertSetting('app_settings', {
+        key: 'onboarding_pending',
+        value: 'true',
+      })
+    }
 
     bootPhase = 'indexing'
     setBootPhase('indexing')
@@ -828,6 +867,9 @@ async function startRealServer(): Promise<void> {
     return res
   }
 
+  // A looping Bible slideshow moves on by itself, wherever the operator is.
+  startVerseLoop()
+
   // Global error handlers to catch unhandled errors. reportError writes to
   // BOTH the on-disk log and PostHog so a fatal is never console-only.
   process.on('uncaughtException', (error) => {
@@ -841,9 +883,9 @@ async function startRealServer(): Promise<void> {
     reportError(reason, 'unhandledRejection')
   })
 
-  const server = await serveWithRetry<WebSocketData>({
+  const serveOptions: Parameters<typeof Bun.serve<WebSocketData>>[0] = {
     port: getServerPort(),
-    hostname: '0.0.0.0',
+    hostname: getListenHost(),
     reusePort: true,
     // Bun's 128 MiB default would reject background video uploads (up to
     // 1 GiB) with a bare 413 before the route runs. Uploads are streamed to
@@ -868,7 +910,7 @@ async function startRealServer(): Promise<void> {
     },
     async fetch(req: Request, server) {
       const requestStartTime = performance.now()
-      setRequestPeer(req, server.requestIP(req)?.address)
+      setRequestPeer(req, peerAddress(req, server))
       logRequest(req)
 
       if (req.method === 'OPTIONS') {
@@ -1323,6 +1365,10 @@ async function startRealServer(): Promise<void> {
         }
       }
 
+      // GET /api/analytics (PUBLIC): may usage data be sent, and the install id
+      const analyticsConsent = handleAnalyticsConsentRead(req, url, handleCors)
+      if (analyticsConsent) return analyticsConsent
+
       // All other /api/* routes require authentication
       if (url.pathname.startsWith('/api/')) {
         const authResult = await combinedAuthMiddleware(req)
@@ -1589,11 +1635,15 @@ async function startRealServer(): Promise<void> {
         )
       }
 
-      // Strict localhost check (no system token allowed)
+      // Strict localhost check (no system token allowed): this machine by its
+      // TCP peer, which a LAN client or a phone's tunnel can't fake (the Host
+      // header alone let any signed-in LAN account read the system token),
+      // and addressed as localhost.
       function isStrictLocalhost(): boolean {
+        if (!isLocalhost(req)) return false
         const host = req.headers.get('Host')
         if (!host) return true
-        const hostname = host.split(':')[0].toLowerCase()
+        const hostname = (host.split(':')[0] ?? '').toLowerCase()
         return (
           hostname === 'localhost' ||
           hostname === '127.0.0.1' ||
@@ -3751,6 +3801,10 @@ async function startRealServer(): Promise<void> {
         const id = parseInt(deleteScreenMatch[1], 10)
         const result = deleteScreen(id)
 
+        // Other clients drop it from their lists, and their previews fall back
+        // to the main screen when it was the one shown there.
+        if (result.success) broadcastScreenConfigUpdated(id)
+
         if (!result.success) {
           return handleCors(
             req,
@@ -4027,7 +4081,12 @@ async function startRealServer(): Promise<void> {
       const sceneOverrideMatch = url.pathname.match(
         /^\/api\/screens\/(\d+)\/scene-overrides\/([^/]+)\/([^/]+)$/,
       )
-      if (req.method === 'PUT' && sceneOverrideMatch?.[1]) {
+      if (
+        req.method === 'PUT' &&
+        sceneOverrideMatch?.[1] &&
+        sceneOverrideMatch[2] &&
+        sceneOverrideMatch[3]
+      ) {
         const permError = checkPermission('displays.edit')
         if (permError) return permError
 
@@ -4239,7 +4298,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBibleInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBible(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4272,7 +4331,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySongInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporarySong(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4521,7 +4580,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryAnnouncementInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryAnnouncement(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4554,7 +4613,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryBiblePassageInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryBiblePassage(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4587,7 +4646,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporaryVerseteTineriInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryVerseteTineri(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4620,7 +4679,7 @@ async function startRealServer(): Promise<void> {
         try {
           const body = (await req.json()) as PresentTemporarySceneInput
           // Stop any active screen share when presenting other content
-          stopActiveScreenShare()
+          endScreenShareSession()
           const state = presentTemporaryScene(body)
           broadcastPresentationState(state)
           triggerSceneAutomation(state)
@@ -4988,7 +5047,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'GET' &&
         url.pathname === '/api/songs/debug/analyze-keylines'
       ) {
-        const permError = checkPermission('songs.manage')
+        const permError = checkPermission('songs.edit')
         if (permError) return permError
 
         // Musical key patterns - solfège (Romanian/Italian) and letter notation
@@ -5001,8 +5060,8 @@ async function startRealServer(): Promise<void> {
         const extractLastParagraph = (html: string): string | null => {
           const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
           if (!paragraphs || paragraphs.length === 0) return null
-          const lastP = paragraphs[paragraphs.length - 1]
-          return lastP.replace(/<\/?p>/gi, '').trim()
+          const lastP = paragraphs.at(-1)
+          return lastP ? lastP.replace(/<\/?p>/gi, '').trim() : null
         }
 
         // Filter by category names if provided
@@ -5097,7 +5156,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'GET' &&
         url.pathname === '/api/songs/debug/sample-last-lines'
       ) {
-        const permError = checkPermission('songs.manage')
+        const permError = checkPermission('songs.edit')
         if (permError) return permError
 
         const limitParam = url.searchParams.get('limit')
@@ -5107,8 +5166,8 @@ async function startRealServer(): Promise<void> {
         const extractLastParagraph = (html: string): string | null => {
           const paragraphs = html.match(/<p>([^<]*)<\/p>/gi)
           if (!paragraphs || paragraphs.length === 0) return null
-          const lastP = paragraphs[paragraphs.length - 1]
-          return lastP.replace(/<\/?p>/gi, '').trim()
+          const lastP = paragraphs.at(-1)
+          return lastP ? lastP.replace(/<\/?p>/gi, '').trim() : null
         }
 
         const allSongs = getAllSongsWithSlides(null)
@@ -5889,6 +5948,28 @@ async function startRealServer(): Promise<void> {
           new Response(JSON.stringify({ data: suggestions }), {
             headers: { 'Content-Type': 'application/json' },
           }),
+        )
+      }
+
+      // GET /api/songs/:id/same-theme - Other songs on the song's theme.
+      // Query: ?limit=8 (defaults to 8, capped at 20).
+      const sameThemeMatch = url.pathname.match(
+        /^\/api\/songs\/(\d+)\/same-theme$/,
+      )
+      if (req.method === 'GET' && sameThemeMatch?.[1]) {
+        const permError = checkPermission('songs.view')
+        if (permError) return permError
+
+        const songId = parseInt(sameThemeMatch[1], 10)
+        const rawLimit = parseInt(url.searchParams.get('limit') ?? '8', 10)
+        const limit = Math.min(20, Math.max(1, rawLimit || 8))
+
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify({ data: findSameThemeSongs(songId, limit) }),
+            { headers: { 'Content-Type': 'application/json' } },
+          ),
         )
       }
 
@@ -8202,7 +8283,6 @@ async function startRealServer(): Promise<void> {
               app_version: body.appVersion ?? 'unknown',
               server_log_tail: logs.serverTail,
               tauri_log_tail: logs.tauriTail,
-              logs_dir: logs.logsDir,
             })
             // Force flush so the logs are durable before we return — the
             // client may close the modal immediately, and Bun's process can
@@ -8248,6 +8328,25 @@ async function startRealServer(): Promise<void> {
       const midiResponse = await handleMIDIRoutes(req, url, handleCors)
       if (midiResponse) return midiResponse
 
+      // Screen share routes (native capture frames, MJPEG stream)
+      const screenShareResponse = await handleScreenShareRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+      )
+      if (screenShareResponse) return screenShareResponse
+
+      // Remote access (phones reaching this computer over WebRTC)
+      if (url.pathname.startsWith('/api/remote-access')) {
+        const remoteAccessResponse = await handleRemoteAccessRoutes(
+          req,
+          url,
+          checkPermission,
+        )
+        if (remoteAccessResponse) return handleCors(req, remoteAccessResponse)
+      }
+
       // Live translation routes
       if (url.pathname.startsWith('/api/live-translation/')) {
         const translationResponse = await handleLiveTranslationRoutes(
@@ -8280,6 +8379,15 @@ async function startRealServer(): Promise<void> {
       )
       if (songSourcesResponse) return songSourcesResponse
 
+      // Bible verses by topic
+      const bibleTopicsResponse = await handleBibleTopicRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (bibleTopicsResponse) return bibleTopicsResponse
+
       // The notifications history (song syncs, app updates)
       const notificationsResponse = await handleNotificationRoutes(
         req,
@@ -8297,6 +8405,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (backgroundMediaResponse) return backgroundMediaResponse
+
+      // Usage data on/off (Settings > Privacy)
+      const analyticsResponse = await handleAnalyticsRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (analyticsResponse) return analyticsResponse
 
       // "Request a feature" (relayed to the Cloudflare worker)
       const featureRequestResponse = await handleFeatureRequestRoutes(
@@ -8329,7 +8446,25 @@ async function startRealServer(): Promise<void> {
       message: handleWebSocketMessage,
       close: handleWebSocketClose,
     },
+  }
+  const server = await serveWithRetry<WebSocketData>(serveOptions)
+  const testLanPort = getTestLanPort()
+  if (testLanPort) {
+    Bun.serve<WebSocketData>({
+      ...serveOptions,
+      port: testLanPort,
+      hostname: '127.0.0.1',
+    })
+    registerStandInListener(testLanPort, TEST_LAN_PEER)
+  }
+  // The phones' WebRTC tunnel reaches the server here (service/remote-access).
+  const remoteAccessListener = Bun.serve<WebSocketData>({
+    ...serveOptions,
+    port: 0,
+    hostname: '127.0.0.1',
   })
+  registerRemoteAccessListener(remoteAccessListener.port as number)
+  void applyRemoteAccess()
 
   logTiming('bun_server_bind', t)
 
@@ -8369,7 +8504,10 @@ async function startRealServer(): Promise<void> {
   // Wire up MIDI devices changed callback to WebSocket broadcast
   // This is called when devices reconnect so clients can update their device lists
   setDevicesChangedCallback((devices) => {
-    broadcastMIDIDevices(devices)
+    broadcastMIDIDevices({
+      inputs: devices.inputs.map((device) => ({ ...device, type: 'input' })),
+      outputs: devices.outputs.map((device) => ({ ...device, type: 'output' })),
+    })
   })
 
   // Wire up MIDI WebSocket message handler for LED control
@@ -8433,11 +8571,8 @@ async function startRealServer(): Promise<void> {
       }
       case 'music_play_file': {
         const { fileId } = payload as { fileId: number }
-        const file = getFileById(fileId)
-        if (file) {
-          setNowPlayingQueue([fileId])
-          refreshQueueState()
-          await executeCommand({ type: 'play_index', index: 0 })
+        if (getFileById(fileId)) {
+          await executeCommand({ type: 'play_file', fileId })
           broadcastMusicState(getPlayerState())
         }
         break
@@ -8445,6 +8580,7 @@ async function startRealServer(): Promise<void> {
       case 'music_add_to_queue': {
         const { fileIds } = payload as { fileIds: number[] }
         addMultipleToNowPlaying(fileIds)
+        applyQueueOrder()
         refreshQueueState()
         broadcastMusicState(getPlayerState())
         break
@@ -8462,23 +8598,12 @@ async function startRealServer(): Promise<void> {
         refreshQueueState()
         broadcastMusicState(getPlayerState())
         break
-      case 'music_set_queue': {
-        const { fileIds } = payload as { fileIds: number[] }
-        setNowPlayingQueue(fileIds)
-        refreshQueueState()
-        broadcastMusicState(getPlayerState())
-        break
-      }
-      case 'music_reorder_queue': {
-        const { itemIds } = payload as { itemIds: number[] }
-        reorderNowPlaying(itemIds)
-        refreshQueueState()
-        broadcastMusicState(getPlayerState())
-        break
-      }
-      case 'music_shuffle': {
-        const { enabled } = payload as { enabled: boolean }
-        await executeCommand({ type: 'shuffle', enabled })
+      case 'music_queue_order': {
+        const { order } = payload as { order: QueueOrder }
+        if (QUEUE_ORDERS.includes(order)) {
+          setQueueOrder(order)
+          broadcastMusicState(getPlayerState())
+        }
         break
       }
       case 'music_get_state':
@@ -8518,25 +8643,28 @@ async function startRealServer(): Promise<void> {
     await warmupSongsSearchIndex()
     logTiming('fts_warmup', warmupStart)
   }, 0)
+}
 
-  // Graceful shutdown
-  process.on('SIGINT', async () => {
+/**
+ * Graceful shutdown: on a signal, or when the desktop shell that started this
+ * sidecar is gone. A failed cleanup step must not keep the process (and its
+ * port) alive: closeDatabase throws "database is locked" while prepared
+ * statements are alive, which left the server running (T-149).
+ */
+async function shutdown() {
+  try {
     clearHistory()
     shutdownMusicPlayer()
     shutdownMIDI()
     closeDatabase()
-    await shutdownPostHog()
-    process.exit(0)
-  })
-
-  process.on('SIGTERM', async () => {
-    clearHistory()
-    shutdownMusicPlayer()
-    shutdownMIDI()
-    closeDatabase()
-    await shutdownPostHog()
-    process.exit(0)
-  })
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: Shutdown failure for the logs
+    console.error('[shutdown] Cleanup failed, exiting anyway:', error)
+    captureExceptionPostHog(error, { stage: 'shutdown' })
+    process.exitCode = 1
+  }
+  await shutdownPostHog()
+  process.exit()
 }
 
 main().catch((error) => {

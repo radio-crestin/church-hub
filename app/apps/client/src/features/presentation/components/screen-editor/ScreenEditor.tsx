@@ -283,6 +283,16 @@ export function ScreenEditor({
           ...(updates.constraints && { constraints: updates.constraints }),
           ...(updates.size && { size: updates.size }),
         }
+      } else if (
+        elementType === 'songTitle' &&
+        'songTitle' in newConfig &&
+        newConfig.songTitle
+      ) {
+        newConfig.songTitle = {
+          ...newConfig.songTitle,
+          ...(updates.constraints && { constraints: updates.constraints }),
+          ...(updates.size && { size: updates.size }),
+        }
       } else if (elementType === 'personLabel' && 'personLabel' in newConfig) {
         newConfig.personLabel = {
           ...newConfig.personLabel,

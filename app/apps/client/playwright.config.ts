@@ -28,14 +28,43 @@ export const WEBKIT_STORAGE_STATE = join(
 // on the running app drove its real projector and database ("slides appear
 // with nobody presenting", T-030).
 const TEST_PORT = process.env.TEST_PORT ?? '3099'
+/**
+ * Every other port a run uses, as an offset from TEST_PORT: one row each, so
+ * two features never take the same port (T-206: the LAN stand-in and the fake
+ * audio server both took +1, and music.spec failed with EADDRINUSE). Keep the
+ * offsets under 10: a Superfactory worktree owns ten ports from $PORT, so a run
+ * on TEST_PORT=$PORT stays inside its own range (task builds use 3100+n and
+ * 4100+n, out of the way of those ranges).
+ */
+const PORT_OFFSETS = {
+  // The server's LAN stand-in (see apps/server/src/utils/testLanListener.ts).
+  lan: 1,
+  // The desktop app's audio server stand-in (fake-audio-server.ts).
+  fakeAudio: 2,
+  // The church's signaling relay stand-in (fake-signaling-relay.ts).
+  fakeRelay: 3,
+} as const
+const derivedPort = (name: keyof typeof PORT_OFFSETS) =>
+  Number(TEST_PORT) + PORT_OFFSETS[name]
+
+export const TEST_LAN_PORT =
+  process.env.TEST_LAN_PORT ?? String(derivedPort('lan'))
 // The test server frees its port on start (killProcessOnPort), so there it
 // would kill the installed app or the dev server.
-if (TEST_PORT === '3000' || TEST_PORT === '3001') {
+if ([TEST_PORT, TEST_LAN_PORT].some((p) => p === '3000' || p === '3001')) {
   throw new Error(
     `TEST_PORT=${TEST_PORT} is the installed app / dev server: pick another`,
   )
 }
 const TEST_BASE_URL = `http://localhost:${TEST_PORT}`
+/**
+ * Where the test server looks for the desktop app's audio server: the music
+ * spec starts a stand-in there, so music really "plays" (fake-audio-server.ts).
+ */
+export const FAKE_AUDIO_PORT = derivedPort('fakeAudio')
+
+/** Where the test server finds the signaling relay (remote access, CH-050). */
+export const FAKE_RELAY_URL = `http://127.0.0.1:${derivedPort('fakeRelay')}`
 
 /**
  * The line the server prints once the real server is bound and boot is done
@@ -87,7 +116,15 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: STORAGE_STATE,
+        // The server's LAN stand-in, by a name the app doesn't take for
+        // localhost (e2e/helpers/lan-address.ts).
+        launchOptions: {
+          args: [`--host-resolver-rules=MAP church-hub-lan.test 127.0.0.1`],
+        },
+      },
       dependencies: ['setup'],
     },
     // The macOS desktop app draws with WebKit, which has laid the previews out
@@ -111,11 +148,17 @@ export default defineConfig({
       CLIENT_DIST_PATH: 'apps/client/dist',
       DATABASE_PATH: TEST_DB_PATH,
       PORT: TEST_PORT,
+      // Loopback only: a test server opens no LAN port, so Windows raises no
+      // firewall prompt (T-193). LAN specs use the stand-in port instead.
+      CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
+      CHURCH_HUB_TEST_LAN_PORT: TEST_LAN_PORT,
       // Song-source specs share links from a stand-in S3 on 127.0.0.1;
       // every other private address stays refused.
       CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
       // Tests start the song-source checks they need (no network at start).
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
+      CHURCH_HUB_AUDIO_SERVER_PORT: String(FAKE_AUDIO_PORT),
+      CHURCH_HUB_SIGNALING_URL: FAKE_RELAY_URL,
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has

@@ -1,4 +1,4 @@
-import { buildScheduleSteps } from './buildScheduleSteps'
+import { buildScheduleSteps, type ScheduleStep } from './buildScheduleSteps'
 import { presentScheduleStep } from './presentScheduleStep'
 import { stepSeconds } from './stepSeconds'
 import type { ScheduleAutomationState } from './types'
@@ -6,7 +6,6 @@ import { createLogger } from '../../utils/logger'
 import {
   broadcastPresentationState,
   broadcastScheduleAutomation,
-  stopActiveScreenShare,
 } from '../../websocket'
 import { executeCommand, isPlayerAvailable } from '../music-player'
 import {
@@ -14,6 +13,7 @@ import {
   getPresentationState,
 } from '../presentation/presentation-state'
 import { getScheduleById } from '../schedules/getSchedules'
+import { endScreenShareSession } from '../screen-share/session'
 
 const logger = createLogger('schedule-automation')
 
@@ -86,21 +86,22 @@ export async function startScheduleAutomation(
   const schedule = getScheduleById(scheduleId)
   if (!schedule) throw new Error(`Presentation ${scheduleId} not found`)
   const steps = buildScheduleSteps(schedule.items)
-  if (steps.length === 0) {
+  const [firstStep] = steps
+  if (!firstStep) {
     throw new Error(`Presentation ${scheduleId} has nothing to show`)
   }
 
   stopScheduleAutomation('another presentation started', { clear: false })
-  stopActiveScreenShare()
+  endScreenShareSession()
   await setMusicVolume(schedule.automation.musicVolume)
   broadcastPresentationState(
-    await presentScheduleStep(scheduleId, schedule.items, steps[0], 0),
+    await presentScheduleStep(scheduleId, schedule.items, firstStep, 0),
   )
 
   const { autoplaySeconds, loop } = schedule.automation
   if (!autoplaySeconds) return state
 
-  const seconds = stepSeconds(steps[0], {
+  const seconds = stepSeconds(firstStep, {
     ...schedule.automation,
     autoplaySeconds,
   })
@@ -157,9 +158,10 @@ async function tick() {
       }
       stepIndex = 0
     }
+    const step = steps[stepIndex] as ScheduleStep
 
     // Autoplay turned off while it runs: finish with the last time it had.
-    const seconds = stepSeconds(steps[stepIndex], {
+    const seconds = stepSeconds(step, {
       ...schedule.automation,
       autoplaySeconds: schedule.automation.autoplaySeconds ?? run.stepSeconds,
     })
@@ -167,7 +169,7 @@ async function tick() {
       await presentScheduleStep(
         run.scheduleId,
         schedule.items,
-        steps[stepIndex],
+        step,
         stepIndex,
       ),
     )

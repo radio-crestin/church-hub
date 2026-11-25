@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Download, ExternalLink, Info, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { CreditsSection } from './CreditsSection'
 import { ReleaseNotesSection } from '../../release-notes'
 import { SettingsSection } from '../../settings'
 import { useAppUpdate } from '../hooks/useAppUpdate'
@@ -105,6 +106,8 @@ export function AboutSection() {
       </SettingsSection>
 
       <ReleaseNotesSection currentVersion={updateInfo?.currentVersion} />
+
+      <CreditsSection />
     </div>
   )
 }

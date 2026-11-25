@@ -12,6 +12,7 @@ import type {
   PreviewTexts,
   SelectedElement,
 } from './hooks/useEditorState'
+import { PositionTools } from './position/PositionTools'
 import { SegmentedControl } from './SegmentedControl'
 import { SettingsSection } from './SettingsSection'
 import { TextStyleControls } from './TextStyleControls'
@@ -48,6 +49,7 @@ const ALWAYS_ANIMATED = new Set([
   'referenceText',
   'songKey',
   'amen',
+  'songTitle',
   'personLabel',
 ])
 
@@ -166,6 +168,16 @@ export function ElementSettings({
         </div>
       )}
 
+      {element.type === 'songTitle' && (
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          <Checkbox
+            checked={elementConfig.showNumber ?? false}
+            onCheckedChange={(checked) => update({ showNumber: !!checked })}
+            label={t('screens.songTitle.showNumber')}
+          />
+        </div>
+      )}
+
       {elementConfig.style && (
         <SettingsSection title={t('screens.panels.textStyle')} icon={Type}>
           <TextStyleControls
@@ -227,13 +239,33 @@ export function ElementSettings({
 
       {elementConfig.constraints && (
         <SettingsSection title={t('screens.sections.position')} icon={Move}>
-          <ConstraintControls
+          <PositionTools
             constraints={elementConfig.constraints}
             size={elementConfig.size ?? DEFAULT_SIZE}
             screenWidth={screen.width}
             screenHeight={screen.height}
-            onChange={(constraints, size) => update({ constraints, size })}
+            locked={elementConfig.locked ?? false}
+            onPaste={(constraints, size) => update({ constraints, size })}
+            onLockedChange={(locked) => update({ locked })}
           />
+          {elementConfig.locked && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {t('screens.position.lockedDescription')}
+            </p>
+          )}
+          {/* A locked element's place can't be edited until it is unlocked */}
+          <fieldset
+            disabled={elementConfig.locked ?? false}
+            className="min-w-0 disabled:opacity-50"
+          >
+            <ConstraintControls
+              constraints={elementConfig.constraints}
+              size={elementConfig.size ?? DEFAULT_SIZE}
+              screenWidth={screen.width}
+              screenHeight={screen.height}
+              onChange={(constraints, size) => update({ constraints, size })}
+            />
+          </fieldset>
         </SettingsSection>
       )}
 

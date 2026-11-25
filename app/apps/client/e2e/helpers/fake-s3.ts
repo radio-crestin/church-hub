@@ -16,6 +16,8 @@ export class FakeS3 {
   readonly stalled = new Set<string>()
   /** Paths answered only after this many ms, like a slow server. */
   readonly delays = new Map<string, number>()
+  /** Paths answered with this HTTP status, like a server refusing them. */
+  readonly statuses = new Map<string, number>()
   private server: Server | undefined
 
   async start(): Promise<void> {
@@ -37,6 +39,11 @@ export class FakeS3 {
         return
       }
       if (this.stalled.has(path)) return
+      const status = this.statuses.get(path)
+      if (status) {
+        res.writeHead(status).end()
+        return
+      }
       const location = this.redirects.get(path)
       if (location) {
         res.writeHead(302, { Location: location }).end()

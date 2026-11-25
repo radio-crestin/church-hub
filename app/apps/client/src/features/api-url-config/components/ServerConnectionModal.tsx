@@ -2,15 +2,10 @@ import { KeyRound, Loader2, Server, Wifi, WifiOff, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  getStoredApiUrl,
-  isValidApiUrl,
-  parseAuthUrl,
-  setApiUrl,
-  testApiConnection,
-} from '~/service/api-url'
+import { getStoredApiUrl, parseAuthUrl, setApiUrl } from '~/service/api-url'
 import { Button } from '~/ui/button'
 import { Input } from '~/ui/input'
+import { useConnectionTest } from '../hooks/useConnectionTest'
 
 interface ServerConnectionModalProps {
   isOpen: boolean
@@ -31,11 +26,14 @@ export function ServerConnectionModal({
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   const [url, setUrlState] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<
-    'idle' | 'testing' | 'success' | 'error'
-  >('idle')
-  const [errorMessage, setErrorMessage] = useState('')
+  const {
+    status: connectionStatus,
+    isLoading,
+    errorMessage,
+    setErrorMessage,
+    test,
+    reset,
+  } = useConnectionTest()
 
   // Load current URL on open
   useEffect(() => {
@@ -65,34 +63,7 @@ export function ServerConnectionModal({
     return userToken !== null
   }, [url])
 
-  const handleTestConnection = async () => {
-    if (!url.trim()) {
-      setErrorMessage(t('sections.apiUrl.errors.emptyUrl'))
-      return
-    }
-
-    if (!isValidApiUrl(url)) {
-      setErrorMessage(t('sections.apiUrl.errors.invalidUrl'))
-      return
-    }
-
-    setIsLoading(true)
-    setConnectionStatus('testing')
-    setErrorMessage('')
-
-    const result = await testApiConnection(url)
-
-    if (result.success) {
-      setConnectionStatus('success')
-    } else {
-      setConnectionStatus('error')
-      setErrorMessage(
-        result.error || t('sections.apiUrl.errors.connectionFailed'),
-      )
-    }
-
-    setIsLoading(false)
-  }
+  const handleTestConnection = () => test(url)
 
   const handleSave = () => {
     if (connectionStatus !== 'success') {
@@ -167,8 +138,7 @@ export function ServerConnectionModal({
               value={url}
               onChange={(e) => {
                 setUrlState(e.target.value)
-                setConnectionStatus('idle')
-                setErrorMessage('')
+                reset()
               }}
               disabled={isLoading}
             />

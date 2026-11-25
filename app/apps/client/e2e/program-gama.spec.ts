@@ -75,7 +75,7 @@ test.describe('Program gama', () => {
       'schedule-save-to-file-action',
     )
     const downloadPromise = page.waitForEvent('download')
-    await page.getByRole('button', { name: /^(Export|Exporta)$/ }).click()
+    await page.getByRole('button', { name: /^(Export|Exportă)$/ }).click()
     const download = await downloadPromise
     const json = JSON.parse(await readFile(await download.path(), 'utf8'))
     const keys = json.items.map(
@@ -157,9 +157,11 @@ test.describe('Program gama', () => {
       timeout: 15000,
     })
     await page
-      .getByRole('button', { name: /Edit as Text|Editeaza ca Text/ })
+      .getByRole('button', { name: /Edit as Text|Editează ca text/ })
       .click()
     const textarea = page.locator('dialog[open] textarea')
+    // The modal opens before its text arrives: wait for it, inputValue doesn't retry.
+    await expect(textarea).toHaveValue(/#\d+ \{Re major\}/)
     const text = await textarea.inputValue()
     expect(text).toContain(`${f.withKey.title} #${f.withKey.id} {Re major}`)
     expect(text).toContain(`${f.withoutKey.title} #${f.withoutKey.id} {}`)
@@ -182,14 +184,14 @@ test.describe('Program gama', () => {
 
     // Reopened, both the detailed and the plain view carry every gama.
     await page
-      .getByRole('button', { name: /Edit as Text|Editeaza ca Text/ })
+      .getByRole('button', { name: /Edit as Text|Editează ca text/ })
       .click()
     const reopened = page.locator('dialog[open]')
-    expect(await reopened.locator('textarea').inputValue()).toContain(
-      `${f.withoutKey.title} #${f.withoutKey.id} {Mi major}`,
+    await expect(reopened.locator('textarea')).toHaveValue(
+      new RegExp(`#${f.withoutKey.id} \\{Mi major\\}`),
     )
     await reopened
-      .getByRole('button', { name: /Plain View|Vizualizare Simpla/ })
+      .getByRole('button', { name: /Plain View|Vizualizare simplă/ })
       .click()
     const plain = reopened.locator('pre')
     await expect(plain).toContainText(`${f.withKey.title} (Re major)`)

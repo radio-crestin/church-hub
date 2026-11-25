@@ -73,6 +73,7 @@
     "elements": {
       "songKey": "Song key",
       "amen": "Amen",
+      "songTitle": "Song title",
       "mainText": "Main Text",
       "contentText": "Content Text",
       "referenceText": "Reference Text",
@@ -95,7 +96,16 @@
       "left": "Left",
       "right": "Right",
       "stretchHorizontal": "Width stretches between left and right constraints",
-      "stretchVertical": "Height stretches between top and bottom constraints"
+      "stretchVertical": "Height stretches between top and bottom constraints",
+      "copy": "Copy position",
+      "paste": "Paste position",
+      "nothingCopied": "Copy an element's position first",
+      "copied": "Position copied. Paste it on another element, slide type or screen.",
+      "lock": "Lock",
+      "locked": "Locked",
+      "lockHint": "Lock it so it can't be moved by mistake",
+      "unlockHint": "Unlock to move or resize it",
+      "lockedDescription": "The position is locked. Unlock it to move or resize the element."
     },
     "textStyle": {
       "fontFamily": "Font Family",
@@ -221,8 +231,6 @@
     },
     "screenShare": {
       "title": "Screen Share",
-      "enableAudio": "Enable audio playback",
-      "enableAudioDescription": "When receiving a screen share with audio, play the audio on this screen",
       "videoSettings": "Video Display Settings",
       "videoPosition": "Position & Size",
       "objectFit": "Video Scaling",
@@ -301,6 +309,9 @@
       "clockSettings": "Clock Settings",
       "clock": "Clock",
       "screenSettings": "Screen Settings"
+    },
+    "songTitle": {
+      "showNumber": "Show the songbook and number (PDC 19)"
     }
   },
   "displays": {
@@ -405,14 +416,21 @@
     "screenShare": {
       "start": "Share Screen",
       "stop": "Stop Sharing",
-      "startNow": "Start Sharing",
-      "includeAudio": "Include Audio",
-      "sharing": "Sharing Screen",
-      "connecting": "Connecting...",
       "error": {
         "notSupported": "Screen sharing is not supported in this browser",
-        "permissionDenied": "Screen sharing permission was denied",
         "failed": "Failed to start screen sharing"
+      },
+      "waiting": "Waiting for the shared screen…",
+      "picker": {
+        "title": "Share a screen or window",
+        "screens": "Screens",
+        "windows": "Windows",
+        "refresh": "Refresh",
+        "loading": "Looking for screens and windows…",
+        "empty": "No screens or windows found.",
+        "error": "Could not list the screens and windows.",
+        "noPreview": "No preview",
+        "permissionHint": "No previews? On macOS, allow Church Hub in System Settings → Privacy & Security → Screen Recording, then reopen it."
       }
     }
   },
@@ -426,5 +444,10 @@
   "contentTypes": {
     "announcement": "Announcement",
     "verseteTineri": "Bible Verses"
+  },
+  "previewScreenPicker": {
+    "label": "Screen shown in the preview",
+    "changed": "Previews now show {{name}}",
+    "error": "Could not change the preview screen"
   }
 }

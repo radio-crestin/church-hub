@@ -31,6 +31,8 @@ import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
 import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
 import { Route as SettingsScreensRouteImport } from './routes/settings/screens'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
+import { Route as SettingsPrivacyRouteImport } from './routes/settings/privacy'
+import { Route as SettingsPhonesRouteImport } from './routes/settings/phones'
 import { Route as SettingsMidiRouteImport } from './routes/settings/midi'
 import { Route as SettingsLogsRouteImport } from './routes/settings/logs'
 import { Route as SettingsLivestreamRouteImport } from './routes/settings/livestream'
@@ -163,6 +165,16 @@ const SettingsProfileRoute = SettingsProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsPrivacyRoute = SettingsPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsPhonesRoute = SettingsPhonesRouteImport.update({
+  id: '/phones',
+  path: '/phones',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsMidiRoute = SettingsMidiRouteImport.update({
   id: '/midi',
   path: '/midi',
@@ -289,6 +301,8 @@ export interface FileRoutesByFullPath {
   '/settings/livestream': typeof SettingsLivestreamRoute
   '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
+  '/settings/phones': typeof SettingsPhonesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
@@ -333,6 +347,8 @@ export interface FileRoutesByTo {
   '/settings/livestream': typeof SettingsLivestreamRoute
   '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
+  '/settings/phones': typeof SettingsPhonesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
@@ -379,6 +395,8 @@ export interface FileRoutesById {
   '/settings/livestream': typeof SettingsLivestreamRoute
   '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
+  '/settings/phones': typeof SettingsPhonesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
@@ -426,6 +444,8 @@ export interface FileRouteTypes {
     | '/settings/livestream'
     | '/settings/logs'
     | '/settings/midi'
+    | '/settings/phones'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/screens'
     | '/settings/shortcuts'
@@ -470,6 +490,8 @@ export interface FileRouteTypes {
     | '/settings/livestream'
     | '/settings/logs'
     | '/settings/midi'
+    | '/settings/phones'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/screens'
     | '/settings/shortcuts'
@@ -515,6 +537,8 @@ export interface FileRouteTypes {
     | '/settings/livestream'
     | '/settings/logs'
     | '/settings/midi'
+    | '/settings/phones'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/screens'
     | '/settings/shortcuts'
@@ -725,6 +749,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsProfileRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/privacy': {
+      id: '/settings/privacy'
+      path: '/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof SettingsPrivacyRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/phones': {
+      id: '/settings/phones'
+      path: '/phones'
+      fullPath: '/settings/phones'
+      preLoaderRoute: typeof SettingsPhonesRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/midi': {
       id: '/settings/midi'
       path: '/midi'
@@ -886,6 +924,8 @@ interface SettingsRouteRouteChildren {
   SettingsLivestreamRoute: typeof SettingsLivestreamRoute
   SettingsLogsRoute: typeof SettingsLogsRoute
   SettingsMidiRoute: typeof SettingsMidiRoute
+  SettingsPhonesRoute: typeof SettingsPhonesRoute
+  SettingsPrivacyRoute: typeof SettingsPrivacyRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsScreensRoute: typeof SettingsScreensRoute
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
@@ -907,6 +947,8 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsLivestreamRoute: SettingsLivestreamRoute,
   SettingsLogsRoute: SettingsLogsRoute,
   SettingsMidiRoute: SettingsMidiRoute,
+  SettingsPhonesRoute: SettingsPhonesRoute,
+  SettingsPrivacyRoute: SettingsPrivacyRoute,
   SettingsProfileRoute: SettingsProfileRoute,
   SettingsScreensRoute: SettingsScreensRoute,
   SettingsShortcutsRoute: SettingsShortcutsRoute,

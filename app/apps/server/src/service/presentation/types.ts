@@ -120,6 +120,10 @@ export interface NextItemPreview {
 export interface TemporarySongContent {
   songId: number
   title: string
+  /** The title without its leading number: "La masa Ta noi azi venim" */
+  displayTitle?: string
+  /** The songbook's initials and the song's number: "PDC 19" */
+  titleNumber?: string
   keyLine?: string | null // Musical key (e.g., "C Major", "Am")
   /**
    * The song's own background, shown instead of the screen's background while
@@ -203,6 +207,18 @@ export interface VerseteTineriEntry {
 export interface TemporaryVerseteTineriContent {
   entries: VerseteTineriEntry[]
   currentEntryIndex: number // 0-based index in entries array
+  /**
+   * Plays the entries in a loop: each stays up for its reading time, then the
+   * next one shows, and the last one wraps to the first (verse-loop.ts).
+   */
+  loop?: boolean
+  /**
+   * Advances by itself after each entry's reading time like `loop`, but stops
+   * on the last entry instead of wrapping (verse-loop.ts).
+   */
+  autoAdvance?: boolean
+  /** The list that started this slideshow, e.g. `bookmarks` or `topic:12` */
+  slideshow?: string
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -221,11 +237,12 @@ export interface TemporarySceneContent {
 }
 
 /**
- * Temporary screen share content for WebRTC streaming
+ * Temporary screen share content: the frames come from the screen-share
+ * service (POST /api/screen-share/frame, GET /api/screen-share/stream.mjpg)
  */
 export interface TemporaryScreenShareContent {
-  broadcasterId: string
-  audioEnabled: boolean
+  /** When the share started: a new share opens a new stream on the screens */
+  startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
@@ -326,6 +343,9 @@ export interface PresentTemporaryBiblePassageInput {
 export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
+  loop?: boolean // Advance by itself and wrap around (see TemporaryVerseteTineriContent)
+  autoAdvance?: boolean // Advance by itself, stop on the last entry
+  slideshow?: string // The list that started it (bookmarks, topic:<id>)
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -347,8 +367,6 @@ export interface PresentTemporarySceneInput {
  * Input for presenting a screen share
  */
 export interface PresentTemporaryScreenShareInput {
-  broadcasterId: string
-  audioEnabled: boolean
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation

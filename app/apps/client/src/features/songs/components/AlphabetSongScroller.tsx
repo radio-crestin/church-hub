@@ -5,6 +5,7 @@ import { AlphabetIndex } from './AlphabetIndex'
 import { SongSectionHeader } from './SongSectionHeader'
 import { ALPHABET_INDEX_LETTERS } from '../constants/alphabet'
 import { useAlphabetScroll } from '../hooks/useAlphabetScroll'
+import { useListScrollElement } from '../hooks/useListScrollElement'
 import { buildAlphabetRows } from '../utils/buildAlphabetRows'
 import type { AlphabetSection } from '../utils/buildAlphabetSections'
 import { findNearestLetter } from '../utils/findNearestLetter'
@@ -37,6 +38,8 @@ export function AlphabetSongScroller<T extends { id: number; title: string }>({
   renderSong,
 }: AlphabetSongScrollerProps<T>) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  // On a phone the page scrolls, not this box (see useListScrollElement).
+  const scroll = useListScrollElement(scrollContainerRef)
 
   const { rows, headerIndexByLetter, songRowIndexByFlatIndex } = useMemo(
     () => buildAlphabetRows(songs, sections),
@@ -45,7 +48,8 @@ export function AlphabetSongScroller<T extends { id: number; title: string }>({
 
   const virtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => scrollContainerRef.current,
+    getScrollElement: () => scroll.element,
+    scrollMargin: scroll.offset,
     estimateSize: (index) =>
       rows[index].type === 'header'
         ? ESTIMATED_HEADER_HEIGHT
@@ -106,7 +110,9 @@ export function AlphabetSongScroller<T extends { id: number; title: string }>({
                 data-index={item.index}
                 ref={virtualizer.measureElement}
                 className="absolute left-0 top-0 w-full"
-                style={{ transform: `translateY(${item.start}px)` }}
+                style={{
+                  transform: `translateY(${item.start - scroll.offset}px)`,
+                }}
               >
                 {row.type === 'header' ? (
                   <SongSectionHeader letter={row.letter} />
@@ -121,16 +127,21 @@ export function AlphabetSongScroller<T extends { id: number; title: string }>({
         </div>
       </div>
 
-      <AlphabetIndex
-        letters={ALPHABET_INDEX_LETTERS}
-        availableLetters={availableLetters}
-        activeLetter={activeLetter}
-        indicatorLetter={indicatorLetter}
-        isDragging={isDragging}
-        railRef={railRef}
-        onJumpToLetter={scrollToLetter}
-        railHandlers={railHandlers}
-      />
+      {/* Pinned to the visible part of the list, also when the page scrolls. */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="sticky top-0 h-full max-h-dvh">
+          <AlphabetIndex
+            letters={ALPHABET_INDEX_LETTERS}
+            availableLetters={availableLetters}
+            activeLetter={activeLetter}
+            indicatorLetter={indicatorLetter}
+            isDragging={isDragging}
+            railRef={railRef}
+            onJumpToLetter={scrollToLetter}
+            railHandlers={railHandlers}
+          />
+        </div>
+      </div>
     </div>
   )
 }

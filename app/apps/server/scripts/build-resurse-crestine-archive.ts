@@ -1,8 +1,8 @@
 /**
  * Rebuilds the Resurse Creștine song archive from resursecrestine.ro's
- * OpenSong ZIP: one OpenSong file per song, named after the song, with the
- * title an untitled song gets from its first lyric line and the file it came
- * from (source_filename). Run daily by .github/workflows/resurse-crestine-archive.yml.
+ * OpenSong ZIP (see UPSTREAM_URLS): one OpenSong file per song, named after
+ * the song, with the title an untitled song gets from its first lyric line
+ * and the file it came from (source_filename). Run daily by .github/workflows/resurse-crestine-archive.yml.
  *
  * Usage: bun scripts/build-resurse-crestine-archive.ts <out-dir> [previous-checksum]
  * Writes resurse-crestine.chsongs, resurse-crestine-opensong.zip (the same
@@ -29,8 +29,15 @@ import {
 } from '../src/service/song-sources/bundle/assembleBundle'
 import { zipBundleFiles } from '../src/service/song-sources/bundle/zipBundleFiles'
 
-const UPSTREAM_URL =
-  'https://download.resursecrestine.ro/programe-crestine/cantece-resurse-crestine-opensong-standard.zip'
+/**
+ * resursecrestine.ro's own download pages, which redirect to wherever the
+ * ZIP lives now (its download host has changed and refused direct links
+ * before): the OpenSong "standard" archive, then the "proiecție" one.
+ */
+const UPSTREAM_URLS = [
+  'https://www.resursecrestine.ro/download/52651',
+  'https://www.resursecrestine.ro/download/65147',
+]
 const ARCHIVE_NAME = 'resurse-crestine'
 
 const escapeXml = (text: string) =>
@@ -83,13 +90,30 @@ function rewrite(xml: string, title: string, fileName: string): string {
     : valid.replace(/<song([^>]*)>/, `<song$1>\n  ${ours}`)
 }
 
+/** The first upstream archive that downloads, saying why each other failed. */
+async function downloadUpstream(): Promise<JSZip> {
+  const failures: string[] = []
+  for (const url of UPSTREAM_URLS) {
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`)
+      }
+      return await JSZip.loadAsync(await response.arrayBuffer())
+    } catch (error) {
+      failures.push(`${url}: ${error instanceof Error ? error.message : error}`)
+      // biome-ignore lint/suspicious/noConsole: CI log of the fallback
+      console.warn(`Download failed, ${failures.at(-1)}`)
+    }
+  }
+  throw new Error(`Every download failed:\n${failures.join('\n')}`)
+}
+
 async function main() {
   const [outDir, previousChecksum] = process.argv.slice(2)
   if (!outDir) throw new Error('usage: <out-dir> [previous-checksum]')
 
-  const response = await fetch(UPSTREAM_URL)
-  if (!response.ok) throw new Error(`Download failed: ${response.status}`)
-  const zip = await JSZip.loadAsync(await response.arrayBuffer())
+  const zip = await downloadUpstream()
 
   const songs: BundleSongInput[] = []
   for (const entry of Object.values(zip.files)) {

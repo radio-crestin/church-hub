@@ -26,6 +26,8 @@ type Token =
       isOpening?: boolean
     }
 
+type Marker = Extract<Token, { kind: 'marker' }>
+
 const ASCII_PUNCTUATION = /[!-/:-@[-`{-~]/
 
 const TAG = /^<(\/?)(u|ins|mark|strong|b|em|i)(\s[^>]*)?>/i
@@ -64,11 +66,11 @@ function tokenize(markdown: string): Token[] {
 
   let i = 0
   while (i < markdown.length) {
-    const char = markdown[i]
+    const char = markdown.charAt(i)
     const rest = markdown.slice(i)
 
     if (char === '\\' && i + 1 < markdown.length) {
-      const next = markdown[i + 1]
+      const next = markdown.charAt(i + 1)
       if (ASCII_PUNCTUATION.test(next) || next === '\n') {
         pushText(next)
         i += 2
@@ -93,9 +95,8 @@ function tokenize(markdown: string): Token[] {
     }
 
     const tag = char === '<' ? rest.match(TAG) : null
-    if (tag) {
-      const name = tag[2].toLowerCase()
-      const attribute = TAG_ATTRIBUTE[name]
+    const attribute = tag ? TAG_ATTRIBUTE[(tag[2] ?? '').toLowerCase()] : null
+    if (tag && attribute) {
       const isClosing = tag[1] === '/'
       tokens.push({
         kind: 'marker',
@@ -124,7 +125,7 @@ function toggle(
   raw: string,
   before: string | undefined,
   after: string | undefined,
-): Token {
+): Marker {
   return {
     kind: 'marker',
     attribute,
@@ -147,7 +148,7 @@ function readMarkColor(attributes: string): string {
 
 /** Matches each opening marker with the next closing one of its family. */
 function pairMarkers(tokens: Token[]): void {
-  const open = new Map<string, Token[]>()
+  const open = new Map<string, Marker[]>()
 
   for (const token of tokens) {
     if (token.kind !== 'marker') continue

@@ -4,11 +4,13 @@
 
 import { responses, securitySchemes } from './components'
 import {
+  analyticsPaths,
   authPaths,
   backgroundMediaPaths,
   backupPaths,
   bibleBookmarksPaths,
   biblePaths,
+  bibleTopicsPaths,
   categoriesPaths,
   conversionPaths,
   databasePaths,
@@ -17,10 +19,13 @@ import {
   healthPaths,
   livestreamYouTubePaths,
   logsPaths,
+  musicPaths,
   notificationsPaths,
   presentationHighlightsPaths,
   presentationPaths,
+  remoteAccessPaths,
   schedulesPaths,
+  screenSharePaths,
   screensPaths,
   settingsPaths,
   songBookmarksPaths,
@@ -36,6 +41,7 @@ import {
   bibleSchemas,
   commonSchemas,
   deviceSchemas,
+  musicSchemas,
   presentationSchemas,
   scheduleSchemas,
   screenSchemas,
@@ -99,19 +105,42 @@ export const openApiSpec = {
       description: 'Screen configuration and rendering settings',
     },
     {
+      name: 'Remote Access',
+      description:
+        'Phones reaching this computer from anywhere: a WebRTC tunnel through the signaling relay',
+    },
+    {
+      name: 'Screen Share',
+      description:
+        'Native screen sharing: start/stop, frame ingest, MJPEG stream for the screens',
+    },
+    {
       name: 'Background Media',
       description: 'Uploaded background images and videos for screens',
     },
     { name: 'Presentation', description: 'Presentation state control' },
+    {
+      name: 'Music',
+      description: "The music library, playlists and the audio player's status",
+    },
     { name: 'Conversion', description: 'File format conversion utilities' },
     {
       name: 'Feedback',
       description: 'Feature requests and user feedback submission',
     },
+    {
+      name: 'Analytics',
+      description: 'Anonymous usage data: on/off and the install id',
+    },
     { name: 'Logs', description: 'Application logs access' },
     {
       name: 'Livestream',
       description: 'YouTube broadcasts and the settings they are created with',
+    },
+    {
+      name: 'Bible Topics',
+      description:
+        'Bible verses by topic (OpenBible.info topical data, CC BY 4.0)',
     },
     {
       name: 'Notifications',
@@ -128,6 +157,7 @@ export const openApiSpec = {
     ...syncPaths,
     ...devicesPaths,
     ...authPaths,
+    ...remoteAccessPaths,
     ...usersPaths,
     ...songsPaths,
     ...songGroupsPaths,
@@ -137,13 +167,17 @@ export const openApiSpec = {
     ...categoriesPaths,
     ...biblePaths,
     ...bibleBookmarksPaths,
+    ...bibleTopicsPaths,
     ...schedulesPaths,
+    ...screenSharePaths,
     ...screensPaths,
     ...backgroundMediaPaths,
     ...presentationPaths,
     ...presentationHighlightsPaths,
+    ...musicPaths,
     ...conversionPaths,
     ...feedbackPaths,
+    ...analyticsPaths,
     ...notificationsPaths,
   },
   components: {
@@ -159,6 +193,7 @@ export const openApiSpec = {
       ...screenSchemas,
       ...backgroundMediaSchemas,
       ...presentationSchemas,
+      ...musicSchemas,
       ...userSchemas,
     },
     responses,

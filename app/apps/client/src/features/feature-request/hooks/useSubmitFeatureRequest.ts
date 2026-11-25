@@ -34,7 +34,7 @@ export function useSubmitFeatureRequest() {
     try {
       const systemInfo = await getSystemInfo()
       const supportId = getSupportId()
-      if (supportId) void attachFeedbackLogs(supportId, systemInfo)
+      void attachFeedbackLogs(supportId, systemInfo)
 
       const result = await submitFeatureRequest({
         notes: values.notes.trim(),

@@ -1,0 +1,41 @@
+{
+  "steps": {
+    "welcome": "Bun venit",
+    "features": "Funcționalități",
+    "done": "Gata"
+  },
+  "stepOf": "Pasul {{step}} din {{total}}",
+  "welcome": {
+    "title": "Bun venit în Church Hub",
+    "description": "Câteva alegeri ca să pregătim Church Hub pentru biserica ta. Le poți schimba oricând din Setări.",
+    "language": "Limbă",
+    "theme": "Temă"
+  },
+  "features": {
+    "title": "Ce vei folosi?",
+    "description": "Alege paginile de care ai nevoie. Celelalte se ascund din meniul lateral; le poți readuce oricând din Setări › Bara laterală.",
+    "selected": "{{count}} din {{total}} alese",
+    "items": {
+      "present": "Afișează cântări, versete și anunțuri pe ecrane",
+      "songs": "Caută, editează și prezintă cântările",
+      "bible": "Găsește și prezintă versete din Biblie",
+      "schedules": "Pregătește ordinea programului",
+      "gallery": "Afișează poze și clipuri",
+      "livestream": "Transmite live pe YouTube cu OBS",
+      "music": "Pune muzică înainte și după program",
+      "song_key": "Gama în care s-a cântat fiecare cântare",
+      "live_translation": "Traducerea predicii în timp real pentru ascultători",
+      "feedback": "Trimite idei și probleme echipei Church Hub"
+    }
+  },
+  "done": {
+    "title": "Totul e pregătit",
+    "description": "Church Hub e gata. Meniul lateral va avea:",
+    "later": "Poți schimba oricând toate acestea din Setări."
+  },
+  "back": "Înapoi",
+  "next": "Continuă",
+  "finish": "Începe să folosești Church Hub",
+  "skip": "Sari peste",
+  "saveError": "Alegerile nu s-au putut salva. Încearcă din nou."
+}

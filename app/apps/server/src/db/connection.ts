@@ -16,6 +16,11 @@ interface InitializeResult {
 const DEBUG = process.env.DEBUG === 'true'
 const DATABASE_PATH = getDatabasePath()
 
+// `db.query()` caches prepared statements up to this many SQL strings and
+// never evicts one: at Bun's default (20) the migrations fill it, and every
+// later query is prepared again on each call (10 s of a 26k-song sync).
+Database.MAX_QUERY_CACHE_SIZE = 1000
+
 let sqlite: Database | null = null
 let db: BunSQLiteDatabase<typeof schema> | null = null
 
@@ -205,12 +210,15 @@ export async function initializeDatabase(): Promise<InitializeResult> {
 
     // Run migrations
     t = performance.now()
-    const migrationResult = runMigrations(db, sqlite)
+    const migrationResult = runMigrations(sqlite)
     logTiming('run_migrations', t)
 
     return { db, migrationResult }
   } catch (error) {
     log('error', `Failed to initialize database: ${error}`)
+    // Let go of the file, or a restore can't put the previous one back
+    // (Windows locks an open database).
+    closeDatabase()
     throw error
   }
 }

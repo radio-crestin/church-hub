@@ -23,5 +23,5 @@ export function recountSourceSongs(sourceId: string): void {
       : update,
   )
   saveSourceUpdates(updates)
-  refreshPendingNotification()
+  refreshPendingNotification(true)
 }

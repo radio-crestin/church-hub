@@ -36,5 +36,9 @@
   "notifications": {
     "title": "Notifications",
     "unread": "New notifications"
+  },
+  "tabs": {
+    "present": "Live",
+    "more": "More"
   }
 }

@@ -9,6 +9,8 @@ pub mod review;
 #[cfg(desktop)]
 pub mod audio;
 #[cfg(desktop)]
+pub mod screen_capture;
+#[cfg(desktop)]
 pub mod server;
 #[cfg(desktop)]
 pub mod updater;
@@ -36,6 +38,7 @@ use std::path::PathBuf;
 #[cfg(desktop)]
 use std::sync::Arc;
 use std::time::Instant;
+#[cfg(desktop)]
 use tauri::Emitter;
 use tauri::RunEvent;
 #[cfg(desktop)]
@@ -43,10 +46,9 @@ use tauri::Manager;
 #[cfg(desktop)]
 use tauri::WindowEvent;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-
 /// Files the app opens when the OS hands them over: a PowerPoint to import,
 /// an OpenSong song, a program, or a Church Hub song file (.chsongs).
+#[cfg(desktop)]
 fn is_opened_file(path: &std::path::Path) -> bool {
     path.extension().is_some_and(|ext| {
         ["pptx", "opensong", "churchprogram", "chsongs"]
@@ -54,6 +56,7 @@ fn is_opened_file(path: &std::path::Path) -> bool {
             .any(|known| ext.eq_ignore_ascii_case(known))
     })
 }
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // File logging — initialize before anything else so we capture startup
     // events. Best-effort: a logging failure must never block the app.
@@ -145,6 +148,10 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_os::init());
     println!("[startup] plugins_core: {:?}", t.elapsed());
+
+    // The phone apps scan the computer's pairing QR code (Settings > Phones).
+    #[cfg(mobile)]
+    let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
 
     // Start the embedded audio player (rodio) with internal HTTP API
     #[cfg(desktop)]
@@ -343,6 +350,8 @@ pub fn run() {
             zoom_levels: Mutex::new(std::collections::HashMap::new()),
         };
         app.manage(zoom_state);
+        #[cfg(desktop)]
+        app.manage(screen_capture::ScreenCapture::<tauri::Wry>::default());
         println!("[startup] setup_app_state: {:?}", t.elapsed());
 
         // Handle file association - check CLI args for PPTX file
@@ -578,7 +587,12 @@ pub fn run() {
         restart_server,
         updater::prepare_update_install,
         updater::abort_update_install,
-        updater::take_update_outcome
+        updater::take_update_outcome,
+        screen_capture::commands::screen_capture_sources,
+        screen_capture::commands::screen_capture_start,
+        screen_capture::commands::screen_capture_stop,
+        screen_capture::commands::screen_share_surface_show,
+        screen_capture::commands::screen_share_surface_hide
     ]);
 
     // Mobile: only basic commands (no webview management)

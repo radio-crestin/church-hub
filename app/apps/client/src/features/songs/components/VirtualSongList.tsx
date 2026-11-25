@@ -2,6 +2,8 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
+import { useListScrollElement } from '../hooks/useListScrollElement'
+
 const ESTIMATED_SONG_HEIGHT = 88
 // How many rows from the end trigger a load — mirrors the old 200px rootMargin
 // preload, but expressed in rows since the virtualizer reasons about indices.
@@ -36,10 +38,14 @@ export function VirtualSongList<T extends { id: number }>({
   onLoadMore,
 }: VirtualSongListProps<T>) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  // On a phone the page scrolls, not this box: virtualize against the page,
+  // or every row counts as on screen and every page loads at once.
+  const scroll = useListScrollElement(scrollContainerRef)
 
   const virtualizer = useVirtualizer({
     count: songs.length,
-    getScrollElement: () => scrollContainerRef.current,
+    getScrollElement: () => scroll.element,
+    scrollMargin: scroll.offset,
     estimateSize: () => ESTIMATED_SONG_HEIGHT,
     overscan: 10,
     getItemKey: (index) => songs[index]?.id ?? index,
@@ -81,7 +87,9 @@ export function VirtualSongList<T extends { id: number }>({
             data-index={item.index}
             ref={virtualizer.measureElement}
             className="absolute left-0 top-0 w-full"
-            style={{ transform: `translateY(${item.start}px)` }}
+            style={{
+              transform: `translateY(${item.start - scroll.offset}px)`,
+            }}
           >
             <div className="pb-3">
               {renderSong(songs[item.index], item.index)}

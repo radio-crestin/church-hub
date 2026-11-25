@@ -1,8 +1,9 @@
-import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
+import type { ClientOptions } from '@tauri-apps/plugin-http'
 
 import { getServerPort, isMobile } from '~/config'
 import { trackServerDatabase } from '~/features/server-identity/utils/trackServerDatabase'
 import { getStoredApiUrl } from '~/service/api-url'
+import { apiFetch } from '~/utils/apiFetch'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
 import { createLogger } from '~/utils/logger'
 
@@ -13,10 +14,6 @@ const DEFAULT_FETCH_TIMEOUT_MS = 15_000
 
 // Check if we're running in Tauri mode
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Use Tauri fetch ONLY on mobile (iOS WKWebView blocks HTTP fetch to non-HTTPS origins)
-// On desktop Tauri, use window.fetch which shares the webview's cookie jar and HTTP context
-const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 
 /**
  * Gets the API base URL
@@ -81,7 +78,7 @@ export async function fetchJsonWithStatus<T>(
   }
 
   try {
-    const res = await fetchFn(fullUrl, {
+    const res = await apiFetch(fullUrl, {
       ...(options ?? {}),
       credentials: 'include',
       headers,

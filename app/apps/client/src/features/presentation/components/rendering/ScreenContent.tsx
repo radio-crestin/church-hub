@@ -1,4 +1,4 @@
-import { Book, Megaphone, MonitorPlay, Music, User } from 'lucide-react'
+import { Book, Megaphone, Music, User } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 
 import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
@@ -17,11 +17,14 @@ import {
   clampBoundsToScreen,
   getBackgroundCSS,
 } from './utils/styleUtils'
+import { usePresentationState } from '../../hooks/usePresentationState'
+import { ScreenShareView } from '../../screen-share'
 import type {
   BibleContentConfig,
   ClockOverride,
   ContentType,
   ContentTypeConfig,
+  ReferenceTextConfig,
   ScreenWithConfigs,
   SongContentConfig,
   TextStyleRange,
@@ -31,6 +34,7 @@ import {
   resolveSlideFontScale,
 } from '../../utils/applySlideStyleOverride'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { formatSongTitle } from '../../utils/formatSongTitle'
 import { offsetStyleRanges } from '../../utils/offsetStyleRanges'
 import { toTextStyleRanges } from '../../utils/toTextStyleRanges'
 
@@ -89,6 +93,7 @@ export function ScreenContent({
   clockOverride,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
+  const { data: presentationState } = usePresentationState()
 
   const currentConfig = screen.contentConfigs[contentType]
 
@@ -372,21 +377,24 @@ export function ScreenContent({
     )
   }
 
-  // Render the song key ("gama") — shown on the first slide. contentData.songKey
-  // is only populated on the first slide.
+  // Render a song element (gama, "Amin", title) from its layout.
   //
   // The element stays mounted on every slide and only its text comes and goes.
   // That way it takes the same slide-change path as the lyrics: the old key
   // fades out with the old verse and the new one fades in with the new verse.
   // Mounting it only when a key exists made it pop in at once and cut off the
   // moment the slide changed, out of step with the lyrics.
-  const renderSongKey = () => {
-    const sk = resolveSongElementConfig(config, songConfig, 'songKey')
-    if (!sk || sk.hidden) return null
+  const renderSongElement = (
+    name: 'songKey' | 'amen' | 'songTitle',
+    element: ReferenceTextConfig | undefined,
+    elementContentKey: string,
+    content = contentData?.[name] ?? '',
+  ) => {
+    if (!element || element.hidden) return null
 
     const bounds = calculatePixelBounds(
-      sk.constraints,
-      sk.size,
+      element.constraints,
+      element.size,
       canvasWidth,
       canvasHeight,
     )
@@ -394,56 +402,54 @@ export function ScreenContent({
 
     return (
       <AnimatedText
-        key="songKey"
-        content={contentData?.songKey ?? ''}
-        contentKey={`songKey-${contentKey}`}
+        key={name}
+        content={content}
+        contentKey={elementContentKey}
         isVisible={isVisible}
-        style={scaleTextStyle(sk.style, fontScale)}
+        style={scaleTextStyle(element.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
         top={scaledBounds.y}
         isHtml={false}
-        animationIn={sk.animationIn}
-        animationOut={sk.animationOut}
-        slideTransitionIn={sk.slideTransitionIn}
-        slideTransitionOut={sk.slideTransitionOut}
+        animationIn={element.animationIn}
+        animationOut={element.animationOut}
+        slideTransitionIn={element.slideTransitionIn}
+        slideTransitionOut={element.slideTransitionOut}
       />
     )
   }
 
-  // Render the "Amin" element — shown on the last slide. contentData.amen is
-  // only populated on the last slide. Mounted on every slide for the same
-  // reason as the song key above.
-  const renderAmen = () => {
-    const am = resolveSongElementConfig(config, songConfig, 'amen')
-    if (!am || am.hidden) return null
-
-    const bounds = calculatePixelBounds(
-      am.constraints,
-      am.size,
-      canvasWidth,
-      canvasHeight,
+  // The song key ("gama"): contentData.songKey is only set on the first slide.
+  const renderSongKey = () =>
+    renderSongElement(
+      'songKey',
+      resolveSongElementConfig(config, songConfig, 'songKey'),
+      `songKey-${contentKey}`,
     )
-    const scaledBounds = scaleBounds(bounds)
 
-    return (
-      <AnimatedText
-        key="amen"
-        content={contentData?.amen ?? ''}
-        contentKey={`amen-${contentKey}`}
-        isVisible={isVisible}
-        style={scaleTextStyle(am.style, fontScale)}
-        width={scaledBounds.width}
-        height={scaledBounds.height}
-        left={scaledBounds.x}
-        top={scaledBounds.y}
-        isHtml={false}
-        animationIn={am.animationIn}
-        animationOut={am.animationOut}
-        slideTransitionIn={am.slideTransitionIn}
-        slideTransitionOut={am.slideTransitionOut}
-      />
+  // "Amin": contentData.amen is only set on the last slide.
+  const renderAmen = () =>
+    renderSongElement(
+      'amen',
+      resolveSongElementConfig(config, songConfig, 'amen'),
+      `amen-${contentKey}`,
+    )
+
+  // The song's title, set on the `song` layout alone and shown on every slide
+  // of the song. Keyed by the title, so it stays put from verse to verse and
+  // only changes with the song.
+  const renderSongTitle = () => {
+    const title = formatSongTitle(
+      contentData?.songTitle,
+      contentData?.songTitleNumber,
+      songConfig?.songTitle?.showNumber,
+    )
+    return renderSongElement(
+      'songTitle',
+      songConfig?.songTitle,
+      `songTitle-${title}`,
+      title,
     )
   }
 
@@ -781,42 +787,15 @@ export function ScreenContent({
     )
   }
 
-  // Render screen share preview placeholder
+  // The live share itself, so the operator sees what the screens show
   const renderScreenSharePreview = () => {
     if (contentType !== 'screen_share') return null
-
-    const iconSize = Math.min(containerWidth, containerHeight) * 0.15
-
+    if (presentationState?.temporaryContent?.type !== 'screen_share')
+      return null
     return (
-      <div
-        className="absolute inset-0 flex flex-col items-center justify-center gap-4"
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        }}
-      >
-        <div
-          style={{
-            width: iconSize * 2,
-            height: iconSize * 2,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <MonitorPlay size={iconSize} style={{ color: 'rgb(59, 130, 246)' }} />
-        </div>
-        <span
-          style={{
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: Math.max(14, containerWidth * 0.025),
-            fontWeight: 500,
-          }}
-        >
-          Screen Share Active
-        </span>
-      </div>
+      <ScreenShareView
+        session={presentationState.temporaryContent.data.startedAt}
+      />
     )
   }
 
@@ -836,6 +815,7 @@ export function ScreenContent({
       {renderReferenceText()}
       {renderSongKey()}
       {renderAmen()}
+      {renderSongTitle()}
       {renderPersonLabel()}
       {!clockOverride && renderClock()}
       {renderNextSlideSection()}

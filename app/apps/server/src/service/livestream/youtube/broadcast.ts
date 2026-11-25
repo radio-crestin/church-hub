@@ -18,7 +18,9 @@ interface YouTubeBroadcastItem {
   status?: {
     lifeCycleStatus?: string
     privacyStatus?: string
-    streamStatus?: string
+  }
+  contentDetails?: {
+    boundStreamId?: string
   }
 }
 
@@ -375,7 +377,7 @@ export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
           broadcast.snippet?.actualStartTime ||
           Date.now(),
       ),
-      boundStreamId: broadcast.contentDetails?.boundStreamId,
+      boundStreamId: broadcast.contentDetails?.boundStreamId ?? undefined,
     }))
   }
 
@@ -408,7 +410,6 @@ export async function getPastBroadcasts(): Promise<PastBroadcast[]> {
 
 export async function getBroadcastStatus(broadcastId: string): Promise<{
   lifeCycleStatus: string
-  streamStatus: string | null
 }> {
   const youtube = await getYouTubeService()
 
@@ -425,7 +426,6 @@ export async function getBroadcastStatus(broadcastId: string): Promise<{
 
     return {
       lifeCycleStatus: broadcast.status?.lifeCycleStatus || 'unknown',
-      streamStatus: broadcast.status?.streamStatus || null,
     }
   }
 
@@ -445,7 +445,6 @@ export async function getBroadcastStatus(broadcastId: string): Promise<{
 
   return {
     lifeCycleStatus: broadcast.status?.lifeCycleStatus || 'unknown',
-    streamStatus: broadcast.status?.streamStatus || null,
   }
 }
 

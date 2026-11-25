@@ -1,4 +1,4 @@
-import { MAX_SYNC_UPDATES } from './constants'
+import { MAX_SYNC_UPDATES, SEARCH_INDEX_BATCH } from './constants'
 import { withTriggersSuppressed } from './syncStateStore'
 import type {
   ApplyOp,
@@ -7,6 +7,7 @@ import type {
   LibrarySchedule,
   LibrarySong,
 } from './types'
+import type { SQLQueryBindings } from 'bun:sqlite'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import {
@@ -17,7 +18,7 @@ import {
   removeFromScheduleSearchIndex,
   updateScheduleSearchIndex,
 } from '../schedules/search'
-import { removeFromSearchIndex, updateSearchIndex } from '../songs/search'
+import { batchUpdateSearchIndex, removeFromSearchIndex } from '../songs/search'
 
 const logger = createLogger('sync')
 
@@ -168,7 +169,7 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
   // Items (and their nested verses, via CASCADE) are replaced wholesale.
   db.query('DELETE FROM schedule_items WHERE schedule_id = ?').run(scheduleId)
 
-  const insertItem = db.query<{ id: number }, unknown[]>(
+  const insertItem = db.query<{ id: number }, SQLQueryBindings[]>(
     `INSERT INTO schedule_items (
        schedule_id, item_type, song_id, slide_type, slide_content,
        bible_passage_reference, bible_passage_translation, obs_scene_name,
@@ -398,7 +399,9 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
 
   withTriggersSuppressed(() => run())
 
-  for (const songId of songFtsUpdates) updateSearchIndex(songId)
+  for (let i = 0; i < songFtsUpdates.length; i += SEARCH_INDEX_BATCH) {
+    batchUpdateSearchIndex(songFtsUpdates.slice(i, i + SEARCH_INDEX_BATCH))
+  }
   for (const scheduleId of scheduleFtsUpdates) {
     updateScheduleSearchIndex(scheduleId)
   }

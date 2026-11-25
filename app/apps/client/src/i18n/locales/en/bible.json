@@ -92,6 +92,11 @@
       "loading": "Loading available Bibles...",
       "selectBible": "Select a Bible to download...",
       "button": "Download"
+    },
+    "readingSpeed": {
+      "title": "Reading speed",
+      "description": "How long each verse stays on screen when bookmarks or a topic play by themselves: its words at this speed, at least 3 seconds.",
+      "label": "Words per minute"
     }
   },
   "translation": {
@@ -151,12 +156,42 @@
         "text_mismatch": "not the text of this verse, imported without its styles"
       }
     },
-    "exportEmpty": "Nothing to export yet"
+    "exportEmpty": "Nothing to export yet",
+    "slideshow": {
+      "play": "Present in order",
+      "playHint": "Present in order: shows the verses one after another; → or Space for the next",
+      "stop": "Stop",
+      "loop": "Play in a loop",
+      "loopHint": "Play in a loop: each verse stays up while it is read, then the next one comes",
+      "stopLoop": "Stop the loop",
+      "position": "{{current}}/{{count}}"
+    }
   },
   "actionsMenu": {
     "trigger": "More",
-    "bookmarkDescription": "Bookmark the verse you currently have open",
     "addToScheduleDescription": "Add the open verse to the selected presentation",
     "addToSchedule": "Add verse to presentation"
+  },
+  "topics": {
+    "title": "Topics",
+    "searchPlaceholder": "Search topics...",
+    "empty": "No topics",
+    "noResults": "No topic found",
+    "verseCount_one": "{{count}} verse",
+    "verseCount_other": "{{count}} verses",
+    "back": "Back to topics",
+    "previous": "Present the previous passage",
+    "next": "Present the next passage",
+    "present": "Present",
+    "openInBible": "Open in the Bible",
+    "expand": "Expand topics",
+    "collapse": "Collapse topics",
+    "slideshow": {
+      "play": "Play",
+      "playHint": "Present every verse, one after another, each for the time it takes to read it; stops on the last one",
+      "loop": "Loop",
+      "loopHint": "Present the verses over and over, each for the time it takes to read it",
+      "stop": "Stop"
+    }
   }
 }

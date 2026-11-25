@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,6 +12,7 @@ import type {
   SizeWithUnits,
 } from '../../types'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { formatSongTitle } from '../../utils/formatSongTitle'
 import { ScreenBackground } from '../rendering/ScreenBackground'
 import { TextContent } from '../rendering/TextContent'
 import {
@@ -42,12 +44,16 @@ const SAMPLE_CONTENT: Record<
     person?: string
     songKey?: string
     amen?: string
+    songTitle?: string
+    songTitleNumber?: string
   }
 > = {
   song: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
     songKey: 'G',
     amen: 'Amin!',
+    songTitle: 'Aleluia, mărire Domnului',
+    songTitleNumber: 'PDC 19',
   },
   song_first_slide: {
     main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
@@ -78,6 +84,8 @@ const SAMPLE_CONTENT: Record<
 }
 
 interface DraggableElementProps {
+  /** Names it for tests: `screen-editor-canvas-<type>` */
+  elementType: string
   x: number
   y: number
   width: number
@@ -86,6 +94,8 @@ interface DraggableElementProps {
   size: SizeWithUnits
   isSelected: boolean
   isHidden?: boolean
+  /** Pinned: it can be selected but not moved or resized */
+  isLocked?: boolean
   onClick: () => void
   onConstraintChange: (constraints: Constraints) => void
   onSizeChange: (size: SizeWithUnits) => void
@@ -99,6 +109,7 @@ interface DraggableElementProps {
 type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'se' | 'sw' | 'ne' | 'nw' | null
 
 function DraggableElement({
+  elementType,
   x,
   y,
   width,
@@ -107,6 +118,7 @@ function DraggableElement({
   size,
   isSelected,
   isHidden = false,
+  isLocked = false,
   onClick,
   onConstraintChange,
   onSizeChange,
@@ -155,6 +167,7 @@ function DraggableElement({
     (e: React.MouseEvent) => {
       e.stopPropagation()
       onClick()
+      if (isLocked) return
 
       const canvasRect = canvasRef.current?.getBoundingClientRect()
       if (!canvasRect) return
@@ -165,7 +178,7 @@ function DraggableElement({
       setIsDragging(true)
       setDragStart({ x: mouseX - position.x, y: mouseY - position.y })
     },
-    [onClick, position, canvasRef],
+    [onClick, isLocked, position, canvasRef],
   )
 
   const handleResizeMouseDown = useCallback(
@@ -436,7 +449,8 @@ function DraggableElement({
   return (
     <div
       ref={elementRef}
-      className={`absolute cursor-move ${isDragging || isResizing ? 'z-50' : ''}`}
+      data-testid={`screen-editor-canvas-${elementType}`}
+      className={`absolute ${isLocked ? 'cursor-pointer' : 'cursor-move'} ${isDragging || isResizing ? 'z-50' : ''}`}
       style={{
         left: position.x,
         top: position.y,
@@ -450,7 +464,15 @@ function DraggableElement({
       onClick={(e) => e.stopPropagation()}
     >
       {children}
-      {isSelected && (
+      {isLocked && (
+        <div
+          className="absolute top-1 right-1 p-0.5 rounded bg-indigo-600/90 text-white pointer-events-none"
+          data-testid="screen-editor-element-locked"
+        >
+          <Lock className="w-3 h-3" />
+        </div>
+      )}
+      {isSelected && !isLocked && (
         <>
           {/* Corner resize handles */}
           <div
@@ -521,6 +543,8 @@ export function ScreenEditorCanvas({
       // comes from the sample defaults only. Exposing it here lets the
       // first-slide preview render `sample.songKey` (see the songKey element).
       songKey: defaultSample?.songKey,
+      songTitle: defaultSample?.songTitle,
+      songTitleNumber: defaultSample?.songTitleNumber,
     }),
     [contentType, previewTexts, defaultSample],
   )
@@ -593,6 +617,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="mainText"
+          elementType="mainText"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -601,6 +626,7 @@ export function ScreenEditorCanvas({
           size={mt.size}
           isSelected={selectedElement?.type === 'mainText'}
           isHidden={mt.hidden}
+          isLocked={mt.locked}
           onClick={() => onSelectElement({ type: 'mainText' })}
           onConstraintChange={handleConstraintChange('mainText')}
           onSizeChange={handleSizeChange('mainText')}
@@ -646,6 +672,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="contentText"
+          elementType="contentText"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -654,6 +681,7 @@ export function ScreenEditorCanvas({
           size={ct.size}
           isSelected={selectedElement?.type === 'contentText'}
           isHidden={ct.hidden}
+          isLocked={ct.locked}
           onClick={() => onSelectElement({ type: 'contentText' })}
           onConstraintChange={handleConstraintChange('contentText')}
           onSizeChange={handleSizeChange('contentText')}
@@ -689,6 +717,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="referenceText"
+          elementType="referenceText"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -697,6 +726,7 @@ export function ScreenEditorCanvas({
           size={rt.size}
           isSelected={selectedElement?.type === 'referenceText'}
           isHidden={rt.hidden || isHiddenByInlineReference}
+          isLocked={rt.locked}
           onClick={() => onSelectElement({ type: 'referenceText' })}
           onConstraintChange={handleConstraintChange('referenceText')}
           onSizeChange={handleSizeChange('referenceText')}
@@ -736,6 +766,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="songKey"
+          elementType="songKey"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -744,6 +775,7 @@ export function ScreenEditorCanvas({
           size={sk.size}
           isSelected={selectedElement?.type === 'songKey'}
           isHidden={sk.hidden}
+          isLocked={sk.locked}
           onClick={() => onSelectElement({ type: 'songKey' })}
           onConstraintChange={handleConstraintChange('songKey')}
           onSizeChange={handleSizeChange('songKey')}
@@ -755,6 +787,57 @@ export function ScreenEditorCanvas({
           <TextContent
             content={sample?.songKey ?? 'G'}
             style={{ ...sk.style, maxFontSize: sk.style.maxFontSize * scale }}
+            containerWidth={bounds.width * scale}
+            containerHeight={bounds.height * scale}
+          />
+        </DraggableElement>,
+      )
+    }
+
+    // Song title — set on the "Cântec" layout alone; every slide of the song,
+    // first and last too, reads it from there.
+    if (
+      config &&
+      'songTitle' in config &&
+      config.songTitle &&
+      contentType === 'song'
+    ) {
+      const st = config.songTitle
+      const bounds = calculatePixelBounds(
+        st.constraints,
+        st.size,
+        canvasWidth,
+        canvasHeight,
+      )
+
+      els.push(
+        <DraggableElement
+          key="songTitle"
+          elementType="songTitle"
+          isLocked={st.locked}
+          x={bounds.x * scale}
+          y={bounds.y * scale}
+          width={bounds.width * scale}
+          height={bounds.height * scale}
+          constraints={st.constraints}
+          size={st.size}
+          isSelected={selectedElement?.type === 'songTitle'}
+          isHidden={st.hidden}
+          onClick={() => onSelectElement({ type: 'songTitle' })}
+          onConstraintChange={handleConstraintChange('songTitle')}
+          onSizeChange={handleSizeChange('songTitle')}
+          canvasWidth={displaySize.width}
+          screenWidth={canvasWidth}
+          screenHeight={canvasHeight}
+          canvasRef={canvasRef}
+        >
+          <TextContent
+            content={formatSongTitle(
+              sample?.songTitle,
+              sample?.songTitleNumber,
+              st.showNumber,
+            )}
+            style={{ ...st.style, maxFontSize: st.style.maxFontSize * scale }}
             containerWidth={bounds.width * scale}
             containerHeight={bounds.height * scale}
           />
@@ -783,6 +866,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="amen"
+          elementType="amen"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -791,6 +875,7 @@ export function ScreenEditorCanvas({
           size={am.size}
           isSelected={selectedElement?.type === 'amen'}
           isHidden={am.hidden}
+          isLocked={am.locked}
           onClick={() => onSelectElement({ type: 'amen' })}
           onConstraintChange={handleConstraintChange('amen')}
           onSizeChange={handleSizeChange('amen')}
@@ -822,6 +907,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="personLabel"
+          elementType="personLabel"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -830,6 +916,7 @@ export function ScreenEditorCanvas({
           size={pl.size}
           isSelected={selectedElement?.type === 'personLabel'}
           isHidden={pl.hidden}
+          isLocked={pl.locked}
           onClick={() => onSelectElement({ type: 'personLabel' })}
           onConstraintChange={handleConstraintChange('personLabel')}
           onSizeChange={handleSizeChange('personLabel')}
@@ -870,6 +957,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="clock"
+          elementType="clock"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -878,6 +966,7 @@ export function ScreenEditorCanvas({
           size={clockSize}
           isSelected={selectedElement?.type === 'clock'}
           isHidden={clockConfig.hidden}
+          isLocked={clockConfig.locked}
           onClick={() => onSelectElement({ type: 'clock' })}
           onConstraintChange={handleConstraintChange('clock')}
           onSizeChange={handleSizeChange('clock')}
@@ -912,6 +1001,7 @@ export function ScreenEditorCanvas({
       els.push(
         <DraggableElement
           key="nextSlide"
+          elementType="nextSlide"
           x={bounds.x * scale}
           y={bounds.y * scale}
           width={bounds.width * scale}
@@ -920,6 +1010,7 @@ export function ScreenEditorCanvas({
           size={ns.size}
           isSelected={selectedElement?.type === 'nextSlide'}
           isHidden={ns.hidden}
+          isLocked={ns.locked}
           onClick={() => onSelectElement({ type: 'nextSlide' })}
           onConstraintChange={handleConstraintChange('nextSlide')}
           onSizeChange={handleSizeChange('nextSlide')}

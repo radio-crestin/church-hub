@@ -19,7 +19,7 @@ export function setScheduleItemAdvance(
   advanceSeconds: number | null,
 ): OperationResult {
   const seconds = advanceSeconds === null ? null : clampSeconds(advanceSeconds)
-  const result = getDatabase()
+  const updated = getDatabase()
     .update(scheduleItems)
     .set({ advanceSeconds: seconds, updatedAt: new Date() })
     .where(
@@ -28,8 +28,9 @@ export function setScheduleItemAdvance(
         eq(scheduleItems.scheduleId, scheduleId),
       ),
     )
-    .run()
-  if (result.changes === 0) {
+    .returning({ id: scheduleItems.id })
+    .all()
+  if (updated.length === 0) {
     logger.warning(`Item ${itemId} not found in presentation ${scheduleId}`)
     return { success: false, error: 'Schedule item not found' }
   }

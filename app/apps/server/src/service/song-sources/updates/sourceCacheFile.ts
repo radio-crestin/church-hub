@@ -3,8 +3,11 @@ import { dirname, join } from 'node:path'
 
 import { getDatabasePath } from '../../../utils/paths'
 
-/** What a check keeps per source: the songs the library lacks, the songs it changed. */
-type CacheKind = 'lacking' | 'changed'
+/**
+ * What a check keeps per source: the songs the library lacks, the songs it
+ * changed, and the changes the user turned down.
+ */
+type CacheKind = 'lacking' | 'changed' | 'kept'
 
 /** Next to the database, so another database never reads them. */
 const fileOf = (kind: CacheKind, sourceId: string) =>

@@ -7,6 +7,7 @@ import {
   resetLibraryVersionIndex,
   warmUpLibraryVersionIndex,
 } from './song-versions/libraryVersionIndex'
+import { SONG_INDEX_ROWS_SQL } from './songIndexRowsSql'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
@@ -82,7 +83,7 @@ export function normalizeForIndex(text: string): string {
     expandedWords.push(word)
     if (
       word.length > 2 &&
-      word[0].toLowerCase() === 'n' &&
+      word[0]?.toLowerCase() === 'n' &&
       !/^n[aeiou]/i.test(word)
     ) {
       expandedWords.push(word.substring(1))
@@ -220,23 +221,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
 
     // Fetch songs data
     const songs = db
-      .query(
-        `
-      SELECT
-        s.id,
-        s.title,
-        s.alternate_titles,
-        COALESCE(sc.name, '') as category_name,
-        COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
-      FROM songs s
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      LEFT JOIN (
-        SELECT song_id, content FROM song_slides ORDER BY sort_order
-      ) ss ON ss.song_id = s.id
-      WHERE s.id IN (${placeholders})
-      GROUP BY s.id
-    `,
-      )
+      .query(`${SONG_INDEX_ROWS_SQL} WHERE s.id IN (${placeholders})`)
       .all(...songIds) as Array<{
       id: number
       title: string
@@ -245,7 +230,10 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
       content: string
     }>
 
-    db.run('BEGIN TRANSACTION')
+    // IMMEDIATE: the song updates' worker writes too; a deferred
+    // transaction that read first fails at once ("database is locked")
+    // when another connection wrote meanwhile, instead of waiting its turn.
+    db.run('BEGIN IMMEDIATE')
 
     try {
       // Delete existing FTS entries for these songs
@@ -333,24 +321,7 @@ export function rebuildSearchIndex(
     const db = getRawDatabase()
 
     // Fetch all songs with their content
-    const songs = db
-      .query(
-        `
-      SELECT
-        s.id,
-        s.title,
-        s.alternate_titles,
-        COALESCE(sc.name, '') as category_name,
-        COALESCE(GROUP_CONCAT(ss.content, ' '), '') as content
-      FROM songs s
-      LEFT JOIN song_categories sc ON s.category_id = sc.id
-      LEFT JOIN (
-        SELECT song_id, content FROM song_slides ORDER BY sort_order
-      ) ss ON ss.song_id = s.id
-      GROUP BY s.id
-    `,
-      )
-      .all() as Array<{
+    const songs = db.query(SONG_INDEX_ROWS_SQL).all() as Array<{
       id: number
       title: string
       alternate_titles: string | null

@@ -2,7 +2,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Eraser,
-  Eye,
   EyeOff,
   Loader2,
   MonitorUp,
@@ -11,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 
 import {
   ContentTypeButton,
+  LiveBadge,
   LivePreview,
   usePresentationState,
   useWebSocket,
@@ -21,7 +21,7 @@ import {
 } from '~/features/presentation/hooks/useSlideHighlights'
 import type { TemporaryContent } from '~/features/presentation/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
-import { Switch } from '~/ui/switch/Switch'
+import { PreviewModeToggle } from './PreviewModeToggle'
 
 interface SongControlPanelProps {
   songId: number
@@ -125,30 +125,7 @@ export function SongControlPanel({
               </button>
             )}
           </div>
-          <div
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-md shrink-0 ${
-              isLive
-                ? 'bg-red-100 dark:bg-red-900/30'
-                : 'bg-gray-100 dark:bg-gray-700'
-            }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                isLive
-                  ? 'bg-red-500 animate-pulse'
-                  : 'bg-gray-400 dark:bg-gray-500'
-              }`}
-            />
-            <span
-              className={`text-xs font-semibold ${
-                isLive
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-400 dark:text-gray-500'
-              }`}
-            >
-              LIVE
-            </span>
-          </div>
+          <LiveBadge isLive={isLive} />
         </div>
 
         {/* Divider between the two groups — large screens only, where both
@@ -160,21 +137,11 @@ export function SongControlPanel({
 
         {/* Controls group */}
         <div className="flex items-center justify-between gap-3 lg:justify-end shrink-0">
-          {/* Preview mode toggle — when ON, clicking a verse stages it here
-              first (Afișează / double-click projects). */}
-          <label
-            className="flex items-center gap-2 cursor-pointer select-none shrink-0"
-            title={t('preview.previewModeHint')}
-          >
-            <Switch
-              id="song-preview-mode"
-              checked={previewMode}
-              onCheckedChange={onTogglePreviewMode}
-            />
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              {t('preview.previewMode')}
-            </span>
-          </label>
+          {/* Live / preview: how a click on a verse behaves. */}
+          <PreviewModeToggle
+            previewMode={previewMode}
+            onTogglePreviewMode={onTogglePreviewMode}
+          />
 
           {isLive ? (
             <button
@@ -220,7 +187,7 @@ export function SongControlPanel({
               disabled
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-400 dark:text-gray-500 rounded-lg border border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed shrink-0"
             >
-              <Eye size={18} />
+              <MonitorUp size={18} />
               <span>{t('bible:controls.show')}</span>
             </button>
           )}

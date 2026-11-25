@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next'
 
 import { AISearchSettings } from '~/features/ai-search'
 import { AlertModal } from '~/ui/modal'
+import { SectionHeader } from '~/ui/page'
 import { BibleDownloadSection } from './BibleDownloadSection'
 import { BibleTranslationsManager } from './BibleTranslationsManager'
+import { ReadingSpeedSettings } from './ReadingSpeedSettings'
 import { useImportTranslation } from '../hooks'
 
 const cardClass =
-  'rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900'
+  'rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-800 dark:bg-gray-900'
 
 /**
  * Bible settings, rendered as a settings-page panel (extracted from the former
@@ -63,37 +65,33 @@ export function BibleSettingsPanel() {
 
         {/* Import from file */}
         <div className={cardClass}>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-                <FileUp className="h-5 w-5" />
-                {t('settings.import.title')}
-              </h3>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                {t('settings.import.description')}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleImportClick}
-              disabled={isImporting}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-            >
-              {isImporting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileUp className="h-4 w-4" />
-              )}
-              {t('settings.import.button')}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xml"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
+          <SectionHeader
+            title={t('settings.import.title')}
+            description={t('settings.import.description')}
+            icon={FileUp}
+            actions={
+              <button
+                type="button"
+                onClick={handleImportClick}
+                disabled={isImporting}
+                className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {isImporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileUp className="h-4 w-4" />
+                )}
+                {t('settings.import.button')}
+              </button>
+            }
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xml"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
 
           {/* Format instructions */}
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
@@ -120,6 +118,10 @@ export function BibleSettingsPanel() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className={cardClass}>
+          <ReadingSpeedSettings />
         </div>
 
         <AISearchSettings configKey="bible_ai_search_config" />

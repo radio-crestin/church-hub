@@ -3,6 +3,7 @@ How an agent working a Superfactory task sets up, tests and builds its worktree 
 
 ## Working a task
 - **Your environment**: `bun app/scripts/worktree-setup.ts <task-id>` sets up the worktree on port 3100 + n (n = task number). After client changes, rebuild the client for that port (`VITE_API_PORT=<port> VITE_SERVER_PORT=<port> bun run build` in `app/apps/client`).
+- **Real data** (on Tibi PC): to try a change on the church's real songs, Bible and programs, run `bun app/scripts/use-adunare-copy.ts app/data` before starting your server (`docs/test-machine.md`). The e2e suite keeps its own data.
 - **e2e**: always with `CI=1 TEST_PORT=<port>`, or Playwright rebuilds the client for the default port. Full tests are the full suite in the root `CLAUDE.md`. A Playwright video recording needs `viewport` and `recordVideo.size` both `{ width: 1920, height: 1080 }`, or it comes out 800×600.
 - **Playwright browser MISSING** while `playwright install` hangs at 100%: unzip the complete zip from `$TMPDIR/playwright-download-*/` into the reported folder and add an empty `INSTALLATION_COMPLETE` file.
 - **Cargo** shares the main checkout's target dir: `cargo check` / `clippy` / `test` only.

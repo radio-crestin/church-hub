@@ -120,6 +120,10 @@ export interface NextItemPreview {
 export interface TemporarySongContent {
   songId: number
   title: string
+  /** The title without its leading number: "La masa Ta noi azi venim" */
+  displayTitle?: string
+  /** The songbook's initials and the song's number: "PDC 19" */
+  titleNumber?: string
   keyLine?: string | null // Musical key (e.g., "C Major", "Am")
   slides: TemporarySongSlide[]
   currentSlideIndex: number // 0-based index
@@ -203,6 +207,12 @@ export interface VerseteTineriEntry {
 export interface TemporaryVerseteTineriContent {
   entries: VerseteTineriEntry[]
   currentEntryIndex: number // 0-based index in entries array
+  /** Advances by itself after each verse's reading time, and wraps around. */
+  loop?: boolean
+  /** Advances by itself like `loop`, but stops on the last verse. */
+  autoAdvance?: boolean
+  /** The list that started this slideshow: `bookmarks` or `topic:<id>` */
+  slideshow?: string
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -221,11 +231,12 @@ export interface TemporarySceneContent {
 }
 
 /**
- * Temporary screen share content for WebRTC streaming
+ * Temporary screen share content: the frames come as an MJPEG stream from
+ * /api/screen-share/stream.mjpg (or the GPU in a desktop projector window)
  */
 export interface TemporaryScreenShareContent {
-  broadcasterId: string
-  audioEnabled: boolean
+  /** When the share started: a new share opens a new stream */
+  startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
@@ -325,6 +336,9 @@ export interface PresentTemporaryBiblePassageInput {
 export interface PresentTemporaryVerseteTineriInput {
   entries: VerseteTineriEntry[]
   currentEntryIndex?: number // Optional: start from specific entry (0-based)
+  loop?: boolean // Advance by itself and wrap around
+  autoAdvance?: boolean // Advance by itself, stop on the last verse
+  slideshow?: string // The list that started it (bookmarks, topic:<id>)
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
@@ -505,6 +519,8 @@ export interface TextElementConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**
@@ -518,6 +534,8 @@ export interface ClockElementConfig {
   format: '12h' | '24h'
   showSeconds: boolean
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**
@@ -545,6 +563,8 @@ export interface ReferenceTextConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
   /**
    * Custom label text. Used by the "Amin" element so the operator can replace
    * the default "Amin!" with their own text. Empty/undefined keeps the default
@@ -566,17 +586,27 @@ export interface PersonLabelConfig {
   slideTransitionIn?: AnimationConfig // Animation for new content entering during slide change
   slideTransitionOut?: AnimationConfig // Animation for old content leaving during slide change
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**
  * Content type configuration - different for each content type
  * Clock is enabled per-content-type but uses shared global config for position/style
  */
+/** The song-title element: a text element that may show the songbook and number. */
+export interface SongTitleConfig extends ReferenceTextConfig {
+  /** The songbook's initials and the song's number before the title ("PDC 19 · …"); off by default. */
+  showNumber?: boolean
+}
+
 export interface SongContentConfig {
   background: ScreenBackgroundConfig
   mainText: TextElementConfig
   songKey?: ReferenceTextConfig // Song key ("gama") element, shown on the first slide
   amen?: ReferenceTextConfig // "Amin" element, shown on the last slide
+  /** The song's title in a corner, on every slide (first and last too). */
+  songTitle?: SongTitleConfig
   clockEnabled?: boolean // Per-slide-type enable, uses global clockConfig for position/style
   displayKeyLine?: boolean // Whether to display the song key line on the first slide (default: true)
   displayChords?: boolean // Whether to display chord annotations above lyrics (default: false)
@@ -703,6 +733,8 @@ export interface NextSlideSectionConfig {
   animationIn?: AnimationConfig
   animationOut?: AnimationConfig
   hidden?: boolean
+  /** Pinned in place: the editor won't move or resize it */
+  locked?: boolean
 }
 
 /**
@@ -711,7 +743,6 @@ export interface NextSlideSectionConfig {
 export interface ScreenGlobalSettings {
   defaultBackground: ScreenBackgroundConfig
   clockConfig?: ClockElementConfig // Shared clock config (position, style, format) - enable is per-content-type
-  screenShareAudioEnabled?: boolean // Whether to play audio when receiving screen share (default: false)
 }
 
 /**

@@ -16,6 +16,12 @@
  *   bun app/scripts/generate-changelog.ts            # regenerate both files
  *   bun app/scripts/generate-changelog.ts --check    # fail if files are stale
  *
+ * A version with plain-language notes (written-notes.json, written by the agent
+ * cutting the release) carries them as `written`: the app shows them instead
+ * of the commits, and its CHANGELOG.md section (which the release CI copies
+ * into the GitHub release) has them in English and Romanian, plus the block
+ * the app reads from GitHub for a version not installed yet.
+ *
  * Commits are grouped into exactly three buckets to match the UI:
  *   feat        -> Features
  *   fix         -> Bug Fixes
@@ -23,9 +29,13 @@
  *   (excluded: merge commits, version-bump commits, ci/test noise)
  */
 
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+
+import { readWrittenNotes } from './written-notes-file'
+import { renderWrittenNotes } from '../apps/client/src/features/release-notes/service/writtenNotesBlock'
+import type { WrittenNotes } from '../apps/client/src/features/release-notes/types'
 
 const REPO_ROOT = join(import.meta.dir, '..', '..')
 const CONF_FILE = join(REPO_ROOT, 'app', 'tauri', 'tauri.conf.json')
@@ -58,10 +68,11 @@ interface VersionNotes {
   features: ChangeEntry[]
   bugFixes: ChangeEntry[]
   changes: ChangeEntry[]
+  written?: WrittenNotes
 }
 
-function git(args: string): string {
-  return execSync(`git ${args}`, {
+function git(args: string[]): string {
+  return execFileSync('git', args, {
     cwd: REPO_ROOT,
     encoding: 'utf-8',
     maxBuffer: 64 * 1024 * 1024,
@@ -79,13 +90,13 @@ function readCurrentVersion(): string {
 
 /** All version tags, newest first (semver-aware). */
 function listTags(): string[] {
-  const out = git("tag --list 'v[0-9]*' --sort=-version:refname")
+  const out = git(['tag', '--list', 'v[0-9]*', '--sort=-version:refname'])
   return out ? out.split('\n').filter(Boolean) : []
 }
 
 function tagDate(ref: string): string | null {
   try {
-    return git(`log -1 --pretty=%cI ${ref}`)
+    return git(['log', '-1', '--pretty=%cI', ref])
   } catch {
     return null
   }
@@ -123,7 +134,7 @@ function notesForRange(range: string): Pick<VersionNotes, 'features' | 'bugFixes
     'features' | 'bugFixes' | 'changes'
   >
 
-  const log = git(`log --no-merges --pretty=format:%s ${range}`)
+  const log = git(['log', '--no-merges', '--pretty=format:%s', range])
   if (!log) return buckets
 
   for (const subject of log.split('\n')) {
@@ -161,7 +172,10 @@ function buildVersionList(): VersionNotes[] {
     })
   }
 
-  return versions
+  const written = readWrittenNotes()
+  return versions.map((v) =>
+    written[v.version] ? { ...v, written: written[v.version] } : v,
+  )
 }
 
 function renderEntry(entry: ChangeEntry): string {
@@ -181,6 +195,11 @@ function renderMarkdown(versions: VersionNotes[]): string {
   for (const v of versions) {
     const date = v.date ? v.date.slice(0, 10) : ''
     lines.push(`## v${v.version}${date ? ` — ${date}` : ''}`, '')
+
+    if (v.written) {
+      lines.push(...renderWrittenNotes(v.written))
+      continue
+    }
 
     const sections: Array<[string, ChangeEntry[]]> = [
       ['### 🚀 Features', v.features],

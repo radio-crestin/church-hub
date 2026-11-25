@@ -1,108 +1,113 @@
 {
-  "title": "Biblie",
+  "title": "Biblia",
   "search": {
-    "placeholder": "Cauta versete (ex: \"Gen 1:1\" sau \"La inceput\")",
-    "hint": "Scrie o referinta precum \"Gen 1:1\" sau cauta un text",
-    "noResults": "Niciun rezultat gasit",
-    "searching": "Se cauta...",
-    "directReference": "Referinta directa",
-    "resultsCount": "{{count}} verset gasit",
-    "resultsCount_few": "{{count}} versete gasite",
-    "resultsCount_other": "{{count}} de versete gasite",
-    "aiSearchTooltip": "Cautare inteligenta cu AI - gaseste versete relevante semantic",
+    "placeholder": "Caută versete (ex.: „Gen 1:1” sau „La început”)",
+    "hint": "Scrie o referință, ca „Gen 1:1”, sau caută un text",
+    "noResults": "Nu s-a găsit nimic",
+    "searching": "Se caută...",
+    "directReference": "Referință directă",
+    "resultsCount": "{{count}} verset găsit",
+    "resultsCount_few": "{{count}} versete găsite",
+    "resultsCount_other": "{{count}} de versete găsite",
+    "aiSearchTooltip": "Căutare cu AI: găsește versete după înțeles",
     "aiProcessing": "AI...",
     "fullTextSearchTooltip": "Caută în textul versetelor"
   },
   "navigation": {
-    "back": "Inapoi",
+    "back": "Înapoi",
     "oldTestament": "Vechiul Testament",
     "newTestament": "Noul Testament",
-    "noBooks": "Nicio carte disponibila",
+    "noBooks": "Nu există nicio carte",
     "previousChapter": "Capitolul anterior",
-    "nextChapter": "Capitolul urmator",
-    "scrollToVerse": "Deruleaza la versetul curent",
-    "loadPrevious": "Incarca versetele anterioare",
-    "loadNext": "Incarca mai multe versete"
+    "nextChapter": "Capitolul următor",
+    "scrollToVerse": "Mergi la versetul curent",
+    "loadPrevious": "Încarcă versetele anterioare",
+    "loadNext": "Încarcă mai multe versete"
   },
   "queue": {
     "title": "Lista versete",
-    "empty": "Niciun verset in lista",
-    "removed": "Versetul a fost eliminat din lista",
-    "remove": "Elimina"
+    "empty": "Niciun verset în listă",
+    "removed": "Versetul a fost scos din listă",
+    "remove": "Scoate"
   },
   "controls": {
     "title": "Previzualizare",
-    "prev": "Anterior",
-    "next": "Următor",
+    "prev": "Anteriorul",
+    "next": "Următorul",
     "prevVerse": "Versetul anterior",
-    "nextVerse": "Versetul urmator",
-    "show": "Afiseaza",
+    "nextVerse": "Versetul următor",
+    "show": "Afișează",
     "hide": "Ascunde",
-    "clearHighlights": "Șterge Evidențierile"
+    "clearHighlights": "Șterge evidențierile"
   },
   "shortcuts": {
-    "title": "Scurtaturi tastatura",
-    "navigate": "Navigheaza versete",
-    "back": "Inapoi",
-    "hide": "Ascunde afisajul",
-    "present": "Prezinta versetul"
+    "title": "Scurtături de tastatură",
+    "navigate": "Navighează prin versete",
+    "back": "Înapoi",
+    "hide": "Ascunde ecranul",
+    "present": "Prezintă versetul"
   },
   "actions": {
-    "presentNow": "Prezinta acum",
-    "addToQueue": "Adauga in lista",
-    "import": "Importa",
-    "importFirst": "Importa traducere Biblie",
-    "settings": "Setari",
-    "openSettings": "Deschide Setari"
+    "presentNow": "Prezintă acum",
+    "addToQueue": "Adaugă în listă",
+    "import": "Importă",
+    "importFirst": "Importă o traducere a Bibliei",
+    "settings": "Setări",
+    "openSettings": "Deschide setările"
   },
   "empty": {
-    "title": "Nicio traducere disponibila",
-    "description": "Importa o traducere a Bibliei in format USFX XML pentru a incepe.",
-    "noTranslationsSelected": "Nicio traducere selectata",
-    "noTranslationsSelectedDescription": "Mergi la Setari > Traduceri Biblice pentru a selecta traducerile dorite."
+    "title": "Nicio traducere a Bibliei",
+    "description": "Importă o traducere a Bibliei în format USFX XML ca să începi.",
+    "noTranslationsSelected": "Nicio traducere selectată",
+    "noTranslationsSelectedDescription": "Mergi la Setări > Traduceri Biblie și alege traducerile pe care le folosești."
   },
   "import": {
-    "title": "Importa traducere Biblie",
-    "error": "Importul traducerii a esuat",
+    "title": "Importă o traducere a Bibliei",
+    "error": "Importul traducerii a eșuat",
     "errorTitle": "Eroare la import",
-    "success": "Traducerea a fost importata cu succes"
+    "success": "Traducerea a fost importată"
   },
   "settings": {
-    "title": "Setari Biblie",
+    "title": "Setări Biblie",
     "import": {
-      "title": "Importa Traducere",
-      "description": "Importa o traducere a Bibliei dintr-un fisier OSIS XML.",
-      "button": "Selecteaza Fisier",
-      "formatTitle": "Formate Acceptate",
-      "formatDescription": "Traducerea Bibliei trebuie sa fie in format OSIS (Open Scripture Information Standard) XML.",
+      "title": "Importă traducere",
+      "description": "Importă o traducere a Bibliei dintr-un fișier OSIS XML.",
+      "button": "Alege fișierul",
+      "formatTitle": "Formate acceptate",
+      "formatDescription": "Traducerea Bibliei trebuie să fie în format OSIS (Open Scripture Information Standard) XML.",
       "formatSimple": "Încarcă fișiere Biblie în format USFX, OSIS sau Zefania XML. Formatul este detectat automat.",
       "formatExamples": "Pentru exemple de format, vezi:",
-      "structureTitle": "Exemplu Structura Fisier:",
+      "structureTitle": "Exemplu de structură a fișierului:",
       "hints": {
-        "rootElement": "Elementul radacina trebuie sa fie <osis>",
-        "bookElement": "Fiecare carte foloseste <div type=\"book\" osisID=\"Gen\">",
+        "rootElement": "Elementul rădăcină trebuie să fie <osis>",
+        "bookElement": "Fiecare carte folosește <div type=\"book\" osisID=\"Gen\">",
         "chapterElement": "Capitolele folosesc <chapter osisID=\"Gen.1\">",
         "verseElement": "Versetele folosesc <verse osisID=\"Gen.1.1\">text</verse>"
       }
     },
     "download": {
-      "title": "Descarcă Biblie",
-      "description": "Descarcă Biblii din depozitul Holy Bible XML Format",
+      "title": "Descarcă o Biblie",
+      "description": "Descarcă Biblii din colecția Holy Bible XML Format",
       "translationsAvailable": "traduceri disponibile",
       "fetchError": "Nu s-au putut încărca Bibliile disponibile. Încearcă din nou mai târziu.",
       "loading": "Se încarcă Bibliile disponibile...",
-      "selectBible": "Selectează o Biblie pentru descărcare...",
+      "selectBible": "Alege o Biblie de descărcat...",
       "button": "Descarcă"
+    },
+    "readingSpeed": {
+      "title": "Viteza de citire",
+      "description": "Cât rămâne fiecare verset pe ecran când marcajele sau o temă rulează singure: după numărul de cuvinte, la această viteză, dar cel puțin 3 secunde.",
+      "label": "Cuvinte pe minut"
     }
   },
   "translation": {
-    "select": "Selecteaza traducerea",
-    "loading": "Se incarca traducerile..."
+    "select": "Alege traducerea",
+    "loading": "Se încarcă traducerile..."
   },
   "history": {
     "title": "Istoric",
-    "empty": "Niciun verset afisat",
-    "clear": "Sterge",
+    "empty": "Niciun verset afișat încă",
+    "clear": "Șterge",
     "today": "Azi",
     "yesterday": "Ieri",
     "export": "Exportă ca prezentare",
@@ -111,54 +116,85 @@
     "exportVerseCount_one": "{{count}} verset",
     "exportVerseCount_few": "{{count}} versete",
     "exportVerseCount_other": "{{count}} de versete",
-    "exportTitleSession": "Istoric Versete Biblice - ultima sesiune",
-    "exportTitle": "Istoric Versete Biblice",
-    "exportHelp": "Foloseste [V] pentru versete biblice",
+    "exportTitleSession": "Istoric Biblie - ultima sesiune",
+    "exportTitle": "Istoric Biblie",
+    "exportHelp": "Folosește [V] pentru versete din Biblie",
     "expand": "Extinde",
-    "collapse": "Restrange",
-    "searchPlaceholder": "Cauta in istoric...",
-    "noResults": "Niciun verset gasit"
+    "collapse": "Restrânge",
+    "searchPlaceholder": "Caută în istoric...",
+    "noResults": "Nu s-a găsit niciun verset"
   },
   "bookmarks": {
     "title": "Marcaje",
-    "add": "Marcheaza versetul",
-    "remove": "Sterge marcajul",
-    "clear": "Sterge tot",
+    "add": "Marchează versetul",
+    "remove": "Șterge marcajul",
+    "clear": "Șterge tot",
     "empty": "Niciun verset marcat",
-    "emptyDescription": "Marcheaza un verset ca sa iti faci lista",
-    "searchPlaceholder": "Cauta in marcaje...",
-    "noResults": "Niciun marcaj gasit",
-    "addNote": "Adauga titlu",
+    "emptyDescription": "Marchează un verset ca să-ți faci lista de citire",
+    "searchPlaceholder": "Caută în marcaje...",
+    "noResults": "Nu s-a găsit niciun marcaj",
+    "addNote": "Adaugă titlu",
     "notePlaceholder": "Textul titlului...",
-    "editNote": "Editeaza titlul",
-    "deleteNote": "Sterge titlul",
+    "editNote": "Editează titlul",
+    "deleteNote": "Șterge titlul",
     "exportAsMarkdown": "Exportă în Markdown",
-    "importFromText": "Importa din text",
+    "importFromText": "Importă din text",
     "expand": "Extinde",
-    "collapse": "Restrange",
+    "collapse": "Restrânge",
     "import": {
-      "title": "Importa marcaje",
+      "title": "Importă marcaje",
       "description": "Lipește un export Markdown de Marcaje sau o listă de referințe, câte una pe rând, de exemplu \"Ioan 3:16\" sau \"Ioan 3:16-18\". Adaugă \" - RCCV\" pentru a alege traducerea. Sub titlul \"## Ioan 3:16\", versetul își păstrează textul **îngroșat**, <u>subliniat</u> și <mark>evidențiat</mark>. Începe o notă cu \">\".",
       "placeholder": "## Ioan 3:16 - RCCV\n\nFiindcă atât de mult a iubit <mark>Dumnezeu</mark> <u>lumea</u>\n\n> Slujba de duminică\nPsalmi 23:1-3",
       "chooseFile": "Alege un fișier Markdown sau text",
-      "cancel": "Anuleaza",
-      "confirm": "Importa",
-      "partial": "Importate {{imported}}, sarite {{skipped}}",
-      "line": "Randul {{line}}:",
+      "cancel": "Anulează",
+      "confirm": "Importă",
+      "partial": "Importate: {{imported}}, sărite: {{skipped}}",
+      "line": "Rândul {{line}}:",
       "errors": {
-        "unknown_reference": "cartea nu a fost recunoscuta",
-        "verse_required": "adauga numarul versetului",
-        "verse_not_found": "nu exista in aceasta traducere",
-        "no_translation": "nicio traducere disponibila",
+        "unknown_reference": "cartea nu a fost recunoscută",
+        "verse_required": "adaugă numărul versetului",
+        "verse_not_found": "nu există în această traducere",
+        "no_translation": "nu există nicio traducere",
         "text_mismatch": "textul nu corespunde acestui verset; versetul a fost importat fără formatare"
       }
     },
-    "exportEmpty": "Nimic de exportat inca"
+    "exportEmpty": "Nu e nimic de exportat încă",
+    "slideshow": {
+      "play": "Prezintă în ordine",
+      "playHint": "Prezintă în ordine: versetele vin unul după altul; → sau Space pentru următorul",
+      "stop": "Oprește",
+      "loop": "Rulează în buclă",
+      "loopHint": "Rulează în buclă: fiecare verset rămâne cât e citit, apoi vine următorul",
+      "stopLoop": "Oprește bucla",
+      "position": "{{current}}/{{count}}"
+    }
   },
   "actionsMenu": {
     "trigger": "Mai multe",
-    "bookmarkDescription": "Marchează versetul deschis acum",
     "addToScheduleDescription": "Adaugă versetul deschis în prezentarea selectată",
     "addToSchedule": "Adaugă versetul în prezentare"
+  },
+  "topics": {
+    "title": "Teme",
+    "searchPlaceholder": "Caută o temă...",
+    "empty": "Nicio temă",
+    "noResults": "Nicio temă găsită",
+    "verseCount_one": "{{count}} verset",
+    "verseCount_few": "{{count}} versete",
+    "verseCount_other": "{{count}} de versete",
+    "back": "Înapoi la teme",
+    "previous": "Prezintă pasajul anterior",
+    "next": "Prezintă pasajul următor",
+    "present": "Prezintă",
+    "openInBible": "Deschide în Biblie",
+    "expand": "Extinde temele",
+    "collapse": "Restrânge temele",
+    "slideshow": {
+      "play": "Prezintă automat",
+      "playHint": "Prezintă versetele pe rând, fiecare cât durează să fie citit; se oprește la ultimul",
+      "loop": "În buclă",
+      "loopHint": "Prezintă versetele iar și iar, fiecare cât durează să fie citit",
+      "stop": "Oprește"
+    }
   }
 }

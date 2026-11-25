@@ -34,11 +34,13 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { applyStylesToText } from '~/features/presentation/utils/applyStylesToText'
+import { useScrollToBottomOnAdd } from '~/hooks/useScrollToBottomOnAdd'
 import { type OverflowAction, OverflowActions } from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
 import { ImportBibleBookmarksModal } from './ImportBibleBookmarksModal'
+import { useBookmarkSlideshowActions } from './useBookmarkSlideshowActions'
 import {
   useAddBibleBookmarkNote,
   useBibleBookmarkNotes,
@@ -308,7 +310,7 @@ interface BibleBookmarksPanelProps {
    * When provided, renders a chevron toggle inline with the title so the panel
    * can act as its own accordion section. The body is hidden when collapsed;
    * the header keeps its actions so the operator still gets at
-   * Add/Import/Export/Clear.
+   * the slideshow and its "More" menu.
    */
   isCollapsed?: boolean
   onToggleCollapse?: () => void
@@ -339,6 +341,7 @@ export function BibleBookmarksPanel({
   const [isImportOpen, setIsImportOpen] = useState(false)
   // Local order override for instant (synchronous) drag feedback
   const [localOrder, setLocalOrder] = useState<BookmarkListItem[] | null>(null)
+  const slideshowActions = useBookmarkSlideshowActions(bookmarks)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -369,6 +372,14 @@ export function BibleBookmarksPanel({
 
   // Use local order if set (during drag), otherwise use server data
   const unifiedItems = localOrder ?? serverItems
+
+  // A row just added lands at the end of the list, so bring it into view.
+  const listRef = useRef<HTMLDivElement>(null)
+  const serverIds = useMemo(
+    () => serverItems.map((item) => item.uniqueId),
+    [serverItems],
+  )
+  useScrollToBottomOnAdd(serverIds, listRef, !isLoading && !isCollapsed)
 
   const filteredItems = useMemo(() => {
     // Folded on both sides so "geneza" finds "Geneză" and vice versa.
@@ -498,11 +509,12 @@ export function BibleBookmarksPanel({
       ? t('bookmarks.exportEmpty')
       : t('bookmarks.exportAsMarkdown')
 
-  // The header's actions in the order they sit. A column too narrow for all of
-  // them tucks the ones at the end under "More", clearing the list first.
-  // Import is not gated on `totalCount > 0`, because an empty list is exactly
-  // when someone wants to paste one in.
+  // The header keeps the slideshow controls in the row; what is used less
+  // (headings, import, export, clear) waits under "More". Import is not gated
+  // on `totalCount > 0`, because an empty list is exactly when someone wants
+  // to paste one in.
   const headerActions: OverflowAction[] = [
+    ...slideshowActions,
     ...(totalCount > 0
       ? [
           {
@@ -513,17 +525,7 @@ export function BibleBookmarksPanel({
               'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
             onSelect: startAddingNote,
             testId: 'bible-bookmarks-add-note-menu',
-            inline: (
-              <button
-                type="button"
-                onClick={startAddingNote}
-                data-testid="bible-bookmarks-add-note"
-                className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
-                title={t('bookmarks.addNote')}
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            ),
+            menuOnly: true as const,
           },
         ]
       : []),
@@ -533,21 +535,10 @@ export function BibleBookmarksPanel({
       icon: <Upload size={18} />,
       onSelect: () => setIsImportOpen(true),
       testId: 'bible-bookmarks-import-menu',
-      inline: (
-        <button
-          type="button"
-          onClick={() => setIsImportOpen(true)}
-          data-testid="bible-bookmarks-import"
-          className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors"
-          title={t('bookmarks.importFromText')}
-        >
-          <Upload className="w-3.5 h-3.5" />
-        </button>
-      ),
+      menuOnly: true,
     },
-    // Export sits next to Import and stays whatever the list holds, so the pair
-    // never appears to come and go; it is disabled rather than hidden when
-    // there is nothing to write out.
+    // Export stays whatever the list holds, so it never appears to come and
+    // go; it is disabled rather than hidden when there is nothing to write.
     {
       id: 'export',
       label: exportLabel,
@@ -555,18 +546,7 @@ export function BibleBookmarksPanel({
       disabled: totalCount === 0 || exportMutation.isPending,
       onSelect: handleExport,
       testId: 'bible-bookmarks-export-menu',
-      inline: (
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={totalCount === 0 || exportMutation.isPending}
-          data-testid="bible-bookmarks-export"
-          className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-          title={exportLabel}
-        >
-          <Download className="w-3.5 h-3.5" />
-        </button>
-      ),
+      menuOnly: true,
     },
     ...(totalCount > 0
       ? [
@@ -579,18 +559,7 @@ export function BibleBookmarksPanel({
             disabled: clearBookmarksMutation.isPending,
             onSelect: () => clearBookmarksMutation.mutate(),
             testId: 'bible-bookmarks-clear-menu',
-            inline: (
-              <button
-                type="button"
-                onClick={() => clearBookmarksMutation.mutate()}
-                disabled={clearBookmarksMutation.isPending}
-                data-testid="bible-bookmarks-clear"
-                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
-                title={t('bookmarks.clear')}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            ),
+            menuOnly: true as const,
           },
         ]
       : []),
@@ -602,8 +571,8 @@ export function BibleBookmarksPanel({
       className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full"
     >
       {/* Header — action buttons stay reachable even when collapsed so the
-          operator can still Add/Import/Export/Clear; in a narrow column the
-          ones that do not fit move into its "More" menu. */}
+          operator can still start a slideshow or reach "More"; in a narrow
+          column the ones that do not fit move into "More" too. */}
       <div className="flex items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <OverflowActions
           testId="bible-bookmarks-header-more"
@@ -714,7 +683,11 @@ export function BibleBookmarksPanel({
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
+          <div
+            ref={listRef}
+            data-testid="bible-bookmarks-list"
+            className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
+          >
             {isLoading ? (
               <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 ...

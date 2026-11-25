@@ -230,6 +230,25 @@ export interface SongGroup {
  * Surfaced as a "Sugestii" section on the song detail page so the operator
  * can accept ("aceeași cântare") or dismiss it.
  */
+/**
+ * A different song on the same theme as the opened one (never one of its
+ * versions), from `GET /api/songs/:id/same-theme`.
+ */
+export interface SongThemeSuggestion {
+  songId: number
+  title: string
+  hymnNumber: string | null
+  author: string | null
+  categoryName: string | null
+  keyLine: string | null
+  /** How close the two songs' words are, 0..1. */
+  score: number
+  /** Named themes both songs are on: keys of `songs:sameTheme.themes`. */
+  themes: string[]
+  /** The distinctive words both hold, as the opened song writes them. */
+  sharedWords: string[]
+}
+
 export interface SongVersionSuggestion {
   songId: number
   title: string

@@ -223,7 +223,7 @@ test.describe('Users & permissions', () => {
       await page
         .getByPlaceholder(/enter password|introdu parola/i)
         .fill(PASSWORD)
-      await page.getByRole('button', { name: /sign in|autentificare/i }).click()
+      await page.getByRole('button', { name: /sign in|conectează-te/i }).click()
 
       // The switch finalizes via a top-level navigation that reloads the app.
       await page.waitForTimeout(3500)
@@ -275,7 +275,7 @@ test.describe('Users & permissions', () => {
       // persists across runs) don't make this a strict-mode violation.
       await page.getByRole('button', { name: new RegExp(wrongName) }).click()
       await page.locator('#login-password').fill('definitely-not-it')
-      await page.getByRole('button', { name: /sign in|autentificare/i }).click()
+      await page.getByRole('button', { name: /sign in|conectează-te/i }).click()
 
       // The alert appears and we stay on the password form (no redirect).
       await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })
@@ -462,7 +462,7 @@ test.describe('Users & permissions', () => {
       expect(names[0]).toMatch(/Super Admin/)
 
       // Search filters by name.
-      const search = page.getByPlaceholder(/search users|caută/i)
+      const search = page.getByPlaceholder(/search users|caută utilizatori/i)
       await search.fill(`ZetaActive ${stamp}`)
       await expect(
         page.getByRole('heading', { name: `ZetaActive ${stamp}` }),

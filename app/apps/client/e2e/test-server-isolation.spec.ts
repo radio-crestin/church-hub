@@ -38,9 +38,10 @@ test.describe('E2E test server isolation', () => {
     if (!process.env.TEST_PORT) {
       expect(['3000', '3001']).not.toContain(new URL(baseURL ?? '').port)
     }
-    expect(testInfo.config.webServer?.env?.DATABASE_PATH).toContain(
-      'e2e/.test-data/app.db',
-    )
+    // Windows paths use backslashes: compare them in one form.
+    expect(
+      testInfo.config.webServer?.env?.DATABASE_PATH?.replaceAll('\\', '/'),
+    ).toContain('e2e/.test-data/app.db')
     expect((await request.get('/ping')).ok()).toBe(true)
   })
 })

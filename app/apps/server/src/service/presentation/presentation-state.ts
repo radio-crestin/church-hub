@@ -13,13 +13,22 @@ import type {
   PresentTemporarySongInput,
   PresentTemporaryVerseteTineriInput,
   TemporaryBibleContent,
+  TemporaryBiblePassageContent,
   TemporaryContent,
+  TemporarySongContent,
+  TemporaryVerseteTineriContent,
   UpdatePresentationStateInput,
 } from './types'
 import { getDatabase, getRawDatabase } from '../../db'
-import { presentationState, songSlides, songs } from '../../db/schema'
+import {
+  presentationState,
+  songCategories,
+  songSlides,
+  songs,
+} from '../../db/schema'
 import { createLogger } from '../../utils/logger'
 import { parseSongBackground } from '../songs/parseSongBackground'
+import { resolveSongTitleParts } from '../songs/resolveSongTitleParts'
 import { parseStyleOverrides } from '../songs/song-slides'
 
 const logger = createLogger('presentation-state')
@@ -388,6 +397,26 @@ export function presentTemporaryBible(
 }
 
 /**
+ * The title shown in the projector's corner and the songbook and number a
+ * screen may show before it, read fresh so an edit reaches them.
+ */
+function readSongTitleParts(songId: number) {
+  const song = getDatabase()
+    .select({
+      title: songs.title,
+      hymnNumber: songs.hymnNumber,
+      sourceFilename: songs.sourceFilename,
+      categoryName: songCategories.name,
+    })
+    .from(songs)
+    .leftJoin(songCategories, eq(songCategories.id, songs.categoryId))
+    .where(eq(songs.id, songId))
+    .get()
+  const parts = song ? resolveSongTitleParts(song) : undefined
+  return { displayTitle: parts?.title, titleNumber: parts?.number }
+}
+
+/**
  * Presents a song temporarily
  * Fetches song and slides from database
  */
@@ -453,6 +482,7 @@ export function presentTemporarySong(
       data: {
         songId: song.id,
         title: song.title,
+        ...readSongTitleParts(song.id),
         keyLine: song.keyLine,
         background: parseSongBackground(song.background),
         slides: expandedSlides.map((s, idx) => {
@@ -590,7 +620,7 @@ export function navigateTemporary(
  * Navigates within temporary Bible content
  */
 function navigateTemporaryBible(
-  data: TemporaryContent extends { type: 'bible'; data: infer D } ? D : never,
+  data: TemporaryBibleContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const rawDb = getRawDatabase()
@@ -617,8 +647,8 @@ function navigateTemporaryBible(
       : data.currentVerseIndex - 1
 
   // If within current chapter
-  if (newIndex >= 0 && newIndex < chapterVerses.length) {
-    const newVerse = chapterVerses[newIndex]
+  const newVerse = chapterVerses[newIndex]
+  if (newVerse) {
     const reference = `${data.bookName} ${data.chapter}:${newVerse.verse} - ${data.translationAbbreviation}`
 
     const temporaryContent: TemporaryContent = {
@@ -827,11 +857,11 @@ function navigateToChapterLastVerse(
     text: string
   }[]
 
-  if (verses.length === 0) {
+  const lastVerse = verses.at(-1)
+  if (!lastVerse) {
     return getPresentationState()
   }
 
-  const lastVerse = verses[verses.length - 1]
   const reference = `${bookName} ${chapter}:${lastVerse.verse} - ${data.translationAbbreviation}`
   return updatePresentationState({
     temporaryContent: {
@@ -858,7 +888,7 @@ function navigateToChapterLastVerse(
  * Navigates within temporary song content
  */
 function navigateTemporarySong(
-  data: TemporaryContent extends { type: 'song'; data: infer D } ? D : never,
+  data: TemporarySongContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const newIndex =
@@ -900,9 +930,7 @@ function navigateTemporarySong(
  * Navigates within temporary Bible passage content
  */
 function navigateTemporaryBiblePassage(
-  data: TemporaryContent extends { type: 'bible_passage'; data: infer D }
-    ? D
-    : never,
+  data: TemporaryBiblePassageContent,
   direction: 'next' | 'prev',
 ): PresentationState {
   const newIndex =
@@ -941,21 +969,32 @@ function navigateTemporaryBiblePassage(
 }
 
 /**
+ * Moves a looping Versete Biblice slideshow on to its next verse. Called by
+ * its timer (verse-loop.ts), so it skips navigateTemporary's check against a
+ * client's request timestamp.
+ */
+export function advanceVerseLoop(): PresentationState {
+  const current = getPresentationState()
+  if (current.temporaryContent?.type !== 'versete_tineri') return current
+  return navigateTemporaryVerseteTineri(current.temporaryContent.data, 'next')
+}
+
+/**
  * Navigates within temporary versete tineri content
  */
 function navigateTemporaryVerseteTineri(
-  data: TemporaryContent extends { type: 'versete_tineri'; data: infer D }
-    ? D
-    : never,
+  data: TemporaryVerseteTineriContent,
   direction: 'next' | 'prev',
 ): PresentationState {
-  const newIndex =
-    direction === 'next'
-      ? data.currentEntryIndex + 1
-      : data.currentEntryIndex - 1
+  const step = direction === 'next' ? 1 : -1
+  const count = data.entries.length
+  // A loop wraps around at both ends instead of stopping.
+  const newIndex = data.loop
+    ? (data.currentEntryIndex + step + count) % count
+    : data.currentEntryIndex + step
 
   // If at end of entries, hide presentation
-  if (newIndex >= data.entries.length) {
+  if (newIndex >= count) {
     logger.info('Reached end of versete tineri, hiding temporary presentation')
     return updatePresentationState({
       temporaryContent: null,
@@ -1132,6 +1171,9 @@ export function presentTemporaryVerseteTineri(
       data: {
         entries: input.entries,
         currentEntryIndex: startIndex,
+        loop: input.loop,
+        autoAdvance: input.autoAdvance,
+        slideshow: input.slideshow,
         nextItemPreview: input.nextItemPreview,
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
@@ -1193,15 +1235,12 @@ export function presentTemporaryScreenShare(
   input: PresentTemporaryScreenShareInput,
 ): PresentationState {
   try {
-    logger.debug(
-      `Presenting temporary screen share from: ${input.broadcasterId}`,
-    )
+    logger.debug('Presenting temporary screen share')
 
     const temporaryContent: TemporaryContent = {
       type: 'screen_share',
       data: {
-        broadcasterId: input.broadcasterId,
-        audioEnabled: input.audioEnabled,
+        startedAt: Date.now(),
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
       },
@@ -1249,7 +1288,11 @@ export function refreshPresentedSongSlides(
     // Fetch the song's keyLine and background override — both are rendered
     // on the projection, so an edit to either must reach the live snapshot.
     const song = db
-      .select({ keyLine: songs.keyLine, background: songs.background })
+      .select({
+        title: songs.title,
+        keyLine: songs.keyLine,
+        background: songs.background,
+      })
       .from(songs)
       .where(eq(songs.id, songId))
       .get()
@@ -1313,6 +1356,8 @@ export function refreshPresentedSongSlides(
           }
         }),
         currentSlideIndex,
+        title: song?.title ?? currentState.temporaryContent.data.title,
+        ...readSongTitleParts(songId),
         keyLine: song?.keyLine ?? null,
         background: parseSongBackground(song?.background),
       },

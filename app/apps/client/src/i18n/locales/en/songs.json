@@ -2,7 +2,9 @@
   "title": "Songs",
   "layout": {
     "controlPanel": "Control panel",
-    "stage": "Stage"
+    "stage": "Stage",
+    "versesTab": "Verses",
+    "versionsTab": "Versions"
   },
   "actions": {
     "create": "New Song",
@@ -289,13 +291,14 @@
     "editAsText": "Edit as Text",
     "slideAdded": "Slide added",
     "presentSlide": "Present this slide",
-    "increaseFontSize": "Increase text size",
-    "decreaseFontSize": "Decrease text size",
     "previewMode": "Preview",
-    "previewModeHint": "Preview mode: stage a slide before projecting it",
+    "previewModeHint": "Preview: stage the verse here, for the singers, before showing it",
     "project": "Project",
     "projectHint": "Project the staged slide",
-    "hideBackground": "Hide background in preview"
+    "hideBackground": "Hide background in preview",
+    "liveMode": "Live",
+    "liveModeHint": "Live: a click on a verse shows it on screen",
+    "modeLabel": "How a click on a verse behaves"
   },
   "metadata": {
     "detailsSection": "Details",
@@ -361,6 +364,32 @@
     "title": "Reset Presentation Count",
     "message": "Are you sure you want to reset the presentation count to 0?",
     "confirm": "Reset"
+  },
+  "sameTheme": {
+    "title": "Same theme",
+    "menuDescription": "Other songs on the same theme as this one",
+    "close": "Close",
+    "empty": "No other songs found on this theme.",
+    "sharedWords": "Shared words: {{words}}",
+    "themes": {
+      "christmas": "Christmas",
+      "easter": "Easter",
+      "cross": "The Cross",
+      "lordsSupper": "The Lord's Supper",
+      "baptism": "Baptism",
+      "pentecost": "Pentecost",
+      "thanksgiving": "Thanksgiving",
+      "wedding": "Wedding",
+      "farewell": "Farewell and comfort",
+      "secondComing": "The Lord's return",
+      "heaven": "Heaven",
+      "shepherd": "The Shepherd",
+      "prayer": "Prayer",
+      "mother": "Mother",
+      "repentance": "Repentance",
+      "mission": "Mission",
+      "scripture": "God's Word"
+    }
   },
   "versions": {
     "title": "Song versions",

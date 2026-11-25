@@ -71,8 +71,7 @@ export function expandSongSlidesWithChoruses(
   let currentChorus: SlideWithLabel | null = null
   const originalIndexMap = new Map(slides.map((s, i) => [s.id, i]))
 
-  for (let i = 0; i < slides.length; i++) {
-    const slide = slides[i]
+  for (const [i, slide] of slides.entries()) {
     const isVerse = slide.label?.startsWith('V')
     const isChorus = slide.label?.startsWith('C')
 
@@ -113,10 +112,7 @@ export function getOriginalSlideIndex(
   expandedSlides: ExpandedSlide[],
   expandedIndex: number,
 ): number {
-  if (expandedIndex < 0 || expandedIndex >= expandedSlides.length) {
-    return 0
-  }
-  return expandedSlides[expandedIndex].originalIndex
+  return expandedSlides[expandedIndex]?.originalIndex ?? 0
 }
 
 /**
@@ -161,8 +157,7 @@ export function generateExpandedPresentationOrder(
   const orderParts: string[] = []
   let currentChorusLabel: string | null = null
 
-  for (let i = 0; i < slides.length; i++) {
-    const slide = slides[i]
+  for (const [i, slide] of slides.entries()) {
     const isVerse = slide.label?.startsWith('V')
     const isChorus = slide.label?.startsWith('C')
 
