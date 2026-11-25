@@ -8,6 +8,7 @@ import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
 import { addNotifications } from './add-notifications'
 import { addPreviewScreen } from './add-preview-screen'
+import { addScheduleAutomation } from './add-schedule-automation'
 import { addScheduleItemSung } from './add-schedule-item-sung'
 import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
@@ -403,6 +404,13 @@ export function runMigrations(rawDb: Database): MigrationResult {
     'add_schedule_item_sung',
     'Running add schedule_item sung migration',
     () => addScheduleItemSung(rawDb),
+  )
+
+  // Autoplay, loop, music volume and start-on-app-start of a presentation.
+  runStep(
+    'add_schedule_automation',
+    'Running add schedule automation migration',
+    () => addScheduleAutomation(rawDb),
   )
 
   // Merge the legacy `bible_passage` schedule items into the surviving

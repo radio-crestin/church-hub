@@ -355,7 +355,7 @@
         "song_versions": "Versiuni de cântări",
         "bible": "Biblia",
         "control_room": "Camera de control",
-        "programs": "Programe",
+        "programs": "Prezentări",
         "queue": "Coadă",
         "settings": "Setări",
         "displays": "Ecrane",
@@ -381,11 +381,11 @@
         "bible.present_now": "Prezentare versete imediat",
         "control_room.view": "Vizualizare Camera de control",
         "control_room.control": "Controlul prezentării",
-        "programs.view": "Vizualizare programe",
-        "programs.create": "Creare programe",
-        "programs.edit": "Editare programe",
-        "programs.delete": "Ștergere programe",
-        "programs.import_to_queue": "Importare programe în coadă",
+        "programs.view": "Vizualizare prezentări",
+        "programs.create": "Creare prezentări",
+        "programs.edit": "Editare prezentări",
+        "programs.delete": "Ștergere prezentări",
+        "programs.import_to_queue": "Importare prezentări în coadă",
         "queue.view": "Vizualizare coadă",
         "queue.add": "Adăugare în coadă",
         "queue.remove": "Eliminare din coadă",
@@ -797,7 +797,7 @@
         "present": "Camera de control",
         "songs": "Cântări",
         "bible": "Biblia",
-        "schedules": "Programe",
+        "schedules": "Prezentări",
         "livestream": "Live Stream",
         "settings": "Setări"
       },
@@ -852,8 +852,8 @@
           "songsDescription": "Categorii de cântări, cântări și slide-uri",
           "bible": "Biblia",
           "bibleDescription": "Traduceri ale Bibliei și versete",
-          "schedules": "Programe",
-          "schedulesDescription": "Programe și elemente de program",
+          "schedules": "Prezentări",
+          "schedulesDescription": "Prezentări și elementele lor",
           "configurations": "Configurări",
           "configurationsDescription": "Ecrane, setări și preferințe"
         }
@@ -1009,7 +1009,7 @@
         "loading": "Se descarcă și se citește copia…",
         "failed": "Conținutul copiei nu a putut fi citit.",
         "songs": "Cântări ({{total}})",
-        "schedules": "Programe ({{total}})",
+        "schedules": "Prezentări ({{total}})",
         "scheduleSongs_one": "{{count}} cântare",
         "scheduleSongs_few": "{{count}} cântări",
         "scheduleSongs_other": "{{count}} de cântări",
@@ -1023,8 +1023,8 @@
           "songSlides": "Slide-uri de cântări",
           "songCategories": "Categorii de cântări",
           "songBookmarks": "Marcaje cântări",
-          "schedules": "Programe",
-          "scheduleItems": "Elemente de program",
+          "schedules": "Prezentări",
+          "scheduleItems": "Elemente de prezentare",
           "musicPlaylists": "Playlisturi",
           "musicFiles": "Fișiere audio",
           "bibleTranslations": "Traduceri biblice",
@@ -1035,7 +1035,7 @@
     },
     "sync": {
       "title": "Sincronizare bibliotecă",
-      "description": "Ține colecția de cântări și programele la zi pe toate dispozitivele tale, prin contul Google Drive.",
+      "description": "Ține colecția de cântări și prezentările la zi pe toate dispozitivele tale, prin contul Google Drive.",
       "loading": "Se încarcă starea sincronizării…",
       "toggle": {
         "title": "Sincronizare în timp real",
@@ -1082,7 +1082,7 @@
           "song": "Cântare",
           "song_category": "Categorie",
           "song_group": "Grup",
-          "schedule": "Program"
+          "schedule": "Prezentare"
         }
       }
     },
@@ -1134,7 +1134,7 @@
       },
       "previewScreen": {
         "label": "Afișat în previzualizări",
-        "description": "Previzualizările din Camera de control, Biblia, Cântări și Programe arată acest ecran. Alege alt ecran ca să schimbi; implicit este ecranul principal.",
+        "description": "Previzualizările din Camera de control, Biblia, Cântări și Prezentări arată acest ecran. Alege alt ecran ca să schimbi; implicit este ecranul principal.",
         "enabled": "Previzualizările arată acum acest ecran",
         "error": "Nu s-a putut schimba ecranul afișat în previzualizări"
       },
@@ -1333,11 +1333,18 @@
           "install": "Actualizarea nu a putut fi instalată; rulează în continuare versiunea curentă. Încearcă din nou sau instalează versiunea de pe GitHub. O instanță de dezvoltare nu se poate înlocui singură."
         }
       },
-      "howItWorks": "La instalare, Church Hub se închide, se înlocuiește cu noua versiune și se redeschide singur. Cântările, programele și setările rămân. Pe Windows poate apărea pentru scurt timp o fereastră de progres; nu trebuie să apeși nimic.",
+      "howItWorks": "La instalare, Church Hub se închide, se înlocuiește cu noua versiune și se redeschide singur. Cântările, prezentările și setările rămân. Pe Windows poate apărea pentru scurt timp o fereastră de progres; nu trebuie să apeși nimic.",
       "outcome": {
         "updated": "Actualizat la v{{version}}",
         "failed": "Actualizarea la v{{version}} nu s-a finalizat — rulează în continuare v{{current}}. Detalii în jurnale."
       }
+    },
+    "startup": {
+      "title": "Pornire",
+      "description": "Ce se întâmplă când pornește calculatorul.",
+      "openOnLogin": "Deschide Church Hub la pornirea calculatorului",
+      "openOnLoginDescription": "O prezentare setată să pornească odată cu Church Hub începe apoi singură.",
+      "error": "Setarea de pornire nu a putut fi schimbată"
     },
     "about": {
       "title": "Despre",

@@ -181,6 +181,15 @@ pub fn run() {
         b
     };
 
+    // "Open Church Hub when the computer starts", switched from Settings.
+    // A LaunchAgent on macOS, the Run registry key on Windows, an XDG
+    // autostart entry on Linux.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_autostart::init(
+        tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+        None,
+    ));
+
     // Window state plugin is desktop-only
     #[cfg(desktop)]
     let builder = {

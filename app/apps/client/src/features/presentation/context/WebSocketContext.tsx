@@ -181,6 +181,7 @@ type MessageData =
   | MusicStateMessage
   | SidebarNavigationMessage
   | SyncAppliedMessage
+  | { type: 'schedule_automation'; payload: Record<string, unknown> }
   | { type: 'translation_state'; payload: Record<string, unknown> }
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
@@ -431,6 +432,12 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           queryClient.invalidateQueries({ queryKey: ['schedules'] })
           queryClient.invalidateQueries({ queryKey: ['schedule'] })
           queryClient.invalidateQueries({ queryKey: ['sync'] })
+        }
+
+        if (data.type === 'schedule_automation') {
+          // The presentation runner moved on, started or stopped (the query
+          // of the schedules feature's useScheduleAutomation).
+          queryClient.setQueryData(['scheduleAutomation'], data.payload)
         }
 
         if (data.type === 'sidebar_navigation') {

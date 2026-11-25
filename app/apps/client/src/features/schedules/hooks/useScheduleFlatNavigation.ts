@@ -127,9 +127,10 @@ export function useScheduleFlatNavigation({
     },
   })
 
-  const { data: schedule, isLoading } = useSchedule(
-    itemsOverride ? undefined : (scheduleId ?? undefined),
-  )
+  // Fetched even with the items given: its loop setting is read below (the
+  // query is shared, so this is cheap).
+  const { data: schedule, isLoading } = useSchedule(scheduleId ?? undefined)
+  const loop = schedule?.automation.loop ?? false
 
   const items = useMemo(
     () => itemsOverride ?? schedule?.items ?? [],
@@ -461,9 +462,11 @@ export function useScheduleFlatNavigation({
         return
       }
 
-      // Past the last step there is nothing left to show; hide the projection.
+      // Past the last step: start over when the presentation loops, else
+      // there is nothing left to show; hide the projection.
       if (flatIndex >= flatItems.length - 1) {
-        await clearTemporary.mutateAsync()
+        if (loop) await presentFlatIndex(0)
+        else await clearTemporary.mutateAsync()
         return
       }
 
@@ -472,6 +475,7 @@ export function useScheduleFlatNavigation({
   }, [
     clearTemporary,
     flatItems.length,
+    loop,
     navigationFlatIndex,
     presentFlatIndex,
     readNavigationFlatIndex,

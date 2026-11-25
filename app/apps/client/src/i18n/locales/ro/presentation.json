@@ -404,7 +404,7 @@
         "conflictOther": "Folosită deja de \"{{action}}\""
       }
     },
-    "selectProgram": "Selectează un program",
+    "selectProgram": "Alege o prezentare",
     "presenting": "În prezentare",
     "notPresenting": "Nu prezintă",
     "connected": "Conectat",
@@ -412,7 +412,7 @@
     "disconnected": "Deconectat",
     "openDisplay": "Deschide Ecran",
     "slides": "Slide-uri",
-    "noSlides": "Niciun slide în acest program",
+    "noSlides": "Niciun slide în această prezentare",
     "preview": "Previzualizare",
     "openSong": "Deschide Cântec",
     "openBible": "Deschide Biblia",
