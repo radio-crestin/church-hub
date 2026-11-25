@@ -15,7 +15,8 @@ export async function runStepSeconds(
 ): Promise<number> {
   const video = step.type === 'video' ? step.item.video : null
   if (video && step.item.advanceSeconds == null) {
-    const length = await getBackgroundVideoSeconds(video.mediaId)
+    const length =
+      video.seconds ?? (await getBackgroundVideoSeconds(video.mediaId))
     if (length) return Math.ceil(length)
   }
   return stepSeconds(step, automation)

@@ -354,6 +354,7 @@ test.describe('Presentation video items', () => {
     expect(item.video).toEqual({
       mediaId: BUILT_IN_VIDEO.id,
       url: `/api/media/backgrounds/${BUILT_IN_VIDEO.id}`,
+      seconds: 30.65,
     })
 
     const run = await request.post(`/api/schedules/${id}/run`)

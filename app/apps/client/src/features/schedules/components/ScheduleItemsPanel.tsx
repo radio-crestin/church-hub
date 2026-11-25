@@ -549,7 +549,8 @@ function SortableItemWrapper({
           </div>
         )}
 
-        {itemAdvance && (
+        {/* Music shows nothing, so it has no time on screen. */}
+        {itemAdvance && item.itemType !== 'music' && (
           <ScheduleItemAdvance
             advanceSeconds={item.advanceSeconds}
             defaultSeconds={itemStepSeconds(

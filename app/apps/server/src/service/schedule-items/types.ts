@@ -58,4 +58,6 @@ export interface ScheduleMusicSummary {
 export interface ScheduleVideoPick {
   mediaId: string
   url: string
+  /** How long it plays; null when it can't be read ahead (a WebM). */
+  seconds: number | null
 }

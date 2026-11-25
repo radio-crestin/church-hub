@@ -25,6 +25,10 @@ export function stepSeconds(
   automation: AutoplayTiming,
 ): number {
   if (step.item.advanceSeconds != null) return step.item.advanceSeconds
+  // A video stays up until it ends.
+  if (step.type === 'video' && step.item.video?.seconds) {
+    return Math.ceil(step.item.video.seconds)
+  }
   if (!automation.autoplayByText) return automation.autoplaySeconds
   const words = stepText(step).split(/\s+/).filter(Boolean).length
   return Math.max(

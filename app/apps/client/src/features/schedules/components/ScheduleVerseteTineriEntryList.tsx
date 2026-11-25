@@ -73,25 +73,29 @@ export function ScheduleVerseteTineriEntryList({
                 {index + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <User
-                    size={12}
-                    className={
-                      isPresented
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-gray-400'
-                    }
-                  />
-                  <span
-                    className={`text-xs font-medium ${
-                      isPresented
-                        ? 'text-green-800 dark:text-green-200'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    {entry.personName}
-                  </span>
-                </div>
+                {/* A passage with nobody attached (from the Bible, a topic,
+                    a book) shows no name line. */}
+                {entry.personName && (
+                  <div className="flex items-center gap-2">
+                    <User
+                      size={12}
+                      className={
+                        isPresented
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-400'
+                      }
+                    />
+                    <span
+                      className={`text-xs font-medium ${
+                        isPresented
+                          ? 'text-green-800 dark:text-green-200'
+                          : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {entry.personName}
+                    </span>
+                  </div>
+                )}
                 <span
                   className={`text-xs flex items-center gap-1 ${
                     isPresented
