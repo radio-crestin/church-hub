@@ -107,7 +107,9 @@ test.describe
     test.beforeAll(async () => {
       s3.signedWritesOnly = true
       await s3.start()
-      await service.start(s3.endpoint)
+      // Snapshots only when a test asks for one: the first upload of the
+      // suite's library is ~50 segments, and the checks read the segments.
+      await service.start(s3.endpoint, { SYNC_COMPACT_AFTER: '100000' })
     })
 
     test.afterAll(async ({ request }) => {
@@ -226,6 +228,15 @@ test.describe
       expect(accepted.body.versions).toEqual([
         { type: 'song', uuid: songUuid, version: accepted.body.seq },
       ])
+
+      // Compacted before the PC pulls it: the PC catches up from the
+      // snapshot (any device's token may ask for one).
+      const compacted = await fetch(
+        `${service.url}/sync/churches/${churchId}/compact`,
+        { method: 'POST', headers: { Authorization: `Bearer ${phone.token}` } },
+      )
+      expect((await compacted.json()).snapshotSeq).toBe(accepted.body.seq)
+      expect((await readHead(readUrl)).segments).toEqual([])
 
       await syncUntil(
         request,
