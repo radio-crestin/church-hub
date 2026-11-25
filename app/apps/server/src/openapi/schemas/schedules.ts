@@ -1,4 +1,28 @@
 export const scheduleSchemas = {
+  AutomationTrigger: {
+    type: 'object',
+    description: 'Something in OBS that starts or stops a presentation',
+    required: ['event'],
+    properties: {
+      event: {
+        type: 'string',
+        enum: [
+          'scene_selected',
+          'stream_started',
+          'stream_stopped',
+          'recording_started',
+          'recording_stopped',
+        ],
+        description:
+          'An OBS scene is selected (in OBS or Church Hub), or the livestream or recording starts or stops',
+      },
+      sceneName: {
+        type: 'string',
+        nullable: true,
+        description: 'The scene that fires it; required for scene_selected',
+      },
+    },
+  },
   ScheduleAutomationSettings: {
     type: 'object',
     description: 'How a presentation runs by itself',
@@ -31,6 +55,18 @@ export const scheduleSchemas = {
         type: 'boolean',
         description:
           'Started by itself when Church Hub starts. Setting it on one presentation turns it off on the others',
+      },
+      startTrigger: {
+        allOf: [{ $ref: '#/components/schemas/AutomationTrigger' }],
+        nullable: true,
+        description:
+          'Started by itself when this happens in OBS (not again while it is on screen); null = never. When several match, the oldest presentation starts',
+      },
+      stopTrigger: {
+        allOf: [{ $ref: '#/components/schemas/AutomationTrigger' }],
+        nullable: true,
+        description:
+          'Stopped and taken off the screens when this happens while it is on screen; null = never',
       },
     },
   },

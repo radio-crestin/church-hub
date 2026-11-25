@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 
 import { SettingsSection } from '~/features/settings/components/SettingsSection'
 import { Combobox } from '~/ui/combobox/Combobox'
+import { NativeSelect } from '~/ui/select'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import type { SetSetting, YouTubeSettingsDraft } from './useYouTubeSettingsForm'
 import { useStreamKeys } from '../../hooks'
-import { NativeSelect } from '../settings-page/NativeSelect'
 import { SettingField } from '../settings-page/SettingField'
 import { SettingFieldRow } from '../settings-page/SettingFieldRow'
 

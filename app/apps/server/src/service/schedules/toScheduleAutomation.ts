@@ -1,4 +1,4 @@
-import type { ScheduleAutomationSettings } from './types'
+import type { AutomationTrigger, ScheduleAutomationSettings } from './types'
 
 /** The automation columns of a `schedules` row, as the API returns them. */
 export function toScheduleAutomation(row: {
@@ -7,6 +7,8 @@ export function toScheduleAutomation(row: {
   loop: boolean
   musicVolume: number | null
   startOnAppStart: boolean
+  startTrigger: AutomationTrigger | null
+  stopTrigger: AutomationTrigger | null
 }): ScheduleAutomationSettings {
   return {
     autoplaySeconds: row.autoplaySeconds,
@@ -14,5 +16,7 @@ export function toScheduleAutomation(row: {
     loop: row.loop,
     musicVolume: row.musicVolume,
     startOnAppStart: row.startOnAppStart,
+    startTrigger: row.startTrigger,
+    stopTrigger: row.stopTrigger,
   }
 }

@@ -203,6 +203,8 @@ export function getSchedules(): Schedule[] {
         loop: schedules.loop,
         musicVolume: schedules.musicVolume,
         startOnAppStart: schedules.startOnAppStart,
+        startTrigger: schedules.startTrigger,
+        stopTrigger: schedules.stopTrigger,
         createdAt: schedules.createdAt,
         updatedAt: schedules.updatedAt,
         itemCount: sql<number>`CAST(COUNT(${scheduleItems.id}) AS INTEGER)`,

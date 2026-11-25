@@ -9,6 +9,7 @@ import {
 
 import { bibleVerses } from './bible'
 import { songs } from './songs'
+import type { AutomationTrigger } from '../../service/schedules/types'
 
 export const schedules = sqliteTable(
   'schedules',
@@ -29,6 +30,12 @@ export const schedules = sqliteTable(
     startOnAppStart: integer('start_on_app_start', { mode: 'boolean' })
       .notNull()
       .default(false),
+    startTrigger: text('start_trigger', {
+      mode: 'json',
+    }).$type<AutomationTrigger>(),
+    stopTrigger: text('stop_trigger', {
+      mode: 'json',
+    }).$type<AutomationTrigger>(),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
