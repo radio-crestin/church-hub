@@ -1,61 +1,42 @@
-import { and, asc, eq, gt } from 'drizzle-orm'
 import { churchPrefix } from './churchPrefix'
-import type { Bucket } from './createBucket'
-import type { SyncDb } from './db/SyncDb'
+import type { ChurchState, SyncStore } from './state/ChurchState'
+import { churchStateKey } from './state/churchStateKey'
+import { readChurch } from './state/readChurch'
 import type { Head } from './types'
 
 /** Readers revalidate head.json on every poll (an unchanged one is a 304). */
 export const HEAD_CACHE_CONTROL = 'no-cache'
 
 /**
- * Writes head.json from the central state: the snapshot and the segments
- * after it. Two writers may PUT out of order, so each re-reads the state
- * after its PUT and writes again until what it wrote is the newest: the last
- * one standing always leaves the current head.
+ * Writes head.json from the church's state (at `etag`): the snapshot and
+ * the segments after it. Two writers may PUT out of order, so each checks
+ * the state's ETag after its PUT and writes again from the newer state if
+ * it changed: the last one standing always leaves the current head.
  */
 export async function publishHead(
-  db: SyncDb,
-  bucket: Bucket,
-  churchId: string
+  store: SyncStore,
+  state: ChurchState,
+  etag: string
 ): Promise<Head> {
-  const { bucketObjects, churches } = db.t
+  let church = { state, etag }
   for (;;) {
-    const [church] = await db.q
-      .select()
-      .from(churches)
-      .where(eq(churches.id, churchId))
-    const segments = await db.q
-      .select({ seq: bucketObjects.seq, key: bucketObjects.key })
-      .from(bucketObjects)
-      .where(
-        and(
-          eq(bucketObjects.churchId, churchId),
-          eq(bucketObjects.kind, 'log'),
-          gt(bucketObjects.seq, church.snapshotSeq)
-        )
-      )
-      .orderBy(asc(bucketObjects.seq))
     const head: Head = {
       schemaVersion: 1,
-      seq: church.seq,
-      snapshot: church.snapshotKey
-        ? { seq: church.snapshotSeq, key: church.snapshotKey }
-        : null,
-      segments,
+      seq: church.state.seq,
+      snapshot: church.state.snapshot,
+      segments: church.state.segments,
     }
-    const prefix = churchPrefix(church.id, church.pathSecret)
-    await bucket.put(
+    const prefix = churchPrefix(church.state.id, church.state.pathSecret)
+    await store.bucket.put(
       `${prefix}/head.json`,
       new TextEncoder().encode(JSON.stringify(head)),
       { contentType: 'application/json', cacheControl: HEAD_CACHE_CONTROL }
     )
 
-    const [after] = await db.q
-      .select({ seq: churches.seq, pathSecret: churches.pathSecret })
-      .from(churches)
-      .where(eq(churches.id, churchId))
-    if (after.seq === church.seq && after.pathSecret === church.pathSecret) {
-      return head
-    }
+    const now = await store.states.etag(churchStateKey(church.state.id))
+    if (now === church.etag) return head
+    const latest = await readChurch(store, church.state.id)
+    if (!latest) return head
+    church = latest
   }
 }

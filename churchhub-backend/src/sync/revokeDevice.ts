@@ -1,44 +1,33 @@
-import { and, eq, isNull } from 'drizzle-orm'
-import type { Bucket } from './createBucket'
-import type { SyncDb } from './db/SyncDb'
 import { rotatePath } from './rotatePath'
+import type { ChurchState, SyncStore } from './state/ChurchState'
+import { updateChurch } from './state/updateChurch'
 import { SyncError } from './SyncError'
 
 /**
  * Revokes a device: its writes are refused from the next request, and the
  * path secret rotates, since the device still knows the old read path.
  * The church server's own token is not revoked this way (T-172: recovery).
- * Returns the new path secret.
+ * Returns the state after the rotation.
  */
 export async function revokeDevice(
-  db: SyncDb,
-  bucket: Bucket,
+  store: SyncStore,
   churchId: string,
   deviceId: string
-): Promise<string> {
-  const { devices } = db.t
-  const [device] = await db.q
-    .select()
-    .from(devices)
-    .where(
-      and(
-        eq(devices.churchId, churchId),
-        eq(devices.id, deviceId),
-        isNull(devices.revokedAt)
+): Promise<ChurchState> {
+  await updateChurch(store, churchId, async (church) => {
+    const device = church.devices.find(
+      (candidate) => candidate.id === deviceId && candidate.revokedAt === null
+    )
+    if (!device) throw new SyncError(404, 'not_found', 'No such device')
+    if (device.isServer) {
+      throw new SyncError(
+        400,
+        'server_device',
+        'The church server cannot be revoked'
       )
-    )
-  if (!device) throw new SyncError(404, 'not_found', 'No such device')
-  if (device.isServer) {
-    throw new SyncError(
-      400,
-      'server_device',
-      'The church server cannot be revoked'
-    )
-  }
-
-  await db.q
-    .update(devices)
-    .set({ revokedAt: Math.floor(Date.now() / 1000) })
-    .where(eq(devices.id, device.id))
-  return rotatePath(db, bucket, churchId)
+    }
+    device.revokedAt = Math.floor(Date.now() / 1000)
+    return { next: church, result: device.id }
+  })
+  return rotatePath(store, churchId)
 }

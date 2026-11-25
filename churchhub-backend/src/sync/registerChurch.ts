@@ -1,9 +1,9 @@
 import { churchPrefix } from './churchPrefix'
-import type { Bucket } from './createBucket'
 import { createDeviceToken } from './createDeviceToken'
-import type { SyncDb } from './db/SyncDb'
 import { publishHead } from './publishHead'
 import { randomId } from './randomId'
+import type { ChurchState, SyncStore } from './state/ChurchState'
+import { writeChurch } from './state/writeChurch'
 
 export interface RegisteredChurch {
   churchId: string
@@ -21,40 +21,46 @@ export interface RegisteredChurch {
  * and an empty head.json readers can poll at once.
  */
 export async function registerChurch(
-  db: SyncDb,
-  bucket: Bucket,
-  tokenSecret: string,
+  store: SyncStore,
   serverName: string
 ): Promise<RegisteredChurch> {
-  const { churches, devices } = db.t
   const churchId = randomId(12)
-  const pathSecret = randomId(32)
   const deviceId = randomId(12)
-  const { token, tokenHash } = await createDeviceToken(tokenSecret)
+  const { token, tokenHash } = await createDeviceToken(store.secret)
   const now = Math.floor(Date.now() / 1000)
+  const state: ChurchState = {
+    schemaVersion: 1,
+    id: churchId,
+    pathSecret: randomId(32),
+    seq: 0,
+    snapshot: null,
+    segments: [],
+    devices: [
+      {
+        id: deviceId,
+        tokenHash,
+        userId: null,
+        name: serverName,
+        isServer: true,
+        createdAt: now,
+        revokedAt: null,
+      },
+    ],
+    roles: [],
+    users: [],
+    versions: {},
+    createdAt: now,
+    updatedAt: now,
+  }
 
-  await db.atomic((q) => [
-    q.insert(churches).values({
-      id: churchId,
-      pathSecret,
-      createdAt: now,
-      updatedAt: now,
-    }),
-    q.insert(devices).values({
-      id: deviceId,
-      churchId,
-      tokenHash,
-      name: serverName,
-      isServer: true,
-      createdAt: now,
-    }),
-  ])
-  await publishHead(db, bucket, churchId)
+  const etag = await writeChurch(store, state, null)
+  if (etag === null) throw new Error(`Church id ${churchId} already exists`)
+  await publishHead(store, state, etag)
 
   return {
     churchId,
-    pathSecret,
-    readUrl: bucket.publicUrl(churchPrefix(churchId, pathSecret)),
+    pathSecret: state.pathSecret,
+    readUrl: store.bucket.publicUrl(churchPrefix(churchId, state.pathSecret)),
     deviceId,
     serverToken: token,
   }

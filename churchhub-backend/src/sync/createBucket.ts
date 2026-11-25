@@ -5,33 +5,55 @@ import type { Bindings } from '../types'
 export interface PutOptions {
   contentType: string
   cacheControl: string
+  /** Write only if the object still has this ETag (compare-and-swap). */
+  ifMatch?: string
+  /** Write only if no object has this key yet. */
+  ifNoneMatch?: '*'
 }
 
-/** The sync bucket, written only by this service; anyone reads by path. */
+/** A bucket only this service writes to (with its keys). */
 export interface Bucket {
-  put(key: string, body: Uint8Array, options: PutOptions): Promise<void>
-  /** The object's bytes, or null when it doesn't exist. */
-  get(key: string): Promise<ArrayBuffer | null>
+  /** The new object's ETag, or null when a condition failed (412). */
+  put(
+    key: string,
+    body: Uint8Array,
+    options: PutOptions
+  ): Promise<string | null>
+  /** The object and its ETag, or null when it doesn't exist. */
+  get(key: string): Promise<{ bytes: ArrayBuffer; etag: string } | null>
+  /** The object's ETag, without its body, or null when it doesn't exist. */
+  etag(key: string): Promise<string | null>
+  /** Every key under `prefix` (listing needs the service's keys). */
+  list(prefix: string): Promise<string[]>
   delete(key: string): Promise<void>
   /** Where readers GET `key` from, without credentials. */
   publicUrl(key: string): string
 }
 
+/** A conditional write that lost: 412, or 409 while another one is in flight. */
+const CONDITION_FAILED = new Set([409, 412])
+
+function decodeXml(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+}
+
 /**
- * Any S3-compatible bucket (R2, B2, AWS S3, MinIO, SeaweedFS, Garage…),
- * path-style and signed with SigV4, from the S3_* settings.
+ * Any S3-compatible bucket with conditional writes (R2, AWS S3, MinIO…),
+ * path-style and signed with SigV4, from the S3_* settings: the public
+ * bucket readers fetch from, or (`name`) the one holding the churches'
+ * encrypted state.
  */
-export function createBucket(env: Bindings): Bucket {
-  const {
-    S3_ENDPOINT,
-    S3_BUCKET,
-    S3_ACCESS_KEY_ID,
-    S3_SECRET_ACCESS_KEY,
-    S3_PUBLIC_URL,
-  } = env
+export function createBucket(env: Bindings, name = env.S3_BUCKET): Bucket {
+  const { S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL } =
+    env
   if (
     !S3_ENDPOINT ||
-    !S3_BUCKET ||
+    !name ||
     !S3_ACCESS_KEY_ID ||
     !S3_SECRET_ACCESS_KEY ||
     !S3_PUBLIC_URL
@@ -48,36 +70,81 @@ export function createBucket(env: Bindings): Bucket {
     service: 's3',
     region: env.S3_REGION || 'auto',
   })
-  const base = `${S3_ENDPOINT.replace(/\/+$/, '')}/${S3_BUCKET}`
+  const base = `${S3_ENDPOINT.replace(/\/+$/, '')}/${name}`
   const objectUrl = (key: string) =>
     `${base}/${key.split('/').map(encodeURIComponent).join('/')}`
 
-  const send = async (key: string, init: RequestInit): Promise<Response> => {
-    const response = await client.fetch(objectUrl(key), init)
-    if (response.ok || response.status === 404) return response
+  const send = async (
+    url: string,
+    init: RequestInit,
+    allowed: (status: number) => boolean = () => false
+  ): Promise<Response> => {
+    const response = await client.fetch(url, init)
+    if (response.ok || response.status === 404 || allowed(response.status)) {
+      return response
+    }
     const detail = await response.text().catch(() => '')
     throw new Error(
-      `S3 ${init.method} ${key} failed: ${response.status} ${detail.slice(0, 200)}`
+      `S3 ${init.method} ${url} failed: ${response.status} ${detail.slice(0, 200)}`
     )
   }
 
   return {
     async put(key, body, options) {
-      await send(key, {
-        method: 'PUT',
-        body,
-        headers: {
-          'Content-Type': options.contentType,
-          'Cache-Control': options.cacheControl,
+      const response = await send(
+        objectUrl(key),
+        {
+          method: 'PUT',
+          body,
+          headers: {
+            'Content-Type': options.contentType,
+            'Cache-Control': options.cacheControl,
+            ...(options.ifMatch ? { 'If-Match': options.ifMatch } : {}),
+            ...(options.ifNoneMatch
+              ? { 'If-None-Match': options.ifNoneMatch }
+              : {}),
+          },
         },
-      })
+        (status) => CONDITION_FAILED.has(status)
+      )
+      if (CONDITION_FAILED.has(response.status)) return null
+      return response.headers.get('ETag') ?? ''
     },
     async get(key) {
-      const response = await send(key, { method: 'GET' })
-      return response.status === 404 ? null : response.arrayBuffer()
+      const response = await send(objectUrl(key), { method: 'GET' })
+      if (response.status === 404) return null
+      return {
+        bytes: await response.arrayBuffer(),
+        etag: response.headers.get('ETag') ?? '',
+      }
+    },
+    async etag(key) {
+      const response = await send(objectUrl(key), { method: 'HEAD' })
+      return response.status === 404
+        ? null
+        : (response.headers.get('ETag') ?? '')
+    },
+    async list(prefix) {
+      const keys: string[] = []
+      let token: string | undefined
+      do {
+        const query = new URLSearchParams({ 'list-type': '2', prefix })
+        if (token) query.set('continuation-token', token)
+        const response = await send(`${base}?${query}`, { method: 'GET' })
+        const xml = await response.text()
+        for (const match of xml.matchAll(/<Key>([^<]*)<\/Key>/g)) {
+          keys.push(decodeXml(match[1]))
+        }
+        token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
+          ? decodeXml(
+              xml.match(/<NextContinuationToken>([^<]*)</)?.[1] ?? ''
+            ) || undefined
+          : undefined
+      } while (token)
+      return keys
     },
     async delete(key) {
-      await send(key, { method: 'DELETE' })
+      await send(objectUrl(key), { method: 'DELETE' })
     },
     publicUrl(key) {
       return `${S3_PUBLIC_URL.replace(/\/+$/, '')}/${key}`

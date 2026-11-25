@@ -1,6 +1,6 @@
 /**
  * Keyed hash (HMAC-SHA-256) of a device token: the central state keeps only
- * this, so a leaked database cannot be replayed as tokens.
+ * this, so a leaked state cannot be replayed as tokens.
  */
 export async function hashToken(
   token: string,

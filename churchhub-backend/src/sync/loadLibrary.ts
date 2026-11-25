@@ -1,18 +1,17 @@
-import { and, asc, eq, gt } from 'drizzle-orm'
 import { applySegment, type LibraryState } from './applySegment'
 import { churchPrefix } from './churchPrefix'
 import type { Bucket } from './createBucket'
-import type { SyncDb, SyncTables } from './db/SyncDb'
 import { gunzipJson } from './gzipJson'
+import type { ChurchState } from './state/ChurchState'
 import { COLLECTION_BY_TYPE, type Segment, type Snapshot } from './types'
 
 /** Tombstones older than this leave the snapshot (the app prunes them too). */
 const TOMBSTONE_RETENTION_SECONDS = 90 * 24 * 3600
 
 async function readObject<T>(bucket: Bucket, key: string): Promise<T> {
-  const bytes = await bucket.get(key)
-  if (!bytes) throw new Error(`Sync object missing: ${key}`)
-  return gunzipJson<T>(bytes)
+  const object = await bucket.get(key)
+  if (!object) throw new Error(`Sync object missing: ${key}`)
+  return gunzipJson<T>(object.bytes)
 }
 
 /**
@@ -20,14 +19,12 @@ async function readObject<T>(bucket: Bucket, key: string): Promise<T> {
  * every segment after it, read with the service's own credentials.
  */
 export async function loadLibrary(
-  db: SyncDb,
   bucket: Bucket,
-  church: SyncTables['churches']['$inferSelect']
+  church: ChurchState
 ): Promise<Snapshot> {
-  const { bucketObjects } = db.t
   const prefix = churchPrefix(church.id, church.pathSecret)
-  const base = church.snapshotKey
-    ? await readObject<Snapshot>(bucket, `${prefix}/${church.snapshotKey}`)
+  const base = church.snapshot
+    ? await readObject<Snapshot>(bucket, `${prefix}/${church.snapshot.key}`)
     : null
 
   const state: LibraryState = {
@@ -49,18 +46,7 @@ export async function loadLibrary(
     versions: { ...(base?.versions ?? {}) },
   }
 
-  const logs = await db.q
-    .select({ key: bucketObjects.key })
-    .from(bucketObjects)
-    .where(
-      and(
-        eq(bucketObjects.churchId, church.id),
-        eq(bucketObjects.kind, 'log'),
-        gt(bucketObjects.seq, church.snapshotSeq)
-      )
-    )
-    .orderBy(asc(bucketObjects.seq))
-  for (const log of logs) {
+  for (const log of church.segments) {
     const segment = await readObject<Segment>(bucket, `${prefix}/${log.key}`)
     applySegment(state, segment)
   }

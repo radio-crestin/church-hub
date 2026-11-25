@@ -1,92 +1,52 @@
-import { and, eq, lte } from 'drizzle-orm'
 import { churchPrefix } from './churchPrefix'
-import type { Bucket } from './createBucket'
-import type { SyncDb } from './db/SyncDb'
 import { loadLibrary } from './loadLibrary'
 import { publishHead } from './publishHead'
 import { randomId } from './randomId'
-import { SyncError } from './SyncError'
+import type { ChurchState, SyncStore } from './state/ChurchState'
+import { updateChurch } from './state/updateChurch'
 import { writeSnapshot } from './writeSnapshot'
 
-const MAX_ATTEMPTS = 5
+/** Old-prefix objects deleted per rotation (the rest are unreferenced). */
+const MAX_DELETES = 500
 
 /**
  * Moves the church to a fresh path secret, so a revoked device that still
  * knows the old path reads nothing new: the whole library is written as one
- * snapshot under the new prefix, the central state switches to it, then
- * every object under the old prefix is deleted. Remaining devices learn the
- * new path from their next write or `GET path`. Returns the new secret.
+ * snapshot under the new prefix, the state switches to it, then every
+ * object under the old prefix is deleted. Remaining devices learn the new
+ * path from their next write or `GET path`.
  */
 export async function rotatePath(
-  db: SyncDb,
-  bucket: Bucket,
+  store: SyncStore,
   churchId: string
-): Promise<string> {
-  const { bucketObjects, churches } = db.t
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const [church] = await db.q
-      .select()
-      .from(churches)
-      .where(eq(churches.id, churchId))
-    const snapshot = await loadLibrary(db, bucket, church)
-    const pathSecret = randomId(32)
-    const prefix = churchPrefix(church.id, pathSecret)
-    const key = await writeSnapshot(bucket, prefix, {
-      ...snapshot,
-      seq: church.seq,
-    })
-    const oldObjects = await db.q
-      .select({ key: bucketObjects.key })
-      .from(bucketObjects)
-      .where(eq(bucketObjects.churchId, church.id))
-
-    await db.q
-      .update(churches)
-      .set({
-        pathSecret,
-        snapshotSeq: church.seq,
-        snapshotKey: key,
-        updatedAt: Math.floor(Date.now() / 1000),
+): Promise<ChurchState> {
+  let oldPrefix = ''
+  const { state, etag } = await updateChurch(
+    store,
+    churchId,
+    async (church) => {
+      oldPrefix = churchPrefix(church.id, church.pathSecret)
+      const snapshot = await loadLibrary(store.bucket, church)
+      const pathSecret = randomId(32)
+      const prefix = churchPrefix(church.id, pathSecret)
+      const key = await writeSnapshot(store.bucket, prefix, {
+        ...snapshot,
+        seq: church.seq,
       })
-      .where(
-        and(
-          eq(churches.id, church.id),
-          eq(churches.seq, church.seq),
-          eq(churches.pathSecret, church.pathSecret)
-        )
-      )
-    const [after] = await db.q
-      .select({ pathSecret: churches.pathSecret })
-      .from(churches)
-      .where(eq(churches.id, church.id))
-    if (after.pathSecret !== pathSecret) {
-      // A write landed meanwhile: its segment is missing from this snapshot.
-      await bucket.delete(`${prefix}/${key}`)
-      continue
+      church.pathSecret = pathSecret
+      church.snapshot = { seq: church.seq, key }
+      church.segments = []
+      church.updatedAt = Math.floor(Date.now() / 1000)
+      return {
+        next: church,
+        result: pathSecret,
+        undo: () => store.bucket.delete(`${prefix}/${key}`),
+      }
     }
+  )
+  await publishHead(store, state, etag)
 
-    await db.atomic((q) => [
-      // Only the old prefix's rows: a write may already have landed under
-      // the new one, with a later seq.
-      q
-        .delete(bucketObjects)
-        .where(
-          and(
-            eq(bucketObjects.churchId, church.id),
-            lte(bucketObjects.seq, church.seq)
-          )
-        ),
-      q
-        .insert(bucketObjects)
-        .values({ churchId: church.id, key, kind: 'snap', seq: church.seq }),
-    ])
-    await publishHead(db, bucket, church.id)
-
-    const oldPrefix = churchPrefix(church.id, church.pathSecret)
-    for (const object of [{ key: 'head.json' }, ...oldObjects]) {
-      await bucket.delete(`${oldPrefix}/${object.key}`)
-    }
-    return pathSecret
-  }
-  throw new SyncError(503, 'busy', 'Too many concurrent writes, try again')
+  const stale = await store.bucket.list(`${oldPrefix}/`)
+  for (const key of stale.slice(0, MAX_DELETES)) await store.bucket.delete(key)
+  return state
 }

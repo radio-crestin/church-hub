@@ -43,7 +43,7 @@ The user's review (22/11): «make sure that each client can modify only what's a
    │                                       │ every write  │ every write
    │                                       ▼              ▼
    │                     Hono sync service: THE ONE WRITER, checks every change
-   │                       central state (D1, Postgres or SQLite): users, roles, permissions,
+   │                       central state (one encrypted object per church in the bucket): users, roles, permissions,
    │                       devices, the version of every row, the church's seq
    │                                       │ accepted changes → one segment
    │  reads: GET directly (secret path)    ▼
@@ -55,23 +55,23 @@ The user's review (22/11): «make sure that each client can modify only what's a
 - **One update, everyone sees it quickly**. A single `POST` is checked, versioned and published as one segment in the bucket. Every client picks it up on its next `head.json` poll, every few seconds while the app is open (an unchanged head costs a 304). Phones on the PC's LAN or WebRTC also get it live from the PC.
 - **The PC is still the hub while it is on**: phones talk to it directly, on the LAN or over **WebRTC** (signaling through the existing `/signal` routes), as today. Even then, its writes go through the service, so the central state and the bucket are always current.
 - **With the PC off**, phones keep full control (D3). They read directly from the bucket, and write through the same service, under the same checks.
-- **Per-request cost stays small**: the service is called **only for writes**, and reads never touch a Worker. On Cloudflare the central state is **D1** (SQLite: 5M row reads and 100k row writes a day free) or Postgres through Hyperdrive. Self-hosted, the same Hono app runs on Bun or Node with Postgres or SQLite (a file, Turso). One drizzle code path serves every database: a schema per dialect with the same tables, and only queries both dialects share.
+- **Per-request cost stays small**: the service is called **only for writes**, and reads never touch a Worker. There is **no database**: each church's central state is one encrypted object in the bucket, changed by compare-and-swap (conditional PUT), so a deploy is the service plus a bucket. Self-hosted, the same Hono app runs on Bun or Node.
 - **Any S3-compatible storage** works, as long as it allows public read without listing. R2 is the default: no egress fees, and the first 10 GB are free.
   - The spike checked it with a standard AWS bucket policy (anonymous `s3:GetObject` on `churches/*` and `libraries/*`, nothing else) on SeaweedFS: anonymous GET there 200, elsewhere 403, listing 403 with or without a prefix (`app/spikes/cloud-sync/scripts/publicRead.py`).
-  - For self-hosters: MinIO stopped publishing binaries and images in Oct 2025; SeaweedFS, Garage or a MinIO community build (`pgsty/minio`) work.
+  - For self-hosters: the bucket must support conditional writes (`If-Match` on `PutObject`, section 4): R2, AWS S3 and MinIO do (MinIO stopped publishing binaries and images in Oct 2025: build it from source or use a community build such as `pgsty/minio`). Check any other store for it first.
 
 ## 4. Central state and bucket layout
 
-**Central state** (D1 or Postgres on Cloudflare; Postgres or SQLite when self-hosted), one set per church:
+**Central state**: one object per church, `sync-state/<churchId>.bin`, gzipped and sealed with AES-256-GCM under a key derived from the service's `SYNC_SECRET` (the church id bound as associated data). It can sit in the public bucket, unreadable without the secret, or in a private bucket (`S3_STATE_BUCKET`). It holds:
 
-| Table | Holds |
+| Field | Holds |
 |---|---|
-| `churches` | `churchId`, `pathSecret`, owner (Google `sub` + email, or none for a guest), `seq` |
+| `pathSecret`, `seq`, `snapshot`, `segments` | where the church is read from, its last write, and what `head.json` lists |
 | `devices` | an HMAC hash of each device token, its user, its name, when it was revoked |
-| `users`, `roles`, `role_permissions`, `user_permissions` | the church's accounts and permissions, the same model as the app's `db/schema/auth.ts`, kept here as the authority once cloud sync is on |
-| `entities` | for every synced row: `type`, `uuid`, `version`, `updatedAt`, `updatedBy`, the content hash, and the fields a permission rule needs (for example, the schedule's author) |
+| `users`, `roles` (with their permissions) | the church's accounts and permissions, the same model as the app's `db/schema/auth.ts`, kept here as the authority once cloud sync is on; a version per row |
+| `versions` | `type:uuid` → the seq that last changed each synced row (negative: deleted) |
 
-The lyrics and other content are not stored in the database; they live in the bucket. The database stays small: about 100 bytes per row.
+The owner (a Google account, through better-auth) comes with T-172. The lyrics and other content are not in the state; they live in the bucket. For a 26k-song library the state is about 0.3-0.4 MB, read and rewritten on each write (10-30 ms per write on Bun).
 
 **Bucket** (public read, no listing):
 
@@ -87,12 +87,12 @@ libraries/<sourceId>/shards/<hash>.json.gz   about 500 songs each, named by cont
 1. **Authenticate**: the token's hash is found in `devices` and isn't revoked; that gives the user. The PC's server token may act for the user who made the change on the PC, whom it has already logged in.
 2. **Authorize every change**: the user's permissions are mapped from the change, using the same permission keys the app checks today: creating a song, category or group needs `songs.create`, changing one `songs.edit`, deleting one `songs.delete`; schedules need `programs.create`, `programs.edit`, `programs.delete`. A change the user isn't allowed to make is **rejected with 403 and a reason**, and never reaches the bucket.
 3. **Check the version**: each change carries the `version` it was based on. If the central version is newer, someone else changed the row first, so the change is answered with **409 and the current version**. The client merges it with the existing `mergeLibraries.ts` (last writer wins per field group, or it asks the user) and sends it again.
-4. **Commit**: the segment is written first under a name of its own (`log/<seq>-<nonce>.json.gz`); one transaction then claims `seq + 1` (`UPDATE churches … WHERE seq = <the seq read>`) and bumps the versions, its every statement guarded by that claim. A write that lost the claim to a concurrent one deletes its segment, waits a moment and starts again, re-checking its versions against the winner's. Then `head.json` is rewritten from the central state; a writer re-reads the state after its PUT and writes again if it changed, so the last one always leaves the current head. No conditional PUT is needed, so any S3-compatible storage works.
+4. **Commit**: the segment is written first under a name of its own (`log/<seq>-<nonce>.json.gz`); the state, with `seq + 1` and the new versions, is then saved with `If-Match` on the ETag it was read at. A write that lost to a concurrent one (412) deletes its segment, waits a moment and starts again, re-checking its versions against the winner's. Then `head.json` is rewritten from the state; a writer checks the state's ETag after its PUT and writes again from the newer state if it changed, so the last one always leaves the current head. This needs a bucket with conditional writes.
 5. **Answer** with the new versions, so the client marks its pending changes as synced.
 
 - **Roles and users** (T-171): the PC mirrors its roles, users and permissions to the service (`PUT /sync/churches/:church/access`, needs `users.edit`) whenever they change; a row's version goes up when it changed. Editing them from a phone, through the same pipeline, comes with syncing every table (T-173). So the central rules can only be changed by someone allowed to change them.
 - **A read**: GET `head.json` straight from the bucket, then only the segments after the device's own `seq`. A new device fetches the snapshot plus the segments after it.
-- **Compaction**: every 40 segments (`SYNC_COMPACT_AFTER`; the Workers free plan allows 50 subrequests per request, and compaction reads each segment), or on `POST /sync/churches/:church/compact`, the service writes a new snapshot from the last one plus the segments, points `head.json` at it, and the old segments expire through a bucket lifecycle rule.
+- **Compaction**: every 40 segments (`SYNC_COMPACT_AFTER`), or on `POST /sync/churches/:church/compact`, the service writes a new snapshot from the last one plus the segments and points `head.json` at it. It then deletes, by listing its own prefix, the snapshot before last and every segment it covers. A reader still holding the previous `head.json` finds everything that head lists, and no lifecycle rule can delete a segment the current head still lists (with one, a church with fewer than 40 writes in its expiry window would lose segments it still needs).
 - **The PC** (T-171) syncs over the cloud when `sync_config.transport` is `cloud`: it polls `head.json` every 30 s with its ETag (a 304 when unchanged), publishes its edits 2 s after they settle, in chunks of 500 changes (a first sync of 26,000 songs is 53 segments), and keeps each row's central version in `sync_versions`. A 409 makes it pull, merge and send again.
 - **Offline phones** (no internet) queue their changes locally, and the UI hides what the user can't do. Once back online, each queued change is checked on arrival like any other; a rejected change is shown to the user and rolled back locally.
 
@@ -179,10 +179,10 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
 
 1. **Spike** (T-170, done; results in section 8):
    - The service layer + drizzle on sqlite-wasm/OPFS in a Web Worker: size, search speed, first sync.
-   - Public read without listing, on a local S3 server (section 3). Conditional PUT dropped: the service is the only writer. D1 latency is left to T-171, which deploys the service.
+   - Public read without listing, on a local S3 server (section 3). Conditional PUT dropped: the service is the only writer. (T-171 brought it back to keep the central state in the bucket, with no database.)
 2. **S3 transport + Hono sync service** (T-171):
    - `/sync/*` routes in `churchhub-backend`: register (guest), devices, changes, rotate the path.
-   - **The central state** (drizzle on D1, Postgres or SQLite): users, roles, permissions, devices, a version per row. **Every change is authorized against the user's permissions and versioned before it is published**; 403 and 409 answers are handled by the client.
+   - **The central state** (one encrypted object per church in the bucket; no database): users, roles, permissions, devices, a version per row. **Every change is authorized against the user's permissions and versioned before it is published**; 403 and 409 answers are handled by the client.
    - The `s3` transport in `runSyncCycle` next to `drive`, with the bucket layout and compaction.
    - Drive stays as a backup option (D4).
 3. **Owner identity** (T-172): Google sign-in as the owner (recorded in the central `churches` table), guest first and claim later, recovery on a new PC; the cloud identity in local backups.

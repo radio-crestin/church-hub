@@ -1,52 +1,48 @@
-import { and, eq, lt } from 'drizzle-orm'
 import { churchPrefix } from './churchPrefix'
-import type { Bucket } from './createBucket'
-import type { SyncDb } from './db/SyncDb'
 import { loadLibrary } from './loadLibrary'
+import { pruneObjects } from './pruneObjects'
 import { publishHead } from './publishHead'
+import type { ChurchState, SyncStore } from './state/ChurchState'
+import { updateChurch } from './state/updateChurch'
 import { writeSnapshot } from './writeSnapshot'
 
 /**
  * Writes a snapshot of the whole library at the latest segment and points
  * head.json at it, so a new device downloads one file instead of every
- * segment. The segments it replaces stay until the bucket's lifecycle rule
- * expires them (a reader may be fetching them right now). Returns the
- * snapshot's seq.
+ * segment. Then deletes what the previous snapshot already replaced: the
+ * service cleans up after itself, so no lifecycle rule can remove a segment
+ * head.json still lists. Returns the snapshot's seq.
  */
 export async function compact(
-  db: SyncDb,
-  bucket: Bucket,
+  store: SyncStore,
   churchId: string
-): Promise<number> {
-  const { bucketObjects, churches } = db.t
-  const [church] = await db.q
-    .select()
-    .from(churches)
-    .where(eq(churches.id, churchId))
-  if (church.seq === church.snapshotSeq) return church.snapshotSeq
+): Promise<{ snapshotSeq: number; state: ChurchState }> {
+  let previous = 0
+  const { state, etag } = await updateChurch(
+    store,
+    churchId,
+    async (church) => {
+      previous = church.snapshot?.seq ?? 0
+      if (church.seq === previous) return null
 
-  const snapshot = await loadLibrary(db, bucket, church)
-  const prefix = churchPrefix(church.id, church.pathSecret)
-  const key = await writeSnapshot(bucket, prefix, snapshot)
-  await db.atomic((q) => [
-    q
-      .update(churches)
-      .set({
-        snapshotSeq: snapshot.seq,
-        snapshotKey: key,
-        updatedAt: Math.floor(Date.now() / 1000),
-      })
-      .where(
-        and(
-          eq(churches.id, church.id),
-          eq(churches.pathSecret, church.pathSecret),
-          lt(churches.snapshotSeq, snapshot.seq)
-        )
-      ),
-    q
-      .insert(bucketObjects)
-      .values({ churchId, key, kind: 'snap', seq: snapshot.seq }),
-  ])
-  await publishHead(db, bucket, churchId)
-  return snapshot.seq
+      const snapshot = await loadLibrary(store.bucket, church)
+      const prefix = churchPrefix(church.id, church.pathSecret)
+      const key = await writeSnapshot(store.bucket, prefix, snapshot)
+      church.snapshot = { seq: snapshot.seq, key }
+      church.segments = church.segments.filter((ref) => ref.seq > snapshot.seq)
+      church.updatedAt = Math.floor(Date.now() / 1000)
+      return {
+        next: church,
+        result: snapshot.seq,
+        undo: () => store.bucket.delete(`${prefix}/${key}`),
+      }
+    }
+  )
+  await publishHead(store, state, etag)
+  await pruneObjects(
+    store.bucket,
+    churchPrefix(state.id, state.pathSecret),
+    previous
+  )
+  return { snapshotSeq: state.snapshot?.seq ?? 0, state }
 }

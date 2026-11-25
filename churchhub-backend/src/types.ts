@@ -1,5 +1,3 @@
-import type { SyncDb } from './sync/db/SyncDb'
-
 export interface Bindings {
   YOUTUBE_CLIENT_ID: string
   YOUTUBE_CLIENT_SECRET: string
@@ -25,18 +23,10 @@ export interface Bindings {
   // Cloudflare Access service token, only when WAHA sits behind Access.
   WAHA_ACCESS_CLIENT_ID?: string
   WAHA_ACCESS_CLIENT_SECRET?: string
-  // Cloud sync (T-171): the central state, the bucket and the token key.
-  // Unset = the /sync routes answer 503 not_configured.
-  /** The central state, one of: a D1 database… */
-  SYNC_DB?: D1Database
-  /** …Postgres through Hyperdrive… */
-  SYNC_HYPERDRIVE?: Hyperdrive
-  /** …or Postgres directly (postgres://…). */
-  SYNC_DATABASE_URL?: string
-  /** Self-hosted: the database server.ts opened once, shared by requests. */
-  SYNC_DATABASE?: SyncDb
-  /** HMAC key of the device token hashes (generate: openssl rand -hex 32). */
-  SYNC_TOKEN_SECRET?: string
+  // Cloud sync (T-171): the bucket (which also holds each church's encrypted
+  // state: no database) and the secret. Unset = /sync answers 503.
+  /** Hashes device tokens and, derived, encrypts the church states (openssl rand -hex 32). */
+  SYNC_SECRET?: string
   /** Any S3-compatible endpoint, e.g. https://<account>.r2.cloudflarestorage.com */
   S3_ENDPOINT?: string
   S3_BUCKET?: string
@@ -46,6 +36,8 @@ export interface Bindings {
   S3_SECRET_ACCESS_KEY?: string
   /** Public, unlisted read URL of the bucket's root (readers GET from it). */
   S3_PUBLIC_URL?: string
+  /** A private bucket for the encrypted church states (default: S3_BUCKET). */
+  S3_STATE_BUCKET?: string
   /** Log segments after which the service writes a snapshot (default 40). */
   SYNC_COMPACT_AFTER?: string
   /** Abuse guard for registering a church (optional binding). */

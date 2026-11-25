@@ -1,4 +1,3 @@
-import type { EntityVersion } from './loadEntityVersions'
 import { ALL_PERMISSIONS } from './loadPermissions'
 import { requiredPermission } from './requiredPermission'
 import { SyncError } from './SyncError'
@@ -7,21 +6,18 @@ import type { ChangeInput } from './types'
 /**
  * Refuses the whole write when any change is not allowed (403, with each
  * refused change and the permission it needs) or was based on an older
- * version than the central one (409, with the current versions): someone
+ * version than the church's (409, with the current versions): someone
  * changed the row first, and the client merges before sending it again.
+ * `versions`: the church state's (negative: the row was deleted).
  */
 export function checkChanges(
   changes: ChangeInput[],
-  versions: Map<string, EntityVersion>,
+  versions: Record<string, number>,
   granted: Set<string> | typeof ALL_PERMISSIONS
 ): void {
   const rejected = changes.flatMap((change) => {
-    const current = versions.get(`${change.type}:${change.uuid}`)
-    const permission = requiredPermission(
-      change.type,
-      change.op,
-      current !== undefined && !current.deleted
-    )
+    const current = versions[`${change.type}:${change.uuid}`] ?? 0
+    const permission = requiredPermission(change.type, change.op, current > 0)
     return granted === ALL_PERMISSIONS || granted.has(permission)
       ? []
       : [{ type: change.type, uuid: change.uuid, permission }]
@@ -33,7 +29,7 @@ export function checkChanges(
   }
 
   const conflicts = changes.flatMap((change) => {
-    const version = versions.get(`${change.type}:${change.uuid}`)?.version ?? 0
+    const version = Math.abs(versions[`${change.type}:${change.uuid}`] ?? 0)
     return version === change.baseVersion
       ? []
       : [{ type: change.type, uuid: change.uuid, version }]
