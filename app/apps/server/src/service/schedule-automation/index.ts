@@ -1,3 +1,6 @@
+export { cueMusicForStep } from './musicCue'
+export { presentStepAt } from './presentStepAt'
+export { repickSchedule } from './repickSchedule'
 export {
   getScheduleAutomationState,
   startScheduleAutomation,

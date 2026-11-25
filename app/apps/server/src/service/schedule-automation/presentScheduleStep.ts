@@ -10,6 +10,7 @@ import {
   presentTemporarySong,
   presentTemporaryVerseteTineri,
 } from '../presentation/presentation-state'
+import { presentTemporaryVideo } from '../presentation/presentTemporaryVideo'
 import type { PresentationState } from '../presentation/types'
 import type { ScheduleItem } from '../schedules/types'
 
@@ -103,6 +104,12 @@ export async function presentScheduleStep(
       }
       return presentTemporaryScene({ obsSceneName: sceneName, ...common })
     }
+    case 'video':
+      return presentTemporaryVideo({
+        mediaId: item.video?.mediaId ?? '',
+        url: item.video?.url ?? '',
+        ...common,
+      })
     case 'announcement':
       return presentTemporaryAnnouncement({
         content: item.slideContent ?? '',

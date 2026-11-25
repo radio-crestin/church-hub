@@ -43,12 +43,14 @@ export function nextItemPreview(
         : `${first.reference} - ${last.reference.split(' ').pop()}`
     return { contentType: 'bible_passage', preview }
   }
-  if (next.slideType === 'versete_tineri') {
+  if (next.slideType === 'versete_tineri' || next.itemType === 'verses') {
     if (next.verseteTineriEntries.length === 0) return undefined
     return {
       contentType: 'versete_tineri',
       preview: next.verseteTineriEntries
-        .map((e) => `${e.personName} (${e.reference})`)
+        .map((e) =>
+          e.personName ? `${e.personName} (${e.reference})` : e.reference,
+        )
         .join(', '),
     }
   }

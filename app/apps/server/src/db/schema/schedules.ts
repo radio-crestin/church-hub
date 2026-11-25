@@ -41,7 +41,7 @@ export const scheduleItems = sqliteTable(
       .notNull()
       .references(() => schedules.id, { onDelete: 'cascade' }),
     itemType: text('item_type', {
-      enum: ['song', 'slide', 'bible_passage'],
+      enum: ['song', 'slide', 'bible_passage', 'music', 'video', 'verses'],
     }).notNull(),
     songId: integer('song_id').references(() => songs.id, {
       onDelete: 'cascade',
@@ -55,6 +55,9 @@ export const scheduleItems = sqliteTable(
     biblePassageTranslation: text('bible_passage_translation'),
     // Scene fields (when slideType === 'scene')
     obsSceneName: text('obs_scene_name'),
+    // An item's settings as JSON (music, video, verses, and how many of a
+    // Versete Biblice slide's passages it shows): service/schedule-items.
+    itemConfig: text('item_config'),
     // Seconds each slide of this item stays up while the presentation runs by
     // itself; NULL = the presentation's timing.
     advanceSeconds: integer('advance_seconds'),

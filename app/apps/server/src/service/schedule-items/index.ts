@@ -1,5 +1,5 @@
 export { forgetItemPicks } from './itemPicks'
 export { parseItemConfig } from './parseItemConfig'
-export { startMusicItem } from './startMusicItem'
+export { startMusicItems } from './startMusicItems'
 export type * from './types'
 export { withItemPicks } from './withItemPicks'

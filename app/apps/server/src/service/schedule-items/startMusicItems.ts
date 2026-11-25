@@ -14,18 +14,23 @@ import {
 const logger = createLogger('schedule-items')
 
 /**
- * Plays a music item from its first track: its tracks replace the player's
- * queue, in a new random order each time when it shuffles. The music then
+ * Plays music items from their first track: their tracks replace the player's
+ * queue, each item's in a new random order when it shuffles. The music then
  * keeps playing under whatever is shown, at the player's volume.
  */
-export async function startMusicItem(config: MusicItemConfig): Promise<void> {
-  const ids = musicFileIds(config)
+export async function startMusicItems(
+  configs: MusicItemConfig[],
+): Promise<void> {
+  const ids = configs.flatMap((config) => {
+    const itemIds = musicFileIds(config)
+    return config.shuffle ? shuffle(itemIds) : itemIds
+  })
   if (ids.length === 0) {
     logger.warning('A music item has no tracks to play')
     return
   }
   clearNowPlayingQueue()
-  addMultipleToNowPlaying(config.shuffle ? shuffle(ids) : ids)
+  addMultipleToNowPlaying(ids)
   refreshQueueState()
   await executeCommand({ type: 'play_index', index: 0 })
   broadcastMusicState(getPlayerState())

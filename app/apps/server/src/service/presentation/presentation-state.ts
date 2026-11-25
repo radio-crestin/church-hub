@@ -53,6 +53,30 @@ export function setOnSongPresentedCallback(
   onSongPresentedCallback = callback
 }
 
+// Callback to notify when a presentation's step goes up (its music starts)
+let onScheduleStepPresentedCallback:
+  | ((scheduleId: number, stepIndex: number) => void)
+  | null = null
+
+/**
+ * Sets a callback called when a step of a presentation (its `scheduleId` and
+ * `scheduleItemIndex`) goes up, from its runner or from any page.
+ */
+export function setOnScheduleStepPresentedCallback(
+  callback: ((scheduleId: number, stepIndex: number) => void) | null,
+): void {
+  onScheduleStepPresentedCallback = callback
+}
+
+/** The presentation step a temporary content is, if it is one. */
+function scheduleStepOf(content: TemporaryContent | null) {
+  const data = content?.data
+  if (!data || !('scheduleId' in data)) return null
+  const { scheduleId, scheduleItemIndex } = data
+  if (scheduleId == null || scheduleItemIndex == null) return null
+  return { scheduleId, scheduleItemIndex }
+}
+
 /**
  * Generates a unique, monotonically increasing timestamp in milliseconds.
  * Ensures each update gets a strictly greater timestamp even within same millisecond.
@@ -260,6 +284,16 @@ export function updatePresentationState(
         },
       })
       .run()
+
+    const step = scheduleStepOf(temporaryContent)
+    const before = scheduleStepOf(current.temporaryContent)
+    if (
+      step &&
+      (step.scheduleId !== before?.scheduleId ||
+        step.scheduleItemIndex !== before?.scheduleItemIndex)
+    ) {
+      onScheduleStepPresentedCallback?.(step.scheduleId, step.scheduleItemIndex)
+    }
 
     // Track presentation count for song slides
     // Only count when:

@@ -51,6 +51,7 @@ import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
 import { handleRemoteAccessRoutes } from './routes/remote-access'
+import { handleScheduleItemRoutes } from './routes/schedule-items'
 import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
@@ -227,6 +228,7 @@ import {
   refreshPresentedSongSlides,
   removeSlideHighlight,
   type ScreenGlobalSettings,
+  setOnScheduleStepPresentedCallback,
   setSlideHighlights,
   showSlide,
   stopPresentation,
@@ -246,6 +248,7 @@ import {
   registerRemoteAccessListener,
 } from './service/remote-access'
 import {
+  cueMusicForStep,
   getScheduleAutomationState,
   startAppStartSchedule,
   startScheduleAutomation,
@@ -3092,6 +3095,15 @@ async function startRealServer(): Promise<void> {
       // ============================================================
       // Schedules API Endpoints
       // ============================================================
+
+      // A presentation's music, video and verses items
+      const scheduleItemsResponse = await handleScheduleItemRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (scheduleItemsResponse) return scheduleItemsResponse
 
       // GET /api/schedules/search - Search schedules (must be before /api/schedules/:id)
       if (req.method === 'GET' && url.pathname === '/api/schedules/search') {
@@ -8526,6 +8538,14 @@ async function startRealServer(): Promise<void> {
   // Wire up music player state callback to WebSocket broadcast
   setStateCallback((state) => {
     broadcastMusicState(state)
+  })
+
+  // A presentation's music item starts as the step after it goes up
+  setOnScheduleStepPresentedCallback((scheduleId, stepIndex) => {
+    cueMusicForStep(scheduleId, stepIndex).catch((error) => {
+      // biome-ignore lint/suspicious/noConsole: Server-side logging
+      console.error(`[schedule-automation] Music did not start: ${error}`)
+    })
   })
 
   // Register music state provider for new WebSocket clients

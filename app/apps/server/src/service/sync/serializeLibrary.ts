@@ -194,20 +194,22 @@ export function serializeLibrary(
       {
         id: number
         schedule_id: number
-        item_type: 'song' | 'slide' | 'bible_passage'
+        item_type: LibraryScheduleItem['itemType']
         song_uuid: string | null
         slide_type: string | null
         slide_content: string | null
         bible_passage_reference: string | null
         bible_passage_translation: string | null
         obs_scene_name: string | null
+        item_config: string | null
         sort_order: number
       },
       []
     >(
       `SELECT i.id, i.schedule_id, i.item_type, s.uuid AS song_uuid,
               i.slide_type, i.slide_content, i.bible_passage_reference,
-              i.bible_passage_translation, i.obs_scene_name, i.sort_order
+              i.bible_passage_translation, i.obs_scene_name, i.item_config,
+              i.sort_order
          FROM schedule_items i
          LEFT JOIN songs s ON s.id = i.song_id
         ORDER BY i.schedule_id, i.sort_order, i.id`,
@@ -303,6 +305,7 @@ export function serializeLibrary(
       biblePassageReference: item.bible_passage_reference,
       biblePassageTranslation: item.bible_passage_translation,
       obsSceneName: item.obs_scene_name,
+      itemConfig: item.item_config,
       sortOrder: item.sort_order,
       bibleVerses: versesByItemId.get(item.id) ?? [],
       verseteTineri: vtByItemId.get(item.id) ?? [],

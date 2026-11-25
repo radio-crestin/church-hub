@@ -32,7 +32,13 @@ export interface VerseteItemConfig {
   count: number | null
 }
 
-export type ConfigurableItemType = 'music' | 'video' | 'verses' | 'versete'
+/** The item types that are only their settings. */
+export type MediaItemType = 'music' | 'video' | 'verses'
+
+/** `versete`: a Versete Biblice slide (how many of its passages it shows). */
+export type ConfigurableItemType = MediaItemType | 'versete'
+
+export type ItemConfig = ItemConfigs[ConfigurableItemType]
 
 export interface ItemConfigs {
   music: MusicItemConfig

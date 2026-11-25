@@ -1,6 +1,8 @@
 import { buildScheduleSteps, type ScheduleStep } from './buildScheduleSteps'
+import { forgetPresentationMusic, playMusicOnly } from './musicCue'
 import { presentScheduleStep } from './presentScheduleStep'
-import { stepSeconds } from './stepSeconds'
+import { repickSchedule } from './repickSchedule'
+import { runStepSeconds } from './runStepSeconds'
 import type { ScheduleAutomationState } from './types'
 import { createLogger } from '../../utils/logger'
 import {
@@ -83,11 +85,15 @@ async function setMusicVolume(volume: number | null) {
 export async function startScheduleAutomation(
   scheduleId: number,
 ): Promise<ScheduleAutomationState> {
-  const schedule = getScheduleById(scheduleId)
+  // A new run: new random verses and videos, its music from the start.
+  const schedule = repickSchedule(scheduleId)
   if (!schedule) throw new Error(`Presentation ${scheduleId} not found`)
+  forgetPresentationMusic()
   const steps = buildScheduleSteps(schedule.items)
   const [firstStep] = steps
   if (!firstStep) {
+    await setMusicVolume(schedule.automation.musicVolume)
+    if (await playMusicOnly(schedule.items)) return state
     throw new Error(`Presentation ${scheduleId} has nothing to show`)
   }
 
@@ -101,7 +107,7 @@ export async function startScheduleAutomation(
   const { autoplaySeconds, loop } = schedule.automation
   if (!autoplaySeconds) return state
 
-  const seconds = stepSeconds(firstStep, {
+  const seconds = await runStepSeconds(firstStep, {
     ...schedule.automation,
     autoplaySeconds,
   })
@@ -141,8 +147,8 @@ async function tick() {
   busy = true
   try {
     // Read again each step: an edit made while it runs is picked up.
-    const schedule = getScheduleById(run.scheduleId)
-    const steps = schedule ? buildScheduleSteps(schedule.items) : []
+    let schedule = getScheduleById(run.scheduleId)
+    let steps = schedule ? buildScheduleSteps(schedule.items) : []
     if (!schedule || steps.length === 0) {
       stopScheduleAutomation('the presentation is gone or empty', {
         clear: true,
@@ -156,12 +162,15 @@ async function tick() {
         stopScheduleAutomation('it reached the end', { clear: true })
         return
       }
+      // A new loop picks its random verses and videos again.
+      schedule = repickSchedule(run.scheduleId) ?? schedule
+      steps = buildScheduleSteps(schedule.items)
       stepIndex = 0
     }
     const step = steps[stepIndex] as ScheduleStep
 
     // Autoplay turned off while it runs: finish with the last time it had.
-    const seconds = stepSeconds(step, {
+    const seconds = await runStepSeconds(step, {
       ...schedule.automation,
       autoplaySeconds: schedule.automation.autoplaySeconds ?? run.stepSeconds,
     })

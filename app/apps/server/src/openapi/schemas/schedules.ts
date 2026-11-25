@@ -72,12 +72,43 @@ export const scheduleSchemas = {
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
     },
   },
+  ScheduleItemConfig: {
+    type: 'object',
+    description:
+      "An item's settings. Music: { source: 'folder', folderId } or { source: 'tracks', fileIds }, with shuffle. Video: { source: 'file', mediaId } or { source: 'random' }. Verses: { source: 'book', bookCode } or { source: 'topic', topicKey }, with translationId and count (null = all of a topic's passages in order, else that many at random each loop). A Versete Biblice slide: { count }",
+    additionalProperties: true,
+  },
   ScheduleItem: {
     type: 'object',
     properties: {
       id: { type: 'integer' },
       scheduleId: { type: 'integer' },
-      itemType: { $ref: '#/components/schemas/QueueItemType' },
+      itemType: {
+        type: 'string',
+        enum: ['song', 'slide', 'bible_passage', 'music', 'video', 'verses'],
+      },
+      itemConfig: {
+        allOf: [{ $ref: '#/components/schemas/ScheduleItemConfig' }],
+        nullable: true,
+      },
+      music: {
+        type: 'object',
+        nullable: true,
+        description: "A music item's tracks",
+        properties: {
+          folderName: { type: 'string', nullable: true },
+          trackCount: { type: 'integer' },
+        },
+      },
+      video: {
+        type: 'object',
+        nullable: true,
+        description: 'The video a video item shows this run',
+        properties: {
+          mediaId: { type: 'string' },
+          url: { type: 'string' },
+        },
+      },
       songId: { type: 'integer', nullable: true },
       song: {
         type: 'object',

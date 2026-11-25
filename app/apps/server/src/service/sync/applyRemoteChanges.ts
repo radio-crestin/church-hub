@@ -173,8 +173,8 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
     `INSERT INTO schedule_items (
        schedule_id, item_type, song_id, slide_type, slide_content,
        bible_passage_reference, bible_passage_translation, obs_scene_name,
-       sort_order, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+       item_config, sort_order, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
   )
   const insertVerse = db.query(
     `INSERT INTO schedule_bible_passage_verses (schedule_item_id, verse_id, reference, text, sort_order)
@@ -232,6 +232,7 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
       mergedEntry ? null : item.biblePassageReference,
       mergedEntry ? null : item.biblePassageTranslation,
       item.obsSceneName,
+      item.itemConfig ?? null,
       item.sortOrder,
       schedule.updatedAt,
       schedule.updatedAt,
