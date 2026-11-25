@@ -1,8 +1,7 @@
 import { and, asc, eq, gt } from 'drizzle-orm'
 import { churchPrefix } from './churchPrefix'
 import type { Bucket } from './createBucket'
-import type { SyncDb } from './getSyncDb'
-import { bucketObjects, churches } from './schema'
+import type { SyncDb } from './db/SyncDb'
 import type { Head } from './types'
 
 /** Readers revalidate head.json on every poll (an unchanged one is a 304). */
@@ -19,12 +18,13 @@ export async function publishHead(
   bucket: Bucket,
   churchId: string
 ): Promise<Head> {
+  const { bucketObjects, churches } = db.t
   for (;;) {
-    const [church] = await db
+    const [church] = await db.q
       .select()
       .from(churches)
       .where(eq(churches.id, churchId))
-    const segments = await db
+    const segments = await db.q
       .select({ seq: bucketObjects.seq, key: bucketObjects.key })
       .from(bucketObjects)
       .where(
@@ -50,7 +50,7 @@ export async function publishHead(
       { contentType: 'application/json', cacheControl: HEAD_CACHE_CONTROL }
     )
 
-    const [after] = await db
+    const [after] = await db.q
       .select({ seq: churches.seq, pathSecret: churches.pathSecret })
       .from(churches)
       .where(eq(churches.id, churchId))

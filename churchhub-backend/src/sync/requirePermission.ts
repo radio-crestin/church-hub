@@ -1,4 +1,4 @@
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { ALL_PERMISSIONS, loadPermissions } from './loadPermissions'
 import { SyncError } from './SyncError'
 import type { SyncCaller } from './types'

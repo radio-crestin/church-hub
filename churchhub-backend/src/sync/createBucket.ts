@@ -36,7 +36,11 @@ export function createBucket(env: Bindings): Bucket {
     !S3_SECRET_ACCESS_KEY ||
     !S3_PUBLIC_URL
   ) {
-    throw new SyncError(503, 'not_configured', 'Cloud sync storage is not configured')
+    throw new SyncError(
+      503,
+      'not_configured',
+      'Cloud sync storage is not configured'
+    )
   }
   const client = new AwsClient({
     accessKeyId: S3_ACCESS_KEY_ID,

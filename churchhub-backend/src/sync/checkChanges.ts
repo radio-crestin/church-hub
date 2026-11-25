@@ -33,8 +33,7 @@ export function checkChanges(
   }
 
   const conflicts = changes.flatMap((change) => {
-    const version =
-      versions.get(`${change.type}:${change.uuid}`)?.version ?? 0
+    const version = versions.get(`${change.type}:${change.uuid}`)?.version ?? 0
     return version === change.baseVersion
       ? []
       : [{ type: change.type, uuid: change.uuid, version }]

@@ -40,7 +40,9 @@ function parseCommon(raw: unknown, where: string) {
   const permissions = item.permissions ?? []
   if (
     !Array.isArray(permissions) ||
-    !permissions.every((p) => typeof p === 'string' && PERMISSION_PATTERN.test(p))
+    !permissions.every(
+      (p) => typeof p === 'string' && PERMISSION_PATTERN.test(p)
+    )
   ) {
     invalid(`${where}.permissions must be permission keys`)
   }
@@ -64,7 +66,9 @@ export function parseAccess(body: unknown): Access {
     invalid(`users must be an array of at most ${MAX_USERS}`)
   }
   return {
-    roles: roles.map((raw, index) => parseCommon(raw, `roles[${index}]`).common),
+    roles: roles.map(
+      (raw, index) => parseCommon(raw, `roles[${index}]`).common
+    ),
     users: users.map((raw, index) => {
       const { item, common } = parseCommon(raw, `users[${index}]`)
       if (item.roleId != null && typeof item.roleId !== 'string') {

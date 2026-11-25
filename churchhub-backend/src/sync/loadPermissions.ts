@@ -1,6 +1,5 @@
 import { and, eq } from 'drizzle-orm'
-import type { SyncDb } from './getSyncDb'
-import { rolePermissions, userPermissions, users } from './schema'
+import type { SyncDb } from './db/SyncDb'
 import type { SyncCaller } from './types'
 
 /** Everything is allowed: the church server itself, or a super admin. */
@@ -15,18 +14,21 @@ export async function loadPermissions(
   db: SyncDb,
   caller: SyncCaller
 ): Promise<Set<string> | typeof ALL_PERMISSIONS> {
+  const { rolePermissions, userPermissions, users } = db.t
   if (caller.isServer && !caller.userId) return ALL_PERMISSIONS
   if (!caller.userId) return new Set()
 
-  const [user] = await db
+  const [user] = await db.q
     .select()
     .from(users)
-    .where(and(eq(users.churchId, caller.churchId), eq(users.id, caller.userId)))
+    .where(
+      and(eq(users.churchId, caller.churchId), eq(users.id, caller.userId))
+    )
     .limit(1)
   if (!user?.isActive) return new Set()
   if (user.isSuperAdmin) return ALL_PERMISSIONS
 
-  const own = await db
+  const own = await db.q
     .select({ permission: userPermissions.permission })
     .from(userPermissions)
     .where(
@@ -36,7 +38,7 @@ export async function loadPermissions(
       )
     )
   const fromRole = user.roleId
-    ? await db
+    ? await db.q
         .select({ permission: rolePermissions.permission })
         .from(rolePermissions)
         .where(

@@ -1,6 +1,5 @@
 import { and, eq, inArray } from 'drizzle-orm'
-import type { SyncDb } from './getSyncDb'
-import { entities } from './schema'
+import type { SyncDb } from './db/SyncDb'
 import type { ChangeInput } from './types'
 
 /** D1 binds at most 100 parameters per statement. */
@@ -17,11 +16,12 @@ export async function loadEntityVersions(
   churchId: string,
   changes: ChangeInput[]
 ): Promise<Map<string, EntityVersion>> {
+  const { entities } = db.t
   const wanted = new Set(changes.map((c) => `${c.type}:${c.uuid}`))
   const uuids = [...new Set(changes.map((c) => c.uuid))]
   const found = new Map<string, EntityVersion>()
   for (let i = 0; i < uuids.length; i += UUIDS_PER_QUERY) {
-    const rows = await db
+    const rows = await db.q
       .select({
         type: entities.type,
         uuid: entities.uuid,

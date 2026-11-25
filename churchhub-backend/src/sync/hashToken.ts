@@ -2,7 +2,10 @@
  * Keyed hash (HMAC-SHA-256) of a device token: the central state keeps only
  * this, so a leaked database cannot be replayed as tokens.
  */
-export async function hashToken(token: string, secret: string): Promise<string> {
+export async function hashToken(
+  token: string,
+  secret: string
+): Promise<string> {
   const encoder = new TextEncoder()
   const key = await crypto.subtle.importKey(
     'raw',

@@ -1,3 +1,5 @@
+import type { SyncDb } from './sync/db/SyncDb'
+
 export interface Bindings {
   YOUTUBE_CLIENT_ID: string
   YOUTUBE_CLIENT_SECRET: string
@@ -25,7 +27,14 @@ export interface Bindings {
   WAHA_ACCESS_CLIENT_SECRET?: string
   // Cloud sync (T-171): the central state, the bucket and the token key.
   // Unset = the /sync routes answer 503 not_configured.
+  /** The central state, one of: a D1 database… */
   SYNC_DB?: D1Database
+  /** …Postgres through Hyperdrive… */
+  SYNC_HYPERDRIVE?: Hyperdrive
+  /** …or Postgres directly (postgres://…). */
+  SYNC_DATABASE_URL?: string
+  /** Self-hosted: the database server.ts opened once, shared by requests. */
+  SYNC_DATABASE?: SyncDb
   /** HMAC key of the device token hashes (generate: openssl rand -hex 32). */
   SYNC_TOKEN_SECRET?: string
   /** Any S3-compatible endpoint, e.g. https://<account>.r2.cloudflarestorage.com */

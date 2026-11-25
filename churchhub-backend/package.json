@@ -8,16 +8,23 @@
     "deploy:prod": "bash deploy.sh",
     "cf-typegen": "wrangler types",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate --config drizzle.sqlite.config.ts && drizzle-kit generate --config drizzle.postgresql.config.ts",
+    "db:migrate:postgresql": "drizzle-kit migrate --config drizzle.postgresql.config.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.11",
+    "@libsql/client": "^0.18.0",
     "aws4fetch": "^1.0.20",
     "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.12"
+    "hono": "^4.13.12",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261003.1",
+    "@electric-sql/pglite": "^0.6.0",
+    "@electric-sql/pglite-socket": "^0.3.0",
+    "drizzle-kit": "^0.31.11",
     "typescript": "^5.7.0",
     "wrangler": "^4.147.0"
   }

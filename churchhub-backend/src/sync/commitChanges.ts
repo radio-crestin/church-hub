@@ -3,13 +3,12 @@ import { checkChanges } from './checkChanges'
 import { churchPrefix } from './churchPrefix'
 import { compact } from './compact'
 import type { Bucket } from './createBucket'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { gzipJson } from './gzipJson'
 import { loadEntityVersions } from './loadEntityVersions'
 import { loadPermissions } from './loadPermissions'
 import { publishHead } from './publishHead'
 import { randomId } from './randomId'
-import { bucketObjects, churches, entities } from './schema'
 import { SyncError } from './SyncError'
 import type { ChangeInput, PublishedChange, Segment, SyncCaller } from './types'
 import { IMMUTABLE_CACHE_CONTROL } from './writeSnapshot'
@@ -55,13 +54,14 @@ export async function commitChanges(
   changes: ChangeInput[],
   compactAfter: number
 ): Promise<CommitResult> {
+  const { bucketObjects, churches, entities } = db.t
   const granted = await loadPermissions(db, caller)
   const hashes = await Promise.all(
     changes.map((change) => (change.data ? sha256(change.data) : null))
   )
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const [church] = await db
+    const [church] = await db.q
       .select()
       .from(churches)
       .where(eq(churches.id, caller.churchId))
@@ -106,43 +106,49 @@ export async function commitChanges(
       cacheControl: IMMUTABLE_CACHE_CONTROL,
     })
 
-    const ours = sql`FROM churches WHERE id = ${church.id} AND commit_nonce = ${nonce}`
-    const statements = [
-      db
-        .update(churches)
-        .set({ seq, commitNonce: nonce, updatedAt: now })
-        .where(
-          and(
-            eq(churches.id, church.id),
-            eq(churches.seq, church.seq),
-            eq(churches.pathSecret, church.pathSecret)
-          )
-        ),
-      db
-        .insert(bucketObjects)
-        .select(sql`SELECT ${church.id}, ${key}, 'log', ${seq} ${ours}`),
-      ...changes.map((change, index) =>
-        db
-          .insert(entities)
-          .select(
-            sql`SELECT ${church.id}, ${change.type}, ${change.uuid}, ${seq},
-              ${change.op === 'delete' ? 1 : 0}, ${hashes[index]},
-              ${caller.userId}, ${caller.userId}, ${now} ${ours}`
-          )
-          .onConflictDoUpdate({
-            target: [entities.churchId, entities.type, entities.uuid],
-            set: {
-              version: sql`excluded.version`,
-              deleted: sql`excluded.deleted`,
-              contentHash: sql`excluded.content_hash`,
-              updatedBy: sql`excluded.updated_by`,
-              updatedAt: sql`excluded.updated_at`,
-            },
-          })
-      ),
-    ] as const
+    // Inserts guarded by the claim: they add rows only if this commit's
+    // UPDATE took `seq`. Standard SQL (CAST, excluded.) runs on every dialect.
+    const text = (value: string | null) => sql`CAST(${value} AS text)`
+    const ours = sql`FROM ${churches} WHERE ${churches.id} = ${church.id}
+      AND ${churches.commitNonce} = ${nonce}`
     try {
-      await db.batch(statements)
+      await db.atomic((q) => [
+        q
+          .update(churches)
+          .set({ seq, commitNonce: nonce, updatedAt: now })
+          .where(
+            and(
+              eq(churches.id, church.id),
+              eq(churches.seq, church.seq),
+              eq(churches.pathSecret, church.pathSecret)
+            )
+          ),
+        q.insert(bucketObjects).select(
+          sql`SELECT ${text(church.id)}, ${text(key)}, ${text('log')},
+              CAST(${seq} AS integer) ${ours}`
+        ),
+        ...changes.map((change, index) =>
+          q
+            .insert(entities)
+            .select(
+              sql`SELECT ${text(church.id)}, ${text(change.type)},
+                ${text(change.uuid)}, CAST(${seq} AS integer),
+                CAST(${change.op === 'delete' ? 1 : 0} AS boolean),
+                ${text(hashes[index])}, ${text(caller.userId)},
+                ${text(caller.userId)}, CAST(${now} AS bigint) ${ours}`
+            )
+            .onConflictDoUpdate({
+              target: [entities.churchId, entities.type, entities.uuid],
+              set: {
+                version: sql`excluded.version`,
+                deleted: sql`excluded.deleted`,
+                contentHash: sql`excluded.content_hash`,
+                updatedBy: sql`excluded.updated_by`,
+                updatedAt: sql`excluded.updated_at`,
+              },
+            })
+        ),
+      ])
     } catch (error) {
       await bucket.delete(`${prefix}/${key}`)
       throw error
@@ -150,7 +156,7 @@ export async function commitChanges(
 
     // The segment's row exists only if this commit's claim held (a later
     // commit may already have replaced commit_nonce).
-    const [claimed] = await db
+    const [claimed] = await db.q
       .select({ key: bucketObjects.key })
       .from(bucketObjects)
       .where(
@@ -163,7 +169,7 @@ export async function commitChanges(
     }
 
     await publishHead(db, bucket, church.id)
-    const [pending] = await db
+    const [pending] = await db.q
       .select({ segments: count() })
       .from(bucketObjects)
       .where(

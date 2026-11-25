@@ -1,8 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import type { Bucket } from './createBucket'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { rotatePath } from './rotatePath'
-import { devices } from './schema'
 import { SyncError } from './SyncError'
 
 /**
@@ -17,7 +16,8 @@ export async function revokeDevice(
   churchId: string,
   deviceId: string
 ): Promise<string> {
-  const [device] = await db
+  const { devices } = db.t
+  const [device] = await db.q
     .select()
     .from(devices)
     .where(
@@ -29,10 +29,14 @@ export async function revokeDevice(
     )
   if (!device) throw new SyncError(404, 'not_found', 'No such device')
   if (device.isServer) {
-    throw new SyncError(400, 'server_device', 'The church server cannot be revoked')
+    throw new SyncError(
+      400,
+      'server_device',
+      'The church server cannot be revoked'
+    )
   }
 
-  await db
+  await db.q
     .update(devices)
     .set({ revokedAt: Math.floor(Date.now() / 1000) })
     .where(eq(devices.id, device.id))

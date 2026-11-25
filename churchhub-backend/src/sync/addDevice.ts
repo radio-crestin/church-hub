@@ -1,8 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { createDeviceToken } from './createDeviceToken'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { randomId } from './randomId'
-import { devices, users } from './schema'
 import { SyncError } from './SyncError'
 
 /**
@@ -16,7 +15,8 @@ export async function addDevice(
   churchId: string,
   input: { userId: string; name: string }
 ): Promise<{ deviceId: string; token: string }> {
-  const [user] = await db
+  const { devices, users } = db.t
+  const [user] = await db.q
     .select({ id: users.id })
     .from(users)
     .where(and(eq(users.churchId, churchId), eq(users.id, input.userId)))
@@ -26,7 +26,7 @@ export async function addDevice(
 
   const deviceId = randomId(12)
   const { token, tokenHash } = await createDeviceToken(tokenSecret)
-  await db.insert(devices).values({
+  await db.q.insert(devices).values({
     id: deviceId,
     churchId,
     tokenHash,

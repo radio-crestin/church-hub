@@ -43,7 +43,7 @@ The user's review (22/11): «make sure that each client can modify only what's a
    │                                       │ every write  │ every write
    │                                       ▼              ▼
    │                     Hono sync service: THE ONE WRITER, checks every change
-   │                       central state (D1 / SQLite): users, roles, permissions,
+   │                       central state (D1, Postgres or SQLite): users, roles, permissions,
    │                       devices, the version of every row, the church's seq
    │                                       │ accepted changes → one segment
    │  reads: GET directly (secret path)    ▼
@@ -55,14 +55,14 @@ The user's review (22/11): «make sure that each client can modify only what's a
 - **One update, everyone sees it quickly**. A single `POST` is checked, versioned and published as one segment in the bucket. Every client picks it up on its next `head.json` poll, every few seconds while the app is open (an unchanged head costs a 304). Phones on the PC's LAN or WebRTC also get it live from the PC.
 - **The PC is still the hub while it is on**: phones talk to it directly, on the LAN or over **WebRTC** (signaling through the existing `/signal` routes), as today. Even then, its writes go through the service, so the central state and the bucket are always current.
 - **With the PC off**, phones keep full control (D3). They read directly from the bucket, and write through the same service, under the same checks.
-- **Per-request cost stays small**: the service is called **only for writes**, and reads never touch a Worker. On Cloudflare the central state is **D1** (SQLite: 5M row reads and 100k row writes a day free). Self-hosted, the same Hono app runs on Bun with a SQLite file. Both use the same drizzle schema.
+- **Per-request cost stays small**: the service is called **only for writes**, and reads never touch a Worker. On Cloudflare the central state is **D1** (SQLite: 5M row reads and 100k row writes a day free) or Postgres through Hyperdrive. Self-hosted, the same Hono app runs on Bun or Node with Postgres or SQLite (a file, Turso). One drizzle code path serves every database: a schema per dialect with the same tables, and only queries both dialects share.
 - **Any S3-compatible storage** works, as long as it allows public read without listing. R2 is the default: no egress fees, and the first 10 GB are free.
   - The spike checked it with a standard AWS bucket policy (anonymous `s3:GetObject` on `churches/*` and `libraries/*`, nothing else) on SeaweedFS: anonymous GET there 200, elsewhere 403, listing 403 with or without a prefix (`app/spikes/cloud-sync/scripts/publicRead.py`).
   - For self-hosters: MinIO stopped publishing binaries and images in Oct 2025; SeaweedFS, Garage or a MinIO community build (`pgsty/minio`) work.
 
 ## 4. Central state and bucket layout
 
-**Central state** (D1 on Cloudflare, SQLite when self-hosted), one set per church:
+**Central state** (D1 or Postgres on Cloudflare; Postgres or SQLite when self-hosted), one set per church:
 
 | Table | Holds |
 |---|---|
@@ -182,7 +182,7 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
    - Public read without listing, on a local S3 server (section 3). Conditional PUT dropped: the service is the only writer. D1 latency is left to T-171, which deploys the service.
 2. **S3 transport + Hono sync service** (T-171):
    - `/sync/*` routes in `churchhub-backend`: register (guest), devices, changes, rotate the path.
-   - **The central state** (D1 / SQLite, drizzle): users, roles, permissions, devices, a version per row. **Every change is authorized against the user's permissions and versioned before it is published**; 403 and 409 answers are handled by the client.
+   - **The central state** (drizzle on D1, Postgres or SQLite): users, roles, permissions, devices, a version per row. **Every change is authorized against the user's permissions and versioned before it is published**; 403 and 409 answers are handled by the client.
    - The `s3` transport in `runSyncCycle` next to `drive`, with the bucket layout and compaction.
    - Drive stays as a backup option (D4).
 3. **Owner identity** (T-172): Google sign-in as the owner (recorded in the central `churches` table), guest first and claim later, recovery on a new PC; the cloud identity in local backups.

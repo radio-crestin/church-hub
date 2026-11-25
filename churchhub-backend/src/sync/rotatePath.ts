@@ -1,11 +1,10 @@
 import { and, eq, lte } from 'drizzle-orm'
 import { churchPrefix } from './churchPrefix'
 import type { Bucket } from './createBucket'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { loadLibrary } from './loadLibrary'
 import { publishHead } from './publishHead'
 import { randomId } from './randomId'
-import { bucketObjects, churches } from './schema'
 import { SyncError } from './SyncError'
 import { writeSnapshot } from './writeSnapshot'
 
@@ -23,8 +22,9 @@ export async function rotatePath(
   bucket: Bucket,
   churchId: string
 ): Promise<string> {
+  const { bucketObjects, churches } = db.t
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const [church] = await db
+    const [church] = await db.q
       .select()
       .from(churches)
       .where(eq(churches.id, churchId))
@@ -35,29 +35,27 @@ export async function rotatePath(
       ...snapshot,
       seq: church.seq,
     })
-    const oldObjects = await db
+    const oldObjects = await db.q
       .select({ key: bucketObjects.key })
       .from(bucketObjects)
       .where(eq(bucketObjects.churchId, church.id))
 
-    await db.batch([
-      db
-        .update(churches)
-        .set({
-          pathSecret,
-          snapshotSeq: church.seq,
-          snapshotKey: key,
-          updatedAt: Math.floor(Date.now() / 1000),
-        })
-        .where(
-          and(
-            eq(churches.id, church.id),
-            eq(churches.seq, church.seq),
-            eq(churches.pathSecret, church.pathSecret)
-          )
-        ),
-    ])
-    const [after] = await db
+    await db.q
+      .update(churches)
+      .set({
+        pathSecret,
+        snapshotSeq: church.seq,
+        snapshotKey: key,
+        updatedAt: Math.floor(Date.now() / 1000),
+      })
+      .where(
+        and(
+          eq(churches.id, church.id),
+          eq(churches.seq, church.seq),
+          eq(churches.pathSecret, church.pathSecret)
+        )
+      )
+    const [after] = await db.q
       .select({ pathSecret: churches.pathSecret })
       .from(churches)
       .where(eq(churches.id, church.id))
@@ -67,10 +65,10 @@ export async function rotatePath(
       continue
     }
 
-    await db.batch([
+    await db.atomic((q) => [
       // Only the old prefix's rows: a write may already have landed under
       // the new one, with a later seq.
-      db
+      q
         .delete(bucketObjects)
         .where(
           and(
@@ -78,7 +76,7 @@ export async function rotatePath(
             lte(bucketObjects.seq, church.seq)
           )
         ),
-      db
+      q
         .insert(bucketObjects)
         .values({ churchId: church.id, key, kind: 'snap', seq: church.seq }),
     ])

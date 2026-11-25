@@ -1,8 +1,6 @@
-import type { BatchItem } from 'drizzle-orm/batch'
 import { and, eq, inArray } from 'drizzle-orm'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb, SyncQuery, SyncStatement } from './db/SyncDb'
 import type { Access } from './parseAccess'
-import { rolePermissions, roles, userPermissions, users } from './schema'
 
 /** Rows per multi-row insert, under D1's 100 bound parameters. */
 const ROWS_PER_INSERT = 30
@@ -28,13 +26,17 @@ export async function updateAccess(
   churchId: string,
   access: Access
 ): Promise<{ roles: number; users: number }> {
+  const { rolePermissions, roles, userPermissions, users } = db.t
   const now = Math.floor(Date.now() / 1000)
-  const statements: BatchItem<'sqlite'>[] = []
+  // Built on the query builder `atomic` hands over (a transaction's, on
+  // Postgres), so they are collected as functions of it.
+  const statements: ((q: SyncQuery) => SyncStatement)[] = []
 
-  const currentRoles = await db.query.roles.findMany({
-    where: eq(roles.churchId, churchId),
-  })
-  const currentRolePermissions = await db
+  const currentRoles = await db.q
+    .select()
+    .from(roles)
+    .where(eq(roles.churchId, churchId))
+  const currentRolePermissions = await db.q
     .select()
     .from(rolePermissions)
     .where(eq(rolePermissions.churchId, churchId))
@@ -54,33 +56,49 @@ export async function updateAccess(
     changedRoles++
     const version = (current?.version ?? 0) + 1
     statements.push(
-      db
-        .insert(roles)
-        .values({ churchId, id: role.id, name: role.name, version, updatedAt: now })
-        .onConflictDoUpdate({
-          target: [roles.churchId, roles.id],
-          set: { name: role.name, version, updatedAt: now },
-        }),
-      db
-        .delete(rolePermissions)
-        .where(
-          and(
-            eq(rolePermissions.churchId, churchId),
-            eq(rolePermissions.roleId, role.id)
-          )
-        ),
-      ...chunk(role.permissions, ROWS_PER_INSERT).map((permissions) =>
-        db
-          .insert(rolePermissions)
-          .values(permissions.map((permission) => ({ churchId, roleId: role.id, permission })))
+      (q) =>
+        q
+          .insert(roles)
+          .values({
+            churchId,
+            id: role.id,
+            name: role.name,
+            version,
+            updatedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: [roles.churchId, roles.id],
+            set: { name: role.name, version, updatedAt: now },
+          }),
+      (q) =>
+        q
+          .delete(rolePermissions)
+          .where(
+            and(
+              eq(rolePermissions.churchId, churchId),
+              eq(rolePermissions.roleId, role.id)
+            )
+          ),
+      ...chunk(role.permissions, ROWS_PER_INSERT).map(
+        (permissions) => (q: SyncQuery) =>
+          q
+            .insert(rolePermissions)
+            .values(
+              permissions.map((permission) => ({
+                churchId,
+                roleId: role.id,
+                permission,
+              }))
+            )
       )
     )
   }
 
-  const currentUsers = await db.query.users.findMany({
-    where: eq(users.churchId, churchId),
-  })
-  const currentUserPermissions = await db
+  const currentUsers = await db.q
+    .select()
+    .from(users)
+    .where(eq(users.churchId, churchId))
+  const currentUserPermissions = await db.q
     .select()
     .from(userPermissions)
     .where(eq(userPermissions.churchId, churchId))
@@ -105,25 +123,34 @@ export async function updateAccess(
     changedUsers++
     const version = (current?.version ?? 0) + 1
     statements.push(
-      db
-        .insert(users)
-        .values({ churchId, ...fields, version, updatedAt: now })
-        .onConflictDoUpdate({
-          target: [users.churchId, users.id],
-          set: { ...fields, version, updatedAt: now },
-        }),
-      db
-        .delete(userPermissions)
-        .where(
-          and(
-            eq(userPermissions.churchId, churchId),
-            eq(userPermissions.userId, user.id)
-          )
-        ),
-      ...chunk(permissions, ROWS_PER_INSERT).map((rows) =>
-        db
-          .insert(userPermissions)
-          .values(rows.map((permission) => ({ churchId, userId: user.id, permission })))
+      (q) =>
+        q
+          .insert(users)
+          .values({ churchId, ...fields, version, updatedAt: now })
+          .onConflictDoUpdate({
+            target: [users.churchId, users.id],
+            set: { ...fields, version, updatedAt: now },
+          }),
+      (q) =>
+        q
+          .delete(userPermissions)
+          .where(
+            and(
+              eq(userPermissions.churchId, churchId),
+              eq(userPermissions.userId, user.id)
+            )
+          ),
+      ...chunk(permissions, ROWS_PER_INSERT).map(
+        (rows) => (q: SyncQuery) =>
+          q
+            .insert(userPermissions)
+            .values(
+              rows.map((permission) => ({
+                churchId,
+                userId: user.id,
+                permission,
+              }))
+            )
       )
     )
   }
@@ -138,38 +165,40 @@ export async function updateAccess(
     .filter((id) => !keptUsers.has(id))
   for (const ids of chunk(removedRoles, IDS_PER_DELETE)) {
     statements.push(
-      db
-        .delete(rolePermissions)
-        .where(
-          and(
-            eq(rolePermissions.churchId, churchId),
-            inArray(rolePermissions.roleId, ids)
-          )
-        ),
-      db
-        .delete(roles)
-        .where(and(eq(roles.churchId, churchId), inArray(roles.id, ids)))
+      (q) =>
+        q
+          .delete(rolePermissions)
+          .where(
+            and(
+              eq(rolePermissions.churchId, churchId),
+              inArray(rolePermissions.roleId, ids)
+            )
+          ),
+      (q) =>
+        q
+          .delete(roles)
+          .where(and(eq(roles.churchId, churchId), inArray(roles.id, ids)))
     )
   }
   for (const ids of chunk(removedUsers, IDS_PER_DELETE)) {
     statements.push(
-      db
-        .delete(userPermissions)
-        .where(
-          and(
-            eq(userPermissions.churchId, churchId),
-            inArray(userPermissions.userId, ids)
-          )
-        ),
-      db
-        .delete(users)
-        .where(and(eq(users.churchId, churchId), inArray(users.id, ids)))
+      (q) =>
+        q
+          .delete(userPermissions)
+          .where(
+            and(
+              eq(userPermissions.churchId, churchId),
+              inArray(userPermissions.userId, ids)
+            )
+          ),
+      (q) =>
+        q
+          .delete(users)
+          .where(and(eq(users.churchId, churchId), inArray(users.id, ids)))
     )
   }
 
-  if (statements.length > 0) {
-    await db.batch(statements as [BatchItem<'sqlite'>, ...BatchItem<'sqlite'>[]])
-  }
+  await db.atomic((q) => statements.map((statement) => statement(q)))
   return {
     roles: changedRoles + removedRoles.length,
     users: changedUsers + removedUsers.length,

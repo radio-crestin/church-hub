@@ -29,7 +29,9 @@ const location = {
   required: ['pathSecret', 'readUrl'],
 }
 
-const unauthorized = error('Missing, invalid or revoked token (code unauthorized)')
+const unauthorized = error(
+  'Missing, invalid or revoked token (code unauthorized)'
+)
 const forbidden = error('The token’s user lacks users.edit (code forbidden)')
 const notConfigured = error('Cloud sync is not configured on this server')
 
@@ -205,7 +207,10 @@ export const syncOpenApi = {
                         roleId: { type: ['string', 'null'] },
                         isSuperAdmin: { type: 'boolean' },
                         isActive: { type: 'boolean' },
-                        permissions: { type: 'array', items: { type: 'string' } },
+                        permissions: {
+                          type: 'array',
+                          items: { type: 'string' },
+                        },
                       },
                       required: ['id', 'name'],
                     },
@@ -293,7 +298,12 @@ export const syncOpenApi = {
         security: [{ deviceToken: [] }],
         parameters: [
           churchId,
-          { name: 'deviceId', in: 'path', required: true, schema: { type: 'string' } },
+          {
+            name: 'deviceId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
         ],
         responses: {
           '200': {
@@ -303,7 +313,10 @@ export const syncOpenApi = {
                 schema: {
                   allOf: [
                     { $ref: '#/components/schemas/Location' },
-                    { type: 'object', properties: { revoked: { type: 'boolean' } } },
+                    {
+                      type: 'object',
+                      properties: { revoked: { type: 'boolean' } },
+                    },
                   ],
                 },
               },
@@ -383,7 +396,9 @@ export const syncOpenApi = {
             'A row changed first elsewhere (code conflict, conflicts: [{ type, uuid, version }]): pull, merge, send again'
           ),
           '413': error('Body over 8 MB'),
-          '503': error('Lost the race for the next seq too many times (code busy)'),
+          '503': error(
+            'Lost the race for the next seq too many times (code busy)'
+          ),
         },
       },
     },

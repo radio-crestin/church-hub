@@ -2,9 +2,8 @@ import { and, asc, eq, gt } from 'drizzle-orm'
 import { applySegment, type LibraryState } from './applySegment'
 import { churchPrefix } from './churchPrefix'
 import type { Bucket } from './createBucket'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb, SyncTables } from './db/SyncDb'
 import { gunzipJson } from './gzipJson'
-import { bucketObjects, type churches } from './schema'
 import { COLLECTION_BY_TYPE, type Segment, type Snapshot } from './types'
 
 /** Tombstones older than this leave the snapshot (the app prunes them too). */
@@ -23,8 +22,9 @@ async function readObject<T>(bucket: Bucket, key: string): Promise<T> {
 export async function loadLibrary(
   db: SyncDb,
   bucket: Bucket,
-  church: typeof churches.$inferSelect
+  church: SyncTables['churches']['$inferSelect']
 ): Promise<Snapshot> {
+  const { bucketObjects } = db.t
   const prefix = churchPrefix(church.id, church.pathSecret)
   const base = church.snapshotKey
     ? await readObject<Snapshot>(bucket, `${prefix}/${church.snapshotKey}`)
@@ -49,7 +49,7 @@ export async function loadLibrary(
     versions: { ...(base?.versions ?? {}) },
   }
 
-  const logs = await db
+  const logs = await db.q
     .select({ key: bucketObjects.key })
     .from(bucketObjects)
     .where(

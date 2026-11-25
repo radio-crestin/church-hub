@@ -1,7 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { hashToken } from './hashToken'
-import { devices } from './schema'
 import { SyncError } from './SyncError'
 import type { SyncCaller } from './types'
 
@@ -18,13 +17,14 @@ export async function authenticate(
   authorization: string | undefined,
   actingUserId?: string | null
 ): Promise<SyncCaller> {
+  const { devices } = db.t
   if (!tokenSecret) {
     throw new SyncError(503, 'not_configured', 'Cloud sync is not configured')
   }
   const token = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1]
   if (!token) throw new SyncError(401, 'unauthorized', 'Missing token')
 
-  const [device] = await db
+  const [device] = await db.q
     .select()
     .from(devices)
     .where(

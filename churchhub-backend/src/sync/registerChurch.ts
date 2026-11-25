@@ -1,10 +1,9 @@
 import { churchPrefix } from './churchPrefix'
 import type { Bucket } from './createBucket'
 import { createDeviceToken } from './createDeviceToken'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { publishHead } from './publishHead'
 import { randomId } from './randomId'
-import { churches, devices } from './schema'
 
 export interface RegisteredChurch {
   churchId: string
@@ -27,20 +26,21 @@ export async function registerChurch(
   tokenSecret: string,
   serverName: string
 ): Promise<RegisteredChurch> {
+  const { churches, devices } = db.t
   const churchId = randomId(12)
   const pathSecret = randomId(32)
   const deviceId = randomId(12)
   const { token, tokenHash } = await createDeviceToken(tokenSecret)
   const now = Math.floor(Date.now() / 1000)
 
-  await db.batch([
-    db.insert(churches).values({
+  await db.atomic((q) => [
+    q.insert(churches).values({
       id: churchId,
       pathSecret,
       createdAt: now,
       updatedAt: now,
     }),
-    db.insert(devices).values({
+    q.insert(devices).values({
       id: deviceId,
       churchId,
       tokenHash,

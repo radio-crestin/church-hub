@@ -2,6 +2,8 @@ name = "churchhub-backend"
 account_id = "c53124cf4d8c039271e3d52917a56b96"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
+# postgres.js (cloud sync on Postgres) needs node:buffer and node:stream.
+compatibility_flags = ["nodejs_compat"]
 minify = true
 
 # Custom domain route. MUST stay above any [section] header: TOML assigns
@@ -41,15 +43,23 @@ namespace_id = "1001"
   limit = 3
   period = 60
 
-# Cloud sync central state (T-171, README "Cloud sync"). Uncomment once the
-# database exists (npx wrangler d1 create churchhub-sync), with its id, then
-# apply migrations/ (npx wrangler d1 migrations apply SYNC_DB --remote).
-# Until then /sync/* answers 503 not_configured and the rest deploys as is.
+# Cloud sync central state (T-171, README "Cloud sync"): any one of a D1
+# database, Postgres through Hyperdrive, or the SYNC_DATABASE_URL secret
+# (postgres://…). Until one is set, /sync/* answers 503 not_configured and
+# the rest deploys as is.
+# D1: npx wrangler d1 create churchhub-sync, uncomment with its id, then
+# npx wrangler d1 migrations apply SYNC_DB --remote
 # [[d1_databases]]
 # binding = "SYNC_DB"
 # database_name = "churchhub-sync"
 # database_id = "<id from wrangler d1 create>"
-# migrations_dir = "migrations"
+# migrations_dir = "migrations/sqlite"
+# Postgres: npx wrangler hyperdrive create churchhub-sync
+# --connection-string="postgres://…", uncomment with its id, then
+# SYNC_DATABASE_URL=postgres://… npm run db:migrate:postgresql
+# [[hyperdrive]]
+# binding = "SYNC_HYPERDRIVE"
+# id = "<id from wrangler hyperdrive create>"
 
 # Non-sensitive environment variables
 [vars]

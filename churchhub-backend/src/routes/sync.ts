@@ -6,7 +6,8 @@ import { churchPrefix } from '../sync/churchPrefix'
 import { commitChanges } from '../sync/commitChanges'
 import { compact } from '../sync/compact'
 import { createBucket } from '../sync/createBucket'
-import { getSyncDb } from '../sync/getSyncDb'
+import { getSyncDb } from '../sync/db/getSyncDb'
+import type { SyncDb } from '../sync/db/SyncDb'
 import { syncOpenApi } from '../sync/openapi'
 import { parseAccess } from '../sync/parseAccess'
 import { parseChanges } from '../sync/parseChanges'
@@ -14,7 +15,6 @@ import { registerChurch } from '../sync/registerChurch'
 import { requirePermission } from '../sync/requirePermission'
 import { revokeDevice } from '../sync/revokeDevice'
 import { rotatePath } from '../sync/rotatePath'
-import { churches } from '../sync/schema'
 import { SyncError } from '../sync/SyncError'
 import { updateAccess } from '../sync/updateAccess'
 import type { Bindings } from '../types'
@@ -25,9 +25,17 @@ const DEFAULT_COMPACT_AFTER = 40
 /** Managing devices and access needs the app's user management permission. */
 const MANAGE_PERMISSION = 'users.edit'
 
-type SyncContext = Context<{ Bindings: Bindings }>
+type SyncEnv = { Bindings: Bindings; Variables: { syncDb?: SyncDb } }
+type SyncContext = Context<SyncEnv>
 
-const sync = new Hono<{ Bindings: Bindings }>()
+const sync = new Hono<SyncEnv>()
+
+/** A database opened for one request is closed once it is answered. */
+sync.use('/sync/*', async (c, next) => {
+  await next()
+  const db = c.get('syncDb')
+  if (db) c.executionCtx.waitUntil(db.close())
+})
 
 /** Every error a /sync route raises, as `{ error, code, ...details }`. */
 sync.onError((error, c) => {
@@ -50,13 +58,27 @@ async function readJson(c: SyncContext): Promise<unknown> {
   })
 }
 
+/**
+ * This request's database: self-hosted, the one server.ts opened; on
+ * Workers, opened on first use and closed after the response.
+ */
+function database(c: SyncContext): SyncDb {
+  if (c.env.SYNC_DATABASE) return c.env.SYNC_DATABASE
+  let db = c.get('syncDb')
+  if (!db) {
+    db = getSyncDb(c.env)
+    c.set('syncDb', db)
+  }
+  return db
+}
+
 function context(c: SyncContext) {
-  return { db: getSyncDb(c.env), bucket: createBucket(c.env) }
+  return { db: database(c), bucket: createBucket(c.env) }
 }
 
 async function caller(c: SyncContext, actingUserId?: string | null) {
   return authenticate(
-    getSyncDb(c.env),
+    database(c),
     c.env.SYNC_TOKEN_SECRET,
     c.req.param('churchId') ?? '',
     c.req.header('Authorization'),
@@ -67,7 +89,8 @@ async function caller(c: SyncContext, actingUserId?: string | null) {
 /** The church's current read location, after a write or a rotation. */
 async function readLocation(c: SyncContext, churchId: string) {
   const { db, bucket } = context(c)
-  const [church] = await db
+  const { churches } = db.t
+  const [church] = await db.q
     .select({ pathSecret: churches.pathSecret })
     .from(churches)
     .where(eq(churches.id, churchId))
@@ -138,10 +161,15 @@ sync.post('/sync/churches/:churchId/devices', async (c) => {
   const who = await caller(c)
   const { db } = context(c)
   await requirePermission(db, who, MANAGE_PERMISSION)
-  const device = await addDevice(db, c.env.SYNC_TOKEN_SECRET ?? '', who.churchId, {
-    userId: body.userId,
-    name: body.name.slice(0, 200),
-  })
+  const device = await addDevice(
+    db,
+    c.env.SYNC_TOKEN_SECRET ?? '',
+    who.churchId,
+    {
+      userId: body.userId,
+      name: body.name.slice(0, 200),
+    }
+  )
   return c.json(device, 201)
 })
 
@@ -159,8 +187,7 @@ sync.post('/sync/churches/:churchId/changes', async (c) => {
   const { changes, actingUserId } = parseChanges(await readJson(c))
   const who = await caller(c, actingUserId)
   const { db, bucket } = context(c)
-  const compactAfter =
-    Number(c.env.SYNC_COMPACT_AFTER) || DEFAULT_COMPACT_AFTER
+  const compactAfter = Number(c.env.SYNC_COMPACT_AFTER) || DEFAULT_COMPACT_AFTER
   const result = await commitChanges(db, bucket, who, changes, compactAfter)
   return c.json({ ...result, ...(await readLocation(c, who.churchId)) })
 })

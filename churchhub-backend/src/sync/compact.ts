@@ -1,10 +1,9 @@
 import { and, eq, lt } from 'drizzle-orm'
 import { churchPrefix } from './churchPrefix'
 import type { Bucket } from './createBucket'
-import type { SyncDb } from './getSyncDb'
+import type { SyncDb } from './db/SyncDb'
 import { loadLibrary } from './loadLibrary'
 import { publishHead } from './publishHead'
-import { bucketObjects, churches } from './schema'
 import { writeSnapshot } from './writeSnapshot'
 
 /**
@@ -19,7 +18,8 @@ export async function compact(
   bucket: Bucket,
   churchId: string
 ): Promise<number> {
-  const [church] = await db
+  const { bucketObjects, churches } = db.t
+  const [church] = await db.q
     .select()
     .from(churches)
     .where(eq(churches.id, churchId))
@@ -28,8 +28,8 @@ export async function compact(
   const snapshot = await loadLibrary(db, bucket, church)
   const prefix = churchPrefix(church.id, church.pathSecret)
   const key = await writeSnapshot(bucket, prefix, snapshot)
-  await db.batch([
-    db
+  await db.atomic((q) => [
+    q
       .update(churches)
       .set({
         snapshotSeq: snapshot.seq,
@@ -43,7 +43,7 @@ export async function compact(
           lt(churches.snapshotSeq, snapshot.seq)
         )
       ),
-    db
+    q
       .insert(bucketObjects)
       .values({ churchId, key, kind: 'snap', seq: snapshot.seq }),
   ])
