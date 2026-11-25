@@ -449,7 +449,7 @@ function SortableItemWrapper({
     >
       {/* Item Header */}
       <div
-        className="w-full flex items-center gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+        className="w-full flex flex-wrap items-center gap-x-2 gap-y-1 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
         onClick={(e) => onHeaderClick(e, item)}
         onAuxClick={(e) => onAuxClick(e, item)}
         onDoubleClick={readOnly ? undefined : () => onDoubleClick(item)}
@@ -496,8 +496,9 @@ function SortableItemWrapper({
 
         <ScheduleItemTypeIcon item={item} />
 
-        {/* Item Title & Info */}
-        <div className="flex-1 min-w-0 text-left">
+        {/* Item Title & Info — never narrower than this: on a narrow row the
+            item's controls wrap under it instead of squeezing it away. */}
+        <div className="flex-1 min-w-40 text-left">
           <div className="font-medium text-sm sm:truncate text-gray-900 dark:text-white">
             {item.itemType === 'song' && (
               <span className="flex min-w-0 items-center gap-2">
@@ -581,68 +582,70 @@ function SortableItemWrapper({
           </div>
         </div>
 
-        {/* Warning indicator for missing content */}
-        {hasMissingContent && (
-          <div
-            className="flex-shrink-0 p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30"
-            title={t('warnings.missingContent')}
-          >
-            <AlertTriangle
-              size={16}
-              className="text-amber-600 dark:text-amber-400"
-            />
-          </div>
-        )}
+        <div className="ml-auto flex flex-shrink-0 items-center gap-2">
+          {/* Warning indicator for missing content */}
+          {hasMissingContent && (
+            <div
+              className="flex-shrink-0 p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30"
+              title={t('warnings.missingContent')}
+            >
+              <AlertTriangle
+                size={16}
+                className="text-amber-600 dark:text-amber-400"
+              />
+            </div>
+          )}
 
-        {midiScheduleId !== undefined && item.itemType === 'song' && (
-          <ScheduleItemMidi scheduleId={midiScheduleId} item={item} />
-        )}
+          {midiScheduleId !== undefined && item.itemType === 'song' && (
+            <ScheduleItemMidi scheduleId={midiScheduleId} item={item} />
+          )}
 
-        {/* Music shows nothing, so it has no time on screen; a MIDI item's
+          {/* Music shows nothing, so it has no time on screen; a MIDI item's
             slides follow its music, not a time per slide. */}
-        {itemAdvance &&
-          item.itemType !== 'music' &&
-          !isBackgroundVideo(item) &&
-          !item.midi && (
-            <ScheduleItemAdvance
-              advanceSeconds={item.advanceSeconds}
-              defaultSeconds={itemStepSeconds(
-                { ...item, advanceSeconds: null },
-                itemAdvance.timing,
-              )}
-              onChange={(seconds) => itemAdvance.onChange(item, seconds)}
+          {itemAdvance &&
+            item.itemType !== 'music' &&
+            !isBackgroundVideo(item) &&
+            !item.midi && (
+              <ScheduleItemAdvance
+                advanceSeconds={item.advanceSeconds}
+                defaultSeconds={itemStepSeconds(
+                  { ...item, advanceSeconds: null },
+                  itemAdvance.timing,
+                )}
+                onChange={(seconds) => itemAdvance.onChange(item, seconds)}
+              />
+            )}
+
+          {onItemTemplateChange && (
+            <TemplatePicker
+              variant="chip"
+              value={item.templateId}
+              noneLabel={t('presentation:templates.presentation.itemNone')}
+              onChange={(templateId) => onItemTemplateChange(item, templateId)}
+              testId={`schedule-item-template-${item.id}`}
             />
           )}
 
-        {onItemTemplateChange && (
-          <TemplatePicker
-            variant="chip"
-            value={item.templateId}
-            noneLabel={t('presentation:templates.presentation.itemNone')}
-            onChange={(templateId) => onItemTemplateChange(item, templateId)}
-            testId={`schedule-item-template-${item.id}`}
-          />
-        )}
-
-        {/* Options Menu Button */}
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onContextMenu(e, item)
-            }}
-            className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title={t('common:options')}
-            aria-label={t('common:options')}
-            data-testid="schedule-item-options"
-          >
-            <MoreVertical
-              size={16}
-              className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
-            />
-          </button>
-        )}
+          {/* Options Menu Button */}
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onContextMenu(e, item)
+              }}
+              className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title={t('common:options')}
+              aria-label={t('common:options')}
+              data-testid="schedule-item-options"
+            >
+              <MoreVertical
+                size={16}
+                className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Expanded Content — the item's presentable steps */}
