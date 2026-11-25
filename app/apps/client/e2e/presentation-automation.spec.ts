@@ -109,12 +109,20 @@ test.describe('Presentation automation', () => {
     })
     await request.post(`/api/schedules/${id}/run`)
 
-    // Reach the last step, then see the first one again.
+    // Reach the last step, then see the first one again. Sampled every
+    // 200 ms: Playwright's default backs off to 1 s, the length of a step, so
+    // its samples can keep landing beside a step and miss it.
     await expect
-      .poll(async () => (await liveStep(request))?.index, { timeout: 8_000 })
+      .poll(async () => (await liveStep(request))?.index, {
+        timeout: 8_000,
+        intervals: [200],
+      })
       .toBe(2)
     await expect
-      .poll(async () => (await liveStep(request))?.index, { timeout: 5_000 })
+      .poll(async () => (await liveStep(request))?.index, {
+        timeout: 5_000,
+        intervals: [200],
+      })
       .toBe(0)
     expect(await runnerState(request)).toMatchObject({
       running: true,
