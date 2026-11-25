@@ -423,7 +423,165 @@
     "slideCount_other": "{{count}} slides",
     "noSlides": "No slides yet",
     "untitledSlide": "Slide with no text",
-    "titlePlaceholder": "Click to add title"
+    "titlePlaceholder": "Click to add title",
+    "textPlaceholder": "Click to add text",
+    "editSlide": "Edit slide"
+  },
+  "deckEditor": {
+    "back": "Back to the presentation",
+    "notFound": "These slides are not in the presentation any more.",
+    "newSlide": "New slide",
+    "duplicateSlide": "Duplicate slide",
+    "deleteSlide": "Delete slide",
+    "undo": "Undo",
+    "redo": "Redo",
+    "bringForward": "Bring forward",
+    "sendBackward": "Send backward",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "hidePanel": "Hide the panel",
+    "showPanel": "Show the panel",
+    "choosePicture": "Choose a picture",
+    "chooseVideo": "Choose a video",
+    "direction": "Direction",
+    "seconds": "Seconds",
+    "status": {
+      "saved": "Saved",
+      "saving": "Saving…",
+      "error": "Not saved"
+    },
+    "tabs": {
+      "design": "Design",
+      "transition": "Transition",
+      "animations": "Animations"
+    },
+    "kinds": {
+      "title": "Title",
+      "title_text": "Title and text",
+      "picture": "Title and picture",
+      "video": "Title and video",
+      "blank": "Blank"
+    },
+    "insert": {
+      "title": "Insert",
+      "text": "Text box",
+      "image": "Picture",
+      "video": "Video",
+      "rect": "Rectangle",
+      "roundRect": "Rounded rectangle",
+      "ellipse": "Oval",
+      "triangle": "Triangle",
+      "line": "Line"
+    },
+    "elementTypes": {
+      "text": "Text box",
+      "image": "Picture",
+      "video": "Video",
+      "shape": "Shape",
+      "picture_fallback": "Picture"
+    },
+    "background": {
+      "color": "Colour",
+      "image": "Picture",
+      "video": "Video"
+    },
+    "design": {
+      "slide": "Slide background",
+      "element": "Selected element",
+      "nothingSelected": "Click an element on the slide to change it.",
+      "x": "X",
+      "y": "Y",
+      "w": "Width",
+      "h": "Height",
+      "rotation": "Rotation (°)",
+      "opacity": "Opacity (%)",
+      "fill": "Fill",
+      "stroke": "Outline",
+      "strokeWidth": "Outline width",
+      "fit": "Fit",
+      "fits": {
+        "contain": "Whole picture",
+        "cover": "Fill the box",
+        "fill": "Stretch"
+      },
+      "autoplay": "Play by itself",
+      "loop": "Loop",
+      "muted": "No sound",
+      "font": "Font",
+      "themeFont": "Theme font",
+      "size": "Size",
+      "textColor": "Text colour",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "alignLeft": "Align left",
+      "alignCenter": "Centre",
+      "alignRight": "Align right",
+      "bullets": "Bullets",
+      "numbers": "Numbering",
+      "vertical": {
+        "top": "Top",
+        "middle": "Middle",
+        "bottom": "Bottom"
+      }
+    },
+    "transition": {
+      "effect": "Transition",
+      "advanceAfter": "Advance after (when the presentation runs by itself)",
+      "effects": {
+        "none": "None",
+        "fade": "Fade",
+        "push": "Push",
+        "wipe": "Wipe",
+        "cover": "Cover",
+        "split": "Split",
+        "zoom": "Zoom"
+      }
+    },
+    "directions": {
+      "left": "From the left",
+      "right": "From the right",
+      "up": "From the top",
+      "down": "From the bottom"
+    },
+    "animations": {
+      "add": "Add effect",
+      "preview": "Preview",
+      "remove": "Remove effect",
+      "selectFirst": "Select an element on the slide, then add an effect to it.",
+      "delay": "Delay (s)",
+      "duration": "Duration (s)",
+      "kind": "Type",
+      "effect": "Effect",
+      "trigger": "Start",
+      "direction": "Direction",
+      "kinds": {
+        "entrance": "Entrance",
+        "emphasis": "Emphasis",
+        "exit": "Exit"
+      },
+      "effects": {
+        "appear": "Appear",
+        "fade": "Fade",
+        "fly": "Fly in",
+        "wipe": "Wipe",
+        "zoom": "Zoom",
+        "split": "Split",
+        "rise_up": "Rise up",
+        "grow_turn": "Grow and turn",
+        "grow_shrink": "Grow/Shrink",
+        "spin": "Spin",
+        "transparency": "Transparency",
+        "pulse": "Pulse"
+      },
+      "triggers": {
+        "click": "On click",
+        "with_previous": "With previous",
+        "after_previous": "After previous"
+      }
+    }
   },
   "midi": {
     "title": "MIDI music",

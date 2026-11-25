@@ -446,7 +446,165 @@
     "slideCount_other": "{{count}} de diapozitive",
     "noSlides": "Niciun diapozitiv încă",
     "untitledSlide": "Diapozitiv fără text",
-    "titlePlaceholder": "Apasă ca să adaugi un titlu"
+    "titlePlaceholder": "Apasă ca să adaugi un titlu",
+    "textPlaceholder": "Apasă ca să adaugi text",
+    "editSlide": "Editează diapozitivul"
+  },
+  "deckEditor": {
+    "back": "Înapoi la prezentare",
+    "notFound": "Aceste diapozitive nu mai sunt în prezentare.",
+    "newSlide": "Diapozitiv nou",
+    "duplicateSlide": "Dublează diapozitivul",
+    "deleteSlide": "Șterge diapozitivul",
+    "undo": "Anulează",
+    "redo": "Refă",
+    "bringForward": "Adu în față",
+    "sendBackward": "Trimite în spate",
+    "lock": "Blochează",
+    "unlock": "Deblochează",
+    "duplicate": "Dublează",
+    "delete": "Șterge",
+    "hidePanel": "Ascunde panoul",
+    "showPanel": "Arată panoul",
+    "choosePicture": "Alege o imagine",
+    "chooseVideo": "Alege un video",
+    "direction": "Direcție",
+    "seconds": "Secunde",
+    "status": {
+      "saved": "Salvat",
+      "saving": "Se salvează…",
+      "error": "Nesalvat"
+    },
+    "tabs": {
+      "design": "Aspect",
+      "transition": "Tranziție",
+      "animations": "Animații"
+    },
+    "kinds": {
+      "title": "Titlu",
+      "title_text": "Titlu și text",
+      "picture": "Titlu și imagine",
+      "video": "Titlu și video",
+      "blank": "Gol"
+    },
+    "insert": {
+      "title": "Inserează",
+      "text": "Casetă de text",
+      "image": "Imagine",
+      "video": "Video",
+      "rect": "Dreptunghi",
+      "roundRect": "Dreptunghi rotunjit",
+      "ellipse": "Oval",
+      "triangle": "Triunghi",
+      "line": "Linie"
+    },
+    "elementTypes": {
+      "text": "Casetă de text",
+      "image": "Imagine",
+      "video": "Video",
+      "shape": "Formă",
+      "picture_fallback": "Imagine"
+    },
+    "background": {
+      "color": "Culoare",
+      "image": "Imagine",
+      "video": "Video"
+    },
+    "design": {
+      "slide": "Fundalul diapozitivului",
+      "element": "Elementul ales",
+      "nothingSelected": "Apasă pe un element din diapozitiv ca să-l schimbi.",
+      "x": "X",
+      "y": "Y",
+      "w": "Lățime",
+      "h": "Înălțime",
+      "rotation": "Rotire (°)",
+      "opacity": "Opacitate (%)",
+      "fill": "Umplere",
+      "stroke": "Contur",
+      "strokeWidth": "Grosime contur",
+      "fit": "Încadrare",
+      "fits": {
+        "contain": "Toată imaginea",
+        "cover": "Umple caseta",
+        "fill": "Întinde"
+      },
+      "autoplay": "Pornește singur",
+      "loop": "În buclă",
+      "muted": "Fără sunet",
+      "font": "Font",
+      "themeFont": "Fontul temei",
+      "size": "Mărime",
+      "textColor": "Culoarea textului",
+      "bold": "Aldin",
+      "italic": "Cursiv",
+      "underline": "Subliniat",
+      "alignLeft": "Aliniere la stânga",
+      "alignCenter": "Centrat",
+      "alignRight": "Aliniere la dreapta",
+      "bullets": "Buline",
+      "numbers": "Numerotare",
+      "vertical": {
+        "top": "Sus",
+        "middle": "Mijloc",
+        "bottom": "Jos"
+      }
+    },
+    "transition": {
+      "effect": "Tranziție",
+      "advanceAfter": "Trece mai departe după (când prezentarea rulează singură)",
+      "effects": {
+        "none": "Fără",
+        "fade": "Estompare",
+        "push": "Împingere",
+        "wipe": "Ștergere",
+        "cover": "Acoperire",
+        "split": "Despicare",
+        "zoom": "Zoom"
+      }
+    },
+    "directions": {
+      "left": "Din stânga",
+      "right": "Din dreapta",
+      "up": "De sus",
+      "down": "De jos"
+    },
+    "animations": {
+      "add": "Adaugă efect",
+      "preview": "Previzualizare",
+      "remove": "Elimină efectul",
+      "selectFirst": "Alege un element din diapozitiv, apoi adaugă-i un efect.",
+      "delay": "Întârziere (s)",
+      "duration": "Durată (s)",
+      "kind": "Tip",
+      "effect": "Efect",
+      "trigger": "Pornire",
+      "direction": "Direcție",
+      "kinds": {
+        "entrance": "Intrare",
+        "emphasis": "Evidențiere",
+        "exit": "Ieșire"
+      },
+      "effects": {
+        "appear": "Apariție",
+        "fade": "Estompare",
+        "fly": "Zbor",
+        "wipe": "Ștergere",
+        "zoom": "Zoom",
+        "split": "Despicare",
+        "rise_up": "Ridicare",
+        "grow_turn": "Creștere și rotire",
+        "grow_shrink": "Mărire/Micșorare",
+        "spin": "Rotire",
+        "transparency": "Transparență",
+        "pulse": "Puls"
+      },
+      "triggers": {
+        "click": "La clic",
+        "with_previous": "Cu precedentul",
+        "after_previous": "După precedentul"
+      }
+    }
   },
   "midi": {
     "title": "Muzică MIDI",

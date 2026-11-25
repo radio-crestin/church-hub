@@ -55,6 +55,7 @@ import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/ind
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 import { Route as LivestreamScenesSceneIdRouteImport } from './routes/livestream/scenes/$sceneId'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
+import { Route as SchedulesScheduleIdSlidesItemIdRouteImport } from './routes/schedules/$scheduleId_.slides.$itemId'
 
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
@@ -286,6 +287,12 @@ const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
   path: '/auth/youtube/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchedulesScheduleIdSlidesItemIdRoute =
+  SchedulesScheduleIdSlidesItemIdRouteImport.update({
+    id: '/schedules/$scheduleId_/slides/$itemId',
+    path: '/schedules/$scheduleId/slides/$itemId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
@@ -334,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
+  '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
@@ -381,6 +389,7 @@ export interface FileRoutesByTo {
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
+  '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -430,6 +439,7 @@ export interface FileRoutesById {
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
+  '/schedules/$scheduleId_/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -480,6 +490,7 @@ export interface FileRouteTypes {
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
+    | '/schedules/$scheduleId/slides/$itemId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/notifications'
@@ -527,6 +538,7 @@ export interface FileRouteTypes {
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId'
+    | '/schedules/$scheduleId/slides/$itemId'
   id:
     | '__root__'
     | '/settings'
@@ -575,6 +587,7 @@ export interface FileRouteTypes {
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
+    | '/schedules/$scheduleId_/slides/$itemId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -603,6 +616,7 @@ export interface RootRouteChildren {
   LivestreamScenesSceneIdRoute: typeof LivestreamScenesSceneIdRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
+  SchedulesScheduleIdSlidesItemIdRoute: typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -929,6 +943,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthYoutubeCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedules/$scheduleId_/slides/$itemId': {
+      id: '/schedules/$scheduleId_/slides/$itemId'
+      path: '/schedules/$scheduleId/slides/$itemId'
+      fullPath: '/schedules/$scheduleId/slides/$itemId'
+      preLoaderRoute: typeof SchedulesScheduleIdSlidesItemIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1010,6 +1031,7 @@ const rootRouteChildren: RootRouteChildren = {
   LivestreamScenesSceneIdRoute: LivestreamScenesSceneIdRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,
+  SchedulesScheduleIdSlidesItemIdRoute: SchedulesScheduleIdSlidesItemIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

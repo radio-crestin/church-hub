@@ -40,6 +40,7 @@ import { PresentationThemeEditor } from '~/features/slide-templates/components/P
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { TemplatePickerDialog } from '~/features/slide-templates/components/TemplatePickerDialog'
 import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
+import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
 import { KeyLineEditDialog } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
@@ -224,6 +225,7 @@ export function SchedulePresenter({
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
   const addDeck = useAddDeckItem(scheduleId, refetch)
+  const openDeckEditor = useOpenDeckEditor()
   const importDialogRef = useRef<HTMLDialogElement>(null)
   const { keyLineDialogRef, editKeyLine: handleEditKeyLine } =
     useScheduleKeyLineEditor()
@@ -535,20 +537,25 @@ export function SchedulePresenter({
   )
 
   // Edit item handler (for non-song items)
-  const handleEditItem = useCallback((item: ScheduleItem) => {
-    if (mediaEditorsRef.current?.edit(item)) return
-    // A Slides item: the deck editor (CH-183 phase 2) opens here.
-    if (item.itemType === 'slides') return
-    if (item.itemType === 'song' && item.songId) {
-      setEditingSongId(item.songId)
-    } else if (item.itemType === 'bible_passage') {
-      // Open bible passage picker for editing
-      setEditingBiblePassageItem(item)
-    } else if (item.itemType === 'slide') {
-      // Open slide modal for editing (announcements and versete tineri)
-      setEditingSlideItem(item)
-    }
-  }, [])
+  const handleEditItem = useCallback(
+    (item: ScheduleItem) => {
+      if (mediaEditorsRef.current?.edit(item)) return
+      if (item.itemType === 'slides') {
+        openDeckEditor(item.scheduleId, item.id)
+        return
+      }
+      if (item.itemType === 'song' && item.songId) {
+        setEditingSongId(item.songId)
+      } else if (item.itemType === 'bible_passage') {
+        // Open bible passage picker for editing
+        setEditingBiblePassageItem(item)
+      } else if (item.itemType === 'slide') {
+        // Open slide modal for editing (announcements and versete tineri)
+        setEditingSlideItem(item)
+      }
+    },
+    [openDeckEditor],
+  )
 
   // Change song handler - replace song in schedule with another
   const handleChangeSong = useCallback((item: ScheduleItem) => {
