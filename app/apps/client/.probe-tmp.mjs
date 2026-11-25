@@ -1,0 +1,17 @@
+import { chromium } from 'playwright'
+const base = 'http://localhost:20040'
+const browser = await chromium.launch()
+const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } })
+const users = await (await ctx.request.get(base + '/api/auth/local-users')).json()
+await ctx.request.post(base + '/api/auth/login', { data: { userId: users.data.find((u) => u.isSuperAdmin).id } })
+const page = await ctx.newPage()
+await page.goto(base + '/settings/screens'); await page.waitForTimeout(2000)
+await page.getByRole('button', { name: /Editează aspectul/ }).first().click()
+await page.waitForTimeout(1500)
+await page.getByText('Cântare', { exact: true }).first().click()
+await page.waitForTimeout(800)
+await page.screenshot({ path: '.demo/T-184/editor2.png' })
+await page.getByText('Implicit (fără scenă)').first().click()
+await page.waitForTimeout(800)
+await page.screenshot({ path: '.demo/T-184/editor3.png' })
+await browser.close()
