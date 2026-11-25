@@ -791,7 +791,12 @@ function SearchResults({
               }`}
             >
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-xs font-medium text-fg">{reference}</span>
+                <span
+                  data-testid="bible-search-result-reference"
+                  className="text-xs font-medium text-fg"
+                >
+                  {reference}
+                </span>
                 {type === 'ai' && aiResult.aiRelevanceScore !== undefined && (
                   <span className="flex items-center gap-0.5 text-xs font-medium text-fg">
                     <Sparkles className="w-3 h-3" strokeWidth={2} />

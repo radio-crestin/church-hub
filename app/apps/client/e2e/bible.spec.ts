@@ -114,7 +114,7 @@ test.describe('Bible Feature', () => {
     // Parse the second result's reference to know what verse to expect
     const secondResult = results.nth(1)
     const referenceText = await secondResult
-      .locator('span.text-indigo-600, span.text-indigo-400')
+      .getByTestId('bible-search-result-reference')
       .first()
       .textContent()
     const refMatch = referenceText?.match(/(\d+):(\d+)/)
@@ -157,7 +157,7 @@ test.describe('Bible Feature', () => {
     // Get expected verse from the second result
     const secondResultRef = await results
       .nth(1)
-      .locator('span.text-indigo-600, span.text-indigo-400')
+      .getByTestId('bible-search-result-reference')
       .first()
       .textContent()
     const refMatch = secondResultRef?.match(/(\d+):(\d+)/)
@@ -222,7 +222,7 @@ test.describe('Bible Feature', () => {
     // Parse the second result's reference
     const secondResult = results.nth(1)
     const referenceText = await secondResult
-      .locator('span.text-indigo-600, span.text-indigo-400')
+      .getByTestId('bible-search-result-reference')
       .first()
       .textContent()
     const refMatch = referenceText?.match(/(\d+):(\d+)/)

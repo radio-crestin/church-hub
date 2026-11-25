@@ -14,7 +14,7 @@ async function firstBibleResult(page: Page, query: string) {
   await page.keyboard.press('Enter')
   const first = page.locator('button.w-full.text-left.px-3.py-2').first()
   await expect(first).toBeVisible({ timeout: 15000 })
-  return first.locator('span.text-fg').first()
+  return first.getByTestId('bible-search-result-reference')
 }
 
 test.describe('Typo-tolerant Bible search', () => {

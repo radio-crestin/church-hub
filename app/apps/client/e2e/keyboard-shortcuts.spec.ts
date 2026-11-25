@@ -67,10 +67,8 @@ test.describe('Keyboard Shortcuts - Song Navigation', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
-    // Exclude disabled buttons so the hidden ServerConnectionModal "Reconnect"
-    // button doesn't inflate the slide count or get selected by `.nth(1)` —
-    // clicking that disabled button is what flaked this test in CI.
-    const slides = page.locator('button.rounded-lg:not([disabled])')
+    // The song's slide rows, by test id: styling classes match other buttons too.
+    const slides = page.getByTestId(/^song-slide-\d+$/)
     const slideCount = await slides.count()
 
     if (slideCount < 2) {
