@@ -10,8 +10,12 @@ export type SyncChangeKind = 'added' | 'updated' | 'removed' | 'conflict'
 
 export interface SyncStatus {
   enabled: boolean
-  /** A Google account (the backup connection) is available for sync. */
+  /** The cloud sync service, or Google Drive as the backup option. */
+  transport: 'drive' | 'cloud'
+  /** The transport can sync: a church on the sync service, or a Google account. */
   connected: boolean
+  /** This server's church on the sync service, when connected. */
+  cloud: { churchId: string; serviceUrl: string; seq: number } | null
   accountEmail: string | null
   pollIntervalMinutes: number
   /** Unix ms of the last completed sync cycle. */

@@ -1366,6 +1366,32 @@
         "title": "Versete biblice pe teme",
         "attribution": "Temele și versetele lor provin din <source>Biblia pe teme de la OpenBible.info</source>, sub licența <licence>CC BY 4.0</licence>. Titlurile în română sunt traducerea noastră; textul versetelor vine din Bibliile instalate."
       }
+    },
+    "cloudDevices": {
+      "title": "Conectare cu un link",
+      "description": "Un telefon sau un browser deschide linkul, de oriunde, și rămâne legat de această biserică.",
+      "notConnected": "Mai întâi conectează acest calculator la Church Hub Cloud: acolo se păstrează cântările bisericii, ca dispozitivele conectate să le poată citi și când calculatorul e oprit.",
+      "connect": "Conectează la Church Hub Cloud",
+      "connecting": "Se conectează…",
+      "connectFailed": "Conectarea nu a reușit: {{error}}",
+      "account": "Contul",
+      "name": "Numele dispozitivului",
+      "namePlaceholder": "De exemplu: telefonul lui Andrei",
+      "create": "Creează linkul",
+      "creating": "Se creează…",
+      "createFailed": "Linkul nu a putut fi creat: {{error}}",
+      "linkHint": "Scanează codul cu telefonul sau trimite-i linkul. Linkul se afișează o singură dată și dă acces dispozitivului, așa că trimite-l doar persoanei respective.",
+      "another": "Adaugă alt dispozitiv",
+      "devices": "Dispozitive",
+      "none": "Niciun dispozitiv nu s-a conectat încă printr-un link.",
+      "addedOn": "adăugat pe {{date}}",
+      "revoke": "Revocă",
+      "revoked": "Revocat",
+      "revokeFailed": "Dispozitivul nu a putut fi revocat: {{error}}",
+      "revokeConfirm": {
+        "title": "Revoci acest dispozitiv?",
+        "message": "{{name}} nu mai poate citi sau modifica datele bisericii. Celelalte dispozitive merg mai departe."
+      }
     }
   }
 }

@@ -4,6 +4,7 @@ import { authenticate } from '../sync/authenticate'
 import { churchPrefix } from '../sync/churchPrefix'
 import { commitChanges } from '../sync/commitChanges'
 import { compact } from '../sync/compact'
+import { listDevices } from '../sync/listDevices'
 import { syncOpenApi } from '../sync/openapi'
 import { parseAccess } from '../sync/parseAccess'
 import { parseChanges } from '../sync/parseChanges'
@@ -118,6 +119,14 @@ sync.put('/sync/churches/:churchId/access', async (c) => {
   const { who, church } = await caller(c, store)
   requirePermission(church.state, who, MANAGE_PERMISSION)
   return c.json({ changed: await updateAccess(store, who.churchId, access) })
+})
+
+/** GET /sync/churches/:churchId/devices: every device, revoked ones too. */
+sync.get('/sync/churches/:churchId/devices', async (c) => {
+  const store = createSyncStore(c.env)
+  const { who, church } = await caller(c, store)
+  requirePermission(church.state, who, MANAGE_PERMISSION)
+  return c.json({ devices: listDevices(church.state) })
 })
 
 /** POST /sync/churches/:churchId/devices: a token for one of the users. */

@@ -1359,6 +1359,32 @@
         "title": "Bible verses by topic",
         "attribution": "The topics and their verses come from the <source>OpenBible.info topical Bible</source>, licensed under <licence>CC BY 4.0</licence>. The Romanian titles are our translation; the verse texts come from your installed Bibles."
       }
+    },
+    "cloudDevices": {
+      "title": "Join with a link",
+      "description": "A phone or a browser opens the link, from anywhere, and stays bound to this church.",
+      "notConnected": "Connect this computer to Church Hub Cloud first: the church's songs are kept there, so joined devices can read them even when this computer is off.",
+      "connect": "Connect to Church Hub Cloud",
+      "connecting": "Connecting…",
+      "connectFailed": "Could not connect: {{error}}",
+      "account": "Account",
+      "name": "Device name",
+      "namePlaceholder": "For example: Andrei's phone",
+      "create": "Create the link",
+      "creating": "Creating…",
+      "createFailed": "Could not create the link: {{error}}",
+      "linkHint": "Scan the code with the phone, or send it the link. The link is shown only once and lets the device in, so share it only with that person.",
+      "another": "Add another device",
+      "devices": "Devices",
+      "none": "No device has joined with a link yet.",
+      "addedOn": "added {{date}}",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "revokeFailed": "Could not revoke the device: {{error}}",
+      "revokeConfirm": {
+        "title": "Revoke this device?",
+        "message": "{{name}} can no longer read or change the church's data. Other devices keep working."
+      }
     }
   }
 }

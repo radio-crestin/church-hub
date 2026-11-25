@@ -1,4 +1,9 @@
-export { addCloudDevice, revokeCloudDevice } from './cloud/cloudDevices'
+export {
+  addCloudDevice,
+  type CloudDevice,
+  listCloudDevices,
+  revokeCloudDevice,
+} from './cloud/cloudDevices'
 export { connectCloudSync } from './cloud/connectCloudSync'
 export { disconnectCloudSync } from './cloud/disconnectCloudSync'
 export {
