@@ -25,6 +25,9 @@ export async function captureScreenshot(): Promise<HTMLCanvasElement> {
     scale,
     timeout: CAPTURE_TIMEOUT_MS,
     backgroundColor: getComputedStyle(document.body).backgroundColor,
+    // modern-screenshot drops the root's margins, so the cloned <body> would
+    // get the browser's default 8px and the whole page would shift.
+    style: { margin: '0' },
     filter: (node) => !isFeatureRequestUi(node) && !isOutsideViewport(node),
   })
 }
