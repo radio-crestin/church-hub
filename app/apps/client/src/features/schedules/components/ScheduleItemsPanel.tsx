@@ -65,6 +65,10 @@ interface ScheduleItemsPanelProps {
   onToggleSung?: (item: ScheduleItem) => void
   /** Inserts right after an entry, from the bar between entries; absent hides the bar. */
   onQuickInsert?: (afterItemId: number) => void
+  /** The item picked as where the next Down/Up starts, outlined in the list. */
+  selectedItemId?: number | null
+  /** A click on an item's header picks it as where Down/Up go next. */
+  onSelectItem?: (item: ScheduleItem) => void
   /**
    * While autoplay is on: each item shows how long its slides stay up, and
    * can be given its own time. Absent hides it.
@@ -102,6 +106,8 @@ export function ScheduleItemsPanel({
   onEditKeyLine,
   onToggleSung,
   onQuickInsert,
+  selectedItemId = null,
+  onSelectItem,
   itemAdvance,
   expandAllTrigger,
   collapseAllTrigger,
@@ -176,10 +182,11 @@ export function ScheduleItemsPanel({
         return
       }
 
-      // Regular click - toggle expand
+      // Regular click - toggle expand, and start Down/Up from this item
       toggleExpanded(item.id)
+      onSelectItem?.(item)
     },
-    [toggleExpanded, onNavigateToSong],
+    [toggleExpanded, onNavigateToSong, onSelectItem],
   )
 
   // Handle auxclick (middle click)
@@ -271,6 +278,7 @@ export function ScheduleItemsPanel({
                 <SortableItemWrapper
                   item={item}
                   isExpanded={isExpanded(item.id)}
+                  isSelected={item.id === selectedItemId}
                   presentedInfo={presentedInfo}
                   itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
                   highlightedRef={highlightedRef}
@@ -320,6 +328,7 @@ export function ScheduleItemsPanel({
 interface SortableItemWrapperProps {
   item: ScheduleItem
   isExpanded: boolean
+  isSelected: boolean
   presentedInfo: PresentedScheduleInfo | null
   itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
@@ -341,6 +350,7 @@ interface SortableItemWrapperProps {
 function SortableItemWrapper({
   item,
   isExpanded,
+  isSelected,
   presentedInfo,
   itemStartFlatIndex,
   highlightedRef,
@@ -385,6 +395,7 @@ function SortableItemWrapper({
     <div
       ref={setNodeRef}
       data-testid="schedule-item"
+      data-selected={isSelected || undefined}
       style={style}
       className={`rounded-lg border bg-white dark:bg-gray-800 overflow-hidden ${
         isDragging ? 'opacity-50 shadow-lg' : ''
@@ -392,7 +403,7 @@ function SortableItemWrapper({
         hasMissingContent
           ? 'border-amber-400 dark:border-amber-500'
           : 'border-gray-200 dark:border-gray-700'
-      }`}
+      } ${isSelected ? 'ring-2 ring-indigo-500 dark:ring-indigo-400' : ''}`}
     >
       {/* Item Header */}
       <div

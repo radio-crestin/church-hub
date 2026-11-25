@@ -21,11 +21,10 @@ machines:
     purpose: The Windows build, the sidecar smoke test and the e2e suite on Windows
     needs: [bun]
 setup:
-  # Every OS: gitleaks, which the pre-commit and pre-push hooks (.githooks/) require.
-  macos:
-    run: command -v gitleaks >/dev/null 2>&1 || brew install gitleaks
-  windows:
-    run: if (-not (Get-Command gitleaks -ErrorAction SilentlyContinue)) { winget install --silent --accept-package-agreements --accept-source-agreements Gitleaks.Gitleaks }
+  # Every OS: gitleaks, which the pre-commit and pre-push hooks (.githooks/) require, on a PATH that
+  # Superfactory's processes see.
+  macos: scripts/setup/macos.sh
+  windows: scripts/setup/windows.ps1
   # Linux: gitleaks, then WebKit's system libraries for Playwright and the Tauri shell's build libraries
   # (WebKitGTK, ALSA…) for the review build.
   linux: scripts/setup/linux.sh
