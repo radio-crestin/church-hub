@@ -35,6 +35,7 @@ const AUDIO_SERVER_URL = `http://127.0.0.1:${AUDIO_SERVER_PORT}`
 let stateCallback: ((state: MusicPlayerState) => void) | null = null
 let statePollingInterval: ReturnType<typeof setInterval> | null = null
 let audioServerAvailable = false
+let audioServerConnected = false
 
 let playerState: MusicPlayerState = {
   isPlaying: false,
@@ -220,6 +221,10 @@ export async function initializeMusicPlayer(): Promise<boolean> {
  * following its state.
  */
 async function connectAudioServer(): Promise<void> {
+  // The start-up wait and a first command can both find the server: a second
+  // connect would put the saved track back over the one playing.
+  if (audioServerConnected) return
+  audioServerConnected = true
   // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Audio server connected')
 
@@ -278,6 +283,7 @@ export function shutdownMusicPlayer(): void {
   })
 
   audioServerAvailable = false
+  audioServerConnected = false
 
   playerState = {
     isPlaying: false,

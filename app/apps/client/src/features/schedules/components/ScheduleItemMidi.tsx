@@ -115,6 +115,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
                 <p
                   className="text-gray-500 dark:text-gray-400"
                   data-testid="schedule-item-midi-sync-state"
+                  data-synced={midi.verseTimes ? 'true' : 'false'}
                 >
                   {midi.verseTimes ? t('midi.synced') : t('midi.splitEvenly')}
                 </p>
