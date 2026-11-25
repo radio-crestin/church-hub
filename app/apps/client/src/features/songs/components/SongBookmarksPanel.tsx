@@ -39,7 +39,11 @@ import { usePresentTemporarySong } from '~/features/presentation'
 import { usePersistedChoice } from '~/hooks/usePersistedChoice'
 import { useScrollToBottomOnAdd } from '~/hooks/useScrollToBottomOnAdd'
 import { usePermissions } from '~/provider/permissions-provider'
-import { type OverflowAction, OverflowActions } from '~/ui/menu'
+import {
+  type OverflowAction,
+  OverflowActions,
+  PanelHeaderButton,
+} from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
@@ -712,15 +716,13 @@ export function SongBookmarksPanel({
     onSelect: () => setIsEditingText(true),
     testId: 'bookmarks-edit-text-menu',
     inline: (
-      <button
-        type="button"
+      <PanelHeaderButton
         onClick={() => setIsEditingText(true)}
         data-testid="bookmarks-edit-text"
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
         title={t('bookmarks.textEdit.open')}
       >
-        <FileText size={16} strokeWidth={1.5} />
-      </button>
+        <FileText size={14} strokeWidth={1.75} />
+      </PanelHeaderButton>
     ),
   }
 
@@ -734,15 +736,13 @@ export function SongBookmarksPanel({
             onSelect: startAddingNote,
             testId: 'bookmarks-add-note-menu',
             inline: (
-              <button
-                type="button"
+              <PanelHeaderButton
                 onClick={startAddingNote}
                 data-testid="bookmarks-add-note"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
                 title={t('bookmarks.addNote')}
               >
-                <Plus size={16} strokeWidth={1.5} />
-              </button>
+                <Plus size={14} strokeWidth={1.75} />
+              </PanelHeaderButton>
             ),
           },
           editTextAction,
@@ -754,16 +754,14 @@ export function SongBookmarksPanel({
             onSelect: handleExport,
             testId: 'bookmarks-export-menu',
             inline: (
-              <button
-                type="button"
+              <PanelHeaderButton
                 onClick={handleExport}
                 disabled={exportMutation.isPending}
                 data-testid="bookmarks-export"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg disabled:opacity-50"
                 title={t('bookmarks.exportAsMarkdown')}
               >
-                <Download size={16} strokeWidth={1.5} />
-              </button>
+                <Download size={14} strokeWidth={1.75} />
+              </PanelHeaderButton>
             ),
           },
           ...(addAllToSchedule
@@ -775,15 +773,13 @@ export function SongBookmarksPanel({
                   onSelect: addAllToSchedule,
                   testId: 'bookmarks-add-all-to-schedule-menu',
                   inline: (
-                    <button
-                      type="button"
+                    <PanelHeaderButton
                       onClick={addAllToSchedule}
                       data-testid="bookmarks-add-all-to-schedule"
                       title={t('actions.addToSchedule')}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
                     >
-                      <CalendarPlus size={16} strokeWidth={1.5} />
-                    </button>
+                      <CalendarPlus size={14} strokeWidth={1.75} />
+                    </PanelHeaderButton>
                   ),
                 },
               ]
@@ -796,16 +792,14 @@ export function SongBookmarksPanel({
             onSelect: () => clearBookmarksMutation.mutate(),
             testId: 'bookmarks-clear-menu',
             inline: (
-              <button
-                type="button"
+              <PanelHeaderButton
                 onClick={() => clearBookmarksMutation.mutate()}
                 disabled={clearBookmarksMutation.isPending}
                 data-testid="bookmarks-clear"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-red-600 disabled:opacity-50"
                 title={t('bookmarks.clear')}
               >
-                <Trash2 size={16} strokeWidth={1.5} />
-              </button>
+                <Trash2 size={14} strokeWidth={1.75} />
+              </PanelHeaderButton>
             ),
           },
         ]
@@ -897,24 +891,20 @@ export function SongBookmarksPanel({
                   placeholder={t('bookmarks.notePlaceholder')}
                   className="flex-1 min-w-0 h-8 text-[13px] bg-field border-0 rounded-lg px-2.5 text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={handleAddNote}
                   disabled={!newNoteContent.trim()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg disabled:opacity-50"
                 >
-                  <Check size={16} strokeWidth={1.5} />
-                </button>
-                <button
-                  type="button"
+                  <Check size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
+                <PanelHeaderButton
                   onClick={() => {
                     setIsAddingNote(false)
                     setNewNoteContent('')
                   }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
                 >
-                  <XIcon size={16} strokeWidth={1.5} />
-                </button>
+                  <XIcon size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </div>
             </div>
           )}

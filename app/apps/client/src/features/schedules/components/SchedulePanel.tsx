@@ -36,7 +36,11 @@ import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { usePermissions } from '~/provider/permissions-provider'
 import type { ComboboxOption } from '~/ui/combobox'
-import { type OverflowAction, OverflowActions } from '~/ui/menu'
+import {
+  type OverflowAction,
+  OverflowActions,
+  PanelHeaderButton,
+} from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
@@ -607,15 +611,13 @@ export function SchedulePanel({
             testId: 'schedule-add-item-menu',
             inline: (
               <Tooltip content={t('panel.addItem')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => editorsRef.current?.addItem()}
                   data-testid="schedule-add-item"
                   aria-label={t('panel.addItem')}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
                 >
-                  <ListPlus className="w-4 h-4" strokeWidth={1.5} />
-                </button>
+                  <ListPlus size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -634,21 +636,16 @@ export function SchedulePanel({
             testId: 'schedule-search-toggle-menu',
             inline: (
               <Tooltip content={searchLabel} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={toggleSearch}
                   aria-expanded={isSearchOpen}
                   aria-label={searchLabel}
                   title={searchLabel}
                   data-testid="schedule-search-toggle"
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                    isSearchOpen
-                      ? 'bg-selected text-fg'
-                      : 'text-fg-label hover:bg-hover hover:text-fg'
-                  }`}
+                  active={isSearchOpen}
                 >
-                  <Search className="w-4 h-4" strokeWidth={1.5} />
-                </button>
+                  <Search size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -670,16 +667,14 @@ export function SchedulePanel({
             testId: 'schedule-load-into-bookmarks-menu',
             inline: (
               <Tooltip content={t('panel.loadIntoBookmarks')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={loadIntoBookmarks.load}
                   disabled={loadIntoBookmarks.isPending}
                   data-testid="schedule-load-into-bookmarks"
                   aria-label={t('panel.loadIntoBookmarks')}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors disabled:opacity-50"
                 >
-                  <BookmarkPlus className="w-4 h-4" strokeWidth={1.5} />
-                </button>
+                  <BookmarkPlus size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -695,16 +690,14 @@ export function SchedulePanel({
             testId: 'schedule-add-all-bookmarks-menu',
             inline: (
               <Tooltip content={t('panel.addAllBookmarks')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={onAddAllBookmarks}
                   data-testid="schedule-add-all-bookmarks"
                   aria-label={t('panel.addAllBookmarks')}
                   title={t('panel.addAllBookmarks')}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
                 >
-                  <CalendarPlus className="w-4 h-4" strokeWidth={1.5} />
-                </button>
+                  <CalendarPlus size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -720,16 +713,14 @@ export function SchedulePanel({
             testId: 'schedule-open-menu',
             inline: (
               <Tooltip content={t('panel.openSchedule')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => onOpenSchedule(selectedScheduleId)}
                   data-testid="schedule-open"
                   aria-label={t('panel.openSchedule')}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
                   title={t('panel.openSchedule')}
                 >
-                  <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
-                </button>
+                  <ExternalLink size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -745,16 +736,14 @@ export function SchedulePanel({
             testId: 'schedule-rename-menu',
             inline: (
               <Tooltip content={t('panel.renameSchedule')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => setRenamingSchedule(schedule)}
                   data-testid="schedule-rename"
                   aria-label={t('panel.renameSchedule')}
                   title={t('panel.renameSchedule')}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
                 >
-                  <Pencil className="w-4 h-4" strokeWidth={1.5} />
-                </button>
+                  <Pencil size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -770,16 +759,14 @@ export function SchedulePanel({
             testId: 'schedule-delete-menu',
             inline: (
               <Tooltip content={t('panel.deleteSchedule')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => setPendingDelete(true)}
                   data-testid="schedule-delete"
                   aria-label={t('panel.deleteSchedule')}
                   title={t('panel.deleteSchedule')}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                </button>
+                  <Trash2 size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
