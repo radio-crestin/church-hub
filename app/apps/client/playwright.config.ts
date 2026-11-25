@@ -43,6 +43,8 @@ const PORT_OFFSETS = {
   fakeAudio: 2,
   // The church's signaling relay stand-in (fake-signaling-relay.ts).
   fakeRelay: 3,
+  // The self-hosted cloud sync service (sync-service.ts, T-171).
+  syncService: 4,
 } as const
 const derivedPort = (name: keyof typeof PORT_OFFSETS) =>
   Number(TEST_PORT) + PORT_OFFSETS[name]
@@ -65,6 +67,9 @@ export const FAKE_AUDIO_PORT = derivedPort('fakeAudio')
 
 /** Where the test server finds the signaling relay (remote access, CH-050). */
 export const FAKE_RELAY_URL = `http://127.0.0.1:${derivedPort('fakeRelay')}`
+
+/** Where the cloud sync spec runs churchhub-backend's sync service. */
+export const SYNC_SERVICE_PORT = derivedPort('syncService')
 
 /**
  * The line the server prints once the real server is bound and boot is done

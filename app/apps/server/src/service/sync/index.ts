@@ -1,3 +1,6 @@
+export { addCloudDevice, revokeCloudDevice } from './cloud/cloudDevices'
+export { connectCloudSync } from './cloud/connectCloudSync'
+export { disconnectCloudSync } from './cloud/disconnectCloudSync'
 export {
   APP_DATA_FOLDER,
   LIBRARY_FILE_NAME,

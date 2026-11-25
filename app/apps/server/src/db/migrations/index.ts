@@ -4,6 +4,7 @@ import { addBackupConfig } from './add-backup-config'
 import { addBibleTopics } from './add-bible-topics'
 import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
+import { addCloudSync } from './add-cloud-sync'
 import { addLastPresentedAt } from './add-last-presented-at'
 import { addLogsPermissions } from './add-logs-permissions'
 import { addNotifications } from './add-notifications'
@@ -451,6 +452,9 @@ export function runMigrations(rawDb: Database): MigrationResult {
   // change-tracking triggers. Must run LAST so seeded rows get their uuid
   // backfilled without being marked as dirty local edits.
   runStep('add_sync', 'Running add sync migration', () => addSync(rawDb))
+  runStep('add_cloud_sync', 'Running add cloud sync migration', () =>
+    addCloudSync(rawDb),
+  )
 
   // Strip <i>, <b> and similar formatting tags from every song. After
   // add_sync on purpose: the cleaned songs are queued for the library sync,

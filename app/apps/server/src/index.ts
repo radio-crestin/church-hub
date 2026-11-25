@@ -44,6 +44,7 @@ import {
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleBibleTopicRoutes } from './routes/bible-topics'
+import { handleCloudSyncRoutes } from './routes/cloud-sync'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
@@ -2609,6 +2610,17 @@ async function startRealServer(): Promise<void> {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
+      }
+
+      // Cloud sync: this server's church on the sync service (T-171)
+      if (url.pathname.startsWith('/api/sync/cloud')) {
+        const cloudSyncResponse = await handleCloudSyncRoutes(
+          req,
+          url,
+          backupLocalhostGuard,
+          checkPermission,
+        )
+        if (cloudSyncResponse) return handleCors(req, cloudSyncResponse)
       }
 
       // GET /api/users - List all users

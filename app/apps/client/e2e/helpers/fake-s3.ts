@@ -1,10 +1,13 @@
+import { createHash } from 'node:crypto'
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
 /**
  * A tiny S3 stand-in for specs: path-style PUT, GET and DELETE of objects
  * in memory, signatures not checked. GET is open, like a public bucket, so
- * the same server is both the S3 endpoint and the public URL.
+ * the same server is both the S3 endpoint and the public URL. Like the
+ * cloud sync bucket's policy, listing is refused and an object's ETag is
+ * honoured (If-None-Match: 304).
  */
 export class FakeS3 {
   readonly objects = new Map<string, Buffer>()
@@ -18,12 +21,24 @@ export class FakeS3 {
   readonly delays = new Map<string, number>()
   /** Paths answered with this HTTP status, like a server refusing them. */
   readonly statuses = new Map<string, number>()
+  /** Refuse PUT and DELETE without an Authorization header (anonymous writes). */
+  signedWritesOnly = false
   private server: Server | undefined
 
   async start(): Promise<void> {
     this.server = createServer((req, res) => {
-      const path = decodeURIComponent((req.url ?? '/').split('?')[0])
+      const [rawPath, query = ''] = (req.url ?? '/').split('?')
+      const path = decodeURIComponent(rawPath)
       this.requests.push(`${req.method} ${path}`)
+      if (req.method === 'GET' && /(^|&)list-type=/.test(query)) {
+        res.writeHead(403).end()
+        return
+      }
+      const write = req.method === 'PUT' || req.method === 'DELETE'
+      if (write && this.signedWritesOnly && !req.headers.authorization) {
+        res.writeHead(403).end()
+        return
+      }
       if (req.method === 'PUT') {
         const chunks: Buffer[] = []
         req.on('data', (chunk) => chunks.push(chunk))
@@ -55,7 +70,14 @@ export class FakeS3 {
           res.writeHead(404).end()
           return
         }
-        res.writeHead(200, { 'Content-Length': body.length }).end(body)
+        const etag = `"${createHash('sha1').update(body).digest('hex')}"`
+        if (req.headers['if-none-match'] === etag) {
+          res.writeHead(304, { ETag: etag }).end()
+          return
+        }
+        res
+          .writeHead(200, { 'Content-Length': body.length, ETag: etag })
+          .end(body)
       }
       setTimeout(answer, this.delays.get(path) ?? 0)
     })

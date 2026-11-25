@@ -1,12 +1,14 @@
 import { adoptRemoteIdentities } from './adoptRemoteIdentities'
 import { applyRemoteChanges } from './applyRemoteChanges'
+import { runCloudSyncCycle } from './cloud/runCloudSyncCycle'
 import { TOMBSTONE_RETENTION_DAYS } from './constants'
 import {
   downloadLibrary,
   findLibraryFile,
   uploadLibrary,
 } from './driveLibraryFile'
-import { dirtyKey, mergeLibraries } from './mergeLibraries'
+import { getPendingKeys } from './getPendingKeys'
+import { mergeLibraries } from './mergeLibraries'
 import { serializeLibrary } from './serializeLibrary'
 import { getSyncConfig, upsertSyncConfig } from './syncConfigStore'
 import { getSyncState, updateRemoteFileRef } from './syncStateStore'
@@ -21,18 +23,9 @@ const logger = createLogger('sync')
 
 let isRunning = false
 
-function getPendingKeys(): Set<string> {
-  const db = getRawDatabase()
-  const rows = db
-    .query<{ entity_type: string; entity_uuid: string }, []>(
-      'SELECT entity_type, entity_uuid FROM sync_pending',
-    )
-    .all()
-  return new Set(rows.map((row) => dirtyKey(row.entity_type, row.entity_uuid)))
-}
-
 /**
- * Runs one full sync cycle against the shared Drive library file:
+ * Runs one sync cycle on the configured transport: the cloud sync service
+ * (runCloudSyncCycle) or, as the backup option, the shared Drive library file:
  * download → adopt identities → merge (last-writer-wins) → apply remote
  * changes locally → upload the merged file. Concurrent calls coalesce into a
  * no-op; failures are recorded on sync_config.lastError for the UI.
@@ -42,6 +35,7 @@ export async function runSyncCycle(): Promise<SyncCycleResult> {
 
   const config = await getSyncConfig()
   if (!config.syncEnabled) return { success: false, skipped: 'disabled' }
+  if (config.transport === 'cloud') return runCloudSyncCycle()
 
   const drive = await getDriveService()
   if (!drive) {
