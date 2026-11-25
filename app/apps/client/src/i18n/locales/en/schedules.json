@@ -320,7 +320,7 @@
     "stop": "Stop",
     "stopDescription": "Stop the presentation and clear the screens",
     "runError": "The presentation could not start",
-    "menuDescription": "Autoplay, loop, music volume, start with Church Hub",
+    "menuDescription": "Autoplay, loop, music volume, start with Church Hub or on an OBS event",
     "runningStep": "Running · {{step}}/{{count}}",
     "hide": "Hide automation",
     "summary": {
@@ -329,7 +329,9 @@
       "musicVolume": "Music at {{volume}}%",
       "startOnAppStart": "Starts with Church Hub",
       "autoplayByText": "At least {{seconds}} s per slide, longer for more text",
-      "duration": "One pass: {{duration}}"
+      "duration": "One pass: {{duration}}",
+      "startTrigger": "Starts when {{when}}",
+      "stopTrigger": "Stops when {{when}}"
     },
     "byText": "Longer for more text",
     "byTextDescription": "A slide with more words stays up longer, so it can be read. The seconds above are the least.",
@@ -338,6 +340,27 @@
       "description": "Each slide of this item stays up this long, then the next one goes up.",
       "reset": "Automatic",
       "save": "Save"
+    },
+    "trigger": {
+      "start": "Start when",
+      "startDescription": "It starts by itself when this happens in OBS. While it is on screen it does not start over.",
+      "stop": "Stop when",
+      "stopDescription": "It stops and clears the screens when this happens while it is on screen.",
+      "never": "Never",
+      "events": {
+        "scene_selected": "A scene is selected",
+        "stream_started": "The livestream starts",
+        "stream_stopped": "The livestream ends",
+        "recording_started": "Recording starts",
+        "recording_stopped": "Recording stops"
+      },
+      "when": {
+        "scene_selected": "scene {{scene}} is selected",
+        "stream_started": "the livestream starts",
+        "stream_stopped": "the livestream ends",
+        "recording_started": "recording starts",
+        "recording_stopped": "recording stops"
+      }
     }
   },
   "playlist": {

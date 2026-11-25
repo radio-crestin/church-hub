@@ -8,6 +8,8 @@ export function isAutomationOn(
     automation.autoplaySeconds != null ||
     automation.loop ||
     automation.musicVolume != null ||
-    automation.startOnAppStart
+    automation.startOnAppStart ||
+    automation.startTrigger !== null ||
+    automation.stopTrigger !== null
   )
 }

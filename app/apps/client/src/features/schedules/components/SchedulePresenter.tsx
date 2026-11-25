@@ -747,9 +747,11 @@ export function SchedulePresenter({
               )}
             </button>
             <div className="flex items-center gap-1.5">
+              {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
               <button
                 type="button"
                 onClick={() => setShowEditAsText(true)}
+                data-testid="schedule-edit-as-text"
                 className="flex items-center gap-2 rounded-lg bg-amber-400 p-2 text-sm text-gray-900 transition-colors hover:bg-amber-500 sm:px-3 sm:py-1.5 dark:bg-amber-400 dark:hover:bg-amber-500"
               >
                 <FileText size={16} />
@@ -985,7 +987,6 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
-          {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
           {isLargeScreen && (
             <button
               type="button"
