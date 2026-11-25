@@ -7,6 +7,7 @@ import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { $ } from 'bun'
 
+import { setLinuxRunpath } from './setLinuxRunpath'
 import { WORKER_ENTRYPOINTS } from './workerEntrypoints'
 import packageJson from '../../../package.json'
 
@@ -135,6 +136,7 @@ async function main() {
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
   // Every worker thread is its own entrypoint (Bun bundles each separately).
   await $`bun build --compile --production --minify --minify-syntax --target bun --bundle ./src/index.ts ${WORKER_ENTRYPOINTS.map((entry) => `./${entry}`)} --outfile ${outfile}`
+  if (os === 'linux') await setLinuxRunpath(outfile)
 
   console.log('\x1b[32mDone! Binary created at:\x1b[0m', outfile)
 }
