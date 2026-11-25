@@ -3,16 +3,18 @@ import { useTranslation } from 'react-i18next'
 
 import { useAddItemToSchedule } from '~/features/schedules/hooks/useAddItemToSchedule'
 import { useToast } from '~/ui/toast'
+import { useDeckTitleStyle } from './useDeckTitleStyle'
 import { newTitleDeck } from '../utils/newTitleDeck'
 
 /**
- * Adds a Slides item with one title slide to a presentation, at its end or
- * after `afterItemId`.
+ * Adds a Slides item with one title slide, in the presentation's theme, to
+ * a presentation, at its end or after `afterItemId`.
  */
 export function useAddDeckItem(scheduleId: number, onAdded?: () => void) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const addItem = useAddItemToSchedule()
+  const style = useDeckTitleStyle(scheduleId)
 
   return useCallback(
     (afterItemId?: number) => {
@@ -20,7 +22,10 @@ export function useAddDeckItem(scheduleId: number, onAdded?: () => void) {
         {
           scheduleId,
           input: {
-            slides: newTitleDeck(t('slidesDeck.titlePlaceholder')),
+            slides: newTitleDeck(style, {
+              title: t('slidesDeck.titlePlaceholder'),
+              text: t('slidesDeck.textPlaceholder'),
+            }),
             afterItemId,
           },
         },
@@ -37,6 +42,6 @@ export function useAddDeckItem(scheduleId: number, onAdded?: () => void) {
         },
       )
     },
-    [addItem, onAdded, scheduleId, showToast, t],
+    [addItem, onAdded, scheduleId, showToast, style, t],
   )
 }

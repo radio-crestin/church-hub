@@ -25,7 +25,8 @@ function isBackwards(
  * stands): the next click group of the same slide is a `build`; a slide's
  * first step reached going forward `enter`s, over the slide before it when
  * that was a deck slide too; anything else (Up, a jump) is `static`. The same
- * step again is the same object, so nothing plays twice.
+ * step again is the same object, so nothing plays twice (a new one, static,
+ * when its slide was edited meanwhile).
  */
 export function deckShownSlide(
   data: TemporaryDeckSlideContent,
@@ -33,7 +34,22 @@ export function deckShownSlide(
 ): DeckShownSlide {
   const key = `${data.scheduleId ?? ''}|${data.itemId}|${data.slideIndex}|${data.buildIndex}`
   const last = before?.deck ?? null
-  if (last?.key === key) return last
+  if (last?.key === key) {
+    // The same step, its slide edited meanwhile: drawn anew, nothing played.
+    const edited =
+      last.width !== data.width ||
+      last.height !== data.height ||
+      JSON.stringify(last.slide) !== JSON.stringify(data.slide)
+    if (!edited) return last
+    return {
+      ...last,
+      width: data.width,
+      height: data.height,
+      slide: data.slide,
+      entry: 'static',
+      previous: null,
+    }
+  }
   const shown: DeckShownSlide = {
     key,
     itemId: data.itemId,

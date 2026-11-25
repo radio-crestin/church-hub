@@ -235,3 +235,16 @@ export interface DeckTargetState {
   opacity: number
   scale: number
 }
+
+/** How a deck's titles and text look by default: its presentation's theme. */
+export interface DeckTextStyle {
+  fontFamily?: string
+  /** On a 1920-wide slide. */
+  fontSize: number
+  color: string
+  bold: boolean
+  italic: boolean
+  alignment: 'left' | 'center' | 'right'
+  /** The theme's slide colour, for a new slide's background. */
+  background: string
+}

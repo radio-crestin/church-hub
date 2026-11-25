@@ -1,42 +1,17 @@
-import { newDeckId } from './newDeckId'
-import type { SlideDeck } from '../types'
-
-const WIDTH = 1920
-const HEIGHT = 1080
-
-/** `text` safe inside HTML. */
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
+import { type DeckPlaceholders, newSlide } from './newSlide'
+import type { DeckTextStyle, SlideDeck } from '../types'
 
 /**
- * A new deck: one title slide, its title box centred and waiting for its
- * text (`placeholder`, in the app's language).
+ * A new deck: one title slide in the presentation's theme `style`, its title
+ * box waiting for its text.
  */
-export function newTitleDeck(placeholder: string): SlideDeck {
+export function newTitleDeck(
+  style: DeckTextStyle,
+  placeholders: DeckPlaceholders,
+): SlideDeck {
   return {
-    width: WIDTH,
-    height: HEIGHT,
-    slides: [
-      {
-        id: newDeckId(),
-        kind: 'title',
-        background: { type: 'color', color: '#000000' },
-        elements: [
-          {
-            id: newDeckId(),
-            type: 'text',
-            x: 160,
-            y: 390,
-            w: 1600,
-            h: 300,
-            html: `<p style="text-align: center">${escapeHtml(placeholder)}</p>`,
-            verticalAlign: 'middle',
-            fontSize: 88,
-            color: '#ffffff',
-          },
-        ],
-      },
-    ],
+    width: 1920,
+    height: 1080,
+    slides: [newSlide('title', style, placeholders)],
   }
 }

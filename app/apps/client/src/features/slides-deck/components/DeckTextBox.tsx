@@ -1,3 +1,4 @@
+import { getFontFamilyStack } from '~/features/presentation/utils/getFontFamilyStack'
 import type { DeckTextElement } from '../types'
 
 /** What a text box falls back to, like a white title on a dark slide. */
@@ -20,7 +21,7 @@ export function DeckTextBox({ element }: { element: DeckTextElement }) {
       style={{
         justifyContent: JUSTIFY[element.verticalAlign ?? 'top'],
         padding: element.padding ?? 0,
-        fontFamily: element.fontFamily,
+        fontFamily: getFontFamilyStack(element.fontFamily),
         fontSize:
           (element.fontSize ?? DEFAULT_FONT_SIZE) * (element.autofitScale ?? 1),
         color: element.color ?? DEFAULT_COLOR,
