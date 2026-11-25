@@ -159,12 +159,8 @@ export function SchedulePreviewPanel({
 
       {/* Preview Area */}
       <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
-        <div className="w-full flex-shrink-0">
-          <LivePreview />
-        </div>
-
         {/* Navigation Controls */}
-        <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">
+        <div className="flex items-center justify-center gap-3 pb-3 flex-shrink-0">
           <button
             type="button"
             onClick={handlePrev}
@@ -188,6 +184,9 @@ export function SchedulePreviewPanel({
             <span className="text-base">{t('bible:controls.next')}</span>
             <ChevronRight size={20} />
           </button>
+        </div>
+        <div className="w-full flex-shrink-0">
+          <LivePreview />
         </div>
       </div>
     </div>

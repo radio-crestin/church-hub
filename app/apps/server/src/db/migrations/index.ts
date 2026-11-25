@@ -10,6 +10,7 @@ import { addNotifications } from './add-notifications'
 import { addPreviewScreen } from './add-preview-screen'
 import { addScheduleAutomation } from './add-schedule-automation'
 import { addScheduleItemConfig } from './add-schedule-item-config'
+import { addScheduleItemMidi } from './add-schedule-item-midi'
 import { addScheduleItemSung } from './add-schedule-item-sung'
 import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
@@ -419,6 +420,13 @@ export function runMigrations(rawDb: Database): MigrationResult {
     'add_schedule_item_config',
     'Running add schedule item config migration',
     () => addScheduleItemConfig(rawDb),
+  )
+
+  // A song item's MIDI file, its slides synced to the music.
+  runStep(
+    'add_schedule_item_midi',
+    'Running add schedule item MIDI migration',
+    () => addScheduleItemMidi(rawDb),
   )
 
   // Merge the legacy `bible_passage` schedule items into the surviving

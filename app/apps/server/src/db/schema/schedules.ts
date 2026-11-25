@@ -1,8 +1,15 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core'
 
 import { bibleVerses } from './bible'
 import { songs } from './songs'
+import type { AutomationTrigger } from '../../service/schedules/types'
 
 export const schedules = sqliteTable(
   'schedules',
@@ -23,6 +30,12 @@ export const schedules = sqliteTable(
     startOnAppStart: integer('start_on_app_start', { mode: 'boolean' })
       .notNull()
       .default(false),
+    startTrigger: text('start_trigger', {
+      mode: 'json',
+    }).$type<AutomationTrigger>(),
+    stopTrigger: text('stop_trigger', {
+      mode: 'json',
+    }).$type<AutomationTrigger>(),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -61,6 +74,14 @@ export const scheduleItems = sqliteTable(
     // Seconds each slide of this item stays up while the presentation runs by
     // itself; NULL = the presentation's timing.
     advanceSeconds: integer('advance_seconds'),
+    // A MIDI file played with a song item while the presentation runs, its
+    // slides following the music (service/midi-audio): the file's content
+    // hash (data/midi/<hash>.mid), its name, length, and the second each
+    // slide starts at as a JSON array (NULL = split evenly).
+    midiFile: text('midi_file'),
+    midiFileName: text('midi_file_name'),
+    midiDurationSeconds: real('midi_duration_seconds'),
+    midiVerseTimes: text('midi_verse_times'),
     // Manual "already sung" marker, per schedule (mirrors song_bookmarks).
     // Only meaningful for itemType === 'song'.
     isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),

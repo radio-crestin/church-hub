@@ -187,6 +187,8 @@ test.describe('Presentation automation', () => {
       loop: false,
       musicVolume: 100,
       startOnAppStart: true,
+      startTrigger: null,
+      stopTrigger: null,
     })
 
     await request.post('/api/schedules', {

@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 
+import { describeTrigger } from './describeTrigger'
 import type { ScheduleAutomationSettings } from '../types'
 
 /**
@@ -27,5 +28,17 @@ export function describeAutomation(
     )
   if (automation.startOnAppStart)
     parts.push(t('automation.summary.startOnAppStart'))
+  if (automation.startTrigger)
+    parts.push(
+      t('automation.summary.startTrigger', {
+        when: describeTrigger(automation.startTrigger, t),
+      }),
+    )
+  if (automation.stopTrigger)
+    parts.push(
+      t('automation.summary.stopTrigger', {
+        when: describeTrigger(automation.stopTrigger, t),
+      }),
+    )
   return parts
 }

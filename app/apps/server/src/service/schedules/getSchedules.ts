@@ -1,6 +1,7 @@
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
 import { toScheduleAutomation } from './toScheduleAutomation'
+import { toScheduleItemMidi } from './toScheduleItemMidi'
 import type {
   Schedule,
   ScheduleBiblePassageVerse,
@@ -208,6 +209,8 @@ export function getSchedules(): Schedule[] {
         loop: schedules.loop,
         musicVolume: schedules.musicVolume,
         startOnAppStart: schedules.startOnAppStart,
+        startTrigger: schedules.startTrigger,
+        stopTrigger: schedules.stopTrigger,
         createdAt: schedules.createdAt,
         updatedAt: schedules.updatedAt,
         itemCount: sql<number>`CAST(COUNT(${scheduleItems.id}) AS INTEGER)`,
@@ -273,6 +276,10 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         obsSceneName: scheduleItems.obsSceneName,
         advanceSeconds: scheduleItems.advanceSeconds,
         itemConfig: scheduleItems.itemConfig,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -363,6 +370,7 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         allVerseteTineriEntries: null,
         music: null,
         video: null,
+        midi: toScheduleItemMidi(record),
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
@@ -415,6 +423,10 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         obsSceneName: scheduleItems.obsSceneName,
         advanceSeconds: scheduleItems.advanceSeconds,
         itemConfig: scheduleItems.itemConfig,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -481,6 +493,7 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
       allVerseteTineriEntries: null,
       music: null,
       video: null,
+      midi: toScheduleItemMidi(record),
       sortOrder: record.sortOrder,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),

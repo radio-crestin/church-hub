@@ -30,6 +30,11 @@ export {
 } from './search'
 export { setScheduleItemAdvance } from './setScheduleItemAdvance'
 export { setScheduleItemConfig } from './setScheduleItemConfig'
+export {
+  type ScheduleItemMidiInput,
+  setScheduleItemMidi,
+  setScheduleItemMidiVerseTimes,
+} from './setScheduleItemMidi'
 export * from './types'
 export { updateScheduleSlide } from './updateScheduleSlide'
 export { upsertSchedule } from './upsertSchedule'

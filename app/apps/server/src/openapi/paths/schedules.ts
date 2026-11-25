@@ -639,4 +639,240 @@ export const schedulesPaths = {
       },
     },
   },
+  '/api/schedules/{id}/items/{itemId}/midi': {
+    put: {
+      tags: ['Schedules'],
+      summary: 'Attach a MIDI file to a song item',
+      description:
+        'The raw .mid file is the body (up to 5 MB). When the running presentation reaches the item, the MIDI plays through the music player and each slide goes up at its time: split evenly until synced (verse-times). Rendering to audio starts at once and is cached. Replacing the file clears synced times. Needs programs.edit',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Presentation ID',
+        },
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Song item ID',
+        },
+        {
+          name: 'name',
+          in: 'query',
+          required: false,
+          schema: { type: 'string' },
+          description: 'The file name shown for it',
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'audio/midi': { schema: { type: 'string', format: 'binary' } },
+        },
+      },
+      responses: {
+        '200': {
+          description: "The item's MIDI file",
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/ScheduleItemMidi' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+    delete: {
+      tags: ['Schedules'],
+      summary: "Remove a song item's MIDI file",
+      description: 'Stops its music if it is playing. Needs programs.edit',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Presentation ID',
+        },
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Song item ID',
+        },
+      ],
+      responses: {
+        '200': { description: 'Removed' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
+  '/api/schedules/{id}/items/{itemId}/midi/verse-times': {
+    put: {
+      tags: ['Schedules'],
+      summary: 'Save when each slide starts in the MIDI music',
+      description:
+        'verseTimes: the second each slide (choruses expanded) starts at, rising; null splits the song evenly again. Needs programs.edit',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Presentation ID',
+        },
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Song item ID',
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['verseTimes'],
+              properties: {
+                verseTimes: {
+                  type: 'array',
+                  items: { type: 'number', minimum: 0 },
+                  nullable: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: "The item's MIDI file",
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/ScheduleItemMidi' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
+  '/api/schedules/{id}/items/{itemId}/midi/play': {
+    post: {
+      tags: ['Schedules'],
+      summary: "Play a song item's MIDI music (from a given second)",
+      description:
+        'Through the music player, to sync its slides by hand; audible is false with no audio server. Needs programs.edit',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Presentation ID',
+        },
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Song item ID',
+        },
+      ],
+      requestBody: {
+        required: false,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                fromSeconds: {
+                  type: 'number',
+                  minimum: 0,
+                  description: 'Where to start; 0 by default',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Playing',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: { audible: { type: 'boolean' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
+  '/api/schedules/{id}/items/{itemId}/midi/stop': {
+    post: {
+      tags: ['Schedules'],
+      summary: "Stop a song item's MIDI music",
+      description:
+        "Only when the player plays this item's MIDI. Needs programs.edit",
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Presentation ID',
+        },
+        {
+          name: 'itemId',
+          in: 'path',
+          required: true,
+          schema: { type: 'integer' },
+          description: 'Song item ID',
+        },
+      ],
+      responses: {
+        '200': { description: 'Stopped' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
 }

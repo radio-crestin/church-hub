@@ -1,4 +1,28 @@
 export const scheduleSchemas = {
+  AutomationTrigger: {
+    type: 'object',
+    description: 'Something in OBS that starts or stops a presentation',
+    required: ['event'],
+    properties: {
+      event: {
+        type: 'string',
+        enum: [
+          'scene_selected',
+          'stream_started',
+          'stream_stopped',
+          'recording_started',
+          'recording_stopped',
+        ],
+        description:
+          'An OBS scene is selected (in OBS or Church Hub), or the livestream or recording starts or stops',
+      },
+      sceneName: {
+        type: 'string',
+        nullable: true,
+        description: 'The scene that fires it; required for scene_selected',
+      },
+    },
+  },
   ScheduleAutomationSettings: {
     type: 'object',
     description: 'How a presentation runs by itself',
@@ -31,6 +55,18 @@ export const scheduleSchemas = {
         type: 'boolean',
         description:
           'Started by itself when Church Hub starts. Setting it on one presentation turns it off on the others',
+      },
+      startTrigger: {
+        allOf: [{ $ref: '#/components/schemas/AutomationTrigger' }],
+        nullable: true,
+        description:
+          'Started by itself when this happens in OBS (not again while it is on screen); null = never. When several match, the oldest presentation starts',
+      },
+      stopTrigger: {
+        allOf: [{ $ref: '#/components/schemas/AutomationTrigger' }],
+        nullable: true,
+        description:
+          'Stopped and taken off the screens when this happens while it is on screen; null = never',
       },
     },
   },
@@ -131,6 +167,12 @@ export const scheduleSchemas = {
         description:
           "Seconds each slide of this item stays up when the presentation runs by itself; null = the presentation's timing",
       },
+      midi: {
+        allOf: [{ $ref: '#/components/schemas/ScheduleItemMidi' }],
+        nullable: true,
+        description:
+          'A MIDI file played when the running presentation reaches this song item, its slides following the music',
+      },
       isSung: {
         type: 'boolean',
         description: 'Manual "already sung" marker, scoped to this schedule',
@@ -145,6 +187,23 @@ export const scheduleSchemas = {
       sortOrder: { type: 'integer' },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
+    },
+  },
+  ScheduleItemMidi: {
+    type: 'object',
+    description:
+      "A song item's MIDI file: rendered with the bundled GeneralUser GS SoundFont and played through the music player; each slide goes up at its time in the music",
+    properties: {
+      hash: { type: 'string', description: 'SHA-256 of the stored file' },
+      fileName: { type: 'string' },
+      durationSeconds: { type: 'number' },
+      verseTimes: {
+        type: 'array',
+        items: { type: 'number' },
+        nullable: true,
+        description:
+          'The second each slide (choruses expanded) starts at, as synced; null = the song split evenly across its slides',
+      },
     },
   },
   ScheduleWithItems: {
