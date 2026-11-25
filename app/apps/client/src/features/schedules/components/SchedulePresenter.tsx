@@ -8,6 +8,8 @@ import {
   FileText,
   Loader2,
   Pencil,
+  Play,
+  Square,
   Timer,
   Trash2,
   Upload,
@@ -58,6 +60,7 @@ import {
   useScheduleFlatNavigation,
   useScheduleKeyboardShortcuts,
   useScheduleKeyLineEditor,
+  useScheduleRunToggle,
   useSetScheduleItemAdvance,
   useUpsertSchedule,
 } from '../hooks'
@@ -110,6 +113,7 @@ export function SchedulePresenter({
     isError,
     refetch,
   } = useSchedule(scheduleId)
+  const runToggle = useScheduleRunToggle(scheduleId)
 
   // Handle schedule not found - redirect to list with toast
   useEffect(() => {
@@ -808,7 +812,27 @@ export function SchedulePresenter({
 
   // A phone has no room for the file and delete buttons beside the title:
   // they join the menu there.
-  // On a phone the header has no room for Delete, so it moves into the menu.
+  // On a phone the header has room for the name and the menu only, so Run
+  // and Delete move into the menu.
+  const phoneRunAction: ActionMenuItem[] = runToggle.allowed
+    ? [
+        {
+          id: 'run-schedule',
+          label: runToggle.progress
+            ? `${runToggle.label} (${runToggle.progress})`
+            : runToggle.label,
+          description: runToggle.description,
+          icon: runToggle.isRunning ? <Square size={18} /> : <Play size={18} />,
+          iconClassName: runToggle.isRunning
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+            : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+          onSelect: runToggle.toggle,
+          disabled: runToggle.isPending,
+          active: runToggle.isRunning,
+          testId: 'schedule-run-action',
+        },
+      ]
+    : []
   const phoneDeleteAction: ActionMenuItem = {
     id: 'delete-schedule',
     label: t('actions.delete'),
@@ -821,6 +845,7 @@ export function SchedulePresenter({
 
   // Panels only form movable columns on a large screen; renaming works anywhere.
   const menuItems: ActionMenuItem[] = [
+    ...(isLargeScreen ? [] : phoneRunAction),
     ...(canEditProgram
       ? [
           {
@@ -956,7 +981,7 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
-          <ScheduleRunButton scheduleId={scheduleId} />
+          {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
           {isLargeScreen && (
             <button
               type="button"
