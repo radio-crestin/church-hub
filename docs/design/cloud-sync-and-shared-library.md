@@ -133,6 +133,11 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - The device token is minted for the chosen user.
 - **The public page** is the same React client, built as a PWA and hosted statically (Cloudflare Pages: free, with no Worker per page view). Opening the link **binds that browser or phone to that church server**. It stores the church, the token and the PC's signal id, and from then on syncs as section 3 describes.
 - **Native apps (T-050)** wrap the same build and open the same link as a deep link.
+- **As built (T-168)**:
+  - Settings > Phones > *Join with a link*: connect to the cloud (guest), pick the account and a name, get the QR code and link; the device list revokes (`GET /sync/churches/:id/devices` on the service). The link also carries `&s=<service>` when the PC uses a self-hosted service.
+  - The public app is `app/apps/client/src/publicApp.tsx` (`features/public-app/`), built by `bun run build:public` into `dist-public/` (vite-plugin-pwa: precached shell, `head.json` network-first, snapshots and segments cache-first). `bun run deploy:public` publishes it to the Pages project `church-hub` (`https://church-hub.pages.dev`, the PC's default; `CHURCH_HUB_PUBLIC_APP_URL` overrides it). Pages serves `index.html` for `/join` (no `404.html`: SPA mode).
+  - It needs the service's `ALLOWED_ORIGINS` to list the public app's origin, and the bucket a CORS rule allowing GET from it.
+  - Until T-174/T-175 the joined device reads the church's songs from the bucket (read-only); `p` (the PC's remote access room) is stored for T-174.
 
 ## 8. A phone with the PC off: full control (D3)
 
