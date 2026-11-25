@@ -24,11 +24,8 @@ import {
   useSidebarConfig,
   useSidebarItemShortcuts,
 } from '../../features/sidebar-config'
-import { DEFAULT_ICON_COLORS } from '../../features/sidebar-config/constants'
 import type {
-  BuiltInMenuItem,
   CustomPageMenuItem,
-  IconColor,
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
 import { usePermissions } from '../../provider/permissions-provider'
@@ -103,22 +100,6 @@ export function Sidebar({
         return (item as CustomPageMenuItem).url
       }
       return undefined
-    },
-    [config],
-  )
-
-  // Get icon color for an item
-  const getItemIconColor = useCallback(
-    (itemId: string): IconColor | undefined => {
-      const item = config?.items.find((i) => i.id === itemId)
-      if (item?.settings?.iconColor) {
-        return item.settings.iconColor
-      }
-      // Return default color for builtin items
-      if (item?.type === 'builtin') {
-        return DEFAULT_ICON_COLORS[(item as BuiltInMenuItem).builtinId]
-      }
-      return 'gray'
     },
     [config],
   )
@@ -233,9 +214,7 @@ export function Sidebar({
               nativeWindowSettings={getItemNativeWindowSettings(item.id)}
               iconName={getItemIconName(item.id)}
               externalUrl={getItemExternalUrl(item.id)}
-              iconColor={getItemIconColor(item.id)}
               customIconUrl={item.customIconUrl}
-              faviconBgColor={item.faviconBgColor}
             />
           ))}
 
@@ -253,7 +232,6 @@ export function Sidebar({
                 className="md:flex"
                 onClick={(e) => handleSidebarItemClick('/kiosk', e)}
                 nativeWindowSettings={getItemNativeWindowSettings('kiosk')}
-                iconColor={getItemIconColor('kiosk')}
               />
             )}
 
@@ -316,7 +294,6 @@ export function Sidebar({
                   className="md:flex flex-1 min-w-0"
                   onClick={(e) => handleSidebarItemClick('/settings', e)}
                   nativeWindowSettings={getItemNativeWindowSettings('settings')}
-                  iconColor={getItemIconColor('settings')}
                 />
               )}
               {!isScreenRoute && (

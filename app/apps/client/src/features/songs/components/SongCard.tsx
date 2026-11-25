@@ -1,4 +1,4 @@
-import { Bookmark, CalendarPlus, Eye, Sparkles, Tag } from 'lucide-react'
+import { Bookmark, CalendarPlus, Eye, Sparkles } from 'lucide-react'
 import { forwardRef, useRef } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
@@ -73,10 +73,8 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
       <div
         ref={ref}
         data-testid="song-card"
-        className={`w-full min-w-0 flex items-center border rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-sm transition-all group overflow-hidden ${
-          isSelected
-            ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 dark:ring-indigo-400/20 bg-indigo-50 dark:bg-indigo-900/20'
-            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+        className={`w-full min-w-0 flex items-center rounded-lg transition-colors duration-150 group overflow-hidden ${
+          isSelected ? 'bg-selected' : 'hover:bg-hover'
         }`}
       >
         <button
@@ -109,13 +107,13 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
               onMiddleClick()
             }
           }}
-          className={`flex-1 min-w-0 flex items-center justify-between py-2.5 pl-3 md:py-4 md:pl-4 text-left ${
+          className={`flex-1 min-w-0 flex items-center justify-between py-2 pl-3 md:py-2.5 text-left ${
             hasRowActions ? 'pr-2' : 'pr-4'
           }`}
         >
           <div className="flex-1 min-w-0">
             {hasHighlight ? (
-              <h3 className="font-medium text-gray-900 dark:text-white truncate">
+              <h3 className="text-[13px] font-medium text-fg truncate">
                 <span
                   data-testid="song-card-title"
                   className="[&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
@@ -129,7 +127,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 )}
               </h3>
             ) : (
-              <h3 className="font-medium text-gray-900 dark:text-white truncate">
+              <h3 className="text-[13px] font-medium text-fg truncate">
                 {song.title}
                 {categorySuffix && (
                   <span className="text-gray-400 dark:text-gray-500 font-normal">
@@ -143,34 +141,30 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 <SyncUpdateBadge changeKind={syncChangeKind} />
               )}
               {song.categoryName && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                  <Tag className="w-3 h-3" />
+                <span className="text-xs text-fg-hint">
                   {song.categoryName}
                 </span>
               )}
               {song.tagNames?.map((name) => (
-                <span
-                  key={name}
-                  className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded"
-                >
+                <span key={name} className="text-xs text-fg-label">
                   {name}
                 </span>
               ))}
               {song.presentationCount !== undefined &&
                 song.presentationCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 rounded">
+                  <span className="inline-flex items-center gap-1 text-xs text-fg-hint tabular-nums">
                     <Eye className="w-3 h-3" />
                     {song.presentationCount}
                   </span>
                 )}
               {song.aiRelevanceScore !== undefined && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded">
+                <span className="inline-flex items-center gap-1 text-xs text-fg-hint tabular-nums">
                   <Sparkles className="w-3 h-3" />
                   {song.aiRelevanceScore}%
                 </span>
               )}
               {song.score !== undefined && song.score > 0 && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 rounded">
+                <span className="inline-flex items-center gap-1 text-xs text-fg-hint tabular-nums">
                   <Sparkles className="w-3 h-3" />
                   {song.score}
                 </span>
@@ -207,8 +201,8 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 onClick={onToggleBookmark}
                 className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
                   isBookmarked
-                    ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300'
-                    : 'text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:text-gray-500 dark:hover:bg-amber-900/30 dark:hover:text-amber-300'
+                    ? 'text-bookmark hover:bg-hover'
+                    : 'text-fg-hint hover:bg-hover hover:text-fg'
                 }`}
               >
                 {/* Marked reads as a filled-in bookmark, not a coloured tile:
@@ -226,7 +220,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 aria-label={addToScheduleLabel}
                 title={addToScheduleLabel}
                 onClick={onAddToSchedule}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-green-50 hover:text-green-600 dark:text-gray-500 dark:hover:bg-green-900/30 dark:hover:text-green-300"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-fg-hint transition-colors hover:bg-hover hover:text-fg"
               >
                 <CalendarPlus className="w-4 h-4" />
               </button>
