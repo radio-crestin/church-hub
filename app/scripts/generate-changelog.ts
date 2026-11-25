@@ -15,6 +15,7 @@
  * Usage:
  *   bun app/scripts/generate-changelog.ts            # regenerate both files
  *   bun app/scripts/generate-changelog.ts --check    # fail if files are stale
+ *   bun app/scripts/generate-changelog.ts --stdout   # print the JSON, write nothing
  *
  * A version with plain-language notes (written-notes.json, written by the agent
  * cutting the release) carries them as `written`: the app shows them instead
@@ -91,7 +92,13 @@ function readCurrentVersion(): string {
 /** All version tags, newest first (semver-aware). */
 function listTags(): string[] {
   const out = git(['tag', '--list', 'v[0-9]*', '--sort=-version:refname'])
-  return out ? out.split('\n').filter(Boolean) : []
+  const tags = out ? out.split('\n').filter(Boolean) : []
+  // No tags: a checkout fetched without them, or a git call that matched
+  // nothing (cmd.exe quoting, T-169). Writing would empty the shipped changelog.
+  if (tags.length === 0) {
+    throw new Error('No version tags found (run: git fetch --tags): refusing to write an empty changelog')
+  }
+  return tags
 }
 
 function tagDate(ref: string): string | null {
@@ -228,6 +235,11 @@ function main(): void {
 
   const markdown = renderMarkdown(versions)
   const json = `${JSON.stringify(versions, null, 2)}\n`
+
+  if (process.argv.includes('--stdout')) {
+    process.stdout.write(json)
+    return
+  }
 
   if (check) {
     const mdStale = !existsSync(CHANGELOG_MD) || readFileSync(CHANGELOG_MD, 'utf-8') !== markdown

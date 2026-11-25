@@ -29,6 +29,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { type Subprocess, spawn } from 'bun'
 
+import { setLinuxRunpath } from './setLinuxRunpath'
 import { WORKER_ENTRYPOINTS } from './workerEntrypoints'
 import {
   DEFAULT_BACKGROUND_MEDIA,
@@ -108,6 +109,8 @@ async function compile(binaryPath: string) {
   if ((await build.exited) !== 0)
     throw new Error(await new Response(build.stderr).text())
   if (!existsSync(binaryPath)) throw new Error(`no binary at ${binaryPath}`)
+  // As compile.ts leaves it, so the check runs the sidecar the AppImage ships.
+  if (process.platform === 'linux') await setLinuxRunpath(binaryPath)
 }
 
 /**
