@@ -12,6 +12,9 @@ import {
   VerseteTineriEditor,
 } from './VerseteTineriEditor'
 import { useAddItemToSchedule, useUpdateScheduleSlide } from '../hooks'
+import { CountPicker } from '../media-items/CountPicker'
+import { setScheduleItemConfig } from '../media-items/service/scheduleItemsApi'
+import type { ItemConfig, VerseteItemConfig } from '../media-items/types'
 import type { SlideTemplate } from '../types'
 import { passageRangeToReadingFields } from '../utils/passageRangeToReadingFields'
 
@@ -19,6 +22,8 @@ interface EditingItem {
   id: number
   slideType: SlideTemplate | null
   slideContent: string | null
+  /** A Versete Biblice slide's settings: how many of its passages it shows. */
+  itemConfig?: ItemConfig | null
   verseteTineriEntries?: Array<{
     id: number
     personName: string
@@ -76,6 +81,8 @@ export function InsertSlideModal({
   const [selectedTemplate, setSelectedTemplate] =
     useState<SlideTemplate>('announcement')
   const [content, setContent] = useState('')
+  // How many of the passages it shows: null = all, in order.
+  const [pickCount, setPickCount] = useState<number | null>(null)
 
   // Versete Tineri state
   const [verseteTineriEntries, setVerseteTineriEntries] = useState<
@@ -120,6 +127,9 @@ export function InsertSlideModal({
         setSelectedTemplate(editingItem.slideType ?? 'announcement')
         setContent(editingItem.slideContent ?? '')
         editor?.commands.setContent(editingItem.slideContent ?? '')
+        setPickCount(
+          (editingItem.itemConfig as VerseteItemConfig | null)?.count ?? null,
+        )
 
         // Load versete tineri entries if editing a versete_tineri slide
         if (
@@ -148,6 +158,7 @@ export function InsertSlideModal({
         }
       } else {
         setSelectedTemplate(initialTemplate ?? 'announcement')
+        setPickCount(null)
         setContent('')
         editor?.commands.setContent('')
         setVerseteTineriEntries([])
@@ -158,6 +169,14 @@ export function InsertSlideModal({
       dialogRef.current?.close()
     }
   }, [isOpen, editor, editingItem, initialTemplate])
+
+  /** A slide showing some of its passages at random says how many. */
+  const savePickCount = async (itemId: number) => {
+    const before =
+      (editingItem?.itemConfig as VerseteItemConfig | null)?.count ?? null
+    if (pickCount === before) return
+    await setScheduleItemConfig(scheduleId, itemId, { count: pickCount })
+  }
 
   const handleSave = async () => {
     // Handle Versete Tineri template
@@ -196,6 +215,7 @@ export function InsertSlideModal({
         })
 
         if (result.success) {
+          await savePickCount(editingItem.id)
           showToast(t('messages.slideUpdated'), 'success')
           onSaved?.()
           onClose()
@@ -212,7 +232,8 @@ export function InsertSlideModal({
           },
         })
 
-        if (result.success) {
+        if (result.success && result.data) {
+          await savePickCount(result.data.id)
           showToast(t('messages.slideInserted'), 'success')
           onSaved?.()
           onClose()
@@ -346,10 +367,18 @@ export function InsertSlideModal({
 
           {/* Content Editor - Show VerseteTineriEditor for versete_tineri template */}
           {selectedTemplate === 'versete_tineri' ? (
-            <VerseteTineriEditor
-              entries={verseteTineriEntries}
-              onEntriesChange={setVerseteTineriEntries}
-            />
+            <div className="space-y-4">
+              <VerseteTineriEditor
+                entries={verseteTineriEntries}
+                onEntriesChange={setVerseteTineriEntries}
+              />
+              <CountPicker
+                testId="versete-pick-count"
+                count={pickCount}
+                onChange={setPickCount}
+                allowAll
+              />
+            </div>
           ) : (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

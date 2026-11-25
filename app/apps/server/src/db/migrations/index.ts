@@ -9,6 +9,7 @@ import { addLogsPermissions } from './add-logs-permissions'
 import { addNotifications } from './add-notifications'
 import { addPreviewScreen } from './add-preview-screen'
 import { addScheduleAutomation } from './add-schedule-automation'
+import { addScheduleItemConfig } from './add-schedule-item-config'
 import { addScheduleItemMidi } from './add-schedule-item-midi'
 import { addScheduleItemSung } from './add-schedule-item-sung'
 import { addScreenMonitor } from './add-screen-monitor'
@@ -412,6 +413,13 @@ export function runMigrations(rawDb: Database): MigrationResult {
     'add_schedule_automation',
     'Running add schedule automation migration',
     () => addScheduleAutomation(rawDb),
+  )
+
+  // The settings of the music, video and verses items of a presentation.
+  runStep(
+    'add_schedule_item_config',
+    'Running add schedule item config migration',
+    () => addScheduleItemConfig(rawDb),
   )
 
   // A song item's MIDI file, its slides synced to the music.

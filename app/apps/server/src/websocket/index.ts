@@ -475,6 +475,25 @@ export function broadcastSyncApplied(appliedCount: number) {
 }
 
 /**
+ * A presentation picked its random items again (verses, a video): pages
+ * showing it read it again.
+ */
+export function broadcastSchedulePicks(scheduleId: number) {
+  const message = JSON.stringify({
+    type: 'schedule_picks',
+    payload: { scheduleId },
+  })
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
  * Broadcasts what the presentation runner is doing (running which
  * presentation, at which step, when the next one goes up, or stopped).
  */

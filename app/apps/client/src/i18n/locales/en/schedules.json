@@ -363,6 +363,60 @@
       }
     }
   },
+  "mediaItems": {
+    "pickAgain": "Pick again",
+    "music": {
+      "title": "Music",
+      "folderTitle": "Music: {{name}}",
+      "folder": "A folder",
+      "tracks": "Tracks I pick",
+      "noFolders": "The Music library has no folders yet. Add one on the Music page first.",
+      "trackCount_one": "{{count}} track",
+      "trackCount_other": "{{count}} tracks",
+      "searchTracks": "Search tracks",
+      "picked_one": "{{count}} track picked",
+      "picked_other": "{{count}} tracks picked",
+      "shuffle": "Shuffle",
+      "shuffleDescription": "A new order each time it starts",
+      "shuffled": "shuffled",
+      "inOrder": "in order",
+      "playNow": "Play now (it starts by itself at the next slide)",
+      "playing": "Music started"
+    },
+    "video": {
+      "title": "Video",
+      "chosen": "This video",
+      "random": "A random video",
+      "randomDescription_one": "The only video in the Gallery.",
+      "randomDescription_other": "One of the {{count}} videos in the Gallery, a different one each time.",
+      "noVideos": "The Gallery has no videos yet. Upload one there first.",
+      "playFullScreen": "Play full screen",
+      "loop": "Loop",
+      "loopDescription": "Plays again from the start until the presentation moves on. While the presentation runs, it stays for the item's time, or the presentation's slide time.",
+      "background": "Background for the slides after it",
+      "backgroundDescription": "Plays silently in a loop behind the songs, verses and slides that follow, on the main screens. It is not a slide of its own.",
+      "asBackground": "Background",
+      "looping": "Loops"
+    },
+    "verses": {
+      "title": "Verses",
+      "topic": "From a topic",
+      "book": "From a book",
+      "translation": "Translation",
+      "pickBook": "Pick a book",
+      "searchTopics": "Search topics (English or Romanian)",
+      "pickedTopic_one": "{{title}}: {{count}} passage",
+      "pickedTopic_other": "{{title}}: {{count}} passages",
+      "rowTitle": "Verses: {{source}}",
+      "randomCount_one": "{{count}} at random on each loop",
+      "randomCount_other": "{{count}} at random on each loop"
+    },
+    "count": {
+      "all": "All, in order",
+      "random": "at random, picked again on each loop",
+      "label": "How many"
+    }
+  },
   "midi": {
     "title": "MIDI music",
     "short": "MIDI",

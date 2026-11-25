@@ -289,6 +289,19 @@ export const schedulesPaths = {
                   items: { $ref: '#/components/schemas/BibleReadingInput' },
                   description: 'Readings of a "Versete Biblice" slide',
                 },
+                media: {
+                  type: 'object',
+                  description: 'A music, video or verses item and its settings',
+                  properties: {
+                    itemType: {
+                      type: 'string',
+                      enum: ['music', 'video', 'verses'],
+                    },
+                    itemConfig: {
+                      $ref: '#/components/schemas/ScheduleItemConfig',
+                    },
+                  },
+                },
               },
             },
           },

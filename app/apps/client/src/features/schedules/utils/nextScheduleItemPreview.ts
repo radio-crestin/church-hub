@@ -79,14 +79,19 @@ export function getNextScheduleItemPreview(
     }
   }
 
-  if (nextItem.itemType === 'slide') {
-    if (nextItem.slideType === 'versete_tineri') {
+  if (nextItem.itemType === 'slide' || nextItem.itemType === 'verses') {
+    if (
+      nextItem.slideType === 'versete_tineri' ||
+      nextItem.itemType === 'verses'
+    ) {
       const entries = nextItem.verseteTineriEntries
       if (entries.length === 0) return undefined
       return {
         contentType: 'versete_tineri',
         preview: entries
-          .map((e) => `${e.personName} (${e.reference})`)
+          .map((e) =>
+            e.personName ? `${e.personName} (${e.reference})` : e.reference,
+          )
           .join(', '),
         label: typeLabel('addMenu.verseteTineri'),
       }

@@ -21,6 +21,12 @@
     "verseteTineriDescription": "Adaugă versete biblice cu nume",
     "scene": "Scenă OBS",
     "sceneDescription": "Comută la o scenă OBS",
+    "music": "Muzică",
+    "musicDescription": "Pornește un dosar de muzică sau piesele alese, în ordine sau amestecate",
+    "video": "Video",
+    "videoDescription": "Rulează pe tot ecranul un video din Galerie",
+    "verses": "Versete",
+    "versesDescription": "Versete dintr-o temă sau dintr-o carte, toate sau câteva la întâmplare",
     "importSchedule": {
       "title": "Importă prezentare",
       "description": "Importă dintr-o prezentare existentă"

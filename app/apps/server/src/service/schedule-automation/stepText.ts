@@ -15,6 +15,7 @@ export function stepText({ item, type, index }: ScheduleStep): string {
     case 'announcement':
       return plainText(item.slideContent ?? '')
     case 'scene':
+    case 'video':
       return ''
   }
 }

@@ -1,9 +1,21 @@
+import type {
+  ItemConfig,
+  MediaItemType,
+  ScheduleMusicSummary,
+  ScheduleVideoPick,
+} from '../schedule-items/types'
 import type { SongSlide } from '../songs'
 
 /**
  * Schedule item types (same as queue)
  */
-export type ScheduleItemType = 'song' | 'slide' | 'bible_passage'
+export type ScheduleItemType =
+  | 'song'
+  | 'slide'
+  | 'bible_passage'
+  | 'music'
+  | 'video'
+  | 'verses'
 
 /**
  * Slide template types for standalone slides (same as queue)
@@ -182,6 +194,22 @@ export interface ScheduleItem {
   obsSceneName: string | null
   /** Seconds each slide of this item stays up when it runs by itself; null = the presentation's. */
   advanceSeconds: number | null
+  /**
+   * The settings of a music, video or verses item, or how many of a Versete
+   * Biblice slide's passages it shows (service/schedule-items); null for the
+   * others. Verses items carry their passages of this run in
+   * `verseteTineriEntries`.
+   */
+  itemConfig: ItemConfig | null
+  /**
+   * Every passage of a Versete Biblice slide that shows only some of them at
+   * random (its `itemConfig.count`), for its editor; null otherwise.
+   */
+  allVerseteTineriEntries: ScheduleVerseteTineriEntry[] | null
+  /** A music item's tracks (itemType === 'music'). */
+  music: ScheduleMusicSummary | null
+  /** The video a video item shows this run; null when the gallery has none. */
+  video: ScheduleVideoPick | null
   /** A MIDI file played with a song item while it runs, its slides following it. */
   midi: ScheduleItemMidi | null
   // Common fields
@@ -262,6 +290,8 @@ export interface AddToScheduleInput {
   verseteTineriEntries?: VerseteTineriEntryInput[]
   // Scene fields
   obsSceneName?: string
+  /** A music, video or verses item and its settings. */
+  media?: { itemType: MediaItemType; itemConfig: unknown }
 }
 
 /**

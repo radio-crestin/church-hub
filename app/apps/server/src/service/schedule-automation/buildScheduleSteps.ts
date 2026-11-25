@@ -1,4 +1,5 @@
 import { expandSongSlidesWithChoruses } from '../presentation/expand-song-slides'
+import { isBackgroundVideo } from '../schedule-items/isBackgroundVideo'
 import type { ScheduleItem } from '../schedules/types'
 
 export type ScheduleStepType =
@@ -7,8 +8,14 @@ export type ScheduleStepType =
   | 'entry'
   | 'announcement'
   | 'scene'
+  | 'video'
 
-/** One presentable step of a presentation: a slide, verse, entry or slide item. */
+/**
+ * One presentable step of a presentation: a slide, verse, entry, slide item
+ * or video. A music item is no step: it starts playing as the presentation
+ * reaches the step after it (see `musicCue`); nor is a background video,
+ * shown behind the steps after it (see `stepBackground`).
+ */
 export interface ScheduleStep {
   item: ScheduleItem
   type: ScheduleStepType
@@ -32,13 +39,19 @@ export function buildScheduleSteps(items: ScheduleItem[]): ScheduleStep[] {
       item.biblePassageVerses.forEach((_, index) => {
         steps.push({ item, type: 'verse', index })
       })
-    } else if (item.slideType === 'versete_tineri') {
+    } else if (
+      item.slideType === 'versete_tineri' ||
+      item.itemType === 'verses'
+    ) {
       item.verseteTineriEntries.forEach((_, index) => {
         steps.push({ item, type: 'entry', index })
       })
     } else if (item.slideType === 'scene') {
       steps.push({ item, type: 'scene', index: 0 })
-    } else {
+    } else if (item.itemType === 'video') {
+      if (item.video && !isBackgroundVideo(item))
+        steps.push({ item, type: 'video', index: 0 })
+    } else if (item.itemType === 'slide') {
       steps.push({ item, type: 'announcement', index: 0 })
     }
   }

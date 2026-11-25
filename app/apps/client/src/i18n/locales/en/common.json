@@ -21,6 +21,12 @@
     "verseteTineriDescription": "Add Bible verses with names",
     "scene": "OBS Scene",
     "sceneDescription": "Switch to an OBS scene",
+    "music": "Music",
+    "musicDescription": "Play a music folder or tracks you pick, in order or shuffled",
+    "video": "Video",
+    "videoDescription": "Play a video from the Gallery full screen",
+    "verses": "Verses",
+    "versesDescription": "Verses from a topic or a book, all or some at random",
     "importSchedule": {
       "title": "Import Presentation",
       "description": "Import from an existing presentation"

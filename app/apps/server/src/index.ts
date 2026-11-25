@@ -51,6 +51,7 @@ import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
 import { handleRemoteAccessRoutes } from './routes/remote-access'
+import { handleScheduleItemRoutes } from './routes/schedule-items'
 import { handleScheduleMidiRoutes } from './routes/schedule-midi'
 import { handleScreenShareRoutes } from './routes/screen-share'
 import { handleSongHistoryRoutes } from './routes/song-history'
@@ -228,6 +229,8 @@ import {
   refreshPresentedSongSlides,
   removeSlideHighlight,
   type ScreenGlobalSettings,
+  setOnScheduleStepPresentedCallback,
+  setScheduleBackgroundResolver,
   setSlideHighlights,
   showSlide,
   stopPresentation,
@@ -247,9 +250,11 @@ import {
   registerRemoteAccessListener,
 } from './service/remote-access'
 import {
+  cueMusicForStep,
   getScheduleAutomationState,
   startAppStartSchedule,
   startScheduleAutomation,
+  stepBackground,
   stopScheduleAutomation,
 } from './service/schedule-automation'
 import {
@@ -3093,6 +3098,15 @@ async function startRealServer(): Promise<void> {
       // ============================================================
       // Schedules API Endpoints
       // ============================================================
+
+      // A presentation's music, video and verses items
+      const scheduleItemsResponse = await handleScheduleItemRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (scheduleItemsResponse) return scheduleItemsResponse
 
       // GET /api/schedules/search - Search schedules (must be before /api/schedules/:id)
       if (req.method === 'GET' && url.pathname === '/api/schedules/search') {
@@ -8537,6 +8551,17 @@ async function startRealServer(): Promise<void> {
   setStateCallback((state) => {
     broadcastMusicState(state)
   })
+
+  // A presentation's music item starts as the step after it goes up
+  setOnScheduleStepPresentedCallback((scheduleId, stepIndex) => {
+    cueMusicForStep(scheduleId, stepIndex).catch((error) => {
+      // biome-ignore lint/suspicious/noConsole: Server-side logging
+      console.error(`[schedule-automation] Music did not start: ${error}`)
+    })
+  })
+
+  // A presentation's steps show the background video set before them
+  setScheduleBackgroundResolver(stepBackground)
 
   // Register music state provider for new WebSocket clients
   setMusicStateProvider(() => getPlayerState())

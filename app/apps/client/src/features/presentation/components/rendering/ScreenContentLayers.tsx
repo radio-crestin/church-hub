@@ -38,6 +38,7 @@ export function ScreenContentLayers({
             nextSlideData={leaving.nextSlideData}
             styleRanges={undefined}
             isVisible={false}
+            videoSound={false}
           />
         </div>
       )}

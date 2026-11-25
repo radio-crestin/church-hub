@@ -24,6 +24,15 @@ export const presentationSchemas = {
   },
   TemporaryContent: {
     type: 'object',
+    properties: {
+      presentationBackground: {
+        type: 'object',
+        nullable: true,
+        description:
+          "The looping video behind a presentation's step, from a video item set as the background of the steps after it",
+        properties: { url: { type: 'string' } },
+      },
+    },
     oneOf: [
       {
         type: 'object',
