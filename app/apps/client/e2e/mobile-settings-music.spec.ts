@@ -1,7 +1,9 @@
 import { expect, type Page, test } from '@playwright/test'
 
-import roSidebar from '../src/i18n/locales/ro/sidebar.json' with { type: 'json' }
 import { startFakeAudioServer } from './helpers/fake-audio'
+import roSidebar from '../src/i18n/locales/ro/sidebar.json' with {
+  type: 'json',
+}
 
 /**
  * Settings and Music on a phone (CH-049): Settings opens on its list of
