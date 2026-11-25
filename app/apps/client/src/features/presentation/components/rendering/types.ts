@@ -20,6 +20,8 @@ export interface ContentData {
   styleOverrides?: SlideStyleOverride | null
   /** The song's own background (see `resolveScreenBackground`). */
   songBackground?: ScreenBackgroundConfig | null
+  /** A presentation's video item, shown full screen (ScreenVideo). */
+  videoUrl?: string
 }
 
 export interface VerseteTineriSummaryEntry {

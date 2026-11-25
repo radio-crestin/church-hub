@@ -54,6 +54,8 @@ export interface ContentData {
   styleOverrides?: SlideStyleOverride | null
   /** The song's own background (see `resolveScreenBackground`). */
   songBackground?: ScreenBackgroundConfig | null
+  /** A presentation's video item, shown full screen (ScreenVideo). */
+  videoUrl?: string
 }
 
 interface UsePresentationContentOptions {
@@ -538,6 +540,19 @@ export function usePresentationContent({
         if (temp.type === 'screen_share') {
           if (isCancelled) return
           showContent('screen_share', {})
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A video item plays full screen over the empty slide, whose own
+        // settings (its background, its clock) stay as they are.
+        if (temp.type === 'video') {
+          if (isCancelled) return
+          showContent(
+            'empty',
+            { videoUrl: temp.data.url },
+            `video|${temp.data.url}`,
+          )
           setNextSlideData(undefined)
           return
         }

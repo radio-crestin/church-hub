@@ -253,6 +253,19 @@ export type TemporaryContent =
   | { type: 'versete_tineri'; data: TemporaryVerseteTineriContent }
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
+  | { type: 'video'; data: TemporaryVideoContent }
+
+/**
+ * A presentation's video item, played full screen on the displays
+ */
+export interface TemporaryVideoContent {
+  /** The gallery video's id and URL (`/api/media/backgrounds/<id>`) */
+  mediaId: string
+  url: string
+  nextItemPreview?: NextItemPreview
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
 
 /**
  * Input for presenting a temporary Bible verse
