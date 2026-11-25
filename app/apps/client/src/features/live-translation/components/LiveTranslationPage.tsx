@@ -170,8 +170,8 @@ export function LiveTranslationPage() {
         actions={
           <>
             {state.isActive && (
-              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium text-fg-label">
+                <span className="w-1.5 h-1.5 bg-ok rounded-full" />
                 {t('status.live')}
               </span>
             )}
@@ -181,7 +181,7 @@ export function LiveTranslationPage() {
               aria-label={t('settings.button')}
               className="gap-2"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4" strokeWidth={1.5} />
               <span className="hidden sm:inline">{t('settings.button')}</span>
             </Button>
           </>
@@ -190,12 +190,12 @@ export function LiveTranslationPage() {
 
       {/* Always-visible listener link bar */}
       {streamUrl && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-lg flex-shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 bg-panel border border-line rounded-xl flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-blue-900 dark:text-blue-300 mb-0.5">
+            <div className="text-[13px] font-medium text-fg mb-0.5">
               {t('settings.streamUrl')}
             </div>
-            <div className="text-[11px] text-blue-700 dark:text-blue-400">
+            <div className="text-xs text-fg-hint">
               {t('settings.streamUrlDescription')}
             </div>
           </div>
@@ -205,17 +205,17 @@ export function LiveTranslationPage() {
               readOnly
               value={streamUrl}
               onClick={(e) => (e.target as HTMLInputElement).select()}
-              className="flex-1 sm:w-80 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 rounded-lg font-mono select-all"
+              className="flex-1 sm:w-80 px-3 py-2 text-xs bg-field text-fg-body border border-line rounded-lg font-mono select-all outline-none focus:border-focus"
             />
             <button
               type="button"
               onClick={copyLink}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
               {copied ? (
-                <Check className="w-3.5 h-3.5" />
+                <Check className="w-3.5 h-3.5" strokeWidth={1.75} />
               ) : (
-                <Copy className="w-3.5 h-3.5" />
+                <Copy className="w-3.5 h-3.5" strokeWidth={1.75} />
               )}
               {copied ? t('settings.copiedUrl') : t('settings.copyUrl')}
             </button>
@@ -229,31 +229,34 @@ export function LiveTranslationPage() {
         onClose={() => setShowSettings(false)}
         onMouseDown={handleSettingsBackdropMouseDown}
         onClick={handleSettingsBackdropClick}
-        className="m-auto p-0 rounded-xl shadow-2xl backdrop:bg-black/60 bg-white dark:bg-gray-800 w-full max-w-3xl overflow-hidden"
+        className="m-auto p-0 rounded-xl border border-line shadow-[0_12px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.55)] backdrop:bg-black/60 bg-panel text-fg w-full max-w-3xl overflow-hidden"
       >
         <div className="flex flex-col max-h-[85vh]">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-line flex-shrink-0">
             <div className="flex items-center gap-2">
-              <Settings className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              <Settings className="w-4 h-4 text-fg-label" strokeWidth={1.5} />
+              <h2 className="text-base font-semibold text-fg">
                 {t('settings.button')}
               </h2>
             </div>
             <button
               type="button"
               onClick={() => setShowSettings(false)}
-              className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-1.5 text-fg-label hover:text-fg hover:bg-hover rounded-lg transition-colors"
               aria-label={t('settings.close')}
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </div>
           <div className="overflow-y-auto flex-1 min-h-0">
-            <div className="bg-white dark:bg-gray-800">
+            <div className="bg-panel">
               {/* Engine Selector */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  <Sparkles className="w-4 h-4 text-purple-500" />
+              <div className="p-4 border-b border-line">
+                <label className="flex items-center gap-1.5 text-[13px] font-semibold text-fg mb-2">
+                  <Sparkles
+                    className="w-4 h-4 text-fg-label"
+                    strokeWidth={1.5}
+                  />
                   {t('settings.engine')}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -263,21 +266,21 @@ export function LiveTranslationPage() {
                       type="button"
                       onClick={() => setEngine(eng)}
                       disabled={state.isActive}
-                      className={`p-3 text-left rounded-lg border-2 transition-all ${
+                      className={`p-3 text-left rounded-lg border transition-colors ${
                         settings.engine === eng
-                          ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          ? 'border-line-strong bg-selected'
+                          : 'border-line hover:bg-hover'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <div className="font-semibold text-sm text-gray-900 dark:text-white">
+                      <div className="font-semibold text-[13px] text-fg">
                         {ENGINE_INFO[eng].label}
                         {eng === 'openai' && (
-                          <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                          <span className="ml-1.5 text-xs font-medium text-fg-hint">
                             {t('settings.engineDefault')}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <div className="text-xs text-fg-hint mt-0.5">
                         {ENGINE_INFO[eng].tagline}
                       </div>
                     </button>
@@ -286,16 +289,16 @@ export function LiveTranslationPage() {
               </div>
 
               {/* API Key */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-b border-line">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0 mt-0.5">
-                    <Key className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <div className="flex-shrink-0 pt-0.5">
+                    <Key className="w-4 h-4 text-fg-label" strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                    <label className="block text-[13px] font-semibold text-fg mb-1">
                       {t(`settings.apiKey.${settings.engine}`)}
                     </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    <p className="text-xs text-fg-hint mb-2">
                       {t(`settings.apiKeyDescription.${settings.engine}`)}
                     </p>
                     <input
@@ -305,7 +308,7 @@ export function LiveTranslationPage() {
                       placeholder={t(
                         `settings.apiKeyPlaceholder.${settings.engine}`,
                       )}
-                      className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full px-3 py-2 text-[13px] bg-field text-fg border border-line rounded-[10px] focus:border-focus outline-none placeholder:text-fg-hint"
                     />
                     {!apiKey && (
                       <div className="mt-2.5 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg">
@@ -316,15 +319,15 @@ export function LiveTranslationPage() {
                           href={engineInfo.getKeyUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                          className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 text-xs font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
                         >
                           {t('settings.getApiKey')}
-                          <ExternalLink className="w-3 h-3" />
+                          <ExternalLink className="w-3 h-3" strokeWidth={2} />
                         </a>
                       </div>
                     )}
                     {apiKey && (
-                      <p className="mt-1.5 text-xs text-green-600 dark:text-green-400">
+                      <p className="mt-1.5 text-xs text-ok">
                         {t('settings.apiKeyConfigured')}
                       </p>
                     )}
@@ -333,11 +336,11 @@ export function LiveTranslationPage() {
               </div>
 
               {/* Output Modality */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-1.5">
+              <div className="p-4 border-b border-line">
+                <label className="block text-[13px] font-semibold text-fg mb-1.5">
                   {t('settings.outputModality')}
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <p className="text-xs text-fg-hint mb-2">
                   {t('settings.outputModalityDescription')}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -348,16 +351,16 @@ export function LiveTranslationPage() {
                         type="button"
                         onClick={() => updateSetting('outputModality', mod)}
                         disabled={state.isActive}
-                        className={`p-3 text-left rounded-lg border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                        className={`p-3 text-left rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                           settings.outputModality === mod
-                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            ? 'border-line-strong bg-selected'
+                            : 'border-line hover:bg-hover'
                         }`}
                       >
-                        <div className="font-semibold text-sm text-gray-900 dark:text-white">
+                        <div className="font-semibold text-[13px] text-fg">
                           {t(`settings.outputModality_${mod}`)}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <div className="text-xs text-fg-hint mt-0.5">
                           {t(`settings.outputModality_${mod}_description`)}
                         </div>
                       </button>
@@ -367,8 +370,8 @@ export function LiveTranslationPage() {
               </div>
 
               {/* Source Language */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              <div className="p-4 border-b border-line">
+                <label className="block text-[13px] font-medium text-fg-body mb-1.5">
                   {t('settings.sourceLanguage')}
                 </label>
                 <Combobox
@@ -384,12 +387,12 @@ export function LiveTranslationPage() {
               </div>
 
               {/* Target Languages */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-b border-line">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <label className="text-[13px] font-semibold text-fg">
                     {t('settings.targetLanguages')}
                   </label>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-fg-hint">
                     {t('settings.targetLanguagesHint')}
                   </span>
                 </div>
@@ -398,13 +401,13 @@ export function LiveTranslationPage() {
                   {settings.targets.map((target) => (
                     <div
                       key={target.id}
-                      className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                      className="flex flex-col sm:flex-row gap-2 p-3 rounded-lg border border-line"
                     >
                       <div
                         className={`flex-1 grid grid-cols-1 gap-2 ${settings.outputModality === 'text_only' ? '' : 'sm:grid-cols-2'}`}
                       >
                         <div>
-                          <label className="block text-[10px] uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                          <label className="block text-xs font-medium text-fg-label mb-1">
                             {t('settings.targetLanguage')}
                           </label>
                           <Combobox
@@ -421,8 +424,8 @@ export function LiveTranslationPage() {
                         </div>
                         {settings.outputModality === 'audio_text' && (
                           <div>
-                            <label className="flex items-center gap-1.5 text-[10px] uppercase font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                              <Volume2 className="w-3 h-3" />
+                            <label className="flex items-center gap-1.5 text-xs font-medium text-fg-label mb-1">
+                              <Volume2 className="w-3 h-3" strokeWidth={2} />
                               {t('settings.voice')}
                             </label>
                             <Combobox
@@ -448,10 +451,10 @@ export function LiveTranslationPage() {
                           onClick={() => setPrimaryTarget(target.id)}
                           disabled={state.isActive}
                           title={t('settings.primaryTargetTooltip')}
-                          className={`flex-1 sm:flex-none px-2.5 py-1.5 text-[11px] font-medium rounded-lg transition-colors disabled:opacity-50 ${
+                          className={`flex-1 sm:flex-none px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${
                             settings.primaryTargetId === target.id
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                              ? 'bg-selected text-fg'
+                              : 'bg-field text-fg-label hover:bg-hover hover:text-fg'
                           }`}
                         >
                           {settings.primaryTargetId === target.id
@@ -464,9 +467,9 @@ export function LiveTranslationPage() {
                             onClick={() => removeTarget(target.id)}
                             disabled={state.isActive}
                             title={t('settings.removeTarget')}
-                            className="px-2.5 py-1.5 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors disabled:opacity-50"
+                            className="px-2.5 py-1.5 text-fg-label hover:bg-hover hover:text-red-600 rounded-lg transition-colors disabled:opacity-50"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-4 h-4" strokeWidth={1.5} />
                           </button>
                         )}
                       </div>
@@ -480,9 +483,9 @@ export function LiveTranslationPage() {
                         addTarget(availableLanguagesForNewTarget[0]?.value)
                       }
                       disabled={state.isActive}
-                      className="flex items-center justify-center gap-2 w-full px-3 py-2 text-sm font-medium border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-medium border border-dashed border-line-strong text-fg-label hover:bg-hover hover:text-fg rounded-lg transition-colors disabled:opacity-50"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4" strokeWidth={1.5} />
                       {t('settings.addTarget')}
                     </button>
                   )}
@@ -491,10 +494,13 @@ export function LiveTranslationPage() {
 
               {/* Audio Devices */}
               {audioDevices.length > 0 && (
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border-b border-line grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                      <Mic className="w-3.5 h-3.5" />
+                    <label className="flex items-center gap-1.5 text-[13px] font-medium text-fg-body mb-1.5">
+                      <Mic
+                        className="w-3.5 h-3.5 text-fg-label"
+                        strokeWidth={1.75}
+                      />
                       {t('settings.inputDevice')}
                     </label>
                     <Combobox
@@ -509,8 +515,11 @@ export function LiveTranslationPage() {
                     />
                   </div>
                   <div>
-                    <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                      <Volume2 className="w-3.5 h-3.5" />
+                    <label className="flex items-center gap-1.5 text-[13px] font-medium text-fg-body mb-1.5">
+                      <Volume2
+                        className="w-3.5 h-3.5 text-fg-label"
+                        strokeWidth={1.75}
+                      />
                       {t('settings.outputDevice')}
                     </label>
                     <Combobox
@@ -529,10 +538,10 @@ export function LiveTranslationPage() {
 
               {/* Output Mode + Listener Link */}
               <div className="p-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <label className="block text-[13px] font-medium text-fg-body mb-1.5">
                   {t('settings.outputMode')}
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <p className="text-xs text-fg-hint mb-2">
                   {t('settings.outputModeDescription')}
                 </p>
                 <div className="flex gap-2 mb-3">
@@ -543,10 +552,10 @@ export function LiveTranslationPage() {
                         type="button"
                         onClick={() => updateSetting('outputMode', mode)}
                         disabled={state.isActive}
-                        className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
+                        className={`flex-1 px-3 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50 ${
                           settings.outputMode === mode
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ? 'bg-selected text-fg'
+                            : 'bg-field text-fg-label hover:bg-hover hover:text-fg'
                         }`}
                       >
                         {t(
@@ -565,9 +574,9 @@ export function LiveTranslationPage() {
                         resetSecret()
                       }
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-field hover:bg-hover text-fg-body rounded-lg transition-colors"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
+                    <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
                     {t('settings.resetSecret')}
                   </button>
                 )}
@@ -580,27 +589,27 @@ export function LiveTranslationPage() {
       {/* Language Bar + Controls */}
       <div className="flex items-center justify-between flex-shrink-0 flex-wrap gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs">
-            <span className="text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider text-[10px]">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-field rounded-lg text-xs">
+            <span className="text-fg-hint font-medium text-xs">
               {t('settings.engine')}
             </span>
-            <span className="font-semibold text-gray-700 dark:text-gray-300">
+            <span className="font-semibold text-fg-body">
               {ENGINE_INFO[settings.engine].label}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm">
-            <span className="font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-field rounded-lg text-[13px]">
+            <span className="font-medium text-fg-body">
               {LANGUAGES.find((l) => l.code === settings.sourceLanguage)?.name}
             </span>
-            <span className="text-gray-400">→</span>
+            <span className="text-fg-hint">→</span>
             <div className="flex gap-1">
               {settings.targets.map((tgt) => (
                 <span
                   key={tgt.id}
-                  className={`px-1.5 py-0.5 text-xs rounded ${
+                  className={`px-1.5 py-0.5 text-xs rounded-md ${
                     settings.primaryTargetId === tgt.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                      ? 'bg-selected font-semibold text-fg'
+                      : 'text-fg-hint'
                   }`}
                   title={
                     LANGUAGES.find((l) => l.code === tgt.targetLanguage)?.name
@@ -618,10 +627,10 @@ export function LiveTranslationPage() {
             <button
               type="button"
               onClick={clearTranscription}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
               title={t('controls.clear')}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" strokeWidth={1.5} />
             </button>
           )}
 
@@ -629,22 +638,22 @@ export function LiveTranslationPage() {
             type="button"
             onClick={state.isActive ? stopTranslation : startTranslation}
             disabled={!canStart && !state.isActive}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
               state.isActive
                 ? 'bg-red-600 hover:bg-red-700 text-white'
                 : canStart
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                  ? 'bg-primary hover:bg-indigo-700 text-white'
+                  : 'bg-field text-fg-hint cursor-not-allowed'
             }`}
           >
             {state.isActive ? (
               <>
-                <MicOff className="w-4 h-4" />
+                <MicOff className="w-4 h-4" strokeWidth={1.5} />
                 {t('controls.stop')}
               </>
             ) : (
               <>
-                <Mic className="w-4 h-4" />
+                <Mic className="w-4 h-4" strokeWidth={1.5} />
                 {t('controls.start')}
               </>
             )}
@@ -654,7 +663,7 @@ export function LiveTranslationPage() {
 
       {/* Audio Level Meters */}
       {state.isActive && (
-        <div className="flex items-center gap-6 px-4 py-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center gap-6 px-4 py-3 bg-panel rounded-xl border border-line flex-shrink-0">
           <AudioLevelMeter
             level={state.inputAudioLevel}
             label={t('levels.input')}
@@ -675,13 +684,13 @@ export function LiveTranslationPage() {
           {state.targets.map((tgt) => (
             <span
               key={tgt.id}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-panel border border-line rounded-full"
             >
-              <span className="font-semibold text-gray-700 dark:text-gray-300">
+              <span className="font-semibold text-fg-body">
                 {tgt.targetLanguage.toUpperCase()}
               </span>
-              <span className="text-gray-400">·</span>
-              <span className="text-gray-500 dark:text-gray-400">
+              <span className="text-fg-hint">·</span>
+              <span className="tabular-nums text-fg-hint">
                 {t('settings.listenersCount', { count: tgt.listenerCount })}
               </span>
             </span>
@@ -696,7 +705,7 @@ export function LiveTranslationPage() {
       )}
 
       {/* Transcription Area */}
-      <div className="flex-1 min-h-0 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 bg-panel rounded-xl border border-line flex flex-col overflow-hidden">
         <TranscriptionDisplay
           entries={state.transcription}
           sourceLanguage={settings.sourceLanguage}

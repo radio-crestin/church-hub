@@ -18,7 +18,7 @@ export function ProgressBar({
 
   return (
     <div className="flex items-center gap-3 w-full">
-      <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums w-10 text-right">
+      <span className="text-xs text-fg-hint tabular-nums w-10 text-right">
         {formatDuration(currentTime)}
       </span>
       <Slider
@@ -30,7 +30,7 @@ export function ProgressBar({
         className="flex-1"
         showValue={false}
       />
-      <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums w-10">
+      <span className="text-xs text-fg-hint tabular-nums w-10">
         {formatDuration(duration)}
       </span>
     </div>

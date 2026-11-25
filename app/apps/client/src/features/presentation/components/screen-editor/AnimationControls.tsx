@@ -55,17 +55,13 @@ export function AnimationControls({
         return (
           <div
             key={key}
-            className={
-              index > 0
-                ? 'pt-3 border-t border-gray-200 dark:border-gray-700'
-                : ''
-            }
+            className={index > 0 ? 'pt-3 border-t border-line' : ''}
           >
-            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+            <Label className="text-xs text-fg-label mb-1 block">
               {t(`screens.animation.${key}`)}
             </Label>
             {described && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+              <p className="text-xs text-fg-hint mb-2">
                 {t(`screens.animation.${key}Description`)}
               </p>
             )}
@@ -81,7 +77,7 @@ export function AnimationControls({
               className="w-full mb-2"
               portalContainer={portalContainer}
             />
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.animation.durationMs')}
             </Label>
             <Slider

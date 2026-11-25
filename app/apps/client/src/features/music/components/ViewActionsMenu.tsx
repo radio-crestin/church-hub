@@ -45,7 +45,7 @@ export function ViewActionsMenu({
     {
       id: 'queue-all',
       label: t('files.addFolderToQueue'),
-      icon: <ListPlus className="h-4 w-4" />,
+      icon: <ListPlus className="h-4 w-4" strokeWidth={1.5} />,
       onSelect: () => onAddToQueue(tracks),
       disabled: tracks.length === 0,
       testId: 'music-view-queue-all',
@@ -55,7 +55,7 @@ export function ViewActionsMenu({
     items.push({
       id: 'rename',
       label: t('folders.rename'),
-      icon: <Pencil className="h-4 w-4" />,
+      icon: <Pencil className="h-4 w-4" strokeWidth={1.5} />,
       onSelect: () => setDialog('rename'),
       testId: 'music-view-rename',
     })
@@ -64,7 +64,7 @@ export function ViewActionsMenu({
     items.push({
       id: 'sync',
       label: t('folders.sync'),
-      icon: <RefreshCw className="h-4 w-4" />,
+      icon: <RefreshCw className="h-4 w-4" strokeWidth={1.5} />,
       onSelect: () => syncFolder.mutate(view.id),
       disabled: syncFolder.isPending,
       testId: 'music-view-sync',
@@ -74,7 +74,7 @@ export function ViewActionsMenu({
     items.push({
       id: 'delete',
       label: isPlaylist ? t('playlist.delete') : t('folders.delete'),
-      icon: <Trash2 className="h-4 w-4" />,
+      icon: <Trash2 className="h-4 w-4" strokeWidth={1.5} />,
       iconClassName: 'text-red-600 dark:text-red-400',
       onSelect: () => setDialog('delete'),
       testId: 'music-view-delete',

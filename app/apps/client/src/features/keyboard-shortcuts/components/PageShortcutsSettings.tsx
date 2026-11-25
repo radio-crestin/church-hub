@@ -249,7 +249,7 @@ export function PageShortcutsSettings({ page }: PageShortcutsSettingsProps) {
 
       {hasSearch && (
         <>
-          <div className="border-gray-200 border-t pt-2 dark:border-gray-700">
+          <div className="border-line border-t pt-2">
             <ShortcutListSection
               title={t('sections.sidebarItem.shortcuts.focusSearchTitle')}
               description={t(
@@ -265,7 +265,7 @@ export function PageShortcutsSettings({ page }: PageShortcutsSettingsProps) {
             />
           </div>
 
-          <p className="text-gray-400 text-xs italic dark:text-gray-500">
+          <p className="text-fg-hint text-xs">
             {t('sections.sidebarItem.shortcuts.sameShortcutHint')}
           </p>
         </>
@@ -273,12 +273,12 @@ export function PageShortcutsSettings({ page }: PageShortcutsSettingsProps) {
 
       {/* Presentation keys that only work while this page is open */}
       {hasSlideKeys && (
-        <div className="space-y-4 border-gray-200 border-t pt-3 dark:border-gray-700">
+        <div className="space-y-4 border-line border-t pt-3">
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm dark:text-white">
+            <h4 className="font-semibold text-fg text-[13px]">
               {t('sections.sidebarItem.shortcuts.page.title')}
             </h4>
-            <p className="mt-0.5 text-gray-500 text-xs dark:text-gray-400">
+            <p className="mt-0.5 text-fg-hint text-xs">
               {t('sections.sidebarItem.shortcuts.page.description')}
             </p>
           </div>

@@ -58,7 +58,7 @@ export function PositionTools({
         onClick={handleCopy}
         data-testid="screen-editor-copy-position"
       >
-        <Copy className="w-4 h-4 mr-1.5" />
+        <Copy size={16} strokeWidth={1.5} className="mr-1.5" />
         {t('screens.position.copy')}
       </Button>
       <Button
@@ -69,7 +69,7 @@ export function PositionTools({
         title={copied ? undefined : t('screens.position.nothingCopied')}
         data-testid="screen-editor-paste-position"
       >
-        <ClipboardPaste className="w-4 h-4 mr-1.5" />
+        <ClipboardPaste size={16} strokeWidth={1.5} className="mr-1.5" />
         {t('screens.position.paste')}
       </Button>
       <Button

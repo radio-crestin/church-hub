@@ -35,7 +35,7 @@ const EMPTY_STYLE_RANGES: TextStyleRange[] = []
 // the fixed-position context menu inside stays anchored to the viewport.
 const FRAME_CLASS = 'relative w-full max-h-full min-h-0'
 const BOX_CLASS =
-  'absolute inset-0 m-auto h-full max-w-full rounded-lg overflow-hidden shadow-lg'
+  'absolute inset-0 m-auto h-full max-w-full rounded-lg overflow-hidden bg-black'
 
 interface LivePreviewProps {
   /**
@@ -55,12 +55,15 @@ interface LivePreviewProps {
    * "Background" toggle). Only this preview changes, never the screens.
    */
   hideBackground?: boolean
+  /** Outlines the box in the `live` colour while it shows what is on screen. */
+  isLive?: boolean
 }
 
 export function LivePreview({
   previewContent = null,
   clockOverride,
   hideBackground = false,
+  isLive = false,
 }: LivePreviewProps) {
   // Note: WebSocket connection is established by parent ControlRoom component
   // Don't call useWebSocket() here as it causes re-renders from debug info state updates
@@ -187,10 +190,10 @@ export function LivePreview({
     return (
       <div className={FRAME_CLASS} style={{ aspectRatio }}>
         <div
-          className={`${BOX_CLASS} bg-gray-800 flex items-center justify-center`}
+          className={`${BOX_CLASS} flex items-center justify-center`}
           style={{ aspectRatio }}
         >
-          <div className="text-gray-400 text-sm">Loading...</div>
+          <div className="text-white/60 text-[13px]">Loading...</div>
         </div>
       </div>
     )
@@ -198,7 +201,10 @@ export function LivePreview({
 
   return (
     <div className={FRAME_CLASS} style={{ aspectRatio }}>
-      <div className={BOX_CLASS} style={{ aspectRatio }}>
+      <div
+        className={`${BOX_CLASS} ${isLive ? 'ring-1 ring-live' : ''}`}
+        style={{ aspectRatio }}
+      >
         {/* The picker sits beside the mirrored content, not in it, so text
             selection offsets and content checks see only the screen. */}
         <div

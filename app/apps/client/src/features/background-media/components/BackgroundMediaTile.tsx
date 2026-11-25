@@ -26,10 +26,10 @@ export function BackgroundMediaTile({
       data-testid="background-media-item"
       data-media-id={media.id}
       data-selected={isSelected}
-      className={`relative aspect-video overflow-hidden rounded-md bg-gray-900 ${
+      className={`relative aspect-video overflow-hidden rounded-lg bg-black ${
         isSelected
-          ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-white dark:ring-offset-gray-900'
-          : 'ring-1 ring-gray-200 hover:ring-gray-400 dark:ring-gray-700 dark:hover:ring-gray-500'
+          ? 'ring-2 ring-fg ring-offset-1 ring-offset-panel'
+          : 'ring-1 ring-line hover:ring-line-strong'
       }`}
     >
       <button
@@ -49,9 +49,9 @@ export function BackgroundMediaTile({
           onClick={onDelete}
           aria-label={t('screens.background.delete')}
           title={t('screens.background.delete')}
-          className="absolute top-1 right-1 rounded bg-black/60 p-1 text-white transition-colors hover:bg-red-600"
+          className="absolute top-1 right-1 rounded-md bg-black/60 p-1 text-white transition-colors hover:bg-red-600"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
         </button>
       )}
     </div>
