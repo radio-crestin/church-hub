@@ -84,6 +84,7 @@ Never use a raw hex or a palette class (`bg-zinc-800`, `text-purple-500`) in a c
   - Shows the live slide at full sidebar width with the `live` outline, then the title and "Chorus 2 / 6", then two equal buttons: gray Previous and blue Next.
   - Appears on every page that has no preview of its own. Song view, Bible, the Schedule presenter and Control Room have their own preview and hide it.
 - **Live row:** what is on the projector gets a `live-tint` fill, a 1px inset `live` outline, and a `live`-coloured number. It never gets a "Live" text badge.
+- **The big preview never gets a red frame.** The operator rejected it. The outline marks the row in the list. Only the small sidebar live-card thumbnail carries it.
 - **Preview controls:**
   - `[← keycap] Previous`: `bg-field`.
   - `Next [→ keycap]`: `primary`. It reads only "Next"; never put the next slide's name in it.

@@ -55,15 +55,12 @@ interface LivePreviewProps {
    * "Background" toggle). Only this preview changes, never the screens.
    */
   hideBackground?: boolean
-  /** Outlines the box in the `live` colour while it shows what is on screen. */
-  isLive?: boolean
 }
 
 export function LivePreview({
   previewContent = null,
   clockOverride,
   hideBackground = false,
-  isLive = false,
 }: LivePreviewProps) {
   // Note: WebSocket connection is established by parent ControlRoom component
   // Don't call useWebSocket() here as it causes re-renders from debug info state updates
@@ -201,10 +198,7 @@ export function LivePreview({
 
   return (
     <div className={FRAME_CLASS} style={{ aspectRatio }}>
-      <div
-        className={`${BOX_CLASS} ${isLive ? 'ring-1 ring-live' : ''}`}
-        style={{ aspectRatio }}
-      >
+      <div className={BOX_CLASS} style={{ aspectRatio }}>
         {/* The picker sits beside the mirrored content, not in it, so text
             selection offsets and content checks see only the screen. */}
         <div

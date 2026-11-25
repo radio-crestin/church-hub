@@ -213,7 +213,7 @@ export function ControlRoom({ liveProgram }: ControlRoomProps) {
 
         <div className="lg:flex-1 flex items-center justify-center min-h-0 overflow-hidden">
           <div className="w-full h-full flex items-center justify-center">
-            <LivePreview clockOverride={CONTROL_ROOM_CLOCK} isLive={isLive} />
+            <LivePreview clockOverride={CONTROL_ROOM_CLOCK} />
           </div>
         </div>
       </div>

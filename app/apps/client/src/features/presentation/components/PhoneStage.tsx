@@ -77,7 +77,6 @@ export function PhoneStage({
           <LivePreview
             previewContent={previewContent}
             hideBackground={hideBackground}
-            isLive={isLive && !previewContent}
           />
         </div>
         <div className="hidden min-w-0 flex-1 flex-col items-start gap-2 group-data-[stuck=true]/pinned:flex [&>*]:max-w-full">
