@@ -1,3 +1,5 @@
+import { basename } from 'node:path'
+
 import {
   getNowPlayingQueue,
   getQueueItemAtIndex,
@@ -144,8 +146,14 @@ function startStatePolling(): void {
         isMuted: result.is_muted,
       })
 
-      // Detect track end: was playing, now not playing, and we have a current track
-      if (wasPlaying && !isNowPlaying && playerState.currentTrack) {
+      // Detect track end: was playing, now not playing, and we have a current
+      // track from the queue (a file played by itself, fileId -1, just ends)
+      if (
+        wasPlaying &&
+        !isNowPlaying &&
+        playerState.currentTrack &&
+        playerState.currentTrack.fileId >= 0
+      ) {
         // Check if track reached the end (within 0.5s of duration)
         if (
           result.duration > 0 &&
@@ -376,10 +384,8 @@ async function playFile(fileId: number): Promise<void> {
   await playAtIndex(index)
 }
 
-export async function executeCommand(
-  command: MusicPlayerCommand,
-): Promise<void> {
-  // An audio server that came up after the start is taken on at first use.
+/** An audio server that came up after the start is taken on at first use. */
+async function ensureAudioServer(action: string): Promise<boolean> {
   if (!audioServerAvailable && (await waitForAudioServer(1, 0))) {
     audioServerAvailable = true
     await connectAudioServer()
@@ -388,10 +394,42 @@ export async function executeCommand(
     // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
     console.warn(
       LOG_PREFIX,
-      `Cannot execute '${command.type}': audio server not available`,
+      `Cannot execute '${action}': audio server not available`,
     )
-    return
   }
+  return audioServerAvailable
+}
+
+/**
+ * Plays a file that is not in the music library (a presentation's rendered
+ * MIDI audio) in place of the queue's track, with the player's volume; the
+ * queue stays as it is and does not move on when the file ends. False when
+ * there is no audio server.
+ */
+export async function playAudioFile(
+  path: string,
+  title: string,
+): Promise<boolean> {
+  if (!(await ensureAudioServer('play_audio_file'))) return false
+  updateState({
+    currentIndex: -1,
+    currentTrack: {
+      id: -1,
+      fileId: -1,
+      path,
+      filename: basename(path),
+      title,
+    },
+  })
+  await loadAndPlayFile(path)
+  updateState({ isPlaying: true, currentTime: 0 })
+  return true
+}
+
+export async function executeCommand(
+  command: MusicPlayerCommand,
+): Promise<void> {
+  if (!(await ensureAudioServer(command.type))) return
 
   switch (command.type) {
     case 'play':

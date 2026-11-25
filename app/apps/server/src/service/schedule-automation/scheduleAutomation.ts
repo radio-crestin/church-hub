@@ -1,4 +1,11 @@
 import { buildScheduleSteps, type ScheduleStep } from './buildScheduleSteps'
+import {
+  endItemMidi,
+  itemMidiPosition,
+  itemMidiStartedAt,
+  startItemMidi,
+} from './itemMidiPlayback'
+import { midiStepTimes, nextMidiStep } from './nextMidiStep'
 import { presentScheduleStep } from './presentScheduleStep'
 import { stepSeconds } from './stepSeconds'
 import type { ScheduleAutomationState } from './types'
@@ -13,6 +20,7 @@ import {
   getPresentationState,
 } from '../presentation/presentation-state'
 import { getScheduleById } from '../schedules/getSchedules'
+import type { Schedule, ScheduleItem } from '../schedules/types'
 import { endScreenShareSession } from '../screen-share/session'
 
 const logger = createLogger('schedule-automation')
@@ -24,6 +32,8 @@ let state: ScheduleAutomationState = { running: false }
 let timer: ReturnType<typeof setInterval> | null = null
 /** A step being put up; ticks wait for it instead of piling up. */
 let busy = false
+/** The running order the step on screen was put up from. */
+let runSteps: ScheduleStep[] = []
 
 export function getScheduleAutomationState(): ScheduleAutomationState {
   return state
@@ -57,6 +67,10 @@ export function stopScheduleAutomation(
   stopTimer()
   if (!state.running) return state
   logger.info(`Presentation ${state.scheduleId} stopped: ${reason}`)
+  // An operator taking over leaves the music playing too.
+  endItemMidi({ stop: clear }).catch((error) => {
+    logger.warning(`Could not stop the MIDI audio: ${error}`)
+  })
   if (clear && liveStep().scheduleId === state.scheduleId) {
     broadcastPresentationState(clearTemporaryContent())
   }
@@ -74,11 +88,60 @@ async function setMusicVolume(volume: number | null) {
 }
 
 /**
+ * Puts a step up; a step of a MIDI item starts its music (rendered first the
+ * first time), whose position then moves the item's slides on.
+ */
+async function presentStep(
+  scheduleId: number,
+  items: ScheduleItem[],
+  steps: ScheduleStep[],
+  stepIndex: number,
+) {
+  const step = steps[stepIndex] as ScheduleStep
+  runSteps = steps
+  broadcastPresentationState(
+    await presentScheduleStep(scheduleId, items, step, stepIndex),
+  )
+  if (step.item.midi) await startItemMidi(step.item)
+  else await endItemMidi({ stop: false })
+}
+
+/**
+ * How long a step stays up and when the next goes up: a MIDI item's slides
+ * by their times in the music, the others by `stepSeconds`.
+ */
+function stepTiming(
+  steps: ScheduleStep[],
+  stepIndex: number,
+  automation: Schedule['automation'],
+  fallbackSeconds: number,
+): { stepSeconds: number; nextStepAt: number } {
+  const step = steps[stepIndex] as ScheduleStep
+  const startedAt = itemMidiStartedAt(step.item)
+  if (step.item.midi && startedAt !== null) {
+    const times = midiStepTimes(steps, step)
+    const start = times[step.index] ?? 0
+    const end = times[step.index + 1] ?? step.item.midi.durationSeconds
+    return {
+      stepSeconds: Math.max(0, Math.round(end - start)),
+      nextStepAt: startedAt + end * 1000,
+    }
+  }
+  const seconds = stepSeconds(step, {
+    ...automation,
+    autoplaySeconds: automation.autoplaySeconds ?? fallbackSeconds,
+  })
+  return { stepSeconds: seconds, nextStepAt: Date.now() + seconds * 1000 }
+}
+
+/**
  * Starts a presentation from its first step. With autoplay on, the server
  * then moves it on by itself, each step after its own time (`stepSeconds`),
  * whether or not a page is
  * open, until it is stopped, an operator presents something else (which takes
- * it over), or it ends. With autoplay off this only puts its first step up.
+ * it over), or it ends. With autoplay off this only puts its first step up,
+ * unless that is a MIDI item: its slides then follow its music, and the run
+ * ends after it.
  */
 export async function startScheduleAutomation(
   scheduleId: number,
@@ -92,21 +155,16 @@ export async function startScheduleAutomation(
   }
 
   stopScheduleAutomation('another presentation started', { clear: false })
+  await endItemMidi({ stop: true })
   endScreenShareSession()
   await setMusicVolume(schedule.automation.musicVolume)
-  broadcastPresentationState(
-    await presentScheduleStep(scheduleId, schedule.items, firstStep, 0),
-  )
+  await presentStep(scheduleId, schedule.items, steps, 0)
 
   const { autoplaySeconds, loop } = schedule.automation
-  if (!autoplaySeconds) return state
+  if (!autoplaySeconds && !firstStep.item.midi) return state
 
-  const seconds = stepSeconds(firstStep, {
-    ...schedule.automation,
-    autoplaySeconds,
-  })
   logger.info(
-    `Presentation ${scheduleId} running: ${steps.length} steps, at least ${autoplaySeconds}s each${loop ? ', in a loop' : ''}`,
+    `Presentation ${scheduleId} running: ${steps.length} steps, ${autoplaySeconds ? `at least ${autoplaySeconds}s each` : 'its MIDI item'}${loop ? ', in a loop' : ''}`,
   )
   setState({
     running: true,
@@ -114,9 +172,8 @@ export async function startScheduleAutomation(
     title: schedule.title,
     stepIndex: 0,
     stepCount: steps.length,
-    stepSeconds: seconds,
     loop,
-    nextStepAt: Date.now() + seconds * 1000,
+    ...stepTiming(steps, 0, schedule.automation, autoplaySeconds ?? 0),
   })
   timer = setInterval(() => {
     tick().catch((error) => {
@@ -136,7 +193,13 @@ async function tick() {
     stopScheduleAutomation('an operator took over', { clear: false })
     return
   }
-  if (Date.now() < run.nextStepAt) return
+  const current = runSteps[run.stepIndex]
+  const midiNext = current?.item.midi
+    ? nextMidiStep(runSteps, run.stepIndex, itemMidiPosition(current.item))
+    : null
+  if (current?.item.midi ? midiNext === null : Date.now() < run.nextStepAt) {
+    return
+  }
 
   busy = true
   try {
@@ -150,7 +213,7 @@ async function tick() {
       return
     }
 
-    let stepIndex = run.stepIndex + 1
+    let stepIndex = midiNext ?? run.stepIndex + 1
     if (stepIndex >= steps.length) {
       if (!schedule.automation.loop) {
         stopScheduleAutomation('it reached the end', { clear: true })
@@ -160,29 +223,22 @@ async function tick() {
     }
     const step = steps[stepIndex] as ScheduleStep
 
-    // Autoplay turned off while it runs: finish with the last time it had.
-    const seconds = stepSeconds(step, {
-      ...schedule.automation,
-      autoplaySeconds: schedule.automation.autoplaySeconds ?? run.stepSeconds,
-    })
-    broadcastPresentationState(
-      await presentScheduleStep(
-        run.scheduleId,
-        schedule.items,
-        step,
-        stepIndex,
-      ),
-    )
+    await presentStep(run.scheduleId, schedule.items, steps, stepIndex)
     // Stopped while the step went up: stay stopped.
     if (!state.running || state.scheduleId !== run.scheduleId) return
+    // Without autoplay only a MIDI item runs by itself; after it, it ends.
+    if (!schedule.automation.autoplaySeconds && !step.item.midi) {
+      stopScheduleAutomation('its MIDI item ended', { clear: false })
+      return
+    }
     setState({
       ...run,
       title: schedule.title,
       stepIndex,
       stepCount: steps.length,
-      stepSeconds: seconds,
       loop: schedule.automation.loop,
-      nextStepAt: Date.now() + seconds * 1000,
+      // Autoplay turned off while it runs: finish with the last time it had.
+      ...stepTiming(steps, stepIndex, schedule.automation, run.stepSeconds),
     })
   } finally {
     busy = false

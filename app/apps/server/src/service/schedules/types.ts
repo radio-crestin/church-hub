@@ -110,6 +110,19 @@ export interface ScheduleItemWithSongRecord extends ScheduleItemRecord {
 }
 
 /**
+ * A song item's MIDI file (service/midi-audio): played when the running
+ * presentation reaches the item, each slide going up at its time.
+ */
+export interface ScheduleItemMidi {
+  /** Content hash of the stored file. */
+  hash: string
+  fileName: string
+  durationSeconds: number
+  /** The second each slide starts at, as synced; null = split evenly. */
+  verseTimes: number[] | null
+}
+
+/**
  * Schedule item API response format
  */
 export interface ScheduleItem {
@@ -142,6 +155,8 @@ export interface ScheduleItem {
   obsSceneName: string | null
   /** Seconds each slide of this item stays up when it runs by itself; null = the presentation's. */
   advanceSeconds: number | null
+  /** A MIDI file played with a song item while it runs, its slides following it. */
+  midi: ScheduleItemMidi | null
   // Common fields
   sortOrder: number
   createdAt: number

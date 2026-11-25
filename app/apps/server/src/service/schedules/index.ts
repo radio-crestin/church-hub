@@ -29,6 +29,11 @@ export {
   updateScheduleSearchIndex,
 } from './search'
 export { setScheduleItemAdvance } from './setScheduleItemAdvance'
+export {
+  type ScheduleItemMidiInput,
+  setScheduleItemMidi,
+  setScheduleItemMidiVerseTimes,
+} from './setScheduleItemMidi'
 export * from './types'
 export { updateScheduleSlide } from './updateScheduleSlide'
 export { upsertSchedule } from './upsertSchedule'

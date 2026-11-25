@@ -1,6 +1,7 @@
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
 import { toScheduleAutomation } from './toScheduleAutomation'
+import { toScheduleItemMidi } from './toScheduleItemMidi'
 import type {
   Schedule,
   ScheduleBiblePassageVerse,
@@ -266,6 +267,10 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
         advanceSeconds: scheduleItems.advanceSeconds,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -352,6 +357,8 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         verseteTineriEntries,
         obsSceneName: record.obsSceneName,
         advanceSeconds: record.advanceSeconds,
+        midi: toScheduleItemMidi(record),
+        midi: toScheduleItemMidi(record),
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
@@ -400,6 +407,10 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
         advanceSeconds: scheduleItems.advanceSeconds,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -462,6 +473,7 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
       verseteTineriEntries,
       obsSceneName: record.obsSceneName,
       advanceSeconds: record.advanceSeconds,
+      midi: toScheduleItemMidi(record),
       sortOrder: record.sortOrder,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
