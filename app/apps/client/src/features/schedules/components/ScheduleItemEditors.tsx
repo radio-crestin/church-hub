@@ -1,4 +1,10 @@
-import { forwardRef, useCallback, useImperativeHandle, useState } from 'react'
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongEditorModal } from '~/features/songs/components'
@@ -8,6 +14,10 @@ import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScenePickerModal } from './ScenePickerModal'
 import { useAddItemToSchedule } from '../hooks'
+import {
+  MediaItemEditors,
+  type MediaItemEditorsHandle,
+} from '../media-items/MediaItemEditors'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 export interface ScheduleItemEditorsHandle {
@@ -57,12 +67,14 @@ export const ScheduleItemEditors = forwardRef<
     useState<ScheduleItem | null>(null)
   const [showScenePicker, setShowScenePicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
+  const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
 
   useImperativeHandle(
     ref,
     () => ({
       addItem: () => setShowAddMenu(true),
       editItem: (item: ScheduleItem) => {
+        if (mediaEditorsRef.current?.edit(item)) return
         if (item.itemType === 'song' && item.songId) {
           setEditingSongId(item.songId)
         } else if (item.itemType === 'bible_passage') {
@@ -110,7 +122,15 @@ export const ScheduleItemEditors = forwardRef<
           setShowSlideModal(true)
         }}
         onAddScene={() => setShowScenePicker(true)}
+        onAddMedia={(type) => mediaEditorsRef.current?.add(type)}
         showTrigger={false}
+      />
+
+      <MediaItemEditors
+        ref={mediaEditorsRef}
+        scheduleId={scheduleId}
+        onChanged={() => onChanged?.()}
+        onAddCancelled={() => setShowAddMenu(true)}
       />
 
       <InsertSlideModal
@@ -129,7 +149,10 @@ export const ScheduleItemEditors = forwardRef<
                 id: editingSlideItem.id,
                 slideType: editingSlideItem.slideType,
                 slideContent: editingSlideItem.slideContent,
-                verseteTineriEntries: editingSlideItem.verseteTineriEntries,
+                verseteTineriEntries:
+                  editingSlideItem.allVerseteTineriEntries ??
+                  editingSlideItem.verseteTineriEntries,
+                itemConfig: editingSlideItem.itemConfig,
               }
             : undefined
         }

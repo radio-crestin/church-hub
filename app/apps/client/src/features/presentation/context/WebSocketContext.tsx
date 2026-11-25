@@ -195,6 +195,7 @@ type MessageData =
   | SidebarNavigationMessage
   | SyncAppliedMessage
   | { type: 'schedule_automation'; payload: Record<string, unknown> }
+  | { type: 'schedule_picks'; payload: { scheduleId: number } }
   | { type: 'translation_state'; payload: Record<string, unknown> }
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
@@ -456,6 +457,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           // The presentation runner moved on, started or stopped (the query
           // of the schedules feature's useScheduleAutomation).
           queryClient.setQueryData(['scheduleAutomation'], data.payload)
+        }
+
+        if (data.type === 'schedule_picks') {
+          // A presentation picked its random verses and videos again.
+          queryClient.invalidateQueries({
+            queryKey: ['schedule', data.payload.scheduleId],
+          })
         }
 
         if (data.type === 'sidebar_navigation') {

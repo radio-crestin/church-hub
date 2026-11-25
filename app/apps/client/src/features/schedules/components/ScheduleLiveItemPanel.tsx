@@ -123,6 +123,7 @@ export function ScheduleLiveItemPanel({
           onEntryClick={nav.presentVerseteEntry}
           onAnnouncementClick={nav.presentAnnouncement}
           onSceneClick={nav.presentScene}
+          onVideoClick={nav.presentVideo}
         />
       </div>
     </div>

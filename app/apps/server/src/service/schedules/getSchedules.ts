@@ -1,6 +1,7 @@
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
 import { toScheduleAutomation } from './toScheduleAutomation'
+import { toScheduleItemMidi } from './toScheduleItemMidi'
 import type {
   Schedule,
   ScheduleBiblePassageVerse,
@@ -17,10 +18,16 @@ import {
   songCategories,
   songs,
 } from '../../db/schema'
+import { type ItemConfig, withItemPicks } from '../schedule-items'
 import { getSlidesBySongId, getSlidesBySongIds } from '../songs'
 import { getTagsBySongIds } from '../songs/tags'
 
 const DEBUG = process.env.DEBUG === 'true'
+
+/** An item's stored settings; null when it has none. */
+function parseStoredConfig(json: string | null): ItemConfig | null {
+  return json ? (JSON.parse(json) as ItemConfig) : null
+}
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
@@ -203,6 +210,8 @@ export function getSchedules(): Schedule[] {
         musicVolume: schedules.musicVolume,
         startOnAppStart: schedules.startOnAppStart,
         templateId: schedules.templateId,
+        startTrigger: schedules.startTrigger,
+        stopTrigger: schedules.stopTrigger,
         createdAt: schedules.createdAt,
         updatedAt: schedules.updatedAt,
         itemCount: sql<number>`CAST(COUNT(${scheduleItems.id}) AS INTEGER)`,
@@ -269,6 +278,11 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         obsSceneName: scheduleItems.obsSceneName,
         advanceSeconds: scheduleItems.advanceSeconds,
         templateId: scheduleItems.templateId,
+        itemConfig: scheduleItems.itemConfig,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -311,7 +325,7 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
     const tagsBySongId = getTagsBySongIds(songIds)
 
     // Convert items with pre-loaded data
-    const items: ScheduleItem[] = itemRecords.map((record) => {
+    function toItem(record: (typeof itemRecords)[number]): ScheduleItem {
       const isSongItem = record.itemType === 'song' && record.songId !== null
       const slides =
         record.itemType === 'song' && record.songId
@@ -356,12 +370,20 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         obsSceneName: record.obsSceneName,
         advanceSeconds: record.advanceSeconds,
         templateId: record.templateId,
+        itemConfig: parseStoredConfig(record.itemConfig),
+        allVerseteTineriEntries: null,
+        music: null,
+        video: null,
+        midi: toScheduleItemMidi(record),
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
       }
-    })
+    }
 
+    const items: ScheduleItem[] = itemRecords.map((record) =>
+      withItemPicks(toItem(record)),
+    )
     const songCount = items.filter((i) => i.itemType === 'song').length
 
     return {
@@ -406,6 +428,11 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         obsSceneName: scheduleItems.obsSceneName,
         advanceSeconds: scheduleItems.advanceSeconds,
         templateId: scheduleItems.templateId,
+        itemConfig: scheduleItems.itemConfig,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -441,7 +468,7 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         ? getVerseteTineriEntries(record.id)
         : []
 
-    return {
+    return withItemPicks({
       id: record.id,
       scheduleId: record.scheduleId,
       itemType: record.itemType,
@@ -469,10 +496,15 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
       obsSceneName: record.obsSceneName,
       advanceSeconds: record.advanceSeconds,
       templateId: record.templateId,
+      itemConfig: parseStoredConfig(record.itemConfig),
+      allVerseteTineriEntries: null,
+      music: null,
+      video: null,
+      midi: toScheduleItemMidi(record),
       sortOrder: record.sortOrder,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
-    }
+    })
   } catch (error) {
     log('error', `Failed to get schedule item: ${error}`)
     return null

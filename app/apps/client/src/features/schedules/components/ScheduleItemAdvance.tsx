@@ -1,7 +1,9 @@
 import { Timer } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+
+import { useAnchoredPopover } from '../hooks/useAnchoredPopover'
 
 interface ScheduleItemAdvanceProps {
   /** The item's own time per slide; null = the presentation's. */
@@ -25,9 +27,13 @@ export function ScheduleItemAdvance({
   onChange,
 }: ScheduleItemAdvanceProps) {
   const { t } = useTranslation('schedules')
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const popoverRef = useRef<HTMLDivElement>(null)
-  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null)
+  const {
+    buttonRef,
+    popoverRef,
+    anchor,
+    open: openPopover,
+    close,
+  } = useAnchoredPopover(POPOVER_WIDTH)
   const [value, setValue] = useState(0)
 
   const min = Math.min(...defaultSeconds)
@@ -39,48 +45,16 @@ export function ScheduleItemAdvance({
       ? `${min} s`
       : `${min}–${max} s`
 
-  useEffect(() => {
-    if (!anchor) return
-    const close = (e: MouseEvent) => {
-      const target = e.target as Node
-      if (
-        !popoverRef.current?.contains(target) &&
-        !buttonRef.current?.contains(target)
-      )
-        setAnchor(null)
-    }
-    const escape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setAnchor(null)
-    }
-    document.addEventListener('mousedown', close)
-    document.addEventListener('keydown', escape)
-    return () => {
-      document.removeEventListener('mousedown', close)
-      document.removeEventListener('keydown', escape)
-    }
-  }, [anchor])
-
   const open = () => {
-    const rect = buttonRef.current?.getBoundingClientRect()
-    if (!rect) return
     setValue(advanceSeconds ?? max)
-    setAnchor({
-      x: Math.max(
-        8,
-        Math.min(
-          rect.right - POPOVER_WIDTH,
-          window.innerWidth - POPOVER_WIDTH - 8,
-        ),
-      ),
-      y: rect.bottom + 4,
-    })
+    openPopover()
   }
 
   const apply = (seconds: number | null) => {
     if (seconds === null || (Number.isFinite(seconds) && seconds >= 1)) {
       onChange(seconds === null ? null : Math.round(seconds))
     }
-    setAnchor(null)
+    close()
   }
 
   return (
@@ -90,7 +64,7 @@ export function ScheduleItemAdvance({
         type="button"
         onClick={(e) => {
           e.stopPropagation()
-          if (anchor) setAnchor(null)
+          if (anchor) close()
           else open()
         }}
         onDoubleClick={(e) => e.stopPropagation()}

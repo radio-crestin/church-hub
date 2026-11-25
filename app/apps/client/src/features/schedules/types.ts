@@ -1,10 +1,22 @@
+import type {
+  ItemConfig,
+  MediaItemType,
+  ScheduleMusicSummary,
+  ScheduleVideoPick,
+} from './media-items/types'
 import type { VerseSegment } from '../bible/utils/parseVerseList'
 import type { SongSlide } from '../songs/types'
 
 /**
  * Schedule item types (same as queue)
  */
-export type ScheduleItemType = 'song' | 'slide' | 'bible_passage'
+export type ScheduleItemType =
+  | 'song'
+  | 'slide'
+  | 'bible_passage'
+  | 'music'
+  | 'video'
+  | 'verses'
 
 /**
  * Slide template types for standalone slides (same as queue)
@@ -40,6 +52,21 @@ export interface ScheduleVerseteTineriEntry {
   sortOrder: number
 }
 
+/** What happens in OBS that can start or stop a presentation. */
+export type AutomationTriggerEvent =
+  | 'scene_selected'
+  | 'stream_started'
+  | 'stream_stopped'
+  | 'recording_started'
+  | 'recording_stopped'
+
+/** A presentation's start or stop trigger. */
+export interface AutomationTrigger {
+  event: AutomationTriggerEvent
+  /** The scene that fires it (`scene_selected` only); null otherwise. */
+  sceneName: string | null
+}
+
 /**
  * How a presentation runs by itself: the server moves it on, each step after
  * its own time (see `utils/stepSeconds` and the server's
@@ -59,6 +86,10 @@ export interface ScheduleAutomationSettings {
   musicVolume: number | null
   /** Started by itself when Church Hub starts (one presentation at most). */
   startOnAppStart: boolean
+  /** Started by itself when this happens in OBS; null = never. */
+  startTrigger: AutomationTrigger | null
+  /** Stopped (and taken off the screens) when this happens; null = never. */
+  stopTrigger: AutomationTrigger | null
 }
 
 /** What the presentation runner on the server is doing. */
@@ -129,9 +160,38 @@ export interface ScheduleItem {
   advanceSeconds: number | null
   /** This item's own slide template; null = the presentation's. */
   templateId: number | null
+  /**
+   * A music, video or verses item's settings, or how many of a Versete
+   * Biblice slide's passages it shows; null for the others. A verses item's
+   * passages of this run are in `verseteTineriEntries`.
+   */
+  itemConfig: ItemConfig | null
+  /**
+   * Every passage of a Versete Biblice slide that shows only some of them at
+   * random (its `itemConfig.count`), for its editor; null otherwise.
+   */
+  allVerseteTineriEntries: ScheduleVerseteTineriEntry[] | null
+  /** A music item's tracks. */
+  music: ScheduleMusicSummary | null
+  /** The video a video item shows this run; null when the gallery has none. */
+  video: ScheduleVideoPick | null
+  /** A MIDI file played when the running presentation reaches this song item. */
+  midi: ScheduleItemMidi | null
   sortOrder: number
   createdAt: number
   updatedAt: number
+}
+
+/**
+ * A song item's MIDI file: played when the running presentation reaches the
+ * item, each slide going up at its time in the music.
+ */
+export interface ScheduleItemMidi {
+  hash: string
+  fileName: string
+  durationSeconds: number
+  /** The second each slide (choruses expanded) starts at; null = split evenly. */
+  verseTimes: number[] | null
 }
 
 /**
@@ -201,6 +261,8 @@ export interface AddToScheduleInput {
   verseteTineriEntries?: VerseteTineriEntryInput[]
   // Scene fields
   obsSceneName?: string
+  /** A music, video or verses item and its settings. */
+  media?: { itemType: MediaItemType; itemConfig: ItemConfig }
 }
 
 /**

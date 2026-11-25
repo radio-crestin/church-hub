@@ -263,7 +263,7 @@ export interface TemporaryScreenShareContent {
 /**
  * Union type for temporary content
  */
-export type TemporaryContent =
+export type TemporaryContent = (
   | { type: 'bible'; data: TemporaryBibleContent }
   | { type: 'song'; data: TemporarySongContent }
   | { type: 'announcement'; data: TemporaryAnnouncementContent }
@@ -271,6 +271,35 @@ export type TemporaryContent =
   | { type: 'versete_tineri'; data: TemporaryVerseteTineriContent }
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
+  | { type: 'video'; data: TemporaryVideoContent }
+) & {
+  /**
+   * The looping video a presentation shows behind its steps after a video
+   * item set as their background (main and kiosk screens); absent otherwise.
+   */
+  presentationBackground?: PresentationBackground | null
+}
+
+/** A presentation's background video (`/api/media/backgrounds/<id>`). */
+export interface PresentationBackground {
+  url: string
+}
+
+/**
+ * A presentation's video item, played full screen on the displays
+ */
+export interface TemporaryVideoContent {
+  /** The gallery video's id and URL (`/api/media/backgrounds/<id>`) */
+  mediaId: string
+  url: string
+  nextItemPreview?: NextItemPreview
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
+  /** Plays again from the start when it ends, until the step changes. */
+  loop?: boolean
+}
+
+export type PresentTemporaryVideoInput = TemporaryVideoContent
 
 /**
  * Input for presenting a temporary Bible verse

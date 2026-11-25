@@ -8,8 +8,9 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[add-schedule-automation:${level}] ${message}`)
 }
 
-// v2 adds the per-slide timing (autoplay_by_text, advance_seconds).
-const MIGRATION_KEY = 'add_schedule_automation_v2'
+// v2 adds the per-slide timing (autoplay_by_text, advance_seconds), v3 the
+// start and stop triggers.
+const MIGRATION_KEY = 'add_schedule_automation_v3'
 
 const COLUMNS: {
   table: 'schedules' | 'schedule_items'
@@ -38,12 +39,16 @@ const COLUMNS: {
     name: 'start_on_app_start',
     definition: 'INTEGER NOT NULL DEFAULT 0',
   },
+  // What in OBS starts it and what stops it (JSON AutomationTrigger); NULL = none.
+  { table: 'schedules', name: 'start_trigger', definition: 'TEXT' },
+  { table: 'schedules', name: 'stop_trigger', definition: 'TEXT' },
   // Seconds each slide of this item stays up; NULL = the presentation's.
   { table: 'schedule_items', name: 'advance_seconds', definition: 'INTEGER' },
 ]
 
 /**
- * Adds the automation settings of a presentation (in `schedules`) and each
+ * Adds the automation settings of a presentation (in `schedules`), with its
+ * start and stop triggers, and each
  * item's own slide timing (in `schedule_items`).
  * Idempotent — safe to run on every boot.
  */

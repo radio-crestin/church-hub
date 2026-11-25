@@ -1,8 +1,11 @@
 import {
   ArrowLeft,
+  BookOpen,
   Camera,
   Check,
   FileText,
+  Film,
+  ListMusic,
   Loader2,
   Megaphone,
   Music,
@@ -16,6 +19,7 @@ import { SongSearchPicker } from '~/features/songs/components/SongSearchPicker'
 import { useSong } from '~/features/songs/hooks/useSong'
 import { stripHtmlTags } from '~/features/songs/utils/stripHtmlTags'
 import { Tooltip } from '~/ui/tooltip/Tooltip'
+import type { MediaItemType } from '../media-items/types'
 import type { SlideTemplate } from '../types'
 
 type Step = 'menu' | 'song' | 'preview'
@@ -33,6 +37,8 @@ interface AddScheduleItemModalProps {
   onAddBiblePassage: () => void
   onAddSlide: (template: SlideTemplate) => void
   onAddScene?: () => void
+  /** A music, video or verses item: its settings dialog. */
+  onAddMedia?: (type: MediaItemType) => void
   /**
    * `false` for a host that opens the modal from its own control — the
    * Programe panel, whose "+" can move into its header's "More" menu.
@@ -50,6 +56,36 @@ interface MenuOption {
   onSelect: () => void
 }
 
+const MEDIA_OPTIONS = [
+  {
+    key: 'music',
+    type: 'music',
+    icon: ListMusic,
+    iconClass: 'text-pink-600 dark:text-pink-400',
+    bgClass: 'bg-pink-100 dark:bg-pink-900/30',
+    titleKey: 'addMenu.music',
+    descriptionKey: 'addMenu.musicDescription',
+  },
+  {
+    key: 'video',
+    type: 'video',
+    icon: Film,
+    iconClass: 'text-sky-600 dark:text-sky-400',
+    bgClass: 'bg-sky-100 dark:bg-sky-900/30',
+    titleKey: 'addMenu.video',
+    descriptionKey: 'addMenu.videoDescription',
+  },
+  {
+    key: 'verses',
+    type: 'verses',
+    icon: BookOpen,
+    iconClass: 'text-emerald-600 dark:text-emerald-400',
+    bgClass: 'bg-emerald-100 dark:bg-emerald-900/30',
+    titleKey: 'addMenu.verses',
+    descriptionKey: 'addMenu.versesDescription',
+  },
+] satisfies (Omit<MenuOption, 'onSelect'> & { type: MediaItemType })[]
+
 /**
  * The single "add to program" modal.
  *
@@ -66,6 +102,7 @@ export function AddScheduleItemModal({
   onAddSong,
   onAddSlide,
   onAddScene,
+  onAddMedia,
   showTrigger = true,
 }: AddScheduleItemModalProps) {
   const { t } = useTranslation('common')
@@ -185,6 +222,14 @@ export function AddScheduleItemModal({
           } satisfies MenuOption,
         ]
       : []),
+    ...(onAddMedia
+      ? MEDIA_OPTIONS.map(
+          (option): MenuOption => ({
+            ...option,
+            onSelect: () => handHandoff(() => onAddMedia(option.type)),
+          }),
+        )
+      : []),
   ]
 
   const isSongStep = step === 'song'
@@ -200,10 +245,10 @@ export function AddScheduleItemModal({
             type="button"
             onClick={() => onOpenChange(true)}
             data-testid="schedule-add-item"
-            className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
+            aria-label={t('addMenu.button')}
+            className="flex items-center p-2 text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors"
           >
             <Plus size={16} />
-            <span className="hidden sm:inline">{t('addMenu.button')}</span>
           </button>
         </Tooltip>
       )}

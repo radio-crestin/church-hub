@@ -320,7 +320,7 @@
     "stop": "Stop",
     "stopDescription": "Stop the presentation and clear the screens",
     "runError": "The presentation could not start",
-    "menuDescription": "Autoplay, loop, music volume, start with Church Hub",
+    "menuDescription": "Autoplay, loop, music volume, start with Church Hub or on an OBS event",
     "runningStep": "Running · {{step}}/{{count}}",
     "hide": "Hide automation",
     "summary": {
@@ -329,7 +329,9 @@
       "musicVolume": "Music at {{volume}}%",
       "startOnAppStart": "Starts with Church Hub",
       "autoplayByText": "At least {{seconds}} s per slide, longer for more text",
-      "duration": "One pass: {{duration}}"
+      "duration": "One pass: {{duration}}",
+      "startTrigger": "Starts when {{when}}",
+      "stopTrigger": "Stops when {{when}}"
     },
     "byText": "Longer for more text",
     "byTextDescription": "A slide with more words stays up longer, so it can be read. The seconds above are the least.",
@@ -338,6 +340,121 @@
       "description": "Each slide of this item stays up this long, then the next one goes up.",
       "reset": "Automatic",
       "save": "Save"
+    },
+    "trigger": {
+      "start": "Start when",
+      "startDescription": "It starts by itself when this happens in OBS. While it is on screen it does not start over.",
+      "stop": "Stop when",
+      "stopDescription": "It stops and clears the screens when this happens while it is on screen.",
+      "never": "Never",
+      "events": {
+        "scene_selected": "A scene is selected",
+        "stream_started": "The livestream starts",
+        "stream_stopped": "The livestream ends",
+        "recording_started": "Recording starts",
+        "recording_stopped": "Recording stops"
+      },
+      "when": {
+        "scene_selected": "scene {{scene}} is selected",
+        "stream_started": "the livestream starts",
+        "stream_stopped": "the livestream ends",
+        "recording_started": "recording starts",
+        "recording_stopped": "recording stops"
+      }
     }
+  },
+  "mediaItems": {
+    "pickAgain": "Pick again",
+    "music": {
+      "title": "Music",
+      "folderTitle": "Music: {{name}}",
+      "folder": "A folder",
+      "tracks": "Tracks I pick",
+      "noFolders": "The Music library has no folders yet. Add one on the Music page first.",
+      "trackCount_one": "{{count}} track",
+      "trackCount_other": "{{count}} tracks",
+      "searchTracks": "Search tracks",
+      "picked_one": "{{count}} track picked",
+      "picked_other": "{{count}} tracks picked",
+      "shuffle": "Shuffle",
+      "shuffleDescription": "A new order each time it starts",
+      "shuffled": "shuffled",
+      "inOrder": "in order",
+      "playNow": "Play now (it starts by itself at the next slide)",
+      "playing": "Music started"
+    },
+    "video": {
+      "title": "Video",
+      "chosen": "This video",
+      "random": "A random video",
+      "randomDescription_one": "The only video in the Gallery.",
+      "randomDescription_other": "One of the {{count}} videos in the Gallery, a different one each time.",
+      "noVideos": "The Gallery has no videos yet. Upload one there first.",
+      "playFullScreen": "Play full screen",
+      "loop": "Loop",
+      "loopDescription": "Plays again from the start until the presentation moves on. While the presentation runs, it stays for the item's time, or the presentation's slide time.",
+      "background": "Background for the slides after it",
+      "backgroundDescription": "Plays silently in a loop behind the songs, verses and slides that follow, on the main screens. It is not a slide of its own.",
+      "asBackground": "Background",
+      "looping": "Loops"
+    },
+    "verses": {
+      "title": "Verses",
+      "topic": "From a topic",
+      "book": "From a book",
+      "translation": "Translation",
+      "pickBook": "Pick a book",
+      "searchTopics": "Search topics (English or Romanian)",
+      "pickedTopic_one": "{{title}}: {{count}} passage",
+      "pickedTopic_other": "{{title}}: {{count}} passages",
+      "rowTitle": "Verses: {{source}}",
+      "randomCount_one": "{{count}} at random on each loop",
+      "randomCount_other": "{{count}} at random on each loop"
+    },
+    "count": {
+      "all": "All, in order",
+      "random": "at random, picked again on each loop",
+      "label": "How many"
+    }
+  },
+  "midi": {
+    "title": "MIDI music",
+    "short": "MIDI",
+    "description": "Plays when the running presentation reaches this song; its verses go up in time with the music.",
+    "choose": "Choose MIDI file",
+    "replace": "Replace file",
+    "remove": "Remove",
+    "sync": "Sync verses",
+    "resetSync": "Split evenly",
+    "synced": "Verses synced by hand",
+    "splitEvenly": "Verses split evenly across the music",
+    "attached": "MIDI file attached",
+    "notMidi": "This is not a MIDI file",
+    "noAudio": "No audio output: the music is silent here, but the verses still change on time",
+    "syncTitle": "Sync verses to the music",
+    "syncHelp": "Press play and tap Next verse (or Space) the moment each verse begins. Got one wrong? Undo it, or press ▶ beside a verse to hear it again and re-tap it. − and + move a verse half a second.",
+    "syncStart": "Play",
+    "syncNext": "Next verse",
+    "syncSave": "Save",
+    "syncSaved": "Verse times saved",
+    "pause": "Pause",
+    "undo": "Undo the last tap",
+    "verseOf": "Verse {{current}} of {{total}}",
+    "nextVerse": "Next",
+    "lastVerse": "Last verse",
+    "seek": "Jump to this point in the music",
+    "playFromHere": "Play from just before this verse and tap again from it",
+    "earlier": "Half a second earlier",
+    "later": "Half a second later",
+    "allMarked": "All verses marked",
+    "keys": "Space: next verse · Backspace: undo · ← →: 3 seconds · Esc: pause"
+  },
+  "playlist": {
+    "title": "Presentations",
+    "empty": "No presentations yet",
+    "open": "Open the presentation",
+    "showAll": "Show all presentations ({{count}})",
+    "showFewer": "Show fewer",
+    "running": "Running"
   }
 }

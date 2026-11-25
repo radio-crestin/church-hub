@@ -73,6 +73,10 @@ import {
   useSetScheduleItemTemplate,
   useSetScheduleTemplate,
 } from '../hooks/useSetScheduleTemplates'
+import {
+  MediaItemEditors,
+  type MediaItemEditorsHandle,
+} from '../media-items/MediaItemEditors'
 import type { ScheduleItem, SlideTemplate } from '../types'
 import { isAutomationOn } from '../utils/isAutomationOn'
 
@@ -215,6 +219,7 @@ export function SchedulePresenter({
   const [collapseAllTrigger, setCollapseAllTrigger] = useState(0)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
+  const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
   const importDialogRef = useRef<HTMLDialogElement>(null)
   const { keyLineDialogRef, editKeyLine: handleEditKeyLine } =
     useScheduleKeyLineEditor()
@@ -283,6 +288,7 @@ export function SchedulePresenter({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
     presentFlatIndex,
     goNext,
     goPrev,
@@ -519,6 +525,7 @@ export function SchedulePresenter({
 
   // Edit item handler (for non-song items)
   const handleEditItem = useCallback((item: ScheduleItem) => {
+    if (mediaEditorsRef.current?.edit(item)) return
     if (item.itemType === 'song' && item.songId) {
       setEditingSongId(item.songId)
     } else if (item.itemType === 'bible_passage') {
@@ -762,9 +769,11 @@ export function SchedulePresenter({
               )}
             </button>
             <div className="flex items-center gap-1.5">
+              {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
               <button
                 type="button"
                 onClick={() => setShowEditAsText(true)}
+                data-testid="schedule-edit-as-text"
                 className="flex items-center gap-2 rounded-lg bg-amber-400 p-2 text-sm text-gray-900 transition-colors hover:bg-amber-500 sm:px-3 sm:py-1.5 dark:bg-amber-400 dark:hover:bg-amber-500"
               >
                 <FileText size={16} />
@@ -783,6 +792,12 @@ export function SchedulePresenter({
                 onAddBiblePassage={handleAddBiblePassage}
                 onAddSlide={handleAddSlide}
                 onAddScene={handleAddScene}
+                onAddMedia={(type) =>
+                  mediaEditorsRef.current?.add(
+                    type,
+                    quickInsertAfterId ?? undefined,
+                  )
+                }
               />
             </div>
           </div>
@@ -796,6 +811,7 @@ export function SchedulePresenter({
               onEntryClick={handleEntryClick}
               onAnnouncementClick={handleAnnouncementClick}
               onSceneClick={handleSceneClick}
+              onVideoClick={presentVideo}
               onReorder={handleReorder}
               onEditSong={handleEditSong}
               onNavigateToSong={handleNavigateToSong}
@@ -815,6 +831,7 @@ export function SchedulePresenter({
                       })
                   : undefined
               }
+              midiScheduleId={canEditProgram ? scheduleId : undefined}
               onQuickInsert={canEditProgram ? handleQuickInsert : undefined}
               selectedItemId={selectedItemId}
               onSelectItem={selectItem}
@@ -1065,7 +1082,6 @@ export function SchedulePresenter({
               {t('presentation:templates.presentation.edit')}
             </button>
           )}
-          {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
           {isLargeScreen && (
             <button
               type="button"
@@ -1128,6 +1144,13 @@ export function SchedulePresenter({
         />
       )}
 
+      <MediaItemEditors
+        ref={mediaEditorsRef}
+        scheduleId={scheduleId}
+        onChanged={refetch}
+        onAddCancelled={handleReopenAddMenu}
+      />
+
       {/* Song Picker Modal — only for replacing an existing song; adding a new
           one happens inside AddScheduleItemModal. */}
       <SongPickerModal
@@ -1156,7 +1179,10 @@ export function SchedulePresenter({
                 id: editingSlideItem.id,
                 slideType: editingSlideItem.slideType,
                 slideContent: editingSlideItem.slideContent,
-                verseteTineriEntries: editingSlideItem.verseteTineriEntries,
+                verseteTineriEntries:
+                  editingSlideItem.allVerseteTineriEntries ??
+                  editingSlideItem.verseteTineriEntries,
+                itemConfig: editingSlideItem.itemConfig,
               }
             : undefined
         }

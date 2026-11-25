@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { stripHtmlTags } from '~/features/songs/utils/stripHtmlTags'
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
+import { useMediaItemText } from '../media-items/hooks/useMediaItemText'
 import type { ScheduleItem } from '../types'
 
 interface ScheduleSlideRowProps {
@@ -62,7 +63,14 @@ export function ScheduleSlideRow({
     position: isDragging ? 'relative' : undefined,
   }
 
+  const mediaText = useMediaItemText(item)
   const { label, testId } = (() => {
+    if (mediaText) {
+      return {
+        label: `${mediaText.title} · ${mediaText.detail}`,
+        testId: `schedule-${item.itemType}-item`,
+      }
+    }
     if (item.slideType === 'versete_tineri') {
       return {
         label:

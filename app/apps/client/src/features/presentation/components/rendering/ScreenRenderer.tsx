@@ -746,6 +746,7 @@ export function ScreenRenderer({
                   isVisible={isVisible}
                   nextSlideData={nextSlideData}
                   styleRanges={styleRanges}
+                  videoSound={screen.type === 'primary'}
                 />
               )}
             </>

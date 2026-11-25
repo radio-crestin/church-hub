@@ -13,6 +13,7 @@ import { calculateMaxExitAnimationDuration } from '../components/rendering/utils
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,
+  PresentationBackground,
   ScreenBackgroundConfig,
   ScreenWithConfigs,
   SongContentConfig,
@@ -55,6 +56,12 @@ export interface ContentData {
   styleOverrides?: SlideStyleOverride | null
   /** The song's own background (see `resolveScreenBackground`). */
   songBackground?: ScreenBackgroundConfig | null
+  /** A presentation's video item, shown full screen (ScreenVideo). */
+  videoUrl?: string
+  /** The video item plays again from the start until the step changes. */
+  videoLoop?: boolean
+  /** A presentation's looping background video (see `resolveScreenBackground`). */
+  presentationBackground?: PresentationBackground | null
 }
 
 interface UsePresentationContentOptions {
@@ -353,8 +360,15 @@ export function usePresentationContent({
       data: ContentData,
       key = '',
     ): void => {
+      // A presentation's background video stays behind every step it covers.
+      const presentationBackground =
+        previewContent || presentationState?.isHidden
+          ? null
+          : presentationState?.temporaryContent?.presentationBackground
       setContentType(type)
-      setContentData(data)
+      setContentData(
+        presentationBackground ? { ...data, presentationBackground } : data,
+      )
       setContentKey(key)
     }
 
@@ -556,6 +570,19 @@ export function usePresentationContent({
         if (temp.type === 'screen_share') {
           if (isCancelled) return
           showContent('screen_share', {})
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A video item plays full screen over the empty slide, whose own
+        // settings (its background, its clock) stay as they are.
+        if (temp.type === 'video') {
+          if (isCancelled) return
+          showContent(
+            'empty',
+            { videoUrl: temp.data.url, videoLoop: temp.data.loop === true },
+            `video|${temp.data.url}`,
+          )
           setNextSlideData(undefined)
           return
         }

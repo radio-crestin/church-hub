@@ -14,6 +14,7 @@ import {
   scheduleVerseteTineriEntries,
 } from '../../db/schema'
 import { getVerseRange, getVersesAcrossChapters } from '../bible'
+import { parseItemConfig } from '../schedule-items'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -63,6 +64,13 @@ export function addItemToSchedule(
         ? [biblePassageToVerseteTineriEntry(input.biblePassage)]
         : undefined)
 
+    // An item with settings: refused before anything moves when they are wrong.
+    const mediaConfig = input.media
+      ? JSON.stringify(
+          parseItemConfig(input.media.itemType, input.media.itemConfig),
+        )
+      : null
+
     const isSong = input.songId !== undefined
     const isBiblePassage = input.biblePassage !== undefined
     const isVerseteTineri = verseteTineriEntries !== undefined
@@ -70,7 +78,8 @@ export function addItemToSchedule(
       input.slideType === 'scene' && input.obsSceneName !== undefined
 
     let itemTypeStr = 'slide'
-    if (isSong) itemTypeStr = 'song'
+    if (input.media) itemTypeStr = input.media.itemType
+    else if (isSong) itemTypeStr = 'song'
     else if (isVerseteTineri) itemTypeStr = 'versete_tineri'
     else if (isScene) itemTypeStr = 'scene'
 
@@ -122,7 +131,21 @@ export function addItemToSchedule(
     // Insert the item
     let itemId: number
 
-    if (isSong) {
+    if (input.media && mediaConfig) {
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: input.media.itemType,
+          itemConfig: mediaConfig,
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
+    } else if (isSong) {
       const result = db
         .insert(scheduleItems)
         .values({

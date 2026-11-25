@@ -29,6 +29,12 @@ export {
   updateScheduleSearchIndex,
 } from './search'
 export { setScheduleItemAdvance } from './setScheduleItemAdvance'
+export { setScheduleItemConfig } from './setScheduleItemConfig'
+export {
+  type ScheduleItemMidiInput,
+  setScheduleItemMidi,
+  setScheduleItemMidiVerseTimes,
+} from './setScheduleItemMidi'
 export {
   setScheduleItemTemplate,
   setScheduleTemplate,

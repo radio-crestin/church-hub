@@ -12,6 +12,7 @@
     "importToQueue": "Adaugă în coadă",
     "saveToFile": "Salvează în fișier",
     "loadFromFile": "Încarcă din fișier",
+    "importFromFile": "Importă",
     "editAsText": "Editează ca text",
     "cancel": "Anulează",
     "expandAll": "Extinde tot",
@@ -336,7 +337,7 @@
     "stop": "Oprește",
     "stopDescription": "Oprește prezentarea și golește ecranele",
     "runError": "Prezentarea nu a putut porni",
-    "menuDescription": "Trecere automată, buclă, volumul muzicii, pornire cu Church Hub",
+    "menuDescription": "Trecere automată, buclă, volumul muzicii, pornire cu Church Hub sau la un eveniment din OBS",
     "runningStep": "Rulează · {{step}}/{{count}}",
     "hide": "Ascunde automatizarea",
     "summary": {
@@ -345,7 +346,9 @@
       "musicVolume": "Muzica la {{volume}}%",
       "startOnAppStart": "Pornește cu Church Hub",
       "autoplayByText": "Cel puțin {{seconds}} s pe slide, mai mult pentru textul lung",
-      "duration": "O trecere: {{duration}}"
+      "duration": "O trecere: {{duration}}",
+      "startTrigger": "Pornește când {{when}}",
+      "stopTrigger": "Se oprește când {{when}}"
     },
     "byText": "Mai mult pentru textul lung",
     "byTextDescription": "Un slide cu mai multe cuvinte rămâne mai mult, ca să poată fi citit. Secundele de mai sus sunt minimul.",
@@ -354,6 +357,126 @@
       "description": "Fiecare slide al acestui element rămâne afișat atât, apoi urmează următorul.",
       "reset": "Automat",
       "save": "Salvează"
+    },
+    "trigger": {
+      "start": "Pornește când",
+      "startDescription": "Pornește singură când se întâmplă asta în OBS. Cât timp e pe ecran, nu o ia de la capăt.",
+      "stop": "Se oprește când",
+      "stopDescription": "Se oprește și golește ecranele când se întâmplă asta cât timp e pe ecran.",
+      "never": "Niciodată",
+      "events": {
+        "scene_selected": "Se alege o scenă",
+        "stream_started": "Pornește transmisiunea live",
+        "stream_stopped": "Se termină transmisiunea live",
+        "recording_started": "Începe înregistrarea",
+        "recording_stopped": "Se oprește înregistrarea"
+      },
+      "when": {
+        "scene_selected": "se alege scena {{scene}}",
+        "stream_started": "pornește transmisiunea live",
+        "stream_stopped": "se termină transmisiunea live",
+        "recording_started": "începe înregistrarea",
+        "recording_stopped": "se oprește înregistrarea"
+      }
     }
+  },
+  "mediaItems": {
+    "pickAgain": "Alege din nou",
+    "music": {
+      "title": "Muzică",
+      "folderTitle": "Muzică: {{name}}",
+      "folder": "Un dosar",
+      "tracks": "Piese alese de mine",
+      "noFolders": "Biblioteca de muzică nu are încă niciun dosar. Adaugă unul mai întâi în pagina Muzică.",
+      "trackCount_one": "{{count}} piesă",
+      "trackCount_few": "{{count}} piese",
+      "trackCount_other": "{{count}} de piese",
+      "searchTracks": "Caută piese",
+      "picked_one": "{{count}} piesă aleasă",
+      "picked_few": "{{count}} piese alese",
+      "picked_other": "{{count}} de piese alese",
+      "shuffle": "Amestecă",
+      "shuffleDescription": "Altă ordine la fiecare pornire",
+      "shuffled": "amestecate",
+      "inOrder": "în ordine",
+      "playNow": "Pornește acum (pornește singură la slide-ul următor)",
+      "playing": "Muzica a pornit"
+    },
+    "video": {
+      "title": "Video",
+      "chosen": "Acest video",
+      "random": "Un video la întâmplare",
+      "randomDescription_one": "Singurul video din Galerie.",
+      "randomDescription_few": "Unul dintre cele {{count}} videoclipuri din Galerie, altul de fiecare dată.",
+      "randomDescription_other": "Unul dintre cele {{count}} de videoclipuri din Galerie, altul de fiecare dată.",
+      "noVideos": "Galeria nu are încă niciun video. Încarcă unul acolo mai întâi.",
+      "playFullScreen": "Rulează pe tot ecranul",
+      "loop": "În buclă",
+      "loopDescription": "Pornește iar de la început până se trece mai departe. Când prezentarea rulează singură, rămâne cât timpul elementului sau cât timpul unui slide din prezentare.",
+      "background": "Fundal pentru ce urmează",
+      "backgroundDescription": "Rulează fără sunet, în buclă, în spatele cântărilor, versetelor și slide-urilor care urmează, pe ecranele principale. Nu e un slide separat.",
+      "asBackground": "Fundal",
+      "looping": "În buclă"
+    },
+    "verses": {
+      "title": "Versete",
+      "topic": "Dintr-o temă",
+      "book": "Dintr-o carte",
+      "translation": "Traducere",
+      "pickBook": "Alege o carte",
+      "searchTopics": "Caută o temă (în română sau engleză)",
+      "pickedTopic_one": "{{title}}: {{count}} pasaj",
+      "pickedTopic_few": "{{title}}: {{count}} pasaje",
+      "pickedTopic_other": "{{title}}: {{count}} de pasaje",
+      "rowTitle": "Versete: {{source}}",
+      "randomCount_one": "{{count}} la întâmplare la fiecare reluare",
+      "randomCount_few": "{{count}} la întâmplare la fiecare reluare",
+      "randomCount_other": "{{count}} la întâmplare la fiecare reluare"
+    },
+    "count": {
+      "all": "Toate, în ordine",
+      "random": "la întâmplare, alese din nou la fiecare reluare",
+      "label": "Câte"
+    }
+  },
+  "midi": {
+    "title": "Muzică MIDI",
+    "short": "MIDI",
+    "description": "Pornește când prezentarea ajunge la această cântare; strofele apar în ritmul muzicii.",
+    "choose": "Alege fișier MIDI",
+    "replace": "Înlocuiește fișierul",
+    "remove": "Elimină",
+    "sync": "Sincronizează strofele",
+    "resetSync": "Împarte egal",
+    "synced": "Strofe sincronizate manual",
+    "splitEvenly": "Strofe împărțite egal pe durata muzicii",
+    "attached": "Fișierul MIDI a fost adăugat",
+    "notMidi": "Acesta nu este un fișier MIDI",
+    "noAudio": "Nu există ieșire audio: muzica nu se aude aici, dar strofele se schimbă la timp",
+    "syncTitle": "Sincronizează strofele cu muzica",
+    "syncHelp": "Apasă play și atinge Strofa următoare (sau Space) exact când începe fiecare strofă. Ai greșit? Anulează, sau apasă ▶ lângă o strofă ca s-o asculți din nou și s-o marchezi iar. − și + mută strofa cu o jumătate de secundă.",
+    "syncStart": "Pornește",
+    "syncNext": "Strofa următoare",
+    "syncSave": "Salvează",
+    "syncSaved": "Timpii strofelor au fost salvați",
+    "pause": "Pauză",
+    "undo": "Anulează ultima atingere",
+    "verseOf": "Strofa {{current}} din {{total}}",
+    "nextVerse": "Urmează",
+    "lastVerse": "Ultima strofă",
+    "seek": "Sari la acest loc din muzică",
+    "playFromHere": "Redă de puțin înainte de această strofă și marcheaz-o din nou",
+    "earlier": "Cu o jumătate de secundă mai devreme",
+    "later": "Cu o jumătate de secundă mai târziu",
+    "allMarked": "Toate strofele sunt marcate",
+    "keys": "Space: strofa următoare · Backspace: anulează · ← →: 3 secunde · Esc: pauză"
+  },
+  "playlist": {
+    "title": "Prezentări",
+    "empty": "Nicio prezentare încă",
+    "open": "Deschide prezentarea",
+    "showAll": "Arată toate prezentările ({{count}})",
+    "showFewer": "Arată mai puține",
+    "running": "Rulează"
   }
 }
