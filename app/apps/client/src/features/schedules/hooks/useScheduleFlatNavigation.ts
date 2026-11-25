@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { switchOBSScene } from '~/features/livestream/service'
 import {
@@ -87,6 +87,13 @@ export interface ScheduleFlatNavigation {
   presentFlatIndex: (flatIndex: number) => Promise<void>
   goNext: () => Promise<void>
   goPrev: () => Promise<void>
+  /**
+   * The item the operator picked in the list, waiting for the next Down/Up:
+   * Down presents its first step, Up the step right before it. `null` once a
+   * step has been presented.
+   */
+  selectedItemId: number | null
+  selectItem: (item: ScheduleItem) => void
 }
 
 /**
@@ -142,6 +149,27 @@ export function useScheduleFlatNavigation({
     [items],
   )
 
+  // An item picked in the list is where the next Down/Up starts from, ahead
+  // of whatever is on screen. The ref is what a queued press reads.
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null)
+  const selectedItemIdRef = useRef<number | null>(null)
+  const selectItem = useCallback((item: ScheduleItem) => {
+    selectedItemIdRef.current = item.id
+    setSelectedItemId(item.id)
+  }, [])
+  const clearSelection = useCallback(() => {
+    selectedItemIdRef.current = null
+    setSelectedItemId(null)
+  }, [])
+  // Every step that goes up, by any route, uses up the picked item.
+  const beforeNavigate = useCallback(
+    (flatIndex: number, flatItem: ScheduleFlatItem) => {
+      clearSelection()
+      onBeforeNavigate?.(flatIndex, flatItem)
+    },
+    [clearSelection, onBeforeNavigate],
+  )
+
   const presentedInfo = useMemo(
     () => derivePresentedScheduleInfo(presentationState?.temporaryContent),
     [presentationState?.temporaryContent],
@@ -173,13 +201,20 @@ export function useScheduleFlatNavigation({
     readProgramPosition(scheduleId),
   )
 
-  const canNavigatePrev = navigationFlatIndex > 0
+  const selectedFlatIndex =
+    selectedItemId === null
+      ? null
+      : (itemStartFlatIndex[selectedItemId] ?? null)
+
+  const canNavigatePrev =
+    selectedFlatIndex !== null ? selectedFlatIndex > 0 : navigationFlatIndex > 0
   // Next is still allowed on the last step: it hides the projection, which is
   // how a service ends.
   const isOnLastStep =
     navigationFlatIndex >= 0 && navigationFlatIndex === flatItems.length - 1
   const hasContent = !!presentationState?.temporaryContent
   const canNavigateNext =
+    (selectedFlatIndex !== null && selectedFlatIndex < flatItems.length) ||
     (navigationFlatIndex >= 0 && navigationFlatIndex < flatItems.length - 1) ||
     (isOnLastStep && hasContent)
 
@@ -196,7 +231,7 @@ export function useScheduleFlatNavigation({
       if (item.itemType !== 'song' || !item.songId) return
 
       const flatIndex = getFlatItemIndex(item, slideIndex)
-      onBeforeNavigate?.(flatIndex, { item, type: 'slide', index: slideIndex })
+      beforeNavigate(flatIndex, { item, type: 'slide', index: slideIndex })
 
       await presentTemporarySong.mutateAsync({
         songId: item.songId,
@@ -206,13 +241,7 @@ export function useScheduleFlatNavigation({
         scheduleItemIndex: flatIndex,
       })
     },
-    [
-      getFlatItemIndex,
-      items,
-      onBeforeNavigate,
-      presentTemporarySong,
-      scheduleId,
-    ],
+    [getFlatItemIndex, items, beforeNavigate, presentTemporarySong, scheduleId],
   )
 
   const presentPassageVerse = useCallback(
@@ -250,7 +279,7 @@ export function useScheduleFlatNavigation({
       }))
 
       const flatIndex = getFlatItemIndex(item, verseIndex)
-      onBeforeNavigate?.(flatIndex, { item, type: 'verse', index: verseIndex })
+      beforeNavigate(flatIndex, { item, type: 'verse', index: verseIndex })
 
       await presentTemporaryBiblePassage.mutateAsync({
         translationId: 0, // Not stored in the schedule, use 0
@@ -271,7 +300,7 @@ export function useScheduleFlatNavigation({
     [
       getFlatItemIndex,
       items,
-      onBeforeNavigate,
+      beforeNavigate,
       presentTemporaryBiblePassage,
       scheduleId,
     ],
@@ -302,7 +331,7 @@ export function useScheduleFlatNavigation({
       }))
 
       const flatIndex = getFlatItemIndex(item, entryIndex)
-      onBeforeNavigate?.(flatIndex, { item, type: 'entry', index: entryIndex })
+      beforeNavigate(flatIndex, { item, type: 'entry', index: entryIndex })
 
       await presentTemporaryVerseteTineri.mutateAsync({
         entries,
@@ -315,7 +344,7 @@ export function useScheduleFlatNavigation({
     [
       getFlatItemIndex,
       items,
-      onBeforeNavigate,
+      beforeNavigate,
       presentTemporaryVerseteTineri,
       scheduleId,
     ],
@@ -332,7 +361,7 @@ export function useScheduleFlatNavigation({
       }
 
       const flatIndex = getFlatItemIndex(item, 0)
-      onBeforeNavigate?.(flatIndex, { item, type: 'announcement', index: 0 })
+      beforeNavigate(flatIndex, { item, type: 'announcement', index: 0 })
 
       await presentTemporaryAnnouncement.mutateAsync({
         content: item.slideContent,
@@ -344,7 +373,7 @@ export function useScheduleFlatNavigation({
     [
       getFlatItemIndex,
       items,
-      onBeforeNavigate,
+      beforeNavigate,
       presentTemporaryAnnouncement,
       scheduleId,
     ],
@@ -361,7 +390,7 @@ export function useScheduleFlatNavigation({
       }
 
       const flatIndex = getFlatItemIndex(item, 0)
-      onBeforeNavigate?.(flatIndex, { item, type: 'scene', index: 0 })
+      beforeNavigate(flatIndex, { item, type: 'scene', index: 0 })
 
       try {
         await switchScene.mutateAsync(item.obsSceneName)
@@ -380,7 +409,7 @@ export function useScheduleFlatNavigation({
     [
       getFlatItemIndex,
       items,
-      onBeforeNavigate,
+      beforeNavigate,
       presentTemporaryScene,
       scheduleId,
       switchScene,
@@ -438,20 +467,38 @@ export function useScheduleFlatNavigation({
     [flatItems, queryClient, scheduleId],
   )
 
+  // Where a picked item puts the next press: its first step, or -1 for none.
+  const takeSelectedFlatIndex = useCallback((): number => {
+    const id = selectedItemIdRef.current
+    if (id === null) return -1
+    clearSelection()
+    return itemStartFlatIndex[id] ?? -1
+  }, [clearSelection, itemStartFlatIndex])
+
   const goPrev = useCallback(
     () =>
       enqueueProgramNavigation(async () => {
+        const selected = takeSelectedFlatIndex()
+        if (selected >= 0) {
+          await presentFlatIndex(selected - 1)
+          return
+        }
         const flatIndex = readNavigationFlatIndex()
         if (flatIndex <= 0) return
         await presentFlatIndex(flatIndex - 1)
       }),
-    [readNavigationFlatIndex, presentFlatIndex],
+    [readNavigationFlatIndex, presentFlatIndex, takeSelectedFlatIndex],
   )
 
   const goNext = useCallback(() => {
     // Whether this press starts the program: nothing of it is on the projector.
     const startsProgram = navigationFlatIndex < 0
     return enqueueProgramNavigation(async () => {
+      const selected = takeSelectedFlatIndex()
+      if (selected >= 0) {
+        await presentFlatIndex(selected)
+        return
+      }
       const flatIndex = readNavigationFlatIndex()
       if (flatIndex < 0) {
         // Nothing of the program up yet — start it from the top. A press made
@@ -475,6 +522,7 @@ export function useScheduleFlatNavigation({
     navigationFlatIndex,
     presentFlatIndex,
     readNavigationFlatIndex,
+    takeSelectedFlatIndex,
   ])
 
   return {
@@ -497,5 +545,7 @@ export function useScheduleFlatNavigation({
     presentFlatIndex,
     goNext,
     goPrev,
+    selectedItemId,
+    selectItem,
   }
 }

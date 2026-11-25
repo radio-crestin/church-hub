@@ -250,6 +250,8 @@ export function SchedulePresenter({
     presentFlatIndex,
     goNext,
     goPrev,
+    selectedItemId,
+    selectItem,
   } = useScheduleFlatNavigation({
     scheduleId,
     items,
@@ -736,6 +738,8 @@ export function SchedulePresenter({
               onEditKeyLine={handleEditKeyLine}
               onToggleSung={handleToggleSung}
               onQuickInsert={canEditProgram ? handleQuickInsert : undefined}
+              selectedItemId={selectedItemId}
+              onSelectItem={selectItem}
               expandAllTrigger={expandAllTrigger}
               collapseAllTrigger={collapseAllTrigger}
             />
