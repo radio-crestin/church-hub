@@ -31,7 +31,7 @@ export const scheduleItemsPaths = {
       tags,
       summary: "Change an item's settings",
       description:
-        "A music, video or verses item's settings, a Slides item's deck (SlideDeck: checked, its HTML sanitized), or how many of a Versete Biblice slide's passages it shows ({ count: null } = all, in order). Its random picks are made again. Needs programs.edit",
+        "A music, video or verses item's settings, a Slides item's deck (SlideDeck: checked, its HTML sanitized; when one of its slides is on screen, the displays show the new version at once), or how many of a Versete Biblice slide's passages it shows ({ count: null } = all, in order). The presentation's random picks are made again (not for a deck). Needs programs.edit",
       security,
       parameters: [id, itemId],
       requestBody: {
