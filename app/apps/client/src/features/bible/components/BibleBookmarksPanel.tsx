@@ -597,7 +597,7 @@ export function BibleBookmarksPanel({
                   />
                 </button>
               ) : null}
-              <Bookmark className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
+              <Bookmark className="w-4 h-4 shrink-0 text-bookmark" />
               {/* One truncating line, so a narrow column cuts the count
                   before it cuts into the title. */}
               <span className="min-w-0 truncate text-sm font-medium text-gray-700 dark:text-gray-300">

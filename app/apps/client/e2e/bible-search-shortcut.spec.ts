@@ -37,7 +37,7 @@ async function searchAndShow(page: Page, reference: string) {
   await search.fill(reference)
   await page.waitForTimeout(800)
   await search.press('Enter')
-  await expect(page.locator('button.ring-green-500')).toBeVisible({
+  await expect(page.locator('button.ring-live')).toBeVisible({
     timeout: 10000,
   })
 }

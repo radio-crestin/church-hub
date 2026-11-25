@@ -204,7 +204,7 @@ export function SongKeyPage() {
                       </div>
                       <div className="ml-2 sm:ml-4 flex-shrink-0">
                         {song.keyLine ? (
-                          <span className="px-2 sm:px-3 py-1 text-sm font-medium rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+                          <span className="text-sm font-medium text-key">
                             {song.keyLine}
                           </span>
                         ) : (

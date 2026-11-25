@@ -38,7 +38,7 @@ test.describe('Keyboard Shortcuts - Song Navigation', () => {
 
     // Check if green highlight appears (active slide)
     const greenHighlight = page.locator(
-      'button.ring-green-500, [class*="ring-green"]',
+      'button.ring-live, [class*="ring-green"]',
     )
     if (await greenHighlight.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Navigate down
@@ -135,7 +135,7 @@ test.describe('Keyboard Shortcuts - Bible Navigation', () => {
       await page.waitForTimeout(500)
 
       // Verify the green highlight moved
-      const greenHighlight = page.locator('button.ring-green-500')
+      const greenHighlight = page.locator('button.ring-live')
       if (
         await greenHighlight.isVisible({ timeout: 3000 }).catch(() => false)
       ) {
@@ -183,7 +183,7 @@ test.describe('Keyboard Shortcuts - Bible Navigation', () => {
       await page.keyboard.press('ArrowUp')
       await page.waitForTimeout(500)
 
-      const greenHighlight = page.locator('button.ring-green-500')
+      const greenHighlight = page.locator('button.ring-live')
       if (
         await greenHighlight.isVisible({ timeout: 3000 }).catch(() => false)
       ) {

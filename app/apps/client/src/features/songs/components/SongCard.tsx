@@ -1,11 +1,4 @@
-import {
-  Bookmark,
-  CalendarPlus,
-  Eye,
-  Music2,
-  Sparkles,
-  Tag,
-} from 'lucide-react'
+import { Bookmark, CalendarPlus, Eye, Sparkles, Tag } from 'lucide-react'
 import { forwardRef, useRef } from 'react'
 
 import type { SyncChangeKind } from '~/features/sync'
@@ -183,8 +176,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 </span>
               )}
               {song.keyLine && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded">
-                  <Music2 className="w-3 h-3" />
+                <span className="text-xs font-medium text-key">
                   {song.keyLine}
                 </span>
               )}

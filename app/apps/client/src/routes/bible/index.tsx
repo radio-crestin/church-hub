@@ -4,14 +4,7 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
-import {
-  Book,
-  Bookmark,
-  BookmarkCheck,
-  CalendarPlus,
-  Loader2,
-  Settings,
-} from 'lucide-react'
+import { Book, Bookmark, CalendarPlus, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -1626,7 +1619,11 @@ function BiblePage() {
                 }`}
               >
                 {isCurrentVerseBookmarked ? (
-                  <BookmarkCheck size={16} />
+                  <Bookmark
+                    size={16}
+                    fill="currentColor"
+                    className="text-bookmark"
+                  />
                 ) : (
                   <Bookmark size={16} />
                 )}

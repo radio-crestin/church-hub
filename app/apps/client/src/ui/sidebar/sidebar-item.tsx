@@ -154,17 +154,16 @@ export function SidebarItem({
     onClick?.(e)
   }
   const baseClasses = `
-    flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+    flex items-center gap-2.5 px-3 py-2.5 md:h-8 md:py-0 md:px-2.5 rounded-lg transition-colors duration-150
     ${isCollapsed ? 'md:justify-center' : ''}
     ${className}
   `
 
   const enabledClasses = isActive
-    ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
-    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+    ? 'bg-selected text-fg'
+    : 'text-fg-label hover:bg-hover hover:text-fg'
 
-  const disabledClasses =
-    'opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600'
+  const disabledClasses = 'opacity-50 cursor-not-allowed text-fg-hint'
 
   // Get icon color classes if specified
   const iconColorClasses = iconColor ? ICON_COLOR_CLASSES[iconColor] : null
@@ -195,24 +194,23 @@ export function SidebarItem({
     }
 
     // Default: regular icon
-    return <Icon size={20} className="flex-shrink-0" />
+    return <Icon size={16} strokeWidth={1.5} className="flex-shrink-0" />
   }
 
   const content = (
     <>
       {renderIcon()}
       {/* Mobile: always show label, Desktop: respect isCollapsed */}
-      <span className="text-sm font-medium md:hidden">{label}</span>
+      <span className="text-[13px] font-medium md:hidden">{label}</span>
       {!isCollapsed && (
-        <span className="text-sm font-medium hidden md:inline flex-1">
+        <span className="text-[13px] font-medium hidden md:inline flex-1">
           {label}
         </span>
       )}
       {shortcut && !isCollapsed && (
         <KeyboardShortcutBadge
           shortcut={shortcut}
-          variant="muted"
-          className="hidden md:inline-block ml-auto"
+          className="hidden md:inline-flex ml-auto"
         />
       )}
     </>

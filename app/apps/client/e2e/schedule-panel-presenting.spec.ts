@@ -110,12 +110,11 @@ async function expectLiveStep(
   await expect
     .poll(() => readLiveStep(request), { timeout: 10000 })
     .toEqual(liveStep)
-  await expect(panel.getByTestId(rowTestId).first()).toHaveClass(
-    /ring-orange-500/,
-    { timeout: 10000 },
-  )
+  await expect(panel.getByTestId(rowTestId).first()).toHaveClass(/ring-live/, {
+    timeout: 10000,
+  })
   if (stepTestId) {
-    await expect(page.getByTestId(stepTestId)).toHaveClass(/ring-green-500/, {
+    await expect(page.getByTestId(stepTestId)).toHaveClass(/ring-live/, {
       timeout: 10000,
     })
   }
@@ -233,7 +232,7 @@ test.describe('Programe panel presents and advances the program', () => {
         'Ioan 3:16',
       )
       await expect(liveRail.getByTestId('schedule-sub-item-2')).toHaveClass(
-        /ring-green-500/,
+        /ring-live/,
       )
       await expect(liveRail.getByTestId('schedule-sub-item-0')).toHaveCount(0)
       // The song's own verse list is no longer what the rail is showing.
@@ -630,7 +629,7 @@ test.describe('Programe panel presents and advances the program', () => {
         timeout: 10000,
       })
 
-      // The row's orange ring is gated on the page deriving schedule mode
+      // The row's live ring is gated on the page deriving schedule mode
       // (SchedulePanel only trusts the projector's step while the live content
       // carries the selected program), so this IS the schedule-mode assertion.
       await expectLiveStep(request, page, panel, {
@@ -718,12 +717,11 @@ test.describe('Programe panel presents and advances the program', () => {
           scheduleId: undefined,
           scheduleItemIndex: undefined,
         })
-      await expect(page.getByTestId('song-slide-0')).toHaveClass(
-        /ring-green-500/,
-        { timeout: 10000 },
-      )
+      await expect(page.getByTestId('song-slide-0')).toHaveClass(/ring-live/, {
+        timeout: 10000,
+      })
       await expect(panel.getByTestId('schedule-song-item')).not.toHaveClass(
-        /ring-orange-500/,
+        /ring-live/,
       )
 
       // Started from its row, the program is live, and its first slide is the
@@ -913,7 +911,7 @@ test.describe('Programe panel presents and advances the program', () => {
       await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true')
       await expect(page.getByTestId('stage-hide')).toBeVisible()
       await expect(panel.getByTestId('schedule-song-item')).not.toHaveClass(
-        /ring-orange-500/,
+        /ring-live/,
       )
 
       // Started from its row, the program is on the projector.
@@ -941,7 +939,7 @@ test.describe('Programe panel presents and advances the program', () => {
       await programPage.goto(`/schedules/${schedule.id}`)
       await programPage.waitForLoadState('networkidle')
       await expect(programPage.getByTestId('schedule-sub-item-1')).toHaveClass(
-        /ring-green-500/,
+        /ring-live/,
         { timeout: 10000 },
       )
       await programPage.keyboard.press('ArrowRight')
@@ -1049,7 +1047,7 @@ test.describe('Programe panel presents and advances the program', () => {
       await programPage.goto(`/schedules/${schedule.id}`)
       await programPage.waitForLoadState('networkidle')
       await expect(programPage.getByTestId('schedule-sub-item-5')).toHaveClass(
-        /ring-green-500/,
+        /ring-live/,
         { timeout: 10000 },
       )
       await programPage.close()
@@ -1074,8 +1072,8 @@ test.describe('Programe panel presents and advances the program', () => {
           scheduleItemIndex: 3,
         })
       await expect(thumbs.nth(0)).toHaveAttribute('aria-current', 'true')
-      await expect(secondRow).toHaveClass(/ring-orange-500/)
-      await expect(firstRow).not.toHaveClass(/ring-orange-500/)
+      await expect(secondRow).toHaveClass(/ring-live/)
+      await expect(firstRow).not.toHaveClass(/ring-live/)
       await expect(page.getByTestId('stage-hide')).toBeVisible()
     } finally {
       await request.post('/api/presentation/clear-temporary').catch(() => {})
@@ -1275,7 +1273,7 @@ test.describe("a program's Next and Prev carry on from the song on screen", () =
         panel
           .getByTestId('schedule-song-item')
           .filter({ hasText: second.title }),
-      ).not.toHaveClass(/ring-orange-500/)
+      ).not.toHaveClass(/ring-live/)
 
       // Next is the second song's next slide, as a step of the program, and the
       // program lights it (regression: the first song's first slide went up).
@@ -1289,7 +1287,7 @@ test.describe("a program's Next and Prev carry on from the song on screen", () =
           scheduleItemIndex: 4,
         })
       await expect(page.getByTestId('schedule-sub-item-4')).toHaveClass(
-        /ring-green-500/,
+        /ring-live/,
         { timeout: 10000 },
       )
 
@@ -1320,7 +1318,7 @@ test.describe("a program's Next and Prev carry on from the song on screen", () =
           scheduleItemIndex: 2,
         })
       await expect(page.getByTestId('schedule-sub-item-2')).toHaveClass(
-        /ring-green-500/,
+        /ring-live/,
         { timeout: 10000 },
       )
     } finally {
@@ -1357,7 +1355,7 @@ test.describe("a program's Next and Prev carry on from the song on screen", () =
           scheduleItemIndex: 5,
         })
       await expect(page.getByTestId('schedule-sub-item-5')).toHaveClass(
-        /ring-green-500/,
+        /ring-live/,
         { timeout: 10000 },
       )
 
@@ -1433,11 +1431,11 @@ test.describe("a program's Next and Prev carry on from the song on screen", () =
           scheduleId: schedule.id,
           scheduleItemIndex: 3,
         })
-      await expect(middleRow).toHaveClass(/ring-orange-500/, {
+      await expect(middleRow).toHaveClass(/ring-live/, {
         timeout: 10000,
       })
       await request.post('/api/presentation/clear-temporary')
-      await expect(middleRow).not.toHaveClass(/ring-orange-500/, {
+      await expect(middleRow).not.toHaveClass(/ring-live/, {
         timeout: 10000,
       })
 
@@ -1480,7 +1478,7 @@ test.describe("a program's Next and Prev carry on from the song on screen", () =
           scheduleItemIndex: 7,
         })
       await expect(page.getByTestId('schedule-sub-item-7')).toHaveClass(
-        /ring-green-500/,
+        /ring-live/,
         { timeout: 10000 },
       )
     } finally {

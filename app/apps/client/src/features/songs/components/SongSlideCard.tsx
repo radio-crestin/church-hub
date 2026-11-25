@@ -305,7 +305,7 @@ export function SongSlideCard({
       style={style}
       className={`bg-white dark:bg-gray-800 border rounded-lg overflow-hidden ${
         isPresented
-          ? 'border-green-400 dark:border-green-600 ring-2 ring-green-400/40 dark:ring-green-600/40'
+          ? 'border-transparent ring-1 ring-live'
           : 'border-gray-200 dark:border-gray-700'
       } ${isDragging ? 'opacity-50 shadow-lg' : ''}`}
     >

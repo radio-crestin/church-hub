@@ -32,6 +32,7 @@ import type {
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
 import { usePermissions } from '../../provider/permissions-provider'
+import { AppMark } from '../brand/AppMark'
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean
@@ -185,7 +186,7 @@ export function Sidebar({
         data-collapsed={isCollapsed}
         className={`
           fixed md:relative z-50 md:z-auto
-          flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
+          flex flex-col h-full bg-panel border-r border-line
           transition-all duration-300 ease-in-out
           w-72 top-0 left-0
           safe-area-top safe-area-left safe-area-bottom
@@ -196,10 +197,8 @@ export function Sidebar({
         {/* Mobile Close Button */}
         <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-3">
-            <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
-            <span className="font-semibold text-gray-900 dark:text-white">
-              Church Hub
-            </span>
+            <AppMark size={28} />
+            <span className="font-semibold text-fg">Church Hub</span>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(false)}

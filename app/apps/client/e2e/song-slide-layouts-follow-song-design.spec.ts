@@ -116,7 +116,7 @@ test('the last slide of a song keeps the screen song design', async ({
 
     expect(await lyricsFont(screen, `${title} slide 1`)).toContain(CUSTOM_FONT)
     await expect(page.getByTestId('schedule-sub-item-0')).toHaveClass(
-      /ring-green-500/,
+      /ring-live/,
       { timeout: 10000 },
     )
 

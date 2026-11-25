@@ -8,7 +8,6 @@ import {
 import {
   ArrowLeft,
   Bookmark,
-  BookmarkCheck,
   CalendarPlus,
   Compass,
   Download,
@@ -1151,7 +1150,11 @@ function SongPreviewPage() {
             }`}
           >
             {isBookmarked ? (
-              <BookmarkCheck size={16} />
+              <Bookmark
+                size={16}
+                fill="currentColor"
+                className="text-bookmark"
+              />
             ) : (
               <Bookmark size={16} />
             )}

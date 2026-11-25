@@ -886,7 +886,7 @@ export function SchedulePanel({
                   }}
                   placeholder={t('panel.searchPlaceholder')}
                   data-testid="schedule-search-input"
-                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-focus focus:border-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton

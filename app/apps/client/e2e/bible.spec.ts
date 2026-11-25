@@ -289,7 +289,7 @@ test.describe('Bible Feature', () => {
     // Present the verse via Enter
     await searchInput.press('Enter')
     await page.waitForTimeout(800)
-    await expect(page.locator('button.ring-green-500')).toBeVisible({
+    await expect(page.locator('button.ring-live')).toBeVisible({
       timeout: 5000,
     })
 
@@ -300,13 +300,13 @@ test.describe('Bible Feature', () => {
     for (let target = 15; target <= 18; target++) {
       await page.keyboard.press('ArrowDown')
       await expect(
-        page.locator('button.ring-green-500 span.font-semibold').first(),
+        page.locator('button.ring-live span.font-semibold').first(),
       ).toHaveText(String(target), { timeout: 15000 })
     }
 
     // Should be on the last verse now (> 14)
     const lastVNum = await page
-      .locator('button.ring-green-500 span.font-semibold')
+      .locator('button.ring-live span.font-semibold')
       .first()
       .textContent()
     expect(parseInt(lastVNum!.trim(), 10)).toBeGreaterThan(14)
@@ -325,7 +325,7 @@ test.describe('Bible Feature', () => {
     // sync effect -> next-chapter load); poll with an auto-retrying assertion
     // instead of a one-shot read after a fixed wait so we don't sample an
     // intermediate state mid-settle.
-    const newHighlight = page.locator('button.ring-green-500')
+    const newHighlight = page.locator('button.ring-live')
     await expect(newHighlight.locator('span.font-semibold').first()).toHaveText(
       '1',
       { timeout: 15000 },
@@ -342,7 +342,7 @@ test.describe('Bible Feature', () => {
 
     // Re-check after a moment that it does not delayed-snap-back.
     await page.waitForTimeout(2000)
-    const afterWait = page.locator('button.ring-green-500')
+    const afterWait = page.locator('button.ring-live')
     await expect(afterWait.locator('span.font-semibold').first()).toHaveText(
       '1',
       { timeout: 5000 },
@@ -381,7 +381,7 @@ test.describe('Bible Feature', () => {
 
     await searchInput.press('Enter')
     await page.waitForTimeout(800)
-    await expect(page.locator('button.ring-green-500')).toBeVisible({
+    await expect(page.locator('button.ring-live')).toBeVisible({
       timeout: 5000,
     })
 
@@ -390,7 +390,7 @@ test.describe('Bible Feature', () => {
     // Poll for the settled verse 1 (async boundary cross) instead of a one-shot
     // read after a fixed wait.
     await expect(
-      page.locator('button.ring-green-500 span.font-semibold').first(),
+      page.locator('button.ring-live span.font-semibold').first(),
     ).toHaveText('1', { timeout: 10000 })
   })
 
@@ -425,7 +425,7 @@ test.describe('Bible Feature', () => {
     await page.waitForTimeout(800)
 
     // Verify green highlight on presented verse
-    const greenHighlight = page.locator('button.ring-green-500')
+    const greenHighlight = page.locator('button.ring-live')
     await expect(greenHighlight).toBeVisible({ timeout: 5000 })
 
     const lastVerseNum = await greenHighlight
@@ -444,7 +444,7 @@ test.describe('Bible Feature', () => {
     // one-shot read so we don't sample an intermediate state (the old last
     // verse, or a transient mid-settle value) before it reconciles.
     await expect(
-      page.locator('button.ring-green-500 span.font-semibold').first(),
+      page.locator('button.ring-live span.font-semibold').first(),
     ).toHaveText('1', { timeout: 10000 })
 
     // Verify a chapter header with "3" is visible
@@ -487,7 +487,7 @@ test.describe('Bible Feature', () => {
     // of the list, so a warp-back is unmistakable (scrollTop collapses to ~0)
     // rather than landing coincidentally near where we scrolled to.
     await verseButtons.first().click()
-    await expect(page.locator('button.ring-green-500')).toBeVisible({
+    await expect(page.locator('button.ring-live')).toBeVisible({
       timeout: 5000,
     })
 
@@ -556,7 +556,7 @@ test.describe('Bible Feature', () => {
     await verseButtons.first().click()
     await page.waitForTimeout(800)
 
-    const greenHighlight = page.locator('button.ring-green-500')
+    const greenHighlight = page.locator('button.ring-live')
     await expect(greenHighlight).toBeVisible({ timeout: 5000 })
 
     const verseNum = await greenHighlight
@@ -574,7 +574,7 @@ test.describe('Bible Feature', () => {
       .poll(
         async () => {
           const text = await page
-            .locator('button.ring-green-500 span.font-semibold')
+            .locator('button.ring-live span.font-semibold')
             .first()
             .textContent()
           return parseInt(text?.trim() ?? '0', 10)

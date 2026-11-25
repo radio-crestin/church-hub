@@ -106,7 +106,7 @@ export function ScheduleSlideRow({
         isDragging
           ? 'opacity-80 shadow-lg border-orange-400 bg-orange-50 dark:border-orange-500 dark:bg-orange-900/20'
           : isLive
-            ? 'border-orange-400 bg-orange-50 ring-2 ring-inset ring-orange-500 dark:border-orange-500 dark:bg-orange-900/30'
+            ? 'border-transparent bg-live-tint ring-1 ring-inset ring-live'
             : item.isSung
               ? 'border-green-200 bg-green-50/50 hover:border-green-300 dark:border-green-800/60 dark:bg-green-900/10 dark:hover:border-green-700'
               : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50/50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-orange-600 dark:hover:bg-orange-900/10'

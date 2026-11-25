@@ -297,7 +297,7 @@ export function AddScheduleItemModal({
                             </span>
                           )}
                           {previewSong.keyLine && (
-                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                            <span className="text-xs font-medium text-key">
                               {previewSong.keyLine}
                             </span>
                           )}

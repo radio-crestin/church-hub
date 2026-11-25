@@ -504,7 +504,7 @@ export function VersesList({
 
                   const getButtonClass = () => {
                     if (isPresented) {
-                      return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-inset ring-green-500'
+                      return 'bg-live-tint ring-1 ring-inset ring-live'
                     }
                     if (isSearched) {
                       return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-inset ring-indigo-500'

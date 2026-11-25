@@ -84,7 +84,7 @@ export function ScheduleSongRow({
       return 'opacity-80 shadow-lg border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-900/20'
     }
     if (isLive) {
-      return 'border-orange-400 bg-orange-50 ring-2 ring-inset ring-orange-500 dark:border-orange-500 dark:bg-orange-900/30'
+      return 'border-transparent bg-live-tint ring-1 ring-inset ring-live'
     }
     if (isActive) {
       return 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
