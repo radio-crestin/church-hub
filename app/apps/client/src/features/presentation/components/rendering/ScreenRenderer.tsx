@@ -66,6 +66,7 @@ export function ScreenRenderer({
     contentKey,
     isVisible: hookIsVisible,
     isExitAnimating,
+    morphLines,
     nextSlideData,
     leaving,
     presentationState,
@@ -741,6 +742,7 @@ export function ScreenRenderer({
                   contentType={contentType}
                   contentData={contentData}
                   contentKey={contentKey}
+                  morphLines={morphLines}
                   containerWidth={containerSize.width}
                   containerHeight={containerSize.height}
                   isVisible={isVisible}
