@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Check, Copy, Globe, Settings } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getApiUrl } from '~/config'
@@ -16,7 +16,7 @@ interface PersistedSettingsSubset {
 
 export function LiveTranslationStreamsCard() {
   const { t } = useTranslation('liveTranslation')
-  const [streamSecret, setStreamSecret] = useState<string>('')
+  const [streamUrl, setStreamUrl] = useState<string>('')
   const [linkChanged, setLinkChanged] = useState(false)
   const [targets, setTargets] = useState<TranslationTarget[]>([])
   const [copied, setCopied] = useState(false)
@@ -25,8 +25,8 @@ export function LiveTranslationStreamsCard() {
   useEffect(() => {
     fetch(`${baseUrl}/api/live-translation/stream-secret`)
       .then((r) => r.json())
-      .then((d: { secret: string; linkChanged?: boolean }) => {
-        setStreamSecret(d.secret)
+      .then((d: { link: string; linkChanged?: boolean }) => {
+        setStreamUrl(d.link)
         setLinkChanged(d.linkChanged === true)
       })
       .catch(() => {})
@@ -40,14 +40,6 @@ export function LiveTranslationStreamsCard() {
       })
       .catch(() => {})
   }, [baseUrl])
-
-  const streamUrl = useMemo(
-    () =>
-      streamSecret
-        ? `https://churchub-backend.radiocrestin.ro/listen/${streamSecret}`
-        : '',
-    [streamSecret],
-  )
 
   const langName = (code: string) =>
     LANGUAGES.find((l) => l.code === code)?.name || code.toUpperCase()

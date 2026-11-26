@@ -41,6 +41,7 @@ import type {
 } from '../service/livestream/types'
 import {
   createBroadcast,
+  createYouTubeAuthUrl,
   endBroadcast,
   getActiveBroadcast,
   getAuthStatus,
@@ -83,20 +84,30 @@ export async function handleLivestreamRoutes(
 ): Promise<Response | null> {
   // YouTube OAuth endpoints
 
-  // POST /api/livestream/youtube/sign-in - Starts a YouTube sign-in: the
-  // state its tokens must come back with (single use, 10 minutes)
+  // POST /api/livestream/youtube/sign-in { mode } - Starts a YouTube sign-in:
+  // the backend page to open, and the state its tokens must come back with
+  // (single use, 10 minutes)
   if (
     req.method === 'POST' &&
     url.pathname === '/api/livestream/youtube/sign-in'
   ) {
+    const body = (await req.json().catch(() => ({}))) as { mode?: unknown }
+    const mode = body.mode ?? 'redirect'
+    if (mode !== 'redirect' && mode !== 'postMessage') {
+      return handleCors(
+        req,
+        Response.json(
+          { error: 'mode must be redirect or postMessage' },
+          { status: 400 },
+        ),
+      )
+    }
+    const state = youtubeSignIns.issue()
     return handleCors(
       req,
-      new Response(
-        JSON.stringify({ data: { state: youtubeSignIns.issue() } }),
-        {
-          headers: { 'Content-Type': 'application/json' },
-        },
-      ),
+      Response.json({
+        data: { state, authUrl: createYouTubeAuthUrl(mode, state) },
+      }),
     )
   }
 

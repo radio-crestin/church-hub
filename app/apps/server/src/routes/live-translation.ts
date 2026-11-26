@@ -1,6 +1,7 @@
 import type { RequestContext } from '../middleware'
 import { getAudioDevices } from '../service/live-translation/audio-io'
 import { defaultVoiceForEngine } from '../service/live-translation/engines'
+import { listenerLink } from '../service/live-translation/listenerLink'
 import {
   defaultSettings,
   generateTargetId,
@@ -161,8 +162,10 @@ export async function handleLiveTranslationRoutes(
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/stream-secret'
   ) {
+    const secret = getStreamSecret()
     return Response.json({
-      secret: getStreamSecret(),
+      secret,
+      link: listenerLink(secret),
       linkChanged: isLinkChangeUnseen(),
     })
   }
@@ -179,7 +182,8 @@ export async function handleLiveTranslationRoutes(
     req.method === 'POST' &&
     url.pathname === '/api/live-translation/stream-secret/reset'
   ) {
-    return Response.json({ secret: resetStreamSecret() })
+    const secret = resetStreamSecret()
+    return Response.json({ secret, link: listenerLink(secret) })
   }
 
   if (

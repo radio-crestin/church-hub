@@ -53,6 +53,13 @@ const BUNDLED_BACKGROUNDS_DIR = resolve(
   DEFAULT_BACKGROUND_MEDIA_RESOURCE_DIR,
 )
 
+/**
+ * The backend baked into the smoke build, and the one this machine sets at
+ * run time: the run-time one wins (docs/backend-endpoint.md).
+ */
+const BAKED_BACKEND_URL = 'https://backend-baked.smoke.invalid'
+const RUNTIME_BACKEND_URL = 'https://backend-runtime.smoke.invalid'
+
 const output = { stdout: '', stderr: '' }
 
 function fail(message: string): never {
@@ -111,6 +118,7 @@ async function compile(binaryPath: string) {
       '--outfile',
       binaryPath,
     ],
+    env: { ...process.env, CHURCH_HUB_BUILD_BACKEND_URL: BAKED_BACKEND_URL },
     stdout: 'pipe',
     stderr: 'pipe',
   })
@@ -151,6 +159,20 @@ async function waitForServer(proc: Subprocess, url: string) {
     await Bun.sleep(500)
   }
   throw new Error('sidecar did not answer within 2 minutes')
+}
+
+/** A cookie signed in as the fresh install's super admin. */
+async function adminCookie(): Promise<string> {
+  const users = (await (
+    await fetch(`${BASE_URL}/api/auth/local-users`)
+  ).json()) as { data: { id: number; isSuperAdmin: boolean }[] }
+  const admin = users.data.find((user) => user.isSuperAdmin)
+  const login = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: admin?.id }),
+  })
+  return (login.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
 }
 
 /**
@@ -199,6 +221,9 @@ async function main() {
     await check('bun build --compile makes the sidecar', () =>
       compile(binaryPath),
     )
+    await check('the build bakes in CHURCH_HUB_BUILD_BACKEND_URL', () =>
+      readFileSync(binaryPath).includes(BAKED_BACKEND_URL),
+    )
 
     proc = spawn({
       cmd: [binaryPath],
@@ -211,6 +236,7 @@ async function main() {
         // As the desktop shell passes it (Tauri's resource_dir)
         CHURCH_HUB_RESOURCES_DIR: resourcesDir,
         DATABASE_PATH: join(workDir, 'data', 'app.db'),
+        CHURCH_HUB_BACKEND_URL: RUNTIME_BACKEND_URL,
       },
       stdout: 'pipe',
       stderr: 'pipe',
@@ -291,16 +317,7 @@ async function main() {
       )
     }
     await check('the song updates run in their worker thread', async () => {
-      const users = (await (
-        await fetch(`${BASE_URL}/api/auth/local-users`)
-      ).json()) as { data: { id: number; isSuperAdmin: boolean }[] }
-      const admin = users.data.find((user) => user.isSuperAdmin)
-      const login = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: admin?.id }),
-      })
-      const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+      const cookie = await adminCookie()
       // No sources: the worker starts, checks nothing, and reports back.
       const run = await fetch(`${BASE_URL}/api/song-sources/updates/run`, {
         method: 'POST',
@@ -316,6 +333,17 @@ async function main() {
       }
       return false
     })
+    await check(
+      'CHURCH_HUB_BACKEND_URL overrides the baked-in backend',
+      async () => {
+        const res = await fetch(`${BASE_URL}/api/livestream/youtube/sign-in`, {
+          method: 'POST',
+          headers: { cookie: await adminCookie() },
+        })
+        const { data } = (await res.json()) as { data: { authUrl: string } }
+        return data.authUrl.startsWith(`${RUNTIME_BACKEND_URL}/auth/youtube?`)
+      },
+    )
     await check(
       'saved secrets are sealed with a data key out of the database (Bun.secrets in the compiled sidecar)',
       async () => {

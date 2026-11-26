@@ -1,5 +1,4 @@
 import { getPublicAppUrl } from './getPublicAppUrl'
-import { getSyncServiceUrl } from './getSyncServiceUrl'
 import { getRemoteAccessSettings } from '../../remote-access/remoteAccessSettings'
 import { getSignalingBaseUrl } from '../../signaling/signalingBaseUrl'
 
@@ -9,8 +8,9 @@ import { getSignalingBaseUrl } from '../../signaling/signalingBaseUrl'
  * Everything sits in the fragment, so no server ever logs it. `p` is the
  * computer's remote access room, when that is on, where the phone reaches
  * it over WebRTC (T-174); `r` the signaling relay of that room, only when it
- * isn't the sync service; `s` the sync service, only when it isn't the
- * default one (a self-hosted service).
+ * isn't the sync service; `s` the sync service, always: the public app reads
+ * a link without it (a released version's) as the legacy backend's, and this
+ * church may be on another one.
  */
 export function buildJoinUrl(input: {
   readUrl: string
@@ -26,8 +26,6 @@ export function buildJoinUrl(input: {
     const relay = getSignalingBaseUrl()
     if (relay !== input.serviceUrl) params.set('r', relay)
   }
-  if (input.serviceUrl !== getSyncServiceUrl()) {
-    params.set('s', input.serviceUrl)
-  }
+  params.set('s', input.serviceUrl)
   return `${getPublicAppUrl()}/join#${params}`
 }
