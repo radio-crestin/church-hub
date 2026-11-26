@@ -32,8 +32,8 @@
     "importPptx": "Import PowerPoint",
     "importPptxDescription": "Slides from a .pptx file, with their pictures, videos and animations",
     "importSchedule": {
-      "title": "Import Presentation",
-      "description": "Import from an existing presentation"
+      "title": "Import presentation",
+      "description": "Copy the items of another presentation"
     }
   },
   "fontSize": {

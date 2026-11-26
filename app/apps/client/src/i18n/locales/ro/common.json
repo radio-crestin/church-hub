@@ -33,7 +33,7 @@
     "importPptxDescription": "Diapozitive dintr-un fișier .pptx, cu imagini, videoclipuri și animații",
     "importSchedule": {
       "title": "Importă prezentare",
-      "description": "Importă dintr-o prezentare existentă"
+      "description": "Copiază elementele altei prezentări"
     }
   },
   "fontSize": {

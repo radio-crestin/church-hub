@@ -303,7 +303,7 @@ export function AddScheduleItemModal({
         className={`fixed inset-0 m-auto p-0 bg-panel rounded-[10px] border border-line shadow-popover backdrop:bg-black/50 ${
           isLargeStep
             ? 'h-[90vh] w-[90vw] max-w-none'
-            : 'w-full max-w-sm max-h-[90vh]'
+            : 'w-[calc(100vw-2rem)] max-w-sm max-h-[90vh]'
         }`}
       >
         {/* `h-full` only in the song step. The menu step's dialog has no

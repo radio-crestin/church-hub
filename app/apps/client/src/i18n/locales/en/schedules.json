@@ -684,7 +684,7 @@
     "running": "Running",
     "addHint": "Add a song, Bible verses, music or a video",
     "addTo": "Add to",
-    "afterLive": "After the one on screen",
+    "afterLive": "After current item",
     "atEnd": "At the end"
   },
   "addPresentation": {

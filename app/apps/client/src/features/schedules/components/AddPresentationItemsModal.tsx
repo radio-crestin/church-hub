@@ -107,7 +107,7 @@ export function AddPresentationItemsModal({
               aria-checked={schedule.id === picked?.id}
               onClick={() => setPickedId(schedule.id)}
               data-testid="add-presentation-items-option"
-              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm ${
+              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus ${
                 schedule.id === picked?.id
                   ? 'bg-selected text-fg'
                   : 'text-fg-body hover:bg-hover'

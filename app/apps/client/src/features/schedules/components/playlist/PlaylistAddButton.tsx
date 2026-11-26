@@ -55,7 +55,7 @@ export function PlaylistAddButton({
           onClick={open}
           data-testid="playlist-add"
           aria-label={t('schedules:playlist.addHint')}
-          className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-raised px-3 text-sm font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover"
+          className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-raised px-3 text-sm font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-focus"
         >
           <Plus size={16} strokeWidth={1.5} />
           <span>{t('common:addMenu.button')}</span>
