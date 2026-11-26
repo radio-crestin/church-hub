@@ -356,6 +356,9 @@ export interface BatchImportSongInput {
   hymnNumber?: string | null
   keyLine?: string | null
   presentationOrder?: string | null
+  /** The song source it comes from and its id there (a new song only). */
+  sourceId?: string | null
+  sourceSongId?: string | null
   slides?: Array<{
     content: string
     sortOrder: number

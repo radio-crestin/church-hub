@@ -1,99 +1,110 @@
 import type { SourceSong } from '@church-hub/song-formats'
 
-import { lyricsKey, lyricsText, readKeptSongs } from './keptSongsStore'
-import { getRawDatabase } from '../../../db'
-import type { DiscoveryMatchResult } from '../../songs'
-
-const CHUNK = 500
+import { lyricsKey, readKeptSongs } from './keptSongsStore'
+import {
+  isUntouched,
+  readSongSourceState,
+  type SongSourceState,
+} from './readSongSourceState'
+import { sourceLyricsHash } from './sourceLyricsHash'
+import type { DiscoveryMatchResult, SourceLink } from '../../songs'
 
 /** A library song and the source's newer version of it. */
 export interface ChangedSong {
   songId: number
   song: SourceSong
+  /**
+   * Changed here since the source gave it (by hand, or its lyrics no longer
+   * the source's): never updated on its own, only offered as a new version.
+   */
+  edited: boolean
 }
 
-interface LibrarySong {
-  id: number
-  title: string
-  last_manual_edit: number | null
-  lyrics: string
+/** What a check found about the library songs a source already has. */
+export interface SourceMatches {
+  changed: ChangedSong[]
+  /** Songs with the source's lyrics not yet linked to it. */
+  links: SourceLink[]
 }
 
-function readLibrarySongs(ids: number[]): Map<number, LibrarySong> {
-  const db = getRawDatabase()
-  const songs = new Map<number, LibrarySong>()
-  for (let i = 0; i < ids.length; i += CHUNK) {
-    const chunk = ids.slice(i, i + CHUNK)
-    const marks = chunk.map(() => '?').join(',')
-    const rows = db
-      .query(
-        `SELECT id, title, last_manual_edit FROM songs WHERE id IN (${marks})`,
-      )
-      .all(...chunk) as Omit<LibrarySong, 'lyrics'>[]
-    for (const row of rows) songs.set(row.id, { ...row, lyrics: '' })
-    const slides = db
-      .query(
-        `SELECT song_id, content FROM song_slides WHERE song_id IN (${marks}) ORDER BY song_id, sort_order`,
-      )
-      .all(...chunk) as { song_id: number; content: string }[]
-    for (const slide of slides) {
-      const song = songs.get(slide.song_id)
-      if (song) song.lyrics += ` ${slide.content}`
-    }
-  }
-  return songs
-}
+/** The verdicts that name the library song a source song is. */
+const SAME_SONG = new Set(['exact-source', 'exact-lyrics', 'exact-filename'])
 
 /**
- * Each source song and the library song that came from the same file. A
- * library song several source songs claim is left out: updating it from each
- * in turn would never settle.
+ * Each source song and the library song it is. A library song several
+ * source songs claim is left out: updating it from each in turn would
+ * never settle.
  */
-function sameFileMatches(
+function sameSongMatches(
   verdicts: DiscoveryMatchResult[],
 ): Map<string, number> {
-  const fromFile = verdicts.filter(
-    (v) => v.verdict === 'exact-filename' && v.exactSongId != null,
+  const same = verdicts.filter(
+    (v) => SAME_SONG.has(v.verdict) && v.exactSongId != null,
   )
   const claims = new Map<number, number>()
-  for (const v of fromFile) {
+  for (const v of same) {
     const id = v.exactSongId as number
     claims.set(id, (claims.get(id) ?? 0) + 1)
   }
   return new Map(
-    fromFile
+    same
       .filter((v) => claims.get(v.exactSongId as number) === 1)
       .map((v) => [v.tempId, v.exactSongId as number]),
   )
 }
 
 /**
- * The source's songs whose lyrics changed since the library got them, for
- * the library songs nobody edited by hand: a song the user changed is never
- * replaced. Only a library song from the same file, under the same title, so
- * an update always lands on the song it came from, never on another song
- * that only shares its title. A version the user turned down (kept their
- * own over it) is not offered again.
+ * An update lands only on the song it came from: one this source added or
+ * was linked to, or (before source links) one from the same file under the
+ * same title, never another source's song.
+ */
+function cameFrom(
+  sourceId: string,
+  known: SongSourceState,
+  song: SourceSong,
+  verdict: string,
+): boolean {
+  if (known.source_id) return known.source_id === sourceId
+  return (
+    verdict === 'exact-filename' &&
+    known.title.toLowerCase() === song.parsed.title.toLowerCase()
+  )
+}
+
+/**
+ * The library songs a source has, and which of them it changed since:
+ * an untouched one (isUntouched) follows the source, an edited one is
+ * offered as a new version with its lyrics diff, never replaced on its own.
+ * A version the user turned down (kept their own over it) is not offered
+ * again. A library song with the source's lyrics and no source yet is
+ * linked to it, so it follows the source from now on.
  */
 export function findChangedSongs(
   sourceId: string,
   songs: SourceSong[],
   verdicts: DiscoveryMatchResult[],
-): ChangedSong[] {
-  const exact = sameFileMatches(verdicts)
-  if (exact.size === 0) return []
-  const library = readLibrarySongs([...new Set(exact.values())])
+): SourceMatches {
+  const same = sameSongMatches(verdicts)
+  if (same.size === 0) return { changed: [], links: [] }
+  const verdictOf = new Map(verdicts.map((v) => [v.tempId, v.verdict]))
+  const library = readSongSourceState([...new Set(same.values())])
   const kept = new Map(readKeptSongs(sourceId).map((k) => [k.songId, k.lyrics]))
-  return songs.flatMap((song) => {
-    const id = exact.get(song.id)
+  const changed: ChangedSong[] = []
+  const links: SourceLink[] = []
+  for (const song of songs) {
+    const id = same.get(song.id)
     const known = id == null ? undefined : library.get(id)
-    if (!known || known.last_manual_edit) return []
-    if (kept.get(known.id) === lyricsKey(song)) return []
-    if (known.title.toLowerCase() !== song.parsed.title.toLowerCase()) {
-      return []
+    if (!known) continue
+    const fresh = sourceLyricsHash(song)
+    if (fresh === known.content_hash) {
+      if (!known.source_id && !known.last_manual_edit) {
+        links.push({ songId: known.id, sourceSongId: song.id })
+      }
+      continue
     }
-    const fresh = song.parsed.slides.map((s) => s.htmlContent).join(' ')
-    if (lyricsText(fresh) === lyricsText(known.lyrics)) return []
-    return [{ songId: known.id, song }]
-  })
+    if (!cameFrom(sourceId, known, song, verdictOf.get(song.id) ?? '')) continue
+    if (kept.get(known.id) === lyricsKey(song)) continue
+    changed.push({ songId: known.id, song, edited: !isUntouched(known) })
+  }
+  return { changed, links }
 }
