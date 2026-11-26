@@ -53,20 +53,29 @@ const PERMISSIONS: Record<
   user: { create: 'users.create', edit: 'users.edit', delete: 'users.delete' },
 }
 
+/** Settings another permission may change too, as the app's route allows. */
+const SETTING_ALSO: Record<string, string> = {
+  // The operator running a verse slideshow sets its reading speed.
+  bible_reading_speed: 'control_room.control',
+}
+
 /**
- * The permission a change needs (null: any active user), with the keys the
- * app checks today. Making, changing or removing a super admin needs a
- * super admin.
+ * The permissions a change needs, any one of them (null: any active user),
+ * with the keys the app checks today. Making, changing or removing a super
+ * admin needs a super admin.
  */
 export function requiredPermission(
   change: ChangeInput,
   exists: boolean,
   access: Access
-): string | null {
+): string[] | null {
   if (change.type === 'user') {
     const current = access.users.find((user) => user.id === change.uuid)
-    if (current?.isSuperAdmin || change.data?.isSuperAdmin) return SUPER_ADMIN
+    if (current?.isSuperAdmin || change.data?.isSuperAdmin) return [SUPER_ADMIN]
   }
   const action = change.op === 'delete' ? 'delete' : exists ? 'edit' : 'create'
-  return PERMISSIONS[change.type][action]
+  const permission = PERMISSIONS[change.type][action]
+  if (permission === null) return null
+  const also = change.type === 'setting' ? SETTING_ALSO[change.uuid] : undefined
+  return also ? [permission, also] : [permission]
 }

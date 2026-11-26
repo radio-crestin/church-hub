@@ -363,6 +363,8 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
           db.query(`DELETE FROM ${table} WHERE id = ?`).run(localId)
         }
         localId = null
+      } else if (op.op === 'keep') {
+        localId = idByUuid(table, op.uuid, uuidColumn)
       } else if (op.data) {
         switch (op.entityType) {
           case 'song_category':

@@ -11,42 +11,52 @@ export function authorOf(caller: SyncCaller, change: ChangeInput): string | null
 }
 
 /**
+ * Whether `access` lets the change's author make it, and if not, what they
+ * lack: a permission, or being an active user at all.
+ */
+function check(
+  change: ChangeInput,
+  exists: boolean,
+  access: Access,
+  author: { isServer: boolean; userId: string | null }
+): { allowed: boolean; lacks: string } {
+  const needs = requiredPermission(change, exists, access)
+  const granted = loadPermissions(access, author)
+  if (granted === null) return { allowed: false, lacks: 'active_user' }
+  const allowed =
+    granted === ALL_PERMISSIONS ||
+    needs === null ||
+    needs.some((permission) => granted.has(permission))
+  return { allowed, lacks: needs?.[0] ?? 'active_user' }
+}
+
+/**
  * Refuses the whole write when any change is not allowed (403, with each
  * refused change and the permission it needs) or was based on an older
  * version than the church's (409, with the current versions): someone
  * changed the row first, and the client merges before sending it again.
  *
- * Each change is checked against its author's permissions as the changes
- * before it leave them: a user added earlier in the batch may make the
- * next change, and a user losing a permission can't use it later on.
+ * A change is allowed when its author may make it either as the church
+ * stood before the write, or as the changes before it in the batch leave
+ * it: a user added earlier in the batch may make the next change, and a
+ * user deactivated later in it keeps the edits they made before.
  */
 export function checkChanges(
   changes: ChangeInput[],
   state: ChurchState,
   caller: SyncCaller
 ): void {
+  const before: Access = { roles: state.roles, users: state.users }
   const access: Access = { roles: [...state.roles], users: [...state.users] }
   const rejected = changes.flatMap((change) => {
     const exists = (state.versions[`${change.type}:${change.uuid}`] ?? 0) > 0
-    const permission = requiredPermission(change, exists, access)
-    const granted = loadPermissions(access, {
-      isServer: caller.isServer,
-      userId: authorOf(caller, change),
-    })
-    const allowed =
-      granted === ALL_PERMISSIONS ||
-      (granted !== null && (permission === null || granted.has(permission)))
-    if (allowed) {
+    const author = { isServer: caller.isServer, userId: authorOf(caller, change) }
+    const now = check(change, exists, access, author)
+    if (now.allowed || check(change, exists, before, author).allowed) {
       applyAccessChange(access, change)
       return []
     }
-    return [
-      {
-        type: change.type,
-        uuid: change.uuid,
-        permission: permission ?? 'active_user',
-      },
-    ]
+    return [{ type: change.type, uuid: change.uuid, permission: now.lacks }]
   })
   if (rejected.length > 0) {
     throw new SyncError(403, 'forbidden', 'Not allowed to make these changes', {

@@ -50,7 +50,31 @@ export const SYNCED_TABLES: SyncedTable[] = [
   { entityType: 'song_category', table: 'song_categories', uuidColumn: 'uuid' },
   { entityType: 'song_group', table: 'song_groups', uuidColumn: 'uuid' },
   { entityType: 'song_tag', table: 'song_tags', uuidColumn: 'uuid' },
-  { entityType: 'song', table: 'songs', uuidColumn: 'uuid' },
+  // Presenting a song (its count, when last shown) and its background (its
+  // media stays on this device) are no edit of it.
+  {
+    entityType: 'song',
+    table: 'songs',
+    uuidColumn: 'uuid',
+    editColumns: [
+      'title',
+      'alternate_titles',
+      'category_id',
+      'song_group_id',
+      'source_filename',
+      'author',
+      'copyright',
+      'ccli',
+      'tempo',
+      'time_signature',
+      'theme',
+      'alt_theme',
+      'hymn_number',
+      'key_line',
+      'presentation_order',
+      'last_manual_edit',
+    ],
+  },
   { entityType: 'song_bookmark', table: 'song_bookmarks', uuidColumn: 'uuid' },
   {
     entityType: 'song_bookmark_note',

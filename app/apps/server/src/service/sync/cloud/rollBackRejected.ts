@@ -11,9 +11,10 @@ const logger = createLogger('sync')
 
 /**
  * Puts the changes the sync service refused (their author may not make
- * them) back as the church has them: the church's row, or no row when it
- * never had it. Each is taken off the queue and shown in the updates feed
- * with the permission it needed. Returns how many were reported.
+ * them) back as the church has them. A row the church never had stays on
+ * this device only, never deleted. Each is taken off the queue and shown in
+ * the updates feed with the permission it needed. Returns how many were
+ * reported.
  */
 export async function rollBackRejected(
   identity: CloudIdentity,
@@ -32,7 +33,7 @@ export async function rollBackRejected(
     )
     return {
       entityType: type,
-      op: theirs ? 'upsert' : 'delete',
+      op: theirs ? 'upsert' : 'keep',
       uuid,
       data: theirs,
       changeKind: 'rejected',

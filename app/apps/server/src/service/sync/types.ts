@@ -256,9 +256,10 @@ export interface ApplyOp {
   entityType: SyncEntityType
   /**
    * `upsert` writes the remote aggregate (insert or update by uuid);
-   * `delete` removes the local row for a remote tombstone.
+   * `delete` removes the local row for a remote tombstone; `keep` leaves the
+   * local row as it is (a refused row the church never had).
    */
-  op: 'upsert' | 'delete'
+  op: 'upsert' | 'delete' | 'keep'
   uuid: string
   /** Present for upserts: the winning remote aggregate. */
   data?: LibraryAggregate

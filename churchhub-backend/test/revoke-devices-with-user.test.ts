@@ -181,3 +181,39 @@ test('a phone’s changes are its own user’s, whatever author they name', asyn
     ])
   ).rejects.toEqual(refused(403))
 })
+
+test('a user deactivated later in the batch keeps the edits they made before', async () => {
+  const { store, churchId, serverToken } = await setUp()
+
+  const { state } = await send(store, churchId, serverToken, [
+    newSong('editor'),
+    userChange(editor({ isActive: 0 })),
+  ])
+
+  expect(state.seq).toBe(2)
+  await expect(send(store, churchId, serverToken, [newSong('editor')])).rejects.toEqual(
+    expect.objectContaining({
+      status: 403,
+      details: { rejected: [expect.objectContaining({ permission: 'active_user' })] },
+    })
+  )
+})
+
+test('an operator sets the reading speed, not other settings', async () => {
+  const { store, churchId, serverToken } = await setUp()
+  await send(store, churchId, serverToken, [
+    userChange(
+      editor({ uuid: 'operator', name: 'Operator', permissions: ['control_room.control'] })
+    ),
+  ])
+  const setting = (key: string) =>
+    ({ type: 'setting', uuid: key, op: 'upsert', author: 'operator', data: { key } }) as const
+
+  await send(store, churchId, serverToken, [setting('bible_reading_speed')])
+  await expect(send(store, churchId, serverToken, [setting('search_synonyms')])).rejects.toEqual(
+    expect.objectContaining({
+      status: 403,
+      details: { rejected: [expect.objectContaining({ permission: 'settings.edit' })] },
+    })
+  )
+})

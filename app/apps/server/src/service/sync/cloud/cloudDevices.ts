@@ -4,10 +4,10 @@ import {
   getCloudIdentity,
   updateCloudIdentity,
 } from './cloudIdentityStore'
-import { runCloudSyncCycle } from './runCloudSyncCycle'
 import { serviceError, syncServiceRequest } from './syncServiceRequest'
 import { getUserUuid } from '../../users/getUserUuid'
 import { idByUuid } from '../records/idByUuid'
+import { runSyncCycle } from '../runSyncCycle'
 
 async function requireIdentity(): Promise<CloudIdentity> {
   const identity = await getCloudIdentity()
@@ -49,7 +49,7 @@ export async function addCloudDevice(input: {
   if (!userUuid) throw new Error('unknown_user')
   let response = await mintDevice(identity, userUuid, input.name)
   if (response.status === 400 && response.body.code === 'unknown_user') {
-    await runCloudSyncCycle()
+    await runSyncCycle()
     response = await mintDevice(identity, userUuid, input.name)
   }
   if (response.status !== 201) throw serviceError(response)
