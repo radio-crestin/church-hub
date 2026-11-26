@@ -10,6 +10,7 @@ import { CandidateEditorPanel } from './CandidateEditorPanel'
 import { ChangedSongList } from './ChangedSongList'
 import { ChangedSongPanel } from './ChangedSongPanel'
 import { DiscoveryHeader } from './DiscoveryHeader'
+import { LibraryCatalog } from './LibraryCatalog'
 import { SongChecklist } from './SongChecklist'
 import { SourceChecklist } from './SourceChecklist'
 import {
@@ -206,6 +207,7 @@ export function SongDiscoveryScreen({
             errors={errors}
           />
           <AddSourceLink />
+          <LibraryCatalog sources={sources} />
           {changed.items.length > 0 && (
             <ChangedSongList
               items={visibleChanged}
