@@ -58,6 +58,7 @@
     "@tiptap/pm": "^3.31.4",
     "@tiptap/react": "^3.31.4",
     "@tiptap/starter-kit": "^3.31.4",
+    "buffer": "6.0.3",
     "docx": "^9.8.1",
     "drizzle-orm": "^0.45.2",
     "i18next": "^25.6.3",

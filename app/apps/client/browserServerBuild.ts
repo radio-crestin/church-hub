@@ -22,6 +22,8 @@ const shim = (name: string) => here(`${SHIMS_DIR}${name}`)
 const PACKAGE_SHIMS: Record<string, string> = {
   'node:path': 'pathe',
   path: 'pathe',
+  'node:buffer': 'buffer',
+  buffer: 'buffer',
 }
 
 /** Built-ins with a browser version of their own. */
@@ -66,7 +68,6 @@ const SERVER_ONLY_PACKAGES = [
 
 const NODE_BUILTINS = new Set([
   'assert',
-  'buffer',
   'child_process',
   'dgram',
   'dns',
@@ -132,7 +133,13 @@ export function serverInBrowser(): Plugin {
     async resolveId(id, importer, options) {
       if (SHIMS[id]) return SHIMS[id]
       if (PACKAGE_SHIMS[id]) {
-        return this.resolve(PACKAGE_SHIMS[id], here('./browserServerBuild.ts'))
+        return this.resolve(
+          PACKAGE_SHIMS[id],
+          here('./browserServerBuild.ts'),
+          {
+            skipSelf: true,
+          },
+        )
       }
       if (isStubbed(id)) return STUB_PREFIX + id
       if (!id.startsWith('.') || !serverPath(importer)) return null

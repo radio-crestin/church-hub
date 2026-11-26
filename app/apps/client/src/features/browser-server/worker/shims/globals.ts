@@ -1,7 +1,10 @@
+import { Buffer } from 'buffer'
+
 /**
  * The globals the server's modules read when they load or run, in the
- * browser build: `process` (env, platform) and the part of `Bun` the shared
- * code calls. Imported first by the worker, before any server module.
+ * browser build: `process` (env, platform), Node's `Buffer` (some modules
+ * make one as they load) and the part of `Bun` the shared code calls.
+ * Imported first by the worker, before any server module.
  */
 const scope = globalThis as unknown as Record<string, unknown>
 
@@ -17,6 +20,8 @@ scope.process ??= {
   on: () => undefined,
   nextTick: (fn: () => void) => queueMicrotask(fn),
 }
+
+scope.Buffer ??= Buffer
 
 const FNV_OFFSET = 0xcbf29ce484222325n
 const FNV_PRIME = 0x100000001b3n
