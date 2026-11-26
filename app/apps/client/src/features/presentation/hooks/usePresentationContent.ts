@@ -66,6 +66,8 @@ export interface ContentData {
   videoUrl?: string
   /** The video item plays again from the start until the step changes. */
   videoLoop?: boolean
+  /** A gallery image, shown full screen (ScreenImage). */
+  imageUrl?: string
   /** A presentation's looping background video (see `resolveScreenBackground`). */
   presentationBackground?: PresentationBackground | null
   /** A Slides item's slide (DeckSlideRenderer). */
@@ -636,6 +638,18 @@ export function usePresentationContent({
             'empty',
             { videoUrl: temp.data.url, videoLoop: temp.data.loop === true },
             `video|${temp.data.url}`,
+          )
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A gallery image, fit full screen over the empty slide, like a video.
+        if (temp.type === 'image') {
+          if (isCancelled) return
+          showContent(
+            'empty',
+            { imageUrl: temp.data.url },
+            `image|${temp.data.url}`,
           )
           setNextSlideData(undefined)
           return

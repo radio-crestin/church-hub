@@ -80,7 +80,75 @@ export const presentationSchemas = {
           data: { $ref: '#/components/schemas/TemporaryDeckSlideContent' },
         },
       },
+      {
+        type: 'object',
+        required: ['type', 'data'],
+        properties: {
+          type: { type: 'string', enum: ['video'] },
+          data: { $ref: '#/components/schemas/TemporaryVideoContent' },
+        },
+      },
+      {
+        type: 'object',
+        required: ['type', 'data'],
+        properties: {
+          type: { type: 'string', enum: ['image'] },
+          data: { $ref: '#/components/schemas/TemporaryImageContent' },
+        },
+      },
     ],
+  },
+  TemporaryVideoContent: {
+    type: 'object',
+    description:
+      "A gallery video played full screen on the displays: a presentation's video item, or one presented from the gallery",
+    required: ['mediaId', 'url'],
+    properties: {
+      mediaId: {
+        type: 'string',
+        example: 'bea7e008-f3d1-4f28-b428-d8ced373f17a.mp4',
+      },
+      url: {
+        type: 'string',
+        example:
+          '/api/media/backgrounds/bea7e008-f3d1-4f28-b428-d8ced373f17a.mp4',
+      },
+      loop: {
+        type: 'boolean',
+        description: 'Plays again from the start when it ends',
+      },
+      scheduleId: { type: 'integer' },
+      scheduleItemIndex: { type: 'integer' },
+    },
+  },
+  TemporaryImageContent: {
+    type: 'object',
+    description:
+      'A gallery image shown full screen on the displays, fit inside the screen on black',
+    required: ['mediaId', 'url'],
+    properties: {
+      mediaId: {
+        type: 'string',
+        example: '0b6e8c1a-7d2f-4f5e-9a3b-2c1d4e5f6a7b.png',
+      },
+      url: {
+        type: 'string',
+        example:
+          '/api/media/backgrounds/0b6e8c1a-7d2f-4f5e-9a3b-2c1d4e5f6a7b.png',
+      },
+    },
+  },
+  PresentGalleryMediaInput: {
+    type: 'object',
+    required: ['mediaId'],
+    properties: {
+      mediaId: {
+        type: 'string',
+        description:
+          'The gallery file id (`<uuid>.<ext>`, from GET /api/media/backgrounds)',
+        example: '0b6e8c1a-7d2f-4f5e-9a3b-2c1d4e5f6a7b.png',
+      },
+    },
   },
   TemporaryBibleContent: {
     type: 'object',

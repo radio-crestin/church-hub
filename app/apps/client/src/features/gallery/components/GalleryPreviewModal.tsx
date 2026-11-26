@@ -1,9 +1,10 @@
-import { X } from 'lucide-react'
+import { MonitorPlay, X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useMediaUrl } from '~/features/background-media/hooks/useMediaUrl'
 import type { BackgroundMedia } from '~/features/background-media/service/types'
+import { Button } from '~/ui/button'
 import { GalleryKindBadge } from './GalleryKindBadge'
 import { GalleryMediaMeta } from './GalleryMediaMeta'
 
@@ -11,6 +12,8 @@ interface GalleryPreviewModalProps {
   /** The file to show; null keeps the dialog closed */
   media: BackgroundMedia | null
   onClose: () => void
+  /** Shown only for someone who may present (control_room.control) */
+  onPresent?: (media: BackgroundMedia) => void
 }
 
 /**
@@ -20,6 +23,7 @@ interface GalleryPreviewModalProps {
 export function GalleryPreviewModal({
   media,
   onClose,
+  onPresent,
 }: GalleryPreviewModalProps) {
   const { t } = useTranslation('gallery')
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -64,16 +68,37 @@ export function GalleryPreviewModal({
               <GalleryKindBadge kind={media.kind} />
               <GalleryMediaMeta media={media} className="text-white/70" />
             </div>
-            <button
-              type="button"
-              data-testid="gallery-preview-close"
-              onClick={onClose}
-              aria-label={t('preview.close')}
-              title={t('preview.close')}
-              className="shrink-0 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              <X className="h-4 w-4" strokeWidth={1.5} />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              {onPresent && (
+                <Button
+                  type="button"
+                  size="sm"
+                  data-testid="gallery-preview-present"
+                  onClick={() => {
+                    onPresent(media)
+                    onClose()
+                  }}
+                  className="pointer-coarse:h-11"
+                >
+                  <MonitorPlay
+                    className="size-4"
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                  {t('preview.present')}
+                </Button>
+              )}
+              <button
+                type="button"
+                data-testid="gallery-preview-close"
+                onClick={onClose}
+                aria-label={t('preview.close')}
+                title={t('preview.close')}
+                className="shrink-0 rounded-lg p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white pointer-coarse:p-3.5"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
           </div>
           <div className="flex items-center justify-center bg-black">
             {media.kind === 'video' ? (

@@ -5,33 +5,48 @@ import { BackgroundMediaThumbnail } from '~/features/background-media/components
 import type { BackgroundMedia } from '~/features/background-media/service/types'
 import { GalleryKindBadge } from './GalleryKindBadge'
 import { GalleryMediaMeta } from './GalleryMediaMeta'
+import { GalleryPresentButton } from './GalleryPresentButton'
+import { useClickOrDoubleClick } from '../hooks/useClickOrDoubleClick'
 
 interface GalleryItemCardProps {
   media: BackgroundMedia
+  /** On the screens now: the card gets the live outline */
+  isLive: boolean
   /** Shown only when there is something to delete with (displays.edit) */
   onDelete?: () => void
+  /** Shown only for someone who may present (control_room.control) */
+  onPresent?: () => void
   onPreview: () => void
 }
 
-/** One uploaded file: its thumbnail opens the preview, trash deletes it. */
+/**
+ * One uploaded file: its thumbnail opens the preview, a double-click on it or
+ * the present button puts it on the screens, trash deletes it.
+ */
 export function GalleryItemCard({
   media,
+  isLive,
   onDelete,
+  onPresent,
   onPreview,
 }: GalleryItemCardProps) {
   const { t } = useTranslation('gallery')
+  const handleThumbnailClick = useClickOrDoubleClick(onPreview, onPresent)
 
   return (
     <div
       data-testid="gallery-item"
       data-media-id={media.id}
       data-kind={media.kind}
-      className="overflow-hidden rounded-xl border border-line bg-panel"
+      data-live={isLive || undefined}
+      className={`group overflow-hidden rounded-xl border ${
+        isLive ? 'border-live bg-live-tint' : 'border-line bg-panel'
+      }`}
     >
       <div className="relative aspect-video bg-black">
         <button
           type="button"
-          onClick={onPreview}
+          onClick={handleThumbnailClick}
           aria-label={t('item.preview')}
           title={t('item.preview')}
           className="absolute inset-0 h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
@@ -62,7 +77,15 @@ export function GalleryItemCard({
           </button>
         )}
       </div>
-      <GalleryMediaMeta media={media} className="px-2.5 py-2 text-fg-hint" />
+      <div className="flex min-h-10 items-center justify-between gap-2 py-1 pr-1 pl-2.5">
+        <GalleryMediaMeta media={media} className="text-fg-hint" />
+        {onPresent && (
+          <GalleryPresentButton
+            onPresent={onPresent}
+            className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+          />
+        )}
+      </div>
     </div>
   )
 }

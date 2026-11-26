@@ -288,6 +288,7 @@ export type TemporaryContent = (
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
   | { type: 'video'; data: TemporaryVideoContent }
+  | { type: 'image'; data: TemporaryImageContent }
   | { type: 'deck_slide'; data: TemporaryDeckSlideContent }
 ) & {
   /**
@@ -314,6 +315,13 @@ export interface TemporaryVideoContent {
   nextItemPreview?: NextItemPreview
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/** A gallery image, shown full screen on the displays (fit, on black). */
+export interface TemporaryImageContent {
+  /** The gallery image's id and URL (`/api/media/backgrounds/<id>`) */
+  mediaId: string
+  url: string
 }
 
 /**

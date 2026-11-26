@@ -1,7 +1,7 @@
 {
   "title": "Galerie",
   "description": "Toate imaginile și videoclipurile încărcate, într-un singur loc.",
-  "usageNote": "Poți folosi aceste fișiere ca fundal pentru ecrane (Setări › Ecrane) sau ca fundal pentru o cântare (editorul de cântări).",
+  "usageNote": "Fă dublu clic pe un fișier pentru a-l prezenta. Fișierele pot fi folosite și ca fundal pentru ecrane (Setări › Ecrane) și pentru cântări (editorul de cântări).",
   "filters": {
     "label": "Filtrează după tip",
     "all": "Toate",
@@ -26,10 +26,15 @@
   },
   "item": {
     "preview": "Previzualizează",
-    "delete": "Șterge"
+    "delete": "Șterge",
+    "present": "Prezintă pe ecrane"
   },
   "preview": {
-    "close": "Închide"
+    "close": "Închide",
+    "present": "Prezintă"
+  },
+  "present": {
+    "failed": "Fișierul nu a putut fi afișat pe ecrane. Încearcă din nou."
   },
   "delete": {
     "confirmTitle": "Ștergi acest fișier?",
