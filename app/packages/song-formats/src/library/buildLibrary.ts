@@ -37,7 +37,7 @@ export async function buildLibrary(
   const count = shardCount(songs.length)
   const buckets: LibraryShardSong[][] = Array.from({ length: count }, () => [])
   for (const song of songs) {
-    buckets[shardIndex(await sha256Hex(song.id), count)].push({
+    buckets[shardIndex(await sha256Hex(song.id), count)]?.push({
       id: song.id,
       title: song.title,
       hash: await sha256Hex(song.xml),
