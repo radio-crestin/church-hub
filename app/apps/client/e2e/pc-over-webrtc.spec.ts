@@ -74,6 +74,9 @@ test.describe
     let stopRelay = () => {}
 
     test.beforeAll(async ({ request }) => {
+      // The public app's build and the PC's first upload of its whole
+      // library (26k songs) take well over a hook's default 30 s.
+      test.setTimeout(300_000)
       s3.signedWritesOnly = true
       await s3.start()
       await service.start(s3.endpoint, {
@@ -101,9 +104,11 @@ test.describe
     })
 
     test.afterAll(async ({ request }) => {
+      test.setTimeout(120_000)
       await setRemoteAccess(request, false)
-      await request.delete('/api/sync/cloud')
-      await request.delete(`/api/users/${userId}`)
+      // Still connected, the next spec to connect would get a 409.
+      expect((await request.delete('/api/sync/cloud')).ok()).toBe(true)
+      if (userId) await request.delete(`/api/users/${userId}`)
       await publicApp.stop()
       stopRelay()
       await service.dispose()
@@ -123,11 +128,12 @@ test.describe
       const phone = await browser.newContext({ ...devices['Pixel 7'] })
       const page = await phone.newPage()
       await page.goto(joinUrl)
-      await expect(page.getByTestId('pc-link')).toHaveAttribute(
-        'data-link',
-        'live',
-        { timeout: 60_000 },
-      )
+      const link = page.getByTestId('pc-link')
+      await expect(link).toHaveAttribute('data-link', 'live', {
+        timeout: 60_000,
+      })
+      // Its WebSocket to the PC is open: edits from now on reach it.
+      await expect(link).toHaveAttribute('data-listening', 'true')
 
       // Signed in on the PC as the device's user, from elsewhere.
       const me = await page.evaluate(async (pc) => {

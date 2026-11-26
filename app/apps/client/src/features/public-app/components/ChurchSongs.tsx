@@ -22,7 +22,7 @@ export function ChurchSongs({ binding }: { binding: ChurchBinding }) {
   const { t } = useTranslation('publicApp')
   const link = usePcLink(binding)
   const live = link === 'live'
-  usePcSongEvents(live)
+  const listening = usePcSongEvents(live)
   const [query, setQuery] = useState('')
   // A row's key belongs to its source (the cloud's uuid or the PC's id).
   const [opened, setOpened] = useState<{ key: string; live: boolean }>()
@@ -62,7 +62,7 @@ export function ChurchSongs({ binding }: { binding: ChurchBinding }) {
         <p className="text-xs text-fg-hint tabular-nums">
           {t('songs.count', { count: total })}
         </p>
-        <PcLinkStatus link={link} />
+        <PcLinkStatus link={link} listening={listening} />
       </div>
       {rows.length === 0 ? (
         <Message text={t(total ? 'songs.noMatch' : 'songs.empty')} />
