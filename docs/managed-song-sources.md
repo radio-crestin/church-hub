@@ -1,44 +1,38 @@
 # Managed song sources
-How Church Hub computes and hosts its own song sources (today Resurse Creștine) in an S3-compatible bucket, and what the repository needs for it.
-Open it to add or change the bucket's GitHub secrets and variable, trigger a run, or add another managed source.
+How Church Hub computes its own song sources (today Resurse Creștine) and publishes them to this repository's `song-sources` GitHub release, where the app reads them.
+Open it to trigger a run, check what a run published, or add another managed source.
 
 ## What runs
-- `.github/workflows/resurse-crestine-archive.yml`, daily and on demand:
+- `.github/workflows/resurse-crestine-archive.yml`, daily at 03:17 UTC and on demand:
   1. builds the archive from resursecrestine.ro (`app/apps/server/scripts/build-resurse-crestine-archive.ts`);
-  2. publishes it to the `song-sources` GitHub release, the app's fallback;
-  3. publishes it to the bucket (`app/apps/server/scripts/publish-managed-source.ts`), skipped with a notice while the secrets below are missing.
-- Each copy is updated only when the songs changed (the bundle's checksum differs from the published one).
+  2. reads the release's `resurse-crestine.chsongs.sha256`;
+  3. when the new bundle's checksum differs, uploads the three files to the release (`gh release upload --clobber`).
+- Permissions: the workflow's default token is `contents: read`; only the `rebuild` job gets `contents: write`, which uploading release assets needs. The checkout keeps no credentials (`persist-credentials: false`). No other secret or variable is used.
 
-## Layout in the bucket
+## What the release holds
 ```
-song-sources/resurse-crestine/latest.json                               the manifest, Cache-Control: public, max-age=300
-song-sources/resurse-crestine/<version>/resurse-crestine.chsongs        Cache-Control: public, max-age=31536000, immutable
-song-sources/resurse-crestine/<version>/resurse-crestine-opensong.zip   the same bytes, for other programs
+resurse-crestine.chsongs          the song bundle (a ZIP: manifest.json plus one OpenSong file per song)
+resurse-crestine-opensong.zip     the same bytes, for other programs
+resurse-crestine.chsongs.sha256   the bundle's checksum: the `checksum` in its manifest.json
 ```
-- `<version>` is `YYYY.MM.DD-<first 6 of the checksum>`, e.g. `2026.11.26-3f9a1c`. The newest 5 versions are kept; older ones are deleted.
-- `latest.json`: `format` (`church-hub-managed-source`), `formatVersion`, `sourceId`, `name`, `version`, `checksum` (the same value as the release's `.sha256`), `songCount`, `builtAt`, `files` (`name`, `path`, `size`, `sha256` each) and `versions` (kept, newest first). The type is in `app/apps/server/src/service/song-sources/managed/types.ts`.
-- The bucket needs public read of `song-sources/*`, without listing.
+The same release holds `bcev-baicoi`, a built-in source read and checked the same way (published once; no workflow updates it), and copies of the `laudele-domnului` and `pe-drumul-credintei` hymnals, which the app reads from cantaricrestine.ro instead.
 
 ## How the app reads it
-- The source's config (`built-in/resurse-crestine.json`) names its folder (`managed`). The server reads `<public URL>/<folder>/latest.json`, then the `.chsongs` it lists, and refuses a file whose SHA-256 differs from the manifest's.
-- With no public URL, or while the manifest can't be downloaded, it reads the source's `url`, the GitHub release.
-- The public URL is baked into release builds from the `SONG_SOURCES_PUBLIC_URL` variable (`build-desktop.yml` → `CHURCH_HUB_BUILD_SONG_SOURCES_URL`, `getManagedSourcesUrl.ts`). `CHURCH_HUB_SONG_SOURCES_URL` overrides it on one machine.
-- Song discovery shows the source as "Managed by Church Hub · version …" (`GET /api/song-sources/:id/managed`).
+- The source's config (`app/apps/server/src/service/song-sources/built-in/resurse-crestine.json`) has the release file as its `url`.
+- To see whether the songs changed, the server reads only the `.sha256` (`readSourceChecksum.ts`).
+- To read the songs it downloads the `.chsongs` and refuses it unless every ZIP entry matches its CRC-32 and the manifest's checksum equals the `.sha256` (`downloadSongFile.ts`): a damaged download, an upload caught half-way or a stale copy fails the check (and is tried again at the next one) instead of importing.
+- `CHURCH_HUB_SONG_SOURCES_RELEASE_URL` points the built-in sources at another release (a fork's, or the e2e suite's stand-in, `e2e/song-sources-release.api.spec.ts`).
 
-## What the repository needs
-Repo → Settings → Secrets and variables → Actions:
-
-| Name | Kind | Used by |
-|---|---|---|
-| `SONG_SOURCES_S3_ENDPOINT` | secret | the archive workflow, to upload |
-| `SONG_SOURCES_S3_BUCKET` | secret | the archive workflow |
-| `SONG_SOURCES_S3_ACCESS_KEY_ID` | secret | the archive workflow (read and write on the bucket only) |
-| `SONG_SOURCES_S3_SECRET_ACCESS_KEY` | secret | the archive workflow |
-| `SONG_SOURCES_S3_REGION` | secret, optional | the archive workflow; defaults to `auto` |
-| `SONG_SOURCES_PUBLIC_URL` | variable | release builds (the app reads from it) and the archive workflow (checks a new copy answers there) |
-
-First run, once they are set (the workflow runs from `main`): `gh workflow run resurse-crestine-archive.yml --ref main`, then `gh run watch`.
+## Trigger a run
+The workflow runs from `main`:
+```bash
+gh workflow run resurse-crestine-archive.yml --repo radio-crestin/church-hub --ref main
+gh run watch --repo radio-crestin/church-hub
+gh release view song-sources --repo radio-crestin/church-hub   # the assets and when they changed
+```
+An unchanged run logs the checksum and skips the upload.
 
 ## Adding another managed source
-1. Give its config in `app/apps/server/src/service/song-sources/built-in/` a `managed` folder, `song-sources/<id>`, and keep a `url` as the fallback.
-2. Have its build write `<id>.chsongs` to a folder, and run `bun scripts/publish-managed-source.ts <folder> <id>` with the same secrets.
+1. Write a build script that writes `<id>.chsongs` (with `assembleBundle` and `zipBundleFiles`, as the Resurse Creștine one does) and `<id>.chsongs.sha256` holding the bundle's checksum.
+2. Give it a workflow like `resurse-crestine-archive.yml`, with the same permissions, uploading to the `song-sources` release.
+3. Add its config in `app/apps/server/src/service/song-sources/built-in/`, with the release file as its `url`, and list it in `builtInSongSources.ts`.

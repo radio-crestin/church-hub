@@ -1,6 +1,1 @@
-export type {
-  ManagedRelease,
-  SongBundleFile,
-  SongSource,
-  SongSourceFormat,
-} from './types'
+export type { SongBundleFile, SongSource, SongSourceFormat } from './types'
