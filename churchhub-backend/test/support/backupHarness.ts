@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { Hono } from 'hono'
+import adminApp from '../../src/admin/adminApp'
 import backup from '../../src/routes/backup'
 import type { Bindings } from '../../src/types'
 import { MemoryS3 } from './memoryS3'
@@ -40,6 +41,8 @@ export function backupEnv(overrides: Partial<Bindings> = {}): Bindings {
 export class BackupHarness {
   readonly s3 = new MemoryS3()
   readonly app = new Hono<{ Bindings: Bindings }>().route('/', backup)
+  /** The admin panel, as its own listener serves it. */
+  readonly admin = adminApp
   private readonly codes = new Map<string, GoogleAccount>()
   private readonly googleTokens = new Map<string, GoogleAccount>()
   private realFetch = globalThis.fetch
@@ -111,6 +114,52 @@ export class BackupHarness {
       email: string
     }
     return { ...session, grant, verifier, nonce: back.searchParams.get('nonce') }
+  }
+
+  /** The cookie value set by a response, by name. */
+  private static cookie(response: Response, name: string): string | null {
+    for (const line of response.headers.getSetCookie()) {
+      const match = line.match(new RegExp(`^${name}=([^;]*)`))
+      if (match) return match[1]
+    }
+    return null
+  }
+
+  /** An admin's sign-in through Google: the session cookie, or null if refused. */
+  async adminSignIn(account: GoogleAccount) {
+    const start = await this.admin.request('https://admin.test/admin/sign-in', {}, this.env)
+    const flow = BackupHarness.cookie(start, '__Host-chadmin-flow')
+    const google = new URL(start.headers.get('Location') ?? '')
+    const code = randomBytes(8).toString('hex')
+    this.codes.set(code, account)
+    const callback = await this.admin.request(
+      `https://admin.test/admin/callback?${new URLSearchParams({ code, state: google.searchParams.get('state') ?? '' })}`,
+      { headers: { Cookie: `__Host-chadmin-flow=${flow}` } },
+      this.env
+    )
+    const session = BackupHarness.cookie(callback, '__Host-chadmin')
+    return {
+      status: callback.status,
+      cookie: session ? `__Host-chadmin=${session}` : null,
+      setCookie: callback.headers.getSetCookie().join('\n'),
+    }
+  }
+
+  /** A call to the admin API with a session cookie and CSRF token. */
+  adminApi(
+    path: string,
+    init: { method?: string; body?: unknown; cookie?: string | null; csrf?: string; headers?: Record<string, string> } = {}
+  ) {
+    const headers = new Headers(init.headers)
+    headers.set('Host', 'admin.test')
+    if (init.cookie) headers.set('Cookie', init.cookie)
+    if (init.csrf) headers.set('X-CSRF-Token', init.csrf)
+    if (init.body !== undefined) headers.set('Content-Type', 'application/json')
+    return this.admin.request(
+      `https://admin.test/admin/api${path}`,
+      { method: init.method ?? 'GET', headers, body: init.body === undefined ? undefined : JSON.stringify(init.body) },
+      this.env
+    )
   }
 
   /** Starts, uploads in parts through the presigned URLs and completes. */

@@ -126,48 +126,94 @@ authorized redirect URI on the Google OAuth client.
 
 ## Cloud backup (`/backup/*`)
 
-Free backups of a church's database for anyone who signs in with Google.
-The API, its limits and its errors are in `/backup/openapi.json` (code:
-`src/backup/`, routes in `src/routes/backup.ts`).
+Free backups of a church's database, only for people signed in with Google
+(no guest or anonymous path). The API, its limits and its errors are in
+`/backup/openapi.json` (code: `src/backup/`, routes in
+`src/routes/backup.ts`).
 
 - **Sign-in**: the PC opens `/backup/sign-in` with its loopback callback, a
   nonce and the SHA-256 of a verifier it keeps; Google (PKCE, `openid email`,
   verified email only) answers `/backup/callback`, which hands the PC a
   five-minute grant. The PC swaps grant + verifier for a one-hour access
   token and a 180-day refresh token (`chba_`/`chbr_`, HMAC-signed with
-  `BACKUP_SECRET`, bound to the Google `sub`). Signing out or deleting the
-  account refuses every token issued before.
+  `BACKUP_SECRET`, bound to the Google `sub` and to the PC's session
+  family). Refresh tokens are single use: a reused one ends every session of
+  the account. Signing out ends the PC's family; deleting the account, all.
 - **Storage**: a private bucket of its own. Each account's folder is
-  `accounts/<HMAC(sub)>/`: a small `account.json` (backup ids, sizes, dates,
-  app versions; no email, no Google id) and the encrypted backups. Uploads
+  `accounts/<HMAC(sub)>/`: `account.json` (the usage counter, quota
+  override, sessions, backup ids, sizes and dates, and the email for the
+  admin panel) and the encrypted backups; `index/accounts.json` lists the
+  accounts for the admin panel; `admin/audit/` holds its audit log. Uploads
   and downloads go straight to the bucket through presigned URLs valid 15
-  minutes, handed out after the session and free-tier checks.
+  minutes, each part signed for its exact Content-Length.
 - **Encryption**: the app encrypts each backup (AES-256-GCM, a fresh key per
   backup) and wraps that key with the account key from `GET /backup/key`,
   derived from `BACKUP_KEY_SECRET` and the `sub`: the bucket alone can't read
   a backup, and the same account restores after a reinstall by signing in.
-- **Free tier** (defaults, each overridable): 512 MiB a backup
-  (`BACKUP_MAX_BYTES`), 2 GiB an account (`BACKUP_QUOTA_BYTES`), at most 12
-  kept (`BACKUP_MAX_COUNT`: the newest 3, one a day for 7 days, one a week
-  for 5 weeks), 24 uploads a day (`BACKUP_UPLOADS_PER_DAY`), 2 in flight.
-  Per IP and per account rate limits: the `BACKUP_RATE_LIMITER` and
-  `BACKUP_ACCOUNT_RATE_LIMITER` bindings on Cloudflare, an in-memory window
-  of the same size on Node or Bun.
+- **Quota**: 2 GiB per Google account (`BACKUP_QUOTA_BYTES`), or an admin's
+  override. The record's usage counter is changed only by compare-and-swap:
+  an upload reserves its size at start (used + reserved + it must fit; if
+  not, backups retention would drop after it are removed first), the real
+  size is read back at completion (another size, or a total past the quota,
+  deletes the object), deletes and retention free it. `GET /backup/usage`
+  answers used, reserved and quota bytes.
+- **Free tier** (each overridable): 512 MiB a backup (`BACKUP_MAX_BYTES`), at
+  most 12 kept (`BACKUP_MAX_COUNT`: the newest 3, one a day for 7 days, one
+  a week for 5 weeks), 24 uploads a day (`BACKUP_UPLOADS_PER_DAY`), 2 in
+  flight. Per IP (60/min) and per account (30/min): the
+  `BACKUP_RATE_LIMITER` and `BACKUP_ACCOUNT_RATE_LIMITER` bindings on
+  Cloudflare; on Node, Redis or memory (`BACKUP_RATE_LIMIT_PER_MINUTE`,
+  `BACKUP_ACCOUNT_RATE_LIMIT_PER_MINUTE`). The IP is `CF-Connecting-IP`
+  only (Cloudflare's, or the Node server's resolved address).
+- **Upkeep** (`src/backup/runBackupMaintenance.ts`; cron triggers on the
+  Worker, timers on Node): hourly, multipart uploads unfinished after 6
+  hours are aborted; daily, every account's usage is recomputed from the
+  bucket (lost objects unlisted, stray ones deleted).
 
 **Settings** (secrets; unset = `/backup` answers `503 not_configured`):
 
 | Name | |
 |---|---|
-| `BACKUP_SECRET` | Signs tokens and the OAuth state (`openssl rand -hex 32`). Rotating it signs everyone out. |
+| `BACKUP_SECRET` | Signs tokens, admin sessions and the OAuth state (`openssl rand -hex 32`). Rotating it signs everyone out. |
 | `BACKUP_KEY_SECRET` | Derives account ids and account keys (`openssl rand -hex 32`). Never rotate it: losing it loses every backup. |
 | `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | The private bucket, path-style, with multipart uploads and conditional writes (`BACKUP_S3_REGION` defaults to `auto`) |
 | `BACKUP_S3_ACCESS_KEY_ID`, `BACKUP_S3_SECRET_ACCESS_KEY` | Read, write, list and multipart on that bucket only |
 | `BACKUP_S3_PRESIGN_ENDPOINT` | Optional: the bucket's public address for presigned URLs, when the service reaches it on another (e.g. inside a cluster) |
 | `BACKUP_REDIRECT_URI` | The sign-in's callback, registered on the Google client (in `wrangler.toml`; default `<this service>/backup/callback`) |
 
-**The bucket**: no public access and no listing for anyone but the service.
-Recommended lifecycle rule: abort incomplete multipart uploads after 1 day
-(the service aborts the ones it knows of; this catches the rest).
+**The bucket**: no public access and no listing for anyone but the service;
+it must enforce signed headers on presigned URLs (Content-Length). Lifecycle
+rule: abort incomplete multipart uploads after 1 day (the service aborts
+them hourly; this is the backstop).
+
+### Admin panel (internal only)
+
+`src/admin/`: list accounts (searchable by email), see an account's
+backups and usage against its quota, change its quota (0-50 GiB, or back to
+the default), pause or resume its uploads, reconcile its usage, delete it
+(typing its email to confirm), and read the audit log.
+
+- **Network**: served only by the Node runtime on its own listener
+  (`ADMIN_PORT`, `ADMIN_HOST` default `127.0.0.1`), which the cluster must
+  expose internally only. The public listener and the Worker have no
+  `/admin` routes at all.
+- **Identity**: Google sign-in (PKCE, a nonce bound to a `__Host-` flow
+  cookie in the browser that started it), then the allowlist:
+  `ADMIN_GOOGLE_SUBS` and/or `ADMIN_EMAILS` (Google-verified), checked again
+  on every call. Nobody is an admin while both are empty.
+- **Session**: one hour, in a `__Host-chadmin` cookie (HttpOnly, Secure,
+  SameSite=Strict). Every changing call needs the session's `X-CSRF-Token`
+  and a same-origin request (`Origin` host = `Host`, `Sec-Fetch-Site`).
+- **Audit**: every `/admin/api` call, refused ones too, and every sign-in
+  is appended to `admin/audit/` (a new object each, never overwritten): who,
+  what, which account, when, the status, and before/after for changes.
+
+| Name | |
+|---|---|
+| `ADMIN_PORT` | The admin listener's port (unset = no admin panel). Must differ from `PORT` |
+| `ADMIN_HOST` | Its address (default `127.0.0.1`; `0.0.0.0` in a pod, behind an internal-only Service) |
+| `ADMIN_GOOGLE_SUBS`, `ADMIN_EMAILS` | Comma-separated allowlist |
+| `ADMIN_REDIRECT_URI` | The admin sign-in's callback, registered on the Google client (default `<admin listener>/admin/callback`) |
 
 ## Self-hosted (Node)
 

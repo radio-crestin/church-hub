@@ -5,10 +5,21 @@ import { buildAuthUrl } from '../../utils/oauth'
 import { generateCodeChallenge, generateCodeVerifier } from '../../utils/pkce'
 import { createGrant } from './backupTokens'
 import { readVerifiedGoogleAccount } from './readVerifiedGoogleAccount'
-import {
-  openBackupOAuthState,
-  sealBackupOAuthState,
-} from './sealBackupOAuthState'
+import { openState, sealState } from './sealState'
+
+const PURPOSE = 'church-hub-backup-oauth-v1'
+
+/** What the backup sign-in carries through Google, in its `state`. */
+interface BackupOAuthState {
+  codeVerifier: string
+  /** The PC's local callback the grant goes to. */
+  returnUrl: string
+  /** The PC's nonce, handed back so it accepts only its own sign-in. */
+  nonce: string
+  /** base64url SHA-256 of the PC's verifier: binds the grant to that PC. */
+  challenge: string
+  createdAt: number
+}
 
 /** A sign-in left unfinished this long is refused. */
 const SIGN_IN_MAX_AGE_MS = 10 * 60 * 1000
@@ -65,9 +76,10 @@ export async function startBackupSignIn(
   )
   url.searchParams.set(
     'state',
-    await sealBackupOAuthState(
+    await sealState(
       { codeVerifier, returnUrl, nonce, challenge, createdAt: Date.now() },
-      secret
+      secret,
+      PURPOSE
     )
   )
   return url.toString()
@@ -87,7 +99,7 @@ export async function finishBackupSignIn(
 ): Promise<string> {
   const { redirectUri } = settings(env, requestUrl)
   const state = query.state
-    ? await openBackupOAuthState(query.state, secret)
+    ? await openState<BackupOAuthState>(query.state, secret, PURPOSE)
     : null
   if (!state) {
     throw new SyncError(400, 'invalid_request', 'Invalid or expired sign-in')

@@ -82,6 +82,15 @@ export interface Bindings {
   BACKUP_UPLOADS_PER_DAY?: string
   /** The backup sign-in's callback (default: <this service>/backup/callback). */
   BACKUP_REDIRECT_URI?: string
+  /**
+   * The internal admin panel (src/admin), served only by the Node runtime on
+   * its own listener (ADMIN_PORT, ADMIN_HOST), never on the Worker. Who may
+   * sign in: Google subs and/or verified emails, comma-separated.
+   */
+  ADMIN_GOOGLE_SUBS?: string
+  ADMIN_EMAILS?: string
+  /** The admin sign-in's callback (default: <admin listener>/admin/callback). */
+  ADMIN_REDIRECT_URI?: string
   /** Per-IP and per-account abuse guards (optional bindings). */
   BACKUP_RATE_LIMITER?: RateLimit
   BACKUP_ACCOUNT_RATE_LIMITER?: RateLimit

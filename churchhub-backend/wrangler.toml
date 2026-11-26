@@ -118,4 +118,5 @@ COOKIE_MAX_AGE = 600
 #   BACKUP_S3_ACCESS_KEY_ID, BACKUP_S3_SECRET_ACCESS_KEY (+ optional
 #   BACKUP_S3_REGION, BACKUP_S3_PRESIGN_ENDPOINT, BACKUP_MAX_BYTES,
 #   BACKUP_QUOTA_BYTES, BACKUP_MAX_COUNT, BACKUP_UPLOADS_PER_DAY).
-#   Unset = /backup/* answers 503.
+#   Unset = /backup/* answers 503. The admin panel (src/admin) is never on
+#   the Worker: only the Node runtime serves it, on ADMIN_PORT.

@@ -2,8 +2,12 @@ import { hashToken } from '../../sync/hashToken'
 import { constantTimeEqual } from '../../utils/constantTimeEqual'
 import { fromBase64url, toBase64url } from '../../sync/owner/base64url'
 
-/** Each kind of backup token: its prefix, also what its signature covers. */
-export type TokenKind = 'chba' | 'chbr' | 'chbg'
+/**
+ * Each kind of token: its prefix, also what its signature covers, so one
+ * kind is never accepted as another. chba/chbr/chbg: a PC's access,
+ * refresh and grant; chad: an admin's session.
+ */
+export type TokenKind = 'chba' | 'chbr' | 'chbg' | 'chad'
 
 const sign = (kind: TokenKind, payload: string, secret: string) =>
   hashToken(`${kind}:${payload}`, secret)
