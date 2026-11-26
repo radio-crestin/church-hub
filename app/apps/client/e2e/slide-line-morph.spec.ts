@@ -591,13 +591,13 @@ test.describe('Slide changes and exits run at a steady frame rate on a full HD p
   let screenId: number | undefined
   let songId: number | undefined
 
-  // GitHub's runners draw WebKit without a GPU on shared CPUs: the same change
-  // measured a median frame of 18 to 561 ms there, so it would time the
-  // runner. Chromium there, and both browsers on a real machine, keep 60 fps.
+  // GitHub's runners are GPU-less shared VMs: the same change measured a
+  // median frame of 18 to 561 ms in WebKit there, and a macOS runner drew
+  // Chromium at 30 fps, so there these would time the runner. Real machines
+  // keep 60 fps in both browsers.
   test.skip(
-    ({ browserName }) =>
-      browserName === 'webkit' && !!process.env.GITHUB_ACTIONS,
-    "GitHub's GPU-less WebKit can't hold a frame rate",
+    !!process.env.GITHUB_ACTIONS,
+    "GitHub's shared runners can't hold a frame rate",
   )
 
   test.beforeAll(async ({ request }) => {
