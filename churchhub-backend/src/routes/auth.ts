@@ -8,6 +8,7 @@ import { buildAuthUrl, exchangeCodeForTokens, refreshTokens } from '../utils/oau
 import { isAllowedOrigin } from '../middleware/security'
 import { escapeHtml } from '../utils/escapeHtml'
 import { toScriptLiteral } from '../utils/toScriptLiteral'
+import { parseOAuthStart } from '../utils/parseOAuthStart'
 
 const auth = new Hono<{ Bindings: Bindings }>()
 
@@ -18,20 +19,27 @@ type Provider = 'youtube' | 'drive'
  * authorization can't clobber it (COOKIE_NAME stays the YouTube one). */
 const DRIVE_COOKIE_NAME = 'drive_oauth_state'
 
+/** The validated origin, mode and returnUrl an authorization starts with. */
+function readOAuthStart(c: Context<{ Bindings: Bindings }>) {
+  return parseOAuthStart(
+    {
+      origin: c.req.header('Origin') || c.req.query('origin'),
+      mode: c.req.query('mode'),
+      returnUrl: c.req.query('returnUrl'),
+    },
+    c.env.ALLOWED_ORIGINS
+  )
+}
+
 /**
  * GET /auth/youtube
  * Initiates OAuth flow by generating PKCE, storing state in encrypted cookie,
  * and redirecting to Google OAuth.
  */
 auth.get('/auth/youtube', async (c) => {
-  const origin = c.req.header('Origin') || c.req.query('origin')
-  const returnMode =
-    (c.req.query('mode') as 'postMessage' | 'redirect') || 'postMessage'
-  const returnUrl = c.req.query('returnUrl')
-
-  // Validate origin against allowed origins
-  if (!origin || !isAllowedOrigin(origin, c.env.ALLOWED_ORIGINS)) {
-    return c.json({ error: 'Invalid or missing origin' }, 403)
+  const start = readOAuthStart(c)
+  if (!start) {
+    return c.json({ error: 'Invalid origin, mode or returnUrl' }, 403)
   }
 
   // Generate PKCE values
@@ -41,9 +49,7 @@ auth.get('/auth/youtube', async (c) => {
   // Create state object
   const state: OAuthState = {
     codeVerifier,
-    origin,
-    returnMode,
-    returnUrl,
+    ...start,
     createdAt: Date.now(),
   }
 
@@ -334,13 +340,9 @@ auth.post('/auth/youtube/refresh', async (c) => {
  * YouTube authorization can't clobber it.
  */
 auth.get('/auth/drive', async (c) => {
-  const origin = c.req.header('Origin') || c.req.query('origin')
-  const returnMode =
-    (c.req.query('mode') as 'postMessage' | 'redirect') || 'postMessage'
-  const returnUrl = c.req.query('returnUrl')
-
-  if (!origin || !isAllowedOrigin(origin, c.env.ALLOWED_ORIGINS)) {
-    return c.json({ error: 'Invalid or missing origin' }, 403)
+  const start = readOAuthStart(c)
+  if (!start) {
+    return c.json({ error: 'Invalid origin, mode or returnUrl' }, 403)
   }
 
   const codeVerifier = generateCodeVerifier()
@@ -348,9 +350,7 @@ auth.get('/auth/drive', async (c) => {
 
   const state: OAuthState = {
     codeVerifier,
-    origin,
-    returnMode,
-    returnUrl,
+    ...start,
     createdAt: Date.now(),
   }
 
