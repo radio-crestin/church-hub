@@ -22,9 +22,7 @@ export async function submitFeatureRequest(
   request: FeatureRequestInput,
   publicOrigin: string
 ): Promise<SubmittedFeatureRequest> {
-  const screenshotUrl = request.screenshot
-    ? `${publicOrigin}${SCREENSHOT_ROUTE_PREFIX}/${await getScreenshotStore(env).save(request.screenshot)}`
-    : null
+  const screenshotUrl = await storeScreenshot(env, request, publicOrigin)
 
   const issue = await createGitHubIssue(
     env.GITHUB_TOKEN,
@@ -36,4 +34,19 @@ export async function submitFeatureRequest(
     formatWhatsAppMessage(request, issue)
   )
   return { ...issue, whatsAppSent }
+}
+
+/** The screenshot's public URL, or null when there's none or nowhere to keep it. */
+async function storeScreenshot(
+  env: Bindings,
+  request: FeatureRequestInput,
+  publicOrigin: string
+): Promise<string | null> {
+  if (!request.screenshot) return null
+  const store = getScreenshotStore(env)
+  if (!store) {
+    console.warn('[feature-requests] no screenshot storage; sending the request without it')
+    return null
+  }
+  return `${publicOrigin}${SCREENSHOT_ROUTE_PREFIX}/${await store.save(request.screenshot)}`
 }

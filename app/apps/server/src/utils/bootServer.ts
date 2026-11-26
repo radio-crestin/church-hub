@@ -21,7 +21,22 @@ function bootServerResponse(
   req: Request,
   published: PublishedHealth,
 ): Response {
-  const cors = { 'Access-Control-Allow-Origin': '*' }
+  // CORS for the app's own origins only, as the real server does
+  // (middleware/origins), restated here because this runs as source text:
+  // the desktop webview polls /health cross-origin while the server boots.
+  const origin = req.headers.get('origin')
+  const host = req.headers.get('host')
+  const trusted =
+    origin !== null &&
+    (/^(tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/i.test(origin) ||
+      /^https?:\/\/(localhost|127(\.\d{1,3}){3}|\[::1\])(:\d+)?$/i.test(
+        origin,
+      ) ||
+      origin === `http://${host}` ||
+      origin === `https://${host}`)
+  const cors: Record<string, string> = trusted
+    ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' }
+    : {}
   const json = { 'Content-Type': 'application/json', ...cors }
   const { startedAtEpochMs, ...rest } = published
   const health = { ...rest, elapsedMs: Date.now() - startedAtEpochMs }

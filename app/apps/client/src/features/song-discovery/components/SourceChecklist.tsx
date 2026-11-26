@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { ManagedSourceNote } from './ManagedSourceNote'
 import type { SongSource } from '../providers'
 
 interface SourceChecklistProps {
@@ -114,6 +115,7 @@ export function SourceChecklist({
                   <span className="ml-1 text-xs text-fg-hint">{from}</span>
                 )}
               </span>
+              {source.managed && <ManagedSourceNote source={source} />}
               {error && (
                 <span
                   data-testid={`source-error-${source.id}`}

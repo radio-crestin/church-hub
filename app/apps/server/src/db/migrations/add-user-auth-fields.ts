@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto'
 
 import type { Database } from 'bun:sqlite'
+import { sealSecret } from '../../service/secret-store/sealSecret'
+import { secretPlaces } from '../../service/secret-store/secretPlaces'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -84,6 +86,11 @@ function ensureSuperAdmin(db: Database): void {
   db.run(
     `INSERT INTO users (name, token, token_hash, is_active, is_super_admin, role_id, created_at, updated_at)
      VALUES (?, ?, ?, 1, 1, ?, unixepoch(), unixepoch())`,
-    ['Super Admin', token, tokenHash, adminRole?.id ?? null],
+    [
+      'Super Admin',
+      sealSecret(token, secretPlaces.userToken(tokenHash)),
+      tokenHash,
+      adminRole?.id ?? null,
+    ],
   )
 }

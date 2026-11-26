@@ -18,6 +18,7 @@ import {
   feedbackPaths,
   healthPaths,
   livestreamYouTubePaths,
+  liveTranslationPaths,
   logsPaths,
   musicPaths,
   notificationsPaths,
@@ -28,6 +29,7 @@ import {
   schedulesPaths,
   screenSharePaths,
   screensPaths,
+  secretStorePaths,
   settingsPaths,
   slideTemplatesPaths,
   songBookmarksPaths,
@@ -64,7 +66,12 @@ export const openApiSpec = {
       'API for Church Hub application - manage songs, schedules, presentations, and device access.\n\n' +
       'Every API response carries `X-Church-Hub-Database`: a short, stable id of the database that answered. ' +
       'It stays the same across restarts and differs between Church Hub apps (installed app, dev server, review builds). ' +
-      'A client that sees it change is talking to another app, whose ids are not the ones it shows.',
+      'A client that sees it change is talking to another app, whose ids are not the ones it shows.\n\n' +
+      "Cross-origin calls: the server answers with CORS only the app's own origins (the desktop and phone webviews " +
+      '`tauri://localhost` and `http(s)://tauri.localhost`, pages on this machine, the server itself as the request reached it) ' +
+      'and the origins listed in the `trusted_origins` app setting (comma or space separated). Any other `Origin` is refused with 403, ' +
+      'and so is a write without `Origin` that the browser marks cross-site, or a form-encoded or text/plain write without ' +
+      'one of `X-User-Auth`, `Authorization` or `X-Requested-With`. Clients that are not browsers send no `Origin` and are not affected.',
   },
   servers: [
     {
@@ -79,6 +86,10 @@ export const openApiSpec = {
   tags: [
     { name: 'Health', description: 'Health check endpoints' },
     { name: 'Settings', description: 'Application and user settings' },
+    {
+      name: 'Live Translation',
+      description: 'The listener link of live translation',
+    },
     { name: 'Database', description: 'Database management and backup' },
     {
       name: 'Backup',
@@ -150,6 +161,11 @@ export const openApiSpec = {
       name: 'Notifications',
       description: 'The notifications history: song syncs and app updates',
     },
+    {
+      name: 'Secret Store',
+      description:
+        'Saved passwords, API keys and tokens are sealed with a key kept outside the database',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -163,6 +179,7 @@ export const openApiSpec = {
     ...devicesPaths,
     ...authPaths,
     ...remoteAccessPaths,
+    ...liveTranslationPaths,
     ...usersPaths,
     ...songsPaths,
     ...songGroupsPaths,
@@ -186,6 +203,7 @@ export const openApiSpec = {
     ...feedbackPaths,
     ...analyticsPaths,
     ...notificationsPaths,
+    ...secretStorePaths,
   },
   components: {
     securitySchemes,

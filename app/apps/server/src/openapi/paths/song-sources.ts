@@ -157,7 +157,7 @@ export const songSourcesPaths = {
       tags,
       summary: 'Download a song file source’s archive',
       description:
-        'For `song-bundle-file` sources: the `.chsongs` file, downloaded by the server (links are checked to reach public addresses only). Requires `songs.create`.',
+        'For `song-bundle-file` sources: the `.chsongs` file, downloaded by the server (links are checked to reach public addresses only). A managed source (Resurse Creștine) is read from Church Hub’s bucket, refused with 502 when the file doesn’t match its manifest’s SHA-256, and from its GitHub release while the bucket has no copy. Requires `songs.create`.',
       security,
       parameters: [idParameter('string')],
       responses: {
@@ -177,7 +177,7 @@ export const songSourcesPaths = {
       tags,
       summary: 'Get what changes when a source’s songs change',
       description:
-        'Cheap: the `.sha256` published next to an archive, a shared folder’s manifest checksum, or cantaricrestine.ro’s song count. Empty when the source offers none. Requires `songs.view`.',
+        'Cheap: a managed source’s manifest checksum, the `.sha256` published next to an archive, a shared folder’s manifest checksum, or cantaricrestine.ro’s song count. Empty when the source offers none. Requires `songs.view`.',
       security,
       parameters: [idParameter('string')],
       responses: {
@@ -189,6 +189,28 @@ export const songSourcesPaths = {
           }),
         },
         '502': { description: 'The source could not be read' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/{id}/managed': {
+    get: {
+      tags,
+      summary: 'Get the version of a managed source’s copy',
+      description:
+        'For a source Church Hub computes and hosts itself (`managed` set): the version its manifest (`latest.json` in our bucket) publishes. `null` while the bucket has no copy, or for a source that is not managed: it is then read from its `url`. Requires `songs.view`.',
+      security,
+      parameters: [idParameter('string')],
+      responses: {
+        '200': {
+          description: 'The published version, or null',
+          content: dataOf({
+            $ref: '#/components/schemas/ManagedRelease',
+          }),
+        },
+        '502': {
+          description: 'No such source, or its manifest is not one',
+        },
         ...errors,
       },
     },
@@ -470,7 +492,7 @@ export const songSourcesPaths = {
       tags,
       summary: 'Save the S3 storage',
       description:
-        'An empty secret keeps the stored one. Requires `settings.edit`.',
+        'An empty secret keeps the stored one, but only for the same endpoint: with a new endpoint the secret must be sent again (400 otherwise). Requires `settings.edit`.',
       security,
       requestBody: {
         required: true,
@@ -485,7 +507,10 @@ export const songSourcesPaths = {
           description: 'The saved storage',
           content: dataOf({ $ref: '#/components/schemas/S3Storage' }),
         },
-        '400': { description: 'A field is missing or not a URL' },
+        '400': {
+          description:
+            'A field is missing or not a URL, or the endpoint changed with no secret sent',
+        },
         ...errors,
       },
     },

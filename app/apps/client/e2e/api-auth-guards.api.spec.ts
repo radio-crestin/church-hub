@@ -1,7 +1,7 @@
-import { request as httpRequest } from 'node:http'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
-import { lanAddress, lanBaseUrl, lanLookup } from './helpers/lan-address'
+import { lanAddress, lanBaseUrl } from './helpers/lan-address'
+import { type RawResponse, rawRequest } from './helpers/raw-request'
 
 /**
  * The server's auth guards, end to end over HTTP: who may read, who may write,
@@ -14,50 +14,6 @@ import { lanAddress, lanBaseUrl, lanLookup } from './helpers/lan-address'
  * would; Node's http client lets the test set any header (browser-style
  * clients refuse to).
  */
-
-interface RawResponse {
-  status: number
-  headers: Record<string, string | string[] | undefined>
-  body: string
-}
-
-/** A request with full control of its headers, Host included. */
-function rawRequest(
-  baseURL: string,
-  path: string,
-  options: {
-    method?: string
-    headers?: Record<string, string>
-    body?: string | Buffer
-  } = {},
-): Promise<RawResponse> {
-  const url = new URL(path, baseURL)
-  return new Promise((resolve, reject) => {
-    const req = httpRequest(
-      {
-        host: url.hostname,
-        port: url.port,
-        lookup: lanLookup,
-        path: url.pathname + url.search,
-        method: options.method ?? 'GET',
-        headers: options.headers,
-      },
-      (res) => {
-        let body = ''
-        res.setEncoding('utf8')
-        res.on('data', (chunk) => {
-          body += chunk
-        })
-        res.on('end', () =>
-          resolve({ status: res.statusCode ?? 0, headers: res.headers, body }),
-        )
-      },
-    )
-    req.on('error', reject)
-    if (options.body) req.write(options.body)
-    req.end()
-  })
-}
 
 async function createUser(
   request: APIRequestContext,
@@ -345,15 +301,27 @@ test.describe('API auth guards', () => {
     const cookieOf = (res: RawResponse) =>
       [res.headers['set-cookie'] ?? []].flat().join('\n')
 
-    const chromium = cookieOf(
+    const chromiumUserAgent =
+      'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
+
+    // The Windows desktop webview: its UI is cross-site with the server.
+    const desktop = cookieOf(
       await loginFrom(base, {
-        'User-Agent':
-          'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+        'User-Agent': chromiumUserAgent,
+        Origin: 'http://tauri.localhost',
       }),
     )
+    expect(desktop).toContain('HttpOnly')
+    expect(desktop).toContain('SameSite=None')
+    expect(desktop).toContain('Secure')
+
+    // Chrome on the app the server itself serves: same-site, so Lax.
+    const chromium = cookieOf(
+      await loginFrom(base, { 'User-Agent': chromiumUserAgent, Origin: base }),
+    )
     expect(chromium).toContain('HttpOnly')
-    expect(chromium).toContain('SameSite=None')
-    expect(chromium).toContain('Secure')
+    expect(chromium).toContain('SameSite=Lax')
+    expect(chromium).not.toContain('Secure')
 
     const webkit = cookieOf(
       await loginFrom(base, {

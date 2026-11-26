@@ -1,3 +1,7 @@
+/** How the settings API treats the API keys some settings hold. */
+const SECRET_FIELDS =
+  "API keys inside a setting (the AI search configs' `apiKey`, live translation's `geminiApiKey` and `openaiApiKey`) are stored sealed and returned as `••••••••` when set."
+
 export const settingsPaths = {
   '/api/settings/{table}': {
     get: {
@@ -18,7 +22,8 @@ export const settingsPaths = {
       ],
       responses: {
         '200': {
-          description: 'List of settings',
+          description:
+            'List of settings, without server secret keys. ' + SECRET_FIELDS,
           content: {
             'application/json': {
               schema: {
@@ -43,7 +48,12 @@ export const settingsPaths = {
         'Upserts a key/value setting. Keys under the `divider.` namespace ' +
         '(persisted resizable-divider positions) are personal layout prefs ' +
         'writable by any authenticated user; other keys require the relevant ' +
-        'settings permission.',
+        'settings permission. Secret fields (`apiKey`, `geminiApiKey`, ' +
+        '`openaiApiKey`) are sealed before they are stored; one sent as ' +
+        '`••••••••` keeps the value saved before, but only while the fields saying ' +
+        'where it is sent (`provider`, `baseUrl`) are unchanged: otherwise the ' +
+        'save is refused (400) and the key must be entered again. An empty ' +
+        'one clears it.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {
@@ -87,6 +97,10 @@ export const settingsPaths = {
         },
         '400': { $ref: '#/components/responses/BadRequest' },
         '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': {
+          description:
+            'A server secret key (signaling room secrets, host keys): the settings API never reads, writes or deletes it',
+        },
       },
     },
   },
@@ -115,7 +129,7 @@ export const settingsPaths = {
       ],
       responses: {
         '200': {
-          description: 'Setting value or null if not found',
+          description: `Setting value or null if not found. ${SECRET_FIELDS}`,
           content: {
             'application/json': {
               schema: {
@@ -133,6 +147,10 @@ export const settingsPaths = {
           },
         },
         '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': {
+          description:
+            'A server secret key (signaling room secrets, host keys): the settings API never reads, writes or deletes it',
+        },
       },
     },
     delete: {
@@ -171,6 +189,10 @@ export const settingsPaths = {
           },
         },
         '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': {
+          description:
+            'A server secret key (signaling room secrets, host keys): the settings API never reads, writes or deletes it',
+        },
         '404': { $ref: '#/components/responses/NotFound' },
       },
     },

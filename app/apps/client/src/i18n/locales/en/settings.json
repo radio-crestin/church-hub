@@ -442,7 +442,14 @@
           "title": "Regenerate Token",
           "message": "This will invalidate the current token for \"{{name}}\". The user will need to be re-authenticated.",
           "confirm": "Regenerate"
-        }
+        },
+        "deactivate": {
+          "title": "Deactivate user",
+          "message": "\"{{name}}\" will no longer be able to sign in.",
+          "confirm": "Deactivate"
+        },
+        "devicesSignedOut_one": "Their device will be signed out. To join again, it has to be added again.",
+        "devicesSignedOut_other": "Their {{count}} devices will be signed out. To join again, they have to be added again."
       },
       "toast": {
         "created": "User created successfully",
@@ -1026,6 +1033,35 @@
         }
       }
     },
+    "secretStore": {
+      "title": "Saved passwords and keys",
+      "description": "The passwords, API keys and sign-ins this computer saves are encrypted.",
+      "keptIn": {
+        "keychain": "The key that opens them is kept in the macOS Keychain, never in the database or its backups.",
+        "credentialManager": "The key that opens them is kept in Windows Credential Manager, never in the database or its backups.",
+        "secretService": "The key that opens them is kept in the system keyring, never in the database or its backups.",
+        "file": "This computer has no system keyring, so the key that opens them is kept in a file in the Church Hub data folder that only you can read. Backups don't include it."
+      },
+      "locked": "Church Hub couldn't open its key in the system keyring, so saved passwords and keys can't be used right now. Unlock the keyring, then restart Church Hub.",
+      "otherComputer": "A backup restored on another computer can't open them: there, you sign in again and re-enter the keys.",
+      "reset": {
+        "title": "This backup came from another computer. Set these up again:",
+        "features": {
+          "youtube": "YouTube: sign in again",
+          "googleDrive": "Google Drive backups: sign in again",
+          "cloudSync": "Cloud sync: the church's owner connects it again",
+          "listenerLink": "Live translation: share the new listener link",
+          "remoteAccess": "Phones: scan the pairing code again",
+          "cloudBackup": "Church Hub Cloud backup: sign in again",
+          "obs": "OBS: enter the password again",
+          "songSources": "Song sources: enter the S3 secret key again",
+          "aiSearch": "AI search: enter the API key again",
+          "liveTranslation": "Live translation: enter the API keys again",
+          "users": "Users: phones sign in again with a new code"
+        },
+        "dismiss": "Done"
+      }
+    },
     "cloudSync": {
       "title": "Cloud sync",
       "description": "Songs and programs reach your phones and other PCs within seconds, through Church Hub's cloud.",
@@ -1089,10 +1125,6 @@
       "signIn": {
         "waiting": "Finish signing in in the browser window…",
         "failed": "The sign-in could not start. Check the internet connection and try again."
-      },
-      "backupWarning": {
-        "title": "Backups hold your cloud sync keys",
-        "body": "A backup lets anyone who has it read and change your church's synced songs. Keep the file private. If one gets out, the owner can revoke every device in Cloud sync."
       }
     },
     "sync": {

@@ -8,7 +8,7 @@ import {
   revokeCloudDevice,
 } from '../service/cloudDevicesApi'
 
-const CLOUD_DEVICES_KEY = ['sync', 'cloud', 'devices']
+export const CLOUD_DEVICES_KEY = ['sync', 'cloud', 'devices']
 
 /** The church's devices on the cloud sync service, and adding or revoking one. */
 export function useCloudDevices(enabled: boolean) {

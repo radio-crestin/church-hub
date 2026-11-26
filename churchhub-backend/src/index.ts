@@ -1,10 +1,10 @@
 import { Hono } from 'hono'
-import { logger } from 'hono/logger'
 import type { Bindings } from './types'
 import {
   createSecurityMiddleware,
   createCorsMiddleware,
 } from './middleware/security'
+import { requestLogger } from './middleware/requestLogger'
 import auth from './routes/auth'
 import featureRequests from './routes/feature-requests'
 import health from './routes/health'
@@ -22,8 +22,8 @@ for (const middleware of createSecurityMiddleware()) {
 // Apply CORS middleware
 app.use('*', createCorsMiddleware())
 
-// Request logging
-app.use('*', logger())
+// Request logging: route patterns only, never raw paths or query strings
+app.use('*', requestLogger())
 
 // Mount routes
 app.route('/', health)

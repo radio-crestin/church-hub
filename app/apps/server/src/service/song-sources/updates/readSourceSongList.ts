@@ -6,6 +6,7 @@ import {
   type SourceSong,
 } from '@church-hub/song-formats'
 
+import { downloadSongFile } from '../downloadSongFile'
 import { fetchLink } from '../links/fetchLink'
 import { readBundleFolder } from '../links/readBundleFolder'
 import type { SongSource } from '../types'
@@ -23,7 +24,7 @@ export async function readSourceSongList(
     }
     case 'song-bundle-file': {
       const { files, ownFormat } = await readSongBundleZip(
-        await fetchLink(source.url),
+        await downloadSongFile(source),
       )
       return bundleFilesToSongs(files, { exactTitle: ownFormat })
     }

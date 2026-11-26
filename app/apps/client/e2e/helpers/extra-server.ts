@@ -18,12 +18,18 @@ const BOOT_TIMEOUT_MS = 240_000
  * survives the start-up migrations. It has its own data folder and port
  * (this worker's server port + 600, never 3000), so the suite's server is untouched.
  * Boot it, stop it, change its database, boot it again on the same folder.
+ * A spec that needs two (two computers) gives the second offset 601.
  */
 export class ExtraServer {
   readonly dataDir = makeTempDir('church-hub-e2e-')
   readonly databasePath = join(this.dataDir, 'app.db')
-  readonly port = SERVER_PORT + 600
-  readonly baseURL = `http://localhost:${this.port}`
+  readonly port: number
+  readonly baseURL: string
+
+  constructor(portOffset: 600 | 601 = 600) {
+    this.port = SERVER_PORT + portOffset
+    this.baseURL = `http://localhost:${this.port}`
+  }
   private process: ChildProcess | undefined
   private output = ''
 

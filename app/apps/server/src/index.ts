@@ -33,15 +33,19 @@ import {
   buildUserAuthCookie,
   combinedAuthMiddleware,
   isLocalhost,
+  reissueSessionCookie,
   requireAnyPermission,
   requirePermission,
+  SESSION_COOKIE_MAX_AGE_SECONDS,
 } from './middleware'
+import { isTrustedOrigin, refuseUntrustedRequest } from './middleware/origins'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import {
   handleAnalyticsConsentRead,
   handleAnalyticsRoutes,
 } from './routes/analytics'
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
+import { handleUserLinkRoute } from './routes/auth-user-link/handleUserLinkRoute'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleBibleTopicRoutes } from './routes/bible-topics'
 import { handleCloudSyncRoutes } from './routes/cloud-sync'
@@ -57,6 +61,7 @@ import { handleScheduleItemRoutes } from './routes/schedule-items'
 import { handleScheduleMidiRoutes } from './routes/schedule-midi'
 import { handleScheduleTemplateRoutes } from './routes/schedule-templates'
 import { handleScreenShareRoutes } from './routes/screen-share'
+import { handleSecretStoreRoutes } from './routes/secret-store'
 import { handleSlideTemplateRoutes } from './routes/slide-templates'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
@@ -71,9 +76,9 @@ import {
   getAllSettings,
   getAllUsers,
   getLocalUsers,
-  getSetting,
+  getPublicSetting,
   getUserById,
-  getUserByToken,
+  isServerSecretKey,
   type Permission,
   regenerateUserToken,
   type SettingsTable,
@@ -294,6 +299,7 @@ import {
   type SaveSearchInput,
   saveSearch,
 } from './service/search-history'
+import { SecretDestinationChangedError } from './service/secret-store'
 import {
   addBookmark,
   addBookmarkNote,
@@ -378,9 +384,11 @@ import {
   listSyncUpdates,
   markSyncUpdatesSeen,
   runSyncCycle,
+  signOutUserDevices,
   startSyncScheduler,
   upsertSyncConfig,
 } from './service/sync'
+import { escapeHtml } from './service/text-search/text/escapeHtml'
 import { startBootServer } from './utils/bootServer'
 import {
   type BootPhase,
@@ -424,57 +432,11 @@ import {
 } from './websocket'
 
 /**
- * Short-lived, single-use login tickets. After a password is verified via
- * POST /api/auth/login the client receives a ticket and performs a TOP-LEVEL
- * navigation to /api/auth/login-redirect/:ticket. Setting the session cookie
- * on a navigation response (302) reliably overwrites the existing cookie in
- * every webview — unlike a cross-origin `fetch` Set-Cookie, which the Tauri
- * desktop webview may not apply. This is what makes "switch user" work on
- * desktop. Tickets expire after 60s and are consumed on use.
+ * Sent as `ticket` in a successful login answer: phone apps released before
+ * 2026-11-27 take a truthy `ticket` as the sign of success, and they keep
+ * talking to updated servers.
  */
-const LOGIN_TICKET_TTL_MS = 60_000
-const loginTickets = new Map<string, { token: string; expiresAt: number }>()
-
-function createLoginTicket(token: string): string {
-  const ticket = crypto.randomUUID()
-  loginTickets.set(ticket, {
-    token,
-    expiresAt: Date.now() + LOGIN_TICKET_TTL_MS,
-  })
-  return ticket
-}
-
-function consumeLoginTicket(ticket: string): string | null {
-  const entry = loginTickets.get(ticket)
-  loginTickets.delete(ticket)
-  if (!entry || entry.expiresAt < Date.now()) return null
-  return entry.token
-}
-
-/**
- * Validates a post-login return URL. Only same-machine origins are allowed so
- * the redirect can never be turned into an open redirect.
- */
-function resolveReturnUrl(
-  returnParam: string | null,
-  fallbackHost: string,
-): string {
-  const fallback = `http://${fallbackHost}/`
-  if (!returnParam) return fallback
-  try {
-    const u = new URL(returnParam)
-    const host = u.hostname.toLowerCase()
-    const allowed =
-      host === 'localhost' ||
-      host === '127.0.0.1' ||
-      host === '::1' ||
-      host === 'tauri.localhost' ||
-      host.endsWith('.localhost')
-    return allowed ? u.toString() : fallback
-  } catch {
-    return fallback
-  }
-}
+const LOGIN_SUCCESS_MARKER = 'signed-in'
 
 // Startup timing helper
 const startupStart = performance.now()
@@ -847,25 +809,40 @@ async function startRealServer(): Promise<void> {
 
   const logger = createLogger('BibleAPI')
 
+  /** The settings API never touches a server secret key (isServerSecretKey). */
+  function serverSecretRefused(req: Request) {
+    return handleCors(
+      req,
+      new Response(
+        JSON.stringify({ error: 'This setting is not available here' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
+      ),
+    )
+  }
+
   function handleCors(req: Request, res: Response) {
-    // Allow any origin - this app is designed for LAN use
-    // Reflect the origin header if present, otherwise allow all
-    const origin = req.headers.get('Origin') || '*'
-    res.headers.set('Access-Control-Allow-Origin', origin)
-    res.headers.set(
-      'Access-Control-Allow-Methods',
-      'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-    )
-    // When credentials are allowed, wildcard (*) doesn't work for headers
-    // Must explicitly list all allowed headers
-    res.headers.set(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, Cookie, X-User-Auth, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
-    )
-    res.headers.set('Access-Control-Allow-Credentials', 'true')
-    res.headers.set('Access-Control-Max-Age', '86400')
+    // Cross-origin access only for the app's own origins (the desktop and
+    // phone webviews, pages on this machine, the server as reached); any
+    // other origin gets no CORS headers (refuseUntrustedRequest refused it).
+    const origin = req.headers.get('Origin')
+    if (origin && isTrustedOrigin(origin, req)) {
+      res.headers.set('Access-Control-Allow-Origin', origin)
+      res.headers.append('Vary', 'Origin')
+      res.headers.set(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+      )
+      // When credentials are allowed, wildcard (*) doesn't work for headers
+      // Must explicitly list all allowed headers
+      res.headers.set(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, Cookie, X-User-Auth, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
+      )
+      res.headers.set('Access-Control-Allow-Credentials', 'true')
+      res.headers.set('Access-Control-Max-Age', '86400')
+      res.headers.set('Access-Control-Expose-Headers', DATABASE_ID_HEADER)
+    }
     res.headers.set(DATABASE_ID_HEADER, getDatabaseId())
-    res.headers.set('Access-Control-Expose-Headers', DATABASE_ID_HEADER)
 
     // Persist every failed response (4xx/5xx) to the on-disk log so the Logs
     // viewer and bug reports surface what went wrong (permission denials,
@@ -928,6 +905,14 @@ async function startRealServer(): Promise<void> {
       setRequestPeer(req, peerAddress(req, server))
       logRequest(req)
 
+      // Before any route (the WebSocket and preflights too): a request
+      // another site's page could have sent with the user's credentials.
+      const untrusted = refuseUntrustedRequest(req)
+      if (untrusted) {
+        logResponse(req, untrusted.status, requestStartTime)
+        return untrusted
+      }
+
       if (req.method === 'OPTIONS') {
         logResponse(req, 204, requestStartTime)
         return handleCors(req, new Response(null, { status: 204 }))
@@ -949,45 +934,9 @@ async function startRealServer(): Promise<void> {
       }
       let _context: RequestContext | null = null
 
-      // User authentication endpoint (public - sets cookie for remote users)
-      const userAuthMatch = url.pathname.match(/^\/api\/auth\/user\/([^/]+)$/)
-      if (req.method === 'GET' && userAuthMatch?.[1]) {
-        const token = decodeURIComponent(userAuthMatch[1])
-        const user = await getUserByToken(token)
-
-        if (!user || !user.isActive) {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({
-                error: 'Invalid or inactive user token',
-              }),
-              {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-
-        // Redirect to frontend using the same host the user accessed from
-        // The server serves the client on its own port (dev and installed app)
-        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = getServerPort()
-        const frontendUrl = `http://${host}:${frontendPort}/`
-
-        // Redirect to frontend app with cookie set. Cookie attributes are
-        // engine-aware — see buildUserAuthCookie.
-        const response = new Response(null, {
-          status: 302,
-          headers: {
-            Location: frontendUrl,
-            'Set-Cookie': buildUserAuthCookie(req, token, 31536000),
-          },
-        })
-
-        return handleCors(req, response)
-      }
+      // A user's sign-in link (public: it carries the user's token)
+      const userLink = await handleUserLinkRoute(req, url, handleCors)
+      if (userLink) return userLink
 
       // OpenAPI documentation endpoints (public)
       if (url.pathname === '/api/docs') {
@@ -1084,10 +1033,6 @@ async function startRealServer(): Promise<void> {
             localhost: isLocalhost(req),
           })
 
-          // Also issue a one-time ticket so the client can finalize the switch
-          // via a top-level navigation (reliable cookie overwrite on desktop).
-          const ticket = createLoginTicket(outcome.token)
-
           // On localhost (the packaged desktop app) the cross-site `Secure`
           // cookie can't be stored by macOS WKWebView, so also return the token
           // in the body; the desktop client persists it and sends it back as an
@@ -1097,12 +1042,22 @@ async function startRealServer(): Promise<void> {
 
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: currentUser, ticket, token }), {
-              headers: {
-                'Content-Type': 'application/json',
-                'Set-Cookie': buildAuthCookie(outcome.token, 31536000),
+            new Response(
+              JSON.stringify({
+                data: currentUser,
+                ticket: LOGIN_SUCCESS_MARKER,
+                token,
+              }),
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Set-Cookie': buildAuthCookie(
+                    outcome.token,
+                    SESSION_COOKIE_MAX_AGE_SECONDS,
+                  ),
+                },
               },
-            }),
+            ),
           )
         } catch (_error) {
           return handleCors(
@@ -1113,55 +1068,6 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
-      }
-
-      // GET /api/auth/login-redirect/:ticket - finalize a login via top-level
-      // navigation. Sets the session cookie on a 302 response (overwrites
-      // reliably in every webview) and redirects back to the app.
-      const loginRedirectMatch = url.pathname.match(
-        /^\/api\/auth\/login-redirect\/([^/]+)$/,
-      )
-      if (req.method === 'GET' && loginRedirectMatch?.[1]) {
-        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = getServerPort()
-        const fallbackHost = `${host}:${frontendPort}`
-        const token = consumeLoginTicket(
-          decodeURIComponent(loginRedirectMatch[1]),
-        )
-        const location = resolveReturnUrl(
-          url.searchParams.get('return'),
-          fallbackHost,
-        )
-
-        if (!token) {
-          // Expired/invalid ticket — just go back to the app (still signed in
-          // as whoever the current cookie is).
-          authLogger.warn('Account switch failed: expired/invalid ticket')
-          return handleCors(
-            req,
-            new Response(null, {
-              status: 302,
-              headers: { Location: location },
-            }),
-          )
-        }
-
-        const switchedUser = await getUserByToken(token)
-        authLogger.info('Account switch', {
-          userId: switchedUser?.id ?? null,
-          userName: switchedUser?.name ?? null,
-        })
-
-        return handleCors(
-          req,
-          new Response(null, {
-            status: 302,
-            headers: {
-              Location: location,
-              'Set-Cookie': buildAuthCookie(token, 31536000),
-            },
-          }),
-        )
       }
 
       // POST /api/auth/logout - clear the auth cookie
@@ -1181,32 +1087,6 @@ async function startRealServer(): Promise<void> {
           new Response(JSON.stringify({ data: { success: true } }), {
             headers: {
               'Content-Type': 'application/json',
-              'Set-Cookie': buildAuthCookie('', 0),
-            },
-          }),
-        )
-      }
-
-      // GET /api/auth/logout-redirect - clear the session via top-level
-      // navigation. Like login-redirect, clearing the cookie on a 302 response
-      // reliably applies in the desktop (Tauri) webview where a cross-origin
-      // `fetch` Set-Cookie may not.
-      if (
-        req.method === 'GET' &&
-        url.pathname === '/api/auth/logout-redirect'
-      ) {
-        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = getServerPort()
-        const location = resolveReturnUrl(
-          url.searchParams.get('return'),
-          `${host}:${frontendPort}`,
-        )
-        return handleCors(
-          req,
-          new Response(null, {
-            status: 302,
-            headers: {
-              Location: location,
               'Set-Cookie': buildAuthCookie('', 0),
             },
           }),
@@ -1242,22 +1122,24 @@ async function startRealServer(): Promise<void> {
         if (authResult.context?.userId) {
           const user = getUserById(authResult.context.userId)
           if (user) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({
-                  data: {
-                    id: user.id,
-                    name: user.name,
-                    isApp: user.isSuperAdmin,
-                    permissions: user.isSuperAdmin
-                      ? ALL_PERMISSIONS
-                      : user.permissions,
-                  },
-                }),
-                { headers: { 'Content-Type': 'application/json' } },
-              ),
+            const response = new Response(
+              JSON.stringify({
+                data: {
+                  id: user.id,
+                  name: user.name,
+                  isApp: user.isSuperAdmin,
+                  permissions: user.isSuperAdmin
+                    ? ALL_PERMISSIONS
+                    : user.permissions,
+                },
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
             )
+            // A session cookie an older version stored as SameSite=None
+            // becomes Lax on the app's next start.
+            const reissued = reissueSessionCookie(req)
+            if (reissued) response.headers.set('Set-Cookie', reissued)
+            return handleCors(req, response)
           }
         }
 
@@ -1414,6 +1296,7 @@ async function startRealServer(): Promise<void> {
       if (req.method === 'GET' && getSettingMatch?.[1] && getSettingMatch[2]) {
         const table = getSettingMatch[1] as SettingsTable
         const key = getSettingMatch[2]
+        if (isServerSecretKey(key)) return serverSecretRefused(req)
 
         // Per-key permission: some app settings belong to a feature (or to the
         // shared navigation shell) rather than to general Settings, so gating
@@ -1444,7 +1327,7 @@ async function startRealServer(): Promise<void> {
           if (permError) return permError
         }
 
-        const setting = getSetting(table, key)
+        const setting = getPublicSetting(table, key)
 
         return handleCors(
           req,
@@ -1492,6 +1375,7 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
+          if (isServerSecretKey(body.key)) return serverSecretRefused(req)
 
           // Choosing which Bible translation to read is part of viewing the
           // Bible, so it's gated by `bible.view` rather than `settings.edit`.
@@ -1569,12 +1453,14 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
-        } catch (_error) {
+        } catch (error) {
+          const message =
+            error instanceof SecretDestinationChangedError
+              ? error.message
+              : 'Invalid JSON body'
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-            }),
+            new Response(JSON.stringify({ error: message }), { status: 400 }),
           )
         }
       }
@@ -1593,6 +1479,7 @@ async function startRealServer(): Promise<void> {
 
         const table = deleteSettingMatch[1] as SettingsTable
         const key = deleteSettingMatch[2]
+        if (isServerSecretKey(key)) return serverSecretRefused(req)
 
         const result = deleteSetting(table, key)
         if (table === 'app_settings' && key === READING_SPEED_SETTING_KEY) {
@@ -2440,7 +2327,7 @@ async function startRealServer(): Promise<void> {
           handleCors(
             req,
             new Response(
-              `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${message}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
+              `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${escapeHtml(message)}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
               { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
             ),
           )
@@ -2452,7 +2339,7 @@ async function startRealServer(): Promise<void> {
           return renderPage('Backup', 'Missing tokens in callback.')
         }
 
-        const result = await completeDriveAuth({
+        const result = await completeDriveAuth(url.searchParams.get('state'), {
           accessToken,
           refreshToken,
           expiresAt,
@@ -2765,6 +2652,7 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
+          if (body.isActive === false) await signOutUserDevices(id)
 
           const updatedUser = getUserById(id)
           return handleCors(
@@ -2802,6 +2690,7 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
+        await signOutUserDevices(id)
 
         return handleCors(
           req,
@@ -8410,6 +8299,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (notificationsResponse) return notificationsResponse
+
+      // Where the key sealing saved secrets is kept
+      const secretStoreResponse = await handleSecretStoreRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (secretStoreResponse) return secretStoreResponse
 
       // A presentation song item's MIDI file, its slides synced to it
       const scheduleMidiResponse = await handleScheduleMidiRoutes(

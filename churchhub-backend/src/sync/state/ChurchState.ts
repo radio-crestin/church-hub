@@ -78,6 +78,13 @@ export interface ChurchState {
   owner?: ChurchOwner | null
   /** A transfer the owner started: this account accepts it to own it. */
   pendingOwnerEmail?: string | null
+  /**
+   * Set once the church server asks for it (PUT access with
+   * revokeDevicesWithUser): a user deactivated or removed has every device
+   * revoked, for good. Absent: an older server, whose inactive users'
+   * devices stay (their writes refused) as before.
+   */
+  revokeDevicesWithUser?: boolean
   createdAt: number
   updatedAt: number
 }

@@ -1,3 +1,6 @@
+/** starting: probe pending; enabled: verified; disabled: the probe failed; off: sync not configured. */
+export type SyncReadiness = 'starting' | 'enabled' | 'disabled' | 'off'
+
 export interface Bindings {
   YOUTUBE_CLIENT_ID: string
   YOUTUBE_CLIENT_SECRET: string
@@ -14,7 +17,16 @@ export interface Bindings {
   GITHUB_TOKEN: string
   SIGNALING_KV: KVNamespace
   // "Request a feature": screenshots, abuse limit and WhatsApp (WAHA) notice.
-  FEATURE_REQUEST_SCREENSHOTS: R2Bucket
+  /** Optional R2 bucket; without it screenshots go to the S3 bucket (S3_*). */
+  FEATURE_REQUEST_SCREENSHOTS?: R2Bucket
+  /** S3 bucket for screenshots (default S3_STATE_BUCKET, then S3_BUCKET). */
+  FEATURE_REQUEST_S3_BUCKET?: string
+  /**
+   * This service's public origin (e.g. https://backend.example.org), used for
+   * links it hands out (screenshot URLs, the listener page, the owner sign-in
+   * callback) instead of the request's Host. Default: the request URL.
+   */
+  PUBLIC_BASE_URL?: string
   FEATURE_REQUEST_RATE_LIMITER: RateLimit
   WAHA_URL?: string
   WAHA_API_KEY?: string
@@ -27,6 +39,11 @@ export interface Bindings {
   // state: no database) and the secret. Unset = /sync answers 503.
   /** Hashes device tokens and, derived, encrypts the church states (openssl rand -hex 32). */
   SYNC_SECRET?: string
+  /**
+   * Node only: where the startup conditional-write probe stands (createSyncGuard).
+   * Absent on the Worker, which has no probe, so it reads as ready.
+   */
+  SYNC_READINESS?: SyncReadiness
   /** Any S3-compatible endpoint, e.g. https://<account>.r2.cloudflarestorage.com */
   S3_ENDPOINT?: string
   S3_BUCKET?: string

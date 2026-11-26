@@ -17,7 +17,10 @@ routes = [
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
-invocation_logs = true
+# Off: an invocation log records each request's full URL, and the signaling
+# routes carry room secrets in the path. The app's own request logger
+# (src/middleware/requestLogger.ts) logs the route pattern of every request.
+invocation_logs = false
 
 # KV namespace for WebRTC signaling relay; also holds the per-IP (hashed)
 # rolling 24h quota of POST /feature-requests.
@@ -36,6 +39,16 @@ bucket_name = "church-hub-feature-requests"
 [[ratelimits]]
 name = "FEATURE_REQUEST_RATE_LIMITER"
 namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 3
+  period = 60
+
+# Abuse guard for POST /sync/churches (registering a church server): 3 per
+# minute per IP. A church registers once, so this never limits real use.
+[[ratelimits]]
+name = "SYNC_RATE_LIMITER"
+namespace_id = "1002"
 
   [ratelimits.simple]
   limit = 3

@@ -1,5 +1,6 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
+import { connectYouTube } from './helpers/connect-youtube'
 import { ExtraServer } from './helpers/extra-server'
 import { type MockObs, startMockObs } from './helpers/mock-obs-websocket'
 import {
@@ -37,13 +38,11 @@ test.beforeAll(async () => {
   await server.start({ YOUTUBE_API_ORIGIN: youtube.origin })
   api = await server.adminRequest()
   await server.skipOnboarding(api)
-  const tokens = await api.post('/api/livestream/youtube/tokens', {
-    data: {
-      accessToken: 'e2e-access',
-      refreshToken: 'e2e-refresh',
-      expiresAt: Date.now() + 24 * 3600 * 1000,
-      channelName: 'Biserica Adunare',
-    },
+  const tokens = await connectYouTube(api, {
+    accessToken: 'e2e-access',
+    refreshToken: 'e2e-refresh',
+    expiresAt: Date.now() + 24 * 3600 * 1000,
+    channelName: 'Biserica Adunare',
   })
   expect(tokens.ok()).toBe(true)
   await api.put('/api/livestream/youtube/config', {

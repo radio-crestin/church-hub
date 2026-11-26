@@ -22,10 +22,14 @@ import type { ChurchState, SyncStore } from '../sync/state/ChurchState'
 import { createSyncStore } from '../sync/state/createSyncStore'
 import { readChurch } from '../sync/state/readChurch'
 import { SyncError } from '../sync/SyncError'
+import { syncBodyLimit } from '../sync/syncBodyLimit'
 import { updateAccess } from '../sync/updateAccess'
 import type { Bindings } from '../types'
+import { clientIp } from '../utils/clientIp'
 
 const DEFAULT_COMPACT_AFTER = 40
+/** Pinned, so the docs page runs only the Scalar build it was checked with. */
+const SCALAR_VERSION = '1.76.4'
 /** Managing devices and access needs the app's user management permission. */
 const MANAGE_PERMISSION = 'users.edit'
 
@@ -34,6 +38,8 @@ type SyncContext = Context<{ Bindings: Bindings }>
 const sync = new Hono<{ Bindings: Bindings }>()
 
 sync.onError(handleSyncError)
+// Every /sync route, the owner's (/sync/owner/*) included.
+sync.use('/sync/*', syncBodyLimit)
 
 /**
  * The church in the path, read once, and the device calling for it. The
@@ -80,7 +86,7 @@ sync.get('/sync/docs', (c) =>
     '<!doctype html><html><head><title>Church Hub cloud sync</title>' +
       '<meta charset="utf-8"></head><body>' +
       '<script id="api-reference" data-url="/sync/openapi.json"></script>' +
-      '<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>' +
+      `<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@${SCALAR_VERSION}"></script>` +
       '</body></html>'
   )
 )
@@ -88,7 +94,7 @@ sync.get('/sync/docs', (c) =>
 /** POST /sync/churches: register a church server, owned or as a guest. */
 sync.post('/sync/churches', async (c) => {
   if (c.env.SYNC_RATE_LIMITER) {
-    const ip = c.req.header('CF-Connecting-IP') ?? 'unknown'
+    const ip = clientIp(c)
     const { success } = await c.env.SYNC_RATE_LIMITER.limit({
       key: `sync-register:${ip}`,
     })
@@ -149,13 +155,18 @@ sync.get('/sync/churches/:churchId/path', async (c) => {
   })
 })
 
-/** PUT /sync/churches/:churchId/access: the church's roles and users. */
+/**
+ * PUT /sync/churches/:churchId/access: the church's roles and users; with
+ * revokeDevicesWithUser, a deactivated or removed user's devices are revoked
+ * and the path moves (the answer has the read location either way).
+ */
 sync.put('/sync/churches/:churchId/access', async (c) => {
   const access = parseAccess(await readJsonBody(c))
   const store = createSyncStore(c.env)
   const { who, church } = await caller(c, store)
   requirePermission(church.state, who, MANAGE_PERMISSION)
-  return c.json({ changed: await updateAccess(store, who.churchId, access) })
+  const { state, ...update } = await updateAccess(store, who.churchId, access)
+  return c.json({ ...update, ...readLocation(store, state) })
 })
 
 /** GET /sync/churches/:churchId/devices: every device, revoked ones too. */

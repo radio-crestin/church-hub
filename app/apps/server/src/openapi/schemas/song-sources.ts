@@ -19,6 +19,27 @@ export const songSourceSchemas = {
       homepage: { type: 'string', format: 'uri' },
       license: { type: 'string' },
       origin: { type: 'string', enum: ['built-in', 'link'] },
+      managed: {
+        type: 'string',
+        description:
+          'Set when Church Hub computes and hosts the source itself: its folder in our bucket, read before `url` (the fallback)',
+        example: 'song-sources/resurse-crestine',
+      },
+    },
+  },
+  ManagedRelease: {
+    type: 'object',
+    nullable: true,
+    description:
+      'The copy of a managed source in Church Hub’s bucket, from its latest.json',
+    properties: {
+      version: { type: 'string', example: '2026.11.26-3f9a1c' },
+      checksum: {
+        type: 'string',
+        description: 'The song bundle’s checksum (the release’s `.sha256`)',
+      },
+      songCount: { type: 'integer' },
+      builtAt: { type: 'string', format: 'date-time' },
     },
   },
   SongBundleFile: {

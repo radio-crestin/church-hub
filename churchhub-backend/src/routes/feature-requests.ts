@@ -1,4 +1,5 @@
 import { type Context, Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import {
   BODY_MAX_BYTES,
   consumeDailyQuota,
@@ -9,11 +10,20 @@ import {
   submitFeatureRequest,
 } from '../feature-requests'
 import type { Bindings } from '../types'
+import { clientIp } from '../utils/clientIp'
+import { publicOrigin } from '../utils/publicOrigin'
 
 // `<random UUID>.<ext>`: unguessable, so only the issue's link finds it.
 const SCREENSHOT_ID_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp)$/
 
 const featureRequests = new Hono<{ Bindings: Bindings }>()
+
+/** 413 for a body over the limit, counted as it streams in. */
+const featureRequestBodyLimit = bodyLimit({
+  maxSize: BODY_MAX_BYTES,
+  onError: (c) =>
+    c.json({ success: false, error: 'Request is too large' }, 413),
+})
 
 /**
  * POST /feature-requests
@@ -24,24 +34,19 @@ const featureRequests = new Hono<{ Bindings: Bindings }>()
  * burst limit (binding) and 50 requests per rolling 24 hours (KV), both
  * checked before anything reaches GitHub or WhatsApp.
  */
-featureRequests.post('/feature-requests', async (c) => {
-  const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown'
+featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => {
+  const ip = clientIp(c)
   const { success: withinLimit } =
     await c.env.FEATURE_REQUEST_RATE_LIMITER.limit({
-      key: `feature-request:${clientIp}`,
+      key: `feature-request:${ip}`,
     })
   if (!withinLimit) return rateLimited(c)
-
-  const declaredBytes = Number(c.req.header('Content-Length') ?? 0)
-  if (declaredBytes > BODY_MAX_BYTES) {
-    return c.json({ success: false, error: 'Request is too large' }, 413)
-  }
 
   try {
     const request = parseFeatureRequest(await c.req.json().catch(() => null))
     const withinDailyQuota = await consumeDailyQuota(
       c.env.SIGNALING_KV,
-      clientIp,
+      ip,
       c.env.COOKIE_ENCRYPTION_KEY
     )
     if (!withinDailyQuota) return rateLimited(c)
@@ -49,7 +54,7 @@ featureRequests.post('/feature-requests', async (c) => {
     const issue = await submitFeatureRequest(
       c.env,
       request,
-      new URL(c.req.url).origin
+      publicOrigin(c.env, c.req.url)
     )
     return c.json({
       success: true,
@@ -78,7 +83,8 @@ featureRequests.get(`${SCREENSHOT_ROUTE_PREFIX}/:id`, async (c) => {
   const id = c.req.param('id')
   if (!SCREENSHOT_ID_PATTERN.test(id)) return c.json({ error: 'Not found' }, 404)
 
-  const screenshot = await getScreenshotStore(c.env).load(id)
+  const store = getScreenshotStore(c.env)
+  const screenshot = store ? await store.load(id) : null
   if (!screenshot) return c.json({ error: 'Not found' }, 404)
 
   return new Response(screenshot.body, {
