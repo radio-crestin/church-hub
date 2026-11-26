@@ -10,7 +10,6 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { groupSidebarItems } from './groupSidebarItems'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { useSidebarCollapsed } from './use-sidebar-collapsed'
@@ -29,6 +28,7 @@ import type {
   CustomPageMenuItem,
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
+import { groupSidebarItems } from '../../features/sidebar-config/utils/sidebarGroups'
 import { usePermissions } from '../../provider/permissions-provider'
 
 interface SidebarProps {

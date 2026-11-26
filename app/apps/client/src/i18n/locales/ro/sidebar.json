@@ -44,6 +44,7 @@
   "groups": {
     "live": "În desfășurare",
     "library": "Resurse",
-    "tools": "Instrumente"
+    "tools": "Instrumente",
+    "label": "Grup din bara laterală"
   }
 }

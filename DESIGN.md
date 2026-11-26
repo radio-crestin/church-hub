@@ -87,7 +87,7 @@ Never use a raw hex or a palette class (`bg-zinc-800`, `text-purple-500`) in a c
 - **Logo:** the app mark (a blue `#0070dd` rounded square, radius 6/24, with a white open book) followed by "Church Hub" in Inter 600 14px. It is not a dropdown.
 - **Sidebar:**
   - 248px wide, on `bg-panel`.
-  - Pages are grouped under white 13px titles: Live / În desfășurare (Control Room), Library / Resurse (Songs, Bible, Presentations, Music, Gallery) and Tools / Instrumente (everything else, custom pages too), with a hairline between groups.
+  - Pages are grouped under white 13px titles: Live / În desfășurare (Control Room), Library / Resurse (Songs, Bible, Presentations, Music, Gallery) and Tools / Instrumente (everything else, custom pages too), with a hairline between groups. Settings > Sidebar moves any page to another group.
   - Rows are 36px tall, with an 18px line icon, a 14px label and the F-key keycap. The selected row is `bg-selected`.
   - The footer holds Feedback and Settings rows, then the user row: a 32px avatar with the name above the role.
 - **Live card:**

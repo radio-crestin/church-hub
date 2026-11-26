@@ -18,11 +18,18 @@ import {
   ICON_COLOR_HEX,
 } from '../constants'
 import { getIconComponent } from '../hooks/useResolvedSidebarItems'
-import type { CustomPageMenuItem, SidebarMenuItem } from '../types'
+import type {
+  CustomPageMenuItem,
+  SidebarGroupId,
+  SidebarMenuItem,
+} from '../types'
+import { groupOf, SIDEBAR_GROUPS } from '../utils/sidebarGroups'
 
 interface SidebarItemCardProps {
   item: SidebarMenuItem
   onToggleVisibility: () => void
+  /** Moves the page to another sidebar section; absent for the footer pages. */
+  onChangeGroup?: (group: SidebarGroupId) => void
   onOpenSettings: () => void
   onDelete?: () => void
 }
@@ -33,6 +40,7 @@ interface SidebarItemCardProps {
 export function SidebarItemCard({
   item,
   onToggleVisibility,
+  onChangeGroup,
   onOpenSettings,
   onDelete,
 }: SidebarItemCardProps) {
@@ -173,7 +181,26 @@ export function SidebarItemCard({
       </div>
 
       {/* Actions */}
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center gap-1">
+        {/* Which sidebar section the page sits in */}
+        {onChangeGroup && (
+          <select
+            data-testid={`sidebar-item-group-${item.id}`}
+            aria-label={t('sidebar:groups.label')}
+            title={t('sidebar:groups.label')}
+            value={groupOf(item)}
+            onChange={(event) =>
+              onChangeGroup(event.target.value as SidebarGroupId)
+            }
+            className="h-8 max-w-40 cursor-pointer rounded-lg border-0 bg-field px-2 text-sm text-fg-body outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            {SIDEBAR_GROUPS.map((group) => (
+              <option key={group} value={group}>
+                {t(`sidebar:groups.${group}`)}
+              </option>
+            ))}
+          </select>
+        )}
         {/* Delete Button (custom pages only) */}
         {isCustom && onDelete && (
           <button

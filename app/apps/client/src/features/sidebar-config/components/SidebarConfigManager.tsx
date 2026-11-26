@@ -31,8 +31,10 @@ import { generateCustomPageId } from '../service/sidebarConfig'
 import type {
   CustomPageInput,
   CustomPageMenuItem,
+  SidebarGroupId,
   SidebarMenuItem,
 } from '../types'
+import { isGroupable } from '../utils/sidebarGroups'
 
 /**
  * Main component for managing sidebar configuration in settings
@@ -97,6 +99,26 @@ export function SidebarConfigManager() {
 
     const updatedItems = config.items.map((item) =>
       item.id === itemId ? { ...item, isVisible: !item.isVisible } : item,
+    )
+
+    updateConfig.mutate(
+      { ...config, items: updatedItems },
+      {
+        onSuccess: () => {
+          showToast(t('sections.sidebar.toast.saved'), 'success')
+        },
+        onError: () => {
+          showToast(t('sections.sidebar.toast.error'), 'error')
+        },
+      },
+    )
+  }
+
+  const handleChangeGroup = (itemId: string, group: SidebarGroupId) => {
+    if (!config) return
+
+    const updatedItems = config.items.map((item) =>
+      item.id === itemId ? { ...item, group } : item,
     )
 
     updateConfig.mutate(
@@ -269,6 +291,11 @@ export function SidebarConfigManager() {
                 key={item.id}
                 item={item}
                 onToggleVisibility={() => handleToggleVisibility(item.id)}
+                onChangeGroup={
+                  isGroupable(item.id)
+                    ? (group) => handleChangeGroup(item.id, group)
+                    : undefined
+                }
                 onOpenSettings={() => setSettingsItem(item)}
                 onDelete={
                   item.type === 'custom'

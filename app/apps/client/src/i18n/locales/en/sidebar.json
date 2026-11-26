@@ -44,6 +44,7 @@
   "groups": {
     "live": "Live",
     "library": "Library",
-    "tools": "Tools"
+    "tools": "Tools",
+    "label": "Sidebar group"
   }
 }
