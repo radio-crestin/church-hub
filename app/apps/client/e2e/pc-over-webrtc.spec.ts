@@ -71,6 +71,7 @@ test.describe
     const userName = `E2E WebRTC ${Date.now()}`
     let userId = 0
     let joinUrl = ''
+    let deviceId = ''
     let stopRelay = () => {}
 
     test.beforeAll(async ({ request }) => {
@@ -99,7 +100,9 @@ test.describe
         data: { userId, name: 'E2E WebRTC phone' },
       })
       expect(minted.status()).toBe(201)
-      joinUrl = (await minted.json()).data.joinUrl
+      const device = (await minted.json()).data
+      joinUrl = device.joinUrl
+      deviceId = device.deviceId
       await publishAll(request)
     })
 
@@ -211,12 +214,46 @@ test.describe
       await expect(hint).toBeHidden()
     })
 
-    test('the PC refuses a device token the service doesn’t know', async ({
+    test('the PC refuses a device token the service doesn’t know, and slows down guessing', async ({
       request,
     }) => {
-      const res = await request.post('/api/auth/device-login', {
-        data: { token: 'not-a-device-token' },
-      })
-      expect(res.status()).toBe(401)
+      const statuses: number[] = []
+      while (statuses.at(-1) !== 429 && statuses.length < 6) {
+        const res = await request.post('/api/auth/device-login', {
+          data: { token: 'not-a-device-token' },
+        })
+        statuses.push(res.status())
+      }
+      // Five refusals a minute, then 429 (a repeat run may start counted).
+      expect(statuses.at(-1)).toBe(429)
+      expect(statuses.slice(0, -1).every((status) => status === 401)).toBe(true)
+    })
+
+    test('revoking the device ends the phone’s session on the PC', async ({
+      browser,
+      request,
+    }) => {
+      const phone = await browser.newContext({ ...devices['Pixel 7'] })
+      const page = await phone.newPage()
+      await page.goto(joinUrl)
+      await expect(page.getByTestId('pc-link')).toHaveAttribute(
+        'data-link',
+        'live',
+        { timeout: 60_000 },
+      )
+      // A route that needs the session (songs.view), unlike public /me.
+      const songs = () =>
+        page.evaluate(
+          async (pc) => (await fetch(`${pc}/api/songs?limit=1`)).status,
+          PC,
+        )
+      expect(await songs()).toBe(200)
+
+      const revoked = await request.delete(
+        `/api/sync/cloud/devices/${deviceId}`,
+      )
+      expect(revoked.ok()).toBe(true)
+      expect(await songs()).toBe(401)
+      await phone.close()
     })
   })
