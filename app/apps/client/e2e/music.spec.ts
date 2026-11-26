@@ -133,7 +133,11 @@ test.describe('Music page', () => {
     // Another track joins it from the whole library.
     await page.getByTestId('music-view-all').click()
     await row(page, NEARER).getByTestId('music-track-menu').click()
-    await page.getByRole('menuitem', { name: `Add to ${name}` }).click()
+    await page.getByTestId('music-add-to-playlist').click()
+    await page
+      .getByTestId('music-playlist-picker')
+      .getByRole('button', { name })
+      .click()
     const playlistNav = page
       .getByTestId('music-library-nav')
       .getByRole('button', { name })

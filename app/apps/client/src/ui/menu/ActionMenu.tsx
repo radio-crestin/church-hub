@@ -37,6 +37,10 @@ interface ActionMenuProps {
 const PANEL_MIN_WIDTH = 264
 const PANEL_MAX_WIDTH = 320
 const ESTIMATED_ROW_HEIGHT = 56
+/** Between the trigger and the panel. */
+const PANEL_GAP = 6
+/** Kept clear between the panel and the screen's edges. */
+const VIEWPORT_MARGIN = 8
 
 /** Menus opened from inside a <dialog> must portal into it or they render behind. */
 function getPortalContainer(element: HTMLElement | null): HTMLElement {
@@ -63,6 +67,7 @@ export function ActionMenu({
     bottom?: number
     left: number
     minWidth: number
+    maxHeight?: number
   }>({ left: 0, minWidth: PANEL_MIN_WIDTH })
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -85,29 +90,41 @@ export function ActionMenu({
     const trigger = buttonRef.current
     if (!trigger) return
 
+    // The panel is fixed, so everything here is in viewport coordinates.
     const rect = trigger.getBoundingClientRect()
-    const panelHeight = Math.min(items.length * ESTIMATED_ROW_HEIGHT + 16, 420)
-    const spaceBelow = window.innerHeight - rect.bottom
-    const openUpward = spaceBelow < panelHeight && rect.top > spaceBelow
+    // It is already mounted when this runs, so its real content height and
+    // width are known; a long list gets the room there is and scrolls.
+    const panelHeight =
+      panelRef.current?.scrollHeight ?? items.length * ESTIMATED_ROW_HEIGHT
+    const spaceBelow =
+      window.innerHeight - rect.bottom - PANEL_GAP - VIEWPORT_MARGIN
+    const spaceAbove = rect.top - PANEL_GAP - VIEWPORT_MARGIN
+    const openUpward = panelHeight > spaceBelow && spaceAbove > spaceBelow
     const minWidth = Math.max(PANEL_MIN_WIDTH, rect.width)
     // The panel is as wide as its rows (up to a cap), so a long label makes it
-    // wider than the minimum. It is already mounted when this runs, and its
-    // width does not depend on where it sits, so line up by the real one.
+    // wider than the minimum; line up by the real width.
     const panelWidth = Math.max(minWidth, panelRef.current?.offsetWidth ?? 0)
 
     // Keep the panel on screen on narrow viewports instead of letting it
     // overflow past the right edge.
-    const preferredLeft =
-      align === 'end'
-        ? rect.right + window.scrollX - panelWidth
-        : rect.left + window.scrollX
-    const maxLeft = window.scrollX + window.innerWidth - panelWidth - 8
-    const left = Math.max(window.scrollX + 8, Math.min(preferredLeft, maxLeft))
+    const preferredLeft = align === 'end' ? rect.right - panelWidth : rect.left
+    const maxLeft = window.innerWidth - panelWidth - VIEWPORT_MARGIN
+    const left = Math.max(VIEWPORT_MARGIN, Math.min(preferredLeft, maxLeft))
 
     setPosition(
       openUpward
-        ? { bottom: window.innerHeight - rect.top + 6, left, minWidth }
-        : { top: rect.bottom + window.scrollY + 6, left, minWidth },
+        ? {
+            bottom: window.innerHeight - rect.top + PANEL_GAP,
+            left,
+            minWidth,
+            maxHeight: spaceAbove,
+          }
+        : {
+            top: rect.bottom + PANEL_GAP,
+            left,
+            minWidth,
+            maxHeight: spaceBelow,
+          },
     )
   }, [align, items.length])
 
@@ -242,12 +259,13 @@ export function ActionMenu({
       role="menu"
       aria-label={label}
       data-testid={testId ? `${testId}-panel` : undefined}
-      className={`fixed z-50 max-h-[70vh] overflow-y-auto scrollbar-thin rounded-[10px] border border-line bg-panel p-1 shadow-popover`}
+      className={`fixed z-50 overflow-y-auto scrollbar-thin rounded-[10px] border border-line bg-panel p-1 shadow-popover`}
       style={{
         top: position.top,
         bottom: position.bottom,
         left: position.left,
         minWidth: position.minWidth,
+        maxHeight: position.maxHeight,
         width: 'max-content',
         maxWidth: `min(calc(100vw - 1rem), ${PANEL_MAX_WIDTH}px)`,
       }}
