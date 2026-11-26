@@ -28,9 +28,10 @@ export interface BackgroundTransition {
 
 /**
  * The background a screen draws and how it changes, in step with the text:
- * while a content type leaves (useContentTypeHandoff), its background stays,
- * and fades out with its text when the next content has another one; the new
- * background then fades in with the new text.
+ * while a kind of slide leaves (useContentTypeHandoff), its background, in
+ * the template it was shown in, stays, and fades out with its text when the
+ * next content has another one; the new background then fades in with the
+ * new text.
  */
 export function backgroundTransition({
   screen,
@@ -42,7 +43,10 @@ export function backgroundTransition({
   contentType: ContentType
   contentData: ContentData
   leaving:
-    | Pick<ShownContent<ContentData, unknown>, 'contentType' | 'contentData'>
+    | Pick<
+        ShownContent<ContentData, unknown>,
+        'contentType' | 'contentData' | 'screen'
+      >
     | null
     | undefined
 }): BackgroundTransition {
@@ -53,8 +57,9 @@ export function backgroundTransition({
   )
   if (!leaving) return { background: next, enter, exit: null }
 
+  const leavingScreen = leaving.screen ?? screen
   const shown = resolveScreenBackground({
-    screen,
+    screen: leavingScreen,
     contentType: leaving.contentType,
     contentData: leaving.contentData,
   })
@@ -62,7 +67,7 @@ export function backgroundTransition({
     backgroundKey(shown) === backgroundKey(next)
       ? null
       : slowestTextAnimation(
-          screen.contentConfigs[leaving.contentType],
+          leavingScreen.contentConfigs[leaving.contentType],
           'animationOut',
         )
   return { background: shown, enter, exit }
