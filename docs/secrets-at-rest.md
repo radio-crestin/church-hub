@@ -11,6 +11,7 @@ To add a secret:
 
 - If it lives in its own column, list the column in `stored-secrets/secretColumns.ts` and its place in `secretPlaces.ts`.
 - If it is a field of an `app_settings` JSON value, list it in `secretSettingFields.ts`.
+- If a user can change where it is sent (a host, an endpoint, a provider), declare those destination fields next to it (`destination` in `secretPlaces.ts` or `secretSettingFields.ts`). The feature's save keeps a stored secret only while they are unchanged (`requireSameDestination`, below).
 
 The start-up check (below) then seals any plain copy, and logs one it finds unsealed afterwards as an error.
 
@@ -70,6 +71,19 @@ Some secrets are not sealed because they are already safe:
 
 The settings API returns the AI and live-translation keys as `••••••••`. A form that sends the mask back keeps the saved key, and an empty value clears it. The denylist of server-secret keys (`isServerSecretKey`) stays as a second net.
 
+**A saved secret is kept only for the address it was saved for.** A save that would keep a stored secret is refused with "re-enter the key for the new address" (400) if it also changes where that secret is sent. Otherwise anyone allowed to edit the setting could point it at their own server and receive the church's key without ever seeing it.
+
+| Secret | Kept by | Destination fields |
+|---|---|---|
+| AI search `apiKey` | sending the mask | `provider`, `baseUrl` |
+| S3 secret key | leaving it blank | `endpoint` |
+| OBS password | leaving it out | `host`, `port` |
+| Live translation keys | sending the mask | none: each key only goes to its own provider |
+
+The AI and S3 forms ask for the key again as soon as the address changes.
+
+**Nothing secret leaves the computer.** `isSecretSettingKey(key)` (service/settings) is true for a server-secret key or any row in `secretSettingFields.ts`. Anything that copies settings elsewhere, such as cloud sync's allow-list, refuses those rows whole. `e2e/cloud-sync.api.spec.ts` checks that no secret value, secret row, server secret or sealed value ever reaches the sync service.
+
 ## The start-up check
 
 `initializeDatabase` runs the check after the migrations, on every start and after every restore (`importDatabase`, and the configurations part of a selective import). It runs as one transaction, so an interrupted run is simply done again on the next start.
@@ -101,9 +115,9 @@ A backup is a copy of `app.db`, so it holds only sealed values. That applies to 
   | Song sources | Re-enter the S3 secret key |
   | Users | Each user gets a new token: phones sign in again |
 
-  The Backup settings page lists what was reset until the user dismisses it (`GET /api/secret-store`, `DELETE /api/secret-store/reset-features`).
+  The Backup page, and the Developer page where a database is imported, list what was reset until the user dismisses it. Each row links to the page where that feature is set up again (`GET /api/secret-store`, `DELETE /api/secret-store/reset-features`). A restore reloads the window on the page it ran from, so the list shows right away.
 
-There is no passphrase export for moving secrets between computers. Setting the features up again takes a few minutes, while a portable secrets file would be one more thing to leak.
+Secrets stay on the computer that saved them, by decision: there is no passphrase export for moving them. Setting the features up again takes a few minutes, while a portable secrets file would be one more thing to leak.
 
 ## Downgrades
 
