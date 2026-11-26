@@ -1,4 +1,10 @@
-import type { RequestContext } from '../middleware'
+import { LIVE_TRANSLATION_PERMISSIONS } from './live-translation-permissions'
+import { holdsPermission } from '../middleware/permissions'
+import {
+  type CheckPermission,
+  checkRoutePermission,
+} from '../middleware/route-permissions'
+import type { RequestContext } from '../middleware/types'
 import { getAudioDevices } from '../service/live-translation/audio-io'
 import { defaultVoiceForEngine } from '../service/live-translation/engines'
 import { listenerLink } from '../service/live-translation/listenerLink'
@@ -42,8 +48,9 @@ import type {
   TranslationTarget,
 } from '../service/live-translation/types'
 import { isSecretMask, maskSettingValue } from '../service/secret-store'
-import { getSetting, upsertSetting } from '../service/settings'
+import { getSetting, SETTING_SECRETS, upsertSetting } from '../service/settings'
 import { log } from '../utils/fileLogger'
+import { hideSecrets } from '../utils/hideSecrets'
 import { toErrorMessage } from '../utils/toErrorMessage'
 import {
   broadcastTranslationAudioLevel,
@@ -109,8 +116,17 @@ setListenerCountsCallback((counts) => {
 export async function handleLiveTranslationRoutes(
   req: Request,
   url: URL,
-  _context: RequestContext,
+  checkPermission: CheckPermission,
+  context: RequestContext | null,
 ): Promise<Response | null> {
+  if (!url.pathname.startsWith('/api/live-translation/')) return null
+  const refused = checkRoutePermission(
+    req,
+    url.pathname,
+    LIVE_TRANSLATION_PERMISSIONS,
+    checkPermission,
+  )
+  if (refused) return refused
   if (req.method === 'GET' && url.pathname === '/api/live-translation/state') {
     return Response.json(getTranslationState())
   }
@@ -148,7 +164,7 @@ export async function handleLiveTranslationRoutes(
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/settings'
   ) {
-    return handleGetSettings()
+    return handleGetSettings(holdsPermission(context, 'settings.edit'))
   }
 
   if (
@@ -211,14 +227,22 @@ function loadPersistedSettings(): PersistedSettings {
   }
 }
 
-/** The saved settings as the client sees them: API keys masked. */
+/** The saved settings as an editor sees them: API keys masked. */
 const publicSettings = (): PersistedSettings =>
   JSON.parse(
     maskSettingValue(SETTINGS_KEY, JSON.stringify(loadPersistedSettings())),
   )
 
-function handleGetSettings(): Response {
-  return Response.json(publicSettings())
+/** Editors see the keys masked; readers learn only whether each is set. */
+function handleGetSettings(mayEdit: boolean): Response {
+  return Response.json(
+    mayEdit
+      ? publicSettings()
+      : hideSecrets(
+          loadPersistedSettings(),
+          SETTING_SECRETS.live_translation_settings ?? {},
+        ),
+  )
 }
 
 function handleSaveSettings(req: Request): Response {
