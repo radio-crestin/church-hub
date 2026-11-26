@@ -36,6 +36,7 @@ async function typewriterTemplate(request: APIRequestContext) {
 async function typewriterScreen(
   request: APIRequestContext,
   extra: Record<string, unknown> = {},
+  templateId?: number,
 ): Promise<number> {
   const name = `E2E Typewriter ${Date.now()}`
   const created = await request.post('/api/screens', {
@@ -43,12 +44,78 @@ async function typewriterScreen(
   })
   expect(created.ok()).toBe(true)
   const id = (await created.json()).data.id as number
-  const template = await typewriterTemplate(request)
+  const template = { id: templateId ?? (await typewriterTemplate(request)).id }
   const saved = await request.post('/api/screens', {
     data: { id, name, type: 'primary', templateId: template.id, ...extra },
   })
   expect(saved.ok()).toBe(true)
   return id
+}
+
+/** A copy of the Paper theme whose songs type too (they fade by default). */
+async function typingSongsTemplate(request: APIRequestContext) {
+  const paper = await typewriterTemplate(request)
+  const copy = (
+    await (
+      await request.post('/api/slide-templates', {
+        data: { name: `E2E Typing songs ${Date.now()}`, fromId: paper.id },
+      })
+    ).json()
+  ).data as Template & { layouts: Record<string, Record<string, unknown>> }
+  const typing = {
+    type: 'typewriter',
+    duration: LONGEST_TYPING_MS,
+    delay: 0,
+    easing: 'linear',
+  }
+  const songKinds = ['song', 'song_first_slide', 'song_last_slide']
+  const layouts = Object.fromEntries(
+    Object.entries(copy.layouts).map(([kind, layout]) => [
+      kind,
+      songKinds.includes(kind)
+        ? {
+            ...layout,
+            mainText: {
+              ...(layout.mainText as Record<string, unknown>),
+              animationIn: typing,
+              slideTransitionIn: typing,
+            },
+          }
+        : layout,
+    ]),
+  )
+  const saved = await request.put(`/api/slide-templates/${copy.id}`, {
+    data: { layouts },
+  })
+  expect(saved.ok()).toBe(true)
+  return copy.id
+}
+
+/** A chorus, then the same chorus with one word changed. */
+const CHORUS = [
+  'Mărire Ție, Doamne',
+  'Cântăm cu bucurie',
+  'Tu ne-ai dat viață',
+  'Și har fără sfârșit',
+]
+const CHANGED_WORD = 'credință'
+
+async function createChorusSong(request: APIRequestContext) {
+  const slides = [
+    CHORUS,
+    [CHORUS[0], `Cântăm cu ${CHANGED_WORD}`, ...CHORUS.slice(2)],
+  ]
+  const song = await request.post('/api/songs', {
+    data: {
+      title: `E2E Typewriter chorus ${Date.now()}`,
+      slides: slides.map((lines, sortOrder) => ({
+        content: lines.map((line) => `<p>${line}</p>`).join(''),
+        sortOrder,
+      })),
+    },
+  })
+  expect(song.ok()).toBe(true)
+  return (await song.json()).data.id as number
 }
 
 function presentVerse(request: APIRequestContext, index: number) {
@@ -191,11 +258,81 @@ const typedSoFar = (page: Page) =>
 
 test.describe('Typewriter template', () => {
   const screens: number[] = []
+  const songs: number[] = []
+  const templates: number[] = []
 
   test.afterAll(async ({ request }) => {
     await request.post('/api/presentation/stop').catch(() => {})
     for (const id of screens) {
       await request.delete(`/api/screens/${id}`).catch(() => {})
+    }
+    for (const id of songs) {
+      await request.delete(`/api/songs/${id}`).catch(() => {})
+    }
+    for (const id of templates) {
+      await request.delete(`/api/slide-templates/${id}`).catch(() => {})
+    }
+  })
+
+  test('a slide change that keeps most words types only the new word', async ({
+    page,
+    request,
+  }) => {
+    const templateId = await typingSongsTemplate(request)
+    templates.push(templateId)
+    const screenId = await typewriterScreen(request, {}, templateId)
+    screens.push(screenId)
+    const songId = await createChorusSong(request)
+    songs.push(songId)
+
+    await request.post('/api/presentation/temporary-song', {
+      data: { songId, slideIndex: 0 },
+    })
+    await page.goto(`/screen/${screenId}`)
+    await expect
+      .poll(() => typedPart(page, CHORUS[0]), { timeout: 10_000 })
+      .toBe(1)
+
+    // Every frame: what is still hidden, and the words of the kept lines.
+    await page.evaluate(() => {
+      const seen: string[] = []
+      ;(window as unknown as { __hidden: string[] }).__hidden = seen
+      const sample = () => {
+        const anchor = document.querySelector(
+          '[data-style-anchor]:not([data-leaving] *)',
+        )
+        const hidden = [
+          ...(anchor?.querySelectorAll('[data-typewriter-hidden]') ?? []),
+        ]
+          .map((element) => element.textContent)
+          .join('')
+        if (hidden) seen.push(hidden)
+        if (seen.length < 2000) requestAnimationFrame(sample)
+      }
+      requestAnimationFrame(sample)
+    })
+    expect(
+      (
+        await request.post('/api/presentation/navigate-temporary', {
+          data: { direction: 'next', requestTimestamp: Date.now() },
+        })
+      ).ok(),
+    ).toBe(true)
+    await expect(page.locator('[data-style-anchor]').first()).toContainText(
+      CHANGED_WORD,
+    )
+    await expect
+      .poll(() => typedPart(page, CHANGED_WORD), { timeout: 10_000 })
+      .toBe(1)
+    const hidden = await page.evaluate(
+      () => (window as unknown as { __hidden: string[] }).__hidden,
+    )
+
+    expect(hidden.length, 'the new word types in').toBeGreaterThan(0)
+    for (const part of hidden) {
+      expect(CHANGED_WORD.endsWith(part), `only "${CHANGED_WORD}" types`).toBe(
+        true,
+      )
     }
   })
 
