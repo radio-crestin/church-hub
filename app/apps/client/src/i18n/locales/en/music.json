@@ -102,7 +102,7 @@
     "description": "Description",
     "empty": "No playlists",
     "emptyDescription": "Create a playlist to organize your music",
-    "addTo": "Add to Playlist",
+    "addTo": "Add to playlist",
     "removeFrom": "Remove from Playlist",
     "items": "{{count}} items",
     "duration": "{{duration}} total",
