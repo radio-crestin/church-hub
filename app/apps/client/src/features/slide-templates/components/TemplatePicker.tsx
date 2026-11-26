@@ -19,9 +19,12 @@ interface TemplatePickerProps {
    * `card`: the thumbnail and name, full width (settings). `compact`: a small
    * thumbnail and name (a page header). `chip`: an icon, plus the name once
    * one is chosen (beside a list item). `icon`: the icon alone, the name in
-   * its tooltip (a panel header).
+   * its tooltip (a panel header); with `thumbnail`, the chosen one's small
+   * thumbnail instead of the icon (a row of a long list).
    */
   variant?: 'card' | 'compact' | 'chip' | 'icon'
+  /** `icon` only: show the chosen template's thumbnail instead of the icon. */
+  thumbnail?: boolean
   testId?: string
 }
 
@@ -44,6 +47,7 @@ export function TemplatePicker({
   noneLabel,
   disabled = false,
   variant = 'card',
+  thumbnail = false,
   testId = 'template-picker',
 }: TemplatePickerProps) {
   const { t } = useTranslation('presentation')
@@ -75,10 +79,15 @@ export function TemplatePicker({
         <HeaderIconButton
           label={label}
           data-testid={testId}
+          data-value={value ?? undefined}
           disabled={disabled}
           onClick={() => setOpen(true)}
         >
-          <LayoutTemplate size={16} strokeWidth={1.5} />
+          {thumbnail && current ? (
+            <TemplateThumbnail template={current} className="w-8 flex-none" />
+          ) : (
+            <LayoutTemplate size={16} strokeWidth={1.5} />
+          )}
         </HeaderIconButton>
         {dialog}
       </>
@@ -92,6 +101,7 @@ export function TemplatePicker({
         data-testid={testId}
         disabled={disabled}
         onClick={() => setOpen(true)}
+        data-value={value ?? undefined}
         title={t('templates.picker.change')}
         className={TRIGGER_CLASS[variant]}
       >
@@ -125,7 +135,7 @@ export function TemplatePicker({
             {currentName}
           </span>
         )}
-        {variant !== 'chip' && (
+        {(variant === 'card' || variant === 'compact') && (
           <ChevronDown
             size={16}
             strokeWidth={1.5}

@@ -3,24 +3,31 @@ import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useNavigateTemporary } from '~/features/presentation'
+import type { TopicVerseSource } from '~/features/presentation/types'
+import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
 import { VerseProgressSlot } from '../../components/VerseProgressSlot'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
-import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
+import { useSetPassageTemplate } from '../hooks/useSetPassageTemplate'
+import { useSetTopicTemplate } from '../hooks/useSetTopicTemplate'
+import { useTakeOverTopicSlideshow } from '../hooks/useTakeOverTopicSlideshow'
 import type { BibleTopicPassage } from '../types'
 import { toSlideshowEntries } from '../utils/toSlideshowEntries'
 
 interface BibleTopicPassagesProps {
   topicId: number
+  /** The template the topic draws with (chosen, else its fitting one) */
+  templateId: number | null
   title: string
   passages: BibleTopicPassage[]
   isLoading: boolean
   /** The verse on screen, to mark its passage */
   activeVerseId?: number
   onBack: () => void
-  onPresentVerse: (verse: BibleVerse) => void
+  /** Presents a verse drawn with its passage's template, else the topic's */
+  onPresentVerse: (verse: BibleVerse, topic: TopicVerseSource) => void
   onOpenVerse: (verse: BibleVerse) => void
 }
 
@@ -28,10 +35,12 @@ interface BibleTopicPassagesProps {
  * A topic's passages in the current translation, best first. A passage
  * presents its first verse (the Bible's next verse continues it);
  * Previous / Next present the topic's passages one by one, and the bar above
- * plays them all as a slideshow timed to each passage's length.
+ * plays them all as a slideshow timed to each passage's length. A passage
+ * may have its own template over the topic's, by hand and in the slideshow.
  */
 export function BibleTopicPassages({
   topicId,
+  templateId,
   title,
   passages,
   isLoading,
@@ -42,9 +51,22 @@ export function BibleTopicPassages({
 }: BibleTopicPassagesProps) {
   const { t } = useTranslation('bible')
   const entries = useMemo(() => toSlideshowEntries(passages), [passages])
-  const [templateId, setTemplateId] = useTopicLoopTemplate()
-  const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
+  const slideshow = useVerseSlideshow(`topic:${topicId}`, entries)
+  useTakeOverTopicSlideshow(topicId, entries.length > 0, slideshow)
   const navigateSlideshow = useNavigateTemporary()
+  // The server draws the topic's slideshow with them, at once if it plays.
+  const setTopicTemplate = useSetTopicTemplate(topicId)
+  const setPassageTemplate = useSetPassageTemplate(topicId)
+  // A passage presents as its topic's: the server draws it with its template.
+  const sourceOf = (passage: BibleTopicPassage): TopicVerseSource => ({
+    topicId,
+    passage: {
+      book: passage.book,
+      chapter: passage.chapter,
+      startVerse: passage.startVerse,
+      endVerse: passage.endVerse,
+    },
+  })
   const activeIndex =
     slideshow.position?.index ??
     passages.findIndex((passage) =>
@@ -64,8 +86,9 @@ export function BibleTopicPassages({
       })
       return
     }
-    const verse = passages[index]?.verses[0]
-    if (verse) onPresentVerse(verse)
+    const passage = passages[index]
+    const verse = passage?.verses[0]
+    if (verse) onPresentVerse(verse, sourceOf(passage))
   }
 
   return (
@@ -121,7 +144,7 @@ export function BibleTopicPassages({
         <BibleTopicSlideshowBar
           slideshow={slideshow}
           templateId={templateId}
-          onTemplateChange={setTemplateId}
+          onTemplateChange={(id) => setTopicTemplate.mutate(id)}
         />
       )}
 
@@ -151,7 +174,7 @@ export function BibleTopicPassages({
                 >
                   <button
                     type="button"
-                    onClick={() => onPresentVerse(first)}
+                    onClick={() => onPresentVerse(first, sourceOf(passage))}
                     title={t('topics.present')}
                     className="min-w-0 flex-1 px-2.5 py-2 text-left rounded-l-lg"
                   >
@@ -190,6 +213,18 @@ export function BibleTopicPassages({
                   >
                     <BookOpen className="w-4 h-4" strokeWidth={1.5} />
                   </button>
+                  <div className="my-1 mr-1 -ml-1">
+                    <TemplatePicker
+                      variant="icon"
+                      thumbnail
+                      value={passage.templateId}
+                      noneLabel={t('topics.passageTemplate.none')}
+                      onChange={(id) =>
+                        setPassageTemplate.mutate({ passage, templateId: id })
+                      }
+                      testId={`bible-topic-passage-template-${index}`}
+                    />
+                  </div>
                 </li>
               )
             })}

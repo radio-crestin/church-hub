@@ -196,6 +196,9 @@
     "openInBible": "Deschide în Biblie",
     "expand": "Extinde temele",
     "collapse": "Restrânge temele",
+    "passageTemplate": {
+      "none": "La fel ca tema subiectului"
+    },
     "slideshow": {
       "play": "Prezintă automat",
       "loop": "În buclă",

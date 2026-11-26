@@ -21,6 +21,7 @@ import type {
   UpdatePresentationStateInput,
 } from './types'
 import { withPresentationTemplate } from './withPresentationTemplate'
+import { withTopicTemplates } from './withTopicTemplates'
 import { getDatabase, getRawDatabase } from '../../db'
 import {
   presentationState,
@@ -296,7 +297,9 @@ export function updatePresentationState(
     const temporaryContent: TemporaryContent | null =
       input.temporaryContent !== undefined
         ? withPresentationBackground(
-            withPresentationTemplate(input.temporaryContent),
+            withTopicTemplates(
+              withPresentationTemplate(input.temporaryContent),
+            ),
             current.temporaryContent,
           )
         : current.temporaryContent
@@ -458,6 +461,9 @@ export function presentTemporaryBible(
         secondaryBookName: input.secondaryBookName,
         secondaryTranslationAbbreviation:
           input.secondaryTranslationAbbreviation,
+        // A topic's verse: drawn with its template (withTopicTemplates); the
+        // verses stepped to from it keep it (they spread this data).
+        topic: input.topic,
       },
     }
 

@@ -125,6 +125,31 @@ export const presentationSchemas = {
         description: 'Secondary version abbreviation',
         nullable: true,
       },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "The slide template the screens that follow presentations draw it with, set by the server for a topic verse (see topic); unset: each screen's own.",
+      },
+      topic: {
+        type: 'object',
+        description:
+          "The Bible topic passage the verse was presented from. The server draws it with the passage's own template, else the topic's, and redraws it when either changes; the verses stepped to from it keep it.",
+        required: ['topicId', 'passage'],
+        properties: {
+          topicId: { type: 'integer' },
+          passage: {
+            type: 'object',
+            required: ['book', 'chapter', 'startVerse', 'endVerse'],
+            properties: {
+              book: { type: 'string', example: 'JHN' },
+              chapter: { type: 'integer' },
+              startVerse: { type: 'integer' },
+              endVerse: { type: 'integer' },
+            },
+          },
+        },
+      },
     },
   },
   TemporarySongContent: {
@@ -198,6 +223,12 @@ export const presentationSchemas = {
       endVerse: { type: 'integer' },
       text: { type: 'string' },
       sortOrder: { type: 'integer' },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "Its own slide template (a Bible topic passage's, set by the server), over the slide's templateId while it is on screen",
+      },
     },
   },
   PresentTemporaryVerseteTineriInput: {
@@ -226,6 +257,12 @@ export const presentationSchemas = {
         type: 'string',
         description:
           'The list that started the slideshow, so its panel shows it as playing: `bookmarks` or `topic:<id>`.',
+      },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "The slide template the screens that follow presentations draw it with; unset: each screen's own. A Bible topic's slideshow (`slideshow: topic:<id>`) gets its topic's template, and each entry its passage's own, from the server instead.",
       },
       scheduleId: {
         type: 'integer',
@@ -263,6 +300,25 @@ export const presentationSchemas = {
       secondaryText: { type: 'string', nullable: true },
       secondaryBookName: { type: 'string', nullable: true },
       secondaryTranslationAbbreviation: { type: 'string', nullable: true },
+      topic: {
+        type: 'object',
+        description:
+          "The Bible topic passage the verse is presented from. The server draws it with the passage's own template, else the topic's, and redraws it when either changes; the verses stepped to from it keep it.",
+        required: ['topicId', 'passage'],
+        properties: {
+          topicId: { type: 'integer' },
+          passage: {
+            type: 'object',
+            required: ['book', 'chapter', 'startVerse', 'endVerse'],
+            properties: {
+              book: { type: 'string', example: 'JHN' },
+              chapter: { type: 'integer' },
+              startVerse: { type: 'integer' },
+              endVerse: { type: 'integer' },
+            },
+          },
+        },
+      },
     },
   },
   PresentTemporarySongInput: {
