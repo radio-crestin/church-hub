@@ -54,6 +54,7 @@ import { handleBibleTopicRoutes } from './routes/bible-topics'
 import { handleCloudBackupRoutes } from './routes/cloud-backup'
 import { CLOUD_BACKUP_PERMISSIONS } from './routes/cloud-backup-permissions'
 import { handleCloudSyncRoutes } from './routes/cloud-sync'
+import { handleSongLibraryRoutes } from './routes/song-library'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
@@ -2598,6 +2599,15 @@ async function startRealServer(): Promise<void> {
           }),
         )
       }
+
+      // The curated Church Hub Library: submissions and curators (T-177)
+      const songLibraryResponse = await handleSongLibraryRoutes(
+        req,
+        url,
+        backupLocalhostGuard,
+        checkPermission,
+      )
+      if (songLibraryResponse) return handleCors(req, songLibraryResponse)
 
       // Cloud sync: this server's church on the sync service (T-171)
       if (url.pathname.startsWith('/api/sync/cloud')) {

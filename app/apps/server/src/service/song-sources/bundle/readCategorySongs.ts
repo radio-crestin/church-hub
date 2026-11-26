@@ -39,23 +39,30 @@ interface SlideRow {
   label: string | null
 }
 
-/** Every song of a category with its slides in order, two queries in all. */
-export function readCategorySongs(categoryId: number): CategorySong[] {
+/** Which songs: a category's, or one song. */
+export type CategorySongsFilter = { categoryId: number } | { songId: number }
+
+/** Songs with their slides in order, two queries in all. */
+export function readCategorySongs(filter: CategorySongsFilter): CategorySong[] {
   const db = getRawDatabase()
+  const [column, value] =
+    'categoryId' in filter
+      ? (['category_id', filter.categoryId] as const)
+      : (['id', filter.songId] as const)
   const songRows = db
     .query<SongRow, [number]>(
       `SELECT id, uuid, title, source_filename, author, copyright, ccli, tempo,
               time_signature, theme, alt_theme, hymn_number, key_line
-         FROM songs WHERE category_id = ? ORDER BY title, id`,
+         FROM songs WHERE ${column} = ? ORDER BY title, id`,
     )
-    .all(categoryId)
+    .all(value)
   const slideRows = db
     .query<SlideRow, [number]>(
       `SELECT sl.song_id, sl.content, sl.label
          FROM song_slides sl JOIN songs s ON s.id = sl.song_id
-        WHERE s.category_id = ? ORDER BY sl.song_id, sl.sort_order, sl.id`,
+        WHERE s.${column} = ? ORDER BY sl.song_id, sl.sort_order, sl.id`,
     )
-    .all(categoryId)
+    .all(value)
 
   const slidesBySong = new Map<number, CategorySong['slides']>()
   for (const row of slideRows) {

@@ -9,9 +9,10 @@ import { getServerPort } from '../../../utils/serverPort'
 
 /**
  * Why the owner signs in: turn cloud sync on as the owner, claim this guest
- * church, or manage (recover, revoke all, transfer) their churches.
+ * church, manage (recover, revoke all, transfer) their churches, or curate
+ * the Church Hub Library (T-177).
  */
-export type OwnerSignInIntent = 'connect' | 'claim' | 'manage'
+export type OwnerSignInIntent = 'connect' | 'claim' | 'manage' | 'curate'
 
 const CALLBACK_PATH = '/api/sync/cloud/owner/callback'
 /** A sign-in left unfinished this long is forgotten. */
