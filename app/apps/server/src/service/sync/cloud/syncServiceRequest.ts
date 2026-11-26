@@ -18,7 +18,8 @@ interface ServerInUseBody {
 
 /**
  * Calls the sync service (churchhub-backend's /sync routes). With an
- * identity, `path` is under the church and the server token authenticates;
+ * identity, `path` is under the church (or, `atRoot`, under /sync, as the
+ * shared libraries are) and the server token authenticates;
  * `ownerTicket` signs in as the church's owner instead. Every call names
  * this installation, so the service can tell a second PC holding the same
  * token (a restored backup) from this one: its 409 server_in_use is kept
@@ -29,27 +30,35 @@ export async function syncServiceRequest<T>(
     serviceUrl: string
     identity?: CloudIdentity
     ownerTicket?: string
+    atRoot?: boolean
   },
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<SyncServiceResponse<T>> {
-  const { serviceUrl, identity, ownerTicket } = target
+  const { serviceUrl, identity, ownerTicket, atRoot } = target
   const base = serviceUrl.replace(/\/+$/, '')
-  const url = identity
-    ? `${base}/sync/churches/${encodeURIComponent(identity.churchId)}${path}`
-    : `${base}/sync${path}`
+  const url =
+    identity && !atRoot
+      ? `${base}/sync/churches/${encodeURIComponent(identity.churchId)}${path}`
+      : `${base}/sync${path}`
   const token = identity?.serverToken ?? ownerTicket
   const installation = getInstallation()
+  // A gzipped file (a library shard) goes as it is; anything else as JSON.
+  const binary = body instanceof Uint8Array
   const response = await fetch(url, {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': binary ? 'application/gzip' : 'application/json',
       'X-Church-Hub-Installation': installation.id,
       'X-Church-Hub-Installation-Name': encodeURIComponent(installation.name),
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: binary
+      ? (body as BodyInit)
+      : body === undefined
+        ? undefined
+        : JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   })
   const json = (await response.json().catch(() => ({}))) as T & {

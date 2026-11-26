@@ -1,9 +1,6 @@
 import { LIBRARY_BUNDLE_VERSION } from '@church-hub/song-formats'
 
-import {
-  SONG_BUNDLE_FORMAT,
-  type SongBundleManifest,
-} from './types'
+import { SONG_BUNDLE_FORMAT, type SongBundleManifest } from './types'
 
 /**
  * Reads a manifest, refusing anything that is not a bundle we can read: a

@@ -73,6 +73,7 @@ export {
   type SongFilters,
   upsertSong,
 } from './songs'
+export * from './source-link'
 // Tags
 export {
   deleteTag,
@@ -116,4 +117,3 @@ export type {
 // Per-song background override
 export { validateCategoryInput } from './validateCategoryInput'
 export { validateSongBackground } from './validateSongBackground'
-export * from './source-link'

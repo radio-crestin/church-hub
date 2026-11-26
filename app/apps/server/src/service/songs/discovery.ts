@@ -1,6 +1,6 @@
 import { normalizeForIndex } from './search'
-import { fillContentHashes } from './source-link/fillContentHashes'
 import { findLibraryVersions } from './song-versions/findLibraryVersions'
+import { fillContentHashes } from './source-link/fillContentHashes'
 import type {
   DiscoveryCandidateInput,
   DiscoveryMatchResult,

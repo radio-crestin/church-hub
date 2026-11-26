@@ -18,3 +18,22 @@ CREATE TRIGGER `songs_content_hash_slide_ai` AFTER INSERT ON `song_slides` BEGIN
 CREATE TRIGGER `songs_content_hash_slide_au` AFTER UPDATE OF `content`, `sort_order`, `song_id` ON `song_slides` BEGIN UPDATE `songs` SET `content_hash` = NULL WHERE `id` IN (NEW.`song_id`, OLD.`song_id`) AND `content_hash` IS NOT NULL; END;
 --> statement-breakpoint
 CREATE TRIGGER `songs_content_hash_slide_ad` AFTER DELETE ON `song_slides` BEGIN UPDATE `songs` SET `content_hash` = NULL WHERE `id` = OLD.`song_id` AND `content_hash` IS NOT NULL; END;
+--> statement-breakpoint
+-- "Share my songs": the church's songs published as a shared library through the sync service (T-176)
+CREATE TABLE `song_library_shares` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`source_id` text NOT NULL,
+	`name` text NOT NULL,
+	`publisher` text NOT NULL,
+	`category_ids` text,
+	`listed` integer DEFAULT 0 NOT NULL,
+	`manifest_url` text,
+	`published_checksum` text,
+	`published_shards` text,
+	`song_count` integer DEFAULT 0 NOT NULL,
+	`last_synced_at` integer,
+	`last_error` text,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `song_library_shares_source_id_unique` ON `song_library_shares` (`source_id`);

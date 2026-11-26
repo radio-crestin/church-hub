@@ -1,12 +1,15 @@
 import {
-  type LibraryManifest,
   LIBRARY_BUNDLE_VERSION,
+  type LibraryManifest,
   readLibraryShard,
 } from '@church-hub/song-formats'
 
 import { fetchLink } from './fetchLink'
 import { sourceFileUrl } from './sourceFileUrl'
-import type { SongBundleManifest, SongBundleManifestEntry } from '../bundle/types'
+import type {
+  SongBundleManifest,
+  SongBundleManifestEntry,
+} from '../bundle/types'
 
 /** Downloads at a time; a first read of a large folder stays quick. */
 const CONCURRENCY = 16

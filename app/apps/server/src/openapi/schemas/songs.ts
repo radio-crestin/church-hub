@@ -461,8 +461,7 @@ export const songSchemas = {
       exactSongId: {
         type: 'integer',
         nullable: true,
-        description:
-          'The matched library song id for the exact-* verdicts.',
+        description: 'The matched library song id for the exact-* verdicts.',
       },
       similar: {
         type: 'array',
