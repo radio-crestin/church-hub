@@ -110,6 +110,12 @@ export const scheduleSchemas = {
       },
       itemCount: { type: 'integer' },
       songCount: { type: 'integer' },
+      childScheduleIds: {
+        type: 'array',
+        items: { type: 'integer' },
+        description:
+          'The presentations its `schedule` items play (to offer only those that make no loop)',
+      },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
     },
@@ -135,7 +141,29 @@ export const scheduleSchemas = {
           'video',
           'verses',
           'slides',
+          'schedule',
         ],
+        description:
+          '`schedule`: another presentation, played in its place (`childScheduleId`)',
+      },
+      childScheduleId: {
+        type: 'integer',
+        nullable: true,
+        description: "A `schedule` item's presentation",
+      },
+      childSchedule: {
+        type: 'object',
+        nullable: true,
+        description:
+          "A `schedule` item's presentation with its items (nested ones too); null where it would contain itself",
+        properties: {
+          id: { type: 'integer' },
+          title: { type: 'string' },
+          items: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/ScheduleItem' },
+          },
+        },
       },
       itemConfig: {
         allOf: [{ $ref: '#/components/schemas/ScheduleItemConfig' }],
@@ -283,6 +311,11 @@ export const scheduleSchemas = {
       afterItemId: {
         type: 'integer',
         description: 'Insert after this item ID',
+      },
+      childScheduleId: {
+        type: 'integer',
+        description:
+          'Add another presentation, played in its place; refused when it is or includes this one',
       },
     },
   },

@@ -2,6 +2,7 @@ export { addItemToSchedule } from './addItemToSchedule'
 export { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
 export { deleteSchedule } from './deleteSchedule'
 export { formatPassageReference } from './formatPassageReference'
+export { getQueueSchedule } from './getQueueSchedule'
 export {
   getScheduleById,
   getScheduleItemById,

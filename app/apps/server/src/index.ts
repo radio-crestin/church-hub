@@ -263,6 +263,7 @@ import {
   type AddToScheduleInput,
   addItemToSchedule,
   deleteSchedule,
+  getQueueSchedule,
   getScheduleById,
   getSchedules,
   markScheduleItemSung,
@@ -3206,6 +3207,26 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
+      }
+
+      // GET /api/schedules/queue - The control room's queue (made on first use)
+      if (req.method === 'GET' && url.pathname === '/api/schedules/queue') {
+        const permError = checkPermission('control_room.view')
+        if (permError) return permError
+
+        const queue = getQueueSchedule()
+        return handleCors(
+          req,
+          new Response(
+            JSON.stringify(
+              queue ? { data: queue } : { error: 'Failed to load the queue' },
+            ),
+            {
+              status: queue ? 200 : 500,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        )
       }
 
       // GET /api/schedules - List all schedules

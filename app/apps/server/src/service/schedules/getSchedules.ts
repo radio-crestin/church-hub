@@ -1,8 +1,10 @@
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
+import { childScheduleIds } from './childScheduleIds'
 import { toScheduleAutomation } from './toScheduleAutomation'
 import { toScheduleItemMidi } from './toScheduleItemMidi'
 import type {
+  ChildSchedule,
   Schedule,
   ScheduleBiblePassageVerse,
   ScheduleItem,
@@ -192,7 +194,21 @@ function getVerseteTineriEntriesBatch(
 }
 
 /**
- * Gets all schedules with item counts
+ * The presentation a `schedule` item plays, with its items; null where it is
+ * one of the presentations being opened around it (a loop in old or synced
+ * data), or gone.
+ */
+function loadChildSchedule(
+  childId: number | null,
+  path: ReadonlySet<number>,
+): ChildSchedule | null {
+  if (childId === null || path.has(childId)) return null
+  const child = getScheduleById(childId, path)
+  return child ? { id: child.id, title: child.title, items: child.items } : null
+}
+
+/**
+ * Gets all schedules with item counts, but the control room's queue
  */
 export function getSchedules(): Schedule[] {
   try {
@@ -219,9 +235,11 @@ export function getSchedules(): Schedule[] {
       })
       .from(schedules)
       .leftJoin(scheduleItems, eq(schedules.id, scheduleItems.scheduleId))
+      .where(eq(schedules.isQueue, false))
       .groupBy(schedules.id)
       .orderBy(desc(schedules.updatedAt))
       .all()
+    const children = childScheduleIds()
 
     return results.map((record) => ({
       id: record.id,
@@ -231,6 +249,7 @@ export function getSchedules(): Schedule[] {
       templateId: record.templateId,
       itemCount: record.itemCount,
       songCount: record.songCount,
+      childScheduleIds: children.get(record.id) ?? [],
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
     }))
@@ -241,9 +260,14 @@ export function getSchedules(): Schedule[] {
 }
 
 /**
- * Gets a single schedule by ID with all items
+ * Gets a single schedule by ID with all items; a `schedule` item carries its
+ * presentation's items too. `path` holds the presentations it is opened
+ * inside, so a loop stops instead of recursing forever.
  */
-export function getScheduleById(id: number): ScheduleWithItems | null {
+export function getScheduleById(
+  id: number,
+  path: ReadonlySet<number> = new Set(),
+): ScheduleWithItems | null {
   try {
     log('debug', `Getting schedule by ID: ${id}`)
 
@@ -276,6 +300,7 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         biblePassageReference: scheduleItems.biblePassageReference,
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
+        childScheduleId: scheduleItems.childScheduleId,
         advanceSeconds: scheduleItems.advanceSeconds,
         templateId: scheduleItems.templateId,
         itemConfig: scheduleItems.itemConfig,
@@ -323,6 +348,8 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
     // Tags power the schedule songs panel chips — same single-query bulk load
     // the bookmarks list uses, so no N+1 creeps in here.
     const tagsBySongId = getTagsBySongIds(songIds)
+
+    const childPath = new Set(path).add(id)
 
     // Convert items with pre-loaded data
     function toItem(record: (typeof itemRecords)[number]): ScheduleItem {
@@ -375,6 +402,8 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         music: null,
         video: null,
         midi: toScheduleItemMidi(record),
+        childScheduleId: record.childScheduleId,
+        childSchedule: loadChildSchedule(record.childScheduleId, childPath),
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
@@ -394,6 +423,11 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
       templateId: schedule.templateId,
       itemCount: items.length,
       songCount,
+      childScheduleIds: items.flatMap((i) =>
+        i.itemType === 'schedule' && i.childScheduleId !== null
+          ? [i.childScheduleId]
+          : [],
+      ),
       createdAt: Math.floor(schedule.createdAt.getTime() / 1000),
       updatedAt: Math.floor(schedule.updatedAt.getTime() / 1000),
       items,
@@ -426,6 +460,7 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         biblePassageReference: scheduleItems.biblePassageReference,
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
+        childScheduleId: scheduleItems.childScheduleId,
         advanceSeconds: scheduleItems.advanceSeconds,
         templateId: scheduleItems.templateId,
         itemConfig: scheduleItems.itemConfig,
@@ -501,6 +536,11 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
       music: null,
       video: null,
       midi: toScheduleItemMidi(record),
+      childScheduleId: record.childScheduleId,
+      childSchedule: loadChildSchedule(
+        record.childScheduleId,
+        new Set([record.scheduleId]),
+      ),
       sortOrder: record.sortOrder,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),

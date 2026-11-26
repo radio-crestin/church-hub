@@ -98,6 +98,8 @@ export interface LibraryScheduleItem {
    * videos and translations are named by this device's ids.
    */
   itemConfig?: string | null
+  /** A `schedule` item's presentation. Absent from older libraries. */
+  childScheduleUuid?: string | null
   sortOrder: number
   bibleVerses: LibraryBibleVerse[]
   verseteTineri: LibraryVerseteTineriEntry[]
