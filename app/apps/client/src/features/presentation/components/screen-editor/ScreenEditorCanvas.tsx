@@ -395,7 +395,7 @@ function DraggableElement({
   // Determine border style based on selection and hidden state
   const getBorderStyle = () => {
     if (isSelected) return '2px solid var(--color-focus)'
-    if (isHidden) return '2px dashed rgba(239, 68, 68, 0.5)' // Red dashed for hidden
+    if (isHidden) return '2px dashed var(--color-fg-hint)'
     return '1px dashed rgba(255,255,255,0.3)'
   }
 

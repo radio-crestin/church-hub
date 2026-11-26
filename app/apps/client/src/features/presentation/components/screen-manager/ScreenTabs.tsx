@@ -32,15 +32,15 @@ export function ScreenTabs({ screens, selectedId, onSelect }: ScreenTabsProps) {
             data-testid="screen-tab"
             data-screen-id={screen.id}
             onClick={() => onSelect(screen.id)}
-            className={`flex min-w-36 shrink-0 items-center gap-2.5 rounded-lg border-2 px-3 py-2 text-left transition-colors ${
+            className={`flex min-w-36 shrink-0 items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors ${
               selected
-                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40'
-                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                ? 'border-line bg-selected'
+                : 'border-line hover:bg-hover'
             }`}
           >
             <span
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                screen.isActive ? 'bg-green-500' : 'bg-gray-400'
+                screen.isActive ? 'bg-ok' : 'bg-fg-hint'
               }`}
               title={
                 screen.isActive
@@ -49,10 +49,10 @@ export function ScreenTabs({ screens, selectedId, onSelect }: ScreenTabsProps) {
               }
             />
             <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">
+              <span className="block truncate text-[13px] font-medium text-fg">
                 {screen.name}
               </span>
-              <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+              <span className="block truncate text-xs text-fg-hint">
                 {t(`presentation:screens.screenTypes.${screen.type}`)}
               </span>
             </span>

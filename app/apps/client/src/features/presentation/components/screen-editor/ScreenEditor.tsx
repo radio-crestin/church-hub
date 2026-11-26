@@ -337,10 +337,10 @@ export function ScreenEditor({
         />
 
         {/* Right pane: the theme's design, or this slide's settings */}
-        <div className="w-full flex-1 min-h-0 md:flex-none md:w-96 md:flex-shrink-0 bg-white dark:bg-gray-900 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-800 overflow-y-auto">
+        <div className="w-full flex-1 min-h-0 md:flex-none md:w-96 md:flex-shrink-0 bg-panel border-t md:border-t-0 md:border-l border-line overflow-y-auto">
           <div
             role="tablist"
-            className="sticky top-0 z-10 flex gap-1 border-b border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900"
+            className="sticky top-0 z-10 flex gap-1 border-b border-line bg-panel p-2"
           >
             {(['design', 'slide'] as const).map((value) => (
               <button
@@ -350,10 +350,10 @@ export function ScreenEditor({
                 aria-selected={pane === value}
                 data-testid={`screen-editor-tab-${value}`}
                 onClick={() => setPane(value)}
-                className={`flex-1 rounded-md py-1.5 text-sm font-medium ${
+                className={`flex-1 h-8 rounded-lg text-[13px] font-medium transition-colors ${
                   pane === value
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                    ? 'bg-selected text-fg'
+                    : 'text-fg-label hover:bg-hover hover:text-fg'
                 }`}
               >
                 {t(`templates.editor.${value}`)}

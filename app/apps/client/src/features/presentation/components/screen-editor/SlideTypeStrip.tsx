@@ -47,7 +47,7 @@ export function SlideTypeStrip({
       className={
         horizontal
           ? 'flex gap-3 overflow-x-auto pb-2'
-          : 'flex gap-3 overflow-x-auto p-2 md:w-48 md:flex-col md:overflow-x-hidden md:overflow-y-auto md:border-r border-b md:border-b-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0'
+          : 'flex gap-3 overflow-x-auto p-2 md:w-48 md:flex-col md:overflow-x-hidden md:overflow-y-auto md:border-r border-b md:border-b-0 border-line bg-panel shrink-0'
       }
     >
       {SLIDE_TYPES.map((contentType, index) => {
@@ -68,22 +68,14 @@ export function SlideTypeStrip({
               />
             </span>
             <span className="mt-1 flex items-baseline gap-1.5 text-xs">
-              <span className="text-gray-400">{index + 1}</span>
-              <span className="truncate font-medium text-gray-700 dark:text-gray-300">
-                {label}
-              </span>
+              <span className="text-fg-hint tabular-nums">{index + 1}</span>
+              <span className="truncate font-medium text-fg-body">{label}</span>
             </span>
           </>
         )
-        const className = `block shrink-0 rounded-md p-1.5 text-left ${
+        const className = `block shrink-0 rounded-lg p-1.5 text-left ${
           horizontal ? 'w-48' : 'w-36 md:w-full'
-        } ${
-          isSelected
-            ? 'bg-indigo-50 ring-2 ring-indigo-500 dark:bg-indigo-950/40'
-            : onSelect
-              ? 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              : ''
-        }`
+        } ${isSelected ? 'bg-selected' : onSelect ? 'hover:bg-hover' : ''}`
         return onSelect ? (
           <button
             key={contentType}

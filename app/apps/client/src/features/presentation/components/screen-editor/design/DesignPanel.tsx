@@ -36,13 +36,13 @@ function ColorField({
 }) {
   return (
     <label className="flex items-center justify-between gap-3 py-1.5">
-      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+      <span className="text-[13px] text-fg-body">{label}</span>
       <input
         type="color"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         data-testid={testId}
-        className="h-8 w-14 cursor-pointer rounded border border-gray-300 dark:border-gray-600"
+        className="h-8 w-14 cursor-pointer rounded-lg border border-line-strong bg-field"
       />
     </label>
   )
@@ -78,11 +78,11 @@ export function DesignPanel({
 
   return (
     <div data-testid="theme-design-panel">
-      <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+      <div className="border-b border-line px-4 py-3">
+        <h2 className="text-base font-semibold text-fg">
           {t('templates.design.title')}
         </h2>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-0.5 text-xs text-fg-hint">
           {t('templates.design.description')}
         </p>
       </div>

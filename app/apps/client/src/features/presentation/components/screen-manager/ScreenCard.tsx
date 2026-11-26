@@ -162,21 +162,21 @@ export function ScreenCard({
     {
       id: 'export',
       label: t('sections.screens.export.title'),
-      icon: <ExternalLink size={18} />,
+      icon: <ExternalLink size={16} strokeWidth={1.5} />,
       onSelect: onExport,
       testId: 'screen-export',
     },
     {
       id: 'copy-url',
       label: t('sections.screens.actions.copyUrl'),
-      icon: <Copy size={18} />,
+      icon: <Copy size={16} strokeWidth={1.5} />,
       onSelect: onCopyUrl,
       testId: 'screen-copy-url',
     },
     {
       id: 'duplicate',
       label: t('sections.screens.actions.duplicate'),
-      icon: <CopyPlus size={18} />,
+      icon: <CopyPlus size={16} strokeWidth={1.5} />,
       onSelect: onDuplicate,
       disabled: isDuplicating,
       testId: 'screen-duplicate',
@@ -184,7 +184,7 @@ export function ScreenCard({
     {
       id: 'delete',
       label: t('sections.screens.actions.delete'),
-      icon: <Trash2 size={18} />,
+      icon: <Trash2 size={16} strokeWidth={1.5} />,
       onSelect: onDelete,
       testId: 'screen-delete',
     },
@@ -199,12 +199,12 @@ export function ScreenCard({
       {/* What it is, its window, and the screen's other actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+          <h3 className="text-base font-semibold text-fg truncate">
             {screen.name}
           </h3>
           <p
             data-testid="screen-window-status"
-            className="text-sm text-gray-500 dark:text-gray-400"
+            className="text-xs text-fg-hint tabular-nums"
           >
             {t(`presentation:screens.screenTypes.${screen.type}`)} ·{' '}
             {screen.width}×{screen.height} ·{' '}
@@ -222,7 +222,11 @@ export function ScreenCard({
             data-testid="screen-window-toggle"
             className="gap-1.5 whitespace-nowrap"
           >
-            {screen.isActive ? <MonitorOff size={16} /> : <Monitor size={16} />}
+            {screen.isActive ? (
+              <MonitorOff size={16} strokeWidth={1.5} />
+            ) : (
+              <Monitor size={16} strokeWidth={1.5} />
+            )}
             {screen.isActive
               ? t('sections.screens.window.close')
               : t('sections.screens.window.open')}
@@ -239,18 +243,18 @@ export function ScreenCard({
       <section data-testid="screen-theme-slides" className="mt-4">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div className="min-w-0">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <h4 className="text-[13px] font-medium text-fg-label">
               {t('sections.screens.groups.slides')}
               {template && (
                 <span
                   data-testid="screen-template-name"
-                  className="ml-2 normal-case tracking-normal text-gray-700 dark:text-gray-300"
+                  className="ml-2 font-normal text-fg-hint"
                 >
                   {templateDisplayName(template, t)}
                 </span>
               )}
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-hint">
               {t('sections.screens.slides.description')}
             </p>
           </div>
@@ -321,11 +325,15 @@ export function ScreenCard({
           </SettingsGroup>
 
           <details data-testid="screen-group-advanced" className="group">
-            <summary className="flex items-center gap-1 cursor-pointer list-none text-sm font-medium text-gray-700 dark:text-gray-300 [&::-webkit-details-marker]:hidden">
-              <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
+            <summary className="flex items-center gap-1 cursor-pointer list-none text-[13px] font-medium text-fg-body [&::-webkit-details-marker]:hidden">
+              <ChevronRight
+                size={16}
+                strokeWidth={1.5}
+                className="text-fg-label transition-transform group-open:rotate-90"
+              />
               {t('sections.screens.groups.more')}
             </summary>
-            <div className="divide-y divide-gray-100 dark:divide-gray-700/60 pl-5">
+            <div className="divide-y divide-line pl-5">
               <PreviewScreenRadio screen={screen} checked={isShownInPreviews} />
               <SwitchRow
                 label={t('sections.screens.fullscreen.label')}
