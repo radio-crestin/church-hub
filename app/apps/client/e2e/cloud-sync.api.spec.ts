@@ -268,13 +268,14 @@ test.describe
       )
 
       // Not allowed: this user may edit songs, not create them.
+      const newUuid = `e2e${Date.now()}`
       const created = await phoneWrite(churchId, phone.token, [
         {
           type: 'song',
-          uuid: `e2e${Date.now()}`,
+          uuid: newUuid,
           op: 'upsert',
           baseVersion: 0,
-          data: { uuid: `e2e${Date.now()}`, title: 'Nope', updatedAt: 1 },
+          data: { uuid: newUuid, title: 'Nope', updatedAt: 1 },
         },
       ])
       expect(created.status).toBe(403)

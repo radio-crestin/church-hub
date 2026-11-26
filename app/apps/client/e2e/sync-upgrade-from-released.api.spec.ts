@@ -99,15 +99,15 @@ test('the released database upgrades: identities, triggers, the rows queued once
 
   readDatabase((db) => {
     for (const table of Object.keys(NEW_TABLES)) {
-      const { rows, missing, distinct } = db
+      const { rows, missing, unique } = db
         .prepare(
           `SELECT COUNT(*) AS rows, SUM(uuid = '') AS missing,
-                  COUNT(DISTINCT uuid) AS distinct FROM ${table}`,
+                  COUNT(DISTINCT uuid) AS "unique" FROM ${table}`,
         )
-        .get() as { rows: number; missing: number; distinct: number }
+        .get() as { rows: number; missing: number; unique: number }
       expect(rows, `${table} keeps its released rows`).toBeGreaterThan(0)
       expect(missing, `${table} rows all have a uuid`).toBe(0)
-      expect(distinct, `${table} uuids are unique`).toBe(rows)
+      expect(unique, `${table} uuids are unique`).toBe(rows)
     }
     for (const table of ['song_bookmarks', 'bible_bookmark_notes']) {
       const { stale } = db
