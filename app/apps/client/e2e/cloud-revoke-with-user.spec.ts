@@ -95,6 +95,8 @@ test.describe
     test.setTimeout(120_000)
 
     let churchId = ''
+    /** On the service from the first upload's first chunk: users go first. */
+    let earlyUserId = 0
 
     /** The service refuses `token`, once the server has signed it out. */
     const expectSignedOut = (token: string) =>
@@ -108,6 +110,10 @@ test.describe
       s3.signedWritesOnly = true
       await s3.start()
       await service.start(s3.endpoint, { SYNC_COMPACT_AFTER: '100000' })
+      const early = await request.post('/api/users', {
+        data: { name: `E2E Early ${Date.now()}`, permissions: ['songs.view'] },
+      })
+      earlyUserId = (await early.json()).data.user.id
       const connected = await request.post('/api/sync/cloud', {
         data: { serviceUrl: service.url },
       })
@@ -121,19 +127,22 @@ test.describe
       await s3.stop()
     })
 
-    test('a user removed while the library is still uploading is signed out before the upload ends', async ({
+    test('a device revoked while the library is still uploading is refused before the upload ends', async ({
       request,
     }) => {
-      const { userId, device } = await addUserWithDevice(
-        request,
-        `E2E Mid-upload ${Date.now()}`,
-      )
-      const removed = await request.delete(`/api/users/${userId}`)
-      expect(removed.ok()).toBe(true)
+      const minted = await request.post('/api/sync/cloud/devices', {
+        data: { userId: earlyUserId, name: 'Early phone' },
+      })
+      expect(minted.status()).toBe(201)
+      const device = (await minted.json()).data as Device & { deviceId: string }
 
-      // The server's writes go one at a time: the sign-out waits for the
+      const revoked = await request.delete(
+        `/api/sync/cloud/devices/${device.deviceId}`,
+      )
+      expect(revoked.ok()).toBe(true)
+      expect((await askPath(churchId, device.token)).status).toBe(401)
+      // The server's writes go one at a time: the path move waited for the
       // chunk in flight, not for the whole upload.
-      await expectSignedOut(device.token)
       const status = await (await request.get('/api/sync/status')).json()
       expect(status.data.pendingCount).toBeGreaterThan(0)
     })
