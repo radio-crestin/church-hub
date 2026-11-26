@@ -26,16 +26,13 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 
+import { withLock } from './review-shell-lock'
 import { run, userCacheDir } from './worktree-common'
 
 const SHELL_SOURCES = ['app/tauri', 'app/tauri-plugins']
 // Copied per task, so they never make a new shell.
 const PER_TASK = ['app/tauri/bin/', 'app/tauri/resources/']
 const SHELLS_KEPT = 3
-const LOCK_WAIT_MS = 30 * 60 * 1000
-// The holder touches the lock this often; one untouched for LOCK_STALE_MS is abandoned.
-const LOCK_HEARTBEAT_MS = 20_000
-const LOCK_STALE_MS = 2 * 60 * 1000
 const SHELLS_DIR = join(userCacheDir(), 'review-shells')
 
 export const SHELL_BINARY =
@@ -71,55 +68,6 @@ export function shellKey(root: string) {
     hash.update(`${file}\n`).update(readFileSync(path))
   }
   return hash.digest('hex').slice(0, 16)
-}
-
-/** A lock its holder stopped touching: it died, whatever pid it had. */
-function isStale(lock: string) {
-  try {
-    return Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS
-  } catch {
-    return false // gone meanwhile: the next mkdir takes it
-  }
-}
-
-/**
- * A lock folder in the Cargo target dir, held only while a shell compiles
- * (worktrees share that target dir). The holder touches it every
- * LOCK_HEARTBEAT_MS; one untouched for LOCK_STALE_MS is taken over. No pid:
- * task sessions run in their own pid namespaces, and a dead holder can
- * linger as a zombie, so a pid proves nothing about the holder.
- */
-async function withLock(targetDir: string, action: () => Promise<void>) {
-  const lock = join(targetDir, '.review-build.lock')
-  const started = Date.now()
-  mkdirSync(targetDir, { recursive: true })
-  while (true) {
-    try {
-      mkdirSync(lock)
-      break
-    } catch {
-      if (isStale(lock)) {
-        rmSync(lock, { recursive: true, force: true })
-        continue
-      }
-      if (Date.now() - started > LOCK_WAIT_MS) {
-        throw new Error(`another review shell build holds ${lock}`)
-      }
-      await Bun.sleep(5000)
-    }
-  }
-  const heartbeat = setInterval(() => {
-    const now = new Date()
-    utimesSync(lock, now, now)
-  }, LOCK_HEARTBEAT_MS)
-  const release = () => rmSync(lock, { recursive: true, force: true })
-  process.on('exit', release)
-  try {
-    await action()
-  } finally {
-    clearInterval(heartbeat)
-    release()
-  }
 }
 
 export function cargoTargetDir(app: string) {
