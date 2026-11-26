@@ -14,27 +14,13 @@ export interface Bindings {
   COOKIE_NAME: string
   COOKIE_MAX_AGE: number
   ALLOWED_ORIGINS: string
-  GITHUB_TOKEN: string
   SIGNALING_KV: KVNamespace
-  // "Request a feature": screenshots, abuse limit and WhatsApp (WAHA) notice.
-  /** Optional R2 bucket; without it screenshots go to the S3 bucket (S3_*). */
-  FEATURE_REQUEST_SCREENSHOTS?: R2Bucket
-  /** S3 bucket for screenshots (default S3_STATE_BUCKET, then S3_BUCKET). */
-  FEATURE_REQUEST_S3_BUCKET?: string
   /**
    * This service's public origin (e.g. https://backend.example.org), used for
-   * links it hands out (screenshot URLs, the listener page, the owner sign-in
+   * links it hands out (the listener page, the owner sign-in
    * callback) instead of the request's Host. Default: the request URL.
    */
   PUBLIC_BASE_URL?: string
-  FEATURE_REQUEST_RATE_LIMITER: RateLimit
-  WAHA_URL?: string
-  WAHA_API_KEY?: string
-  WAHA_SESSION?: string
-  WAHA_CHAT_ID?: string
-  // Cloudflare Access service token, only when WAHA sits behind Access.
-  WAHA_ACCESS_CLIENT_ID?: string
-  WAHA_ACCESS_CLIENT_SECRET?: string
   // Cloud sync (T-171): the bucket (which also holds each church's encrypted
   // state: no database) and the secret. Unset = /sync answers 503.
   /** Hashes device tokens and, derived, encrypts the church states (openssl rand -hex 32). */

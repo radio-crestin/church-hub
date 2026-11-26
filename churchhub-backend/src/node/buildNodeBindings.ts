@@ -11,7 +11,6 @@ import { WORKER_VAR_DEFAULTS } from './workerVarDefaults'
  * The Worker's bindings for the same app on Node: settings from the
  * environment, and in place of Cloudflare's KV and rate limiters either Redis
  * (shared by every replica) or this process's memory (one replica only).
- * Screenshots need no binding: without R2 they go to the S3 bucket.
  */
 export function buildNodeBindings(
   settings: NodeSettings,
@@ -28,7 +27,6 @@ export function buildNodeBindings(
     ...(withDefaults as unknown as Bindings),
     COOKIE_MAX_AGE: Number(withDefaults.COOKIE_MAX_AGE),
     SIGNALING_KV: redis ? createRedisKv(redis) : createMemoryKv(),
-    FEATURE_REQUEST_RATE_LIMITER: limiter('FEATURE_REQUEST_RATE_LIMITER'),
     SYNC_RATE_LIMITER: limiter('SYNC_RATE_LIMITER'),
     LIBRARY_RATE_LIMITER: limiter('LIBRARY_RATE_LIMITER'),
     BACKUP_RATE_LIMITER: limiter('BACKUP_RATE_LIMITER'),

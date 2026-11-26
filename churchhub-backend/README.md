@@ -25,8 +25,6 @@ This worker provides a stateless OAuth flow using:
 | `/auth/drive/refresh` | POST | Refreshes a Drive access token |
 | `/health` | GET | Health check endpoint |
 | `/health/ready` | GET | Readiness: 503 `{status:"starting"}` while the Node runtime's startup sync probe is pending, else 200 with `sync`: `enabled`, `disabled` (the probe failed; /sync answers 503) or `off`. Always ready on the Worker. Use it for readiness/startup probes and `/health` for liveness |
-| `/feature-requests` | POST | "Request a feature": stores the screenshot (the S3 bucket, or R2 when bound), opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email). Max 3/min and 50 per rolling 24h per IP (hashed IP counter in `SIGNALING_KV`) |
-| `/feature-requests/screenshots/:id` | GET | Serves a feature-request screenshot from its storage (embedded in the issue; random id, cached a year) |
 | `/sync/*` | GET, POST, PUT, DELETE | Cloud sync service (see below); documented at `/sync/openapi.json`, rendered at `/sync/docs` |
 | `/backup/*` | GET, POST, DELETE | Church Hub Cloud backup, free with Google sign-in (see below); documented at `/backup/openapi.json`, rendered at `/backup/docs` |
 
@@ -252,7 +250,7 @@ an alert on repeated failures. No emails or addresses in labels.
 
 `src/node/server.ts` serves the same app on Node 24 (or Bun) without
 Cloudflare: Redis replaces KV and the rate limiters (memory outside
-production), and screenshots go to the S3 bucket. It writes nothing to the
+production). It writes nothing to the
 local disk, so it runs with a read-only root filesystem.
 
 ```bash
@@ -263,18 +261,17 @@ PORT=8787 node dist/server.mjs      # or, in development: bun src/node/server.ts
 It reads the settings of [Cloud sync](#cloud-sync-sync) and
 [Production Deployment](#production-deployment) from the environment
 (`SYNC_SECRET`, `S3_*`, `YOUTUBE_*`, `COOKIE_ENCRYPTION_KEY`,
-`ALLOWED_ORIGINS`, `GITHUB_TOKEN`, `WAHA_*`, `DRIVE_REDIRECT_URI`,
+`ALLOWED_ORIGINS`, `DRIVE_REDIRECT_URI`,
 `OWNER_REDIRECT_URI`; `YOUTUBE_SCOPE`, `DRIVE_SCOPE`, `COOKIE_NAME` and
 `COOKIE_MAX_AGE` default to `wrangler.toml`'s values), plus:
 
 | Name | |
 |---|---|
-| `REDIS_URL` | `redis://:<password>@<host>:6379`: signaling, the feature-request quota and the rate limits, shared by every replica. Required when `NODE_ENV=production` unless `SINGLE_INSTANCE=true`; elsewhere unset = this process's memory |
-| `SINGLE_INSTANCE` | `true` = exactly one replica runs, so production may leave `REDIS_URL` unset: signaling rooms, the quota and the rate limits live in its memory and reset on restart |
-| `FEATURE_REQUEST_S3_BUCKET` | Bucket for feature-request screenshots, under `feature-requests/` (default `S3_STATE_BUCKET`, then `S3_BUCKET`); same endpoint and keys |
+| `REDIS_URL` | `redis://:<password>@<host>:6379`: signaling and the rate limits, shared by every replica. Required when `NODE_ENV=production` unless `SINGLE_INSTANCE=true`; elsewhere unset = this process's memory |
+| `SINGLE_INSTANCE` | `true` = exactly one replica runs, so production may leave `REDIS_URL` unset: signaling rooms and the rate limits live in its memory and reset on restart |
 | `TRUSTED_PROXY_CIDRS` | Comma-separated CIDRs of every proxy in front: the ingress pods, plus any outer proxy the ingress trusts. Only a peer inside them may pass the client address in `X-Forwarded-For`, which is read from the right, skipping these addresses; required in production (the server refuses to start without it), empty elsewhere = trust nobody |
-| `PUBLIC_BASE_URL` | This service's public origin, for the links it hands out (screenshot URLs in issues, the listener page, the owner sign-in callback) instead of the request's `Host` (also honoured on Cloudflare) |
-| `FEATURE_REQUEST_RATE_LIMIT_PER_MINUTE`, `SYNC_RATE_LIMIT_PER_MINUTE` | Per-IP limits of `POST /feature-requests` and `POST /sync/churches` (default 3, as on Cloudflare) |
+| `PUBLIC_BASE_URL` | This service's public origin, for the links it hands out (the listener page, the owner sign-in callback) instead of the request's `Host` (also honoured on Cloudflare) |
+| `SYNC_RATE_LIMIT_PER_MINUTE` | Per-IP limit of `POST /sync/churches` (default 3, as on Cloudflare) |
 | `PORT`, `HOST` | Listen address (default `8787`, `0.0.0.0`) |
 
 The resolved client address replaces any `CF-Connecting-IP` the client sent.
@@ -420,18 +417,6 @@ YOUTUBE_CLIENT_SECRET=your-client-secret
 YOUTUBE_REDIRECT_URI=https://churchub-backend.radiocrestin.ro/auth/youtube/callback
 COOKIE_ENCRYPTION_KEY=<generate with: openssl rand -hex 32>
 ALLOWED_ORIGINS=https://churchub-backend.radiocrestin.ro,http://localhost:3000
-GITHUB_TOKEN=<fine-grained PAT, radio-crestin/church-hub, Issues: read and write>
-# Optional WhatsApp notice for feature requests (see .dev.vars.example)
-WAHA_URL=<public WAHA base URL>
-WAHA_API_KEY=<WAHA X-Api-Key>
-WAHA_CHAT_ID=<chat id, e.g. 407...@c.us or ...@g.us>
-```
-
-Feature-request screenshots live in an R2 bucket, created once before the
-first deploy:
-
-```bash
-npx wrangler r2 bucket create church-hub-feature-requests
 ```
 
 Then deploy. `deploy.sh` checks `.prod.vars` (no empty or placeholder
