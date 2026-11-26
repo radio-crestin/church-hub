@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
-import { ScreenBackground } from './ScreenBackground'
+import { CrossfadeScreenBackground } from './CrossfadeScreenBackground'
 import { ScreenContentLayers } from './ScreenContentLayers'
 import { TypewriterContext } from './TypewriterContext'
 import { getNextVerse } from '../../../bible/service/bible'
@@ -657,7 +657,7 @@ export function ScreenRenderer({
       onClick={handleClick}
     >
       {/* First, so everything after it paints above the background */}
-      <ScreenBackground background={bg} />
+      <CrossfadeScreenBackground background={bg} />
 
       {/* Safe area wrapper - adds padding on mobile to avoid status bar.
           Positioned so its whole subtree stacks above the background layer. */}

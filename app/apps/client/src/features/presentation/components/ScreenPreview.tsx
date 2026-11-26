@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { CrossfadeScreenBackground } from './rendering/CrossfadeScreenBackground'
 import { ScreenBackground } from './rendering/ScreenBackground'
 import { ScreenContentLayers } from './rendering/ScreenContentLayers'
 import type { ContentData, NextSlideData } from './rendering/types'
@@ -28,7 +29,7 @@ interface ScreenPreviewProps {
   /** Animate only the changed lines on a slide change (usePresentationContent) */
   morphLines?: boolean
   isVisible?: boolean
-  /** The previous content type's content, fading out (usePresentationContent) */
+  /** The previous content type's content, fading out (useContentTypeHandoff) */
   leaving?: ShownContent<ContentData, NextSlideData | undefined> | null
   styleRanges?: TextStyleRange[]
   /** Stage editor: make the main lyrics element editable in place */
@@ -48,6 +49,11 @@ interface ScreenPreviewProps {
    * an operator's preview. Never set for a projected screen.
    */
   hideBackground?: boolean
+  /**
+   * Dissolve into a new background as the projection does, for a preview of
+   * the live screen; editors leave it off, so a change shows at once.
+   */
+  crossfadeBackground?: boolean
 }
 
 export function ScreenPreview({
@@ -66,6 +72,7 @@ export function ScreenPreview({
   clockOverride,
   playVideo = true,
   hideBackground = false,
+  crossfadeBackground = false,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -97,7 +104,11 @@ export function ScreenPreview({
   return (
     <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* First, so the (positioned) content paints above it */}
-      <ScreenBackground background={bg} playVideo={playVideo} />
+      {crossfadeBackground ? (
+        <CrossfadeScreenBackground background={bg} playVideo={playVideo} />
+      ) : (
+        <ScreenBackground background={bg} playVideo={playVideo} />
+      )}
       <ScreenContentLayers
         leaving={leaving}
         screen={screen}
