@@ -75,8 +75,8 @@ namespace_id = "1011"
   period = 60
 
 # Cloud backup upkeep (src/backup/runBackupMaintenance.ts): every hour,
-# abort multipart uploads left unfinished; daily at 03:43 UTC, also
-# recompute every account's usage from the bucket.
+# abort multipart uploads left unfinished and expire backups past 30 days;
+# daily at 03:43 UTC, also recompute every account from the bucket.
 [triggers]
 crons = ["17 * * * *", "43 3 * * *"]
 
@@ -117,6 +117,6 @@ COOKIE_MAX_AGE = 600
 #   it derives every account key), BACKUP_S3_ENDPOINT, BACKUP_S3_BUCKET,
 #   BACKUP_S3_ACCESS_KEY_ID, BACKUP_S3_SECRET_ACCESS_KEY (+ optional
 #   BACKUP_S3_REGION, BACKUP_S3_PRESIGN_ENDPOINT, BACKUP_MAX_BYTES,
-#   BACKUP_QUOTA_BYTES, BACKUP_MAX_COUNT, BACKUP_UPLOADS_PER_DAY).
+#   BACKUP_QUOTA_BYTES, BACKUP_RETENTION_DAYS, BACKUP_UPLOADS_PER_DAY).
 #   Unset = /backup/* answers 503. The admin panel (src/admin) is never on
 #   the Worker: only the Node runtime serves it, on ADMIN_PORT.

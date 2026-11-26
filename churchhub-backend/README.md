@@ -139,36 +139,48 @@ Free backups of a church's database, only for people signed in with Google
   `BACKUP_SECRET`, bound to the Google `sub` and to the PC's session
   family). Refresh tokens are single use: a reused one ends every session of
   the account. Signing out ends the PC's family; deleting the account, all.
-- **Storage**: a private bucket of its own. Each account's folder is
-  `accounts/<HMAC(sub)>/`: `account.json` (the usage counter, quota
-  override, sessions, backup ids, sizes and dates, and the email for the
-  admin panel) and the encrypted backups; `index/accounts.json` lists the
-  accounts for the admin panel; `admin/audit/` holds its audit log. Uploads
-  and downloads go straight to the bucket through presigned URLs valid 15
-  minutes, each part signed for its exact Content-Length.
-- **Encryption**: the app encrypts each backup (AES-256-GCM, a fresh key per
-  backup) and wraps that key with the account key from `GET /backup/key`,
-  derived from `BACKUP_KEY_SECRET` and the `sub`: the bucket alone can't read
-  a backup, and the same account restores after a reinstall by signing in.
+- **What a backup is**: an encrypted **user part** (the church's own data:
+  settings, users, programs, history, bookmarks, its own and edited songs,
+  every song's usage) and an encrypted **manifest** (the user part's hash,
+  the blobs it needs), plus plaintext **resource blobs** (Bible
+  translations; the slides of unedited library songs): content-addressed
+  by SHA-256, immutable, under a random per-account prefix, sent only when
+  the account doesn't store them yet. The split is the app's
+  (`app/apps/server/src/service/backup/cloud/resources/planResources.ts`).
+- **Layout** (private, unlisted bucket): `accounts/<HMAC(sub)>/account.json`
+  (usage counter, blob reference counts, quota override, sessions,
+  backups, and the email for the admin panel); `backups/<HMAC(sub)>/<id>/`
+  (`user.chb`, `manifest.chb`); `blobs/<HMAC(sub)>/<random>/<sha256>`;
+  `index/accounts.json` (admin search); `admin/audit/` (audit log).
+  Uploads and downloads go straight to the bucket through presigned URLs
+  valid 15 minutes, each PUT signed for its exact Content-Length.
+- **Encryption**: the app encrypts the user part and manifest (AES-256-GCM,
+  a fresh key per backup) and wraps that key with the account key from
+  `GET /backup/key`, derived from `BACKUP_KEY_SECRET` and the `sub`: the
+  bucket alone can't read them, and the same account restores after a
+  reinstall by signing in. Restore checks every hash before replacing
+  anything.
 - **Quota**: 2 GiB per Google account (`BACKUP_QUOTA_BYTES`), or an admin's
-  override. The record's usage counter is changed only by compare-and-swap:
-  an upload reserves its size at start (used + reserved + it must fit; if
-  not, backups retention would drop after it are removed first), the real
-  size is read back at completion (another size, or a total past the quota,
-  deletes the object), deletes and retention free it. `GET /backup/usage`
+  override, counting every backup's user part and manifest plus each blob
+  once. The record's usage counter and blob refs are changed only by
+  compare-and-swap: an upload reserves what it adds at start (past the
+  quota: refused, nothing is deleted to make room), sizes are read back at
+  completion, a blob no backup needs is deleted. `GET /backup/usage`
   answers used, reserved and quota bytes.
-- **Free tier** (each overridable): 512 MiB a backup (`BACKUP_MAX_BYTES`), at
-  most 12 kept (`BACKUP_MAX_COUNT`: the newest 3, one a day for 7 days, one
-  a week for 5 weeks), 24 uploads a day (`BACKUP_UPLOADS_PER_DAY`), 2 in
-  flight. Per IP (60/min) and per account (30/min): the
-  `BACKUP_RATE_LIMITER` and `BACKUP_ACCOUNT_RATE_LIMITER` bindings on
-  Cloudflare; on Node, Redis or memory (`BACKUP_RATE_LIMIT_PER_MINUTE`,
+- **History**: a backup expires 30 days after it was made
+  (`BACKUP_RETENTION_DAYS`). No other pruning.
+- **Free tier** (each overridable): 512 MiB an upload (`BACKUP_MAX_BYTES`),
+  24 uploads a day (`BACKUP_UPLOADS_PER_DAY`), 2 in flight. Per IP (60/min)
+  and per account (30/min): the `BACKUP_RATE_LIMITER` and
+  `BACKUP_ACCOUNT_RATE_LIMITER` bindings on Cloudflare; on Node, Redis or
+  memory (`BACKUP_RATE_LIMIT_PER_MINUTE`,
   `BACKUP_ACCOUNT_RATE_LIMIT_PER_MINUTE`). The IP is `CF-Connecting-IP`
   only (Cloudflare's, or the Node server's resolved address).
 - **Upkeep** (`src/backup/runBackupMaintenance.ts`; cron triggers on the
   Worker, timers on Node): hourly, multipart uploads unfinished after 6
-  hours are aborted; daily, every account's usage is recomputed from the
-  bucket (lost objects unlisted, stray ones deleted).
+  hours are aborted and backups past 30 days expire; daily, every account
+  is recomputed from the bucket (blob refs, usage; lost objects unlisted,
+  stray ones deleted).
 
 **Settings** (secrets; unset = `/backup` answers `503 not_configured`):
 
@@ -183,8 +195,10 @@ Free backups of a church's database, only for people signed in with Google
 
 **The bucket**: no public access and no listing for anyone but the service;
 it must enforce signed headers on presigned URLs (Content-Length). Lifecycle
-rule: abort incomplete multipart uploads after 1 day (the service aborts
-them hourly; this is the backstop).
+rules (backstops to the hourly upkeep): abort incomplete multipart uploads
+after 1 day; expire objects under `backups/` after 32 days. Never a rule on
+`blobs/` (a blob a recent backup still needs can be older than 30 days) or
+`accounts/`.
 
 ### Admin panel (internal only)
 

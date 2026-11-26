@@ -191,7 +191,7 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
               usedBytes: { type: 'integer' },
               quotaBytes: { type: 'integer' },
               maxBackupBytes: { type: 'integer' },
-              maxBackups: { type: 'integer' },
+              retentionDays: { type: 'integer' },
               uploadsPerDay: { type: 'integer' },
             },
           },
@@ -203,7 +203,7 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'Back up now',
       description:
-        'Copies the database, gzips and encrypts it on this PC (AES-256-GCM under a fresh key wrapped with the account key) and uploads it straight to the bucket in parts.',
+        'Copies the database and splits it on this PC: the church’s own data is gzipped and encrypted (AES-256-GCM under a fresh key wrapped with the account key); the shared resources (Bible texts, the slides of unedited library songs) become plaintext blobs named by their SHA-256, sent only when the account doesn’t store them yet; an encrypted manifest ties them together. Refused past the quota (`quota_exceeded`).',
       responses: {
         '200': json('Uploaded', { backup: cloudBackup }),
         ...signedInErrors,
@@ -215,7 +215,7 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'Restore a cloud backup',
       description:
-        'Downloads, decrypts and checks the backup, then replaces the database (the current one is kept to fall back on). This PC stays signed in as it was.',
+        'Downloads the manifest, the user part and every blob, checks the user part’s hash and every blob’s hash, decrypts and puts the church’s data and the resources back together, then replaces the database (the current one is kept to fall back on) and rebuilds the search indexes. This PC stays signed in as it was.',
       parameters: [backupId],
       requestBody: body({
         confirmToken: {
