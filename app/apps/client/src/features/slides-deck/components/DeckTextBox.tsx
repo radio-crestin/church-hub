@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+
 import { getFontFamilyStack } from '~/features/presentation/utils/getFontFamilyStack'
 import type { DeckTextElement } from '../types'
 
@@ -13,6 +15,11 @@ const JUSTIFY = { top: 'flex-start', middle: 'center', bottom: 'flex-end' }
  * (`data-deck-text`).
  */
 export function DeckTextBox({ element }: { element: DeckTextElement }) {
+  // The same object while the HTML is the same: React 19 sets innerHTML again
+  // whenever this prop is a new object, which would undo the paragraph
+  // states a by-paragraph build set on its paragraphs (applyParagraphStates)
+  // at the slide's next re-render (its transition ending).
+  const html = useMemo(() => ({ __html: element.html }), [element.html])
   return (
     <div
       data-deck-text={element.id}
@@ -28,7 +35,7 @@ export function DeckTextBox({ element }: { element: DeckTextElement }) {
         lineHeight: 1.2,
       }}
       // Sanitized by the server when the deck was saved (sanitizeDeckHtml).
-      dangerouslySetInnerHTML={{ __html: element.html }}
+      dangerouslySetInnerHTML={html}
     />
   )
 }
