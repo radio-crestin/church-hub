@@ -121,6 +121,23 @@ test.describe
       await s3.stop()
     })
 
+    test('a user removed while the library is still uploading is signed out before the upload ends', async ({
+      request,
+    }) => {
+      const { userId, device } = await addUserWithDevice(
+        request,
+        `E2E Mid-upload ${Date.now()}`,
+      )
+      const removed = await request.delete(`/api/users/${userId}`)
+      expect(removed.ok()).toBe(true)
+
+      // The server's writes go one at a time: the sign-out waits for the
+      // chunk in flight, not for the whole upload.
+      await expectSignedOut(device.token)
+      const status = await (await request.get('/api/sync/status')).json()
+      expect(status.data.pendingCount).toBeGreaterThan(0)
+    })
+
     test('removing a user signs out their device, which never learns the new path', async ({
       page,
       request,
