@@ -4,7 +4,7 @@
       "features": [
         "Programs can run as automated presentations, and the Down arrow walks through each item's slides, then into the next item.",
         "The Control Room has a queue: add a song, Bible verses, music, a gallery video or a whole program, and Next walks through them, programs inside programs included.",
-        "Join a church from a phone by QR code or link, and use Church Hub in the browser as a web app.",
+        "Join a church from a phone by QR code or link and use the whole app in the browser: it connects to the church computer when it's on, and keeps working on its own copy of the library when it's off.",
         "Cloud sync keeps every part of the church's library in step across devices: sign in with Google as the owner, or start as a guest and claim it later.",
         "Bible verses by topic: browse topics, present their verses, and each topic keeps its own template, live on screen.",
         "Bible slideshows have clear icon buttons, an adjustable reading speed and a progress ring for each verse.",
@@ -28,7 +28,7 @@
       "features": [
         "Programele pot rula ca prezentări automate, iar săgeata în jos trece prin diapozitivele fiecărui element, apoi la următorul.",
         "Camera de control are o coadă: adaugi o cântare, versete, muzică, un video din galerie sau un program întreg, iar „Următorul” le parcurge pe rând, inclusiv programele din alte programe.",
-        "Te poți alătura bisericii de pe telefon, cu un cod QR sau un link, și poți folosi Church Hub direct în browser, ca aplicație web.",
+        "Te poți alătura bisericii de pe telefon, cu un cod QR sau un link, și poți folosi toată aplicația în browser: se conectează la calculatorul bisericii când e pornit și merge mai departe pe propria copie a bibliotecii când e oprit.",
         "Sincronizarea în cloud ține toată biblioteca bisericii la zi pe toate dispozitivele: intri cu Google ca proprietar sau începi ca invitat și o revendici mai târziu.",
         "Versete biblice pe teme: răsfoiești temele, prezinți versetele lor, iar fiecare temă își păstrează șablonul, direct pe ecran.",
         "Prezentările automate din Biblie au butoane cu iconițe clare, viteză de citire reglabilă și un cerc care arată cât mai rămâne din fiecare verset.",
