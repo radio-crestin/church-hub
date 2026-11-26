@@ -6,6 +6,13 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [livestream-routes] ${message}`)
 }
 
+import { LIVESTREAM_PERMISSIONS } from './livestream-permissions'
+import { holdsPermission } from '../middleware/permissions'
+import {
+  type CheckPermission,
+  checkRoutePermission,
+} from '../middleware/route-permissions'
+import type { RequestContext } from '../middleware/types'
 import { generateBroadcastMessage } from '../service/livestream/message'
 import {
   getMixerChannels,
@@ -60,6 +67,7 @@ import type { YouTubeConfigUpdate } from '../service/livestream/youtube/config'
 import { loadMIDIShortcuts } from '../service/midi/shortcuts'
 import { SecretDestinationChangedError } from '../service/secret-store'
 import { createFlowStates } from '../utils/createFlowStates'
+import { hideSecrets } from '../utils/hideSecrets'
 import { toErrorMessage } from '../utils/toErrorMessage'
 import {
   broadcastLivestreamStatus,
@@ -81,7 +89,17 @@ export async function handleLivestreamRoutes(
   req: Request,
   url: URL,
   handleCors: HandleCors,
+  checkPermission: CheckPermission,
+  context: RequestContext | null,
 ): Promise<Response | null> {
+  if (!url.pathname.startsWith('/api/livestream/')) return null
+  const refused = checkRoutePermission(
+    req,
+    url.pathname,
+    LIVESTREAM_PERMISSIONS,
+    checkPermission,
+  )
+  if (refused) return refused
   // YouTube OAuth endpoints
 
   // POST /api/livestream/youtube/sign-in { mode } - Starts a YouTube sign-in:
@@ -969,11 +987,15 @@ export async function handleLivestreamRoutes(
 
   // OBS Config endpoints
   // GET /api/livestream/obs/config
+  // The password only to who may change it (they copy it into OBS)
   if (req.method === 'GET' && url.pathname === '/api/livestream/obs/config') {
     const config = await getOBSConfig()
+    const shown = holdsPermission(context, 'settings.edit')
+      ? config
+      : hideSecrets(config, { password: 'passwordSet' })
     return handleCors(
       req,
-      new Response(JSON.stringify({ data: config }), {
+      new Response(JSON.stringify({ data: shown }), {
         headers: { 'Content-Type': 'application/json' },
       }),
     )

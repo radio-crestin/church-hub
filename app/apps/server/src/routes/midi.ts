@@ -1,3 +1,8 @@
+import { MIDI_PERMISSIONS } from './midi-permissions'
+import {
+  type CheckPermission,
+  checkRoutePermission,
+} from '../middleware/route-permissions'
 import {
   connectInput,
   connectOutput,
@@ -22,8 +27,16 @@ export async function handleMIDIRoutes(
   req: Request,
   url: URL,
   handleCors: HandleCors,
+  checkPermission: CheckPermission,
 ): Promise<Response | null> {
   if (!url.pathname.startsWith('/api/midi/')) return null
+  const refused = checkRoutePermission(
+    req,
+    url.pathname,
+    MIDI_PERMISSIONS,
+    checkPermission,
+  )
+  if (refused) return refused
 
   // A page loading during start-up must see the devices and reconnect the
   // saved ones, not find MIDI missing while CoreMIDI warms up (macOS).

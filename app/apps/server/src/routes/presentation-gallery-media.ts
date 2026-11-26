@@ -1,3 +1,4 @@
+import type { CheckPermission } from '../middleware/route-permissions'
 import {
   BackgroundMediaError,
   getGalleryMediaRef,
@@ -6,13 +7,11 @@ import type { PresentationState } from '../service/presentation'
 import { presentTemporaryImage } from '../service/presentation/presentTemporaryImage'
 import { presentTemporaryVideo } from '../service/presentation/presentTemporaryVideo'
 import { endScreenShareSession } from '../service/screen-share'
-import type { Permission } from '../service/users/types'
 import { createLogger } from '../utils/logger'
 
 const logger = createLogger('presentation-gallery-media')
 
 type HandleCors = (req: Request, res: Response) => Response
-type CheckPermission = (permission: Permission) => Response | null
 
 const PRESENTERS = {
   '/api/presentation/temporary-image': (mediaId: unknown) =>

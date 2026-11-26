@@ -1,3 +1,8 @@
+import { MUSIC_PERMISSIONS } from './music-permissions'
+import {
+  type CheckPermission,
+  checkRoutePermission,
+} from '../middleware/route-permissions'
 import type {
   AddFolderInput,
   AddToPlaylistInput,
@@ -31,7 +36,16 @@ export async function handleMusicRoutes(
   req: Request,
   url: URL,
   handleCors: HandleCors,
+  checkPermission: CheckPermission,
 ): Promise<Response | null> {
+  if (!url.pathname.startsWith('/api/music/')) return null
+  const refused = checkRoutePermission(
+    req,
+    url.pathname,
+    MUSIC_PERMISSIONS,
+    checkPermission,
+  )
+  if (refused) return refused
   // ========== PLAYER STATUS ==========
 
   // GET /api/music/player/status - Get audio player status

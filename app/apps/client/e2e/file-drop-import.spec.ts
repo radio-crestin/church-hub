@@ -3,6 +3,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
 
+import { dropFile } from './helpers/drop-file'
+
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURES_DIR = path.join(currentDir, 'fixtures')
 const PPTX_FILE = path.join(FIXTURES_DIR, 'Cand Isus Hristos m-a mantuit.pptx')
@@ -30,43 +32,6 @@ async function deleteMatchingSongs(
   }
 }
 
-/**
- * Simulates a file drop on the document by injecting file bytes into a
- * synthetic DragEvent. Chromium's DataTransfer constructor supports
- * `items.add(file)`, so the handler sees `e.dataTransfer.files`.
- */
-async function simulateFileDrop(
-  page: import('@playwright/test').Page,
-  fileBuffer: Buffer,
-  fileName: string,
-  mimeType: string,
-) {
-  const base64Data = fileBuffer.toString('base64')
-
-  await page.evaluate(
-    ({ base64, name, mime }) => {
-      const binaryString = atob(base64)
-      const bytes = new Uint8Array(binaryString.length)
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-      }
-
-      const file = new File([bytes], name, { type: mime })
-      const dt = new DataTransfer()
-      dt.items.add(file)
-
-      document.dispatchEvent(
-        new DragEvent('drop', {
-          bubbles: true,
-          cancelable: true,
-          dataTransfer: dt,
-        }),
-      )
-    },
-    { base64: base64Data, name: fileName, mime: mimeType },
-  )
-}
-
 test.describe('File Drop Import', () => {
   test('can import a .pptx file via drag and drop', async ({ page }) => {
     // Clean up any existing song with the same title first
@@ -88,7 +53,7 @@ test.describe('File Drop Import', () => {
       { timeout: 15000 },
     )
 
-    await simulateFileDrop(
+    await dropFile(
       page,
       fileBuffer,
       'Cand Isus Hristos m-a mantuit.pptx',
@@ -134,7 +99,7 @@ test.describe('File Drop Import', () => {
       { timeout: 60000 },
     )
 
-    await simulateFileDrop(
+    await dropFile(
       page,
       fileBuffer,
       'Se cuvine.ppt',
