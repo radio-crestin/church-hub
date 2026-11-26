@@ -7,6 +7,7 @@ import {
   clearTemporaryContent,
   navigateQueueSlide,
   navigateTemporary,
+  presentGalleryMedia,
   presentTemporaryAnnouncement,
   presentTemporaryBible,
   presentTemporaryBiblePassage,
@@ -323,6 +324,19 @@ export function usePresentTemporaryScene() {
       resetNavigationTracking()
       await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       // Use setStateFromMutation to update lastAppliedUpdatedAt after reset
+      setStateFromMutation(queryClient, data)
+    },
+  })
+}
+
+export function usePresentGalleryMedia() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: presentGalleryMedia,
+    onSuccess: async (data: PresentationState) => {
+      resetNavigationTracking()
+      await queryClient.cancelQueries({ queryKey: presentationStateQueryKey })
       setStateFromMutation(queryClient, data)
     },
   })

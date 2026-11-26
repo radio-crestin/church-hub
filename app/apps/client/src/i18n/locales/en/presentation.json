@@ -160,7 +160,8 @@
         "slideRight": "Slide Right",
         "scale": "Scale",
         "blur": "Blur",
-        "zoom": "Zoom"
+        "zoom": "Zoom",
+        "typewriter": "Typewriter"
       },
       "easings": {
         "linear": "Linear",
@@ -169,7 +170,8 @@
         "easeInOut": "Ease In Out",
         "bounce": "Bounce"
       },
-      "durationMs": "Duration (ms)"
+      "durationMs": "Duration (ms)",
+      "typingMs": "Longest typing time (ms)"
     },
     "background": {
       "type": "Type",
@@ -459,6 +461,8 @@
       "verses_evening": "Verses · Evening",
       "verses_light": "Verses · Light",
       "verses_calm": "Verses · Calm",
+      "typewriter_paper": "Typewriter · Paper",
+      "typewriter_night": "Typewriter · Night",
       "photo_mountain_sunrise": "Mountain sunrise",
       "photo_misty_forest": "Misty forest",
       "photo_golden_wheat": "Golden wheat",
@@ -482,7 +486,8 @@
       "title": "Choose a theme",
       "change": "Change theme",
       "close": "Close",
-      "manage": "Manage themes"
+      "manage": "Manage themes",
+      "current": "Theme: {{name}}"
     },
     "page": {
       "title": "Themes",
@@ -551,7 +556,9 @@
       "accentFont": "Accent font",
       "background": "Background for all slides",
       "transition": "Transition between slides",
-      "duration": "Duration"
+      "duration": "Duration",
+      "typewriter": "Typewriter",
+      "typewriterDescription": "Verses and announcements type in letter by letter. Songs still fade in, so everyone can sing at once."
     },
     "editor": {
       "design": "Design",

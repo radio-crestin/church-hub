@@ -2,6 +2,7 @@ import { ChevronDown, Tags } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { TopicVerseSource } from '~/features/presentation/types'
 import { BibleTopicList } from './BibleTopicList'
 import { BibleTopicPassages } from './BibleTopicPassages'
 import type { BibleVerse } from '../../types'
@@ -12,7 +13,8 @@ interface BibleTopicsPanelProps {
   /** The Bible page's translation: the verses are shown in it */
   translationId?: number
   activeVerseId?: number
-  onPresentVerse: (verse: BibleVerse) => void
+  /** Presents a topic's verse, drawn with the topic's template */
+  onPresentVerse: (verse: BibleVerse, topic: TopicVerseSource) => void
   /** Shows the verse in the Bible, selected but not presented */
   onOpenVerse: (verse: BibleVerse) => void
   isCollapsed?: boolean
@@ -79,6 +81,7 @@ export function BibleTopicsPanel({
       {isCollapsed ? null : openTopic ? (
         <BibleTopicPassages
           topicId={openTopic.id}
+          templateId={topicQuery.data?.templateId ?? openTopic.templateId}
           title={titleOf(openTopic)}
           passages={topicQuery.data?.passages ?? []}
           isLoading={topicQuery.isLoading}

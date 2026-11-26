@@ -4,9 +4,11 @@ import { LeavingLines } from './LeavingLines'
 import { SlideLines } from './SlideLines'
 import { useLineMorph } from './useLineMorph'
 import type { SlideAnimationConfig } from './useSlideAnimation'
+import { useTypewriter } from './useTypewriter'
 import { calculateFontSize } from './utils/calculateFontSize'
 import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
+import type { LayerTypewriter } from './utils/layerTypewriter'
 import { splitSlideLines } from './utils/splitSlideLines'
 import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type { TextStyle, TextStyleRange } from '../../types'
@@ -41,6 +43,8 @@ interface TextLayerProps {
   split?: TokenMode | null
   /** The slide change transitions a morph plays on single lines */
   lineTransitions: { enter: SlideAnimationConfig; exit: SlideAnimationConfig }
+  /** SlideLayer.typewriter: set while the text types itself in */
+  typewriter?: LayerTypewriter<TextLayerContent> | null
 }
 
 /**
@@ -58,6 +62,7 @@ export function TextLayer({
   onMorphRejected,
   split = null,
   lineTransitions,
+  typewriter = null,
 }: TextLayerProps) {
   const { text, style, width, height, left, top, contentScale, styleRanges } =
     content
@@ -80,6 +85,14 @@ export function TextLayer({
     enter: lineTransitions.enter,
     exit: lineTransitions.exit,
     onReject: onMorphRejected,
+  })
+  const reveal = useTypewriter({
+    text,
+    lines,
+    lineMatch: lineMorph.lineMatch,
+    tokenMatch: lineMorph.tokenMatch,
+    morph,
+    typewriter,
   })
 
   // Calculate font size synchronously before paint
@@ -202,6 +215,7 @@ export function TextLayer({
           tokenKeys={lineMorph.tokenKeys}
           underline={style.underline}
           unitRef={lineMorph.unitRef}
+          reveal={reveal}
         />
       </div>
       {lineMorph.leaving.map((data) => (

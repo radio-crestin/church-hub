@@ -244,5 +244,14 @@ export function useLineMorph({
     }
   }
 
-  return { lineKeys, tokenKeys, unitRef, leaving, rejects, play }
+  return {
+    lineKeys,
+    tokenKeys,
+    lineMatch,
+    tokenMatch,
+    unitRef,
+    leaving,
+    rejects,
+    play,
+  }
 }

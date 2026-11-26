@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 
+import { usePresentationState } from '~/features/presentation'
 import type { VerseteTineriEntry } from '~/features/presentation/types'
 import { useVerseSlideshow } from './useVerseSlideshow'
 import type { BibleBookmark } from '../service/bookmarks'
+import { getVerseSlideshow } from '../utils/getVerseSlideshow'
 
 function toEntry(bookmark: BibleBookmark, index: number): VerseteTineriEntry {
   return {
@@ -20,6 +22,11 @@ function toEntry(bookmark: BibleBookmark, index: number): VerseteTineriEntry {
   }
 }
 
+/** The bookmarks in the order their slideshow shows them: the list's. */
+export function slideshowOrder(bookmarks: BibleBookmark[]): BibleBookmark[] {
+  return [...bookmarks].sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
 /**
  * Shows the bookmarked verses on screen one after another, in the list's
  * order: stepped with the arrows, or with `loop` on by themselves and over
@@ -27,7 +34,7 @@ function toEntry(bookmark: BibleBookmark, index: number): VerseteTineriEntry {
  */
 export function useBookmarkSlideshow(bookmarks: BibleBookmark[]) {
   const entries = useMemo(
-    () => [...bookmarks].sort((a, b) => a.sortOrder - b.sortOrder).map(toEntry),
+    () => slideshowOrder(bookmarks).map(toEntry),
     [bookmarks],
   )
   const slideshow = useVerseSlideshow('bookmarks', entries)
@@ -35,6 +42,14 @@ export function useBookmarkSlideshow(bookmarks: BibleBookmark[]) {
   return {
     ...slideshow,
     // ▶ steps by hand; 🔁 plays on its own
-    start: (loop: boolean) => slideshow.start(loop ? 'loop' : 'manual'),
+    start: (loop: boolean, fromIndex?: number) =>
+      slideshow.start(loop ? 'loop' : 'manual', fromIndex),
   }
+}
+
+/** The bookmark the bookmarks slideshow has on screen, or null. */
+export function useLiveBookmarkId(): number | null {
+  const { data: state } = usePresentationState()
+  const playing = getVerseSlideshow(state, 'bookmarks')
+  return playing?.entries[playing.currentEntryIndex]?.id ?? null
 }

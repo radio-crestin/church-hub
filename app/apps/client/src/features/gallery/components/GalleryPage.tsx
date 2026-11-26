@@ -18,19 +18,24 @@ import { GalleryItemCard } from './GalleryItemCard'
 import { GalleryPreviewModal } from './GalleryPreviewModal'
 import { GalleryUploadButton } from './GalleryUploadButton'
 import { useGalleryUpload } from '../hooks/useGalleryUpload'
+import { useLiveGalleryMediaId } from '../hooks/useLiveGalleryMediaId'
+import { usePresentGalleryItem } from '../hooks/usePresentGalleryItem'
 import type { GalleryFilter } from '../types'
 
 const logger = createLogger('app:gallery')
 
 /**
  * Every uploaded image and video in one place: upload several at once, filter
- * by kind, preview at full size and delete. The same files are offered as
+ * by kind, preview at full size, present on the screens and delete. The same files are offered as
  * screen and song backgrounds.
  */
 export function GalleryPage() {
   const { t } = useTranslation('gallery')
   const { showToast } = useToast()
   const canEdit = useHasPermission('displays.edit')
+  const canPresent = useHasPermission('control_room.control')
+  const presentItem = usePresentGalleryItem()
+  const liveMediaId = useLiveGalleryMediaId()
   const {
     data: media = [],
     isLoading,
@@ -110,7 +115,9 @@ export function GalleryPage() {
           <GalleryItemCard
             key={item.id}
             media={item}
+            isLive={item.id === liveMediaId}
             onPreview={() => setPreviewMedia(item)}
+            onPresent={canPresent ? () => presentItem(item) : undefined}
             onDelete={canEdit ? () => setPendingDelete(item) : undefined}
           />
         ))}
@@ -152,6 +159,7 @@ export function GalleryPage() {
       <GalleryPreviewModal
         media={previewMedia}
         onClose={() => setPreviewMedia(null)}
+        onPresent={canPresent ? presentItem : undefined}
       />
 
       <ConfirmModal

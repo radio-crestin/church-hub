@@ -50,7 +50,7 @@ tauri-utils = "2"
 url = "2"
 ureq = "2"
 tauri-plugin-single-instance = "2"
-rodio = { version = "0.20", features = ["symphonia-all"] }
+rodio = { version = "0.21.1", features = ["symphonia-all"] }
 tauri-plugin-updater = "2"
 # Native screen sharing (src/screen_capture/): xcap captures a screen or
 # window on all three OSes, image scales and JPEG-encodes it, wgpu draws it on

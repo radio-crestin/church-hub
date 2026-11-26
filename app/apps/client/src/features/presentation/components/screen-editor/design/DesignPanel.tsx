@@ -179,6 +179,13 @@ export function DesignPanel({
               formatValue={(value) => `${value} ms`}
             />
           </div>
+          <SwitchRow
+            label={t('templates.design.typewriter')}
+            description={t('templates.design.typewriterDescription')}
+            checked={design.typewriter}
+            onCheckedChange={(typewriter) => apply({ typewriter })}
+            testId="theme-design-typewriter"
+          />
         </div>
       </SettingsSection>
     </div>
