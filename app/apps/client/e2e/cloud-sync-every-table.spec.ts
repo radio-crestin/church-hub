@@ -277,9 +277,10 @@ test.describe
       await request.post('/api/bible-bookmark-notes', {
         data: { content: `E2E Bible note ${stamp}` },
       })
-      await request.post('/api/music/playlists', {
+      const playlist = await request.post('/api/music/playlists', {
         data: { name: `E2E playlist ${stamp}` },
       })
+      const playlistId = (await playlist.json()).data.id as number
       await request.post('/api/settings/app_settings', {
         data: { key: 'search_synonyms', value: `[["e2e${stamp}","test"]]` },
       })
@@ -329,6 +330,8 @@ test.describe
           (change) => change.type === 'setting' && change.uuid === 'theme',
         ),
       ).toBe(false)
+      // The music page lists every playlist: leave none behind.
+      await request.delete(`/api/music/playlists/${playlistId}`)
     })
 
     test('a phone changes what its user may; the PC applies it; the rest is refused with the permission', async ({
