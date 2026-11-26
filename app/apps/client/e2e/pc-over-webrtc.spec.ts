@@ -4,7 +4,7 @@ import { FakeS3 } from './helpers/fake-s3'
 import { PublicAppServer } from './helpers/public-app'
 import { relayToService } from './helpers/relay-to-service'
 import { SyncService } from './helpers/sync-service'
-import { FAKE_RELAY_URL } from '../playwright.config'
+import { SIGNALING_RELAY_URL } from '../playwright.config'
 
 /**
  * Phones reach the church PC over WebRTC when it's online (T-174): a phone
@@ -113,7 +113,7 @@ test.describe
     test('the join link names the PC’s room and its relay', () => {
       const params = new URLSearchParams(joinUrl.split('#')[1])
       expect(params.get('p')).toMatch(/^[\w-]{16,}$/)
-      expect(params.get('r')).toBe(FAKE_RELAY_URL)
+      expect(params.get('r')).toBe(SIGNALING_RELAY_URL)
     })
 
     test('a joined phone gets the PC’s live API as its own user, and its songs at once', async ({
