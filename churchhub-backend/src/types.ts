@@ -69,6 +69,12 @@ export interface Bindings {
   /** Abuse guard for registering a church (optional binding). */
   SYNC_RATE_LIMITER?: RateLimit
   /**
+   * The curated Church Hub Library (T-177): the curators' Google accounts
+   * (emails or subs, comma-separated), and the abuse guard on submissions.
+   */
+  LIBRARY_CURATORS?: string
+  LIBRARY_RATE_LIMITER?: RateLimit
+  /**
    * Church Hub Cloud backup (free, Google sign-in): a PRIVATE bucket of its
    * own and two secrets. Unset = /backup answers 503. See src/backup/.
    */

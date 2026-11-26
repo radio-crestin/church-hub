@@ -28,6 +28,8 @@
   "verdict": {
     "new": "Nouă",
     "similar": "Există una similară",
+    "exact-source": "Deja în bibliotecă",
+    "exact-lyrics": "Deja în bibliotecă",
     "exact-title": "Deja în bibliotecă",
     "exact-filename": "Deja în bibliotecă"
   },
@@ -140,6 +142,24 @@
       "syncNow": "Sincronizează acum",
       "stop": "Oprește distribuirea",
       "failed": "Distribuirea a eșuat: {{error}}"
+    },
+    "share": {
+      "title": "Partajează cântările mele",
+      "description": "Publică cântările prin sincronizarea în cloud Church Hub, fără chei S3 proprii. Alte biserici le adaugă prin link sau din catalog, dacă le listezi. Se sincronizează la fiecare 5 minute.",
+      "needsCloudSync": "Pornește mai întâi sincronizarea în cloud: partajarea trece prin ea.",
+      "name": "Nume",
+      "namePlaceholder": "de ex. Cântările bisericii noastre",
+      "scope": "Ce partajezi",
+      "wholeLibrary": "Toată biblioteca",
+      "someCategories": "Categoriile alese",
+      "listed": "Listează în catalogul public",
+      "listedHint": "Nelistată, o găsesc doar cei care au linkul.",
+      "button": "Partajează",
+      "update": "Salvează",
+      "inCatalog": "în catalog",
+      "unlisted": "nelistată",
+      "stop": "Oprește partajarea",
+      "failed": "Partajarea a eșuat: {{error}}"
     }
   },
   "page": {
@@ -202,7 +222,10 @@
     "subtitle": "{{source}} · o versiune mai nouă a cântării din biblioteca ta",
     "update": "Actualizează",
     "keep": "Păstrează-o pe a mea",
-    "editedNeverHere": "Cântările modificate de tine nu apar aici: nu sunt înlocuite niciodată."
+    "editedBadge": "Modificată aici · versiune nouă",
+    "editedSubtitle": "{{source}} · o versiune mai nouă a unei cântări pe care ai modificat-o aici",
+    "editedUpdate": "Actualizarea îți înlocuiește modificările cu această versiune.",
+    "followsSource": "O cântare nemodificată își urmează singură sursa."
   },
   "recoverTitles": {
     "description": "Cântările importate din Resurse Creștine în versiunile mai vechi sunt salvate cu primul vers ca titlu, iar numele sub care le știe sursa s-a pierdut. Recuperează-l, ca să le poți găsi din nou după acel nume.",
@@ -212,5 +235,16 @@
     "done_few": "{{count}} cântări și-au recăpătat titlul original",
     "done_other": "{{count}} de cântări și-au recăpătat titlul original",
     "failed": "Titlurile nu au putut fi recuperate: {{error}}"
+  },
+  "catalog": {
+    "title": "Biblioteci partajate",
+    "loading": "Se încarcă catalogul…",
+    "failed": "Catalogul nu a putut fi încărcat.",
+    "empty": "Nicio biserică nu a listat încă o bibliotecă.",
+    "meta_one": "{{publisher}} · {{count}} cântare",
+    "meta_few": "{{publisher}} · {{count}} cântări",
+    "meta_other": "{{publisher}} · {{count}} de cântări",
+    "add": "Adaugă",
+    "added": "Adăugată"
   }
 }

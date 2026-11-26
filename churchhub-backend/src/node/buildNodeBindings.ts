@@ -30,6 +30,7 @@ export function buildNodeBindings(
     SIGNALING_KV: redis ? createRedisKv(redis) : createMemoryKv(),
     FEATURE_REQUEST_RATE_LIMITER: limiter('FEATURE_REQUEST_RATE_LIMITER'),
     SYNC_RATE_LIMITER: limiter('SYNC_RATE_LIMITER'),
+    LIBRARY_RATE_LIMITER: limiter('LIBRARY_RATE_LIMITER'),
     BACKUP_RATE_LIMITER: limiter('BACKUP_RATE_LIMITER'),
     BACKUP_ACCOUNT_RATE_LIMITER: limiter('BACKUP_ACCOUNT_RATE_LIMITER'),
   }

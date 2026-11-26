@@ -1,6 +1,11 @@
 import { normalizeForIndex } from './search'
 import { findLibraryVersions } from './song-versions/findLibraryVersions'
-import type { DiscoveryCandidateInput, DiscoveryMatchResult } from './types'
+import { fillContentHashes } from './source-link/fillContentHashes'
+import type {
+  DiscoveryCandidateInput,
+  DiscoveryMatchResult,
+  DiscoveryMatchVerdict,
+} from './types'
 import { getDatabase } from '../../db'
 import { songs } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
@@ -14,14 +19,20 @@ const SIMILAR_MIN_SCORE = 0.55
 const SIMILAR_LIMIT = 5
 
 /**
- * The two cheap exact-match indexes over the whole library, built once per
- * request: `source_filename` → id and `normalizeForIndex(title)` → id.
- * First-writer-wins on collisions — any match means the candidate is present.
+ * The cheap exact-match indexes over the whole library, built once per
+ * request: source song → id, `content_hash` → id, `source_filename` → id and
+ * `normalizeForIndex(title)` → id. First-writer-wins on collisions — any
+ * match means the candidate is present.
  */
 interface LibraryExactIndex {
+  bySourceSong: Map<string, number>
+  byContentHash: Map<string, number>
   byFilename: Map<string, number>
   byNormalizedTitle: Map<string, number>
 }
+
+const sourceSongKey = (sourceId: string, sourceSongId: string) =>
+  `${sourceId}\n${sourceSongId}`
 
 /**
  * Case-insensitive title key. `normalizeForIndex` strips diacritics + punctuation
@@ -37,19 +48,32 @@ function normalizeTitleKey(title: string): string {
 }
 
 function buildLibraryExactIndex(): LibraryExactIndex {
+  fillContentHashes()
   const db = getDatabase()
   const libraryRows = db
     .select({
       id: songs.id,
       title: songs.title,
       sourceFilename: songs.sourceFilename,
+      sourceId: songs.sourceId,
+      sourceSongId: songs.sourceSongId,
+      contentHash: songs.contentHash,
     })
     .from(songs)
     .all()
 
+  const bySourceSong = new Map<string, number>()
+  const byContentHash = new Map<string, number>()
   const byFilename = new Map<string, number>()
   const byNormalizedTitle = new Map<string, number>()
   for (const row of libraryRows) {
+    if (row.sourceId && row.sourceSongId) {
+      const key = sourceSongKey(row.sourceId, row.sourceSongId)
+      if (!bySourceSong.has(key)) bySourceSong.set(key, row.id)
+    }
+    if (row.contentHash && !byContentHash.has(row.contentHash)) {
+      byContentHash.set(row.contentHash, row.id)
+    }
     if (row.sourceFilename && !byFilename.has(row.sourceFilename)) {
       byFilename.set(row.sourceFilename, row.id)
     }
@@ -58,10 +82,10 @@ function buildLibraryExactIndex(): LibraryExactIndex {
       byNormalizedTitle.set(normTitle, row.id)
     }
   }
-  return { byFilename, byNormalizedTitle }
+  return { bySourceSong, byContentHash, byFilename, byNormalizedTitle }
 }
 
-/** Whether the candidate exactly matches a library song by filename or title. */
+/** Whether the candidate exactly matches a library song by filename or title (no source, no lyrics: the caller has neither). */
 function isExactLibraryMatch(
   index: LibraryExactIndex,
   candidate: { title: string; sourceFilename: string | null },
@@ -83,10 +107,12 @@ function isExactLibraryMatch(
  *
  * Combined dedup, in increasing cost order — the cheap exact passes short-
  * circuit so the expensive FTS-backed fuzzy pass only runs for candidates
- * that are new-by-filename AND new-by-title:
- *   1. exact `source_filename` match  → 'exact-filename'
- *   2. exact normalized-title match   → 'exact-title'
- *   3. fuzzy version match against the whole library (findLibraryVersions)
+ * none of them found:
+ *   1. the same source and source song id → 'exact-source'
+ *   2. the same lyrics fingerprint        → 'exact-lyrics'
+ *   3. exact `source_filename` match      → 'exact-filename'
+ *   4. exact normalized-title match       → 'exact-title'
+ *   5. fuzzy version match against the whole library (findLibraryVersions)
  *      → 'similar' (with matches) else 'new'
  *
  * The library snapshot (filename + normalized-title maps) is built ONCE for
@@ -99,10 +125,32 @@ export function matchCandidatesAgainstLibrary(
   if (candidates.length === 0) return []
 
   try {
-    const { byFilename, byNormalizedTitle } = buildLibraryExactIndex()
+    const { bySourceSong, byContentHash, byFilename, byNormalizedTitle } =
+      buildLibraryExactIndex()
+    const exact = (
+      candidate: DiscoveryCandidateInput,
+      verdict: DiscoveryMatchVerdict,
+      id: number,
+    ): DiscoveryMatchResult => ({
+      tempId: candidate.tempId,
+      verdict,
+      exactSongId: id,
+      similar: [],
+    })
 
     return candidates.map((candidate) => {
-      // 1) Exact filename.
+      if (candidate.sourceId && candidate.sourceSongId) {
+        const hit = bySourceSong.get(
+          sourceSongKey(candidate.sourceId, candidate.sourceSongId),
+        )
+        if (hit != null) return exact(candidate, 'exact-source', hit)
+      }
+      if (candidate.fingerprint) {
+        const hit = byContentHash.get(candidate.fingerprint)
+        if (hit != null) return exact(candidate, 'exact-lyrics', hit)
+      }
+
+      // Exact filename.
       if (candidate.sourceFilename) {
         const hit = byFilename.get(candidate.sourceFilename)
         if (hit != null) {
@@ -115,7 +163,7 @@ export function matchCandidatesAgainstLibrary(
         }
       }
 
-      // 2) Exact normalized title (case-insensitive, like the importer).
+      // Exact normalized title (case-insensitive, like the importer).
       const normTitle = normalizeTitleKey(candidate.title)
       if (normTitle) {
         const hit = byNormalizedTitle.get(normTitle)
@@ -129,7 +177,7 @@ export function matchCandidatesAgainstLibrary(
         }
       }
 
-      // 3) Fuzzy version match — only reached when both exact passes missed.
+      // Fuzzy version match — only reached when every exact pass missed.
       const similar = findLibraryVersions(candidate.title, candidate.lyrics, {
         limit: SIMILAR_LIMIT,
         minScore: SIMILAR_MIN_SCORE,

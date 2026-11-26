@@ -1,4 +1,5 @@
 import { applySourcePending } from './applySourcePending'
+import { readChangedSongs } from './changedSongsStore'
 import { recordSyncedNotification } from './songSyncNotifications'
 import { getStoredSourceUpdates, saveSourceUpdates } from './sourceUpdatesStore'
 import type { SourceSongChanges } from './types'
@@ -22,7 +23,8 @@ export function syncPendingSongs(): SourceSongChanges[] {
     return {
       ...update,
       newCount: 0,
-      changedCount: 0,
+      // New versions of songs changed here stay for the user to take.
+      changedCount: readChangedSongs(update.sourceId).length,
       imported: synced.added.count,
       updated: synced.updated.count,
     }

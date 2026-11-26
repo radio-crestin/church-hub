@@ -27,6 +27,8 @@
   "verdict": {
     "new": "New",
     "similar": "Similar exists",
+    "exact-source": "Already in library",
+    "exact-lyrics": "Already in library",
     "exact-title": "Already in library",
     "exact-filename": "Already in library"
   },
@@ -134,6 +136,24 @@
       "syncNow": "Sync now",
       "stop": "Stop sharing",
       "failed": "Sharing failed: {{error}}"
+    },
+    "share": {
+      "title": "Share my songs",
+      "description": "Publish your songs through Church Hub's cloud sync, without S3 keys of your own. Other churches add them by link, or from the catalog if you list them. Kept in sync every 5 minutes.",
+      "needsCloudSync": "Turn on cloud sync first: sharing goes through it.",
+      "name": "Name",
+      "namePlaceholder": "e.g. Songs of our church",
+      "scope": "What to share",
+      "wholeLibrary": "The whole library",
+      "someCategories": "Chosen categories",
+      "listed": "List it in the public catalog",
+      "listedHint": "Unlisted, only people with the link can find it.",
+      "button": "Share",
+      "update": "Save",
+      "inCatalog": "in the catalog",
+      "unlisted": "unlisted",
+      "stop": "Stop sharing",
+      "failed": "Sharing failed: {{error}}"
     }
   },
   "page": {
@@ -190,7 +210,10 @@
     "subtitle": "{{source}} · a newer version of the song in your library",
     "update": "Update",
     "keep": "Keep mine",
-    "editedNeverHere": "Songs you edited never show up here: they are never replaced."
+    "editedBadge": "Edited here · new version",
+    "editedSubtitle": "{{source}} · a newer version of a song you changed here",
+    "editedUpdate": "Updating replaces your changes with this version.",
+    "followsSource": "An untouched song follows its source on its own."
   },
   "recoverTitles": {
     "description": "Songs imported from Resurse Creștine in older versions are filed under their first verse, and the name the source knows them by was lost. Recover it so they can be found by that name again.",
@@ -199,5 +222,15 @@
     "done_one": "{{count}} song got its original title back",
     "done_other": "{{count}} songs got their original title back",
     "failed": "Couldn't recover the titles: {{error}}"
+  },
+  "catalog": {
+    "title": "Shared libraries",
+    "loading": "Loading the catalog…",
+    "failed": "The catalog could not be loaded.",
+    "empty": "No church has listed a library yet.",
+    "meta_one": "{{publisher}} · {{count}} song",
+    "meta_other": "{{publisher}} · {{count}} songs",
+    "add": "Add",
+    "added": "Added"
   }
 }

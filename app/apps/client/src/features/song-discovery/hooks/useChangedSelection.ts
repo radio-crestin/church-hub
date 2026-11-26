@@ -9,7 +9,8 @@ export interface ChangedItem extends ChangedEntry {
 }
 
 /**
- * The changed songs the user picks to update (all at first), and their
+ * The changed songs the user picks to update (all at first, but the ones
+ * changed here), and their
  * choice for each: update it, or keep the library's. A song updated or
  * kept leaves the list.
  */
@@ -18,7 +19,9 @@ export function useChangedSelection(
   isSourceChecked: (sourceId: string) => boolean,
 ) {
   const { resolveChanged, isResolving } = useSongUpdates()
-  const [unselected, setUnselected] = useState<Set<string>>(() => new Set())
+  // Songs whose choice differs from their default: picked, unless changed
+  // here (then a new version the user takes only on purpose).
+  const [toggled, setToggled] = useState<Set<string>>(() => new Set())
   const [resolved, setResolved] = useState<Set<string>>(() => new Set())
 
   const remaining = useMemo(
@@ -29,8 +32,11 @@ export function useChangedSelection(
     () =>
       remaining
         .filter((entry) => isSourceChecked(entry.sourceId))
-        .map((entry) => ({ ...entry, selected: !unselected.has(entry.key) })),
-    [remaining, isSourceChecked, unselected],
+        .map((entry) => ({
+          ...entry,
+          selected: !entry.edited !== toggled.has(entry.key),
+        })),
+    [remaining, isSourceChecked, toggled],
   )
 
   /** Songs left to choose for, per source. */
@@ -68,10 +74,13 @@ export function useChangedSelection(
     countBySource,
     isResolving,
     setSelected: (keys: string[], selected: boolean) =>
-      setUnselected((previous) => {
+      setToggled((previous) => {
+        const edited = new Set(
+          entries.filter((entry) => entry.edited).map((entry) => entry.key),
+        )
         const next = new Set(previous)
         for (const key of keys) {
-          if (selected) next.delete(key)
+          if (selected === !edited.has(key)) next.delete(key)
           else next.add(key)
         }
         return next

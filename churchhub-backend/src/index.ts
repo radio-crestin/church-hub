@@ -10,6 +10,7 @@ import backup from './routes/backup'
 import { runBackupMaintenance } from './backup/runBackupMaintenance'
 import featureRequests from './routes/feature-requests'
 import health from './routes/health'
+import libraries from './routes/libraries'
 import signal from './routes/signal'
 import sync from './routes/sync'
 import syncOwner from './routes/syncOwner'
@@ -34,6 +35,7 @@ app.route('/', featureRequests)
 app.route('/', signal)
 app.route('/', sync)
 app.route('/', syncOwner)
+app.route('/', libraries)
 app.route('/', backup)
 
 // 404 handler
