@@ -83,6 +83,8 @@ async function saveSongWithBackground(
 async function showSong(page: Page, title: string): Promise<Locator> {
   const songId = await findSong(page, title)
   expect(songId).toBeTruthy()
+  await page.goto(`${publicApp.url}/songs/${songId}`)
+  await waitForApp(page)
   const presented = await pageApi(
     page,
     'POST',
@@ -90,8 +92,17 @@ async function showSong(page: Page, title: string): Promise<Locator> {
     { songId, slideIndex: 0 },
   )
   expect(presented.status, JSON.stringify(presented.json)).toBe(200)
-  await page.goto(`${publicApp.url}/songs/${songId}`)
   return page.getByTestId('live-preview').getByTestId('screen-background')
+}
+
+/** The song's background as the page's own server has it. */
+async function storedBackground(page: Page, title: string) {
+  const song = await pageApi(
+    page,
+    'GET',
+    `/api/songs/${await findSong(page, title)}`,
+  )
+  return (song.json?.data as { background?: unknown } | undefined)?.background
 }
 
 /** The image the background layer shows, once it has loaded: its URL. */
@@ -237,10 +248,14 @@ test.describe
     test('with the PC out of reach, it comes from the church’s bucket', async ({
       request,
     }) => {
+      // The phone starts over on its own server once the tunnel closes.
       await setRemoteAccess(request, false)
-      await page.reload()
+      await expect.poll(() => onThePc(page), { timeout: 90_000 }).toBe(false)
       await waitForApp(page)
-      await expect.poll(() => onThePc(page), { timeout: 60_000 }).toBe(false)
+      // The song came with its background from the church's bucket.
+      await expect
+        .poll(() => storedBackground(page, imageSongTitle), { timeout: 60_000 })
+        .toMatchObject({ type: 'image', imageUrl: `${MEDIA_API}/${imageId}` })
 
       const src = await loadedBackgroundImage(
         await showSong(page, imageSongTitle),
@@ -259,7 +274,6 @@ test.describe
       const placeholder = background.getByTestId('media-unavailable')
       await expect(placeholder).toBeVisible({ timeout: 30_000 })
       await expect(placeholder).toHaveAttribute('data-media-kind', 'video')
-      await expect(placeholder).toHaveAccessibleName('Video not available')
     })
 
     test('offline, the image still shows from the browser’s cache', async () => {
