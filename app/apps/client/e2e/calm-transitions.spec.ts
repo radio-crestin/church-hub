@@ -253,7 +253,7 @@ test.describe('Calm slide transitions', () => {
     expect(verse.at(-1)).toBe(1)
   })
 
-  test('a song, then a verse: the song fades out as the verse fades in', async ({
+  test('a song, then a verse: the song fades out, then the verse fades in', async ({
     page,
     request,
   }) => {
@@ -294,12 +294,11 @@ test.describe('Calm slide transitions', () => {
       frames.some(([, verse]) => isFading(verse)),
       'verse fades in',
     ).toBe(true)
-    // A crossfade (T-158): the verse comes in while the song leaves, with no
-    // blank screen between them.
+    // Never on screen together: the verse comes in once the song is gone.
     expect(
-      frames.some(([song, verse]) => isFading(song) && isFading(verse)),
-      'they cross',
-    ).toBe(true)
+      frames.some(([song, verse]) => song > 0 && verse > 0),
+      'they never cross',
+    ).toBe(false)
     expect(frames.at(-1)).toEqual([0, 1])
 
     // The next verse after a song is a slide change too, not a cut.

@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { ExtraServer } from './helpers/extra-server'
+import { openSealed, SEALED } from './helpers/sealed-secrets'
 
 /**
  * Updating the app must never lose a church's data. Every start runs the
@@ -17,6 +18,27 @@ const PASSAGES_FLAG = 'merge_bible_passages_into_versete_tineri_v1'
 test.describe.configure({ mode: 'serial', timeout: 600_000 })
 
 let server: ExtraServer
+
+const SECRET_MASK = '••••••••'
+
+/** A secret field of a setting, opened from the database. */
+function storedSettingField(key: string, field: string): string {
+  const db = new DatabaseSync(server.databasePath, { readOnly: true })
+  try {
+    const row = db
+      .prepare('SELECT value FROM app_settings WHERE key = ?')
+      .get(key) as { value: string }
+    const stored = JSON.parse(row.value)[field] as string
+    expect(stored).toMatch(SEALED)
+    return openSealed(
+      server.databasePath,
+      stored,
+      `app_settings.value:${key}.${field}`,
+    )
+  } finally {
+    db.close()
+  }
+}
 
 test.beforeAll(async () => {
   server = new ExtraServer()
@@ -89,7 +111,9 @@ test('what a user saved survives a restart', async () => {
   const aiConfig = (
     await (await api.get('/api/settings/app_settings/ai_search_config')).json()
   ).data.value as string
-  expect(JSON.parse(aiConfig).apiKey).toBe(USER_AI_KEY)
+  // Kept, sealed, and never sent back: the API shows the mask.
+  expect(JSON.parse(aiConfig).apiKey).toBe(SECRET_MASK)
+  expect(storedSettingField('ai_search_config', 'apiKey')).toBe(USER_AI_KEY)
 
   const screenAfter = (await (await api.get(`/api/screens/${screenId}`)).json())
     .data as { alwaysOnTop: boolean }
@@ -104,7 +128,10 @@ test('what a user saved survives a restart', async () => {
   expect(translation.targets).toHaveLength(1)
   expect(translation.targets[0].targetLanguage).toBe('hu')
   expect(translation.targets[0].voiceName).toBe('Kore')
-  expect(translation.geminiApiKey).toBe('church-gemini-key')
+  expect(translation.geminiApiKey).toBe(SECRET_MASK)
+  expect(storedSettingField('live_translation_settings', 'geminiApiKey')).toBe(
+    'church-gemini-key',
+  )
   expect(translation.outputMode).toBe('both')
 })
 

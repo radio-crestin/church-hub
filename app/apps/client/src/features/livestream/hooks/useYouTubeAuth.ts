@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '~/ui/toast'
 import {
   getYouTubeAuthStatus,
-  getYouTubeAuthUrl,
   logoutYouTube,
+  startYouTubeSignIn,
   storeYouTubeTokens,
 } from '../service'
 import { isTauri, openAuthUrl } from '../utils'
@@ -23,14 +23,6 @@ export function useYouTubeAuth() {
     queryKey: ['livestream', 'youtube', 'auth'],
     queryFn: getYouTubeAuthStatus,
     staleTime: 5 * 60 * 1000,
-  })
-
-  // Fetched ahead, so the browser popup opens within the click's gesture.
-  const authMode = isTauri() ? 'redirect' : 'postMessage'
-  const authUrlQuery = useQuery({
-    queryKey: ['livestream', 'youtube', 'auth-url', authMode],
-    queryFn: () => getYouTubeAuthUrl(authMode),
-    staleTime: Number.POSITIVE_INFINITY,
   })
 
   // Show toast when requiresReauth becomes true
@@ -82,10 +74,12 @@ export function useYouTubeAuth() {
     setAuthError(null)
 
     try {
-      const authUrl = authUrlQuery.data ?? (await getYouTubeAuthUrl(authMode))
-      // In Tauri, the backend redirects back to the app; the WebSocket tells
-      // us when the tokens are stored.
-      if (authMode === 'redirect') {
+      const mode = isTauri() ? 'redirect' : 'postMessage'
+      const { state, authUrl } = await startYouTubeSignIn(mode)
+
+      // In Tauri, the backend redirects back to the app's callback page with
+      // the state; the WebSocket tells us when the tokens are stored.
+      if (mode === 'redirect') {
         await openAuthUrl(authUrl, { popupName: 'youtube-auth' })
         // Keep authenticating state until WebSocket updates or timeout
         setTimeout(() => {
@@ -115,7 +109,9 @@ export function useYouTubeAuth() {
 
           try {
             // Send tokens to server for storage
+            // Tokens from the OAuth server's own window (origin checked above)
             await storeMutation.mutateAsync({
+              state,
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
               expiresAt: tokens.expiresAt,
@@ -153,7 +149,7 @@ export function useYouTubeAuth() {
       setAuthError(err instanceof Error ? err.message : 'Authentication failed')
       setIsAuthenticating(false)
     }
-  }, [storeMutation, authUrlQuery.data, authMode])
+  }, [storeMutation])
 
   return {
     ...query,

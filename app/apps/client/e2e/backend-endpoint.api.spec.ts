@@ -58,11 +58,20 @@ const dataOf = async (response: APIResponse) => {
 test.describe('The backend set on this machine', () => {
   test('Google sign-in for YouTube, Drive and the cloud owner opens there', async () => {
     const youtube = await dataOf(
-      await api.get('/api/livestream/youtube/auth-url?mode=redirect'),
+      await api.post('/api/livestream/youtube/sign-in', {
+        data: { mode: 'redirect' },
+      }),
     )
     expect(pageOf(youtube.authUrl)).toBe(`${backend.url}/auth/youtube`)
+    // The desktop app's callback gets the sign-in's state back.
+    const returnUrl = new URL(youtube.authUrl).searchParams.get('returnUrl')
+    expect(new URL(returnUrl ?? '').searchParams.get('state')).toBe(
+      youtube.state,
+    )
     const popup = await dataOf(
-      await api.get('/api/livestream/youtube/auth-url?mode=postMessage'),
+      await api.post('/api/livestream/youtube/sign-in', {
+        data: { mode: 'postMessage' },
+      }),
     )
     expect(pageOf(popup.authUrl)).toBe(`${backend.url}/auth/youtube`)
 
@@ -123,7 +132,7 @@ test.describe('A build with no backend set', () => {
     request,
   }) => {
     const youtube = await dataOf(
-      await request.get('/api/livestream/youtube/auth-url?mode=redirect'),
+      await request.post('/api/livestream/youtube/sign-in'),
     )
     expect(pageOf(youtube.authUrl)).toBe(
       'https://churchub-backend.radiocrestin.ro/auth/youtube',

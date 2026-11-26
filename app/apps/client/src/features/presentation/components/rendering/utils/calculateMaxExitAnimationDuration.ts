@@ -1,14 +1,16 @@
 import type { AnimationConfig, ContentTypeConfig } from '../../../types'
 import { FACTORY_TRANSITIONS } from '../../../utils/factoryTransitions'
 
-const ANIMATED_ELEMENTS = [
+/** The text elements that animate in and out (AnimatedText). */
+export const ANIMATED_ELEMENTS = [
   'mainText',
   'contentText',
   'referenceText',
   'personLabel',
 ] as const
 
-function totalDuration(animation: AnimationConfig): number {
+/** An animation's whole length, its delay included; a cut takes none. */
+export function totalDuration(animation: AnimationConfig): number {
   if (animation.type === 'none') return 0
   return animation.duration + (animation.delay ?? 0)
 }

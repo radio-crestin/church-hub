@@ -241,6 +241,7 @@ export function LivePreview({
               styleRanges={styleRanges}
               clockOverride={clockOverride}
               hideBackground={hideBackground}
+              crossfadeBackground
             />
           </TypewriterContext>
           {contextMenu.visible && (

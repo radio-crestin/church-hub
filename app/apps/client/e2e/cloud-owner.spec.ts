@@ -10,8 +10,10 @@ import {
 
 import { FakeGoogle } from './helpers/fake-google'
 import { FakeS3 } from './helpers/fake-s3'
+import { openSealed, SEALED } from './helpers/sealed-secrets'
 import { SyncService } from './helpers/sync-service'
 import { makeTempDir, removeTempDir } from './helpers/temp-dir'
+import { TEST_DB_PATH } from '../playwright.config'
 
 /**
  * Cloud sync's owner (T-172): Google sign-in through the self-hosted sync
@@ -145,13 +147,8 @@ test.describe
     })
 
     test('a local backup holds the church id, path, token and owner, and restoring it reconnects', async ({
-      page,
       request,
     }) => {
-      // The backup screen says the file holds the cloud keys.
-      await page.goto('/settings/backup')
-      await expect(page.getByTestId('cloud-backup-warning')).toBeVisible()
-
       expect((await request.post('/api/backup/local/now')).status()).toBe(200)
       const [fileName] = readdirSync(folder).filter((n) => n.endsWith('.db'))
       const backup = new DatabaseSync(join(folder, fileName as string), {
@@ -167,6 +164,21 @@ test.describe
         church_id: churchId,
         owner_email: OWNER.email,
       })
+      // The read path and the token are sealed with this computer's data
+      // key: only a copy of the whole data folder, key file and all, opens
+      // them, as the second PC in the next test has.
+      expect(backupIdentity.read_url).toMatch(SEALED)
+      expect(backupIdentity.server_token).toMatch(SEALED)
+      backupIdentity.read_url = openSealed(
+        TEST_DB_PATH,
+        backupIdentity.read_url,
+        'cloud_sync.read_url',
+      )
+      backupIdentity.server_token = openSealed(
+        TEST_DB_PATH,
+        backupIdentity.server_token,
+        'cloud_sync.server_token',
+      )
       // The read path's secret is in the read URL; the token is the server's.
       expect(backupIdentity.read_url).toMatch(
         new RegExp(`/churches/${churchId}-[A-Za-z0-9_-]{43}$`),

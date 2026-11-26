@@ -10,6 +10,7 @@ import { createLogger } from '../../utils/logger'
 import { getDatabasePath, getDataDir } from '../../utils/paths'
 import { rebuildSearchIndex as rebuildBibleSearchIndex } from '../bible/search'
 import { rebuildScheduleSearchIndex } from '../schedules/search'
+import { sealDatabaseSecrets } from '../secret-store/stored-secrets'
 import { rebuildSearchIndex as rebuildSongsSearchIndex } from '../songs/search'
 
 const logger = createLogger('database')
@@ -552,6 +553,11 @@ export async function selectiveImportDatabase(
       if (options.bible) {
         logger.debug('Rebuilding Bible FTS index')
         rebuildBibleSearchIndex()
+      }
+      // Configuration rows arrive as the source stored them: plain text from
+      // an older version, or sealed on another computer.
+      if (options.configurations) {
+        await sealDatabaseSecrets(destDb, { forgetUnreadable: true })
       }
 
       const duration = performance.now() - startTime

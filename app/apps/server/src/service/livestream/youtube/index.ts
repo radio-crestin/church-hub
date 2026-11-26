@@ -23,6 +23,5 @@ export {
   createYouTubeAuthUrl,
   type YouTubeAuthMode,
 } from './createYouTubeAuthUrl'
-export { consumePKCESession, storePKCESession } from './pkce-session'
 export { getPlaylists } from './playlists'
 export { getVideoCategories } from './video-categories'

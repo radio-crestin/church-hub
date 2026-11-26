@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
-import { ScreenBackground } from './ScreenBackground'
+import { CrossfadeScreenBackground } from './CrossfadeScreenBackground'
 import { ScreenContentLayers } from './ScreenContentLayers'
 import { TypewriterContext } from './TypewriterContext'
+import { backgroundTransition } from './utils/backgroundTransition'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
@@ -18,7 +19,6 @@ import { ScreenShareView } from '../../screen-share'
 import type { ScreenShareContentConfig } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
-import { resolveScreenBackground } from '../../utils/resolveScreenBackground'
 
 const logger = createLogger('ScreenRenderer')
 
@@ -628,14 +628,14 @@ export function ScreenRenderer({
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
   )
 
-  // The song's own background or the screen's one for the content shown.
-  // When disconnected and hidden, use empty state background
-  const effectiveContentType = isDisconnectedAndHidden ? 'empty' : contentType
-  const bg = resolveScreenBackground({
-    screen,
-    contentType: effectiveContentType,
-    contentData,
-  })
+  // The song's own background or the screen's one for the content shown,
+  // changing in step with the text. When disconnected and hidden, use empty
+  // state background
+  const background = backgroundTransition(
+    isDisconnectedAndHidden
+      ? { screen, contentType: 'empty', contentData, leaving: null }
+      : { screen, contentType, contentData, leaving },
+  )
 
   // Get styleRanges from useSlideHighlights hook for real-time WebSocket updates
   const styleRanges = slideHighlights ?? []
@@ -657,7 +657,7 @@ export function ScreenRenderer({
       onClick={handleClick}
     >
       {/* First, so everything after it paints above the background */}
-      <ScreenBackground background={bg} />
+      <CrossfadeScreenBackground {...background} />
 
       {/* Safe area wrapper - adds padding on mobile to avoid status bar.
           Positioned so its whole subtree stacks above the background layer. */}

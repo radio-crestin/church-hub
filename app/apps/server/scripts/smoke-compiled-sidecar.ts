@@ -17,6 +17,7 @@
  *
  * Prints one line per check and exits 1 on the first failure.
  */
+import { execFileSync } from 'node:child_process'
 import {
   cpSync,
   existsSync,
@@ -32,10 +33,15 @@ import { type Subprocess, spawn } from 'bun'
 
 import { setLinuxRunpath } from './setLinuxRunpath'
 import { WORKER_ENTRYPOINTS } from './workerEntrypoints'
+import { Database } from 'bun:sqlite'
 import {
   DEFAULT_BACKGROUND_MEDIA,
   DEFAULT_BACKGROUND_MEDIA_RESOURCE_DIR,
 } from '../src/service/background-media/constants'
+import {
+  OS_STORE_SERVICE,
+  osEntryName,
+} from '../src/service/secret-store/data-key/osKeyStore'
 
 const PORT = 3098
 // 127.0.0.1, not "localhost": Bun on Linux resolves localhost to ::1 first
@@ -169,6 +175,31 @@ async function adminCookie(): Promise<string> {
   return (login.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
 }
 
+/**
+ * Removes the run's key from the OS secret store. macOS lets only the item's
+ * creator (the sidecar) or Apple's security tool delete it.
+ */
+async function removeOsKey(keyId: string): Promise<void> {
+  if (process.platform !== 'darwin') {
+    await Bun.secrets.delete({
+      service: OS_STORE_SERVICE,
+      name: osEntryName(keyId),
+    })
+    return
+  }
+  execFileSync(
+    '/usr/bin/security',
+    [
+      'delete-generic-password',
+      '-s',
+      OS_STORE_SERVICE,
+      '-a',
+      osEntryName(keyId),
+    ],
+    { stdio: 'pipe', timeout: 10_000 },
+  )
+}
+
 async function main() {
   const workDir = mkdtempSync(join(tmpdir(), 'church-hub-smoke-'))
   const { binDir, resourcesDir } = bundleLayout(workDir)
@@ -183,6 +214,8 @@ async function main() {
     process.platform === 'win32' ? 'sidecar.exe' : 'sidecar',
   )
   let proc: Subprocess<'ignore', 'pipe', 'pipe'> | undefined
+  /** The run's throwaway key in the OS secret store, removed at the end. */
+  let osKeyId: string | null = null
 
   try {
     await check('bun build --compile makes the sidecar', () =>
@@ -303,12 +336,38 @@ async function main() {
     await check(
       'CHURCH_HUB_BACKEND_URL overrides the baked-in backend',
       async () => {
-        const res = await fetch(
-          `${BASE_URL}/api/livestream/youtube/auth-url?mode=redirect`,
-          { headers: { cookie: await adminCookie() } },
-        )
+        const res = await fetch(`${BASE_URL}/api/livestream/youtube/sign-in`, {
+          method: 'POST',
+          headers: { cookie: await adminCookie() },
+        })
         const { data } = (await res.json()) as { data: { authUrl: string } }
         return data.authUrl.startsWith(`${RUNTIME_BACKEND_URL}/auth/youtube?`)
+      },
+    )
+    await check(
+      'saved secrets are sealed with a data key out of the database (Bun.secrets in the compiled sidecar)',
+      async () => {
+        const keyFile = JSON.parse(
+          readFileSync(join(workDir, 'data', 'secret-key.json'), 'utf8'),
+        ) as { id: string; store: 'os' | 'file' }
+        if (keyFile.store === 'os') osKeyId = keyFile.id
+        const status = (await (
+          await fetch(`${BASE_URL}/api/secret-store`)
+        ).json()) as { data?: { keptIn: string; locked: boolean } }
+        process.stdout.write(`  data key kept in: ${status.data?.keptIn}\n`)
+        const db = new Database(join(workDir, 'data', 'app.db'), {
+          readonly: true,
+        })
+        const tokens = db
+          .query<{ token: string }, []>('SELECT token FROM users')
+          .all()
+        db.close()
+        return (
+          status.data?.locked === false &&
+          (status.data.keptIn === 'file') === (keyFile.store === 'file') &&
+          tokens.length > 0 &&
+          tokens.every(({ token }) => token.startsWith('enc:v1:'))
+        )
       },
     )
     await check(
@@ -320,6 +379,7 @@ async function main() {
     // Windows keeps the .exe locked until the process has exited
     await proc?.exited
     rmSync(workDir, { recursive: true, force: true, maxRetries: 3 })
+    if (osKeyId) await removeOsKey(osKeyId)
   }
 }
 

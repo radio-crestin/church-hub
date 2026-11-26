@@ -3,10 +3,13 @@ import { eq } from 'drizzle-orm'
 import { getDatabase } from '../../db'
 import { appSessions } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
+import { openSecret, sealSecret, secretPlaces } from '../secret-store'
 import { hashToken } from '../users/users'
 
 const SYSTEM_TOKEN_NAME = 'System API Token'
 const logger = createLogger('app-sessions')
+const sealToken = (token: string) =>
+  sealSecret(token, secretPlaces.systemToken(SYSTEM_TOKEN_NAME))
 
 export function generateSystemToken(): string {
   const bytes = new Uint8Array(24)
@@ -40,7 +43,7 @@ export async function getOrCreateSystemToken(): Promise<{
 
   db.insert(appSessions)
     .values({
-      sessionToken: token,
+      sessionToken: sealToken(token),
       sessionTokenHash: tokenHash,
       name: SYSTEM_TOKEN_NAME,
     })
@@ -63,12 +66,15 @@ export function getSystemToken(): {
     .where(eq(appSessions.name, SYSTEM_TOKEN_NAME))
     .get()
 
-  if (!session) {
+  const token =
+    session &&
+    openSecret(session.sessionToken, secretPlaces.systemToken(session.name))
+  if (!session || !token) {
     return null
   }
 
   return {
-    token: session.sessionToken,
+    token,
     lastUsedAt: session.lastUsedAt,
     createdAt: session.createdAt,
   }
@@ -89,7 +95,7 @@ export async function regenerateSystemToken(): Promise<string> {
   if (existing) {
     db.update(appSessions)
       .set({
-        sessionToken: token,
+        sessionToken: sealToken(token),
         sessionTokenHash: tokenHash,
         lastUsedAt: null,
       })
@@ -99,7 +105,7 @@ export async function regenerateSystemToken(): Promise<string> {
   } else {
     db.insert(appSessions)
       .values({
-        sessionToken: token,
+        sessionToken: sealToken(token),
         sessionTokenHash: tokenHash,
         name: SYSTEM_TOKEN_NAME,
       })

@@ -1,4 +1,46 @@
 export const liveTranslationPaths = {
+  '/api/live-translation/settings': {
+    get: {
+      tags: ['Live Translation'],
+      summary: 'Get the saved live translation settings',
+      description:
+        'Engine, languages, voices and devices. The API keys are stored sealed and returned as `••••••••` when set.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The settings',
+          content: { 'application/json': { schema: { type: 'object' } } },
+        },
+      },
+    },
+    put: {
+      tags: ['Live Translation'],
+      summary: 'Save the live translation settings',
+      description:
+        'A `geminiApiKey` or `openaiApiKey` sent as `••••••••` keeps the key saved before; an empty one clears it. Keys are sealed before they are stored.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: { 'application/json': { schema: { type: 'object' } } },
+      },
+      responses: {
+        '200': {
+          description: 'Saved; the settings as GET returns them',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  settings: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   '/api/live-translation/stream-secret': {
     get: {
       tags: ['Live Translation'],

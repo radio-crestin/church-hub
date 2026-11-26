@@ -5,6 +5,7 @@ import { storeYouTubeTokens } from '~/features/livestream/service'
 
 export const Route = createFileRoute('/auth/youtube/callback')({
   validateSearch: (search: Record<string, unknown>) => ({
+    state: (search.state as string) || '',
     accessToken: (search.accessToken as string) || '',
     refreshToken: (search.refreshToken as string) || '',
     expiresAt: (search.expiresAt as string) || '',
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/auth/youtube/callback')({
 
 function YouTubeCallbackPage() {
   const {
+    state,
     accessToken,
     refreshToken,
     expiresAt,
@@ -46,6 +48,7 @@ function YouTubeCallbackPage() {
 
       try {
         await storeYouTubeTokens({
+          state,
           accessToken,
           refreshToken,
           expiresAt: parseInt(expiresAt, 10),
@@ -68,7 +71,7 @@ function YouTubeCallbackPage() {
     }
 
     handleCallback()
-  }, [accessToken, refreshToken, expiresAt, error, navigate])
+  }, [state, accessToken, refreshToken, expiresAt, error, navigate])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-app">

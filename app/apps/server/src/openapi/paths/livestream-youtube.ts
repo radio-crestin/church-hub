@@ -78,27 +78,80 @@ const broadcast = {
 }
 
 export const livestreamYouTubePaths = {
-  '/api/livestream/youtube/auth-url': {
-    get: {
+  '/api/livestream/youtube/sign-in': {
+    post: {
       tags,
-      summary: 'The page that signs the church into YouTube',
-      description:
-        "On Church Hub's backend, which holds the Google client. `redirect` (the desktop app) comes back to /auth/youtube/callback; `postMessage` (a browser popup) posts the tokens to its opener.",
       security,
-      parameters: [
-        {
-          name: 'mode',
-          in: 'query',
-          required: true,
-          schema: { type: 'string', enum: ['redirect', 'postMessage'] },
+      summary: 'Start a YouTube sign-in',
+      description:
+        'The page to open, on Church Hub’s backend (it holds the Google client), and the state the sign-in must bring its tokens back with (single use, valid 10 minutes). `redirect` (the desktop app, the default): the state rides in the returnUrl to the app’s /auth/youtube/callback page. `postMessage` (a browser popup): the backend posts the tokens to the opener, which stores them with the state.',
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                mode: {
+                  type: 'string',
+                  enum: ['redirect', 'postMessage'],
+                  default: 'redirect',
+                },
+              },
+            },
+          },
         },
-      ],
+      },
       responses: {
         '200': json(
-          { type: 'object', properties: { authUrl: { type: 'string' } } },
-          'The URL to open',
+          {
+            type: 'object',
+            properties: {
+              state: { type: 'string' },
+              authUrl: { type: 'string', description: 'The page to open' },
+            },
+          },
+          'The sign-in’s state and page',
         ),
         '400': { description: 'mode is not redirect or postMessage' },
+        '401': errors['401'],
+      },
+    },
+  },
+  '/api/livestream/youtube/tokens': {
+    post: {
+      tags,
+      security,
+      summary: 'Store the tokens a YouTube sign-in brought back',
+      description:
+        'Connects the YouTube channel, only with a state from POST /api/livestream/youtube/sign-in (used up here), so a link carrying tokens of someone else’s choosing can’t connect another channel.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['state', 'accessToken', 'refreshToken', 'expiresAt'],
+              properties: {
+                state: { type: 'string' },
+                accessToken: { type: 'string' },
+                refreshToken: { type: 'string' },
+                expiresAt: {
+                  type: 'integer',
+                  description: 'Access-token expiry (ms epoch)',
+                },
+                channelId: { type: 'string' },
+                channelName: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': json({ type: 'object' }, 'The YouTube connection status'),
+        '400': {
+          description:
+            '`unknown_sign_in` (no state, or one this server did not issue or already used), or missing token fields',
+        },
         '401': errors['401'],
       },
     },
