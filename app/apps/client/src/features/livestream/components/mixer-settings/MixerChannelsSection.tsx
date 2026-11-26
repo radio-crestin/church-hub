@@ -66,7 +66,7 @@ export function MixerChannelsSection() {
           const number = num.toString().padStart(2, '0')
           return (
             <label key={num} className="flex items-center gap-2">
-              <span className="w-8 text-right text-sm text-gray-500 dark:text-gray-400">
+              <span className="w-8 text-right text-xs text-fg-hint tabular-nums">
                 {number}
               </span>
               <input
@@ -75,7 +75,7 @@ export function MixerChannelsSection() {
                 onChange={(e) =>
                   setLabels((prev) => ({ ...prev, [num]: e.target.value }))
                 }
-                className="min-w-0 flex-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="min-w-0 flex-1 rounded-lg bg-field px-2 py-1 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 placeholder={`CH${number}`}
               />
             </label>

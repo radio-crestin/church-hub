@@ -64,7 +64,7 @@ export function NoteInput({
           close(false)
         }
       }}
-      className="absolute z-10 px-2 py-1 text-sm rounded-md border-2 bg-white text-gray-900 shadow-lg focus:outline-none"
+      className="absolute z-10 px-2 py-1 text-[13px] rounded-md border-2 bg-panel text-fg shadow-lg focus:outline-none"
       style={{
         left: Math.max(0, Math.min(left, boxWidth - width)),
         top: Math.max(0, top - 16),

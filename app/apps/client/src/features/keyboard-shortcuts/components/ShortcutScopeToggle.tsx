@@ -45,13 +45,11 @@ export function ShortcutScopeToggle({
           withShortcutScope(shortcuts, shortcut, isSystem ? 'app' : 'system'),
         )
       }
-      className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors disabled:opacity-50 ${
-        isSystem
-          ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-          : 'border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200'
+      className={`flex shrink-0 items-center gap-1.5 h-9 rounded-lg px-2.5 text-xs font-medium transition-colors hover:bg-hover disabled:opacity-50 ${
+        isSystem ? 'bg-selected text-fg' : 'bg-field text-fg-label'
       }`}
     >
-      <Icon size={14} />
+      <Icon size={14} strokeWidth={1.75} />
       <span className="hidden sm:inline">{label}</span>
     </button>
   )

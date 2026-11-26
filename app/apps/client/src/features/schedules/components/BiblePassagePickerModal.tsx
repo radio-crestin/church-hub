@@ -209,14 +209,14 @@ export function BiblePassagePickerModal({
       onCancel={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
-      className="fixed inset-0 m-auto w-full max-w-lg p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-full max-w-lg p-0 rounded-lg bg-panel backdrop:bg-black/50"
     >
       <div className="flex flex-col max-h-[80vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-line">
           <div className="flex items-center gap-2">
-            <Book size={20} className="text-teal-600" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <Book size={20} className="text-fg-label" strokeWidth={1.5} />
+            <h2 className="text-base font-semibold text-fg">
               {isEditMode
                 ? t('biblePassage.editTitle')
                 : t('biblePassage.title')}
@@ -226,9 +226,9 @@ export function BiblePassagePickerModal({
             type="button"
             onClick={handleClose}
             disabled={isPending}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-1 rounded hover:bg-hover disabled:opacity-50"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-fg-hint" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -236,7 +236,7 @@ export function BiblePassagePickerModal({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Reference Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-[13px] font-medium text-fg-body mb-1">
               {t('biblePassage.reference')}
             </label>
             <input
@@ -246,9 +246,9 @@ export function BiblePassagePickerModal({
               onChange={(e) => setReferenceInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('biblePassage.referencePlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-fg-hint">
               {t('biblePassage.referenceHint')}
             </p>
           </div>
@@ -258,23 +258,23 @@ export function BiblePassagePickerModal({
             <div
               className={`p-3 rounded-lg border ${
                 isValid
-                  ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800'
+                  ? 'border-line'
                   : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800'
               }`}
             >
               {isValid ? (
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-teal-800 dark:text-teal-200">
+                  <span className="font-medium text-fg-label">
                     {parsedResult.formattedReference}
                   </span>
-                  <span className="flex items-center gap-1 text-sm text-teal-600 dark:text-teal-400">
-                    <Check size={16} />
+                  <span className="flex items-center gap-1 text-[13px] text-fg-label">
+                    <Check size={16} strokeWidth={1.5} />
                     {t('biblePassage.valid')}
                   </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-                  <AlertCircle size={16} />
+                  <AlertCircle size={16} strokeWidth={1.5} />
                   <span>{t(parsedResult.errorKey!)}</span>
                 </div>
               )}
@@ -283,12 +283,12 @@ export function BiblePassagePickerModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
             disabled={isPending}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
+            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg disabled:opacity-50"
           >
             {t('actions.cancel')}
           </button>
@@ -296,7 +296,7 @@ export function BiblePassagePickerModal({
             type="button"
             onClick={handleSave}
             disabled={isPending || !isValid}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {isPending ? (
               <Loader2 size={18} className="animate-spin" />

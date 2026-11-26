@@ -115,5 +115,5 @@ step('sidecar', () => copySidecar(worktreeApp, mainApp))
 step('playwright browser', () => checkBrowser(worktreeApp))
 step('client build', () => buildClient(worktreeApp, port))
 console.log(
-  `\nRun e2e: cd app/apps/client && CI=1 TEST_PORT=${port} bunx playwright test <spec> --workers=1 --retries=2`,
+  `\nRun e2e: cd app/apps/client && CI=1 E2E_WORKERS=2 TEST_PORT=${port} bunx playwright test <spec> --retries=2`,
 )

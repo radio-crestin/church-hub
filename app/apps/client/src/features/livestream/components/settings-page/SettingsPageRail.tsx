@@ -16,7 +16,7 @@ export function SettingsPageRail() {
       className="space-y-3 pt-1"
       data-testid="livestream-settings-rail"
     >
-      <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+      <div className="px-3 py-1.5 text-xs font-medium text-fg-hint">
         {t('settingsPages.railGroup')}
       </div>
       <div className="mt-0.5 space-y-0.5">

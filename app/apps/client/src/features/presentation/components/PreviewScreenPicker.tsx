@@ -46,7 +46,12 @@ export function PreviewScreenPicker({
 
   return (
     <label className="absolute bottom-2 left-2 z-10 flex items-center gap-1 max-w-[60%] rounded-md bg-black/60 px-2 py-1 text-xs text-white opacity-80 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm">
-      <MonitorPlay size={14} className="shrink-0" aria-hidden />
+      <MonitorPlay
+        size={14}
+        strokeWidth={1.75}
+        className="shrink-0"
+        aria-hidden
+      />
       <select
         data-testid="preview-screen-picker"
         aria-label={t('previewScreenPicker.label')}
@@ -54,7 +59,7 @@ export function PreviewScreenPicker({
         value={previewScreenId}
         onChange={handleChange}
         disabled={isPending}
-        className="min-w-0 appearance-none truncate bg-transparent pr-4 outline-none cursor-pointer [&>option]:text-gray-900"
+        className="min-w-0 appearance-none truncate bg-transparent pr-4 outline-none cursor-pointer [&>option]:bg-panel [&>option]:text-fg"
       >
         {screens.map((screen) => (
           <option key={screen.id} value={screen.id}>
@@ -64,6 +69,7 @@ export function PreviewScreenPicker({
       </select>
       <ChevronDown
         size={12}
+        strokeWidth={2}
         className="pointer-events-none -ml-4 shrink-0"
         aria-hidden
       />

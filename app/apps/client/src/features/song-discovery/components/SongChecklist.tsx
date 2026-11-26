@@ -48,8 +48,8 @@ export function SongChecklist({
   })
 
   return (
-    <div className="flex min-h-[18rem] flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-      <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 px-4 py-2.5 dark:border-gray-800">
+    <div className="flex min-h-[18rem] flex-1 flex-col overflow-hidden rounded-xl border border-line bg-panel">
+      <label className="flex cursor-pointer items-center gap-3 border-b border-line px-4 py-2.5">
         <input
           ref={allRef}
           type="checkbox"
@@ -62,12 +62,12 @@ export function SongChecklist({
               !allSelected,
             )
           }
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+          className="h-4 w-4 rounded border-line text-primary focus:ring-focus bg-field"
         />
-        <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+        <span className="flex-1 text-sm font-medium text-fg-body">
           {t('songs.title')}
         </span>
-        <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400">
+        <span className="text-xs tabular-nums text-fg-hint">
           {t('songs.selected', {
             selected: selectedCount.toLocaleString(),
             total: items.length.toLocaleString(),
@@ -88,10 +88,8 @@ export function SongChecklist({
                 key={item.tempId}
                 data-index={row.index}
                 ref={virtualizer.measureElement}
-                className={`absolute top-0 left-0 flex w-full items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800 ${
-                  item.tempId === openTempId
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                className={`absolute top-0 left-0 flex w-full items-center gap-3 border-b border-line px-4 ${
+                  item.tempId === openTempId ? 'bg-selected' : 'hover:bg-hover'
                 }`}
                 style={{ transform: `translateY(${row.start}px)` }}
               >
@@ -100,7 +98,7 @@ export function SongChecklist({
                   aria-label={t('actions.select', { title })}
                   checked={item.selected}
                   onChange={() => onSelect([item.tempId], !item.selected)}
-                  className="h-4 w-4 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                  className="h-4 w-4 shrink-0 rounded border-line text-primary focus:ring-focus bg-field"
                 />
                 <button
                   type="button"
@@ -108,10 +106,10 @@ export function SongChecklist({
                   className="flex min-w-0 flex-1 items-center gap-2 py-2 text-left"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">
+                    <span className="block truncate text-sm font-medium text-fg">
                       {title}
                     </span>
-                    <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                    <span className="block truncate text-xs text-fg-hint">
                       {sourceNames.get(item.sourceId)}
                     </span>
                   </span>

@@ -13,7 +13,7 @@ export function PagePanel({ children, testId }: PagePanelProps) {
   return (
     <div
       data-testid={testId}
-      className="flex min-h-0 flex-1 flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:overflow-y-auto dark:border-gray-700 dark:bg-gray-800"
+      className="flex min-h-0 flex-1 flex-col gap-3 rounded-xl border border-line bg-panel p-3 lg:overflow-y-auto"
     >
       {children}
     </div>

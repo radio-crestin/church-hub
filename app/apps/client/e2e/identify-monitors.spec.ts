@@ -8,6 +8,8 @@ import {
   test,
 } from '@playwright/test'
 
+import { pinShellServerPort } from './helpers/desktop-shell-port'
+
 /**
  * Settings → Screens → "Identify" puts a plate in the middle of every display
  * with the monitor's number, name and resolution, the ones the Monitor picker
@@ -57,6 +59,7 @@ interface ShellCall {
 
 /** Makes the page believe it runs in the desktop shell, as window `label`. */
 async function fakeDesktopShell(page: Page, label = 'main') {
+  await pinShellServerPort(page)
   await page.addInitScript(
     ({ monitors, label }) => {
       const calls: Array<{ command: string; args: unknown }> = []

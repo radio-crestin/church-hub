@@ -17,9 +17,7 @@ export function useEditLayoutAction(workspaceId: string): ActionMenuItem {
     id: 'edit-layout',
     label: t('workspace.editLayout'),
     description: t('workspace.editLayoutDescription'),
-    icon: <LayoutGrid size={18} />,
-    iconClassName:
-      'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+    icon: <LayoutGrid size={16} strokeWidth={1.5} />,
     active: editing,
     onSelect: toggleEditing,
     testId: 'workspace-edit-layout',

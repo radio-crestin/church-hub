@@ -21,9 +21,7 @@ function isView(view: LibraryView, other: LibraryView): boolean {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-1">
-      <h3 className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        {title}
-      </h3>
+      <h3 className="px-3 pb-1 text-xs font-medium text-fg-hint">{title}</h3>
       {children}
     </section>
   )
@@ -83,9 +81,7 @@ export function LibraryNav({ view, onSelect }: LibraryNavProps) {
       </Section>
       <Section title={t('playlist.title')}>
         {playlists.length === 0 && (
-          <p className="px-3 text-sm text-gray-500 dark:text-gray-400">
-            {t('playlist.empty')}
-          </p>
+          <p className="px-3 text-[13px] text-fg-hint">{t('playlist.empty')}</p>
         )}
         {playlists.map((playlist) =>
           item(

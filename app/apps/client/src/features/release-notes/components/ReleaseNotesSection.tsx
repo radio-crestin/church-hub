@@ -48,16 +48,16 @@ export function ReleaseNotesSection({
       {hasMore && (
         <button
           onClick={() => setExpanded((prev) => !prev)}
-          className="mt-4 flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+          className="mt-4 flex items-center gap-1.5 text-[13px] font-medium text-focus hover:underline"
         >
           {expanded ? (
             <>
-              <ChevronUp size={16} />
+              <ChevronUp size={16} strokeWidth={1.5} />
               {t('showLess')}
             </>
           ) : (
             <>
-              <ChevronDown size={16} />
+              <ChevronDown size={16} strokeWidth={1.5} />
               {t('showAll', { count: versions.length })}
             </>
           )}

@@ -139,9 +139,9 @@ test.describe
       )
       // Signed in as the owner, its tools are there, with this church listed.
       await expect(section.getByTestId('cloud-owner-tools')).toBeVisible(SLOW)
-      await expect(
-        section.getByTestId(`owner-church-${churchId}`),
-      ).toBeVisible(SLOW)
+      await expect(section.getByTestId(`owner-church-${churchId}`)).toBeVisible(
+        SLOW,
+      )
     })
 
     test('a local backup holds the church id, path, token and owner, and restoring it reconnects', async ({

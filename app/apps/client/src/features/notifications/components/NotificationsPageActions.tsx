@@ -33,7 +33,7 @@ export function NotificationsPageActions({
         aria-label={t('markAllRead')}
         className="gap-2"
       >
-        <CheckCheck className="h-4 w-4" />
+        <CheckCheck size={16} strokeWidth={1.5} />
         <span className="hidden sm:inline">{t('markAllRead')}</span>
       </Button>
       <Button
@@ -45,7 +45,7 @@ export function NotificationsPageActions({
         aria-label={t('clearAll')}
         className="gap-2"
       >
-        <Trash2 className="h-4 w-4" />
+        <Trash2 size={16} strokeWidth={1.5} />
         <span className="hidden sm:inline">{t('clearAll')}</span>
       </Button>
       <ConfirmModal

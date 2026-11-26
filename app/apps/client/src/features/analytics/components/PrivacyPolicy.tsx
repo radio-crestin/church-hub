@@ -25,10 +25,8 @@ export function PrivacyPolicy() {
 
   return (
     <article className="space-y-5" data-testid="privacy-policy">
-      <p className="text-sm text-gray-700 dark:text-gray-300">
-        {t('policy.intro')}
-      </p>
-      <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+      <p className="text-[13px] text-fg-body">{t('policy.intro')}</p>
+      <h3 className="text-base font-semibold text-fg">
         {t('policy.whatTitle')}
       </h3>
       <EventList

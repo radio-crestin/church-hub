@@ -50,13 +50,13 @@ export function ImportProgressModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+      <div className="relative bg-panel rounded-xl shadow-popover p-8 max-w-md w-full mx-4">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
-            <Loader2 className="w-16 h-16 text-indigo-600 animate-spin" />
+            <Loader2 className="w-16 h-16 text-fg-hint animate-spin" />
             {hasKnownTotal && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-semibold text-indigo-600">
+                <span className="text-[13px] font-medium tabular-nums text-fg">
                   {percentage}%
                 </span>
               </div>
@@ -64,21 +64,21 @@ export function ImportProgressModal({
           </div>
 
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-base font-semibold text-fg">
               {getPhaseText()}
             </h3>
 
             {progress && (
               <>
                 {progress.phase === 'downloading' ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-fg-hint">
                     {hasKnownTotal
                       ? `${formatBytes(progress.current)} / ${formatBytes(total)}`
                       : formatBytes(progress.current)}
                   </p>
                 ) : (
                   hasKnownTotal && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-fg-hint">
                       {t('batchImport.processingProgress', {
                         current: progress.current,
                         total: progress.total,
@@ -88,7 +88,7 @@ export function ImportProgressModal({
                 )}
 
                 {progress.currentFile && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">
+                  <p className="text-xs text-fg-hint truncate max-w-xs">
                     {progress.currentFile}
                   </p>
                 )}
@@ -96,10 +96,10 @@ export function ImportProgressModal({
             )}
           </div>
 
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-field rounded-full h-2">
             <div
               className={`h-2 rounded-full transition-all duration-300 ease-out ${
-                hasKnownTotal ? 'bg-indigo-600' : 'bg-indigo-600 animate-pulse'
+                hasKnownTotal ? 'bg-primary' : 'bg-primary animate-pulse'
               }`}
               style={{ width: hasKnownTotal ? `${percentage}%` : '100%' }}
             />

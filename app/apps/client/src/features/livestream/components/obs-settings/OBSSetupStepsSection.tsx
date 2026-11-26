@@ -18,16 +18,16 @@ export function OBSSetupStepsSection() {
         href="https://github.com/obsproject/obs-websocket/releases"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+        className="text-[13px] font-medium text-focus hover:underline"
       >
         {t('obs.setup.downloadLink')}
       </a>
-      <ol className="mt-3 list-inside list-decimal space-y-1 text-sm text-gray-600 dark:text-gray-400">
+      <ol className="mt-3 list-inside list-decimal space-y-1 text-[13px] text-fg-body">
         <li>{t('obs.setup.step2Instruction1')}</li>
         <li>{t('obs.setup.step2Instruction2')}</li>
         <li>{t('obs.setup.step2Instruction3')}</li>
       </ol>
-      <p className="mt-3 rounded-md bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+      <p className="mt-3 rounded-lg bg-field p-3 text-[13px] text-fg-label">
         {t('obs.setup.noteDescription')}
       </p>
     </SettingsSection>

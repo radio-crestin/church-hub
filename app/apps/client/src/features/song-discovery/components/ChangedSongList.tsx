@@ -37,9 +37,9 @@ export function ChangedSongList({
   return (
     <section
       data-testid="changed-songs"
-      className="flex max-h-72 shrink-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+      className="flex max-h-72 shrink-0 flex-col overflow-hidden rounded-xl border border-line bg-panel"
     >
-      <label className="flex cursor-pointer items-center gap-3 border-b border-gray-200 px-4 py-2.5 dark:border-gray-800">
+      <label className="flex cursor-pointer items-center gap-3 border-b border-line px-4 py-2.5">
         <input
           ref={allRef}
           type="checkbox"
@@ -51,9 +51,9 @@ export function ChangedSongList({
               !allSelected,
             )
           }
-          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+          className="h-4 w-4 rounded border-line text-primary focus:ring-focus bg-field"
         />
-        <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+        <span className="flex-1 text-sm font-medium text-fg-body">
           {t('changed.title', { count: items.length })}
         </span>
       </label>
@@ -61,10 +61,8 @@ export function ChangedSongList({
         {items.map((item) => (
           <li
             key={item.key}
-            className={`flex items-center gap-3 border-b border-gray-100 px-4 dark:border-gray-800 ${
-              item.key === openKey
-                ? 'bg-indigo-50 dark:bg-indigo-900/30'
-                : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+            className={`flex items-center gap-3 border-b border-line px-4 ${
+              item.key === openKey ? 'bg-selected' : 'hover:bg-hover'
             }`}
           >
             <input
@@ -72,7 +70,7 @@ export function ChangedSongList({
               aria-label={t('changed.select', { title: item.library.title })}
               checked={item.selected}
               onChange={() => onSelect([item.key], !item.selected)}
-              className="h-4 w-4 shrink-0 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+              className="h-4 w-4 shrink-0 rounded border-line text-primary focus:ring-focus bg-field"
             />
             <button
               type="button"
@@ -80,14 +78,14 @@ export function ChangedSongList({
               className="flex min-w-0 flex-1 items-center gap-2 py-2 text-left"
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">
+                <span className="block truncate text-sm font-medium text-fg">
                   {item.library.title}
                 </span>
-                <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                <span className="block truncate text-xs text-fg-hint">
                   {sourceNames.get(item.sourceId)}
                 </span>
               </span>
-              <span className="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300">
+              <span className="inline-flex items-center text-xs font-medium text-fg-label">
                 {t('changed.badge')}
               </span>
             </button>

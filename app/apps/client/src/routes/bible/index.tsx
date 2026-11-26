@@ -4,14 +4,7 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
-import {
-  Book,
-  Bookmark,
-  BookmarkCheck,
-  CalendarPlus,
-  Loader2,
-  Settings,
-} from 'lucide-react'
+import { Book, Bookmark, CalendarPlus, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -1443,7 +1436,7 @@ function BiblePage() {
 
           {showsLiveProgramItem ? (
             <div
-              className={`overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 ${
+              className={`overflow-hidden rounded-xl border border-line bg-panel ${
                 isLargeScreen ? 'absolute inset-0' : ''
               }`}
             >
@@ -1591,8 +1584,6 @@ function BiblePage() {
         ? tSchedules('panel.addVerse', { reference: candidatePassage.label })
         : tSchedules('panel.addVerseDisabled'),
       icon: <CalendarPlus size={18} />,
-      iconClassName:
-        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
       disabled: !candidatePassage,
       onSelect: handleAddCurrentVerseToProgram,
       testId: 'bible-add-to-schedule',
@@ -1619,16 +1610,21 @@ function BiblePage() {
                 aria-label={bookmarkLabel}
                 title={bookmarkLabel}
                 data-testid="bible-bookmark-toggle"
-                className={`inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed ${
                   isCurrentVerseBookmarked
-                    ? 'bg-amber-500 border-amber-500 text-white hover:bg-amber-600'
-                    : 'bg-white border-gray-300 text-amber-600 hover:bg-amber-50 dark:bg-gray-800 dark:border-gray-600 dark:text-amber-400 dark:hover:bg-gray-700'
+                    ? 'text-bookmark'
+                    : 'text-fg-label hover:text-fg'
                 }`}
               >
                 {isCurrentVerseBookmarked ? (
-                  <BookmarkCheck size={16} />
+                  <Bookmark
+                    size={16}
+                    fill="currentColor"
+                    className="text-bookmark"
+                    strokeWidth={1.5}
+                  />
                 ) : (
-                  <Bookmark size={16} />
+                  <Bookmark size={16} strokeWidth={1.5} />
                 )}
               </button>
               <ActionMenu
@@ -1642,7 +1638,10 @@ function BiblePage() {
 
         {translationsLoading ? (
           <div className="flex items-center justify-center flex-1">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+            <Loader2
+              className="w-8 h-8 animate-spin text-fg-hint"
+              strokeWidth={1}
+            />
           </div>
         ) : selectedTranslations.length > 0 ? (
           <>
@@ -1685,29 +1684,35 @@ function BiblePage() {
         ) : translations.length > 0 ? (
           // Translations exist but none selected - prompt to go to settings
           <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
-            <Book className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <Book
+              className="w-16 h-16 mx-auto mb-4 text-fg-hint"
+              strokeWidth={1}
+            />
+            <h2 className="text-base font-semibold text-fg mb-2">
               {t('empty.noTranslationsSelected')}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-[13px] text-fg-hint mb-4">
               {t('empty.noTranslationsSelectedDescription')}
             </p>
           </div>
         ) : (
           // No translations imported at all
           <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
-            <Book className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <Book
+              className="w-16 h-16 mx-auto mb-4 text-fg-hint"
+              strokeWidth={1}
+            />
+            <h2 className="text-base font-semibold text-fg mb-2">
               {t('empty.title')}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-[13px] text-fg-hint mb-4">
               {t('empty.description')}
             </p>
             <Link
               to="/settings/bible"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4" strokeWidth={1.5} />
               {t('actions.openSettings')}
             </Link>
           </div>

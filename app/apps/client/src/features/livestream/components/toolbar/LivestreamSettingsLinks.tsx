@@ -94,32 +94,36 @@ export function LivestreamSettingsLinks() {
           data-testid="livestream-settings-toggle"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((open) => !open)}
-          className="flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left dark:border-gray-700 dark:bg-gray-800"
+          className="flex w-full items-center gap-3 rounded-xl border border-line bg-panel px-3 py-2.5 text-left hover:bg-hover"
         >
           <Settings2
-            className="h-5 w-5 shrink-0 text-gray-600 dark:text-gray-300"
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-fg-label"
             aria-hidden
           />
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
+          <span className="text-[13px] font-medium text-fg">
             {t('settingsPages.railGroup')}
           </span>
-          <span className="flex min-w-0 flex-1 items-center justify-end gap-3 overflow-hidden text-xs text-gray-500 dark:text-gray-400">
+          <span className="flex min-w-0 flex-1 items-center justify-end gap-3 overflow-hidden text-xs text-fg-label">
             {links.map(({ to, icon: Icon, label, tone }) => (
               <span
                 key={to}
                 title={label}
                 className="flex shrink-0 items-center gap-1"
               >
-                <Icon className="h-4 w-4" aria-hidden />
+                <Icon size={14} strokeWidth={1.75} aria-hidden />
                 <span
-                  className={`h-2 w-2 rounded-full ${STATUS_DOT[tone]}`}
+                  className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[tone]}`}
                   aria-hidden
                 />
               </span>
             ))}
           </span>
           <ChevronDown
-            className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            size={16}
+            strokeWidth={1.5}
+            className={`shrink-0 text-fg-hint transition-transform ${isOpen ? 'rotate-180' : ''}`}
             aria-hidden
           />
         </button>

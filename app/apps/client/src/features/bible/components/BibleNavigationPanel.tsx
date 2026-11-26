@@ -1,4 +1,4 @@
-import { ArrowLeft, Search, Sparkles } from 'lucide-react'
+import { ArrowLeft, Loader2, Search, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -521,13 +521,14 @@ export function BibleNavigationPanel({
   }
 
   return (
-    <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 lg:rounded-lg lg:border lg:border-gray-200 lg:dark:border-gray-700">
-      <div className="p-3 space-y-2 border-b border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col lg:h-full bg-panel lg:rounded-xl lg:border lg:border-line">
+      <div className="p-3 space-y-2 border-b border-line">
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-hint"
+              strokeWidth={1.5}
             />
             <input
               ref={searchInputRef}
@@ -557,7 +558,7 @@ export function BibleNavigationPanel({
                 hasSelectedAllRef.current = false
               }}
               placeholder={t('search.placeholder')}
-              className={`w-full pl-9 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 ${
+              className={`w-full h-9 pl-9 text-[13px] bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
                 searchBibleShortcut && !localQuery ? 'pr-20' : 'pr-9'
               }`}
             />
@@ -565,13 +566,19 @@ export function BibleNavigationPanel({
               <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-1 right-9">
                 {aiSearchMutation.isPending ? (
                   <>
-                    <Sparkles className="w-3 h-3 text-indigo-500 animate-pulse" />
-                    <span className="text-xs text-indigo-500">
+                    <Sparkles
+                      className="w-3 h-3 text-fg-hint"
+                      strokeWidth={2}
+                    />
+                    <span className="text-xs text-fg-hint">
                       {t('search.aiProcessing')}
                     </span>
                   </>
                 ) : (
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                  <Loader2
+                    className="w-3 h-3 animate-spin text-fg-hint"
+                    strokeWidth={2}
+                  />
                 )}
               </div>
             )}
@@ -591,28 +598,28 @@ export function BibleNavigationPanel({
               type="button"
               onClick={handleAISearch}
               disabled={!localQuery.trim() || aiSearchMutation.isPending}
-              className={`px-2 py-2 rounded-lg border transition-colors flex items-center ${
+              className={`h-9 w-9 shrink-0 rounded-lg transition-colors flex items-center justify-center ${
                 isAISearchActive
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  ? 'bg-selected text-fg'
+                  : 'text-fg-label hover:bg-hover hover:text-fg'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
               title={t('search.aiSearchTooltip')}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" strokeWidth={1.5} />
             </button>
           )}
           <button
             type="button"
             onClick={handleTextSearch}
             disabled={!localQuery.trim() || isSearching}
-            className={`px-2 py-2 rounded-lg border transition-colors flex items-center ${
+            className={`h-9 w-9 shrink-0 rounded-lg transition-colors flex items-center justify-center ${
               isTextSearchActive
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                ? 'bg-selected text-fg'
+                : 'text-fg-label hover:bg-hover hover:text-fg'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={t('search.fullTextSearchTooltip')}
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
       </div>
@@ -723,7 +730,7 @@ function SearchResults({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-center py-8 text-fg-hint">
         {t('search.searching')}
       </div>
     )
@@ -731,7 +738,7 @@ function SearchResults({
 
   if (results.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="text-center py-8 text-fg-hint">
         {t('search.noResults')}
       </div>
     )
@@ -743,12 +750,12 @@ function SearchResults({
         <button
           type="button"
           onClick={onClearSearch}
-          className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+          className="flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg transition-colors"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={16} strokeWidth={1.5} />
           {t('navigation.back')}
         </button>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+        <span className="text-[13px] text-fg-hint">
           {t('search.resultsCount', { count: results.length })}
         </span>
       </div>
@@ -780,23 +787,24 @@ function SearchResults({
               type="button"
               onClick={() => onSelectResult(searchResult)}
               className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                isFocused
-                  ? 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-indigo-500'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                isFocused ? 'bg-selected' : 'hover:bg-hover'
               }`}
             >
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                <span
+                  data-testid="bible-search-result-reference"
+                  className="text-xs font-medium text-fg"
+                >
                   {reference}
                 </span>
                 {type === 'ai' && aiResult.aiRelevanceScore !== undefined && (
-                  <span className="flex items-center gap-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                    <Sparkles className="w-3 h-3" />
+                  <span className="flex items-center gap-0.5 text-xs font-medium text-fg">
+                    <Sparkles className="w-3 h-3" strokeWidth={2} />
                     {aiResult.aiRelevanceScore}%
                   </span>
                 )}
               </div>
-              <div className="text-sm text-gray-700 dark:text-gray-200 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
+              <div className="text-[13px] text-fg-body [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
                 <HighlightedText
                   text={
                     isSearchResult ? searchResult.highlightedText : verse.text

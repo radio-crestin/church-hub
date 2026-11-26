@@ -6,6 +6,7 @@ import {
 } from '@playwright/test'
 
 import { setAppLanguage } from './helpers/app-language'
+import { pinShellServerPort } from './helpers/desktop-shell-port'
 import {
   makeJpeg,
   postFrame,
@@ -54,6 +55,7 @@ const SOURCES = [
  * can draw on the projector windows.
  */
 async function fakeDesktopShell(page: Page, label: string, gpu = true) {
+  await pinShellServerPort(page)
   await page.addInitScript(
     ({ label, sources, gpu }) => {
       const calls: Array<{ command: string; args: unknown }> = []

@@ -18,16 +18,11 @@ export function SettingField({
 
   return (
     <div className="py-2">
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-gray-900 dark:text-gray-100"
-      >
+      <label htmlFor={id} className="block text-[13px] font-medium text-fg">
         {label}
       </label>
       {description && (
-        <p className="mt-0.5 mb-2 text-xs text-gray-500 dark:text-gray-400">
-          {description}
-        </p>
+        <p className="mt-0.5 mb-2 text-xs text-fg-hint">{description}</p>
       )}
       <div className={description ? '' : 'mt-2'}>{children(id)}</div>
     </div>

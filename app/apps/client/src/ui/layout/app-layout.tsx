@@ -52,9 +52,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Standalone mode - hide sidebar for native page windows
   if (isStandalone) {
     return (
-      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
-        <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-gray-50 dark:bg-gray-950 safe-area-right safe-area-bottom overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-950 p-3 sm:p-4 md:p-6">
+      <div className="flex h-screen overflow-hidden bg-app">
+        <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-app safe-area-right safe-area-bottom overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto bg-app p-3 sm:p-4 md:p-6">
             {children}
           </div>
         </main>
@@ -64,14 +64,14 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-app">
       <WebviewRouteManager />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}
         onMobileMenuChange={setIsMobileMenuOpen}
       />
-      <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-gray-50 dark:bg-gray-950 safe-area-right safe-area-bottom overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto flex flex-col bg-gray-50 dark:bg-gray-950 safe-area-top">
+      <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-app safe-area-right safe-area-bottom overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto flex flex-col bg-app safe-area-top">
           {/* The top padding is deliberately tighter than the sides: in the
               desktop window the OS title bar already sits above this, so a
               full p-6 up top reads as dead space before the page title. */}

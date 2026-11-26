@@ -114,7 +114,7 @@ export function SlideFilmstrip({
         type="button"
         data-testid="stage-add-slide"
         onClick={onAdd}
-        className="flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition-colors"
+        className="flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-line rounded-lg text-sm text-fg-label hover:border-line-strong hover:text-fg transition-colors"
       >
         <Plus size={16} />
         {t('actions.addSlide')}
