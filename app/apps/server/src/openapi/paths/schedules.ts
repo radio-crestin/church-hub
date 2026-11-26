@@ -285,7 +285,7 @@ export const schedulesPaths = {
       tags: ['Schedules'],
       summary: 'Add item to schedule',
       description:
-        'Add a song, slide, Bible verses, music, video, verses, Slides deck or another presentation (`childScheduleId`) to a schedule, at its end or after `afterItemId`. A presentation that is or includes this one is refused with 400 (it would make a loop), as is the queue.',
+        'Add a song, slide, Bible verses, music, video, verses, Slides deck or another presentation (`childScheduleId`) to a schedule, at its end or after `afterItemId`. A presentation that is or includes this one is refused with 400 (it would make a loop), as is the queue, and one that would nest presentations more than 5 levels deep or make a presentation run more than 1000 items counting those inside it. Nested presentations are returned within the same limits.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {

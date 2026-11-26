@@ -10,10 +10,12 @@ import type {
 import type { SQLQueryBindings } from 'bun:sqlite'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
+import { nestingProblem } from '../schedules/nestingLimits'
 import {
   type ResolvedLegacyBiblePassage,
   resolveLegacyBiblePassage,
 } from '../schedules/resolveLegacyBiblePassage'
+import { scheduleContains } from '../schedules/scheduleContains'
 import {
   removeFromScheduleSearchIndex,
   updateScheduleSearchIndex,
@@ -199,6 +201,19 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
     if (item.itemType === 'schedule' && childScheduleId === null) {
       logger.warning(
         `Schedule "${schedule.title}": presentation ${item.childScheduleUuid ?? '?'} missing locally, item left out`,
+      )
+      continue
+    }
+    // Held to the same rules as one added here: no loop, within the limits.
+    const nestingIssue =
+      childScheduleId === null
+        ? null
+        : scheduleContains(childScheduleId, scheduleId)
+          ? 'it would make a loop'
+          : nestingProblem(scheduleId, childScheduleId)
+    if (nestingIssue) {
+      logger.warning(
+        `Schedule "${schedule.title}": presentation ${item.childScheduleUuid ?? '?'} left out: ${nestingIssue}`,
       )
       continue
     }

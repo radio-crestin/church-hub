@@ -106,6 +106,60 @@ test.describe('Presentations inside presentations - API', () => {
     expect(got.items).toEqual([])
   })
 
+  test('a presentation held many times over loads quickly and stays bounded; too many items are refused', async ({
+    request,
+  }) => {
+    const tag = Date.now()
+    const levels: number[] = []
+    for (let i = 0; i < 5; i++) {
+      levels.push(await createPresentation(request, ids, `Fan ${i} ${tag}`))
+    }
+    await request.post(`/api/schedules/${levels[4]}/items`, {
+      data: { slideType: 'announcement', slideContent: '<p>Fan</p>' },
+    })
+    // Each level holds the next one six times: 1, 12, 78, 474 items.
+    for (const level of [3, 2, 1]) {
+      for (let n = 0; n < 6; n++) {
+        const res = await nest(request, levels[level]!, levels[level + 1]!)
+        expect(res.status()).toBe(201)
+      }
+    }
+    // A fourth level of six would run 2844 items: refused past 1000.
+    expect((await nest(request, levels[0]!, levels[1]!)).status()).toBe(201)
+    expect((await nest(request, levels[0]!, levels[1]!)).status()).toBe(201)
+    const tooMany = await nest(request, levels[0]!, levels[1]!)
+    expect(tooMany.status()).toBe(400)
+    expect((await tooMany.json()).error).toMatch(/at most 1000 items/)
+
+    const started = Date.now()
+    const got = await request.get(`/api/schedules/${levels[0]}`)
+    expect(got.status()).toBe(200)
+    expect(Date.now() - started).toBeLessThan(2000)
+    type Item = { childSchedule: { items: Item[] } | null }
+    const count = (items: Item[]): number =>
+      items.reduce(
+        (sum, item) => sum + 1 + count(item.childSchedule?.items ?? []),
+        0,
+      )
+    const expanded = count((await got.json()).data.items)
+    expect(expanded).toBe(2 + 2 * 474)
+    expect(expanded).toBeLessThanOrEqual(1000)
+  })
+
+  test('nesting deeper than five levels is refused', async ({ request }) => {
+    const tag = Date.now()
+    const chain: number[] = []
+    for (let i = 0; i < 7; i++) {
+      chain.push(await createPresentation(request, ids, `Deep ${i} ${tag}`))
+    }
+    for (let i = 0; i < 5; i++) {
+      expect((await nest(request, chain[i]!, chain[i + 1]!)).status()).toBe(201)
+    }
+    const tooDeep = await nest(request, chain[5]!, chain[6]!)
+    expect(tooDeep.status()).toBe(400)
+    expect((await tooDeep.json()).error).toMatch(/5 levels deep/)
+  })
+
   test('the queue is a presentation hidden from the list, that cannot go inside another', async ({
     request,
   }) => {

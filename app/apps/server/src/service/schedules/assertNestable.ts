@@ -1,13 +1,15 @@
 import { eq } from 'drizzle-orm'
 
+import { nestingProblem } from './nestingLimits'
 import { scheduleContains } from './scheduleContains'
 import { getDatabase } from '../../db'
 import { schedules } from '../../db/schema'
 
 /**
  * Throws unless presentation `childId` can play inside `scheduleId`: it
- * exists, is not the control room's queue, and neither is nor includes
- * `scheduleId` (that would make a loop).
+ * exists, is not the control room's queue, neither is nor includes
+ * `scheduleId` (that would make a loop), and keeps every presentation
+ * within the nesting limits.
  */
 export function assertNestable(scheduleId: number, childId: number): void {
   const child = getDatabase()
@@ -24,4 +26,6 @@ export function assertNestable(scheduleId: number, childId: number): void {
       `Presentation ${childId} is or includes presentation ${scheduleId}: adding it would make a loop`,
     )
   }
+  const problem = nestingProblem(scheduleId, childId)
+  if (problem) throw new Error(problem)
 }
