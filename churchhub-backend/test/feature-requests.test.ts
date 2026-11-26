@@ -210,6 +210,25 @@ describe('POST /feature-requests', () => {
     expect(notAnId.status).toBe(404)
   })
 
+  test('sends the request without its screenshot when no storage is configured', async () => {
+    const env = createEnv({ FEATURE_REQUEST_SCREENSHOTS: undefined })
+    const response = await post(validBody(), env)
+
+    expect(response.status).toBe(200)
+    const issueBody = String(calls[0].body.body)
+    expect(issueBody).not.toContain('/feature-requests/screenshots/')
+  })
+
+  test('404s screenshot reads when no storage is configured', async () => {
+    const env = createEnv({ FEATURE_REQUEST_SCREENSHOTS: undefined })
+    const response = await app.request(
+      'https://backend.test/feature-requests/screenshots/00000000-0000-0000-0000-000000000000.png',
+      {},
+      env
+    )
+    expect(response.status).toBe(404)
+  })
+
   test('stores nothing when there is no screenshot', async () => {
     const env = createEnv()
     const response = await post(validBody({ screenshot: undefined }), env)
