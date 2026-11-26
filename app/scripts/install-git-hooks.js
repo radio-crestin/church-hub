@@ -22,13 +22,10 @@ try {
   process.exit(0)
 }
 
-// Already set (a worktree sharing its main checkout's config, which may be
-// read-only to this user): nothing to write.
+// Already set (e.g. a worktree whose shared .git/config is read-only): nothing to write.
 let current = ''
 try {
   current = git(['config', 'core.hooksPath'])
 } catch {}
-if (current === '.githooks') process.exit(0)
-
-git(['config', 'core.hooksPath', '.githooks'])
+if (current !== '.githooks') git(['config', 'core.hooksPath', '.githooks'])
 console.log('git hooks: core.hooksPath = .githooks (gitleaks on commit and push)')
