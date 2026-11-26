@@ -391,6 +391,12 @@ function BiblePage() {
     presentationState?.temporaryContent?.type === 'bible'
       ? presentationState.temporaryContent.data.translationId
       : undefined
+  // The template the verse on screen is drawn with (a topic's): the verse
+  // stepped to next keeps it.
+  const shownTemplateId =
+    presentationState?.temporaryContent?.type === 'bible'
+      ? (presentationState.temporaryContent.data.templateId ?? null)
+      : null
   const { data: temporaryBooks = [] } = useBooks(temporaryBibleTranslationId)
 
   // Sync navigation with current Bible verse only on initial page open
@@ -901,7 +907,11 @@ function BiblePage() {
 
   // Handle verse presentation to screen (API call)
   const presentVerseToScreen = useCallback(
-    async (verse: BibleVerse, verseIndex: number) => {
+    async (
+      verse: BibleVerse,
+      verseIndex: number,
+      templateId: number | null = null,
+    ) => {
       const reference = formatVerseReference(
         verse.bookName,
         verse.chapter,
@@ -943,6 +953,7 @@ function BiblePage() {
         secondaryText,
         secondaryBookName,
         secondaryTranslationAbbreviation,
+        templateId,
       })
 
       // Bring back whatever highlighting was saved with this verse. Live
@@ -1017,10 +1028,10 @@ function BiblePage() {
         if (clampedIndex !== presentedIndex) {
           navigation.presentVerse(clampedIndex)
         }
-        presentVerseToScreen(verse, clampedIndex)
+        presentVerseToScreen(verse, clampedIndex, shownTemplateId)
       }
     }
-  }, [navigation, verses, presentVerseToScreen])
+  }, [navigation, verses, presentVerseToScreen, shownTemplateId])
 
   // Handle verse selection - immediately present it
   const handleSelectVerse = useCallback(
@@ -1048,13 +1059,14 @@ function BiblePage() {
     [navigation, presentVerseToScreen, urlSelectOnly, navigate],
   )
 
-  // A verse presented from a topic: the page follows the screen to its
-  // chapter (the server sync), so the next verse continues the passage.
+  // A verse presented from a topic, drawn with the topic's template: the page
+  // follows the screen to its chapter (the server sync), so the next verse
+  // continues the passage.
   const handlePresentTopicVerse = useCallback(
-    async (verse: BibleVerse) => {
+    async (verse: BibleVerse, templateId: number | null) => {
       isBrowsingRef.current = false
       hasNavigatedOnOpen.current = true
-      await presentVerseToScreen(verse, verse.verse - 1)
+      await presentVerseToScreen(verse, verse.verse - 1, templateId)
     },
     [presentVerseToScreen],
   )
@@ -1124,7 +1136,7 @@ function BiblePage() {
       const verse = verses[nextIndex]
       if (verse) {
         navigation.presentVerse(nextIndex)
-        await presentVerseToScreen(verse, nextIndex)
+        await presentVerseToScreen(verse, nextIndex, shownTemplateId)
       }
     } else {
       // Just move selection (not presenting)
@@ -1138,6 +1150,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
+    shownTemplateId,
   ])
 
   const handlePreviousVerse = useCallback(async () => {
@@ -1175,7 +1188,7 @@ function BiblePage() {
       const verse = verses[prevIndex]
       if (verse) {
         navigation.presentVerse(prevIndex)
-        await presentVerseToScreen(verse, prevIndex)
+        await presentVerseToScreen(verse, prevIndex, shownTemplateId)
       }
     } else {
       // Just move selection (not presenting)
@@ -1189,6 +1202,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
+    shownTemplateId,
   ])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection

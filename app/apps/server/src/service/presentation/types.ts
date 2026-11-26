@@ -84,6 +84,8 @@ export interface TemporaryBibleContent {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
+  /** The template screens that follow presentations draw it with (a topic's). */
+  templateId?: number | null
 }
 
 /**
@@ -345,6 +347,8 @@ export interface PresentTemporaryBibleInput {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
+  /** The template screens that follow presentations draw it with (a topic's). */
+  templateId?: number | null
 }
 
 /**

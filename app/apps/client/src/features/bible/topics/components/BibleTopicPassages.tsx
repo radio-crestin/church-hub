@@ -6,6 +6,7 @@ import { useNavigateTemporary } from '~/features/presentation'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
+import { useTakeOverTopicSlideshow } from '../hooks/useTakeOverTopicSlideshow'
 import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
 import type { BibleTopicPassage } from '../types'
 import { toSlideshowEntries } from '../utils/toSlideshowEntries'
@@ -18,7 +19,8 @@ interface BibleTopicPassagesProps {
   /** The verse on screen, to mark its passage */
   activeVerseId?: number
   onBack: () => void
-  onPresentVerse: (verse: BibleVerse) => void
+  /** Presents a verse drawn with the topic's template */
+  onPresentVerse: (verse: BibleVerse, templateId: number | null) => void
   onOpenVerse: (verse: BibleVerse) => void
 }
 
@@ -42,6 +44,7 @@ export function BibleTopicPassages({
   const entries = useMemo(() => toSlideshowEntries(passages), [passages])
   const [templateId, setTemplateId] = useTopicLoopTemplate()
   const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
+  useTakeOverTopicSlideshow(topicId, entries.length > 0, slideshow)
   const navigateSlideshow = useNavigateTemporary()
   const chooseTemplate = (id: number | null) => {
     setTemplateId(id)
@@ -62,7 +65,7 @@ export function BibleTopicPassages({
       return
     }
     const verse = passages[index]?.verses[0]
-    if (verse) onPresentVerse(verse)
+    if (verse) onPresentVerse(verse, templateId)
   }
 
   return (
@@ -139,7 +142,7 @@ export function BibleTopicPassages({
                 >
                   <button
                     type="button"
-                    onClick={() => onPresentVerse(first)}
+                    onClick={() => onPresentVerse(first, templateId)}
                     title={t('topics.present')}
                     className="min-w-0 flex-1 px-2.5 py-2 text-left hover:bg-hover rounded-l-lg"
                   >

@@ -103,6 +103,12 @@ export const presentationSchemas = {
         description: 'Secondary version abbreviation',
         nullable: true,
       },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "The slide template the screens that follow presentations draw it with (a Bible topic's); unset: each screen's own. Stepping to the next or previous verse keeps it.",
+      },
     },
   },
   TemporarySongContent: {
@@ -205,6 +211,12 @@ export const presentationSchemas = {
         description:
           'The list that started the slideshow, so its panel shows it as playing: `bookmarks` or `topic:<id>`.',
       },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "The slide template the screens that follow presentations draw it with (a Bible topic's); unset: each screen's own. Presenting the same slideshow again on its current entry with another template restyles it without restarting its timer.",
+      },
       scheduleId: {
         type: 'integer',
         description:
@@ -241,6 +253,12 @@ export const presentationSchemas = {
       secondaryText: { type: 'string', nullable: true },
       secondaryBookName: { type: 'string', nullable: true },
       secondaryTranslationAbbreviation: { type: 'string', nullable: true },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "The slide template the screens that follow presentations draw it with (a Bible topic's); unset: each screen's own. Stepping to the next or previous verse keeps it.",
+      },
     },
   },
   PresentTemporarySongInput: {

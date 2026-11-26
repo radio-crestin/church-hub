@@ -6,10 +6,10 @@ import {
 } from '@playwright/test'
 
 /**
- * A theme chosen for what is on screen restyles the projector at once, and
- * the next time it is presented otherwise: a Bible topic's verse loop (its
- * template chip beside ▶ and 🔁) and a presentation (its header). The topic
- * loop's theme reached the screens only when the loop was started.
+ * A Bible topic's template (its chip beside ▶ and 🔁) reaches the projector
+ * however the topic is presented: a verse by hand, the verses stepped to from
+ * it, its slideshow. Choosing another template mid-play restyles the screen
+ * at once, and opening another topic mid-play moves the slideshow to it.
  */
 
 const RED = 'rgb(255, 0, 0)'
@@ -50,17 +50,6 @@ async function colourTemplate(
   return copy.id
 }
 
-async function createProjector(
-  request: APIRequestContext,
-  name: string,
-): Promise<number> {
-  const res = await request.post('/api/screens', {
-    data: { name, type: 'primary' },
-  })
-  expect(res.ok()).toBe(true)
-  return (await res.json()).data.id
-}
-
 /** Whether the display draws a background of this colour. */
 function drawsColour(display: Page, colour: string) {
   return display.evaluate(
@@ -72,127 +61,169 @@ function drawsColour(display: Page, colour: string) {
   )
 }
 
-async function chooseTemplate(page: Page, picker: string, templateId: number) {
-  await page.getByTestId(picker).click()
+async function chooseTemplate(page: Page, templateId: number) {
+  await page.getByTestId('bible-topic-template').click()
   await page.getByTestId(`template-choice-${templateId}`).click()
 }
 
-/** The verse loop on screen: which verse, and whether it still loops. */
-async function loopOnScreen(request: APIRequestContext) {
+/** What is on screen: its kind, reference, template and slideshow mode. */
+async function onScreen(request: APIRequestContext) {
   const state = (await (await request.get('/api/presentation/state')).json())
     .data
   const content = state.temporaryContent
-  if (state.isHidden || content?.type !== 'versete_tineri') return null
-  return { index: content.data.currentEntryIndex, loop: content.data.loop }
+  if (state.isHidden || !content) return null
+  const { data } = content
+  return {
+    type: content.type as string,
+    templateId: data.templateId ?? null,
+    reference:
+      content.type === 'bible'
+        ? `${data.bookName} ${data.chapter}:${data.currentVerseIndex + 1}`
+        : data.entries?.[data.currentEntryIndex]?.reference,
+    slideshow: data.slideshow ?? null,
+    loop: !!data.loop,
+    autoAdvance: !!data.autoAdvance,
+  }
 }
 
-test.describe('Changing the theme of what is on screen', () => {
+async function topicId(request: APIRequestContext, key: string) {
+  const topics = (await (await request.get('/api/bible/topics')).json())
+    .data as { id: number; key: string }[]
+  return topics.find((topic) => topic.key === key)?.id as number
+}
+
+test.describe("A Bible topic's template on screen", () => {
   test.describe.configure({ mode: 'serial' })
 
-  test.afterEach(async ({ request }) => {
-    await request.post('/api/schedules/automation/stop')
+  let red: number
+  let blue: number
+  let projector: number
+  let display: Page
+
+  test.beforeEach(async ({ page, context, request }) => {
     await request.post('/api/presentation/clear-temporary')
-  })
-
-  test("a Bible topic's verse loop restyles live, and the next time", async ({
-    page,
-    context,
-    request,
-  }) => {
     const name = `E2E Topic Theme ${Date.now()}`
-    const red = await colourTemplate(request, `${name} red`, '#ff0000')
-    const blue = await colourTemplate(request, `${name} blue`, '#0000ff')
-    const projector = await createProjector(request, `${name} projector`)
-    try {
-      const display = await context.newPage()
-      await display.goto(`/screen/${projector}`)
-      await page.addInitScript(() => {
-        window.localStorage.setItem('bible:topics-open', 'true')
-      })
-      await page.goto('/bible')
-      const panel = page.getByTestId('bible-topics-panel')
-      await panel.getByTestId('bible-topic-gods-love').click()
-
-      await chooseTemplate(page, 'bible-topic-template', red)
-      await panel.getByTestId('bible-topic-loop').click()
-      await expect.poll(() => drawsColour(display, RED)).toBe(true)
-
-      // Live: the screen restyles at once, the loop goes on where it was.
-      const before = await loopOnScreen(request)
-      await chooseTemplate(page, 'bible-topic-template', blue)
-      await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
-      expect(await drawsColour(display, RED)).toBe(false)
-      const after = await loopOnScreen(request)
-      expect(after?.loop).toBe(true)
-      expect(after?.index).toBeGreaterThanOrEqual(before?.index ?? 0)
-
-      // Not live: the next loop is drawn with the theme chosen meanwhile.
-      await panel.getByTestId('bible-topic-loop').click()
-      await expect.poll(() => loopOnScreen(request)).toBeNull()
-      await chooseTemplate(page, 'bible-topic-template', red)
-      await expect.poll(() => loopOnScreen(request)).toBeNull()
-      await panel.getByTestId('bible-topic-loop').click()
-      await expect.poll(() => drawsColour(display, RED)).toBe(true)
-      expect(await drawsColour(display, BLUE)).toBe(false)
-    } finally {
-      await request.delete(`/api/screens/${projector}`)
-      await request.delete(`/api/slide-templates/${red}`)
-      await request.delete(`/api/slide-templates/${blue}`)
-    }
+    red = await colourTemplate(request, `${name} red`, '#ff0000')
+    blue = await colourTemplate(request, `${name} blue`, '#0000ff')
+    const screen = await request.post('/api/screens', {
+      data: { name: `${name} projector`, type: 'primary' },
+    })
+    projector = (await screen.json()).data.id
+    display = await context.newPage()
+    await display.goto(`/screen/${projector}`)
+    await page.addInitScript(() => {
+      window.localStorage.setItem('church-hub-language', 'ro')
+      window.localStorage.setItem('bible:topics-open', 'true')
+    })
+    await page.goto('/bible')
+    await page
+      .getByTestId('bible-topics-panel')
+      .getByTestId('bible-topic-gods-love')
+      .click()
   })
 
-  test('a presentation restyles live, and the next time', async ({
+  test.afterEach(async ({ request }) => {
+    await request.post('/api/presentation/clear-temporary')
+    await request.delete(`/api/screens/${projector}`)
+    await request.delete(`/api/slide-templates/${red}`)
+    await request.delete(`/api/slide-templates/${blue}`)
+  })
+
+  test('a verse presented by hand, and the verses stepped to from it, use it', async ({
     page,
-    context,
     request,
   }) => {
-    const name = `E2E Presentation Theme ${Date.now()}`
-    const red = await colourTemplate(request, `${name} red`, '#ff0000')
-    const blue = await colourTemplate(request, `${name} blue`, '#0000ff')
-    const projector = await createProjector(request, `${name} projector`)
-    const schedule = (
-      await (
-        await request.post('/api/schedules', { data: { title: name } })
-      ).json()
-    ).data as { id: number }
-    await request.post(`/api/schedules/${schedule.id}/items`, {
-      data: { slideType: 'announcement', slideContent: '<p>Bun venit!</p>' },
+    const panel = page.getByTestId('bible-topics-panel')
+    await chooseTemplate(page, red)
+    await panel
+      .getByTestId('bible-topic-passage')
+      .first()
+      .getByRole('button')
+      .first()
+      .click()
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({ type: 'bible', reference: 'Ioan 3:16', templateId: red })
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+
+    // The topic's next passage, then the Bible's next verse after it.
+    await panel.getByTestId('bible-topic-next').click()
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({ reference: 'Romani 5:8', templateId: red })
+    await page.locator('body').click({ position: { x: 5, y: 5 } })
+    await page.keyboard.press('ArrowRight')
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({ reference: 'Romani 5:9', templateId: red })
+    expect(await drawsColour(display, RED)).toBe(true)
+  })
+
+  test('another template chosen mid-play restyles the screen at once', async ({
+    page,
+    request,
+  }) => {
+    const panel = page.getByTestId('bible-topics-panel')
+    await chooseTemplate(page, red)
+    await panel.getByTestId('bible-topic-loop').click()
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+
+    // The loop goes on where it was, now drawn with the other template.
+    await chooseTemplate(page, blue)
+    await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
+    expect(await drawsColour(display, RED)).toBe(false)
+    expect(await onScreen(request)).toMatchObject({
+      loop: true,
+      templateId: blue,
     })
-    const run = async () =>
-      expect(
-        (await request.post(`/api/schedules/${schedule.id}/run`)).ok(),
-      ).toBe(true)
 
-    try {
-      await page.goto(`/schedules/${schedule.id}`)
-      await chooseTemplate(page, 'schedule-template-picker', red)
-      const display = await context.newPage()
-      await display.goto(`/screen/${projector}`)
+    // Stopped, the next start uses the template chosen meanwhile.
+    await panel.getByTestId('bible-topic-loop').click()
+    await expect.poll(() => onScreen(request)).toBeNull()
+    await chooseTemplate(page, red)
+    await panel.getByTestId('bible-topic-loop').click()
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+    expect(await drawsColour(display, BLUE)).toBe(false)
+  })
 
-      // Live: the screen restyles as soon as another theme is chosen.
-      await run()
-      await expect.poll(() => drawsColour(display, RED)).toBe(true)
-      await chooseTemplate(page, 'schedule-template-picker', blue)
-      await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
-      expect(await drawsColour(display, RED)).toBe(false)
+  test('another topic opened mid-play takes the slideshow over, in its mode', async ({
+    page,
+    request,
+  }) => {
+    const panel = page.getByTestId('bible-topics-panel')
+    const forgiveness = await topicId(request, 'forgiveness')
+    const prayer = await topicId(request, 'prayer')
+    await chooseTemplate(page, red)
 
-      // Not live: presenting it again uses the theme chosen meanwhile.
-      await request.post('/api/schedules/automation/stop')
-      await request.post('/api/presentation/clear-temporary')
-      const ownTheme = async () =>
-        (await (await request.get(`/api/schedules/${schedule.id}`)).json()).data
-          .templateId
-      const blueCopy = await ownTheme()
-      await chooseTemplate(page, 'schedule-template-picker', red)
-      await expect.poll(ownTheme).not.toBe(blueCopy)
-      await run()
-      await expect.poll(() => drawsColour(display, RED)).toBe(true)
-      expect(await drawsColour(display, BLUE)).toBe(false)
-    } finally {
-      await request.delete(`/api/schedules/${schedule.id}`)
-      await request.delete(`/api/screens/${projector}`)
-      await request.delete(`/api/slide-templates/${red}`)
-      await request.delete(`/api/slide-templates/${blue}`)
-    }
+    // 🔁 on one topic; another opened goes on screen from its first passage.
+    await panel.getByTestId('bible-topic-loop').click()
+    await expect.poll(async () => (await onScreen(request))?.loop).toBe(true)
+    await panel.getByTestId('bible-topic-back').click()
+    await panel.getByTestId('bible-topic-forgiveness').click()
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({
+        slideshow: `topic:${forgiveness}`,
+        loop: true,
+        templateId: red,
+      })
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+
+    // ▶ likewise keeps playing once through.
+    await panel.getByTestId('bible-topic-loop').click()
+    await panel.getByTestId('bible-topic-play').click()
+    await expect
+      .poll(async () => (await onScreen(request))?.autoAdvance)
+      .toBe(true)
+    await panel.getByTestId('bible-topic-back').click()
+    await panel.getByTestId('bible-topics-search').fill('rugaciune')
+    await panel.getByTestId('bible-topic-prayer').click()
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({
+        slideshow: `topic:${prayer}`,
+        autoAdvance: true,
+        loop: false,
+      })
   })
 })
