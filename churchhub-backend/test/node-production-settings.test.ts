@@ -19,6 +19,20 @@ describe('assertProductionSettings', () => {
     ).toThrow('REDIS_URL')
   })
 
+  test('a single instance runs in production without Redis', () => {
+    expect(() =>
+      assertProductionSettings({ ...production, REDIS_URL: undefined, SINGLE_INSTANCE: 'true' }),
+    ).not.toThrow()
+  })
+
+  test('anything but SINGLE_INSTANCE=true still requires REDIS_URL', () => {
+    for (const value of ['', 'false', '1', 'yes']) {
+      expect(() =>
+        assertProductionSettings({ ...production, REDIS_URL: undefined, SINGLE_INSTANCE: value }),
+      ).toThrow('REDIS_URL')
+    }
+  })
+
   test('requires TRUSTED_PROXY_CIDRS in production, blank counts as unset', () => {
     for (const value of [undefined, '', '   ']) {
       expect(() =>

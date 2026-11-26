@@ -25,7 +25,7 @@ const settings = process.env
 assertProductionSettings(settings)
 const redis = settings.REDIS_URL ? connectRedis(settings.REDIS_URL) : null
 if (!redis) {
-  console.warn('[server] REDIS_URL is not set: signaling and rate limits live in memory (one process only)')
+  console.warn('[server] REDIS_URL is not set: signaling and rate limits live in memory (one replica only)')
 }
 const bindingsFor = createSyncGuard(buildNodeBindings(settings, redis))
 const isTrustedProxy = createCidrMatcher(settings.TRUSTED_PROXY_CIDRS ?? '')
