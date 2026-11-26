@@ -1419,6 +1419,21 @@
       },
       "slides": {
         "description": "Fiecare tip de slide, cum îl arată acest ecran. Apasă pe unul ca să-l editezi."
+      },
+      "link": {
+        "title": "Afișează „{{name}}” pe alt dispozitiv",
+        "description": "Deschideți acest link pe un televizor, laptop sau tabletă. Cât timp calculatorul bisericii e oprit, telefonul acesta îi trimite ecranul, așa că lăsați Church Hub deschis aici.",
+        "making": "Se creează linkul…",
+        "error": "Linkul nu a putut fi creat. Verificați conexiunea la internet și încercați din nou.",
+        "qrAlt": "Codul QR al linkului ecranului",
+        "urlLabel": "Linkul ecranului",
+        "copy": "Copiază",
+        "copied": "Link copiat",
+        "until": "Funcționează până {{time}}.",
+        "revoke": "Revocă linkul",
+        "revoked": "Link revocat: dispozitivul acela nu mai afișează ecranul",
+        "revokeError": "Linkul nu a putut fi revocat",
+        "action": "Afișează pe alt dispozitiv"
       }
     },
     "developer": {

@@ -1410,6 +1410,21 @@
       },
       "slides": {
         "description": "Every kind of slide, as this screen shows it. Click one to edit it."
+      },
+      "link": {
+        "title": "Show “{{name}}” on another device",
+        "description": "Open this link on a TV, laptop or tablet. While the church computer is off, this phone sends it the screen, so keep Church Hub open here.",
+        "making": "Making the link…",
+        "error": "The link couldn't be made. Check the internet connection and try again.",
+        "qrAlt": "QR code of the screen link",
+        "urlLabel": "Screen link",
+        "copy": "Copy",
+        "copied": "Link copied",
+        "until": "Works until {{time}}.",
+        "revoke": "Revoke link",
+        "revoked": "Link revoked: that device no longer shows the screen",
+        "revokeError": "The link couldn't be revoked",
+        "action": "Show on another device"
       }
     },
     "developer": {

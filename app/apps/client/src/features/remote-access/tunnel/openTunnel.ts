@@ -1,29 +1,15 @@
 import { createTunnel, type Tunnel } from './createTunnel'
+import { iceGathered } from './iceGathered'
+import { ICE_SERVERS } from './iceServers'
 import { relayFetch } from './relayFetch'
 import type { RemotePairing } from '../service/remotePairing'
 
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-]
-/** STUN candidates come in well under this; past it the offer goes as is. */
-const GATHER_MS = 1500
 /** The computer polls the relay every 2 s; this covers a slow answer. */
 const ANSWER_MS = 20_000
 const ANSWER_POLL_MS = 300
 const OPEN_MS = 15_000
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-function iceGathered(pc: RTCPeerConnection) {
-  return new Promise<void>((resolve) => {
-    if (pc.iceGatheringState === 'complete') return resolve()
-    pc.addEventListener('icegatheringstatechange', () => {
-      if (pc.iceGatheringState === 'complete') resolve()
-    })
-    setTimeout(resolve, GATHER_MS)
-  })
-}
 
 function channelOpen(channel: RTCDataChannel) {
   return new Promise<void>((resolve, reject) => {
