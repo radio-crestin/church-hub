@@ -27,6 +27,7 @@ This worker provides a stateless OAuth flow using:
 | `/feature-requests` | POST | "Request a feature": stores the screenshot in R2, opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email). Max 3/min and 50 per rolling 24h per IP (hashed IP counter in `SIGNALING_KV`) |
 | `/feature-requests/screenshots/:id` | GET | Serves a feature-request screenshot from R2 (embedded in the issue; random id, cached a year) |
 | `/sync/*` | GET, POST, PUT, DELETE | Cloud sync service (see below); documented at `/sync/openapi.json`, rendered at `/sync/docs` |
+| `/backup/*` | GET, POST, DELETE | Church Hub Cloud backup, free with Google sign-in (see below); documented at `/backup/openapi.json`, rendered at `/backup/docs` |
 
 > Drive setup: enable the **Google Drive API** in the same Google Cloud project
 > and register `https://churchub-backend.radiocrestin.ro/auth/drive/callback`
@@ -125,6 +126,51 @@ Google stand-in too.
 For the owner sign-in in production, register
 `https://churchub-backend.radiocrestin.ro/sync/owner/callback` as an
 authorized redirect URI on the Google OAuth client.
+
+## Cloud backup (`/backup/*`)
+
+Free backups of a church's database for anyone who signs in with Google.
+The API, its limits and its errors are in `/backup/openapi.json` (code:
+`src/backup/`, routes in `src/routes/backup.ts`).
+
+- **Sign-in**: the PC opens `/backup/sign-in` with its loopback callback, a
+  nonce and the SHA-256 of a verifier it keeps; Google (PKCE, `openid email`,
+  verified email only) answers `/backup/callback`, which hands the PC a
+  five-minute grant. The PC swaps grant + verifier for a one-hour access
+  token and a 180-day refresh token (`chba_`/`chbr_`, HMAC-signed with
+  `BACKUP_SECRET`, bound to the Google `sub`). Signing out or deleting the
+  account refuses every token issued before.
+- **Storage**: a private bucket of its own. Each account's folder is
+  `accounts/<HMAC(sub)>/`: a small `account.json` (backup ids, sizes, dates,
+  app versions; no email, no Google id) and the encrypted backups. Uploads
+  and downloads go straight to the bucket through presigned URLs valid 15
+  minutes, handed out after the session and free-tier checks.
+- **Encryption**: the app encrypts each backup (AES-256-GCM, a fresh key per
+  backup) and wraps that key with the account key from `GET /backup/key`,
+  derived from `BACKUP_KEY_SECRET` and the `sub`: the bucket alone can't read
+  a backup, and the same account restores after a reinstall by signing in.
+- **Free tier** (defaults, each overridable): 512 MiB a backup
+  (`BACKUP_MAX_BYTES`), 2 GiB an account (`BACKUP_QUOTA_BYTES`), at most 12
+  kept (`BACKUP_MAX_COUNT`: the newest 3, one a day for 7 days, one a week
+  for 5 weeks), 24 uploads a day (`BACKUP_UPLOADS_PER_DAY`), 2 in flight.
+  Per IP and per account rate limits: the `BACKUP_RATE_LIMITER` and
+  `BACKUP_ACCOUNT_RATE_LIMITER` bindings on Cloudflare, an in-memory window
+  of the same size on Node or Bun.
+
+**Settings** (secrets; unset = `/backup` answers `503 not_configured`):
+
+| Name | |
+|---|---|
+| `BACKUP_SECRET` | Signs tokens and the OAuth state (`openssl rand -hex 32`). Rotating it signs everyone out. |
+| `BACKUP_KEY_SECRET` | Derives account ids and account keys (`openssl rand -hex 32`). Never rotate it: losing it loses every backup. |
+| `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | The private bucket, path-style, with multipart uploads and conditional writes (`BACKUP_S3_REGION` defaults to `auto`) |
+| `BACKUP_S3_ACCESS_KEY_ID`, `BACKUP_S3_SECRET_ACCESS_KEY` | Read, write, list and multipart on that bucket only |
+| `BACKUP_S3_PRESIGN_ENDPOINT` | Optional: the bucket's public address for presigned URLs, when the service reaches it on another (e.g. inside a cluster) |
+| `BACKUP_REDIRECT_URI` | The sign-in's callback, registered on the Google client (in `wrangler.toml`; default `<this service>/backup/callback`) |
+
+**The bucket**: no public access and no listing for anyone but the service.
+Recommended lifecycle rule: abort incomplete multipart uploads after 1 day
+(the service aborts the ones it knows of; this catches the rest).
 
 ## Google Cloud Console Setup
 

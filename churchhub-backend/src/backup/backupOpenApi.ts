@@ -1,0 +1,413 @@
+/**
+ * OpenAPI 3.1 document of Church Hub Cloud backup (served at
+ * /backup/openapi.json, rendered by Scalar at /backup/docs).
+ */
+import { RETENTION } from './account/applyRetention'
+import { MAX_PENDING_UPLOADS } from './account/checkCanStartUpload'
+import { UPLOAD_MAX_AGE_MS } from './account/takeExpiredUploads'
+import { DEFAULT_LIMITS } from './backupSettings'
+import { PRESIGN_TTL_SECONDS } from './storage/createBackupBucket'
+
+const error = (description: string) => ({
+  description,
+  content: {
+    'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+  },
+})
+
+const json = (description: string, schema: object) => ({
+  description,
+  content: { 'application/json': { schema } },
+})
+
+const body = (properties: Record<string, object>, required: string[]) => ({
+  required: true,
+  content: {
+    'application/json': {
+      schema: { type: 'object', properties, required },
+    },
+  },
+})
+
+const backupId = {
+  name: 'backupId',
+  in: 'path',
+  required: true,
+  schema: { type: 'string', pattern: '^[A-Za-z0-9_-]{22}$' },
+}
+
+const signedIn = [{ accessToken: [] }]
+const unauthorized = error(
+  'Missing, forged, expired or revoked access token (code unauthorized)'
+)
+const notFound = error(
+  'No such backup or upload in the caller’s own account (code not_found)'
+)
+const limited = error('Over the per-IP or per-account rate limit (code rate_limited)')
+const notConfigured = error('Cloud backup is not configured (code not_configured)')
+const common = { '401': unauthorized, '429': limited, '503': notConfigured }
+
+const session = {
+  type: 'object',
+  properties: {
+    accessToken: { type: 'string', description: 'chba_…, valid one hour' },
+    accessExpiresAt: { type: 'integer', description: 'Unix seconds' },
+    refreshToken: {
+      type: 'string',
+      description: 'chbr_…, valid 180 days; each refresh returns a new one',
+    },
+    refreshExpiresAt: { type: 'integer', description: 'Unix seconds' },
+    email: { type: 'string', description: 'The Google account (lowercased)' },
+  },
+  required: [
+    'accessToken',
+    'accessExpiresAt',
+    'refreshToken',
+    'refreshExpiresAt',
+    'email',
+  ],
+}
+
+const MIB = 1024 * 1024
+
+export const backupOpenApi = {
+  openapi: '3.1.0',
+  info: {
+    title: 'Church Hub Cloud backup',
+    version: '1.0.0',
+    description: [
+      'Free cloud backups of a church’s Church Hub database, for a Google account.',
+      '',
+      '**Sign-in.** The PC opens `/backup/sign-in` with its loopback callback, a nonce and the SHA-256 (base64url) of a verifier it keeps. Google answers `/backup/callback` (PKCE, scopes `openid email`, verified email required), which redirects to the PC with its nonce and a five-minute grant. The PC swaps the grant and its verifier for a session (`POST /backup/session`): an access token (one hour) and a refresh token (180 days, rotated on each refresh). Tokens are HMAC-signed, compared in constant time and bound to the Google `sub`; signing out or deleting the account refuses every token issued before.',
+      '',
+      '**Storage.** Each account has a folder in a private bucket, named by a keyed hash of its Google `sub` (never its email). Backups go straight to the bucket in parts through presigned URLs valid ' +
+        `${PRESIGN_TTL_SECONDS / 60} minutes, handed out only to the signed-in account within its free tier; downloads are presigned the same way.`,
+      '',
+      '**Encryption.** The app encrypts each backup before uploading it: AES-256-GCM in 1 MiB chunks under a fresh random key, which it wraps with the account key from `GET /backup/key` (derived from a service secret and the account’s `sub`). The bucket alone can’t read a backup; the same account can restore after a reinstall by signing in again.',
+      '',
+      `**Free tier** (defaults): ${DEFAULT_LIMITS.maxBackupBytes / MIB} MiB a backup, ${DEFAULT_LIMITS.quotaBytes / MIB} MiB an account, ${DEFAULT_LIMITS.uploadsPerDay} uploads a day, ${MAX_PENDING_UPLOADS} in flight (dropped after ${UPLOAD_MAX_AGE_MS / 3600000} hours). Retention keeps the newest ${RETENTION.latest}, one a day for ${RETENTION.days} days and one a week for ${RETENTION.weeks} weeks, at most ${DEFAULT_LIMITS.maxBackups}.`,
+    ].join('\n'),
+  },
+  components: {
+    securitySchemes: {
+      accessToken: {
+        type: 'http',
+        scheme: 'bearer',
+        description: 'An access token (chba_…) from POST /backup/session or /backup/session/refresh.',
+      },
+    },
+    schemas: {
+      Error: {
+        type: 'object',
+        properties: {
+          error: { type: 'string' },
+          code: {
+            type: 'string',
+            enum: [
+              'invalid_request',
+              'unauthorized',
+              'not_found',
+              'too_large',
+              'quota_exceeded',
+              'daily_limit',
+              'upload_in_progress',
+              'upload_incomplete',
+              'size_mismatch',
+              'rate_limited',
+              'busy',
+              'not_configured',
+              'internal',
+            ],
+          },
+        },
+        required: ['error', 'code'],
+      },
+      Backup: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          sizeBytes: { type: 'integer', description: 'As stored (encrypted)' },
+          createdAt: { type: 'integer', description: 'Unix ms' },
+          appVersion: { type: 'string' },
+          keyVersion: { type: 'integer' },
+        },
+        required: ['id', 'sizeBytes', 'createdAt', 'appVersion', 'keyVersion'],
+      },
+    },
+  },
+  paths: {
+    '/backup/sign-in': {
+      get: {
+        tags: ['Sign-in'],
+        summary: 'Start the Google sign-in',
+        parameters: [
+          {
+            name: 'returnUrl',
+            in: 'query',
+            required: true,
+            description: 'The PC’s loopback callback (http://localhost or 127.0.0.1), or an allowed origin',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'nonce',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', pattern: '^[A-Za-z0-9_-]{16,128}$' },
+          },
+          {
+            name: 'challenge',
+            in: 'query',
+            required: true,
+            description: 'base64url SHA-256 of the PC’s verifier',
+            schema: { type: 'string', pattern: '^[A-Za-z0-9_-]{43}$' },
+          },
+        ],
+        responses: {
+          '302': { description: 'To Google’s account chooser' },
+          '400': error('returnUrl, nonce or challenge refused (invalid_request)'),
+          '503': notConfigured,
+        },
+      },
+    },
+    '/backup/callback': {
+      get: {
+        tags: ['Sign-in'],
+        summary: 'Google’s answer',
+        description:
+          'Redirects to the PC’s returnUrl with `nonce` and `grant` (five minutes, bound to the challenge), or `nonce` and `error` (access_denied, missing_code, expired, unverified_account).',
+        responses: {
+          '302': { description: 'Back to the PC' },
+          '400': error('The state is missing or was tampered with'),
+        },
+      },
+    },
+    '/backup/session': {
+      post: {
+        tags: ['Sign-in'],
+        summary: 'Swap a grant for a session',
+        requestBody: body(
+          {
+            grant: { type: 'string', description: 'chbg_… from the callback' },
+            verifier: { type: 'string', description: 'The verifier the challenge was made from' },
+          },
+          ['grant', 'verifier']
+        ),
+        responses: {
+          '200': json('The session', session),
+          '401': error('Grant forged or expired, or the verifier doesn’t match'),
+        },
+      },
+      delete: {
+        tags: ['Sign-in'],
+        summary: 'Sign out everywhere',
+        description: 'Every access and refresh token issued so far is refused.',
+        security: signedIn,
+        responses: {
+          '200': json('Signed out', { type: 'object', properties: { signedOut: { type: 'boolean' } } }),
+          ...common,
+        },
+      },
+    },
+    '/backup/session/refresh': {
+      post: {
+        tags: ['Sign-in'],
+        summary: 'A new session for a refresh token',
+        requestBody: body({ refreshToken: { type: 'string' } }, ['refreshToken']),
+        responses: {
+          '200': json('The new session (a new refresh token too)', session),
+          '401': error('Refresh token forged, expired or revoked'),
+        },
+      },
+    },
+    '/backup/key': {
+      get: {
+        tags: ['Backups'],
+        summary: 'The account key',
+        description:
+          'The 256-bit key (base64url) the app wraps each backup’s own key with. The same for the account on every PC, so a reinstall can restore.',
+        security: signedIn,
+        responses: {
+          '200': json('The key', {
+            type: 'object',
+            properties: { keyVersion: { type: 'integer' }, key: { type: 'string' } },
+            required: ['keyVersion', 'key'],
+          }),
+          ...common,
+        },
+      },
+    },
+    '/backup/backups': {
+      get: {
+        tags: ['Backups'],
+        summary: 'The account’s backups and free-tier usage',
+        security: signedIn,
+        responses: {
+          '200': json('Newest first', {
+            type: 'object',
+            properties: {
+              backups: { type: 'array', items: { $ref: '#/components/schemas/Backup' } },
+              usage: {
+                type: 'object',
+                properties: {
+                  usedBytes: { type: 'integer' },
+                  maxBackupBytes: { type: 'integer' },
+                  quotaBytes: { type: 'integer' },
+                  maxBackups: { type: 'integer' },
+                  uploadsPerDay: { type: 'integer' },
+                },
+              },
+            },
+          }),
+          ...common,
+        },
+      },
+    },
+    '/backup/uploads': {
+      post: {
+        tags: ['Backups'],
+        summary: 'Start an upload',
+        description:
+          'Checks the free tier (size, daily uploads, uploads in flight, storage after retention), then opens a multipart upload in the bucket and reserves its size.',
+        security: signedIn,
+        requestBody: body(
+          {
+            sizeBytes: { type: 'integer', description: 'The encrypted file’s exact size' },
+            appVersion: { type: 'string' },
+            keyVersion: { type: 'integer', const: 1 },
+          },
+          ['sizeBytes', 'keyVersion']
+        ),
+        responses: {
+          '201': json('Started', {
+            type: 'object',
+            properties: {
+              backupId: { type: 'string' },
+              partSize: { type: 'integer', description: 'Every part but the last' },
+              partCount: { type: 'integer' },
+              expiresAt: { type: 'integer', description: 'Unix ms; unfinished, it is dropped' },
+            },
+          }),
+          '400': error('Bad size or key version (invalid_request)'),
+          '409': error('Too many uploads in flight (upload_in_progress)'),
+          '413': error('Over the backup size (too_large) or the account’s storage (quota_exceeded)'),
+          ...common,
+          '429': error('rate_limited, or daily_limit'),
+        },
+      },
+    },
+    '/backup/uploads/{backupId}/parts': {
+      post: {
+        tags: ['Backups'],
+        summary: 'Presigned URLs for parts',
+        description: `PUT each part's bytes to its URL (valid ${PRESIGN_TTL_SECONDS / 60} minutes). Ask for at most 50 at a time, as the upload goes.`,
+        security: signedIn,
+        parameters: [backupId],
+        requestBody: body(
+          { partNumbers: { type: 'array', items: { type: 'integer', minimum: 1 }, maxItems: 50 } },
+          ['partNumbers']
+        ),
+        responses: {
+          '200': json('The URLs', {
+            type: 'object',
+            properties: {
+              parts: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { partNumber: { type: 'integer' }, url: { type: 'string' } },
+                },
+              },
+              expiresAt: { type: 'integer', description: 'Unix ms' },
+            },
+          }),
+          '400': error('Bad part numbers (invalid_request)'),
+          '404': notFound,
+          ...common,
+        },
+      },
+    },
+    '/backup/uploads/{backupId}/complete': {
+      post: {
+        tags: ['Backups'],
+        summary: 'Finish an upload',
+        description:
+          'The parts must add up to exactly the reserved size. The backup is then listed and retention removes the backups it replaces.',
+        security: signedIn,
+        parameters: [backupId],
+        responses: {
+          '200': json('Listed', {
+            type: 'object',
+            properties: { backup: { $ref: '#/components/schemas/Backup' } },
+          }),
+          '400': error('Larger than reserved: aborted (size_mismatch)'),
+          '404': notFound,
+          '409': error('Parts missing (upload_incomplete, with uploadedParts)'),
+          ...common,
+        },
+      },
+    },
+    '/backup/uploads/{backupId}': {
+      delete: {
+        tags: ['Backups'],
+        summary: 'Cancel an upload',
+        security: signedIn,
+        parameters: [backupId],
+        responses: {
+          '200': json('Aborted', { type: 'object', properties: { aborted: { type: 'boolean' } } }),
+          '404': notFound,
+          ...common,
+        },
+      },
+    },
+    '/backup/backups/{backupId}/download': {
+      post: {
+        tags: ['Backups'],
+        summary: 'A presigned download URL',
+        security: signedIn,
+        parameters: [backupId],
+        responses: {
+          '200': json('GET it within the time', {
+            type: 'object',
+            properties: {
+              url: { type: 'string' },
+              expiresAt: { type: 'integer', description: 'Unix ms' },
+              sizeBytes: { type: 'integer' },
+              keyVersion: { type: 'integer' },
+            },
+          }),
+          '404': notFound,
+          ...common,
+        },
+      },
+    },
+    '/backup/backups/{backupId}': {
+      delete: {
+        tags: ['Backups'],
+        summary: 'Delete a backup',
+        security: signedIn,
+        parameters: [backupId],
+        responses: {
+          '200': json('Deleted', { type: 'object', properties: { deleted: { type: 'boolean' } } }),
+          '404': notFound,
+          ...common,
+        },
+      },
+    },
+    '/backup/account': {
+      delete: {
+        tags: ['Backups'],
+        summary: 'Delete the account and all its backups',
+        description:
+          'Deletes every backup and upload in flight and refuses every token issued so far. What stays is a record with no backups: when tokens became invalid and the day’s upload times.',
+        security: signedIn,
+        responses: {
+          '200': json('Deleted', {
+            type: 'object',
+            properties: { deletedBackups: { type: 'integer' } },
+          }),
+          ...common,
+        },
+      },
+    },
+  },
+}

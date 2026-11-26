@@ -9,13 +9,15 @@
  * Settings come from the environment: SYNC_SECRET, S3_ENDPOINT, S3_BUCKET,
  * S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL,
  * S3_STATE_BUCKET (optional), SYNC_COMPACT_AFTER, ALLOWED_ORIGINS, PORT
- * (default 8787) and HOST (default 127.0.0.1).
+ * (default 8787) and HOST (default 127.0.0.1). Cloud backup (/backup) takes
+ * BACKUP_SECRET, BACKUP_KEY_SECRET and the BACKUP_S3_* settings.
  */
 import { Hono } from 'hono'
 import {
   createCorsMiddleware,
   createSecurityMiddleware,
 } from '../middleware/security'
+import backup from '../routes/backup'
 import sync from '../routes/sync'
 import syncOwner from '../routes/syncOwner'
 import type { Bindings } from '../types'
@@ -42,6 +44,7 @@ for (const middleware of createSecurityMiddleware()) app.use('*', middleware)
 app.use('*', createCorsMiddleware())
 app.route('/', sync)
 app.route('/', syncOwner)
+app.route('/', backup)
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
 const port = Number(settings.PORT ?? 8787)

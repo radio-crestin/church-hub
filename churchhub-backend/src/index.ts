@@ -6,6 +6,7 @@ import {
 } from './middleware/security'
 import { requestLogger } from './middleware/requestLogger'
 import auth from './routes/auth'
+import backup from './routes/backup'
 import featureRequests from './routes/feature-requests'
 import health from './routes/health'
 import signal from './routes/signal'
@@ -32,6 +33,7 @@ app.route('/', featureRequests)
 app.route('/', signal)
 app.route('/', sync)
 app.route('/', syncOwner)
+app.route('/', backup)
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
