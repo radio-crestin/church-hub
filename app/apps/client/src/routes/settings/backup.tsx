@@ -27,10 +27,7 @@ function BackupSettings() {
           {isLocalhost() ? (
             <>
               <CloudBackupWarning />
-              <div className="space-y-4">
-                <BackupManager />
-                <CloudBackupPanel />
-              </div>
+              <BackupManager />
             </>
           ) : (
             <p className="text-sm text-fg-hint">
@@ -38,6 +35,14 @@ function BackupSettings() {
             </p>
           )}
         </SettingsSection>
+        {isLocalhost() && (
+          <SettingsSection
+            title={t('sections.backup.cloud.title')}
+            description={t('sections.backup.cloud.description')}
+          >
+            <CloudBackupPanel />
+          </SettingsSection>
+        )}
         {isLocalhost() && (
           <SettingsSection
             title={t('sections.cloudSync.title')}

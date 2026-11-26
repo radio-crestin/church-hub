@@ -18,7 +18,7 @@ export function CloudBackupPanel() {
   return (
     <div className="space-y-4" data-testid="cloud-backup-panel">
       {isLoading || !status ? (
-        <div className="h-[74px] rounded-xl bg-field" />
+        <div className="h-[74px] rounded-xl bg-field" aria-busy="true" />
       ) : !signedIn ? (
         <CloudBackupSignedOut />
       ) : (

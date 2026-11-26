@@ -6,6 +6,8 @@ import { Button } from '~/ui/button'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { formatFileSize } from '~/utils/formatFileSize'
+import { CloudBackupErrorText } from './CloudBackupErrorText'
+import { TOUCH_HEIGHT, TOUCH_SQUARE } from './touchTarget'
 import { useCloudBackupAction, useCloudBackupError } from '../hooks'
 import {
   type CloudBackupFile,
@@ -65,12 +67,10 @@ export function CloudBackupList({
         {t('sections.backup.cloud.list.title')}
       </h4>
       {error ? (
-        <p className="text-sm text-live" role="alert">
-          {explain(error)}
-        </p>
+        <CloudBackupErrorText>{explain(error)}</CloudBackupErrorText>
       ) : isLoading ? (
         <p className="flex items-center gap-2 text-sm text-fg-hint">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 strokeWidth={1.5} className="h-4 w-4 animate-spin" />
           {t('sections.backup.cloud.list.loading')}
         </p>
       ) : !backups?.length ? (
@@ -91,14 +91,14 @@ export function CloudBackupList({
                 </p>
                 <p className="text-xs text-fg-hint tabular-nums">
                   {formatFileSize(backup.sizeBytes, i18n.language)}
-                  {backup.appVersion !== 'unknown' &&
-                    ` · v${backup.appVersion}`}
+                  {/^\d/.test(backup.appVersion) && ` · v${backup.appVersion}`}
                 </p>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-auto">
                 <Button
                   size="sm"
                   variant="secondary"
+                  className={TOUCH_HEIGHT}
                   disabled={busy}
                   onClick={() => setPending({ action: 'restore', backup })}
                   data-testid="cloud-backup-restore"
@@ -109,6 +109,7 @@ export function CloudBackupList({
                 <Button
                   size="icon"
                   variant="ghost"
+                  className={TOUCH_SQUARE}
                   disabled={busy}
                   onClick={() => setPending({ action: 'delete', backup })}
                   aria-label={t('sections.backup.cloud.list.delete')}

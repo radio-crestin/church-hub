@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button'
 import { useToast } from '~/ui/toast'
+import { TOUCH_HEIGHT } from './touchTarget'
 import { useCloudBackupAction, useCloudBackupError } from '../hooks'
 import { backUpToCloudNow } from '../service/cloudBackup'
 
@@ -38,13 +39,13 @@ export function CloudBackupNow({
       </p>
       <Button
         size="sm"
-        className="mt-3"
+        className={`mt-3 ${TOUCH_HEIGHT}`}
         onClick={run}
         disabled={backUp.isPending}
         data-testid="cloud-backup-now"
       >
         {backUp.isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 strokeWidth={1.5} className="h-4 w-4 animate-spin" />
         ) : (
           <CloudUpload strokeWidth={1.5} className="h-4 w-4" />
         )}

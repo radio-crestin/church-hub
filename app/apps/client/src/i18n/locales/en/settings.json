@@ -1031,10 +1031,13 @@
         "usage": "{{used}} of {{total}} used",
         "signOut": "Sign out",
         "signedOut": {
-          "description": "Encrypted backups of this church’s data, kept by Church Hub for free. Sign in with Google once; to restore on another computer, sign in with the same account.",
+          "title": "Not signed in",
+          "description": "Sign in with Google once. Each backup is encrypted on this computer before it is sent.",
           "signIn": "Sign in with Google",
+          "cancel": "Cancel",
           "waiting": "Finish signing in in the browser window, then come back here.",
-          "failed": "Couldn’t start the sign-in. Check the internet connection and try again."
+          "failed": "Couldn’t start the sign-in. Check the internet connection and try again.",
+          "timedOut": "The sign-in wasn’t finished. Try again."
         },
         "signOutModal": {
           "title": "Sign out of Church Hub Cloud?",
@@ -1047,7 +1050,7 @@
           "confirm": "Delete and sign out"
         },
         "now": {
-          "title": "Back up now",
+          "title": "Manual backup",
           "last": "Last backup: {{date}}",
           "never": "No backup from this computer yet",
           "button": "Back up now",
@@ -1058,7 +1061,11 @@
           "title": "Automatic backups",
           "description": "Back up to Church Hub Cloud on a schedule while the app is open.",
           "interval": "How often",
-          "everyHours": "Every {{hours}} hours"
+          "everyHours": "Every {{hours}} hours",
+          "short": {
+            "hours": "{{count}}h",
+            "days": "{{count}}d"
+          }
         },
         "list": {
           "title": "Cloud backups",
@@ -1069,7 +1076,7 @@
         },
         "restoreModal": {
           "title": "Restore this backup?",
-          "message": "All current data is replaced with the backup from {{date}}. The app reloads when it is done.",
+          "message": "All current data is replaced with the backup from {{date}}. The current data is first saved as a copy on this computer. The app reloads when it is done.",
           "confirm": "Restore"
         },
         "deleteModal": {
@@ -1086,7 +1093,7 @@
         },
         "errors": {
           "cloud_sign_in_required": "Your Church Hub Cloud sign-in has ended. Sign in with Google again.",
-          "quota_exceeded": "The free storage is full. Delete an older backup and try again.",
+          "quota_exceeded": "The free storage is full. Delete an older cloud backup and try again.",
           "too_large": "This database is larger than the free backup limit.",
           "daily_limit": "You have reached today’s backup limit. Try again tomorrow.",
           "rate_limited": "Too many requests. Wait a minute and try again.",
@@ -1097,7 +1104,9 @@
           "service_unreachable": "Church Hub Cloud can’t be reached. Check the internet connection.",
           "not_configured": "Church Hub Cloud is not available right now.",
           "generic": "Something went wrong with Church Hub Cloud. Try again."
-        }
+        },
+        "description": "Free, encrypted backups of this church’s data, kept by Church Hub. Restore them on any computer by signing in with the same Google account.",
+        "retention": "Keeps the newest 3, then one a day for a week and one a week for 5 weeks."
       }
     },
     "cloudSync": {

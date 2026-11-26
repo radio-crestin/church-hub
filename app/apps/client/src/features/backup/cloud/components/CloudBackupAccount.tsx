@@ -6,6 +6,7 @@ import { Button } from '~/ui/button'
 import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
 import { formatFileSize } from '~/utils/formatFileSize'
+import { TOUCH_HEIGHT } from './touchTarget'
 import { useCloudBackupAction, useCloudBackupError } from '../hooks'
 import {
   type CloudBackupUsage,
@@ -54,15 +55,12 @@ export function CloudBackupAccount({ email, usage }: CloudBackupAccountProps) {
             className="mt-0.5 h-5 w-5 shrink-0 text-ok"
           />
           <div className="min-w-0">
-            <h4 className="text-sm font-medium text-fg">
-              {t('sections.backup.cloud.title')}
-            </h4>
-            <p
-              className="mt-0.5 truncate text-xs text-fg-hint"
+            <h4
+              className="truncate text-sm font-medium text-fg"
               data-testid="cloud-backup-email"
             >
               {t('sections.backup.cloud.signedInAs', { email })}
-            </p>
+            </h4>
             {usage && (
               <p className="mt-0.5 text-xs text-fg-hint tabular-nums">
                 {t('sections.backup.cloud.usage', {
@@ -71,11 +69,15 @@ export function CloudBackupAccount({ email, usage }: CloudBackupAccountProps) {
                 })}
               </p>
             )}
+            <p className="mt-0.5 text-xs text-fg-hint">
+              {t('sections.backup.cloud.retention')}
+            </p>
           </div>
         </div>
         <Button
           size="sm"
           variant="outline"
+          className={`shrink-0 whitespace-nowrap ${TOUCH_HEIGHT}`}
           onClick={() => setConfirming('plain')}
           disabled={signOut.isPending}
           data-testid="cloud-backup-sign-out"
@@ -88,7 +90,7 @@ export function CloudBackupAccount({ email, usage }: CloudBackupAccountProps) {
         type="button"
         onClick={() => setConfirming('delete')}
         disabled={signOut.isPending}
-        className="mt-3 text-xs text-fg-label underline-offset-2 hover:text-fg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+        className="mt-2 rounded-lg py-1 text-xs text-fg-label underline underline-offset-2 hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50 max-md:min-h-11"
         data-testid="cloud-backup-delete-account"
       >
         {t('sections.backup.cloud.deleteAccount.button')}

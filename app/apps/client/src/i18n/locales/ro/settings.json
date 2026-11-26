@@ -1038,10 +1038,13 @@
         "usage": "Spațiu folosit: {{used}} din {{total}}",
         "signOut": "Deconectează-te",
         "signedOut": {
-          "description": "Copii criptate ale datelor bisericii tale, păstrate gratuit de Church Hub. Conectează-te o dată cu Google; ca să restaurezi datele pe alt computer, conectează-te cu același cont.",
+          "title": "Nu ești conectat",
+          "description": "Conectează-te o dată cu Google. Fiecare copie este criptată pe acest computer înainte să fie trimisă.",
           "signIn": "Conectează-te cu Google",
+          "cancel": "Anulează",
           "waiting": "Finalizează conectarea în fereastra browserului, apoi revino aici.",
-          "failed": "Nu s-a putut începe conectarea. Verifică-ți conexiunea la internet și încearcă din nou."
+          "failed": "Nu s-a putut începe conectarea. Verifică conexiunea la internet și încearcă din nou.",
+          "timedOut": "Conectarea nu a fost finalizată. Încearcă din nou."
         },
         "signOutModal": {
           "title": "Te deconectezi de la Church Hub Cloud?",
@@ -1054,7 +1057,7 @@
           "confirm": "Șterge și deconectează-te"
         },
         "now": {
-          "title": "Fă o copie acum",
+          "title": "Copie manuală",
           "last": "Ultima copie: {{date}}",
           "never": "Nu există încă nicio copie de pe acest computer.",
           "button": "Fă o copie acum",
@@ -1065,7 +1068,11 @@
           "title": "Copii automate",
           "description": "Fă copii în Church Hub Cloud la intervale regulate cât timp aplicația este deschisă.",
           "interval": "Cât de des",
-          "everyHours": "La fiecare {{hours}} ore"
+          "everyHours": "La fiecare {{hours}} ore",
+          "short": {
+            "hours": "{{count}}h",
+            "days": "{{count}}z"
+          }
         },
         "list": {
           "title": "Copii în cloud",
@@ -1076,7 +1083,7 @@
         },
         "restoreModal": {
           "title": "Restaurezi această copie?",
-          "message": "Toate datele actuale vor fi înlocuite cu copia din {{date}}. Aplicația se reîncarcă după terminare.",
+          "message": "Toate datele actuale vor fi înlocuite cu copia din {{date}}. Mai întâi, datele actuale vor fi salvate ca o copie pe acest computer. Aplicația se reîncarcă după terminare.",
           "confirm": "Restaurează"
         },
         "deleteModal": {
@@ -1093,7 +1100,7 @@
         },
         "errors": {
           "cloud_sign_in_required": "Sesiunea ta Church Hub Cloud a expirat. Conectează-te din nou cu Google.",
-          "quota_exceeded": "Spațiul gratuit este plin. Șterge o copie mai veche și încearcă din nou.",
+          "quota_exceeded": "Spațiul gratuit din cloud este plin. Șterge o copie mai veche din cloud și încearcă din nou.",
           "too_large": "Baza de date depășește limita pentru copiile gratuite.",
           "daily_limit": "Ai atins limita de copii pentru astăzi. Încearcă din nou mâine.",
           "rate_limited": "Sunt prea multe solicitări. Așteaptă un minut și încearcă din nou.",
@@ -1104,7 +1111,9 @@
           "service_unreachable": "Church Hub Cloud nu este accesibil. Verifică-ți conexiunea la internet.",
           "not_configured": "Church Hub Cloud nu este disponibil momentan.",
           "generic": "A apărut o problemă cu Church Hub Cloud. Încearcă din nou."
-        }
+        },
+        "description": "Copii gratuite și criptate ale datelor bisericii tale, păstrate de Church Hub. Le poți restaura pe orice computer conectându-te cu același cont Google.",
+        "retention": "Păstrează cele mai recente 3 copii, apoi câte una pe zi timp de o săptămână și câte una pe săptămână timp de 5 săptămâni."
       }
     },
     "cloudSync": {

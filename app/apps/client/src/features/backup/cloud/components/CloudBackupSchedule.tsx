@@ -10,13 +10,14 @@ import {
 
 const INTERVALS = [6, 12, 24, 48, 168]
 
-/** Compact label for an interval pill: 6→"6h", 24→"1d", 168→"7d". */
-const intervalLabel = (hours: number) =>
-  hours % 24 === 0 ? `${hours / 24}d` : `${hours}h`
-
 /** Automatic cloud backups: the switch and how often. */
 export function CloudBackupSchedule({ status }: { status: CloudBackupStatus }) {
   const { t } = useTranslation('settings')
+  /** Compact pill label: 6 → "6h", 24 → "1d", 168 → "7d" (translated units). */
+  const intervalLabel = (hours: number) =>
+    hours % 24 === 0
+      ? t('sections.backup.cloud.auto.short.days', { count: hours / 24 })
+      : t('sections.backup.cloud.auto.short.hours', { count: hours })
   const { showToast } = useToast()
   const explain = useCloudBackupError()
   const update = useCloudBackupAction(updateCloudBackupSchedule)
@@ -50,10 +51,8 @@ export function CloudBackupSchedule({ status }: { status: CloudBackupStatus }) {
                   onClick={() => save({ intervalHours: hours })}
                   disabled={update.isPending}
                   aria-pressed={selected}
-                  aria-label={t('sections.backup.cloud.auto.everyHours', {
-                    hours,
-                  })}
-                  className={`min-w-[3rem] rounded-md px-3 py-1.5 text-xs font-medium tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50 ${
+                  title={t('sections.backup.cloud.auto.everyHours', { hours })}
+                  className={`min-w-[3rem] rounded-md px-3 py-1.5 text-sm font-medium tabular-nums max-md:py-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50 ${
                     selected
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-hover hover:text-fg'
