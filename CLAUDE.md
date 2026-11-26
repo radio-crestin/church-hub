@@ -49,7 +49,10 @@ Every screen follows `DESIGN.md`, the app's design system: a quiet, Framer-like 
 - Tibi PC (Superfactory machine `tibi-pc`) is the build and test machine, with a copy of Adunare PC's real data in `C:\Users\Tibi\church-hub-data\adunare\`. Adunare PC is the church's live machine: read from it only. How to load and refresh that copy, and what only Adunare can test: `docs/test-machine.md`.
 - Verify changes in a browser driven by Playwright, never by launching, building or clicking through the Tauri desktop app.
 - Every feature and bug fix gets an e2e spec in `app/apps/client/e2e/`; a passing spec is the acceptance signal. The e2e suite is the project's test suite: no new unit tests (the few kept guard what no e2e can reach and run before a release).
-- A task is accepted on the full suite, run locally and serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`.
+- A task is accepted on the full suite, run locally: `CI=1 TEST_PORT=<port> bunx playwright test --retries=2`.
+  - It runs in parallel: each worker gets its own test server, database and five ports, counted up from `TEST_PORT`.
+  - `E2E_WORKERS` sets the worker count; the default is half the CPUs, at most 4.
+  - Specs that never open a page run in a browser-less project.
 - GitHub Actions run only before a release (`test.yml`: e2e and the compiled-sidecar smoke on all three OSes, plus CodeQL); nothing runs on PRs. A red gate publishes nothing; run it on main before tagging (`gh workflow run test.yml --ref main`).
 - Security checks are local: `scripts/release.sh` runs `scripts/security-check.sh` before the bump (gitleaks since the last tag, then, on Linux only by default, CodeQL for javascript-typescript, actions and rust with CI's suite) and stops on any finding (reviewed false positives go in `.codeql-accepted.txt`); it needs gitleaks and bun, plus the CodeQL bundle on Linux. On macOS or Windows, `scripts/security-check.sh codeql` runs CodeQL there to check it; CI's CodeQL still gates every tag.
 - Temp files, screenshots and traces go in your session scratchpad, never the repo or `$TMPDIR`.
