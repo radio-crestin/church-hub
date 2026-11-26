@@ -64,7 +64,7 @@ export function NotificationPopUp() {
       <Link
         to="/notifications"
         onClick={close}
-        className="px-4 py-2 text-right text-[13px] font-medium text-fg-label hover:text-fg"
+        className="px-4 py-2 text-right text-sm font-medium text-fg-label hover:text-fg"
       >
         {t('seeAll')}
       </Link>

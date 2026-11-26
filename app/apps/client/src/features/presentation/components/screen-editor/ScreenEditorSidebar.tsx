@@ -85,10 +85,7 @@ export function ScreenEditorSidebar({
   }
 
   return (
-    <div
-      data-testid="screen-editor-sidebar"
-      className="w-full flex-1 min-h-0 md:flex-none md:w-96 md:flex-shrink-0 bg-panel border-t md:border-t-0 md:border-l border-line overflow-y-auto"
-    >
+    <div data-testid="screen-editor-sidebar">
       {selectedElement &&
       getElementConfig(screen, config, selectedElement.type) ? (
         <ElementSettings

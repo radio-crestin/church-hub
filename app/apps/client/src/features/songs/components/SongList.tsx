@@ -904,7 +904,7 @@ export function SongList({
               w-full 
               pl-9 
               py-2 
-              text-[13px]
+              text-sm
               bg-field
               border-0
               rounded-[10px]

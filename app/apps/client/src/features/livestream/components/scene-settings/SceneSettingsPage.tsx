@@ -47,7 +47,7 @@ export function SceneSettingsPage({ sceneId }: SceneSettingsPageProps) {
         />
       ) : (
         !isLoading && (
-          <p className="text-[13px] text-fg-label">
+          <p className="text-sm text-fg-label">
             {t('sceneSettingsPage.notFound')}
           </p>
         )

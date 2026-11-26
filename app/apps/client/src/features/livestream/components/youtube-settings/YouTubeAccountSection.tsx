@@ -25,7 +25,7 @@ export function YouTubeAccountSection() {
       testId="youtube-settings-account"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-fg-body">
+        <p className="text-sm text-fg-body">
           {isAuthenticated
             ? t('youtubeSettings.account.connectedAs', {
                 channel: channelName ?? '',

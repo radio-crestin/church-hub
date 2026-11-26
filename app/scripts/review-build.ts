@@ -13,7 +13,7 @@
  *
  * It never meets the user's real Church Hub; its `review-build.json`
  * (read by tauri/src/review.rs) gives it:
- *   - its own port, 4100 + task number (not 3000/3001, not the e2e port 3100 + n:
+ *   - its own port, 4100 + task number (not 3000/3001, not the task's e2e ports:
  *     the app kills whatever holds its port at start),
  *   - its own data folder, `.review-build/<task id>/data` (database, logs, backups),
  *   - its own bundle identifier, so a running Church Hub (single instance)

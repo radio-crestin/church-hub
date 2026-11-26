@@ -14,9 +14,8 @@ import {
 import {
   backgroundImageStyle,
   chooseBackgroundType,
-  deleteMediaExcept,
+  deleteUploadedMedia,
   label,
-  listMediaIds,
   MEDIA_API,
   PNG,
   setScreenSongBackground,
@@ -245,7 +244,6 @@ test.describe('Song background', () => {
   let primaryScreenId: number
   let stageScreenId: number
   let song: { id: number; title: string }
-  let preexistingMediaIds = new Set<string>()
   const suffix = Date.now()
   const lyrics = [
     `Song background one ${suffix}`,
@@ -254,8 +252,6 @@ test.describe('Song background', () => {
   const screenBackground = { type: 'color', color: SCREEN_COLOR, opacity: 1 }
 
   test.beforeAll(async ({ request }) => {
-    preexistingMediaIds = new Set(await listMediaIds(request))
-
     for (const type of ['primary', 'stage'] as const) {
       const res = await request.post('/api/screens', {
         data: { name: `E2E Song Background ${type} ${suffix}`, type },
@@ -291,7 +287,7 @@ test.describe('Song background', () => {
     for (const id of [primaryScreenId, stageScreenId]) {
       if (id) await request.delete(`/api/screens/${id}`)
     }
-    await deleteMediaExcept(request, preexistingMediaIds)
+    await deleteUploadedMedia(request)
   })
 
   test('the song editor saves an uploaded image as the song background', async ({

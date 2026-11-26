@@ -75,7 +75,7 @@ export function ScheduleEditor({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-[13px] bg-field hover:bg-selected text-fg-body rounded-lg transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-field hover:bg-selected text-fg-body rounded-lg transition-colors"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
           <span className="hidden sm:inline">{t('actions.back')}</span>
@@ -85,7 +85,7 @@ export function ScheduleEditor({
           type="button"
           onClick={handleSave}
           disabled={upsertSchedule.isPending || !title.trim()}
-          className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-2 py-1.5 lg:px-3 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {upsertSchedule.isPending ? (
             <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
@@ -101,7 +101,7 @@ export function ScheduleEditor({
         <div className="space-y-1.5">
           <label
             htmlFor="schedule-title"
-            className="block text-[13px] font-medium text-fg-body"
+            className="block text-sm font-medium text-fg-body"
           >
             {t('editor.title', 'Title')}
           </label>
@@ -127,7 +127,7 @@ export function ScheduleEditor({
         <div className="space-y-1.5">
           <label
             htmlFor="schedule-description"
-            className="block text-[13px] font-medium text-fg-body"
+            className="block text-sm font-medium text-fg-body"
           >
             {t('editor.description', 'Description')}
           </label>

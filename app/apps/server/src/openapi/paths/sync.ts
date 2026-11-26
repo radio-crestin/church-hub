@@ -113,6 +113,29 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
                             type: 'integer',
                             description: 'Last segment applied here.',
                           },
+                          ownerEmail: {
+                            type: ['string', 'null'],
+                            description:
+                              'The Google account owning the church; null for a guest church.',
+                          },
+                          serverConflict: {
+                            type: ['object', 'null'],
+                            description:
+                              'Another PC holds this church’s token (a restored backup): POST /api/sync/cloud/keep picks one.',
+                            properties: {
+                              otherPcName: { type: ['string', 'null'] },
+                              otherPcLastSeenAt: { type: ['integer', 'null'] },
+                            },
+                          },
+                        },
+                      },
+                      ownerSession: {
+                        type: ['object', 'null'],
+                        description:
+                          'The owner signed in on this PC (an hour, in memory).',
+                        properties: {
+                          email: { type: 'string' },
+                          expiresAt: { type: 'integer' },
                         },
                       },
                       accountEmail: { type: ['string', 'null'] },
@@ -359,7 +382,7 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
       tags: ['Sync'],
       summary: 'Connect to cloud sync',
       description:
-        'Registers this server on the cloud sync service as a guest church (churchhub-backend /sync/churches, or CHURCH_HUB_SYNC_URL), keeps its identity, queues the whole library for the first upload, makes cloud the sync transport and starts a first cycle in the background. Google Drive stays available as the backup option. Only accessible from localhost.',
+        'Registers this server on the cloud sync service as a guest church (to own it, sign in with intent `connect` instead: /api/sync/cloud/owner/sign-in) (churchhub-backend /sync/churches, or CHURCH_HUB_SYNC_URL), keeps its identity, queues the whole library for the first upload, makes cloud the sync transport and starts a first cycle in the background. Google Drive stays available as the backup option. Only accessible from localhost.',
       requestBody: {
         content: {
           'application/json': {
@@ -434,6 +457,43 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
     },
   },
   '/api/sync/cloud/devices': {
+    get: {
+      tags: ['Sync'],
+      summary: 'List cloud sync devices',
+      description:
+        'The church’s devices on the sync service, newest first, revoked ones included (never their tokens). Requires users.edit.',
+      responses: {
+        '200': {
+          description: 'The devices',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        name: { type: 'string' },
+                        userId: { type: 'integer', nullable: true },
+                        isServer: { type: 'boolean' },
+                        createdAt: { type: 'integer' },
+                        revokedAt: { type: 'integer', nullable: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': cloudError('Requires users.edit'),
+        '409': cloudError('Not connected to cloud sync'),
+        '502': cloudError('The sync service refused or failed'),
+      },
+    },
     post: {
       tags: ['Sync'],
       summary: 'Add a cloud sync device',
@@ -469,6 +529,11 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
                       token: { type: 'string' },
                       churchId: { type: 'string' },
                       readUrl: { type: 'string' },
+                      joinUrl: {
+                        type: 'string',
+                        description:
+                          'The link the device opens to join: <public app>/join#c=<churchId>-<pathSecret>&t=<token>[&p=<remote access room>][&s=<sync service>] (CHURCH_HUB_PUBLIC_APP_URL)',
+                      },
                     },
                   },
                 },

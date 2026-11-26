@@ -40,5 +40,11 @@
   "tabs": {
     "present": "Live",
     "more": "More"
+  },
+  "groups": {
+    "live": "Live",
+    "library": "Library",
+    "tools": "Tools",
+    "label": "Sidebar group"
   }
 }

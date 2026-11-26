@@ -28,12 +28,12 @@ function ConnectionLost({ onRetry }: { onRetry?: () => void }) {
       <h1 className="text-base font-semibold text-fg">
         {t('errors.connectionLostTitle')}
       </h1>
-      <p className="max-w-md text-[13px] text-fg-label">
+      <p className="max-w-md text-sm text-fg-label">
         {t('errors.connectionLost')}
       </p>
       <button
         onClick={() => (onRetry ? onRetry() : refresh())}
-        className="h-9 rounded-lg bg-primary px-4 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700"
+        className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
       >
         {t('buttons.retry')}
       </button>

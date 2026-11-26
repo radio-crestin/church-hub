@@ -12,7 +12,7 @@ interface RoamingBarProps {
 }
 
 const barButton =
-  'flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-2 text-[13px] font-medium rounded-lg transition-colors'
+  'flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors'
 
 /**
  * A small bar floating over the app while the user retakes the screenshot.
@@ -34,7 +34,7 @@ export function RoamingBar({
       className="fixed left-1/2 -translate-x-1/2 bottom-4 w-[calc(100%-2rem)] max-w-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-xl border border-line bg-panel text-fg shadow-popover p-3"
       style={{ zIndex: 2147483000 }}
     >
-      <p className="flex items-center gap-2 text-[13px] flex-1">
+      <p className="flex items-center gap-2 text-sm flex-1">
         <Camera
           strokeWidth={1.5}
           size={16}

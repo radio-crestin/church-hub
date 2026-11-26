@@ -17,6 +17,7 @@ import {
   createSecurityMiddleware,
 } from '../middleware/security'
 import sync from '../routes/sync'
+import syncOwner from '../routes/syncOwner'
 import type { Bindings } from '../types'
 
 interface Runtime {
@@ -40,6 +41,7 @@ const app = new Hono<{ Bindings: Bindings }>()
 for (const middleware of createSecurityMiddleware()) app.use('*', middleware)
 app.use('*', createCorsMiddleware())
 app.route('/', sync)
+app.route('/', syncOwner)
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
 const port = Number(settings.PORT ?? 8787)

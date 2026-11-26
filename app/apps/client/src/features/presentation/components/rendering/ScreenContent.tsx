@@ -1,11 +1,13 @@
 import { Book, Megaphone, Music, User } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 
+import { DeckSlideRenderer } from '~/features/slides-deck/components/DeckSlideRenderer'
 import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
 import { AnimatedText } from './AnimatedText'
 import { ChordsOverlay } from './ChordsOverlay'
 import { ClockText } from './ClockText'
 import { EditableMainText } from './EditableMainText'
+import { ScreenVideo } from './ScreenVideo'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
@@ -79,6 +81,8 @@ export interface ScreenContentProps {
    * projections always render the screen's own clock settings.
    */
   clockOverride?: ClockOverride
+  /** A video item plays its sound here (a main display, not a preview). */
+  videoSound?: boolean
 }
 
 export function ScreenContent({
@@ -97,6 +101,7 @@ export function ScreenContent({
   onMainTextEdit,
   textVersion,
   clockOverride,
+  videoSound = false,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
   const { data: presentationState } = usePresentationState()
@@ -814,8 +819,24 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
+      {contentData?.deck && (
+        <DeckSlideRenderer
+          shown={contentData.deck}
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+          withSound={videoSound}
+          isVisible={isVisible}
+        />
+      )}
       {/* First, so the content's text is drawn over it; the screen background
           belongs to the parent and stays below */}
+      {contentData?.videoUrl && (
+        <ScreenVideo
+          url={contentData.videoUrl}
+          loop={contentData.videoLoop === true}
+          withSound={videoSound}
+        />
+      )}
       {renderClockOverride()}
       {renderMainText()}
       {renderContentText()}

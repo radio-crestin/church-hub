@@ -43,7 +43,7 @@ export function OpenLogsFolder() {
           <FolderOpen strokeWidth={1.5} className="w-5 h-5 text-fg-label" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-[13px] font-medium text-fg">
+          <h4 className="text-sm font-medium text-fg">
             {t('sections.logs.card.title')}
           </h4>
           <p className="text-xs text-fg-hint mt-0.5">
@@ -53,7 +53,7 @@ export function OpenLogsFolder() {
             type="button"
             onClick={handleOpen}
             disabled={isPending}
-            className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-field text-fg rounded-lg hover:bg-hover disabled:opacity-50 text-[13px] font-medium"
+            className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-field text-fg rounded-lg hover:bg-hover disabled:opacity-50 text-sm font-medium"
           >
             <FolderOpen strokeWidth={1.5} className="w-4 h-4" />
             {isPending

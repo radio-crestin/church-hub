@@ -117,7 +117,7 @@ export function ImportTextModal({
           <button
             type="button"
             onClick={handleClose}
-            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('import.cancel')}
           </button>
@@ -125,7 +125,7 @@ export function ImportTextModal({
             type="button"
             onClick={handleImport}
             disabled={parsedSlides.length === 0}
-            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('import.confirm')}
           </button>

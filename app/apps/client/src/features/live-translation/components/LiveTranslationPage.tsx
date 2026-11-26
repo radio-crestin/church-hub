@@ -192,7 +192,7 @@ export function LiveTranslationPage() {
       {streamUrl && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 bg-panel border border-line rounded-xl flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-medium text-fg mb-0.5">
+            <div className="text-sm font-medium text-fg mb-0.5">
               {t('settings.streamUrl')}
             </div>
             <div className="text-xs text-fg-hint">
@@ -252,7 +252,7 @@ export function LiveTranslationPage() {
             <div className="bg-panel">
               {/* Engine Selector */}
               <div className="p-4 border-b border-line">
-                <label className="flex items-center gap-1.5 text-[13px] font-semibold text-fg mb-2">
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-fg mb-2">
                   <Sparkles
                     className="w-4 h-4 text-fg-label"
                     strokeWidth={1.5}
@@ -272,7 +272,7 @@ export function LiveTranslationPage() {
                           : 'border-line hover:bg-hover'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      <div className="font-semibold text-[13px] text-fg">
+                      <div className="font-semibold text-sm text-fg">
                         {ENGINE_INFO[eng].label}
                         {eng === 'openai' && (
                           <span className="ml-1.5 text-xs font-medium text-fg-hint">
@@ -295,7 +295,7 @@ export function LiveTranslationPage() {
                     <Key className="w-4 h-4 text-fg-label" strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[13px] font-semibold text-fg mb-1">
+                    <label className="block text-sm font-semibold text-fg mb-1">
                       {t(`settings.apiKey.${settings.engine}`)}
                     </label>
                     <p className="text-xs text-fg-hint mb-2">
@@ -308,7 +308,7 @@ export function LiveTranslationPage() {
                       placeholder={t(
                         `settings.apiKeyPlaceholder.${settings.engine}`,
                       )}
-                      className="w-full px-3 py-2 text-[13px] bg-field text-fg border border-line rounded-[10px] focus:border-focus outline-none placeholder:text-fg-hint"
+                      className="w-full px-3 py-2 text-sm bg-field text-fg border border-line rounded-[10px] focus:border-focus outline-none placeholder:text-fg-hint"
                     />
                     {!apiKey && (
                       <div className="mt-2.5 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg">
@@ -337,7 +337,7 @@ export function LiveTranslationPage() {
 
               {/* Output Modality */}
               <div className="p-4 border-b border-line">
-                <label className="block text-[13px] font-semibold text-fg mb-1.5">
+                <label className="block text-sm font-semibold text-fg mb-1.5">
                   {t('settings.outputModality')}
                 </label>
                 <p className="text-xs text-fg-hint mb-2">
@@ -357,7 +357,7 @@ export function LiveTranslationPage() {
                             : 'border-line hover:bg-hover'
                         }`}
                       >
-                        <div className="font-semibold text-[13px] text-fg">
+                        <div className="font-semibold text-sm text-fg">
                           {t(`settings.outputModality_${mod}`)}
                         </div>
                         <div className="text-xs text-fg-hint mt-0.5">
@@ -371,7 +371,7 @@ export function LiveTranslationPage() {
 
               {/* Source Language */}
               <div className="p-4 border-b border-line">
-                <label className="block text-[13px] font-medium text-fg-body mb-1.5">
+                <label className="block text-sm font-medium text-fg-body mb-1.5">
                   {t('settings.sourceLanguage')}
                 </label>
                 <Combobox
@@ -389,7 +389,7 @@ export function LiveTranslationPage() {
               {/* Target Languages */}
               <div className="p-4 border-b border-line">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[13px] font-semibold text-fg">
+                  <label className="text-sm font-semibold text-fg">
                     {t('settings.targetLanguages')}
                   </label>
                   <span className="text-xs text-fg-hint">
@@ -483,7 +483,7 @@ export function LiveTranslationPage() {
                         addTarget(availableLanguagesForNewTarget[0]?.value)
                       }
                       disabled={state.isActive}
-                      className="flex items-center justify-center gap-2 w-full px-3 py-2 text-[13px] font-medium border border-dashed border-line-strong text-fg-label hover:bg-hover hover:text-fg rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 w-full px-3 py-2 text-sm font-medium border border-dashed border-line-strong text-fg-label hover:bg-hover hover:text-fg rounded-lg transition-colors disabled:opacity-50"
                     >
                       <Plus className="w-4 h-4" strokeWidth={1.5} />
                       {t('settings.addTarget')}
@@ -496,7 +496,7 @@ export function LiveTranslationPage() {
               {audioDevices.length > 0 && (
                 <div className="p-4 border-b border-line grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="flex items-center gap-1.5 text-[13px] font-medium text-fg-body mb-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-fg-body mb-1.5">
                       <Mic
                         className="w-3.5 h-3.5 text-fg-label"
                         strokeWidth={1.75}
@@ -515,7 +515,7 @@ export function LiveTranslationPage() {
                     />
                   </div>
                   <div>
-                    <label className="flex items-center gap-1.5 text-[13px] font-medium text-fg-body mb-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-fg-body mb-1.5">
                       <Volume2
                         className="w-3.5 h-3.5 text-fg-label"
                         strokeWidth={1.75}
@@ -538,7 +538,7 @@ export function LiveTranslationPage() {
 
               {/* Output Mode + Listener Link */}
               <div className="p-4">
-                <label className="block text-[13px] font-medium text-fg-body mb-1.5">
+                <label className="block text-sm font-medium text-fg-body mb-1.5">
                   {t('settings.outputMode')}
                 </label>
                 <p className="text-xs text-fg-hint mb-2">
@@ -552,7 +552,7 @@ export function LiveTranslationPage() {
                         type="button"
                         onClick={() => updateSetting('outputMode', mode)}
                         disabled={state.isActive}
-                        className={`flex-1 px-3 py-2 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-50 ${
+                        className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
                           settings.outputMode === mode
                             ? 'bg-selected text-fg'
                             : 'bg-field text-fg-label hover:bg-hover hover:text-fg'
@@ -597,7 +597,7 @@ export function LiveTranslationPage() {
               {ENGINE_INFO[settings.engine].label}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-field rounded-lg text-[13px]">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-field rounded-lg text-sm">
             <span className="font-medium text-fg-body">
               {LANGUAGES.find((l) => l.code === settings.sourceLanguage)?.name}
             </span>
@@ -638,7 +638,7 @@ export function LiveTranslationPage() {
             type="button"
             onClick={state.isActive ? stopTranslation : startTranslation}
             disabled={!canStart && !state.isActive}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               state.isActive
                 ? 'bg-red-600 hover:bg-red-700 text-white'
                 : canStart

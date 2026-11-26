@@ -16,15 +16,13 @@ export function SynonymCard({ synonym, onEdit, onDelete }: SynonymCardProps) {
     <div className="flex items-center gap-3 p-3 bg-field rounded-lg border border-line">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[13px] font-medium text-fg">
-            {synonym.primary}
-          </span>
+          <span className="text-sm font-medium text-fg">{synonym.primary}</span>
           <ArrowLeftRight
             size={14}
             className="text-fg-hint shrink-0"
             strokeWidth={1.75}
           />
-          <span className="text-[13px] text-fg-label">
+          <span className="text-sm text-fg-label">
             {synonym.synonyms.join(', ')}
           </span>
         </div>

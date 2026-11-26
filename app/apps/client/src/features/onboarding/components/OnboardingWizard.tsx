@@ -89,7 +89,7 @@ export function OnboardingWizard() {
           </div>
         </div>
         {finish.isError && (
-          <p role="alert" className="text-center text-[13px] text-red-600">
+          <p role="alert" className="text-center text-sm text-red-600">
             {t('saveError')}
           </p>
         )}

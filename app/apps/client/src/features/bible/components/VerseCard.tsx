@@ -33,8 +33,8 @@ export function VerseCard({
     <div className="group bg-panel rounded-lg border border-line p-4 hover:border-line-strong transition-colors">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-fg text-[13px]">{reference}</h3>
-          <p className="mt-1 text-fg-label text-[13px] line-clamp-3 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
+          <h3 className="font-medium text-fg text-sm">{reference}</h3>
+          <p className="mt-1 text-fg-label text-sm line-clamp-3 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
             <HighlightedText text={highlightedText || verse.text} />
           </p>
         </div>

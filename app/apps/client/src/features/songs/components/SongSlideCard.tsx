@@ -318,7 +318,7 @@ export function SongSlideCard({
           >
             <GripVertical className="w-4 h-4" strokeWidth={1.5} />
           </button>
-          <span className="text-[13px] font-medium text-fg-label">
+          <span className="text-sm font-medium text-fg-label">
             {t('editor.slideNumber', { number: index + 1 })}
           </span>
 
@@ -514,7 +514,7 @@ export function SongSlideCard({
                           value={chordFilter}
                           onChange={(e) => setChordFilter(e.target.value)}
                           placeholder={t('chords.searchChord')}
-                          className="w-full h-8 px-2 text-[13px] border-0 rounded-lg mb-2 bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                          className="w-full h-8 px-2 text-sm border-0 rounded-lg mb-2 bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                           autoFocus
                           onKeyDown={(e) => {
                             if (
@@ -575,7 +575,7 @@ export function SongSlideCard({
         <button
           type="button"
           onClick={() => editor?.chain().focus().toggleBold().run()}
-          className={`h-7 px-2.5 rounded-md text-[13px] font-bold ${
+          className={`h-7 px-2.5 rounded-md text-sm font-bold ${
             editor?.isActive('bold')
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:bg-hover'
@@ -586,7 +586,7 @@ export function SongSlideCard({
         <button
           type="button"
           onClick={() => editor?.chain().focus().toggleItalic().run()}
-          className={`h-7 px-2.5 rounded-md text-[13px] font-medium italic ${
+          className={`h-7 px-2.5 rounded-md text-sm font-medium italic ${
             editor?.isActive('italic')
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:bg-hover'
@@ -600,7 +600,7 @@ export function SongSlideCard({
           onClick={() =>
             editor?.chain().focus().toggleHeading({ level: 1 }).run()
           }
-          className={`h-7 px-2.5 rounded-md text-[13px] font-medium ${
+          className={`h-7 px-2.5 rounded-md text-sm font-medium ${
             editor?.isActive('heading', { level: 1 })
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:bg-hover'
@@ -613,7 +613,7 @@ export function SongSlideCard({
           onClick={() =>
             editor?.chain().focus().toggleHeading({ level: 2 }).run()
           }
-          className={`h-7 px-2.5 rounded-md text-[13px] font-medium ${
+          className={`h-7 px-2.5 rounded-md text-sm font-medium ${
             editor?.isActive('heading', { level: 2 })
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:bg-hover'
@@ -625,7 +625,7 @@ export function SongSlideCard({
         <button
           type="button"
           onClick={() => editor?.chain().focus().setTextAlign('left').run()}
-          className={`h-7 px-2.5 rounded-md text-[13px] ${
+          className={`h-7 px-2.5 rounded-md text-sm ${
             editor?.isActive({ textAlign: 'left' })
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:bg-hover'
@@ -636,7 +636,7 @@ export function SongSlideCard({
         <button
           type="button"
           onClick={() => editor?.chain().focus().setTextAlign('center').run()}
-          className={`h-7 px-2.5 rounded-md text-[13px] ${
+          className={`h-7 px-2.5 rounded-md text-sm ${
             editor?.isActive({ textAlign: 'center' })
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:bg-hover'
@@ -647,7 +647,7 @@ export function SongSlideCard({
         <button
           type="button"
           onClick={() => editor?.chain().focus().setTextAlign('right').run()}
-          className={`h-7 px-2.5 rounded-md text-[13px] ${
+          className={`h-7 px-2.5 rounded-md text-sm ${
             editor?.isActive({ textAlign: 'right' })
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:bg-hover'

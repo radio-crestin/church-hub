@@ -1033,6 +1033,76 @@
         }
       }
     },
+    "cloudSync": {
+      "title": "Sincronizare în cloud",
+      "description": "Cântările și programele ajung în câteva secunde pe telefoane și pe celelalte calculatoare, prin cloudul Church Hub.",
+      "off": {
+        "title": "Pornește sincronizarea în cloud",
+        "description": "Alege cum configurezi biserica. Te poți conecta cu Google și mai târziu.",
+        "google": "Continuă cu Google",
+        "guest": "Continuă ca invitat",
+        "ownerHint": "Cu Google, contul tău devine proprietarul bisericii: o poți recupera pe un calculator nou și poți revoca dispozitivele pierdute. Ca invitat, te conectezi mai târziu ca s-o revendici.",
+        "failed": "Sincronizarea în cloud nu a pornit. Verifică conexiunea la internet și încearcă din nou."
+      },
+      "recover": {
+        "title": "Ai configurat-o deja pe alt calculator?",
+        "description": "Conectează-te cu contul Google care deține biserica, ca s-o aduci pe acest calculator.",
+        "signIn": "Recuperează cu Google"
+      },
+      "on": {
+        "title": "Sincronizarea în cloud este pornită",
+        "owner": "Proprietar: {{email}}",
+        "guest": "Biserică de invitat: nu are încă proprietar",
+        "claimHint": "Conectează-te cu Google ca să devii proprietarul bisericii. Nu se mută nimic; apoi o poți recupera pe alt calculator.",
+        "claim": "Revendică biserica cu Google",
+        "manageHint": "Conectează-te ca proprietar ca să vezi serverele bisericii, să transferi biserica sau să revoci toate dispozitivele.",
+        "manage": "Conectează-te ca proprietar",
+        "turnOff": "Oprește sincronizarea în cloud",
+        "turnOffTitle": "Oprești sincronizarea în cloud?",
+        "turnOffConfirm": "Acest calculator nu mai sincronizează. Biserica rămâne în cloud: proprietarul o poate recupera mai târziu."
+      },
+      "owner": {
+        "signedInAs": "Conectat ca {{email}}",
+        "signOut": "Deconectează-te",
+        "yourChurches": "Serverele bisericii tale",
+        "thisPc": "Acest calculator",
+        "offered": "Ți-a fost oferită: acceptă ca să devii proprietar",
+        "churchDetails_one": "{{count}} dispozitiv · actualizat {{updated}}",
+        "churchDetails_few": "{{count}} dispozitive · actualizat {{updated}}",
+        "churchDetails_other": "{{count}} de dispozitive · actualizat {{updated}}",
+        "noChurches": "Acest cont nu deține încă nicio biserică.",
+        "listFailed": "Bisericile tale nu s-au putut încărca.",
+        "recover": "Folosește pe acest calculator",
+        "accept": "Acceptă",
+        "transferTitle": "Transferă biserica",
+        "transferHint": "Biserica rămâne a ta până când acel cont Google se conectează și o acceptă.",
+        "transferPlaceholder": "Adresa Gmail a noului proprietar",
+        "transfer": "Transferă",
+        "transferSent": "I-ai oferit-o lui {{email}}. Devine a lui după ce acceptă.",
+        "revokeTitle": "Revocă toate dispozitivele",
+        "revokeHint": "Folosește-o când s-a pierdut un telefon sau a ajuns pe mâini străine o copie de rezervă: toate dispozitivele trebuie conectate din nou.",
+        "revokeAll": "Revocă toate dispozitivele",
+        "revokeConfirm": "Toate telefoanele și calculatoarele pierd accesul, iar biserica se mută la o nouă adresă privată. Acest calculator sincronizează în continuare. Conectează din nou telefoanele după aceea.",
+        "revokedAll": "Toate dispozitivele au fost revocate. Conectează din nou telefoanele.",
+        "actionFailed": "Nu a mers. Conectează-te din nou și reîncearcă."
+      },
+      "conflict": {
+        "title": "Biserica este și pe alt calculator",
+        "body": "{{name}} (activ ultima dată {{lastSeen}}) folosește și el această biserică, de obicei pentru că acolo s-a restaurat o copie de rezervă. Doar un calculator o poate păstra. Care?",
+        "keepHere": "Păstreaz-o pe acest calculator",
+        "keepOther": "Păstreaz-o pe {{name}}",
+        "unknownPc": "Alt calculator",
+        "unknownTime": "recent"
+      },
+      "signIn": {
+        "waiting": "Termină conectarea în fereastra browserului…",
+        "failed": "Conectarea nu a pornit. Verifică conexiunea la internet și încearcă din nou."
+      },
+      "backupWarning": {
+        "title": "Copiile de rezervă conțin cheile sincronizării în cloud",
+        "body": "Oricine are o copie de rezervă poate citi și modifica cântările sincronizate ale bisericii. Păstrează fișierul doar pentru tine. Dacă ajunge pe mâini străine, proprietarul poate revoca toate dispozitivele din Sincronizare în cloud."
+      }
+    },
     "sync": {
       "title": "Sincronizare bibliotecă",
       "description": "Ține colecția de cântări și prezentările la zi pe toate dispozitivele tale, prin contul Google Drive.",
@@ -1092,7 +1162,7 @@
     },
     "screens": {
       "title": "Ecrane",
-      "description": "Configurează ecranele după rolul fiecăruia. Fiecare tip de ecran are propriul aspect și propriile opțiuni.",
+      "description": "Fiecare ecran e o fereastră: pe proiector, pe monitorul de scenă sau în transmisiune. Alege unul ca să stabilești cum arată și unde apare.",
       "addScreen": "Adaugă ecran",
       "noScreens": "Niciun ecran configurat",
       "status": {
@@ -1100,23 +1170,21 @@
         "closed": "fereastră închisă"
       },
       "groups": {
+        "look": "Aspect",
         "idle": "Când nu se afișează nimic",
-        "window": "Fereastră",
-        "advanced": "Mai multe opțiuni pentru fereastră"
+        "where": "Unde apare",
+        "more": "Mai multe opțiuni",
+        "slides": "Slide-uri"
       },
       "idle": {
-        "summaryOpen": "Între cântări și versete, pe proiector rămâne acest slide gol. Apasă pe el ca să-i schimbi aspectul.",
-        "summaryClosed": "Între cântări și versete fereastra se închide: pe proiector se vede desktopul calculatorului, fără ceas și fără fundal.",
-        "windowCloses": "Fereastra se închide: se vede desktopul",
-        "editEmptySlide": "Editează slide-ul gol",
         "clock": {
           "label": "Ceas pe slide-ul gol",
           "description": "Arată ora când nu se afișează nimic, de exemplu înainte de serviciu."
         }
       },
       "window": {
-        "label": "Fereastra deschisă acum",
-        "description": "Afișează acest ecran pe monitorul lui. Oprește-l ca să închizi fereastra."
+        "open": "Deschide fereastra",
+        "close": "Închide fereastra"
       },
       "openOnStartup": {
         "label": "Se deschide la pornirea aplicației",
@@ -1156,9 +1224,10 @@
         "openInNewTab": "Deschide într-un tab nou",
         "copyUrl": "Copiază URL-ul",
         "duplicate": "Duplică ecranul cu toate setările",
-        "edit": "Editează aspectul",
+        "edit": "Editează tema",
         "delete": "Șterge ecranul",
-        "editTooltip": "Schimbă cum arată fiecare tip de slide pe acest ecran: text, fundal, ceas"
+        "editTooltip": "Schimbă tema ecranului: cum arată fiecare tip de slide (culori, text, fundal, ceas)",
+        "menu": "Alte acțiuni pentru ecran"
       },
       "toast": {
         "created": "Ecranul a fost creat",
@@ -1209,6 +1278,9 @@
           "saveFailed": "Nu s-a putut salva fișierul",
           "cancelled": "Export anulat"
         }
+      },
+      "slides": {
+        "description": "Fiecare tip de slide, cum îl arată acest ecran. Apasă pe unul ca să-l editezi."
       }
     },
     "developer": {
@@ -1366,6 +1438,35 @@
         "title": "Versete biblice pe teme",
         "attribution": "Temele și versetele lor provin din <source>Biblia pe teme de la OpenBible.info</source>, sub licența <licence>CC BY 4.0</licence>. Titlurile în română sunt traducerea noastră; textul versetelor vine din Bibliile instalate."
       }
+    },
+    "cloudDevices": {
+      "title": "Conectare cu un link",
+      "description": "Un telefon sau un browser deschide linkul, de oriunde, și rămâne legat de această biserică.",
+      "notConnected": "Mai întâi conectează acest calculator la Church Hub Cloud: acolo se păstrează cântările bisericii, ca dispozitivele conectate să le poată citi și când calculatorul e oprit.",
+      "connect": "Conectează la Church Hub Cloud",
+      "connecting": "Se conectează…",
+      "connectFailed": "Conectarea nu a reușit: {{error}}",
+      "account": "Contul",
+      "name": "Numele dispozitivului",
+      "namePlaceholder": "De exemplu: telefonul lui Andrei",
+      "create": "Creează linkul",
+      "creating": "Se creează…",
+      "createFailed": "Linkul nu a putut fi creat: {{error}}",
+      "linkHint": "Scanează codul cu telefonul sau trimite-i linkul. Linkul se afișează o singură dată și dă acces dispozitivului, așa că trimite-l doar persoanei respective.",
+      "another": "Adaugă alt dispozitiv",
+      "devices": "Dispozitive",
+      "none": "Niciun dispozitiv nu s-a conectat încă printr-un link.",
+      "addedOn": "adăugat pe {{date}}",
+      "revoke": "Revocă",
+      "revoked": "Revocat",
+      "revokeFailed": "Dispozitivul nu a putut fi revocat: {{error}}",
+      "revokeConfirm": {
+        "title": "Revoci acest dispozitiv?",
+        "message": "{{name}} nu mai poate citi sau modifica datele bisericii. Celelalte dispozitive merg mai departe."
+      }
+    },
+    "themes": {
+      "title": "Teme"
     }
   }
 }

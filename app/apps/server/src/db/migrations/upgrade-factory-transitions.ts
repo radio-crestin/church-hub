@@ -111,6 +111,13 @@ export function upgradeFactoryTransitions(db: Database): void {
     log('debug', 'Already applied, skipping')
     return
   }
+  // Gone once move-screen-layouts-into-templates ran (a fresh install).
+  const hasLayouts = db
+    .query(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'screen_content_configs'",
+    )
+    .get()
+  if (!hasLayouts) return
   const factory = isApplied(db, CALM_MIGRATION_KEY) ? CALM : OLD_FACTORY
 
   const rows = db

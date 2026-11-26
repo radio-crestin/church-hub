@@ -13,9 +13,7 @@ export function PlayerQueue({ player }: { player: ServerAudioPlayer }) {
   return (
     <div className="flex flex-col lg:flex-1 lg:min-h-0">
       <div className="flex items-center justify-between p-3 sm:p-4 pb-2 flex-shrink-0">
-        <span className="text-[13px] font-medium text-fg">
-          {t('player.queue')}
-        </span>
+        <span className="text-sm font-medium text-fg">{t('player.queue')}</span>
         {state.queueLength > 0 && (
           <button
             type="button"

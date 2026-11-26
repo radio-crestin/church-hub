@@ -1,6 +1,27 @@
-export { addCloudDevice, revokeCloudDevice } from './cloud/cloudDevices'
+export { claimCloudChurch } from './cloud/claimCloudChurch'
+export {
+  addCloudDevice,
+  type CloudDevice,
+  listCloudDevices,
+  revokeCloudDevice,
+} from './cloud/cloudDevices'
 export { connectCloudSync } from './cloud/connectCloudSync'
 export { disconnectCloudSync } from './cloud/disconnectCloudSync'
+export { keepCloudChurch } from './cloud/keepCloudChurch'
+export {
+  acceptCloudChurch,
+  listOwnerChurches,
+  type OwnedChurch,
+  recoverCloudChurch,
+  resetCloudChurch,
+  transferCloudChurch,
+} from './cloud/ownerChurches'
+export { setOwnerSession } from './cloud/ownerSession'
+export {
+  completeOwnerSignIn,
+  type OwnerSignInIntent,
+  startOwnerSignIn,
+} from './cloud/ownerSignIn'
 export {
   APP_DATA_FOLDER,
   LIBRARY_FILE_NAME,

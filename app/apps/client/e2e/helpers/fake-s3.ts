@@ -34,6 +34,8 @@ export class FakeS3 {
       const [rawPath, query = ''] = (req.url ?? '/').split('?')
       const path = decodeURIComponent(rawPath)
       this.requests.push(`${req.method} ${path}`)
+      // A public bucket's CORS rule: the public app reads it from its origin.
+      res.setHeader('Access-Control-Allow-Origin', '*')
       if (req.method === 'GET' && /(^|&)list-type=/.test(query)) {
         if (!req.headers.authorization) {
           res.writeHead(403).end()

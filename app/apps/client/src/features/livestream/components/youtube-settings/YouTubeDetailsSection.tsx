@@ -55,7 +55,7 @@ export function YouTubeDetailsSection({
             rows={4}
             value={draft.description}
             onChange={(e) => set('description', e.target.value)}
-            className="w-full rounded-[10px] bg-field px-3 py-2 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+            className="w-full rounded-[10px] bg-field px-3 py-2 text-sm text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
         )}
       </SettingField>

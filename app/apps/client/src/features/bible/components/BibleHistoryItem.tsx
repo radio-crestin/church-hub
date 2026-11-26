@@ -16,7 +16,7 @@ export function BibleHistoryItem({ item, onClick }: BibleHistoryItemProps) {
         <div className="text-xs font-medium mb-0.5 text-fg-label">
           {item.reference}
         </div>
-        <div className="text-[13px] text-fg-body">{item.text}</div>
+        <div className="text-sm text-fg-body">{item.text}</div>
       </div>
     </button>
   )

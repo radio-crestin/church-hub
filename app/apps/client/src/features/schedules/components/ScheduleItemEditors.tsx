@@ -1,6 +1,16 @@
-import { forwardRef, useCallback, useImperativeHandle, useState } from 'react'
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
+import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
+import { PptxImportDialog } from '~/features/slides-deck/pptx-import/components/PptxImportDialog'
+import { useImportPptxItem } from '~/features/slides-deck/pptx-import/hooks/useImportPptxItem'
 import { SongEditorModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
@@ -8,6 +18,10 @@ import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { InsertSlideModal } from './InsertSlideModal'
 import { ScenePickerModal } from './ScenePickerModal'
 import { useAddItemToSchedule } from '../hooks'
+import {
+  MediaItemEditors,
+  type MediaItemEditorsHandle,
+} from '../media-items/MediaItemEditors'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 export interface ScheduleItemEditorsHandle {
@@ -57,12 +71,21 @@ export const ScheduleItemEditors = forwardRef<
     useState<ScheduleItem | null>(null)
   const [showScenePicker, setShowScenePicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
+  const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
+  const addDeck = useAddDeckItem(scheduleId, onChanged)
+  const { pptx, importPptx } = useImportPptxItem(scheduleId, onChanged)
+  const openDeckEditor = useOpenDeckEditor()
 
   useImperativeHandle(
     ref,
     () => ({
       addItem: () => setShowAddMenu(true),
       editItem: (item: ScheduleItem) => {
+        if (mediaEditorsRef.current?.edit(item)) return
+        if (item.itemType === 'slides') {
+          openDeckEditor(item.scheduleId, item.id)
+          return
+        }
         if (item.itemType === 'song' && item.songId) {
           setEditingSongId(item.songId)
         } else if (item.itemType === 'bible_passage') {
@@ -72,7 +95,7 @@ export const ScheduleItemEditors = forwardRef<
         }
       },
     }),
-    [],
+    [openDeckEditor],
   )
 
   const handleAddSong = useCallback(
@@ -110,7 +133,19 @@ export const ScheduleItemEditors = forwardRef<
           setShowSlideModal(true)
         }}
         onAddScene={() => setShowScenePicker(true)}
+        onAddMedia={(type) => mediaEditorsRef.current?.add(type)}
+        onAddDeck={() => addDeck()}
+        onImportPptx={() => importPptx()}
         showTrigger={false}
+      />
+
+      <PptxImportDialog pptx={pptx} />
+
+      <MediaItemEditors
+        ref={mediaEditorsRef}
+        scheduleId={scheduleId}
+        onChanged={() => onChanged?.()}
+        onAddCancelled={() => setShowAddMenu(true)}
       />
 
       <InsertSlideModal
@@ -129,7 +164,10 @@ export const ScheduleItemEditors = forwardRef<
                 id: editingSlideItem.id,
                 slideType: editingSlideItem.slideType,
                 slideContent: editingSlideItem.slideContent,
-                verseteTineriEntries: editingSlideItem.verseteTineriEntries,
+                verseteTineriEntries:
+                  editingSlideItem.allVerseteTineriEntries ??
+                  editingSlideItem.verseteTineriEntries,
+                itemConfig: editingSlideItem.itemConfig,
               }
             : undefined
         }

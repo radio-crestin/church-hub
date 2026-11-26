@@ -6,4 +6,5 @@
  */
 export const WORKER_ENTRYPOINTS = [
   'src/service/song-sources/updates/songUpdatesWorker.ts',
+  'src/service/midi-audio/renderMidiWorker.ts',
 ]

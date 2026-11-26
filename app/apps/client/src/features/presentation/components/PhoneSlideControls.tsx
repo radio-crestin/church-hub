@@ -52,7 +52,7 @@ export function PhoneSlideControls({
 }: PhoneSlideControlsProps) {
   const { t } = useTranslation(['bible', 'songs'])
   const buttonClass =
-    'flex h-12 items-center justify-center gap-1.5 rounded-lg text-[15px] font-medium transition-colors disabled:opacity-40'
+    'flex h-12 items-center justify-center gap-1.5 rounded-lg text-base font-medium transition-colors disabled:opacity-40'
   const iconButtonClass = `${buttonClass} w-14 shrink-0 bg-field`
 
   const middle = project ? (
@@ -95,8 +95,8 @@ export function PhoneSlideControls({
       >
         <button
           type="button"
-          onClick={onPrev}
-          disabled={!canPrev || isNavigating || isHiding}
+          onClick={() => !isNavigating && onPrev()}
+          disabled={!canPrev || isHiding}
           data-testid={`${testId}-prev`}
           className={`${buttonClass} flex-1 bg-field text-fg active:bg-hover`}
         >
@@ -106,8 +106,8 @@ export function PhoneSlideControls({
         {middle}
         <button
           type="button"
-          onClick={onNext}
-          disabled={!canNext || isNavigating || isHiding}
+          onClick={() => !isNavigating && onNext()}
+          disabled={!canNext || isHiding}
           data-testid={`${testId}-next`}
           className={`${buttonClass} flex-1 bg-primary text-white active:bg-indigo-700`}
         >

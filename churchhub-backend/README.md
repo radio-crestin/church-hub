@@ -35,8 +35,8 @@ This worker provides a stateless OAuth flow using:
 ## Cloud sync (`/sync/*`)
 
 The one writer of every church's synced library
-(`docs/design/cloud-sync-and-shared-library.md` §3-5). A church server
-registers as a guest (`POST /sync/churches`), mirrors its roles and users
+(`docs/design/cloud-sync-and-shared-library.md` §3-6). A church server
+registers, owned by a Google account or as a guest (`POST /sync/churches`), mirrors its roles and users
 (`PUT …/access`), mints device tokens for its users (`POST …/devices`), and
 every device writes through `POST …/changes`: authenticated by its token,
 authorized against its user's permissions, version-checked, then published to
@@ -73,6 +73,29 @@ so the rest of the Worker deploys without them.
 | `S3_STATE_BUCKET` | Optional: a private bucket (same endpoint and keys) for `sync-state/` |
 | `SYNC_COMPACT_AFTER` | Segments between snapshots (default 40) |
 | `SYNC_RATE_LIMITER` | Optional rate-limit binding on registration |
+| `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET` | The Google OAuth client the owner sign-in uses (the one YouTube and Drive share) |
+| `OWNER_REDIRECT_URI` | Optional: the sign-in's callback, registered on that client (default `<this service>/sync/owner/callback`) |
+| `GOOGLE_AUTH_URL`, `GOOGLE_TOKEN_URL`, `GOOGLE_USERINFO_URL` | Optional: Google's endpoints, for a test's stand-in |
+
+**The owner** (§6). `GET /sync/owner/sign-in?returnUrl&nonce` sends the
+browser to Google (scopes `openid email`); the callback reads the account's
+verified id and email and redirects to `returnUrl` (the church PC's loopback
+page, or an `ALLOWED_ORIGINS` one) with the PC's nonce and an owner ticket:
+`cho_<payload>.<HMAC>`, signed with `SYNC_SECRET`, valid one hour. The PKCE
+verifier, return URL and nonce travel sealed in the OAuth `state` (AES-GCM),
+so no cookie is needed. The owner is kept in the church's state; empty
+marker objects `sync-owners/<hmac(email)>/<churchId>` list an account's
+churches. With a ticket (`Authorization: Bearer cho_…`) the owner lists
+their churches, recovers one on a new PC (`…/recover`: a fresh server
+token), revokes every device and rotates the path (`…/reset`), and offers
+the church to another account (`…/transfer`), which accepts it
+(`…/accept`). A guest church is claimed by its server (`POST …/owner`).
+
+**One PC per church server.** The church PC names its installation on
+every call (`X-Church-Hub-Installation`, `-Name`). A local backup restored
+on another PC carries the server token; the service answers that other
+installation `409 server_in_use` (who holds it, last seen when) until the
+user picks it (`POST …/takeover`).
 
 **On Cloudflare**, once:
 
@@ -96,7 +119,12 @@ SYNC_SECRET=… S3_ENDPOINT=… S3_BUCKET=… S3_ACCESS_KEY_ID=… \
 
 The app points at it with `CHURCH_HUB_SYNC_URL` (or `serviceUrl` in
 `POST /api/sync/cloud`). The e2e spec `app/apps/client/e2e/cloud-sync.spec.ts`
-runs it this way against an S3 stand-in.
+runs it this way against an S3 stand-in, and `cloud-owner.spec.ts` with a
+Google stand-in too.
+
+For the owner sign-in in production, register
+`https://churchub-backend.radiocrestin.ro/sync/owner/callback` as an
+authorized redirect URI on the Google OAuth client.
 
 ## Google Cloud Console Setup
 

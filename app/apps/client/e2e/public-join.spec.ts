@@ -1,0 +1,185 @@
+import { type APIRequestContext, devices, expect, test } from '@playwright/test'
+
+import { setAppLanguage } from './helpers/app-language'
+import { FakeS3 } from './helpers/fake-s3'
+import { PublicAppServer } from './helpers/public-app'
+import { SyncService } from './helpers/sync-service'
+
+/**
+ * Join a church by QR code or link (T-168): the PC mints a device token in
+ * Settings > Phones and shows the link; a phone opens it on the public web
+ * app, which binds it to the church and shows the church's songs, read
+ * straight from the bucket, offline too. Revoking the device ends that.
+ */
+
+const s3 = new FakeS3()
+const service = new SyncService()
+const publicApp = new PublicAppServer()
+
+/** Runs sync cycles until the PC has published everything it queued. */
+async function publishAll(request: APIRequestContext) {
+  await expect
+    .poll(
+      async () => {
+        await request.post('/api/sync/now')
+        const status = (await (await request.get('/api/sync/status')).json())
+          .data
+        return status.pendingCount
+      },
+      { timeout: 90_000, intervals: [500, 1000, 2000] },
+    )
+    .toBe(0)
+}
+
+test.describe
+  .serial('Join a church with a link', () => {
+    test.setTimeout(180_000)
+
+    const title = `E2E Join ${Date.now()}`
+    let joinUrl = ''
+
+    test.beforeAll(async () => {
+      s3.signedWritesOnly = true
+      await s3.start()
+      await service.start(s3.endpoint, {
+        // The public app calls the service from its own origin.
+        ALLOWED_ORIGINS: publicApp.url,
+        SYNC_COMPACT_AFTER: '100000',
+      })
+      await publicApp.start()
+    })
+
+    test.afterAll(async ({ request }) => {
+      await request.delete('/api/sync/cloud')
+      await publicApp.stop()
+      await service.dispose()
+      await s3.stop()
+    })
+
+    test('the PC connects to the cloud and shows a join link for a new device', async ({
+      page,
+      request,
+    }) => {
+      await request.post('/api/songs', {
+        data: {
+          title,
+          author: 'E2E Author',
+          slides: [
+            {
+              content: '<p>Glory to God</p><p>in the highest</p>',
+              sortOrder: 0,
+              label: 'V1',
+            },
+          ],
+        },
+      })
+
+      // The shipped fixtures save Romanian; the assertions read English.
+      await setAppLanguage(page, 'en')
+      await page.goto('/settings/phones')
+      await page.getByTestId('cloud-connect').click()
+      await page.getByLabel('Device name').fill('E2E phone')
+      await page.getByTestId('cloud-device-create').click()
+
+      const qr = page.getByTestId('join-qr')
+      await expect(qr).toBeVisible()
+      joinUrl = (await qr.getAttribute('data-url')) ?? ''
+      // Everything in the fragment: no server logs the token.
+      expect(joinUrl).toMatch(
+        new RegExp(
+          `^${publicApp.url}/join#c=[A-Za-z0-9_-]{16}-[A-Za-z0-9_-]{43}&t=[^&]+$`,
+        ),
+      )
+      await expect(page.getByTestId('cloud-device')).toContainText('E2E phone')
+      await publishAll(request)
+    })
+
+    test('a phone opens the link: it joins, forgets the link and reads the songs, offline too', async ({
+      browser,
+    }) => {
+      const phone = await browser.newContext({ ...devices['Pixel 7'] })
+      const page = await phone.newPage()
+      await page.goto(joinUrl)
+
+      const search = page.getByRole('searchbox')
+      await expect(search).toBeVisible({ timeout: 30_000 })
+      await expect(page).toHaveURL(`${publicApp.url}/`)
+      await search.fill(title)
+      await page.getByTestId('church-song').filter({ hasText: title }).click()
+      await expect(page.getByTestId('song-slide')).toHaveText(
+        'Glory to God\nin the highest',
+      )
+
+      // Bound: it opens on the church's songs without the link.
+      await page.evaluate(() => navigator.serviceWorker.ready)
+      await page.reload()
+      await expect(page.getByRole('searchbox')).toBeVisible()
+      await expect(
+        page.getByTestId('church-song').filter({ hasText: title }),
+      ).toBeHidden()
+      await page.getByRole('searchbox').fill(title)
+      await expect(
+        page.getByTestId('church-song').filter({ hasText: title }),
+      ).toBeVisible()
+
+      // The service worker keeps the app and the church's reads.
+      await phone.setOffline(true)
+      await page.reload()
+      await page.getByRole('searchbox').fill(title)
+      await expect(
+        page.getByTestId('church-song').filter({ hasText: title }),
+      ).toBeVisible()
+      await phone.close()
+    })
+
+    test('revoking the device on the PC removes it from the church', async ({
+      page,
+      browser,
+    }) => {
+      const phone = await browser.newContext({ ...devices['Pixel 7'] })
+      const phonePage = await phone.newPage()
+      await phonePage.goto(joinUrl)
+      await expect(phonePage.getByRole('searchbox')).toBeVisible({
+        timeout: 30_000,
+      })
+
+      await setAppLanguage(page, 'en')
+      await page.goto('/settings/phones')
+      const device = page
+        .getByTestId('cloud-device')
+        .filter({ hasText: 'E2E phone' })
+        .first()
+      await device.getByRole('button', { name: 'Revoke' }).click()
+      await page
+        .getByTestId('cloud-device-revoke-confirm')
+        .getByRole('button', { name: 'Revoke' })
+        .click()
+      await expect(device).toContainText('Revoked')
+
+      await phonePage.reload()
+      await expect(phonePage.getByTestId('session-notice')).toHaveAttribute(
+        'data-notice',
+        'removed',
+      )
+
+      // The same link no longer lets anyone in.
+      await phonePage.goto(joinUrl)
+      await expect(phonePage.getByTestId('session-notice')).toHaveAttribute(
+        'data-notice',
+        'joinFailed.refused',
+      )
+      await expect(phonePage).toHaveURL(`${publicApp.url}/`)
+      await phone.close()
+    })
+
+    test('a link that is not a join link says so', async ({ browser }) => {
+      const phone = await browser.newContext()
+      const page = await phone.newPage()
+      await page.goto(`${publicApp.url}/join#c=nope&t=x`)
+      await expect(page.getByTestId('session-notice')).toHaveAttribute(
+        'data-notice',
+        'joinFailed.invalid',
+      )
+      await phone.close()
+    })
+  })

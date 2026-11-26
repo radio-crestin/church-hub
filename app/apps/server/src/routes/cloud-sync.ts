@@ -1,9 +1,10 @@
+import { handleCloudSyncOwnerRoutes } from './cloud-sync-owner'
 import {
   addCloudDevice,
   connectCloudSync,
   disconnectCloudSync,
+  listCloudDevices,
   revokeCloudDevice,
-  runSyncCycle,
 } from '../service/sync'
 import type { Permission } from '../service/users/types'
 import { createLogger } from '../utils/logger'
@@ -16,7 +17,11 @@ const DEVICE_PATH = /^\/api\/sync\/cloud\/devices\/([A-Za-z0-9_-]{1,64})$/
 function failure(error: unknown): Response {
   const message = toErrorMessage(error)
   const status =
-    message === 'already_connected' || message === 'not_connected' ? 409 : 502
+    message === 'already_connected' ||
+    message === 'not_connected' ||
+    message === 'server_in_use'
+      ? 409
+      : 502
   if (status === 502) logger.error(`Cloud sync request failed: ${message}`)
   return Response.json({ error: message }, { status })
 }
@@ -25,7 +30,8 @@ function failure(error: unknown): Response {
  * Cloud sync (T-171): this server's church on the sync service.
  * POST   /api/sync/cloud                     { serviceUrl? } → { churchId, readUrl } (localhost)
  * DELETE /api/sync/cloud                     → disconnected (localhost)
- * POST   /api/sync/cloud/devices             { userId, name } → device token (users.edit)
+ * GET    /api/sync/cloud/devices             → the church's devices (users.edit)
+ * POST   /api/sync/cloud/devices             { userId, name } → device token and join link (users.edit)
  * DELETE /api/sync/cloud/devices/:deviceId   → revoked, new read path (users.edit)
  */
 export async function handleCloudSyncRoutes(
@@ -34,6 +40,13 @@ export async function handleCloudSyncRoutes(
   localhostGuard: () => Response | null,
   checkPermission: (permission: Permission) => Response | null,
 ): Promise<Response | null> {
+  if (
+    url.pathname.startsWith('/api/sync/cloud/owner/') ||
+    url.pathname === '/api/sync/cloud/keep'
+  ) {
+    return localhostGuard() ?? handleCloudSyncOwnerRoutes(req, url)
+  }
+
   if (url.pathname === '/api/sync/cloud' && req.method === 'POST') {
     const denied = localhostGuard()
     if (denied) return denied
@@ -47,9 +60,8 @@ export async function handleCloudSyncRoutes(
       )
     }
     try {
-      const church = await connectCloudSync(body.serviceUrl || undefined)
       // The first upload starts at once, in the background.
-      void runSyncCycle()
+      const church = await connectCloudSync(body.serviceUrl || undefined)
       return Response.json({ data: church })
     } catch (error) {
       return failure(error)
@@ -61,6 +73,16 @@ export async function handleCloudSyncRoutes(
     if (denied) return denied
     await disconnectCloudSync()
     return Response.json({ data: { connected: false } })
+  }
+
+  if (url.pathname === '/api/sync/cloud/devices' && req.method === 'GET') {
+    const denied = checkPermission('users.edit')
+    if (denied) return denied
+    try {
+      return Response.json({ data: await listCloudDevices() })
+    } catch (error) {
+      return failure(error)
+    }
   }
 
   if (url.pathname === '/api/sync/cloud/devices' && req.method === 'POST') {

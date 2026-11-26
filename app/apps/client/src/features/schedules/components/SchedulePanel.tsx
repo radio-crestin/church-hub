@@ -72,6 +72,7 @@ import {
   useSchedules,
 } from '../hooks'
 import { useLoadProgramIntoBookmarks } from '../hooks/useLoadProgramIntoBookmarks'
+import { playMusicItem } from '../media-items/service/scheduleItemsApi'
 import {
   readSelectedScheduleId,
   writeSelectedScheduleId,
@@ -230,6 +231,8 @@ export function SchedulePanel({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
+    presentDeckStep,
   } = useScheduleFlatNavigation({
     scheduleId: selectedScheduleId,
     items: allItems,
@@ -338,10 +341,15 @@ export function SchedulePanel({
         return presented
       }
       if (item.itemType === 'bible_passage') return presentPassageVerse(item, 0)
-      if (item.slideType === 'versete_tineri') {
+      if (item.slideType === 'versete_tineri' || item.itemType === 'verses') {
         return presentVerseteEntry(item, 0)
       }
       if (item.slideType === 'scene') return presentScene(item)
+      if (item.itemType === 'video') return presentVideo(item)
+      if (item.itemType === 'slides') return presentDeckStep(item, 0)
+      if (item.itemType === 'music') {
+        return playMusicItem(item.scheduleId, item.id)
+      }
       return presentAnnouncement(item)
     },
     [
@@ -349,6 +357,8 @@ export function SchedulePanel({
       presentAnnouncement,
       presentPassageVerse,
       presentScene,
+      presentVideo,
+      presentDeckStep,
       presentSongSlide,
       presentVerseteEntry,
     ],
@@ -817,7 +827,7 @@ export function SchedulePanel({
               />
               {/* One truncating line, so a narrow column cuts the count
                   before it cuts into the title. */}
-              <span className="min-w-0 truncate text-[13px] font-medium text-fg">
+              <span className="min-w-0 truncate text-sm font-medium text-fg">
                 {t('panel.title')}
                 {orderedItems.length > 0 && (
                   <span className="ml-2 text-xs font-normal text-fg-hint tabular-nums">
@@ -868,7 +878,7 @@ export function SchedulePanel({
                   }}
                   placeholder={t('panel.searchPlaceholder')}
                   data-testid="schedule-search-input"
-                  className="w-full h-8 pl-8 pr-7 text-[13px] bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
@@ -887,14 +897,14 @@ export function SchedulePanel({
             className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : schedules.length === 0 ? (
               <SchedulePanelNoPrograms canCreate={canCreateProgram} />
             ) : displayItems.length === 0 ? (
               isSearching ? (
-                <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+                <div className="px-4 py-6 text-center text-sm text-fg-hint">
                   {t('panel.noResults')}
                 </div>
               ) : (
@@ -906,7 +916,7 @@ export function SchedulePanel({
                     className="w-8 h-8 mx-auto mb-2 text-fg-hint"
                     strokeWidth={1}
                   />
-                  <p className="text-[13px] text-fg-hint">
+                  <p className="text-sm text-fg-hint">
                     {t('panel.emptySchedule')}
                   </p>
                   {canEditProgram && (

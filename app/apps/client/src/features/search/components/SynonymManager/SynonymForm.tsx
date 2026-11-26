@@ -86,7 +86,7 @@ export function SynonymForm({
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-[13px] font-medium text-fg-body mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('sections.synonyms.primaryTerm')}
             </label>
             <input
@@ -101,7 +101,7 @@ export function SynonymForm({
           </div>
 
           <div className="mb-4">
-            <label className="block text-[13px] font-medium text-fg-body mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('sections.synonyms.synonymTerms')}
             </label>
             <input
@@ -121,14 +121,14 @@ export function SynonymForm({
             <button
               type="button"
               onClick={onCancel}
-              className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
+              className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
             >
               {t('common:buttons.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading || !primary.trim() || !synonymsText.trim()}
-              className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {synonym
                 ? t('sections.synonyms.modals.edit.submit')

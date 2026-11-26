@@ -1,14 +1,18 @@
 import { Play, Repeat, Square } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import type { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 
 interface BibleTopicSlideshowBarProps {
   slideshow: ReturnType<typeof useVerseSlideshow>
+  /** The template the verses are drawn with; null: each screen's own. */
+  templateId: number | null
+  onTemplateChange: (templateId: number | null) => void
 }
 
 const buttonClass =
-  'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium transition-colors'
+  'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors'
 
 /**
  * The topic as a presentation in one tap: ▶ shows its verses one after
@@ -17,6 +21,8 @@ const buttonClass =
  */
 export function BibleTopicSlideshowBar({
   slideshow,
+  templateId,
+  onTemplateChange,
 }: BibleTopicSlideshowBarProps) {
   const { t } = useTranslation('bible')
   const { isPlaying, isLooping, position } = slideshow
@@ -68,6 +74,15 @@ export function BibleTopicSlideshowBar({
         <Repeat className="h-4 w-4" strokeWidth={1.5} />
         {t('topics.slideshow.loop')}
       </button>
+      <div className="ml-auto min-w-0">
+        <TemplatePicker
+          variant="chip"
+          value={templateId}
+          noneLabel={t('presentation:templates.presentation.none')}
+          onChange={onTemplateChange}
+          testId="bible-topic-template"
+        />
+      </div>
     </div>
   )
 }

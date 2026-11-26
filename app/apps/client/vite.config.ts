@@ -7,6 +7,11 @@ import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 
+import {
+  isPublicAppBuild,
+  publicAppBase,
+  publicAppPlugins,
+} from './publicAppBuild'
 import tauriConf from '../../tauri/tauri.conf.json'
 
 const host = process.env.TAURI_DEV_HOST
@@ -111,7 +116,12 @@ const config = defineConfig(({ mode }) => {
       }),
       tailwindcss(),
       viteReact(),
+      ...(isPublicAppBuild ? publicAppPlugins() : []),
     ],
+    ...(isPublicAppBuild && {
+      base: publicAppBase,
+      build: { outDir: 'dist-public', emptyOutDir: true },
+    }),
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
     // 1. prevent Vite from obscuring rust errors
     clearScreen: false,

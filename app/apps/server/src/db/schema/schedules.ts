@@ -1,8 +1,15 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core'
 
 import { bibleVerses } from './bible'
 import { songs } from './songs'
+import type { AutomationTrigger } from '../../service/schedules/types'
 
 export const schedules = sqliteTable(
   'schedules',
@@ -23,6 +30,15 @@ export const schedules = sqliteTable(
     startOnAppStart: integer('start_on_app_start', { mode: 'boolean' })
       .notNull()
       .default(false),
+    // The slide template for all its slides (slide_templates.id); NULL = each
+    // screen's own. Local to this computer, like the automation.
+    templateId: integer('template_id'),
+    startTrigger: text('start_trigger', {
+      mode: 'json',
+    }).$type<AutomationTrigger>(),
+    stopTrigger: text('stop_trigger', {
+      mode: 'json',
+    }).$type<AutomationTrigger>(),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -41,7 +57,15 @@ export const scheduleItems = sqliteTable(
       .notNull()
       .references(() => schedules.id, { onDelete: 'cascade' }),
     itemType: text('item_type', {
-      enum: ['song', 'slide', 'bible_passage'],
+      enum: [
+        'song',
+        'slide',
+        'bible_passage',
+        'music',
+        'video',
+        'verses',
+        'slides',
+      ],
     }).notNull(),
     songId: integer('song_id').references(() => songs.id, {
       onDelete: 'cascade',
@@ -55,9 +79,22 @@ export const scheduleItems = sqliteTable(
     biblePassageTranslation: text('bible_passage_translation'),
     // Scene fields (when slideType === 'scene')
     obsSceneName: text('obs_scene_name'),
+    // An item's settings as JSON (music, video, verses, and how many of a
+    // Versete Biblice slide's passages it shows): service/schedule-items.
+    itemConfig: text('item_config'),
     // Seconds each slide of this item stays up while the presentation runs by
     // itself; NULL = the presentation's timing.
     advanceSeconds: integer('advance_seconds'),
+    // This item's own slide template; NULL = the presentation's.
+    templateId: integer('template_id'),
+    // A MIDI file played with a song item while the presentation runs, its
+    // slides following the music (service/midi-audio): the file's content
+    // hash (data/midi/<hash>.mid), its name, length, and the second each
+    // slide starts at as a JSON array (NULL = split evenly).
+    midiFile: text('midi_file'),
+    midiFileName: text('midi_file_name'),
+    midiDurationSeconds: real('midi_duration_seconds'),
+    midiVerseTimes: text('midi_verse_times'),
     // Manual "already sung" marker, per schedule (mirrors song_bookmarks).
     // Only meaningful for itemType === 'song'.
     isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),

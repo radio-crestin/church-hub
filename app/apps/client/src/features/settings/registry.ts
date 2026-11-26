@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Sliders,
   Smartphone,
+  SwatchBook,
   Tv,
   User,
   Users,
@@ -187,6 +188,14 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
           'settings:sections.screens.fullscreen.label',
           'settings:sections.screens.alwaysOnTop.label',
         ],
+      },
+      {
+        id: 'themes',
+        labelKey: 'sections.themes.title',
+        icon: SwatchBook,
+        to: '/settings/themes',
+        visible: canEdit,
+        settings: ['presentation:templates.page.title'],
       },
       {
         id: 'kiosk',

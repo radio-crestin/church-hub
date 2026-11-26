@@ -15,7 +15,7 @@ export function OnboardingProgress({ step }: OnboardingProgressProps) {
 
   return (
     <div className="space-y-3">
-      <ol className="flex items-center gap-2 text-[13px]">
+      <ol className="flex items-center gap-2 text-sm">
         {ONBOARDING_STEPS.map((name, index) => (
           <li
             key={name}

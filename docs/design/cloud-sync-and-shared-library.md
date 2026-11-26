@@ -126,6 +126,14 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - The backup file therefore holds secrets; the backup screen says so.
   - If a backup is restored on a second PC while the first is still active, the server token shows it, and the user is asked which PC keeps the church.
 
+**As built (T-172).**
+- There is no `churches` table or KV (T-171 keeps each church as one encrypted state object): the owner `{ googleSub, email, claimedAt }` and a pending transfer live in that state, and empty marker objects `sync-owners/<hmac(email)>/<churchId>` list an account's churches.
+- The sign-in goes through the sync service (`/sync/owner/sign-in`, scopes `openid email`, the shared Google client). It returns to the PC's loopback callback with a signed owner ticket valid one hour and the nonce the PC issued; the PC refuses any other nonce. The ticket stays in the PC's memory only, never in the database, so a backup can't act as the owner.
+- The owner email is kept with the cloud identity (`cloud_sync.owner_email`). A local backup is the whole database file, so it carries the church id, the read URL (with the path secret), the server token and the owner; restoring it reconnects.
+- Which PC: each install has an id in a file next to the database (`installation-id`, outside backups) and sends it on every call. The service remembers the installation holding the server token and answers another `409 server_in_use`; that PC stops syncing and asks "keep it on this PC" (takeover) or "let the other PC keep it" (disconnect). The PC checks in every 15 minutes (`GET path`), so an idle PC finds out too, and learns a new path or owner.
+- Revoke every device = reset: all tokens revoked (the server's too), a fresh server token for this PC, the path rotated. Recovery revokes only the old server token.
+- Transfer is an offer by email; it is the new owner's once that Google account signs in and accepts it.
+
 ## 7. Joining: a QR code or a link (T-168)
 
 - On the PC, **"Add a device"** shows a QR code and a link: `https://<public app>/join#c=<churchId>-<pathSecret>&t=<deviceToken>&p=<pcSignalId>`.
@@ -133,6 +141,11 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - The device token is minted for the chosen user.
 - **The public page** is the same React client, built as a PWA and hosted statically (Cloudflare Pages: free, with no Worker per page view). Opening the link **binds that browser or phone to that church server**. It stores the church, the token and the PC's signal id, and from then on syncs as section 3 describes.
 - **Native apps (T-050)** wrap the same build and open the same link as a deep link.
+- **As built (T-168)**:
+  - Settings > Phones > *Join with a link*: connect to the cloud (guest), pick the account and a name, get the QR code and link; the device list revokes (`GET /sync/churches/:id/devices` on the service). The link also carries `&s=<service>` when the PC uses a self-hosted service.
+  - The public app is `app/apps/client/src/publicApp.tsx` (`features/public-app/`), built by `bun run build:public` into `dist-public/` (vite-plugin-pwa: precached shell, `head.json` network-first, snapshots and segments cache-first). `bun run deploy:public` publishes it to the Pages project `church-hub` (`https://church-hub.pages.dev`, the PC's default; `CHURCH_HUB_PUBLIC_APP_URL` overrides it). Pages serves `index.html` for `/join` (no `404.html`: SPA mode).
+  - It needs the service's `ALLOWED_ORIGINS` to list the public app's origin, and the bucket a CORS rule allowing GET from it.
+  - Until T-174/T-175 the joined device reads the church's songs from the bucket (read-only); `p` (the PC's remote access room) is stored for T-174.
 
 ## 8. A phone with the PC off: full control (D3)
 

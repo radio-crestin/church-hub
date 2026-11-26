@@ -9,9 +9,8 @@ import { useScheduleAutomation } from './useScheduleAutomation'
 const logger = createLogger('schedules:run')
 
 /**
- * Run or stop a presentation: Run starts it from its first slide, and while
- * it runs the same control stops it. Shared by the header button and the
- * phone's actions menu.
+ * Run/Stop of one presentation, shared by the header button and the phone's
+ * menu item: Run starts it from its first slide, Stop ends it while it runs.
  */
 export function useScheduleRunToggle(scheduleId: number) {
   const { t } = useTranslation('schedules')
@@ -20,8 +19,13 @@ export function useScheduleRunToggle(scheduleId: number) {
   const { data: automation } = useScheduleAutomation()
   const { run, stop } = useRunSchedule()
 
-  const isRunning =
-    automation?.running === true && automation.scheduleId === scheduleId
+  const isRunning = !!(
+    automation?.running && automation.scheduleId === scheduleId
+  )
+  const progress =
+    isRunning && automation?.running
+      ? `${automation.stepIndex + 1}/${automation.stepCount}`
+      : null
 
   const toggle = async () => {
     try {
@@ -34,11 +38,14 @@ export function useScheduleRunToggle(scheduleId: number) {
   }
 
   return {
-    canRun: hasPermission('control_room.control'),
+    allowed: hasPermission('control_room.control'),
     isRunning,
     isPending: run.isPending || stop.isPending,
-    automation,
+    progress,
     label: isRunning ? t('automation.stop') : t('automation.run'),
+    description: isRunning
+      ? t('automation.stopDescription')
+      : t('automation.runDescription'),
     toggle,
   }
 }

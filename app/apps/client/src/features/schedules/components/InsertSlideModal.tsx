@@ -12,6 +12,9 @@ import {
   VerseteTineriEditor,
 } from './VerseteTineriEditor'
 import { useAddItemToSchedule, useUpdateScheduleSlide } from '../hooks'
+import { CountPicker } from '../media-items/CountPicker'
+import { setScheduleItemConfig } from '../media-items/service/scheduleItemsApi'
+import type { ItemConfig, VerseteItemConfig } from '../media-items/types'
 import type { SlideTemplate } from '../types'
 import { passageRangeToReadingFields } from '../utils/passageRangeToReadingFields'
 
@@ -19,6 +22,8 @@ interface EditingItem {
   id: number
   slideType: SlideTemplate | null
   slideContent: string | null
+  /** A Versete Biblice slide's settings: how many of its passages it shows. */
+  itemConfig?: ItemConfig | null
   verseteTineriEntries?: Array<{
     id: number
     personName: string
@@ -76,6 +81,8 @@ export function InsertSlideModal({
   const [selectedTemplate, setSelectedTemplate] =
     useState<SlideTemplate>('announcement')
   const [content, setContent] = useState('')
+  // How many of the passages it shows: null = all, in order.
+  const [pickCount, setPickCount] = useState<number | null>(null)
 
   // Versete Tineri state
   const [verseteTineriEntries, setVerseteTineriEntries] = useState<
@@ -120,6 +127,9 @@ export function InsertSlideModal({
         setSelectedTemplate(editingItem.slideType ?? 'announcement')
         setContent(editingItem.slideContent ?? '')
         editor?.commands.setContent(editingItem.slideContent ?? '')
+        setPickCount(
+          (editingItem.itemConfig as VerseteItemConfig | null)?.count ?? null,
+        )
 
         // Load versete tineri entries if editing a versete_tineri slide
         if (
@@ -148,6 +158,7 @@ export function InsertSlideModal({
         }
       } else {
         setSelectedTemplate(initialTemplate ?? 'announcement')
+        setPickCount(null)
         setContent('')
         editor?.commands.setContent('')
         setVerseteTineriEntries([])
@@ -158,6 +169,14 @@ export function InsertSlideModal({
       dialogRef.current?.close()
     }
   }, [isOpen, editor, editingItem, initialTemplate])
+
+  /** A slide showing some of its passages at random says how many. */
+  const savePickCount = async (itemId: number) => {
+    const before =
+      (editingItem?.itemConfig as VerseteItemConfig | null)?.count ?? null
+    if (pickCount === before) return
+    await setScheduleItemConfig(scheduleId, itemId, { count: pickCount })
+  }
 
   const handleSave = async () => {
     // Handle Versete Tineri template
@@ -196,6 +215,7 @@ export function InsertSlideModal({
         })
 
         if (result.success) {
+          await savePickCount(editingItem.id)
           showToast(t('messages.slideUpdated'), 'success')
           onSaved?.()
           onClose()
@@ -212,7 +232,8 @@ export function InsertSlideModal({
           },
         })
 
-        if (result.success) {
+        if (result.success && result.data) {
+          await savePickCount(result.data.id)
           showToast(t('messages.slideInserted'), 'success')
           onSaved?.()
           onClose()
@@ -296,7 +317,7 @@ export function InsertSlideModal({
       onCancel={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
-      className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-lg bg-panel backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-xl border border-line bg-panel shadow-popover backdrop:bg-black/50"
     >
       <div className="flex flex-col max-h-[80vh]">
         {/* Header */}
@@ -319,7 +340,7 @@ export function InsertSlideModal({
           {/* Template Selector - only show when inserting new slide without initial template */}
           {!isEditMode && !initialTemplate && (
             <div>
-              <label className="block text-[13px] font-medium text-fg-body mb-2">
+              <label className="block text-sm font-medium text-fg-body mb-2">
                 {t('insertSlide.selectTemplate')}
               </label>
               <div className="flex gap-2">
@@ -335,7 +356,7 @@ export function InsertSlideModal({
                     }`}
                   >
                     <Icon size={18} />
-                    <span className="text-[13px] font-medium">
+                    <span className="text-sm font-medium">
                       {t(`slideTemplates.${type}`)}
                     </span>
                   </button>
@@ -346,13 +367,21 @@ export function InsertSlideModal({
 
           {/* Content Editor - Show VerseteTineriEditor for versete_tineri template */}
           {selectedTemplate === 'versete_tineri' ? (
-            <VerseteTineriEditor
-              entries={verseteTineriEntries}
-              onEntriesChange={setVerseteTineriEntries}
-            />
+            <div className="space-y-4">
+              <VerseteTineriEditor
+                entries={verseteTineriEntries}
+                onEntriesChange={setVerseteTineriEntries}
+              />
+              <CountPicker
+                testId="versete-pick-count"
+                count={pickCount}
+                onChange={setPickCount}
+                allowAll
+              />
+            </div>
           ) : (
             <div>
-              <label className="block text-[13px] font-medium text-fg-body mb-2">
+              <label className="block text-sm font-medium text-fg-body mb-2">
                 {t('insertSlide.content')}
               </label>
               {/* Toolbar */}
@@ -360,7 +389,7 @@ export function InsertSlideModal({
                 <button
                   type="button"
                   onClick={() => editor?.chain().focus().toggleBold().run()}
-                  className={`px-2 py-1 rounded text-[13px] font-bold ${
+                  className={`px-2 py-1 rounded text-sm font-bold ${
                     editor?.isActive('bold')
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -371,7 +400,7 @@ export function InsertSlideModal({
                 <button
                   type="button"
                   onClick={() => editor?.chain().focus().toggleItalic().run()}
-                  className={`px-2 py-1 rounded text-[13px] italic ${
+                  className={`px-2 py-1 rounded text-sm italic ${
                     editor?.isActive('italic')
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -385,7 +414,7 @@ export function InsertSlideModal({
                   onClick={() =>
                     editor?.chain().focus().toggleHeading({ level: 1 }).run()
                   }
-                  className={`px-2 py-1 rounded text-[13px] ${
+                  className={`px-2 py-1 rounded text-sm ${
                     editor?.isActive('heading', { level: 1 })
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -398,7 +427,7 @@ export function InsertSlideModal({
                   onClick={() =>
                     editor?.chain().focus().toggleHeading({ level: 2 }).run()
                   }
-                  className={`px-2 py-1 rounded text-[13px] ${
+                  className={`px-2 py-1 rounded text-sm ${
                     editor?.isActive('heading', { level: 2 })
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -423,7 +452,7 @@ export function InsertSlideModal({
             type="button"
             onClick={handleClose}
             disabled={isPending}
-            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-fg bg-field hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
           >
             <X size={16} strokeWidth={1.5} />
             {t('actions.cancel')}
@@ -438,7 +467,7 @@ export function InsertSlideModal({
                 ? verseteTineriEntries.length === 0
                 : !content.trim())
             }
-            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {isPending ? (
               <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />

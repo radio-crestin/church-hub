@@ -23,12 +23,12 @@ function ConnectionLostPage() {
       <h1 className="text-base font-semibold text-fg mb-1.5">
         {t('errors.connectionLostTitle')}
       </h1>
-      <p className="text-[13px] text-fg-label mb-4 max-w-md">
+      <p className="text-sm text-fg-label mb-4 max-w-md">
         {t('errors.connectionLost')}
       </p>
       <button
         onClick={() => refresh()}
-        className="h-9 px-4 bg-primary text-[13px] font-medium text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        className="h-9 px-4 bg-primary text-sm font-medium text-white rounded-lg hover:bg-indigo-700 transition-colors"
       >
         {t('buttons.retry')}
       </button>
@@ -46,13 +46,13 @@ function NoPermissionPage() {
       <h1 className="text-base font-semibold text-fg mb-1.5">
         {t('errors.noPermissionTitle')}
       </h1>
-      <p className="text-[13px] text-fg-label mb-4 max-w-md">
+      <p className="text-sm text-fg-label mb-4 max-w-md">
         {t('errors.noPermission')}
       </p>
       <p className="text-xs text-fg-hint mb-4">{t('errors.contactAdmin')}</p>
       <button
         onClick={() => refresh()}
-        className="h-9 px-4 bg-primary text-[13px] font-medium text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        className="h-9 px-4 bg-primary text-sm font-medium text-white rounded-lg hover:bg-indigo-700 transition-colors"
       >
         {t('buttons.retry')}
       </button>

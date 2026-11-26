@@ -5,7 +5,16 @@ test('serves the third-party font licences', async ({ request }) => {
   const response = await request.get('/licenses/third-party-fonts.txt')
   expect(response.ok()).toBe(true)
   const text = await response.text()
-  for (const font of ['Fira Sans', 'Montserrat', 'Lora']) {
+  for (const font of [
+    'Fira Sans',
+    'Montserrat',
+    'Lora',
+    'Carlito',
+    'Caladea',
+    'Arimo',
+    'Tinos',
+    'Cousine',
+  ]) {
     expect(text).toContain(font)
   }
   expect(text).toContain('SIL OPEN FONT LICENSE Version 1.1')

@@ -203,4 +203,23 @@ export const backgroundMediaPaths = {
       },
     },
   },
+  '/api/media/theme-backgrounds/{file}': {
+    get: {
+      tags: ['Background Media'],
+      summary: "Download a built-in theme's background",
+      description:
+        'The photos and videos the built-in themes ship with (read-only, from the bundled resources), with HTTP Range support. `file` is a plain name such as `mountain-sunrise.jpg` or `clouds.mp4` (`<name>.poster.jpg` is the still of a video). Requires `displays.view`.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      parameters: [
+        {
+          name: 'file',
+          in: 'path',
+          required: true,
+          schema: { type: 'string', example: 'mountain-sunrise.jpg' },
+        },
+        rangeParameter,
+      ],
+      responses: fileResponses,
+    },
+  },
 }

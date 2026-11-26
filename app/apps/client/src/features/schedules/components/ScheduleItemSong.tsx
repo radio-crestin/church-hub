@@ -76,7 +76,7 @@ export function ScheduleItemSong({
 
           {/* Song Title & Info */}
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-[13px] truncate text-fg">
+            <div className="font-medium text-sm truncate text-fg">
               {item.song?.title}
             </div>
             <div className="text-xs text-fg-hint">
@@ -113,7 +113,7 @@ export function ScheduleItemSong({
                     setShowMenu(false)
                     onEditSong()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <Pencil size={14} strokeWidth={1.75} />
                   {t('actions.editSong')}
@@ -124,7 +124,7 @@ export function ScheduleItemSong({
                     setShowMenu(false)
                     onInsertSongAfter()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <Plus size={14} strokeWidth={1.75} />
                   {t('actions.insertAfter')}
@@ -136,7 +136,7 @@ export function ScheduleItemSong({
                     setShowMenu(false)
                     onRemove()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <Trash2 size={14} strokeWidth={1.75} />
                   {t('actions.remove')}
@@ -153,7 +153,7 @@ export function ScheduleItemSong({
           {item.slides.map((slide, idx) => (
             <div
               key={slide.id}
-              className="flex items-center gap-2 px-3 py-2 bg-app rounded-lg text-[13px]"
+              className="flex items-center gap-2 px-3 py-2 bg-app rounded-lg text-sm"
             >
               <span className="flex-shrink-0 w-5 h-5 rounded bg-field text-fg-label text-xs flex items-center justify-center">
                 {idx + 1}

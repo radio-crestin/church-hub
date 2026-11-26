@@ -1,4 +1,5 @@
 export * from './scheduleAutomation'
+export * from './scheduleMidi'
 export * from './schedules'
 export {
   readSelectedScheduleId,

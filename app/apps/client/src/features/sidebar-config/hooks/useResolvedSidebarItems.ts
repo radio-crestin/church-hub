@@ -94,6 +94,7 @@ export function useResolvedSidebarItems(
           to: definition.to,
           permission: definition.permission,
           isCustom: false,
+          group: item.group,
         })
       } else {
         // Custom page
@@ -122,6 +123,7 @@ export function useResolvedSidebarItems(
           isCustom: true,
           customIconUrl,
           faviconBgColor,
+          group: item.group,
         })
       }
     }

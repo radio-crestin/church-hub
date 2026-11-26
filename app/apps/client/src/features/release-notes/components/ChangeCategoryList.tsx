@@ -27,7 +27,7 @@ export function ChangeCategoryList({
         {entries.map((entry, index) => (
           <li
             key={`${index}-${entry.scope ?? ''}-${entry.message}`}
-            className="text-[13px] text-fg-body flex gap-2"
+            className="text-sm text-fg-body flex gap-2"
           >
             <span className="text-fg-hint select-none">•</span>
             <span>

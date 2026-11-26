@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 
 import { SettingsSection } from '~/features/settings/components/SettingsSection'
 import { Button } from '~/ui/button/Button'
+import { NativeSelect } from '~/ui/select'
 import { useMixerChannels, useMixerConfig } from '../../hooks'
-import { NativeSelect } from '../settings-page/NativeSelect'
 import { SettingField } from '../settings-page/SettingField'
 
 const CHANNEL_COUNTS = ['8', '16', '24', '32'] as const
@@ -75,7 +75,7 @@ export function MixerChannelsSection() {
                 onChange={(e) =>
                   setLabels((prev) => ({ ...prev, [num]: e.target.value }))
                 }
-                className="min-w-0 flex-1 rounded-lg bg-field px-2 py-1 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                className="min-w-0 flex-1 rounded-lg bg-field px-2 py-1 text-sm text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 placeholder={`CH${number}`}
               />
             </label>
