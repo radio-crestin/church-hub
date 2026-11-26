@@ -131,12 +131,13 @@ async function main() {
   copyMidiPrebuilds(os, arch)
 
   // No credentials are embedded in the binary: Google OAuth (YouTube AND the
-  // Drive backup) goes through the ChurchHub OAuth worker, which holds the
-  // client id/secret server-side.
+  // Drive backup) goes through Church Hub's backend, which holds the client
+  // id/secret server-side.
   console.log('\x1b[34mCompiling server with Bun...\x1b[0m')
   // Every worker thread is its own entrypoint (Bun bundles each separately).
   // CHURCH_HUB_BUILD_* values set while building are baked into the binary
-  // (the managed song sources' URL, getManagedSourcesUrl).
+  // (the managed song sources' URL, getManagedSourcesUrl; the backend's,
+  // getBackendBaseUrl).
   await $`bun build --compile --production --minify --minify-syntax --target bun --env=${'CHURCH_HUB_BUILD_*'} --bundle ./src/index.ts ${WORKER_ENTRYPOINTS.map((entry) => `./${entry}`)} --outfile ${outfile}`
   if (os === 'linux') await setLinuxRunpath(outfile)
 
