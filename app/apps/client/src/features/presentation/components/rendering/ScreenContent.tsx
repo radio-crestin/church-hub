@@ -60,8 +60,8 @@ export interface ScreenContentProps {
   /** Identity-based key that changes only on slide navigation, not content edits */
   contentKey?: string
   /**
-   * The slide shares lines with the previous one (usePresentationContent): the
-   * main text animates only the lines that changed.
+   * The slide shares lines with the previous one (usePresentationContent):
+   * the main text, the verse and the reference animate only what changed.
    */
   morphLines?: boolean
   /**
@@ -324,6 +324,7 @@ export function ScreenContent({
         key="contentText"
         content={displayContent}
         contentKey={`contentText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(ct.style, fontScale)}
         width={scaledBounds.width}
@@ -370,6 +371,8 @@ export function ScreenContent({
         key="referenceText"
         content={contentData?.referenceText ?? ''}
         contentKey={`referenceText-${contentKey}`}
+        morphLines={morphLines}
+        splitBy="reference"
         isVisible={elementVisible}
         style={scaleTextStyle(rt.style, fontScale)}
         width={scaledBounds.width}

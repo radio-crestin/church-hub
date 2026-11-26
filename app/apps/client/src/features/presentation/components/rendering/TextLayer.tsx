@@ -11,6 +11,7 @@ import { splitSlideLines } from './utils/splitSlideLines'
 import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type { TextStyle, TextStyleRange } from '../../types'
 import { applyStylesToText } from '../../utils/applyStylesToText'
+import type { TokenMode } from '../../utils/tokenizeLine'
 
 /** One slide's text and everything that decides how it looks. */
 export interface TextLayerContent {
@@ -36,8 +37,8 @@ interface TextLayerProps {
   morph?: number | null
   /** SlideLayer.rejectMorph */
   onMorphRejected?: () => void
-  /** Cut the text into words, for a text whose slide changes can morph */
-  byWord?: boolean
+  /** How to cut the text into parts, for a text whose slide changes can morph */
+  split?: TokenMode | null
   /** The slide change transitions a morph plays on single lines */
   lineTransitions: { enter: SlideAnimationConfig; exit: SlideAnimationConfig }
 }
@@ -55,7 +56,7 @@ export function TextLayer({
   leaving = false,
   morph = null,
   onMorphRejected,
-  byWord = false,
+  split = null,
   lineTransitions,
 }: TextLayerProps) {
   const { text, style, width, height, left, top, contentScale, styleRanges } =
@@ -70,8 +71,8 @@ export function TextLayer({
   }, [text, styleRanges])
 
   const lines = useMemo(
-    () => splitSlideLines(text, styleRanges, byWord),
-    [text, styleRanges, byWord],
+    () => splitSlideLines(text, styleRanges, split),
+    [text, styleRanges, split],
   )
   const lineMorph = useLineMorph({
     lines,

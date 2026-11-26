@@ -15,6 +15,7 @@ import type {
   AnimationConfig as TypesAnimationConfig,
 } from '../../types'
 import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
+import type { TokenMode } from '../../utils/tokenizeLine'
 
 // Convert types animation config to hook animation config
 function toAnimationConfig(
@@ -40,6 +41,8 @@ interface AnimatedTextProps {
    * (the main text) is drawn word by word; others stay plain runs.
    */
   morphLines?: boolean
+  /** How finely a morphing text is cut: `reference` for a Bible reference */
+  splitBy?: TokenMode
   /** Whether the element is visible */
   isVisible: boolean
   /** Text styling */
@@ -115,6 +118,7 @@ function arePropsEqual(
     prevProps.content !== nextProps.content ||
     prevProps.contentKey !== nextProps.contentKey ||
     prevProps.morphLines !== nextProps.morphLines ||
+    prevProps.splitBy !== nextProps.splitBy ||
     prevProps.isVisible !== nextProps.isVisible ||
     prevProps.width !== nextProps.width ||
     prevProps.height !== nextProps.height ||
@@ -173,6 +177,7 @@ const AnimatedTextInner = memo(function AnimatedText({
   content,
   contentKey,
   morphLines,
+  splitBy = 'words',
   isVisible,
   style,
   width,
@@ -255,7 +260,7 @@ const AnimatedTextInner = memo(function AnimatedText({
       leaving={layer.leaving}
       morph={layer.morph}
       onMorphRejected={layer.rejectMorph}
-      byWord={morphLines !== undefined}
+      split={morphLines === undefined ? null : splitBy}
       lineTransitions={lineTransitions}
     />
   ))

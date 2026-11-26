@@ -5,8 +5,10 @@ interface SlideWordProps {
   text: string
   /** The same with its styling markup, or null when it has none */
   html: string | null
-  /** A word, drawn as an inline block so it can glide; spaces stay inline */
+  /** A word or part of one, drawn as its own element so it can fade */
   isWord: boolean
+  /** Drawn as an inline block so it can glide (SlideToken.glides) */
+  glides: boolean
   /** Laid out but not drawn */
   hidden?: boolean
   /** A word box doesn't take its line's underline, so it draws its own */
@@ -23,6 +25,7 @@ export const SlideWord = memo(function SlideWord({
   text,
   html,
   isWord,
+  glides,
   hidden,
   underline,
   unitKey,
@@ -37,8 +40,8 @@ export const SlideWord = memo(function SlideWord({
   if (!isWord && html === null) return text
 
   const style: React.CSSProperties = {
-    display: isWord ? 'inline-block' : undefined,
-    textDecoration: isWord && underline ? 'underline' : undefined,
+    display: glides ? 'inline-block' : undefined,
+    textDecoration: glides && underline ? 'underline' : undefined,
     visibility: hidden ? 'hidden' : undefined,
   }
   return html === null ? (

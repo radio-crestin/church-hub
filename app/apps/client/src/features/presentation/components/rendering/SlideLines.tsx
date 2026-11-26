@@ -1,7 +1,10 @@
 import { useCallback } from 'react'
 
 import { SlideWord } from './SlideWord'
+import { groupWordPieces } from './utils/groupWordPieces'
 import type { SlideLine } from './utils/splitSlideLines'
+
+const NO_WRAP: React.CSSProperties = { whiteSpace: 'nowrap' }
 
 interface SlideLinesProps {
   lines: SlideLine[]
@@ -34,22 +37,37 @@ export function SlideLines({
     (key: string) => (element: HTMLElement | null) => unitRef?.(key, element),
     [unitRef],
   )
+  const renderToken = (line: number, token: number) => {
+    const { text, html, isWord, glides } = lines[line].tokens[token]
+    return (
+      <SlideWord
+        key={tokenKeys[line][token]}
+        unitKey={tokenKeys[line][token]}
+        unitRef={unitRef}
+        text={text}
+        html={html}
+        isWord={isWord}
+        glides={glides}
+        hidden={hidden?.[line]?.[token]}
+        underline={underline}
+      />
+    )
+  }
+
   return (
     <div>
       {lines.map((line, index) => (
         <div key={lineKeys[index]} ref={lineRef(lineKeys[index])} data-line="">
-          {line.tokens.map((token, i) => (
-            <SlideWord
-              key={tokenKeys[index][i]}
-              unitKey={tokenKeys[index][i]}
-              unitRef={unitRef}
-              text={token.text}
-              html={token.html}
-              isWord={token.isWord}
-              hidden={hidden?.[index]?.[i]}
-              underline={underline}
-            />
-          ))}
+          {groupWordPieces(line.tokens).map((group) =>
+            group.length === 1 ? (
+              renderToken(index, group[0])
+            ) : (
+              // The pieces of one word never wrap apart, as the word didn't
+              <span key={`group:${tokenKeys[index][group[0]]}`} style={NO_WRAP}>
+                {group.map((token) => renderToken(index, token))}
+              </span>
+            ),
+          )}
           {line.breaks ? '\n' : null}
         </div>
       ))}

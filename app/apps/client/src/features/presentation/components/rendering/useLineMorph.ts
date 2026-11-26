@@ -187,7 +187,7 @@ export function useLineMorph({
         const element = units.current.get(key)
         const was = drawn.current.places.get(key)
         const now = places.get(key)
-        if (!token.isWord || tokenMatch[index][i] === null) return
+        if (!token.glides || tokenMatch[index][i] === null) return
         if (!element || !was || !now) return
         const from = glideFrom(
           element,

@@ -11,9 +11,17 @@ export interface ShownSlide {
   template?: number | null
   data: Pick<
     ContentData,
-    'mainText' | 'songBackground' | 'presentationBackground' | 'styleOverrides'
+    | 'mainText'
+    | 'contentText'
+    | 'referenceText'
+    | 'songBackground'
+    | 'presentationBackground'
+    | 'styleOverrides'
   >
 }
+
+/** The texts whose slide changes can animate only what changed */
+const MORPHING_TEXTS = ['mainText', 'contentText', 'referenceText'] as const
 
 const linesOf = (html: string | undefined) =>
   normalizeText(html ?? '', true).split('\n')
@@ -37,8 +45,8 @@ const backgroundOf = (
  * Whether the next slide can change only what differs from the previous one:
  * the same kind of content (a song's first, middle and last slides are one
  * kind), the same presentation template, the same background on this screen,
- * the same slide styling (style overrides), and main text that keeps or
- * changes in place at least one line.
+ * the same slide styling (style overrides), and a text (the lyrics, the
+ * verse or its reference) that keeps or changes in place at least one line.
  * Otherwise the whole slide transitions. The renderer still checks that the
  * text keeps its box, style and size (canMorphText, useLineMorph).
  */
@@ -52,7 +60,10 @@ export function sharesSlideLines(
     (prev.template ?? null) === (next.template ?? null) &&
     sameValue(backgroundOf(prev, screen), backgroundOf(next, screen)) &&
     sameValue(prev.data.styleOverrides, next.data.styleOverrides) &&
-    diffSlideLines(linesOf(prev.data.mainText), linesOf(next.data.mainText))
-      .shared > 0
+    MORPHING_TEXTS.some(
+      (text) =>
+        diffSlideLines(linesOf(prev.data[text]), linesOf(next.data[text]))
+          .shared > 0,
+    )
   )
 }

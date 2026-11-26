@@ -38,6 +38,36 @@ const CHORUS_SLIDES = [
   OTHER_VERSE,
 ]
 
+/** Two verses in a row: the reference changes only its verse number. */
+const VERSES = [
+  {
+    verse: 16,
+    text: 'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu.',
+  },
+  {
+    verse: 17,
+    text: 'Dumnezeu, în adevăr, n-a trimis pe Fiul Său în lume ca să judece lumea.',
+  },
+]
+
+function presentVerse(request: APIRequestContext, index: number) {
+  const { verse, text } = VERSES[index]
+  return request.post('/api/presentation/temporary-bible', {
+    data: {
+      verseId: 9000 + index,
+      reference: `Ioan 3:${verse}`,
+      text,
+      translationAbbreviation: 'VDC',
+      bookName: 'Ioan',
+      translationId: 1,
+      bookId: 43,
+      bookCode: 'JHN',
+      chapter: 3,
+      currentVerseIndex: verse - 1,
+    },
+  })
+}
+
 const toHtml = (lines: string[]) =>
   lines.map((line) => `<p>${line}</p>`).join('')
 
@@ -73,6 +103,12 @@ interface SlideChange {
   outgoing: string
   /** Kept words the change may move to a new place (they glide there) */
   mayGlide?: string[]
+  /**
+   * Text that marks the element watched, when it isn't the slide's main text
+   * (a Bible reference holds its book name). Only that element must not
+   * crossfade as a whole.
+   */
+  holds?: string
 }
 
 /**
@@ -86,7 +122,7 @@ async function sampleSlideChange(
   action: () => Promise<unknown>,
 ): Promise<Frame[]> {
   await page.evaluate(
-    ({ root, incoming, outgoing }) =>
+    ({ root, incoming, outgoing, holds }) =>
       new Promise<void>((started) => {
         type Marked = HTMLElement & { __kept?: boolean }
         const inRoot = (selector: string) => [
@@ -94,9 +130,18 @@ async function sampleSlideChange(
         ]
         // The slide's own text: not a slide fading out under it
         const currentText = () =>
-          inRoot('[data-style-anchor]').find(
-            (anchor) => !anchor.closest('[data-leaving]'),
-          )
+          holds
+            ? inRoot('[data-line]')
+                .map((line) => line.parentElement?.parentElement as Marked)
+                .find(
+                  (text) =>
+                    text.textContent?.includes(holds) &&
+                    !text.closest('[data-leaving]') &&
+                    !text.closest('[data-leaving-lines]'),
+                )
+            : inRoot('[data-style-anchor]').find(
+                (anchor) => !anchor.closest('[data-leaving]'),
+              )
         const wordsIn = (element: Element | undefined) => [
           ...(element?.querySelectorAll<Marked>('[data-token]') ?? []),
         ]
@@ -159,7 +204,9 @@ async function sampleSlideChange(
                   .map((word) => word.textContent ?? ''),
                 // Empty elements (the gamă, "Amin") crossfade nothing.
                 slideCrossfade: inRoot('[data-leaving]').some((layer) =>
-                  layer.textContent?.trim(),
+                  holds
+                    ? layer.textContent?.includes(holds)
+                    : layer.textContent?.trim(),
                 ),
               }
               frames.push(frame)
@@ -199,9 +246,10 @@ async function expectOnlyTheWordChanges(
   page: Page,
   request: APIRequestContext,
   change: SlideChange,
+  present: () => Promise<APIResponse> = () => nextSlide(request),
 ) {
   const frames = await sampleSlideChange(page, change, async () =>
-    expect((await nextSlide(request)).ok()).toBeTruthy(),
+    expect((await present()).ok()).toBeTruthy(),
   )
 
   expect(frames[0].kept.length, 'the kept words were found').toBeGreaterThan(2)
@@ -350,6 +398,24 @@ test.describe('Slide changes animate only the words that changed', () => {
     expect(crossfade.at(-1)).toMatchObject({ incoming: 1, outgoing: 0 })
   })
 
+  test('Ioan 3:16 to Ioan 3:17: only the verse number of the reference changes', async ({
+    page,
+    request,
+  }) => {
+    expect((await presentVerse(request, 0)).ok()).toBeTruthy()
+    await page.goto(`/screen/${screenId}`)
+    await expect(page.getByText(VERSES[0].text).last()).toBeVisible()
+    await page.waitForTimeout(800)
+
+    await expectOnlyTheWordChanges(
+      page,
+      request,
+      { root: '', incoming: '17', outgoing: '16', holds: 'Ioan' },
+      () => presentVerse(request, 1),
+    )
+    await expect(page.getByText(VERSES[1].text).last()).toBeVisible()
+  })
+
   test('the Control Room preview changes only the number too', async ({
     page,
     request,
@@ -408,6 +474,27 @@ async function frameIntervalsDuring(
   return stamps.slice(1).map((stamp, i) => stamp - stamps[i])
 }
 
+/** Median frame interval about 16.7 ms or less and no frame over 50 ms. */
+function expectSteadyFrames(label: string, intervals: number[]) {
+  const sorted = [...intervals].sort((a, b) => a - b)
+  const median = sorted[Math.floor(sorted.length / 2)]
+  const p95 = sorted[Math.floor(sorted.length * 0.95)]
+  test.info().annotations.push({
+    type: 'frames',
+    description: JSON.stringify({
+      label,
+      frames: intervals.length,
+      median: median.toFixed(1),
+      p95: p95.toFixed(1),
+      max: sorted.at(-1)?.toFixed(1),
+    }),
+  })
+  expect(median, `${label}: median frame interval (ms)`).toBeLessThanOrEqual(
+    17.5,
+  )
+  expect(sorted.at(-1), `${label}: longest frame (ms)`).toBeLessThan(50)
+}
+
 test.describe('A word change runs at a steady frame rate on a full HD projector', () => {
   test.use({ viewport: { width: 1920, height: 1080 } })
   let screenId: number | undefined
@@ -446,19 +533,22 @@ test.describe('A word change runs at a steady frame rate on a full HD projector'
       expect((await nextSlide(request)).ok()).toBeTruthy(),
     )
     await expect(page.locator('[data-style-anchor]')).toContainText(TAKEOVER[1])
-    const sorted = [...intervals].sort((a, b) => a - b)
-    const median = sorted[Math.floor(sorted.length / 2)]
-    const p95 = sorted[Math.floor(sorted.length * 0.95)]
-    test.info().annotations.push({
-      type: 'frames',
-      description: JSON.stringify({
-        frames: intervals.length,
-        median: median.toFixed(1),
-        p95: p95.toFixed(1),
-        max: sorted.at(-1)?.toFixed(1),
-      }),
-    })
-    expect(median, 'median frame interval (ms)').toBeLessThanOrEqual(17.5)
-    expect(sorted.at(-1), 'longest frame (ms)').toBeLessThan(50)
+    expectSteadyFrames('slide 1 to slide 2', intervals)
+  })
+
+  test('Ioan 3:16 to Ioan 3:17 keeps every frame within budget', async ({
+    page,
+    request,
+  }) => {
+    expect((await presentVerse(request, 0)).ok()).toBeTruthy()
+    await page.goto(`/screen/${screenId}`)
+    await expect(page.getByText(VERSES[0].text).last()).toBeVisible()
+    await page.waitForTimeout(800)
+
+    const intervals = await frameIntervalsDuring(page, 700, async () =>
+      expect((await presentVerse(request, 1)).ok()).toBeTruthy(),
+    )
+    await expect(page.getByText(VERSES[1].text).last()).toBeVisible()
+    expectSteadyFrames('Ioan 3:16 to Ioan 3:17', intervals)
   })
 })
