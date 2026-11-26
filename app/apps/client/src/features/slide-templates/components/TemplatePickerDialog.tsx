@@ -48,21 +48,21 @@ export function TemplatePickerDialog({
       onClick={(event) => {
         if (event.target === dialogRef.current) onClose()
       }}
-      className="fixed inset-0 m-auto w-[min(56rem,95vw)] rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800"
+      className="fixed inset-0 m-auto w-[min(56rem,95vw)] rounded-xl border border-line bg-panel p-0 shadow-popover backdrop:bg-black/50"
     >
       {open && (
         <div className="flex max-h-[85vh] flex-col">
-          <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <h2 className="text-base font-semibold text-fg">
               {t('templates.picker.title')}
             </h2>
             <button
               type="button"
               onClick={onClose}
               aria-label={t('templates.picker.close')}
-              className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
             >
-              <X className="h-5 w-5" />
+              <X size={16} strokeWidth={1.5} />
             </button>
           </div>
           <div className="overflow-y-auto p-5">
@@ -72,10 +72,10 @@ export function TemplatePickerDialog({
               noneLabel={noneLabel}
             />
           </div>
-          <div className="border-t border-gray-200 px-5 py-3 text-right dark:border-gray-700">
+          <div className="border-t border-line px-5 py-3 text-right">
             <Link
               to="/settings/themes"
-              className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              className="text-[13px] font-medium text-primary hover:underline"
             >
               {t('templates.picker.manage')}
             </Link>

@@ -60,7 +60,7 @@ export function TemplateEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950">
+    <div className="fixed inset-0 z-50 bg-app">
       <ScreenEditor
         screen={screen}
         title={templateDisplayName(template, t)}

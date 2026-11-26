@@ -24,10 +24,10 @@ interface TemplatePickerProps {
 }
 
 const TRIGGER_CLASS = {
-  card: 'flex w-full items-center gap-3 rounded-lg border border-gray-300 bg-white p-2 text-left font-medium text-gray-900 hover:border-indigo-400 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white',
+  card: 'flex w-full items-center gap-3 rounded-lg bg-field p-2 text-left text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:opacity-50',
   compact:
-    'flex max-w-56 items-center gap-2 rounded-lg border border-gray-300 bg-white py-1 pr-2 pl-1 text-left text-sm text-gray-900 hover:border-indigo-400 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white',
-  chip: 'flex max-w-40 items-center gap-1 rounded px-1.5 py-0.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700',
+    'flex max-w-56 items-center gap-2 rounded-lg bg-field py-1 pr-2 pl-1 text-left text-[13px] text-fg transition-colors hover:bg-hover disabled:opacity-50',
+  chip: 'flex max-w-40 items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs text-fg-hint transition-colors hover:bg-hover hover:text-fg-body disabled:opacity-50',
 }
 
 const THUMB_WIDTH = { card: 'w-24', compact: 'w-12', chip: '' }
@@ -64,7 +64,9 @@ export function TemplatePicker({
       >
         {variant === 'chip' ? (
           <LayoutTemplate
-            className={`h-4 w-4 flex-none ${current ? 'text-indigo-500' : ''}`}
+            size={16}
+            strokeWidth={1.5}
+            className={`flex-none ${current ? 'text-fg' : ''}`}
           />
         ) : current ? (
           <TemplateThumbnail
@@ -73,9 +75,13 @@ export function TemplatePicker({
           />
         ) : (
           <span
-            className={`flex aspect-video ${THUMB_WIDTH[variant]} flex-none items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800`}
+            className={`flex aspect-video ${THUMB_WIDTH[variant]} flex-none items-center justify-center rounded-md bg-panel`}
           >
-            <LayoutTemplate className="h-4 w-4 text-gray-400" />
+            <LayoutTemplate
+              size={16}
+              strokeWidth={1.5}
+              className="text-fg-hint"
+            />
           </span>
         )}
         {(variant !== 'chip' || current) && (
@@ -87,7 +93,11 @@ export function TemplatePicker({
           </span>
         )}
         {variant !== 'chip' && (
-          <ChevronDown className="h-4 w-4 flex-none text-gray-500" />
+          <ChevronDown
+            size={16}
+            strokeWidth={1.5}
+            className="flex-none text-fg-label"
+          />
         )}
       </button>
 

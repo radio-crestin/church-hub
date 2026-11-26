@@ -103,7 +103,7 @@ export function TemplatesPage() {
                 if (copy) setEditingId(copy.id)
               }}
             >
-              <Plus size={16} />
+              <Plus size={16} strokeWidth={1.5} />
               {t('templates.page.new')}
             </Button>
           )
@@ -112,7 +112,11 @@ export function TemplatesPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2
+            size={32}
+            strokeWidth={1.5}
+            className="animate-spin text-fg-hint"
+          />
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
