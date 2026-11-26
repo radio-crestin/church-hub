@@ -36,6 +36,8 @@ let stateCallback: ((state: MusicPlayerState) => void) | null = null
 let statePollingInterval: ReturnType<typeof setInterval> | null = null
 let audioServerAvailable = false
 let audioServerConnected = false
+/** Counts seeks, so a state poll that left before one cannot undo it. */
+let seekCount = 0
 
 let playerState: MusicPlayerState = {
   isPlaying: false,
@@ -125,6 +127,7 @@ function startStatePolling(): void {
     if (!audioServerAvailable) return
 
     try {
+      const seeksBefore = seekCount
       const result = (await audioRequest('GET', '/state')) as {
         is_playing: boolean
         current_time: number
@@ -134,7 +137,7 @@ function startStatePolling(): void {
         current_file: string | null
       } | null
 
-      if (!result) return
+      if (!result || seeksBefore !== seekCount) return
 
       const wasPlaying = playerState.isPlaying
       const isNowPlaying = result.is_playing
@@ -304,6 +307,12 @@ export function shutdownMusicPlayer(): void {
   console.log(LOG_PREFIX, 'Music player shutdown complete')
 }
 
+async function seekTo(time: number): Promise<void> {
+  await audioRequest('POST', '/seek', { time })
+  seekCount++
+  updateState({ currentTime: time })
+}
+
 async function loadAndPlayFile(filePath: string): Promise<void> {
   await audioRequest('POST', '/play', { path: filePath })
 }
@@ -329,7 +338,7 @@ async function playNext(): Promise<void> {
 
 async function playPrevious(): Promise<void> {
   if (playerState.currentTime > 3) {
-    await audioRequest('POST', '/seek', { time: 0 })
+    await seekTo(0)
     return
   }
 
@@ -337,7 +346,7 @@ async function playPrevious(): Promise<void> {
   if (prevIndex >= 0) {
     await playAtIndex(prevIndex)
   } else {
-    await audioRequest('POST', '/seek', { time: 0 })
+    await seekTo(0)
   }
 }
 
@@ -464,7 +473,7 @@ export async function executeCommand(
       break
 
     case 'seek':
-      await audioRequest('POST', '/seek', { time: command.time })
+      await seekTo(command.time)
       break
 
     case 'volume':
