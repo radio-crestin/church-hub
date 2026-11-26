@@ -1,7 +1,7 @@
 import { hashToken } from '../hashToken'
 import { SyncError } from '../SyncError'
 import { fromBase64url, toBase64url } from './base64url'
-import { constantTimeEqual } from './constantTimeEqual'
+import { constantTimeEqual } from '../../utils/constantTimeEqual'
 import type { OwnerIdentity } from './OwnerIdentity'
 
 /** How long a sign-in lets the owner act (recover, reset, transfer). */

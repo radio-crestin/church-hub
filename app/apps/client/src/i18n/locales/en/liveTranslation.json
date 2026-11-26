@@ -9,7 +9,9 @@
     "cardDescription": "Share this link with listeners. They pick their language in the player.",
     "configuredLanguages": "Configured languages",
     "noLanguages": "No target languages configured yet.",
-    "openSettings": "Open settings"
+    "openSettings": "Open settings",
+    "linkChanged": "Your listener link changed with this update. Share the new link below; the old one no longer works.",
+    "dismissLinkChanged": "Dismiss"
   },
   "settings": {
     "button": "Settings",

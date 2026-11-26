@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
-import { startFakeSignalingRelay } from './helpers/fake-signaling-relay'
-import { FAKE_RELAY_URL } from '../playwright.config'
+import { startSignalingRelay } from './helpers/signaling-relay'
+import { SIGNALING_RELAY_URL } from '../playwright.config'
 
 /**
  * Remote access (CH-050): with "Reach this computer from anywhere" on in
@@ -25,9 +25,9 @@ const IPHONE_UA =
 /** The computer's address on the church Wi-Fi, out of reach from here. */
 const UNREACHABLE_COMPUTER = 'http://127.0.0.1:9'
 
-let stopRelay: () => void
+let stopRelay: () => Promise<void>
 test.beforeAll(async () => {
-  stopRelay = await startFakeSignalingRelay()
+  stopRelay = await startSignalingRelay()
 })
 test.afterAll(() => stopRelay())
 
@@ -57,7 +57,7 @@ test.describe('Remote access', () => {
     await expect(qr).toHaveAttribute(
       'data-url',
       new RegExp(
-        `#remote=[\\w-]+&relay=${encodeURIComponent(FAKE_RELAY_URL).replace(/\./g, '\\.')}`,
+        `#remote=[\\w-]+&relay=${encodeURIComponent(SIGNALING_RELAY_URL).replace(/\./g, '\\.')}`,
       ),
     )
   })
