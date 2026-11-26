@@ -7,6 +7,11 @@ import { stampActingUser } from './actingUser'
 import { type MigrationResult, runMigrations } from './migrations'
 import * as schema from './schema'
 import { Database } from 'bun:sqlite'
+import { loadDataKey } from '../service/secret-store'
+import {
+  sealDatabaseSecrets,
+  sealLegacyCopies,
+} from '../service/secret-store/stored-secrets'
 import { getDatabasePath } from '../utils/paths'
 
 interface InitializeResult {
@@ -188,6 +193,11 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     logTiming('db_mkdir', t)
     log('debug', `Data directory ensured: ${dbDir}`)
 
+    // The key secrets are sealed with, before any migration stores one
+    t = performance.now()
+    await loadDataKey(dbDir)
+    logTiming('data_key', t)
+
     // Create versioned backup before migrations modify the database
     t = performance.now()
     await createVersionBackup(DATABASE_PATH)
@@ -214,6 +224,13 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     const migrationResult = runMigrations(sqlite)
     logTiming('run_migrations', t)
     stampActingUser(sqlite)
+
+    // No secret stays in plain text, here or in the copies next to it; one
+    // restored from another computer is forgotten (set up again)
+    t = performance.now()
+    await sealDatabaseSecrets(sqlite, { forgetUnreadable: true })
+    await sealLegacyCopies(DATABASE_PATH, dbDir)
+    logTiming('seal_secrets', t)
 
     return { db, migrationResult }
   } catch (error) {

@@ -25,6 +25,7 @@ import { authenticateLogin, type LoginBody } from '../routes/auth-login'
 import { handleUserLinkRoute } from '../routes/auth-user-link/handleUserLinkRoute'
 import { handleBackgroundMediaRoutes } from '../routes/background-media'
 import { handleBibleTopicRoutes } from '../routes/bible-topics'
+import { handleCloudBackupRoutes } from '../routes/cloud-backup'
 import { handleCloudSyncRoutes } from '../routes/cloud-sync'
 import { handleFeatureRequestRoutes } from '../routes/feature-requests'
 import { handleLiveTranslationRoutes } from '../routes/live-translation'
@@ -38,6 +39,7 @@ import { handleScheduleItemRoutes } from '../routes/schedule-items'
 import { handleScheduleMidiRoutes } from '../routes/schedule-midi'
 import { handleScheduleTemplateRoutes } from '../routes/schedule-templates'
 import { handleScreenShareRoutes } from '../routes/screen-share'
+import { handleSecretStoreRoutes } from '../routes/secret-store'
 import { handleSlideTemplateRoutes } from '../routes/slide-templates'
 import { handleSongHistoryRoutes } from '../routes/song-history'
 import { handleSongSourceRoutes } from '../routes/song-sources'
@@ -52,7 +54,7 @@ import {
   getAllSettings,
   getAllUsers,
   getLocalUsers,
-  getSetting,
+  getPublicSetting,
   getUserById,
   getUserUuid,
   isServerSecretKey,
@@ -227,6 +229,7 @@ import {
   type SaveSearchInput,
   saveSearch,
 } from '../service/search-history'
+import { SecretDestinationChangedError } from '../service/secret-store'
 import {
   addBookmark,
   addBookmarkNote,
@@ -853,7 +856,7 @@ export function createFetchHandler(): (
         if (permError) return permError
       }
 
-      const setting = getSetting(table, key)
+      const setting = getPublicSetting(table, key)
 
       return handleCors(
         req,
@@ -977,12 +980,14 @@ export function createFetchHandler(): (
             headers: { 'Content-Type': 'application/json' },
           }),
         )
-      } catch (_error) {
+      } catch (error) {
+        const message =
+          error instanceof SecretDestinationChangedError
+            ? error.message
+            : 'Invalid JSON body'
         return handleCors(
           req,
-          new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-            status: 400,
-          }),
+          new Response(JSON.stringify({ error: message }), { status: 400 }),
         )
       }
     }
@@ -1404,6 +1409,14 @@ export function createFetchHandler(): (
               },
             ),
           )
+
+    // Church Hub Cloud backup (free, Google sign-in), same localhost guard
+    if (url.pathname.startsWith('/api/backup/cloud/')) {
+      const guard = backupLocalhostGuard()
+      if (guard) return guard
+      const cloudBackupResponse = await handleCloudBackupRoutes(req, url)
+      if (cloudBackupResponse) return handleCors(req, cloudBackupResponse)
+    }
 
     // GET /api/backup/status - Drive connection + auto-backup settings
     if (req.method === 'GET' && url.pathname === '/api/backup/status') {
@@ -7749,6 +7762,15 @@ export function createFetchHandler(): (
       _context,
     )
     if (notificationsResponse) return notificationsResponse
+
+    // Where the key sealing saved secrets is kept
+    const secretStoreResponse = await handleSecretStoreRoutes(
+      req,
+      url,
+      handleCors,
+      _context,
+    )
+    if (secretStoreResponse) return secretStoreResponse
 
     // A presentation song item's MIDI file, its slides synced to it
     const scheduleMidiResponse = await handleScheduleMidiRoutes(

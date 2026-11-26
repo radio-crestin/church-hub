@@ -492,7 +492,7 @@ export const songSourcesPaths = {
       tags,
       summary: 'Save the S3 storage',
       description:
-        'An empty secret keeps the stored one. Requires `settings.edit`.',
+        'An empty secret keeps the stored one, but only for the same endpoint: with a new endpoint the secret must be sent again (400 otherwise). Requires `settings.edit`.',
       security,
       requestBody: {
         required: true,
@@ -507,7 +507,10 @@ export const songSourcesPaths = {
           description: 'The saved storage',
           content: dataOf({ $ref: '#/components/schemas/S3Storage' }),
         },
-        '400': { description: 'A field is missing or not a URL' },
+        '400': {
+          description:
+            'A field is missing or not a URL, or the endpoint changed with no secret sent',
+        },
         ...errors,
       },
     },

@@ -85,7 +85,8 @@ test.describe
     let stopRelay = () => {}
 
     test.beforeAll(async ({ request }) => {
-      // The public app's build (the whole app and its server) takes a while.
+      // The public app's build (the whole app and its server) and the PC's
+      // first upload of its whole library (26k songs) take a while.
       test.setTimeout(300_000)
       s3.signedWritesOnly = true
       await s3.start()
@@ -114,9 +115,11 @@ test.describe
     })
 
     test.afterAll(async ({ request }) => {
+      test.setTimeout(120_000)
       await setRemoteAccess(request, false)
-      await request.delete('/api/sync/cloud')
-      await request.delete(`/api/users/${userId}`)
+      // Still connected, the next spec to connect would get a 409.
+      expect((await request.delete('/api/sync/cloud')).ok()).toBe(true)
+      if (userId) await request.delete(`/api/users/${userId}`)
       await publicApp.stop()
       stopRelay()
       await service.dispose()
@@ -146,21 +149,32 @@ test.describe
 
       // The PC's WebSocket reaches the phone: a song saved on the PC is
       // announced at once, long before the cloud's next look.
-      const announced = page.evaluate(
+      await page.evaluate(
         () =>
-          new Promise<number>((resolve) => {
+          new Promise<void>((resolve) => {
             const socket = new WebSocket('ws://church-pc.invalid/ws')
+            const updated: number[] = []
+            Object.assign(window, { e2eSongUpdates: updated })
+            socket.onopen = () => resolve()
             socket.onmessage = (event) => {
               const message = JSON.parse(String(event.data))
               if (message.type === 'song_updated') {
-                resolve(message.payload.songId)
+                updated.push(message.payload.songId)
               }
             }
           }),
       )
       const title = `E2E Live ${Date.now()}`
       const id = await saveSong(request, { title, lyrics: 'Live from the PC' })
-      expect(await announced).toBe(id)
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              (window as unknown as { e2eSongUpdates: number[] })
+                .e2eSongUpdates,
+          ),
+        )
+        .toContain(id)
       // …and found by the PC's own search.
       expect(await findSong(page, title)).toBeTruthy()
       await phone.close()
