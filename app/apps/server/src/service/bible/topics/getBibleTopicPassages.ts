@@ -1,3 +1,5 @@
+import { getTopicTemplatePool } from './getFittingTopicTemplateId'
+import { getPassageTemplates, passageKey } from './getPassageTemplates'
 import { toBibleTopic } from './listBibleTopics'
 import type {
   BibleTopicPassage,
@@ -11,7 +13,8 @@ import { formatRangeReference, getVerseRange } from '../verses'
 /**
  * A topic with its references resolved in a translation: each passage's
  * verses, and its reference in that translation's book names. A passage the
- * translation lacks (a missing book) is left out.
+ * translation lacks (a missing book) is left out. A passage drawn with its
+ * own template carries it.
  */
 export function getBibleTopicPassages(
   topicId: number,
@@ -25,6 +28,7 @@ export function getBibleTopicPassages(
   if (!row) return null
 
   const references = JSON.parse(row.verse_references) as BibleTopicReference[]
+  const templates = getPassageTemplates(topicId)
   const passages: BibleTopicPassage[] = []
   for (const ref of references) {
     const verses = getVerseRange(
@@ -46,7 +50,12 @@ export function getBibleTopicPassages(
         last.verse,
       ),
       verses,
+      templateId: templates.get(passageKey(ref)) ?? null,
     })
   }
-  return { ...toBibleTopic(row), translationId, passages }
+  return {
+    ...toBibleTopic(row, getTopicTemplatePool()),
+    translationId,
+    passages,
+  }
 }

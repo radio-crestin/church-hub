@@ -22,6 +22,11 @@ export interface Palette {
   italic: boolean
   /** Bold words with a soft shadow, readable on a photo or a video. */
   onMedia?: boolean
+  /**
+   * The verses and announcements type themselves in, left-aligned like a
+   * typed page; songs still fade, so the congregation can sing at once.
+   */
+  typewriter?: boolean
 }
 
 type Layout = Record<string, unknown>
@@ -31,6 +36,37 @@ type Element = Record<string, unknown> & { style: Record<string, unknown> }
 const VERSE_BOX = { top: 14, right: 12, bottom: 30, left: 12 }
 const REFERENCE_BOX = { top: 74, right: 12, bottom: 14, left: 12 }
 const FADE = { type: 'fade', duration: 900, delay: 0, easing: 'ease-in-out' }
+/** At most 3.5 s per slide: a short verse types at a calm pace, a long one faster. */
+const TYPEWRITER = {
+  type: 'typewriter',
+  duration: 3500,
+  delay: 0,
+  easing: 'linear',
+}
+/** The slide before a typed one clears quickly, so the new words type on a clear page. */
+const QUICK_FADE = {
+  type: 'fade',
+  duration: 250,
+  delay: 0,
+  easing: 'ease-out',
+}
+
+/** How a text comes in and changes: typed in, or the theme's calm fade. */
+function transitionsOf(palette: Palette) {
+  return palette.typewriter
+    ? {
+        animationIn: TYPEWRITER,
+        animationOut: FADE,
+        slideTransitionIn: TYPEWRITER,
+        slideTransitionOut: QUICK_FADE,
+      }
+    : {
+        animationIn: FADE,
+        animationOut: FADE,
+        slideTransitionIn: FADE,
+        slideTransitionOut: FADE,
+      }
+}
 
 function restyle(element: unknown, style: Record<string, unknown>): Element {
   const own = element as Element
@@ -65,17 +101,14 @@ function verseText(element: unknown, palette: Palette): Element {
       italic: palette.italic,
       bold: !!palette.onMedia,
       color: palette.text,
-      alignment: 'center',
+      alignment: palette.typewriter ? 'left' : 'center',
       verticalAlignment: 'middle',
       lineHeight: 1.35,
       maxFontSize: 96,
       shadow: !!palette.onMedia,
     }),
     ...boxPlacement(VERSE_BOX),
-    animationIn: FADE,
-    animationOut: FADE,
-    slideTransitionIn: FADE,
-    slideTransitionOut: FADE,
+    ...transitionsOf(palette),
   }
 }
 
@@ -86,7 +119,7 @@ function reference(element: unknown, palette: Palette): Element {
       italic: false,
       bold: true,
       color: palette.accent,
-      alignment: 'center',
+      alignment: palette.typewriter ? 'left' : 'center',
       verticalAlignment: 'top',
       maxFontSize: 44,
       autoScale: false,
@@ -147,6 +180,7 @@ export function getPaletteDesign(palette: Palette): TemplateDesign {
           }),
         ]),
     )
+    const typed = palette.typewriter && kind === 'announcement'
     layouts[kind] = {
       ...layout,
       ...accented,
@@ -157,8 +191,9 @@ export function getPaletteDesign(palette: Palette): TemplateDesign {
           ...(palette.onMedia && { bold: true }),
           shadow: !!palette.onMedia,
         }),
-        slideTransitionIn: FADE,
-        slideTransitionOut: FADE,
+        ...(typed
+          ? transitionsOf(palette)
+          : { slideTransitionIn: FADE, slideTransitionOut: FADE }),
       },
     }
   }

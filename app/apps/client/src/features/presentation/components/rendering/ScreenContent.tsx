@@ -7,6 +7,7 @@ import { AnimatedText } from './AnimatedText'
 import { ChordsOverlay } from './ChordsOverlay'
 import { ClockText } from './ClockText'
 import { EditableMainText } from './EditableMainText'
+import { ScreenImage } from './ScreenImage'
 import { ScreenVideo } from './ScreenVideo'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
@@ -60,6 +61,11 @@ export interface ScreenContentProps {
   /** Identity-based key that changes only on slide navigation, not content edits */
   contentKey?: string
   /**
+   * The slide shares lines with the previous one (usePresentationContent):
+   * the main text, the verse and the reference animate only what changed.
+   */
+  morphLines?: boolean
+  /**
    * When true, the main lyrics element becomes editable in place (PowerPoint-style
    * slide editing). Only the stage editor sets this; projection is unaffected.
    */
@@ -90,6 +96,7 @@ export function ScreenContent({
   nextSlideData,
   styleRanges,
   contentKey: externalContentKey,
+  morphLines = false,
   editableMainText = false,
   editPlaceholder,
   onMainTextEdit,
@@ -257,6 +264,7 @@ export function ScreenContent({
         key="mainText"
         content={contentData?.mainText ?? ''}
         contentKey={`mainText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(mainStyle, fontScale)}
         width={scaledBounds.width}
@@ -317,6 +325,7 @@ export function ScreenContent({
         key="contentText"
         content={displayContent}
         contentKey={`contentText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(ct.style, fontScale)}
         width={scaledBounds.width}
@@ -363,6 +372,8 @@ export function ScreenContent({
         key="referenceText"
         content={contentData?.referenceText ?? ''}
         contentKey={`referenceText-${contentKey}`}
+        morphLines={morphLines}
+        splitBy="reference"
         isVisible={elementVisible}
         style={scaleTextStyle(rt.style, fontScale)}
         width={scaledBounds.width}
@@ -830,6 +841,10 @@ export function ScreenContent({
           withSound={videoSound}
         />
       )}
+      <ScreenImage
+        url={contentData?.imageUrl}
+        isVisible={isVisible && !!contentData?.imageUrl}
+      />
       {renderClockOverride()}
       {renderMainText()}
       {renderContentText()}

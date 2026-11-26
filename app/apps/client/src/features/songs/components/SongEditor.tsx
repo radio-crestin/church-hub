@@ -392,7 +392,7 @@ export function SongEditor({
   ]
 
   return (
-    <div className="flex flex-col gap-4 lg:h-[calc(100vh-3rem)] lg:overflow-hidden">
+    <div className="flex flex-col gap-4 lg:h-full lg:overflow-hidden">
       {/* Header, always in view: on a large screen the page itself does not
           scroll (the panels below do), on a phone the page scrolls and the
           header sticks to the top. The bleed (negative margin + matching

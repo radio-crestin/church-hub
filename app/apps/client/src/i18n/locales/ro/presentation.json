@@ -160,7 +160,8 @@
         "slideRight": "Alunecare spre dreapta",
         "scale": "Scalare",
         "blur": "Încețoșare",
-        "zoom": "Zoom"
+        "zoom": "Zoom",
+        "typewriter": "Mașină de scris"
       },
       "easings": {
         "linear": "Liniar",
@@ -169,7 +170,8 @@
         "easeInOut": "Ease In Out",
         "bounce": "Bounce"
       },
-      "durationMs": "Durată (ms)"
+      "durationMs": "Durată (ms)",
+      "typingMs": "Timp maxim de scriere (ms)"
     },
     "background": {
       "type": "Tip",
@@ -462,6 +464,8 @@
       "verses_evening": "Versete · Seară",
       "verses_light": "Versete · Lumină",
       "verses_calm": "Versete · Liniște",
+      "typewriter_paper": "Mașină de scris · Hârtie",
+      "typewriter_night": "Mașină de scris · Noapte",
       "photo_mountain_sunrise": "Răsărit pe munte",
       "photo_misty_forest": "Pădure în ceață",
       "photo_golden_wheat": "Lan de grâu",
@@ -485,7 +489,8 @@
       "title": "Alege o temă",
       "change": "Schimbă tema",
       "close": "Închide",
-      "manage": "Gestionează temele"
+      "manage": "Gestionează temele",
+      "current": "Tema: {{name}}"
     },
     "page": {
       "title": "Teme",
@@ -554,7 +559,9 @@
       "accentFont": "Fontul accentului",
       "background": "Fundal pentru toate slide-urile",
       "transition": "Tranziție între slide-uri",
-      "duration": "Durată"
+      "duration": "Durată",
+      "typewriter": "Mașină de scris",
+      "typewriterDescription": "Versetele și anunțurile se afișează literă cu literă. Cântările apar treptat, ca să puteți cânta cu toții de la început."
     },
     "editor": {
       "design": "Design",

@@ -6,6 +6,8 @@ import type {
   ScreenWithConfigs,
   TextElementConfig,
 } from '../../../types'
+import { FACTORY_TRANSITIONS } from '../../../utils/factoryTransitions'
+import { TYPEWRITER_DURATION } from '../../../utils/typewriterDuration'
 
 /** The slide's own words: lyrics, the verse, an announcement. */
 const TEXT_ELEMENTS = ['mainText', 'contentText'] as const
@@ -17,6 +19,16 @@ const ACCENT_ELEMENTS = [
   'songTitle',
   'personLabel',
 ] as const
+
+/** Songs never type: the congregation sings the words at once. */
+const SONG_KINDS = new Set(['song', 'song_first_slide', 'song_last_slide'])
+
+const TYPEWRITER: AnimationConfig = {
+  type: 'typewriter',
+  duration: TYPEWRITER_DURATION.default,
+  delay: 0,
+  easing: 'linear',
+}
 
 type ElementName =
   | (typeof TEXT_ELEMENTS)[number]
@@ -32,6 +44,8 @@ export interface ThemeDesign {
   background: ScreenBackgroundConfig
   transition: AnimationType
   transitionMs: number
+  /** The verses and announcements type themselves in. */
+  typewriter: boolean
 }
 
 /** One change from the Design panel, applied to every slide. */
@@ -63,6 +77,8 @@ export function readThemeDesign(screen: ScreenWithConfigs): ThemeDesign {
     },
     transition: transition?.type ?? 'fade',
     transitionMs: transition?.duration ?? 300,
+    typewriter:
+      element(bible, 'contentText')?.slideTransitionIn?.type === 'typewriter',
   }
 }
 
@@ -89,11 +105,29 @@ function restyleElement(
     type: change.transition ?? current?.type ?? 'fade',
     duration: change.transitionMs ?? current?.duration ?? 300,
   })
+  const typed = config.slideTransitionIn?.type === 'typewriter'
   return {
     ...config,
     style,
-    slideTransitionIn: transition(config.slideTransitionIn),
+    // A text that types keeps typing; the transition is how it leaves.
+    slideTransitionIn: typed
+      ? config.slideTransitionIn
+      : transition(config.slideTransitionIn),
     slideTransitionOut: transition(config.slideTransitionOut),
+  }
+}
+
+/** The text typed in, or back to the theme's transition. */
+function withTypewriter(
+  config: TextElementConfig,
+  typewriter: boolean,
+): TextElementConfig {
+  return {
+    ...config,
+    animationIn: typewriter ? TYPEWRITER : FACTORY_TRANSITIONS.animationIn,
+    slideTransitionIn: typewriter
+      ? TYPEWRITER
+      : (config.slideTransitionOut ?? FACTORY_TRANSITIONS.slideTransitionIn),
   }
 }
 
@@ -116,7 +150,15 @@ export function applyThemeDesign(
       ] as const) {
         for (const name of names) {
           const current = element(layout, name)
-          if (current) layout[name] = restyleElement(current, change, role)
+          if (!current) continue
+          const restyled = restyleElement(current, change, role)
+          const types =
+            change.typewriter !== undefined &&
+            role === 'text' &&
+            !SONG_KINDS.has(kind)
+          layout[name] = types
+            ? withTypewriter(restyled, change.typewriter as boolean)
+            : restyled
         }
       }
       if (change.background) layout.background = change.background

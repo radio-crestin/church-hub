@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { getAnimationStyles } from './utils/getAnimationStyles'
+import { type LayerTypewriter, layerTypewriter } from './utils/layerTypewriter'
 import type { AnimationType } from '../../types'
 import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
 
@@ -25,6 +27,12 @@ interface UseSlideAnimationOptions<T> {
   slideTransitionOut?: SlideAnimationConfig
   /** Animation for new content entering during slide transitions */
   slideTransitionIn?: SlideAnimationConfig
+  /**
+   * Whether a slide change from `from` to `to` keeps the layer and lets it
+   * animate only what changed (see SlideLayer.morph), instead of crossfading
+   * the whole element.
+   */
+  canMorph?: (from: T, to: T) => boolean
 }
 
 /** One copy of the element on screen: the current slide, or the one leaving. */
@@ -36,6 +44,25 @@ export interface SlideLayer<T> {
   style: React.CSSProperties
   /** The previous slide, fading out under the new one */
   leaving: boolean
+  /**
+   * Set on the current layer once a slide change morphed it in place: a new
+   * number for every such change, so the layer animates the lines that
+   * differ. Null when the layer's content came without a morph.
+   */
+  morph: number | null
+  /**
+   * The layer can't morph after all (its text no longer fits at the same
+   * size): turns the change into a whole-element crossfade before it paints.
+   */
+  rejectMorph?: () => void
+  /** Set while the layer types its text in (see layerTypewriter) */
+  typewriter: LayerTypewriter<T> | null
+}
+
+interface Morph<T> {
+  count: number
+  /** The content before the change, to crossfade from if the morph is rejected */
+  from: T
 }
 
 interface LeavingLayer<T> {
@@ -50,6 +77,9 @@ const DEFAULT_SLIDE_TRANSITION_DURATION =
 
 /** The CSS transition for one animation, with its own duration and easing. */
 function toCssTransition(config: SlideAnimationConfig): string {
+  // A typewriter changes no style: a transition would only slow the box down
+  // when the screen resizes as it types.
+  if (config.type === 'typewriter') return 'none'
   const duration = config.duration ?? DEFAULT_ANIMATION_DURATION
   return `all ${duration}ms ${config.easing ?? 'ease-out'}`
 }
@@ -69,52 +99,6 @@ function toCssTransition(config: SlideAnimationConfig): string {
 type AnimationPhase = 'hidden' | 'mounting' | 'entering' | 'visible' | 'exiting'
 
 /**
- * Get CSS styles for animation start and end states
- */
-function getAnimationStyles(animType: AnimationType): {
-  start: React.CSSProperties
-  end: React.CSSProperties
-} {
-  switch (animType) {
-    case 'fade':
-      return { start: { opacity: 0 }, end: { opacity: 1 } }
-    case 'slide-up':
-      return {
-        start: { opacity: 0, transform: 'translateY(30px)' },
-        end: { opacity: 1, transform: 'translateY(0)' },
-      }
-    case 'slide-down':
-      return {
-        start: { opacity: 0, transform: 'translateY(-30px)' },
-        end: { opacity: 1, transform: 'translateY(0)' },
-      }
-    case 'slide-left':
-      return {
-        start: { opacity: 0, transform: 'translateX(30px)' },
-        end: { opacity: 1, transform: 'translateX(0)' },
-      }
-    case 'slide-right':
-      return {
-        start: { opacity: 0, transform: 'translateX(-30px)' },
-        end: { opacity: 1, transform: 'translateX(0)' },
-      }
-    case 'zoom':
-      return {
-        start: { opacity: 0, transform: 'scale(0.85)' },
-        end: { opacity: 1, transform: 'scale(1)' },
-      }
-    case 'blur':
-      return {
-        start: { opacity: 0, filter: 'blur(10px)' },
-        end: { opacity: 1, filter: 'blur(0px)' },
-      }
-    case 'none':
-    default:
-      return { start: { opacity: 1 }, end: { opacity: 1 } }
-  }
-}
-
-/**
  * Hook for slide transition animations.
  * Properly handles CSS transitions including on mount.
  *
@@ -123,6 +107,8 @@ function getAnimationStyles(animType: AnimationType): {
  * 2. Presentation ends (becameHidden): Use animationOut
  * 3. Slide changes (contentChanged while visible): the old slide leaves with
  *    slideTransitionOut while the new one enters with slideTransitionIn
+ * 4. Slide changes that `canMorph` allows: the layer stays and is marked with
+ *    a new `morph` number, so it animates only the lines that changed
  *
  * The key insight is that CSS transitions don't work on initial mount -
  * there's no previous state to transition from. We solve this by:
@@ -137,12 +123,18 @@ export function useSlideAnimation<T>({
   animationOut,
   slideTransitionOut,
   slideTransitionIn,
+  canMorph,
 }: UseSlideAnimationOptions<T>): SlideLayer<T>[] {
   // Cache content for exit animations (show old content while animating out)
   const cachedContentRef = useRef<T>(content)
   const cachedKeyRef = useRef(contentKey)
+  // The slide the current one replaced; none when it came on an empty screen
+  const replacedContentRef = useRef<T | undefined>(undefined)
   const layerIdRef = useRef(0)
   const [leaving, setLeaving] = useState<LeavingLayer<T> | null>(null)
+  const [morph, setMorph] = useState<Morph<T> | null>(null)
+  const morphRef = useRef<Morph<T> | null>(null)
+  const morphCountRef = useRef(0)
 
   // Track previous visibility state. An element starts out hidden, so one that
   // mounts already visible (the first slide after an empty screen, or a new
@@ -226,6 +218,47 @@ export function useSlideAnimation<T>({
     [],
   )
 
+  const showMorph = useCallback((next: Morph<T> | null) => {
+    morphRef.current = next
+    setMorph(next)
+  }, [])
+
+  // Slide change: the old content leaves on its own layer while the new
+  // content enters at once
+  const crossfade = useCallback(
+    (from: T) => {
+      clearTimers()
+      const exitConfig = getExitAnimation(true)
+      const exitType = exitConfig.type ?? 'fade'
+      const exitDuration =
+        exitConfig.duration ?? DEFAULT_SLIDE_TRANSITION_DURATION
+
+      if (exitType === 'none') {
+        setLeaving(null)
+      } else {
+        setLeaving({
+          id: layerIdRef.current,
+          content: from,
+          config: exitConfig,
+        })
+        leavingTimeoutRef.current = setTimeout(
+          () => setLeaving(null),
+          exitDuration,
+        )
+      }
+      layerIdRef.current++
+      startEnterAnimation(getEnterAnimation(true))
+    },
+    [getEnterAnimation, getExitAnimation, startEnterAnimation, clearTimers],
+  )
+
+  const rejectMorph = useCallback(() => {
+    const from = morphRef.current?.from
+    if (from === undefined) return
+    showMorph(null)
+    crossfade(from)
+  }, [showMorph, crossfade])
+
   // Handle visibility and content changes
   useEffect(() => {
     const wasVisible = prevVisibleRef.current
@@ -238,15 +271,17 @@ export function useSlideAnimation<T>({
     prevVisibleRef.current = isVisible
     prevContentKeyRef.current = contentKey
 
-    // Only clear timers if we're starting a new animation sequence
+    // Only clear timers if we're starting a new animation sequence (a slide
+    // change's crossfade clears them itself; a morph leaves them running)
     // Don't clear if effect re-runs for unrelated reasons (e.g., content reference change)
-    if (becameVisible || becameHidden || contentChanged) {
+    if (becameVisible || becameHidden) {
       clearTimers()
+      setLeaving(null)
+      showMorph(null)
     }
 
-    if (becameVisible || becameHidden) setLeaving(null)
-
     if (becameVisible) {
+      replacedContentRef.current = undefined
       // Presentation starting - update content and animate in
       cachedContentRef.current = content
       cachedKeyRef.current = contentKey
@@ -275,31 +310,19 @@ export function useSlideAnimation<T>({
         }, exitDuration)
       }
     } else if (contentChanged) {
-      // Slide change - crossfade: the old content leaves on its own layer
-      // while the new content enters at once
-      const exitConfig = getExitAnimation(true)
-      const enterConfig = getEnterAnimation(true)
-      const exitType = exitConfig.type ?? 'fade'
-      const exitDuration =
-        exitConfig.duration ?? DEFAULT_SLIDE_TRANSITION_DURATION
-
-      if (exitType === 'none') {
-        setLeaving(null)
-      } else {
-        setLeaving({
-          id: layerIdRef.current,
-          content: cachedContentRef.current,
-          config: exitConfig,
-        })
-        leavingTimeoutRef.current = setTimeout(
-          () => setLeaving(null),
-          exitDuration,
-        )
-      }
-      layerIdRef.current++
+      const from = cachedContentRef.current
+      replacedContentRef.current = from
       cachedContentRef.current = content
       cachedKeyRef.current = contentKey
-      startEnterAnimation(enterConfig)
+      if (canMorph?.(from, content)) {
+        // The layer stays and animates only what changed; a crossfade still
+        // under way finishes on its own.
+        morphCountRef.current++
+        showMorph({ count: morphCountRef.current, from })
+      } else {
+        showMorph(null)
+        crossfade(from)
+      }
     } else if (isVisible && cachedKeyRef.current === contentKey) {
       // Content updated without key change (e.g., clock, highlights) - just
       // update cached content, so a slide that leaves takes its latest look
@@ -307,7 +330,7 @@ export function useSlideAnimation<T>({
     }
 
     // Don't return clearTimers here - we only want to clear on unmount, not on every re-run
-    // The clearTimers() call at the start handles clearing when starting new animations
+    // The clearTimers() calls above handle clearing when starting new animations
     // Note: phase is intentionally NOT in deps - phase changes should not re-run this effect
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -318,6 +341,9 @@ export function useSlideAnimation<T>({
     getExitAnimation,
     clearTimers,
     startEnterAnimation,
+    canMorph,
+    crossfade,
+    showMorph,
   ])
 
   // Cleanup on unmount only
@@ -385,6 +411,17 @@ export function useSlideAnimation<T>({
     isBecomingVisible ||
     (phase !== 'exiting' && cachedKeyRef.current === contentKey)
 
+  const typewriter = layerTypewriter({
+    enter: isBecomingVisible
+      ? getEnterAnimation(false)
+      : morph
+        ? getEnterAnimation(true)
+        : (currentEnterConfig ?? getEnterAnimation(false)),
+    entering: isBecomingVisible || phase === 'mounting' || phase === 'entering',
+    morphed: morph !== null && phase === 'visible',
+    replaces: replacedContentRef.current,
+  })
+
   const layers: SlideLayer<T>[] = []
   if (leaving) {
     const leavingStyles = getAnimationStyles(leaving.config.type ?? 'fade')
@@ -396,6 +433,8 @@ export function useSlideAnimation<T>({
         transition: toCssTransition(leaving.config),
       },
       leaving: true,
+      morph: null,
+      typewriter: null,
     })
   }
   if (shouldRender) {
@@ -404,6 +443,9 @@ export function useSlideAnimation<T>({
       content: showsLiveContent ? content : cachedContentRef.current,
       style: getStyle(),
       leaving: false,
+      morph: morph?.count ?? null,
+      rejectMorph,
+      typewriter,
     })
   }
   return layers

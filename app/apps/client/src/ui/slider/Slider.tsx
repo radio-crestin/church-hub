@@ -16,6 +16,8 @@ interface SliderProps {
   label?: string
   /** Test id of the range input */
   testId?: string
+  /** What a screen reader says for the value, e.g. "160 words a minute". */
+  ariaValueText?: string
 }
 
 export const Slider = forwardRef<HTMLInputElement, SliderProps>(
@@ -33,6 +35,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
       formatValue,
       label,
       testId,
+      ariaValueText,
     },
     ref,
   ) => {
@@ -66,6 +69,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
           type="range"
           data-testid={testId}
           aria-label={label}
+          aria-valuetext={ariaValueText}
           value={value[0]}
           onChange={(e) => {
             // The user's moves are input events; the change event that ends a

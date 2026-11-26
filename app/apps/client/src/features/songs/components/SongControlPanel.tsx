@@ -187,6 +187,7 @@ export function SongControlPanel({
             <button
               type="button"
               disabled
+              title={t('bible:controls.showHint')}
               className="flex items-center gap-1.5 h-8 px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg opacity-50 cursor-not-allowed shrink-0"
             >
               <MonitorUp size={16} strokeWidth={1.5} />

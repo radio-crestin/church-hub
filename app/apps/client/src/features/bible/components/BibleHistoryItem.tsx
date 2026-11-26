@@ -3,13 +3,20 @@ import type { BibleHistoryItem as BibleHistoryItemType } from '../types'
 interface BibleHistoryItemProps {
   item: BibleHistoryItemType
   onClick: () => void
+  onDoubleClick: () => void
 }
 
-export function BibleHistoryItem({ item, onClick }: BibleHistoryItemProps) {
+export function BibleHistoryItem({
+  item,
+  onClick,
+  onDoubleClick,
+}: BibleHistoryItemProps) {
   return (
     <button
       type="button"
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      data-testid="bible-history-item"
       className="w-full text-left px-2.5 py-2 rounded-lg transition-colors hover:bg-hover"
     >
       <div className="flex-1 min-w-0">

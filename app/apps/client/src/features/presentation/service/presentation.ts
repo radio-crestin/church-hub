@@ -1,4 +1,5 @@
 import { getApiUrl, isMobile } from '~/config'
+import type { BackgroundMediaKind } from '~/features/background-media/service/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { apiFetch } from '~/utils/apiFetch'
 import { createLogger } from '~/utils/logger'
@@ -400,5 +401,28 @@ export async function presentTemporaryScene(
 
   const result = await response.json()
   logger.debug('Temporary scene presented', result.data?.updatedAt)
+  return result.data
+}
+
+/** Puts a gallery image or video full screen on the displays. */
+export async function presentGalleryMedia(input: {
+  kind: BackgroundMediaKind
+  mediaId: string
+}): Promise<PresentationState> {
+  const endpoint = `/api/presentation/temporary-${input.kind}`
+  logger.info(`POST ${endpoint}`, input.mediaId)
+  const response = await apiFetch(`${getApiUrl()}${endpoint}`, {
+    method: 'POST',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ mediaId: input.mediaId }),
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    logger.error(`Failed to present gallery ${input.kind}: ${response.status}`)
+    throw new Error(`Failed to present gallery ${input.kind}`)
+  }
+
+  const result = await response.json()
   return result.data
 }

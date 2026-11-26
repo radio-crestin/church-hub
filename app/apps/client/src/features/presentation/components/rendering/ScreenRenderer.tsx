@@ -6,6 +6,7 @@ import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
 import { ScreenBackground } from './ScreenBackground'
 import { ScreenContentLayers } from './ScreenContentLayers'
+import { TypewriterContext } from './TypewriterContext'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
@@ -66,6 +67,7 @@ export function ScreenRenderer({
     contentKey,
     isVisible: hookIsVisible,
     isExitAnimating,
+    morphLines,
     nextSlideData,
     leaving,
     presentationState,
@@ -735,19 +737,24 @@ export function ScreenRenderer({
                   }
                 />
               ) : (
-                <ScreenContentLayers
-                  leaving={leaving}
-                  screen={screen}
-                  contentType={contentType}
-                  contentData={contentData}
-                  contentKey={contentKey}
-                  containerWidth={containerSize.width}
-                  containerHeight={containerSize.height}
-                  isVisible={isVisible}
-                  nextSlideData={nextSlideData}
-                  styleRanges={styleRanges}
-                  videoSound={screen.type === 'primary'}
-                />
+                // The typewriter is part of what the congregation sees: the
+                // projection always plays it.
+                <TypewriterContext value>
+                  <ScreenContentLayers
+                    leaving={leaving}
+                    screen={screen}
+                    contentType={contentType}
+                    contentData={contentData}
+                    contentKey={contentKey}
+                    morphLines={morphLines}
+                    containerWidth={containerSize.width}
+                    containerHeight={containerSize.height}
+                    isVisible={isVisible}
+                    nextSlideData={nextSlideData}
+                    styleRanges={styleRanges}
+                    videoSound={screen.type === 'primary'}
+                  />
+                </TypewriterContext>
               )}
             </>
           )}

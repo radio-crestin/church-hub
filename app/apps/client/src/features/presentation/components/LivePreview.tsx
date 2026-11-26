@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useLocalizedBookNames } from '~/features/bible/hooks'
+import { useMediaQuery } from '~/hooks/useMediaQuery'
+import { TypewriterContext } from './rendering/TypewriterContext'
 import { ScreenPreview } from './ScreenPreview'
 import { TextStyleContextMenu } from './TextStyleContextMenu'
 import { usePresentationState } from '../hooks'
@@ -67,6 +69,9 @@ export function LivePreview({
   const { data: presentationState } = usePresentationState()
   const { screen: ownScreen, previewScreen } = usePreviewScreen()
   const { getBookName } = useLocalizedBookNames()
+  // The operator's own preview types like the screen, unless they asked
+  // their system for less motion.
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
   // Highlight hooks
   const { data: slideHighlights } = useSlideHighlights()
@@ -88,13 +93,20 @@ export function LivePreview({
 
   // Use shared presentation content hook
   // `screen`: the preview screen with the template the content is drawn with
-  const { screen, contentType, contentData, contentKey, isVisible, leaving } =
-    usePresentationContent({
-      screen: ownScreen,
-      includeNextSlide: false,
-      getBookName,
-      previewContent,
-    })
+  const {
+    screen,
+    contentType,
+    contentData,
+    contentKey,
+    morphLines,
+    isVisible,
+    leaving,
+  } = usePresentationContent({
+    screen: ownScreen,
+    includeNextSlide: false,
+    getBookName,
+    previewContent,
+  })
 
   // Handle context menu (right-click) on preview
   const handleContextMenu = useCallback(
@@ -217,17 +229,20 @@ export function LivePreview({
           className="absolute inset-0"
           onContextMenu={handleContextMenu}
         >
-          <ScreenPreview
-            screen={screen}
-            contentType={contentType}
-            contentData={contentData}
-            contentKey={contentKey}
-            isVisible={isVisible}
-            leaving={leaving}
-            styleRanges={styleRanges}
-            clockOverride={clockOverride}
-            hideBackground={hideBackground}
-          />
+          <TypewriterContext value={!reducedMotion}>
+            <ScreenPreview
+              screen={screen}
+              contentType={contentType}
+              contentData={contentData}
+              contentKey={contentKey}
+              morphLines={morphLines}
+              isVisible={isVisible}
+              leaving={leaving}
+              styleRanges={styleRanges}
+              clockOverride={clockOverride}
+              hideBackground={hideBackground}
+            />
+          </TypewriterContext>
           {contextMenu.visible && (
             <TextStyleContextMenu
               position={{ x: contextMenu.x, y: contextMenu.y }}
