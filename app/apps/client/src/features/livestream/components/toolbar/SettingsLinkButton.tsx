@@ -4,10 +4,10 @@ import { ChevronRight, type LucideIcon } from 'lucide-react'
 export type StatusTone = 'ok' | 'busy' | 'off' | 'error'
 
 export const STATUS_DOT: Record<StatusTone, string> = {
-  ok: 'bg-green-500',
-  busy: 'bg-yellow-500 animate-pulse',
-  off: 'bg-gray-400 dark:bg-gray-500',
-  error: 'bg-red-500',
+  ok: 'bg-ok',
+  busy: 'bg-fg-label',
+  off: 'bg-fg-hint',
+  error: 'bg-red-600',
 }
 
 export interface SettingsLinkButtonProps {
@@ -36,25 +36,32 @@ export function SettingsLinkButton({
     <Link
       to={to}
       data-testid={testId}
-      className="flex min-w-0 items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/20"
+      className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-panel px-3 py-2.5 text-left transition-colors hover:bg-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus"
     >
       <Icon
-        className="h-5 w-5 shrink-0 text-gray-600 dark:text-gray-300"
+        size={16}
+        strokeWidth={1.5}
+        className="shrink-0 text-fg-label"
         aria-hidden
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">
+        <span className="block truncate text-[13px] font-medium text-fg">
           {label}
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <span className="flex items-center gap-1.5 text-xs text-fg-hint">
           <span
-            className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[tone]}`}
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[tone]}`}
             aria-hidden
           />
           <span className="truncate">{status}</span>
         </span>
       </span>
-      <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+      <ChevronRight
+        size={16}
+        strokeWidth={1.5}
+        className="shrink-0 text-fg-hint"
+        aria-hidden
+      />
     </Link>
   )
 }

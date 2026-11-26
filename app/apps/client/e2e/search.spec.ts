@@ -143,7 +143,7 @@ test.describe('Bible Search', () => {
     await page.waitForTimeout(2000)
 
     // Should navigate to the verse, showing indigo highlight
-    const highlight = page.locator('button.ring-indigo-500')
+    const highlight = page.locator('button[data-verse].bg-selected')
     if (await highlight.isVisible({ timeout: 10000 }).catch(() => false)) {
       const verseNum = await highlight
         .locator('span.font-semibold')

@@ -84,7 +84,7 @@ export function ImportConfirmationModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      className="fixed inset-0 m-auto p-0 rounded-xl shadow-popover backdrop:bg-black/50 bg-panel"
       onClose={onCancel}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
@@ -92,8 +92,8 @@ export function ImportConfirmationModal({
       <div className="p-6 min-w-[400px] max-w-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <FileUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <FileUp className="w-5 h-5 text-fg-label" />
+            <h2 className="text-base font-semibold text-fg">
               {t('batchImport.title')}
             </h2>
           </div>
@@ -101,18 +101,18 @@ export function ImportConfirmationModal({
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors disabled:opacity-50"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-fg-label mb-4">
           {t('batchImport.description', { count: songCount })}
         </p>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-fg-body mb-1">
             {t('batchImport.categoryLabel')}
           </label>
           <CategoryPicker
@@ -130,9 +130,9 @@ export function ImportConfirmationModal({
               checked={useFirstVerseAsTitle}
               onChange={(e) => setUseFirstVerseAsTitle(e.target.checked)}
               disabled={isPending}
-              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50"
+              className="w-4 h-4 text-primary bg-field border-line rounded focus:ring-focus disabled:opacity-50"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-fg-body">
               {t('batchImport.useFirstVerseAsTitle')}
             </span>
           </label>
@@ -142,9 +142,9 @@ export function ImportConfirmationModal({
               checked={overwriteDuplicates}
               onChange={(e) => setOverwriteDuplicates(e.target.checked)}
               disabled={isPending}
-              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50"
+              className="w-4 h-4 text-primary bg-field border-line rounded focus:ring-focus disabled:opacity-50"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-fg-body">
               {t('batchImport.overwriteDuplicates')}
             </span>
           </label>
@@ -156,20 +156,20 @@ export function ImportConfirmationModal({
               checked={skipManuallyEdited}
               onChange={(e) => setSkipManuallyEdited(e.target.checked)}
               disabled={isPending || !overwriteDuplicates}
-              className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50"
+              className="w-4 h-4 text-primary bg-field border-line rounded focus:ring-focus disabled:opacity-50"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm text-fg-body">
               {t('batchImport.skipManuallyEdited')}
             </span>
           </label>
         </div>
 
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-fg-body mb-2">
             {t('batchImport.songsList')}
           </label>
-          <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="max-h-48 overflow-y-auto border border-line rounded-lg">
+            <ul className="divide-y divide-line">
               {songs.map((song, index) => {
                 // Get both possible titles for comparison
                 let verseTitle: string
@@ -199,7 +199,7 @@ export function ImportConfirmationModal({
                 return (
                   <li
                     key={`${index}-${useFirstVerseAsTitle}`}
-                    className="px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                    className="px-3 py-2 text-sm text-fg"
                   >
                     {index + 1}. {displayTitle}
                   </li>
@@ -212,14 +212,14 @@ export function ImportConfirmationModal({
         {isPending ? (
           <div className="space-y-3">
             <div className="flex items-center justify-center gap-3">
-              <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Loader2 className="w-5 h-5 text-fg-hint animate-spin" />
+              <span className="text-sm font-medium text-fg-body">
                 {t('batchImport.saving')} {progress}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-field rounded-full h-2">
               <div
-                className="bg-indigo-600 h-2 rounded-full transition-all duration-300 ease-out"
+                className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -229,14 +229,14 @@ export function ImportConfirmationModal({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
             >
               {t('common:buttons.cancel', { ns: 'common' })}
             </button>
             <button
               type="button"
               onClick={handleConfirm}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+              className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
               {t('batchImport.confirmButton', { count: songCount })}
             </button>

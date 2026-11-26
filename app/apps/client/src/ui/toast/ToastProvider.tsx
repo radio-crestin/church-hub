@@ -64,12 +64,10 @@ export function ToastProvider({ children }: ToastProviderProps) {
 
   const getToastStyles = (type: ToastType) => {
     switch (type) {
-      case 'success':
-        return 'bg-green-600 text-white'
       case 'error':
         return 'bg-red-600 text-white'
       default:
-        return 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-800'
+        return 'bg-panel text-fg border border-line'
     }
   }
 
@@ -80,8 +78,11 @@ export function ToastProvider({ children }: ToastProviderProps) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in ${getToastStyles(toast.type)}`}
+            className={`px-3.5 py-2.5 rounded-[10px] shadow-popover flex items-center gap-3 text-[13px] animate-slide-in ${getToastStyles(toast.type)}`}
           >
+            {toast.type === 'success' && (
+              <span className="h-2 w-2 shrink-0 rounded-full bg-ok" />
+            )}
             <span>{toast.message}</span>
             {toast.action && (
               <button
@@ -90,7 +91,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
                   toast.action?.onClick()
                   dismissToast(toast.id)
                 }}
-                className="px-2 py-0.5 text-xs font-medium bg-white/20 hover:bg-white/30 rounded transition-colors"
+                className="px-2 py-0.5 text-xs font-medium bg-current/10 hover:bg-current/20 rounded-md transition-colors"
               >
                 {toast.action.label}
               </button>
@@ -100,7 +101,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
               onClick={() => dismissToast(toast.id)}
               className="hover:opacity-70 transition-opacity"
             >
-              <X className="w-4 h-4" />
+              <X strokeWidth={1.5} className="w-4 h-4" />
             </button>
           </div>
         ))}

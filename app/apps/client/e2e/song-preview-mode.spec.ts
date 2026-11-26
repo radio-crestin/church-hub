@@ -56,7 +56,7 @@ test.describe('Song Preview Mode', () => {
     await preview.click()
     await expect(preview).toHaveAttribute('aria-checked', 'true')
     await expect(live).toHaveAttribute('aria-checked', 'false')
-    await expect(slide0).toHaveClass(/ring-indigo-500/)
+    await expect(slide0).toHaveClass(/bg-selected/)
 
     // The Afișează (Project) button is available for the staged slide.
     const projectBtn = page.locator('[data-testid="song-project-staged"]')
@@ -65,7 +65,7 @@ test.describe('Song Preview Mode', () => {
     // Projecting promotes the staged slide to live (green ring).
     await projectBtn.click()
     await page.waitForTimeout(800)
-    await expect(slide0).toHaveClass(/ring-green-500/)
+    await expect(slide0).toHaveClass(/ring-live/)
 
     // While THIS song is live, clicking another verse drives the projection too
     // (like the arrows), not just the small stage.
@@ -74,8 +74,8 @@ test.describe('Song Preview Mode', () => {
     if (await slide1.isVisible({ timeout: 1000 }).catch(() => false)) {
       await slide1.click()
       await page.waitForTimeout(800)
-      await expect(slide1).toHaveClass(/ring-green-500/)
-      await expect(slide0).not.toHaveClass(/ring-green-500/)
+      await expect(slide1).toHaveClass(/ring-live/)
+      await expect(slide0).not.toHaveClass(/ring-live/)
       liveSlide = slide1
     }
 
@@ -85,7 +85,7 @@ test.describe('Song Preview Mode', () => {
     await expect(hideBtn).toBeVisible({ timeout: 3000 })
     await hideBtn.click()
     await page.waitForTimeout(600)
-    await expect(liveSlide).toHaveClass(/ring-indigo-500/)
+    await expect(liveSlide).toHaveClass(/bg-selected/)
     await expect(projectBtn).toBeVisible()
 
     // Clean up: back to live, where a click projects straight away.

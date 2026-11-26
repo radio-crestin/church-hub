@@ -24,7 +24,10 @@ export function SearchInput({
 
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+      <Search
+        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-hint"
+        strokeWidth={1.5}
+      />
       <Input
         ref={inputRef}
         type="text"

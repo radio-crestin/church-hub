@@ -244,15 +244,15 @@ export function ScheduleItemsPanel({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
-        <p className="text-sm">{t('editor.noItems')}</p>
+      <div className="flex flex-col items-center justify-center py-12 text-fg-hint">
+        <p className="text-[13px]">{t('editor.noItems')}</p>
         <p className="text-xs mt-1">{t('editor.addFirstItem')}</p>
       </div>
     )
@@ -397,17 +397,17 @@ function SortableItemWrapper({
       data-testid="schedule-item"
       data-selected={isSelected || undefined}
       style={style}
-      className={`rounded-lg border bg-white dark:bg-gray-800 overflow-hidden ${
-        isDragging ? 'opacity-50 shadow-lg' : ''
+      className={`rounded-lg border overflow-hidden ${
+        isDragging ? 'opacity-50' : ''
       } ${
         hasMissingContent
           ? 'border-amber-400 dark:border-amber-500'
-          : 'border-gray-200 dark:border-gray-700'
-      } ${isSelected ? 'ring-2 ring-indigo-500 dark:ring-indigo-400' : ''}`}
+          : 'border-line'
+      } ${isSelected ? 'bg-selected' : 'bg-panel'}`}
     >
       {/* Item Header */}
       <div
-        className="w-full flex items-center gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+        className="w-full flex items-center gap-2 p-3 hover:bg-hover transition-colors cursor-pointer"
         onClick={(e) => onHeaderClick(e, item)}
         onAuxClick={(e) => onAuxClick(e, item)}
         onDoubleClick={() => onDoubleClick(item)}
@@ -419,10 +419,7 @@ function SortableItemWrapper({
           {...attributes}
           {...listeners}
         >
-          <GripVertical
-            size={16}
-            className="text-gray-400 dark:text-gray-500"
-          />
+          <GripVertical size={16} className="text-fg-hint" strokeWidth={1.5} />
         </div>
 
         {/* Done-marker — every kind of item can be ticked off a program. */}
@@ -438,14 +435,12 @@ function SortableItemWrapper({
         {/* Expand/Collapse Icon */}
         <div className="flex-shrink-0">
           {isExpanded ? (
-            <ChevronDown
-              size={16}
-              className="text-gray-400 dark:text-gray-500"
-            />
+            <ChevronDown size={16} className="text-fg-hint" strokeWidth={1.5} />
           ) : (
             <ChevronRight
               size={16}
-              className="text-gray-400 dark:text-gray-500"
+              className="text-fg-hint"
+              strokeWidth={1.5}
             />
           )}
         </div>
@@ -454,7 +449,7 @@ function SortableItemWrapper({
 
         {/* Item Title & Info */}
         <div className="flex-1 min-w-0 text-left">
-          <div className="font-medium text-sm sm:truncate text-gray-900 dark:text-white">
+          <div className="font-medium text-[13px] sm:truncate text-fg">
             {item.itemType === 'song' && (
               <span className="flex min-w-0 items-center gap-2">
                 {/* A phone has no room for one line: the title takes two. */}
@@ -495,6 +490,7 @@ function SortableItemWrapper({
                     size={12}
                     className="text-amber-500 flex-shrink-0"
                     aria-label={t('warnings.invalidReference')}
+                    strokeWidth={2}
                   />
                 )}
               </span>
@@ -503,7 +499,7 @@ function SortableItemWrapper({
           {/* Song rows deliberately carry no second line: the title, its gama
               and the slides underneath are the whole story while running a
               program. */}
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-xs text-fg-hint">
             {item.itemType === 'bible_passage' && (
               <>
                 {t('presenter.versesCount', {
@@ -538,12 +534,13 @@ function SortableItemWrapper({
         {/* Warning indicator for missing content */}
         {hasMissingContent && (
           <div
-            className="flex-shrink-0 p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30"
+            className="flex-shrink-0 p-2"
             title={t('warnings.missingContent')}
           >
             <AlertTriangle
               size={16}
               className="text-amber-600 dark:text-amber-400"
+              strokeWidth={1.5}
             />
           </div>
         )}
@@ -566,14 +563,15 @@ function SortableItemWrapper({
             e.stopPropagation()
             onContextMenu(e, item)
           }}
-          className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="flex-shrink-0 p-2 rounded-lg hover:bg-hover transition-colors"
           title={t('common:options')}
           aria-label={t('common:options')}
           data-testid="schedule-item-options"
         >
           <MoreVertical
             size={16}
-            className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+            className="text-fg-hint hover:text-fg"
+            strokeWidth={1.5}
           />
         </button>
       </div>

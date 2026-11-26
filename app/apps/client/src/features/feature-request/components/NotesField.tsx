@@ -24,7 +24,7 @@ export function NotesField({
     <div>
       <label htmlFor="feature-request-notes" className={labelClass}>
         {t('common:featureRequest.notesLabel')}
-        <span className="font-normal text-gray-500 dark:text-gray-400">
+        <span className="font-normal text-fg-hint">
           {` ${t('common:featureRequest.optional')}`}
         </span>
       </label>
@@ -42,7 +42,7 @@ export function NotesField({
       />
       <p
         data-testid="feature-request-notes-counter"
-        className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400"
+        className="mt-1 text-right text-xs text-fg-hint"
       >
         {value.length} / {NOTES_MAX_LENGTH}
       </p>

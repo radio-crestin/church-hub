@@ -17,7 +17,7 @@ export function StageTimer() {
 
   return (
     <div
-      className="inline-flex items-center gap-1.5 rounded-lg bg-gray-900/80 px-2.5 py-1 font-mono text-sm tabular-nums text-white shadow-md backdrop-blur-sm dark:bg-white/85 dark:text-gray-900"
+      className="inline-flex items-center gap-1.5 rounded-lg bg-panel px-2.5 py-1 text-xs font-medium tabular-nums text-fg shadow-[inset_0_0_0_1px_var(--color-line)]"
       title={t('stageEditor.elapsed')}
       aria-label={t('stageEditor.elapsed')}
       data-testid="stage-timer"

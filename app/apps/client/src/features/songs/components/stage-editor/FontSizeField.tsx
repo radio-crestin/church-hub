@@ -97,7 +97,7 @@ export function FontSizeField({
             inputRef.current?.blur()
           }
         }}
-        className="h-7 w-14 rounded-md border border-gray-300 bg-white px-1.5 text-center text-sm text-gray-700 disabled:opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+        className="h-7 w-14 rounded-md border border-line bg-panel px-1.5 text-center text-sm text-fg-body disabled:opacity-40"
       />
       <button
         type="button"
@@ -108,7 +108,7 @@ export function FontSizeField({
         disabled={disabled}
         aria-label={t('stageEditor.style.fontSizePresets')}
         title={t('stageEditor.style.fontSizePresets')}
-        className="-ml-6 flex h-6 w-5 items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700"
+        className="-ml-6 flex h-6 w-5 items-center justify-center rounded text-fg-hint hover:bg-hover disabled:opacity-40"
       >
         <ChevronDown size={14} />
       </button>
@@ -118,7 +118,7 @@ export function FontSizeField({
           <ul
             ref={menuRef}
             data-testid="slide-style-font-size-list"
-            className="fixed z-[100] max-h-64 w-20 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            className="fixed z-[100] max-h-64 w-20 overflow-y-auto rounded-[10px] border border-line bg-panel py-1 shadow-popover"
             style={{ top: menuAt.top, left: menuAt.left }}
           >
             {FONT_SIZE_PRESETS.map((preset) => (
@@ -132,10 +132,10 @@ export function FontSizeField({
                     setDraft(null)
                     onApply(preset)
                   }}
-                  className={`w-full px-3 py-1 text-left text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  className={`w-full px-3 py-1 text-left text-sm transition-colors hover:bg-hover ${
                     !isMixed && preset === smallest
-                      ? 'font-semibold text-indigo-600 dark:text-indigo-400'
-                      : 'text-gray-700 dark:text-gray-200'
+                      ? 'font-semibold text-fg-label'
+                      : 'text-fg-body'
                   }`}
                 >
                   {preset}

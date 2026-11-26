@@ -21,18 +21,9 @@ interface VersionNotesCardProps {
 }
 
 const FRAME: Record<VersionNotesVariant, string> = {
-  default:
-    'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50',
-  current:
-    'border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-900/10',
-  available:
-    'border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10',
-}
-
-const RULE: Record<VersionNotesVariant, string> = {
-  default: 'border-gray-200 dark:border-gray-700',
-  current: 'border-indigo-200 dark:border-indigo-800',
-  available: 'border-green-200 dark:border-green-800',
+  default: 'border-line',
+  current: 'border-line-strong',
+  available: 'border-line-strong',
 }
 
 function formatDate(date: string | null, language: string): string {
@@ -78,59 +69,52 @@ export function VersionNotesCard({
 
   return (
     <div
-      className={`p-4 rounded-lg border ${FRAME[variant]}`}
+      className={`p-4 rounded-xl border ${FRAME[variant]}`}
       data-testid={testId}
     >
       <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className="text-base font-bold text-gray-900 dark:text-white">
+        <span className="text-[15px] font-semibold tabular-nums text-fg">
           v{notes.version}
         </span>
         {variant === 'current' && (
-          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-600 text-white">
+          <span className="text-xs font-medium text-fg-label">
             {t('current')}
           </span>
         )}
         {variant === 'available' && (
-          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-600 text-white">
+          <span className="text-xs font-medium text-fg-label">
             {t('available')}
           </span>
         )}
         {formattedDate && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {formattedDate}
-          </span>
+          <span className="text-xs text-fg-hint">{formattedDate}</span>
         )}
       </div>
 
       {isEmpty ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-          {t('empty')}
-        </p>
+        <p className="text-[13px] text-fg-hint italic">{t('empty')}</p>
       ) : (
         <div className="space-y-3">
           <ChangeCategoryList
             icon={Sparkles}
             label={t('categories.features')}
-            accentClassName="text-green-600 dark:text-green-400"
             entries={features}
           />
           <ChangeCategoryList
             icon={Bug}
             label={t('categories.bugFixes')}
-            accentClassName="text-red-600 dark:text-red-400"
             entries={bugFixes}
           />
           <ChangeCategoryList
             icon={Wrench}
             label={t('categories.changes')}
-            accentClassName="text-amber-600 dark:text-amber-400"
             entries={changes}
           />
         </div>
       )}
 
       {children && (
-        <div className={`mt-4 border-t pt-4 ${RULE[variant]}`}>{children}</div>
+        <div className="mt-4 border-t border-line pt-4">{children}</div>
       )}
     </div>
   )

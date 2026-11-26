@@ -38,7 +38,7 @@ test.describe('Keyboard Shortcuts - Song Navigation', () => {
 
     // Check if green highlight appears (active slide)
     const greenHighlight = page.locator(
-      'button.ring-green-500, [class*="ring-green"]',
+      'button.ring-live, [class*="ring-green"]',
     )
     if (await greenHighlight.isVisible({ timeout: 3000 }).catch(() => false)) {
       // Navigate down
@@ -67,10 +67,8 @@ test.describe('Keyboard Shortcuts - Song Navigation', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(1000)
 
-    // Exclude disabled buttons so the hidden ServerConnectionModal "Reconnect"
-    // button doesn't inflate the slide count or get selected by `.nth(1)` —
-    // clicking that disabled button is what flaked this test in CI.
-    const slides = page.locator('button.rounded-lg:not([disabled])')
+    // The song's slide rows, by test id: styling classes match other buttons too.
+    const slides = page.getByTestId(/^song-slide-\d+$/)
     const slideCount = await slides.count()
 
     if (slideCount < 2) {
@@ -135,7 +133,7 @@ test.describe('Keyboard Shortcuts - Bible Navigation', () => {
       await page.waitForTimeout(500)
 
       // Verify the green highlight moved
-      const greenHighlight = page.locator('button.ring-green-500')
+      const greenHighlight = page.locator('button.ring-live')
       if (
         await greenHighlight.isVisible({ timeout: 3000 }).catch(() => false)
       ) {
@@ -183,7 +181,7 @@ test.describe('Keyboard Shortcuts - Bible Navigation', () => {
       await page.keyboard.press('ArrowUp')
       await page.waitForTimeout(500)
 
-      const greenHighlight = page.locator('button.ring-green-500')
+      const greenHighlight = page.locator('button.ring-live')
       if (
         await greenHighlight.isVisible({ timeout: 3000 }).catch(() => false)
       ) {

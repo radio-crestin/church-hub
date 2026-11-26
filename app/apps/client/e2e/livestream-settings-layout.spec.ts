@@ -38,7 +38,7 @@ test.describe('Live Stream settings pages', () => {
       for (const href of ['/livestream/youtube', '/livestream/obs']) {
         await expect(rail.locator(`a[href="${href}"]`)).toBeVisible()
       }
-      await expect(rail.locator(`a[href="${path}"]`)).toHaveClass(/indigo/)
+      await expect(rail.locator(`a[href="${path}"]`)).toHaveClass(/bg-selected/)
       // Only the pages: the sections are not listed again.
       await expect(rail.locator('a')).toHaveCount(4)
       await expect(rail.locator('button')).toHaveCount(0)

@@ -227,7 +227,10 @@ export function SidebarConfigManager() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+        <Loader2
+          strokeWidth={1.5}
+          className="w-6 h-6 animate-spin text-fg-hint"
+        />
       </div>
     )
   }
@@ -242,9 +245,9 @@ export function SidebarConfigManager() {
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 h-8 px-3 bg-primary hover:bg-indigo-700 text-white text-[13px] font-medium rounded-lg transition-colors"
           >
-            <Plus size={16} />
+            <Plus strokeWidth={1.5} size={16} />
             {t('sections.sidebar.addCustomPage')}
           </button>
         }

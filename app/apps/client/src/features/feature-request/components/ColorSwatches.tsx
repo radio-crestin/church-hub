@@ -21,7 +21,7 @@ export function ColorSwatches({ color, onChange }: ColorSwatchesProps) {
           title={t(nameKey)}
           aria-pressed={color === value}
           onClick={() => onChange(value)}
-          className={`w-7 h-7 rounded-full border border-black/20 dark:border-white/30 transition-transform hover:scale-110 ${color === value ? 'ring-2 ring-offset-2 ring-indigo-500 ring-offset-white dark:ring-offset-gray-800 scale-110' : ''}`}
+          className={`w-7 h-7 rounded-full border border-black/20 dark:border-white/30 transition-transform hover:scale-110 ${color === value ? 'ring-2 ring-offset-2 ring-fg ring-offset-panel scale-110' : ''}`}
           style={{ backgroundColor: value }}
         />
       ))}

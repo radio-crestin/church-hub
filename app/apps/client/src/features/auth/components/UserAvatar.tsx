@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react'
 interface UserAvatarProps {
   name: string
   isSuperAdmin?: boolean
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   /** Show the super-admin shield badge (hidden on very small avatars by default). */
   showBadge?: boolean
 }
@@ -16,35 +16,37 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-// Deterministic avatar gradient per account so users are easy to tell apart.
-const AVATAR_GRADIENTS = [
-  'from-rose-500 to-pink-600',
-  'from-amber-500 to-orange-600',
-  'from-emerald-500 to-teal-600',
-  'from-sky-500 to-blue-600',
-  'from-violet-500 to-purple-600',
-  'from-fuchsia-500 to-pink-600',
+// Deterministic flat avatar colour per account so users are easy to tell
+// apart (DESIGN.md allows colour here: it identifies a person).
+const AVATAR_COLORS = [
+  'bg-rose-600',
+  'bg-amber-600',
+  'bg-emerald-600',
+  'bg-sky-600',
+  'bg-teal-600',
+  'bg-pink-600',
 ]
 
-function gradientFor(name: string, isSuperAdmin?: boolean): string {
-  if (isSuperAdmin) return 'from-indigo-500 to-indigo-700'
+function colorFor(name: string, isSuperAdmin?: boolean): string {
+  if (isSuperAdmin) return 'bg-primary'
   let hash = 0
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length]
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
 const SIZES = {
+  xs: { box: 'h-5 w-5 text-[9px]', badge: 'hidden', icon: 'h-2 w-2' },
   sm: { box: 'h-8 w-8 text-xs', badge: 'h-3.5 w-3.5', icon: 'h-2.5 w-2.5' },
   md: { box: 'h-11 w-11 text-sm', badge: 'h-5 w-5', icon: 'h-3.5 w-3.5' },
   lg: { box: 'h-16 w-16 text-xl', badge: 'h-6 w-6', icon: 'h-4 w-4' },
 } as const
 
 /**
- * Colored, initials-based account avatar shared across the login screen, the
+ * Coloured, initials-based account avatar shared across the login screen, the
  * sidebar account button and the account page so a user looks the same
- * everywhere. Super admins get an indigo gradient and a shield badge.
+ * everywhere. Super admins get the primary colour and a shield badge.
  */
 export function UserAvatar({
   name,
@@ -55,17 +57,17 @@ export function UserAvatar({
   const s = SIZES[size]
   return (
     <span
-      className={`relative flex ${s.box} shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${gradientFor(
+      className={`relative flex ${s.box} shrink-0 items-center justify-center rounded-full ${colorFor(
         name,
         isSuperAdmin,
-      )} font-semibold text-white shadow-sm`}
+      )} font-semibold text-white`}
     >
       {getInitials(name)}
       {isSuperAdmin && showBadge && (
         <span
-          className={`absolute -bottom-0.5 -right-0.5 flex ${s.badge} items-center justify-center rounded-full bg-white ring-2 ring-white dark:bg-gray-800 dark:ring-gray-800`}
+          className={`absolute -bottom-0.5 -right-0.5 flex ${s.badge} items-center justify-center rounded-full bg-panel ring-2 ring-panel`}
         >
-          <ShieldCheck className={`${s.icon} text-indigo-500`} />
+          <ShieldCheck strokeWidth={2} className={`${s.icon} text-fg-label`} />
         </span>
       )}
     </span>

@@ -45,9 +45,9 @@ export function SlideCounter({
         data-testid="slide-counter"
         title={description}
         aria-label={description}
-        className={`inline-flex items-center gap-1.5 rounded-lg bg-gray-900/80 px-2.5 py-1 font-mono text-sm tabular-nums text-white shadow-md backdrop-blur-sm dark:bg-white/85 dark:text-gray-900 ${className}`}
+        className={`inline-flex items-center gap-1.5 rounded-lg bg-panel px-2.5 py-1 text-xs font-medium tabular-nums text-fg shadow-[inset_0_0_0_1px_var(--color-line)] ${className}`}
       >
-        <Layers size={14} />
+        <Layers size={14} strokeWidth={1.75} className="text-fg-label" />
         {label}
       </div>
     )
@@ -58,7 +58,7 @@ export function SlideCounter({
       data-testid="slide-counter"
       title={description}
       aria-label={description}
-      className={`text-xs font-medium tabular-nums text-gray-500 dark:text-gray-400 whitespace-nowrap ${className}`}
+      className={`text-xs font-medium tabular-nums text-fg-hint whitespace-nowrap ${className}`}
     >
       {label}
     </span>

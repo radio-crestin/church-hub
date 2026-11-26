@@ -64,41 +64,39 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-sm w-full"
+      className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel max-w-sm w-full"
       onClose={onClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {t('common:contact.title')}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg transition-colors"
+            className="p-1 text-fg-hint hover:text-fg-body rounded-lg transition-colors"
             aria-label={t('common:buttons.cancel')}
           >
-            <X size={20} />
+            <X strokeWidth={1.5} size={16} />
           </button>
         </div>
 
         <div className="space-y-3">
           <a
             href="mailto:iosif@radiocrestin.ro"
-            className="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+            className="flex items-center gap-3 p-3 rounded-lg bg-field hover:bg-hover transition-colors group"
           >
-            <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Mail size={20} />
+            <div className="w-8 h-8 flex items-center justify-center text-fg-label">
+              <Mail strokeWidth={1.5} size={16} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-fg-hint">
                 {t('common:contact.email')}
               </p>
-              <p className="text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                iosif@radiocrestin.ro
-              </p>
+              <p className="text-[13px] text-fg">iosif@radiocrestin.ro</p>
             </div>
           </a>
 
@@ -106,18 +104,16 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
             href={getWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+            className="flex items-center gap-3 p-3 rounded-lg bg-field hover:bg-hover transition-colors group"
           >
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
-              <WhatsAppIcon size={20} />
+            <div className="w-8 h-8 flex items-center justify-center text-fg-label">
+              <WhatsAppIcon size={16} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-fg-hint">
                 {t('common:contact.whatsapp')}
               </p>
-              <p className="text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                +40 766 338 046
-              </p>
+              <p className="text-[13px] text-fg">+40 766 338 046</p>
             </div>
           </a>
         </div>
@@ -126,7 +122,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             {t('common:buttons.ok')}
           </button>

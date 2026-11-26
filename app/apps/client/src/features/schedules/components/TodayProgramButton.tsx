@@ -28,12 +28,12 @@ export function TodayProgramButton({
       title={hint}
       aria-label={hint}
       data-testid={testId}
-      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors disabled:opacity-50"
+      className="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg bg-primary text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
     >
       {isPending ? (
-        <Loader2 size={16} className="animate-spin" />
+        <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
       ) : (
-        <CalendarCheck size={16} />
+        <CalendarCheck size={16} strokeWidth={1.5} />
       )}
       {t('today.button')}
     </button>

@@ -43,10 +43,8 @@ export function UserCard({
 
   return (
     <div
-      className={`relative border rounded-lg p-4 transition-colors hover:border-indigo-300 dark:hover:border-indigo-500/60 ${
-        user.isActive
-          ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-          : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900'
+      className={`relative border rounded-xl p-4 transition-colors hover:bg-hover ${
+        user.isActive ? 'border-line bg-panel' : 'border-line bg-app'
       }`}
     >
       {/* Full-card click target → opens the edit modal. It's an overlay button
@@ -67,48 +65,49 @@ export function UserCard({
             (opacity on the root would create a stacking context). */}
         <div className={`flex-1 min-w-0 ${user.isActive ? '' : 'opacity-60'}`}>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3 className="min-w-0 max-w-full truncate text-base font-medium text-gray-900 dark:text-white">
+            <h3 className="min-w-0 max-w-full truncate text-base font-medium text-fg">
               {user.name}
             </h3>
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                user.isActive
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+              className={`inline-flex items-center gap-1.5 text-xs ${
+                user.isActive ? 'text-fg-label' : 'text-fg-hint'
               }`}
             >
+              {user.isActive && (
+                <span className="h-1.5 w-1.5 rounded-full bg-ok" />
+              )}
               {user.isActive
                 ? t('sections.users.active')
                 : t('sections.users.inactive')}
             </span>
             {user.isSuperAdmin && (
               <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400"
+                className="inline-flex items-center gap-1 text-xs text-fg-label"
                 title={t('users:superAdmin')}
               >
-                <ShieldCheck size={12} />
+                <ShieldCheck strokeWidth={2} size={12} />
                 {t('users:superAdmin')}
               </span>
             )}
             {user.hasPassword && (
               <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                className="inline-flex items-center gap-1 text-xs text-fg-hint"
                 title={t('users:password.hasPassword')}
               >
-                <Lock size={12} />
+                <Lock strokeWidth={2} size={12} />
                 {t('users:password.hasPassword')}
               </span>
             )}
           </div>
           {user.roleName && (
-            <p className="mt-1 text-sm text-indigo-600 dark:text-indigo-400">
+            <p className="mt-1 text-[13px] text-fg-label">
               {t(`sections.users.roles.${user.roleName}`, user.roleName)}
             </p>
           )}
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-[13px] text-fg-hint">
             {t('sections.users.lastUsed')}: {formatDate(user.lastUsedAt)}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-[13px] text-fg-hint">
             {t('sections.users.permissionCount', { count: permissionCount })}
           </p>
         </div>
@@ -117,24 +116,18 @@ export function UserCard({
           {/* QR Code button - always visible */}
           <button
             onClick={() => onShowQR(user)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
             title={t('sections.users.actions.showQRCode')}
           >
-            <QrCode
-              size={20}
-              className="text-indigo-600 dark:text-indigo-400"
-            />
+            <QrCode strokeWidth={1.5} size={16} />
           </button>
 
           {/* More options menu */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
           >
-            <MoreVertical
-              size={20}
-              className="text-gray-500 dark:text-gray-400"
-            />
+            <MoreVertical strokeWidth={1.5} size={16} />
           </button>
 
           {menuOpen && (
@@ -143,15 +136,15 @@ export function UserCard({
                 className="fixed inset-0 z-10"
                 onClick={() => setMenuOpen(false)}
               />
-              <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-panel rounded-[10px] p-1 shadow-popover border border-line z-20">
                 <button
                   onClick={() => {
                     onShowQR(user)
                     setMenuOpen(false)
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
                 >
-                  <QrCode size={16} />
+                  <QrCode strokeWidth={1.5} size={16} />
                   {t('sections.users.actions.showQRCode')}
                 </button>
                 <button
@@ -159,9 +152,9 @@ export function UserCard({
                     onEdit(user)
                     setMenuOpen(false)
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
                 >
-                  <Edit size={16} />
+                  <Edit strokeWidth={1.5} size={16} />
                   {t('sections.users.actions.edit')}
                 </button>
                 <button
@@ -169,9 +162,9 @@ export function UserCard({
                     onRegenerateToken(user)
                     setMenuOpen(false)
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
                 >
-                  <RefreshCw size={16} />
+                  <RefreshCw strokeWidth={1.5} size={16} />
                   {t('sections.users.actions.regenerateToken')}
                 </button>
                 {/* The super admin is always active and cannot be toggled. */}
@@ -181,16 +174,16 @@ export function UserCard({
                       onToggleActive(user)
                       setMenuOpen(false)
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
                   >
                     {user.isActive ? (
                       <>
-                        <PowerOff size={16} />
+                        <PowerOff strokeWidth={1.5} size={16} />
                         {t('sections.users.actions.deactivate')}
                       </>
                     ) : (
                       <>
-                        <Power size={16} />
+                        <Power strokeWidth={1.5} size={16} />
                         {t('sections.users.actions.activate')}
                       </>
                     )}
@@ -199,15 +192,15 @@ export function UserCard({
                 {/* The super admin (owner) cannot be deleted. */}
                 {!user.isSuperAdmin && (
                   <>
-                    <div className="border-t border-gray-200 dark:border-gray-700" />
+                    <div className="border-t border-line" />
                     <button
                       onClick={() => {
                         onDelete(user)
                         setMenuOpen(false)
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 strokeWidth={1.5} size={16} />
                       {t('sections.users.actions.delete')}
                     </button>
                   </>

@@ -12,7 +12,7 @@ interface RoamingBarProps {
 }
 
 const barButton =
-  'flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors'
+  'flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-3 py-2 text-[13px] font-medium rounded-lg transition-colors'
 
 /**
  * A small bar floating over the app while the user retakes the screenshot.
@@ -31,11 +31,15 @@ export function RoamingBar({
     <div
       {...{ [FEATURE_REQUEST_UI_ATTRIBUTE]: '' }}
       data-testid="feature-request-roaming"
-      className="fixed left-1/2 -translate-x-1/2 bottom-4 w-[calc(100%-2rem)] max-w-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-xl bg-gray-900/95 text-white shadow-2xl p-3"
+      className="fixed left-1/2 -translate-x-1/2 bottom-4 w-[calc(100%-2rem)] max-w-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-xl border border-line bg-panel text-fg shadow-popover p-3"
       style={{ zIndex: 2147483000 }}
     >
-      <p className="flex items-center gap-2 text-sm flex-1">
-        <Camera size={18} className="flex-shrink-0 text-indigo-300" />
+      <p className="flex items-center gap-2 text-[13px] flex-1">
+        <Camera
+          strokeWidth={1.5}
+          size={16}
+          className="flex-shrink-0 text-fg-label"
+        />
         {t('common:featureRequest.roamingHint')}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -43,7 +47,7 @@ export function RoamingBar({
           type="button"
           data-testid="feature-request-take"
           onClick={onTake}
-          className={`${barButton} bg-indigo-600 hover:bg-indigo-500`}
+          className={`${barButton} bg-primary text-white hover:bg-indigo-700`}
         >
           {t('common:featureRequest.takeScreenshot')}
         </button>
@@ -52,9 +56,9 @@ export function RoamingBar({
             type="button"
             data-testid="feature-request-capture-display"
             onClick={onCaptureDisplay}
-            className={`${barButton} bg-white/10 hover:bg-white/20`}
+            className={`${barButton} bg-field text-fg hover:bg-hover`}
           >
-            <Monitor size={16} />
+            <Monitor strokeWidth={1.5} size={16} />
             {t('common:featureRequest.otherScreen')}
           </button>
         )}
@@ -62,7 +66,7 @@ export function RoamingBar({
           type="button"
           data-testid="feature-request-roaming-cancel"
           onClick={onCancel}
-          className={`${barButton} bg-white/10 hover:bg-white/20`}
+          className={`${barButton} bg-field text-fg hover:bg-hover`}
         >
           {t('common:buttons.cancel')}
         </button>

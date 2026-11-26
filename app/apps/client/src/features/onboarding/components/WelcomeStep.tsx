@@ -15,12 +15,8 @@ export function WelcomeStep() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t('welcome.title')}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t('welcome.description')}
-        </p>
+        <h1 className="text-xl font-semibold text-fg">{t('welcome.title')}</h1>
+        <p className="text-[13px] text-fg-label">{t('welcome.description')}</p>
       </div>
       <ChoiceGroup<LanguagePreference>
         label={t('welcome.language')}

@@ -177,7 +177,11 @@ export function ScreenManager() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2
+          size={24}
+          strokeWidth={1.5}
+          className="animate-spin text-fg-hint"
+        />
       </div>
     )
   }
@@ -185,7 +189,7 @@ export function ScreenManager() {
   // Full-screen editor mode
   if (editingScreenId && editingScreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950">
+      <div className="fixed inset-0 z-50 bg-app">
         <ScreenEditor
           screen={editingScreen}
           initialContentType={editingContentType}
@@ -202,8 +206,13 @@ export function ScreenManager() {
         title={t('settings:sections.screens.title')}
         description={t('settings:sections.screens.description')}
         actions={
-          <Button onClick={handleAddNew} variant="primary" className="gap-2">
-            <Plus size={16} />
+          <Button
+            onClick={handleAddNew}
+            variant="primary"
+            size="sm"
+            className="gap-2"
+          >
+            <Plus size={16} strokeWidth={1.5} />
             {t('settings:sections.screens.addScreen')}
           </Button>
         }
@@ -227,19 +236,20 @@ export function ScreenManager() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="text-center py-12 bg-panel rounded-xl border border-line">
           <MonitorUp
-            size={48}
-            className="mx-auto text-gray-400 dark:text-gray-500 mb-4"
+            size={32}
+            strokeWidth={1.25}
+            className="mx-auto text-fg-hint mb-4"
           />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <h3 className="text-base font-semibold text-fg mb-2">
             {t('settings:sections.screens.noScreens')}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-[13px] text-fg-hint mb-4">
             {t('presentation:screens.noScreensDescription')}
           </p>
           <Button onClick={handleAddNew} variant="primary">
-            <Plus size={20} className="mr-2" />
+            <Plus size={16} strokeWidth={1.5} className="mr-2" />
             {t('presentation:screens.addFirstScreen')}
           </Button>
         </div>
@@ -248,13 +258,13 @@ export function ScreenManager() {
       {/* Add Screen Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-panel rounded-xl border border-line shadow-popover w-full max-w-md mx-4 p-6">
+            <h3 className="text-base font-semibold text-fg mb-4">
               {t('settings:sections.screens.addScreen')}
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[13px] font-medium text-fg-label mb-1">
                   {t('presentation:screens.screenName')}
                 </label>
                 <input
@@ -262,12 +272,12 @@ export function ScreenManager() {
                   value={newScreenName}
                   onChange={(e) => setNewScreenName(e.target.value)}
                   placeholder={t('presentation:screens.screenNamePlaceholder')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-9 px-3 text-[13px] rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-[13px] font-medium text-fg-label mb-1">
                   {t('presentation:screens.screenType')}
                 </label>
                 <Combobox
@@ -288,7 +298,11 @@ export function ScreenManager() {
                 disabled={!newScreenName.trim() || upsertScreen.isPending}
               >
                 {upsertScreen.isPending && (
-                  <Loader2 size={16} className="animate-spin mr-2" />
+                  <Loader2
+                    size={16}
+                    strokeWidth={1.5}
+                    className="animate-spin mr-2"
+                  />
                 )}
                 {t('presentation:screens.createAndConfigure')}
               </Button>
@@ -300,11 +314,11 @@ export function ScreenManager() {
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-panel rounded-xl border border-line shadow-popover w-full max-w-sm mx-4 p-6">
+            <h3 className="text-base font-semibold text-fg mb-2">
               {t('presentation:screens.deleteConfirmTitle')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-[13px] text-fg-label mb-4">
               {t('presentation:screens.deleteConfirmMessage', {
                 name: deleteConfirm.name,
               })}
@@ -319,7 +333,11 @@ export function ScreenManager() {
                 disabled={deleteScreen.isPending}
               >
                 {deleteScreen.isPending && (
-                  <Loader2 size={16} className="animate-spin mr-2" />
+                  <Loader2
+                    size={16}
+                    strokeWidth={1.5}
+                    className="animate-spin mr-2"
+                  />
                 )}
                 {t('presentation:actions.delete')}
               </Button>

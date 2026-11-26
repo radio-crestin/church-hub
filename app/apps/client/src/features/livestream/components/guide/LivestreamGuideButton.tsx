@@ -18,7 +18,7 @@ export function LivestreamGuideButton({
     <>
       <Button size="sm" variant={variant} onClick={() => setIsOpen(true)}>
         <span className="inline-flex items-center gap-2">
-          <BookOpen className="h-4 w-4" aria-hidden />
+          <BookOpen size={16} strokeWidth={1.5} aria-hidden />
           {t('guide.open')}
         </span>
       </Button>

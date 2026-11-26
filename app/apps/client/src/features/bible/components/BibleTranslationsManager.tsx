@@ -129,7 +129,7 @@ export function BibleTranslationsManager({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
@@ -138,22 +138,22 @@ export function BibleTranslationsManager({
     <div>
       {/* Header */}
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Book className="w-5 h-5" />
+        <h3 className="text-base font-semibold text-fg flex items-center gap-2">
+          <Book className="w-5 h-5" strokeWidth={1.5} />
           {t('sections.bible.title')}
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-[13px] text-fg-label mt-1">
           {t('sections.bible.description')}
         </p>
       </div>
 
       {translations.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
-          <Book className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
+        <div className="text-center py-8 bg-field rounded-lg border border-dashed border-line">
+          <Book className="w-12 h-12 mx-auto text-fg-hint mb-3" />
+          <p className="text-fg-label font-medium">
             {t('sections.bible.noTranslations')}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+          <p className="text-[13px] text-fg-hint mt-1">
             {t('sections.bible.noTranslationsDescription')}
           </p>
         </div>
@@ -161,7 +161,7 @@ export function BibleTranslationsManager({
         <div className="space-y-4">
           {/* Primary Version Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-[13px] font-medium text-fg-body mb-1">
               {t('sections.bible.primaryVersion')}
             </label>
             <Combobox
@@ -174,14 +174,14 @@ export function BibleTranslationsManager({
               allowDelete
               portalContainer={portalContainer}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-fg-hint mt-1">
               {t('sections.bible.primaryDescription')}
             </p>
           </div>
 
           {/* Secondary Version Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-[13px] font-medium text-fg-body mb-1">
               {t('sections.bible.secondaryVersion')}
             </label>
             <Combobox
@@ -195,7 +195,7 @@ export function BibleTranslationsManager({
               allowDelete
               portalContainer={portalContainer}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-fg-hint mt-1">
               {t('sections.bible.secondaryDescription')}
             </p>
           </div>

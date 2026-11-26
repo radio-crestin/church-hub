@@ -26,15 +26,15 @@ export function GalleryItemCard({
       data-testid="gallery-item"
       data-media-id={media.id}
       data-kind={media.kind}
-      className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+      className="overflow-hidden rounded-xl border border-line bg-panel"
     >
-      <div className="relative aspect-video bg-gray-900">
+      <div className="relative aspect-video bg-black">
         <button
           type="button"
           onClick={onPreview}
           aria-label={t('item.preview')}
           title={t('item.preview')}
-          className="absolute inset-0 h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+          className="absolute inset-0 h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus"
         >
           <BackgroundMediaThumbnail media={media} />
           {media.kind === 'video' && (
@@ -56,16 +56,13 @@ export function GalleryItemCard({
             onClick={onDelete}
             aria-label={t('item.delete')}
             title={t('item.delete')}
-            className="absolute top-1.5 right-1.5 rounded bg-black/60 p-1.5 text-white transition-colors hover:bg-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            className="absolute top-1.5 right-1.5 rounded-lg bg-black/60 p-1.5 text-white transition-colors hover:bg-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" strokeWidth={1.5} />
           </button>
         )}
       </div>
-      <GalleryMediaMeta
-        media={media}
-        className="px-2.5 py-2 text-gray-500 dark:text-gray-400"
-      />
+      <GalleryMediaMeta media={media} className="px-2.5 py-2 text-fg-hint" />
     </div>
   )
 }

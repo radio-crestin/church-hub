@@ -135,14 +135,14 @@ export function EditVerseteTineriModal({
       onCancel={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
-      className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-lg bg-panel backdrop:bg-black/50"
     >
       <div className="flex flex-col max-h-[80vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-line">
           <div className="flex items-center gap-2">
-            <Users size={20} className="text-purple-500" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <Users size={20} className="text-fg" strokeWidth={1.5} />
+            <h2 className="text-base font-semibold text-fg">
               {t('slideTemplates.versete_tineri')}
             </h2>
           </div>
@@ -150,9 +150,9 @@ export function EditVerseteTineriModal({
             type="button"
             onClick={handleClose}
             disabled={updateMutation.isPending}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-1 rounded hover:bg-hover disabled:opacity-50"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-fg-hint" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -165,14 +165,14 @@ export function EditVerseteTineriModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
             disabled={updateMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
           >
-            <X size={16} />
+            <X size={16} strokeWidth={1.5} />
             {t('actions.cancel')}
           </button>
           <button
@@ -181,12 +181,12 @@ export function EditVerseteTineriModal({
             disabled={
               updateMutation.isPending || verseteTineriEntries.length === 0
             }
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {updateMutation.isPending ? (
-              <Loader2 size={16} className="animate-spin" />
+              <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
             ) : (
-              <Save size={16} />
+              <Save size={16} strokeWidth={1.5} />
             )}
             {t('insertSlide.save')}
           </button>

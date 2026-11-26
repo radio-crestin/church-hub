@@ -14,7 +14,7 @@ export function MultiTranslationVerse({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+        <Loader2 className="w-4 h-4 animate-spin text-fg" strokeWidth={1.5} />
       </div>
     )
   }
@@ -32,15 +32,13 @@ export function MultiTranslationVerse({
   }
 
   return (
-    <div className="mt-2 space-y-2 pl-6 border-l-2 border-indigo-200 dark:border-indigo-700">
+    <div className="mt-2 space-y-2 pl-6 border-l-2 border-line-strong">
       {validResults.map(({ translation, verse }) => (
-        <div key={translation.id} className="text-sm">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 mr-2">
+        <div key={translation.id} className="text-[13px]">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-field text-fg-label mr-2">
             {translation.abbreviation}
           </span>
-          <span className="text-gray-700 dark:text-gray-200">
-            {verse?.text}
-          </span>
+          <span className="text-fg-body">{verse?.text}</span>
         </div>
       ))}
     </div>

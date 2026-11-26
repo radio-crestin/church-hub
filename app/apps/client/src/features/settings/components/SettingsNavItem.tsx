@@ -22,20 +22,13 @@ export function SettingsNavItem({
   return (
     <Link
       to={to}
-      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+      className={`flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-colors ${
         isActive
-          ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
-          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+          ? 'bg-selected text-fg'
+          : 'text-fg-label hover:bg-hover hover:text-fg'
       }`}
     >
-      <Icon
-        size={17}
-        className={`flex-shrink-0 ${
-          isActive
-            ? 'text-indigo-600 dark:text-indigo-400'
-            : 'text-gray-400 dark:text-gray-500'
-        }`}
-      />
+      <Icon size={16} strokeWidth={1.5} className="flex-shrink-0" />
       <span className="flex-1 truncate">{label}</span>
     </Link>
   )

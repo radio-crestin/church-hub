@@ -40,7 +40,10 @@ export function SettingsSearch({
   return (
     <div className="space-y-2">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search
+          strokeWidth={1.5}
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-hint"
+        />
         <input
           ref={inputRef}
           type="text"
@@ -53,7 +56,7 @@ export function SettingsSearch({
           placeholder={t('nav.search.placeholder')}
           aria-label={t('nav.search.placeholder')}
           data-testid="settings-search"
-          className={`w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white ${
+          className={`h-8 w-full rounded-[10px] bg-field pl-9 text-[13px] text-fg outline-none placeholder:text-fg-hint focus:ring-1 focus:ring-inset focus:ring-focus ${
             query ? 'pr-9' : 'pr-3'
           }`}
         />
@@ -72,19 +75,19 @@ export function SettingsSearch({
               <button
                 type="button"
                 onClick={() => open(result)}
-                className="w-full rounded-lg px-3 py-2 text-left text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                className="w-full rounded-lg px-2.5 py-1.5 text-left text-fg-label transition-colors hover:bg-hover hover:text-fg"
               >
-                <span className="block text-sm font-medium">
+                <span className="block text-[13px] font-medium">
                   {result.label}
                 </span>
-                <span className="block truncate text-xs text-gray-400 dark:text-gray-500">
+                <span className="block truncate text-xs text-fg-hint">
                   {result.path}
                 </span>
               </button>
             </li>
           ))}
           {results.length === 0 && (
-            <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+            <li className="px-2.5 py-1.5 text-[13px] text-fg-hint">
               {t('nav.search.noResults', { query: query.trim() })}
             </li>
           )}

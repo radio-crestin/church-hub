@@ -115,7 +115,7 @@ async function expectLive(
     .poll(() => liveStep(request, program.scheduleId), { timeout: 10000 })
     .toBe(step)
   await expect(page.getByTestId(`schedule-sub-item-${step}`)).toHaveClass(
-    /ring-green-500/,
+    /ring-live/,
     { timeout: 10000 },
   )
 }

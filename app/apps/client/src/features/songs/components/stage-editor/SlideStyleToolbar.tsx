@@ -335,8 +335,8 @@ export function SlideStyleToolbar({
     () => (active: boolean) =>
       `flex items-center justify-center rounded-md border p-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
         active
-          ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-300'
-          : 'border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700'
+          ? 'border-transparent bg-selected text-fg'
+          : 'border-line text-fg-label hover:bg-hover'
       }`,
     [],
   )
@@ -344,7 +344,7 @@ export function SlideStyleToolbar({
   return (
     <div
       data-testid="slide-style-toolbar"
-      className="mb-2 flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-800"
+      className="mb-2 flex flex-wrap items-center gap-1 rounded-lg border border-line bg-panel px-2 py-1.5"
     >
       <button
         type="button"
@@ -377,7 +377,7 @@ export function SlideStyleToolbar({
         disabled={disabled}
       />
 
-      <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
+      <span className="mx-1 h-5 w-px bg-field" />
 
       {(
         [
@@ -426,7 +426,7 @@ export function SlideStyleToolbar({
         )}
       </button>
 
-      <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
+      <span className="mx-1 h-5 w-px bg-field" />
 
       {(
         [

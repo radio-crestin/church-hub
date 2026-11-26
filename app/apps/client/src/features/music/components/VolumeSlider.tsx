@@ -33,9 +33,9 @@ export function VolumeSlider({
         title={isMuted ? t('player.unmute') : t('player.mute')}
       >
         {isMuted || volume === 0 ? (
-          <VolumeX className="h-4 w-4" />
+          <VolumeX className="h-4 w-4" strokeWidth={1.5} />
         ) : (
-          <Volume2 className="h-4 w-4" />
+          <Volume2 className="h-4 w-4" strokeWidth={1.5} />
         )}
       </Button>
       <Slider
