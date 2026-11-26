@@ -58,16 +58,16 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-app p-4">
+      <div className="w-full max-w-md bg-panel border border-line rounded-xl p-6 space-y-6">
         <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
-            <Server className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          <div className="mx-auto flex items-center justify-center text-fg-label">
+            <Server strokeWidth={1.5} className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl font-semibold text-fg">
             {t('sections.apiUrl.setup.title')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-fg-label">
             {t('sections.apiUrl.setup.description')}
           </p>
         </div>
@@ -84,7 +84,7 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
           <div className="space-y-2">
             <label
               htmlFor="api-url"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-fg-body"
             >
               {t('sections.apiUrl.label')}
             </label>
@@ -99,12 +99,10 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
               }}
               disabled={isLoading}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t('sections.apiUrl.hint')}
-            </p>
+            <p className="text-xs text-fg-hint">{t('sections.apiUrl.hint')}</p>
             {hasAuthToken && (
-              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-                <KeyRound className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-sm text-fg-body">
+                <KeyRound strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
                 <span>{t('sections.apiUrl.authTokenDetected')}</span>
               </div>
             )}
@@ -117,8 +115,8 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
           )}
 
           {connectionStatus === 'success' && (
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-              <Wifi className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-sm text-fg-body">
+              <Wifi strokeWidth={1.5} className="w-4 h-4 text-ok" />
               <span>{t('sections.apiUrl.connectionSuccess')}</span>
             </div>
           )}
@@ -132,17 +130,20 @@ export function ApiUrlSetup({ onComplete }: ApiUrlSetupProps) {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2
+                    strokeWidth={1.5}
+                    className="w-4 h-4 mr-2 animate-spin"
+                  />
                   {t('sections.apiUrl.testing')}
                 </>
               ) : connectionStatus === 'error' ? (
                 <>
-                  <WifiOff className="w-4 h-4 mr-2" />
+                  <WifiOff strokeWidth={1.5} className="w-4 h-4 mr-2" />
                   {t('sections.apiUrl.retry')}
                 </>
               ) : (
                 <>
-                  <Wifi className="w-4 h-4 mr-2" />
+                  <Wifi strokeWidth={1.5} className="w-4 h-4 mr-2" />
                   {t('sections.apiUrl.testConnection')}
                 </>
               )}

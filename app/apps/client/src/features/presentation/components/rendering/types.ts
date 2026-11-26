@@ -1,3 +1,4 @@
+import type { DeckShownSlide } from '~/features/slides-deck/types'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import type {
   ContentType,
@@ -30,6 +31,8 @@ export interface ContentData {
   videoLoop?: boolean
   /** A presentation's looping background video (see `resolveScreenBackground`). */
   presentationBackground?: PresentationBackground | null
+  /** A Slides item's slide (DeckSlideRenderer). */
+  deck?: DeckShownSlide
 }
 
 export interface VerseteTineriSummaryEntry {

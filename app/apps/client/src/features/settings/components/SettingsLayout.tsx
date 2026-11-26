@@ -26,17 +26,15 @@ export function SettingsLayout() {
 
   return (
     <PagePermissionGuard permission="settings.view">
-      <div className="flex min-h-full flex-col overflow-hidden md:h-[calc(100dvh_-_3rem)] md:flex-row md:rounded-xl md:border md:border-gray-200 md:bg-white md:shadow-sm dark:md:border-gray-800 dark:md:bg-gray-900">
+      <div className="flex min-h-full flex-col overflow-hidden md:h-[calc(100dvh_-_3rem)] md:flex-row md:rounded-xl md:border md:border-line md:bg-panel">
         {/* Category rail */}
         <aside
           className={`${
             isIndex ? 'flex' : 'hidden'
-          } min-h-0 w-full shrink-0 flex-col md:flex md:border-gray-200 md:bg-white md:w-56 md:border-r lg:w-60 dark:md:border-gray-800 dark:md:bg-gray-900`}
+          } min-h-0 w-full shrink-0 flex-col md:flex md:border-line md:bg-panel md:w-56 md:border-r lg:w-60`}
         >
           <div className="shrink-0 pb-3 md:px-4 md:pt-4">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {t('title')}
-            </h1>
+            <h1 className="text-base font-semibold text-fg">{t('title')}</h1>
           </div>
           <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pb-4 md:px-3">
             <SettingsSidebar />
@@ -47,7 +45,7 @@ export function SettingsLayout() {
         <section
           className={`${
             isIndex ? 'hidden' : 'flex'
-          } min-h-0 min-w-0 flex-1 flex-col md:flex md:bg-gray-50 dark:md:bg-gray-950`}
+          } min-h-0 min-w-0 flex-1 flex-col md:flex md:bg-app`}
         >
           <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
             <div
@@ -57,9 +55,9 @@ export function SettingsLayout() {
               {!isIndex && (
                 <Link
                   to="/settings"
-                  className="mb-4 inline-flex w-fit items-center gap-2 text-sm text-gray-600 hover:text-gray-900 md:hidden dark:text-gray-400 dark:hover:text-white"
+                  className="mb-4 inline-flex w-fit items-center gap-2 text-sm text-fg-label hover:text-fg md:hidden"
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft strokeWidth={1.5} className="h-4 w-4" />
                   {t('nav.back')}
                 </Link>
               )}

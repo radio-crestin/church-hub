@@ -20,12 +20,12 @@ export function AboutSection() {
       >
         <div className="space-y-4">
           {/* Current Version */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center justify-between p-4 border border-line rounded-xl">
             <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-fg">
                 {t('sections.about.currentVersion')}
               </p>
-              <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+              <p className="text-xl font-semibold tabular-nums text-fg mt-1">
                 v{updateInfo?.currentVersion || '...'}
               </p>
             </div>
@@ -33,11 +33,12 @@ export function AboutSection() {
               <button
                 onClick={() => void checkNow()}
                 disabled={isLoading}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                className="flex h-8 items-center gap-2 px-3 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
                 title={t('sections.about.checkForUpdates')}
               >
                 <RefreshCw
                   size={16}
+                  strokeWidth={1.5}
                   className={isLoading ? 'animate-spin' : ''}
                 />
                 {t('sections.about.checkForUpdates')}
@@ -47,25 +48,25 @@ export function AboutSection() {
 
           {/* Dev instance note / Latest Version / Update Available */}
           {isDevInstance ? (
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
               <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                 {t('sections.about.devInstance')}
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
                 {t('sections.about.devInstanceDescription')}
               </p>
             </div>
           ) : updateInfo?.hasUpdate ? (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="p-4 border border-line rounded-xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  <p className="text-sm font-medium text-fg">
                     {t('sections.about.updateAvailable')}
                   </p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
+                  <p className="text-xl font-semibold tabular-nums text-fg mt-1">
                     v{updateInfo.latestVersion}
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                  <p className="text-xs text-fg-hint mt-2">
                     {t('sections.about.updateDescription')}
                   </p>
                 </div>
@@ -75,16 +76,16 @@ export function AboutSection() {
                 <Link
                   to="/settings/updates"
                   data-testid="about-open-updates"
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
+                  className="flex h-9 items-center gap-2 px-3.5 bg-primary hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
                 >
-                  <Download size={16} />
+                  <Download size={16} strokeWidth={1.5} />
                   {t('sections.about.openUpdates')}
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="p-4 border border-line rounded-xl">
+              <p className="text-sm text-fg-label">
                 {t('sections.about.upToDate')}
               </p>
             </div>
@@ -96,9 +97,9 @@ export function AboutSection() {
               href={updateInfo.releaseUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="flex items-center gap-2 text-sm text-focus hover:underline"
             >
-              <ExternalLink size={14} />
+              <ExternalLink size={14} strokeWidth={1.75} />
               {t('sections.about.viewReleaseNotes')}
             </a>
           )}

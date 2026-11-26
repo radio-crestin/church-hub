@@ -67,7 +67,7 @@ export function PairingQRCode({ token, fragment = '' }: PairingQRCodeProps) {
     <div className="flex flex-col gap-4">
       {interfaces.length > 0 && (
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="mb-2 block text-sm font-medium text-fg-body">
             {t('sections.users.modals.qrCode.networkInterface')}
           </label>
           <Combobox
@@ -81,10 +81,10 @@ export function PairingQRCode({ token, fragment = '' }: PairingQRCodeProps) {
         </div>
       )}
 
-      <div className="flex justify-center rounded-lg bg-white p-4">
+      <div className="flex justify-center rounded-lg bg-panel p-4">
         {isLoading || !qrDataUrl ? (
           <div className="flex h-64 w-64 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600" />
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-fg-label" />
           </div>
         ) : (
           <img
@@ -98,21 +98,21 @@ export function PairingQRCode({ token, fragment = '' }: PairingQRCodeProps) {
       </div>
 
       <div>
-        <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-2 text-sm text-fg-label">
           {t('sections.users.modals.qrCode.manualUrl')}
         </p>
-        <div className="flex items-center gap-2 rounded-lg bg-gray-100 p-2 dark:bg-gray-700">
-          <code className="flex-1 break-all text-xs text-gray-800 dark:text-gray-200">
+        <div className="flex items-center gap-2 rounded-lg bg-field p-2">
+          <code className="flex-1 break-all text-xs text-fg-body">
             {authUrl}
           </code>
           <button
             type="button"
             onClick={copyUrl}
-            className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-600"
+            className="rounded p-1 hover:bg-hover"
             title={t('sections.users.actions.copyUrl')}
             aria-label={t('sections.users.actions.copyUrl')}
           >
-            <Copy size={16} className="text-gray-600 dark:text-gray-400" />
+            <Copy strokeWidth={1.5} size={16} className="text-fg-label" />
           </button>
         </div>
       </div>

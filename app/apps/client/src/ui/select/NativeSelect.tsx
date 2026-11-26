@@ -20,7 +20,7 @@ export function NativeSelect<T extends string>({
       value={value}
       data-testid={testId}
       onChange={(e) => onChange(e.target.value as T)}
-      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+      className="w-full rounded-[10px] bg-field px-3 py-2 text-base md:text-sm text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>

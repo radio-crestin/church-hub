@@ -144,7 +144,7 @@ export function ShortcutRecorder({
       <div className="flex-1 relative">
         {/* MIDI badge indicator */}
         {isMIDI && !isRecording && (
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+          <span className="absolute left-2 top-1/2 -translate-y-1/2 px-[5px] h-[18px] leading-[18px] text-[11px] font-medium bg-keycap shadow-[inset_0_0_0_1px_var(--color-keycap-ring)] text-fg-label rounded-[5px]">
             MIDI
           </span>
         )}
@@ -157,25 +157,25 @@ export function ShortcutRecorder({
           onFocus={handleFocus}
           onBlur={handleBlur}
           className={`
-            w-full py-2 text-sm
-            border rounded-lg
-            bg-white dark:bg-gray-700
-            text-gray-900 dark:text-white
-            placeholder:text-gray-400 dark:placeholder:text-gray-500
-            focus:outline-none focus:ring-2
+            w-full h-9 text-sm
+            border rounded-[10px]
+            bg-field
+            text-fg
+            placeholder:text-fg-hint
+            focus:outline-none focus:ring-1 focus:ring-inset
             cursor-pointer
             ${isMIDI && !isRecording ? 'pl-14 pr-3' : 'px-3'}
             ${
               error
-                ? 'border-red-500 focus:ring-red-500'
+                ? 'border-red-600 focus:ring-red-600'
                 : isRecording
-                  ? 'border-indigo-500 focus:ring-indigo-500'
-                  : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500'
+                  ? 'border-focus focus:ring-focus'
+                  : 'border-transparent focus:border-focus focus:ring-focus'
             }
           `}
         />
         {isRecording && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-indigo-500 animate-pulse">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-fg-hint">
             {t(`${translationPrefix}.recording`, {
               defaultValue: 'Recording...',
             })}
@@ -188,10 +188,10 @@ export function ShortcutRecorder({
       <button
         type="button"
         onClick={onRemove}
-        className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+        className="h-8 w-8 inline-flex items-center justify-center text-fg-label hover:text-red-600 dark:hover:text-red-400 hover:bg-hover rounded-lg transition-colors"
         title={t(`${translationPrefix}.removeShortcut`)}
       >
-        <X size={18} />
+        <X size={16} strokeWidth={1.5} />
       </button>
     </div>
   )

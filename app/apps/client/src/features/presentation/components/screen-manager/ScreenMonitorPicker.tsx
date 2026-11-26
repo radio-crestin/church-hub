@@ -95,10 +95,10 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
   return (
     <div className="py-2 space-y-2">
       <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        <p className="text-sm font-medium text-fg">
           {t('presentation:screens.monitor.label')}
         </p>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-0.5 text-xs text-fg-hint">
           {t('presentation:screens.monitor.description')}
         </p>
       </div>
@@ -130,7 +130,7 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
           onClick={() => identifyMonitors()}
           title={t('presentation:screens.monitor.identifyTooltip')}
         >
-          <ScanSearch size={16} />
+          <ScanSearch size={16} strokeWidth={1.5} />
           <span className="ml-1">
             {t('presentation:screens.monitor.identify')}
           </span>

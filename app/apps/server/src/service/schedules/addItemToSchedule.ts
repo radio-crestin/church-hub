@@ -5,7 +5,11 @@ import { formatEntryReference } from './formatEntryReference'
 import { getEntryVerses } from './getEntryVerses'
 import { getScheduleItemById } from './getSchedules'
 import { updateScheduleSearchIndex } from './search'
-import type { AddToScheduleInput, ScheduleItem } from './types'
+import type {
+  AddToScheduleInput,
+  ScheduleItem,
+  ScheduleItemType,
+} from './types'
 import { getDatabase } from '../../db'
 import {
   scheduleBiblePassageVerses,
@@ -14,7 +18,7 @@ import {
   scheduleVerseteTineriEntries,
 } from '../../db/schema'
 import { getVerseRange, getVersesAcrossChapters } from '../bible'
-import { parseItemConfig } from '../schedule-items'
+import { type ConfigurableItemType, parseItemConfig } from '../schedule-items'
 
 const DEBUG = process.env.DEBUG === 'true'
 
@@ -49,11 +53,27 @@ function formatPassageReference(
 }
 
 /**
- * Adds an item (song, slide, or bible_passage) to a schedule
+ * Adds an item (song, slide, bible_passage, an item with settings or a Slides
+ * deck) to a schedule. Settings that don't fit the item throw, before anything
+ * is stored, so the API can say what is wrong with them.
  */
 export function addItemToSchedule(
   input: AddToScheduleInput,
 ): ScheduleItem | null {
+  // An item with settings (a Slides item's deck is its settings).
+  const configured: {
+    itemType: ConfigurableItemType & ScheduleItemType
+    itemConfig: unknown
+  } | null =
+    input.slides !== undefined
+      ? { itemType: 'slides', itemConfig: input.slides }
+      : (input.media ?? null)
+  const mediaConfig = configured
+    ? JSON.stringify(
+        parseItemConfig(configured.itemType, configured.itemConfig),
+      )
+    : null
+
   try {
     // A Bible passage is no longer an item type of its own: it is stored as one
     // "Versete Biblice" slide holding the whole passage, with no person name.
@@ -64,13 +84,6 @@ export function addItemToSchedule(
         ? [biblePassageToVerseteTineriEntry(input.biblePassage)]
         : undefined)
 
-    // An item with settings: refused before anything moves when they are wrong.
-    const mediaConfig = input.media
-      ? JSON.stringify(
-          parseItemConfig(input.media.itemType, input.media.itemConfig),
-        )
-      : null
-
     const isSong = input.songId !== undefined
     const isBiblePassage = input.biblePassage !== undefined
     const isVerseteTineri = verseteTineriEntries !== undefined
@@ -78,7 +91,7 @@ export function addItemToSchedule(
       input.slideType === 'scene' && input.obsSceneName !== undefined
 
     let itemTypeStr = 'slide'
-    if (input.media) itemTypeStr = input.media.itemType
+    if (configured) itemTypeStr = configured.itemType
     else if (isSong) itemTypeStr = 'song'
     else if (isVerseteTineri) itemTypeStr = 'versete_tineri'
     else if (isScene) itemTypeStr = 'scene'
@@ -131,12 +144,12 @@ export function addItemToSchedule(
     // Insert the item
     let itemId: number
 
-    if (input.media && mediaConfig) {
+    if (configured && mediaConfig) {
       const result = db
         .insert(scheduleItems)
         .values({
           scheduleId: input.scheduleId,
-          itemType: input.media.itemType,
+          itemType: configured.itemType,
           itemConfig: mediaConfig,
           sortOrder: targetOrder,
           createdAt: now,

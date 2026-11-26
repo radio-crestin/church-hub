@@ -1,6 +1,7 @@
 import { requirePermission } from '../middleware/permissions'
 import type { RequestContext } from '../middleware/types'
 import { presentStepAt, repickSchedule } from '../service/schedule-automation'
+import { refreshPresentedDeck } from '../service/schedule-automation/refreshPresentedDeck'
 import {
   type MusicItemConfig,
   startMusicItems,
@@ -22,6 +23,7 @@ const STEP_PATH = /^\/api\/schedules\/(\d+)\/steps\/(\d+)\/present$/
  * A presentation's items with settings (music, video, verses):
  *
  * - PUT  /api/schedules/:id/items/:itemId/config  `{ itemConfig }` its settings
+ *   (a deck's slide on screen is put up again from the new deck)
  * - POST /api/schedules/:id/items/:itemId/play    a music item plays now
  * - POST /api/schedules/:id/repick                new random verses and videos
  * - POST /api/schedules/:id/steps/:index/present  a step goes up, built by the
@@ -63,8 +65,14 @@ export async function handleScheduleItemRoutes(
       body?.itemConfig,
     )
     if (!result.success) return respond(400, { error: result.error })
-    repickSchedule(Number(config[1]))
-    return respond(200, { data: getScheduleItemById(Number(config[2])) })
+    const item = getScheduleItemById(Number(config[2]))
+    // A deck changes nothing random: its slide on screen shows the edit.
+    if (item?.itemType === 'slides') {
+      await refreshPresentedDeck(Number(config[1]), item.id)
+    } else {
+      repickSchedule(Number(config[1]))
+    }
+    return respond(200, { data: item })
   }
 
   const play = pathname.match(PLAY_PATH)

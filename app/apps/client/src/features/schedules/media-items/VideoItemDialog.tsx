@@ -46,7 +46,7 @@ export function VideoItemDialog({
   return (
     <ItemDialog
       title={t('mediaItems.video.title')}
-      icon={<Film size={20} className="text-sky-500" />}
+      icon={<Film size={16} strokeWidth={1.5} className="text-fg-label" />}
       testId="video-item-dialog"
       canSave={config !== null}
       isSaving={isSaving}
@@ -63,11 +63,9 @@ export function VideoItemDialog({
         ]}
       />
       {videos.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t('mediaItems.video.noVideos')}
-        </p>
+        <p className="text-sm text-fg-hint">{t('mediaItems.video.noVideos')}</p>
       ) : source === 'random' ? (
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-fg-label">
           {t('mediaItems.video.randomDescription', { count: videos.length })}
         </p>
       ) : (
@@ -84,16 +82,16 @@ export function VideoItemDialog({
               data-testid="video-item-option"
               data-media-id={video.id}
               onClick={() => setMediaId(video.id)}
-              className={`relative aspect-video overflow-hidden rounded-lg border-2 bg-black ${
+              className={`relative aspect-video overflow-hidden rounded-lg bg-black ${
                 video.id === mediaId
-                  ? 'border-indigo-600'
-                  : 'border-transparent hover:border-gray-300'
+                  ? 'ring-2 ring-fg ring-offset-1 ring-offset-panel'
+                  : 'ring-1 ring-line hover:ring-line-strong'
               }`}
             >
               <BackgroundMediaThumbnail media={video} />
               {video.id === mediaId && (
-                <span className="absolute right-1 top-1 rounded-full bg-indigo-600 p-0.5 text-white">
-                  <Check size={14} />
+                <span className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white">
+                  <Check size={14} strokeWidth={1.75} />
                 </span>
               )}
             </button>

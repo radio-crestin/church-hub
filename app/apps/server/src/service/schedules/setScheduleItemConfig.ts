@@ -9,9 +9,9 @@ import { type ConfigurableItemType, parseItemConfig } from '../schedule-items'
 const logger = createLogger('schedules')
 
 /**
- * Changes an item's settings: a music, video or verses item's, or how many of
- * a Versete Biblice slide's passages it shows (null: all, in order). Settings
- * that don't fit the item are refused.
+ * Changes an item's settings: a music, video or verses item's, a Slides
+ * item's deck, or how many of a Versete Biblice slide's passages it shows
+ * (null: all, in order). Settings that don't fit the item are refused.
  */
 export function setScheduleItemConfig(
   scheduleId: number,
@@ -36,7 +36,8 @@ export function setScheduleItemConfig(
   const type: ConfigurableItemType | null =
     item.itemType === 'music' ||
     item.itemType === 'video' ||
-    item.itemType === 'verses'
+    item.itemType === 'verses' ||
+    item.itemType === 'slides'
       ? item.itemType
       : item.slideType === 'versete_tineri'
         ? 'versete'

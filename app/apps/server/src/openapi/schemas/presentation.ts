@@ -50,6 +50,14 @@ export const presentationSchemas = {
           data: { $ref: '#/components/schemas/TemporarySongContent' },
         },
       },
+      {
+        type: 'object',
+        required: ['type', 'data'],
+        properties: {
+          type: { type: 'string', enum: ['deck_slide'] },
+          data: { $ref: '#/components/schemas/TemporaryDeckSlideContent' },
+        },
+      },
     ],
   },
   TemporaryBibleContent: {

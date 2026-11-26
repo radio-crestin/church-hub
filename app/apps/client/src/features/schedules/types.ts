@@ -1,3 +1,4 @@
+import type { SlideDeck } from '~/features/slides-deck/types'
 import type {
   ItemConfig,
   MediaItemType,
@@ -17,6 +18,8 @@ export type ScheduleItemType =
   | 'music'
   | 'video'
   | 'verses'
+  /** A deck of our own slides (features/slides-deck), its `itemConfig`. */
+  | 'slides'
 
 /**
  * Slide template types for standalone slides (same as queue)
@@ -263,6 +266,8 @@ export interface AddToScheduleInput {
   obsSceneName?: string
   /** A music, video or verses item and its settings. */
   media?: { itemType: MediaItemType; itemConfig: ItemConfig }
+  /** A Slides item: its deck. */
+  slides?: SlideDeck
 }
 
 /**

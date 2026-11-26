@@ -1,3 +1,4 @@
+import { Mic } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -69,10 +70,12 @@ export function TranscriptionDisplay({
 
   if (!hasAny) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500">
+      <div className="flex-1 flex items-center justify-center text-fg-hint">
         <div className="text-center">
-          <div className="text-4xl mb-3 opacity-50">🎙️</div>
-          <p className="text-lg">{t('transcription.waitingForSpeech')}</p>
+          <Mic className="mx-auto mb-3 h-8 w-8" strokeWidth={1.25} />
+          <p className="text-base font-medium text-fg-label">
+            {t('transcription.waitingForSpeech')}
+          </p>
           <p className="text-sm mt-1">{t('transcription.startSpeaking')}</p>
         </div>
       </div>
@@ -90,12 +93,7 @@ export function TranscriptionDisplay({
 
 function BucketCard({ bucket }: { bucket: Bucket }) {
   const isSource = bucket.variant === 'source'
-  const accent = isSource
-    ? 'border-gray-300 dark:border-gray-600'
-    : 'border-blue-400 dark:border-blue-500'
-  const labelColor = isSource
-    ? 'text-gray-500 dark:text-gray-400'
-    : 'text-blue-600 dark:text-blue-400'
+  const labelColor = isSource ? 'text-fg-hint' : 'text-fg-label'
 
   // Fill-then-clear: keep the latest "window" of the incoming stream that
   // fits within two visual lines. We measure the rendered text height
@@ -140,31 +138,23 @@ function BucketCard({ bucket }: { bucket: Bucket }) {
   }, [windowText])
 
   return (
-    <div
-      className={`rounded-xl border-l-4 ${accent} bg-gray-50 dark:bg-gray-900/40 px-4 py-3`}
-    >
+    <div className="rounded-lg border border-line bg-app px-4 py-3">
       <div className="flex items-baseline gap-2 mb-1.5">
-        <span
-          className={`text-[10px] font-bold uppercase tracking-wider ${labelColor}`}
-        >
+        <span className={`text-xs font-semibold ${labelColor}`}>
           {bucket.label}
         </span>
-        <span className="text-[10px] text-gray-400 dark:text-gray-500">
-          {bucket.fullName}
-        </span>
+        <span className="text-xs text-fg-hint">{bucket.fullName}</span>
       </div>
       <p
         ref={measureRef}
-        className="text-xl md:text-2xl font-semibold leading-snug text-gray-900 dark:text-white break-words overflow-hidden"
+        className="text-xl md:text-2xl font-semibold leading-snug text-fg break-words overflow-hidden"
         style={{
           // exactly 2 lines worth, matching leading-snug (≈ 1.375)
           height: 'calc(2 * 1.375 * 1em)',
         }}
       >
         {windowText || (
-          <span className="text-gray-400 dark:text-gray-600 font-normal text-base">
-            —
-          </span>
+          <span className="text-fg-hint font-normal text-base">—</span>
         )}
       </p>
     </div>

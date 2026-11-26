@@ -53,13 +53,13 @@ export function TagForm({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-md w-full"
+      className="fixed inset-0 m-auto p-0 rounded-xl shadow-popover backdrop:bg-black/50 bg-panel max-w-md w-full"
       onClose={onCancel}
       onClick={handleDialogClick}
     >
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {tag
               ? t('sections.tags.modals.edit.title')
               : t('sections.tags.modals.create.title')}
@@ -67,7 +67,7 @@ export function TagForm({
           <button
             type="button"
             onClick={onCancel}
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            className="text-fg-hint hover:text-fg"
           >
             <X size={20} />
           </button>
@@ -75,7 +75,7 @@ export function TagForm({
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('sections.tags.tagName')}
             </label>
             <input
@@ -84,7 +84,7 @@ export function TagForm({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('sections.tags.tagNamePlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-line rounded-lg bg-field text-fg focus:ring-2 focus:ring-focus focus:border-focus"
               required
             />
           </div>
@@ -93,14 +93,14 @@ export function TagForm({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
             >
               {t('common:buttons.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading || !name.trim()}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {tag
                 ? t('sections.tags.modals.edit.submit')

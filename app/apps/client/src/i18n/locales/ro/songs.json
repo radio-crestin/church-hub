@@ -244,6 +244,7 @@
     "songTitle": "Titlul cântării",
     "createSong": "Creează cântare",
     "dropHint": "Lasă aici fișierul PPTX ca să-l imporți ca o cântare",
+    "dropHintPresentation": "Lasă fișierul aici ca să imporți PowerPoint-ul",
     "slideNumber": "Slide {{number}}",
     "duplicateIdentical": "Există deja o cântare „{{title}}” cu același conținut. Importul a fost omis.",
     "duplicateDifferent": "Există deja o cântare „{{title}}”, dar cu alt conținut. O imporți ca o cântare nouă, cu titlu numerotat automat?",

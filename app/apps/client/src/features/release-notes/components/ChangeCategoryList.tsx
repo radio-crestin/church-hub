@@ -5,25 +5,20 @@ import type { ChangeEntry } from '../types'
 interface ChangeCategoryListProps {
   icon: LucideIcon
   label: string
-  /** Tailwind text-color class for the heading + icon, e.g. "text-green-600". */
-  accentClassName: string
   entries: ChangeEntry[]
 }
 
 export function ChangeCategoryList({
   icon: Icon,
   label,
-  accentClassName,
   entries,
 }: ChangeCategoryListProps) {
   if (entries.length === 0) return null
 
   return (
     <div className="space-y-1.5">
-      <div
-        className={`flex items-center gap-1.5 text-xs font-semibold ${accentClassName}`}
-      >
-        <Icon size={14} />
+      <div className="flex items-center gap-1.5 text-xs font-medium text-fg-label">
+        <Icon size={14} strokeWidth={1.75} />
         <span>
           {label} ({entries.length})
         </span>
@@ -32,16 +27,12 @@ export function ChangeCategoryList({
         {entries.map((entry, index) => (
           <li
             key={`${index}-${entry.scope ?? ''}-${entry.message}`}
-            className="text-sm text-gray-700 dark:text-gray-300 flex gap-2"
+            className="text-sm text-fg-body flex gap-2"
           >
-            <span className="text-gray-400 dark:text-gray-600 select-none">
-              •
-            </span>
+            <span className="text-fg-hint select-none">•</span>
             <span>
               {entry.scope && (
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {entry.scope}:{' '}
-                </span>
+                <span className="font-medium text-fg">{entry.scope}: </span>
               )}
               {entry.message}
             </span>

@@ -35,6 +35,9 @@ import {
 import { parsePptViaServer } from '../utils/parsePptViaServer'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
+const PPTX_MIME =
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+
 interface PendingImport {
   type: 'pptx' | 'opensong'
   title: string
@@ -43,12 +46,27 @@ interface PendingImport {
   opensongData?: { parsed: ParsedOpenSong; filePath: string }
 }
 
+/**
+ * Takes a dropped .pptx instead of the song import: `file` is the dropped
+ * file, `importAsSong` the song import the drop would have done.
+ */
+export type PptxDropHandler = (
+  file: File,
+  importAsSong: () => Promise<void>,
+) => void
+
 interface FileDropZoneContextValue {
   isDragging: boolean
+  /**
+   * A page that offers more for a dropped .pptx (a presentation: its slides)
+   * takes such drops while it is open; null gives them back to the song import.
+   */
+  setPptxDropHandler: (handler: PptxDropHandler | null) => void
 }
 
 const FileDropZoneContext = createContext<FileDropZoneContextValue>({
   isDragging: false,
+  setPptxDropHandler: () => {},
 })
 
 export function useFileDropZone() {
@@ -197,6 +215,15 @@ export function FileDropZoneProvider({ children }: Props) {
   const dragOverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const upsertMutation = useUpsertSong()
   const openSongFile = useOpenSongFile()
+  const pptxDropHandlerRef = useRef<PptxDropHandler | null>(null)
+  // Whether the open page takes .pptx drops, and whether the file being
+  // dragged is one: the overlay then does not promise a song.
+  const [hasPptxDropHandler, setHasPptxDropHandler] = useState(false)
+  const [isDraggingPptx, setIsDraggingPptx] = useState(false)
+  const setPptxDropHandler = useCallback((handler: PptxDropHandler | null) => {
+    pptxDropHandlerRef.current = handler
+    setHasPptxDropHandler(handler !== null)
+  }, [])
 
   // State for duplicate dialog
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null)
@@ -256,6 +283,21 @@ export function FileDropZoneProvider({ children }: Props) {
       }
     },
     [navigateToSong, upsertMutation],
+  )
+
+  // A dropped .pptx: the open page's own handler when it has one (a
+  // presentation asks whether it becomes slides or a song), else a song.
+  const handleDroppedPptx = useCallback(
+    async (file: File, filePath: string | null) => {
+      const importAsSong = async () => {
+        const parsed = await parsePptxFile(file, filePath ?? file.name)
+        await importPptxAsSong(parsed, filePath)
+      }
+      const handler = pptxDropHandlerRef.current
+      if (handler) handler(file, importAsSong)
+      else await importAsSong()
+    },
+    [importPptxAsSong],
   )
 
   // Handle OpenSong file import
@@ -546,6 +588,11 @@ export function FileDropZoneProvider({ children }: Props) {
         )
         if (hasFile) {
           setIsDragging(true)
+          setIsDraggingPptx(
+            Array.from(e.dataTransfer.items).some(
+              (item) => item.type === PPTX_MIME,
+            ),
+          )
           armDragOverTimer()
         }
       }
@@ -600,10 +647,9 @@ export function FileDropZoneProvider({ children }: Props) {
       const pptxFile = files.find((f) => f.name.toLowerCase().endsWith('.pptx'))
       if (pptxFile) {
         try {
-          const parsed = await parsePptxFile(pptxFile)
           // @ts-expect-error - path property may be available in Tauri
           const filePath = pptxFile.path as string | undefined
-          await importPptxAsSong(parsed, filePath || null)
+          await handleDroppedPptx(pptxFile, filePath || null)
         } catch (error) {
           // biome-ignore lint/suspicious/noConsole: error logging
           console.error('[file-import] Failed to parse PPTX:', error)
@@ -680,6 +726,7 @@ export function FileDropZoneProvider({ children }: Props) {
     }
   }, [
     importPptxAsSong,
+    handleDroppedPptx,
     handleOpenSongFile,
     handleChurchProgramFile,
     openSongFile,
@@ -699,8 +746,8 @@ export function FileDropZoneProvider({ children }: Props) {
 
           if (lowerPath.endsWith('.pptx')) {
             const fileData = await readFile(filePath)
-            const parsed = await parsePptxFile(fileData.buffer, filePath)
-            await importPptxAsSong(parsed, filePath)
+            const name = filePath.split(/[/\\]/).pop() ?? filePath
+            await handleDroppedPptx(new File([fileData], name), filePath)
             return // Process only the first valid file
           }
 
@@ -738,6 +785,7 @@ export function FileDropZoneProvider({ children }: Props) {
     },
     [
       importPptxAsSong,
+      handleDroppedPptx,
       handleOpenSongFile,
       handleChurchProgramFile,
       openSongFile,
@@ -757,7 +805,15 @@ export function FileDropZoneProvider({ children }: Props) {
       try {
         const webview = getCurrentWebview()
         unlisten = await webview.onDragDropEvent(async (event) => {
-          if (event.payload.type === 'over') {
+          if (event.payload.type === 'enter') {
+            // Files dragged into the window: their paths tell what they are
+            setIsDragging(true)
+            setIsDraggingPptx(
+              event.payload.paths.some((path) =>
+                path.toLowerCase().endsWith('.pptx'),
+              ),
+            )
+          } else if (event.payload.type === 'over') {
             // User is hovering files over the window
             setIsDragging(true)
           } else if (event.payload.type === 'drop') {
@@ -923,15 +979,22 @@ export function FileDropZoneProvider({ children }: Props) {
   )
 
   return (
-    <FileDropZoneContext.Provider value={{ isDragging }}>
+    <FileDropZoneContext.Provider value={{ isDragging, setPptxDropHandler }}>
       {children}
 
       {/* Drag overlay */}
       {isDragging && (
-        <div className="fixed inset-0 z-50 bg-indigo-500/20 border-4 border-dashed border-indigo-500 pointer-events-none flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-xl">
-            <p className="text-xl font-semibold text-gray-900 dark:text-white">
-              {t('pptxImport.dropHint')}
+        <div
+          data-testid="file-drop-overlay"
+          className="fixed inset-0 z-50 bg-app/70 border-2 border-dashed border-focus pointer-events-none flex items-center justify-center"
+        >
+          <div className="bg-panel rounded-lg p-8 shadow-popover">
+            <p className="text-xl font-semibold text-fg">
+              {t(
+                hasPptxDropHandler && isDraggingPptx
+                  ? 'pptxImport.dropHintPresentation'
+                  : 'pptxImport.dropHint',
+              )}
             </p>
           </div>
         </div>

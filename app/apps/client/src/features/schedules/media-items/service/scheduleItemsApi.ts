@@ -1,3 +1,4 @@
+import type { PresentationState } from '~/features/presentation'
 import { fetcher } from '~/utils/fetcher'
 import type { ScheduleItem } from '../../types'
 import type { ItemConfig } from '../types'
@@ -40,12 +41,18 @@ export async function repickSchedule(scheduleId: number): Promise<void> {
   await fetcher(`/api/schedules/${scheduleId}/repick`, { method: 'POST' })
 }
 
-/** A step of the presentation goes up, built by the server (a video). */
+/**
+ * A step of the presentation goes up, built by the server (a video, a deck's
+ * slide); answers with the presentation state.
+ */
 export async function presentScheduleStep(
   scheduleId: number,
   stepIndex: number,
-): Promise<void> {
-  await fetcher(`/api/schedules/${scheduleId}/steps/${stepIndex}/present`, {
-    method: 'POST',
-  })
+): Promise<PresentationState> {
+  const response = await fetcher<ApiResponse<PresentationState>>(
+    `/api/schedules/${scheduleId}/steps/${stepIndex}/present`,
+    { method: 'POST' },
+  )
+  if (!response.data) throw new Error(response.error ?? 'Step not presented')
+  return response.data
 }

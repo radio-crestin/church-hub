@@ -17,10 +17,10 @@ export function SegmentedControl<T extends string>({
           key={option.value}
           type="button"
           aria-pressed={value === option.value}
-          className={`flex-1 min-w-0 py-1.5 text-xs font-medium rounded ${
+          className={`flex-1 min-w-0 h-8 text-sm font-medium rounded-lg transition-colors ${
             value === option.value
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              ? 'bg-selected text-fg'
+              : 'bg-field text-fg-label hover:bg-hover hover:text-fg'
           }`}
           onClick={() => onChange(option.value)}
         >

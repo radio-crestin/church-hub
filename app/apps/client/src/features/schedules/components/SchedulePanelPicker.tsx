@@ -60,9 +60,9 @@ export function SchedulePanelPicker({
             onClick={onNewProgram}
             data-testid="schedule-picker-new"
             aria-label={t('panel.newSchedule')}
-            className="shrink-0 p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 transition-colors"
+            className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </Tooltip>
       )}

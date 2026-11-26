@@ -160,7 +160,7 @@ export function ScreenExportModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-md w-full"
+      className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel max-w-md w-full"
       onClose={onClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
@@ -170,23 +170,23 @@ export function ScreenExportModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="absolute top-4 right-4 flex items-center justify-center h-8 w-8 rounded-lg text-fg-label hover:bg-hover hover:text-fg"
         >
-          <X className="w-5 h-5" />
+          <X size={16} strokeWidth={1.5} />
         </button>
 
         {/* Header */}
         <div className="mb-4 pr-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {t('sections.screens.export.title')}
           </h2>
-          <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+          <span className="inline-block mt-1 text-xs text-fg-hint">
             {t('sections.screens.export.options.staticFile.recommended')}
           </span>
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-sm text-fg-label mb-6">
           {t('sections.screens.export.description')}
         </p>
 
@@ -195,10 +195,10 @@ export function ScreenExportModal({
           <div className="space-y-3 mb-6">
             {/* URL Option */}
             <label
-              className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                 selectedMode === 'url'
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-transparent bg-selected'
+                  : 'border-line hover:border-line-strong'
               }`}
             >
               <input
@@ -207,16 +207,20 @@ export function ScreenExportModal({
                 value="url"
                 checked={selectedMode === 'url'}
                 onChange={() => setSelectedMode('url')}
-                className="mt-1 accent-indigo-600"
+                className="mt-1 accent-primary"
               />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <ExternalLink className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <ExternalLink
+                    size={16}
+                    strokeWidth={1.5}
+                    className="text-fg-label"
+                  />
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.screens.export.options.url.title')}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-fg-hint mt-1">
                   {t('sections.screens.export.options.url.description')}
                 </p>
               </div>
@@ -224,10 +228,10 @@ export function ScreenExportModal({
 
             {/* Static File Option */}
             <label
-              className={`flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                 selectedMode === 'staticFile'
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-transparent bg-selected'
+                  : 'border-line hover:border-line-strong'
               }`}
             >
               <input
@@ -236,16 +240,20 @@ export function ScreenExportModal({
                 value="staticFile"
                 checked={selectedMode === 'staticFile'}
                 onChange={() => setSelectedMode('staticFile')}
-                className="mt-1 accent-indigo-600"
+                className="mt-1 accent-primary"
               />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <FileCode className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <FileCode
+                    size={16}
+                    strokeWidth={1.5}
+                    className="text-fg-label"
+                  />
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.screens.export.options.staticFile.title')}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-fg-hint mt-1">
                   {t('sections.screens.export.options.staticFile.description')}
                 </p>
               </div>
@@ -256,7 +264,7 @@ export function ScreenExportModal({
         {/* Server URL Selection - only show for static file mode */}
         {!isSuccess && selectedMode === 'staticFile' && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-fg-label mb-2">
               {t('sections.screens.export.serverUrl.label')}
             </label>
 
@@ -282,19 +290,17 @@ export function ScreenExportModal({
             )}
 
             {/* Show the resulting URL */}
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-xs text-fg-hint">
               {t('sections.screens.export.serverUrl.result')}:{' '}
-              <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">
-                {serverUrl}
-              </code>
+              <code className="bg-field px-1 rounded">{serverUrl}</code>
             </p>
           </div>
         )}
 
         {/* Note about OBS */}
         {!isSuccess && selectedMode === 'staticFile' && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-6">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+          <div className="bg-field rounded-lg p-3 mb-6">
+            <p className="text-sm text-fg-body">
               {t('sections.screens.export.note')}
             </p>
           </div>
@@ -303,17 +309,17 @@ export function ScreenExportModal({
         {/* Success State */}
         {isSuccess && filePath && (
           <div className="mb-6">
-            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-3">
-              <Check className="w-5 h-5" />
+            <div className="flex items-center gap-2 text-fg mb-3">
+              <Check size={16} strokeWidth={1.5} className="text-ok" />
               <span className="font-medium">
                 {t('sections.screens.export.success')}
               </span>
             </div>
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+            <div className="bg-field rounded-lg p-3">
+              <p className="text-xs text-fg-hint mb-1">
                 {t('sections.screens.export.filePath', { path: '' })}
               </p>
-              <code className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
+              <code className="text-sm font-mono text-fg break-all">
                 {filePath}
               </code>
             </div>
@@ -328,11 +334,11 @@ export function ScreenExportModal({
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 pt-4 border-t border-line">
           {isSuccess ? (
             <>
               <Button variant="secondary" onClick={handleOpenFolder}>
-                <FolderOpen className="w-4 h-4 mr-2" />
+                <FolderOpen size={16} strokeWidth={1.5} className="mr-2" />
                 {t('sections.screens.export.openFolder')}
               </Button>
               <Button onClick={onClose}>{t('common:buttons.done')}</Button>
@@ -353,7 +359,11 @@ export function ScreenExportModal({
               </Button>
               <Button onClick={handleExport} disabled={isExporting}>
                 {isExporting && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2
+                    size={16}
+                    strokeWidth={1.5}
+                    className="mr-2 animate-spin"
+                  />
                 )}
                 {isExporting
                   ? t('sections.screens.export.generating')

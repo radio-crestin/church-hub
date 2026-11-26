@@ -40,23 +40,19 @@ function Choice({
       disabled={disabled}
       data-testid={testId}
       aria-pressed={selected}
-      className={`relative flex min-w-0 flex-col gap-1.5 rounded-lg border-2 p-2 text-left transition-colors disabled:opacity-60 ${
-        selected
-          ? 'border-indigo-500 ring-2 ring-indigo-500/30'
-          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+      className={`relative flex min-w-0 flex-col gap-1.5 rounded-lg border border-line p-2 text-left transition-colors disabled:opacity-60 ${
+        selected ? 'bg-selected' : 'hover:bg-hover'
       }`}
     >
       {children}
-      <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
-        {label}
-      </span>
-      {detail && (
-        <span className="-mt-1 text-xs text-gray-500 dark:text-gray-400">
-          {detail}
-        </span>
-      )}
+      <span className="truncate text-sm font-medium text-fg">{label}</span>
+      {detail && <span className="-mt-1 text-xs text-fg-hint">{detail}</span>}
       {selected && (
-        <Check className="absolute top-3 right-3 h-5 w-5 rounded-full bg-indigo-600 p-0.5 text-white" />
+        <Check
+          size={20}
+          strokeWidth={2}
+          className="absolute top-3 right-3 rounded-full bg-panel p-0.5 text-fg"
+        />
       )}
     </button>
   )
@@ -89,8 +85,12 @@ export function TemplateGrid({
           disabled={disabled}
           testId="template-choice-none"
         >
-          <span className="flex aspect-video items-center justify-center rounded-md bg-gray-100 dark:bg-gray-900">
-            <LayoutTemplate className="h-6 w-6 text-gray-400" />
+          <span className="flex aspect-video items-center justify-center rounded-md bg-field">
+            <LayoutTemplate
+              size={24}
+              strokeWidth={1.5}
+              className="text-fg-hint"
+            />
           </span>
         </Choice>
       )}

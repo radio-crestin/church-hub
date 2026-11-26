@@ -1,3 +1,4 @@
+import type { DeckSlide } from '~/features/slides-deck/types'
 import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 
 /**
@@ -266,6 +267,7 @@ export type TemporaryContent = (
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
   | { type: 'video'; data: TemporaryVideoContent }
+  | { type: 'deck_slide'; data: TemporaryDeckSlideContent }
 ) & {
   /**
    * The looping video a presentation shows behind its steps after a video
@@ -290,6 +292,27 @@ export interface TemporaryVideoContent {
   loop?: boolean
   nextItemPreview?: NextItemPreview
   scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/**
+ * One slide of a presentation's Slides item, with its click groups up to
+ * `buildIndex` played (the server's TemporaryDeckSlideContent).
+ */
+export interface TemporaryDeckSlideContent {
+  itemId: number
+  /** The deck's design size. */
+  width: number
+  height: number
+  slide: DeckSlide
+  slideIndex: number
+  slideCount: number
+  /** 0: the slide as it comes in; each Down plays one more click group. */
+  buildIndex: number
+  nextItemPreview?: NextItemPreview
+  scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -427,6 +450,8 @@ export type ContentType =
   | 'versete_tineri'
   | 'screen_share'
   | 'empty'
+  /** A Slides item's slide: drawn with its own design, no layout of a template. */
+  | 'deck_slide'
 
 /**
  * Position unit - pixels or percentage
@@ -766,6 +791,8 @@ export interface ContentConfigMap {
   versete_tineri: VerseteTineriContentConfig
   empty: EmptyContentConfig
   screen_share: ScreenShareContentConfig
+  /** A deck slide brings its own design: templates have no layout for it. */
+  deck_slide?: undefined
 }
 
 /**
@@ -851,7 +878,7 @@ export interface ScreenContentConfigEntity {
  */
 export interface ScreenWithConfigs extends Screen {
   contentConfigs: {
-    [K in ContentType]: ContentConfigMap[K]
+    [K in keyof ContentConfigMap]: ContentConfigMap[K]
   }
   nextSlideConfig: NextSlideSectionConfig
 }

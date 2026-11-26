@@ -31,13 +31,13 @@ export function TemplateCard({
     <div
       data-testid="template-card"
       data-template-id={template.id}
-      className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+      className="flex flex-col gap-2 rounded-xl border border-line bg-panel p-3"
     >
       <button
         type="button"
         onClick={onEdit}
         title={t('templates.actions.edit')}
-        className="rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <TemplateThumbnail template={template} />
       </button>
@@ -45,17 +45,17 @@ export function TemplateCard({
         <div className="flex items-center gap-2">
           <h3
             data-testid="template-card-name"
-            className="truncate font-medium text-gray-900 dark:text-white"
+            className="truncate text-sm font-medium text-fg"
           >
             {templateDisplayName(template, t)}
           </h3>
           {bundled && (
-            <span className="flex-none rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+            <span className="flex-none rounded-full bg-field px-2 py-0.5 text-xs text-fg-label">
               {t('templates.bundledBadge')}
             </span>
           )}
         </div>
-        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+        <p className="truncate text-xs text-fg-hint">
           {users
             ? t('templates.usedBy', { names: users })
             : t('templates.unused')}
@@ -63,7 +63,7 @@ export function TemplateCard({
       </div>
       <div className="mt-auto flex flex-wrap gap-1">
         <Button variant="secondary" size="sm" onClick={onEdit}>
-          <Edit size={14} />
+          <Edit size={14} strokeWidth={1.75} />
           <span className="ml-1">{t('templates.actions.edit')}</span>
         </Button>
         <Button
@@ -73,7 +73,7 @@ export function TemplateCard({
           title={t('templates.actions.duplicate')}
           aria-label={t('templates.actions.duplicate')}
         >
-          <CopyPlus size={14} />
+          <CopyPlus size={14} strokeWidth={1.75} />
         </Button>
         {!bundled && (
           <>
@@ -84,7 +84,7 @@ export function TemplateCard({
               title={t('templates.actions.rename')}
               aria-label={t('templates.actions.rename')}
             >
-              <Pencil size={14} />
+              <Pencil size={14} strokeWidth={1.75} />
             </Button>
             <Button
               variant="ghost"
@@ -92,9 +92,9 @@ export function TemplateCard({
               onClick={onDelete}
               title={t('templates.actions.delete')}
               aria-label={t('templates.actions.delete')}
-              className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
+              className="hover:text-red-600! dark:hover:text-red-400!"
             >
-              <Trash2 size={14} />
+              <Trash2 size={14} strokeWidth={1.75} />
             </Button>
           </>
         )}

@@ -71,11 +71,11 @@ export function SongEditorSlideRail({
 
   return (
     <div
-      className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+      className="flex h-full flex-col overflow-hidden rounded-lg border border-line bg-panel"
       data-testid="song-editor-slide-rail"
     >
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700">
-        <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-3 py-2">
+        <span className="truncate text-sm font-medium text-fg-body">
           {t('songs:editor.slides')}
         </span>
         <div className="flex items-center gap-1">
@@ -90,7 +90,7 @@ export function SongEditorSlideRail({
             title={t('bible:controls.prev')}
             aria-label={t('bible:controls.prev')}
             data-testid="song-editor-rail-prev"
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-line text-fg-label transition-colors hover:bg-hover disabled:opacity-40"
           >
             <ChevronLeft size={16} />
           </button>
@@ -101,7 +101,7 @@ export function SongEditorSlideRail({
             title={t('bible:controls.next')}
             aria-label={t('bible:controls.next')}
             data-testid="song-editor-rail-next"
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-line text-fg-label transition-colors hover:bg-hover disabled:opacity-40"
           >
             <ChevronRight size={16} />
           </button>
@@ -113,7 +113,7 @@ export function SongEditorSlideRail({
         className="min-h-0 flex-1 overflow-y-auto scrollbar-thin px-2 py-2"
       >
         {expandedSlides.length === 0 ? (
-          <p className="px-2 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          <p className="px-2 py-6 text-center text-sm text-fg-hint">
             {t('songs:editor.noSlides')}
           </p>
         ) : (

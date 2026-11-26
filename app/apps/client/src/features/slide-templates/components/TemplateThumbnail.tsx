@@ -34,7 +34,7 @@ export function TemplateThumbnail({
   return (
     <div
       data-testid="template-thumbnail"
-      className={`flex aspect-video items-center justify-center overflow-hidden rounded-md bg-gray-900 ${className}`}
+      className={`flex aspect-video items-center justify-center overflow-hidden rounded-md bg-black ${className}`}
     >
       <div
         className={`relative ${portrait ? 'h-full' : 'w-full'}`}

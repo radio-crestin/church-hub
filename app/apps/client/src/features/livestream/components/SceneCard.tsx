@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
-import { formatShortcutForDisplay } from '~/features/keyboard-shortcuts'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import type { OBSScene } from '../types'
 
 interface SceneCardProps {
@@ -22,20 +22,17 @@ export function SceneCard({
 
   return (
     <div
-      className={`
-        relative p-4 rounded-lg border-2 transition-all cursor-pointer
-        ${
-          scene.isCurrent
-            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
-        }
-      `}
+      className={`relative cursor-pointer rounded-lg p-4 transition-colors ${
+        scene.isCurrent
+          ? 'bg-live-tint ring-1 ring-inset ring-live'
+          : 'bg-field hover:bg-hover'
+      }`}
       onClick={() => onSwitch(scene.obsSceneName)}
     >
       {scene.isCurrent && (
         <div
-          className={`absolute -top-2 -right-2 px-2 py-0.5 text-xs font-bold text-white rounded-full ${
-            isUnconfirmedCurrent ? 'bg-indigo-400/60' : 'bg-indigo-500'
+          className={`absolute -top-2 -right-2 rounded-md bg-panel px-1.5 py-0.5 text-[11px] font-medium text-live ring-1 ring-inset ring-live ${
+            isUnconfirmedCurrent ? 'opacity-60' : ''
           }`}
         >
           {t('scenes.current')}
@@ -43,18 +40,11 @@ export function SceneCard({
       )}
 
       <div>
-        <h3 className="font-medium text-gray-900 dark:text-gray-100">
-          {scene.displayName}
-        </h3>
+        <h3 className="text-sm font-medium text-fg">{scene.displayName}</h3>
         {scene.shortcuts && scene.shortcuts.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {scene.shortcuts.map((shortcut) => (
-              <span
-                key={shortcut}
-                className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
-              >
-                {formatShortcutForDisplay(shortcut)}
-              </span>
+              <KeyboardShortcutBadge key={shortcut} shortcut={shortcut} />
             ))}
           </div>
         )}

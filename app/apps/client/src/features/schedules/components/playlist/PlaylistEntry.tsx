@@ -38,11 +38,8 @@ export function PlaylistEntry({
       data-schedule-id={schedule.id}
       data-live={isLive ? 'true' : 'false'}
       aria-label={schedule.title}
-      className={`rounded-lg border bg-white dark:bg-gray-800 ${
-        isLive
-          ? 'border-red-400 ring-1 ring-red-400 dark:border-red-500 dark:ring-red-500'
-          : 'border-gray-200 dark:border-gray-700'
-      }`}
+      // The step on screen carries the live outline; the entry only says LIVE.
+      className="rounded-lg"
     >
       <div className="flex items-start gap-2 p-2">
         <div className="min-w-0 flex-1">
@@ -51,14 +48,18 @@ export function PlaylistEntry({
             onClick={onToggle}
             aria-expanded={isExpanded}
             data-testid="playlist-entry-toggle"
-            className="flex w-full min-w-0 items-center gap-2 rounded-md p-1 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50"
+            className="flex w-full min-w-0 items-center gap-2 rounded-lg p-1 text-left hover:bg-hover"
           >
-            <Chevron size={16} className="shrink-0 text-gray-400" />
-            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-white">
+            <Chevron
+              size={16}
+              strokeWidth={1.5}
+              className="shrink-0 text-fg-hint"
+            />
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
               {schedule.title}
             </span>
           </button>
-          <div className="flex flex-wrap items-center gap-1.5 pl-7 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex flex-wrap items-center gap-1.5 pl-7 text-xs tabular-nums text-fg-hint">
             <span>{t('itemCount', { count: schedule.itemCount })}</span>
             {isLive && <LiveBadge isLive />}
             <PlaylistRunnerState
@@ -73,13 +74,13 @@ export function PlaylistEntry({
           params={{ scheduleId: String(schedule.id) }}
           aria-label={t('playlist.open')}
           title={t('playlist.open')}
-          className="shrink-0 rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-gray-700"
+          className="shrink-0 rounded-lg p-1.5 text-fg-label hover:bg-hover hover:text-fg"
         >
-          <ExternalLink size={16} />
+          <ExternalLink size={16} strokeWidth={1.5} />
         </Link>
       </div>
       {isExpanded && (
-        <div className="border-t border-gray-100 px-1 pb-1 dark:border-gray-700">
+        <div className="border-t border-line px-1 pb-1">
           <PlaylistItems scheduleId={schedule.id} />
         </div>
       )}

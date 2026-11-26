@@ -52,10 +52,10 @@ export function MissingSongResolver({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-fg">
           {t('editAsText.missingSongs.title')}
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-sm text-fg-label mt-1">
           {t('editAsText.missingSongs.description')}
         </p>
       </div>
@@ -64,20 +64,24 @@ export function MissingSongResolver({
         {songs.map((song) => (
           <div
             key={song.title}
-            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+            className="flex items-center justify-between p-3 bg-app rounded-lg border border-line"
           >
             <div className="flex items-center gap-3">
               {song.resolved ? (
-                <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <Check
+                  className="w-5 h-5 text-fg-label flex-shrink-0"
+                  strokeWidth={1.5}
+                />
               ) : (
-                <X className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <X
+                  className="w-5 h-5 text-red-500 flex-shrink-0"
+                  strokeWidth={1.5}
+                />
               )}
               <div>
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {song.title}
-                </span>
+                <span className="font-medium text-fg">{song.title}</span>
                 {song.resolved && (
-                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="ml-2 text-sm text-fg-hint">
                     {song.resolved.type === 'existing'
                       ? '(linked)'
                       : '(will create)'}
@@ -91,25 +95,25 @@ export function MissingSongResolver({
                 <button
                   type="button"
                   onClick={() => setSearchingFor(song.title)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-fg hover:bg-hover rounded-lg transition-colors"
                 >
-                  <Search size={14} />
+                  <Search size={14} strokeWidth={1.75} />
                   {t('editAsText.missingSongs.searchAndSelect')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCreate(song.title)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-fg-label hover:bg-hover rounded-lg transition-colors"
                 >
-                  <Plus size={14} />
+                  <Plus size={14} strokeWidth={1.75} />
                   {t('editAsText.missingSongs.createNew')}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSkip(song.title)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-fg-label hover:bg-hover rounded-lg transition-colors"
                 >
-                  <X size={14} />
+                  <X size={14} strokeWidth={1.75} />
                   {t('editAsText.missingSongs.skip')}
                 </button>
               </div>
@@ -127,7 +131,7 @@ export function MissingSongResolver({
                     ),
                   )
                 }
-                className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm text-fg-label hover:bg-hover rounded-lg transition-colors"
               >
                 Change
               </button>
@@ -137,16 +141,16 @@ export function MissingSongResolver({
       </div>
 
       {songs.length === 0 && (
-        <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+        <p className="text-center text-fg-hint py-4">
           All songs resolved or skipped
         </p>
       )}
 
-      <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex justify-end gap-2 pt-4 border-t border-line">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
         >
           {t('editAsText.cancel')}
         </button>
@@ -154,7 +158,7 @@ export function MissingSongResolver({
           type="button"
           onClick={handleContinue}
           disabled={!allResolved && songs.length > 0}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('editAsText.missingSongs.continue')}
         </button>

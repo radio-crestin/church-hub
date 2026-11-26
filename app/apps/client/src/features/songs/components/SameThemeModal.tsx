@@ -48,42 +48,43 @@ export function SameThemeModal({
     <dialog
       ref={dialogRef}
       data-testid="same-theme-modal"
-      className="fixed inset-0 m-auto w-full max-w-lg rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800"
+      className="fixed inset-0 m-auto w-full max-w-lg rounded-xl bg-panel p-0 shadow-popover backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) onClose()
       }}
     >
       <div className="flex max-h-[80vh] flex-col">
-        <header className="flex items-start justify-between gap-3 border-b border-gray-200 p-4 dark:border-gray-700">
+        <header className="flex items-start justify-between gap-3 border-b border-line p-4">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-              <Compass className="h-5 w-5 shrink-0 text-violet-500 dark:text-violet-400" />
+            <h2 className="flex items-center gap-2 text-base font-semibold text-fg">
+              <Compass
+                className="h-4 w-4 shrink-0 text-fg-label"
+                strokeWidth={1.5}
+              />
               {t('sameTheme.title')}
             </h2>
-            <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">
-              {songTitle}
-            </p>
+            <p className="mt-0.5 truncate text-sm text-fg-hint">{songTitle}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             data-testid="same-theme-close"
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
             aria-label={t('sameTheme.close')}
           >
-            <X size={20} />
+            <X size={16} strokeWidth={1.5} />
           </button>
         </header>
 
         <div className="min-h-[12rem] flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+              <Loader2 className="h-5 w-5 animate-spin text-fg-hint" />
             </div>
           ) : songs.length === 0 ? (
             <p
               data-testid="same-theme-empty"
-              className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+              className="px-4 py-6 text-center text-sm text-fg-hint"
             >
               {t('sameTheme.empty')}
             </p>

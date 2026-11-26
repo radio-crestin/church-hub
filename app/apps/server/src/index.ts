@@ -44,6 +44,7 @@ import {
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleBibleTopicRoutes } from './routes/bible-topics'
+import { handleCloudSyncRoutes } from './routes/cloud-sync'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
 import { handleLivestreamRoutes } from './routes/livestream'
@@ -2625,6 +2626,17 @@ async function startRealServer(): Promise<void> {
         )
       }
 
+      // Cloud sync: this server's church on the sync service (T-171)
+      if (url.pathname.startsWith('/api/sync/cloud')) {
+        const cloudSyncResponse = await handleCloudSyncRoutes(
+          req,
+          url,
+          backupLocalhostGuard,
+          checkPermission,
+        )
+        if (cloudSyncResponse) return handleCors(req, cloudSyncResponse)
+      }
+
       // GET /api/users - List all users
       if (req.method === 'GET' && url.pathname === '/api/users') {
         const authError = await requireAppAuth()
@@ -3362,13 +3374,20 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
-        } catch {
+        } catch (error) {
+          // A body that is no JSON, or settings (a deck) that don't fit.
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }),
+            new Response(
+              JSON.stringify({
+                error:
+                  error instanceof Error ? error.message : 'Invalid JSON body',
+              }),
+              {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              },
+            ),
           )
         }
       }

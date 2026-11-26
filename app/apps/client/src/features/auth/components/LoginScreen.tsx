@@ -15,6 +15,7 @@ import {
   PairingRequiredError,
 } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
+import { AppMark } from '~/ui/brand/AppMark'
 import { captureActivity } from '~/utils/activity-logger'
 import { UserAvatar } from './UserAvatar'
 
@@ -26,29 +27,21 @@ interface LoginScreenProps {
   initialPairing?: { user: LocalUser; pairingId: string } | null
 }
 
-/** Decorative branded panel shown on large screens. */
+/** The quiet brand half shown on large screens. */
 function BrandPanel({ tagline }: { tagline: string }) {
   return (
-    <div className="login-gradient relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-12 text-white lg:flex">
-      {/* Soft decorative blobs that drift slowly */}
-      <div className="login-blob pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-      <div className="login-blob-slow pointer-events-none absolute -bottom-32 -right-16 h-96 w-96 rounded-full bg-fuchsia-300/20 blur-3xl" />
-
-      <div className="relative flex items-center gap-3">
-        <img
-          src="/logo192.png"
-          alt="Church Hub"
-          className="h-11 w-11 rounded-xl shadow-lg"
-        />
-        <span className="text-lg font-semibold tracking-tight">Church Hub</span>
+    <div className="hidden w-1/2 flex-col justify-between border-r border-line bg-panel p-12 lg:flex">
+      <div className="flex items-center gap-3">
+        <AppMark size={40} />
+        <span className="text-base font-semibold text-fg">Church Hub</span>
       </div>
 
-      <div className="relative">
-        <h2 className="text-4xl font-bold leading-tight">Church Hub</h2>
-        <p className="mt-3 max-w-sm text-lg text-white/80">{tagline}</p>
+      <div>
+        <h2 className="text-2xl font-semibold text-fg">Church Hub</h2>
+        <p className="mt-2 max-w-sm text-base text-fg-label">{tagline}</p>
       </div>
 
-      <div className="relative text-sm text-white/50">
+      <div className="text-xs text-fg-hint">
         © {new Date().getFullYear()} Church Hub
       </div>
     </div>
@@ -140,7 +133,7 @@ export function LoginScreen({
     user.isSuperAdmin ? t('superAdmin') : t('profile.user')
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-app">
       <BrandPanel tagline={t('login.tagline')} />
 
       {/* Account chooser */}
@@ -148,20 +141,12 @@ export function LoginScreen({
         <div className="mx-auto w-full max-w-sm">
           {/* Brand (mobile only, since the side panel is hidden) */}
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
-            <img
-              src="/logo192.png"
-              alt="Church Hub"
-              className="h-9 w-9 rounded-lg"
-            />
-            <span className="font-semibold text-gray-900 dark:text-white">
-              Church Hub
-            </span>
+            <AppMark size={32} />
+            <span className="text-base font-semibold text-fg">Church Hub</span>
           </div>
 
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {t('login.title')}
-          </h1>
-          <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+          <h1 className="text-2xl font-semibold text-fg">{t('login.title')}</h1>
+          <p className="mt-1.5 text-sm text-fg-hint">
             {!selected
               ? t('login.selectUser')
               : codeMode
@@ -179,10 +164,10 @@ export function LoginScreen({
                     size="lg"
                   />
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <p className="text-base font-semibold text-fg">
                       {selected.name}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-fg-hint">
                       {roleLabel(selected)}
                     </p>
                   </div>
@@ -191,17 +176,20 @@ export function LoginScreen({
                 <div>
                   <label
                     htmlFor="login-password"
-                    className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    className="mb-1.5 block text-sm font-medium text-fg-label"
                   >
                     {codeMode ? t('login.codeLabel') : t('login.passwordLabel')}
                   </label>
                   {codeMode ? (
-                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mb-2 text-sm text-fg-hint">
                       {t('login.codeHint')}
                     </p>
                   ) : null}
                   <div ref={passwordRowRef} className="relative">
-                    <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Lock
+                      strokeWidth={1.5}
+                      className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-hint"
+                    />
                     <input
                       id="login-password"
                       type={codeMode || showPassword ? 'text' : 'password'}
@@ -215,10 +203,10 @@ export function LoginScreen({
                         setError(false)
                       }}
                       disabled={submitting}
-                      className={`w-full rounded-xl border bg-white py-2.5 pl-10 pr-11 text-gray-900 outline-none transition focus:ring-2 disabled:opacity-60 dark:bg-gray-800 dark:text-white ${
+                      className={`w-full rounded-[10px] bg-field py-2.5 pl-10 pr-11 text-sm text-fg outline-none transition-colors placeholder:text-fg-hint disabled:opacity-60 ${
                         error
-                          ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30'
-                          : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/30 dark:border-gray-600'
+                          ? 'ring-1 ring-inset ring-red-500'
+                          : 'focus:ring-1 focus:ring-inset focus:ring-focus'
                       }`}
                       placeholder={
                         codeMode ? '000000' : t('login.passwordPlaceholder')
@@ -232,12 +220,12 @@ export function LoginScreen({
                         aria-label={
                           showPassword ? t('password.hide') : t('password.show')
                         }
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-fg-label transition-colors hover:bg-hover hover:text-fg"
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff strokeWidth={1.5} className="h-4 w-4" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye strokeWidth={1.5} className="h-4 w-4" />
                         )}
                       </button>
                     )}
@@ -247,7 +235,10 @@ export function LoginScreen({
                       role="alert"
                       className="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400"
                     >
-                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <AlertCircle
+                        strokeWidth={1.5}
+                        className="h-4 w-4 shrink-0"
+                      />
                       {codeMode
                         ? t('login.wrongCode')
                         : t('login.wrongPassword')}
@@ -258,7 +249,7 @@ export function LoginScreen({
                       type="button"
                       onClick={() => void doLogin(selected)}
                       disabled={submitting}
-                      className="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 disabled:opacity-60 dark:text-indigo-400"
+                      className="mt-2 text-sm font-medium text-focus hover:underline disabled:opacity-60"
                     >
                       {t('login.newCode')}
                     </button>
@@ -273,14 +264,14 @@ export function LoginScreen({
                       setPairingId(null)
                     }}
                     disabled={submitting}
-                    className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="h-9 flex-1 rounded-lg bg-field px-4 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
                   >
                     {t('login.back')}
                   </button>
                   <button
                     type="submit"
                     disabled={submitting || password.length === 0}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                    className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
                   >
                     {submitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -290,7 +281,7 @@ export function LoginScreen({
                 </div>
               </form>
             ) : users.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-gray-300 p-5 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+              <p className="rounded-xl border border-dashed border-line p-5 text-center text-sm text-fg-hint">
                 {t('login.noAccounts')}
               </p>
             ) : (
@@ -300,35 +291,44 @@ export function LoginScreen({
                     role="alert"
                     className="mb-3 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400"
                   >
-                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <AlertCircle
+                      strokeWidth={1.5}
+                      className="h-4 w-4 shrink-0"
+                    />
                     {t('login.failed')}
                   </p>
                 ) : null}
-                <ul className="space-y-2.5">
+                <ul className="space-y-1.5">
                   {users.map((user) => (
                     <li key={user.id}>
                       <button
                         type="button"
                         onClick={() => handleSelect(user)}
                         disabled={submitting}
-                        className="group flex w-full items-center gap-3.5 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-500/60"
+                        className="group flex w-full items-center gap-3 rounded-lg bg-field px-3 py-2.5 text-left transition-colors hover:bg-hover disabled:opacity-60"
                       >
                         <UserAvatar
                           name={user.name}
                           isSuperAdmin={user.isSuperAdmin}
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate font-semibold text-gray-900 dark:text-white">
+                          <span className="block truncate text-sm font-medium text-fg">
                             {user.name}
                           </span>
-                          <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                          <span className="block truncate text-xs text-fg-hint">
                             {roleLabel(user)}
                           </span>
                         </span>
                         {user.hasPassword ? (
-                          <Lock className="h-4 w-4 shrink-0 text-gray-400" />
+                          <Lock
+                            strokeWidth={1.5}
+                            className="h-4 w-4 shrink-0 text-fg-hint"
+                          />
                         ) : null}
-                        <ChevronRight className="h-5 w-5 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-400 dark:text-gray-600" />
+                        <ChevronRight
+                          strokeWidth={1.5}
+                          className="h-4 w-4 shrink-0 text-fg-hint group-hover:text-fg"
+                        />
                       </button>
                     </li>
                   ))}

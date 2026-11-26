@@ -30,7 +30,7 @@ function CopyIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -47,7 +47,7 @@ function CheckIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -69,7 +69,7 @@ function StreamStartProgressUI({
 }) {
   if (progress.step === 'error') {
     return (
-      <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+      <div className="rounded-xl border border-line bg-panel p-4">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm text-red-600 dark:text-red-400">
             {progress.error || t('errors.startStreamFailed')}
@@ -96,25 +96,23 @@ function StreamStartProgressUI({
   }
 
   return (
-    <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+    <div className="rounded-xl border border-line bg-panel p-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-fg-body">
             {t(`stream.progress.${progress.step}`)}
           </span>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-xs text-fg-hint tabular-nums">
             {progress.progress}%
           </span>
         </div>
-        <div className="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="h-1 w-full overflow-hidden rounded-full bg-field">
           <div
-            className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-300"
+            className="h-full bg-primary transition-[width] duration-300"
             style={{ width: `${progress.progress}%` }}
           />
         </div>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
-          {progress.message}
-        </p>
+        <p className="text-xs text-fg-hint">{progress.message}</p>
       </div>
     </div>
   )
@@ -158,10 +156,8 @@ export function BroadcastInfo() {
 
   if (isLoadingBroadcast) {
     return (
-      <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <p className="text-gray-500 dark:text-gray-400">
-          {t('broadcast.loading')}
-        </p>
+      <div className="rounded-xl border border-line bg-panel p-4">
+        <p className="text-sm text-fg-hint">{t('broadcast.loading')}</p>
       </div>
     )
   }
@@ -183,7 +179,7 @@ export function BroadcastInfo() {
     : null
 
   return (
-    <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+    <div className="rounded-xl border border-line bg-panel p-4">
       <div className="flex items-center gap-3">
         <Tooltip
           content={
@@ -193,7 +189,7 @@ export function BroadcastInfo() {
           className="flex-1"
         >
           <div
-            className="relative w-full px-3 py-2 pr-10 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg whitespace-pre-wrap break-words cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="relative w-full px-3 py-2 pr-10 text-sm text-fg-body bg-field rounded-lg whitespace-pre-wrap break-words cursor-pointer hover:bg-hover transition-colors"
             onClick={() => copyMessage(activeBroadcast.url)}
             role="button"
             tabIndex={0}
@@ -205,9 +201,9 @@ export function BroadcastInfo() {
             }}
           >
             {displayMessage}
-            <span className="absolute right-2 top-2 p-1.5 text-gray-400">
+            <span className="absolute right-2 top-2 p-1.5 text-fg-hint">
               {copied ? (
-                <CheckIcon className="w-4 h-4 text-green-500" />
+                <CheckIcon className="w-4 h-4 text-ok" />
               ) : (
                 <CopyIcon className="w-4 h-4" />
               )}
@@ -220,9 +216,9 @@ export function BroadcastInfo() {
               variant="ghost"
               size="icon"
               onClick={() => openExternalUrl(activeBroadcast.url)}
-              className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
+              className="text-fg-label hover:text-fg"
             >
-              <YouTubeIcon className="w-5 h-5" />
+              <YouTubeIcon className="w-4 h-4" />
             </Button>
           </Tooltip>
           {studioUrl && (
@@ -231,9 +227,9 @@ export function BroadcastInfo() {
                 variant="ghost"
                 size="icon"
                 onClick={() => openExternalUrl(studioUrl)}
-                className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                className="text-fg-label hover:text-fg"
               >
-                <StudioIcon className="w-5 h-5" />
+                <StudioIcon className="w-4 h-4" />
               </Button>
             </Tooltip>
           )}

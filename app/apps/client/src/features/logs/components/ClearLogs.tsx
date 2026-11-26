@@ -55,25 +55,25 @@ export function ClearLogs({ onCleared }: ClearLogsProps) {
   if (!hasPermission('logs.clear')) return null
 
   return (
-    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+    <div className="rounded-xl border border-line p-4">
       <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-red-100 p-2 dark:bg-red-900/30">
-          <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+        <div className="shrink-0">
+          <Trash2 strokeWidth={1.5} className="h-5 w-5 text-fg-label" />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+          <h4 className="text-sm font-medium text-fg">
             {t('sections.logs.clear.card.title')}
           </h4>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-0.5 text-xs text-fg-hint">
             {t('sections.logs.clear.card.description')}
           </p>
           <button
             type="button"
             onClick={() => setShowConfirm(true)}
             disabled={isPending}
-            className="mt-3 inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+            className="mt-3 inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 strokeWidth={1.5} className="h-4 w-4" />
             {isPending
               ? t('sections.logs.clear.button.clearing')
               : t('sections.logs.clear.button.clear')}
@@ -88,16 +88,17 @@ export function ClearLogs({ onCleared }: ClearLogsProps) {
             onClick={() => setShowConfirm(false)}
             onKeyDown={(e) => e.key === 'Escape' && setShowConfirm(false)}
           />
-          <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+          <div className="relative mx-4 w-full max-w-md rounded-xl border border-line bg-panel shadow-popover p-6">
             <div className="flex items-start gap-4">
-              <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
-                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-              </div>
+              <AlertTriangle
+                strokeWidth={1.5}
+                className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
+              />
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base font-semibold text-fg">
                   {t('sections.logs.clear.confirm.title')}
                 </h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-sm text-fg-label">
                   {t('sections.logs.clear.confirm.message')}
                 </p>
                 <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
@@ -109,14 +110,14 @@ export function ClearLogs({ onCleared }: ClearLogsProps) {
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="h-9 rounded-lg bg-field px-3.5 text-sm font-medium text-fg hover:bg-hover"
               >
                 {t('sections.logs.clear.confirm.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleClear}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+                className="h-9 rounded-lg bg-red-600 px-3.5 text-sm font-medium text-white hover:bg-red-700"
               >
                 {t('sections.logs.clear.confirm.confirm')}
               </button>

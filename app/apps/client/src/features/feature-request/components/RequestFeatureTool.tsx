@@ -101,8 +101,8 @@ export function RequestFeatureTool({ onClose }: RequestFeatureToolProps) {
         className="fixed inset-0 flex items-center justify-center bg-black/20 cursor-wait"
         style={{ zIndex: 2147483000 }}
       >
-        <span className="flex items-center gap-2 rounded-lg bg-gray-900/90 px-4 py-2 text-sm text-white">
-          <Loader2 size={16} className="animate-spin" />
+        <span className="flex items-center gap-2 rounded-[10px] border border-line bg-panel px-4 py-2 text-sm text-fg shadow-popover">
+          <Loader2 strokeWidth={1.5} size={16} className="animate-spin" />
           {t('common:featureRequest.capturing')}
         </span>
       </div>

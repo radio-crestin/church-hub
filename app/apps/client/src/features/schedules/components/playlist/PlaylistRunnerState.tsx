@@ -22,19 +22,20 @@ export function PlaylistRunnerState({
     <>
       {isRunning && (
         <span
-          className="rounded bg-green-600 px-1.5 py-0.5 font-medium text-white"
+          className="flex items-center gap-1 rounded bg-field px-1.5 py-0.5 font-medium text-fg-body"
           data-testid="playlist-running"
         >
+          <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
           {t('playlist.running')}
         </span>
       )}
       {loops && (
         <span
-          className="flex items-center gap-1 rounded bg-indigo-100 px-1.5 py-0.5 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+          className="flex items-center gap-1 rounded bg-field px-1.5 py-0.5 text-fg-label"
           data-testid="playlist-looping"
           title={t('automation.loopDescription')}
         >
-          <Repeat size={12} />
+          <Repeat size={12} strokeWidth={2} />
           {t('automation.summary.loop')}
         </span>
       )}

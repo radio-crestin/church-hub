@@ -32,14 +32,14 @@ export function MobileLiveStrip({ liveProgram }: MobileLiveStripProps) {
   if (!content || state.isHidden) return null
 
   const buttonClass =
-    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:active:bg-gray-700'
+    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-fg-label active:bg-hover'
 
   return (
     <div
       data-testid="mobile-live-strip"
-      className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/60 border-t border-indigo-200 dark:border-indigo-900"
+      className="flex items-center gap-2 px-3 py-2 bg-panel border-t border-line"
     >
-      <span className="w-2 h-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
+      <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-live" />
       <div className="flex min-w-0 flex-1">
         <ContentTypeButton temporaryContent={content} />
       </div>
@@ -49,7 +49,7 @@ export function MobileLiveStrip({ liveProgram }: MobileLiveStripProps) {
         aria-label={t('controls.prev')}
         className={buttonClass}
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={20} strokeWidth={1.5} />
       </button>
       <button
         type="button"
@@ -58,16 +58,16 @@ export function MobileLiveStrip({ liveProgram }: MobileLiveStripProps) {
         data-testid="mobile-live-strip-next"
         className={buttonClass}
       >
-        <ChevronRight size={20} />
+        <ChevronRight size={20} strokeWidth={1.5} />
       </button>
       <button
         type="button"
         onClick={() => clearSlide.mutate()}
         aria-label={t('controls.hide')}
         data-testid="mobile-live-strip-hide"
-        className={`${buttonClass} text-red-600 dark:text-red-400`}
+        className={buttonClass}
       >
-        <EyeOff size={18} />
+        <EyeOff size={20} strokeWidth={1.5} />
       </button>
     </div>
   )

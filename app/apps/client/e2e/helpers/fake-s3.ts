@@ -1,10 +1,17 @@
+import { createHash } from 'node:crypto'
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
+const etagOf = (body: Buffer) =>
+  `"${createHash('sha1').update(body).digest('hex')}"`
+
 /**
- * A tiny S3 stand-in for specs: path-style PUT, GET and DELETE of objects
- * in memory, signatures not checked. GET is open, like a public bucket, so
- * the same server is both the S3 endpoint and the public URL.
+ * A tiny S3 stand-in for specs: path-style PUT, GET, HEAD and DELETE of
+ * objects in memory, signatures not checked. GET is open, like a public
+ * bucket, so the same server is both the S3 endpoint and the public URL.
+ * Like the cloud sync bucket's policy, anonymous listing is refused (a
+ * signed one is answered) and ETags are honoured: If-None-Match on GET
+ * (304), If-Match and If-None-Match: * on PUT (412), as conditional writes.
  */
 export class FakeS3 {
   readonly objects = new Map<string, Buffer>()
@@ -18,18 +25,56 @@ export class FakeS3 {
   readonly delays = new Map<string, number>()
   /** Paths answered with this HTTP status, like a server refusing them. */
   readonly statuses = new Map<string, number>()
+  /** Refuse PUT and DELETE without an Authorization header (anonymous writes). */
+  signedWritesOnly = false
   private server: Server | undefined
 
   async start(): Promise<void> {
     this.server = createServer((req, res) => {
-      const path = decodeURIComponent((req.url ?? '/').split('?')[0])
+      const [rawPath, query = ''] = (req.url ?? '/').split('?')
+      const path = decodeURIComponent(rawPath)
       this.requests.push(`${req.method} ${path}`)
+      if (req.method === 'GET' && /(^|&)list-type=/.test(query)) {
+        if (!req.headers.authorization) {
+          res.writeHead(403).end()
+          return
+        }
+        const prefix = `${path}/${new URLSearchParams(query).get('prefix') ?? ''}`
+        const keys = [...this.objects.keys()]
+          .filter((key) => key.startsWith(prefix))
+          .map(
+            (key) =>
+              `<Contents><Key>${key.slice(path.length + 1)}</Key></Contents>`,
+          )
+        res
+          .writeHead(200, { 'Content-Type': 'application/xml' })
+          .end(
+            `<ListBucketResult><IsTruncated>false</IsTruncated>${keys.join('')}</ListBucketResult>`,
+          )
+        return
+      }
+      const write = req.method === 'PUT' || req.method === 'DELETE'
+      if (write && this.signedWritesOnly && !req.headers.authorization) {
+        res.writeHead(403).end()
+        return
+      }
       if (req.method === 'PUT') {
         const chunks: Buffer[] = []
         req.on('data', (chunk) => chunks.push(chunk))
         req.on('end', () => {
-          this.objects.set(path, Buffer.concat(chunks))
-          res.writeHead(200, { ETag: '"fake"' }).end()
+          const existing = this.objects.get(path)
+          const ifMatch = req.headers['if-match']
+          const ifNoneMatch = req.headers['if-none-match']
+          if (
+            (ifMatch && (!existing || etagOf(existing) !== ifMatch)) ||
+            (ifNoneMatch === '*' && existing)
+          ) {
+            res.writeHead(412).end()
+            return
+          }
+          const body = Buffer.concat(chunks)
+          this.objects.set(path, body)
+          res.writeHead(200, { ETag: etagOf(body) }).end()
         })
         return
       }
@@ -55,7 +100,20 @@ export class FakeS3 {
           res.writeHead(404).end()
           return
         }
-        res.writeHead(200, { 'Content-Length': body.length }).end(body)
+        const etag = etagOf(body)
+        if (req.method === 'HEAD') {
+          res
+            .writeHead(200, { 'Content-Length': body.length, ETag: etag })
+            .end()
+          return
+        }
+        if (req.headers['if-none-match'] === etag) {
+          res.writeHead(304, { ETag: etag }).end()
+          return
+        }
+        res
+          .writeHead(200, { 'Content-Length': body.length, ETag: etag })
+          .end(body)
       }
       setTimeout(answer, this.delays.get(path) ?? 0)
     })

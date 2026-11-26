@@ -1,5 +1,6 @@
 /**
- * A presentation's music, video and verses items: their settings, playing a
+ * A presentation's music, video, verses and Slides items: their settings (a
+ * deck), playing a
  * music item, picking the random ones again, and putting up a step the
  * server builds (service/schedule-items).
  */
@@ -30,7 +31,7 @@ export const scheduleItemsPaths = {
       tags,
       summary: "Change an item's settings",
       description:
-        "A music, video or verses item's settings, or how many of a Versete Biblice slide's passages it shows ({ count: null } = all, in order). Its random picks are made again. Needs programs.edit",
+        "A music, video or verses item's settings, a Slides item's deck (SlideDeck: checked, its HTML sanitized; when one of its slides is on screen, the displays show the new version at once), or how many of a Versete Biblice slide's passages it shows ({ count: null } = all, in order). The presentation's random picks are made again (not for a deck). Needs programs.edit",
       security,
       parameters: [id, itemId],
       requestBody: {
@@ -115,7 +116,7 @@ export const scheduleItemsPaths = {
       tags,
       summary: 'Put a step of the presentation up',
       description:
-        "The step at this position of the running order, built by the server as the presentation's runner does (a video item plays full screen). Needs control_room.control",
+        "The step at this position of the running order, built by the server as the presentation's runner does (a video item plays full screen; a Slides item's step is its slide with its animations up to that click, as deck_slide content). Needs control_room.control",
       security,
       parameters: [
         id,

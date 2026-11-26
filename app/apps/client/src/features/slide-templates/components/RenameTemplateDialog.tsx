@@ -37,7 +37,7 @@ export function RenameTemplateDialog({
       ref={dialogRef}
       data-testid="rename-template-dialog"
       onClose={onCancel}
-      className="fixed inset-0 m-auto w-[min(26rem,92vw)] rounded-lg bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800"
+      className="fixed inset-0 m-auto w-[min(26rem,92vw)] rounded-xl border border-line bg-panel p-0 shadow-popover backdrop:bg-black/50"
     >
       <form
         className="space-y-4 p-6"
@@ -46,21 +46,21 @@ export function RenameTemplateDialog({
           if (trimmed) onSave(trimmed)
         }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-base font-semibold text-fg">
           {t('templates.rename.title')}
         </h2>
         <label className="block space-y-1">
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-fg-label">
             {t('templates.rename.label')}
           </span>
           <input
             value={value}
             onChange={(event) => setValue(event.target.value)}
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+            className="w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
         </label>
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button type="button" variant="secondary" onClick={onCancel}>
             {t('common:buttons.cancel')}
           </Button>
           <Button type="submit" variant="primary" disabled={!trimmed}>

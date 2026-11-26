@@ -29,9 +29,7 @@ export function SongRefList({ label, set, onOpen }: SongRefListProps) {
 
   return (
     <div>
-      <p className="mb-1 text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
-        {label}
-      </p>
+      <p className="mb-1 text-xs font-medium text-fg-hint">{label}</p>
       <ul className="flex flex-wrap gap-1.5">
         {shown.map((song) => (
           <li key={`${song.id ?? ''}:${song.title}`} className="min-w-0">
@@ -40,12 +38,12 @@ export function SongRefList({ label, set, onOpen }: SongRefListProps) {
                 to="/songs/$songId"
                 params={{ songId: String(song.id) }}
                 onClick={onOpen}
-                className="block max-w-64 truncate rounded-md bg-gray-100 px-2 py-0.5 text-sm text-gray-800 transition-colors hover:bg-indigo-100 hover:text-indigo-700 dark:bg-gray-700/70 dark:text-gray-100 dark:hover:bg-indigo-900/50 dark:hover:text-indigo-200"
+                className="block max-w-64 truncate rounded-md bg-field px-2 py-0.5 text-sm text-fg-body transition-colors hover:bg-hover hover:text-fg"
               >
                 {song.title}
               </Link>
             ) : (
-              <span className="block max-w-64 truncate rounded-md bg-gray-100 px-2 py-0.5 text-sm text-gray-800 dark:bg-gray-700/70 dark:text-gray-100">
+              <span className="block max-w-64 truncate rounded-md bg-field px-2 py-0.5 text-sm text-fg-body">
                 {song.title}
               </span>
             )}
@@ -56,7 +54,7 @@ export function SongRefList({ label, set, onOpen }: SongRefListProps) {
             <button
               type="button"
               onClick={() => setIsOpen((open) => !open)}
-              className="rounded-md px-2 py-0.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-900/30"
+              className="rounded-md px-2 py-0.5 text-sm font-medium text-fg-label hover:bg-hover hover:text-fg"
             >
               {isOpen
                 ? t('notification.showLess')
@@ -66,7 +64,7 @@ export function SongRefList({ label, set, onOpen }: SongRefListProps) {
         )}
       </ul>
       {isOpen && unnamed > 0 && (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-fg-hint">
           {t('notification.andMore', { count: unnamed })}
         </p>
       )}

@@ -1,14 +1,15 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * The presentation page (T-182 review): Previous / Next sit above the live
- * preview, the items list's Add button is an icon alone, still named for
- * screen readers and its tooltip, and Run sits just left of Edit as text.
+ * The presentation page (T-182 review): Previous / Next are the shared row
+ * under the live preview (as on the song and Bible pages since #272), the
+ * items list's Add button is an icon alone, still named for screen readers
+ * and its tooltip, and Run sits just left of Edit as text.
  */
 
 test.use({ viewport: { width: 1440, height: 900 } })
 
-test('Previous / Next sit above the preview; Run, then Edit as text; Add is an icon', async ({
+test('Previous / Next sit under the preview; Run, then Edit as text; Add is an icon', async ({
   page,
   request,
 }) => {
@@ -28,8 +29,8 @@ test('Previous / Next sit above the preview; Run, then Edit as text; Add is an i
     const nextBox = await next.boundingBox()
     const previewBox = await preview.boundingBox()
     expect(nextBox && previewBox).toBeTruthy()
-    expect((nextBox?.y ?? 0) + (nextBox?.height ?? 0)).toBeLessThanOrEqual(
-      previewBox?.y ?? 0,
+    expect(nextBox?.y ?? 0).toBeGreaterThanOrEqual(
+      (previewBox?.y ?? 0) + (previewBox?.height ?? 0),
     )
 
     const runBox = await page.getByTestId('schedule-run-button').boundingBox()

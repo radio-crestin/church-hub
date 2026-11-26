@@ -1,6 +1,7 @@
 import { Book, Megaphone, Music, User } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 
+import { DeckSlideRenderer } from '~/features/slides-deck/components/DeckSlideRenderer'
 import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
 import { AnimatedText } from './AnimatedText'
 import { ChordsOverlay } from './ChordsOverlay'
@@ -811,6 +812,15 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
+      {contentData?.deck && (
+        <DeckSlideRenderer
+          shown={contentData.deck}
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+          withSound={videoSound}
+          isVisible={isVisible}
+        />
+      )}
       {/* First, so the content's text is drawn over it; the screen background
           belongs to the parent and stays below */}
       {contentData?.videoUrl && (

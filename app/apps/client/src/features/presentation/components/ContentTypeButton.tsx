@@ -12,7 +12,7 @@ interface ContentTypeButtonProps {
 // wider. Used in the song detail header where a long title used to crowd
 // out the LIVE indicator next to it.
 const baseClassName =
-  'flex min-w-0 shrink items-center gap-2 rounded-md px-3 py-1.5 text-sm text-white transition-colors'
+  'flex min-w-0 shrink items-center gap-2 h-8 rounded-lg px-3 text-sm font-medium bg-field text-fg hover:bg-hover transition-colors'
 
 export function ContentTypeButton({
   temporaryContent,
@@ -33,9 +33,13 @@ export function ContentTypeButton({
             })
           }
           title={title}
-          className={`${baseClassName} bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600`}
+          className={baseClassName}
         >
-          <Music size={16} className="shrink-0" />
+          <Music
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-fg-label"
+          />
           <span className="truncate min-w-0">{title}</span>
         </button>
       )
@@ -55,9 +59,13 @@ export function ContentTypeButton({
             })
           }
           title={temporaryContent.data.reference}
-          className={`${baseClassName} bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600`}
+          className={baseClassName}
         >
-          <Book size={16} className="shrink-0" />
+          <Book
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-fg-label"
+          />
           <span className="truncate min-w-0">
             {temporaryContent.data.reference}
           </span>
@@ -84,9 +92,13 @@ export function ContentTypeButton({
             })
           }
           title={`${bookName} ${startChapter}:${currentVerse?.verse ?? 1}`}
-          className={`${baseClassName} bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600`}
+          className={baseClassName}
         >
-          <BookOpen size={16} className="shrink-0" />
+          <BookOpen
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-fg-label"
+          />
           <span className="truncate min-w-0">
             {bookName} {startChapter}:{currentVerse?.verse ?? 1}
           </span>

@@ -19,16 +19,11 @@ export function WorkspacePanelGhost({ title }: WorkspacePanelGhostProps) {
   return (
     <div
       data-testid="workspace-panel-ghost"
-      className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-indigo-500 bg-indigo-100/80 p-2 text-center dark:border-indigo-400 dark:bg-indigo-500/20"
+      className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-focus bg-focus/10 p-2 text-center"
     >
-      <GripHorizontal
-        size={16}
-        className="text-indigo-500 dark:text-indigo-300"
-      />
-      <span className="truncate text-sm font-medium text-indigo-900 dark:text-indigo-100">
-        {title}
-      </span>
-      <span className="truncate text-xs text-indigo-600 dark:text-indigo-300">
+      <GripHorizontal size={16} strokeWidth={1.5} className="text-fg-label" />
+      <span className="truncate text-sm font-medium text-fg">{title}</span>
+      <span className="truncate text-xs text-fg-hint">
         {t('workspace.newPosition')}
       </span>
     </div>

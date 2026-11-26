@@ -50,22 +50,25 @@ export function DuplicateSongDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      className="fixed inset-0 m-auto p-0 rounded-xl shadow-popover backdrop:bg-black/50 bg-panel"
       onClose={() => onAction('cancel')}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6 min-w-[400px] max-w-lg">
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          <div className="flex-shrink-0 flex items-center justify-center pt-0.5">
+            <AlertTriangle
+              className="w-5 h-5 text-amber-600 dark:text-amber-400"
+              strokeWidth={1.5}
+            />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {t('duplicateDialog.title')}
           </h2>
         </div>
 
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-fg-label mb-6">
           {t('duplicateDialog.description', { title: songTitle })}
         </p>
 
@@ -73,39 +76,39 @@ export function DuplicateSongDialog({
           <button
             type="button"
             onClick={() => onAction('openExisting')}
-            className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-left"
+            className="w-full px-4 py-3 bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors text-left"
           >
             <div className="font-medium">
               {t('duplicateDialog.openExisting')}
             </div>
-            <div className="text-sm text-indigo-200">
+            <div className="text-sm text-white/75">
               {t('duplicateDialog.openExistingDescription')}
             </div>
           </button>
           <button
             type="button"
             onClick={() => onAction('overwrite')}
-            className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition-colors text-left"
+            className="w-full px-4 py-3 bg-field hover:bg-hover text-fg rounded-lg font-medium transition-colors text-left"
           >
             <div className="font-medium">{t('duplicateDialog.overwrite')}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-fg-hint">
               {t('duplicateDialog.overwriteDescription')}
             </div>
           </button>
           <button
             type="button"
             onClick={() => onAction('createNew')}
-            className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition-colors text-left"
+            className="w-full px-4 py-3 bg-field hover:bg-hover text-fg rounded-lg font-medium transition-colors text-left"
           >
             <div className="font-medium">{t('duplicateDialog.createNew')}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-fg-hint">
               {t('duplicateDialog.createNewDescription')}
             </div>
           </button>
           <button
             type="button"
             onClick={() => onAction('cancel')}
-            className="w-full px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="w-full px-4 py-2 text-fg-label hover:text-fg transition-colors"
           >
             {t('common:buttons.cancel', { ns: 'common' })}
           </button>

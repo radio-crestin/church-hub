@@ -7,6 +7,10 @@ import {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
+import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
+import { PptxImportDialog } from '~/features/slides-deck/pptx-import/components/PptxImportDialog'
+import { useImportPptxItem } from '~/features/slides-deck/pptx-import/hooks/useImportPptxItem'
 import { SongEditorModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
@@ -68,6 +72,9 @@ export const ScheduleItemEditors = forwardRef<
   const [showScenePicker, setShowScenePicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
   const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
+  const addDeck = useAddDeckItem(scheduleId, onChanged)
+  const { pptx, importPptx } = useImportPptxItem(scheduleId, onChanged)
+  const openDeckEditor = useOpenDeckEditor()
 
   useImperativeHandle(
     ref,
@@ -75,6 +82,10 @@ export const ScheduleItemEditors = forwardRef<
       addItem: () => setShowAddMenu(true),
       editItem: (item: ScheduleItem) => {
         if (mediaEditorsRef.current?.edit(item)) return
+        if (item.itemType === 'slides') {
+          openDeckEditor(item.scheduleId, item.id)
+          return
+        }
         if (item.itemType === 'song' && item.songId) {
           setEditingSongId(item.songId)
         } else if (item.itemType === 'bible_passage') {
@@ -84,7 +95,7 @@ export const ScheduleItemEditors = forwardRef<
         }
       },
     }),
-    [],
+    [openDeckEditor],
   )
 
   const handleAddSong = useCallback(
@@ -123,8 +134,12 @@ export const ScheduleItemEditors = forwardRef<
         }}
         onAddScene={() => setShowScenePicker(true)}
         onAddMedia={(type) => mediaEditorsRef.current?.add(type)}
+        onAddDeck={() => addDeck()}
+        onImportPptx={() => importPptx()}
         showTrigger={false}
       />
+
+      <PptxImportDialog pptx={pptx} />
 
       <MediaItemEditors
         ref={mediaEditorsRef}

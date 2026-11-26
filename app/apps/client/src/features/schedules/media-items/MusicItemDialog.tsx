@@ -56,7 +56,7 @@ export function MusicItemDialog({
   return (
     <ItemDialog
       title={t('mediaItems.music.title')}
-      icon={<Music size={20} className="text-pink-500" />}
+      icon={<Music size={16} strokeWidth={1.5} className="text-fg-label" />}
       testId="music-item-dialog"
       canSave={config !== null}
       isSaving={isSaving}
@@ -75,7 +75,7 @@ export function MusicItemDialog({
 
       {source === 'folder' ? (
         folders.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-fg-hint">
             {t('mediaItems.music.noFolders')}
           </p>
         ) : (
@@ -89,12 +89,12 @@ export function MusicItemDialog({
                 onClick={() => setFolderId(folder.id)}
                 className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm ${
                   folder.id === folderId
-                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                    ? 'bg-selected text-fg'
+                    : 'text-fg-body hover:bg-hover'
                 }`}
               >
                 <span className="truncate font-medium">{folder.name}</span>
-                <span className="shrink-0 text-xs text-gray-500">
+                <span className="shrink-0 text-xs text-fg-hint tabular-nums">
                   {t('mediaItems.music.trackCount', {
                     count: folder.fileCount,
                   })}
@@ -110,9 +110,9 @@ export function MusicItemDialog({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('mediaItems.music.searchTracks')}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+            className="w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fg-hint tabular-nums">
             {t('mediaItems.music.picked', { count: fileIds.length })}
           </p>
           <div className="max-h-72 space-y-1 overflow-y-auto">
@@ -125,22 +125,26 @@ export function MusicItemDialog({
                   role="checkbox"
                   aria-checked={picked >= 0}
                   onClick={() => toggleFile(file.id)}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-fg-body hover:bg-hover"
                 >
                   <span
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs tabular-nums ${
                       picked >= 0
-                        ? 'border-indigo-600 bg-indigo-600 text-white'
-                        : 'border-gray-300 dark:border-gray-600'
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-line-strong'
                     }`}
                   >
                     {picked >= 0 &&
-                      (shuffle ? <Check size={12} /> : picked + 1)}
+                      (shuffle ? (
+                        <Check size={12} strokeWidth={2} />
+                      ) : (
+                        picked + 1
+                      ))}
                   </span>
                   <span className="min-w-0 flex-1 truncate">
                     {file.title ?? file.filename}
                     {file.artist && (
-                      <span className="text-gray-500"> · {file.artist}</span>
+                      <span className="text-fg-hint"> · {file.artist}</span>
                     )}
                   </span>
                 </button>

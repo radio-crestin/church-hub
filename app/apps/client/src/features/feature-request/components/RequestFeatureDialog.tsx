@@ -92,24 +92,24 @@ export function RequestFeatureDialog({
         ref={dialogRef}
         {...{ [FEATURE_REQUEST_UI_ATTRIBUTE]: '' }}
         data-testid="feature-request-dialog"
-        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 w-[calc(100%-1rem)] max-w-3xl max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain"
+        className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel w-[calc(100%-1rem)] max-w-3xl max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain"
         onCancel={(event) => {
           event.preventDefault()
           if (!isSending) onClose()
         }}
       >
         <div className="flex items-center justify-between px-4 sm:px-6 pt-4 pb-2">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {t('common:featureRequest.title')}
           </h2>
           <button
             type="button"
             onClick={onClose}
             disabled={isSending}
-            className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg transition-colors"
+            className="p-1 text-fg-hint hover:text-fg-body rounded-lg transition-colors"
             aria-label={t('common:buttons.cancel')}
           >
-            <X size={20} />
+            <X strokeWidth={1.5} size={16} />
           </button>
         </div>
 
@@ -154,7 +154,7 @@ export function RequestFeatureDialog({
               <button
                 type="button"
                 onClick={() => setIsContactOpen(true)}
-                className="px-3 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="px-3 py-2 text-sm font-medium text-focus hover:underline"
               >
                 {t('common:contact.title')}
               </button>
@@ -162,7 +162,7 @@ export function RequestFeatureDialog({
                 {missingKey && (
                   <span
                     data-testid="feature-request-missing-hint"
-                    className="text-xs text-gray-600 dark:text-gray-400 text-center sm:text-right"
+                    className="text-xs text-fg-label text-center sm:text-right"
                   >
                     {t(missingKey)}
                   </span>
@@ -171,7 +171,7 @@ export function RequestFeatureDialog({
                   type="submit"
                   data-testid="feature-request-submit"
                   disabled={isSending || missingKey !== null}
-                  className="flex items-center justify-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-indigo-600"
+                  className="flex items-center justify-center gap-1.5 h-9 px-4 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-primary"
                 >
                   {isSending
                     ? t('common:featureRequest.sending')

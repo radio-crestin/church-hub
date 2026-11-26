@@ -19,23 +19,21 @@ export function SameThemeRow({ song, onOpen }: SameThemeRowProps) {
         to="/songs/$songId"
         params={{ songId: String(song.songId) }}
         onClick={onOpen}
-        className="group block px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+        className="block px-4 py-2.5 hover:bg-hover"
       >
-        <p className="truncate text-sm font-medium text-gray-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
-          {song.title}
-        </p>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+        <p className="truncate text-sm font-medium text-fg">{song.title}</p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
           {song.themes.map((theme) => (
             <span
               key={theme}
               data-testid="same-theme-chip"
-              className="rounded bg-violet-100 px-1.5 py-0.5 font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+              className="text-fg-label"
             >
               {t(`sameTheme.themes.${theme}`)}
             </span>
           ))}
           {song.categoryName ? (
-            <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+            <span className="inline-flex items-center gap-1 text-fg-hint">
               <Tag className="h-3 w-3" />
               {song.categoryName}
             </span>
@@ -44,7 +42,7 @@ export function SameThemeRow({ song, onOpen }: SameThemeRowProps) {
         {song.sharedWords.length > 0 ? (
           <p
             data-testid="same-theme-words"
-            className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400"
+            className="mt-1 truncate text-xs text-fg-hint"
           >
             {t('sameTheme.sharedWords', {
               words: song.sharedWords.join(' · '),

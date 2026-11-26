@@ -27,10 +27,10 @@ export function MusicPlayRow({ item }: MusicPlayRowProps) {
           () => showToast(t('messages.error'), 'error'),
         )
       }
-      className="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50"
+      className="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 hover:bg-hover"
     >
-      <Play size={16} className="shrink-0 text-pink-500" />
-      <span className="text-sm text-gray-700 dark:text-gray-300">
+      <Play size={16} strokeWidth={1.5} className="shrink-0 text-fg-hint" />
+      <span className="text-sm text-fg-body">
         {t('mediaItems.music.playNow')}
       </span>
     </button>

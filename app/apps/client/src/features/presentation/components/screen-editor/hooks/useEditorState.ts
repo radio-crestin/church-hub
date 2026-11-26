@@ -40,6 +40,7 @@ const createEmptyPreviewTexts = (): PreviewTextsMap => ({
   versete_tineri: {},
   empty: {},
   screen_share: {},
+  deck_slide: {},
 })
 
 interface EditorState {

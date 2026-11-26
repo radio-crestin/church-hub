@@ -229,7 +229,7 @@ export async function updateScreenGlobalSettings(
 export async function batchUpdateScreenConfig(
   screenId: number,
   globalSettings: ScreenGlobalSettings,
-  contentConfigs: Record<ContentType, ContentTypeConfig>,
+  contentConfigs: ScreenWithConfigs['contentConfigs'],
   nextSlideConfig?: NextSlideSectionConfig,
   width?: number,
   height?: number,

@@ -26,7 +26,7 @@ export function ScheduleQuickInsertBar({
       data-testid="schedule-quick-insert-bar"
       className="group/insert relative -my-1 flex h-4 items-center justify-center"
     >
-      <div className="absolute inset-x-2 top-1/2 h-px bg-indigo-300 opacity-0 transition-opacity group-hover/insert:opacity-100 group-focus-within/insert:opacity-100 dark:bg-indigo-700" />
+      <div className="absolute inset-x-2 top-1/2 h-px bg-line-strong opacity-0 transition-opacity group-hover/insert:opacity-100 group-focus-within/insert:opacity-100" />
       <div className="relative z-10 opacity-0 transition-opacity group-hover/insert:opacity-100 group-focus-within/insert:opacity-100 [@media(hover:none)]:opacity-100">
         <Tooltip content={tooltip} position="top">
           <button
@@ -34,9 +34,9 @@ export function ScheduleQuickInsertBar({
             onClick={onInsert}
             aria-label={tooltip}
             data-testid="schedule-quick-insert"
-            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm ring-1 ring-black/5 transition-colors text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-300 dark:bg-indigo-900/40 dark:hover:bg-indigo-900/60"
+            className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors text-fg bg-field shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-hover"
           >
-            <Plus size={12} />
+            <Plus size={12} strokeWidth={2} />
             {t('quickInsert.button')}
           </button>
         </Tooltip>

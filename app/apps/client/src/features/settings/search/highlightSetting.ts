@@ -1,13 +1,7 @@
 const PANEL_SELECTOR = '[data-testid="settings-panel"]'
 const WAIT_MS = 3000
 const HIGHLIGHT_MS = 2500
-const HIGHLIGHT_CLASSES = [
-  'rounded',
-  'bg-indigo-100',
-  'ring-2',
-  'ring-indigo-400',
-  'dark:bg-indigo-900/60',
-]
+const HIGHLIGHT_CLASSES = ['rounded', 'bg-selected', 'ring-1', 'ring-focus']
 
 /** The first element in the settings panel whose own text is `label`. */
 function findLabel(label: string): HTMLElement | null {

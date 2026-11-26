@@ -12,7 +12,7 @@ interface BibleTopicSlideshowBarProps {
 }
 
 const buttonClass =
-  'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors'
+  'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors'
 
 /**
  * The topic as a presentation in one tap: ▶ shows its verses one after
@@ -28,15 +28,15 @@ export function BibleTopicSlideshowBar({
   const { isPlaying, isLooping, position } = slideshow
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+    <div className="flex items-center gap-2 px-2 py-1.5 border-b border-line flex-shrink-0">
       {isPlaying ? (
         <button
           type="button"
           onClick={slideshow.stop}
           data-testid="bible-topic-stop"
-          className={`${buttonClass} bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50`}
+          className={`${buttonClass} bg-live-tint text-live ring-1 ring-inset ring-live`}
         >
-          <Square className="h-3.5 w-3.5" />
+          <Square className="h-4 w-4" strokeWidth={1.5} />
           {t('topics.slideshow.stop')}
           {position && (
             <span
@@ -53,9 +53,9 @@ export function BibleTopicSlideshowBar({
           onClick={() => slideshow.start('once')}
           data-testid="bible-topic-play"
           title={t('topics.slideshow.playHint')}
-          className={`${buttonClass} bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50`}
+          className={`${buttonClass} text-fg-label hover:bg-hover hover:text-fg`}
         >
-          <Play className="h-3.5 w-3.5" />
+          <Play className="h-4 w-4" strokeWidth={1.5} />
           {t('topics.slideshow.play')}
         </button>
       )}
@@ -67,11 +67,11 @@ export function BibleTopicSlideshowBar({
         title={t('topics.slideshow.loopHint')}
         className={`${buttonClass} ${
           isLooping
-            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50'
+            ? 'bg-selected text-fg'
+            : 'text-fg-label hover:bg-hover hover:text-fg'
         }`}
       >
-        <Repeat className="h-3.5 w-3.5" />
+        <Repeat className="h-4 w-4" strokeWidth={1.5} />
         {t('topics.slideshow.loop')}
       </button>
       <div className="ml-auto min-w-0">

@@ -51,8 +51,8 @@ export function MIDIDeviceSelector() {
 
   if (!midi.isSupported) {
     return (
-      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-        <p className="text-sm text-yellow-700 dark:text-yellow-300">
+      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+        <p className="text-sm text-amber-700 dark:text-amber-300">
           {t('sections.shortcuts.midi.notSupported', {
             defaultValue:
               'Web MIDI API is not supported in this browser. MIDI controller features are unavailable.',
@@ -67,16 +67,18 @@ export function MIDIDeviceSelector() {
       {/* Header with enable toggle */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <Music2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-          </div>
+          <Music2
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-fg-label"
+          />
           <div>
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+            <h4 className="text-sm font-medium text-fg">
               {t('sections.shortcuts.midi.title', {
                 defaultValue: 'MIDI Controller',
               })}
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-hint">
               {t('sections.shortcuts.midi.description', {
                 defaultValue:
                   'Use hardware MIDI controllers for shortcuts with LED feedback',
@@ -89,7 +91,7 @@ export function MIDIDeviceSelector() {
           onClick={handleToggleEnabled}
           className={`
             relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-            ${midi.isEnabled ? 'bg-purple-600' : 'bg-gray-200 dark:bg-gray-700'}
+            ${midi.isEnabled ? 'bg-primary' : 'bg-line-strong'}
           `}
           role="switch"
           aria-checked={midi.isEnabled}
@@ -105,7 +107,7 @@ export function MIDIDeviceSelector() {
 
       {/* Permission error */}
       {midi.permissionError && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
           <p className="text-sm text-red-700 dark:text-red-300">
             {t('sections.shortcuts.midi.permissionError', {
               defaultValue: 'MIDI access denied: {{error}}',
@@ -117,15 +119,15 @@ export function MIDIDeviceSelector() {
 
       {/* Device selectors (only shown when enabled) */}
       {midi.isEnabled && midi.hasPermission && (
-        <div className="space-y-3 pl-10">
+        <div className="space-y-3 pl-7">
           {/* Refresh button */}
           <div className="flex justify-end">
             <button
               type="button"
               onClick={handleRefresh}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              className="flex items-center gap-1.5 h-7 px-2 rounded-lg text-xs text-fg-label hover:bg-hover hover:text-fg transition-colors"
             >
-              <RefreshCw className="w-3 h-3" />
+              <RefreshCw size={12} strokeWidth={2} />
               {t('sections.shortcuts.midi.refresh', {
                 defaultValue: 'Refresh devices',
               })}
@@ -134,8 +136,8 @@ export function MIDIDeviceSelector() {
 
           {/* Input device selector */}
           <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              <Usb className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-sm font-medium text-fg-label">
+              <Usb size={16} strokeWidth={1.5} />
               {t('sections.shortcuts.midi.inputDevice', {
                 defaultValue: 'Input Device',
               })}
@@ -152,7 +154,7 @@ export function MIDIDeviceSelector() {
               allowClear
             />
             {midi.inputDevices.length === 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-fg-hint">
                 {t('sections.shortcuts.midi.noInputDevices', {
                   defaultValue: 'No MIDI input devices detected',
                 })}
@@ -162,8 +164,8 @@ export function MIDIDeviceSelector() {
 
           {/* Output device selector (for LEDs) */}
           <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              <Power className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-sm font-medium text-fg-label">
+              <Power size={16} strokeWidth={1.5} />
               {t('sections.shortcuts.midi.outputDevice', {
                 defaultValue: 'Output Device (LEDs)',
               })}
@@ -180,7 +182,7 @@ export function MIDIDeviceSelector() {
               allowClear
             />
             {midi.outputDevices.length === 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-fg-hint">
                 {t('sections.shortcuts.midi.noOutputDevices', {
                   defaultValue: 'No MIDI output devices detected',
                 })}
@@ -195,7 +197,11 @@ export function MIDIDeviceSelector() {
             <div className="flex items-center gap-2 pt-2">
               {midi.isReconnecting ? (
                 <>
-                  <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
+                  <Loader2
+                    size={12}
+                    strokeWidth={2}
+                    className="text-amber-600 dark:text-amber-400 animate-spin"
+                  />
                   <span className="text-xs text-amber-600 dark:text-amber-400">
                     {t('sections.shortcuts.midi.reconnecting', {
                       defaultValue: 'Reconnecting to {{device}}...',
@@ -210,13 +216,13 @@ export function MIDIDeviceSelector() {
               ) : (
                 <>
                   <div
-                    className={`w-2 h-2 rounded-full ${
+                    className={`w-1.5 h-1.5 rounded-full ${
                       midi.selectedInputName && midi.selectedOutputName
-                        ? 'bg-green-500'
-                        : 'bg-yellow-500'
+                        ? 'bg-ok'
+                        : 'bg-amber-500'
                     }`}
                   />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-fg-hint">
                     {midi.selectedInputName && midi.selectedOutputName
                       ? t('sections.shortcuts.midi.fullyConnected', {
                           defaultValue: 'Input and output connected',
@@ -238,11 +244,11 @@ export function MIDIDeviceSelector() {
 
       {/* Request permission prompt */}
       {midi.isEnabled && !midi.hasPermission && !midi.permissionError && (
-        <div className="pl-10">
+        <div className="pl-7">
           <button
             type="button"
             onClick={() => midi.requestAccess()}
-            className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+            className="h-8 px-3 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
           >
             {t('sections.shortcuts.midi.requestPermission', {
               defaultValue: 'Grant MIDI Access',

@@ -43,12 +43,12 @@ export function ScreenTemplateSettings({
   return (
     <div className="space-y-2 py-2" data-testid="screen-template-settings">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-fg-hint">
           {t('templates.screen.description')}
         </p>
         <Link
           to="/settings/themes"
-          className="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+          className="text-xs font-medium text-focus hover:underline"
         >
           {t('templates.picker.manage')}
         </Link>

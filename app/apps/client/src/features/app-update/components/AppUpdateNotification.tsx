@@ -89,7 +89,7 @@ export function AppUpdateNotification({
     <NotificationShell
       testId="notification-app-update"
       icon={isReady ? CheckCircle2 : Download}
-      tone="emerald"
+      tone="neutral"
       title={
         isReady
           ? t('version.readyToInstall', { version })

@@ -7,6 +7,7 @@ import {
   useDeleteBackgroundMedia,
 } from '~/features/background-media/hooks'
 import type { BackgroundMedia } from '~/features/background-media/service/types'
+import { Button } from '~/ui/button'
 import { ConfirmModal } from '~/ui/modal'
 import { useHasPermission } from '~/ui/PermissionGate'
 import { EmptyState, Page, PageHeader, PagePanel } from '~/ui/page'
@@ -73,7 +74,7 @@ export function GalleryPage() {
     if (isLoading) {
       return (
         <div className="flex justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-fg-hint" />
         </div>
       )
     }
@@ -84,13 +85,9 @@ export function GalleryPage() {
           <p className="text-sm text-red-600 dark:text-red-400">
             {t('errors.loadFailed')}
           </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-          >
+          <Button type="button" onClick={() => refetch()}>
             {t('common:buttons.retry')}
-          </button>
+          </Button>
         </div>
       )
     }
@@ -143,7 +140,7 @@ export function GalleryPage() {
             counts={counts}
             onChange={setFilter}
           />
-          <p className="flex items-start gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="flex items-start gap-1.5 text-xs text-fg-hint">
             <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             {t('usageNote')}
           </p>

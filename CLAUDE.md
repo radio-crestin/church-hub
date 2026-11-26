@@ -14,6 +14,26 @@ The project's rules for any agent working here: the principles, then the facts o
 - A request the user makes mid-task goes on the todo list, so no detail is lost.
 - When the user pastes `/abc/sample.py:XX:YY`, XX is the line and YY the number of lines to select.
 
+## Design
+Every screen follows `DESIGN.md`, the app's design system: a quiet, Framer-like tool UI. Read it before you build or change any UI.
+- **Colour from the tokens only:**
+  - Use `bg-app`, `bg-panel`, `bg-field`, `bg-selected`, `border-line`, `text-fg`, `text-fg-hint`, `ring-live`, `text-key`, `text-bookmark` and `bg-primary`.
+  - The tokens are defined in `app/apps/client/src/styles.css`.
+  - New code uses no raw hex and no palette classes (`bg-gray-800`, `text-indigo-600`). The old palette classes still work, retuned to the design, but are converted to tokens whenever a file is touched.
+- **Colour roles:**
+  - Blue is the primary action and focus.
+  - Red is what is on the projector; it uses `ring-live` and never shows a "Live" label.
+  - Gold is the musical key.
+  - Yellow is a set bookmark.
+  - Everything else is grey.
+  - No gradients, glows, coloured icon tiles or entrance animations.
+- **Structure:** a restyle never moves features: the songs list on the left, the preview in the middle, Bookmarks / History / Programs on the right.
+- **Both themes:**
+  - Check every UI change in light and in dark.
+  - Text needs 4.5:1 contrast, and icons, outlines and keycaps need 3:1.
+  - Inter is the UI font; Fira Sans appears only on slides.
+- **Review:** before a UI change is done, review it with the `impeccable` skill (`critique`, `polish`, `audit`) and run its detector on the changed files.
+
 ## Tasks
 - Tasks, sprints and their history are managed in Superfactory (project "Church Hub" on https://superfactory.bringes.io/tasks). Use it for every task: create, update, comment and close them with Superfactory's task tools (`task_create`, `task_update`, `task_comment`, `task_list`, …) in a Superfactory session, or in the web app.
 - Each task is also a file in `.superfactory/tasks/` (`T-<n>-<slug>.md`), kept in step with the server both ways; sprints are in `.superfactory/sprints/<year>-W<week>.json`. Find a task with `grep -il "<words>" .superfactory/tasks/*.md`. Superfactory never commits these files: commit them yourself, on their own branch, when they change.
@@ -29,7 +49,10 @@ The project's rules for any agent working here: the principles, then the facts o
 - Tibi PC (Superfactory machine `tibi-pc`) is the build and test machine, with a copy of Adunare PC's real data in `C:\Users\Tibi\church-hub-data\adunare\`. Adunare PC is the church's live machine: read from it only. How to load and refresh that copy, and what only Adunare can test: `docs/test-machine.md`.
 - Verify changes in a browser driven by Playwright, never by launching, building or clicking through the Tauri desktop app.
 - Every feature and bug fix gets an e2e spec in `app/apps/client/e2e/`; a passing spec is the acceptance signal. The e2e suite is the project's test suite: no new unit tests (the few kept guard what no e2e can reach and run before a release).
-- A task is accepted on the full suite, run locally and serially: `CI=1 TEST_PORT=<port> bunx playwright test --workers=1 --retries=2`.
+- A task is accepted on the full suite, run locally: `CI=1 TEST_PORT=<port> bunx playwright test --retries=2`.
+  - It runs in parallel: each worker gets its own test server, database and five ports, counted up from `TEST_PORT`.
+  - `E2E_WORKERS` sets the worker count; the default is half the CPUs, at most 4.
+  - Specs that never open a page run in a browser-less project.
 - GitHub Actions run only before a release (`test.yml`: e2e and the compiled-sidecar smoke on all three OSes, plus CodeQL); nothing runs on PRs. A red gate publishes nothing; run it on main before tagging (`gh workflow run test.yml --ref main`).
 - Security checks are local: `scripts/release.sh` runs `scripts/security-check.sh` before the bump (gitleaks since the last tag, then, on Linux only by default, CodeQL for javascript-typescript, actions and rust with CI's suite) and stops on any finding (reviewed false positives go in `.codeql-accepted.txt`); it needs gitleaks and bun, plus the CodeQL bundle on Linux. On macOS or Windows, `scripts/security-check.sh codeql` runs CodeQL there to check it; CI's CodeQL still gates every tag.
 - Temp files, screenshots and traces go in your session scratchpad, never the repo or `$TMPDIR`.

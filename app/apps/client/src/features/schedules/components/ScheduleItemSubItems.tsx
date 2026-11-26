@@ -1,3 +1,6 @@
+import { DeckSlideRows } from '~/features/slides-deck/components/DeckSlideRows'
+import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
+import type { SlideDeck } from '~/features/slides-deck/types'
 import { ScheduleAnnouncementSlideRow } from './ScheduleAnnouncementSlideRow'
 import { ScheduleBiblePassageVerseList } from './ScheduleBiblePassageVerseList'
 import { ScheduleSceneSlideRow } from './ScheduleSceneSlideRow'
@@ -24,6 +27,8 @@ interface ScheduleItemSubItemsProps {
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
   onVideoClick?: (item: ScheduleItem) => void
+  /** A Slides item's step (a slide's first, from its row). */
+  onDeckStepClick?: (item: ScheduleItem, stepIndex: number) => void
 }
 
 /**
@@ -52,7 +57,9 @@ function ItemSteps({
   onAnnouncementClick,
   onSceneClick,
   onVideoClick,
+  onDeckStepClick,
 }: ScheduleItemSubItemsProps) {
+  const openDeckEditor = useOpenDeckEditor()
   if (item.itemType === 'song') {
     return (
       <ScheduleSongSlideList
@@ -124,6 +131,23 @@ function ItemSteps({
         itemStartFlatIndex={itemStartFlatIndex}
         highlightedRef={highlightedRef}
         onVideoClick={onVideoClick}
+      />
+    )
+  }
+
+  if (item.itemType === 'slides') {
+    return (
+      <DeckSlideRows
+        deck={item.itemConfig as SlideDeck}
+        itemStartFlatIndex={itemStartFlatIndex}
+        presentedFlatIndex={
+          presentedInfo?.type === 'deck_slide'
+            ? presentedInfo.scheduleItemIndex
+            : null
+        }
+        highlightedRef={highlightedRef}
+        onStepClick={(stepIndex) => onDeckStepClick?.(item, stepIndex)}
+        onEdit={(slide) => openDeckEditor(item.scheduleId, item.id, slide)}
       />
     )
   }

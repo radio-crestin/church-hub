@@ -30,7 +30,7 @@ export function LiveStreamPage() {
       <div className="space-y-4 lg:space-y-6 flex-1 lg:overflow-auto">
         <BroadcastInfo />
 
-        <div className="p-4 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <div className="rounded-xl border border-line bg-panel p-4">
           <SceneGrid />
         </div>
       </div>

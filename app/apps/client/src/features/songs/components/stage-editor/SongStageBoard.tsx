@@ -501,7 +501,7 @@ export function SongStageBoard({
     <div className="flex flex-1 flex-col min-h-0">
       {/* Toolbar: save status + present */}
       <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-fg-hint">
           {upsert.isPending ? (
             <>
               <Loader2 size={14} className="animate-spin" />
@@ -511,7 +511,7 @@ export function SongStageBoard({
             <span>{t('stageEditor.unsaved')}</span>
           ) : (
             <>
-              <Check size={14} className="text-green-500" />
+              <Check size={14} strokeWidth={1.75} className="text-fg-label" />
               {t('stageEditor.saved')}
             </>
           )}
@@ -522,7 +522,7 @@ export function SongStageBoard({
               type="button"
               onClick={handleHide}
               disabled={clearTemporary.isPending}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-field text-fg-body rounded-lg hover:bg-hover disabled:opacity-50 transition-colors"
               data-testid="stage-hide"
             >
               <EyeOff size={16} />
@@ -533,7 +533,7 @@ export function SongStageBoard({
             type="button"
             onClick={handlePresent}
             disabled={isStartingPresentation}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 h-8 px-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             data-testid="stage-present"
           >
             <Play size={16} />
@@ -591,7 +591,7 @@ export function SongStageBoard({
                 onMouseDown={keepSlideEditorFocus}
                 onClick={handlePrev}
                 disabled={!canNavigatePrev || navigateTemporary.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-field text-fg-body rounded-lg hover:bg-hover disabled:opacity-50 transition-colors"
                 data-testid="stage-prev"
               >
                 <ChevronLeft size={20} />
@@ -602,7 +602,7 @@ export function SongStageBoard({
                 onMouseDown={keepSlideEditorFocus}
                 onClick={handleNext}
                 disabled={!canNavigateNext || navigateTemporary.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-field text-fg-body rounded-lg hover:bg-hover disabled:opacity-50 transition-colors"
                 data-testid="stage-next"
               >
                 <span className="text-sm">{t('bible:controls.next')}</span>

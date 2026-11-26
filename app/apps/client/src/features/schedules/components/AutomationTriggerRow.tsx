@@ -60,15 +60,10 @@ export function AutomationTriggerRow({
   return (
     <div className="space-y-2 py-2">
       <div>
-        <label
-          htmlFor={id}
-          className="block text-sm font-medium text-gray-900 dark:text-gray-100"
-        >
+        <label htmlFor={id} className="block text-sm font-medium text-fg">
           {label}
         </label>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-          {description}
-        </p>
+        <p className="mt-0.5 text-xs text-fg-hint">{description}</p>
       </div>
       <NativeSelect<Choice>
         id={id}

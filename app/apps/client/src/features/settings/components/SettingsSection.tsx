@@ -28,7 +28,7 @@ export function SettingsSection({
   return (
     <div
       data-testid={testId}
-      className="flex-1 rounded-lg border border-gray-200 bg-white p-4 transition-colors sm:p-6 data-[active]:border-indigo-400 data-[active]:ring-1 data-[active]:ring-indigo-400/40 dark:border-gray-800 dark:bg-gray-900 dark:data-[active]:border-indigo-500 dark:data-[active]:ring-indigo-500/40"
+      className="flex-1 rounded-xl border border-line bg-panel p-4 transition-colors sm:p-5 data-[active]:border-line-strong"
     >
       {(title || description || actions) && (
         <SectionHeader
