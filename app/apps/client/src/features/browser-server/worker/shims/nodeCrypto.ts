@@ -1,6 +1,7 @@
 /**
  * `node:crypto` in the browser build: the synchronous calls the server makes
- * (randomBytes, createHash('sha256'), scryptSync, randomUUID). WebCrypto's
+ * (randomBytes, createHash('sha256'), scryptSync, randomUUID); ciphers
+ * stay the PC's. WebCrypto's
  * digest and derive are async, so the sync ones come from @noble/hashes.
  */
 import { scrypt } from '@noble/hashes/scrypt'
@@ -67,4 +68,21 @@ export function randomUUID(): string {
   return crypto.randomUUID()
 }
 
-export default { randomBytes, createHash, scryptSync, randomUUID }
+/**
+ * Ciphers seal secrets at rest and Cloud backups, both the PC's own (the
+ * browser keeps secrets as they are: sealSecret.ts).
+ */
+const needsChurchPc = (name: string) => () => {
+  throw new Error(`${name} needs the church PC`)
+}
+export const createCipheriv = needsChurchPc('createCipheriv')
+export const createDecipheriv = needsChurchPc('createDecipheriv')
+
+export default {
+  randomBytes,
+  createHash,
+  scryptSync,
+  randomUUID,
+  createCipheriv,
+  createDecipheriv,
+}

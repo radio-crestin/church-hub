@@ -38,6 +38,8 @@ const SERVER_FILE_SWAPS: Record<string, string> = {
   'db/connection.ts': shim('connection.ts'),
   'db/fixtures/readFixtureFile.ts': shim('readFixtureFile.ts'),
   'service/sync/cloud/getInstallation.ts': shim('installation.ts'),
+  'service/secret-store/sealSecret.ts': shim('sealSecret.ts'),
+  'service/secret-store/openSecret.ts': shim('openSecret.ts'),
 }
 
 /**
