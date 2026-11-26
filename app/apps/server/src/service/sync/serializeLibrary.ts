@@ -1,4 +1,4 @@
-import { LIBRARY_SCHEMA_VERSION } from './constants'
+import { emptyLibrary, LIBRARY_COLLECTIONS } from './libraryCollections'
 import type {
   LibraryFile,
   LibrarySchedule,
@@ -11,8 +11,8 @@ import type { SyncEntityType } from '../../db/schema/sync'
 
 /**
  * Serializes the local database into a LibraryFile snapshot — the local side
- * of the merge. Only synced aggregates are included (songs with slides,
- * categories, groups, schedules with items) plus the local tombstones.
+ * of the merge: every synced collection (libraryCollections.ts) plus the
+ * local tombstones.
  *
  * Aggregates in `dirtyKeys` (`entityType:uuid`, the unsynced local edits) are
  * stamped with `modifiedByDevice = deviceName` so other devices can show where
@@ -95,6 +95,7 @@ export function serializeLibrary(
         hymn_number: string | null
         key_line: string | null
         presentation_order: string | null
+        alternate_titles: string | null
         presentation_count: number
         last_presented_at: number | null
         last_manual_edit: number | null
@@ -106,7 +107,7 @@ export function serializeLibrary(
       `SELECT s.id, s.uuid, s.title, c.uuid AS category_uuid, g.uuid AS group_uuid,
               s.source_filename, s.author, s.copyright, s.ccli, s.tempo,
               s.time_signature, s.theme, s.alt_theme, s.hymn_number, s.key_line,
-              s.presentation_order, s.presentation_count, s.last_presented_at,
+              s.presentation_order, s.alternate_titles, s.presentation_count, s.last_presented_at,
               s.last_manual_edit, s.created_at, s.updated_at
          FROM songs s
          LEFT JOIN song_categories c ON c.id = s.category_id
@@ -149,6 +150,19 @@ export function serializeLibrary(
     })
   }
 
+  const tagsBySongId = new Map<number, string[]>()
+  for (const row of db
+    .query<{ song_id: number; uuid: string }, []>(
+      `SELECT a.song_id, t.uuid FROM song_tag_assignments a
+         JOIN song_tags t ON t.id = a.tag_id ORDER BY t.uuid`,
+    )
+    .all()) {
+    tagsBySongId.set(row.song_id, [
+      ...(tagsBySongId.get(row.song_id) ?? []),
+      row.uuid,
+    ])
+  }
+
   const songs: LibrarySong[] = songRows.map((row) => ({
     uuid: row.uuid,
     title: row.title,
@@ -165,6 +179,8 @@ export function serializeLibrary(
     hymnNumber: row.hymn_number,
     keyLine: row.key_line,
     presentationOrder: row.presentation_order,
+    alternateTitles: row.alternate_titles,
+    tagUuids: tagsBySongId.get(row.id) ?? [],
     presentationCount: row.presentation_count,
     lastPresentedAt: row.last_presented_at,
     lastManualEdit: row.last_manual_edit,
@@ -180,12 +196,22 @@ export function serializeLibrary(
         uuid: string
         title: string
         description: string | null
+        autoplay_seconds: number | null
+        autoplay_by_text: number
+        loop: number
+        music_volume: number | null
+        start_on_app_start: number
+        start_trigger: string | null
+        stop_trigger: string | null
         created_at: number
         updated_at: number
       },
       []
     >(
-      "SELECT id, uuid, title, description, created_at, updated_at FROM schedules WHERE uuid != '' AND is_queue = 0",
+      `SELECT id, uuid, title, description, autoplay_seconds, autoplay_by_text,
+              loop, music_volume, start_on_app_start, start_trigger,
+              stop_trigger, created_at, updated_at
+         FROM schedules WHERE uuid != '' AND is_queue = 0`,
     )
     .all()
 
@@ -203,6 +229,9 @@ export function serializeLibrary(
         obs_scene_name: string | null
         item_config: string | null
         child_schedule_uuid: string | null
+        advance_seconds: number | null
+        is_sung: number
+        sung_at: number | null
         sort_order: number
       },
       []
@@ -210,7 +239,8 @@ export function serializeLibrary(
       `SELECT i.id, i.schedule_id, i.item_type, s.uuid AS song_uuid,
               i.slide_type, i.slide_content, i.bible_passage_reference,
               i.bible_passage_translation, i.obs_scene_name, i.item_config,
-              c.uuid AS child_schedule_uuid, i.sort_order
+              c.uuid AS child_schedule_uuid, i.advance_seconds, i.is_sung,
+              i.sung_at, i.sort_order
          FROM schedule_items i
          LEFT JOIN songs s ON s.id = i.song_id
          LEFT JOIN schedules c ON c.id = i.child_schedule_id
@@ -309,6 +339,9 @@ export function serializeLibrary(
       obsSceneName: item.obs_scene_name,
       itemConfig: item.item_config,
       childScheduleUuid: item.child_schedule_uuid,
+      advanceSeconds: item.advance_seconds,
+      isSung: item.is_sung,
+      sungAt: item.sung_at,
       sortOrder: item.sort_order,
       bibleVerses: versesByItemId.get(item.id) ?? [],
       verseteTineri: vtByItemId.get(item.id) ?? [],
@@ -319,6 +352,15 @@ export function serializeLibrary(
     uuid: row.uuid,
     title: row.title,
     description: row.description,
+    playback: {
+      autoplaySeconds: row.autoplay_seconds,
+      autoplayByText: row.autoplay_by_text,
+      loop: row.loop,
+      musicVolume: row.music_volume,
+      startOnAppStart: row.start_on_app_start,
+      startTrigger: row.start_trigger,
+      stopTrigger: row.stop_trigger,
+    },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     items: itemsByScheduleId.get(row.id) ?? [],
@@ -337,29 +379,23 @@ export function serializeLibrary(
     }))
 
   const library: LibraryFile = {
-    schemaVersion: LIBRARY_SCHEMA_VERSION,
-    updatedByDevice: deviceId,
+    ...emptyLibrary(deviceId),
     categories,
     groups,
     songs,
     schedules,
     tombstones,
   }
+  for (const { key, records } of LIBRARY_COLLECTIONS) {
+    if (records) library[key] = records.serialize() as never
+  }
 
-  const stamp = (
-    entityType: string,
-    items: Array<{ uuid: string } & { modifiedByDevice?: string | null }>,
-  ) => {
-    for (const item of items) {
+  for (const { entityType, key } of LIBRARY_COLLECTIONS) {
+    for (const item of library[key]) {
       if (dirtyKeys.has(`${entityType}:${item.uuid}`)) {
         item.modifiedByDevice = deviceName
       }
     }
   }
-  stamp('song_category', library.categories)
-  stamp('song_group', library.groups)
-  stamp('song', library.songs)
-  stamp('schedule', library.schedules)
-
   return library
 }

@@ -9,14 +9,25 @@ import {
 } from 'drizzle-orm/sqlite-core'
 
 /**
- * Entity types covered by Google Drive library sync. Each is an aggregate:
- * `song` includes its slides, `schedule` includes its items and nested verses.
+ * Entity types the library sync carries (Drive and cloud). Each is an
+ * aggregate: `song` includes its slides and tags, `schedule` its items and
+ * nested verses, `music_playlist` its items, `role` and `user` their
+ * permissions. A `setting` is identified by its key.
  */
 export const SYNC_ENTITY_TYPES = [
   'song',
   'song_category',
   'song_group',
   'schedule',
+  'song_tag',
+  'song_bookmark',
+  'song_bookmark_note',
+  'bible_bookmark',
+  'bible_bookmark_note',
+  'music_playlist',
+  'setting',
+  'role',
+  'user',
 ] as const
 
 export type SyncEntityType = (typeof SYNC_ENTITY_TYPES)[number]
@@ -64,6 +75,12 @@ export const syncState = sqliteTable('sync_state', {
   remoteFileId: text('remote_file_id'),
   /** Drive-reported version of the library file at the last successful sync. */
   remoteFileVersion: text('remote_file_version'),
+  /**
+   * The user (uuid) the current request acts for, set just before each of
+   * its statements (db/actingUser.ts): the triggers stamp it on the changes
+   * they queue. Null: the server itself.
+   */
+  actingUser: text('acting_user'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -85,6 +102,8 @@ export const syncPending = sqliteTable(
     queuedAt: integer('queued_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
+    /** The user (uuid) who made the change; null: the server itself. */
+    author: text('author'),
   },
   (table) => [primaryKey({ columns: [table.entityType, table.entityUuid] })],
 )
@@ -103,6 +122,8 @@ export const syncTombstones = sqliteTable(
     deletedAt: integer('deleted_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
+    /** The user (uuid) who deleted it; null: the server itself. */
+    author: text('author'),
   },
   (table) => [
     uniqueIndex('idx_sync_tombstones_entity').on(
@@ -115,7 +136,9 @@ export const syncTombstones = sqliteTable(
 /**
  * Feed of changes applied from other devices, powering the "updated elsewhere"
  * badges in the songs and schedules lists. `conflict` marks rows where a local
- * unsynced edit was overwritten by a newer remote version (last-writer-wins).
+ * unsynced edit was overwritten by a newer remote version (last-writer-wins);
+ * `rejected` a local change the sync service refused (its author may not make
+ * it), put back as the church has it.
  */
 export const syncUpdates = sqliteTable(
   'sync_updates',
@@ -126,12 +149,14 @@ export const syncUpdates = sqliteTable(
     /** Local row id after apply (null when the entity was removed). */
     localId: integer('local_id'),
     changeKind: text('change_kind', {
-      enum: ['added', 'updated', 'removed', 'conflict'],
+      enum: ['added', 'updated', 'removed', 'conflict', 'rejected'],
     }).notNull(),
     /** Display title snapshot, so removed entities can still be named. */
     title: text('title').notNull(),
     /** Name of the device the change was made on (null when unattributed). */
     sourceDevice: text('source_device'),
+    /** For `rejected`: the permission its author lacked. */
+    detail: text('detail'),
     occurredAt: integer('occurred_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -158,8 +183,6 @@ export const cloudSync = sqliteTable('cloud_sync', {
   serverToken: text('server_token').notNull(),
   seq: integer('seq').notNull().default(0),
   headEtag: text('head_etag'),
-  /** Hash of the roles and users last mirrored to the service. */
-  accessHash: text('access_hash'),
   /** The Google account owning the church (T-172); null for a guest church. */
   ownerEmail: text('owner_email'),
   createdAt: integer('created_at', { mode: 'timestamp' })

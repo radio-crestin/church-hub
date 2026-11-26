@@ -31,23 +31,26 @@ export interface ChurchOwner {
   claimedAt: number
 }
 
+/**
+ * A role as the service checks writes against: kept from the `role`
+ * changes (their versions are in `versions`, like every synced row's).
+ */
 export interface RoleRecord {
+  /** The role's sync uuid. */
   id: string
   name: string
   permissions: string[]
-  version: number
-  updatedAt: number
 }
 
+/** An account, kept from the `user` changes. */
 export interface UserRecord {
+  /** The user's sync uuid. */
   id: string
   name: string
   roleId: string | null
   isSuperAdmin: boolean
   isActive: boolean
   permissions: string[]
-  version: number
-  updatedAt: number
 }
 
 /**
@@ -78,13 +81,6 @@ export interface ChurchState {
   owner?: ChurchOwner | null
   /** A transfer the owner started: this account accepts it to own it. */
   pendingOwnerEmail?: string | null
-  /**
-   * Set once the church server asks for it (PUT access with
-   * revokeDevicesWithUser): a user deactivated or removed has every device
-   * revoked, for good. Absent: an older server, whose inactive users'
-   * devices stay (their writes refused) as before.
-   */
-  revokeDevicesWithUser?: boolean
   createdAt: number
   updatedAt: number
 }

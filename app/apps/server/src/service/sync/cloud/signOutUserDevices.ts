@@ -1,19 +1,22 @@
 import { listCloudDevices, revokeCloudDevice } from './cloudDevices'
 import { getCloudIdentity } from './cloudIdentityStore'
-import { pushAccessIfChanged } from './pushAccessIfChanged'
 import { createLogger } from '../../../utils/logger'
 import { toErrorMessage } from '../../../utils/toErrorMessage'
+import { runSyncCycle } from '../runSyncCycle'
+import { getSyncConfig } from '../syncConfigStore'
 
 const logger = createLogger('sync')
 
 async function signOut(userId: number): Promise<void> {
-  const identity = await getCloudIdentity()
-  if (!identity) return
-  const pushed = await pushAccessIfChanged(identity)
-  if (pushed?.revokesDevicesWithUser) return
-
-  const devices = await listCloudDevices()
-  for (const device of devices) {
+  if (!(await getCloudIdentity())) return
+  const config = await getSyncConfig()
+  if (config.syncEnabled && config.transport === 'cloud') {
+    const result = await runSyncCycle({ waitsItsTurn: true })
+    if (!result.success) throw new Error(result.error ?? 'sync failed')
+    return
+  }
+  // Sync is paused: nothing else goes out, but the devices still go.
+  for (const device of await listCloudDevices()) {
     if (device.userId === userId && device.revokedAt === null) {
       await revokeCloudDevice(device.id)
     }
@@ -22,11 +25,10 @@ async function signOut(userId: number): Promise<void> {
 
 /**
  * After a user was deactivated or removed: their devices are signed out on
- * the sync service. The access push does it (the service revokes them and
- * moves the read path); an older service, or a push a sync cycle already
- * made, leaves the ones still active to revoke here one by one. A failure
- * is logged, not thrown: the user change stands, and the next sync cycle
- * pushes the access again.
+ * the sync service. The user change goes out at once, and the service,
+ * applying it, revokes them and moves the read path; while sync is paused,
+ * each of their devices is revoked by itself. A failure is logged, not
+ * thrown: the user change stands, and the next sync cycle sends it again.
  */
 export async function signOutUserDevices(userId: number): Promise<void> {
   try {

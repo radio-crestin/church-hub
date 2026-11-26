@@ -5,6 +5,7 @@ import { serviceError, syncServiceRequest } from './syncServiceRequest'
 import { getRawDatabase } from '../../../db'
 import { runSyncCycle } from '../runSyncCycle'
 import { upsertSyncConfig } from '../syncConfigStore'
+import { SYNCED_TABLES, syncedRowsSql } from '../syncedTables'
 
 interface Registration {
   churchId: string
@@ -14,14 +15,6 @@ interface Registration {
   serverToken: string
   ownerEmail: string | null
 }
-
-/** Every synced root table, queued whole for a new church's first upload. */
-const ROOT_TABLES = [
-  ['song_category', 'song_categories'],
-  ['song_group', 'song_groups'],
-  ['song', 'songs'],
-  ['schedule', 'schedules'],
-] as const
 
 /**
  * Registers this server on the sync service, owned by the Google account
@@ -65,12 +58,12 @@ export async function connectCloudSync(
 /** Every synced row, queued for a new church's first upload. */
 function queueWholeLibrary(): void {
   const db = getRawDatabase()
-  for (const [entityType, table] of ROOT_TABLES) {
+  for (const synced of SYNCED_TABLES) {
     // Dated a second back, so the first cycle clears them once it has
     // published them (it clears what was queued before its first second).
     db.query(
       `INSERT OR IGNORE INTO sync_pending (entity_type, entity_uuid, queued_at)
-       SELECT ?, uuid, unixepoch() - 1 FROM ${table} WHERE uuid != ''`,
-    ).run(entityType)
+       SELECT ?, uuid, unixepoch() - 1 FROM (${syncedRowsSql(synced)})`,
+    ).run(synced.entityType)
   }
 }

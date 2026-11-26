@@ -1,10 +1,13 @@
-import { checkChanges } from './checkChanges'
+import { applyAccessChange } from './applyAccessChange'
+import { authorOf, checkChanges } from './checkChanges'
 import { churchPrefix } from './churchPrefix'
 import { compact } from './compact'
+import { finishPathMove } from './finishPathMove'
 import { gzipJson } from './gzipJson'
-import { loadPermissions } from './loadPermissions'
+import { movePathSecret, type PathMove } from './movePathSecret'
 import { publishHead } from './publishHead'
 import { randomId } from './randomId'
+import { revokeDevicesOfInactiveUsers } from './revokeDevicesOfInactiveUsers'
 import type { ChurchState, SyncStore } from './state/ChurchState'
 import { type ChurchVersion, readChurch } from './state/readChurch'
 import { updateChurch } from './state/updateChurch'
@@ -19,8 +22,12 @@ export interface CommitResult {
 }
 
 /**
- * One accepted write (design §4): authorize every change, check its version,
- * then publish it as one segment and commit the new versions.
+ * One accepted write (design §4): authorize every change against its
+ * author, check its version, then publish it as one segment and commit the
+ * new versions. Role and user changes become the rules later writes are
+ * checked against; a user they deactivate or remove has every device
+ * revoked, and the path secret moves in the same state write, so those
+ * devices neither write nor read again.
  *
  * The segment is written first, under a name of its own
  * (`log/<seq>-<nonce>.json.gz`); the church's state then takes `seq` with a
@@ -37,12 +44,14 @@ export async function commitChanges(
   church: ChurchVersion
 ): Promise<CommitResult> {
   let committed
+  let move: PathMove | null = null
   try {
     committed = await updateChurch(
       store,
       caller.churchId,
       async (state) => {
-        checkChanges(changes, state.versions, loadPermissions(state, caller))
+        move = null
+        checkChanges(changes, state, caller)
 
         const seq = state.seq + 1
         const now = Math.floor(Date.now() / 1000)
@@ -51,6 +60,7 @@ export async function commitChanges(
           uuid: change.uuid,
           op: change.op,
           version: seq,
+          author: authorOf(caller, change),
           ...(change.op === 'upsert'
             ? { data: change.data }
             : { deletedAt: change.deletedAt }),
@@ -74,12 +84,20 @@ export async function commitChanges(
         for (const change of changes) {
           state.versions[`${change.type}:${change.uuid}`] =
             change.op === 'delete' ? -seq : seq
+          applyAccessChange(state, change)
         }
         state.updatedAt = now
+        if (revokeDevicesOfInactiveUsers(state, now) > 0) {
+          move = await movePathSecret(store.bucket, state)
+        }
+        const moved = move as PathMove | null
         return {
           next: state,
           result: seq,
-          undo: () => store.bucket.delete(object),
+          undo: async () => {
+            await moved?.undo()
+            await store.bucket.delete(object)
+          },
         }
       },
       church
@@ -96,7 +114,9 @@ export async function commitChanges(
 
   const { state, etag } = committed
   const seq = state.seq
-  await publishHead(store, state, etag)
+  const moved = move as PathMove | null
+  if (moved) await finishPathMove(store, state, etag, moved.oldPrefix)
+  else await publishHead(store, state, etag)
   const result = {
     seq,
     versions: changes.map(({ type, uuid }) => ({ type, uuid, version: seq })),

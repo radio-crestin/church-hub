@@ -160,6 +160,8 @@ export const songBookmarks = sqliteTable(
   'song_bookmarks',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     songId: integer('song_id')
       .notNull()
       .references(() => songs.id, { onDelete: 'cascade' }),
@@ -169,6 +171,9 @@ export const songBookmarks = sqliteTable(
     isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),
     sungAt: integer('sung_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
   },
@@ -185,6 +190,8 @@ export const songTags = sqliteTable(
   'song_tags',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     name: text('name').notNull().unique(),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
@@ -220,9 +227,14 @@ export const songBookmarkNotes = sqliteTable(
   'song_bookmark_notes',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     content: text('content').notNull(),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
   },

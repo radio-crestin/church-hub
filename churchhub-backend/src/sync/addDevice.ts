@@ -23,7 +23,7 @@ export async function addDevice(
       throw new SyncError(400, 'unknown_user', 'No such user in this church')
     }
     // Its device would be revoked at once (revokeDevicesOfInactiveUsers).
-    if (church.revokeDevicesWithUser && !user.isActive) {
+    if (!user.isActive) {
       throw new SyncError(400, 'inactive_user', 'This user is deactivated')
     }
     church.devices.push({

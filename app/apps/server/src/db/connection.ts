@@ -3,6 +3,7 @@ import { copyFile, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { type BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite'
 
+import { stampActingUser } from './actingUser'
 import { type MigrationResult, runMigrations } from './migrations'
 import * as schema from './schema'
 import { Database } from 'bun:sqlite'
@@ -222,6 +223,7 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     t = performance.now()
     const migrationResult = runMigrations(sqlite)
     logTiming('run_migrations', t)
+    stampActingUser(sqlite)
 
     // No secret stays in plain text, here or in the copies next to it; one
     // restored from another computer is forgotten (set up again)
@@ -247,6 +249,7 @@ export async function initializeDatabase(): Promise<InitializeResult> {
 export function connectDatabase(): void {
   sqlite = new Database(DATABASE_PATH)
   applyPragmas(sqlite)
+  stampActingUser(sqlite)
   db = drizzle(sqlite, { schema })
 }
 

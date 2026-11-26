@@ -1,3 +1,5 @@
+import { SYNC_ENTITY_TYPES } from '../../db/schema/sync'
+
 const localhostError = {
   description: 'Only accessible from localhost',
   content: {
@@ -42,10 +44,7 @@ const syncUpdateEntrySchema = {
   type: 'object',
   properties: {
     id: { type: 'integer' },
-    entityType: {
-      type: 'string',
-      enum: ['song', 'song_category', 'song_group', 'schedule'],
-    },
+    entityType: { type: 'string', enum: [...SYNC_ENTITY_TYPES] },
     entityUuid: { type: 'string' },
     localId: {
       type: ['integer', 'null'],
@@ -53,12 +52,18 @@ const syncUpdateEntrySchema = {
     },
     changeKind: {
       type: 'string',
-      enum: ['added', 'updated', 'removed', 'conflict'],
+      enum: ['added', 'updated', 'removed', 'conflict', 'rejected'],
+      description:
+        'conflict: a local edit lost to a newer one; rejected: a local change the sync service refused (its author lacks the permission), put back as the church has it.',
     },
     title: { type: 'string' },
     sourceDevice: {
       type: ['string', 'null'],
       description: 'Name of the device the change was made on, when known.',
+    },
+    detail: {
+      type: ['string', 'null'],
+      description: 'For rejected: the permission the change needed.',
     },
     occurredAt: { type: 'integer', description: 'Unix seconds' },
     seen: { type: 'boolean' },
@@ -68,10 +73,7 @@ const syncUpdateEntrySchema = {
 const pendingChangeEntrySchema = {
   type: 'object',
   properties: {
-    entityType: {
-      type: 'string',
-      enum: ['song', 'song_category', 'song_group', 'schedule'],
-    },
+    entityType: { type: 'string', enum: [...SYNC_ENTITY_TYPES] },
     entityUuid: { type: 'string' },
     localId: { type: ['integer', 'null'] },
     title: { type: 'string' },

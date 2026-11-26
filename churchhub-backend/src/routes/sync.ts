@@ -10,7 +10,6 @@ import { listDevices } from '../sync/listDevices'
 import { claimChurch } from '../sync/owner/claimChurch'
 import { verifyOwnerTicket } from '../sync/owner/ownerTicket'
 import { syncOpenApi } from '../sync/openapi'
-import { parseAccess } from '../sync/parseAccess'
 import { parseChanges } from '../sync/parseChanges'
 import { readInstallation } from '../sync/readInstallation'
 import { readJsonBody } from '../sync/readJsonBody'
@@ -23,7 +22,6 @@ import { createSyncStore } from '../sync/state/createSyncStore'
 import { readChurch } from '../sync/state/readChurch'
 import { SyncError } from '../sync/SyncError'
 import { syncBodyLimit } from '../sync/syncBodyLimit'
-import { updateAccess } from '../sync/updateAccess'
 import type { Bindings } from '../types'
 import { clientIp } from '../utils/clientIp'
 
@@ -46,19 +44,9 @@ sync.use('/sync/*', syncBodyLimit)
  * church server's calls are checked against the installation holding its
  * token (checkInstallation); `takeover` makes the caller's the one.
  */
-async function caller(
-  c: SyncContext,
-  store: SyncStore,
-  actingUserId?: string | null,
-  takeover = false
-) {
+async function caller(c: SyncContext, store: SyncStore, takeover = false) {
   const found = await readChurch(store, c.req.param('churchId') ?? '')
-  const who = await authenticate(
-    store,
-    found,
-    c.req.header('Authorization'),
-    actingUserId
-  )
+  const who = await authenticate(store, found, c.req.header('Authorization'))
   // authenticate refuses an unknown church, so it was found.
   const church = await checkInstallation(
     store,
@@ -135,7 +123,7 @@ sync.post('/sync/churches/:churchId/owner', async (c) => {
  */
 sync.post('/sync/churches/:churchId/takeover', async (c) => {
   const store = createSyncStore(c.env)
-  const { who, church } = await caller(c, store, null, true)
+  const { who, church } = await caller(c, store, true)
   if (!who.isServer) {
     throw new SyncError(403, 'forbidden', 'Only the church server can')
   }
@@ -153,20 +141,6 @@ sync.get('/sync/churches/:churchId/path', async (c) => {
     ...readLocation(store, church.state),
     ownerEmail: church.state.owner?.email ?? null,
   })
-})
-
-/**
- * PUT /sync/churches/:churchId/access: the church's roles and users; with
- * revokeDevicesWithUser, a deactivated or removed user's devices are revoked
- * and the path moves (the answer has the read location either way).
- */
-sync.put('/sync/churches/:churchId/access', async (c) => {
-  const access = parseAccess(await readJsonBody(c))
-  const store = createSyncStore(c.env)
-  const { who, church } = await caller(c, store)
-  requirePermission(church.state, who, MANAGE_PERMISSION)
-  const { state, ...update } = await updateAccess(store, who.churchId, access)
-  return c.json({ ...update, ...readLocation(store, state) })
 })
 
 /** GET /sync/churches/:churchId/devices: every device, revoked ones too. */
@@ -204,9 +178,9 @@ sync.delete('/sync/churches/:churchId/devices/:deviceId', async (c) => {
 
 /** POST /sync/churches/:churchId/changes: one checked, versioned write. */
 sync.post('/sync/churches/:churchId/changes', async (c) => {
-  const { changes, actingUserId } = parseChanges(await readJsonBody(c))
+  const changes = parseChanges(await readJsonBody(c))
   const store = createSyncStore(c.env)
-  const { who, church } = await caller(c, store, actingUserId)
+  const { who, church } = await caller(c, store)
   const compactAfter = Number(c.env.SYNC_COMPACT_AFTER) || DEFAULT_COMPACT_AFTER
   const { state, ...result } = await commitChanges(
     store,

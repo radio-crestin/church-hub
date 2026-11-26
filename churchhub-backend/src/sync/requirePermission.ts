@@ -10,7 +10,7 @@ export function requirePermission(
   permission: string
 ): void {
   const granted = loadPermissions(state, caller)
-  if (granted === ALL_PERMISSIONS || granted.has(permission)) return
+  if (granted === ALL_PERMISSIONS || granted?.has(permission)) return
   throw new SyncError(403, 'forbidden', `Requires ${permission}`, {
     permission,
   })
