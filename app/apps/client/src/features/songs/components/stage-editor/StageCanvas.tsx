@@ -186,7 +186,7 @@ export function StageCanvas({
         data-editing={framed ? 'true' : 'false'}
         className={`rounded-2xl border-2 p-2 transition-colors ${
           canEdit ? 'cursor-text' : ''
-        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'} flex w-fit items-center justify-center`}
+        } ${framed ? 'border-focus bg-indigo-500/10' : 'border-transparent'} flex w-fit items-center justify-center`}
       >
         <div
           style={boxStyle}

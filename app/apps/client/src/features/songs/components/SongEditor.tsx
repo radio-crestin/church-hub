@@ -96,24 +96,24 @@ export function SongEditor({
     >
       <header
         data-testid="song-editor-header"
-        className="sticky top-0 z-20 -mx-3 -mt-2 flex shrink-0 items-center gap-2 bg-gray-50 px-3 pb-2 pt-2 sm:-mx-4 sm:px-4 md:-mx-6 md:-mt-3 md:px-6 md:pt-3 lg:static lg:m-0 lg:p-0 dark:bg-gray-950"
+        className="sticky top-0 z-20 -mx-3 -mt-2 flex shrink-0 items-center gap-2 bg-app px-3 pb-2 pt-2 sm:-mx-4 sm:px-4 md:-mx-6 md:-mt-3 md:px-6 md:pt-3 lg:static lg:m-0 lg:p-0"
       >
         <button
           type="button"
           onClick={onClose}
           data-testid="song-editor-done"
           title={t('songEditor.done')}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg p-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg p-2 text-sm font-medium text-fg-body hover:bg-hover"
         >
           <ArrowLeft size={20} />
           <span className="hidden sm:inline">{t('songEditor.done')}</span>
         </button>
         <h1
           data-testid="song-editor-title"
-          className="min-w-0 flex-1 truncate text-xl font-bold text-gray-900 lg:text-2xl dark:text-white"
+          className="min-w-0 flex-1 truncate text-xl font-bold text-fg lg:text-2xl"
         >
           {isLoading ? (
-            <span className="inline-block h-7 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+            <span className="inline-block h-7 w-48 animate-pulse rounded bg-field" />
           ) : (
             draft.title ||
             t(isNew ? 'actions.create' : 'editor.titlePlaceholder')
@@ -121,7 +121,7 @@ export function SongEditor({
         </h1>
         <span
           data-testid="song-editor-status"
-          className="hidden shrink-0 items-center gap-1 text-xs text-gray-500 sm:inline-flex dark:text-gray-400"
+          className="hidden shrink-0 items-center gap-1 text-xs text-fg-hint sm:inline-flex"
         >
           {isSaving ? (
             <>
@@ -144,7 +144,7 @@ export function SongEditor({
             disabled={deleteSong.isPending || isLoading}
             data-testid="song-editor-delete"
             title={t('songs:actions.delete')}
-            className="shrink-0 rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-red-900/20"
+            className="shrink-0 rounded-lg p-2 text-fg-hint hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-900/20"
           >
             <Trash2 size={18} />
           </button>
@@ -155,7 +155,7 @@ export function SongEditor({
           disabled={!canSave}
           data-testid="song-editor-save"
           title={`${t('songs:actions.save')} (Ctrl+S)`}
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           {isSaving ? (
             <Loader2 size={18} className="animate-spin" />
@@ -168,7 +168,7 @@ export function SongEditor({
 
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-fg" />
         </div>
       ) : (
         <SongEditorBody

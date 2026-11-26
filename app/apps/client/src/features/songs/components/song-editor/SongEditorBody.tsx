@@ -62,7 +62,7 @@ export function SongEditorBody({
             onClick={() => setDetailsOpen(!detailsOpen)}
             aria-pressed={detailsOpen}
             data-testid="song-editor-details-toggle"
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-fg-label hover:bg-hover"
           >
             {detailsOpen ? (
               <PanelRightClose size={16} />

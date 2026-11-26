@@ -97,13 +97,13 @@ function OpenSongEditorModal({
         }
       }}
       data-testid="song-editor-modal"
-      className="fixed inset-0 z-50 m-auto h-[calc(100dvh-2rem)] max-h-none w-[calc(100vw-2rem)] max-w-[110rem] rounded-lg bg-white p-0 backdrop:bg-black/50 dark:bg-gray-900"
+      className="fixed inset-0 z-50 m-auto h-[calc(100dvh-2rem)] max-h-none w-[calc(100vw-2rem)] max-w-[110rem] rounded-lg bg-panel p-0 backdrop:bg-black/50"
     >
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
-          <h2 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between border-b border-line p-4">
+          <h2 className="truncate text-lg font-semibold text-fg">
             {isLoading ? (
-              <span className="inline-block h-6 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              <span className="inline-block h-6 w-48 animate-pulse rounded bg-field" />
             ) : (
               draft.title || t('songs:editor.titlePlaceholder')
             )}
@@ -113,16 +113,16 @@ function OpenSongEditorModal({
             onClick={handleClose}
             disabled={isSaving}
             aria-label={t('common:buttons.close')}
-            className="rounded p-1 hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-gray-700"
+            className="rounded p-1 hover:bg-hover disabled:opacity-50"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-fg-hint" />
           </button>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 lg:overflow-hidden">
           {isLoading ? (
             <div className="flex flex-1 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-fg" />
             </div>
           ) : (
             <SongEditorBody
@@ -139,12 +139,12 @@ function OpenSongEditorModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-200 p-4 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 border-t border-line p-4">
           <button
             type="button"
             onClick={handleClose}
             disabled={isSaving}
-            className="rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="rounded-lg px-4 py-2 text-fg-body hover:bg-hover disabled:opacity-50"
           >
             {t('common:buttons.cancel')}
           </button>
@@ -153,7 +153,7 @@ function OpenSongEditorModal({
             onClick={() => void handleSave()}
             disabled={isSaving || isLoading || !draft.title.trim() || !isDirty}
             data-testid="song-editor-modal-save"
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             {isSaving ? (
               <Loader2 size={18} className="animate-spin" />

@@ -59,7 +59,7 @@ export function SlideChordEditor({
 
   if (words.length === 0) {
     return (
-      <p className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+      <p className="px-3 py-2 text-xs text-fg-hint">
         {t('songEditor.chords.empty')}
       </p>
     )
@@ -96,7 +96,7 @@ export function SlideChordEditor({
                 className={`rounded px-1 py-0.5 text-sm transition-colors ${
                   selected
                     ? 'bg-amber-200 text-amber-900 dark:bg-amber-800 dark:text-amber-100'
-                    : 'text-gray-700 hover:bg-amber-100 dark:text-gray-300 dark:hover:bg-amber-900/30'
+                    : 'text-fg-body hover:bg-amber-100 dark:hover:bg-amber-900/30'
                 }`}
               >
                 {word}
@@ -126,7 +126,7 @@ export function SlideChordEditor({
             placeholder={t('chords.searchChord')}
             data-testid="slide-chord-filter"
             autoFocus
-            className="mb-2 w-full rounded border border-gray-200 bg-white px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-amber-400 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+            className="mb-2 w-full rounded border border-line bg-panel px-2 py-1 text-sm text-fg focus:outline-none focus:ring-1 focus:ring-amber-400"
           />
           <div className="grid max-h-36 grid-cols-6 gap-1 overflow-y-auto sm:grid-cols-10">
             {matchingChords.map((chord) => (
@@ -134,7 +134,7 @@ export function SlideChordEditor({
                 key={chord}
                 type="button"
                 onClick={() => assign(chord)}
-                className="rounded px-1 py-1 text-xs font-medium text-gray-700 hover:bg-amber-100 dark:text-gray-300 dark:hover:bg-amber-900/30"
+                className="rounded px-1 py-1 text-xs font-medium text-fg-body hover:bg-amber-100 dark:hover:bg-amber-900/30"
               >
                 {localizeChordName(chord, language)}
               </button>

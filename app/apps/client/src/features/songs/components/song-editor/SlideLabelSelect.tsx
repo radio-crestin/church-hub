@@ -24,8 +24,8 @@ export function SlideLabelSelect({
       : SLIDE_LABELS
 
   return (
-    <label className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-      <Tag size={13} className="text-gray-400" />
+    <label className="inline-flex items-center gap-1.5 text-xs text-fg-label">
+      <Tag size={13} className="text-fg-hint" />
       <span className="sr-only">{t('chords.setLabel')}</span>
       <select
         value={current}
@@ -33,7 +33,7 @@ export function SlideLabelSelect({
         onChange={(e) => onChange(e.target.value || null)}
         data-testid="slide-label-select"
         title={t('chords.setLabel')}
-        className="rounded-md border border-gray-200 bg-white py-1 pl-2 pr-7 text-xs font-medium text-gray-700 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+        className="rounded-md border border-line bg-panel py-1 pl-2 pr-7 text-xs font-medium text-fg-body focus:border-focus focus:ring-1 focus:ring-focus"
       >
         <option value="">{t('songEditor.noLabel')}</option>
         {options.map((option) => (

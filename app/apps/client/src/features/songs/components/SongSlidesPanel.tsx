@@ -117,7 +117,7 @@ export function SongSlidesPanel({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
@@ -125,7 +125,7 @@ export function SongSlidesPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-line shrink-0">
         <FontSizeButtons
           fontScale={fontScale}
           testIdPrefix="song-slides-font"

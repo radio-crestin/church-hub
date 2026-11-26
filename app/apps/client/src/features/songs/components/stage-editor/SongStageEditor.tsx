@@ -399,7 +399,7 @@ export function SongStageEditor({
 
   if (isLoading || !screen) {
     return (
-      <div className="flex items-center justify-center py-16 text-gray-400">
+      <div className="flex items-center justify-center py-16 text-fg-hint">
         <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     )
@@ -438,12 +438,12 @@ export function SongStageEditor({
 
       {/* Draggable divider */}
       <div
-        className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded transition-colors group shrink-0 lg:h-full"
+        className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-hover rounded transition-colors group shrink-0 lg:h-full"
         onMouseDown={handleDividerMouseDown}
       >
         <GripVertical
           size={16}
-          className="text-gray-400 group-hover:text-indigo-500 transition-colors"
+          className="text-fg-hint group-hover:text-fg-label transition-colors"
         />
       </div>
 

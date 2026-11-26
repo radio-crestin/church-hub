@@ -107,7 +107,7 @@ export function SongSlidesEditor({
             className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
               chordsOpen
                 ? 'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200'
-                : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                : 'border-line bg-panel text-fg-label hover:bg-hover'
             }`}
           >
             <Music size={13} />
@@ -123,7 +123,7 @@ export function SongSlidesEditor({
       columnFooter={
         <>
           {chordsOpen && active && (
-            <div className="mt-2 max-h-56 shrink-0 overflow-y-auto rounded-lg border border-amber-200 bg-white dark:border-amber-900/50 dark:bg-gray-800">
+            <div className="mt-2 max-h-56 shrink-0 overflow-y-auto rounded-lg border border-amber-200 bg-panel dark:border-amber-900/50">
               <SlideChordEditor
                 content={active.content}
                 chords={active.chords}

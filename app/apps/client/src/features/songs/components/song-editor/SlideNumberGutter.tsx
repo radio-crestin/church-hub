@@ -27,9 +27,7 @@ export const SlideNumberGutter = memo(function SlideNumberGutter({
           key={line}
           data-testid="song-text-slide-number"
           className={`absolute right-2 text-[11px] font-medium tabular-nums select-none ${
-            index === activeSlide
-              ? 'text-indigo-600 dark:text-indigo-400'
-              : 'text-gray-400 dark:text-gray-500'
+            index === activeSlide ? 'text-fg' : 'text-fg-hint'
           }`}
           style={{
             top: paddingTop + line * lineHeight,

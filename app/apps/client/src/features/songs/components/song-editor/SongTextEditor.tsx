@@ -96,11 +96,11 @@ export function SongTextEditor({
     >
       <div
         data-testid="song-text-scroll"
-        className="relative flex min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 scrollbar-thin dark:border-gray-700 dark:bg-gray-900"
+        className="relative flex min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-panel focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/20 scrollbar-thin"
       >
         <div
           aria-hidden
-          className="relative w-9 shrink-0 self-stretch border-r border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-gray-950/40"
+          className="relative w-9 shrink-0 self-stretch border-r border-line bg-field"
         >
           <SlideNumberGutter
             startLines={startLines}
@@ -126,10 +126,10 @@ export function SongTextEditor({
             paddingTop: PADDING_TOP_PX,
             paddingBottom: PADDING_TOP_PX,
           }}
-          className="min-h-full min-w-0 flex-1 shrink-0 resize-none overflow-x-auto overflow-y-hidden whitespace-pre border-0 bg-transparent px-3 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:ring-0 dark:text-gray-100"
+          className="min-h-full min-w-0 flex-1 shrink-0 resize-none overflow-x-auto overflow-y-hidden whitespace-pre border-0 bg-transparent px-3 text-[15px] text-fg placeholder:text-fg-hint outline-none focus:ring-0"
         />
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs text-fg-hint">
         <span data-testid="song-text-slide-count" className="tabular-nums">
           {t('textEditor.slideCount', { count: startLines.length })}
         </span>
@@ -140,8 +140,7 @@ export function SongTextEditor({
             {t('textEditor.help.chord')}
           </span>
           <span>
-            <code className="text-indigo-600 dark:text-indigo-400">#C1</code>{' '}
-            {t('textEditor.help.label')}
+            <code className="text-fg">#C1</code> {t('textEditor.help.label')}
           </span>
           <span>
             <code>**{t('textEditor.help.bold')}**</code>

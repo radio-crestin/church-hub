@@ -27,7 +27,7 @@ export function SongEditorModeSwitch({
     <div
       role="radiogroup"
       aria-label={t('songEditor.mode.label')}
-      className="inline-flex rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800"
+      className="inline-flex rounded-lg bg-field p-0.5"
     >
       {options.map(({ id, label, Icon }) => (
         <button
@@ -39,8 +39,8 @@ export function SongEditorModeSwitch({
           data-testid={`song-editor-mode-${id}`}
           className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
             mode === id
-              ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
-              : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+              ? 'bg-panel text-fg shadow-sm'
+              : 'text-fg-label hover:text-fg'
           }`}
         >
           <Icon size={15} />
