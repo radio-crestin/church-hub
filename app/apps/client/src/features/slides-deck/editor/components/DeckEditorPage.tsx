@@ -38,7 +38,7 @@ export function DeckEditorPage({
         <button
           type="button"
           onClick={onBack}
-          className="text-primary hover:underline"
+          className="text-focus hover:underline"
         >
           {t('deckEditor.back')}
         </button>

@@ -48,7 +48,7 @@ export function ScreenTemplateSettings({
         </p>
         <Link
           to="/settings/themes"
-          className="text-xs font-medium text-primary hover:underline"
+          className="text-xs font-medium text-focus hover:underline"
         >
           {t('templates.picker.manage')}
         </Link>
