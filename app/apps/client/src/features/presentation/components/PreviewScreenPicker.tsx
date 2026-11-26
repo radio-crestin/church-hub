@@ -11,6 +11,8 @@ import { useSetPreviewScreen } from '../hooks/useSetPreviewScreen'
 interface PreviewScreenPickerProps {
   /** Which way the list opens: up from a bottom row of controls, down from a header. */
   placement?: 'up' | 'down'
+  /** Which edge of the button the list lines up with. */
+  align?: 'start' | 'end'
 }
 
 /**
@@ -20,6 +22,7 @@ interface PreviewScreenPickerProps {
  */
 export function PreviewScreenPicker({
   placement = 'up',
+  align = 'end',
 }: PreviewScreenPickerProps) {
   const { t } = useTranslation('presentation')
   const { showToast } = useToast()
@@ -89,7 +92,7 @@ export function PreviewScreenPicker({
         <div
           role="menu"
           aria-label={t('previewScreenPicker.label')}
-          className={`absolute right-0 z-30 min-w-52 rounded-[10px] border border-line bg-panel p-1 shadow-popover ${
+          className={`absolute z-30 min-w-52 ${align === 'start' ? 'left-0' : 'right-0'} rounded-[10px] border border-line bg-panel p-1 shadow-popover ${
             placement === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
           }`}
         >
