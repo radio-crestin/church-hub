@@ -38,9 +38,8 @@ export function PlaylistEntry({
       data-schedule-id={schedule.id}
       data-live={isLive ? 'true' : 'false'}
       aria-label={schedule.title}
-      className={`rounded-lg ${
-        isLive ? 'bg-live-tint ring-1 ring-inset ring-live' : ''
-      }`}
+      // The step on screen carries the live outline; the entry only says LIVE.
+      className="rounded-lg"
     >
       <div className="flex items-start gap-2 p-2">
         <div className="min-w-0 flex-1">
