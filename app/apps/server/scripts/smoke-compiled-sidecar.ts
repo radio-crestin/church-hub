@@ -326,7 +326,7 @@ async function main() {
         const status = (await (
           await fetch(`${BASE_URL}/api/secret-store`)
         ).json()) as { data?: { keptIn: string; locked: boolean } }
-        console.log(`  data key kept in: ${status.data?.keptIn}`)
+        process.stdout.write(`  data key kept in: ${status.data?.keptIn}\n`)
         const db = new Database(join(workDir, 'data', 'app.db'), {
           readonly: true,
         })
