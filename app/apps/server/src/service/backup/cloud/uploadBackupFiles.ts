@@ -15,15 +15,25 @@ interface StartedUpload {
   missingBlobs: string[]
 }
 
-/** PUTs a body to a presigned URL (signed for its exact length), retrying. */
-async function put(url: string, body: Blob): Promise<void> {
+/**
+ * PUTs a body to a presigned URL (signed for its exact length, and for any
+ * `headers` it must send), retrying. A whole file the store already has
+ * (412 to If-None-Match: *) is done: files are never overwritten.
+ */
+async function put(
+  url: string,
+  body: Blob,
+  headers: Record<string, string> = {},
+): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     const response = await fetch(url, {
       method: 'PUT',
       body,
+      headers,
       signal: AbortSignal.timeout(PUT_TIMEOUT_MS),
     }).catch(() => null)
     if (response?.ok) return
+    if (response?.status === 412 && headers['If-None-Match']) return
     if (attempt >= PUT_ATTEMPTS) throw new CloudBackupError('upload_failed')
   }
 }
@@ -77,14 +87,14 @@ export async function uploadBackupFiles(input: {
     const pathOf = new Map(input.blobs.map((blob) => [blob.hash, blob.path]))
     for (const batch of batches(['manifest', ...upload.missingBlobs])) {
       const { files } = await cloudBackupRequest<{
-        files: { name: string; url: string }[]
+        files: { name: string; url: string; headers: Record<string, string> }[]
       }>('POST', `${base}/files`, { files: batch })
       for (const file of files) {
         const body =
           file.name === 'manifest'
             ? new Blob([new Uint8Array(input.manifest)])
             : Bun.file(pathOf.get(file.name) as string)
-        await put(file.url, body)
+        await put(file.url, body, file.headers)
       }
     }
     const backup = await cloudBackupRequest<CloudBackupFile>(

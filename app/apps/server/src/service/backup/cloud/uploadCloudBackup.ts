@@ -14,6 +14,10 @@ import {
   type ResourceBlob,
 } from './resources/buildResourceBlobs'
 import { planResources } from './resources/planResources'
+import {
+  type PublishedLibrary,
+  readPublishedLibrary,
+} from './resources/readPublishedLibrary'
 import { stripResources } from './resources/stripResources'
 import { runExclusive } from './runExclusive'
 import { sha256File } from './sha256File'
@@ -26,14 +30,14 @@ const logger = createLogger('backup')
 
 /**
  * Splits a WAL-safe copy of the database into resource blobs (Bible texts,
- * library songs' slides: plaintext, content-addressed) and the church's own
- * data (resources/planResources), written as temp files; the copy keeps
- * only the church's data.
+ * the slides of songs exactly as a public source publishes them: plaintext,
+ * content-addressed) and the church's own data (resources/planResources),
+ * written as temp files; the copy keeps only the church's data.
  */
-async function splitCopy(plainPath: string) {
+async function splitCopy(plainPath: string, published: PublishedLibrary) {
   const db = new Database(plainPath)
   try {
-    const plan = planResources(db)
+    const plan = planResources(db, published)
     const blobs = await buildResourceBlobs(db, plan, (hash) =>
       cloudTempPath(`cloud-blob-${hash.slice(0, 16)}`, 'gz'),
     )
@@ -60,7 +64,7 @@ export function uploadCloudBackup(): Promise<CloudBackupFile> {
       const { key, keyVersion } = await getAccountKey()
       const exported = await checkpointAndExport(plainPath)
       if (!exported.success) throw new Error(exported.error || 'export_failed')
-      blobs = await splitCopy(plainPath)
+      blobs = await splitCopy(plainPath, await readPublishedLibrary())
       await pipeline(
         createReadStream(plainPath),
         createGzip(),

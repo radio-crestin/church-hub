@@ -12,7 +12,7 @@ const etagOf = (body: Buffer) =>
  * Like the cloud sync bucket's policy, anonymous listing is refused (a
  * signed one is answered) and ETags are honoured: If-None-Match on GET
  * (304), If-Match and If-None-Match: * on PUT (412), as conditional writes.
- * Multipart uploads (create, upload part, list parts, complete, abort) work
+ * Multipart uploads (create, upload part, list parts, list uploads, complete, abort) work
  * too, for the cloud backup bucket; presigned query strings are ignored.
  */
 export class FakeS3 {
@@ -47,6 +47,21 @@ export class FakeS3 {
     body: Buffer,
     res: import('node:http').ServerResponse,
   ): boolean {
+    if (method === 'GET' && query.has('uploads')) {
+      const prefix = `${path}/${query.get('prefix') ?? ''}`
+      const uploads = [...this.multipart]
+        .filter(([, upload]) => upload.path.startsWith(prefix))
+        .map(
+          ([id, upload]) =>
+            `<Upload><Key>${upload.path.slice(path.length + 1)}</Key><UploadId>${id}</UploadId><Initiated>${new Date().toISOString()}</Initiated></Upload>`,
+        )
+      res
+        .writeHead(200, { 'Content-Type': 'application/xml' })
+        .end(
+          `<ListMultipartUploadsResult><IsTruncated>false</IsTruncated>${uploads.join('')}</ListMultipartUploadsResult>`,
+        )
+      return true
+    }
     if (method === 'POST' && query.has('uploads')) {
       const uploadId = `e2e-upload-${this.nextUploadId++}`
       this.multipart.set(uploadId, { path, parts: new Map() })

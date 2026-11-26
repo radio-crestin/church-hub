@@ -210,6 +210,8 @@ export default defineConfig({
       // the spec's public app.
       CHURCH_HUB_SYNC_URL: `http://127.0.0.1:${server.syncServicePort}`,
       CHURCH_HUB_PUBLIC_APP_URL: server.publicAppUrl,
+      // A cloud backup compares songs with no public source here (offline).
+      CHURCH_HUB_BACKUP_PUBLIC_SOURCES: '',
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has
