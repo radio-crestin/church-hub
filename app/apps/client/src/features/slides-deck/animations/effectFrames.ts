@@ -75,9 +75,15 @@ function hiddenPose(
   }
 }
 
-/** An emphasis's poses from `before`; an effect that is no emphasis pulses. */
+/**
+ * An emphasis's poses from `before`: Appear holds it as it stands (an
+ * imported motion path or click-started video keeps its click); an effect
+ * that is no emphasis pulses.
+ */
 function emphasisFrames(animation: DeckAnimation, before: DeckFrame) {
   switch (animation.effect) {
+    case 'appear':
+      return [before, before]
     case 'grow_shrink':
       return [before, { ...before, scale: before.scale * 1.5 }]
     case 'spin':

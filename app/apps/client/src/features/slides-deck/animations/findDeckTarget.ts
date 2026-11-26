@@ -1,6 +1,7 @@
 /**
  * The node an animation moves: an element's animated body, or the
- * `paragraphIndex`-th paragraph of its text.
+ * `paragraphIndex`-th paragraph of its text, counting each list item as a
+ * paragraph, as PowerPoint counts bullets.
  */
 export function findDeckTarget(
   root: HTMLElement,
@@ -12,5 +13,8 @@ export function findDeckTarget(
     return root.querySelector<HTMLElement>(`[data-deck-target="${id}"]`)
   }
   const text = root.querySelector<HTMLElement>(`[data-deck-text="${id}"]`)
-  return (text?.children[paragraphIndex] as HTMLElement | undefined) ?? null
+  const paragraphs = text?.querySelectorAll<HTMLElement>(
+    ':scope > :not(ul):not(ol), :scope > ul > li, :scope > ol > li',
+  )
+  return paragraphs?.[paragraphIndex] ?? null
 }
