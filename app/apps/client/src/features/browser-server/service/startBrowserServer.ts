@@ -19,14 +19,15 @@ function createServerWorker(): Worker {
 }
 
 /**
- * Deletes what this browser kept of a church (its database): the church
- * removed this device. Another tab holding the database: left for later.
+ * Deletes what this browser kept of a church (its database): the device
+ * left it, or the church removed it. False while another tab holds the
+ * database: it is left for a later start.
  */
-export async function forgetChurchDatabase(churchId: string): Promise<void> {
+export async function forgetChurchDatabase(churchId: string): Promise<boolean> {
   try {
     await holdServerLock()
   } catch {
-    return
+    return false
   }
   const worker = createServerWorker()
   await new Promise<void>((resolve) => {
@@ -37,6 +38,7 @@ export async function forgetChurchDatabase(churchId: string): Promise<void> {
     worker.postMessage({ type: 'forget', churchId } satisfies ForgetMessage)
   })
   worker.terminate()
+  return true
 }
 
 export interface BrowserServer {

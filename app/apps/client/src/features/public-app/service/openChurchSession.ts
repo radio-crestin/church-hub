@@ -1,6 +1,11 @@
 import { forgetChurchDatabase } from '~/features/browser-server'
 import { createLogger } from '~/utils/logger'
-import { type ChurchBinding, getChurchBinding } from './churchBinding'
+import {
+  type ChurchBinding,
+  clearLeftChurchId,
+  getChurchBinding,
+  getLeftChurchId,
+} from './churchBinding'
 import { DeviceRefusedError } from './fetchReadUrl'
 import { joinChurch } from './joinChurch'
 import { parseJoinLink } from './parseJoinLink'
@@ -53,10 +58,14 @@ export async function openChurchSession(): Promise<ChurchSession> {
   const { pathname, hash } = window.location
   if (pathname === `${BASE}join` && hash.length > 1) return openJoinLink(hash)
   const saved = getChurchBinding()
-  if (!saved) return { kind: 'notJoined' }
-  const binding = await refreshBinding(saved)
+  const binding = saved && (await refreshBinding(saved))
   if (binding) return { kind: 'joined', binding }
-  // Removed by the church: nothing of it stays on this device.
-  await forgetChurchDatabase(saved.churchId)
-  return { kind: 'removed' }
+  await forgetLeftChurch()
+  return saved ? { kind: 'removed' } : { kind: 'notJoined' }
+}
+
+/** A church this device left or was removed from: nothing of it stays. */
+async function forgetLeftChurch() {
+  const churchId = getLeftChurchId()
+  if (churchId && (await forgetChurchDatabase(churchId))) clearLeftChurchId()
 }

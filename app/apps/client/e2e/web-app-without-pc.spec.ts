@@ -210,6 +210,31 @@ test.describe
       await api.dispose()
     })
 
+    test('the phone leaves its church: it opens as a guest, the church gone from it', async () => {
+      const page = phonePage
+      // Bound to its device's user: the account menu has no other account.
+      await pageApi(page, 'POST', '/api/settings/app_settings', {
+        key: 'language',
+        value: 'en',
+      })
+      await page.reload()
+      await waitForApp(page)
+      // On a phone the account is under More.
+      await page.getByRole('button', { name: 'More' }).click()
+      await page.getByRole('button', { name: 'Account' }).click()
+      await expect(page.getByText('Log out')).toHaveCount(0)
+      await page.getByRole('button', { name: 'Leave this church' }).click()
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: 'Leave this church' })
+        .click()
+
+      await waitForApp(page)
+      expect(await findSong(page, songTitleFromPhone)).toBeUndefined()
+      const library = await pageApi(page, 'GET', '/api/songs/search?q=isus')
+      expect((library.json?.data as unknown[]).length).toBeGreaterThan(0)
+    })
+
     test('with no church, the web app opens as a guest on the Church Hub library', async ({
       browser,
     }) => {

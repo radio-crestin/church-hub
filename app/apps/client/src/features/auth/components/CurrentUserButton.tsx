@@ -12,6 +12,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
+import { LeaveChurchItem } from '~/features/public-app/components/LeaveChurchItem'
 import { getLocalUsers, login, performLogout } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
@@ -72,6 +74,11 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
       setShowPassword(false)
       setError(false)
       setSubmitting(false)
+      return
+    }
+    // The web app is bound to its device's user: no other account here.
+    if (isWebApp) {
+      setAccounts([])
       return
     }
     let cancelled = false
@@ -345,15 +352,19 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
               </>
             ) : null}
 
-            {/* Log out */}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-sm font-medium text-red-600 hover:bg-hover dark:text-red-400"
-            >
-              <LogOut strokeWidth={1.5} className="h-4 w-4" />
-              {t('logout')}
-            </button>
+            {/* Log out; the web app leaves its church instead */}
+            {isWebApp ? (
+              <LeaveChurchItem />
+            ) : (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-sm font-medium text-red-600 hover:bg-hover dark:text-red-400"
+              >
+                <LogOut strokeWidth={1.5} className="h-4 w-4" />
+                {t('logout')}
+              </button>
+            )}
           </>
         )}
       </div>
