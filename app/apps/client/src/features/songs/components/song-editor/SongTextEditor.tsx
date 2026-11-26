@@ -11,6 +11,8 @@ import { songTextToSlides } from '../../utils/songTextToSlides'
 const PARSE_DELAY_MS = 200
 const LINE_HEIGHT_PX = 24
 const PADDING_TOP_PX = 12
+/** Room under the last line for the textarea's own sideways scrollbar. */
+const SCROLLBAR_ROOM_PX = 16
 
 interface SongTextEditorProps {
   slides: LocalSlide[]
@@ -25,6 +27,10 @@ interface SongTextEditorProps {
  * keystroke renders nothing; the slide numbers in the gutter render only when
  * a slide starts or ends; the text is turned back into slides once typing
  * pauses (and when the editor closes), not on every key.
+ *
+ * The textarea grows with its text and scrolls together with the numbers in
+ * one container, so the numbers can never drift from their lines, even in the
+ * middle of a fast scroll.
  */
 export function SongTextEditor({
   slides,
@@ -32,7 +38,6 @@ export function SongTextEditor({
 }: SongTextEditorProps) {
   const { t } = useTranslation('songs')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const gutterRef = useRef<HTMLDivElement>(null)
   const [initialText] = useState(() => slidesToSongText(slides))
   const [startLines, setStartLines] = useState(() =>
     findSlideStartLines(initialText),
@@ -74,7 +79,9 @@ export function SongTextEditor({
   }, [])
 
   const handleInput = useCallback(() => {
-    const text = textareaRef.current?.value ?? ''
+    const textarea = textareaRef.current
+    const text = textarea?.value ?? ''
+    if (textarea) textarea.style.height = `${textHeight(text)}px`
     const starts = findSlideStartLines(text)
     if (!sameLines(starts, startLinesRef.current)) setStartLines(starts)
     trackCaret()
@@ -82,26 +89,20 @@ export function SongTextEditor({
     timerRef.current = setTimeout(flush, PARSE_DELAY_MS)
   }, [flush, trackCaret])
 
-  // The numbers follow the text's scroll without a render.
-  const syncGutter = useCallback(() => {
-    const textarea = textareaRef.current
-    if (textarea && gutterRef.current) {
-      gutterRef.current.style.transform = `translateY(${-textarea.scrollTop}px)`
-    }
-  }, [])
-
   return (
     <div
       data-testid="song-text-editor"
       className="flex h-full min-h-[60vh] flex-col gap-2 lg:min-h-0"
     >
-      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900">
+      <div
+        data-testid="song-text-scroll"
+        className="relative flex min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 scrollbar-thin dark:border-gray-700 dark:bg-gray-900"
+      >
         <div
           aria-hidden
-          className="relative w-9 shrink-0 overflow-hidden border-r border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-gray-950/40"
+          className="relative w-9 shrink-0 self-stretch border-r border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-gray-950/40"
         >
           <SlideNumberGutter
-            ref={gutterRef}
             startLines={startLines}
             activeSlide={activeSlide}
             lineHeight={LINE_HEIGHT_PX}
@@ -114,18 +115,18 @@ export function SongTextEditor({
           defaultValue={initialText}
           onInput={handleInput}
           onSelect={trackCaret}
-          onScroll={syncGutter}
           onBlur={flush}
           placeholder={t('textEditor.placeholder')}
           spellCheck={false}
           autoFocus
           wrap="off"
           style={{
+            height: textHeight(initialText),
             lineHeight: `${LINE_HEIGHT_PX}px`,
             paddingTop: PADDING_TOP_PX,
             paddingBottom: PADDING_TOP_PX,
           }}
-          className="min-w-0 flex-1 resize-none overflow-auto whitespace-pre border-0 bg-transparent px-3 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:ring-0 dark:text-gray-100"
+          className="min-h-full min-w-0 flex-1 shrink-0 resize-none overflow-x-auto overflow-y-hidden whitespace-pre border-0 bg-transparent px-3 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:ring-0 dark:text-gray-100"
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs text-gray-500 dark:text-gray-400">
@@ -149,6 +150,12 @@ export function SongTextEditor({
       </div>
     </div>
   )
+}
+
+/** The textarea's height for all of its lines, so it never scrolls itself. */
+function textHeight(text: string): number {
+  const lines = countLines(text, text.length) + 1
+  return lines * LINE_HEIGHT_PX + 2 * PADDING_TOP_PX + SCROLLBAR_ROOM_PX
 }
 
 function countLines(text: string, end: number): number {

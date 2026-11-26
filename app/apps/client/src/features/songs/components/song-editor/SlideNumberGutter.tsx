@@ -1,4 +1,4 @@
-import { forwardRef, memo } from 'react'
+import { memo } from 'react'
 
 interface SlideNumberGutterProps {
   /** The line each slide starts on. */
@@ -14,31 +14,31 @@ interface SlideNumberGutterProps {
  * first line of each slide, the one being typed in picked out. Memoised, so
  * typing inside a slide never renders it.
  */
-export const SlideNumberGutter = memo(
-  forwardRef<HTMLDivElement, SlideNumberGutterProps>(function SlideNumberGutter(
-    { startLines, activeSlide, lineHeight, paddingTop },
-    ref,
-  ) {
-    return (
-      <div ref={ref} className="absolute inset-x-0 top-0 will-change-transform">
-        {startLines.map((line, index) => (
-          <span
-            key={line}
-            data-testid="song-text-slide-number"
-            className={`absolute right-2 text-[11px] font-medium tabular-nums select-none ${
-              index === activeSlide
-                ? 'text-indigo-600 dark:text-indigo-400'
-                : 'text-gray-400 dark:text-gray-500'
-            }`}
-            style={{
-              top: paddingTop + line * lineHeight,
-              lineHeight: `${lineHeight}px`,
-            }}
-          >
-            {index + 1}
-          </span>
-        ))}
-      </div>
-    )
-  }),
-)
+export const SlideNumberGutter = memo(function SlideNumberGutter({
+  startLines,
+  activeSlide,
+  lineHeight,
+  paddingTop,
+}: SlideNumberGutterProps) {
+  return (
+    <>
+      {startLines.map((line, index) => (
+        <span
+          key={line}
+          data-testid="song-text-slide-number"
+          className={`absolute right-2 text-[11px] font-medium tabular-nums select-none ${
+            index === activeSlide
+              ? 'text-indigo-600 dark:text-indigo-400'
+              : 'text-gray-400 dark:text-gray-500'
+          }`}
+          style={{
+            top: paddingTop + line * lineHeight,
+            lineHeight: `${lineHeight}px`,
+          }}
+        >
+          {index + 1}
+        </span>
+      ))}
+    </>
+  )
+})

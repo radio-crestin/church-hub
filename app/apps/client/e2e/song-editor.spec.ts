@@ -324,23 +324,24 @@ test.describe('Song text editor on a long song', () => {
     try {
       await page.setViewportSize({ width: 1600, height: 900 })
       const textarea = await openTextEditor(page, song.id)
-      await expect.poll(() => textarea.evaluate((el) => el.scrollTop)).toBe(0)
+      const scroller = page.getByTestId('song-text-scroll')
+      await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0)
 
       // Each slide is 3 lines and a blank one: slide n starts on line
-      // (n - 1) * 4, 24px a line. Line 104 (slide 27) at the top.
-      await textarea.evaluate((el) => {
+      // (n - 1) * 4, 24px a line after 12px of padding. Slide 27: line 104.
+      await scroller.evaluate((el) => {
         el.scrollTop = 104 * 24
       })
       const number = page
         .getByTestId('song-text-slide-number')
         .filter({ hasText: /^27$/ })
+      await expect(number).toBeInViewport()
       const textBox = await textarea.boundingBox()
-      await expect
-        .poll(async () => {
-          const box = await number.boundingBox()
-          return box && textBox ? Math.round(box.y - textBox.y) : null
-        })
-        .toBe(12)
+      const numberBox = await number.boundingBox()
+      // On its line, wherever the text is scrolled to.
+      expect(Math.round((numberBox?.y ?? 0) - (textBox?.y ?? 0))).toBe(
+        12 + 104 * 24,
+      )
     } finally {
       await request.delete(`/api/songs/${song.id}`)
     }
@@ -358,10 +359,10 @@ test.describe('Song text editor on a long song', () => {
         el.setSelectionRange(el.value.length, el.value.length)
       })
       await page.keyboard.type('\n\nNou 1\nNou 2\nNou 3')
-      const fromEnd = await textarea.evaluate(
-        (el) => el.scrollHeight - el.clientHeight - el.scrollTop,
-      )
-      expect(fromEnd).toBeLessThanOrEqual(40)
+      const fromEnd = await page
+        .getByTestId('song-text-scroll')
+        .evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop)
+      expect(fromEnd).toBeLessThanOrEqual(60)
       await expect(page.getByTestId('song-text-slide-count')).toContainText(
         String(SLIDE_COUNT + 1),
       )
@@ -378,7 +379,10 @@ test.describe('Song text editor on a long song', () => {
     try {
       await page.setViewportSize({ width: 390, height: 800 })
       const textarea = await openTextEditor(page, song.id)
-      expect((await textarea.boundingBox())?.height ?? 0).toBeGreaterThan(400)
+      await expect(textarea).toBeVisible()
+      expect(
+        (await page.getByTestId('song-text-scroll').boundingBox())?.height ?? 0,
+      ).toBeGreaterThan(400)
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - window.innerWidth,
       )
