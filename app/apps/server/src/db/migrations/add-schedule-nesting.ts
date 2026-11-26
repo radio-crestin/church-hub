@@ -22,10 +22,12 @@ export function addScheduleNesting(db: Database): void {
     db.run(
       'ALTER TABLE schedule_items ADD COLUMN child_schedule_id INTEGER REFERENCES schedules(id) ON DELETE CASCADE',
     )
-    db.run(
-      'CREATE INDEX IF NOT EXISTS idx_schedule_items_child_schedule_id ON schedule_items(child_schedule_id)',
-    )
   }
+  // Outside the column check, so a boot stopped right after adding the
+  // column still gets its index next time.
+  db.run(
+    'CREATE INDEX IF NOT EXISTS idx_schedule_items_child_schedule_id ON schedule_items(child_schedule_id)',
+  )
   if (!hasColumn(db, 'schedules', 'is_queue')) {
     // biome-ignore lint/suspicious/noConsole: migration logging
     console.log('[add-schedule-nesting:info] Adding "is_queue"')
