@@ -64,8 +64,26 @@ test('unauthenticated and non-admin callers get 403 on every admin route', async
   }
 })
 
+test('the admin listener counts sign-ins by result, without emails', async () => {
+  const read = async () => {
+    const text = await (await harness.admin.request('https://admin.test/metrics', {}, harness.env)).text()
+    const count = (result: string) =>
+      Number(text.match(new RegExp(`churchhub_admin_signin_total\\{result="${result}"\\} (\\d+)`))?.[1])
+    return { text, success: count('success'), failure: count('failure') }
+  }
+  const before = await read()
+  await harness.adminSignIn(ADMIN)
+  await harness.adminSignIn(USER)
+  await harness.adminSignIn(USER)
+  const after = await read()
+  expect(after.success - before.success).toBe(1)
+  expect(after.failure - before.failure).toBe(2)
+  expect(after.text).toContain('# TYPE churchhub_admin_signin_total counter')
+  expect(after.text).not.toContain('@')
+})
+
 test('the public listener has no admin routes', async () => {
-  for (const path of ['/admin', '/admin/sign-in', '/admin/api/accounts', '/admin/api/session']) {
+  for (const path of ['/admin', '/admin/sign-in', '/admin/api/accounts', '/admin/api/session', '/metrics']) {
     const response = await app.request(`https://backend.test${path}`, {}, harness.env)
     expect(`${path} ${response.status}`).toBe(`${path} 404`)
   }

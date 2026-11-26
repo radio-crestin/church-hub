@@ -14,6 +14,7 @@ import { readJsonBody } from '../sync/readJsonBody'
 import { SyncError } from '../sync/SyncError'
 import type { Bindings } from '../types'
 import { isAllowedAdmin } from './adminAllowlist'
+import { countAdminSignIn, renderAdminMetrics } from './adminMetrics'
 import { adminPage } from './adminPage'
 import {
   ADMIN_SESSION_TTL_SECONDS,
@@ -90,6 +91,16 @@ adminApp.use('/admin/*', async (c, next) => {
   c.header('Cache-Control', 'no-store')
 })
 
+/**
+ * GET /metrics: Prometheus counters for the infra's alerts (repeated
+ * admin sign-in failures). Only on this admin listener, never public.
+ */
+adminApp.get('/metrics', (c) =>
+  c.text(renderAdminMetrics(), 200, {
+    'Content-Type': 'text/plain; version=0.0.4; charset=utf-8',
+  })
+)
+
 /** GET /admin: the panel (static: it reads everything through /admin/api). */
 adminApp.get('/admin', (c) => {
   const nonce = crypto.randomUUID().replace(/-/g, '')
@@ -131,6 +142,7 @@ adminApp.get('/admin/callback', async (c) => {
   )
   deleteCookie(c, FLOW_COOKIE, { prefix: 'host', path: '/', secure: true })
   const allowed = account !== null && isAllowedAdmin(c.env, account)
+  countAdminSignIn(allowed ? 'success' : 'failure')
   await appendAudit(bucket, {
     at: Date.now(),
     admin: allowed ? account.email : null,

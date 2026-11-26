@@ -215,6 +215,10 @@ the default), pause or resume its uploads, reconcile its usage, delete it
 | `ADMIN_GOOGLE_SUBS`, `ADMIN_EMAILS` | Comma-separated allowlist |
 | `ADMIN_REDIRECT_URI` | The admin sign-in's callback, registered on the Google client (default `<admin listener>/admin/callback`) |
 
+**Metrics** (admin listener only, `GET /metrics`, Prometheus text):
+`churchhub_admin_signin_total{result="success|failure"}`, per replica, for
+an alert on repeated failures. No emails or addresses in labels.
+
 ## Self-hosted (Node)
 
 `src/node/server.ts` serves the same app on Node 24 (or Bun) without
