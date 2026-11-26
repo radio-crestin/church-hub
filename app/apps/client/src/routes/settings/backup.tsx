@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { isLocalhost } from '~/config'
-import { BackupManager } from '~/features/backup'
+import { BackupManager, CloudBackupPanel } from '~/features/backup'
 import { SettingsLeafGuard, SettingsSection } from '~/features/settings'
 import {
   CloudBackupWarning,
@@ -27,7 +27,10 @@ function BackupSettings() {
           {isLocalhost() ? (
             <>
               <CloudBackupWarning />
-              <BackupManager />
+              <div className="space-y-4">
+                <BackupManager />
+                <CloudBackupPanel />
+              </div>
             </>
           ) : (
             <p className="text-sm text-fg-hint">

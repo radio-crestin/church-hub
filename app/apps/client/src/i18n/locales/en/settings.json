@@ -1024,6 +1024,80 @@
           "users": "Users",
           "screens": "Screens"
         }
+      },
+      "cloud": {
+        "title": "Church Hub Cloud (free)",
+        "signedInAs": "Signed in as {{email}}",
+        "usage": "{{used}} of {{total}} used",
+        "signOut": "Sign out",
+        "signedOut": {
+          "description": "Encrypted backups of this church’s data, kept by Church Hub for free. Sign in with Google once; to restore on another computer, sign in with the same account.",
+          "signIn": "Sign in with Google",
+          "waiting": "Finish signing in in the browser window, then come back here.",
+          "failed": "Couldn’t start the sign-in. Check the internet connection and try again."
+        },
+        "signOutModal": {
+          "title": "Sign out of Church Hub Cloud?",
+          "message": "Your cloud backups stay saved, and automatic backups stop. Sign in again with the same Google account to see them."
+        },
+        "deleteAccount": {
+          "button": "Sign out and delete my cloud backups",
+          "title": "Delete all cloud backups?",
+          "message": "Every backup of this account in Church Hub Cloud is deleted for good, and you are signed out. Backups on this computer and in Google Drive are not affected.",
+          "confirm": "Delete and sign out"
+        },
+        "now": {
+          "title": "Back up now",
+          "last": "Last backup: {{date}}",
+          "never": "No backup from this computer yet",
+          "button": "Back up now",
+          "running": "Backing up…",
+          "encrypted": "Encrypted on this computer before it is sent."
+        },
+        "auto": {
+          "title": "Automatic backups",
+          "description": "Back up to Church Hub Cloud on a schedule while the app is open.",
+          "interval": "How often",
+          "everyHours": "Every {{hours}} hours"
+        },
+        "list": {
+          "title": "Cloud backups",
+          "loading": "Loading backups…",
+          "empty": "No cloud backups yet.",
+          "restore": "Restore",
+          "delete": "Delete backup"
+        },
+        "restoreModal": {
+          "title": "Restore this backup?",
+          "message": "All current data is replaced with the backup from {{date}}. The app reloads when it is done.",
+          "confirm": "Restore"
+        },
+        "deleteModal": {
+          "title": "Delete this backup?",
+          "message": "The backup from {{date}} is deleted from Church Hub Cloud for good.",
+          "confirm": "Delete"
+        },
+        "toast": {
+          "backedUp": "Backed up to Church Hub Cloud",
+          "restored": "Backup restored. Reloading…",
+          "deleted": "Backup deleted",
+          "signedOut": "Signed out of Church Hub Cloud",
+          "deletedAll": "Cloud backups deleted and signed out"
+        },
+        "errors": {
+          "cloud_sign_in_required": "Your Church Hub Cloud sign-in has ended. Sign in with Google again.",
+          "quota_exceeded": "The free storage is full. Delete an older backup and try again.",
+          "too_large": "This database is larger than the free backup limit.",
+          "daily_limit": "You have reached today’s backup limit. Try again tomorrow.",
+          "rate_limited": "Too many requests. Wait a minute and try again.",
+          "busy": "A backup or restore is already running.",
+          "upload_in_progress": "A backup is still uploading. Try again in a few minutes.",
+          "backup_unreadable": "This backup can’t be opened: it was changed or belongs to another account.",
+          "not_found": "This backup no longer exists.",
+          "service_unreachable": "Church Hub Cloud can’t be reached. Check the internet connection.",
+          "not_configured": "Church Hub Cloud is not available right now.",
+          "generic": "Something went wrong with Church Hub Cloud. Try again."
+        }
       }
     },
     "cloudSync": {

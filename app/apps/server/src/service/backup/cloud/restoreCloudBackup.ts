@@ -1,6 +1,5 @@
 import { createReadStream, createWriteStream } from 'node:fs'
 import { unlink } from 'node:fs/promises'
-import { join } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { createGunzip } from 'node:zlib'
 
@@ -11,10 +10,10 @@ import {
   saveCloudBackupCredential,
 } from './cloudBackupCredential'
 import { cloudBackupRequest } from './cloudBackupRequest'
+import { cloudTempPath } from './cloudTempPath'
 import { getAccountKey } from './getAccountKey'
 import { runExclusive } from './runExclusive'
 import { createLogger } from '../../../utils/logger'
-import { getDataDir } from '../../../utils/paths'
 import { importDatabase } from '../../database'
 
 const logger = createLogger('backup')
@@ -43,9 +42,8 @@ async function download(backupId: string, path: string): Promise<number> {
  */
 export function restoreCloudBackup(backupId: string) {
   return runExclusive(async () => {
-    const stamp = Date.now()
-    const sealedPath = join(getDataDir(), `.cloud-restore-${stamp}.chb`)
-    const plainPath = join(getDataDir(), `.cloud-restore-${stamp}.db`)
+    const sealedPath = cloudTempPath('cloud-restore', 'chb')
+    const plainPath = cloudTempPath('cloud-restore', 'db')
     try {
       const keyVersion = await download(backupId, sealedPath)
       const { key } = await getAccountKey()

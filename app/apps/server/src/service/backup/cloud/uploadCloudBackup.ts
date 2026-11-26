@@ -1,17 +1,16 @@
 import { createReadStream, createWriteStream } from 'node:fs'
 import { stat, unlink } from 'node:fs/promises'
-import { join } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { createGzip } from 'node:zlib'
 
 import type { CloudBackupFile } from './CloudBackupFile'
 import { createEncryptStream } from './cipher/createEncryptStream'
 import { updateCloudBackupSchedule } from './cloudBackupSchedule'
+import { cloudTempPath } from './cloudTempPath'
 import { getAccountKey } from './getAccountKey'
 import { runExclusive } from './runExclusive'
 import { uploadEncryptedFile } from './uploadEncryptedFile'
 import { createLogger } from '../../../utils/logger'
-import { getDataDir } from '../../../utils/paths'
 import { checkpointAndExport } from '../../database'
 
 const logger = createLogger('backup')
@@ -24,9 +23,8 @@ const logger = createLogger('backup')
  */
 export function uploadCloudBackup(): Promise<CloudBackupFile> {
   return runExclusive(async () => {
-    const stamp = Date.now()
-    const plainPath = join(getDataDir(), `.cloud-backup-${stamp}.db`)
-    const sealedPath = join(getDataDir(), `.cloud-backup-${stamp}.chb`)
+    const plainPath = cloudTempPath('cloud-backup', 'db')
+    const sealedPath = cloudTempPath('cloud-backup', 'chb')
     try {
       const { key, keyVersion } = await getAccountKey()
       const exported = await checkpointAndExport(plainPath)
