@@ -40,6 +40,15 @@ export interface Bindings {
   S3_STATE_BUCKET?: string
   /** Log segments after which the service writes a snapshot (default 40). */
   SYNC_COMPACT_AFTER?: string
+  /**
+   * Owner sign-in (T-172) through the same Google client (YOUTUBE_CLIENT_*):
+   * the callback URI registered on it (default: <this service>/sync/owner/callback).
+   */
+  OWNER_REDIRECT_URI?: string
+  /** Google's endpoints, for a self-hosted test's stand-in (default: Google). */
+  GOOGLE_AUTH_URL?: string
+  GOOGLE_TOKEN_URL?: string
+  GOOGLE_USERINFO_URL?: string
   /** Abuse guard for registering a church (optional binding). */
   SYNC_RATE_LIMITER?: RateLimit
 }

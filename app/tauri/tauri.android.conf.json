@@ -11,7 +11,8 @@
       "../apps/client/dist": null,
       "resources/midi-native": null,
       "resources/sample-music": null,
-      "resources/default-backgrounds": null
+      "resources/default-backgrounds": null,
+      "resources/theme-backgrounds": null
     },
     "android": {
       "minSdkVersion": 24

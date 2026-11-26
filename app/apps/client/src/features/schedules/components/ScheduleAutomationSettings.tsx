@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Slider } from '~/ui/slider'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { useToast } from '~/ui/toast'
+import { AutomationTriggerRow } from './AutomationTriggerRow'
 import { useUpsertSchedule } from '../hooks'
 import type { Schedule, ScheduleAutomationSettings as Settings } from '../types'
 
@@ -20,7 +21,8 @@ interface ScheduleAutomationSettingsProps {
 
 /**
  * The automation settings, one under the other: autoplay (seconds per slide,
- * longer for more text), loop, the music volume and starting with Church Hub.
+ * longer for more text), loop, the music volume, starting with Church Hub,
+ * and what in OBS starts and stops it.
  * Each change is saved as it is made. An item's own time is set beside it in
  * the items list.
  */
@@ -149,6 +151,20 @@ export function ScheduleAutomationSettings({
         checked={automation.startOnAppStart}
         onCheckedChange={(startOnAppStart) => save({ startOnAppStart })}
         testId="automation-start-on-app-start"
+      />
+      <AutomationTriggerRow
+        label={t('automation.trigger.start')}
+        description={t('automation.trigger.startDescription')}
+        trigger={automation.startTrigger}
+        onChange={(startTrigger) => save({ startTrigger })}
+        testId="automation-start-trigger"
+      />
+      <AutomationTriggerRow
+        label={t('automation.trigger.stop')}
+        description={t('automation.trigger.stopDescription')}
+        trigger={automation.stopTrigger}
+        onChange={(stopTrigger) => save({ stopTrigger })}
+        testId="automation-stop-trigger"
       />
     </div>
   )

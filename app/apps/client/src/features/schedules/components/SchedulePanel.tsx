@@ -72,6 +72,7 @@ import {
   useSchedules,
 } from '../hooks'
 import { useLoadProgramIntoBookmarks } from '../hooks/useLoadProgramIntoBookmarks'
+import { playMusicItem } from '../media-items/service/scheduleItemsApi'
 import {
   readSelectedScheduleId,
   writeSelectedScheduleId,
@@ -230,6 +231,8 @@ export function SchedulePanel({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
+    presentDeckStep,
   } = useScheduleFlatNavigation({
     scheduleId: selectedScheduleId,
     items: allItems,
@@ -338,10 +341,15 @@ export function SchedulePanel({
         return presented
       }
       if (item.itemType === 'bible_passage') return presentPassageVerse(item, 0)
-      if (item.slideType === 'versete_tineri') {
+      if (item.slideType === 'versete_tineri' || item.itemType === 'verses') {
         return presentVerseteEntry(item, 0)
       }
       if (item.slideType === 'scene') return presentScene(item)
+      if (item.itemType === 'video') return presentVideo(item)
+      if (item.itemType === 'slides') return presentDeckStep(item, 0)
+      if (item.itemType === 'music') {
+        return playMusicItem(item.scheduleId, item.id)
+      }
       return presentAnnouncement(item)
     },
     [
@@ -349,6 +357,8 @@ export function SchedulePanel({
       presentAnnouncement,
       presentPassageVerse,
       presentScene,
+      presentVideo,
+      presentDeckStep,
       presentSongSlide,
       presentVerseteEntry,
     ],

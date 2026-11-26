@@ -31,11 +31,20 @@ export type ScreenConfigUpdatedMessage = {
   }
 }
 
-export type ScreenConfigPreviewMessage = {
-  type: 'screen_config_preview'
+export type SlideTemplateUpdatedMessage = {
+  type: 'slide_template_updated'
   payload: {
-    screenId: number
-    config: Record<string, unknown>
+    templateId: number
+    updatedAt: number
+  }
+}
+
+/** A template's unsaved design while it is edited, drawn live on its screens. */
+export type SlideTemplatePreviewMessage = {
+  type: 'slide_template_preview'
+  payload: {
+    templateId: number
+    design: Record<string, unknown> | null
     updatedAt: number
   }
 }
@@ -314,19 +323,20 @@ export function handleWebSocketMessage(
       return
     }
 
-    // Handle screen config preview - broadcast to all other clients
-    if (data.type === 'screen_config_preview') {
+    // A template being edited: its screens elsewhere draw the unsaved design
+    // (null: back to the saved one)
+    if (data.type === 'slide_template_preview') {
       const previewMessage = JSON.stringify({
-        type: 'screen_config_preview',
+        type: 'slide_template_preview',
         payload: {
-          screenId: data.payload.screenId,
-          config: data.payload.config,
+          templateId: data.payload.templateId,
+          design: data.payload.design,
           updatedAt: Date.now(),
         },
-      } satisfies ScreenConfigPreviewMessage)
+      } satisfies SlideTemplatePreviewMessage)
 
       wsLogger.debug(
-        `Broadcasting screen config preview for screen ${data.payload.screenId}`,
+        `Broadcasting slide template preview for template ${data.payload.templateId}`,
       )
 
       // Broadcast to all clients except the sender
@@ -453,6 +463,22 @@ export function broadcastScreenConfigUpdated(screenId: number) {
  * Notifies all connected clients that Drive sync just applied changes from
  * other devices, so open views can refetch songs/schedules and show badges.
  */
+/** A slide template was saved, created or deleted: clients refetch it. */
+export function broadcastSlideTemplateUpdated(templateId: number) {
+  const message = JSON.stringify({
+    type: 'slide_template_updated',
+    payload: { templateId, updatedAt: Date.now() },
+  } satisfies SlideTemplateUpdatedMessage)
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
 export function broadcastSyncApplied(appliedCount: number) {
   const message = JSON.stringify({
     type: 'sync_applied',
@@ -464,6 +490,25 @@ export function broadcastSyncApplied(appliedCount: number) {
 
   wsLogger.debug(`Broadcasting sync_applied to ${clients.size} clients`)
 
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * A presentation picked its random items again (verses, a video): pages
+ * showing it read it again.
+ */
+export function broadcastSchedulePicks(scheduleId: number) {
+  const message = JSON.stringify({
+    type: 'schedule_picks',
+    payload: { scheduleId },
+  })
   for (const [clientId, conn] of clients) {
     try {
       conn.ws.send(message)

@@ -1,12 +1,17 @@
 import {
   ArrowLeft,
+  BookOpen,
   Camera,
   Check,
   FileText,
+  FileUp,
+  Film,
+  ListMusic,
   Loader2,
   Megaphone,
   Music,
   Plus,
+  Presentation,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -16,6 +21,7 @@ import { SongSearchPicker } from '~/features/songs/components/SongSearchPicker'
 import { useSong } from '~/features/songs/hooks/useSong'
 import { stripHtmlTags } from '~/features/songs/utils/stripHtmlTags'
 import { Tooltip } from '~/ui/tooltip/Tooltip'
+import type { MediaItemType } from '../media-items/types'
 import type { SlideTemplate } from '../types'
 
 type Step = 'menu' | 'song' | 'preview'
@@ -33,6 +39,12 @@ interface AddScheduleItemModalProps {
   onAddBiblePassage: () => void
   onAddSlide: (template: SlideTemplate) => void
   onAddScene?: () => void
+  /** A music, video or verses item: its settings dialog. */
+  onAddMedia?: (type: MediaItemType) => void
+  /** A Slides item: added with one title slide. */
+  onAddDeck?: () => void
+  /** A Slides item from a PowerPoint file the operator picks. */
+  onImportPptx?: () => void
   /**
    * `false` for a host that opens the modal from its own control — the
    * Programe panel, whose "+" can move into its header's "More" menu.
@@ -47,6 +59,30 @@ interface MenuOption {
   descriptionKey: string
   onSelect: () => void
 }
+
+const MEDIA_OPTIONS = [
+  {
+    key: 'music',
+    type: 'music',
+    icon: ListMusic,
+    titleKey: 'addMenu.music',
+    descriptionKey: 'addMenu.musicDescription',
+  },
+  {
+    key: 'video',
+    type: 'video',
+    icon: Film,
+    titleKey: 'addMenu.video',
+    descriptionKey: 'addMenu.videoDescription',
+  },
+  {
+    key: 'verses',
+    type: 'verses',
+    icon: BookOpen,
+    titleKey: 'addMenu.verses',
+    descriptionKey: 'addMenu.versesDescription',
+  },
+] satisfies (Omit<MenuOption, 'onSelect'> & { type: MediaItemType })[]
 
 /**
  * The single "add to program" modal.
@@ -64,6 +100,9 @@ export function AddScheduleItemModal({
   onAddSong,
   onAddSlide,
   onAddScene,
+  onAddMedia,
+  onAddDeck,
+  onImportPptx,
   showTrigger = true,
 }: AddScheduleItemModalProps) {
   const { t } = useTranslation('common')
@@ -175,6 +214,36 @@ export function AddScheduleItemModal({
           } satisfies MenuOption,
         ]
       : []),
+    ...(onAddMedia
+      ? MEDIA_OPTIONS.map(
+          (option): MenuOption => ({
+            ...option,
+            onSelect: () => handHandoff(() => onAddMedia(option.type)),
+          }),
+        )
+      : []),
+    ...(onAddDeck
+      ? [
+          {
+            key: 'slides',
+            icon: Presentation,
+            titleKey: 'addMenu.slides',
+            descriptionKey: 'addMenu.slidesDescription',
+            onSelect: () => handHandoff(onAddDeck),
+          } satisfies MenuOption,
+        ]
+      : []),
+    ...(onImportPptx
+      ? [
+          {
+            key: 'importPptx',
+            icon: FileUp,
+            titleKey: 'addMenu.importPptx',
+            descriptionKey: 'addMenu.importPptxDescription',
+            onSelect: () => handHandoff(onImportPptx),
+          } satisfies MenuOption,
+        ]
+      : []),
   ]
 
   const isSongStep = step === 'song'
@@ -190,10 +259,10 @@ export function AddScheduleItemModal({
             type="button"
             onClick={() => onOpenChange(true)}
             data-testid="schedule-add-item"
-            className="flex items-center gap-2 p-2 sm:px-3 sm:py-1.5 text-sm text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
+            aria-label={t('addMenu.button')}
+            className="flex items-center p-2 text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
           >
             <Plus size={16} strokeWidth={1.5} />
-            <span className="hidden sm:inline">{t('addMenu.button')}</span>
           </button>
         </Tooltip>
       )}
@@ -206,7 +275,7 @@ export function AddScheduleItemModal({
         }}
         // The menu stays compact; the song step expands to ~90% of the viewport
         // so searching the library doesn't happen through a keyhole.
-        className={`fixed inset-0 m-auto p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50 ${
+        className={`fixed inset-0 m-auto p-0 bg-panel rounded-xl border border-line shadow-popover backdrop:bg-black/50 ${
           isLargeStep
             ? 'h-[90vh] w-[90vw] max-w-none'
             : 'w-full max-w-sm max-h-[90vh]'
@@ -310,7 +379,7 @@ export function AddScheduleItemModal({
                                 data-testid="add-schedule-item-preview-slide"
                                 className="rounded-lg border border-line bg-app p-3"
                               >
-                                <div className="mb-1 text-[10px] font-medium text-fg-hint">
+                                <div className="mb-1 text-xs font-medium text-fg-hint">
                                   {slide.label || `${index + 1}`}
                                 </div>
                                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg-body">

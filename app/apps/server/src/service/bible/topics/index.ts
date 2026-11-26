@@ -1,4 +1,5 @@
 export { getBibleTopicPassages } from './getBibleTopicPassages'
+export { getBibleTopicReferences } from './getBibleTopicReferences'
 export { listBibleTopics } from './listBibleTopics'
 export type {
   BibleTopic,

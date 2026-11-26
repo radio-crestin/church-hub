@@ -4,16 +4,22 @@ import {
   CopyPlus,
   Edit,
   ExternalLink,
+  Monitor,
+  MonitorOff,
   Trash2,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ScreenSceneTemplates } from '~/features/slide-templates/components/ScreenSceneTemplates'
+import { ScreenTemplateSettings } from '~/features/slide-templates/components/ScreenTemplateSettings'
+import { useSlideTemplate } from '~/features/slide-templates/hooks/useSlideTemplates'
+import { templateDisplayName } from '~/features/slide-templates/utils/templateDisplayName'
 import { Button } from '~/ui/button/Button'
+import { ActionMenu, type ActionMenuItem } from '~/ui/menu'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { useToast } from '~/ui/toast/useToast'
 import { PreviewScreenRadio } from './PreviewScreenRadio'
-import { ScreenIdlePreview } from './ScreenIdlePreview'
 import { ScreenMonitorPicker } from './ScreenMonitorPicker'
 import {
   useScreen,
@@ -26,6 +32,7 @@ import {
   openDisplayWindow,
   setDisplayAlwaysOnTop,
 } from '../../utils/openDisplayWindow'
+import { SlideTypeStrip } from '../screen-editor/SlideTypeStrip'
 
 /**
  * The per-screen switches saved straight from the card, each with the i18n
@@ -42,6 +49,7 @@ type ScreenSwitch = keyof typeof SWITCH_MESSAGES
 
 interface ScreenCardProps {
   screen: Screen
+  /** Opens its theme in the editor, on this slide when given. */
   onEdit: (contentType?: ContentType) => void
   onExport: () => void
   onCopyUrl: () => void
@@ -70,8 +78,10 @@ function SettingsGroup({
 }
 
 /**
- * One screen in Settings → Screens: what it is, what the projector shows
- * when nothing is live, and its window switches, each saying what it does.
+ * The chosen screen in Settings → Screens, in the order an operator asks:
+ * how it looks (a large preview and every template to pick from), what it
+ * shows when nothing is live, and where it appears. The rarely changed
+ * options wait under "More options".
  */
 export function ScreenCard({
   screen,
@@ -88,6 +98,7 @@ export function ScreenCard({
   const upsertScreen = useUpsertScreen()
   const updateContentConfig = useUpdateScreenContentConfig()
   const { data: screenWithConfigs } = useScreen(screen.id)
+  const { data: template } = useSlideTemplate(screen.templateId)
   const emptySlide = screenWithConfigs?.contentConfigs.empty
 
   const save = async (key: ScreenSwitch, value: boolean) => {
@@ -147,46 +158,107 @@ export function ScreenCard({
 
   const busy = upsertScreen.isPending
 
+  const actions: ActionMenuItem[] = [
+    {
+      id: 'export',
+      label: t('sections.screens.export.title'),
+      icon: <ExternalLink size={16} strokeWidth={1.5} />,
+      onSelect: onExport,
+      testId: 'screen-export',
+    },
+    {
+      id: 'copy-url',
+      label: t('sections.screens.actions.copyUrl'),
+      icon: <Copy size={16} strokeWidth={1.5} />,
+      onSelect: onCopyUrl,
+      testId: 'screen-copy-url',
+    },
+    {
+      id: 'duplicate',
+      label: t('sections.screens.actions.duplicate'),
+      icon: <CopyPlus size={16} strokeWidth={1.5} />,
+      onSelect: onDuplicate,
+      disabled: isDuplicating,
+      testId: 'screen-duplicate',
+    },
+    {
+      id: 'delete',
+      label: t('sections.screens.actions.delete'),
+      icon: <Trash2 size={16} strokeWidth={1.5} />,
+      onSelect: onDelete,
+      testId: 'screen-delete',
+    },
+  ]
+
   return (
     <div
       data-testid="screen-card"
       data-screen-id={screen.id}
       className="p-3 md:p-4 bg-panel rounded-xl border border-line"
     >
-      {/* Identity: status, name, type, size, and the screen's actions */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className={`w-2 h-2 rounded-full flex-shrink-0 ${
-              screen.isActive ? 'bg-ok' : 'bg-fg-hint'
-            }`}
-          />
-          <div className="min-w-0">
-            <h3 className="text-sm font-medium text-fg truncate">
-              {screen.name}
-            </h3>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-              <span className="text-xs text-fg-hint">
-                {t(`presentation:screens.screenTypes.${screen.type}`)}
-              </span>
-              <span className="text-xs text-fg-hint tabular-nums">
-                {screen.width}×{screen.height}
-              </span>
-              <span
-                data-testid="screen-window-status"
-                className="text-xs text-fg-hint"
-              >
-                ·{' '}
-                {screen.isActive
-                  ? t('sections.screens.status.open')
-                  : t('sections.screens.status.closed')}
-              </span>
-            </div>
-          </div>
+      {/* What it is, its window, and the screen's other actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-base font-semibold text-fg truncate">
+            {screen.name}
+          </h3>
+          <p
+            data-testid="screen-window-status"
+            className="text-xs text-fg-hint tabular-nums"
+          >
+            {t(`presentation:screens.screenTypes.${screen.type}`)} ·{' '}
+            {screen.width}×{screen.height} ·{' '}
+            {screen.isActive
+              ? t('sections.screens.status.open')
+              : t('sections.screens.status.closed')}
+          </p>
         </div>
-        <div className="flex flex-wrap items-center gap-1 w-full sm:w-auto">
+        <div className="flex items-center gap-2">
           <Button
-            className="basis-full sm:basis-auto justify-center whitespace-nowrap"
+            variant={screen.isActive ? 'secondary' : 'primary'}
+            size="sm"
+            onClick={() => toggleWindow(!screen.isActive)}
+            disabled={busy}
+            data-testid="screen-window-toggle"
+            className="gap-1.5 whitespace-nowrap"
+          >
+            {screen.isActive ? (
+              <MonitorOff size={16} strokeWidth={1.5} />
+            ) : (
+              <Monitor size={16} strokeWidth={1.5} />
+            )}
+            {screen.isActive
+              ? t('sections.screens.window.close')
+              : t('sections.screens.window.open')}
+          </Button>
+          <ActionMenu
+            items={actions}
+            label={t('sections.screens.actions.menu')}
+            testId="screen-actions-menu"
+          />
+        </div>
+      </div>
+
+      {/* Its theme as a presentation: every kind of slide, as it shows it */}
+      <section data-testid="screen-theme-slides" className="mt-4">
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="text-sm font-medium text-fg-label">
+              {t('sections.screens.groups.slides')}
+              {template && (
+                <span
+                  data-testid="screen-template-name"
+                  className="ml-2 font-normal text-fg-hint"
+                >
+                  {templateDisplayName(template, t)}
+                </span>
+              )}
+            </h4>
+            <p className="text-xs text-fg-hint">
+              {t('sections.screens.slides.description')}
+            </p>
+          </div>
+          <Button
             variant="secondary"
             size="sm"
             onClick={() => onEdit()}
@@ -195,116 +267,74 @@ export function ScreenCard({
             <Edit size={16} strokeWidth={1.5} />
             <span className="ml-1">{t('sections.screens.actions.edit')}</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onExport}
-            title={t('sections.screens.export.title')}
-            aria-label={t('sections.screens.export.title')}
-          >
-            <ExternalLink size={16} strokeWidth={1.5} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCopyUrl}
-            title={t('sections.screens.actions.copyUrl')}
-            aria-label={t('sections.screens.actions.copyUrl')}
-          >
-            <Copy size={16} strokeWidth={1.5} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            data-testid="screen-duplicate"
-            onClick={onDuplicate}
-            disabled={isDuplicating}
-            title={t('sections.screens.actions.duplicate')}
-            aria-label={t('sections.screens.actions.duplicate')}
-          >
-            <CopyPlus size={16} strokeWidth={1.5} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            className="hover:text-red-600"
-            title={t('sections.screens.actions.delete')}
-            aria-label={t('sections.screens.actions.delete')}
-          >
-            <Trash2 size={16} strokeWidth={1.5} />
-          </Button>
         </div>
-      </div>
+        {screenWithConfigs && (
+          <SlideTypeStrip
+            screen={screenWithConfigs}
+            horizontal
+            onSelect={onEdit}
+            testIdPrefix="screen-slide"
+          />
+        )}
+      </section>
 
-      <div className="grid gap-x-8 gap-y-4 mt-3 pt-3 border-t border-line lg:grid-cols-2">
-        {/* What the projector shows between items */}
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <SettingsGroup
-          title={t('sections.screens.groups.idle')}
-          testId="screen-group-idle"
+          title={t('sections.screens.groups.look')}
+          testId="screen-group-look"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 py-2">
-            <ScreenIdlePreview
-              screen={screenWithConfigs}
-              onClick={() => onEdit('empty')}
-            />
-            <p className="text-xs text-fg-hint">
-              {screen.closeOnEscape
-                ? t('sections.screens.idle.summaryClosed')
-                : t('sections.screens.idle.summaryOpen')}
-            </p>
-          </div>
-          <SwitchRow
-            label={t('sections.screens.idle.clock.label')}
-            description={t('sections.screens.idle.clock.description')}
-            checked={emptySlide?.clockEnabled ?? false}
-            onCheckedChange={toggleIdleClock}
-            disabled={!emptySlide || updateContentConfig.isPending}
-            testId="screen-idle-clock"
-          />
-          <SwitchRow
-            label={t('sections.screens.closeOnEscape.label')}
-            description={t('sections.screens.closeOnEscape.description')}
-            checked={screen.closeOnEscape}
-            onCheckedChange={(value) => save('closeOnEscape', value)}
-            disabled={busy}
-            testId="screen-close-on-escape"
-          />
+          <ScreenTemplateSettings screen={screen} />
         </SettingsGroup>
 
-        {/* The window on the projector */}
-        <SettingsGroup
-          title={t('sections.screens.groups.window')}
-          testId="screen-group-window"
-        >
-          <SwitchRow
-            label={t('sections.screens.window.label')}
-            description={t('sections.screens.window.description')}
-            checked={screen.isActive}
-            onCheckedChange={toggleWindow}
-            disabled={busy}
-            testId="screen-window-open"
-          />
-          <SwitchRow
-            label={t('sections.screens.openOnStartup.label')}
-            description={t('sections.screens.openOnStartup.description')}
-            checked={screen.openOnStartup}
-            onCheckedChange={(value) => save('openOnStartup', value)}
-            disabled={busy}
-            testId="screen-open-on-startup"
-          />
-          <ScreenMonitorPicker screen={screen} />
-          <PreviewScreenRadio screen={screen} checked={isShownInPreviews} />
-          <details data-testid="screen-group-advanced" className="group py-2">
+        <div className="space-y-5 min-w-0">
+          <SettingsGroup
+            title={t('sections.screens.groups.idle')}
+            testId="screen-group-idle"
+          >
+            <SwitchRow
+              label={t('sections.screens.idle.clock.label')}
+              description={t('sections.screens.idle.clock.description')}
+              checked={emptySlide?.clockEnabled ?? false}
+              onCheckedChange={toggleIdleClock}
+              disabled={!emptySlide || updateContentConfig.isPending}
+              testId="screen-idle-clock"
+            />
+            <SwitchRow
+              label={t('sections.screens.closeOnEscape.label')}
+              description={t('sections.screens.closeOnEscape.description')}
+              checked={screen.closeOnEscape}
+              onCheckedChange={(value) => save('closeOnEscape', value)}
+              disabled={busy}
+              testId="screen-close-on-escape"
+            />
+          </SettingsGroup>
+
+          <SettingsGroup
+            title={t('sections.screens.groups.where')}
+            testId="screen-group-window"
+          >
+            <ScreenMonitorPicker screen={screen} />
+            <SwitchRow
+              label={t('sections.screens.openOnStartup.label')}
+              description={t('sections.screens.openOnStartup.description')}
+              checked={screen.openOnStartup}
+              onCheckedChange={(value) => save('openOnStartup', value)}
+              disabled={busy}
+              testId="screen-open-on-startup"
+            />
+          </SettingsGroup>
+
+          <details data-testid="screen-group-advanced" className="group">
             <summary className="flex items-center gap-1 cursor-pointer list-none text-sm font-medium text-fg-body [&::-webkit-details-marker]:hidden">
               <ChevronRight
                 size={16}
                 strokeWidth={1.5}
                 className="text-fg-label transition-transform group-open:rotate-90"
               />
-              {t('sections.screens.groups.advanced')}
+              {t('sections.screens.groups.more')}
             </summary>
-            <div className="divide-y divide-line/60 pl-5">
+            <div className="divide-y divide-line pl-5">
+              <PreviewScreenRadio screen={screen} checked={isShownInPreviews} />
               <SwitchRow
                 label={t('sections.screens.fullscreen.label')}
                 description={t('sections.screens.fullscreen.description')}
@@ -321,9 +351,10 @@ export function ScreenCard({
                 disabled={busy}
                 testId="screen-always-on-top"
               />
+              <ScreenSceneTemplates screen={screen} />
             </div>
           </details>
-        </SettingsGroup>
+        </div>
       </div>
     </div>
   )

@@ -43,7 +43,8 @@
       "../apps/client/dist": "client-dist",
       "resources/midi-native": "midi-native",
       "resources/sample-music": "sample-music",
-      "resources/default-backgrounds": "default-backgrounds"
+      "resources/default-backgrounds": "default-backgrounds",
+      "resources/theme-backgrounds": "theme-backgrounds"
     },
     "icon": [
       "icons/32x32.png",

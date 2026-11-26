@@ -72,20 +72,24 @@ export function ScheduleVerseteTineriEntryList({
                 {index + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <User
-                    size={12}
-                    className={isPresented ? 'text-fg-label' : 'text-fg-hint'}
-                    strokeWidth={2}
-                  />
-                  <span
-                    className={`text-xs font-medium ${
-                      isPresented ? 'text-fg' : 'text-fg-body'
-                    }`}
-                  >
-                    {entry.personName}
-                  </span>
-                </div>
+                {/* A passage with nobody attached (from the Bible, a topic,
+                    a book) shows no name line. */}
+                {entry.personName && (
+                  <div className="flex items-center gap-2">
+                    <User
+                      size={12}
+                      className={isPresented ? 'text-fg-label' : 'text-fg-hint'}
+                      strokeWidth={2}
+                    />
+                    <span
+                      className={`text-xs font-medium ${
+                        isPresented ? 'text-fg' : 'text-fg-body'
+                      }`}
+                    >
+                      {entry.personName}
+                    </span>
+                  </div>
+                )}
                 <span
                   className={`text-xs flex items-center gap-1 ${
                     isPresented ? 'text-fg' : 'text-fg-label'
@@ -94,8 +98,9 @@ export function ScheduleVerseteTineriEntryList({
                   {entry.reference}
                   {!entry.text && (
                     <AlertTriangle
-                      size={10}
-                      className="text-amber-500 flex-shrink-0"
+                      size={12}
+                      strokeWidth={2}
+                      className="text-amber-600 dark:text-amber-400 flex-shrink-0"
                       aria-label={t('warnings.invalidReference')}
                     />
                   )}

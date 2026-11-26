@@ -10,6 +10,7 @@ import featureRequests from './routes/feature-requests'
 import health from './routes/health'
 import signal from './routes/signal'
 import sync from './routes/sync'
+import syncOwner from './routes/syncOwner'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -30,6 +31,7 @@ app.route('/', auth)
 app.route('/', featureRequests)
 app.route('/', signal)
 app.route('/', sync)
+app.route('/', syncOwner)
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Not found' }, 404))

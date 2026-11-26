@@ -2,6 +2,8 @@
  * OpenAPI 3.1 document of the cloud sync service (served at
  * /sync/openapi.json, rendered by Scalar at /sync/docs).
  */
+import { installationHeaders, ownerOpenApiPaths } from './owner/ownerOpenApi'
+
 const error = (description: string) => ({
   description,
   content: {
@@ -51,6 +53,12 @@ export const syncOpenApi = {
         description:
           'A device token (chs_…): the church server’s from registration, or a device’s from POST devices.',
       },
+      ownerTicket: {
+        type: 'http',
+        scheme: 'bearer',
+        description:
+          'An owner ticket (cho_…) from the Google sign-in (/sync/owner/sign-in), valid one hour.',
+      },
     },
     schemas: {
       Error: {
@@ -72,6 +80,11 @@ export const syncOpenApi = {
               'busy',
               'not_configured',
               'internal',
+              'server_in_use',
+              'already_owned',
+              'not_owner',
+              'not_offered',
+              'owner_unauthorized',
             ],
           },
         },
@@ -109,9 +122,10 @@ export const syncOpenApi = {
   paths: {
     '/sync/churches': {
       post: {
-        summary: 'Register a church server as a guest',
+        summary: 'Register a church server',
         description:
-          'Creates a church with a fresh path secret and an empty head.json, and returns the church server’s token (shown once). Rate limited per IP.',
+          'Creates a church with a fresh path secret and an empty head.json, and returns the church server’s token (shown once). With an owner ticket, that Google account owns it; without, it is a guest church (claim it later). Rate limited per IP.',
+        parameters: installationHeaders,
         requestBody: {
           content: {
             'application/json': {
@@ -119,6 +133,10 @@ export const syncOpenApi = {
                 type: 'object',
                 properties: {
                   name: { type: 'string', description: 'The server’s name' },
+                  ownerTicket: {
+                    type: 'string',
+                    description: 'From the Google sign-in: the owner.',
+                  },
                 },
               },
             },
@@ -136,6 +154,7 @@ export const syncOpenApi = {
                     ...location.properties,
                     deviceId: { type: 'string' },
                     serverToken: { type: 'string' },
+                    ownerEmail: { type: ['string', 'null'] },
                   },
                 },
               },
@@ -150,19 +169,26 @@ export const syncOpenApi = {
       get: {
         summary: 'Where the church is read from now',
         description:
-          'Any valid token of the church. Used after a path rotation, when the old head.json is gone.',
+          'Any valid token of the church. Used after a path rotation, when the old head.json is gone, and by the church PC to check in now and then (it learns the owner, and whether another PC holds its token).',
         security: [{ deviceToken: [] }],
-        parameters: [churchId],
+        parameters: [churchId, ...installationHeaders],
         responses: {
           '200': {
-            description: 'The current read location',
+            description: 'The current read location, and the owner',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Location' },
+                schema: {
+                  type: 'object',
+                  properties: {
+                    ...location.properties,
+                    ownerEmail: { type: ['string', 'null'] },
+                  },
+                },
               },
             },
           },
           '401': unauthorized,
+          '409': error('Another PC holds the server token (server_in_use)'),
         },
       },
     },
@@ -483,6 +509,7 @@ export const syncOpenApi = {
         },
       },
     },
+    ...ownerOpenApiPaths,
     '/sync/openapi.json': {
       get: {
         summary: 'This document',

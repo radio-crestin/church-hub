@@ -1,4 +1,5 @@
 import { clampSeconds } from './clampSeconds'
+import { toAutomationTrigger } from './toAutomationTrigger'
 import type { ScheduleAutomationSettings } from './types'
 
 /**
@@ -28,6 +29,12 @@ export function automationColumns(
   }
   if (automation.startOnAppStart !== undefined) {
     columns.startOnAppStart = !!automation.startOnAppStart
+  }
+  if (automation.startTrigger !== undefined) {
+    columns.startTrigger = toAutomationTrigger(automation.startTrigger)
+  }
+  if (automation.stopTrigger !== undefined) {
+    columns.stopTrigger = toAutomationTrigger(automation.stopTrigger)
   }
   return columns
 }

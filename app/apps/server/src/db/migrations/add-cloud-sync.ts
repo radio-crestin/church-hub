@@ -61,6 +61,13 @@ export function addCloudSync(db: Database): void {
     `)
   }
 
+  // The church's owner (T-172), kept with its identity so a local backup
+  // restores it too.
+  if (!columnExists(db, 'cloud_sync', 'owner_email')) {
+    log('info', 'Adding "owner_email" column to "cloud_sync"...')
+    db.run('ALTER TABLE cloud_sync ADD COLUMN owner_email TEXT')
+  }
+
   if (!tableExists(db, 'sync_versions')) {
     log('info', 'Creating "sync_versions" table...')
     db.run(`

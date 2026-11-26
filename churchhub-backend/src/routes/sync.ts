@@ -1,13 +1,19 @@
 import { type Context, Hono } from 'hono'
 import { addDevice } from '../sync/addDevice'
 import { authenticate } from '../sync/authenticate'
+import { checkInstallation } from '../sync/checkInstallation'
 import { churchPrefix } from '../sync/churchPrefix'
 import { commitChanges } from '../sync/commitChanges'
 import { compact } from '../sync/compact'
+import { handleSyncError } from '../sync/handleSyncError'
 import { listDevices } from '../sync/listDevices'
+import { claimChurch } from '../sync/owner/claimChurch'
+import { verifyOwnerTicket } from '../sync/owner/ownerTicket'
 import { syncOpenApi } from '../sync/openapi'
 import { parseAccess } from '../sync/parseAccess'
 import { parseChanges } from '../sync/parseChanges'
+import { readInstallation } from '../sync/readInstallation'
+import { readJsonBody } from '../sync/readJsonBody'
 import { registerChurch } from '../sync/registerChurch'
 import { requirePermission } from '../sync/requirePermission'
 import { revokeDevice } from '../sync/revokeDevice'
@@ -19,8 +25,6 @@ import { SyncError } from '../sync/SyncError'
 import { updateAccess } from '../sync/updateAccess'
 import type { Bindings } from '../types'
 
-/** A first sync sends its library in chunks well under this. */
-const BODY_MAX_BYTES = 8 * 1024 * 1024
 const DEFAULT_COMPACT_AFTER = 40
 /** Managing devices and access needs the app's user management permission. */
 const MANAGE_PERMISSION = 'users.edit'
@@ -29,42 +33,35 @@ type SyncContext = Context<{ Bindings: Bindings }>
 
 const sync = new Hono<{ Bindings: Bindings }>()
 
-/** Every error a /sync route raises, as `{ error, code, ...details }`. */
-sync.onError((error, c) => {
-  if (error instanceof SyncError) {
-    return c.json(
-      { error: error.message, code: error.code, ...error.details },
-      error.status
-    )
-  }
-  console.error('[sync] request failed:', error)
-  return c.json({ error: 'Internal server error', code: 'internal' }, 500)
-})
+sync.onError(handleSyncError)
 
-async function readJson(c: SyncContext): Promise<unknown> {
-  if (Number(c.req.header('Content-Length') ?? 0) > BODY_MAX_BYTES) {
-    throw new SyncError(413, 'too_large', 'Request is too large')
-  }
-  return c.req.json().catch(() => {
-    throw new SyncError(400, 'invalid_request', 'Body must be JSON')
-  })
-}
-
-/** The church in the path, read once, and the device calling for it. */
+/**
+ * The church in the path, read once, and the device calling for it. The
+ * church server's calls are checked against the installation holding its
+ * token (checkInstallation); `takeover` makes the caller's the one.
+ */
 async function caller(
   c: SyncContext,
   store: SyncStore,
-  actingUserId?: string | null
+  actingUserId?: string | null,
+  takeover = false
 ) {
-  const church = await readChurch(store, c.req.param('churchId') ?? '')
+  const found = await readChurch(store, c.req.param('churchId') ?? '')
   const who = await authenticate(
     store,
-    church,
+    found,
     c.req.header('Authorization'),
     actingUserId
   )
   // authenticate refuses an unknown church, so it was found.
-  return { who, church: church as NonNullable<typeof church> }
+  const church = await checkInstallation(
+    store,
+    found as NonNullable<typeof found>,
+    who,
+    readInstallation((name) => c.req.header(name)),
+    takeover
+  )
+  return { who, church }
 }
 
 /** Where the church is read from now, after a write or a rotation. */
@@ -88,7 +85,7 @@ sync.get('/sync/docs', (c) =>
   )
 )
 
-/** POST /sync/churches: register a church server as a guest. */
+/** POST /sync/churches: register a church server, owned or as a guest. */
 sync.post('/sync/churches', async (c) => {
   if (c.env.SYNC_RATE_LIMITER) {
     const ip = c.req.header('CF-Connecting-IP') ?? 'unknown'
@@ -97,24 +94,64 @@ sync.post('/sync/churches', async (c) => {
     })
     if (!success) throw new SyncError(429, 'rate_limited', 'Too many requests')
   }
-  const body = (await readJson(c)) as { name?: unknown }
+  const body = (await readJsonBody(c)) as { name?: unknown; ownerTicket?: unknown }
   const name =
     typeof body?.name === 'string' && body.name.trim()
       ? body.name.trim().slice(0, 200)
       : 'Church server'
-  return c.json(await registerChurch(createSyncStore(c.env), name), 201)
+  const store = createSyncStore(c.env)
+  const owner =
+    body?.ownerTicket === undefined || body.ownerTicket === null
+      ? null
+      : await verifyOwnerTicket(String(body.ownerTicket), store.secret)
+  const installation = readInstallation((header) => c.req.header(header))
+  return c.json(await registerChurch(store, name, owner, installation), 201)
 })
 
-/** GET /sync/churches/:churchId/path: where to read, after a rotation. */
+/** POST /sync/churches/:churchId/owner: a guest church claimed by its owner. */
+sync.post('/sync/churches/:churchId/owner', async (c) => {
+  const body = (await readJsonBody(c)) as { ownerTicket?: unknown }
+  const store = createSyncStore(c.env)
+  const owner = await verifyOwnerTicket(
+    typeof body?.ownerTicket === 'string' ? body.ownerTicket : null,
+    store.secret
+  )
+  const { who } = await caller(c, store)
+  if (!who.isServer) {
+    throw new SyncError(403, 'forbidden', 'Only the church server can claim it')
+  }
+  return c.json(await claimChurch(store, who.churchId, owner))
+})
+
+/**
+ * POST /sync/churches/:churchId/takeover: this PC keeps the church server
+ * (the user chose it after a 409 server_in_use); the other PC is refused.
+ */
+sync.post('/sync/churches/:churchId/takeover', async (c) => {
+  const store = createSyncStore(c.env)
+  const { who, church } = await caller(c, store, null, true)
+  if (!who.isServer) {
+    throw new SyncError(403, 'forbidden', 'Only the church server can')
+  }
+  return c.json(readLocation(store, church.state))
+})
+
+/**
+ * GET /sync/churches/:churchId/path: where to read, after a rotation, and
+ * who owns the church. The church PC checks in with it now and then.
+ */
 sync.get('/sync/churches/:churchId/path', async (c) => {
   const store = createSyncStore(c.env)
   const { church } = await caller(c, store)
-  return c.json(readLocation(store, church.state))
+  return c.json({
+    ...readLocation(store, church.state),
+    ownerEmail: church.state.owner?.email ?? null,
+  })
 })
 
 /** PUT /sync/churches/:churchId/access: the church's roles and users. */
 sync.put('/sync/churches/:churchId/access', async (c) => {
-  const access = parseAccess(await readJson(c))
+  const access = parseAccess(await readJsonBody(c))
   const store = createSyncStore(c.env)
   const { who, church } = await caller(c, store)
   requirePermission(church.state, who, MANAGE_PERMISSION)
@@ -131,7 +168,7 @@ sync.get('/sync/churches/:churchId/devices', async (c) => {
 
 /** POST /sync/churches/:churchId/devices: a token for one of the users. */
 sync.post('/sync/churches/:churchId/devices', async (c) => {
-  const body = (await readJson(c)) as { userId?: unknown; name?: unknown }
+  const body = (await readJsonBody(c)) as { userId?: unknown; name?: unknown }
   if (typeof body?.userId !== 'string' || typeof body.name !== 'string') {
     throw new SyncError(400, 'invalid_request', 'userId and name are required')
   }
@@ -156,7 +193,7 @@ sync.delete('/sync/churches/:churchId/devices/:deviceId', async (c) => {
 
 /** POST /sync/churches/:churchId/changes: one checked, versioned write. */
 sync.post('/sync/churches/:churchId/changes', async (c) => {
-  const { changes, actingUserId } = parseChanges(await readJson(c))
+  const { changes, actingUserId } = parseChanges(await readJsonBody(c))
   const store = createSyncStore(c.env)
   const { who, church } = await caller(c, store, actingUserId)
   const compactAfter = Number(c.env.SYNC_COMPACT_AFTER) || DEFAULT_COMPACT_AFTER

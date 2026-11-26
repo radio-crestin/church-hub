@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 
 import { SettingsSection } from '~/features/settings/components/SettingsSection'
 import { Button } from '~/ui/button/Button'
+import { NativeSelect } from '~/ui/select'
 import { useMixerChannels, useMixerConfig } from '../../hooks'
-import { NativeSelect } from '../settings-page/NativeSelect'
 import { SettingField } from '../settings-page/SettingField'
 
 const CHANNEL_COUNTS = ['8', '16', '24', '32'] as const

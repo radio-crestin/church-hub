@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { useTemplatedScreen } from '~/features/slide-templates/hooks/useTemplatedScreen'
+import type { DeckShownSlide } from '~/features/slides-deck/types'
+import {
+  type DeckShownBefore,
+  deckShownSlide,
+} from '~/features/slides-deck/utils/deckShownSlide'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { createLogger } from '~/utils/logger'
 import {
@@ -12,6 +18,7 @@ import { calculateMaxExitAnimationDuration } from '../components/rendering/utils
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,
+  PresentationBackground,
   ScreenBackgroundConfig,
   ScreenWithConfigs,
   SongContentConfig,
@@ -54,12 +61,22 @@ export interface ContentData {
   styleOverrides?: SlideStyleOverride | null
   /** The song's own background (see `resolveScreenBackground`). */
   songBackground?: ScreenBackgroundConfig | null
+  /** A presentation's video item, shown full screen (ScreenVideo). */
+  videoUrl?: string
+  /** The video item plays again from the start until the step changes. */
+  videoLoop?: boolean
+  /** A presentation's looping background video (see `resolveScreenBackground`). */
+  presentationBackground?: PresentationBackground | null
+  /** A Slides item's slide (DeckSlideRenderer). */
+  deck?: DeckShownSlide
 }
 
 interface UsePresentationContentOptions {
-  /** Screen config for animation duration calculation */
+  /** The screen drawing the content, with its own template's layouts. */
   screen: ScreenWithConfigs | null | undefined
-  /** Whether to calculate next slide data (for preview) */
+  /** The live OBS scene: a screen may draw with another template for it. */
+  obsSceneName?: string | null
+  /** Whether to build the next slide's data; left out, the template decides. */
   includeNextSlide?: boolean
   /** Function to get next verse for bible passages */
   getNextVerse?: (verseId: number) => Promise<{
@@ -81,6 +98,11 @@ interface UsePresentationContentOptions {
 }
 
 interface UsePresentationContentResult {
+  /**
+   * The screen with the template the content is drawn with (an OBS scene's,
+   * a presentation's): draw with this one, not the screen passed in.
+   */
+  screen: ScreenWithConfigs | null | undefined
   contentType: ContentType
   contentData: ContentData
   /** Identity-based key that only changes on slide navigation, not content edits */
@@ -185,13 +207,23 @@ function buildSongSlideContent(
  * 3. Visibility calculation - determines if content should be visible
  */
 export function usePresentationContent({
-  screen,
-  includeNextSlide = false,
+  screen: ownScreen,
+  obsSceneName = null,
+  includeNextSlide: includeNextSlideOption,
   getNextVerse,
   getBookName,
   previewContent = null,
 }: UsePresentationContentOptions): UsePresentationContentResult {
   const { data: presentationState } = usePresentationState()
+  // A presentation's (or its item's) template, carried by what is shown
+  const shownTemplateId = (
+    (previewContent ?? presentationState?.temporaryContent)?.data as
+      | { templateId?: number | null }
+      | undefined
+  )?.templateId
+  const screen = useTemplatedScreen(ownScreen, obsSceneName, shownTemplateId)
+  const includeNextSlide =
+    includeNextSlideOption ?? screen?.nextSlideConfig?.enabled ?? false
   const songUpdateTimestamp = useSongUpdateTimestamp()
 
   const [contentType, setContentType] = useState<ContentType>('empty')
@@ -215,6 +247,9 @@ export function usePresentationContent({
   // we can clear the stage when preview is dismissed while the real projection
   // is hidden (no visible -> hidden transition to drive the exit animation).
   const prevPreviewRef = useRef<TemporaryContent | null>(previewContent)
+  // What this screen showed last, for how a deck slide comes on (played, or
+  // drawn as it stands); null until it has seen a presentation state.
+  const deckBeforeRef = useRef<DeckShownBefore | null>(null)
 
   // Keep track of current content type for exit animation calculation
   if (contentType !== 'empty') {
@@ -335,8 +370,15 @@ export function usePresentationContent({
       data: ContentData,
       key = '',
     ): void => {
+      // A presentation's background video stays behind every step it covers.
+      const presentationBackground =
+        previewContent || presentationState?.isHidden
+          ? null
+          : presentationState?.temporaryContent?.presentationBackground
       setContentType(type)
-      setContentData(data)
+      setContentData(
+        presentationBackground ? { ...data, presentationBackground } : data,
+      )
       setContentKey(key)
     }
 
@@ -393,6 +435,19 @@ export function usePresentationContent({
         showContent('empty', {})
         setNextSlideData(undefined)
         return
+      }
+
+      // How a deck step comes on depends on what was shown before it.
+      const live = presentationState.temporaryContent
+      const deck =
+        live?.type === 'deck_slide' && !presentationState.isHidden
+          ? deckShownSlide(live.data, deckBeforeRef.current)
+          : null
+      if (!presentationState.isHidden || !deckBeforeRef.current) {
+        const data = live?.data as DeckShownBefore['step'] | undefined
+        deckBeforeRef.current = presentationState.isHidden
+          ? { deck: null, step: null }
+          : { deck, step: data ?? null }
       }
 
       // When hidden, don't fetch new content - check isHidden directly here because
@@ -542,6 +597,27 @@ export function usePresentationContent({
           return
         }
 
+        // A video item plays full screen over the empty slide, whose own
+        // settings (its background, its clock) stay as they are.
+        if (temp.type === 'video') {
+          if (isCancelled) return
+          showContent(
+            'empty',
+            { videoUrl: temp.data.url, videoLoop: temp.data.loop === true },
+            `video|${temp.data.url}`,
+          )
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A Slides item's slide draws itself, with its own design.
+        if (deck) {
+          if (isCancelled) return
+          showContent('deck_slide', { deck }, deck.key)
+          setNextSlideData(undefined)
+          return
+        }
+
         // A scene item (e.g. "Solo") switches OBS and projects the empty
         // slide, with that slide's own settings such as its clock. There is
         // no "scene" slide layout to render.
@@ -610,5 +686,5 @@ export function usePresentationContent({
     screen?.contentConfigs,
   )
 
-  return { ...shown, isExitAnimating, presentationState }
+  return { ...shown, screen, isExitAnimating, presentationState }
 }

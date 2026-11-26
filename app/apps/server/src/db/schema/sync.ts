@@ -160,6 +160,8 @@ export const cloudSync = sqliteTable('cloud_sync', {
   headEtag: text('head_etag'),
   /** Hash of the roles and users last mirrored to the service. */
   accessHash: text('access_hash'),
+  /** The Google account owning the church (T-172); null for a guest church. */
+  ownerEmail: text('owner_email'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

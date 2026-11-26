@@ -238,7 +238,7 @@ test.describe('Song title on the projector', () => {
   })
 
   test('is turned on from the screen editor', async ({ page, request }) => {
-    await page.goto('/settings/screens')
+    await page.goto(`/settings/screens?screen=${screenId}`)
     await page
       .locator(`[data-testid="screen-card"][data-screen-id="${screenId}"]`)
       .getByRole('button', {
@@ -248,13 +248,8 @@ test.describe('Song title on the projector', () => {
     await expect(page.getByTestId('screen-editor-save')).toBeVisible({
       timeout: 10000,
     })
-    await page.getByTestId('screen-editor-content-type').click()
-    await page
-      .getByTestId('screen-editor-content-type-option')
-      .filter({ hasText: label('presentation', 'screens.contentTypes.song') })
-      .locator('button')
-      .first()
-      .click()
+    // The slide, from the theme's slides on the left.
+    await page.getByTestId('screen-editor-slide-song').click()
 
     await page.getByTestId('screen-editor-element-songTitle').click()
     const element = page.getByTestId('screen-editor-element-settings')

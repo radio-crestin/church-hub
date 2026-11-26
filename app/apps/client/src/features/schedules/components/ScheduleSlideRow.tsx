@@ -8,6 +8,7 @@ import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
 import { ScheduleRowNumber } from './ScheduleRowNumber'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { scheduleRowClass } from './scheduleRowClass'
+import { useMediaItemText } from '../media-items/hooks/useMediaItemText'
 import type { ScheduleItem } from '../types'
 
 interface ScheduleSlideRowProps {
@@ -67,7 +68,14 @@ export function ScheduleSlideRow({
     position: isDragging ? 'relative' : undefined,
   }
 
+  const mediaText = useMediaItemText(item)
   const { label, testId } = (() => {
+    if (mediaText) {
+      return {
+        label: `${mediaText.title} · ${mediaText.detail}`,
+        testId: `schedule-${item.itemType}-item`,
+      }
+    }
     if (item.slideType === 'versete_tineri') {
       return {
         label:
@@ -163,7 +171,7 @@ export function ScheduleSlideRow({
             e.stopPropagation()
             onRemove()
           }}
-          className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-600 dark:hover:text-red-400 rounded-r-lg hover:bg-hover transition-colors"
           title={t('panel.removeFromSchedule')}
           data-testid="schedule-slide-remove"
         >

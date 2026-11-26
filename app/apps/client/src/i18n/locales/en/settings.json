@@ -1026,6 +1026,75 @@
         }
       }
     },
+    "cloudSync": {
+      "title": "Cloud sync",
+      "description": "Songs and programs reach your phones and other PCs within seconds, through Church Hub's cloud.",
+      "off": {
+        "title": "Turn on cloud sync",
+        "description": "Pick how this church is set up. You can sign in with Google later too.",
+        "google": "Continue with Google",
+        "guest": "Continue as a guest",
+        "ownerHint": "With Google, your account owns this church: you can recover it on a new PC and revoke lost devices. As a guest, sign in later to claim it.",
+        "failed": "Cloud sync could not be turned on. Check the internet connection and try again."
+      },
+      "recover": {
+        "title": "Already set up on another PC?",
+        "description": "Sign in with the Google account that owns the church to bring it to this PC.",
+        "signIn": "Recover with Google"
+      },
+      "on": {
+        "title": "Cloud sync is on",
+        "owner": "Owner: {{email}}",
+        "guest": "Guest church: nobody owns it yet",
+        "claimHint": "Sign in with Google to own this church. Nothing moves; you can then recover it on another PC.",
+        "claim": "Sign in with Google to claim it",
+        "manageHint": "Sign in as the owner to see your church servers, transfer the church or revoke every device.",
+        "manage": "Sign in as the owner",
+        "turnOff": "Turn off cloud sync",
+        "turnOffTitle": "Turn off cloud sync?",
+        "turnOffConfirm": "This PC stops syncing. The church stays in the cloud: its owner can recover it later."
+      },
+      "owner": {
+        "signedInAs": "Signed in as {{email}}",
+        "signOut": "Sign out",
+        "yourChurches": "Your church servers",
+        "thisPc": "This PC",
+        "offered": "Offered to you: accept it to become its owner",
+        "churchDetails_one": "{{count}} device · updated {{updated}}",
+        "churchDetails_other": "{{count}} devices · updated {{updated}}",
+        "noChurches": "This account owns no church yet.",
+        "listFailed": "Could not load your churches.",
+        "recover": "Use on this PC",
+        "accept": "Accept",
+        "transferTitle": "Transfer ownership",
+        "transferHint": "The church stays yours until that Google account signs in and accepts it.",
+        "transferPlaceholder": "New owner's Gmail address",
+        "transfer": "Transfer",
+        "transferSent": "Offered to {{email}}. It is theirs once they accept.",
+        "revokeTitle": "Revoke every device",
+        "revokeHint": "Use it when a phone is lost or a backup file got out: every device must be paired again.",
+        "revokeAll": "Revoke every device",
+        "revokeConfirm": "Every phone and PC loses access, and the church moves to a new private address. This PC keeps syncing. Pair the phones again afterwards.",
+        "revokedAll": "Every device was revoked. Pair your phones again.",
+        "actionFailed": "That did not work. Sign in again and retry."
+      },
+      "conflict": {
+        "title": "This church is also on another PC",
+        "body": "{{name}} (last active {{lastSeen}}) uses this church too, usually because a backup was restored there. Only one PC can keep it. Which one?",
+        "keepHere": "Keep it on this PC",
+        "keepOther": "Let {{name}} keep it",
+        "unknownPc": "Another PC",
+        "unknownTime": "recently"
+      },
+      "signIn": {
+        "waiting": "Finish signing in in the browser window…",
+        "failed": "The sign-in could not start. Check the internet connection and try again."
+      },
+      "backupWarning": {
+        "title": "Backups hold your cloud sync keys",
+        "body": "A backup lets anyone who has it read and change your church's synced songs. Keep the file private. If one gets out, the owner can revoke every device in Cloud sync."
+      }
+    },
     "sync": {
       "title": "Library Sync",
       "description": "Keep your song library and presentations up to date across all your devices through your Google Drive account.",
@@ -1085,7 +1154,7 @@
     },
     "screens": {
       "title": "Screens",
-      "description": "Configure screens for different display purposes. Each screen type has its own layout and configuration options.",
+      "description": "Each screen is a window: on the projector, the stage monitor or the stream. Pick one to choose how it looks and where it shows.",
       "addScreen": "Add Screen",
       "noScreens": "No screens configured",
       "status": {
@@ -1093,23 +1162,21 @@
         "closed": "window closed"
       },
       "groups": {
+        "look": "Look",
         "idle": "When nothing is shown",
-        "window": "Window",
-        "advanced": "More window options"
+        "where": "Where it shows",
+        "more": "More options",
+        "slides": "Slides"
       },
       "idle": {
-        "summaryOpen": "Between songs and verses the projector shows this empty slide. Click it to change its look.",
-        "summaryClosed": "Between songs and verses the window closes: the projector shows the computer's desktop, with no clock or background.",
-        "windowCloses": "Window closed: the desktop shows",
-        "editEmptySlide": "Edit the empty slide",
         "clock": {
           "label": "Clock on the empty slide",
           "description": "Shows the time when nothing is live, for example before the service."
         }
       },
       "window": {
-        "label": "Window open now",
-        "description": "Shows this screen on its display. Turn it off to close the window."
+        "open": "Open window",
+        "close": "Close window"
       },
       "openOnStartup": {
         "label": "Open when the app starts",
@@ -1149,9 +1216,10 @@
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
         "duplicate": "Duplicate the screen with all its settings",
-        "edit": "Edit layout",
+        "edit": "Edit theme",
         "delete": "Delete screen",
-        "editTooltip": "Change what each slide type looks like on this screen: text, background, clock"
+        "editTooltip": "Change this screen's theme: what each slide type looks like (colours, text, background, clock)",
+        "menu": "More screen actions"
       },
       "toast": {
         "created": "Screen created successfully",
@@ -1202,6 +1270,9 @@
           "saveFailed": "Failed to save file",
           "cancelled": "Export cancelled"
         }
+      },
+      "slides": {
+        "description": "Every kind of slide, as this screen shows it. Click one to edit it."
       }
     },
     "developer": {
@@ -1385,6 +1456,9 @@
         "title": "Revoke this device?",
         "message": "{{name}} can no longer read or change the church's data. Other devices keep working."
       }
+    },
+    "themes": {
+      "title": "Themes"
     }
   }
 }

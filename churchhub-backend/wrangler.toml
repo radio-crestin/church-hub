@@ -49,6 +49,8 @@ YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
 # must be registered on the OAuth client in Google Cloud Console.
 DRIVE_SCOPE = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.appdata"
 DRIVE_REDIRECT_URI = "https://churchub-backend.radiocrestin.ro/auth/drive/callback"
+# Cloud sync owner sign-in (T-172), same Google client; register this URI on it.
+OWNER_REDIRECT_URI = "https://churchub-backend.radiocrestin.ro/sync/owner/callback"
 COOKIE_NAME = "yt_oauth_state"
 COOKIE_MAX_AGE = 600
 

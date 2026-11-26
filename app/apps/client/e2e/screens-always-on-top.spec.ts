@@ -34,9 +34,11 @@ test.describe('Screens are always on top by default', () => {
     try {
       expect(screen.alwaysOnTop).toBe(true)
 
-      await page.goto('/settings/screens')
-      const card = page.locator(`[data-screen-id="${screen.id}"]`)
-      // Under "More window options", switched on.
+      await page.goto(`/settings/screens?screen=${screen.id}`)
+      const card = page.locator(
+        `[data-testid="screen-card"][data-screen-id="${screen.id}"]`,
+      )
+      // Under "More options", switched on.
       await expect(card.getByTestId('screen-always-on-top')).toHaveAttribute(
         'aria-checked',
         'true',

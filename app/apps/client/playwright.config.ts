@@ -203,8 +203,9 @@ export default defineConfig({
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
       CHURCH_HUB_AUDIO_SERVER_PORT: String(server.fakeAudioPort),
       CHURCH_HUB_SIGNALING_URL: server.fakeRelayUrl,
-      // Cloud sync goes to the spec's self-hosted service, and its join
-      // links open the spec's public app (public-join).
+      // Cloud sync goes to the spec's own sync service (cloud-owner,
+      // public-join), never the church's real one, and its join links open
+      // the spec's public app.
       CHURCH_HUB_SYNC_URL: `http://127.0.0.1:${server.syncServicePort}`,
       CHURCH_HUB_PUBLIC_APP_URL: server.publicAppUrl,
     },
