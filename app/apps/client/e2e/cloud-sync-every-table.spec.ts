@@ -9,6 +9,14 @@ import {
 import { setAppLanguage } from './helpers/app-language'
 import { FakeS3 } from './helpers/fake-s3'
 import { SyncService } from './helpers/sync-service'
+import {
+  SECRET_NAME,
+  SECRET_VALUE,
+} from '../../server/src/db/fixtures/secret-patterns'
+import {
+  SYNCED_SETTING_KEYS,
+  SYNCED_TABLES,
+} from '../../server/src/service/sync/syncedTables'
 
 /**
  * Cloud sync carries every table (T-173): tags, song and Bible bookmarks and
@@ -178,6 +186,61 @@ test.describe
       adminUuid = users.find((user) => user.data?.isSuperAdmin === 1)
         ?.uuid as string
       expect(adminUuid).toBeTruthy()
+    })
+
+    test('no secret is ever synced: not a secret setting, table or value', async ({
+      request,
+    }) => {
+      // What is synced is named: nothing holding a secret is on the lists.
+      for (const key of SYNCED_SETTING_KEYS)
+        expect(key).not.toMatch(SECRET_NAME)
+      for (const { table } of SYNCED_TABLES) {
+        expect(table).not.toMatch(/secret|token|session|oauth|credential/i)
+      }
+      const holdsSecret = ({ key, value }: { key: string; value: string }) =>
+        SECRET_NAME.test(key) ||
+        /"[^"]*(api_?key|secret|token|password|credential)[^"]*"\s*:/i.test(
+          value,
+        )
+      const all = (
+        await (await request.get('/api/settings/app_settings')).json()
+      ).data as { key: string; value: string }[]
+      for (const setting of all.filter(holdsSecret)) {
+        expect(SYNCED_SETTING_KEYS as readonly string[]).not.toContain(
+          setting.key,
+        )
+      }
+
+      // A key saved in each kind of place never reaches the church.
+      const key = `sk-${'e2e0'.repeat(6)}`
+      expect(key).toMatch(SECRET_VALUE)
+      const aiConfig = all.find((setting) => setting.key === 'ai_search_config')
+      const save = (settingKey: string, value: string) =>
+        request.post('/api/settings/app_settings', {
+          data: { key: settingKey, value },
+        })
+      await save('ai_search_config', JSON.stringify({ apiKey: key }))
+      await save('e2e_api_key', key)
+      const stamp = Date.now()
+      await save('search_synonyms', `[["secret${stamp}","test"]]`)
+      try {
+        await syncUntil(request, async () =>
+          (await published(readUrl)).some((change) =>
+            mentions(change, `secret${stamp}`),
+          ),
+        )
+        const changes = await published(readUrl)
+        expect(JSON.stringify(changes)).not.toMatch(SECRET_VALUE)
+        for (const change of changes.filter((c) => c.type === 'setting')) {
+          expect(SYNCED_SETTING_KEYS as readonly string[]).toContain(
+            change.uuid,
+          )
+        }
+      } finally {
+        if (aiConfig) await save('ai_search_config', aiConfig.value)
+        else await request.delete('/api/settings/app_settings/ai_search_config')
+        await request.delete('/api/settings/app_settings/e2e_api_key')
+      }
     })
 
     test('every table’s edits travel, each with who made it; a device’s own settings stay', async ({

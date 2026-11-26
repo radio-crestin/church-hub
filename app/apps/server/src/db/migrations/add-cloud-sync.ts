@@ -67,6 +67,13 @@ export function addCloudSync(db: Database): void {
     db.run('ALTER TABLE cloud_sync ADD COLUMN owner_email TEXT')
   }
 
+  // The access mirror's hash (T-172), gone since users and roles sync as
+  // changes (T-173).
+  if (columnExists(db, 'cloud_sync', 'access_hash')) {
+    log('info', 'Dropping "access_hash" column from "cloud_sync"...')
+    db.run('ALTER TABLE cloud_sync DROP COLUMN access_hash')
+  }
+
   if (!tableExists(db, 'sync_versions')) {
     log('info', 'Creating "sync_versions" table...')
     db.run(`
