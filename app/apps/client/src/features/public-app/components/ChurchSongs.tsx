@@ -58,7 +58,7 @@ export function ChurchSongs({ binding }: { binding: ChurchBinding }) {
           className="h-11 pl-9"
         />
       </label>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="text-xs text-fg-hint tabular-nums">
           {t('songs.count', { count: total })}
         </p>

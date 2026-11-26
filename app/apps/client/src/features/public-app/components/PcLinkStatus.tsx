@@ -12,6 +12,7 @@ export function PcLinkStatus({ link }: { link: PcLink }) {
     <p
       data-testid="pc-link"
       data-link={link}
+      aria-live="polite"
       className="flex items-center gap-2 text-xs text-fg-hint"
     >
       <span
