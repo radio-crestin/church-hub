@@ -339,51 +339,67 @@ test.describe
         ai: 'church-ai-key-never-synced-0123',
         gemini: 'church-gemini-key-never-synced-0123',
       }
-      for (const [key, value] of [
-        ['songs_ai_search_config', { provider: 'openai', apiKey: keys.ai }],
+      // The legacy AI row (no feature reads it) and live translation's:
+      // restored afterwards, as later specs on this server expect no key.
+      const saved = [
+        ['ai_search_config', { provider: 'openai', apiKey: keys.ai }],
         ['live_translation_settings', { geminiApiKey: keys.gemini }],
-      ] as const) {
-        const saved = await request.post('/api/settings/app_settings', {
+      ] as const
+      const originals = new Map<string, string | null>()
+      for (const [key, value] of saved) {
+        const before = await request.get(`/api/settings/app_settings/${key}`)
+        originals.set(key, (await before.json()).data?.value ?? null)
+        const written = await request.post('/api/settings/app_settings', {
           data: { key, value: JSON.stringify(value) },
         })
-        expect(saved.ok()).toBe(true)
+        expect(written.ok()).toBe(true)
       }
-      const title = `E2E Cloud secrets ${Date.now()}`
-      await request.post('/api/songs', { data: { id: songId, title } })
-      await syncUntil(request, async () =>
-        (await publishedChanges(readUrl))
-          .flat()
-          .some((c) => c.data?.title === title),
-      )
+      try {
+        const title = `E2E Cloud secrets ${Date.now()}`
+        await request.post('/api/songs', { data: { id: songId, title } })
+        await syncUntil(request, async () =>
+          (await publishedChanges(readUrl))
+            .flat()
+            .some((c) => c.data?.title === title),
+        )
 
-      // Everything the service published or keeps readable in the bucket.
-      const published = [...s3.objects]
-        .filter(([path]) => !path.includes('/sync-state/'))
-        .map(([, bytes]) => {
-          try {
-            return gunzipSync(bytes).toString('utf8')
-          } catch {
-            return bytes.toString('utf8')
-          }
-        })
-        .join('\n')
-      const secretRows = [
-        ...Object.keys(SECRET_SETTINGS),
-        'server_secrets',
-        'live_translation_host_key',
-        'remote_access_host_key',
-      ]
-      for (const forbidden of [
-        ...Object.values(keys),
-        ...secretRows,
-        'enc:v1:',
-      ]) {
-        expect(published, forbidden).not.toContain(forbidden)
+        // Everything the service published or keeps readable in the bucket.
+        const published = [...s3.objects]
+          .filter(([path]) => !path.includes('/sync-state/'))
+          .map(([, bytes]) => {
+            try {
+              return gunzipSync(bytes).toString('utf8')
+            } catch {
+              return bytes.toString('utf8')
+            }
+          })
+          .join('\n')
+        const secretRows = [
+          ...Object.keys(SECRET_SETTINGS),
+          'server_secrets',
+          'live_translation_host_key',
+          'remote_access_host_key',
+        ]
+        for (const forbidden of [
+          ...Object.values(keys),
+          ...secretRows,
+          'enc:v1:',
+        ]) {
+          expect(published, forbidden).not.toContain(forbidden)
+        }
+        const types = new Set(
+          (await publishedChanges(readUrl)).flat().map((c) => c.type),
+        )
+        for (const row of secretRows) expect(types.has(row)).toBe(false)
+      } finally {
+        for (const [key, value] of originals) {
+          await (value === null
+            ? request.delete(`/api/settings/app_settings/${key}`)
+            : request.post('/api/settings/app_settings', {
+                data: { key, value },
+              }))
+        }
       }
-      const types = new Set(
-        (await publishedChanges(readUrl)).flat().map((c) => c.type),
-      )
-      for (const row of secretRows) expect(types.has(row)).toBe(false)
     })
 
     test('a deleted song is published as a delete', async ({ request }) => {
