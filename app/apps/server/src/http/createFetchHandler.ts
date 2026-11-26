@@ -8,6 +8,7 @@ import {
   appOnlyAuthMiddleware,
   buildUserAuthCookie,
   combinedAuthMiddleware,
+  holdsPermission,
   isLocalhost,
   reissueSessionCookie,
   requireAnyPermission,
@@ -15,6 +16,7 @@ import {
   SESSION_COOKIE_MAX_AGE_SECONDS,
 } from '../middleware'
 import { isTrustedOrigin, refuseUntrustedRequest } from '../middleware/origins'
+import { checkRoutePermission } from '../middleware/route-permissions'
 import { getOpenApiSpec, getScalarDocs } from '../openapi'
 import {
   handleAnalyticsConsentRead,
@@ -26,6 +28,7 @@ import { handleUserLinkRoute } from '../routes/auth-user-link/handleUserLinkRout
 import { handleBackgroundMediaRoutes } from '../routes/background-media'
 import { handleBibleTopicRoutes } from '../routes/bible-topics'
 import { handleCloudBackupRoutes } from '../routes/cloud-backup'
+import { CLOUD_BACKUP_PERMISSIONS } from '../routes/cloud-backup-permissions'
 import { handleCloudSyncRoutes } from '../routes/cloud-sync'
 import { handleFeatureRequestRoutes } from '../routes/feature-requests'
 import { handleLiveTranslationRoutes } from '../routes/live-translation'
@@ -67,6 +70,7 @@ import {
   updateUser,
   updateUserPermissions,
   upsertSetting,
+  withoutSettingSecrets,
 } from '../service'
 import { aiBibleSearch } from '../service/ai-bible-search'
 import { aiSearchSongs } from '../service/ai-search'
@@ -857,10 +861,14 @@ export function createFetchHandler(): (
       }
 
       const setting = getPublicSetting(table, key)
+      const shown =
+        setting && !holdsPermission(_context, 'settings.edit')
+          ? withoutSettingSecrets(setting)
+          : setting
 
       return handleCors(
         req,
-        new Response(JSON.stringify({ data: setting ?? null }), {
+        new Response(JSON.stringify({ data: shown ?? null }), {
           headers: { 'Content-Type': 'application/json' },
         }),
       )
@@ -873,7 +881,10 @@ export function createFetchHandler(): (
       if (permError) return permError
 
       const table = getAllSettingsMatch[1] as SettingsTable
-      const settings = getAllSettings(table)
+      const all = getAllSettings(table)
+      const settings = holdsPermission(_context, 'settings.edit')
+        ? all
+        : all.map(withoutSettingSecrets)
 
       return handleCors(
         req,
@@ -1059,6 +1070,18 @@ export function createFetchHandler(): (
       return null
     }
 
+    /** A super admin or the system token (null), else 403. */
+    function checkAdmin(): Response | null {
+      if (_context?.authType === 'app') return null
+      return handleCors(
+        req,
+        new Response(JSON.stringify({ error: 'Admin access required' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+    }
+
     // GET /api/roles - List all roles
     if (req.method === 'GET' && url.pathname === '/api/roles') {
       const authError = await requireAppAuth()
@@ -1101,6 +1124,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = await requireAppAuth()
+      if (denied) return denied
 
       const tokenInfo = getSystemToken()
       return handleCors(
@@ -1125,6 +1150,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = await requireAppAuth()
+      if (denied) return denied
 
       const newToken = await regenerateSystemToken()
       return handleCors(
@@ -1150,6 +1177,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = checkPermission('settings.view')
+      if (denied) return denied
 
       const info = await getDatabaseInfo()
       return handleCors(
@@ -1171,6 +1200,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = await requireAppAuth()
+      if (denied) return denied
 
       const body = (await req.json()) as { destinationPath: string }
       if (!body.destinationPath) {
@@ -1213,6 +1244,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = await requireAppAuth()
+      if (denied) return denied
 
       const body = (await req.json()) as {
         sourcePath: string
@@ -1265,6 +1298,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = await requireAppAuth()
+      if (denied) return denied
 
       // Parse optional options from request body
       let options: { includeBibles?: boolean; includeSongs?: boolean } = {}
@@ -1313,6 +1348,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = checkPermission('settings.edit')
+      if (denied) return denied
 
       // Parse optional options from request body
       let options: {
@@ -1410,17 +1447,38 @@ export function createFetchHandler(): (
             ),
           )
 
-    // Church Hub Cloud backup (free, Google sign-in), same localhost guard
+    /**
+     * A route of this computer's own data (backups, sync): only from this
+     * machine, and only for whoever holds `need` ('admin': a super admin
+     * or the system token, for what can hand over or replace the whole
+     * database).
+     */
+    const localGuard = async (
+      need: Permission | 'admin',
+    ): Promise<Response | null> =>
+      backupLocalhostGuard() ??
+      (need === 'admin' ? await requireAppAuth() : checkPermission(need))
+
+    // Church Hub Cloud backup (free, Google sign-in): this machine, and
+    // each route's permission (routes/cloud-backup-permissions.ts)
     if (url.pathname.startsWith('/api/backup/cloud/')) {
-      const guard = backupLocalhostGuard()
-      if (guard) return guard
+      const refused =
+        backupLocalhostGuard() ??
+        checkRoutePermission(
+          req,
+          url.pathname,
+          CLOUD_BACKUP_PERMISSIONS,
+          checkPermission,
+          checkAdmin,
+        )
+      if (refused) return refused
       const cloudBackupResponse = await handleCloudBackupRoutes(req, url)
       if (cloudBackupResponse) return handleCors(req, cloudBackupResponse)
     }
 
     // GET /api/backup/status - Drive connection + auto-backup settings
     if (req.method === 'GET' && url.pathname === '/api/backup/status') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const status = await getBackupStatus()
@@ -1434,7 +1492,7 @@ export function createFetchHandler(): (
 
     // GET /api/backup/list - List backups stored in Google Drive
     if (req.method === 'GET' && url.pathname === '/api/backup/list') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const result = await listBackups()
@@ -1466,7 +1524,7 @@ export function createFetchHandler(): (
 
     // POST /api/backup/now - Upload a fresh backup to Google Drive
     if (req.method === 'POST' && url.pathname === '/api/backup/now') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       const result = await uploadBackup()
@@ -1503,7 +1561,7 @@ export function createFetchHandler(): (
 
     // POST /api/backup/restore - Restore a backup from Google Drive
     if (req.method === 'POST' && url.pathname === '/api/backup/restore') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('admin')
       if (guard) return guard
 
       let fileId: string | undefined
@@ -1557,7 +1615,7 @@ export function createFetchHandler(): (
     // POST /api/backup/inspect - Read a backup's contents (songs, schedules,
     // playlists, per-table counts) without restoring it
     if (req.method === 'POST' && url.pathname === '/api/backup/inspect') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       let fileId: string | undefined
@@ -1606,7 +1664,7 @@ export function createFetchHandler(): (
 
     // POST /api/backup/delete - Delete a single backup from Google Drive
     if (req.method === 'POST' && url.pathname === '/api/backup/delete') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       let fileId: string | undefined
@@ -1657,7 +1715,7 @@ export function createFetchHandler(): (
     // GET /api/backup/local/list - Backups present in the configured folder,
     // or in `?dir=` when the operator is browsing another one to restore from
     if (req.method === 'GET' && url.pathname === '/api/backup/local/list') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const dir = url.searchParams.get('dir') || undefined
@@ -1675,7 +1733,7 @@ export function createFetchHandler(): (
 
     // POST /api/backup/local/now - Write a fresh backup to the local folder
     if (req.method === 'POST' && url.pathname === '/api/backup/local/now') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       const result = await runLocalBackup()
@@ -1695,7 +1753,7 @@ export function createFetchHandler(): (
 
     // POST /api/backup/local/delete - Delete one local backup by file name
     if (req.method === 'POST' && url.pathname === '/api/backup/local/delete') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       let fileName = ''
@@ -1733,7 +1791,7 @@ export function createFetchHandler(): (
 
     // POST /api/backup/local/restore - Replace the database with a local copy
     if (req.method === 'POST' && url.pathname === '/api/backup/local/restore') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('admin')
       if (guard) return guard
 
       let input: RestoreLocalBackupInput = {}
@@ -1765,7 +1823,7 @@ export function createFetchHandler(): (
 
     // GET /api/backup/config - Read auto-backup settings
     if (req.method === 'GET' && url.pathname === '/api/backup/config') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const config = await getBackupConfig()
@@ -1779,7 +1837,7 @@ export function createFetchHandler(): (
 
     // PUT /api/backup/config - Update auto-backup settings
     if (req.method === 'PUT' && url.pathname === '/api/backup/config') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       let patch: {
@@ -1822,7 +1880,7 @@ export function createFetchHandler(): (
     // the ChurchHub OAuth worker's /auth/drive URL (the worker holds the
     // Google client credentials and redirects back here with the tokens).
     if (req.method === 'GET' && url.pathname === '/api/backup/google/connect') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('admin')
       if (guard) return guard
 
       const result = createDriveAuthUrl()
@@ -1882,7 +1940,7 @@ export function createFetchHandler(): (
       req.method === 'POST' &&
       url.pathname === '/api/backup/google/disconnect'
     ) {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       await clearDriveAuth()
@@ -1900,7 +1958,7 @@ export function createFetchHandler(): (
 
     // GET /api/sync/status - Sync state for the settings UI and indicator
     if (req.method === 'GET' && url.pathname === '/api/sync/status') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const status = await getSyncStatus()
@@ -1917,7 +1975,7 @@ export function createFetchHandler(): (
 
     // GET /api/sync/config - Read sync settings
     if (req.method === 'GET' && url.pathname === '/api/sync/config') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const config = await getSyncConfig()
@@ -1931,7 +1989,7 @@ export function createFetchHandler(): (
 
     // PUT /api/sync/config - Update sync settings
     if (req.method === 'PUT' && url.pathname === '/api/sync/config') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       const patch: { syncEnabled?: boolean; pollIntervalMinutes?: number } = {}
@@ -1966,7 +2024,7 @@ export function createFetchHandler(): (
 
     // POST /api/sync/now - Run a sync cycle immediately
     if (req.method === 'POST' && url.pathname === '/api/sync/now') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.edit')
       if (guard) return guard
 
       const result = await runSyncCycle()
@@ -1994,7 +2052,7 @@ export function createFetchHandler(): (
 
     // GET /api/sync/pending - Local changes waiting to upload to Drive
     if (req.method === 'GET' && url.pathname === '/api/sync/pending') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const pending = listPendingChanges()
@@ -2011,7 +2069,7 @@ export function createFetchHandler(): (
 
     // GET /api/sync/updates - Changes applied from other devices
     if (req.method === 'GET' && url.pathname === '/api/sync/updates') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       const unseenOnly = url.searchParams.get('unseenOnly') === 'true'
@@ -2029,7 +2087,7 @@ export function createFetchHandler(): (
 
     // POST /api/sync/updates/seen - Mark update entries as reviewed
     if (req.method === 'POST' && url.pathname === '/api/sync/updates/seen') {
-      const guard = backupLocalhostGuard()
+      const guard = await localGuard('settings.view')
       if (guard) return guard
 
       let ids: number[] | undefined
@@ -2466,6 +2524,8 @@ export function createFetchHandler(): (
           ),
         )
       }
+      const denied = checkPermission('logs.view')
+      if (denied) return denied
       const result = openLogsFolder()
       return handleCors(
         req,
@@ -7601,6 +7661,8 @@ export function createFetchHandler(): (
     // same id privately with the request and finds the logs as a
     // `$feedback_report` event keyed by it.
     if (req.method === 'POST' && url.pathname === '/api/feedback/attach-logs') {
+      const denied = checkPermission('settings.view')
+      if (denied) return denied
       try {
         const body = (await req.json()) as {
           ticketId?: string
@@ -7669,11 +7731,18 @@ export function createFetchHandler(): (
       req,
       url,
       handleCors,
+      checkPermission,
+      _context,
     )
     if (livestreamResponse) return livestreamResponse
 
     // MIDI routes
-    const midiResponse = await handleMIDIRoutes(req, url, handleCors)
+    const midiResponse = await handleMIDIRoutes(
+      req,
+      url,
+      handleCors,
+      checkPermission,
+    )
     if (midiResponse) return midiResponse
 
     // Screen share routes (native capture frames, MJPEG stream)
@@ -7700,13 +7769,19 @@ export function createFetchHandler(): (
       const translationResponse = await handleLiveTranslationRoutes(
         req,
         url,
-        _context!,
+        checkPermission,
+        _context,
       )
       if (translationResponse) return handleCors(req, translationResponse)
     }
 
     // Music routes (folders, files, playlists)
-    const musicResponse = await handleMusicRoutes(req, url, handleCors)
+    const musicResponse = await handleMusicRoutes(
+      req,
+      url,
+      handleCors,
+      checkPermission,
+    )
     if (musicResponse) return musicResponse
 
     // Per-song edit history (list, entry detail, restore)

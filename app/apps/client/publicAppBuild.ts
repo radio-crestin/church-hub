@@ -33,9 +33,7 @@ export function publicAppPlugins(): PluginOption[] {
       // index.html already links public/site.webmanifest.
       manifest: false,
       workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,png,svg,ico,woff2,webmanifest,wasm}',
-        ],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2,webmanifest,wasm}'],
         // The app's largest chunks and the browser server are a few MB.
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',

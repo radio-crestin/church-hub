@@ -91,6 +91,7 @@ export function LiveTranslationPage() {
     state,
     settings,
     apiKey,
+    hasApiKey,
     audioDevices,
     streamUrl,
     canStart,
@@ -310,7 +311,7 @@ export function LiveTranslationPage() {
                       )}
                       className="w-full px-3 py-2 text-sm bg-field text-fg border border-line rounded-[10px] focus:border-focus outline-none placeholder:text-fg-hint"
                     />
-                    {!apiKey && (
+                    {!hasApiKey && (
                       <div className="mt-2.5 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg">
                         <p className="text-xs font-medium text-amber-800 dark:text-amber-300 mb-1.5">
                           {t('settings.howToGetKey')}
@@ -326,7 +327,7 @@ export function LiveTranslationPage() {
                         </a>
                       </div>
                     )}
-                    {apiKey && (
+                    {hasApiKey && (
                       <p className="mt-1.5 text-xs text-ok">
                         {t('settings.apiKeyConfigured')}
                       </p>

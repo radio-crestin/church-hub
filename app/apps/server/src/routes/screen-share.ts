@@ -1,3 +1,4 @@
+import type { CheckPermission } from '../middleware/route-permissions'
 import {
   clearTemporaryContent,
   getPresentationState,
@@ -10,14 +11,12 @@ import {
   openMjpegStream,
   startScreenShareSession,
 } from '../service/screen-share'
-import type { Permission } from '../service/users/types'
 import { createLogger } from '../utils/logger'
 import { broadcastPresentationState } from '../websocket'
 
 const logger = createLogger('screen-share')
 
 type HandleCors = (req: Request, res: Response) => Response
-type CheckPermission = (permission: Permission) => Response | null
 
 /** A 4K frame as JPEG is well under this; more is not a frame. */
 const MAX_FRAME_BYTES = 8 * 1024 * 1024
