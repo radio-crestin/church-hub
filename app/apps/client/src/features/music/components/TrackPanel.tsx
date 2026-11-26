@@ -1,10 +1,11 @@
 import { Loader2, Music, SearchX } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { EmptyState } from '~/ui/page'
 import { MusicSection } from './MusicSection'
+import { PlaylistPickerModal } from './PlaylistPickerModal'
 import { RecentSearches } from './RecentSearches'
 import { Scrollable } from './Scrollable'
 import { SearchInput } from './SearchInput'
@@ -54,6 +55,7 @@ export function TrackPanel({
   const { tracks, isLoading } = useLibraryTracks(view, query)
   const addToPlaylist = useAddToPlaylist()
   const removeFromPlaylist = useRemoveFromPlaylist()
+  const [pickingFor, setPickingFor] = useState<LibraryTrack | null>(null)
 
   // A search the operator stopped typing at is worth offering again.
   useEffect(() => {
@@ -82,12 +84,9 @@ export function TrackPanel({
       <TrackList
         tracks={tracks}
         playingFileId={playingFileId}
-        playlists={playlists}
         onPlay={onPlay}
         onAddToQueue={(track) => onAddToQueue([track])}
-        onAddToPlaylist={(track, id) =>
-          addToPlaylist.mutate({ playlistId: id, fileId: track.id })
-        }
+        onPickPlaylist={setPickingFor}
         onCreatePlaylistWith={onCreatePlaylistWith}
         onRemoveFromPlaylist={
           playlistId === null
@@ -138,6 +137,14 @@ export function TrackPanel({
       >
         <Scrollable enabled={scrollable}>{results}</Scrollable>
       </MusicSection>
+      <PlaylistPickerModal
+        track={pickingFor}
+        playlists={playlists}
+        onPick={(track, playlistId) =>
+          addToPlaylist.mutate({ playlistId, fileId: track.id })
+        }
+        onClose={() => setPickingFor(null)}
+      />
     </div>
   )
 }

@@ -40,6 +40,7 @@ import type {
   TranslationEngine,
   TranslationTarget,
 } from '../service/live-translation/types'
+import { isSecretMask, maskSettingValue } from '../service/secret-store'
 import { getSetting, upsertSetting } from '../service/settings'
 import { log } from '../utils/fileLogger'
 import { toErrorMessage } from '../utils/toErrorMessage'
@@ -206,8 +207,14 @@ function loadPersistedSettings(): PersistedSettings {
   }
 }
 
+/** The saved settings as the client sees them: API keys masked. */
+const publicSettings = (): PersistedSettings =>
+  JSON.parse(
+    maskSettingValue(SETTINGS_KEY, JSON.stringify(loadPersistedSettings())),
+  )
+
 function handleGetSettings(): Response {
-  return Response.json(loadPersistedSettings())
+  return Response.json(publicSettings())
 }
 
 function handleSaveSettings(req: Request): Response {
@@ -219,7 +226,7 @@ function handleSaveSettings(req: Request): Response {
         key: SETTINGS_KEY,
         value: JSON.stringify(migrated),
       })
-      return Response.json({ success: true, settings: migrated })
+      return Response.json({ success: true, settings: publicSettings() })
     } catch (error) {
       logger.error('Failed to save settings', { error: String(error) })
       return Response.json({ error: toErrorMessage(error) }, { status: 500 })
@@ -255,8 +262,10 @@ function handleStart(req: Request): Response {
         )
       }
 
-      const geminiApiKey = body.geminiApiKey || saved.geminiApiKey
-      const openaiApiKey = body.openaiApiKey || saved.openaiApiKey
+      // A masked key from the form means the saved one.
+      const sent = (key?: string) => (isSecretMask(key) ? undefined : key)
+      const geminiApiKey = sent(body.geminiApiKey) || saved.geminiApiKey
+      const openaiApiKey = sent(body.openaiApiKey) || saved.openaiApiKey
 
       const apiKey = engine === 'gemini' ? geminiApiKey : openaiApiKey
       if (!apiKey) {
