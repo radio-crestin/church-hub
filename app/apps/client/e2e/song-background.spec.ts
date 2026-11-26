@@ -229,8 +229,8 @@ async function takePreviewScreen(
       : flagPreviewScreen(request, screen as ScreenSummary, false)
 }
 
-/** Saves the song editor and waits for the song page it returns to. */
-async function saveSongEditor(page: Page, songId: number) {
+/** Saves the song editor and waits until nothing is left unsaved. */
+async function saveSongEditor(page: Page) {
   const saved = page.waitForResponse(
     (res) =>
       new URL(res.url()).pathname === '/api/songs' &&
@@ -238,7 +238,7 @@ async function saveSongEditor(page: Page, songId: number) {
   )
   await page.getByTestId('song-editor-save').click()
   expect((await saved).status()).toBe(200)
-  await expect(page).toHaveURL(new RegExp(`/songs/${songId}$`))
+  await expect(page.getByTestId('song-editor-save')).toBeDisabled()
 }
 
 test.describe('Song background', () => {
@@ -298,7 +298,9 @@ test.describe('Song background', () => {
     page,
     request,
   }) => {
+    // The old edit page's address opens the song editor.
     await page.goto(`/songs/${song.id}/edit`)
+    await expect(page).toHaveURL(new RegExp(`/songs/${song.id}\\?edit=slides`))
     const section = page.getByTestId('song-background-section')
     await expect(section).toBeVisible({ timeout: 15000 })
     // No background of its own: the screens' settings apply.
@@ -315,7 +317,7 @@ test.describe('Song background', () => {
     })
     expect(media.kind).toBe('image')
 
-    await saveSongEditor(page, song.id)
+    await saveSongEditor(page)
     const background = await getSongBackground(request, song.id)
     expect(background).toMatchObject({
       type: 'image',
@@ -378,7 +380,7 @@ test.describe('Song background', () => {
     })
 
     // Back to "Default (screen settings)" in the editor, and save.
-    await page.goto(`/songs/${song.id}/edit`)
+    await page.goto(`/songs/${song.id}?edit=slides`)
     await expect(page.getByTestId('song-background-section')).toBeVisible({
       timeout: 15000,
     })
@@ -387,7 +389,7 @@ test.describe('Song background', () => {
     )
     await chooseBackgroundType(page, 'inherit')
     await expect(page.getByTestId('background-media-picker')).toHaveCount(0)
-    await saveSongEditor(page, song.id)
+    await saveSongEditor(page)
     expect(await getSongBackground(request, song.id)).toBeNull()
 
     // The projection falls back to the screen's own background, on the same

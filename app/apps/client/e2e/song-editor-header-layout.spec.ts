@@ -3,9 +3,8 @@ import { expect, type Page, test } from '@playwright/test'
 /**
  * Regression guard for the song editor header row.
  *
- * The header puts the back arrow + the song title on the left and the actions
- * (Adaugă în program / Prezintă acum / delete / Salvează) on the right, fixed
- * at the top of the page. The page also renders the slide rail beside the form
+ * The header puts Done (the back arrow) + the song title on the left and the
+ * status, delete and Salvează on the right, fixed at the top of the page. The page also renders the slide rail beside the form
  * (288px at `lg`, 320px at `xl`), so a header that is narrower than the
  * viewport must still keep its parts apart.
  *
@@ -60,9 +59,10 @@ const VIEWPORTS: Viewport[] = [
 async function assertHeaderStaysUsable(page: Page, expectedTitle: string) {
   const header = page.getByTestId('song-editor-header')
   const heading = page.getByTestId('song-editor-title')
-  const back = page.getByTestId('song-editor-back')
+  const back = page.getByTestId('song-editor-done')
   const save = page.getByTestId('song-editor-save')
-  const actions = page.getByTestId('song-editor-header-actions')
+  // The first thing right of the title: the saved / unsaved status.
+  const actions = page.getByTestId('song-editor-status')
 
   // Nothing may be display:none-d or squashed to a zero-area box. Playwright
   // treats a 0-width element as not visible, which is exactly how the <h1>
@@ -140,7 +140,7 @@ test.describe('Song editor header layout', () => {
           { isCollapsed: collapsed },
         )
 
-        await page.goto(`/songs/${created.id}/edit`)
+        await page.goto(`/songs/${created.id}?edit=slides`)
         await page.waitForLoadState('networkidle')
 
         await assertHeaderStaysUsable(page, created.title)

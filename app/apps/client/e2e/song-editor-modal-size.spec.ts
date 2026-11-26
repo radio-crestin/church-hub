@@ -29,7 +29,8 @@ async function openModal(page: Page, hostId: number, markedTitle: string) {
   await row.getByTestId('bookmark-song-edit').click()
   const modal = page.getByTestId('song-editor-modal')
   await expect(modal).toBeVisible({ timeout: 10000 })
-  await expect(modal.getByTestId('song-editor-modal-save')).toBeEnabled({
+  // Loaded: the editor's details are up (Save waits for a change).
+  await expect(modal.getByTestId('song-editor-details')).toBeVisible({
     timeout: 10000,
   })
   return modal
