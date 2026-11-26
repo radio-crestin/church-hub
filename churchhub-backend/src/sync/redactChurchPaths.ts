@@ -1,8 +1,9 @@
 /**
- * `text` with every church prefix (`churches/<churchId>-<pathSecret>`)
- * replaced by `churches/<redacted>`: the path secret is the read
- * permission, so error messages and logs never carry it.
+ * `text` with every church prefix (`churches/<churchId>-<pathSecret>`, also
+ * percent-encoded as `churches%2F…`, in any case) replaced by
+ * `churches/<redacted>`: the path secret is the read permission, so logs
+ * never carry it. A second net: storage errors already leave keys out.
  */
 export function redactChurchPaths(text: string): string {
-  return text.replace(/churches\/[A-Za-z0-9_-]+/g, 'churches/<redacted>')
+  return text.replace(/churches(?:\/|%2F)[A-Za-z0-9_%-]+/gi, 'churches/<redacted>')
 }
