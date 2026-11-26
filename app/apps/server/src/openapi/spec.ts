@@ -65,7 +65,12 @@ export const openApiSpec = {
       'API for Church Hub application - manage songs, schedules, presentations, and device access.\n\n' +
       'Every API response carries `X-Church-Hub-Database`: a short, stable id of the database that answered. ' +
       'It stays the same across restarts and differs between Church Hub apps (installed app, dev server, review builds). ' +
-      'A client that sees it change is talking to another app, whose ids are not the ones it shows.',
+      'A client that sees it change is talking to another app, whose ids are not the ones it shows.\n\n' +
+      "Cross-origin calls: the server answers with CORS only the app's own origins (the desktop and phone webviews " +
+      '`tauri://localhost` and `http(s)://tauri.localhost`, pages on this machine, the server itself as the request reached it) ' +
+      'and the origins listed in the `trusted_origins` app setting (comma or space separated). Any other `Origin` is refused with 403, ' +
+      'and so is a write without `Origin` that the browser marks cross-site, or a form-encoded or text/plain write without ' +
+      'one of `X-User-Auth`, `Authorization` or `X-Requested-With`. Clients that are not browsers send no `Origin` and are not affected.',
   },
   servers: [
     {

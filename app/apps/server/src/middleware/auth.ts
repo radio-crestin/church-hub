@@ -1,3 +1,4 @@
+import { isAppWebviewOrigin, isLoopbackHostname } from './origins'
 import type { AuthResult } from './types'
 import { validateSystemToken } from '../service/app-sessions'
 import {
@@ -24,12 +25,14 @@ const READ_ONLY_LOCALHOST_PERMISSIONS: Permission[] = ALL_PERMISSIONS.filter(
 
 /**
  * Builds the `user_auth` Set-Cookie header value with attributes that
- * actually persist in every engine we target:
+ * actually persist in every engine we target, as strict as each allows:
  *
- * - Chromium (Windows WebView2, Chrome, Edge, CI) gets `None; Secure`. On
- *   Windows the desktop UI (`tauri.localhost`) is cross-site with this server,
- *   Chromium refuses `SameSite=None` without `Secure`, and it treats plain-http
- *   localhost as trustworthy.
+ * - The Windows desktop webview (WebView2, Chromium, origin
+ *   `http://tauri.localhost`) gets `None; Secure`: its UI is cross-site with
+ *   this server, Chromium refuses `SameSite=None` without `Secure`, and it
+ *   treats plain-http localhost as trustworthy.
+ * - Every other Chromium (Chrome, Edge, CI) loads the app from this server
+ *   itself, same-site, and gets `Lax`, so other sites' pages never carry it.
  * - WebKit (Safari, macOS WKWebView, Linux webkitgtk/Epiphany) gets `Lax`.
  *   Every WebKit REJECTS `Secure` over plain http — no localhost exemption —
  *   and Linux WebKit (libsoup) also rejects `SameSite=None` without `Secure`,
@@ -57,8 +60,10 @@ export function buildUserAuthCookie(
     !ua.includes('Chrome') &&
     !ua.includes('Chromium')
 
+  const fromAppWebview = isAppWebviewOrigin(req.headers.get('origin') ?? '')
+
   const parts = [`user_auth=${token}`, 'HttpOnly']
-  if (isLocal && !isNonChromiumWebKit) {
+  if (isLocal && fromAppWebview && !isNonChromiumWebKit) {
     parts.push('SameSite=None', 'Secure')
   } else {
     parts.push('SameSite=Lax')
@@ -101,9 +106,24 @@ export function parseCookies(cookieHeader: string): Record<string, string> {
  */
 export function isLocalhost(req: Request): boolean {
   const peer = getRequestPeer(req)
-  const local = !!peer && isLoopbackAddress(peer)
+  const local = !!peer && isLoopbackAddress(peer) && addressesThisMachine(req)
   logger.debug(`Peer ${peer ?? 'unknown'} is ${local ? 'local' : 'remote'}`)
   return local
+}
+
+/**
+ * Whether the request was addressed to this machine by a loopback name. A
+ * local browser reaches a website's domain rebound to 127.0.0.1 from a
+ * loopback peer too, but it still sends that domain as the Host.
+ */
+function addressesThisMachine(req: Request): boolean {
+  const host = req.headers.get('host')
+  if (!host) return false
+  try {
+    return isLoopbackHostname(new URL(`http://${host}`).hostname)
+  } catch {
+    return false
+  }
 }
 
 function extractBearerToken(req: Request): string | null {

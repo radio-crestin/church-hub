@@ -108,6 +108,7 @@ libraries/<sourceId>/shards/<hash>.json.gz   about 500 songs each, named by cont
 - **Revoking a device or a user** (by someone with `users.manage`, on the PC or a phone):
   - Their writes are refused from the next request.
   - Because the device still knows the read path, the service **rotates the path secret**: it writes a fresh snapshot under a new `pathSecret`, and gives the new path to the remaining devices on their next write or check-in (`GET /sync/:church/path`, by token). The old prefix is deleted.
+  - **Deactivating or removing a user revokes all their devices at once**; they must be added again to rejoin, even after the user is reactivated. The PC pushes its access right after the change (`PUT access` with `revokeDevicesWithUser: true`); the service then revokes every device of a user who is inactive or gone and moves the path in the same state write, and keeps doing so on every later push (the church remembers the signal), so a PC that missed the moment still can't leave a device reading. A PC older than this never sends the signal and keeps the earlier behaviour (the device stays, only its writes are refused). Against an older service, the PC revokes the user's devices one by one.
 - **Abuse**: the service's rate limiter and size caps per church, as in the feature-request routes.
 - Shared and curated libraries are public to read (`libraries/*`, no secret), because they are meant to be shared. Publishing to them goes through the same service and its permission check.
 

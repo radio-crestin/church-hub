@@ -2,6 +2,7 @@ import { Plus, Search, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useUserDeviceCounts } from '~/features/cloud-devices'
 import { SectionHeader } from '~/ui/page'
 import { UserCard } from './UserCard'
 import { UserForm, type UserFormData } from './UserForm'
@@ -26,6 +27,7 @@ type ModalState =
   | { type: 'edit'; user: UserWithPermissions }
   | { type: 'qr'; user: UserWithPermissions }
   | { type: 'delete'; user: UserWithPermissions }
+  | { type: 'deactivate'; user: UserWithPermissions }
   | { type: 'regenerate'; user: UserWithPermissions }
 
 export function UserList() {
@@ -38,6 +40,7 @@ export function UserList() {
   const updatePermissions = useUpdatePermissions()
   const setUserPassword = useSetUserPassword()
   const regenerateToken = useRegenerateToken()
+  const deviceCounts = useUserDeviceCounts()
 
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [search, setSearch] = useState('')
@@ -114,6 +117,7 @@ export function UserList() {
     try {
       await deleteUser.mutateAsync(modal.user.id)
       setModal({ type: 'none' })
+      deviceCounts.refresh()
       showToast(t('sections.users.toast.deleted'), 'success')
     } catch {
       showToast(t('sections.users.toast.error'), 'error')
@@ -132,16 +136,34 @@ export function UserList() {
     }
   }
 
-  const handleToggleActive = async (user: UserWithPermissions) => {
+  const setActive = async (user: UserWithPermissions, isActive: boolean) => {
     try {
-      await updateUser.mutateAsync({
-        id: user.id,
-        input: { isActive: !user.isActive },
-      })
+      await updateUser.mutateAsync({ id: user.id, input: { isActive } })
+      setModal({ type: 'none' })
+      if (!isActive) deviceCounts.refresh()
       showToast(t('sections.users.toast.updated'), 'success')
     } catch {
       showToast(t('sections.users.toast.error'), 'error')
     }
+  }
+
+  // Deactivating signs out the user's cloud devices: asked first, if any.
+  const handleToggleActive = (user: UserWithPermissions) => {
+    if (user.isActive && deviceCounts.countFor(user.id) > 0) {
+      setModal({ type: 'deactivate', user })
+    } else {
+      setActive(user, !user.isActive)
+    }
+  }
+
+  const devicesNote = (user: UserWithPermissions) => {
+    const count = deviceCounts.countFor(user.id)
+    if (count === 0) return null
+    return (
+      <p className="text-sm text-fg" data-testid="user-devices-signed-out">
+        {t('sections.users.modals.devicesSignedOut', { count })}
+      </p>
+    )
   }
 
   const handleShowQR = (user: UserWithPermissions) => {
@@ -174,7 +196,7 @@ export function UserList() {
           <button
             type="button"
             onClick={() => setModal({ type: 'create' })}
-            className="flex items-center gap-2 h-8 px-3 font-medium bg-primary hover:bg-indigo-700
+            className="flex items-center gap-2 h-8 px-3 font-medium bg-primary hover:bg-primary/90
             text-white rounded-lg transition-colors text-sm"
           >
             <Plus strokeWidth={1.5} size={16} />
@@ -311,7 +333,29 @@ export function UserList() {
           onConfirm={handleDelete}
           onCancel={() => setModal({ type: 'none' })}
           variant="danger"
-        />
+          testId="user-delete-confirm"
+        >
+          {devicesNote(modal.user)}
+        </ConfirmModal>
+      )}
+
+      {/* Deactivate Confirmation (only for a user with cloud devices) */}
+      {modal.type === 'deactivate' && (
+        <ConfirmModal
+          isOpen={true}
+          title={t('sections.users.modals.deactivate.title')}
+          message={t('sections.users.modals.deactivate.message', {
+            name: modal.user.name,
+          })}
+          confirmLabel={t('sections.users.modals.deactivate.confirm')}
+          cancelLabel={t('sections.users.modals.cancel')}
+          onConfirm={() => setActive(modal.user, false)}
+          onCancel={() => setModal({ type: 'none' })}
+          testId="user-deactivate-confirm"
+          isLoading={updateUser.isPending}
+        >
+          {devicesNote(modal.user)}
+        </ConfirmModal>
       )}
 
       {/* Regenerate Token Confirmation */}

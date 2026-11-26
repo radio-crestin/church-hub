@@ -43,6 +43,7 @@ export function UserCard({
 
   return (
     <div
+      data-testid="user-card"
       className={`relative border rounded-xl p-4 transition-colors hover:bg-hover ${
         user.isActive ? 'border-line bg-panel' : 'border-line bg-app'
       }`}
@@ -112,7 +113,11 @@ export function UserCard({
           </p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-1">
+        {/* Raised while its menu is open, so the menu sits above the next
+            cards' click targets (z-10 each) instead of under them. */}
+        <div
+          className={`relative flex items-center gap-1 ${menuOpen ? 'z-30' : 'z-10'}`}
+        >
           {/* QR Code button - always visible */}
           <button
             onClick={() => onShowQR(user)}
@@ -125,6 +130,7 @@ export function UserCard({
           {/* More options menu */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
+            data-testid="user-menu"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
           >
             <MoreVertical strokeWidth={1.5} size={16} />
