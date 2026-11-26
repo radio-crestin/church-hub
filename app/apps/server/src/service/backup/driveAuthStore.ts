@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 
 import { getDatabase } from '../../db'
 import { googleDriveAuth } from '../../db/schema'
+import { openSecret, sealSecret, secretPlaces } from '../secret-store'
 
 /** Token set persisted after a successful Drive authorization. */
 export interface DriveTokens {
@@ -20,11 +21,21 @@ export interface DriveAuthRecord {
   email: string | null
 }
 
-/** Returns the single Drive connection row, or null when not connected. */
+/**
+ * Returns the single Drive connection row with its tokens opened, or null
+ * when not connected (or its tokens can't be opened: sign in again).
+ */
 export async function getDriveAuth(): Promise<DriveAuthRecord | null> {
   const db = getDatabase()
-  const rows = await db.select().from(googleDriveAuth).limit(1)
-  return rows[0] ?? null
+  const [row] = await db.select().from(googleDriveAuth).limit(1)
+  if (!row) return null
+  const accessToken = openSecret(row.accessToken, secretPlaces.driveAccessToken)
+  const refreshToken = openSecret(
+    row.refreshToken,
+    secretPlaces.driveRefreshToken,
+  )
+  if (accessToken === null || refreshToken === null) return null
+  return { ...row, accessToken, refreshToken }
 }
 
 /** Upserts the single Drive connection row after a successful OAuth exchange. */
@@ -33,8 +44,11 @@ export async function storeDriveAuth(tokens: DriveTokens): Promise<void> {
   const existing = await db.select().from(googleDriveAuth).limit(1)
 
   const values = {
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken,
+    accessToken: sealSecret(tokens.accessToken, secretPlaces.driveAccessToken),
+    refreshToken: sealSecret(
+      tokens.refreshToken,
+      secretPlaces.driveRefreshToken,
+    ),
     expiresAt: new Date(tokens.expiresAt),
     email: tokens.email ?? null,
   }
@@ -59,7 +73,11 @@ export async function updateDriveAccessToken(
   const db = getDatabase()
   await db
     .update(googleDriveAuth)
-    .set({ accessToken, expiresAt, updatedAt: new Date() })
+    .set({
+      accessToken: sealSecret(accessToken, secretPlaces.driveAccessToken),
+      expiresAt,
+      updatedAt: new Date(),
+    })
     .where(eq(googleDriveAuth.id, id))
 }
 

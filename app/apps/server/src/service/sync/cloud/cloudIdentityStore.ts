@@ -3,13 +3,37 @@ import { eq } from 'drizzle-orm'
 import { clearSyncVersions } from './syncVersionsStore'
 import { getDatabase } from '../../../db'
 import { cloudSync } from '../../../db/schema'
+import { openSecret, sealSecret, secretPlaces } from '../../secret-store'
 
 export type CloudIdentity = typeof cloudSync.$inferSelect
 
-/** This server's church on the sync service, or null when not connected. */
+/** The identity's secrets as stored: sealed. */
+const sealSecrets = (
+  identity: Partial<Pick<CloudIdentity, 'serverToken' | 'readUrl'>>,
+) => ({
+  ...(identity.serverToken !== undefined && {
+    serverToken: sealSecret(
+      identity.serverToken,
+      secretPlaces.cloudServerToken,
+    ),
+  }),
+  ...(identity.readUrl !== undefined && {
+    readUrl: sealSecret(identity.readUrl, secretPlaces.cloudReadUrl),
+  }),
+})
+
+/**
+ * This server's church on the sync service, its server token and read path
+ * opened, or null when not connected (or they can't be opened: the owner
+ * recovers the church).
+ */
 export async function getCloudIdentity(): Promise<CloudIdentity | null> {
   const [row] = await getDatabase().select().from(cloudSync).limit(1)
-  return row ?? null
+  if (!row) return null
+  const serverToken = openSecret(row.serverToken, secretPlaces.cloudServerToken)
+  const readUrl = openSecret(row.readUrl, secretPlaces.cloudReadUrl)
+  if (serverToken === null || readUrl === null) return null
+  return { ...row, serverToken, readUrl }
 }
 
 /** Saves the church a registration returned (replacing any previous one). */
@@ -27,7 +51,11 @@ export async function saveCloudIdentity(
   const db = getDatabase()
   await db.delete(cloudSync)
   clearSyncVersions()
-  await db.insert(cloudSync).values({ id: 1, ...identity })
+  await db.insert(cloudSync).values({
+    id: 1,
+    ...identity,
+    ...sealSecrets(identity),
+  })
 }
 
 /**
@@ -50,7 +78,7 @@ export async function updateCloudIdentity(
 ): Promise<void> {
   await getDatabase()
     .update(cloudSync)
-    .set({ ...patch, updatedAt: new Date() })
+    .set({ ...patch, ...sealSecrets(patch), updatedAt: new Date() })
     .where(eq(cloudSync.id, 1))
 }
 

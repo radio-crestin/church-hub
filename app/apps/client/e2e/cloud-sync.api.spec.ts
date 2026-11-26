@@ -3,6 +3,7 @@ import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { FakeS3 } from './helpers/fake-s3'
 import { SYNC_BUCKET, SyncService } from './helpers/sync-service'
+import { SECRET_SETTINGS } from '../../server/src/service/secret-store/secretSettingFields'
 
 /**
  * Cloud sync (T-171): churchhub-backend's sync service, self-hosted on Bun
@@ -329,6 +330,76 @@ test.describe
           .flat()
           .some((c) => c.uuid === songUuid && c.data?.title === again),
       )
+    })
+
+    test('no secret is ever part of a sync change', async ({ request }) => {
+      // Secrets stay on this computer (service/secret-store): saved keys,
+      // the rows holding them and anything sealed never reach the service.
+      const keys = {
+        ai: 'church-ai-key-never-synced-0123',
+        gemini: 'church-gemini-key-never-synced-0123',
+      }
+      // The legacy AI row (no feature reads it) and live translation's:
+      // restored afterwards, as later specs on this server expect no key.
+      const saved = [
+        ['ai_search_config', { provider: 'openai', apiKey: keys.ai }],
+        ['live_translation_settings', { geminiApiKey: keys.gemini }],
+      ] as const
+      const originals = new Map<string, string | null>()
+      for (const [key, value] of saved) {
+        const before = await request.get(`/api/settings/app_settings/${key}`)
+        originals.set(key, (await before.json()).data?.value ?? null)
+        const written = await request.post('/api/settings/app_settings', {
+          data: { key, value: JSON.stringify(value) },
+        })
+        expect(written.ok()).toBe(true)
+      }
+      try {
+        const title = `E2E Cloud secrets ${Date.now()}`
+        await request.post('/api/songs', { data: { id: songId, title } })
+        await syncUntil(request, async () =>
+          (await publishedChanges(readUrl))
+            .flat()
+            .some((c) => c.data?.title === title),
+        )
+
+        // Everything the service published or keeps readable in the bucket.
+        const published = [...s3.objects]
+          .filter(([path]) => !path.includes('/sync-state/'))
+          .map(([, bytes]) => {
+            try {
+              return gunzipSync(bytes).toString('utf8')
+            } catch {
+              return bytes.toString('utf8')
+            }
+          })
+          .join('\n')
+        const secretRows = [
+          ...Object.keys(SECRET_SETTINGS),
+          'server_secrets',
+          'live_translation_host_key',
+          'remote_access_host_key',
+        ]
+        for (const forbidden of [
+          ...Object.values(keys),
+          ...secretRows,
+          'enc:v1:',
+        ]) {
+          expect(published, forbidden).not.toContain(forbidden)
+        }
+        const types = new Set(
+          (await publishedChanges(readUrl)).flat().map((c) => c.type),
+        )
+        for (const row of secretRows) expect(types.has(row)).toBe(false)
+      } finally {
+        for (const [key, value] of originals) {
+          await (value === null
+            ? request.delete(`/api/settings/app_settings/${key}`)
+            : request.post('/api/settings/app_settings', {
+                data: { key, value },
+              }))
+        }
+      }
     })
 
     test('a deleted song is published as a delete', async ({ request }) => {
