@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useLocalizedBookNames } from '~/features/bible/hooks'
-import { PreviewScreenPicker } from './PreviewScreenPicker'
 import { ScreenPreview } from './ScreenPreview'
 import { TextStyleContextMenu } from './TextStyleContextMenu'
 import { usePresentationState } from '../hooks'
@@ -33,7 +32,7 @@ const EMPTY_STYLE_RANGES: TextStyleRange[] = []
 // lyrics with it. Positioned against the frame, the height is the frame's
 // final one in every engine. Centred with auto margins, not a transform, so
 // the fixed-position context menu inside stays anchored to the viewport.
-const FRAME_CLASS = 'relative w-full max-h-full min-h-0'
+const FRAME_CLASS = 'relative mx-auto w-full max-h-full min-h-0'
 const BOX_CLASS =
   'absolute inset-0 m-auto h-full max-w-full rounded-lg overflow-hidden bg-black'
 
@@ -182,23 +181,33 @@ export function LivePreview({
   const screenHeight = screen?.height ?? previewScreen?.height
   const aspectRatio =
     screenWidth && screenHeight ? `${screenWidth} / ${screenHeight}` : '16 / 9'
+  // Inside a size container (the control panels), the frame is as wide as the
+  // panel allows AND short enough to leave room for the controls below it
+  // (--preview-reserve), so it never overflows a short panel. Outside one,
+  // cqh falls back to the viewport and the width stays 100%.
+  const ratio =
+    screenWidth && screenHeight ? screenWidth / screenHeight : 16 / 9
+  const frameStyle = {
+    aspectRatio,
+    width: `min(100%, calc((100cqh - var(--preview-reserve, 0px)) * ${ratio}))`,
+  }
 
   // Loading state
   if (!screen) {
     return (
-      <div className={FRAME_CLASS} style={{ aspectRatio }}>
+      <div className={FRAME_CLASS} style={frameStyle}>
         <div
           className={`${BOX_CLASS} flex items-center justify-center`}
           style={{ aspectRatio }}
         >
-          <div className="text-white/60 text-[13px]">Loading...</div>
+          <div className="text-white/60 text-sm">Loading...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={FRAME_CLASS} style={{ aspectRatio }}>
+    <div className={FRAME_CLASS} style={frameStyle}>
       <div className={BOX_CLASS} style={{ aspectRatio }}>
         {/* The picker sits beside the mirrored content, not in it, so text
             selection offsets and content checks see only the screen. */}
@@ -232,7 +241,6 @@ export function LivePreview({
             />
           )}
         </div>
-        <PreviewScreenPicker previewScreenId={screen.id} />
       </div>
     </div>
   )

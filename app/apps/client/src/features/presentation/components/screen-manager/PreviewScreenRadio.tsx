@@ -40,7 +40,7 @@ export function PreviewScreenRadio({
       <div className="min-w-0">
         <label
           htmlFor={id}
-          className="block text-[13px] font-medium text-fg cursor-pointer"
+          className="block text-sm font-medium text-fg cursor-pointer"
         >
           {t('sections.screens.previewScreen.label')}
         </label>

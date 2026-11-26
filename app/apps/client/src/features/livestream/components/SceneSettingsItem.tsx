@@ -49,7 +49,7 @@ export function SceneSettingsItem({ scene }: SceneSettingsItemProps) {
       </button>
 
       <div className="flex-1 min-w-0">
-        <span className="block truncate text-[13px] font-medium text-fg">
+        <span className="block truncate text-sm font-medium text-fg">
           {scene.displayName}
         </span>
         <div className="flex flex-wrap items-center gap-2">

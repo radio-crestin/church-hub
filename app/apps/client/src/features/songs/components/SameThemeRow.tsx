@@ -21,7 +21,7 @@ export function SameThemeRow({ song, onOpen }: SameThemeRowProps) {
         onClick={onOpen}
         className="block px-4 py-2.5 hover:bg-hover"
       >
-        <p className="truncate text-[13px] font-medium text-fg">{song.title}</p>
+        <p className="truncate text-sm font-medium text-fg">{song.title}</p>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
           {song.themes.map((theme) => (
             <span

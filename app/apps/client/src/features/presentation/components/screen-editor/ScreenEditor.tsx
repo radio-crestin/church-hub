@@ -350,7 +350,7 @@ export function ScreenEditor({
                 aria-selected={pane === value}
                 data-testid={`screen-editor-tab-${value}`}
                 onClick={() => setPane(value)}
-                className={`flex-1 h-8 rounded-lg text-[13px] font-medium transition-colors ${
+                className={`flex-1 h-8 rounded-lg text-sm font-medium transition-colors ${
                   pane === value
                     ? 'bg-selected text-fg'
                     : 'text-fg-label hover:bg-hover hover:text-fg'

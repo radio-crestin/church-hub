@@ -28,8 +28,8 @@ import type {
   CustomPageMenuItem,
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
+import { groupSidebarItems } from '../../features/sidebar-config/utils/sidebarGroups'
 import { usePermissions } from '../../provider/permissions-provider'
-import { AppMark } from '../brand/AppMark'
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean
@@ -124,6 +124,13 @@ export function Sidebar({
 
   const handleSidebarItemClick = useSidebarItemClick()
 
+  // The notifications bell lives in the header, at the right of the name.
+  const bell = isScreenRoute ? null : (
+    <NotificationsBell
+      onClick={(e) => handleSidebarItemClick('/notifications', e)}
+    />
+  )
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false)
@@ -175,47 +182,61 @@ export function Sidebar({
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
-        {/* Mobile Close Button */}
-        <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-line">
-          <div className="flex items-center gap-3">
-            <AppMark size={28} />
-            <span className="text-sm font-semibold text-fg">Church Hub</span>
-          </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
-            aria-label={t('sidebar:actions.closeMenu')}
-          >
-            <X size={20} strokeWidth={1.5} />
-          </button>
-        </div>
+        {/* One header for every size: the name, the notifications bell, and
+            on a phone the button that closes the menu. */}
+        <SidebarHeader
+          isCollapsed={isCollapsed}
+          action={
+            <>
+              {bell}
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
+                aria-label={t('sidebar:actions.closeMenu')}
+              >
+                <X size={20} strokeWidth={1.5} />
+              </button>
+            </>
+          }
+        />
 
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <SidebarHeader isCollapsed={isCollapsed} />
-        </div>
-
-        <nav className="flex-1 flex flex-col gap-0.5 p-2 overflow-y-auto scrollbar-thin">
-          {menuItems.map((item) => (
-            <SidebarItem
-              key={item.id}
-              pageId={item.id}
-              icon={item.icon}
-              label={item.label}
-              to={item.to}
-              isCollapsed={isCollapsed}
-              isActive={
-                location.pathname === item.to ||
-                location.pathname.startsWith(`${item.to}/`)
-              }
-              className="md:flex"
-              onClick={(e) => handleSidebarItemClick(item.to, e)}
-              shortcut={routeShortcuts[item.to as keyof typeof routeShortcuts]}
-              nativeWindowSettings={getItemNativeWindowSettings(item.id)}
-              iconName={getItemIconName(item.id)}
-              externalUrl={getItemExternalUrl(item.id)}
-              customIconUrl={item.customIconUrl}
-            />
+        <nav className="flex-1 flex flex-col p-2 overflow-y-auto scrollbar-thin">
+          {groupSidebarItems(menuItems).map((group, index) => (
+            <section
+              key={group.id}
+              aria-label={t(`sidebar:groups.${group.id}`)}
+              className={`flex flex-col gap-0.5 ${index > 0 ? 'mt-2 border-t border-line pt-2' : ''}`}
+            >
+              {!isCollapsed && (
+                <h2 className="px-3 pt-1 pb-1.5 text-[13px] font-medium text-fg md:px-2.5">
+                  {t(`sidebar:groups.${group.id}`)}
+                </h2>
+              )}
+              {group.items.map((item) => (
+                <SidebarItem
+                  key={item.id}
+                  pageId={item.id}
+                  icon={item.icon}
+                  label={item.label}
+                  to={item.to}
+                  isCollapsed={isCollapsed}
+                  isActive={
+                    location.pathname === item.to ||
+                    location.pathname.startsWith(`${item.to}/`)
+                  }
+                  className="md:flex"
+                  onClick={(e) => handleSidebarItemClick(item.to, e)}
+                  shortcut={
+                    routeShortcuts[item.to as keyof typeof routeShortcuts]
+                  }
+                  nativeWindowSettings={getItemNativeWindowSettings(item.id)}
+                  iconName={getItemIconName(item.id)}
+                  externalUrl={getItemExternalUrl(item.id)}
+                  customIconUrl={item.customIconUrl}
+                />
+              ))}
+            </section>
           ))}
 
           {/* Bottom section - fixed at the bottom, above the collapse button */}
@@ -252,55 +273,45 @@ export function Sidebar({
                   setIsMobileMenuOpen(false)
                   setIsFeatureRequestOpen(true)
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2.5 md:h-8 md:py-0 md:px-2.5 rounded-lg transition-colors w-full text-fg-label hover:bg-hover hover:text-fg ${isCollapsed ? 'md:justify-center' : ''}`}
+                className={`flex items-center gap-3 px-3 py-2.5 md:h-9 md:py-0 md:px-2.5 rounded-lg transition-colors w-full text-fg-label hover:bg-hover hover:text-fg ${isCollapsed ? 'md:justify-center' : ''}`}
                 title={
                   isCollapsed ? t('sidebar:navigation.feedback') : undefined
                 }
                 aria-label={t('sidebar:navigation.feedback')}
               >
                 <MessageSquarePlus
-                  size={16}
+                  size={18}
                   strokeWidth={1.5}
                   className="flex-shrink-0"
                 />
-                <span className="text-[13px] font-medium md:hidden">
+                <span className="text-sm font-medium md:hidden">
                   {t('sidebar:navigation.feedback')}
                 </span>
                 {!isCollapsed && (
-                  <span className="text-[13px] font-medium hidden md:inline flex-1 text-left">
+                  <span className="text-sm font-medium hidden md:inline flex-1 text-left">
                     {t('sidebar:navigation.feedback')}
                   </span>
                 )}
               </button>
             )}
 
-            {/* Settings, with the notifications bell (synced songs, app
-                updates) at the right end of its row; stacked when collapsed. */}
-            <div
-              className={`flex items-center justify-end gap-1 ${isCollapsed ? 'md:flex-col md:items-stretch' : ''}`}
-            >
-              {canViewSettings && (
-                <SidebarItem
-                  pageId="settings"
-                  icon={Settings}
-                  label={t('sidebar:navigation.settings')}
-                  to="/settings"
-                  isCollapsed={isCollapsed}
-                  isActive={
-                    location.pathname === '/settings' ||
-                    location.pathname.startsWith('/settings/')
-                  }
-                  className="md:flex flex-1 min-w-0"
-                  onClick={(e) => handleSidebarItemClick('/settings', e)}
-                  nativeWindowSettings={getItemNativeWindowSettings('settings')}
-                />
-              )}
-              {!isScreenRoute && (
-                <NotificationsBell
-                  onClick={(e) => handleSidebarItemClick('/notifications', e)}
-                />
-              )}
-            </div>
+            {/* Settings */}
+            {canViewSettings && (
+              <SidebarItem
+                pageId="settings"
+                icon={Settings}
+                label={t('sidebar:navigation.settings')}
+                to="/settings"
+                isCollapsed={isCollapsed}
+                isActive={
+                  location.pathname === '/settings' ||
+                  location.pathname.startsWith('/settings/')
+                }
+                className="md:flex"
+                onClick={(e) => handleSidebarItemClick('/settings', e)}
+                nativeWindowSettings={getItemNativeWindowSettings('settings')}
+              />
+            )}
 
             {/* Current user — opens the account page (profile, permissions,
                 switch user, log out), replacing the current page content. */}
@@ -313,7 +324,7 @@ export function Sidebar({
           <button
             onClick={toggleCollapsed}
             data-testid="sidebar-collapse-toggle"
-            className={`hidden md:flex w-full h-8 items-center gap-2.5 px-2.5 rounded-lg
+            className={`hidden md:flex w-full h-9 items-center gap-3 px-2.5 rounded-lg
               text-fg-label hover:bg-hover hover:text-fg
               transition-colors ${isCollapsed ? 'justify-center' : ''}`}
             title={
@@ -324,18 +335,18 @@ export function Sidebar({
           >
             {isCollapsed ? (
               <ChevronRight
-                size={16}
+                size={18}
                 strokeWidth={1.5}
                 className="flex-shrink-0"
               />
             ) : (
               <>
                 <ChevronLeft
-                  size={16}
+                  size={18}
                   strokeWidth={1.5}
                   className="flex-shrink-0"
                 />
-                <span className="text-[13px] font-medium">
+                <span className="text-sm font-medium">
                   {t('sidebar:actions.collapse')}
                 </span>
               </>

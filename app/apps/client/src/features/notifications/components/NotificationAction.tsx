@@ -23,7 +23,7 @@ export function NotificationAction({
       onClick={onClick}
       disabled={disabled}
       data-testid={testId}
-      className={`inline-flex items-center gap-1.5 h-8 rounded-lg px-3 text-[13px] font-medium transition-colors disabled:opacity-60 ${
+      className={`inline-flex items-center gap-1.5 h-8 rounded-lg px-3 text-sm font-medium transition-colors disabled:opacity-60 ${
         primary
           ? 'bg-primary text-white hover:bg-indigo-700'
           : 'bg-field text-fg hover:bg-hover'

@@ -40,7 +40,7 @@ export function ScheduleRunButton({
       title={description}
       data-testid="schedule-run-button"
       data-running={isRunning ? 'true' : 'false'}
-      className={`flex items-center justify-center gap-2 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50 ${
+      className={`flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
         compact ? 'h-[26px] min-w-[26px] px-1.5' : 'h-8 px-2 lg:px-3'
       } ${
         isRunning

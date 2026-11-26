@@ -72,7 +72,7 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
 
   return (
     <div className="space-y-2">
-      <label className="text-[13px] font-medium text-fg">
+      <label className="text-sm font-medium text-fg">
         {t('sections.sidebar.fields.icon')}
       </label>
       <div className="grid grid-cols-6 gap-2 p-3 bg-field rounded-lg border border-line">

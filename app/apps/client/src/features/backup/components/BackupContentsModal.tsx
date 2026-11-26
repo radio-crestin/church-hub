@@ -74,12 +74,12 @@ export function BackupContentsModal({
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-[13px] text-fg-hint">
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-fg-hint">
               <Loader2 className="h-5 w-5 animate-spin" />
               {t('sections.backup.inspectModal.loading')}
             </div>
           ) : error || !contents ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-[13px] text-red-600 dark:text-red-400">
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-red-600 dark:text-red-400">
               <AlertTriangle strokeWidth={1.5} className="h-4 w-4" />
               {t('sections.backup.inspectModal.failed')}
             </div>
@@ -102,7 +102,7 @@ export function BackupContentsModal({
               {/* Songs */}
               {contents.songs.length > 0 && (
                 <section>
-                  <h4 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-fg">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-fg">
                     <Music
                       strokeWidth={1.5}
                       className="h-4 w-4 text-fg-label"
@@ -117,7 +117,7 @@ export function BackupContentsModal({
                         key={`${song.title}-${i}`}
                         className="flex items-center justify-between gap-3 px-3 py-1.5"
                       >
-                        <span className="truncate text-[13px] text-fg-body">
+                        <span className="truncate text-sm text-fg-body">
                           {song.title}
                         </span>
                         {song.category && (
@@ -143,7 +143,7 @@ export function BackupContentsModal({
                   just their names. */}
               {contents.schedules.length > 0 && (
                 <section>
-                  <h4 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-fg">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-fg">
                     <CalendarDays
                       strokeWidth={1.5}
                       className="h-4 w-4 text-fg-label"
@@ -160,7 +160,7 @@ export function BackupContentsModal({
                         data-testid="backup-schedule-row"
                       >
                         <div className="flex items-center justify-between gap-3">
-                          <span className="truncate text-[13px] text-fg-body">
+                          <span className="truncate text-sm text-fg-body">
                             {schedule.title}
                           </span>
                           <span className="flex shrink-0 items-center gap-2">
@@ -203,7 +203,7 @@ export function BackupContentsModal({
               {/* Playlists */}
               {contents.playlists.length > 0 && (
                 <section>
-                  <h4 className="mb-2 flex items-center gap-2 text-[13px] font-medium text-fg">
+                  <h4 className="mb-2 flex items-center gap-2 text-sm font-medium text-fg">
                     <ListMusic
                       strokeWidth={1.5}
                       className="h-4 w-4 text-fg-label"
@@ -218,7 +218,7 @@ export function BackupContentsModal({
                         key={`${playlist.name}-${i}`}
                         className="flex items-center justify-between gap-3 px-3 py-1.5"
                       >
-                        <span className="truncate text-[13px] text-fg-body">
+                        <span className="truncate text-sm text-fg-body">
                           {playlist.name}
                         </span>
                         <span className="shrink-0 text-xs text-fg-hint">

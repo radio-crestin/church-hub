@@ -71,7 +71,7 @@ function SettingsGroup({
 }) {
   return (
     <section data-testid={testId} className="min-w-0">
-      <h4 className="text-[13px] font-medium text-fg-label">{title}</h4>
+      <h4 className="text-sm font-medium text-fg-label">{title}</h4>
       <div className="divide-y divide-line/60">{children}</div>
     </section>
   )
@@ -243,7 +243,7 @@ export function ScreenCard({
       <section data-testid="screen-theme-slides" className="mt-4">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div className="min-w-0">
-            <h4 className="text-[13px] font-medium text-fg-label">
+            <h4 className="text-sm font-medium text-fg-label">
               {t('sections.screens.groups.slides')}
               {template && (
                 <span
@@ -325,7 +325,7 @@ export function ScreenCard({
           </SettingsGroup>
 
           <details data-testid="screen-group-advanced" className="group">
-            <summary className="flex items-center gap-1 cursor-pointer list-none text-[13px] font-medium text-fg-body [&::-webkit-details-marker]:hidden">
+            <summary className="flex items-center gap-1 cursor-pointer list-none text-sm font-medium text-fg-body [&::-webkit-details-marker]:hidden">
               <ChevronRight
                 size={16}
                 strokeWidth={1.5}

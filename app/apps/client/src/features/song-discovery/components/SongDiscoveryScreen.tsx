@@ -187,7 +187,7 @@ export function SongDiscoveryScreen({
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t('search.placeholder')}
               aria-label={t('search.placeholder')}
-              className="w-full h-9 rounded-[10px] border-0 bg-field pr-9 pl-9 text-[13px] text-fg placeholder:text-fg-hint focus:ring-1 focus:ring-inset focus:ring-focus focus:outline-none"
+              className="w-full h-9 rounded-[10px] border-0 bg-field pr-9 pl-9 text-sm text-fg placeholder:text-fg-hint focus:ring-1 focus:ring-inset focus:ring-focus focus:outline-none"
             />
             {query && (
               <ClearSearchButton

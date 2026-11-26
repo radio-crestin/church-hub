@@ -185,7 +185,7 @@ function SortableBookmarkItem({
         className="flex-1 min-w-0 text-left py-1.5 pr-1"
       >
         <div
-          className={`text-[13px] font-medium truncate ${
+          className={`text-sm font-medium truncate ${
             bookmark.isSung ? 'text-fg-hint' : 'text-fg'
           }`}
         >
@@ -336,7 +336,7 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
               if (e.key === 'Enter') handleSave()
               if (e.key === 'Escape') setIsEditing(false)
             }}
-            className="flex-1 min-w-0 h-7 text-[13px] bg-field border-0 rounded-lg px-2 text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+            className="flex-1 min-w-0 h-7 text-sm bg-field border-0 rounded-lg px-2 text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
           <button
             type="button"
@@ -361,7 +361,7 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
               strokeWidth={1.75}
               className="flex-shrink-0 text-fg-hint"
             />
-            <span className="text-[13px] text-fg-label italic truncate">
+            <span className="text-sm text-fg-label italic truncate">
               {note.content}
             </span>
           </div>
@@ -854,7 +854,7 @@ export function SongBookmarksPanel({
               />
               {/* One truncating line, so a narrow column cuts the count
                   before it cuts into the title. */}
-              <span className="min-w-0 truncate text-[13px] font-medium text-fg">
+              <span className="min-w-0 truncate text-sm font-medium text-fg">
                 {t('bookmarks.title')}
                 {totalCount > 0 && (
                   <span className="ml-2 text-xs font-normal text-fg-hint tabular-nums">
@@ -889,7 +889,7 @@ export function SongBookmarksPanel({
                     }
                   }}
                   placeholder={t('bookmarks.notePlaceholder')}
-                  className="flex-1 min-w-0 h-8 text-[13px] bg-field border-0 rounded-lg px-2.5 text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="flex-1 min-w-0 h-8 text-sm bg-field border-0 rounded-lg px-2.5 text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 <PanelHeaderButton
                   onClick={handleAddNote}
@@ -972,7 +972,7 @@ export function SongBookmarksPanel({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('bookmarks.searchPlaceholder')}
-                  className="w-full h-8 pl-8 pr-7 text-[13px] bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
@@ -1002,9 +1002,7 @@ export function SongBookmarksPanel({
                   className="w-6 h-6 mx-auto mb-2 text-fg-hint"
                   strokeWidth={1.5}
                 />
-                <p className="text-[13px] text-fg-label">
-                  {t('bookmarks.empty')}
-                </p>
+                <p className="text-sm text-fg-label">{t('bookmarks.empty')}</p>
                 <p className="text-xs text-fg-hint mt-1">
                   {t('bookmarks.emptyDescription')}
                 </p>

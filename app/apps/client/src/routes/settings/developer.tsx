@@ -40,7 +40,7 @@ function DeveloperSettings() {
                 <div className="flex items-center gap-3">
                   <Bug strokeWidth={1.5} className="h-4 w-4 text-fg-label" />
                   <div>
-                    <h4 className="text-[13px] font-medium text-fg">
+                    <h4 className="text-sm font-medium text-fg">
                       {t('sections.debug.title')}
                     </h4>
                     <p className="mt-0.5 text-xs text-fg-hint">
@@ -74,7 +74,7 @@ function DeveloperSettings() {
                     className="h-4 w-4 text-fg-label"
                   />
                   <div>
-                    <h4 className="text-[13px] font-medium text-fg">
+                    <h4 className="text-sm font-medium text-fg">
                       {t('sections.apiDocs.title')}
                     </h4>
                     <p className="mt-0.5 text-xs text-fg-hint">
@@ -86,7 +86,7 @@ function DeveloperSettings() {
                   href={`http://localhost:${getServerPort()}/api/docs`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-8 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-medium text-white hover:bg-indigo-700"
+                  className="inline-flex h-8 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-indigo-700"
                 >
                   {t('sections.apiDocs.link')}
                 </a>

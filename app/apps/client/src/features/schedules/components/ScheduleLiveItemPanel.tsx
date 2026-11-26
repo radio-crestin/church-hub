@@ -84,7 +84,7 @@ export function ScheduleLiveItemPanel({
       <div className="flex shrink-0 items-center gap-2 border-b border-line pb-2">
         {icon}
         <span
-          className="min-w-0 flex-1 truncate text-[13px] font-medium text-fg"
+          className="min-w-0 flex-1 truncate text-sm font-medium text-fg"
           data-testid="schedule-live-item-title"
         >
           {title}

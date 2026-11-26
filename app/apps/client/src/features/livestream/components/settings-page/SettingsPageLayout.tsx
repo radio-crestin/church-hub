@@ -49,7 +49,7 @@ export function SettingsPageLayout({
         <div className="shrink-0 px-4 pb-3 pt-4">
           <Link
             to={back?.to ?? '/livestream'}
-            className="mb-2 inline-flex w-fit items-center gap-1 text-[13px] font-medium text-fg-label hover:text-fg"
+            className="mb-2 inline-flex w-fit items-center gap-1 text-sm font-medium text-fg-label hover:text-fg"
           >
             <ArrowLeft size={14} strokeWidth={1.75} aria-hidden />
             {back?.label ?? t('settingsPages.back')}
@@ -71,7 +71,7 @@ export function SettingsPageLayout({
           <div className="flex w-full flex-col gap-4 p-4 md:p-6">
             <Link
               to={back?.to ?? '/livestream'}
-              className="inline-flex w-fit items-center gap-1 text-[13px] font-medium text-fg-label hover:text-fg md:hidden"
+              className="inline-flex w-fit items-center gap-1 text-sm font-medium text-fg-label hover:text-fg md:hidden"
             >
               <ArrowLeft size={14} strokeWidth={1.75} aria-hidden />
               {back?.label ?? t('settingsPages.back')}

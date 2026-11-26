@@ -262,7 +262,7 @@ export function SongSlidesPanel({
               type="button"
               data-testid="toggle-slides-edit-mode"
               onClick={onToggleEditMode}
-              className={`flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg transition-colors ${
+              className={`flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg transition-colors ${
                 isEditMode
                   ? 'bg-selected text-fg'
                   : 'bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover'
@@ -293,7 +293,7 @@ export function SongSlidesPanel({
               <button
                 type="button"
                 onClick={onToggleEditMode}
-                className="flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg transition-colors bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover"
+                className="flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg transition-colors bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover"
               >
                 <X size={14} strokeWidth={1.75} />
                 <span>{t('preview.discardChanges')}</span>
@@ -302,7 +302,7 @@ export function SongSlidesPanel({
                 type="button"
                 data-testid="save-slides-edit-mode"
                 onClick={handleSaveClick}
-                className={`flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg transition-colors bg-primary text-white ${
+                className={`flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg transition-colors bg-primary text-white ${
                   isSaving ? 'opacity-70 cursor-wait' : 'hover:bg-indigo-700'
                 }`}
               >
@@ -344,7 +344,7 @@ export function SongSlidesPanel({
                   paddingTop: `${TEXTAREA_PADDING_TOP_PX}px`,
                   paddingBottom: `${TEXTAREA_PADDING_TOP_PX}px`,
                 }}
-                className="absolute inset-0 w-full h-full pl-3 pr-16 bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus font-mono text-[13px] resize-none whitespace-pre"
+                className="absolute inset-0 w-full h-full pl-3 pr-16 bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus font-mono text-sm resize-none whitespace-pre"
               />
               {/* Gutter overlay with per-block Play buttons — offset to clear the textarea scrollbar */}
               <div

@@ -1,11 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eraser,
-  EyeOff,
-  Loader2,
-  MonitorUp,
-} from 'lucide-react'
+import { Eraser, EyeOff, Loader2, MonitorUp } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -15,6 +8,7 @@ import {
   usePresentationState,
   useWebSocket,
 } from '~/features/presentation'
+import { PreviewNavControls } from '~/features/presentation/components/PreviewNavControls'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
@@ -152,7 +146,7 @@ export function SongControlPanel({
               type="button"
               onClick={onHide}
               disabled={isHiding}
-              className="flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg disabled:opacity-50 transition-colors shrink-0"
+              className="flex items-center gap-1.5 h-8 px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg disabled:opacity-50 transition-colors shrink-0"
               title={`${t('bible:controls.hide')} (Esc)`}
             >
               {isHiding ? (
@@ -174,7 +168,7 @@ export function SongControlPanel({
                 data-testid="song-project-staged"
                 onClick={onProject}
                 disabled={isProjecting}
-                className="flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg disabled:opacity-50 transition-colors shrink-0"
+                className="flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg disabled:opacity-50 transition-colors shrink-0"
                 title={t('preview.projectHint')}
               >
                 {isProjecting ? (
@@ -193,7 +187,7 @@ export function SongControlPanel({
             <button
               type="button"
               disabled
-              className="flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg opacity-50 cursor-not-allowed shrink-0"
+              className="flex items-center gap-1.5 h-8 px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg opacity-50 cursor-not-allowed shrink-0"
             >
               <MonitorUp size={16} strokeWidth={1.5} />
               <span>{t('bible:controls.show')}</span>
@@ -202,11 +196,9 @@ export function SongControlPanel({
         </div>
       </div>
 
-      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
-        {/* Preview sits at the top as a fixed 16:9 box (same as the Bible
-            control panel) — it spans the column width and derives its height
-            from the aspect ratio, instead of stretching to the full column
-            height. */}
+      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col lg:justify-center lg:[container-type:size] [--preview-reserve:3.75rem]">
+        {/* The preview fits the panel both ways (LivePreview reads the size
+            container), and with the controls it sits centred in the panel. */}
         <div className="w-full flex-shrink-0">
           <LivePreview
             previewContent={previewContent}
@@ -214,35 +206,14 @@ export function SongControlPanel({
           />
         </div>
 
-        <div className="flex items-center justify-center gap-2 pt-3 flex-shrink-0">
-          <button
-            type="button"
-            onClick={onPrevSlide}
-            disabled={!canNavigatePrev || isNavigating || isHiding}
-            className="flex items-center gap-2 h-9 px-3.5 bg-field text-fg rounded-lg hover:bg-hover disabled:opacity-50 transition-colors"
-            title={t('bible:controls.prev')}
-            data-testid="song-control-prev"
-          >
-            <ChevronLeft size={16} strokeWidth={1.5} />
-            <span className="text-[13px] font-medium">
-              {t('bible:controls.prev')}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onNextSlide}
-            disabled={!canNavigateNext || isNavigating || isHiding}
-            className="flex items-center gap-2 h-9 px-3.5 bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            title={t('bible:controls.next')}
-            data-testid="song-control-next"
-          >
-            <span className="text-[13px] font-medium">
-              {t('bible:controls.next')}
-            </span>
-            <ChevronRight size={16} strokeWidth={1.5} />
-          </button>
-        </div>
+        <PreviewNavControls
+          onPrev={onPrevSlide}
+          onNext={onNextSlide}
+          canPrev={canNavigatePrev && !isHiding}
+          canNext={canNavigateNext && !isHiding}
+          isBusy={isNavigating}
+          testIdPrefix="song-control"
+        />
       </div>
     </div>
   )

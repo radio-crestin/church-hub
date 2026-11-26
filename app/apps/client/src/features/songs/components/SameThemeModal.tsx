@@ -63,9 +63,7 @@ export function SameThemeModal({
               />
               {t('sameTheme.title')}
             </h2>
-            <p className="mt-0.5 truncate text-[13px] text-fg-hint">
-              {songTitle}
-            </p>
+            <p className="mt-0.5 truncate text-sm text-fg-hint">{songTitle}</p>
           </div>
           <button
             type="button"
@@ -86,7 +84,7 @@ export function SameThemeModal({
           ) : songs.length === 0 ? (
             <p
               data-testid="same-theme-empty"
-              className="px-4 py-6 text-center text-[13px] text-fg-hint"
+              className="px-4 py-6 text-center text-sm text-fg-hint"
             >
               {t('sameTheme.empty')}
             </p>

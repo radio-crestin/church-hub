@@ -1,11 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eraser,
-  Eye,
-  EyeOff,
-  Loader2,
-} from 'lucide-react'
+import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -16,6 +9,8 @@ import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
 import { PhoneSlideControls } from './PhoneSlideControls'
+import { PreviewNavControls } from './PreviewNavControls'
+import { PreviewScreenPicker } from './PreviewScreenPicker'
 import {
   type LiveProgramSteps,
   useClearSlide,
@@ -40,9 +35,7 @@ const CONTROL_ROOM_CLOCK: ClockOverride = {
 }
 
 const HEADER_BUTTON_CLASS =
-  'flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium text-fg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] rounded-lg hover:bg-hover disabled:opacity-50 transition-colors'
-const NEXT_BUTTON_CLASS =
-  'flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium text-white bg-primary rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors'
+  'flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-fg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] rounded-lg hover:bg-hover disabled:opacity-50 transition-colors'
 const ICON_BUTTON_CLASS =
   'flex items-center justify-center h-8 w-8 rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-50 transition-colors'
 
@@ -187,32 +180,8 @@ export function ControlRoom({
                   )}
                 </button>
               )}
-              {/* Previous / Next (on a phone, in the bottom bar) */}
-              {!isPhone && (
-                <>
-                  <button
-                    type="button"
-                    onClick={goPrev}
-                    disabled={!canMove || isMoving}
-                    data-testid="control-room-prev"
-                    aria-label={t('presentation:controls.prev')}
-                    title={t('presentation:controls.prev')}
-                    className={HEADER_BUTTON_CLASS}
-                  >
-                    <ChevronLeft size={16} strokeWidth={1.5} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={!canMove || isMoving}
-                    data-testid="control-room-next"
-                    className={NEXT_BUTTON_CLASS}
-                  >
-                    <span>{t('presentation:controls.next')}</span>
-                    <ChevronRight size={16} strokeWidth={1.5} />
-                  </button>
-                </>
-              )}
+              {/* On a desktop the screen picker sits in the Previous / Next row */}
+              {isPhone && <PreviewScreenPicker placement="down" />}
               {/* Hide/Show Button (on a phone, in the bottom bar) */}
               {isPhone ? null : !isHidden ? (
                 <button
@@ -260,10 +229,21 @@ export function ControlRoom({
             </div>
           </div>
 
-          <div className="lg:flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center">
+          {/* Previous / Next walk the live presentation (on a phone, in the bottom bar) */}
+          <div className="lg:flex-1 lg:min-h-0 flex flex-col lg:justify-center lg:[container-type:size] [--preview-reserve:3.75rem]">
+            <div className="w-full flex-shrink-0">
               <LivePreview clockOverride={CONTROL_ROOM_CLOCK} />
             </div>
+            {!isPhone && (
+              <PreviewNavControls
+                onPrev={goPrev}
+                onNext={goNext}
+                canPrev={canMove}
+                canNext={canMove}
+                isBusy={isMoving}
+                testIdPrefix="control-room"
+              />
+            )}
           </div>
         </div>
 

@@ -125,7 +125,7 @@ function SortableBookmarkItem({
       >
         <div className="flex items-baseline gap-1.5">
           <span
-            className="text-[13px] font-medium truncate text-fg"
+            className="text-sm font-medium truncate text-fg"
             data-testid="bible-bookmark-reference"
           >
             {bookmark.reference}
@@ -599,7 +599,7 @@ export function BibleBookmarksPanel({
               />
               {/* One truncating line, so a narrow column cuts the count
                   before it cuts into the title. */}
-              <span className="min-w-0 truncate text-[13px] font-medium text-fg">
+              <span className="min-w-0 truncate text-sm font-medium text-fg">
                 {t('bookmarks.title')}
                 {totalCount > 0 && (
                   <span className="ml-2 text-xs font-normal text-fg-hint tabular-nums">
@@ -633,7 +633,7 @@ export function BibleBookmarksPanel({
                     }
                   }}
                   placeholder={t('bookmarks.notePlaceholder')}
-                  className="flex-1 min-w-0 h-8 text-[13px] bg-field rounded-[10px] px-2.5 text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="flex-1 min-w-0 h-8 text-sm bg-field rounded-[10px] px-2.5 text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 <button
                   type="button"
@@ -671,7 +671,7 @@ export function BibleBookmarksPanel({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('bookmarks.searchPlaceholder')}
-                  className="w-full h-8 pl-8 pr-7 text-[13px] bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
@@ -691,7 +691,7 @@ export function BibleBookmarksPanel({
             className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : totalCount === 0 ? (
@@ -700,15 +700,13 @@ export function BibleBookmarksPanel({
                   className="w-8 h-8 mx-auto mb-2 text-fg-hint"
                   strokeWidth={1}
                 />
-                <p className="text-[13px] text-fg-hint">
-                  {t('bookmarks.empty')}
-                </p>
+                <p className="text-sm text-fg-hint">{t('bookmarks.empty')}</p>
                 <p className="text-xs text-fg-hint mt-1">
                   {t('bookmarks.emptyDescription')}
                 </p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 {t('bookmarks.noResults')}
               </div>
             ) : (

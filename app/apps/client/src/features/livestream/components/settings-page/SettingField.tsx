@@ -18,7 +18,7 @@ export function SettingField({
 
   return (
     <div className="py-2">
-      <label htmlFor={id} className="block text-[13px] font-medium text-fg">
+      <label htmlFor={id} className="block text-sm font-medium text-fg">
         {label}
       </label>
       {description && (

@@ -276,7 +276,7 @@ export function ImportExportManager() {
           <button
             type="button"
             onClick={handleImport}
-            className="w-full h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
+            className="w-full h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             {t('sections.importExport.import.button')}
           </button>
@@ -308,7 +308,7 @@ export function ImportExportManager() {
           <button
             type="button"
             onClick={handleExport}
-            className="w-full h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
+            className="w-full h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             {t('sections.importExport.export.button')}
           </button>

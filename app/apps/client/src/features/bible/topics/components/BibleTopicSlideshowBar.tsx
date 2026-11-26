@@ -12,7 +12,7 @@ interface BibleTopicSlideshowBarProps {
 }
 
 const buttonClass =
-  'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium transition-colors'
+  'flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors'
 
 /**
  * The topic as a presentation in one tap: ▶ shows its verses one after

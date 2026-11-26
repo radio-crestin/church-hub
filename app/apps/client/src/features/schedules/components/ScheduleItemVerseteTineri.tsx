@@ -81,7 +81,7 @@ export function ScheduleItemVerseteTineri({
                 {item.verseteTineriEntries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center gap-2 text-[13px]"
+                    className="flex items-center gap-2 text-sm"
                   >
                     <span className="font-medium truncate text-fg">
                       {entry.personName}
@@ -93,7 +93,7 @@ export function ScheduleItemVerseteTineri({
                 ))}
               </div>
             ) : (
-              <span className="font-medium text-[13px] text-fg-hint">
+              <span className="font-medium text-sm text-fg-hint">
                 {t('verseteTineri.entriesCount', { count: 0 })}
               </span>
             )}
@@ -127,7 +127,7 @@ export function ScheduleItemVerseteTineri({
                     setShowMenu(false)
                     onEditSlide()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <Pencil size={14} strokeWidth={1.75} />
                   {t('actions.editSlide')}
@@ -138,7 +138,7 @@ export function ScheduleItemVerseteTineri({
                     setShowMenu(false)
                     onInsertSongAfter()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <Plus size={14} strokeWidth={1.75} />
                   {t('actions.insertAfter')}
@@ -150,7 +150,7 @@ export function ScheduleItemVerseteTineri({
                     setShowMenu(false)
                     onRemove()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <Trash2 size={14} strokeWidth={1.75} />
                   {t('actions.remove')}
@@ -165,7 +165,7 @@ export function ScheduleItemVerseteTineri({
       {isExpanded && item.verseteTineriEntries.length > 0 && (
         <div className="px-3 pb-3 space-y-1.5">
           {item.verseteTineriEntries.map((entry) => (
-            <div key={entry.id} className="p-2 rounded bg-field text-[13px]">
+            <div key={entry.id} className="p-2 rounded bg-field text-sm">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-fg">{entry.personName}</span>
                 <span className="text-xs text-fg-hint">{entry.reference}</span>

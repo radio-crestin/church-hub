@@ -55,7 +55,7 @@ export function SettingsLayout() {
               {!isIndex && (
                 <Link
                   to="/settings"
-                  className="mb-4 inline-flex w-fit items-center gap-2 text-[13px] text-fg-label hover:text-fg md:hidden"
+                  className="mb-4 inline-flex w-fit items-center gap-2 text-sm text-fg-label hover:text-fg md:hidden"
                 >
                   <ArrowLeft strokeWidth={1.5} className="h-4 w-4" />
                   {t('nav.back')}

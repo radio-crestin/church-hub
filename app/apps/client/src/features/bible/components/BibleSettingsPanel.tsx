@@ -73,7 +73,7 @@ export function BibleSettingsPanel() {
                 type="button"
                 onClick={handleImportClick}
                 disabled={isImporting}
-                className="flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-line-strong"
+                className="flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-line-strong"
               >
                 {isImporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
@@ -99,7 +99,7 @@ export function BibleSettingsPanel() {
                 className="mt-0.5 h-5 w-5 flex-shrink-0 text-fg"
                 strokeWidth={1.5}
               />
-              <div className="text-[13px]">
+              <div className="text-sm">
                 <p className="mb-2 font-medium text-fg">
                   {t('settings.import.formatTitle')}
                 </p>

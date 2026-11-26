@@ -52,7 +52,7 @@ export function MIDIDeviceSelector() {
   if (!midi.isSupported) {
     return (
       <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-        <p className="text-[13px] text-amber-700 dark:text-amber-300">
+        <p className="text-sm text-amber-700 dark:text-amber-300">
           {t('sections.shortcuts.midi.notSupported', {
             defaultValue:
               'Web MIDI API is not supported in this browser. MIDI controller features are unavailable.',
@@ -73,7 +73,7 @@ export function MIDIDeviceSelector() {
             className="shrink-0 text-fg-label"
           />
           <div>
-            <h4 className="text-[13px] font-medium text-fg">
+            <h4 className="text-sm font-medium text-fg">
               {t('sections.shortcuts.midi.title', {
                 defaultValue: 'MIDI Controller',
               })}
@@ -108,7 +108,7 @@ export function MIDIDeviceSelector() {
       {/* Permission error */}
       {midi.permissionError && (
         <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-          <p className="text-[13px] text-red-700 dark:text-red-300">
+          <p className="text-sm text-red-700 dark:text-red-300">
             {t('sections.shortcuts.midi.permissionError', {
               defaultValue: 'MIDI access denied: {{error}}',
               error: midi.permissionError,
@@ -136,7 +136,7 @@ export function MIDIDeviceSelector() {
 
           {/* Input device selector */}
           <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-[13px] font-medium text-fg-label">
+            <label className="flex items-center gap-2 text-sm font-medium text-fg-label">
               <Usb size={16} strokeWidth={1.5} />
               {t('sections.shortcuts.midi.inputDevice', {
                 defaultValue: 'Input Device',
@@ -164,7 +164,7 @@ export function MIDIDeviceSelector() {
 
           {/* Output device selector (for LEDs) */}
           <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-[13px] font-medium text-fg-label">
+            <label className="flex items-center gap-2 text-sm font-medium text-fg-label">
               <Power size={16} strokeWidth={1.5} />
               {t('sections.shortcuts.midi.outputDevice', {
                 defaultValue: 'Output Device (LEDs)',
@@ -248,7 +248,7 @@ export function MIDIDeviceSelector() {
           <button
             type="button"
             onClick={() => midi.requestAccess()}
-            className="h-8 px-3 text-[13px] font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
+            className="h-8 px-3 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
           >
             {t('sections.shortcuts.midi.requestPermission', {
               defaultValue: 'Grant MIDI Access',

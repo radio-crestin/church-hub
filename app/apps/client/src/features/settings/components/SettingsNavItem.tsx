@@ -22,7 +22,7 @@ export function SettingsNavItem({
   return (
     <Link
       to={to}
-      className={`flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-colors ${
+      className={`flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors ${
         isActive
           ? 'bg-selected text-fg'
           : 'text-fg-label hover:bg-hover hover:text-fg'

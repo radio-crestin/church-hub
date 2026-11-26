@@ -133,7 +133,7 @@ export function PptxImportDialog({
           <button
             type="button"
             onClick={handleClose}
-            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('common:buttons.cancel')}
           </button>
@@ -142,7 +142,7 @@ export function PptxImportDialog({
             type="button"
             onClick={handleImportAsSong}
             disabled={!title.trim() || upsertMutation.isPending}
-            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Music className="w-4 h-4" />
             {t('songs:pptxImport.createSong')}

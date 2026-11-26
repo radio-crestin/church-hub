@@ -102,7 +102,7 @@ export function ScheduleItemAdvance({
                 apply(value)
               }}
             >
-              <label className="flex items-center justify-between gap-2 text-[13px] font-medium text-fg">
+              <label className="flex items-center justify-between gap-2 text-sm font-medium text-fg">
                 {t('automation.advance.title')}
                 <span className="flex items-center gap-1">
                   <input
@@ -127,7 +127,7 @@ export function ScheduleItemAdvance({
                     type="button"
                     onClick={() => apply(null)}
                     data-testid="schedule-item-advance-reset"
-                    className="rounded-lg px-2 py-1 text-[13px] text-fg-body hover:bg-hover"
+                    className="rounded-lg px-2 py-1 text-sm text-fg-body hover:bg-hover"
                   >
                     {t('automation.advance.reset')}
                   </button>
@@ -135,7 +135,7 @@ export function ScheduleItemAdvance({
                 <button
                   type="submit"
                   data-testid="schedule-item-advance-save"
-                  className="rounded-lg bg-primary px-3 py-1 text-[13px] text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-primary px-3 py-1 text-sm text-white hover:bg-indigo-700"
                 >
                   {t('automation.advance.save')}
                 </button>

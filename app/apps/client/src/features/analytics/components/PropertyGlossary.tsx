@@ -19,10 +19,10 @@ export function PropertyGlossary() {
   const { t } = useTranslation('privacy')
   return (
     <div>
-      <h4 className="text-[13px] font-medium text-fg">
+      <h4 className="text-sm font-medium text-fg">
         {t('policy.propertiesTitle')}
       </h4>
-      <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[13px] sm:grid-cols-[auto_1fr]">
+      <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
         {ALL_PROPERTIES.map((name) => (
           <div key={name} className="contents">
             <dt>

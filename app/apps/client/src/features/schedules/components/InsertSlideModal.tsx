@@ -340,7 +340,7 @@ export function InsertSlideModal({
           {/* Template Selector - only show when inserting new slide without initial template */}
           {!isEditMode && !initialTemplate && (
             <div>
-              <label className="block text-[13px] font-medium text-fg-body mb-2">
+              <label className="block text-sm font-medium text-fg-body mb-2">
                 {t('insertSlide.selectTemplate')}
               </label>
               <div className="flex gap-2">
@@ -356,7 +356,7 @@ export function InsertSlideModal({
                     }`}
                   >
                     <Icon size={18} />
-                    <span className="text-[13px] font-medium">
+                    <span className="text-sm font-medium">
                       {t(`slideTemplates.${type}`)}
                     </span>
                   </button>
@@ -381,7 +381,7 @@ export function InsertSlideModal({
             </div>
           ) : (
             <div>
-              <label className="block text-[13px] font-medium text-fg-body mb-2">
+              <label className="block text-sm font-medium text-fg-body mb-2">
                 {t('insertSlide.content')}
               </label>
               {/* Toolbar */}
@@ -389,7 +389,7 @@ export function InsertSlideModal({
                 <button
                   type="button"
                   onClick={() => editor?.chain().focus().toggleBold().run()}
-                  className={`px-2 py-1 rounded text-[13px] font-bold ${
+                  className={`px-2 py-1 rounded text-sm font-bold ${
                     editor?.isActive('bold')
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -400,7 +400,7 @@ export function InsertSlideModal({
                 <button
                   type="button"
                   onClick={() => editor?.chain().focus().toggleItalic().run()}
-                  className={`px-2 py-1 rounded text-[13px] italic ${
+                  className={`px-2 py-1 rounded text-sm italic ${
                     editor?.isActive('italic')
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -414,7 +414,7 @@ export function InsertSlideModal({
                   onClick={() =>
                     editor?.chain().focus().toggleHeading({ level: 1 }).run()
                   }
-                  className={`px-2 py-1 rounded text-[13px] ${
+                  className={`px-2 py-1 rounded text-sm ${
                     editor?.isActive('heading', { level: 1 })
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -427,7 +427,7 @@ export function InsertSlideModal({
                   onClick={() =>
                     editor?.chain().focus().toggleHeading({ level: 2 }).run()
                   }
-                  className={`px-2 py-1 rounded text-[13px] ${
+                  className={`px-2 py-1 rounded text-sm ${
                     editor?.isActive('heading', { level: 2 })
                       ? 'bg-selected text-fg'
                       : 'text-fg-label hover:bg-selected'
@@ -452,7 +452,7 @@ export function InsertSlideModal({
             type="button"
             onClick={handleClose}
             disabled={isPending}
-            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-fg bg-field hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
           >
             <X size={16} strokeWidth={1.5} />
             {t('actions.cancel')}
@@ -467,7 +467,7 @@ export function InsertSlideModal({
                 ? verseteTineriEntries.length === 0
                 : !content.trim())
             }
-            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {isPending ? (
               <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />

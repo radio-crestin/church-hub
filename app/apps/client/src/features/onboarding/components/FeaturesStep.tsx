@@ -39,7 +39,7 @@ export function FeaturesStep({ selected, onToggle }: FeaturesStepProps) {
                 className="mt-0.5 h-4 w-4 shrink-0 text-fg-label"
               />
               <span className="min-w-0">
-                <span className="block text-[13px] font-medium text-fg">
+                <span className="block text-sm font-medium text-fg">
                   {t(labelKey)}
                 </span>
                 <span className="block text-xs text-fg-hint">
@@ -50,7 +50,7 @@ export function FeaturesStep({ selected, onToggle }: FeaturesStepProps) {
           )
         })}
       </div>
-      <p className="text-[13px] text-fg-hint">
+      <p className="text-sm text-fg-hint">
         {t('features.selected', {
           count: selected.size,
           total: ONBOARDING_FEATURES.length,

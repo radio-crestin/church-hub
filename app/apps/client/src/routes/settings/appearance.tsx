@@ -51,7 +51,7 @@ function AppearanceSettings() {
       <div className="mb-6 space-y-2">
         <div className="flex items-center gap-2">
           <Languages strokeWidth={1.5} className="h-4 w-4 text-fg-label" />
-          <label className="text-[13px] font-medium text-fg">
+          <label className="text-sm font-medium text-fg">
             {t('sections.language.title')}
           </label>
         </div>
@@ -71,7 +71,7 @@ function AppearanceSettings() {
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Palette strokeWidth={1.5} className="h-4 w-4 text-fg-label" />
-          <label className="text-[13px] font-medium text-fg">
+          <label className="text-sm font-medium text-fg">
             {t('sections.theme.title')}
           </label>
         </div>

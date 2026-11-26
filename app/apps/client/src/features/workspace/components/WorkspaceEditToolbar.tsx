@@ -31,7 +31,7 @@ export function WorkspaceEditToolbar({
         strokeWidth={1.5}
         className="shrink-0 text-fg-label"
       />
-      <span className="text-[13px] font-medium text-fg">
+      <span className="text-sm font-medium text-fg">
         {t('workspace.layout')}
       </span>
       <span className="min-w-0 flex-1 truncate text-xs text-fg-hint">
@@ -42,7 +42,7 @@ export function WorkspaceEditToolbar({
         onClick={onReset}
         disabled={!isCustomised}
         data-testid="workspace-reset-layout"
-        className="inline-flex items-center gap-1.5 h-8 rounded-lg bg-field px-3 text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
+        className="inline-flex items-center gap-1.5 h-8 rounded-lg bg-field px-3 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
         <RotateCcw size={14} strokeWidth={1.75} />
         {t('workspace.resetLayout')}
@@ -51,7 +51,7 @@ export function WorkspaceEditToolbar({
         type="button"
         onClick={onDone}
         data-testid="workspace-done-editing"
-        className="inline-flex items-center gap-1.5 h-8 rounded-lg bg-primary px-3 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700"
+        className="inline-flex items-center gap-1.5 h-8 rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
       >
         <Check size={14} strokeWidth={1.75} />
         {t('workspace.doneEditing')}

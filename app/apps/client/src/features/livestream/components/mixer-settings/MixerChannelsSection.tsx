@@ -75,7 +75,7 @@ export function MixerChannelsSection() {
                 onChange={(e) =>
                   setLabels((prev) => ({ ...prev, [num]: e.target.value }))
                 }
-                className="min-w-0 flex-1 rounded-lg bg-field px-2 py-1 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                className="min-w-0 flex-1 rounded-lg bg-field px-2 py-1 text-sm text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 placeholder={`CH${number}`}
               />
             </label>

@@ -806,7 +806,7 @@ export function SchedulePresenter({
                 type="button"
                 onClick={() => setShowEditAsText(true)}
                 data-testid="schedule-edit-as-text"
-                className="flex h-8 items-center gap-2 rounded-lg bg-field px-2 text-[13px] font-medium text-fg transition-colors hover:bg-hover sm:px-3"
+                className="flex h-8 items-center gap-2 rounded-lg bg-field px-2 text-sm font-medium text-fg transition-colors hover:bg-hover sm:px-3"
               >
                 <FileText size={16} strokeWidth={1.5} />
                 <span className="hidden sm:inline">
@@ -1098,7 +1098,7 @@ export function SchedulePresenter({
               onClick={() => setThemeEditorOpen(true)}
               title={t('presentation:templates.presentation.editDescription')}
               data-testid="schedule-edit-theme"
-              className="flex h-8 items-center gap-1.5 rounded-lg bg-raised px-3 text-[13px] font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover"
+              className="flex h-8 items-center gap-1.5 rounded-lg bg-raised px-3 text-sm font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover"
             >
               <Paintbrush className="h-4 w-4" strokeWidth={1.5} />
               {t('presentation:templates.presentation.edit')}
@@ -1278,14 +1278,14 @@ export function SchedulePresenter({
           <h3 className="text-base font-semibold text-fg mb-2">
             {t('modal.deleteTitle')}
           </h3>
-          <p className="text-[13px] text-fg-label mb-6">
+          <p className="text-sm text-fg-label mb-6">
             {t('modal.deleteMessage')}
           </p>
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
-              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-fg bg-field hover:bg-hover rounded-lg transition-colors"
             >
               <X size={16} strokeWidth={1.5} />
               {tCommon('buttons.cancel')}
@@ -1294,7 +1294,7 @@ export function SchedulePresenter({
               type="button"
               onClick={handleDelete}
               disabled={deleteSchedule.isPending}
-              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
             >
               {deleteSchedule.isPending ? (
                 <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
@@ -1328,15 +1328,15 @@ export function SchedulePresenter({
           </h3>
           {importData && (
             <div className="space-y-4">
-              <p className="text-[13px] text-fg-label">
+              <p className="text-sm text-fg-label">
                 {t('import.message', { title: importData.schedule.title })}
               </p>
               <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
-                <p className="text-[13px] text-amber-700 dark:text-amber-300">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
                   {t('import.warning')}
                 </p>
               </div>
-              <div className="text-[13px] text-fg-label">
+              <div className="text-sm text-fg-label">
                 <p>
                   {t('import.itemCount', { count: importData.items.length })}
                 </p>
@@ -1350,7 +1350,7 @@ export function SchedulePresenter({
                 setShowImportConfirmModal(false)
                 setImportData(null)
               }}
-              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-fg bg-field hover:bg-hover rounded-lg transition-colors"
             >
               <X size={16} strokeWidth={1.5} />
               {tCommon('buttons.cancel')}
@@ -1359,7 +1359,7 @@ export function SchedulePresenter({
               type="button"
               onClick={handleImportConfirm}
               disabled={isImporting}
-              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
               {isImporting ? (
                 <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />

@@ -235,9 +235,7 @@ export function ScheduleItemList({
       <div className="text-center py-8 border border-dashed border-line rounded-lg">
         <ListMusic size={48} className="mx-auto text-fg-hint mb-3" />
         <p className="text-fg-label font-medium">{t('editor.noItems')}</p>
-        <p className="text-[13px] text-fg-hint mt-1">
-          {t('editor.addFirstItem')}
-        </p>
+        <p className="text-sm text-fg-hint mt-1">{t('editor.addFirstItem')}</p>
       </div>
     )
   }

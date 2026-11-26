@@ -368,7 +368,7 @@ export function AddScheduleItemModal({
                         </div>
 
                         {previewSong.slides.length === 0 ? (
-                          <p className="py-8 text-center text-[13px] text-fg-hint">
+                          <p className="py-8 text-center text-sm text-fg-hint">
                             {tSchedules('modal.previewEmpty')}
                           </p>
                         ) : (
@@ -382,7 +382,7 @@ export function AddScheduleItemModal({
                                 <div className="mb-1 text-xs font-medium text-fg-hint">
                                   {slide.label || `${index + 1}`}
                                 </div>
-                                <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-fg-body">
+                                <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg-body">
                                   {stripHtmlTags(slide.content)}
                                 </p>
                               </div>
@@ -401,7 +401,7 @@ export function AddScheduleItemModal({
                       onClick={() => setStep('song')}
                       disabled={isAdding}
                       data-testid="add-schedule-item-preview-back"
-                      className="rounded-lg bg-field h-9 px-3.5 text-[13px] font-medium text-fg-body transition-colors hover:bg-selected disabled:opacity-50"
+                      className="rounded-lg bg-field h-9 px-3.5 text-sm font-medium text-fg-body transition-colors hover:bg-selected disabled:opacity-50"
                     >
                       {t('addMenu.searchSong')}
                     </button>
@@ -410,7 +410,7 @@ export function AddScheduleItemModal({
                       onClick={handleConfirmAdd}
                       disabled={isAdding || !previewSong}
                       data-testid="add-schedule-item-preview-add"
-                      className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                     >
                       {isAdding ? (
                         <Loader2
@@ -448,7 +448,7 @@ export function AddScheduleItemModal({
                     </div>
                     <div className="min-w-0">
                       <div className="font-medium">{t(option.titleKey)}</div>
-                      <div className="text-[13px] text-fg-hint">
+                      <div className="text-sm text-fg-hint">
                         {t(option.descriptionKey)}
                       </div>
                     </div>

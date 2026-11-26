@@ -19,10 +19,10 @@ export function CreditsSection() {
         data-testid="credits-bible-topics"
         className="p-4 border border-line rounded-xl"
       >
-        <p className="text-[13px] font-medium text-fg">
+        <p className="text-sm font-medium text-fg">
           {t('sections.credits.bibleTopics.title')}
         </p>
-        <p className="text-[13px] text-fg-label mt-1">
+        <p className="text-sm text-fg-label mt-1">
           <Trans
             t={t}
             i18nKey="sections.credits.bibleTopics.attribution"

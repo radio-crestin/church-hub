@@ -18,11 +18,18 @@ import {
   ICON_COLOR_HEX,
 } from '../constants'
 import { getIconComponent } from '../hooks/useResolvedSidebarItems'
-import type { CustomPageMenuItem, SidebarMenuItem } from '../types'
+import type {
+  CustomPageMenuItem,
+  SidebarGroupId,
+  SidebarMenuItem,
+} from '../types'
+import { groupOf, SIDEBAR_GROUPS } from '../utils/sidebarGroups'
 
 interface SidebarItemCardProps {
   item: SidebarMenuItem
   onToggleVisibility: () => void
+  /** Moves the page to another sidebar section; absent for the footer pages. */
+  onChangeGroup?: (group: SidebarGroupId) => void
   onOpenSettings: () => void
   onDelete?: () => void
 }
@@ -33,6 +40,7 @@ interface SidebarItemCardProps {
 export function SidebarItemCard({
   item,
   onToggleVisibility,
+  onChangeGroup,
   onOpenSettings,
   onDelete,
 }: SidebarItemCardProps) {
@@ -103,7 +111,7 @@ export function SidebarItemCard({
       ref={setNodeRef}
       style={style}
       className={`
-        flex items-center gap-3 p-3 bg-panel
+        flex flex-wrap items-center gap-3 p-3 bg-panel
         border border-line rounded-lg
         ${isDragging ? 'bg-selected shadow-popover' : ''}
         ${!item.isVisible ? 'opacity-60' : ''}
@@ -141,7 +149,7 @@ export function SidebarItemCard({
 
       {/* Label, then its type badge and shortcuts under it */}
       <div className="flex-1 min-w-0">
-        <span className="block text-[13px] font-medium text-fg truncate">
+        <span className="block text-sm font-medium text-fg truncate">
           {label}
         </span>
         <div className="mt-0.5 flex flex-wrap items-center gap-1">
@@ -172,8 +180,28 @@ export function SidebarItemCard({
         )}
       </div>
 
+      {/* Which sidebar section the page sits in: inline from small tablets
+        up, on its own line on a phone so the page name keeps its room. */}
+      {onChangeGroup && (
+        <select
+          data-testid={`sidebar-item-group-${item.id}`}
+          aria-label={t('sidebar:groups.label')}
+          title={t('sidebar:groups.label')}
+          value={groupOf(item)}
+          onChange={(event) =>
+            onChangeGroup(event.target.value as SidebarGroupId)
+          }
+          className="order-last basis-full sm:order-none sm:basis-auto h-8 sm:max-w-40 cursor-pointer rounded-lg border-0 bg-field px-2 text-sm text-fg-body outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          {SIDEBAR_GROUPS.map((group) => (
+            <option key={group} value={group}>
+              {t(`sidebar:groups.${group}`)}
+            </option>
+          ))}
+        </select>
+      )}
       {/* Actions */}
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center gap-1">
         {/* Delete Button (custom pages only) */}
         {isCustom && onDelete && (
           <button

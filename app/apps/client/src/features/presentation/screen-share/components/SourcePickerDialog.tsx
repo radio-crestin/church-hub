@@ -143,7 +143,7 @@ function SourceGroup({
   if (sources.length === 0) return null
   return (
     <section>
-      <h3 className="mb-2 text-[13px] font-medium text-fg-label">{title}</h3>
+      <h3 className="mb-2 text-sm font-medium text-fg-label">{title}</h3>
       <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {sources.map((source) => (
           <li key={source.id}>
@@ -181,7 +181,7 @@ function SourceGroup({
                   />
                 )}
                 <div className="min-w-0">
-                  <div className="truncate text-[13px] font-medium text-fg">
+                  <div className="truncate text-sm font-medium text-fg">
                     {source.name}
                   </div>
                   <div className="truncate text-xs text-fg-hint">

@@ -78,7 +78,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`px-3.5 py-2.5 rounded-[10px] shadow-popover flex items-center gap-3 text-[13px] animate-slide-in ${getToastStyles(toast.type)}`}
+            className={`px-3.5 py-2.5 rounded-[10px] shadow-popover flex items-center gap-3 text-sm animate-slide-in ${getToastStyles(toast.type)}`}
           >
             {toast.type === 'success' && (
               <span className="h-2 w-2 shrink-0 rounded-full bg-ok" />
