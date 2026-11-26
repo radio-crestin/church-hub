@@ -20,9 +20,7 @@ fi
 # access. Sourcing an empty or incomplete .prod.vars once silently wiped
 # ALLOWED_ORIGINS in production and 403'd every OAuth flow, so we still
 # parse .prod.vars generically and validate every value before shipping.
-# Optional keys (WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID, WAHA_SESSION,
-# WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) are shipped when present.
-# So are the cloud backup keys (BACKUP_SECRET, BACKUP_KEY_SECRET,
+# Optional keys are shipped when present, e.g. the cloud backup keys (BACKUP_SECRET, BACKUP_KEY_SECRET,
 # BACKUP_S3_ENDPOINT, BACKUP_S3_BUCKET, BACKUP_S3_ACCESS_KEY_ID,
 # BACKUP_S3_SECRET_ACCESS_KEY, optional BACKUP_S3_REGION,
 # BACKUP_S3_PRESIGN_ENDPOINT and the BACKUP_* limits): without them
@@ -38,7 +36,6 @@ REQUIRED_VARS=(
   YOUTUBE_REDIRECT_URI
   COOKIE_ENCRYPTION_KEY
   ALLOWED_ORIGINS
-  GITHUB_TOKEN
 )
 
 # Placeholder markers that indicate an unfilled example value.

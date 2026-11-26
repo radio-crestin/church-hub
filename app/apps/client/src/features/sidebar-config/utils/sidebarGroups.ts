@@ -12,8 +12,8 @@ const DEFAULT_GROUP: Record<string, SidebarGroupId> = {
   gallery: 'library',
 }
 
-/** The pages the footer draws (Settings, Feedback, Kiosk) belong to no group. */
-const FOOTER_PAGES = new Set(['settings', 'feedback', 'kiosk'])
+/** The pages the footer draws (Settings, Kiosk) belong to no group. */
+const FOOTER_PAGES = new Set(['settings', 'kiosk'])
 
 export function isGroupable(id: string): boolean {
   return !FOOTER_PAGES.has(id)

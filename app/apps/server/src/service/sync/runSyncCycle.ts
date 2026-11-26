@@ -7,6 +7,7 @@ import {
   findLibraryFile,
   uploadLibrary,
 } from './driveLibraryFile'
+import { getLatestPendingSeq } from './getLatestPendingSeq'
 import { getPendingKeys } from './getPendingKeys'
 import { libraryChanged } from './libraryChanged'
 import { mergeLibraries } from './mergeLibraries'
@@ -75,6 +76,7 @@ export async function runSyncCycle(
     if (remote) adoptRemoteIdentities(remote)
 
     // Re-read after adoption: dirty keys may have been remapped to new uuids.
+    const sentUpTo = getLatestPendingSeq()
     const dirtyKeys = getPendingKeys()
     const local = serializeLibrary(state.deviceId, state.deviceName, dirtyKeys)
 
@@ -97,13 +99,9 @@ export async function runSyncCycle(
     }
     updateRemoteFileRef(newRef?.fileId ?? null, newRef?.version ?? null)
 
-    // Everything queued before this cycle is now reflected in the shared
-    // file. Strictly before its first second: queued_at is in seconds, so an
-    // edit made later in that second, after the pending rows were read, stays
-    // queued for the next cycle instead of being lost.
-    db.query('DELETE FROM sync_pending WHERE queued_at < ?').run(
-      cycleStartSeconds,
-    )
+    // Everything this cycle read is now in the shared file. An edit queued
+    // after, even in the same second, stays queued for the next cycle.
+    db.query('DELETE FROM sync_pending WHERE seq <= ?').run(sentUpTo)
     db.query('DELETE FROM sync_tombstones WHERE deleted_at < ?').run(
       cycleStartSeconds - TOMBSTONE_RETENTION_DAYS * 24 * 3600,
     )

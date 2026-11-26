@@ -1,13 +1,14 @@
 [
   {
-    "version": "0.1.106",
-    "date": "2026-11-23T21:42:54+02:00",
-    "features": [],
-    "bugFixes": [
+    "version": "0.1.107",
+    "date": "2026-11-26T23:59:16+02:00",
+    "features": [
       {
-        "scope": "changelog",
-        "message": "the generator finds the version tags on Windows"
-      },
+        "scope": "presentation",
+        "message": "fade the slide out when it leaves, calmer factory transitions"
+      }
+    ],
+    "bugFixes": [
       {
         "scope": "setup",
         "message": "Linux setup installs gitleaks without sudo or GitHub's API, parses Playwright 1.65's dry run"
@@ -31,12 +32,304 @@
     ],
     "changes": [
       {
-        "scope": "release",
-        "message": "local CodeQL runs on Linux only by default"
+        "scope": null,
+        "message": "security-check.sh is executable, so release.sh can run it"
       },
       {
-        "scope": "release",
-        "message": "v0.1.106 release notes in English and Romanian"
+        "scope": null,
+        "message": "release notes: v0.1.107 includes the full app in the browser"
+      },
+      {
+        "scope": null,
+        "message": "release notes: v0.1.107 in English and Romanian"
+      },
+      {
+        "scope": null,
+        "message": "a change queued in the second a sync round started goes out once"
+      },
+      {
+        "scope": null,
+        "message": "T-175 The web app runs the full app in the browser (sqlite-wasm) when the church PC is off; guest mode on the default library"
+      },
+      {
+        "scope": null,
+        "message": "the PC's writes to the sync service go one at a time"
+      },
+      {
+        "scope": null,
+        "message": "WebKit slide-morph waits for a still screen; removing a user answers without waiting for the device sign-out (T-213)"
+      },
+      {
+        "scope": null,
+        "message": "sidecar-exits-with-shell counts a never-reaped zombie as stopped (CH-209)"
+      },
+      {
+        "scope": null,
+        "message": "file drops wait for the page's drop listener (CH-210)"
+      },
+      {
+        "scope": null,
+        "message": "T-173 Cloud sync: sync every table (uuids, triggers, merge); each change carries its base version and author"
+      },
+      {
+        "scope": null,
+        "message": "every route checks its permission"
+      },
+      {
+        "scope": null,
+        "message": "one backend address; new versions can move to the new backend, released ones stay on the Worker"
+      },
+      {
+        "scope": null,
+        "message": "the backup privacy test looks for an email, not any '@'"
+      },
+      {
+        "scope": null,
+        "message": "Church Hub Cloud, free encrypted backups with Google sign-in"
+      },
+      {
+        "scope": null,
+        "message": "\"Add to playlist\" opens a searchable picker; long menus fit the screen (CH-212)"
+      },
+      {
+        "scope": null,
+        "message": "keep secrets encrypted at rest"
+      },
+      {
+        "scope": null,
+        "message": "a new kind of slide replaces the old one, in its own theme, with its background"
+      },
+      {
+        "scope": null,
+        "message": "bind every sign-in to its flow and drop unused redirect routes"
+      },
+      {
+        "scope": null,
+        "message": "the host proves itself with its own key; listeners see only their own session"
+      },
+      {
+        "scope": null,
+        "message": "feature-requests: send the request when no screenshot storage is configured"
+      },
+      {
+        "scope": null,
+        "message": "answer cross-origin requests only from the app's own origins"
+      },
+      {
+        "scope": null,
+        "message": "/health/ready waits for the startup sync probe"
+      },
+      {
+        "scope": null,
+        "message": "a removed user's devices are signed out"
+      },
+      {
+        "scope": null,
+        "message": "one helper for the visitor's address"
+      },
+      {
+        "scope": null,
+        "message": "refuse to start in production without trusted proxies"
+      },
+      {
+        "scope": null,
+        "message": "run the same app on Node, with S3 screenshots and shared limits"
+      },
+      {
+        "scope": null,
+        "message": "Resurse Creștine: our own managed source, published to S3 by our Action"
+      },
+      {
+        "scope": null,
+        "message": "hardening before the next deploy"
+      },
+      {
+        "scope": null,
+        "message": "Control Room: a queue you add to, and programs inside programs"
+      },
+      {
+        "scope": null,
+        "message": "seamless seeking and a page in clear sections"
+      },
+      {
+        "scope": null,
+        "message": "a typewriter text animation and two typewriter templates"
+      },
+      {
+        "scope": null,
+        "message": "present an image or video directly"
+      },
+      {
+        "scope": null,
+        "message": "Bible topics: templates reach the screen live, per passage, and fit each topic"
+      },
+      {
+        "scope": null,
+        "message": "Bible slideshows: icon buttons, reading speed, a progress ring per verse"
+      },
+      {
+        "scope": null,
+        "message": "double-click shows a verse, \"Show on screen\", present on pick, panel gutters"
+      },
+      {
+        "scope": null,
+        "message": "animate only the lines, words and verse numbers that change"
+      },
+      {
+        "scope": null,
+        "message": "T-168 Join a church by QR code or link + public web app (PWA)"
+      },
+      {
+        "scope": null,
+        "message": "T-178 Presentations: programs become automated presentations"
+      },
+      {
+        "scope": null,
+        "message": "T-172 Cloud sync: owner by Google sign-in or guest, claim later, recovery, cloud identity in local backups"
+      },
+      {
+        "scope": null,
+        "message": "T-211 e2e mobile-settings-music: read the sidebar names from the Romanian i18n"
+      },
+      {
+        "scope": null,
+        "message": "grouped sidebar, readable type scale, new app icons, start-up skeleton"
+      },
+      {
+        "scope": null,
+        "message": "a server per worker, and only tests of what users do (19.4 min → 5 min)"
+      },
+      {
+        "scope": null,
+        "message": "Framer-style design system across the whole client"
+      },
+      {
+        "scope": null,
+        "message": "T-171 Cloud sync: S3 transport + Hono sync service (any S3, secret path per server, writes only)"
+      },
+      {
+        "scope": "skills",
+        "message": "add Impeccable and Emil Kowalski's UI design skills"
+      },
+      {
+        "scope": null,
+        "message": "T-196 Linux AppImage: set the sidecar's RUNPATH so linuxdeploy doesn't corrupt it"
+      },
+      {
+        "scope": null,
+        "message": "T-191 e2e lan-login: pin English (fixtures save Romanian) and accept the sole-account pairing shortcut"
+      },
+      {
+        "scope": null,
+        "message": "T-179 Presentations: Down arrow walks an item's slides, then into the next item"
+      },
+      {
+        "scope": null,
+        "message": "T-169 Changelog generator refuses an empty changelog; --stdout and an e2e guard"
+      },
+      {
+        "scope": null,
+        "message": "T-192 Machine setup installs gitleaks on Windows (machine-wide) and macOS; hooks find it off-PATH"
+      },
+      {
+        "scope": null,
+        "message": "T-050 Phone apps, QR pairing and remote access over WebRTC"
+      },
+      {
+        "scope": null,
+        "message": "T-203 Bible verses by topic: bundled OpenBible.info topics (RO + EN), browse and present them on the Bible page"
+      },
+      {
+        "scope": null,
+        "message": "T-029 Screens: song title element in a projector corner"
+      },
+      {
+        "scope": null,
+        "message": "T-207 e2e: mobile-bible search spec no longer races Enter against the reference navigation"
+      },
+      {
+        "scope": null,
+        "message": "T-049 Mobile — Music, Settings and remaining pages"
+      },
+      {
+        "scope": null,
+        "message": "T-208 e2e: release-notes spec mocks an unreleased version, so bundled notes never override it"
+      },
+      {
+        "scope": null,
+        "message": "T-198 .gitattributes: check out every text file with LF"
+      },
+      {
+        "scope": null,
+        "message": "T-028 Screen editor: copy, paste and lock an element's position"
+      },
+      {
+        "scope": null,
+        "message": "T-206 e2e: one offset table for the ports derived from TEST_PORT"
+      },
+      {
+        "scope": null,
+        "message": "T-204 e2e: shared temp-dir helper; port-listener spec waits for its server to exit before deleting its DB copy"
+      },
+      {
+        "scope": null,
+        "message": "T-205 e2e: extra servers mark first-run onboarding done, like the suite's server"
+      },
+      {
+        "scope": null,
+        "message": "T-043 Romanian texts reviewed in context"
+      },
+      {
+        "scope": null,
+        "message": "T-157 Release v0.1.106: bump and notes, macOS gate test fix, changelog generator on Windows, local CodeQL Linux-only"
+      },
+      {
+        "scope": null,
+        "message": "T-084 Songs: show other songs on the same theme"
+      },
+      {
+        "scope": null,
+        "message": "T-025 Songs: two-icon live/preview toggle instead of the Previzualizare switch"
+      },
+      {
+        "scope": null,
+        "message": "T-048 Mobile: presenting, control room and screens"
+      },
+      {
+        "scope": null,
+        "message": "T-200 e2e: delete the database export spec's temp .sqlite after the test"
+      },
+      {
+        "scope": null,
+        "message": "T-195 Anonymous usage analytics: every press to PostHog, privacy policy, opt-out"
+      },
+      {
+        "scope": null,
+        "message": "T-193 e2e test servers bind to 127.0.0.1 (no Windows firewall prompts)"
+      },
+      {
+        "scope": null,
+        "message": "T-170 Cloud sync spike: the service layer on sqlite-wasm/OPFS + faster sync apply"
+      },
+      {
+        "scope": "readme",
+        "message": "fresh screenshots and the features shipped since January"
+      },
+      {
+        "scope": null,
+        "message": "T-034 Music page like the Songs page: playlists, search, recents, queue orders"
+      },
+      {
+        "scope": null,
+        "message": "T-099 Church Hub on Linux: resources in the installed build, port cleanup, and a Linux test VM"
+      },
+      {
+        "scope": null,
+        "message": "T-186 Choose which screen the Control Room and the previews show (default: the main display)"
+      },
+      {
+        "scope": null,
+        "message": "T-038 Onboarding: pick features, initial settings, first-run progress"
       },
       {
         "scope": null,
@@ -134,42 +427,50 @@
     "written": {
       "en": {
         "features": [
-          "Share a screen or window on the projector and on browser screens, straight from the app.",
-          "Present Bible bookmarks one after another, or let them loop on a timer.",
-          "A bookmark button in the Bible page header, and the bookmark list scrolls to the verse you just added.",
-          "Make Bible verses bigger or smaller on screen with the new font-size buttons.",
-          "When a song source changes a song, review each change and choose to update it or keep yours.",
-          "The YouTube stream description now lists a chapter and the full text of every song and verse shown.",
-          "Go back and forward between pages with the mouse side buttons or Alt+Left/Right (Cmd+[ / Cmd+] on Mac).",
-          "Search in Settings to find an option quickly.",
-          "Settings > Shortcuts now lists the shortcuts of every page in the sidebar.",
-          "On a phone: a bottom tab bar, a live strip with previous / next / hide on every page, and phone layouts for songs, the Bible and programs."
+          "Programs can run as automated presentations, and the Down arrow walks through each item's slides, then into the next item.",
+          "The Control Room has a queue: add a song, Bible verses, music, a gallery video or a whole program, and Next walks through them, programs inside programs included.",
+          "Join a church from a phone by QR code or link and use the whole app in the browser: it connects to the church computer when it's on, and keeps working on its own copy of the library when it's off.",
+          "Cloud sync keeps every part of the church's library in step across devices: sign in with Google as the owner, or start as a guest and claim it later.",
+          "Bible verses by topic: browse topics, present their verses, and each topic keeps its own template, live on screen.",
+          "Bible slideshows have clear icon buttons, an adjustable reading speed and a progress ring for each verse.",
+          "On the Bible page, double-click a verse to show it, use \"Show on screen\", or turn on showing a verse as soon as you pick it.",
+          "Present an image or video straight from the gallery.",
+          "A typewriter text animation and two typewriter templates for slides.",
+          "Slide changes are calmer: only the lines, words and verse numbers that change move, a slide fades out when it leaves, and a new kind of slide comes in with its own theme and background.",
+          "Music: seeking is seamless, the page is split into clear sections, and \"Add to playlist\" opens a searchable list.",
+          "A fresh, quieter design across the app, with a grouped sidebar, easier-to-read text and new app icons."
         ],
         "bugFixes": [
-          "Closing the app (even a force quit) now also stops its background server, so it starts again cleanly next time.",
-          "Songs with dots in their names (like \"Isaia 38.9-20\") are now imported from Resurse Creștine.",
-          "Resurse Creștine downloads use a working link, and a failed download says why.",
-          "Song search updates much faster after importing many songs."
+          "Passwords and keys saved in the app are now stored encrypted on the computer, and each user can only do what their permissions allow.",
+          "Phone remote control and live-translation links are better protected: after updating, pair your phones again and share the listener link again.",
+          "When a user is removed or turned off, their phones are signed out right away.",
+          "Seeking in a song no longer makes a strange sound.",
+          "Sending a feature request works even when screenshots can't be stored.",
+          "The Linux AppImage starts correctly again."
         ]
       },
       "ro": {
         "features": [
-          "Poți proiecta un ecran sau o fereastră pe proiector și pe ecranele din browser, direct din aplicație.",
-          "Versetele marcate din Biblie se pot prezenta pe rând sau în buclă, cu temporizator.",
-          "Buton de marcaj în antetul paginii Biblia, iar lista de marcaje derulează la versetul tocmai adăugat.",
-          "Butoane noi pentru a mări sau micșora textul versetelor pe ecran.",
-          "Când o sursă de cântări modifică o cântare, vezi fiecare schimbare și alegi dacă o actualizezi sau o păstrezi pe a ta.",
-          "Descrierea transmisiunii pe YouTube conține acum un capitol și textul complet pentru fiecare cântare și verset afișat.",
-          "Te întorci înapoi sau mergi înainte între pagini cu butoanele laterale ale mouse-ului sau cu Alt+Stânga/Dreapta (Cmd+[ / Cmd+] pe Mac).",
-          "Căutare în Setări, ca să găsești repede o opțiune.",
-          "Setări > Scurtături arată acum scurtăturile tuturor paginilor din meniu.",
-          "Pe telefon: bară de file jos, bandă cu ce e pe ecran (înapoi / înainte / ascunde) pe fiecare pagină, și pagini adaptate pentru cântări, Biblie și programe."
+          "Programele pot rula ca prezentări automate, iar săgeata în jos trece prin diapozitivele fiecărui element, apoi la următorul.",
+          "Camera de control are o coadă: adaugi o cântare, versete, muzică, un video din galerie sau un program întreg, iar „Următorul” le parcurge pe rând, inclusiv programele din alte programe.",
+          "Te poți alătura bisericii de pe telefon, cu un cod QR sau un link, și poți folosi toată aplicația în browser: se conectează la calculatorul bisericii când e pornit și merge mai departe pe propria copie a bibliotecii când e oprit.",
+          "Sincronizarea în cloud ține toată biblioteca bisericii la zi pe toate dispozitivele: intri cu Google ca proprietar sau începi ca invitat și o revendici mai târziu.",
+          "Versete biblice pe teme: răsfoiești temele, prezinți versetele lor, iar fiecare temă își păstrează șablonul, direct pe ecran.",
+          "Prezentările automate din Biblie au butoane cu iconițe clare, viteză de citire reglabilă și un cerc care arată cât mai rămâne din fiecare verset.",
+          "Pe pagina Biblie, dublu clic pe un verset îl afișează; poți folosi și „Afișează pe ecran” sau poți alege ca versetul să apară pe ecran imediat ce îl selectezi.",
+          "Poți prezenta o imagine sau un video direct din galerie.",
+          "O animație de text ca la mașina de scris și două șabloane „Mașină de scris” pentru diapozitive.",
+          "Trecerea între diapozitive e mai liniștită: se mișcă doar rândurile, cuvintele și numerele de verset care se schimbă, diapozitivul dispare treptat când iese, iar un alt tip de conținut intră cu tema și fundalul lui.",
+          "Muzică: derularea în piesă e fără întreruperi, pagina e împărțită în secțiuni clare, iar „Adaugă în playlist” deschide o listă în care poți căuta.",
+          "Un aspect nou, mai aerisit, în toată aplicația: meniul lateral pe grupuri, text mai ușor de citit și iconițe noi."
         ],
         "bugFixes": [
-          "La închiderea aplicației (chiar și forțată) se oprește și serverul din fundal, așa că pornește curat data viitoare.",
-          "Cântările cu puncte în nume (de exemplu „Isaia 38.9-20”) se importă acum de pe Resurse Creștine.",
-          "Descărcarea de pe Resurse Creștine folosește un link care merge, iar o descărcare eșuată spune de ce.",
-          "Căutarea cântărilor se actualizează mult mai repede după importul multor cântări."
+          "Parolele și cheile salvate în aplicație sunt acum păstrate criptat pe calculator, iar fiecare utilizator poate face doar ce îi permit drepturile lui.",
+          "Controlul de pe telefon și linkurile pentru traducerea live sunt mai bine protejate: după actualizare, asociază din nou telefoanele și trimite din nou linkul pentru ascultători.",
+          "Când un utilizator e șters sau dezactivat, telefoanele lui sunt deconectate imediat.",
+          "Derularea într-o piesă nu mai produce un sunet ciudat.",
+          "Trimiterea unei sugestii merge și când capturile de ecran nu pot fi salvate.",
+          "Varianta AppImage pentru Linux pornește din nou corect."
         ]
       }
     }

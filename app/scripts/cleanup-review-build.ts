@@ -1,8 +1,9 @@
 /**
  * What a task's review build (review-build.ts) leaves on this computer, and
  * how worktree-cleanup.ts removes it: the app's window, its build folder in
- * the main checkout, bundles an older review-build.ts left in the shared
- * Cargo target, and the folders the OS made for the app's own identifier.
+ * the task's worktree (and in the main checkout, where an older
+ * review-build.ts put it), bundles an older review-build.ts left in the
+ * shared Cargo target, and the folders the OS made for the app's own identifier.
  */
 
 import { spawnSync } from 'node:child_process'
@@ -10,7 +11,7 @@ import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, sep } from 'node:path'
 
-import { reviewIdentifier } from './worktree-common'
+import { reviewBuildsRoot, reviewIdentifier } from './worktree-common'
 
 /** Folders the OS creates for an app of this identifier, per platform. */
 function appDataDirs(identifier: string): string[] {
@@ -44,6 +45,16 @@ function isBundleOf(name: string, taskId: string) {
   return name.startsWith(prefix) && /^[._]/.test(name.slice(prefix.length))
 }
 
+/**
+ * A task's review build folders: in its worktree, and in the main checkout
+ * where an older review-build.ts kept them.
+ */
+function buildDirs(worktreeRoot: string, mainRoot: string, taskId: string) {
+  return [worktreeRoot, mainRoot].map((root) =>
+    join(reviewBuildsRoot(root), taskId),
+  )
+}
+
 /** Bundles an older review-build.ts left in the shared Cargo target (it now moves them out). */
 function leftoverBundles(mainRoot: string, taskId: string): string[] {
   const target = join(mainRoot, 'app', 'tauri', 'target')
@@ -60,28 +71,38 @@ function leftoverBundles(mainRoot: string, taskId: string): string[] {
 
 /**
  * Closes the review app of a task if it is running: every process started from
- * its `.review-build/<task id>/` folder (the window and its sidecar).
+ * its review build folder (the window and its sidecar).
  * Windows has no cheap command-line listing, so only the port is freed there.
  */
-export function stopReviewApp(taskId: string) {
+export function stopReviewApp(
+  worktreeRoot: string,
+  mainRoot: string,
+  taskId: string,
+) {
   if (process.platform === 'win32') return 'skipped on Windows'
   const listing = spawnSync('ps', ['-axo', 'pid=,command='], {
     encoding: 'utf8',
   }).stdout
-  const folder = `${sep}.review-build${sep}${taskId}${sep}`
+  const folders = buildDirs(worktreeRoot, mainRoot, taskId).map(
+    (dir) => `${dir}${sep}`,
+  )
   const pids = listing
     .split('\n')
-    .filter((line) => line.includes(folder))
+    .filter((line) => folders.some((folder) => line.includes(folder)))
     .map((line) => Number(line.trim().split(/\s+/)[0]))
     .filter((pid) => pid && pid !== process.pid)
   for (const pid of pids) process.kill(pid, 'SIGTERM')
   return pids.length > 0 ? `closed ${pids.length} process(es)` : 'not running'
 }
 
-/** Deletes a task's review build from the main checkout, the Cargo target and the OS app folders. */
-export function removeReviewBuild(mainRoot: string, taskId: string) {
+/** Deletes a task's review build from its worktree, the main checkout, the Cargo target and the OS app folders. */
+export function removeReviewBuild(
+  worktreeRoot: string,
+  mainRoot: string,
+  taskId: string,
+) {
   const found = [
-    join(mainRoot, '.review-build', taskId),
+    ...buildDirs(worktreeRoot, mainRoot, taskId),
     ...leftoverBundles(mainRoot, taskId),
     ...appDataDirs(reviewIdentifier(taskId)),
   ].filter(existsSync)

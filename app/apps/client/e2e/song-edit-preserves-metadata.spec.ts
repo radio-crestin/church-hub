@@ -121,8 +121,7 @@ test.describe('Song partial update preserves metadata', () => {
       })
 
       // Enter slides edit mode and change only the verses. Target the
-      // slides editor by its placeholder — a generic `textarea` locator can
-      // resolve to the hidden feedback-widget textarea instead.
+      // slides editor by its placeholder, not a generic `textarea` locator.
       await page.getByTestId('toggle-slides-edit-mode').click()
       const textarea = page.getByPlaceholder(
         /first slide lyrics|versurile primului slide/i,

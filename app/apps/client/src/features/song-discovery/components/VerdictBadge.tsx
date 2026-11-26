@@ -13,6 +13,8 @@ export function VerdictBadge({ verdict }: { verdict: DiscoveryMatchVerdict }) {
   const styles: Record<DiscoveryMatchVerdict, string> = {
     new: 'text-fg',
     similar: 'text-fg-label',
+    'exact-source': 'text-fg-hint',
+    'exact-lyrics': 'text-fg-hint',
     'exact-title': 'text-fg-hint',
     'exact-filename': 'text-fg-hint',
   }

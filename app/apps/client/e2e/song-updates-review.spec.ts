@@ -17,7 +17,8 @@ import {
 /**
  * One Resurse Creștine importer (T-035): with syncing without approval off,
  * Download songs lists the library songs a source changed, each with its old
- * and new lyrics, to update or keep; a song edited by hand never shows up.
+ * and new lyrics, to update or keep; a song edited by hand shows up as a new
+ * version, never applied on its own.
  * A source that cannot be downloaded says why, with the real HTTP status.
  */
 
@@ -191,7 +192,7 @@ test.describe('Song updates: review each change', () => {
     expect(changed.map((c) => c.library.title)).toEqual([second])
   })
 
-  test('a song edited by hand is never offered, nor replaced', async ({
+  test('a song edited by hand is offered as a new version, never replaced on its own', async ({
     request,
   }) => {
     const id = await songIdTitled(request, first)
@@ -216,13 +217,14 @@ test.describe('Song updates: review each change', () => {
     await checkSource(request, sourceId)
     const changed = (
       await (await request.get(`/api/song-sources/${sourceId}/changed`)).json()
-    ).data as { songId: number }[]
-    expect(changed.map((c) => c.songId)).not.toContain(id)
+    ).data as { songId: number; edited: boolean }[]
+    expect(changed.find((c) => c.songId === id)?.edited).toBe(true)
+    expect(await lyricsOf(request, first)).toContain('versurile noastre')
 
-    // Asked to update it all the same, it stays as edited.
+    // Kept, it leaves the list and stays as edited.
     const resolve = await request.post(
       `/api/song-sources/${sourceId}/changed`,
-      { data: { songIds: [id], action: 'update' } },
+      { data: { songIds: [id], action: 'keep' } },
     )
     expect(resolve.ok()).toBeTruthy()
     expect(await lyricsOf(request, first)).toContain('versurile noastre')

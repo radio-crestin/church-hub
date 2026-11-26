@@ -39,21 +39,24 @@ interface SlideRow {
   label: string | null
 }
 
-/** Every song of a category with its slides in order, two queries in all. */
-export function readCategorySongs(categoryId: number): CategorySong[] {
+/**
+ * Every song of a category (null: the songs with none) with its slides in
+ * order, two queries in all.
+ */
+export function readCategorySongs(categoryId: number | null): CategorySong[] {
   const db = getRawDatabase()
   const songRows = db
-    .query<SongRow, [number]>(
+    .query<SongRow, [number | null]>(
       `SELECT id, uuid, title, source_filename, author, copyright, ccli, tempo,
               time_signature, theme, alt_theme, hymn_number, key_line
-         FROM songs WHERE category_id = ? ORDER BY title, id`,
+         FROM songs WHERE category_id IS ? ORDER BY title, id`,
     )
     .all(categoryId)
   const slideRows = db
-    .query<SlideRow, [number]>(
+    .query<SlideRow, [number | null]>(
       `SELECT sl.song_id, sl.content, sl.label
          FROM song_slides sl JOIN songs s ON s.id = sl.song_id
-        WHERE s.category_id = ? ORDER BY sl.song_id, sl.sort_order, sl.id`,
+        WHERE s.category_id IS ? ORDER BY sl.song_id, sl.sort_order, sl.id`,
     )
     .all(categoryId)
 

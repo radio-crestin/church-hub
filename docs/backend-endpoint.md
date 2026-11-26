@@ -12,7 +12,6 @@ Every caller goes through it:
 - Google sign-in: YouTube (`createYouTubeAuthUrl`, `GET /api/livestream/youtube/auth-url`, token refresh in `youtube/client.ts`), Drive backup (`backup/oauth`, `getDriveService.ts`), the cloud owner (`ownerSignIn.ts`, through the sync service URL).
 - Cloud sync (`getSyncServiceUrl`, `CHURCH_HUB_SYNC_URL` narrows it for tests).
 - The signaling relay for remote access and live translation (`getSignalingBaseUrl`, `CHURCH_HUB_SIGNALING_URL` narrows it for tests), the pairing code's `&relay=` and the listener link.
-- Feature requests (`forwardFeatureRequest.ts`).
 - Church Hub Cloud backup (`backup/cloud`): its sign-in goes to the backend, and it is offered only once that is not the legacy one (`isCloudBackupAvailable`).
 
 The desktop client never names the backend: it asks the server (the YouTube sign-in URL, the listener link). The public web app keeps the legacy backend as the default for join links without `s=`: released versions leave `s` out for it, so it must not change; current versions always write `s`.

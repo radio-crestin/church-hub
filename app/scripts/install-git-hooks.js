@@ -26,10 +26,8 @@ let current = ''
 try {
   current = git(['config', '--get', 'core.hooksPath'])
 } catch {
-  // unset: git exits 1
+  // not set yet: git exits 1
 }
-// Already set: don't write .git/config again (it may be read-only, as in a shared worktree)
-if (current === '.githooks') process.exit(0)
-
-git(['config', 'core.hooksPath', '.githooks'])
+// Task worktrees have a read-only .git/config: skip the write when it is already set.
+if (current !== '.githooks') git(['config', 'core.hooksPath', '.githooks'])
 console.log('git hooks: core.hooksPath = .githooks (gitleaks on commit and push)')

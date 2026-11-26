@@ -40,7 +40,7 @@ export const analyticsPaths = {
       tags: ['Analytics'],
       summary: 'Turn anonymous usage data on or off',
       description:
-        'When off, neither the server nor the clients send events, errors or session replays to PostHog. A feedback report the user sends still carries its logs.',
+        'When off, neither the server nor the clients send events, errors or session replays to PostHog.',
       requestBody: {
         required: true,
         content: {

@@ -33,8 +33,8 @@ function publicSources() {
 
 /**
  * The songs Church Hub's built-in, public sources publish (Resurse
- * Creștine and the others shipped with the app: our managed copy, checked
- * against its manifest, or the release file), as fingerprints of their
+ * Creștine and the others shipped with the app; a song file from our
+ * release is checked against its `.sha256`), as fingerprints of their
  * slides by file name. Link subscriptions are never read here: they may be
  * private. A source that can't be read adds nothing, so its songs stay in
  * the encrypted part.

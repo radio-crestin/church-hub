@@ -358,6 +358,9 @@ export interface BatchImportSongInput {
   hymnNumber?: string | null
   keyLine?: string | null
   presentationOrder?: string | null
+  /** The song source it comes from and its id there (a new song only). */
+  sourceId?: string | null
+  sourceSongId?: string | null
   slides?: Array<{
     content: string
     sortOrder: number
@@ -387,16 +390,25 @@ export interface DiscoveryCandidateInput {
   title: string
   lyrics: string
   sourceFilename: string | null
+  /** The song source it comes from and its id there, when it has one. */
+  sourceId?: string
+  sourceSongId?: string
+  /** Its lyrics fingerprint (lyricsHash), matched against `content_hash`. */
+  fingerprint?: string | null
 }
 
 /**
  * How an external candidate relates to the local library:
+ *  - `exact-source`:   a song this source added (or was linked to) has its id.
+ *  - `exact-lyrics`:   a song has the same lyrics fingerprint.
  *  - `exact-filename`: a song with the same `source_filename` already exists.
  *  - `exact-title`:    a song with the same normalized title already exists.
  *  - `similar`:        no exact match, but ≥1 fuzzy version match was found.
  *  - `new`:            nothing comparable in the library — safe to import.
  */
 export type DiscoveryMatchVerdict =
+  | 'exact-source'
+  | 'exact-lyrics'
   | 'exact-filename'
   | 'exact-title'
   | 'similar'
@@ -406,7 +418,7 @@ export type DiscoveryMatchVerdict =
 export interface DiscoveryMatchResult {
   tempId: string
   verdict: DiscoveryMatchVerdict
-  /** The matched library song id for exact-filename / exact-title verdicts. */
+  /** The matched library song id for the exact-* verdicts. */
   exactSongId: number | null
   /** Fuzzy version matches (empty unless verdict is `similar`). */
   similar: SongVersionSuggestion[]

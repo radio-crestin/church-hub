@@ -19,6 +19,7 @@ import { adoptRemoteIdentities } from '../adoptRemoteIdentities'
 import { applyRemoteChanges } from '../applyRemoteChanges'
 import { TOMBSTONE_RETENTION_DAYS } from '../constants'
 import { getChangeAuthors } from '../getChangeAuthors'
+import { getLatestPendingSeq } from '../getLatestPendingSeq'
 import { getPendingKeys } from '../getPendingKeys'
 import { mergeLibraries } from '../mergeLibraries'
 import { serializeLibrary } from '../serializeLibrary'
@@ -53,6 +54,7 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
   if (remote?.fromSnapshot && identity.seq === 0) {
     adoptRemoteIdentities(remote.library)
   }
+  const sentUpTo = getLatestPendingSeq()
   const dirtyKeys = getPendingKeys()
   const hasTombstonesToPush = getRawDatabase()
     .query<{ n: number }, []>(
@@ -118,13 +120,12 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
     logger.info(`Published ${changes.length} change(s) to cloud sync`)
   }
 
-  // Only what was queued before this cycle's first second: queued_at is in
-  // seconds, so an edit made later in that second, after the pending rows
-  // were read, stays queued for the next cycle instead of being lost.
+  // Only what this round read and sent: an edit queued after, even in the
+  // same second, stays queued for the next round instead of being lost. A
+  // change left queued once sent goes out again, and would undo a newer
+  // one made elsewhere in the same second (a phone revoking a permission).
   const db = getRawDatabase()
-  db.query('DELETE FROM sync_pending WHERE queued_at < ?').run(
-    cycleStartSeconds,
-  )
+  db.query('DELETE FROM sync_pending WHERE seq <= ?').run(sentUpTo)
   db.query('DELETE FROM sync_tombstones WHERE deleted_at < ?').run(
     cycleStartSeconds - TOMBSTONE_RETENTION_DAYS * 24 * 3600,
   )

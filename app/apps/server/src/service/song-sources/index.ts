@@ -6,8 +6,6 @@ export { isProxyAllowedUrl } from './isProxyAllowedUrl'
 export { deleteLinkSource } from './links/deleteLinkSource'
 export { upsertLinkSource } from './links/upsertLinkSource'
 export { listSongSources } from './listSongSources'
-export { readManagedRelease } from './managed/readManagedRelease'
-export type { ManagedRelease } from './managed/types'
 export { deletePublication } from './publications/deletePublication'
 export {
   getPublication,
@@ -23,6 +21,15 @@ export { upsertPublication } from './publications/upsertPublication'
 export { readSourceArchive } from './readSourceArchive'
 export { readSourceChecksum } from './readSourceChecksum'
 export { readSourceSongs } from './readSourceSongs'
+export {
+  deleteShare,
+  getShare,
+  type LibraryShare,
+  type LibraryShareInput,
+  publishShare,
+  readCatalog,
+  saveShare,
+} from './shares'
 export { getS3Storage } from './storage/getS3Storage'
 export { toS3StorageView } from './storage/toS3StorageView'
 export type { S3StorageInput } from './storage/types'

@@ -26,9 +26,7 @@ function post(path: string, bytes: number) {
       body: streamedBody(bytes),
       duplex: 'half',
     } as RequestInit,
-    {
-      FEATURE_REQUEST_RATE_LIMITER: { limit: async () => ({ success: true }) },
-    }
+    {}
   )
 }
 
@@ -40,11 +38,6 @@ test('a /sync body over 8 MB is refused while it streams', async () => {
 
 test('an owner route body over 8 MB is refused too', async () => {
   const response = await post('/sync/owner/churches/abc/transfer', 9 * 1024 * 1024)
-  expect(response.status).toBe(413)
-})
-
-test('a feature request body over 8 MB is refused while it streams', async () => {
-  const response = await post('/feature-requests', 9 * 1024 * 1024)
   expect(response.status).toBe(413)
 })
 
