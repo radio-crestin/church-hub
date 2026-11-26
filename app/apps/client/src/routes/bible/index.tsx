@@ -1601,7 +1601,7 @@ function BiblePage() {
 
   return (
     <PagePermissionGuard permission="bible.view">
-      <div className="flex flex-col gap-4 h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
+      <div className="flex flex-col gap-4 h-full lg:overflow-hidden">
         {/* Same single labelled menu as the song page, so both pages expose
             their actions the same way. */}
         <PageHeader
