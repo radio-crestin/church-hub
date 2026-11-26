@@ -19,6 +19,8 @@ const ITEMS_PER_PAGE = 20
 
 interface BibleHistoryPanelProps {
   onSelectVerse: (item: BibleHistoryItemType) => void
+  /** A double-click: show the verse on screen right away. */
+  onPresentVerse: (item: BibleHistoryItemType) => void
   /**
    * Renders a chevron beside the title so the panel behaves like the song
    * page's Marcaje section: the body folds away while the header — and its
@@ -83,6 +85,7 @@ function groupHistoryByDay(
 
 export function BibleHistoryPanel({
   onSelectVerse,
+  onPresentVerse,
   isCollapsed = false,
   onToggleCollapse,
 }: BibleHistoryPanelProps) {
@@ -328,6 +331,7 @@ export function BibleHistoryPanel({
                           key={item.id}
                           item={item}
                           onClick={() => onSelectVerse(item)}
+                          onDoubleClick={() => onPresentVerse(item)}
                         />
                       ))}
                     </div>

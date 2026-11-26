@@ -13,6 +13,28 @@ export const presentationSchemas = {
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
     },
   },
+  VerseLoopTimer: {
+    type: 'object',
+    description:
+      "A playing verse slideshow's timer: the verse it times and how long it has left. Also sent over the WebSocket as `verse_loop_timer` (null when it stops).",
+    properties: {
+      slideshow: {
+        type: 'string',
+        nullable: true,
+        description: 'The list that started it, e.g. `bookmarks`, `topic:12`',
+      },
+      entryIndex: { type: 'integer' },
+      durationMs: {
+        type: 'number',
+        description: "The verse's whole reading time at the current speed",
+      },
+      remainingMs: {
+        type: 'number',
+        description: 'Time left before the next verse goes up, as of sending',
+      },
+    },
+    required: ['slideshow', 'entryIndex', 'durationMs', 'remainingMs'],
+  },
   UpdatePresentationStateInput: {
     type: 'object',
     properties: {

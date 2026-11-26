@@ -130,6 +130,7 @@ export function SchedulePreviewPanel({
             <button
               type="button"
               disabled
+              title={t('bible:controls.showHint')}
               className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-hint rounded-lg border border-line opacity-50 cursor-not-allowed"
             >
               <Eye size={18} />

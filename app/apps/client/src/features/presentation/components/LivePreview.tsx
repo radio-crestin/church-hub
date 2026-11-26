@@ -88,13 +88,20 @@ export function LivePreview({
 
   // Use shared presentation content hook
   // `screen`: the preview screen with the template the content is drawn with
-  const { screen, contentType, contentData, contentKey, isVisible, leaving } =
-    usePresentationContent({
-      screen: ownScreen,
-      includeNextSlide: false,
-      getBookName,
-      previewContent,
-    })
+  const {
+    screen,
+    contentType,
+    contentData,
+    contentKey,
+    morphLines,
+    isVisible,
+    leaving,
+  } = usePresentationContent({
+    screen: ownScreen,
+    includeNextSlide: false,
+    getBookName,
+    previewContent,
+  })
 
   // Handle context menu (right-click) on preview
   const handleContextMenu = useCallback(
@@ -222,6 +229,7 @@ export function LivePreview({
             contentType={contentType}
             contentData={contentData}
             contentKey={contentKey}
+            morphLines={morphLines}
             isVisible={isVisible}
             leaving={leaving}
             styleRanges={styleRanges}

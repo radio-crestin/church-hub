@@ -25,6 +25,8 @@ interface ScreenPreviewProps {
   contentType: ContentType
   contentData: ContentData
   contentKey?: string
+  /** Animate only the changed lines on a slide change (usePresentationContent) */
+  morphLines?: boolean
   isVisible?: boolean
   /** The previous content type's content, fading out (usePresentationContent) */
   leaving?: ShownContent<ContentData, NextSlideData | undefined> | null
@@ -53,6 +55,7 @@ export function ScreenPreview({
   contentType,
   contentData,
   contentKey,
+  morphLines,
   isVisible = true,
   leaving,
   styleRanges,
@@ -101,6 +104,7 @@ export function ScreenPreview({
         contentType={contentType}
         contentData={contentData}
         contentKey={contentKey}
+        morphLines={morphLines}
         containerWidth={displaySize.width}
         containerHeight={displaySize.height}
         isVisible={isVisible}

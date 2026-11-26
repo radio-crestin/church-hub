@@ -485,7 +485,8 @@
       "title": "Alege o temă",
       "change": "Schimbă tema",
       "close": "Închide",
-      "manage": "Gestionează temele"
+      "manage": "Gestionează temele",
+      "current": "Tema: {{name}}"
     },
     "page": {
       "title": "Teme",

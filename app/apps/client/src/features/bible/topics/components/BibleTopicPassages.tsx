@@ -1,11 +1,13 @@
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useNavigateTemporary } from '~/features/presentation'
 import type { TopicVerseSource } from '~/features/presentation/types'
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
+import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
+import { VerseProgressSlot } from '../../components/VerseProgressSlot'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
 import { useSetPassageTemplate } from '../hooks/useSetPassageTemplate'
@@ -71,6 +73,11 @@ export function BibleTopicPassages({
       passage.verses.some((verse) => verse.id === activeVerseId),
     )
 
+  const listRef = useRef<HTMLDivElement>(null)
+  const liveRowRef = useRef<HTMLLIElement>(null)
+  // The live passage stays in view, with the next one under it.
+  useFollowPresentedScroll(listRef, liveRowRef, activeIndex)
+
   // While the slideshow plays, the arrows step it (its timer starts over).
   const present = (index: number) => {
     if (slideshow.isPlaying) {
@@ -114,7 +121,10 @@ export function BibleTopicPassages({
         >
           <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        <span className="text-xs tabular-nums text-fg-hint">
+        <span
+          data-testid="bible-topic-position"
+          className="text-xs tabular-nums text-fg-hint"
+        >
           {activeIndex >= 0 ? activeIndex + 1 : '–'}/{passages.length}
         </span>
         <button
@@ -138,7 +148,10 @@ export function BibleTopicPassages({
         />
       )}
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
+      <div
+        ref={listRef}
+        className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
+      >
         {isLoading ? (
           <div className="px-4 py-6 text-center text-sm text-fg-hint">...</div>
         ) : (
@@ -151,18 +164,25 @@ export function BibleTopicPassages({
                 <li
                   key={`${passage.book}-${passage.chapter}-${passage.startVerse}`}
                   data-testid="bible-topic-passage"
+                  ref={isActive ? liveRowRef : undefined}
                   data-active={isActive || undefined}
                   className={`flex items-start gap-1 rounded-lg ${
-                    isActive ? 'bg-live-tint ring-1 ring-inset ring-live' : ''
+                    isActive
+                      ? 'bg-live-tint ring-1 ring-inset ring-live'
+                      : 'hover:bg-hover'
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => onPresentVerse(first, sourceOf(passage))}
                     title={t('topics.present')}
-                    className="min-w-0 flex-1 px-2.5 py-2 text-left hover:bg-hover rounded-l-lg"
+                    className="min-w-0 flex-1 px-2.5 py-2 text-left rounded-l-lg"
                   >
-                    <span className="block text-xs font-semibold text-fg-label">
+                    <span
+                      className={`block text-xs font-semibold ${
+                        isActive ? 'text-live' : 'text-fg-label'
+                      }`}
+                    >
                       {passage.reference}
                     </span>
                     <span className="block text-sm text-fg-body">
@@ -178,6 +198,11 @@ export function BibleTopicPassages({
                       ))}
                     </span>
                   </button>
+                  <VerseProgressSlot
+                    slideshow={`topic:${topicId}`}
+                    entryIndex={index}
+                    testId="bible-topic-progress"
+                  />
                   <button
                     type="button"
                     onClick={() => onOpenVerse(first)}
@@ -191,6 +216,7 @@ export function BibleTopicPassages({
                   <div className="my-1 mr-1 -ml-1">
                     <TemplatePicker
                       variant="icon"
+                      thumbnail
                       value={passage.templateId}
                       noneLabel={t('topics.passageTemplate.none')}
                       onChange={(id) =>

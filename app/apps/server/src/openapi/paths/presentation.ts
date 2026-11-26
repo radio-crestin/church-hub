@@ -1,4 +1,32 @@
 export const presentationPaths = {
+  '/api/presentation/verse-loop': {
+    get: {
+      tags: ['Presentation'],
+      summary: "Get the verse slideshow's timer",
+      description:
+        'How long the verse of a playing (looping or auto-advancing) verse slideshow has left; null when none plays. Changing the `bible_reading_speed` setting rescales it.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The running timer, or null',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/VerseLoopTimer',
+                    nullable: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
   '/api/presentation/state': {
     get: {
       tags: ['Presentation'],

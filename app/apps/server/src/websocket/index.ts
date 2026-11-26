@@ -7,6 +7,7 @@ import {
 import type {
   PresentationState,
   TextStyleRange,
+  VerseLoopTimer,
 } from '../service/presentation/types'
 import type { ScheduleAutomationState } from '../service/schedule-automation/types'
 import { wsLogger } from '../utils/fileLogger'
@@ -554,6 +555,25 @@ export function broadcastScheduleAutomation(state: ScheduleAutomationState) {
   })
 
   wsLogger.debug(`Broadcasting schedule_automation to ${clients.size} clients`)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts the verse slideshow's timer each time it starts, changes speed
+ * or stops (null).
+ */
+export function broadcastVerseLoopTimer(timer: VerseLoopTimer | null) {
+  const message = JSON.stringify({ type: 'verse_loop_timer', payload: timer })
+
+  wsLogger.debug(`Broadcasting verse_loop_timer to ${clients.size} clients`)
 
   for (const [clientId, conn] of clients) {
     try {
