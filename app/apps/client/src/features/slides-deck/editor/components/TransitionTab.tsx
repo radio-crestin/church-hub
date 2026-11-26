@@ -15,7 +15,7 @@ import {
 import type { DeckAction } from '../types'
 
 const SELECT =
-  'w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+  'h-8 w-full rounded-[10px] border-0 bg-field px-2 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus'
 
 interface TransitionTabProps {
   slide: DeckSlide
@@ -96,7 +96,7 @@ export function TransitionTab({ slide, change }: TransitionTabProps) {
           }
         />
       )}
-      <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+      <label className="flex items-center gap-2 text-[13px] text-fg-body">
         <input
           type="checkbox"
           data-testid="deck-editor-advance-after"

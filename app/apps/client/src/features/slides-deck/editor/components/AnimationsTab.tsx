@@ -71,9 +71,9 @@ export function AnimationsTab({
               animation: newAnimation(),
             })
           }
-          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="flex h-8 flex-1 items-center justify-center gap-1 rounded-lg bg-primary px-3 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
-          <Plus size={14} />
+          <Plus size={14} strokeWidth={1.75} />
           {t('deckEditor.animations.add')}
         </button>
         <button
@@ -81,14 +81,14 @@ export function AnimationsTab({
           data-testid="deck-editor-preview"
           disabled={previewing}
           onClick={onPreview}
-          className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          className="flex h-8 items-center gap-1 rounded-lg bg-field px-3 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
         >
-          <Play size={14} />
+          <Play size={14} strokeWidth={1.75} />
           {t('deckEditor.animations.preview')}
         </button>
       </div>
       {!selected && entries.length === 0 && (
-        <p className="text-sm text-gray-500">
+        <p className="text-[13px] text-fg-hint">
           {t('deckEditor.animations.selectFirst')}
         </p>
       )}

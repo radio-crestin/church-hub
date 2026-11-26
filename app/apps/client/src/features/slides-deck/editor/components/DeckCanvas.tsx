@@ -79,7 +79,7 @@ export function DeckCanvas({
       <div
         ref={canvasRef}
         data-testid="deck-editor-canvas"
-        className="relative shadow-lg ring-1 ring-gray-300 dark:ring-gray-700"
+        className="relative ring-1 ring-line"
         style={{ width: deck.width * scale, height: deck.height * scale }}
         onPointerDown={(e) => {
           if (e.target !== e.currentTarget) return

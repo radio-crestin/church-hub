@@ -39,9 +39,9 @@ export function ElementHitBox({
       className={`absolute touch-none ${element.locked ? 'cursor-default' : 'cursor-move'} ${
         selected
           ? element.locked
-            ? 'outline-2 outline-dashed outline-indigo-400'
-            : 'outline-2 outline-indigo-500'
-          : 'hover:outline hover:outline-1 hover:outline-indigo-300'
+            ? 'outline-2 outline-dashed outline-focus'
+            : 'outline-2 outline-focus'
+          : 'hover:outline hover:outline-1 hover:outline-focus/60'
       }`}
       style={{
         left: element.x * scale,
@@ -59,7 +59,11 @@ export function ElementHitBox({
       onDoubleClick={editable ? onEditText : undefined}
     >
       {selected && element.locked && (
-        <Lock size={14} className="absolute -top-5 right-0 text-indigo-400" />
+        <Lock
+          size={14}
+          strokeWidth={1.75}
+          className="absolute -top-5 right-0 text-focus"
+        />
       )}
       {selected && !element.locked && (
         <SelectionHandles onResize={onResize} onRotate={onRotate} />

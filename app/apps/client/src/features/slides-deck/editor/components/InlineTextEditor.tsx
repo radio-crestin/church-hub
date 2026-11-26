@@ -66,7 +66,7 @@ export function InlineTextEditor({
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div
-        className="flex h-full w-full flex-col overflow-hidden break-words outline-2 outline-indigo-500 outline-dashed"
+        className="flex h-full w-full flex-col overflow-hidden break-words outline-2 outline-focus outline-dashed"
         style={{
           justifyContent: JUSTIFY[text?.verticalAlign ?? 'middle'],
           padding: text?.padding ?? 0,

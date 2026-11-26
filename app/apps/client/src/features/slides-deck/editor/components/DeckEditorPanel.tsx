@@ -44,11 +44,11 @@ export function DeckEditorPanel({
       data-testid="deck-editor-panel"
       className={
         sheet
-          ? `flex shrink-0 flex-col rounded-t-2xl border-t border-gray-200 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.08)] dark:border-gray-700 dark:bg-gray-900 ${open ? 'max-h-[45vh]' : ''}`
-          : 'flex w-80 shrink-0 flex-col border-l border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
+          ? `flex shrink-0 flex-col rounded-t-xl border-t border-line bg-panel ${open ? 'max-h-[45vh]' : ''}`
+          : 'flex w-80 shrink-0 flex-col border-l border-line bg-panel'
       }
     >
-      <div className="flex items-center gap-1 border-b border-gray-200 px-2 dark:border-gray-700">
+      <div className="flex items-center gap-1 border-b border-line px-2">
         {TABS.map((name) => (
           <button
             key={name}
@@ -58,10 +58,10 @@ export function DeckEditorPanel({
               setTab(name)
               setOpen(true)
             }}
-            className={`px-3 py-2 text-sm font-medium ${
+            className={`px-3 py-2 text-[13px] font-medium ${
               tab === name
-                ? 'border-b-2 border-indigo-600 text-indigo-700 dark:text-indigo-300'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-300'
+                ? 'border-b-2 border-fg text-fg'
+                : 'text-fg-label hover:text-fg'
             }`}
           >
             {t(`deckEditor.tabs.${name}`)}
@@ -71,12 +71,16 @@ export function DeckEditorPanel({
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="ml-auto rounded p-1 text-gray-500"
+            className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
             aria-label={
               open ? t('deckEditor.hidePanel') : t('deckEditor.showPanel')
             }
           >
-            {open ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+            {open ? (
+              <ChevronDown size={18} strokeWidth={1.5} />
+            ) : (
+              <ChevronUp size={18} strokeWidth={1.5} />
+            )}
           </button>
         )}
       </div>

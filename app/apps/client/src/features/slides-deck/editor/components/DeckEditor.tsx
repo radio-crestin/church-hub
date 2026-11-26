@@ -123,7 +123,7 @@ export function DeckEditor({
   return (
     <div
       data-testid="deck-editor"
-      className="flex h-full min-h-0 flex-col bg-gray-50 dark:bg-gray-950"
+      className="flex h-full min-h-0 flex-col bg-app"
     >
       <DeckEditorToolbar
         title={title}
@@ -182,8 +182,8 @@ export function DeckEditor({
         <div
           className={
             phone
-              ? 'shrink-0 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
-              : 'w-52 shrink-0 overflow-y-auto border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900'
+              ? 'shrink-0 border-b border-line bg-panel'
+              : 'w-52 shrink-0 overflow-y-auto border-r border-line bg-panel'
           }
         >
           <SlideThumbnailList

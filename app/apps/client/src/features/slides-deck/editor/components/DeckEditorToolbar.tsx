@@ -52,7 +52,7 @@ function IconButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="rounded-md p-1.5 text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-gray-700"
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent"
     >
       {children}
     </button>
@@ -78,26 +78,26 @@ export function DeckEditorToolbar({
   const { t } = useTranslation('schedules')
   const none = !selected
   return (
-    <header className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-900">
+    <header className="flex flex-wrap items-center gap-1 border-b border-line bg-panel px-2 py-1.5">
       <IconButton
         label={t('deckEditor.back')}
         onClick={onBack}
         testId="deck-editor-back"
       >
-        <ArrowLeft size={18} />
+        <ArrowLeft size={18} strokeWidth={1.5} />
       </IconButton>
-      <h1 className="mr-2 max-w-[12rem] truncate font-semibold text-gray-900 sm:max-w-xs dark:text-white">
+      <h1 className="mr-2 max-w-[12rem] truncate text-base font-semibold text-fg sm:max-w-xs">
         {title}
       </h1>
       <InsertMenu onInsert={onInsert} />
-      <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
+      <span className="mx-1 h-5 w-px bg-line" />
       <IconButton
         label={t('deckEditor.undo')}
         onClick={onUndo}
         disabled={!canUndo}
         testId="deck-editor-undo"
       >
-        <Undo2 size={16} />
+        <Undo2 size={16} strokeWidth={1.5} />
       </IconButton>
       <IconButton
         label={t('deckEditor.redo')}
@@ -105,22 +105,22 @@ export function DeckEditorToolbar({
         disabled={!canRedo}
         testId="deck-editor-redo"
       >
-        <Redo2 size={16} />
+        <Redo2 size={16} strokeWidth={1.5} />
       </IconButton>
-      <span className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
+      <span className="mx-1 h-5 w-px bg-line" />
       <IconButton
         label={t('deckEditor.bringForward')}
         onClick={() => onOrder('forward')}
         disabled={none}
       >
-        <BringToFront size={16} />
+        <BringToFront size={16} strokeWidth={1.5} />
       </IconButton>
       <IconButton
         label={t('deckEditor.sendBackward')}
         onClick={() => onOrder('backward')}
         disabled={none}
       >
-        <SendToBack size={16} />
+        <SendToBack size={16} strokeWidth={1.5} />
       </IconButton>
       <IconButton
         label={selected?.locked ? t('deckEditor.unlock') : t('deckEditor.lock')}
@@ -128,14 +128,18 @@ export function DeckEditorToolbar({
         disabled={none}
         testId="deck-editor-lock"
       >
-        {selected?.locked ? <Unlock size={16} /> : <Lock size={16} />}
+        {selected?.locked ? (
+          <Unlock size={16} strokeWidth={1.5} />
+        ) : (
+          <Lock size={16} strokeWidth={1.5} />
+        )}
       </IconButton>
       <IconButton
         label={t('deckEditor.duplicate')}
         onClick={onDuplicate}
         disabled={none}
       >
-        <Copy size={16} />
+        <Copy size={16} strokeWidth={1.5} />
       </IconButton>
       <IconButton
         label={t('deckEditor.delete')}
@@ -143,12 +147,12 @@ export function DeckEditorToolbar({
         disabled={none || selected?.locked}
         testId="deck-editor-delete"
       >
-        <Trash2 size={16} />
+        <Trash2 size={16} strokeWidth={1.5} />
       </IconButton>
       <span
         data-testid="deck-editor-status"
         data-status={status}
-        className={`ml-auto text-xs ${status === 'error' ? 'text-red-600' : 'text-gray-500'}`}
+        className={`ml-auto text-xs ${status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-fg-hint'}`}
       >
         {t(`deckEditor.status.${status}`)}
       </span>

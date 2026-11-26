@@ -26,7 +26,7 @@ export function SlideBackgroundControls({
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-1">
+      <div className="flex gap-0.5 rounded-lg bg-field p-0.5">
         {(['color', 'image', 'video'] as const).map((option) => (
           <button
             key={option}
@@ -37,10 +37,10 @@ export function SlideBackgroundControls({
                 ? set({ background: { type: 'color', color: '#000000' } })
                 : setPicking(option)
             }
-            className={`flex-1 rounded-md px-2 py-1 text-xs ${
+            className={`flex-1 rounded-md px-2 py-1 text-[13px] font-medium ${
               type === option
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200'
+                ? 'bg-selected text-fg'
+                : 'text-fg-label hover:text-fg'
             }`}
           >
             {t(`deckEditor.background.${option}`)}

@@ -27,10 +27,10 @@ export function MediaPickerDialog({
       ref={dialogRef}
       data-testid="deck-editor-media-dialog"
       onClose={onClose}
-      className="m-auto w-[min(40rem,95vw)] rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-900"
+      className="m-auto w-[min(40rem,95vw)] rounded-xl border border-line bg-panel p-0 shadow-popover backdrop:bg-black/50"
     >
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <h2 className="font-semibold text-gray-900 dark:text-white">
+      <div className="flex items-center justify-between border-b border-line px-4 py-3">
+        <h2 className="text-base font-semibold text-fg">
           {kind === 'image'
             ? t('deckEditor.choosePicture')
             : t('deckEditor.chooseVideo')}
@@ -38,10 +38,10 @@ export function MediaPickerDialog({
         <button
           type="button"
           onClick={() => dialogRef.current?.close()}
-          className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
           aria-label={t('common:buttons.done')}
         >
-          <X size={18} />
+          <X size={18} strokeWidth={1.5} />
         </button>
       </div>
       <div className="max-h-[70vh] overflow-y-auto p-4">

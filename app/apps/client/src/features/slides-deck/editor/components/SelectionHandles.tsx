@@ -27,18 +27,18 @@ export function SelectionHandles({
         <div
           key={handle}
           data-testid={`deck-editor-handle-${handle}`}
-          className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 touch-none rounded-sm border border-indigo-600 bg-white"
+          className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 touch-none rounded-sm border border-focus bg-panel"
           style={style}
           onPointerDown={(e) => onResize(e, handle)}
         />
       ))}
       <div
-        className="absolute left-1/2 h-6 w-px -translate-x-1/2 bg-indigo-500"
+        className="absolute left-1/2 h-6 w-px -translate-x-1/2 bg-focus"
         style={{ top: -24 }}
       />
       <div
         data-testid="deck-editor-rotate"
-        className="absolute left-1/2 h-3.5 w-3.5 -translate-x-1/2 touch-none cursor-grab rounded-full border border-indigo-600 bg-white"
+        className="absolute left-1/2 h-3.5 w-3.5 -translate-x-1/2 touch-none cursor-grab rounded-full border border-focus bg-panel"
         style={{ top: -32 }}
         onPointerDown={onRotate}
       />

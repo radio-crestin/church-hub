@@ -38,7 +38,7 @@ export function ColorField({
         data-testid={testId}
         value={toHex(value)}
         onChange={(e) => onChange(e.target.value)}
-        className="h-8 w-full cursor-pointer rounded-md border border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
+        className="h-8 w-full cursor-pointer rounded-[10px] border-0 bg-field p-1 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
       />
     </PanelField>
   )

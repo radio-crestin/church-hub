@@ -26,13 +26,13 @@ export function ToggleButton({
       // Keeps the text's selection while the box is being edited.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`rounded-md p-1.5 ${
+      className={`rounded-lg p-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-focus ${
         active
-          ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-          : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+          ? 'bg-selected text-fg'
+          : 'text-fg-label hover:bg-hover hover:text-fg'
       }`}
     >
-      <Icon size={16} />
+      <Icon size={16} strokeWidth={1.5} />
     </button>
   )
 }

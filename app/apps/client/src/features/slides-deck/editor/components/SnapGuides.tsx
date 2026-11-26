@@ -14,7 +14,7 @@ export function SnapGuides({
         <div
           key={`${guide.axis}${guide.at}`}
           data-testid="deck-editor-guide"
-          className="pointer-events-none absolute bg-pink-500"
+          className="pointer-events-none absolute bg-focus"
           style={
             guide.axis === 'x'
               ? { left: guide.at * scale, top: 0, bottom: 0, width: 1 }

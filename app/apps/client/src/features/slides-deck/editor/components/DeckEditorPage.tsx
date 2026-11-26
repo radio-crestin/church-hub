@@ -27,18 +27,18 @@ export function DeckEditorPage({
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="animate-spin text-gray-400" />
+        <Loader2 className="animate-spin text-fg-hint" strokeWidth={1.5} />
       </div>
     )
   }
   if (!item || item.itemType !== 'slides') {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-600 dark:text-gray-300">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-[13px] text-fg-label">
         <p>{t('deckEditor.notFound')}</p>
         <button
           type="button"
           onClick={onBack}
-          className="text-indigo-600 hover:underline"
+          className="text-primary hover:underline"
         >
           {t('deckEditor.back')}
         </button>

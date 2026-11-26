@@ -33,7 +33,7 @@ export function NumberField({
           const next = e.target.valueAsNumber
           if (Number.isFinite(next)) onChange(next)
         }}
-        className="w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        className="h-8 w-full rounded-[10px] border-0 bg-field px-2 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus tabular-nums"
       />
     </PanelField>
   )

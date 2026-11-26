@@ -47,21 +47,19 @@ export function SortableSlideThumb({
       data-testid="deck-editor-slide"
       data-slide-id={slide.id}
       data-selected={selected || undefined}
-      className={`group relative flex shrink-0 touch-none items-start gap-1.5 rounded-lg p-1.5 ${
-        selected
-          ? 'bg-indigo-100 dark:bg-indigo-900/40'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+      className={`group relative flex shrink-0 touch-none items-start gap-1.5 rounded-lg p-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+        selected ? 'bg-selected' : 'hover:bg-hover'
       } ${isDragging ? 'z-10 opacity-60' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
       onClick={onSelect}
     >
-      <span className="w-4 pt-0.5 text-right text-xs text-gray-500">
+      <span className="w-4 pt-0.5 text-right text-xs tabular-nums text-fg-hint">
         {index + 1}
       </span>
       <span
-        className={`rounded ring-2 ${selected ? 'ring-indigo-500' : 'ring-transparent'}`}
+        className={`rounded ring-2 ${selected ? 'ring-fg-hint' : 'ring-transparent'}`}
       >
         <DeckSlideThumbnail
           slide={slide}
@@ -76,14 +74,14 @@ export function SortableSlideThumb({
           data-testid="deck-editor-slide-duplicate"
           title={t('deckEditor.duplicateSlide')}
           aria-label={t('deckEditor.duplicateSlide')}
-          className="rounded bg-white/90 p-1 text-gray-700 shadow hover:bg-white"
+          className="rounded-md bg-panel/90 p-1 text-fg-label ring-1 ring-line hover:bg-panel hover:text-fg"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation()
             onDuplicate()
           }}
         >
-          <Copy size={12} />
+          <Copy size={12} strokeWidth={2} />
         </button>
         {canDelete && (
           <button
@@ -91,14 +89,14 @@ export function SortableSlideThumb({
             data-testid="deck-editor-slide-delete"
             title={t('deckEditor.deleteSlide')}
             aria-label={t('deckEditor.deleteSlide')}
-            className="rounded bg-white/90 p-1 text-red-600 shadow hover:bg-white"
+            className="rounded-md bg-panel/90 p-1 text-fg-label ring-1 ring-line hover:bg-panel hover:text-red-600"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation()
               onDelete()
             }}
           >
-            <Trash2 size={12} />
+            <Trash2 size={12} strokeWidth={2} />
           </button>
         )}
       </span>

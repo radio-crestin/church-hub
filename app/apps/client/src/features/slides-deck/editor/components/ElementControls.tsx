@@ -32,7 +32,7 @@ export function ElementControls({
   )
   const check = (key: 'loop' | 'muted' | 'autoplay', fallback: boolean) =>
     element.type === 'video' && (
-      <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+      <label className="flex items-center gap-2 text-[13px] text-fg-body">
         <input
           type="checkbox"
           checked={element[key] ?? fallback}
@@ -104,7 +104,7 @@ export function ElementControls({
             onChange={(e) =>
               update({ fit: e.target.value as 'cover' | 'contain' | 'fill' })
             }
-            className="w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className="h-8 w-full rounded-[10px] border-0 bg-field px-2 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           >
             {(['contain', 'cover', 'fill'] as const).map((fit) => (
               <option key={fit} value={fit}>

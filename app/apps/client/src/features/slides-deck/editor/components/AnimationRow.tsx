@@ -17,7 +17,7 @@ import {
 } from '../../utils/animationDirection'
 
 const SELECT =
-  'w-full rounded-md border border-gray-300 bg-white px-1.5 py-1 text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
+  'h-8 w-full rounded-[10px] border-0 bg-field px-2 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus'
 
 interface AnimationRowProps {
   animation: DeckAnimation
@@ -86,25 +86,25 @@ export function AnimationRow({
       data-animation-id={animation.id}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`space-y-1.5 rounded-lg border p-2 ${
-        selected
-          ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
-          : 'border-gray-200 dark:border-gray-700'
+        selected ? 'border-line-strong bg-selected' : 'border-line'
       }`}
     >
       <div className="flex items-center gap-1.5">
         <span
-          className="cursor-grab touch-none text-gray-400"
+          className="cursor-grab touch-none text-fg-hint"
           data-testid="deck-editor-animation-grip"
           {...attributes}
           {...listeners}
         >
-          <GripVertical size={14} />
+          <GripVertical size={14} strokeWidth={1.75} />
         </span>
-        <span className="text-xs font-semibold text-gray-500">{index + 1}</span>
+        <span className="text-xs font-semibold tabular-nums text-fg-hint">
+          {index + 1}
+        </span>
         <button
           type="button"
           onClick={onSelect}
-          className="min-w-0 flex-1 truncate text-left text-sm text-gray-800 dark:text-gray-100"
+          className="min-w-0 flex-1 truncate text-left text-[13px] font-medium text-fg-body"
         >
           {target}
         </button>
@@ -114,9 +114,9 @@ export function AnimationRow({
           title={t('deckEditor.animations.remove')}
           aria-label={t('deckEditor.animations.remove')}
           onClick={onRemove}
-          className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-red-600 dark:hover:bg-gray-700"
+          className="rounded-lg p-1 text-fg-label hover:bg-hover hover:text-red-600"
         >
-          <Trash2 size={14} />
+          <Trash2 size={14} strokeWidth={1.75} />
         </button>
       </div>
       <div className="grid grid-cols-2 gap-1.5">
