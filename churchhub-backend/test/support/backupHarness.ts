@@ -211,10 +211,12 @@ export class BackupHarness {
     }
     const byHash = new Map(blobs.map((blob) => [BackupHarness.hashOf(blob), blob]))
     const filed = await this.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['manifest', ...missingBlobs] }, token)
-    const { files } = (await filed.json()) as { files: { name: string; url: string }[] }
+    const { files } = (await filed.json()) as {
+      files: { name: string; url: string; headers: Record<string, string> }[]
+    }
     for (const file of files) {
       const body = file.name === 'manifest' ? manifest : (byHash.get(file.name) as Uint8Array)
-      await fetch(file.url, { method: 'PUT', body })
+      await fetch(file.url, { method: 'PUT', body, headers: file.headers })
     }
     const done = await this.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, token)
     return { backupId, done, missingBlobs }

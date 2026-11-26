@@ -103,11 +103,23 @@ test('every PUT URL is signed for its exact size; another size is refused', asyn
   const parts = await harness.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: [1] }, accessToken)
   const files = await harness.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['manifest', BackupHarness.hashOf(BIBLE)] }, accessToken)
   const part = ((await parts.json()) as { parts: { url: string; sizeBytes: number }[] }).parts[0]
-  const urls = ((await files.json()) as { files: { name: string; url: string; sizeBytes: number }[] }).files
-  for (const { url, sizeBytes } of [part, ...urls]) {
-    expect(new URL(url).searchParams.get('X-Amz-SignedHeaders')).toContain('content-length')
-    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes + 5000) })).status).toBe(403)
-    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes) })).status).toBe(200)
+  expect(new URL(part.url).searchParams.get('X-Amz-SignedHeaders')).toContain('content-length')
+  expect((await fetch(part.url, { method: 'PUT', body: bytes(part.sizeBytes + 5000) })).status).toBe(403)
+  expect((await fetch(part.url, { method: 'PUT', body: bytes(part.sizeBytes) })).status).toBe(200)
+
+  // Whole files: 5 minutes, signed for their size and If-None-Match: *.
+  const urls = ((await files.json()) as {
+    files: { name: string; url: string; sizeBytes: number; headers: Record<string, string> }[]
+  }).files
+  for (const { url, sizeBytes, headers } of urls) {
+    const signed = new URL(url).searchParams
+    expect(signed.get('X-Amz-Expires')).toBe('300')
+    expect(signed.get('X-Amz-SignedHeaders')).toContain('if-none-match')
+    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes + 5000), headers })).status).toBe(403)
+    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes) })).status).toBe(403)
+    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes), headers })).status).toBe(200)
+    // Never overwritten: a second PUT finds the object there.
+    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes, 4), headers })).status).toBe(412)
   }
   // A blob the upload doesn't send gets no URL.
   const other = await harness.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['f'.repeat(64)] }, accessToken)
@@ -130,6 +142,7 @@ test('completion waits for missing files and refuses a size lie', async () => {
   )).blobPrefix
   const accountId = [...harness.s3.objects.keys()].find((key) => key.endsWith('account.json'))?.split('/')[2]
   harness.s3.objects.set(`backups/blobs/${accountId}/${blobPrefix}/${BackupHarness.hashOf(BIBLE)}`, bytes(5000))
+  harness.s3.modified.set(`backups/blobs/${accountId}/${blobPrefix}/${BackupHarness.hashOf(BIBLE)}`, Date.now())
   const files = await harness.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['manifest'] }, accessToken)
   const { files: [manifest] } = (await files.json()) as { files: { url: string }[] }
   await fetch(manifest.url, { method: 'PUT', body: bytes(50) })
@@ -200,10 +213,8 @@ test('deleting one backup, then the whole account', async () => {
   expect(objectKeys('backups/')).toEqual([])
   expect(objectKeys('blobs/')).toEqual([])
   expect(harness.s3.uploads.size).toBe(0)
-  const record = JSON.parse(
-    new TextDecoder().decode([...harness.s3.objects].find(([key]) => key.endsWith('account.json'))?.[1])
-  )
-  expect(record).toMatchObject({ backups: [], blobs: {}, usedBytes: 0, email: null })
+  // Nothing is left: not even the record.
+  expect(harness.s3.keys().filter((key) => !key.startsWith('index/'))).toEqual([])
   expect((await harness.request('/backup/backups', {}, accessToken)).status).toBe(401)
   const refresh = await harness.json('/backup/session/refresh', 'POST', { refreshToken })
   expect(refresh.status).toBe(401)

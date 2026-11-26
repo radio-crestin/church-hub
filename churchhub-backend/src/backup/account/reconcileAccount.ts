@@ -1,15 +1,11 @@
 import type { BackupBucket, StoredObject } from '../storage/createBackupBucket'
 import type { AccountRecord, BlobEntry } from './AccountRecord'
-import {
-  accountBackupsPrefix,
-  accountBlobsPrefix,
-  blobKey,
-  manifestKey,
-  userPartKey,
-} from './accountKeys'
+import { blobKey, manifestKey, userPartKey } from './accountKeys'
 import { abortUploads } from './abortUploads'
 import { updateAccount } from './accountStore'
 import { expiredBackups } from './expiredBackups'
+import { listedKeys } from './listedKeys'
+import { listAccountObjects, SWEEP_AFTER_MS } from './sweepUnlistedObjects'
 import { takeExpiredUploads } from './takeExpiredUploads'
 
 export interface ReconcileResult {
@@ -47,7 +43,7 @@ function recount(record: AccountRecord, sizeOf: Map<string, number>, accountId: 
  * backups and uploads go; backups whose user part, manifest or any blob is
  * gone are unlisted (they couldn't be restored); sizes are read from the
  * objects; blob refs and the usage counter are recomputed from scratch;
- * objects nothing lists are deleted. `objects` may come from one listing
+ * objects nothing lists, older than any presigned URL, are deleted. `objects` may come from one listing
  * of the whole bucket (the daily run); otherwise the account is listed.
  */
 export async function reconcileAccount(
@@ -56,10 +52,7 @@ export async function reconcileAccount(
   retentionDays: number,
   objects?: StoredObject[]
 ): Promise<ReconcileResult> {
-  const stored = objects ?? [
-    ...(await bucket.list(accountBackupsPrefix(accountId))),
-    ...(await bucket.list(accountBlobsPrefix(accountId))),
-  ]
+  const stored = objects ?? (await listAccountObjects(bucket, accountId))
   const sizeOf = new Map(stored.map((object) => [object.key, object.size]))
   const now = Date.now()
   const outcome = await updateAccount(bucket, accountId, (record) => {
@@ -82,18 +75,14 @@ export async function reconcileAccount(
       }))
     recount(record, sizeOf, accountId)
     record.lastReconciledAt = now
-    const keep = new Set([
-      ...[...record.backups, ...record.uploads].flatMap((entry) => [
-        userPartKey(accountId, entry.id),
-        manifestKey(accountId, entry.id),
-      ]),
-      ...Object.keys(record.blobs).map((hash) => blobKey(accountId, record.blobPrefix, hash)),
-    ])
+    const keep = listedKeys(accountId, record)
     return {
       usedBytesBefore,
       expiredUploads: uploads.expired,
       blobPrefix: record.blobPrefix,
-      orphans: stored.filter((object) => !keep.has(object.key)),
+      orphans: stored.filter(
+        (object) => !keep.has(object.key) && now - object.lastModified >= SWEEP_AFTER_MS
+      ),
       usedBytesAfter: record.usedBytes,
       droppedBackups: before - record.backups.length,
     }

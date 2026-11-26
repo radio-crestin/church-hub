@@ -152,8 +152,10 @@ Free backups of a church's database, only for people signed in with Google
   backups, and the email for the admin panel); `backups/<HMAC(sub)>/<id>/`
   (`user.chb`, `manifest.chb`); `blobs/<HMAC(sub)>/<random>/<sha256>`;
   `index/accounts.json` (admin search); `admin/audit/` (audit log).
-  Uploads and downloads go straight to the bucket through presigned URLs
-  valid 15 minutes, each PUT signed for its exact Content-Length.
+  Uploads and downloads go straight to the bucket through presigned URLs:
+  parts and downloads valid 15 minutes; whole files (manifest, blobs) 5
+  minutes, only for blobs still unstored, signed for their exact
+  Content-Length and `If-None-Match: *` (never overwritten).
 - **Encryption**: the app encrypts the user part and manifest (AES-256-GCM,
   a fresh key per backup) and wraps that key with the account key from
   `GET /backup/key`, derived from `BACKUP_KEY_SECRET` and the `sub`: the
@@ -178,9 +180,13 @@ Free backups of a church's database, only for people signed in with Google
   only (Cloudflare's, or the Node server's resolved address).
 - **Upkeep** (`src/backup/runBackupMaintenance.ts`; cron triggers on the
   Worker, timers on Node): hourly, multipart uploads unfinished after 6
-  hours are aborted and backups past 30 days expire; daily, every account
-  is recomputed from the bucket (blob refs, usage; lost objects unlisted,
-  stray ones deleted).
+  hours are aborted, backups past 30 days expire, and objects no record
+  lists (older than any presigned URL) are swept; daily, every account is
+  recomputed from the bucket (blob refs, usage; lost objects unlisted).
+  Each account is handled on its own: one bad record never stops the rest.
+- **Deleting an account** erases everything under `accounts/<id>/`,
+  `backups/<id>/` and `blobs/<id>/` (multipart uploads aborted, the record
+  last): nothing is left.
 
 **Settings** (secrets; unset = `/backup` answers `503 not_configured`):
 

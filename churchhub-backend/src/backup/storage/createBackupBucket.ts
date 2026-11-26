@@ -3,10 +3,14 @@ import type { BackupBucketSettings } from '../backupSettings'
 
 /** How long a presigned upload-part or download URL works. */
 export const PRESIGN_TTL_SECONDS = 15 * 60
+/** How long a presigned whole-file PUT (manifest, blob) works. */
+export const FILE_PUT_TTL_SECONDS = 5 * 60
 
 export interface StoredObject {
   key: string
   size: number
+  /** Unix ms. */
+  lastModified: number
 }
 
 export interface InFlightUpload {
@@ -54,8 +58,11 @@ export interface BackupBucket {
     parts: UploadedPart[]
   ): Promise<void>
   abortMultipartUpload(key: string, uploadId: string): Promise<void>
-  /** A PUT URL for a whole object, signed for exactly `contentLength` bytes. */
-  presignPut(key: string, contentLength: number): Promise<string>
+  /**
+   * A PUT URL for a whole new object (5 minutes), signed for exactly
+   * `contentLength` bytes and `If-None-Match: *`: it can't overwrite one.
+   */
+  presignCreate(key: string, contentLength: number): Promise<string>
   presignGet(key: string): Promise<string>
 }
 
@@ -127,13 +134,14 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
     method: 'GET' | 'PUT',
     key: string,
     query: Record<string, string> = {},
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
+    ttlSeconds = PRESIGN_TTL_SECONDS
   ) => {
     const url = new URL(urlOf(settings.presignEndpoint, key))
     for (const [name, value] of Object.entries(query)) {
       url.searchParams.set(name, value)
     }
-    url.searchParams.set('X-Amz-Expires', String(PRESIGN_TTL_SECONDS))
+    url.searchParams.set('X-Amz-Expires', String(ttlSeconds))
     // allHeaders: aws4fetch leaves Content-Length out of the signature
     // otherwise; signed, the store refuses a body of any other length.
     const signed = await client.sign(url.toString(), {
@@ -194,6 +202,7 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
           objects.push({
             key: decodeXml(tag(entry, 'Key') ?? ''),
             size: Number(tag(entry, 'Size') ?? 0),
+            lastModified: Date.parse(tag(entry, 'LastModified') ?? '') || 0,
           })
         }
         token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
@@ -291,8 +300,14 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
         method: 'DELETE',
       })
     },
-    presignPut(key, contentLength) {
-      return presign('PUT', key, {}, { 'content-length': String(contentLength) })
+    presignCreate(key, contentLength) {
+      return presign(
+        'PUT',
+        key,
+        {},
+        { 'content-length': String(contentLength), 'if-none-match': '*' },
+        FILE_PUT_TTL_SECONDS
+      )
     },
     presignGet(key) {
       return presign('GET', key)

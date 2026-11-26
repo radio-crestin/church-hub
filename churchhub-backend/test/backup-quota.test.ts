@@ -128,6 +128,9 @@ test('the daily reconcile repairs a drifted counter, lost and stray objects', as
   harness.s3.objects.delete(`backups/backups/${stored.accountId}/${lost.backupId}/user.chb`)
   harness.s3.objects.set(`backups/blobs/${stored.accountId}/${stored.value.blobPrefix}/${'e'.repeat(64)}`, bytes(40))
 
+  // Stray objects are swept once older than any presigned URL (15 minutes).
+  for (const key of harness.s3.modified.keys()) harness.s3.modified.set(key, Date.now() - 16 * 60 * 1000)
+
   await runBackupMaintenance(harness.env, { reconcile: true })
 
   expect(await listed(accessToken)).toEqual([kept.backupId])

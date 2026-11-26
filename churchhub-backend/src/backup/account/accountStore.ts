@@ -2,6 +2,7 @@ import { randomId } from '../../sync/randomId'
 import { SyncError } from '../../sync/SyncError'
 import type { BackupBucket } from '../storage/createBackupBucket'
 import { type AccountRecord, emptyAccount } from './AccountRecord'
+import { migrateRecord } from './migrateRecord'
 import { accountRecordKey } from './accountKeys'
 
 /** Concurrent writes to one account retry this many times, then 503 busy. */
@@ -14,9 +15,7 @@ export async function readAccount(
 ): Promise<{ record: AccountRecord; etag: string | null }> {
   const found = await bucket.get(accountRecordKey(accountId))
   if (!found) return { record: emptyAccount(), etag: null }
-  // Fields added later read as their defaults.
-  const record = { ...emptyAccount(), ...(JSON.parse(found.text) as Partial<AccountRecord>) }
-  return { record, etag: found.etag }
+  return { record: migrateRecord(JSON.parse(found.text)), etag: found.etag }
 }
 
 /**

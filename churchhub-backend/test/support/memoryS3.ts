@@ -30,8 +30,10 @@ async function presignedIsValid(request: Request, bodyLength: number) {
   if (!(Date.now() <= issued + expires * 1000)) return false
   url.searchParams.delete('X-Amz-Signature')
   const headers: Record<string, string> = {}
-  if (signedHeaders.includes('content-length')) {
-    headers['content-length'] = String(bodyLength)
+  for (const name of signedHeaders) {
+    if (name === 'host') continue
+    headers[name] =
+      name === 'content-length' ? String(bodyLength) : (request.headers.get(name) ?? '')
   }
   const signer = new AwsV4Signer({
     url: url.toString(),
@@ -56,6 +58,8 @@ async function presignedIsValid(request: Request, bodyLength: number) {
  */
 export class MemoryS3 {
   readonly objects = new Map<string, Uint8Array>()
+  /** When each object was last written (unix ms), as ListObjectsV2 reports it. */
+  readonly modified = new Map<string, number>()
   readonly uploads = new Map<string, Upload>()
   /** Every request, as "METHOD /bucket/key?query". */
   readonly requests: string[] = []
@@ -100,7 +104,7 @@ export class MemoryS3 {
         .slice(0, Number(query.get('max-keys') ?? 1000))
         .map(
           (key) =>
-            `<Contents><Key>${key.slice(bucket.length + 1)}</Key><Size>${this.objects.get(key)?.length ?? 0}</Size></Contents>`
+            `<Contents><Key>${key.slice(bucket.length + 1)}</Key><Size>${this.objects.get(key)?.length ?? 0}</Size><LastModified>${new Date(this.modified.get(key) ?? Date.now()).toISOString()}</LastModified></Contents>`
         )
       return new Response(
         `<ListBucketResult><IsTruncated>false</IsTruncated>${keys.join('')}</ListBucketResult>`
@@ -156,6 +160,7 @@ export class MemoryS3 {
           offset += chunk.length
         }
         this.objects.set(path, whole)
+        this.modified.set(path, Date.now())
         this.uploads.delete(uploadId)
         return new Response('<CompleteMultipartUploadResult/>')
       }
@@ -175,6 +180,7 @@ export class MemoryS3 {
         return new Response(null, { status: 412 })
       }
       this.objects.set(path, bytes)
+      this.modified.set(path, Date.now())
       return new Response(null, { headers: { ETag: etagOf(bytes) } })
     }
     if (request.method === 'DELETE') {
