@@ -45,8 +45,10 @@ describe('createSyncGuard', () => {
     fakeBucket(true)
     const bindingsFor = createSyncGuard(ENV)
     expect(bindingsFor().SYNC_SECRET).toBeUndefined()
+    expect(bindingsFor().SYNC_READINESS).toBe('starting')
     await settle()
     expect(bindingsFor().SYNC_SECRET).toBe('secret')
+    expect(bindingsFor().SYNC_READINESS).toBe('enabled')
   })
 
   test('withholds SYNC_SECRET for good when the bucket ignores them', async () => {
@@ -55,10 +57,11 @@ describe('createSyncGuard', () => {
     await settle()
     expect(bindingsFor().SYNC_SECRET).toBeUndefined()
     expect(bindingsFor().S3_ENDPOINT).toBe('https://s3.example.com')
+    expect(bindingsFor().SYNC_READINESS).toBe('disabled')
   })
 
-  test('passes the bindings through when sync is not configured', () => {
+  test('passes the bindings through, marked off, when sync is not configured', () => {
     const env = { ...ENV, S3_ENDPOINT: undefined } as unknown as Bindings
-    expect(createSyncGuard(env)()).toBe(env)
+    expect(createSyncGuard(env)()).toEqual({ ...env, SYNC_READINESS: 'off' })
   })
 })
