@@ -2,6 +2,7 @@ import { buildScheduleSteps } from './buildScheduleSteps'
 import { presentScheduleStep } from './presentScheduleStep'
 import { broadcastPresentationState } from '../../websocket'
 import type { PresentationState } from '../presentation/types'
+import { flattenScheduleItems } from '../schedules/flattenScheduleItems'
 import { getScheduleById } from '../schedules/getSchedules'
 import { endScreenShareSession } from '../screen-share/session'
 
@@ -20,7 +21,7 @@ export async function presentStepAt(
   endScreenShareSession()
   const state = await presentScheduleStep(
     scheduleId,
-    schedule.items,
+    flattenScheduleItems(schedule.items),
     step,
     stepIndex,
   )

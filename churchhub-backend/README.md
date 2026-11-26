@@ -17,10 +17,10 @@ This worker provides a stateless OAuth flow using:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/auth/youtube` | GET | Initiates the YouTube OAuth flow, redirects to Google |
+| `/auth/youtube` | GET | Initiates the YouTube OAuth flow, redirects to Google. `origin` must be in `ALLOWED_ORIGINS`; `mode=redirect` takes a `returnUrl` on that same origin |
 | `/auth/youtube/callback` | GET | Handles Google callback, returns tokens (+ channel info) |
 | `/auth/youtube/refresh` | POST | Refreshes a YouTube access token |
-| `/auth/drive` | GET | Initiates the Drive backup OAuth flow (`drive.appdata` + identity scopes) |
+| `/auth/drive` | GET | Initiates the Drive backup OAuth flow (`drive.appdata` + identity scopes); same `origin`/`returnUrl` rules |
 | `/auth/drive/callback` | GET | Handles Google callback, returns tokens (+ account email) |
 | `/auth/drive/refresh` | POST | Refreshes a Drive access token |
 | `/health` | GET | Health check endpoint |
@@ -72,7 +72,7 @@ so the rest of the Worker deploys without them.
 | `S3_PUBLIC_URL` | The bucket's public read URL (anonymous `GetObject` on `churches/*`, no listing) |
 | `S3_STATE_BUCKET` | Optional: a private bucket (same endpoint and keys) for `sync-state/` |
 | `SYNC_COMPACT_AFTER` | Segments between snapshots (default 40) |
-| `SYNC_RATE_LIMITER` | Optional rate-limit binding on registration |
+| `SYNC_RATE_LIMITER` | Rate-limit binding on registration (bound in `wrangler.toml`: 3/min per IP; optional when self-hosted) |
 | `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET` | The Google OAuth client the owner sign-in uses (the one YouTube and Drive share) |
 | `OWNER_REDIRECT_URI` | Optional: the sign-in's callback, registered on that client (default `<this service>/sync/owner/callback`) |
 | `GOOGLE_AUTH_URL`, `GOOGLE_TOKEN_URL`, `GOOGLE_USERINFO_URL` | Optional: Google's endpoints, for a test's stand-in |

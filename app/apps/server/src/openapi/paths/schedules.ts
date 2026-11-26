@@ -190,6 +190,31 @@ export const schedulesPaths = {
       },
     },
   },
+  '/api/schedules/queue': {
+    get: {
+      tags: ['Schedules'],
+      summary: "The control room's queue",
+      description:
+        'The presentation the control room adds to when nothing else runs, with its items; made on first use. It is hidden from the list, search and sync; add, remove and reorder its items with the usual item endpoints.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The queue with its items',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/ScheduleWithItems' },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
   '/api/schedules/{id}': {
     get: {
       tags: ['Schedules'],
@@ -259,7 +284,8 @@ export const schedulesPaths = {
     post: {
       tags: ['Schedules'],
       summary: 'Add item to schedule',
-      description: 'Add a song or standalone slide to a schedule',
+      description:
+        'Add a song, slide, Bible verses, music, video, verses, Slides deck or another presentation (`childScheduleId`) to a schedule, at its end or after `afterItemId`. A presentation that is or includes this one is refused with 400 (it would make a loop), as is the queue, and one that would nest presentations more than 5 levels deep or make a presentation run more than 1000 items counting those inside it. Nested presentations are returned within the same limits.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {
@@ -281,6 +307,11 @@ export const schedulesPaths = {
                 slideType: { $ref: '#/components/schemas/SlideTemplate' },
                 slideContent: { type: 'string' },
                 afterItemId: { type: 'integer' },
+                childScheduleId: {
+                  type: 'integer',
+                  description:
+                    'Another presentation, played in its place; 400 when it is or includes this one',
+                },
                 biblePassage: {
                   $ref: '#/components/schemas/BiblePassageInput',
                 },
@@ -598,47 +629,6 @@ export const schedulesPaths = {
           },
         },
         '400': { $ref: '#/components/responses/BadRequest' },
-        '401': { $ref: '#/components/responses/Unauthorized' },
-        '404': { $ref: '#/components/responses/NotFound' },
-      },
-    },
-  },
-  '/api/schedules/{id}/import-to-queue': {
-    post: {
-      tags: ['Schedules'],
-      summary: 'Import schedule to queue',
-      description:
-        'Import all items from a schedule into the presentation queue',
-      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-      parameters: [
-        {
-          name: 'id',
-          in: 'path',
-          required: true,
-          schema: { type: 'integer' },
-          description: 'Schedule ID',
-        },
-      ],
-      responses: {
-        '200': {
-          description: 'Schedule imported to queue',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  data: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean' },
-                      itemsImported: { type: 'integer' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
         '401': { $ref: '#/components/responses/Unauthorized' },
         '404': { $ref: '#/components/responses/NotFound' },
       },

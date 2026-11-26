@@ -31,10 +31,8 @@
     "slidesDescription": "Diapozitive proprii, cu text, imagini, video și animații",
     "importPptx": "Importă PowerPoint",
     "importPptxDescription": "Diapozitive dintr-un fișier .pptx, cu imagini, videoclipuri și animații",
-    "importSchedule": {
-      "title": "Importă prezentare",
-      "description": "Importă dintr-o prezentare existentă"
-    }
+    "program": "Program",
+    "programDescription": "O altă prezentare, rulată în locul acesta"
   },
   "fontSize": {
     "increase": "Mărește textul",

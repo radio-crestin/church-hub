@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  type AnySQLiteColumn,
   index,
   integer,
   real,
@@ -33,6 +34,9 @@ export const schedules = sqliteTable(
     // The slide template for all its slides (slide_templates.id); NULL = each
     // screen's own. Local to this computer, like the automation.
     templateId: integer('template_id'),
+    // The control room's queue (see add-schedule-nesting): one, hidden from
+    // the presentations list.
+    isQueue: integer('is_queue', { mode: 'boolean' }).notNull().default(false),
     startTrigger: text('start_trigger', {
       mode: 'json',
     }).$type<AutomationTrigger>(),
@@ -65,11 +69,17 @@ export const scheduleItems = sqliteTable(
         'video',
         'verses',
         'slides',
+        'schedule',
       ],
     }).notNull(),
     songId: integer('song_id').references(() => songs.id, {
       onDelete: 'cascade',
     }),
+    // A `schedule` item: the presentation it plays in its place.
+    childScheduleId: integer('child_schedule_id').references(
+      (): AnySQLiteColumn => schedules.id,
+      { onDelete: 'cascade' },
+    ),
     slideType: text('slide_type', {
       enum: ['announcement', 'versete_tineri', 'scene'],
     }),

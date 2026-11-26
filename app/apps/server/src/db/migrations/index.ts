@@ -14,6 +14,7 @@ import { addScheduleAutomation } from './add-schedule-automation'
 import { addScheduleItemConfig } from './add-schedule-item-config'
 import { addScheduleItemMidi } from './add-schedule-item-midi'
 import { addScheduleItemSung } from './add-schedule-item-sung'
+import { addScheduleNesting } from './add-schedule-nesting'
 import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
 import { addSlideTemplates } from './add-slide-templates'
@@ -441,6 +442,13 @@ export function runMigrations(rawDb: Database): MigrationResult {
     'add_schedule_item_midi',
     'Running add schedule item MIDI migration',
     () => addScheduleItemMidi(rawDb),
+  )
+
+  // Presentations inside presentations, and the control room's queue.
+  runStep(
+    'add_schedule_nesting',
+    'Running add schedule nesting migration',
+    () => addScheduleNesting(rawDb),
   )
 
   // Merge the legacy `bible_passage` schedule items into the surviving

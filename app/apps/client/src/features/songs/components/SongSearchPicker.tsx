@@ -145,6 +145,9 @@ export function SongSearchPicker({
     ? searchFetching && !searchResults
     : browseLoading
 
+  const isSettled =
+    query.trim() === debouncedQuery && !(isSearching && searchFetching)
+
   const loadMore = useCallback(() => {
     if (isSearching) {
       setVisibleCount((count) => count + PAGE_SIZE)
@@ -183,9 +186,16 @@ export function SongSearchPicker({
             setQuery(e.target.value)
             setVisibleCount(PAGE_SIZE)
           }}
+          onKeyDown={(e) => {
+            // Enter takes the first song listed, once the list matches the query.
+            if (e.key === 'Enter' && isSettled && rows[0]) {
+              e.preventDefault()
+              onSongSelect(rows[0].id)
+            }
+          }}
           placeholder={t('search.placeholder')}
           data-testid="song-picker-search"
-          className="w-full pl-9 pr-8 py-2 text-sm bg-app border border-line rounded-lg text-fg placeholder:text-fg-hint focus:ring-1 focus:ring-focus focus:border-focus"
+          className="w-full pl-9 pr-8 py-2 text-base md:text-sm bg-app border border-line rounded-lg text-fg placeholder:text-fg-hint focus:ring-1 focus:ring-focus focus:border-focus"
         />
         {query && (
           <ClearSearchButton

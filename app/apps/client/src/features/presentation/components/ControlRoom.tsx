@@ -43,11 +43,12 @@ interface ControlRoomProps {
   /** The program whose step is on the screens: the phone's arrows walk it. */
   liveProgram: LiveProgramSteps | null
   /**
-   * The presentations with their items, beside the preview (under it on a
-   * phone): what the operator follows and steps through.
+   * The queue, or the program running, beside the preview (under it on a
+   * phone): what the operator follows and steps through. It fills the column
+   * and scrolls its own list.
    */
   playlist?: ReactNode
-  /** The playlist's name, read out by screen readers (it shows no heading). */
+  /** The playlist's name, for screen readers. */
   playlistTitle?: string
 }
 
@@ -251,7 +252,7 @@ export function ControlRoom({
           <aside
             aria-label={playlistTitle}
             data-testid="control-room-playlist"
-            className="bg-panel rounded-xl border border-line p-3 lg:p-4 lg:order-first lg:w-[30rem] lg:shrink-0 lg:min-h-0 lg:overflow-y-auto"
+            className="bg-panel rounded-xl border border-line p-3 lg:p-4 lg:order-first lg:w-[30rem] lg:shrink-0 lg:min-h-0 lg:flex lg:flex-col"
           >
             {playlist}
           </aside>

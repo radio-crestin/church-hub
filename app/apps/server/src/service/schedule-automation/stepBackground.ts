@@ -1,6 +1,7 @@
 import { buildScheduleSteps } from './buildScheduleSteps'
 import type { PresentationBackground } from '../presentation/types'
 import { isBackgroundVideo } from '../schedule-items/isBackgroundVideo'
+import { flattenScheduleItems } from '../schedules/flattenScheduleItems'
 import { getScheduleById } from '../schedules/getSchedules'
 
 /**
@@ -14,10 +15,8 @@ export function stepBackground(
   const schedule = getScheduleById(scheduleId)
   const step = schedule && buildScheduleSteps(schedule.items)[stepIndex]
   if (!schedule || !step) return null
-  const at = schedule.items.findIndex((item) => item.id === step.item.id)
-  const background = schedule.items
-    .slice(0, at)
-    .reverse()
-    .find(isBackgroundVideo)
+  const items = flattenScheduleItems(schedule.items)
+  const at = items.findIndex((item) => item.id === step.item.id)
+  const background = items.slice(0, at).reverse().find(isBackgroundVideo)
   return background?.video ? { url: background.video.url } : null
 }

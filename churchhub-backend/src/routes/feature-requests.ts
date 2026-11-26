@@ -1,4 +1,5 @@
 import { type Context, Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import {
   BODY_MAX_BYTES,
   consumeDailyQuota,
@@ -15,6 +16,13 @@ const SCREENSHOT_ID_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp)$/
 
 const featureRequests = new Hono<{ Bindings: Bindings }>()
 
+/** 413 for a body over the limit, counted as it streams in. */
+const featureRequestBodyLimit = bodyLimit({
+  maxSize: BODY_MAX_BYTES,
+  onError: (c) =>
+    c.json({ success: false, error: 'Request is too large' }, 413),
+})
+
 /**
  * POST /feature-requests
  * Creates a public GitHub issue from an in-app "Request a feature" report
@@ -24,18 +32,13 @@ const featureRequests = new Hono<{ Bindings: Bindings }>()
  * burst limit (binding) and 50 requests per rolling 24 hours (KV), both
  * checked before anything reaches GitHub or WhatsApp.
  */
-featureRequests.post('/feature-requests', async (c) => {
+featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => {
   const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown'
   const { success: withinLimit } =
     await c.env.FEATURE_REQUEST_RATE_LIMITER.limit({
       key: `feature-request:${clientIp}`,
     })
   if (!withinLimit) return rateLimited(c)
-
-  const declaredBytes = Number(c.req.header('Content-Length') ?? 0)
-  if (declaredBytes > BODY_MAX_BYTES) {
-    return c.json({ success: false, error: 'Request is too large' }, 413)
-  }
 
   try {
     const request = parseFeatureRequest(await c.req.json().catch(() => null))
