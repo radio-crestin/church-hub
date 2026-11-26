@@ -67,6 +67,7 @@ interface SortableBookmarkItemProps {
   bookmark: BibleBookmark
   isActive: boolean
   onSelect: () => void
+  onPresent: () => void
   onRemove: () => void
 }
 
@@ -74,6 +75,7 @@ function SortableBookmarkItem({
   bookmark,
   isActive,
   onSelect,
+  onPresent,
   onRemove,
 }: SortableBookmarkItemProps) {
   const { t } = useTranslation('bible')
@@ -121,6 +123,7 @@ function SortableBookmarkItem({
       <button
         type="button"
         onClick={onSelect}
+        onDoubleClick={onPresent}
         className="flex-1 min-w-0 text-left py-1.5 pr-1"
       >
         <div className="flex items-baseline gap-1.5">
@@ -301,6 +304,8 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
 
 interface BibleBookmarksPanelProps {
   onSelectVerse: (bookmark: BibleBookmark) => void
+  /** A double-click: show the verse on screen right away. */
+  onPresentVerse: (bookmark: BibleBookmark) => void
   /** Verse currently on screen, highlighted in the list. */
   activeVerseId?: number
   /** Translation used for imported references that do not name one. */
@@ -317,6 +322,7 @@ interface BibleBookmarksPanelProps {
 
 export function BibleBookmarksPanel({
   onSelectVerse,
+  onPresentVerse,
   activeVerseId,
   translationId,
   isCollapsed = false,
@@ -492,6 +498,7 @@ export function BibleBookmarksPanel({
           bookmark={item.bookmark}
           isActive={activeVerseId === item.bookmark.verseId}
           onSelect={() => onSelectVerse(item.bookmark!)}
+          onPresent={() => onPresentVerse(item.bookmark!)}
           onRemove={() => removeBookmarkMutation.mutate(item.bookmark!.id)}
         />
       )
