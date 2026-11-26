@@ -115,7 +115,7 @@ export function ScheduleVerseRow({
         <div className="flex items-center gap-1.5 min-w-0">
           <ScheduleRowNumber position={position} isLive={isLive} />
           <ScheduleItemTypeIcon item={item} size="sm" />
-          <span className="text-[13px] font-medium truncate text-fg">
+          <span className="text-sm font-medium truncate text-fg">
             {reference}
           </span>
           {item.biblePassageTranslation && (

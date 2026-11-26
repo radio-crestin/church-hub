@@ -233,7 +233,7 @@ export function BibleHistoryPanel({
             </button>
           ) : null}
           <History className="w-4 h-4 text-fg-label" strokeWidth={1.5} />
-          <span className="text-[13px] font-medium text-fg">
+          <span className="text-sm font-medium text-fg">
             {t('history.title')}
           </span>
           {historyItems.length > 0 && (
@@ -280,7 +280,7 @@ export function BibleHistoryPanel({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('history.searchPlaceholder')}
-                  className="w-full h-8 pl-8 pr-7 text-[13px] bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
@@ -300,15 +300,15 @@ export function BibleHistoryPanel({
             className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : historyItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 {t('history.empty')}
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 {t('history.noResults')}
               </div>
             ) : (

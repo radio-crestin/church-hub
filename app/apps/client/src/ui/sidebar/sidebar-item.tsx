@@ -144,7 +144,7 @@ export function SidebarItem({
     onClick?.(e)
   }
   const baseClasses = `
-    flex items-center gap-2.5 px-3 py-2.5 md:h-8 md:py-0 md:px-2.5 rounded-lg transition-colors duration-150
+    flex items-center gap-3 px-3 py-2.5 md:h-9 md:py-0 md:px-2.5 rounded-lg transition-colors duration-150
     ${isCollapsed ? 'md:justify-center' : ''}
     ${className}
   `
@@ -162,19 +162,19 @@ export function SidebarItem({
       <img
         src={customIconUrl}
         alt=""
-        className="w-4 h-4 flex-shrink-0 object-contain"
+        className="w-[18px] h-[18px] flex-shrink-0 object-contain"
       />
     ) : (
-      <Icon size={16} strokeWidth={1.5} className="flex-shrink-0" />
+      <Icon size={18} strokeWidth={1.5} className="flex-shrink-0" />
     )
 
   const content = (
     <>
       {renderIcon()}
       {/* Mobile: always show label, Desktop: respect isCollapsed */}
-      <span className="text-[13px] font-medium md:hidden">{label}</span>
+      <span className="text-sm font-medium md:hidden">{label}</span>
       {!isCollapsed && (
-        <span className="text-[13px] font-medium hidden md:inline flex-1">
+        <span className="text-sm font-medium hidden md:inline flex-1">
           {label}
         </span>
       )}

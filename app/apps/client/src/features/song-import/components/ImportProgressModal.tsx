@@ -56,7 +56,7 @@ export function ImportProgressModal({
             <Loader2 className="w-16 h-16 text-fg-hint animate-spin" />
             {hasKnownTotal && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[13px] font-medium tabular-nums text-fg">
+                <span className="text-sm font-medium tabular-nums text-fg">
                   {percentage}%
                 </span>
               </div>

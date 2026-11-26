@@ -170,7 +170,7 @@ export function EditVerseteTineriModal({
             type="button"
             onClick={handleClose}
             disabled={updateMutation.isPending}
-            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-fg bg-field hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
           >
             <X size={16} strokeWidth={1.5} />
             {t('actions.cancel')}
@@ -181,7 +181,7 @@ export function EditVerseteTineriModal({
             disabled={
               updateMutation.isPending || verseteTineriEntries.length === 0
             }
-            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {updateMutation.isPending ? (
               <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />

@@ -444,7 +444,7 @@ export function SongEditor({
                   type="button"
                   onClick={handleAddToScheduleClick}
                   disabled={isLoading}
-                  className="h-8 px-2 @3xl:px-3 text-[13px] font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+                  className="h-8 px-2 @3xl:px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                   title={t('songs:actions.addToSchedule')}
                 >
                   <CalendarPlus size={20} />
@@ -456,7 +456,7 @@ export function SongEditor({
                   type="button"
                   onClick={handlePresentNow}
                   disabled={isLoading || presentTemporarySong.isPending}
-                  className="h-8 px-2 @3xl:px-3 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+                  className="h-8 px-2 @3xl:px-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                   title={t('queue:actions.presentNow')}
                 >
                   <Play size={20} />
@@ -486,7 +486,7 @@ export function SongEditor({
               onClick={() => onSave()}
               data-testid="song-editor-save"
               disabled={isSaving || isLoading || !title.trim() || !isDirty}
-              className="h-8 px-2 @3xl:px-3 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+              className="h-8 px-2 @3xl:px-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
               title={t('songs:actions.save')}
             >
               {isSaving ? (
@@ -582,7 +582,7 @@ export function SongEditor({
               <button
                 type="button"
                 onClick={handleSaveAndContinue}
-                className="w-full h-9 px-3.5 text-[13px] font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
+                className="w-full h-9 px-3.5 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
               >
                 {t('songs:modal.saveAndContinue')}
               </button>

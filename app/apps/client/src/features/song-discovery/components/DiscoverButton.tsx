@@ -31,7 +31,7 @@ export function DiscoverButton() {
         type="button"
         onClick={() => navigate({ to: '/songs/discover' })}
         title={t('button.discover')}
-        className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-raised px-3 text-[13px] font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover"
+        className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-raised px-3 text-sm font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover"
       >
         <Sparkles
           aria-hidden="true"
@@ -48,7 +48,7 @@ export function DiscoverButton() {
           data-testid="discover-sync-pending"
           title={t('button.syncPending', { count: pendingCount })}
           aria-label={t('button.syncPending', { count: pendingCount })}
-          className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary px-2.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+          className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary px-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
         >
           {isSyncing ? (
             <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />

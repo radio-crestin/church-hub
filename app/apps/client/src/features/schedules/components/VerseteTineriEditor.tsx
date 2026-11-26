@@ -108,7 +108,7 @@ export function VerseteTineriEditor({
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center gap-2 text-[13px] text-fg-label">
+      <div className="flex items-center gap-2 text-sm text-fg-label">
         <Users size={16} strokeWidth={1.5} />
         <span>
           {t('verseteTineri.entriesCount', { count: entries.length })}
@@ -147,9 +147,7 @@ export function VerseteTineriEditor({
       ) : (
         <div className="flex flex-col items-center justify-center py-6 text-center border-2 border-dashed border-line rounded-lg">
           <Users className="w-8 h-8 text-fg-hint mb-2" />
-          <p className="text-[13px] text-fg-hint">
-            {t('verseteTineri.noEntries')}
-          </p>
+          <p className="text-sm text-fg-hint">{t('verseteTineri.noEntries')}</p>
         </div>
       )}
 

@@ -60,7 +60,7 @@ export function QueueList({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-fg-body truncate">
+            <p className="text-sm font-medium text-fg-body truncate">
               {item.title || item.filename}
             </p>
             {item.artist && (

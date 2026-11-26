@@ -109,7 +109,7 @@ export function UserPermissions({
     <div className="space-y-5">
       {/* Role Template Selection */}
       <div>
-        <h4 className="text-[13px] font-semibold text-fg">
+        <h4 className="text-sm font-semibold text-fg">
           {t('sections.users.roleTemplate')}
         </h4>
         <p className="mb-2.5 text-xs text-fg-hint">
@@ -122,7 +122,7 @@ export function UserPermissions({
               type="button"
               onClick={() => handleRoleSelect(role)}
               disabled={disabled}
-              className={`px-3 py-2 text-[13px] rounded-lg border transition-colors ${
+              className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                 selectedRole === role
                   ? 'border-transparent bg-selected text-fg'
                   : 'border-transparent bg-field text-fg-body hover:bg-hover'
@@ -137,7 +137,7 @@ export function UserPermissions({
       {/* Permission Groups */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h4 className="text-[13px] font-semibold text-fg">
+          <h4 className="text-sm font-semibold text-fg">
             {t('sections.users.permissions')}
           </h4>
           <span className="text-xs text-fg-hint">
@@ -192,7 +192,7 @@ export function UserPermissions({
                   <button
                     type="button"
                     onClick={() => toggleGroup(group)}
-                    className="flex-1 text-left text-[13px] font-medium text-fg"
+                    className="flex-1 text-left text-sm font-medium text-fg"
                   >
                     {t(`sections.users.groups.${group}`)}
                   </button>
@@ -220,7 +220,7 @@ export function UserPermissions({
                           focus:ring-focus disabled:opacity-50 cursor-pointer
                           disabled:cursor-not-allowed ml-6"
                         />
-                        <span className="text-[13px] text-fg-body">
+                        <span className="text-sm text-fg-body">
                           {t(`sections.users.permissionLabels.${permission}`)}
                         </span>
                       </label>

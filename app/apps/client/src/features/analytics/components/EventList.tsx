@@ -12,10 +12,10 @@ export function EventList({ title, namespace, events }: EventListProps) {
   const { t } = useTranslation('privacy')
   return (
     <div>
-      <h4 className="text-[13px] font-medium text-fg">{title}</h4>
+      <h4 className="text-sm font-medium text-fg">{title}</h4>
       <ul className="mt-2 space-y-2" data-testid={`privacy-${namespace}`}>
         {Object.entries(events).map(([name, properties]) => (
-          <li key={name} className="text-[13px] text-fg-body">
+          <li key={name} className="text-sm text-fg-body">
             <code className="rounded bg-field px-1 text-xs">{name}</code>{' '}
             {t(`${namespace}.${name}`)}
             <span className="block text-xs text-fg-hint">

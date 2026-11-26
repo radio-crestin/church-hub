@@ -58,7 +58,7 @@ export function StreamControls() {
     <button
       onClick={handleButtonClick}
       disabled={isButtonDisabled}
-      className={`inline-flex h-8 items-center justify-center rounded-lg px-3 text-[13px] font-medium text-white transition-colors ${
+      className={`inline-flex h-8 items-center justify-center rounded-lg px-3 text-sm font-medium text-white transition-colors ${
         hasConnection
           ? 'bg-primary hover:bg-indigo-700 disabled:cursor-not-allowed'
           : 'bg-primary opacity-50 cursor-not-allowed'
@@ -94,7 +94,7 @@ export function StreamControls() {
           <button
             onClick={() => stop()}
             disabled={isStopping}
-            className="inline-flex h-8 items-center justify-center rounded-lg px-3 text-[13px] font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex h-8 items-center justify-center rounded-lg px-3 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span className="flex items-center gap-2">
               <Square size={14} strokeWidth={1.75} className="fill-current" />

@@ -381,7 +381,7 @@ export function ScreenEditor({
 
           {/* The slide type whose layout is being edited */}
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[13px] text-fg-hint whitespace-nowrap">
+            <span className="text-sm text-fg-hint whitespace-nowrap">
               {t('screens.editor.slideType')}
             </span>
             <Combobox

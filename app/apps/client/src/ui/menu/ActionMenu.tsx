@@ -274,7 +274,7 @@ export function ActionMenu({
           <span className="min-w-0 flex-1">
             {/* Wraps rather than truncates, so a long label still reads whole
                 within the panel's capped width. */}
-            <span className="block text-[13px] font-medium text-fg">
+            <span className="block text-sm font-medium text-fg">
               {item.label}
             </span>
             {item.description && (

@@ -100,14 +100,14 @@ export function AISearchSettings({
             {t(`${i18nPrefix}.title`)}
           </h3>
         </div>
-        <p className="text-fg-label text-[13px] mb-6">
+        <p className="text-fg-label text-sm mb-6">
           {t(`${i18nPrefix}.description`)}
         </p>
 
         {/* Enable Toggle */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="text-[13px] font-medium text-fg">
+            <label className="text-sm font-medium text-fg">
               {t(`${i18nPrefix}.enable.label`)}
             </label>
             <p className="text-fg-label text-xs mt-0.5">
@@ -134,7 +134,7 @@ export function AISearchSettings({
         {/* Analyze Results Toggle */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="text-[13px] font-medium text-fg">
+            <label className="text-sm font-medium text-fg">
               {t(`${i18nPrefix}.analyzeResults.label`)}
             </label>
             <p className="text-fg-label text-xs mt-0.5">
@@ -162,7 +162,7 @@ export function AISearchSettings({
 
         {/* Provider */}
         <div className="space-y-2 mb-4">
-          <label className="text-[13px] font-medium text-fg">
+          <label className="text-sm font-medium text-fg">
             {t(`${i18nPrefix}.provider.label`)}
           </label>
           <Combobox
@@ -181,7 +181,7 @@ export function AISearchSettings({
 
         {/* Model */}
         <div className="space-y-2 mb-4">
-          <label className="text-[13px] font-medium text-fg">
+          <label className="text-sm font-medium text-fg">
             {t(`${i18nPrefix}.model.label`)}
           </label>
           <input
@@ -198,7 +198,7 @@ export function AISearchSettings({
 
         {/* API Key */}
         <div className="space-y-2 mb-4">
-          <label className="text-[13px] font-medium text-fg">
+          <label className="text-sm font-medium text-fg">
             {t(`${i18nPrefix}.apiKey.label`)}
           </label>
           <div className="relative">
@@ -229,7 +229,7 @@ export function AISearchSettings({
         {/* Base URL (for custom provider) */}
         {localConfig.provider === 'custom' && (
           <div className="space-y-2 mb-4">
-            <label className="text-[13px] font-medium text-fg">
+            <label className="text-sm font-medium text-fg">
               {t(`${i18nPrefix}.baseUrl.label`)}
             </label>
             <input
@@ -251,7 +251,7 @@ export function AISearchSettings({
             type="button"
             onClick={handleSave}
             disabled={isUpdating}
-            className="w-full h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUpdating ? t(`${i18nPrefix}.saving`) : t(`${i18nPrefix}.save`)}
           </button>

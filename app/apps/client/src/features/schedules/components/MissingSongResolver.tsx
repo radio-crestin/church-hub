@@ -55,7 +55,7 @@ export function MissingSongResolver({
         <h3 className="text-base font-semibold text-fg">
           {t('editAsText.missingSongs.title')}
         </h3>
-        <p className="text-[13px] text-fg-label mt-1">
+        <p className="text-sm text-fg-label mt-1">
           {t('editAsText.missingSongs.description')}
         </p>
       </div>
@@ -81,7 +81,7 @@ export function MissingSongResolver({
               <div>
                 <span className="font-medium text-fg">{song.title}</span>
                 {song.resolved && (
-                  <span className="ml-2 text-[13px] text-fg-hint">
+                  <span className="ml-2 text-sm text-fg-hint">
                     {song.resolved.type === 'existing'
                       ? '(linked)'
                       : '(will create)'}
@@ -95,7 +95,7 @@ export function MissingSongResolver({
                 <button
                   type="button"
                   onClick={() => setSearchingFor(song.title)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-fg hover:bg-hover rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-fg hover:bg-hover rounded-lg transition-colors"
                 >
                   <Search size={14} strokeWidth={1.75} />
                   {t('editAsText.missingSongs.searchAndSelect')}
@@ -103,7 +103,7 @@ export function MissingSongResolver({
                 <button
                   type="button"
                   onClick={() => handleCreate(song.title)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-fg-label hover:bg-hover rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-fg-label hover:bg-hover rounded-lg transition-colors"
                 >
                   <Plus size={14} strokeWidth={1.75} />
                   {t('editAsText.missingSongs.createNew')}
@@ -111,7 +111,7 @@ export function MissingSongResolver({
                 <button
                   type="button"
                   onClick={() => handleSkip(song.title)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-fg-label hover:bg-hover rounded-lg transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-fg-label hover:bg-hover rounded-lg transition-colors"
                 >
                   <X size={14} strokeWidth={1.75} />
                   {t('editAsText.missingSongs.skip')}
@@ -131,7 +131,7 @@ export function MissingSongResolver({
                     ),
                   )
                 }
-                className="px-3 py-1.5 text-[13px] text-fg-label hover:bg-hover rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm text-fg-label hover:bg-hover rounded-lg transition-colors"
               >
                 Change
               </button>
@@ -150,7 +150,7 @@ export function MissingSongResolver({
         <button
           type="button"
           onClick={onCancel}
-          className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
+          className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
         >
           {t('editAsText.cancel')}
         </button>
@@ -158,7 +158,7 @@ export function MissingSongResolver({
           type="button"
           onClick={handleContinue}
           disabled={!allResolved && songs.length > 0}
-          className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('editAsText.missingSongs.continue')}
         </button>

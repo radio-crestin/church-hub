@@ -245,7 +245,7 @@ export function ScreenManager() {
           <h3 className="text-base font-semibold text-fg mb-2">
             {t('settings:sections.screens.noScreens')}
           </h3>
-          <p className="text-[13px] text-fg-hint mb-4">
+          <p className="text-sm text-fg-hint mb-4">
             {t('presentation:screens.noScreensDescription')}
           </p>
           <Button onClick={handleAddNew} variant="primary">
@@ -264,7 +264,7 @@ export function ScreenManager() {
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-fg-label mb-1">
+                <label className="block text-sm font-medium text-fg-label mb-1">
                   {t('presentation:screens.screenName')}
                 </label>
                 <input
@@ -272,12 +272,12 @@ export function ScreenManager() {
                   value={newScreenName}
                   onChange={(e) => setNewScreenName(e.target.value)}
                   placeholder={t('presentation:screens.screenNamePlaceholder')}
-                  className="w-full h-9 px-3 text-[13px] rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="w-full h-9 px-3 text-sm rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-fg-label mb-1">
+                <label className="block text-sm font-medium text-fg-label mb-1">
                   {t('presentation:screens.screenType')}
                 </label>
                 <Combobox
@@ -318,7 +318,7 @@ export function ScreenManager() {
             <h3 className="text-base font-semibold text-fg mb-2">
               {t('presentation:screens.deleteConfirmTitle')}
             </h3>
-            <p className="text-[13px] text-fg-label mb-4">
+            <p className="text-sm text-fg-label mb-4">
               {t('presentation:screens.deleteConfirmMessage', {
                 name: deleteConfirm.name,
               })}

@@ -33,12 +33,12 @@ function BrandPanel({ tagline }: { tagline: string }) {
     <div className="hidden w-1/2 flex-col justify-between border-r border-line bg-panel p-12 lg:flex">
       <div className="flex items-center gap-3">
         <AppMark size={40} />
-        <span className="text-[15px] font-semibold text-fg">Church Hub</span>
+        <span className="text-base font-semibold text-fg">Church Hub</span>
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold text-fg">Church Hub</h2>
-        <p className="mt-2 max-w-sm text-[15px] text-fg-label">{tagline}</p>
+        <p className="mt-2 max-w-sm text-base text-fg-label">{tagline}</p>
       </div>
 
       <div className="text-xs text-fg-hint">
@@ -142,13 +142,11 @@ export function LoginScreen({
           {/* Brand (mobile only, since the side panel is hidden) */}
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
             <AppMark size={32} />
-            <span className="text-[15px] font-semibold text-fg">
-              Church Hub
-            </span>
+            <span className="text-base font-semibold text-fg">Church Hub</span>
           </div>
 
           <h1 className="text-2xl font-semibold text-fg">{t('login.title')}</h1>
-          <p className="mt-1.5 text-[13px] text-fg-hint">
+          <p className="mt-1.5 text-sm text-fg-hint">
             {!selected
               ? t('login.selectUser')
               : codeMode
@@ -178,12 +176,12 @@ export function LoginScreen({
                 <div>
                   <label
                     htmlFor="login-password"
-                    className="mb-1.5 block text-[13px] font-medium text-fg-label"
+                    className="mb-1.5 block text-sm font-medium text-fg-label"
                   >
                     {codeMode ? t('login.codeLabel') : t('login.passwordLabel')}
                   </label>
                   {codeMode ? (
-                    <p className="mb-2 text-[13px] text-fg-hint">
+                    <p className="mb-2 text-sm text-fg-hint">
                       {t('login.codeHint')}
                     </p>
                   ) : null}
@@ -205,7 +203,7 @@ export function LoginScreen({
                         setError(false)
                       }}
                       disabled={submitting}
-                      className={`w-full rounded-[10px] bg-field py-2.5 pl-10 pr-11 text-[13px] text-fg outline-none transition-colors placeholder:text-fg-hint disabled:opacity-60 ${
+                      className={`w-full rounded-[10px] bg-field py-2.5 pl-10 pr-11 text-sm text-fg outline-none transition-colors placeholder:text-fg-hint disabled:opacity-60 ${
                         error
                           ? 'ring-1 ring-inset ring-red-500'
                           : 'focus:ring-1 focus:ring-inset focus:ring-focus'
@@ -235,7 +233,7 @@ export function LoginScreen({
                   {error ? (
                     <p
                       role="alert"
-                      className="mt-2 flex items-center gap-1.5 text-[13px] font-medium text-red-600 dark:text-red-400"
+                      className="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400"
                     >
                       <AlertCircle
                         strokeWidth={1.5}
@@ -251,7 +249,7 @@ export function LoginScreen({
                       type="button"
                       onClick={() => void doLogin(selected)}
                       disabled={submitting}
-                      className="mt-2 text-[13px] font-medium text-focus hover:underline disabled:opacity-60"
+                      className="mt-2 text-sm font-medium text-focus hover:underline disabled:opacity-60"
                     >
                       {t('login.newCode')}
                     </button>
@@ -266,14 +264,14 @@ export function LoginScreen({
                       setPairingId(null)
                     }}
                     disabled={submitting}
-                    className="h-9 flex-1 rounded-lg bg-field px-4 text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
+                    className="h-9 flex-1 rounded-lg bg-field px-4 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
                   >
                     {t('login.back')}
                   </button>
                   <button
                     type="submit"
                     disabled={submitting || password.length === 0}
-                    className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                    className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
                   >
                     {submitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -283,7 +281,7 @@ export function LoginScreen({
                 </div>
               </form>
             ) : users.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-line p-5 text-center text-[13px] text-fg-hint">
+              <p className="rounded-xl border border-dashed border-line p-5 text-center text-sm text-fg-hint">
                 {t('login.noAccounts')}
               </p>
             ) : (
@@ -291,7 +289,7 @@ export function LoginScreen({
                 {error ? (
                   <p
                     role="alert"
-                    className="mb-3 flex items-center gap-1.5 text-[13px] font-medium text-red-600 dark:text-red-400"
+                    className="mb-3 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400"
                   >
                     <AlertCircle
                       strokeWidth={1.5}
@@ -314,7 +312,7 @@ export function LoginScreen({
                           isSuperAdmin={user.isSuperAdmin}
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[13px] font-medium text-fg">
+                          <span className="block truncate text-sm font-medium text-fg">
                             {user.name}
                           </span>
                           <span className="block truncate text-xs text-fg-hint">

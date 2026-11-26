@@ -78,7 +78,7 @@ export function AddTranslationModal({
 
         <div className="space-y-4 mb-6">
           <div>
-            <label className="block text-[13px] font-medium text-fg-body mb-2">
+            <label className="block text-sm font-medium text-fg-body mb-2">
               {t('sections.bible.modals.add.selectLabel')}
             </label>
             <Combobox
@@ -95,7 +95,7 @@ export function AddTranslationModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
           >
             {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
           </button>
@@ -103,7 +103,7 @@ export function AddTranslationModal({
             type="button"
             onClick={handleSubmit}
             disabled={selectedId === null}
-            className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 disabled:bg-line-strong disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+            className="h-9 px-3.5 text-sm bg-primary hover:bg-indigo-700 disabled:bg-line-strong disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
           >
             {t('sections.bible.modals.add.submit')}
           </button>

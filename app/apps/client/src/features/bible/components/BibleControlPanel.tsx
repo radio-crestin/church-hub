@@ -1,11 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eraser,
-  Eye,
-  EyeOff,
-  Loader2,
-} from 'lucide-react'
+import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -17,6 +10,7 @@ import {
   useShowSlide,
   useWebSocket,
 } from '~/features/presentation'
+import { PreviewNavControls } from '~/features/presentation/components/PreviewNavControls'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
@@ -87,7 +81,7 @@ export function BibleControlPanel({
               type="button"
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-[13px] text-fg-label rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors shrink-0"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-fg-label rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors shrink-0"
               title={t('controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
@@ -118,7 +112,7 @@ export function BibleControlPanel({
               type="button"
               onClick={handleHide}
               disabled={isHiding}
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-[13px] text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={`${t('controls.hide')} (Esc)`}
             >
               {isHiding ? (
@@ -138,7 +132,7 @@ export function BibleControlPanel({
               type="button"
               onClick={handleShow}
               disabled={!hasContent || showSlideCommand.isPending}
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-[13px] text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={t('controls.show')}
             >
               {showSlideCommand.isPending ? (
@@ -159,34 +153,19 @@ export function BibleControlPanel({
         </div>
       </div>
 
-      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
+      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col lg:justify-center lg:[container-type:size] [--preview-reserve:3.75rem]">
         <div className="w-full flex-shrink-0">
           <LivePreview />
         </div>
 
-        <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">
-          <button
-            type="button"
-            onClick={onPrevVerse}
-            disabled={!canNavigate}
-            className="flex items-center gap-2 px-4 py-3 bg-field text-fg-body rounded-lg hover:bg-selected disabled:opacity-50 transition-colors"
-            title={t('controls.prevVerse')}
-          >
-            <ChevronLeft size={20} strokeWidth={1.5} />
-            <span className="text-base">{t('controls.prev')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onNextVerse}
-            disabled={!canNavigate}
-            className="flex items-center gap-2 px-4 py-3 bg-field text-fg-body rounded-lg hover:bg-selected disabled:opacity-50 transition-colors"
-            title={t('controls.nextVerse')}
-          >
-            <span className="text-base">{t('controls.next')}</span>
-            <ChevronRight size={20} strokeWidth={1.5} />
-          </button>
-        </div>
+        <PreviewNavControls
+          onPrev={onPrevVerse}
+          onNext={onNextVerse}
+          canPrev={canNavigate}
+          canNext={canNavigate}
+          prevTitle={t('controls.prevVerse')}
+          nextTitle={t('controls.nextVerse')}
+        />
       </div>
     </div>
   )

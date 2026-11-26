@@ -102,7 +102,7 @@ export function LivestreamSettingsLinks() {
             className="shrink-0 text-fg-label"
             aria-hidden
           />
-          <span className="text-[13px] font-medium text-fg">
+          <span className="text-sm font-medium text-fg">
             {t('settingsPages.railGroup')}
           </span>
           <span className="flex min-w-0 flex-1 items-center justify-end gap-3 overflow-hidden text-xs text-fg-label">

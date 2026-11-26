@@ -10,7 +10,7 @@ export function SidebarGroupHeading({
 }: SidebarGroupHeadingProps) {
   return (
     <div className="px-4 pt-4 pb-2 border-b border-line">
-      <h3 className="text-[13px] font-semibold text-fg">{title}</h3>
+      <h3 className="text-sm font-semibold text-fg">{title}</h3>
       <p className="mt-0.5 text-xs text-fg-hint">{description}</p>
     </div>
   )

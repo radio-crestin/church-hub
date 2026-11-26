@@ -14,7 +14,7 @@ export function ChoiceGroup<T extends string>({
 }: ChoiceGroupProps<T>) {
   return (
     <fieldset className="space-y-2">
-      <legend className="text-[13px] font-medium text-fg">{label}</legend>
+      <legend className="text-sm font-medium text-fg">{label}</legend>
       <div className="grid grid-cols-3 gap-2">
         {options.map((option) => (
           <button
@@ -22,7 +22,7 @@ export function ChoiceGroup<T extends string>({
             type="button"
             aria-pressed={option.value === value}
             onClick={() => onChange(option.value)}
-            className="rounded-lg bg-field px-3 py-2.5 text-[13px] font-medium text-fg-body transition-colors hover:bg-hover aria-pressed:bg-selected aria-pressed:text-fg"
+            className="rounded-lg bg-field px-3 py-2.5 text-sm font-medium text-fg-body transition-colors hover:bg-hover aria-pressed:bg-selected aria-pressed:text-fg"
           >
             {option.label}
           </button>

@@ -431,7 +431,7 @@ function SongsPage() {
                 <button
                   type="button"
                   onClick={handleFocusPresentedSong}
-                  className="flex h-8 items-center gap-2 px-3 text-[13px] font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg transition-colors"
+                  className="flex h-8 items-center gap-2 px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg transition-colors"
                   title={t('bookmarks.focusPresentedSong')}
                 >
                   <Eye className="w-4 h-4 text-live" strokeWidth={1.5} />
@@ -457,7 +457,7 @@ function SongsPage() {
                       params: { songId: 'new' },
                     })
                   }
-                  className="flex h-8 items-center gap-2 px-3 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                  className="flex h-8 items-center gap-2 px-3 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" strokeWidth={1.5} />
                   <span className="hidden sm:inline">

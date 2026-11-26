@@ -109,7 +109,7 @@ export function ServerConnectionModal({
               <h2 className="text-base font-semibold text-fg">
                 {t('sections.apiUrl.modal.title')}
               </h2>
-              <p className="text-[13px] text-fg-label">
+              <p className="text-sm text-fg-label">
                 {t('sections.apiUrl.modal.description')}
               </p>
             </div>
@@ -127,7 +127,7 @@ export function ServerConnectionModal({
           <div className="space-y-2">
             <label
               htmlFor="server-url"
-              className="block text-[13px] font-medium text-fg-body"
+              className="block text-sm font-medium text-fg-body"
             >
               {t('sections.apiUrl.label')}
             </label>
@@ -143,7 +143,7 @@ export function ServerConnectionModal({
               disabled={isLoading}
             />
             {hasAuthToken && (
-              <div className="flex items-center gap-2 text-[13px] text-fg-body">
+              <div className="flex items-center gap-2 text-sm text-fg-body">
                 <KeyRound strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
                 <span>{t('sections.apiUrl.authTokenDetected')}</span>
               </div>
@@ -151,13 +151,13 @@ export function ServerConnectionModal({
           </div>
 
           {errorMessage && (
-            <p className="text-[13px] text-red-600 dark:text-red-400">
+            <p className="text-sm text-red-600 dark:text-red-400">
               {errorMessage}
             </p>
           )}
 
           {connectionStatus === 'success' && (
-            <div className="flex items-center gap-2 text-[13px] text-fg-body">
+            <div className="flex items-center gap-2 text-sm text-fg-body">
               <Wifi strokeWidth={1.5} className="w-4 h-4 text-ok" />
               <span>{t('sections.apiUrl.connectionSuccess')}</span>
             </div>

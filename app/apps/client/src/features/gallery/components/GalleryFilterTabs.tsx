@@ -32,7 +32,7 @@ export function GalleryFilterTabs({
             data-testid={filter.testId}
             aria-pressed={isActive}
             onClick={() => onChange(filter.value)}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1 text-[13px] font-medium transition-colors sm:flex-none ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-colors sm:flex-none ${
               isActive ? 'bg-selected text-fg' : 'text-fg-label hover:text-fg'
             }`}
           >

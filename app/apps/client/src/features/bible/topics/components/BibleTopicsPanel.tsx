@@ -70,9 +70,7 @@ export function BibleTopicsPanel({
           </button>
         ) : null}
         <Tags className="w-4 h-4 text-fg-label" strokeWidth={1.5} />
-        <span className="text-[13px] font-medium text-fg">
-          {t('topics.title')}
-        </span>
+        <span className="text-sm font-medium text-fg">{t('topics.title')}</span>
         {topics.length > 0 && (
           <span className="text-xs text-fg-hint">({topics.length})</span>
         )}
