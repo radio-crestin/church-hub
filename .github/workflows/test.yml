@@ -219,6 +219,12 @@ jobs:
         with:
           bun-version-file: app/package.json
 
+      # The sync merge test imports the server's database code, so it needs
+      # the app's packages.
+      - name: Install dependencies
+        working-directory: app
+        run: bun install --frozen-lockfile
+
       - name: Sync merge
         working-directory: app/apps/server
         run: bun run test
