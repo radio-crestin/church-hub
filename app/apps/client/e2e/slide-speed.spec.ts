@@ -83,6 +83,31 @@ function passageBody() {
   }
 }
 
+/**
+ * A schedule's Bible reading, as programs store it now: one "Versete
+ * Biblice" entry holding the whole passage, with no person name.
+ */
+function readingBody(text: string) {
+  return {
+    entries: [
+      {
+        id: 9200,
+        personName: '',
+        reference: 'Ioan 3:16-17',
+        bookCode: 'JHN',
+        bookName: 'Ioan',
+        startChapter: 3,
+        startVerse: 16,
+        endChapter: 3,
+        endVerse: 17,
+        text,
+        sortOrder: 0,
+      },
+    ],
+    currentEntryIndex: 0,
+  }
+}
+
 interface Timing {
   /** ms from the request until the new text is fully opaque and the old one gone */
   visibleMs: number
@@ -257,6 +282,24 @@ test.describe('Slides appear on the projector fast', () => {
       lyrics[0],
     )
 
+    await page.waitForTimeout(800)
+    await timeSlide(
+      page,
+      '/api/presentation/temporary-song',
+      { songId, slideIndex: 1 },
+      lyrics[1],
+      VERSES[0],
+    )
+    await page.waitForTimeout(800)
+    const reading = `${VERSES[1]} (lectura)`
+    const toReading = await timeSlide(
+      page,
+      '/api/presentation/temporary-versete-tineri',
+      readingBody(reading),
+      reading,
+      lyrics[1],
+    )
+
     const timings = {
       first,
       next,
@@ -264,6 +307,7 @@ test.describe('Slides appear on the projector fast', () => {
       verseChange,
       backToSong,
       toPassage,
+      toReading,
     }
     test.info().annotations.push({
       type: 'timings',
@@ -284,7 +328,7 @@ test.describe('Slides appear on the projector fast', () => {
     }
     // A song and a verse are never on screen together: the old one fades
     // out, then the new one fades in right after.
-    for (const timing of [typeChange, backToSong, toPassage]) {
+    for (const timing of [typeChange, backToSong, toPassage, toReading]) {
       expect(timing.overlapFrames).toBe(0)
       expect(timing.firstShowsMs - latency).toBeLessThan(
         TYPE_CHANGE_START_MAX_MS,
