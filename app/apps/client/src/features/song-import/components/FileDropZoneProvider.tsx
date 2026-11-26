@@ -711,8 +711,11 @@ export function FileDropZoneProvider({ children }: Props) {
     document.addEventListener('drop', handleDrop)
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('blur', cancelDrag)
+    // Tells tests (and anything else) that a dropped file is now handled.
+    document.documentElement.dataset.fileDropReady = 'true'
 
     return () => {
+      delete document.documentElement.dataset.fileDropReady
       document.removeEventListener('dragenter', handleDragEnter)
       document.removeEventListener('dragover', handleDragOver)
       document.removeEventListener('dragleave', handleDragLeave)

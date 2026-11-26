@@ -1,5 +1,7 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import JSZip from 'jszip'
+
+import { dropFile } from './helpers/drop-file'
 
 /**
  * OpenSong saves songs as files with no extension, named after the song, and
@@ -40,25 +42,6 @@ const openSong = (title: string) =>
   <lyrics>[V1]
  ${title}, aleluia</lyrics>
 </song>`
-
-/** Drops a file on the page the way a user drags one in. */
-async function dropFile(page: Page, bytes: Buffer, name: string) {
-  await page.evaluate(
-    ({ base64, fileName }) => {
-      const data = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-      const transfer = new DataTransfer()
-      transfer.items.add(new File([data], fileName))
-      document.dispatchEvent(
-        new DragEvent('drop', {
-          bubbles: true,
-          cancelable: true,
-          dataTransfer: transfer,
-        }),
-      )
-    },
-    { base64: bytes.toString('base64'), fileName: name },
-  )
-}
 
 test('OpenSong files with dots in their names are read', async ({ page }) => {
   // A plain ZIP of OpenSong files, laid out like resursecrestine.ro's.
