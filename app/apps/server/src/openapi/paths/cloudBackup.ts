@@ -56,7 +56,7 @@ const schedule = {
 /** Refusals every changing route answers before anything else. */
 const guardErrors = {
   '403': error(
-    'Not from localhost, or not from the app’s own UI: a foreign Origin, or a cross-site request without the app’s Origin (foreign_origin)',
+    'Not from localhost, or an untrusted Origin (the server-wide origin gate)',
   ),
   '415': error(
     'The body must be JSON, so a browser preflights it (json_required)',

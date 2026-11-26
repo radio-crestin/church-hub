@@ -7,7 +7,6 @@ import {
   getCloudBackupStatus,
   issueConfirmation,
   listCloudBackups,
-  refuseForeignMutation,
   restoreCloudBackup,
   signOutCloudBackup,
   startCloudBackupSignIn,
@@ -52,6 +51,12 @@ function callbackPage(english: string, romanian: string): Response {
     `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Church Hub</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${escapeHtml(english)}</p><p>${escapeHtml(romanian)}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
     { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
   )
+}
+
+/** A read, or a change sent as JSON (which a cross-site form can't send). */
+function isJsonOrRead(req: Request): boolean {
+  if (req.method === 'GET' || req.method === 'HEAD') return true
+  return /^application\/json\b/i.test(req.headers.get('Content-Type') ?? '')
 }
 
 const confirmationRequired = () =>
@@ -99,11 +104,12 @@ async function updateSchedule(req: Request): Promise<Response> {
 }
 
 /**
- * Church Hub Cloud backup on this PC, localhost only (the caller guards).
- * Every change must come from the app's own UI as JSON
- * (refuseForeignMutation); restore and delete-all also need a single-use
- * confirmation from the UI's dialog. The sign-in callback, a navigation
- * from Google, is bound instead to the nonce this PC issued at its start:
+ * Church Hub Cloud backup on this PC, localhost only (the caller guards;
+ * foreign origins are refused by the server-wide origin gate). Every change
+ * must be JSON, so a browser preflights it; restore and delete-all also
+ * need a single-use confirmation from the UI's dialog. The sign-in
+ * callback, a navigation from Google, is bound instead to the nonce this PC
+ * issued at its start:
  * GET    /api/backup/cloud/status                 signed in?, email, schedule
  * POST   /api/backup/cloud/sign-in                → { authUrl }
  * GET    /api/backup/cloud/callback               the sign-in's return (HTML)
@@ -121,8 +127,9 @@ export async function handleCloudBackupRoutes(
 ): Promise<Response | null> {
   const { pathname } = url
   const { method } = req
-  const refused = refuseForeignMutation(req)
-  if (refused) return refused
+  if (!isJsonOrRead(req)) {
+    return Response.json({ error: 'json_required' }, { status: 415 })
+  }
 
   if (pathname === '/api/backup/cloud/status' && method === 'GET') {
     return answer(getCloudBackupStatus)

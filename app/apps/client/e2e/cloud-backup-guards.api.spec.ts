@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * The local Church Hub Cloud routes can't be driven by another website open
- * in the operator's browser: changes must come from the app's own UI as
- * JSON, restore and delete-all need a single-use confirmation from the UI,
- * and the sign-in callback takes only a sign-in this PC started.
+ * What the local Church Hub Cloud routes add to the server-wide origin gate:
+ * changes must be JSON (so a browser preflights them), restore and
+ * delete-all need a single-use confirmation from the UI, and the sign-in
+ * callback takes only a sign-in this PC started.
  */
 
 const BACKUP_ID = 'A'.repeat(22)
@@ -15,41 +15,6 @@ test.describe('Church Hub Cloud: local route guards', () => {
     await request.post('/api/backup/cloud/sign-out', {
       data: { deleteBackups: false },
     })
-  })
-
-  test('a request from another site is refused', async ({ request }) => {
-    const foreign = await request.post('/api/backup/cloud/sign-in', {
-      data: {},
-      headers: { Origin: 'https://evil.example' },
-    })
-    expect(foreign.status()).toBe(403)
-    expect((await foreign.json()).error).toBe('foreign_origin')
-
-    const crossSite = await request.post('/api/backup/cloud/backups', {
-      data: {},
-      headers: { 'Sec-Fetch-Site': 'cross-site' },
-    })
-    expect(crossSite.status()).toBe(403)
-
-    const otherPort = await request.post('/api/backup/cloud/sign-in', {
-      data: {},
-      headers: { Origin: 'http://localhost:1' },
-    })
-    expect(otherPort.status()).toBe(403)
-  })
-
-  test('the desktop webview’s own origin passes, even cross-site', async ({
-    request,
-  }) => {
-    const webview = await request.post('/api/backup/cloud/sign-in', {
-      data: {},
-      headers: {
-        Origin: 'http://tauri.localhost',
-        'Sec-Fetch-Site': 'cross-site',
-      },
-    })
-    expect(webview.status()).toBe(200)
-    expect((await webview.json()).data.authUrl).toContain('/backup/sign-in')
   })
 
   test('a change that isn’t JSON is refused, so a browser must preflight', async ({
