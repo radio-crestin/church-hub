@@ -186,7 +186,7 @@ export const presentationSchemas = {
         type: 'integer',
         nullable: true,
         description:
-          "Its own slide template (a Bible topic passage's), over the slide's templateId while it is on screen",
+          "Its own slide template (a Bible topic passage's, set by the server), over the slide's templateId while it is on screen",
       },
     },
   },
@@ -221,7 +221,7 @@ export const presentationSchemas = {
         type: 'integer',
         nullable: true,
         description:
-          "The slide template the screens that follow presentations draw it with (a Bible topic's); unset: each screen's own. Presenting the same slideshow again on its current entry with another template restyles it without restarting its timer.",
+          "The slide template the screens that follow presentations draw it with; unset: each screen's own. A Bible topic's slideshow (`slideshow: topic:<id>`) gets its topic's template, and each entry its passage's own, from the server instead.",
       },
       scheduleId: {
         type: 'integer',

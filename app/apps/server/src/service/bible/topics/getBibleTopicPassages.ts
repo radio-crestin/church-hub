@@ -1,3 +1,4 @@
+import { getTopicTemplatePool } from './getFittingTopicTemplateId'
 import { getPassageTemplates, passageKey } from './getPassageTemplates'
 import { toBibleTopic } from './listBibleTopics'
 import type {
@@ -52,5 +53,9 @@ export function getBibleTopicPassages(
       templateId: templates.get(passageKey(ref)) ?? null,
     })
   }
-  return { ...toBibleTopic(row), translationId, passages }
+  return {
+    ...toBibleTopic(row, getTopicTemplatePool()),
+    translationId,
+    passages,
+  }
 }

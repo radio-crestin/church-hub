@@ -16,6 +16,12 @@ const topicProperties = {
   titleEn: { type: 'string', example: "God's love" },
   titleRo: { type: 'string', example: 'Dragostea lui Dumnezeu' },
   referenceCount: { type: 'integer', example: 15 },
+  templateId: {
+    type: 'integer',
+    nullable: true,
+    description:
+      'The slide template the topic draws with: the one chosen for it, else its fitting default (one of the bundled templates readable for verses, the same for the same topic every time).',
+  },
 }
 
 const passage = {
@@ -114,12 +120,48 @@ export const bibleTopicsPaths = {
       },
     },
   },
+  '/api/bible/topics/{id}/template': {
+    put: {
+      tags,
+      summary: "Set a topic's template",
+      description:
+        "The slide template the topic's verses are drawn with, presented by hand or in its slideshow, remembered for the topic; `null` goes back to its fitting default. The topic's slideshow on screen redraws with it at once. Needs bible.present_now.",
+      security,
+      parameters: [
+        { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['templateId'],
+              properties: {
+                templateId: { type: 'integer', nullable: true, example: 12 },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': { description: 'Saved' },
+        '400': { description: 'templateId is neither a number nor null' },
+        '403': { description: 'Missing the bible.present_now permission' },
+        '404': {
+          description:
+            'No such topic, or no such shared template (a presentation’s own cannot be used)',
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
   '/api/bible/topics/{id}/passage-template': {
     put: {
       tags,
       summary: "Set a passage's own template",
       description:
-        "One of the topic's passages (its reference: book code, chapter, verse range) is drawn with its own slide template, presented by hand or in the topic's slideshow; `null` draws it with the topic's again. Needs bible.present_now.",
+        "One of the topic's passages (its reference: book code, chapter, verse range) is drawn with its own slide template, presented by hand or in the topic's slideshow; `null` draws it with the topic's again. The topic's slideshow on screen redraws at once. Needs bible.present_now.",
       security,
       parameters: [
         { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },

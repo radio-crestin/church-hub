@@ -8,13 +8,15 @@ import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
 import { useSetPassageTemplate } from '../hooks/useSetPassageTemplate'
+import { useSetTopicTemplate } from '../hooks/useSetTopicTemplate'
 import { useTakeOverTopicSlideshow } from '../hooks/useTakeOverTopicSlideshow'
-import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
 import type { BibleTopicPassage } from '../types'
 import { toSlideshowEntries } from '../utils/toSlideshowEntries'
 
 interface BibleTopicPassagesProps {
   topicId: number
+  /** The template the topic draws with (chosen, else its fitting one) */
+  templateId: number | null
   title: string
   passages: BibleTopicPassage[]
   isLoading: boolean
@@ -35,6 +37,7 @@ interface BibleTopicPassagesProps {
  */
 export function BibleTopicPassages({
   topicId,
+  templateId,
   title,
   passages,
   isLoading,
@@ -45,29 +48,14 @@ export function BibleTopicPassages({
 }: BibleTopicPassagesProps) {
   const { t } = useTranslation('bible')
   const entries = useMemo(() => toSlideshowEntries(passages), [passages])
-  const [templateId, setTemplateId] = useTopicLoopTemplate()
-  const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
+  const slideshow = useVerseSlideshow(`topic:${topicId}`, entries)
   useTakeOverTopicSlideshow(topicId, entries.length > 0, slideshow)
   const navigateSlideshow = useNavigateTemporary()
+  // The server draws the topic's slideshow with them, at once if it plays.
+  const setTopicTemplate = useSetTopicTemplate(topicId)
   const setPassageTemplate = useSetPassageTemplate(topicId)
   const templateOf = (passage: BibleTopicPassage) =>
     passage.templateId ?? templateId
-  const chooseTemplate = (id: number | null) => {
-    setTemplateId(id)
-    slideshow.refresh({ templateId: id })
-  }
-  const choosePassageTemplate = (
-    passage: BibleTopicPassage,
-    id: number | null,
-  ) => {
-    setPassageTemplate.mutate({ passage, templateId: id })
-    const firstId = passage.verses[0]?.id
-    slideshow.refresh({
-      entries: entries.map((entry) =>
-        entry.id === firstId ? { ...entry, templateId: id } : entry,
-      ),
-    })
-  }
   const activeIndex =
     slideshow.position?.index ??
     passages.findIndex((passage) =>
@@ -137,7 +125,7 @@ export function BibleTopicPassages({
         <BibleTopicSlideshowBar
           slideshow={slideshow}
           templateId={templateId}
-          onTemplateChange={chooseTemplate}
+          onTemplateChange={(id) => setTopicTemplate.mutate(id)}
         />
       )}
 
@@ -196,7 +184,9 @@ export function BibleTopicPassages({
                       variant="icon"
                       value={passage.templateId}
                       noneLabel={t('topics.passageTemplate.none')}
-                      onChange={(id) => choosePassageTemplate(passage, id)}
+                      onChange={(id) =>
+                        setPassageTemplate.mutate({ passage, templateId: id })
+                      }
                       testId={`bible-topic-passage-template-${index}`}
                     />
                   </div>

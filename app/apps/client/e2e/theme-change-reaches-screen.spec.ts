@@ -10,7 +10,8 @@ import {
  * however the topic is presented: a verse by hand, the verses stepped to from
  * it, its slideshow. Choosing another template mid-play restyles the screen
  * at once, and opening another topic mid-play moves the slideshow to it. A
- * passage may have its own template over the topic's.
+ * passage may have its own template over the topic's. A topic starts with a
+ * fitting built-in template, and the one chosen for it is remembered.
  */
 
 const RED = 'rgb(255, 0, 0)'
@@ -195,8 +196,12 @@ test.describe("A Bible topic's template on screen", () => {
     const forgiveness = await topicId(request, 'forgiveness')
     const prayer = await topicId(request, 'prayer')
     await chooseTemplate(page, red)
+    await request.put(`/api/bible/topics/${forgiveness}/template`, {
+      data: { templateId: blue },
+    })
 
-    // 🔁 on one topic; another opened goes on screen from its first passage.
+    // 🔁 on one topic; another opened goes on screen from its first passage,
+    // drawn with its own template.
     await panel.getByTestId('bible-topic-loop').click()
     await expect.poll(async () => (await onScreen(request))?.loop).toBe(true)
     await panel.getByTestId('bible-topic-back').click()
@@ -206,9 +211,9 @@ test.describe("A Bible topic's template on screen", () => {
       .toMatchObject({
         slideshow: `topic:${forgiveness}`,
         loop: true,
-        templateId: red,
+        templateId: blue,
       })
-    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+    await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
 
     // ▶ likewise keeps playing once through.
     await panel.getByTestId('bible-topic-loop').click()
@@ -279,5 +284,60 @@ test.describe("A Bible topic's template on screen", () => {
     await page.getByTestId('template-choice-none').click()
     await expect.poll(() => drawsColour(display, RED)).toBe(true)
     await expect(own).not.toHaveAttribute('data-value')
+  })
+
+  test('each topic starts with a fitting template, and the one chosen is remembered', async ({
+    page,
+    request,
+  }) => {
+    const listTopics = async () =>
+      (await (await request.get('/api/bible/topics')).json()).data as {
+        key: string
+        templateId: number
+      }[]
+    const templates = (await (await request.get('/api/slide-templates')).json())
+      .data as Template[]
+    const bundled = new Set(
+      templates.filter((t) => t.bundledKey).map((t) => t.id),
+    )
+
+    // A built-in template for every topic, the same each time, not one for all.
+    const topics = await listTopics()
+    expect(topics.every((topic) => bundled.has(topic.templateId))).toBe(true)
+    expect(
+      new Set(topics.map((topic) => topic.templateId)).size,
+    ).toBeGreaterThan(2)
+    expect(await listTopics()).toEqual(topics)
+
+    // Presented by hand, a verse of the topic is drawn with it.
+    const love = topics.find((topic) => topic.key === 'gods-love')
+    const panel = page.getByTestId('bible-topics-panel')
+    await expect(page.getByTestId('bible-topic-template')).toHaveAttribute(
+      'data-value',
+      String(love?.templateId),
+    )
+    await panel
+      .getByTestId('bible-topic-passage')
+      .first()
+      .getByRole('button')
+      .first()
+      .click()
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({ type: 'bible', templateId: love?.templateId })
+
+    // Another one chosen stays the topic's, on this computer and the others.
+    await chooseTemplate(page, red)
+    await expect
+      .poll(async () =>
+        (await listTopics()).find((topic) => topic.key === 'gods-love'),
+      )
+      .toMatchObject({ templateId: red })
+    await page.reload()
+    await panel.getByTestId('bible-topic-gods-love').click()
+    await expect(page.getByTestId('bible-topic-template')).toHaveAttribute(
+      'data-value',
+      String(red),
+    )
   })
 })

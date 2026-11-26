@@ -6,7 +6,7 @@ import type { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 
 interface BibleTopicSlideshowBarProps {
   slideshow: ReturnType<typeof useVerseSlideshow>
-  /** The template the verses are drawn with; null: each screen's own. */
+  /** The topic's template: the one chosen for it, else its fitting one. */
   templateId: number | null
   onTemplateChange: (templateId: number | null) => void
 }
@@ -78,7 +78,6 @@ export function BibleTopicSlideshowBar({
         <TemplatePicker
           variant="chip"
           value={templateId}
-          noneLabel={t('presentation:templates.presentation.none')}
           onChange={onTemplateChange}
           testId="bible-topic-template"
         />

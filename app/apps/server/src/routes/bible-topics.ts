@@ -5,13 +5,20 @@ import {
   getBibleTopicPassages,
   listBibleTopics,
   setBibleTopicPassageTemplate,
+  setBibleTopicTemplate,
 } from '../service/bible/topics'
 import type { BibleTopicReference } from '../service/bible/topics/types'
+import {
+  getPresentationState,
+  updatePresentationState,
+} from '../service/presentation'
+import { broadcastPresentationState } from '../websocket'
 
 type HandleCors = (req: Request, res: Response) => Response
 
 const TOPIC_PASSAGES_PATH = /^\/api\/bible\/topics\/(\d+)$/
 const PASSAGE_TEMPLATE_PATH = /^\/api\/bible\/topics\/(\d+)\/passage-template$/
+const TOPIC_TEMPLATE_PATH = /^\/api\/bible\/topics\/(\d+)\/template$/
 
 type Respond = (status: number, payload: unknown) => Response
 
@@ -42,6 +49,43 @@ function readPassageTemplate(body: unknown) {
   }
 }
 
+/** The topic's slideshow on screen now redraws with its templates. */
+function redrawIfLive(topicId: number): void {
+  const { temporaryContent, isHidden } = getPresentationState()
+  if (
+    isHidden ||
+    temporaryContent?.type !== 'versete_tineri' ||
+    temporaryContent.data.slideshow !== `topic:${topicId}`
+  ) {
+    return
+  }
+  broadcastPresentationState(updatePresentationState({ temporaryContent }))
+}
+
+const NOT_FOUND = {
+  'topic-not-found': 'Topic not found',
+  'template-not-found': 'Template not found',
+} as const
+
+/** PUT /api/bible/topics/:id/template */
+async function putTopicTemplate(
+  req: Request,
+  topicId: number,
+  respond: Respond,
+): Promise<Response> {
+  const body = (await req.json().catch(() => null)) as {
+    templateId?: unknown
+  } | null
+  const templateId = body?.templateId
+  if (templateId !== null && !isWholeNumber(templateId)) {
+    return respond(400, { error: 'templateId must be a number or null' })
+  }
+  const result = setBibleTopicTemplate(topicId, templateId as number | null)
+  if (result !== 'ok') return respond(404, { error: NOT_FOUND[result] })
+  redrawIfLive(topicId)
+  return respond(200, { data: { success: true } })
+}
+
 /** PUT /api/bible/topics/:id/passage-template */
 async function putPassageTemplate(
   req: Request,
@@ -60,12 +104,8 @@ async function putPassageTemplate(
     input.passage,
     input.templateId,
   )
-  if (result === 'topic-not-found') {
-    return respond(404, { error: 'Topic not found' })
-  }
-  if (result === 'template-not-found') {
-    return respond(404, { error: 'Template not found' })
-  }
+  if (result !== 'ok') return respond(404, { error: NOT_FOUND[result] })
+  redrawIfLive(topicId)
   return respond(200, { data: { success: true } })
 }
 
@@ -75,8 +115,10 @@ async function putPassageTemplate(
  * - GET /api/bible/topics                         every topic
  * - GET /api/bible/topics/:id?translationId=:tid  a topic with its passages
  *   in that translation (the default one when not given)
+ * - PUT /api/bible/topics/:id/template             the topic's slide
+ *   template (null: its fitting default), for who can present Bible verses
  * - PUT /api/bible/topics/:id/passage-template     a passage's own slide
- *   template (null: the topic's), for who can present Bible verses
+ *   template (null: the topic's), likewise
  */
 export async function handleBibleTopicRoutes(
   req: Request,
@@ -86,9 +128,10 @@ export async function handleBibleTopicRoutes(
 ): Promise<Response | null> {
   const { pathname } = url
   if (!pathname.startsWith('/api/bible/topics')) return null
-  const passageTemplate =
-    req.method === 'PUT' ? pathname.match(PASSAGE_TEMPLATE_PATH) : null
-  if (req.method !== 'GET' && !passageTemplate) return null
+  const isPut = req.method === 'PUT'
+  const topicTemplate = isPut ? pathname.match(TOPIC_TEMPLATE_PATH) : null
+  const passageTemplate = isPut ? pathname.match(PASSAGE_TEMPLATE_PATH) : null
+  if (!(req.method === 'GET' || topicTemplate || passageTemplate)) return null
 
   const respond = (status: number, payload: unknown): Response =>
     handleCors(
@@ -99,10 +142,13 @@ export async function handleBibleTopicRoutes(
       }),
     )
   if (!context) return respond(401, { error: 'Unauthorized' })
-  const denied = requirePermission(
-    passageTemplate ? 'bible.present_now' : 'bible.view',
-  )(context)
+  const denied = requirePermission(isPut ? 'bible.present_now' : 'bible.view')(
+    context,
+  )
   if (denied) return handleCors(req, denied)
+  if (topicTemplate) {
+    return putTopicTemplate(req, Number(topicTemplate[1]), respond)
+  }
   if (passageTemplate) {
     return putPassageTemplate(req, Number(passageTemplate[1]), respond)
   }

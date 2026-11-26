@@ -22,6 +22,8 @@ export interface BibleTopic {
   titleEn: string
   titleRo: string
   referenceCount: number
+  /** The template it draws with: the one chosen for it, else its fitting one. */
+  templateId: number | null
 }
 
 /** One of a topic's references, resolved in a translation. */
@@ -45,4 +47,5 @@ export interface BibleTopicRecord {
   title_ro: string
   verse_references: string
   fixture_hash: string | null
+  template_id: number | null
 }

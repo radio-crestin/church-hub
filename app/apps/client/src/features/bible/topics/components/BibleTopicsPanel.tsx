@@ -80,6 +80,7 @@ export function BibleTopicsPanel({
       {isCollapsed ? null : openTopic ? (
         <BibleTopicPassages
           topicId={openTopic.id}
+          templateId={topicQuery.data?.templateId ?? openTopic.templateId}
           title={titleOf(openTopic)}
           passages={topicQuery.data?.passages ?? []}
           isLoading={topicQuery.isLoading}
