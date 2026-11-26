@@ -62,7 +62,7 @@ export function TagManager() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fg-hint" />
       </div>
     )
   }
@@ -79,17 +79,17 @@ export function TagManager() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-base font-semibold text-fg">
             {t('sections.tags.title')}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-fg-hint">
             {t('sections.tags.description')}
           </p>
         </div>
         <button
           type="button"
           onClick={() => setModal({ type: 'create' })}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm whitespace-nowrap shrink-0"
+          className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm whitespace-nowrap shrink-0"
         >
           <Plus size={16} />
           {t('sections.tags.addTag')}
@@ -108,15 +108,12 @@ export function TagManager() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <Tags
-            size={48}
-            className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
-          />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
+        <div className="text-center py-12 border border-dashed border-line rounded-lg">
+          <Tags size={48} className="mx-auto text-fg-hint mb-3" />
+          <p className="text-fg-label font-medium">
             {t('sections.tags.noTags')}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+          <p className="text-sm text-fg-hint mt-1">
             {t('sections.tags.noTagsDescription')}
           </p>
         </div>

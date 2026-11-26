@@ -130,7 +130,7 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
     return (
       <dialog
         ref={dialogRef}
-        className="fixed p-0 rounded-xl shadow-2xl backdrop:bg-black/50 max-w-md w-[calc(100vw-2rem)]"
+        className="fixed p-0 rounded-xl shadow-popover backdrop:bg-black/50 max-w-md w-[calc(100vw-2rem)]"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) + 3rem)',
           left: '50%',
@@ -140,15 +140,15 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
         onClose={handleClose}
         onClick={handleBackdropClick}
       >
-        <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-panel rounded-xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-line">
+            <h2 className="text-base font-semibold text-fg truncate">
               {t('dialog.title')}
             </h2>
             <button
               onClick={handleClose}
-              className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-1.5 rounded-lg text-fg-hint hover:bg-hover transition-colors"
             >
               <X size={20} />
             </button>
@@ -158,19 +158,17 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
           <div className="px-4 sm:px-6 py-4 space-y-4">
             {song && (
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-fg-body mb-1">
                   {t('dialog.songTitle')}
                 </label>
-                <p className="text-gray-900 dark:text-white font-medium break-words">
-                  {song.title}
-                </p>
+                <p className="text-fg font-medium break-words">{song.title}</p>
               </div>
             )}
 
             <div>
               <label
                 htmlFor={inputId}
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-fg-body mb-1"
               >
                 {t('dialog.keyLine')}
               </label>
@@ -192,10 +190,10 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
                 onChange={(e) => setKeyLine(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t('dialog.keyLinePlaceholder')}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
-                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base
-                  focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                  placeholder:text-gray-400 dark:placeholder:text-gray-500
+                className="w-full px-4 py-3 rounded-lg border border-line
+                  bg-field text-fg text-base
+                  focus:ring-2 focus:ring-focus focus:border-focus
+                  placeholder:text-fg-hint
                   touch-manipulation"
                 style={{ fontSize: '16px' }}
               />
@@ -203,7 +201,7 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end items-center gap-3 px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end items-center gap-3 px-4 sm:px-6 py-4 border-t border-line">
             <button
               type="button"
               onClick={() => {
@@ -215,15 +213,15 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
                 })
               }}
               className="flex items-center gap-1.5 px-3 py-2.5 text-base font-medium
-                text-indigo-600 dark:text-indigo-400 hover:underline"
+                text-fg-label hover:underline"
             >
               <ExternalLink size={16} />
               <span>{t('dialog.openSong')}</span>
             </button>
             <button
               onClick={handleClose}
-              className="px-5 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300
-                bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600
+              className="px-5 py-2.5 text-base font-medium text-fg-body
+                bg-field rounded-lg hover:bg-hover
                 transition-colors min-w-[90px]"
             >
               {t('dialog.cancel')}
@@ -232,7 +230,7 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
               onClick={handleSave}
               disabled={updateMutation.isPending}
               data-testid="key-line-save"
-              className="px-5 py-2.5 text-base font-medium text-white bg-indigo-600 rounded-lg
+              className="px-5 py-2.5 text-base font-medium text-white bg-primary rounded-lg
                 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[90px]"
             >
               {updateMutation.isPending ? t('dialog.saving') : t('dialog.save')}

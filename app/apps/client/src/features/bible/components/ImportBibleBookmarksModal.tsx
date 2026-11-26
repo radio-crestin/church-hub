@@ -114,11 +114,11 @@ export function ImportBibleBookmarksModal({
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-panel rounded-lg shadow-xl">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <FileText className="w-5 h-5 text-fg-label" strokeWidth={1.5} />
+            <h2 className="text-base font-semibold text-fg">
               {t('bookmarks.import.title')}
             </h2>
           </div>
@@ -126,14 +126,14 @@ export function ImportBibleBookmarksModal({
             type="button"
             onClick={handleClose}
             aria-label={t('bookmarks.import.cancel')}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1 hover:bg-hover rounded transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-fg-hint" strokeWidth={1.5} />
           </button>
         </div>
 
         <div className="p-4 space-y-3">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-[13px] text-fg-label">
             {t('bookmarks.import.description')}
           </p>
 
@@ -146,15 +146,15 @@ export function ImportBibleBookmarksModal({
             placeholder={t('bookmarks.import.placeholder')}
             rows={10}
             data-testid="bible-bookmarks-import-textarea"
-            className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none font-mono text-sm"
+            className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-none font-mono text-[13px]"
           />
 
           <button
             type="button"
             onClick={handlePickFile}
-            className="inline-flex items-center gap-1.5 text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+            className="inline-flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg"
           >
-            <FolderOpen className="w-4 h-4" />
+            <FolderOpen className="w-4 h-4" strokeWidth={1.5} />
             {t('bookmarks.import.chooseFile')}
           </button>
 
@@ -173,8 +173,8 @@ export function ImportBibleBookmarksModal({
               data-testid="bible-bookmarks-import-errors"
               className="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-900/20"
             >
-              <div className="flex items-center gap-1.5 text-sm font-medium text-amber-800 dark:text-amber-300">
-                <AlertTriangle className="w-4 h-4" />
+              <div className="flex items-center gap-1.5 text-[13px] font-medium text-amber-800 dark:text-amber-300">
+                <AlertTriangle className="w-4 h-4" strokeWidth={1.5} />
                 {t('bookmarks.import.partial', {
                   imported: result.imported,
                   // A text mismatch still imports the verse, only unstyled
@@ -201,11 +201,11 @@ export function ImportBibleBookmarksModal({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-2 px-4 py-3 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
           >
             {t('bookmarks.import.cancel')}
           </button>
@@ -214,7 +214,7 @@ export function ImportBibleBookmarksModal({
             onClick={handleImport}
             disabled={!text.trim() || importMutation.isPending}
             data-testid="bible-bookmarks-import-confirm"
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('bookmarks.import.confirm')}
           </button>

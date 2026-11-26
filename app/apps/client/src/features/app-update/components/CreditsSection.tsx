@@ -3,7 +3,7 @@ import { Trans, useTranslation } from 'react-i18next'
 
 import { SettingsSection } from '../../settings'
 
-const linkClass = 'text-indigo-600 dark:text-indigo-400 hover:underline'
+const linkClass = 'text-focus hover:underline'
 
 /** The data the app bundles from others, with its licence and attribution. */
 export function CreditsSection() {
@@ -17,12 +17,12 @@ export function CreditsSection() {
     >
       <div
         data-testid="credits-bible-topics"
-        className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+        className="p-4 border border-line rounded-xl"
       >
-        <p className="text-sm font-medium text-gray-900 dark:text-white">
+        <p className="text-[13px] font-medium text-fg">
           {t('sections.credits.bibleTopics.title')}
         </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-[13px] text-fg-label mt-1">
           <Trans
             t={t}
             i18nKey="sections.credits.bibleTopics.attribution"

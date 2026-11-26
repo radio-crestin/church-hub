@@ -95,16 +95,20 @@ export function TextStyleContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 min-w-[160px] py-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
+      className="fixed z-50 min-w-[160px] py-1 bg-panel rounded-[10px] shadow-popover border border-line"
       style={{ left: position.x, top: position.y }}
     >
       {/* Highlight option */}
       <button
         type="button"
         onClick={handleHighlight}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
       >
-        <Highlighter size={14} style={{ color: highlightColor }} />
+        <Highlighter
+          size={14}
+          strokeWidth={1.75}
+          style={{ color: highlightColor }}
+        />
         {t('textStyle.highlight')}
       </button>
 
@@ -112,9 +116,9 @@ export function TextStyleContextMenu({
       <button
         type="button"
         onClick={handleBold}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
       >
-        <Bold size={14} />
+        <Bold size={14} strokeWidth={1.75} />
         {t('textStyle.bold')}
       </button>
 
@@ -122,22 +126,22 @@ export function TextStyleContextMenu({
       <button
         type="button"
         onClick={handleUnderline}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
       >
-        <Underline size={14} />
+        <Underline size={14} strokeWidth={1.75} />
         {t('textStyle.underline')}
       </button>
 
       {/* Remove style option */}
       {showRemove && onRemoveStyle && (
         <>
-          <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+          <div className="border-t border-line my-1" />
           <button
             type="button"
             onClick={handleRemoveStyle}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-hover transition-colors"
           >
-            <X size={14} />
+            <X size={14} strokeWidth={1.75} />
             {t('textStyle.removeStyle')}
           </button>
         </>

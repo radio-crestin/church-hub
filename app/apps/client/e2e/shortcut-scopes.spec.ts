@@ -5,6 +5,8 @@ import {
   test,
 } from '@playwright/test'
 
+import { pinShellServerPort } from './helpers/desktop-shell-port'
+
 /**
  * T-123. Each key works either only inside Church Hub or from any program, and
  * the user chooses per key (Settings → Shortcuts, next to the key).
@@ -60,6 +62,7 @@ interface FakeShell {
  * program, sending each window's focus and blur events as Tauri does.
  */
 async function fakeDesktopShell(page: Page) {
+  await pinShellServerPort(page)
   await page.addInitScript(() => {
     type Target = { kind: string; label?: string }
     const callbacks = new Map<number, (event: unknown) => void>()

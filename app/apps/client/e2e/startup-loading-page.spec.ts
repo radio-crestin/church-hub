@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
+import { pinShellServerPort } from './helpers/desktop-shell-port'
+
 /**
  * The desktop window opens at once and its loading page follows the local
  * server's start: each step in plain words, the song-search progress, and on
@@ -18,6 +20,7 @@ interface ScriptedHealth {
 
 /** Makes the page believe it runs in the desktop shell. */
 async function stubDesktopShell(page: Page, { serverStopped = false } = {}) {
+  await pinShellServerPort(page)
   await page.addInitScript((stopped) => {
     const calls: string[] = []
     const state = { serverStopped: stopped }

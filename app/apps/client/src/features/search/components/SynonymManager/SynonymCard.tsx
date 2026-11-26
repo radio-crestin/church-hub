@@ -13,17 +13,18 @@ export function SynonymCard({ synonym, onEdit, onDelete }: SynonymCardProps) {
   const { t } = useTranslation('settings')
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="flex items-center gap-3 p-3 bg-field rounded-lg border border-line">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
+          <span className="text-[13px] font-medium text-fg">
             {synonym.primary}
           </span>
           <ArrowLeftRight
             size={14}
-            className="text-gray-400 dark:text-gray-500 shrink-0"
+            className="text-fg-hint shrink-0"
+            strokeWidth={1.75}
           />
-          <span className="text-sm text-gray-600 dark:text-gray-300">
+          <span className="text-[13px] text-fg-label">
             {synonym.synonyms.join(', ')}
           </span>
         </div>
@@ -33,18 +34,18 @@ export function SynonymCard({ synonym, onEdit, onDelete }: SynonymCardProps) {
         <button
           type="button"
           onClick={onEdit}
-          className="p-2 text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          className="p-2 text-fg-hint hover:text-fg transition-colors"
           title={t('sections.synonyms.actions.edit')}
         >
-          <Pencil size={16} />
+          <Pencil size={16} strokeWidth={1.5} />
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          className="p-2 text-fg-hint hover:text-red-600 dark:hover:text-red-400 transition-colors"
           title={t('sections.synonyms.actions.delete')}
         >
-          <Trash2 size={16} />
+          <Trash2 size={16} strokeWidth={1.5} />
         </button>
       </div>
     </div>

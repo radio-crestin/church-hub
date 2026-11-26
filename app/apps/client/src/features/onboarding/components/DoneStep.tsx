@@ -16,13 +16,11 @@ export function DoneStep({ selected }: DoneStepProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-          <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-500" />
+        <h1 className="flex items-center gap-2 text-xl font-semibold text-fg">
+          <CheckCircle2 strokeWidth={1.5} className="h-6 w-6 text-ok" />
           {t('done.title')}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t('done.description')}
-        </p>
+        <p className="text-[13px] text-fg-label">{t('done.description')}</p>
       </div>
       <ul className="flex flex-wrap gap-2" data-testid="onboarding-summary">
         {ONBOARDING_FEATURES.filter((id) => selected.has(id)).map((id) => {
@@ -30,17 +28,15 @@ export function DoneStep({ selected }: DoneStepProps) {
           return (
             <li
               key={id}
-              className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+              className="flex items-center gap-1.5 rounded-lg bg-field px-2.5 py-1 text-[13px] text-fg-body"
             >
-              <Icon className="h-4 w-4" />
+              <Icon strokeWidth={1.5} className="h-4 w-4 text-fg-label" />
               {t(labelKey)}
             </li>
           )
         })}
       </ul>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        {t('done.later')}
-      </p>
+      <p className="text-[13px] text-fg-hint">{t('done.later')}</p>
     </div>
   )
 }

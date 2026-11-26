@@ -126,3 +126,20 @@ test('the updates page shows a new version with its written notes', async ({
   await expect(card).not.toContainText('T-158')
   await expect(card).not.toContainText('church-hub-notes')
 })
+
+test('"Show all" on Settings > About expands the whole version history', async ({
+  page,
+}) => {
+  await setAppLanguage(page, 'en')
+  await page.goto('/settings/about')
+  const section = page.getByTestId('release-notes-section')
+  const versions = section.getByText(/^v0\.1\./)
+  await expect(versions.first()).toBeVisible()
+  const before = await versions.count()
+
+  await section.getByRole('button', { name: /show all/i }).click()
+  await expect(
+    section.getByRole('button', { name: /show less/i }),
+  ).toBeVisible()
+  expect(await versions.count()).toBeGreaterThan(before)
+})

@@ -60,7 +60,7 @@ export function YouTubeTemplateSection({
       {filledFromLatest && (
         <p
           data-testid="youtube-template-latest-hint"
-          className="mt-1 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
+          className="mt-1 rounded-lg bg-field px-3 py-2 text-xs text-fg-label"
         >
           {t('youtubeSettings.template.filledFromLatest')}
         </p>

@@ -77,7 +77,7 @@ export function SongSyncNotification({
     <NotificationShell
       testId={`notification-${notification.kind}`}
       icon={isPending ? Download : Music}
-      tone={isPending ? 'amber' : 'indigo'}
+      tone={isPending ? 'attention' : 'neutral'}
       title={t(
         isPending ? 'notification.pendingTitle' : 'notification.syncedTitle',
       )}
@@ -119,7 +119,7 @@ export function SongSyncNotification({
           {sources.map((source) => (
             <section key={source.sourceId} className="flex flex-col gap-2">
               {sources.length > 1 && (
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <h4 className="text-sm font-medium text-fg-body">
                   {source.name}
                 </h4>
               )}

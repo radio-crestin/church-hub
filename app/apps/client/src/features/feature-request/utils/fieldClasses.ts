@@ -1,6 +1,5 @@
 /** Tailwind classes shared by the request's text fields. */
 export const inputClass =
-  'w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-60'
+  'w-full px-3 py-2 rounded-[10px] bg-field text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus disabled:opacity-60'
 
-export const labelClass =
-  'block text-sm font-medium text-gray-900 dark:text-white mb-1'
+export const labelClass = 'block text-[13px] font-medium text-fg-label mb-1'

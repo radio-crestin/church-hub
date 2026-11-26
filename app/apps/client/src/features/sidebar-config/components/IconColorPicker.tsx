@@ -62,14 +62,12 @@ export function IconColorPicker({
           onClick={handleClearSelection}
           className={`
             w-8 h-8 rounded-full transition-all flex items-center justify-center
-            bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600
-            ${isDefaultSelected ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ring-gray-900 dark:ring-white' : 'hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600'}
+            bg-field
+            ${isDefaultSelected ? 'ring-2 ring-offset-2 ring-offset-panel ring-fg' : 'hover:ring-2 hover:ring-line'}
           `}
           title={t('sections.sidebarItem.iconColor.default')}
         >
-          <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
-            A
-          </span>
+          <span className="text-xs font-bold text-fg-hint">A</span>
         </button>
       )}
 
@@ -86,8 +84,8 @@ export function IconColorPicker({
             className={`
               w-8 h-8 rounded-full transition-all flex items-center justify-center
               ${colorClasses.bg}
-              ${isSelected ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800' : ''}
-              ${isSelected ? 'ring-gray-900 dark:ring-white' : 'hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600'}
+              ${isSelected ? 'ring-2 ring-offset-2 ring-offset-panel' : ''}
+              ${isSelected ? 'ring-fg' : 'hover:ring-2 hover:ring-line'}
             `}
             title={color}
           >
@@ -106,19 +104,15 @@ export function IconColorPicker({
             onClick={handleCustomColorClick}
             className={`
               w-8 h-8 rounded-full transition-all flex items-center justify-center
-              border-2 border-dashed border-gray-300 dark:border-gray-600
-              ${hasCustomColor ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ring-gray-900 dark:ring-white' : 'hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600'}
+              border-2 border-dashed border-line
+              ${hasCustomColor ? 'ring-2 ring-offset-2 ring-offset-panel ring-fg' : 'hover:ring-2 hover:ring-line'}
             `}
             style={
               hasCustomColor ? { backgroundColor: customColor } : undefined
             }
             title={t('sections.sidebarItem.iconColor.custom')}
           >
-            {!hasCustomColor && (
-              <span className="text-lg text-gray-400 dark:text-gray-500">
-                +
-              </span>
-            )}
+            {!hasCustomColor && <span className="text-lg text-fg-hint">+</span>}
           </button>
           <input
             ref={colorInputRef}

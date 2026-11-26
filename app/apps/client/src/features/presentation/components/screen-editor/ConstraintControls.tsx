@@ -80,10 +80,10 @@ export function ConstraintControls({
   return (
     <div className="space-y-4">
       {/* Visual constraint indicator */}
-      <div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4">
+      <div className="relative w-full aspect-video bg-field rounded-lg border border-line p-4">
         {/* Center box representing the element */}
-        <div className="absolute inset-8 border-2 border-dashed border-gray-400 dark:border-gray-500 rounded flex items-center justify-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="absolute inset-8 border-2 border-dashed border-line-strong rounded flex items-center justify-center">
+          <span className="text-xs text-fg-hint">
             {t('screens.position.element', 'Element')}
           </span>
         </div>
@@ -102,14 +102,14 @@ export function ConstraintControls({
             transition-all duration-150
             ${
               constraints.top.enabled
-                ? 'bg-indigo-600 border-indigo-600'
-                : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600'
+                ? 'bg-primary border-primary'
+                : 'bg-panel border-line'
             }
           `}
           title={t('screens.position.top', 'Top')}
         />
         {constraints.top.enabled && (
-          <div className="absolute top-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+          <div className="absolute top-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-panel/90 rounded overflow-hidden">
             <input
               type="number"
               value={roundForDisplay(constraints.top.value)}
@@ -120,7 +120,7 @@ export function ConstraintControls({
                 })
               }
               step="0.1"
-              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-10 h-5 text-[10px] text-fg font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
             <button
@@ -129,7 +129,7 @@ export function ConstraintControls({
                 e.stopPropagation()
                 handleConstraintUnitToggle('top')
               }}
-              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+              className="h-5 px-1 text-[10px] text-fg-label hover:bg-hover hover:text-fg"
             >
               {constraints.top.unit}
             </button>
@@ -150,14 +150,14 @@ export function ConstraintControls({
             transition-all duration-150
             ${
               constraints.bottom.enabled
-                ? 'bg-indigo-600 border-indigo-600'
-                : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600'
+                ? 'bg-primary border-primary'
+                : 'bg-panel border-line'
             }
           `}
           title={t('screens.position.bottom', 'Bottom')}
         />
         {constraints.bottom.enabled && (
-          <div className="absolute bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+          <div className="absolute bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-panel/90 rounded overflow-hidden">
             <input
               type="number"
               value={roundForDisplay(constraints.bottom.value)}
@@ -168,7 +168,7 @@ export function ConstraintControls({
                 })
               }
               step="0.1"
-              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-10 h-5 text-[10px] text-fg font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
             <button
@@ -177,7 +177,7 @@ export function ConstraintControls({
                 e.stopPropagation()
                 handleConstraintUnitToggle('bottom')
               }}
-              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+              className="h-5 px-1 text-[10px] text-fg-label hover:bg-hover hover:text-fg"
             >
               {constraints.bottom.unit}
             </button>
@@ -198,14 +198,14 @@ export function ConstraintControls({
             transition-all duration-150
             ${
               constraints.left.enabled
-                ? 'bg-indigo-600 border-indigo-600'
-                : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600'
+                ? 'bg-primary border-primary'
+                : 'bg-panel border-line'
             }
           `}
           title={t('screens.position.left', 'Left')}
         />
         {constraints.left.enabled && (
-          <div className="absolute left-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+          <div className="absolute left-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-panel/90 rounded overflow-hidden">
             <input
               type="number"
               value={roundForDisplay(constraints.left.value)}
@@ -216,7 +216,7 @@ export function ConstraintControls({
                 })
               }
               step="0.1"
-              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-10 h-5 text-[10px] text-fg font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
             <button
@@ -225,7 +225,7 @@ export function ConstraintControls({
                 e.stopPropagation()
                 handleConstraintUnitToggle('left')
               }}
-              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+              className="h-5 px-1 text-[10px] text-fg-label hover:bg-hover hover:text-fg"
             >
               {constraints.left.unit}
             </button>
@@ -246,14 +246,14 @@ export function ConstraintControls({
             transition-all duration-150
             ${
               constraints.right.enabled
-                ? 'bg-indigo-600 border-indigo-600'
-                : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600'
+                ? 'bg-primary border-primary'
+                : 'bg-panel border-line'
             }
           `}
           title={t('screens.position.right', 'Right')}
         />
         {constraints.right.enabled && (
-          <div className="absolute right-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-white/90 dark:bg-gray-900/90 rounded overflow-hidden">
+          <div className="absolute right-7 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-panel/90 rounded overflow-hidden">
             <input
               type="number"
               value={roundForDisplay(constraints.right.value)}
@@ -264,7 +264,7 @@ export function ConstraintControls({
                 })
               }
               step="0.1"
-              className="w-10 h-5 text-[10px] text-indigo-600 dark:text-indigo-400 font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-10 h-5 text-[10px] text-fg font-medium bg-transparent px-1 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               onClick={(e) => e.stopPropagation()}
             />
             <button
@@ -273,7 +273,7 @@ export function ConstraintControls({
                 e.stopPropagation()
                 handleConstraintUnitToggle('right')
               }}
-              className="h-5 px-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
+              className="h-5 px-1 text-[10px] text-fg-label hover:bg-hover hover:text-fg"
             >
               {constraints.right.unit}
             </button>
@@ -282,27 +282,27 @@ export function ConstraintControls({
 
         {/* Lines connecting enabled anchors to center box */}
         {constraints.top.enabled && (
-          <div className="absolute top-6 left-1/2 w-0.5 h-2 bg-indigo-600 -translate-x-1/2" />
+          <div className="absolute top-6 left-1/2 w-0.5 h-2 bg-primary -translate-x-1/2" />
         )}
         {constraints.bottom.enabled && (
-          <div className="absolute bottom-6 left-1/2 w-0.5 h-2 bg-indigo-600 -translate-x-1/2" />
+          <div className="absolute bottom-6 left-1/2 w-0.5 h-2 bg-primary -translate-x-1/2" />
         )}
         {constraints.left.enabled && (
-          <div className="absolute left-6 top-1/2 h-0.5 w-2 bg-indigo-600 -translate-y-1/2" />
+          <div className="absolute left-6 top-1/2 h-0.5 w-2 bg-primary -translate-y-1/2" />
         )}
         {constraints.right.enabled && (
-          <div className="absolute right-6 top-1/2 h-0.5 w-2 bg-indigo-600 -translate-y-1/2" />
+          <div className="absolute right-6 top-1/2 h-0.5 w-2 bg-primary -translate-y-1/2" />
         )}
       </div>
 
       {/* Size inputs (hidden when stretch mode is active) */}
-      <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="space-y-3 pt-2 border-t border-line">
         {!isHorizontalStretch && (
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.position.width', 'Width')}
             </Label>
-            <div className="flex items-center gap-0.5 mt-1 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+            <div className="flex items-center gap-0.5 mt-1 bg-field rounded-lg overflow-hidden">
               <input
                 type="number"
                 value={roundForDisplay(size.width)}
@@ -310,12 +310,12 @@ export function ConstraintControls({
                   updateSize({ width: parseFloat(e.target.value) || 0 })
                 }
                 step="0.1"
-                className="w-20 h-8 text-sm text-gray-900 dark:text-gray-100 font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-20 h-8 text-[13px] text-fg font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 type="button"
                 onClick={handleWidthUnitToggle}
-                className="h-8 px-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 font-medium"
+                className="h-8 px-2 text-[13px] text-fg-label hover:bg-hover hover:text-fg font-medium"
               >
                 {size.widthUnit}
               </button>
@@ -323,7 +323,7 @@ export function ConstraintControls({
           </div>
         )}
         {isHorizontalStretch && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+          <div className="text-xs text-fg-hint italic">
             {t(
               'screens.position.stretchHorizontal',
               'Width stretches between left and right constraints',
@@ -333,10 +333,10 @@ export function ConstraintControls({
 
         {!isVerticalStretch && (
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.position.height', 'Height')}
             </Label>
-            <div className="flex items-center gap-0.5 mt-1 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+            <div className="flex items-center gap-0.5 mt-1 bg-field rounded-lg overflow-hidden">
               <input
                 type="number"
                 value={roundForDisplay(size.height)}
@@ -344,12 +344,12 @@ export function ConstraintControls({
                   updateSize({ height: parseFloat(e.target.value) || 0 })
                 }
                 step="0.1"
-                className="w-20 h-8 text-sm text-gray-900 dark:text-gray-100 font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-20 h-8 text-[13px] text-fg font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 type="button"
                 onClick={handleHeightUnitToggle}
-                className="h-8 px-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 font-medium"
+                className="h-8 px-2 text-[13px] text-fg-label hover:bg-hover hover:text-fg font-medium"
               >
                 {size.heightUnit}
               </button>
@@ -357,7 +357,7 @@ export function ConstraintControls({
           </div>
         )}
         {isVerticalStretch && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 italic">
+          <div className="text-xs text-fg-hint italic">
             {t(
               'screens.position.stretchVertical',
               'Height stretches between top and bottom constraints',

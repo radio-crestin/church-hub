@@ -17,10 +17,7 @@ export function SceneGrid() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"
-          />
+          <div key={i} className="h-24 rounded-lg bg-field" />
         ))}
       </div>
     )
@@ -28,7 +25,7 @@ export function SceneGrid() {
 
   return (
     <div className="space-y-4">
-      {/*<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">*/}
+      {/*<h2 className="text-lg font-semibold text-fg">*/}
       {/*  {t('scenes.title')}*/}
       {/*</h2>*/}
       {visibleScenes.length === 0 ? (

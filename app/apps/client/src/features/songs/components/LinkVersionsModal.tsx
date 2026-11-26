@@ -81,7 +81,7 @@ export function LinkVersionsModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto w-full max-w-lg rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800"
+      className="fixed inset-0 m-auto w-full max-w-lg rounded-xl bg-panel p-0 shadow-popover backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current && !linkMutation.isPending) {
           onClose()
@@ -89,12 +89,12 @@ export function LinkVersionsModal({
       }}
     >
       <div className="flex max-h-[80vh] flex-col">
-        <header className="flex items-start justify-between gap-3 border-b border-gray-200 p-4 dark:border-gray-700">
+        <header className="flex items-start justify-between gap-3 border-b border-line p-4">
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-base font-semibold text-fg">
               {t('versions.linkModalTitle')}
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-hint">
               {t('versions.linkModalDescription', { title: currentSongTitle })}
             </p>
           </div>
@@ -102,18 +102,18 @@ export function LinkVersionsModal({
             type="button"
             onClick={onClose}
             disabled={linkMutation.isPending}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-gray-700"
+            className="rounded p-1 text-fg-hint hover:bg-hover disabled:opacity-50"
             aria-label={t('versions.linkCancel')}
           >
             <X size={20} />
           </button>
         </header>
 
-        <div className="border-b border-gray-200 p-4 dark:border-gray-700">
+        <div className="border-b border-line p-4">
           <div className="relative">
             <Search
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-hint"
             />
             <input
               ref={searchInputRef}
@@ -125,7 +125,7 @@ export function LinkVersionsModal({
                 setSelectedId(null)
               }}
               placeholder={t('versions.linkSearchPlaceholder')}
-              className={`w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+              className={`w-full rounded-lg border border-line bg-field py-2 pl-9 text-sm text-fg outline-none focus:border-focus focus:ring-2 focus:ring-focus ${
                 query ? 'pr-9' : 'pr-3'
               }`}
             />
@@ -143,15 +143,15 @@ export function LinkVersionsModal({
 
         <div className="min-h-[12rem] flex-1 overflow-y-auto">
           {query.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="px-4 py-6 text-center text-sm text-fg-hint">
               {t('versions.linkSearchPlaceholder')}
             </p>
           ) : isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+              <Loader2 className="h-5 w-5 animate-spin text-fg-hint" />
             </div>
           ) : candidates.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="px-4 py-6 text-center text-sm text-fg-hint">
               {t('versions.emptyPicker')}
             </p>
           ) : (
@@ -162,17 +162,15 @@ export function LinkVersionsModal({
                     type="button"
                     onClick={() => setSelectedId(song.id)}
                     className={`flex w-full items-start gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                      selectedId === song.id
-                        ? 'bg-indigo-50 dark:bg-indigo-900/30'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                      selectedId === song.id ? 'bg-selected' : 'hover:bg-hover'
                     }`}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-medium text-gray-900 dark:text-white">
+                      <span className="block truncate font-medium text-fg">
                         {song.title}
                       </span>
                       {song.categoryName ? (
-                        <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                        <span className="block truncate text-xs text-fg-hint">
                           {song.categoryName}
                         </span>
                       ) : null}
@@ -192,12 +190,12 @@ export function LinkVersionsModal({
           </p>
         ) : null}
 
-        <footer className="flex items-center justify-end gap-2 border-t border-gray-200 p-4 dark:border-gray-700">
+        <footer className="flex items-center justify-end gap-2 border-t border-line p-4">
           <button
             type="button"
             onClick={onClose}
             disabled={linkMutation.isPending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-fg-body hover:bg-hover disabled:opacity-50"
           >
             {t('versions.linkCancel')}
           </button>
@@ -205,7 +203,7 @@ export function LinkVersionsModal({
             type="button"
             onClick={handleSubmit}
             disabled={selectedId === null || linkMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
           >
             {linkMutation.isPending ? (
               <Loader2 size={14} className="animate-spin" />

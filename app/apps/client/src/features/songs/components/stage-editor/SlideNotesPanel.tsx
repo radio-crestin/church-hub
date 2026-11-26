@@ -85,18 +85,18 @@ export function SlideNotesPanel({
   return (
     <div
       data-testid="slide-notes-panel"
-      className="mt-2 flex shrink-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+      className="mt-2 flex shrink-0 flex-col overflow-hidden rounded-lg border border-line bg-panel"
     >
       {/* Drag-to-resize handle (desktop only, expanded only) */}
       {!collapsed && (
         <div
           onMouseDown={handleDragStart}
           title={t('stageEditor.notes.resize')}
-          className="group hidden h-2 shrink-0 cursor-row-resize items-center justify-center hover:bg-indigo-100 lg:flex dark:hover:bg-indigo-900/30"
+          className="group hidden h-2 shrink-0 cursor-row-resize items-center justify-center hover:bg-hover lg:flex"
         >
           <GripHorizontal
             size={14}
-            className="text-gray-400 transition-colors group-hover:text-indigo-500"
+            className="text-fg-hint transition-colors group-hover:text-fg-label"
           />
         </div>
       )}
@@ -108,15 +108,15 @@ export function SlideNotesPanel({
         data-testid="slide-notes-toggle"
         className="flex items-center justify-between gap-2 px-3 py-1.5 text-left"
       >
-        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+        <span className="flex items-center gap-1.5 text-xs font-medium text-fg-label">
           <StickyNote size={13} />
           {t('stageEditor.notes.title')}
-          <span className="text-gray-400">#{slideNumber}</span>
+          <span className="text-fg-hint">#{slideNumber}</span>
         </span>
         {collapsed ? (
-          <ChevronUp size={14} className="text-gray-400" />
+          <ChevronUp size={14} className="text-fg-hint" />
         ) : (
-          <ChevronDown size={14} className="text-gray-400" />
+          <ChevronDown size={14} className="text-fg-hint" />
         )}
       </button>
 
@@ -128,7 +128,7 @@ export function SlideNotesPanel({
           placeholder={t('stageEditor.notes.placeholder')}
           data-testid="slide-notes-textarea"
           style={{ height }}
-          className="w-full resize-none border-t border-gray-100 bg-transparent px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none dark:border-gray-700 dark:text-gray-100"
+          className="w-full resize-none border-t border-line bg-transparent px-3 py-2 text-sm text-fg placeholder:text-fg-hint focus:outline-none"
         />
       )}
     </div>

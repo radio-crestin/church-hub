@@ -42,8 +42,9 @@ export function ScheduleSongSlideList({
         <AlertTriangle
           size={16}
           className="text-amber-600 dark:text-amber-400 flex-shrink-0"
+          strokeWidth={1.5}
         />
-        <span className="text-sm text-amber-700 dark:text-amber-300">
+        <span className="text-[13px] text-amber-700 dark:text-amber-300">
           {t('warnings.noSlides')}
         </span>
       </div>
@@ -70,32 +71,28 @@ export function ScheduleSongSlideList({
             onClick={() => onSlideClick(item, index)}
             className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
               isPresented
-                ? 'bg-green-100 dark:bg-green-900/50 ring-2 ring-inset ring-green-500'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
+                ? 'bg-live-tint ring-1 ring-inset ring-live'
+                : 'hover:bg-hover'
             }`}
           >
             <div className="flex items-start gap-2">
               <span
-                className={`font-semibold text-sm min-w-[24px] ${
-                  isPresented
-                    ? 'text-green-700 dark:text-green-300'
-                    : 'text-gray-500 dark:text-gray-400'
+                className={`font-semibold text-[13px] min-w-[24px] ${
+                  isPresented ? 'text-live' : 'text-fg-hint'
                 }`}
               >
                 {index + 1}
               </span>
               <span
-                className={`text-sm whitespace-pre-line ${
-                  isPresented
-                    ? 'text-green-900 dark:text-green-100'
-                    : 'text-gray-600 dark:text-gray-400'
+                className={`text-[13px] whitespace-pre-line ${
+                  isPresented ? 'text-fg' : 'text-fg-body'
                 }`}
               >
                 {plainText}
               </span>
             </div>
             {slide.label && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-8 mt-1 block">
+              <span className="text-xs text-fg-hint ml-8 mt-1 block">
                 {slide.label}
               </span>
             )}

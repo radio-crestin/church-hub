@@ -31,7 +31,7 @@ export function ConnectPhone() {
 
   return (
     <div className="flex flex-col gap-5">
-      <ol className="list-decimal space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
+      <ol className="list-decimal space-y-1 pl-5 text-[13px] text-fg-body">
         <li>{t('sections.phones.steps.wifi')}</li>
         <li>{t('sections.phones.steps.account')}</li>
         <li>{t('sections.phones.steps.scan')}</li>
@@ -40,7 +40,7 @@ export function ConnectPhone() {
       {account ? (
         <>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-[13px] font-medium text-fg-body">
               {t('sections.phones.account')}
             </label>
             <Combobox
@@ -66,11 +66,11 @@ export function ConnectPhone() {
           </div>
         </>
       ) : (
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-[13px] text-fg-label">
           {t('sections.phones.noAccounts')}{' '}
           <Link
             to="/settings/users"
-            className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            className="font-medium text-focus hover:underline"
           >
             {t('sections.phones.createAccount')}
           </Link>

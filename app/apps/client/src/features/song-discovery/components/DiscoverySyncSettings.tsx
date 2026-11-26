@@ -22,25 +22,21 @@ export function DiscoverySyncSettings() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-fg">
           {t('settings.title')}
         </h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t('settings.description')}
-        </p>
+        <p className="mt-1 text-sm text-fg-hint">{t('settings.description')}</p>
       </div>
 
       <div className="flex items-center justify-between gap-4">
         <div>
           <label
             htmlFor="song-updates-auto"
-            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="text-sm font-medium text-fg-body"
           >
             {t('settings.enableLabel')}
           </label>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t('settings.enableHint')}
-          </p>
+          <p className="text-xs text-fg-hint">{t('settings.enableHint')}</p>
         </div>
         <Switch
           id="song-updates-auto"
@@ -55,7 +51,7 @@ export function DiscoverySyncSettings() {
           type="button"
           onClick={() => void checkNow({ force: true })}
           disabled={isRunning}
-          className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+          className="inline-flex items-center gap-2 rounded-lg bg-field px-4 py-2 text-sm font-medium text-fg-body transition-colors hover:bg-hover disabled:opacity-50"
         >
           {isRunning ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -64,7 +60,7 @@ export function DiscoverySyncSettings() {
           )}
           {t('settings.checkNow')}
         </button>
-        <span className="text-sm text-gray-600 dark:text-gray-300">
+        <span className="text-sm text-fg-label">
           {isRunning
             ? t('source.checkingAll')
             : state?.finishedAt
@@ -96,7 +92,7 @@ export function DiscoverySyncSettings() {
         </ul>
       )}
 
-      <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+      <div className="border-t border-line pt-4">
         <RecoverTitlesButton />
       </div>
     </div>

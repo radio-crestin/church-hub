@@ -81,36 +81,36 @@ export function AISearchSettings({
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-800 animate-pulse">
-        <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+      <div className="bg-panel rounded-xl p-4 sm:p-6 border border-line animate-pulse">
+        <div className="h-6 w-32 bg-field rounded mb-4" />
         <div className="space-y-3">
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded" />
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-10 bg-field rounded" />
+          <div className="h-10 bg-field rounded" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-800 space-y-6">
+    <div className="bg-panel rounded-xl p-4 sm:p-6 border border-line space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-indigo-500" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <Sparkles className="w-5 h-5 text-fg" strokeWidth={1.5} />
+          <h3 className="text-base font-semibold text-fg">
             {t(`${i18nPrefix}.title`)}
           </h3>
         </div>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+        <p className="text-fg-label text-[13px] mb-6">
           {t(`${i18nPrefix}.description`)}
         </p>
 
         {/* Enable Toggle */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="text-sm font-medium text-gray-900 dark:text-white">
+            <label className="text-[13px] font-medium text-fg">
               {t(`${i18nPrefix}.enable.label`)}
             </label>
-            <p className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+            <p className="text-fg-label text-xs mt-0.5">
               {t(`${i18nPrefix}.enable.description`)}
             </p>
           </div>
@@ -120,13 +120,11 @@ export function AISearchSettings({
             aria-checked={localConfig.enabled}
             onClick={() => updateField('enabled', !localConfig.enabled)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              localConfig.enabled
-                ? 'bg-indigo-600'
-                : 'bg-gray-200 dark:bg-gray-700'
+              localConfig.enabled ? 'bg-primary' : 'bg-field'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-panel transition-transform ${
                 localConfig.enabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -136,10 +134,10 @@ export function AISearchSettings({
         {/* Analyze Results Toggle */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="text-sm font-medium text-gray-900 dark:text-white">
+            <label className="text-[13px] font-medium text-fg">
               {t(`${i18nPrefix}.analyzeResults.label`)}
             </label>
-            <p className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+            <p className="text-fg-label text-xs mt-0.5">
               {t(`${i18nPrefix}.analyzeResults.description`)}
             </p>
           </div>
@@ -151,13 +149,11 @@ export function AISearchSettings({
               updateField('analyzeResults', !localConfig.analyzeResults)
             }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              localConfig.analyzeResults
-                ? 'bg-indigo-600'
-                : 'bg-gray-200 dark:bg-gray-700'
+              localConfig.analyzeResults ? 'bg-primary' : 'bg-field'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-panel transition-transform ${
                 localConfig.analyzeResults ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -166,7 +162,7 @@ export function AISearchSettings({
 
         {/* Provider */}
         <div className="space-y-2 mb-4">
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
+          <label className="text-[13px] font-medium text-fg">
             {t(`${i18nPrefix}.provider.label`)}
           </label>
           <Combobox
@@ -178,14 +174,14 @@ export function AISearchSettings({
             allowClear={false}
             portalContainer={portalContainer}
           />
-          <p className="text-gray-600 dark:text-gray-400 text-xs">
+          <p className="text-fg-label text-xs">
             {t(`${i18nPrefix}.provider.description`)}
           </p>
         </div>
 
         {/* Model */}
         <div className="space-y-2 mb-4">
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
+          <label className="text-[13px] font-medium text-fg">
             {t(`${i18nPrefix}.model.label`)}
           </label>
           <input
@@ -193,16 +189,16 @@ export function AISearchSettings({
             value={localConfig.model}
             onChange={(e) => updateField('model', e.target.value)}
             placeholder="gpt-5.2"
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+            className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus transition-colors"
           />
-          <p className="text-gray-600 dark:text-gray-400 text-xs">
+          <p className="text-fg-label text-xs">
             {t(`${i18nPrefix}.model.description`)}
           </p>
         </div>
 
         {/* API Key */}
         <div className="space-y-2 mb-4">
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
+          <label className="text-[13px] font-medium text-fg">
             {t(`${i18nPrefix}.apiKey.label`)}
           </label>
           <div className="relative">
@@ -211,21 +207,21 @@ export function AISearchSettings({
               value={localConfig.apiKey}
               onChange={(e) => updateField('apiKey', e.target.value)}
               placeholder={t(`${i18nPrefix}.apiKey.placeholder`)}
-              className="w-full px-3 py-2 pr-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2 pr-10 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus transition-colors"
             />
             <button
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-fg-hint hover:text-fg-label"
             >
               {showApiKey ? (
-                <EyeOff className="w-4 h-4" />
+                <EyeOff className="w-4 h-4" strokeWidth={1.5} />
               ) : (
-                <Eye className="w-4 h-4" />
+                <Eye className="w-4 h-4" strokeWidth={1.5} />
               )}
             </button>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 text-xs">
+          <p className="text-fg-label text-xs">
             {t(`${i18nPrefix}.apiKey.description`)}
           </p>
         </div>
@@ -233,7 +229,7 @@ export function AISearchSettings({
         {/* Base URL (for custom provider) */}
         {localConfig.provider === 'custom' && (
           <div className="space-y-2 mb-4">
-            <label className="text-sm font-medium text-gray-900 dark:text-white">
+            <label className="text-[13px] font-medium text-fg">
               {t(`${i18nPrefix}.baseUrl.label`)}
             </label>
             <input
@@ -241,9 +237,9 @@ export function AISearchSettings({
               value={localConfig.baseUrl || ''}
               onChange={(e) => updateField('baseUrl', e.target.value)}
               placeholder={t(`${i18nPrefix}.baseUrl.placeholder`)}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus transition-colors"
             />
-            <p className="text-gray-600 dark:text-gray-400 text-xs">
+            <p className="text-fg-label text-xs">
               {t(`${i18nPrefix}.baseUrl.description`)}
             </p>
           </div>
@@ -255,7 +251,7 @@ export function AISearchSettings({
             type="button"
             onClick={handleSave}
             disabled={isUpdating}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUpdating ? t(`${i18nPrefix}.saving`) : t(`${i18nPrefix}.save`)}
           </button>

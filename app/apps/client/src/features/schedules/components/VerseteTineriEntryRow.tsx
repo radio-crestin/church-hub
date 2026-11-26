@@ -116,7 +116,7 @@ export function VerseteTineriEntryRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-start gap-2 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg ${
+      className={`flex items-start gap-2 p-3 bg-panel border border-line rounded-lg ${
         isDragging ? 'opacity-50 shadow-lg' : ''
       }`}
     >
@@ -125,13 +125,13 @@ export function VerseteTineriEntryRow({
         type="button"
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing p-1 mt-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+        className="cursor-grab active:cursor-grabbing p-1 mt-1.5 hover:bg-hover rounded transition-colors flex-shrink-0"
       >
-        <GripVertical className="w-4 h-4 text-gray-400" />
+        <GripVertical className="w-4 h-4 text-fg-hint" strokeWidth={1.5} />
       </button>
 
       {/* Entry number */}
-      <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-2 flex-shrink-0 w-6">
+      <span className="text-[13px] font-medium text-fg-hint mt-2 flex-shrink-0 w-6">
         {index + 1}.
       </span>
 
@@ -143,7 +143,7 @@ export function VerseteTineriEntryRow({
           value={entry.personName}
           onChange={(e) => onPersonNameChange(e.target.value)}
           placeholder={t('verseteTineri.personNamePlaceholder')}
-          className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full px-3 py-1.5 text-[13px] border border-line rounded bg-panel text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
         />
 
         {/* Bible reference */}
@@ -153,12 +153,10 @@ export function VerseteTineriEntryRow({
             value={localReference}
             onChange={(e) => setLocalReference(e.target.value)}
             placeholder={t('biblePassage.referencePlaceholder')}
-            className={`w-full px-3 py-1.5 text-sm border rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:border-transparent ${
+            className={`w-full px-3 py-1.5 text-[13px] border rounded-[10px] bg-field text-fg focus:outline-none focus:ring-1 focus:ring-inset ${
               hasError
                 ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
-                : isValid
-                  ? 'border-teal-300 dark:border-teal-600 focus:ring-teal-500'
-                  : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500'
+                : 'border-transparent focus:ring-focus'
             }`}
           />
 
@@ -167,17 +165,18 @@ export function VerseteTineriEntryRow({
             <div className="flex items-center gap-1 text-xs">
               {isValid ? (
                 <>
-                  <Check
-                    size={12}
-                    className="text-teal-600 dark:text-teal-400"
-                  />
-                  <span className="text-teal-700 dark:text-teal-300">
+                  <Check size={12} className="text-fg-label" strokeWidth={2} />
+                  <span className="text-fg-label">
                     {entry.parsedResult.formattedReference}
                   </span>
                 </>
               ) : (
                 <>
-                  <AlertCircle size={12} className="text-red-500" />
+                  <AlertCircle
+                    size={12}
+                    className="text-red-500"
+                    strokeWidth={2}
+                  />
                   <span className="text-red-600 dark:text-red-400">
                     {t(entry.parsedResult.errorKey!)}
                   </span>
@@ -195,7 +194,10 @@ export function VerseteTineriEntryRow({
         className="p-1.5 mt-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors flex-shrink-0"
         title={t('verseteTineri.removeEntry')}
       >
-        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+        <Trash2
+          className="w-4 h-4 text-fg-hint hover:text-red-500"
+          strokeWidth={1.5}
+        />
       </button>
     </div>
   )

@@ -13,17 +13,17 @@ export function PlayerQueue({ player }: { player: ServerAudioPlayer }) {
   return (
     <div className="flex flex-col lg:flex-1 lg:min-h-0">
       <div className="flex items-center justify-between p-3 sm:p-4 pb-2 flex-shrink-0">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-[13px] font-medium text-fg">
           {t('player.queue')}
         </span>
         {state.queueLength > 0 && (
           <button
             type="button"
             onClick={player.clearQueue}
-            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            className="-my-1.5 flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-red-600"
             title={t('player.clearQueue')}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" strokeWidth={1.5} />
           </button>
         )}
       </div>

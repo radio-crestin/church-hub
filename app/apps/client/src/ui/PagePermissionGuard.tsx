@@ -19,16 +19,16 @@ function ConnectionLostPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
-      <WifiOff className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" />
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+      <WifiOff strokeWidth={1.5} className="w-8 h-8 text-fg-hint mb-4" />
+      <h1 className="text-base font-semibold text-fg mb-1.5">
         {t('errors.connectionLostTitle')}
       </h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
+      <p className="text-[13px] text-fg-label mb-4 max-w-md">
         {t('errors.connectionLost')}
       </p>
       <button
         onClick={() => refresh()}
-        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+        className="h-9 px-4 bg-primary text-[13px] font-medium text-white rounded-lg hover:bg-indigo-700 transition-colors"
       >
         {t('buttons.retry')}
       </button>
@@ -42,19 +42,17 @@ function NoPermissionPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
-      <ShieldX className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" />
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+      <ShieldX strokeWidth={1.5} className="w-8 h-8 text-fg-hint mb-4" />
+      <h1 className="text-base font-semibold text-fg mb-1.5">
         {t('errors.noPermissionTitle')}
       </h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
+      <p className="text-[13px] text-fg-label mb-4 max-w-md">
         {t('errors.noPermission')}
       </p>
-      <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
-        {t('errors.contactAdmin')}
-      </p>
+      <p className="text-xs text-fg-hint mb-4">{t('errors.contactAdmin')}</p>
       <button
         onClick={() => refresh()}
-        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+        className="h-9 px-4 bg-primary text-[13px] font-medium text-white rounded-lg hover:bg-indigo-700 transition-colors"
       >
         {t('buttons.retry')}
       </button>
@@ -103,7 +101,7 @@ export function PagePermissionGuard({
   if (isLoading || (isPermissionDenied && isSidebarLoading)) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fg-label" />
       </div>
     )
   }

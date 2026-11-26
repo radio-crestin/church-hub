@@ -25,7 +25,7 @@ export function TrackList({
   return (
     <div className="@container">
       <div
-        className={`${TRACK_GRID} hidden px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 @md:grid dark:text-gray-400`}
+        className={`${TRACK_GRID} hidden px-3 pb-2 text-xs font-medium text-fg-hint @md:grid`}
       >
         <span>{t('tracks.columns.title')}</span>
         <span className="hidden @3xl:block">{t('tracks.columns.artist')}</span>
