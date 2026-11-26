@@ -20,6 +20,8 @@ const TYPES: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
+  // sqlite-wasm compiles it while it downloads only when served as wasm.
+  '.wasm': 'application/wasm',
 }
 
 /**

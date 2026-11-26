@@ -14,11 +14,26 @@ import {
 
 type HandleRequest = (req: Request, server: FetchServer) => Promise<Response>
 
-/** The address the server sees its requests at: nobody's network. */
-const ORIGIN = 'http://browser-server.invalid'
+/**
+ * Where the server sees its requests come from: this machine. The page is
+ * this device's own app, its only client, as the desktop app's windows are
+ * the PC's: what the PC keeps to its own machine (sync, settings) is the
+ * device's here.
+ */
+const ORIGIN = 'http://localhost'
+const PEER = { address: '127.0.0.1', family: 'IPv4' as const, port: 0 }
 
-/** The peer every request comes from: this page, never this machine. */
-const PEER = { address: '0.0.0.0', family: 'IPv4' as const, port: 0 }
+/**
+ * The request as the server reads it. A browser drops a Request's Host
+ * header (a forbidden name), which the server checks to tell this machine
+ * from the LAN: it is put back on the request's own headers.
+ */
+function toServerRequest(url: URL | string, init?: RequestInit): Request {
+  const request = new Request(url, init)
+  const headers = new Headers(request.headers)
+  headers.set('Host', new URL(request.url).host)
+  return Object.defineProperty(request, 'headers', { value: headers })
+}
 
 /**
  * A WebSocket from the page to the server in this worker: opening it runs
@@ -41,7 +56,7 @@ class WorkerSocket implements TunnelSocket {
         return true
       },
     } as unknown as FetchServer
-    void handleRequest(new Request(url.href.replace(/^ws/, 'http')), server)
+    void handleRequest(toServerRequest(url.href.replace(/^ws/, 'http')), server)
       .then(() => {
         if (!this.serverSide) return this.end()
         handleWebSocketOpen(this.serverSide as never)
@@ -94,7 +109,9 @@ export function workerTarget(handleRequest: HandleRequest): TunnelTarget {
     origin: ORIGIN,
     fetch: async (url, init) => {
       if (needsChurchPc(url.pathname)) return needsChurchPcResponse()
-      return runAsRequest(() => handleRequest(new Request(url, init), server))
+      return runAsRequest(() =>
+        handleRequest(toServerRequest(url, init), server),
+      )
     },
     openSocket: (url) => new WorkerSocket(url, handleRequest),
   }
