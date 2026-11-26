@@ -118,8 +118,9 @@ interface UsePresentationContentResult {
   morphLines: boolean
   nextSlideData: NextSlideData | undefined
   /**
-   * The previous content type's content while it fades out under the new one
-   * (a song, then a verse); drawn by ScreenContentLayers. Null otherwise.
+   * The previous content type's content while it fades out before the new
+   * one fades in (a song, then a verse); drawn by ScreenContentLayers. Null
+   * otherwise.
    */
   leaving: ShownContent<ContentData, NextSlideData | undefined> | null
   presentationState: ReturnType<typeof usePresentationState>['data']

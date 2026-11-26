@@ -21,10 +21,10 @@ function isTypeChange(from: ContentType, to: ContentType): boolean {
 
 /**
  * When the content changes type while on screen (a song, then a Bible verse),
- * hands the old content back as `leaving` for the length of its exit fade, so
- * it fades out while the new content fades in at once (ScreenContentLayers
- * draws both). Without it the new type waited for the old one to leave, with a
- * blank screen between them.
+ * hands the old content back as `leaving` for the length of its exit fade
+ * (ScreenContentLayers draws it), and keeps the new content hidden until it
+ * is gone: the old type fades out, then the new one fades in, so the two are
+ * never on screen together.
  */
 export function useContentTypeHandoff<Data, Next>(
   target: ShownContent<Data, Next>,
@@ -74,5 +74,5 @@ export function useContentTypeHandoff<Data, Next>(
     shownRef.current = target
   })
 
-  return { ...target, isVisible, leaving: leavingNow }
+  return { ...target, isVisible: isVisible && !leavingNow, leaving: leavingNow }
 }

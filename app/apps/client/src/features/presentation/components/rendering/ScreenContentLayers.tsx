@@ -4,7 +4,7 @@ import type { ShownContent } from '../../hooks/useContentTypeHandoff'
 import { contentFamily } from '../../utils/contentFamily'
 
 interface ScreenContentLayersProps extends ScreenContentProps {
-  /** The previous content type's content, fading out (usePresentationContent) */
+  /** The previous content type's content, fading out (useContentTypeHandoff) */
   leaving?: ShownContent<ContentData, NextSlideData | undefined> | null
 }
 
@@ -12,8 +12,9 @@ const LAYER_STYLE: React.CSSProperties = { position: 'absolute', inset: 0 }
 
 /**
  * Draws the content and, while the content type changes (a song, then a
- * verse), the old content fading out under it. Each content family keeps its
- * own ScreenContent, so the old one plays its exit as the new one enters.
+ * verse), the old content fading out before it. Each content family keeps its
+ * own ScreenContent, so the old one plays its exit while the new one waits
+ * hidden (useContentTypeHandoff), then enters.
  */
 export function ScreenContentLayers({
   leaving,
