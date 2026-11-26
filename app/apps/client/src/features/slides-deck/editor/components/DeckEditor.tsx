@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/react'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useMediaQuery } from '~/hooks/useMediaQuery'
@@ -10,6 +10,10 @@ import type { DeckInsertChoice } from './InsertMenu'
 import { MediaPickerDialog } from './MediaPickerDialog'
 import { SlideThumbnailList } from './SlideThumbnailList'
 import { useDeckTitleStyle } from '../../hooks/useDeckTitleStyle'
+import { PptxImportDialog } from '../../pptx-import/components/PptxImportDialog'
+import { usePptxImport } from '../../pptx-import/hooks/usePptxImport'
+import type { PptxImportResult } from '../../pptx-import/types'
+import { fitSlidesToDeck } from '../../pptx-import/utils/fitSlidesToDeck'
 import type { DeckSlideKind, SlideDeck } from '../../types'
 import { newSlide } from '../../utils/newSlide'
 import { useDeckEditorKeys } from '../hooks/useDeckEditorKeys'
@@ -61,6 +65,21 @@ export function DeckEditor({
   const [textEditor, setTextEditor] = useState<Editor | null>(null)
   const [picking, setPicking] = useState<'image' | 'video' | null>(null)
 
+  // Slides from a PowerPoint file go after the last one, whatever was open.
+  const deckRef = useRef(deck)
+  deckRef.current = deck
+  const pptx = usePptxImport(
+    useCallback(
+      async ({ deck: imported }: PptxImportResult) => {
+        const current = deckRef.current
+        const slides = fitSlidesToDeck(imported, current)
+        change({ type: 'slide/add', slides, index: current.slides.length })
+        if (slides[0]) setSlideId(slides[0].id)
+      },
+      [change],
+    ),
+  )
+
   // A removed or undone slide leaves the first one open.
   const slide = deck.slides.find((s) => s.id === slideId) ?? deck.slides[0]
   const selected = slide?.elements.find((e) => e.id === selectedId)
@@ -91,7 +110,8 @@ export function DeckEditor({
     setSelectedId(element.id)
   }
   const handleInsert = (choice: DeckInsertChoice) => {
-    if (choice === 'image' || choice === 'video') setPicking(choice)
+    if (choice === 'pptx') pptx.choose()
+    else if (choice === 'image' || choice === 'video') setPicking(choice)
     else if (choice === 'text')
       insert({ type: 'text', text: placeholders.text, style })
     else insert({ type: 'shape', shape: choice })
@@ -180,7 +200,7 @@ export function DeckEditor({
                 deck.height,
               )
               const index = deck.slides.indexOf(slide) + 1
-              change({ type: 'slide/add', slide: added, index })
+              change({ type: 'slide/add', slides: [added], index })
               openSlide(added.id)
             }}
             onDuplicate={(id) =>
@@ -214,6 +234,7 @@ export function DeckEditor({
           sheet={phone}
         />
       </div>
+      <PptxImportDialog pptx={pptx} />
       {picking && (
         <MediaPickerDialog
           kind={picking}

@@ -35,7 +35,7 @@ export function deckReducer(deck: SlideDeck, action: DeckAction): SlideDeck {
   switch (action.type) {
     case 'slide/add': {
       const slides = [...deck.slides]
-      slides.splice(action.index, 0, action.slide)
+      slides.splice(action.index, 0, ...action.slides)
       return { ...deck, slides }
     }
     case 'slide/duplicate': {

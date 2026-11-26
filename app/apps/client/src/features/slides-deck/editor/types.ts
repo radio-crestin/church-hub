@@ -4,8 +4,8 @@ import type { DeckAnimation, DeckElement, DeckSlide } from '../types'
 export type DeckAction =
   | {
       type: 'slide/add'
-      slide: DeckSlide
-      /** Where it goes in the deck. */
+      slides: DeckSlide[]
+      /** Where they go in the deck. */
       index: number
     }
   | { type: 'slide/duplicate'; slideId: string }

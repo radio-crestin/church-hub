@@ -4,6 +4,7 @@ import {
   Camera,
   Check,
   FileText,
+  FileUp,
   Film,
   ListMusic,
   Loader2,
@@ -42,6 +43,8 @@ interface AddScheduleItemModalProps {
   onAddMedia?: (type: MediaItemType) => void
   /** A Slides item: added with one title slide. */
   onAddDeck?: () => void
+  /** A Slides item from a PowerPoint file the operator picks. */
+  onImportPptx?: () => void
   /**
    * `false` for a host that opens the modal from its own control — the
    * Programe panel, whose "+" can move into its header's "More" menu.
@@ -107,6 +110,7 @@ export function AddScheduleItemModal({
   onAddScene,
   onAddMedia,
   onAddDeck,
+  onImportPptx,
   showTrigger = true,
 }: AddScheduleItemModalProps) {
   const { t } = useTranslation('common')
@@ -244,6 +248,19 @@ export function AddScheduleItemModal({
             titleKey: 'addMenu.slides',
             descriptionKey: 'addMenu.slidesDescription',
             onSelect: () => handHandoff(onAddDeck),
+          } satisfies MenuOption,
+        ]
+      : []),
+    ...(onImportPptx
+      ? [
+          {
+            key: 'importPptx',
+            icon: FileUp,
+            iconClass: 'text-red-600 dark:text-red-400',
+            bgClass: 'bg-red-100 dark:bg-red-900/30',
+            titleKey: 'addMenu.importPptx',
+            descriptionKey: 'addMenu.importPptxDescription',
+            onSelect: () => handHandoff(onImportPptx),
           } satisfies MenuOption,
         ]
       : []),

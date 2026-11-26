@@ -1,5 +1,6 @@
 import {
   Circle,
+  FileInput,
   Film,
   Image,
   Minus,
@@ -14,7 +15,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { DeckShape } from '../../types'
 
-export type DeckInsertChoice = 'text' | 'image' | 'video' | DeckShape
+export type DeckInsertChoice = 'text' | 'image' | 'video' | 'pptx' | DeckShape
 
 const CHOICES: { choice: DeckInsertChoice; icon: typeof Type }[] = [
   { choice: 'text', icon: Type },
@@ -25,9 +26,10 @@ const CHOICES: { choice: DeckInsertChoice; icon: typeof Type }[] = [
   { choice: 'ellipse', icon: Circle },
   { choice: 'triangle', icon: Triangle },
   { choice: 'line', icon: Minus },
+  { choice: 'pptx', icon: FileInput },
 ]
 
-/** Insert: a text box, a picture or video from the gallery, or a shape. */
+/** Insert: a text box, a picture or video from the gallery, a shape, or slides from a PowerPoint file. */
 export function InsertMenu({
   onInsert,
 }: {
@@ -47,7 +49,7 @@ export function InsertMenu({
         {t('deckEditor.insert.title')}
       </button>
       {open && (
-        <div className="absolute top-full left-0 z-40 mt-1 w-48 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div className="absolute top-full left-0 z-40 mt-1 w-56 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
           {CHOICES.map(({ choice, icon: Icon }) => (
             <button
               key={choice}

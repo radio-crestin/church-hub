@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next'
 
 import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
 import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
+import { PptxImportDialog } from '~/features/slides-deck/pptx-import/components/PptxImportDialog'
+import { useImportPptxItem } from '~/features/slides-deck/pptx-import/hooks/useImportPptxItem'
 import { SongEditorModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
@@ -71,6 +73,7 @@ export const ScheduleItemEditors = forwardRef<
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
   const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
   const addDeck = useAddDeckItem(scheduleId, onChanged)
+  const { pptx, importPptx } = useImportPptxItem(scheduleId, onChanged)
   const openDeckEditor = useOpenDeckEditor()
 
   useImperativeHandle(
@@ -132,8 +135,11 @@ export const ScheduleItemEditors = forwardRef<
         onAddScene={() => setShowScenePicker(true)}
         onAddMedia={(type) => mediaEditorsRef.current?.add(type)}
         onAddDeck={() => addDeck()}
+        onImportPptx={() => importPptx()}
         showTrigger={false}
       />
+
+      <PptxImportDialog pptx={pptx} />
 
       <MediaItemEditors
         ref={mediaEditorsRef}

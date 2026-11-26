@@ -47,7 +47,7 @@ export async function readBackground(
       const blip = await readBlip(
         fill.blipFill,
         { deck, parts, partPath: part.path, level: 'slide', idPrefix: '' },
-        'background',
+        '',
       )
       if (blip.mediaId) {
         return {
@@ -65,7 +65,7 @@ export async function readBackground(
       background: { type: 'color', color: colorCss(fill.color) },
       notes:
         fill.kind === 'gradient'
-          ? [{ outcome: 'changed', reason: 'gradient', detail: 'background' }]
+          ? [{ outcome: 'changed', reason: 'gradient' }]
           : [],
     }
   }

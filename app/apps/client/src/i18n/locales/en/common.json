@@ -29,6 +29,8 @@
     "versesDescription": "Verses from a topic or a book, all or some at random",
     "slides": "Slides",
     "slidesDescription": "Your own slides, with text, pictures, videos and animations",
+    "importPptx": "Import PowerPoint",
+    "importPptxDescription": "Slides from a .pptx file, with their pictures, videos and animations",
     "importSchedule": {
       "title": "Import Presentation",
       "description": "Import from an existing presentation"

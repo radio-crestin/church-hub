@@ -29,16 +29,34 @@ export async function readBlip(
   const embed = blip?.getAttribute('r:embed')
   if (!blip || !embed) {
     return blip?.getAttribute('r:link')
-      ? { note: { outcome: 'skipped', reason: 'linkedMedia', detail: name } }
+      ? {
+          note: {
+            outcome: 'skipped',
+            reason: 'linkedMedia',
+            detail: name || undefined,
+          },
+        }
       : {}
   }
   const rel = (await context.deck.pkg.rels(context.partPath)).get(embed)
   if (!rel || rel.external || !context.deck.pkg.has(rel.target)) {
-    return { note: { outcome: 'skipped', reason: 'linkedMedia', detail: name } }
+    return {
+      note: {
+        outcome: 'skipped',
+        reason: 'linkedMedia',
+        detail: name || undefined,
+      },
+    }
   }
   const type = mediaFileType(rel.target, 'image')
   if (!type.ok) {
-    return { note: { outcome: 'skipped', reason: type.reason, detail: name } }
+    return {
+      note: {
+        outcome: 'skipped',
+        reason: type.reason,
+        detail: name || undefined,
+      },
+    }
   }
   const mediaId = context.deck.media.add({
     path: rel.target,
