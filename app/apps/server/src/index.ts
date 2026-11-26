@@ -51,6 +51,7 @@ import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
+import { handlePresentationGalleryMediaRoutes } from './routes/presentation-gallery-media'
 import { handleRemoteAccessRoutes } from './routes/remote-access'
 import { handleScheduleItemRoutes } from './routes/schedule-items'
 import { handleScheduleMidiRoutes } from './routes/schedule-midi'
@@ -4631,6 +4632,19 @@ async function startRealServer(): Promise<void> {
           )
         }
       }
+
+      // POST /api/presentation/temporary-image, /temporary-video - A gallery file
+      const galleryMediaResponse = await handlePresentationGalleryMediaRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+        (state) => {
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+        },
+      )
+      if (galleryMediaResponse) return galleryMediaResponse
 
       // ============================================================
       // Songs API Endpoints
