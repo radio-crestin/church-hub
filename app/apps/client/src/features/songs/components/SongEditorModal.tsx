@@ -289,7 +289,7 @@ export function SongEditorModal({
             type="button"
             onClick={handleClose}
             disabled={upsertMutation.isPending}
-            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50"
           >
             {t('common:buttons.cancel')}
           </button>
@@ -298,7 +298,7 @@ export function SongEditorModal({
             onClick={handleSave}
             disabled={upsertMutation.isPending || showLoading || !title.trim()}
             data-testid="song-editor-modal-save"
-            className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {upsertMutation.isPending ? (
               <Loader2 size={18} className="animate-spin" />

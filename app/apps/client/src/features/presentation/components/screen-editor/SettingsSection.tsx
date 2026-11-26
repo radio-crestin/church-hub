@@ -45,7 +45,7 @@ export function SettingsSection({
           />
         )}
         <Icon size={16} strokeWidth={1.5} className="mr-2 text-fg-label" />
-        <span className="text-[13px] font-medium text-fg">{title}</span>
+        <span className="text-sm font-medium text-fg">{title}</span>
       </button>
       {isOpen && <div className="px-4 pb-4 space-y-4">{children}</div>}
     </div>

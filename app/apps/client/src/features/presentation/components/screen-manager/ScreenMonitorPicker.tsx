@@ -95,7 +95,7 @@ export function ScreenMonitorPicker({ screen }: ScreenMonitorPickerProps) {
   return (
     <div className="py-2 space-y-2">
       <div>
-        <p className="text-[13px] font-medium text-fg">
+        <p className="text-sm font-medium text-fg">
           {t('presentation:screens.monitor.label')}
         </p>
         <p className="mt-0.5 text-xs text-fg-hint">

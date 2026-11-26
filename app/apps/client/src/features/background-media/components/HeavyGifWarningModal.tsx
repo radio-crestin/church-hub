@@ -40,7 +40,7 @@ export function HeavyGifWarningModal({
             // One pick comes from one folder, so names are unique.
             key={gif.name}
             data-testid="heavy-gif-warning-item"
-            className="min-w-0 rounded-lg bg-amber-50 px-3 py-2 text-[13px] dark:bg-amber-900/20"
+            className="min-w-0 rounded-lg bg-amber-50 px-3 py-2 text-sm dark:bg-amber-900/20"
           >
             <p className="truncate font-medium text-fg">{gif.name}</p>
             <p className="text-xs text-fg-label">

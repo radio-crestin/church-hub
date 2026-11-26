@@ -41,7 +41,7 @@ export function ShortcutListSection({
   return (
     <div className="space-y-2" data-testid={testId}>
       <div>
-        <h4 className="text-[13px] font-medium text-fg">{title}</h4>
+        <h4 className="text-sm font-medium text-fg">{title}</h4>
         <p className="mt-0.5 text-xs text-fg-hint">{description}</p>
       </div>
 
@@ -77,7 +77,7 @@ export function ShortcutListSection({
         type="button"
         onClick={() => onChange([...shortcuts, ''])}
         data-testid={testId ? `${testId}-add` : undefined}
-        className="flex items-center gap-2 h-8 px-2 -mx-2 rounded-lg text-[13px] text-fg-label hover:bg-hover hover:text-fg transition-colors"
+        className="flex items-center gap-2 h-8 px-2 -mx-2 rounded-lg text-sm text-fg-label hover:bg-hover hover:text-fg transition-colors"
       >
         <Plus size={16} strokeWidth={1.5} />
         {t('sections.shortcuts.addShortcut')}

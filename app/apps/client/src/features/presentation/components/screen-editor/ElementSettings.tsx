@@ -147,7 +147,7 @@ export function ElementSettings({
           <ArrowLeft size={16} strokeWidth={1.5} />
         </Button>
         <div className="min-w-0">
-          <h3 className="text-[13px] font-semibold text-fg truncate">
+          <h3 className="text-sm font-semibold text-fg truncate">
             {t(`screens.elements.${element.type}`)}
           </h3>
           <p className="text-xs text-fg-hint">
@@ -298,7 +298,7 @@ export function ElementSettings({
               {t('screens.editor.customPreviewText')}
             </Label>
             <textarea
-              className="w-full h-24 px-3 py-2 text-[13px] rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+              className="w-full h-24 px-3 py-2 text-sm rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               placeholder={t('screens.editor.previewTextPlaceholder')}
               value={previewText}
               onChange={(e) => setPreviewText(e.target.value)}

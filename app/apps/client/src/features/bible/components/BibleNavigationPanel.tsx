@@ -558,7 +558,7 @@ export function BibleNavigationPanel({
                 hasSelectedAllRef.current = false
               }}
               placeholder={t('search.placeholder')}
-              className={`w-full h-9 pl-9 text-[13px] bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
+              className={`w-full h-9 pl-9 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
                 searchBibleShortcut && !localQuery ? 'pr-20' : 'pr-9'
               }`}
             />
@@ -750,12 +750,12 @@ function SearchResults({
         <button
           type="button"
           onClick={onClearSearch}
-          className="flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg transition-colors"
+          className="flex items-center gap-1.5 text-sm text-fg-label hover:text-fg transition-colors"
         >
           <ArrowLeft size={16} strokeWidth={1.5} />
           {t('navigation.back')}
         </button>
-        <span className="text-[13px] text-fg-hint">
+        <span className="text-sm text-fg-hint">
           {t('search.resultsCount', { count: results.length })}
         </span>
       </div>
@@ -804,7 +804,7 @@ function SearchResults({
                   </span>
                 )}
               </div>
-              <div className="text-[13px] text-fg-body [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
+              <div className="text-sm text-fg-body [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
                 <HighlightedText
                   text={
                     isSearchResult ? searchResult.highlightedText : verse.text

@@ -123,7 +123,7 @@ export function BibleDownloadSection({
       {biblesError ? (
         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
           <AlertCircle className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-          <p className="text-[13px]">{t('settings.download.fetchError')}</p>
+          <p className="text-sm">{t('settings.download.fetchError')}</p>
         </div>
       ) : (
         <>
@@ -148,7 +148,7 @@ export function BibleDownloadSection({
               type="button"
               onClick={handleDownload}
               disabled={!selectedBible || isLoading || isLoadingBibles}
-              className="flex items-center gap-2 h-9 px-3.5 bg-primary hover:bg-indigo-700 disabled:bg-line-strong disabled:cursor-not-allowed text-white text-[13px] font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 bg-primary hover:bg-indigo-700 disabled:bg-line-strong disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />

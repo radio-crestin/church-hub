@@ -83,7 +83,7 @@ export function TrackRow({
           onPlay(track)
         }
       }}
-      className={`grid ${TRACK_GRID} cursor-pointer rounded-lg px-3 py-2 text-[13px] transition-colors ${
+      className={`grid ${TRACK_GRID} cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors ${
         isPlaying
           ? 'bg-live-tint text-fg ring-1 ring-inset ring-live'
           : 'text-fg-body hover:bg-hover'
@@ -97,12 +97,20 @@ export function TrackRow({
           <p className="truncate font-medium" data-testid="music-track-title">
             {title}
           </p>
-          <p className="truncate text-xs text-fg-hint @3xl:hidden">
+          {/* Plain text, one line each, so nothing inside sticks out past
+              the row while it truncates: the full meta on a narrow row, the
+              artist alone once the plays and date have their own columns. */}
+          <p className="truncate text-xs text-fg-hint @md:hidden">
+            {[
+              track.artist,
+              t('tracks.plays', { count: track.playCount }),
+              lastPlayed,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <p className="hidden truncate text-xs text-fg-hint @md:block @3xl:hidden">
             {track.artist}
-            <span className="@md:hidden">
-              {track.artist ? ' · ' : ''}
-              {t('tracks.plays', { count: track.playCount })} · {lastPlayed}
-            </span>
           </p>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LiveBadge } from './LiveBadge'
 import { LivePreview } from './LivePreview'
+import { PreviewScreenPicker } from './PreviewScreenPicker'
 import { usePresentationState } from '../hooks/usePresentationState'
 import {
   useClearSlideHighlights,
@@ -71,6 +72,7 @@ export function PhoneStage({
         </div>
         <LiveBadge isLive={isLive} />
         {headerActions}
+        <PreviewScreenPicker placement="down" />
       </div>
       <div className="flex items-center gap-3 p-2">
         <div className="w-full shrink-0 transition-[width] duration-200 group-data-[stuck=true]/pinned:w-2/5">

@@ -549,7 +549,7 @@ export function EditAsTextModal({
           {modalState === 'editing' && (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-[13px] text-fg-label">
+                <p className="text-sm text-fg-label">
                   {t('editAsText.description')}
                 </p>
                 <button
@@ -575,7 +575,7 @@ export function EditAsTextModal({
               </div>
 
               {plainView ? (
-                <pre className="w-full px-3 py-2 bg-app border border-line rounded-lg text-fg font-mono text-[13px] whitespace-pre-wrap min-h-[22.5rem] select-text">
+                <pre className="w-full px-3 py-2 bg-app border border-line rounded-lg text-fg font-mono text-sm whitespace-pre-wrap min-h-[22.5rem] select-text">
                   {plainText}
                 </pre>
               ) : (
@@ -591,12 +591,12 @@ export function EditAsTextModal({
                   }}
                   placeholder={t('editAsText.formatHelp')}
                   rows={15}
-                  className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-none font-mono text-[13px]"
+                  className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-none font-mono text-sm"
                 />
               )}
 
               {!plainView && (
-                <div className="flex items-center justify-between text-[13px]">
+                <div className="flex items-center justify-between text-sm">
                   {parseResult.items.length > 0 && (
                     <span className="text-fg">
                       {t('editAsText.preview', {
@@ -615,7 +615,7 @@ export function EditAsTextModal({
               )}
 
               {!plainView && parseResult.errors.length > 0 && (
-                <div className="text-[13px] text-red-600 dark:text-red-400 space-y-1">
+                <div className="text-sm text-red-600 dark:text-red-400 space-y-1">
                   {parseResult.errors.map((error) => (
                     <div key={error.line}>
                       {t('editAsText.lineError', {
@@ -633,7 +633,7 @@ export function EditAsTextModal({
                     <AlertCircle className="w-4 h-4" strokeWidth={1.5} />
                     <span>{t('editAsText.validationErrors')}</span>
                   </div>
-                  <div className="text-[13px] text-amber-600 dark:text-amber-300 space-y-1">
+                  <div className="text-sm text-amber-600 dark:text-amber-300 space-y-1">
                     {validationErrors.map((error, idx) => (
                       <div key={`${error.lineNumber}-${idx}`}>
                         {t('editAsText.lineError', {
@@ -675,7 +675,7 @@ export function EditAsTextModal({
             <button
               type="button"
               onClick={handleClose}
-              className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
+              className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
             >
               {t('editAsText.cancel')}
             </button>
@@ -687,7 +687,7 @@ export function EditAsTextModal({
                 parseResult.errors.length > 0 ||
                 !scheduleId
               }
-              className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('editAsText.save')}
             </button>

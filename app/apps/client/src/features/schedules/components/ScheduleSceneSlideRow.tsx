@@ -52,7 +52,7 @@ export function ScheduleSceneSlideRow({
           strokeWidth={1.5}
         />
         <span
-          className={`text-[13px] ${isPresented ? 'text-fg' : 'text-fg-label'}`}
+          className={`text-sm ${isPresented ? 'text-fg' : 'text-fg-label'}`}
         >
           {t('slideTemplates.scene')}: {item.slideContent || item.obsSceneName}
         </span>

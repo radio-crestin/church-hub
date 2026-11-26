@@ -98,14 +98,12 @@ export function KioskSettingsSection({
         </h3>
       </div>
 
-      <p className="text-fg-label text-[13px]">
-        {t('sections.kiosk.description')}
-      </p>
+      <p className="text-fg-label text-sm">{t('sections.kiosk.description')}</p>
 
       {/* Enable/Disable Kiosk Mode */}
       <div className="flex items-center justify-between p-4 bg-panel border border-line rounded-xl">
         <div>
-          <label className="text-[13px] font-medium text-fg">
+          <label className="text-sm font-medium text-fg">
             {t('sections.kiosk.enable.label')}
           </label>
           <p className="text-fg-hint text-xs mt-1">
@@ -123,7 +121,7 @@ export function KioskSettingsSection({
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <PlayCircle size={16} strokeWidth={1.5} className="text-fg-label" />
-          <label className="text-[13px] font-medium text-fg">
+          <label className="text-sm font-medium text-fg">
             {t('sections.kiosk.startupPage.label')}
           </label>
         </div>
@@ -144,7 +142,7 @@ export function KioskSettingsSection({
       <div className="pt-4 border-t border-line">
         <div className="flex items-center gap-2 mb-3">
           <Bug size={16} strokeWidth={1.5} className="text-fg-label" />
-          <span className="text-[13px] font-medium text-fg-label">
+          <span className="text-sm font-medium text-fg-label">
             {t('sections.kiosk.debug.title')}
           </span>
         </div>

@@ -65,12 +65,12 @@ export function ApiUrlSettings() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Server strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
-        <h3 className="text-[15px] font-semibold text-fg">
+        <h3 className="text-base font-semibold text-fg">
           {t('sections.apiUrl.title')}
         </h3>
       </div>
 
-      <p className="text-[13px] text-fg-label">
+      <p className="text-sm text-fg-label">
         {t('sections.apiUrl.settingsDescription')}
       </p>
 
@@ -86,7 +86,7 @@ export function ApiUrlSettings() {
         <div className="space-y-2">
           <label
             htmlFor="settings-api-url"
-            className="block text-[13px] font-medium text-fg-body"
+            className="block text-sm font-medium text-fg-body"
           >
             {t('sections.apiUrl.label')}
           </label>
@@ -104,13 +104,13 @@ export function ApiUrlSettings() {
         </div>
 
         {errorMessage && (
-          <p className="text-[13px] text-red-600 dark:text-red-400">
+          <p className="text-sm text-red-600 dark:text-red-400">
             {errorMessage}
           </p>
         )}
 
         {connectionStatus === 'success' && (
-          <div className="flex items-center gap-2 text-[13px] text-fg-body">
+          <div className="flex items-center gap-2 text-sm text-fg-body">
             <Wifi strokeWidth={1.5} className="w-4 h-4 text-ok" />
             <span>{t('sections.apiUrl.connectionSuccess')}</span>
           </div>

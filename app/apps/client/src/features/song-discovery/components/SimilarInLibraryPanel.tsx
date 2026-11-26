@@ -32,7 +32,7 @@ function SimilarRow({
 
   return (
     <li className="rounded-lg px-2 py-1.5 hover:bg-hover">
-      <div className="flex items-center justify-between gap-2 text-[13px]">
+      <div className="flex items-center justify-between gap-2 text-sm">
         <div className="min-w-0">
           <span className="block truncate font-medium text-fg">
             {suggestion.title}
@@ -95,7 +95,7 @@ export function SimilarInLibraryPanel({
 
   return (
     <div className="rounded-xl border border-line bg-panel p-3">
-      <h3 className="mb-1.5 px-2 text-[13px] font-medium text-fg">
+      <h3 className="mb-1.5 px-2 text-sm font-medium text-fg">
         {t('similar.title', { count: similar.length })}
       </h3>
       <ul className="space-y-0.5">

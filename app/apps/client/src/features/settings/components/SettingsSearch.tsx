@@ -56,7 +56,7 @@ export function SettingsSearch({
           placeholder={t('nav.search.placeholder')}
           aria-label={t('nav.search.placeholder')}
           data-testid="settings-search"
-          className={`h-8 w-full rounded-[10px] bg-field pl-9 text-[13px] text-fg outline-none placeholder:text-fg-hint focus:ring-1 focus:ring-inset focus:ring-focus ${
+          className={`h-8 w-full rounded-[10px] bg-field pl-9 text-sm text-fg outline-none placeholder:text-fg-hint focus:ring-1 focus:ring-inset focus:ring-focus ${
             query ? 'pr-9' : 'pr-3'
           }`}
         />
@@ -77,7 +77,7 @@ export function SettingsSearch({
                 onClick={() => open(result)}
                 className="w-full rounded-lg px-2.5 py-1.5 text-left text-fg-label transition-colors hover:bg-hover hover:text-fg"
               >
-                <span className="block text-[13px] font-medium">
+                <span className="block text-sm font-medium">
                   {result.label}
                 </span>
                 <span className="block truncate text-xs text-fg-hint">
@@ -87,7 +87,7 @@ export function SettingsSearch({
             </li>
           ))}
           {results.length === 0 && (
-            <li className="px-2.5 py-1.5 text-[13px] text-fg-hint">
+            <li className="px-2.5 py-1.5 text-sm text-fg-hint">
               {t('nav.search.noResults', { query: query.trim() })}
             </li>
           )}

@@ -100,14 +100,14 @@ export function UserCard({
             )}
           </div>
           {user.roleName && (
-            <p className="mt-1 text-[13px] text-fg-label">
+            <p className="mt-1 text-sm text-fg-label">
               {t(`sections.users.roles.${user.roleName}`, user.roleName)}
             </p>
           )}
-          <p className="text-[13px] text-fg-hint">
+          <p className="text-sm text-fg-hint">
             {t('sections.users.lastUsed')}: {formatDate(user.lastUsedAt)}
           </p>
-          <p className="text-[13px] text-fg-hint">
+          <p className="text-sm text-fg-hint">
             {t('sections.users.permissionCount', { count: permissionCount })}
           </p>
         </div>
@@ -142,7 +142,7 @@ export function UserCard({
                     onShowQR(user)
                     setMenuOpen(false)
                   }}
-                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <QrCode strokeWidth={1.5} size={16} />
                   {t('sections.users.actions.showQRCode')}
@@ -152,7 +152,7 @@ export function UserCard({
                     onEdit(user)
                     setMenuOpen(false)
                   }}
-                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <Edit strokeWidth={1.5} size={16} />
                   {t('sections.users.actions.edit')}
@@ -162,7 +162,7 @@ export function UserCard({
                     onRegenerateToken(user)
                     setMenuOpen(false)
                   }}
-                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <RefreshCw strokeWidth={1.5} size={16} />
                   {t('sections.users.actions.regenerateToken')}
@@ -174,7 +174,7 @@ export function UserCard({
                       onToggleActive(user)
                       setMenuOpen(false)
                     }}
-                    className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-[13px] text-fg-body hover:bg-hover"
+                    className="w-full flex h-8 items-center gap-2 rounded-lg px-2 text-sm text-fg-body hover:bg-hover"
                   >
                     {user.isActive ? (
                       <>
@@ -198,7 +198,7 @@ export function UserCard({
                         onDelete(user)
                         setMenuOpen(false)
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <Trash2 strokeWidth={1.5} size={16} />
                       {t('sections.users.actions.delete')}

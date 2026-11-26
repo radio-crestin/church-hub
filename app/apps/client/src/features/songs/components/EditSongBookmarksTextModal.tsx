@@ -154,13 +154,13 @@ export function EditSongBookmarksTextModal({
             spellCheck={false}
             disabled={loadMutation.isPending}
             data-testid="bookmarks-text-textarea"
-            className="w-full px-3 py-2 bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-y font-mono text-[13px]"
+            className="w-full px-3 py-2 bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-y font-mono text-sm"
           />
 
           <button
             type="button"
             onClick={handlePickFile}
-            className="inline-flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg"
+            className="inline-flex items-center gap-1.5 text-sm text-fg-label hover:text-fg"
           >
             <FolderOpen className="w-4 h-4" />
             {t('bookmarks.textEdit.chooseFile')}
@@ -205,7 +205,7 @@ export function EditSongBookmarksTextModal({
           <button
             type="button"
             onClick={handleClose}
-            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('bookmarks.textEdit.cancel')}
           </button>
@@ -214,7 +214,7 @@ export function EditSongBookmarksTextModal({
             onClick={handleSave}
             disabled={loadMutation.isPending || replaceMutation.isPending}
             data-testid="bookmarks-text-save"
-            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('bookmarks.textEdit.save')}
           </button>

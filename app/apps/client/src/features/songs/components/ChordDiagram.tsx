@@ -373,7 +373,7 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
           <button
             type="button"
             onClick={() => setView('guitar')}
-            className={`flex-1 h-7 rounded-md px-3 text-[13px] font-medium transition-colors ${
+            className={`flex-1 h-7 rounded-md px-3 text-sm font-medium transition-colors ${
               view === 'guitar'
                 ? 'bg-selected text-fg'
                 : 'text-fg-label hover:text-fg'
@@ -384,7 +384,7 @@ export function ChordDiagram({ chord, onClose }: ChordDiagramProps) {
           <button
             type="button"
             onClick={() => setView('piano')}
-            className={`flex-1 h-7 rounded-md px-3 text-[13px] font-medium transition-colors ${
+            className={`flex-1 h-7 rounded-md px-3 text-sm font-medium transition-colors ${
               view === 'piano'
                 ? 'bg-selected text-fg'
                 : 'text-fg-label hover:text-fg'

@@ -203,7 +203,7 @@ export function LinkVersionsModal({
             type="button"
             onClick={handleSubmit}
             disabled={selectedId === null || linkMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
           >
             {linkMutation.isPending ? (
               <Loader2 size={14} className="animate-spin" />

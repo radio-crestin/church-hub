@@ -416,7 +416,7 @@ export function SidebarItemSettingsModal({
             {/* Switch to Page Shortcuts Section */}
             <div className="space-y-3">
               <div>
-                <h3 className="text-[13px] font-medium text-fg">
+                <h3 className="text-sm font-medium text-fg">
                   {t('sections.sidebarItem.shortcuts.switchTitle')}
                 </h3>
                 <p className="text-xs text-fg-hint mt-0.5">
@@ -441,7 +441,7 @@ export function SidebarItemSettingsModal({
               <button
                 type="button"
                 onClick={handleAddShortcut}
-                className="flex items-center gap-2 text-[13px] text-focus hover:underline"
+                className="flex items-center gap-2 text-sm text-focus hover:underline"
               >
                 <Plus size={16} strokeWidth={1.5} />
                 {t('sections.shortcuts.addShortcut')}
@@ -452,7 +452,7 @@ export function SidebarItemSettingsModal({
             {hasSearch && (
               <div className="space-y-3 pt-2 border-t border-line">
                 <div>
-                  <h3 className="text-[13px] font-medium text-fg">
+                  <h3 className="text-sm font-medium text-fg">
                     {t('sections.sidebarItem.shortcuts.focusSearchTitle')}
                   </h3>
                   <p className="text-xs text-fg-hint mt-0.5">
@@ -483,7 +483,7 @@ export function SidebarItemSettingsModal({
                 <button
                   type="button"
                   onClick={handleAddFocusSearchShortcut}
-                  className="flex items-center gap-2 text-[13px] text-focus hover:underline"
+                  className="flex items-center gap-2 text-sm text-focus hover:underline"
                 >
                   <Plus size={16} strokeWidth={1.5} />
                   {t('sections.shortcuts.addShortcut')}
@@ -494,7 +494,7 @@ export function SidebarItemSettingsModal({
             {/* Icon Color Section */}
             <div className="space-y-3 pt-2 border-t border-line">
               <div>
-                <h3 className="text-[13px] font-medium text-fg">
+                <h3 className="text-sm font-medium text-fg">
                   {t('sections.sidebarItem.iconColor.title')}
                 </h3>
                 <p className="text-xs text-fg-hint mt-0.5">
@@ -515,7 +515,7 @@ export function SidebarItemSettingsModal({
             {/* Visibility Toggle */}
             <div className="flex items-center justify-between pt-2 border-t border-line">
               <div>
-                <h3 className="text-[13px] font-medium text-fg">
+                <h3 className="text-sm font-medium text-fg">
                   {t('sections.sidebarItem.visibility.label')}
                 </h3>
                 <p className="text-xs text-fg-hint">
@@ -542,7 +542,7 @@ export function SidebarItemSettingsModal({
             {/* Native Window Settings (Tauri only) */}
             {isTauri() && (
               <div className="space-y-4 pt-4 border-t border-line">
-                <h3 className="text-[13px] font-medium text-fg">
+                <h3 className="text-sm font-medium text-fg">
                   {t('sections.sidebarItem.nativeWindow.title')}
                 </h3>
 
@@ -564,7 +564,7 @@ export function SidebarItemSettingsModal({
                   <div className="flex flex-col">
                     <label
                       htmlFor="open-in-native-window"
-                      className="text-[13px] font-medium text-fg-body cursor-pointer"
+                      className="text-sm font-medium text-fg-body cursor-pointer"
                     >
                       {t('sections.sidebarItem.nativeWindow.enableLabel')}
                     </label>
@@ -587,7 +587,7 @@ export function SidebarItemSettingsModal({
                     <div className="flex flex-col">
                       <label
                         htmlFor="auto-open-startup"
-                        className="text-[13px] font-medium text-fg-body cursor-pointer"
+                        className="text-sm font-medium text-fg-body cursor-pointer"
                       >
                         {t('sections.sidebarItem.nativeWindow.autoOpenLabel')}
                       </label>
@@ -613,7 +613,7 @@ export function SidebarItemSettingsModal({
                     <div className="flex flex-col">
                       <label
                         htmlFor="force-native-window"
-                        className="text-[13px] font-medium text-fg-body cursor-pointer"
+                        className="text-sm font-medium text-fg-body cursor-pointer"
                       >
                         {t('sections.sidebarItem.nativeWindow.forceLabel')}
                       </label>
@@ -631,7 +631,7 @@ export function SidebarItemSettingsModal({
             {/* Custom Page Settings */}
             {isCustom && (
               <div className="space-y-4 pt-4 border-t border-line">
-                <h3 className="text-[13px] font-medium text-fg">
+                <h3 className="text-sm font-medium text-fg">
                   {t('sections.sidebarItem.customPage.title')}
                 </h3>
 
@@ -639,7 +639,7 @@ export function SidebarItemSettingsModal({
                 <div className="space-y-1">
                   <label
                     htmlFor="custom-page-title"
-                    className="text-[13px] font-medium text-fg-body"
+                    className="text-sm font-medium text-fg-body"
                   >
                     {t('sections.sidebar.fields.title')}
                   </label>
@@ -651,14 +651,14 @@ export function SidebarItemSettingsModal({
                     placeholder={t('sections.sidebar.fields.titlePlaceholder')}
                     className={`
                       block w-full h-9 px-3 bg-field
-                      border text-fg text-[13px] rounded-[10px]
+                      border text-fg text-sm rounded-[10px]
                       focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
                       placeholder:text-fg-hint
                       ${errors.title ? 'border-red-500' : 'border-transparent'}
                     `}
                   />
                   {errors.title && (
-                    <p className="text-[13px] text-red-500">{errors.title}</p>
+                    <p className="text-sm text-red-500">{errors.title}</p>
                   )}
                 </div>
 
@@ -666,7 +666,7 @@ export function SidebarItemSettingsModal({
                 <div className="space-y-1">
                   <label
                     htmlFor="custom-page-url"
-                    className="text-[13px] font-medium text-fg-body"
+                    className="text-sm font-medium text-fg-body"
                   >
                     {t('sections.sidebar.fields.url')}
                   </label>
@@ -678,21 +678,21 @@ export function SidebarItemSettingsModal({
                     placeholder={t('sections.sidebar.fields.urlPlaceholder')}
                     className={`
                       block w-full h-9 px-3 bg-field
-                      border text-fg text-[13px] rounded-[10px]
+                      border text-fg text-sm rounded-[10px]
                       focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
                       placeholder:text-fg-hint
                       ${errors.url ? 'border-red-500' : 'border-transparent'}
                     `}
                   />
                   {errors.url && (
-                    <p className="text-[13px] text-red-500">{errors.url}</p>
+                    <p className="text-sm text-red-500">{errors.url}</p>
                   )}
                 </div>
 
                 {/* Icon Source Selection */}
                 <div className="space-y-3">
                   <div>
-                    <h4 className="text-[13px] font-medium text-fg-body">
+                    <h4 className="text-sm font-medium text-fg-body">
                       {t('sections.sidebar.fields.icon')}
                     </h4>
                     <p className="text-xs text-fg-hint mt-0.5">
@@ -705,7 +705,7 @@ export function SidebarItemSettingsModal({
                     <button
                       type="button"
                       onClick={() => setIconSource('favicon')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[13px] rounded-lg border transition-colors ${
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
                         iconSource === 'favicon'
                           ? 'bg-selected border-transparent text-fg'
                           : 'bg-field border-transparent text-fg-body hover:bg-hover'
@@ -717,7 +717,7 @@ export function SidebarItemSettingsModal({
                     <button
                       type="button"
                       onClick={() => setIconSource('icon')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[13px] rounded-lg border transition-colors ${
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
                         iconSource === 'icon'
                           ? 'bg-selected border-transparent text-fg'
                           : 'bg-field border-transparent text-fg-body hover:bg-hover'
@@ -773,7 +773,7 @@ export function SidebarItemSettingsModal({
                             !url.trim() ||
                             !isValidUrl(url.trim())
                           }
-                          className="flex items-center gap-2 px-3 py-2 text-[13px] bg-field hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-fg-body"
+                          className="flex items-center gap-2 px-3 py-2 text-sm bg-field hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-fg-body"
                         >
                           {isFetchingFavicon ? (
                             <Loader2
@@ -816,7 +816,7 @@ export function SidebarItemSettingsModal({
                   <div className="flex flex-col">
                     <label
                       htmlFor="use-iframe-embedding"
-                      className="text-[13px] font-medium text-fg-body cursor-pointer"
+                      className="text-sm font-medium text-fg-body cursor-pointer"
                     >
                       {t('sections.sidebar.fields.useIframeEmbedding')}
                     </label>
@@ -829,7 +829,7 @@ export function SidebarItemSettingsModal({
                 {/* Delete Section */}
                 {onDelete && (
                   <div className="pt-4 border-t border-line">
-                    <h4 className="text-[13px] font-medium text-red-600 dark:text-red-400 mb-2">
+                    <h4 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">
                       {t('sections.sidebarItem.customPage.dangerZone')}
                     </h4>
                     <p className="text-xs text-fg-hint mb-3">
@@ -838,7 +838,7 @@ export function SidebarItemSettingsModal({
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(true)}
-                      className="flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-hover rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-hover rounded-lg transition-colors"
                     >
                       <Trash2 strokeWidth={1.5} size={16} />
                       {t('sections.sidebar.modals.delete.confirm')}
@@ -854,14 +854,14 @@ export function SidebarItemSettingsModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+              className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
             >
               {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+              className="h-9 px-3.5 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
             >
               {t('common:buttons.save', { defaultValue: 'Save' })}
             </button>

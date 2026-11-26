@@ -168,7 +168,7 @@ function MenuItem({ icon, label, count, testId, onClick }: MenuItemProps) {
       onClick={onClick}
       disabled={count === 0}
       data-testid={testId}
-      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] text-fg-body transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-fg-body transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
     >
       <span className="text-fg-label">{icon}</span>
       <span className="flex-1 truncate">{label}</span>

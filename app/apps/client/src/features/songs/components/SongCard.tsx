@@ -113,7 +113,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
         >
           <div className="flex-1 min-w-0">
             {hasHighlight ? (
-              <h3 className="text-[13px] font-medium text-fg truncate">
+              <h3 className="text-sm font-medium text-fg truncate">
                 <span
                   data-testid="song-card-title"
                   className="[&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5"
@@ -127,7 +127,7 @@ export const SongCard = forwardRef<HTMLDivElement, SongCardProps>(
                 )}
               </h3>
             ) : (
-              <h3 className="text-[13px] font-medium text-fg truncate">
+              <h3 className="text-sm font-medium text-fg truncate">
                 {song.title}
                 {categorySuffix && (
                   <span className="text-fg-hint font-normal">

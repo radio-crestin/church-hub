@@ -285,7 +285,7 @@ export function ExportOptionsModal({
           <button
             type="button"
             onClick={onCancel}
-            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('common:buttons.cancel', { ns: 'common' })}
           </button>
@@ -293,7 +293,7 @@ export function ExportOptionsModal({
             type="button"
             onClick={handleConfirm}
             disabled={exportScope === 'category' && categoryId === null}
-            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('sections.importExport.export.button')}
           </button>

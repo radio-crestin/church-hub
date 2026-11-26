@@ -82,7 +82,7 @@ export function GalleryPage() {
     if (isError) {
       return (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <p className="text-[13px] text-red-600 dark:text-red-400">
+          <p className="text-sm text-red-600 dark:text-red-400">
             {t('errors.loadFailed')}
           </p>
           <Button type="button" onClick={() => refetch()}>

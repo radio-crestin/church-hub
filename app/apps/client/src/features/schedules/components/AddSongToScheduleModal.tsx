@@ -264,7 +264,7 @@ export function AddSongToScheduleModal({
             <h2 className="text-base font-semibold text-fg">
               {t('modal.addSongTitle')}
             </h2>
-            <p className="text-[13px] text-fg-hint">
+            <p className="text-sm text-fg-hint">
               {t('modal.addSongDescription')}
             </p>
           </div>
@@ -294,7 +294,7 @@ export function AddSongToScheduleModal({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('modal.searchSchedules')}
               data-testid="add-song-to-schedule-search"
-              className="w-full pl-9 pr-8 py-2 text-[13px] bg-app border border-line rounded-lg text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+              className="w-full pl-9 pr-8 py-2 text-sm bg-app border border-line rounded-lg text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
             />
             {searchQuery && (
               <ClearSearchButton
@@ -356,7 +356,7 @@ export function AddSongToScheduleModal({
                     }
                   }}
                   placeholder={t('modal.scheduleName')}
-                  className="flex-1 min-w-0 bg-transparent text-[13px] text-fg placeholder:text-fg-hint focus:outline-none"
+                  className="flex-1 min-w-0 bg-transparent text-sm text-fg placeholder:text-fg-hint focus:outline-none"
                 />
                 <button
                   type="button"
@@ -370,13 +370,13 @@ export function AddSongToScheduleModal({
             ))}
 
             {isLoading ? (
-              <div className="px-4 py-8 text-center text-[13px] text-fg-hint">
+              <div className="px-4 py-8 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : filteredSchedules.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <CalendarDays className="w-8 h-8 mx-auto mb-2 text-fg-hint" />
-                <p className="text-[13px] text-fg-hint">
+                <p className="text-sm text-fg-hint">
                   {searchQuery.trim()
                     ? t('search.noResults', { query: searchQuery })
                     : t('noSchedules')}
@@ -408,7 +408,7 @@ export function AddSongToScheduleModal({
                       <Check size={12} strokeWidth={3} />
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[13px] font-medium text-fg truncate">
+                      <span className="block text-sm font-medium text-fg truncate">
                         {schedule.title}
                       </span>
                       <span className="block text-xs text-fg-hint">
@@ -429,7 +429,7 @@ export function AddSongToScheduleModal({
             onClick={handleClose}
             disabled={isSaving}
             data-testid="add-song-to-schedule-cancel"
-            className="h-9 px-3.5 text-[13px] font-medium text-fg-body bg-field hover:bg-selected rounded-lg transition-colors disabled:opacity-50"
+            className="h-9 px-3.5 text-sm font-medium text-fg-body bg-field hover:bg-selected rounded-lg transition-colors disabled:opacity-50"
           >
             {t('modal.cancel')}
           </button>
@@ -438,7 +438,7 @@ export function AddSongToScheduleModal({
             onClick={handleSave}
             disabled={!canSave || isSaving}
             data-testid="add-song-to-schedule-save"
-            className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
           >
             {isSaving ? (
               <>

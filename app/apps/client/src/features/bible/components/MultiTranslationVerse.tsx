@@ -34,7 +34,7 @@ export function MultiTranslationVerse({
   return (
     <div className="mt-2 space-y-2 pl-6 border-l-2 border-line-strong">
       {validResults.map(({ translation, verse }) => (
-        <div key={translation.id} className="text-[13px]">
+        <div key={translation.id} className="text-sm">
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-field text-fg-label mr-2">
             {translation.abbreviation}
           </span>

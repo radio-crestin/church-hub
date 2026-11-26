@@ -54,9 +54,7 @@ export function LivestreamGuideModal({
               >
                 {t('guide.title')}
               </h2>
-              <p className="mt-1 text-[13px] text-fg-label">
-                {t('guide.intro')}
-              </p>
+              <p className="mt-1 text-sm text-fg-label">{t('guide.intro')}</p>
             </div>
             <button
               type="button"

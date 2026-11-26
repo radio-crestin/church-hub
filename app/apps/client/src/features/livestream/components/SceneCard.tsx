@@ -40,7 +40,7 @@ export function SceneCard({
       )}
 
       <div>
-        <h3 className="text-[13px] font-medium text-fg">{scene.displayName}</h3>
+        <h3 className="text-sm font-medium text-fg">{scene.displayName}</h3>
         {scene.shortcuts && scene.shortcuts.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {scene.shortcuts.map((shortcut) => (

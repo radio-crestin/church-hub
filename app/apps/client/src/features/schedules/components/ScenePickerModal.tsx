@@ -84,7 +84,7 @@ export function ScenePickerModal({
                     {scene.displayName}
                   </div>
                   {scene.obsSceneName !== scene.displayName && (
-                    <div className="text-[13px] text-fg-hint truncate">
+                    <div className="text-sm text-fg-hint truncate">
                       {scene.obsSceneName}
                     </div>
                   )}

@@ -21,7 +21,7 @@ export function YouTubeChatSection() {
       icon={MessageSquare}
       testId="youtube-settings-chat"
     >
-      <div className="rounded-lg bg-field p-3 text-[13px] text-fg-body">
+      <div className="rounded-lg bg-field p-3 text-sm text-fg-body">
         <p className="font-medium">{t('youtubeSettings.chat.notByApi')}</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5">
           <li>{t('youtubeSettings.chat.stepChat')}</li>

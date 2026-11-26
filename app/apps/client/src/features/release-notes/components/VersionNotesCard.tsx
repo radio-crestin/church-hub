@@ -73,7 +73,7 @@ export function VersionNotesCard({
       data-testid={testId}
     >
       <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span className="text-[15px] font-semibold tabular-nums text-fg">
+        <span className="text-base font-semibold tabular-nums text-fg">
           v{notes.version}
         </span>
         {variant === 'current' && (
@@ -92,7 +92,7 @@ export function VersionNotesCard({
       </div>
 
       {isEmpty ? (
-        <p className="text-[13px] text-fg-hint italic">{t('empty')}</p>
+        <p className="text-sm text-fg-hint italic">{t('empty')}</p>
       ) : (
         <div className="space-y-3">
           <ChangeCategoryList

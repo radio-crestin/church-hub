@@ -27,7 +27,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           disabled={disabled}
           className="w-4 h-4 rounded accent-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         />
-        {label && <span className="text-[13px] text-fg-body">{label}</span>}
+        {label && <span className="text-sm text-fg-body">{label}</span>}
       </label>
     )
   },

@@ -196,7 +196,7 @@ export function CustomPageFormModal({
           <div className="space-y-1">
             <label
               htmlFor="custom-page-title"
-              className="text-[13px] font-medium text-fg"
+              className="text-sm font-medium text-fg"
             >
               {t('sections.sidebar.fields.title')}
             </label>
@@ -209,14 +209,14 @@ export function CustomPageFormModal({
               placeholder={t('sections.sidebar.fields.titlePlaceholder')}
               className={`
                 block w-full h-9 px-3 bg-field
-                border text-fg text-[13px] rounded-[10px]
+                border text-fg text-sm rounded-[10px]
                 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
                 placeholder:text-fg-hint
                 ${errors.title ? 'border-red-500' : 'border-transparent'}
               `}
             />
             {errors.title && (
-              <p className="text-[13px] text-red-500">{errors.title}</p>
+              <p className="text-sm text-red-500">{errors.title}</p>
             )}
           </div>
 
@@ -224,7 +224,7 @@ export function CustomPageFormModal({
           <div className="space-y-1">
             <label
               htmlFor="custom-page-url"
-              className="text-[13px] font-medium text-fg"
+              className="text-sm font-medium text-fg"
             >
               {t('sections.sidebar.fields.url')}
             </label>
@@ -236,15 +236,13 @@ export function CustomPageFormModal({
               placeholder={t('sections.sidebar.fields.urlPlaceholder')}
               className={`
                 block w-full h-9 px-3 bg-field
-                border text-fg text-[13px] rounded-[10px]
+                border text-fg text-sm rounded-[10px]
                 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
                 placeholder:text-fg-hint
                 ${errors.url ? 'border-red-500' : 'border-transparent'}
               `}
             />
-            {errors.url && (
-              <p className="text-[13px] text-red-500">{errors.url}</p>
-            )}
+            {errors.url && <p className="text-sm text-red-500">{errors.url}</p>}
             <p className="text-xs text-fg-hint">
               {t('sections.sidebar.fields.urlHint')}
             </p>
@@ -253,7 +251,7 @@ export function CustomPageFormModal({
           {/* Icon Source Selection */}
           <div className="space-y-3">
             <div>
-              <h4 className="text-[13px] font-medium text-fg">
+              <h4 className="text-sm font-medium text-fg">
                 {t('sections.sidebar.fields.icon')}
               </h4>
               <p className="text-xs text-fg-hint mt-0.5">
@@ -266,7 +264,7 @@ export function CustomPageFormModal({
               <button
                 type="button"
                 onClick={() => setIconSource('favicon')}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[13px] rounded-lg border transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
                   iconSource === 'favicon'
                     ? 'bg-selected border-transparent text-fg'
                     : 'bg-field border-transparent text-fg-body hover:bg-hover'
@@ -278,7 +276,7 @@ export function CustomPageFormModal({
               <button
                 type="button"
                 onClick={() => setIconSource('icon')}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-[13px] rounded-lg border transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
                   iconSource === 'icon'
                     ? 'bg-selected border-transparent text-fg'
                     : 'bg-field border-transparent text-fg-body hover:bg-hover'
@@ -332,7 +330,7 @@ export function CustomPageFormModal({
                       !url.trim() ||
                       !isValidUrl(url.trim())
                     }
-                    className="flex items-center gap-2 px-3 py-2 text-[13px] bg-field hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-fg-body"
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-field hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-fg-body"
                   >
                     {isFetchingFavicon ? (
                       <Loader2
@@ -375,7 +373,7 @@ export function CustomPageFormModal({
             <div className="flex flex-col">
               <label
                 htmlFor="use-iframe-embedding"
-                className="text-[13px] font-medium text-fg cursor-pointer"
+                className="text-sm font-medium text-fg cursor-pointer"
               >
                 {t('sections.sidebar.fields.useIframeEmbedding')}
               </label>
@@ -391,13 +389,13 @@ export function CustomPageFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
           </button>
           <button
             type="submit"
-            className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="h-9 px-3.5 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             {isEditing
               ? t('sections.sidebar.modals.edit.submit')

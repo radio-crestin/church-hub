@@ -66,7 +66,7 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
                   key={book.id}
                   type="button"
                   onClick={() => onSelectBook(book.id, localizedName)}
-                  className="text-left px-2 py-1.5 text-[13px] text-fg-body hover:bg-hover rounded-md transition-colors truncate"
+                  className="text-left px-2 py-1.5 text-sm text-fg-body hover:bg-hover rounded-md transition-colors truncate"
                 >
                   {localizedName}
                 </button>
@@ -89,7 +89,7 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
                   key={book.id}
                   type="button"
                   onClick={() => onSelectBook(book.id, localizedName)}
-                  className="text-left px-2 py-1.5 text-[13px] text-fg-body hover:bg-hover rounded-md transition-colors truncate"
+                  className="text-left px-2 py-1.5 text-sm text-fg-body hover:bg-hover rounded-md transition-colors truncate"
                 >
                   {localizedName}
                 </button>

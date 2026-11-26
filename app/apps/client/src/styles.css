@@ -153,6 +153,17 @@ body {
   -webkit-touch-callout: none;
 }
 
+/* <dialog> keeps none of the browser's own look: every dialog draws its own
+   rounded panel, and the default background and border showed at its corners. */
+@layer base {
+  dialog {
+    background: transparent;
+    border: 0;
+    color: inherit;
+    padding: 0;
+  }
+}
+
 #app {
   @apply h-full;
   /* Ensure app fills the entire viewport including safe areas */

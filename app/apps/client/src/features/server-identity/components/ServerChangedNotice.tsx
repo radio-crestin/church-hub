@@ -23,7 +23,7 @@ export function ServerChangedNotice() {
       className="fixed inset-x-4 top-4 z-[60] mx-auto flex max-w-xl items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-popover dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
     >
       <AlertTriangle strokeWidth={1.5} className="mt-0.5 h-4 w-4 shrink-0" />
-      <div className="min-w-0 flex-1 text-[13px]">
+      <div className="min-w-0 flex-1 text-sm">
         <p className="font-semibold">{t('serverChanged.title')}</p>
         <p className="mt-1">{t('serverChanged.description')}</p>
       </div>

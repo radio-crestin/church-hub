@@ -15,7 +15,7 @@ export function IncludeScreenshotToggle({
     <div className="flex items-center justify-between gap-3">
       <span
         id="feature-request-include-label"
-        className="text-[13px] font-medium text-fg"
+        className="text-sm font-medium text-fg"
       >
         {t('common:featureRequest.includeScreenshot')}
       </span>

@@ -25,7 +25,7 @@ export function RequestFeatureSuccess({
       <p className="text-base font-medium text-fg mb-1">
         {t('common:featureRequest.successTitle')}
       </p>
-      <p className="text-[13px] text-fg-label mb-4 max-w-sm">
+      <p className="text-sm text-fg-label mb-4 max-w-sm">
         {t('common:featureRequest.successBody')}
       </p>
       <div className="flex flex-col sm:flex-row gap-2">
@@ -33,7 +33,7 @@ export function RequestFeatureSuccess({
           type="button"
           data-testid="feature-request-open-issue"
           onClick={() => void openExternalUrl(issueUrl)}
-          className="flex items-center justify-center gap-1.5 h-9 px-3.5 text-[13px] bg-field text-fg hover:bg-hover rounded-lg font-medium transition-colors"
+          className="flex items-center justify-center gap-1.5 h-9 px-3.5 text-sm bg-field text-fg hover:bg-hover rounded-lg font-medium transition-colors"
         >
           <ExternalLink strokeWidth={1.5} size={16} />
           {t('common:featureRequest.openIssue')}
@@ -41,7 +41,7 @@ export function RequestFeatureSuccess({
         <button
           type="button"
           onClick={onClose}
-          className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+          className="h-9 px-3.5 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
         >
           {t('common:buttons.ok')}
         </button>

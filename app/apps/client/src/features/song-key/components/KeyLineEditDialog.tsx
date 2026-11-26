@@ -102,6 +102,12 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
       close: handleClose,
     }))
 
+    const openSong = () => {
+      if (!song) return
+      handleClose()
+      navigate({ to: '/songs/$songId', params: { songId: String(song.id) } })
+    }
+
     const handleSave = async () => {
       if (!song) return
 
@@ -142,33 +148,50 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
       >
         <div className="bg-panel rounded-xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-line">
+          <div className="flex items-center justify-between gap-3 px-5 h-14 border-b border-line">
             <h2 className="text-base font-semibold text-fg truncate">
               {t('dialog.title')}
             </h2>
             <button
+              type="button"
               onClick={handleClose}
-              className="p-1.5 rounded-lg text-fg-hint hover:bg-hover transition-colors"
+              aria-label={t('dialog.cancel')}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
             >
-              <X size={20} />
+              <X size={18} strokeWidth={1.5} />
             </button>
           </div>
 
           {/* Content */}
-          <div className="px-4 sm:px-6 py-4 space-y-4">
+          <div className="px-5 py-4 space-y-4">
             {song && (
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-fg-body mb-1">
+                <p className="mb-1 text-xs text-fg-hint">
                   {t('dialog.songTitle')}
-                </label>
-                <p className="text-fg font-medium break-words">{song.title}</p>
+                </p>
+                {/* The song itself opens the song page. */}
+                <button
+                  type="button"
+                  onClick={openSong}
+                  title={t('dialog.openSong')}
+                  data-testid="key-line-open-song"
+                  className="group inline-flex max-w-full items-center gap-1.5 rounded text-left text-sm font-medium text-fg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                >
+                  <span className="break-words">{song.title}</span>
+                  <ExternalLink
+                    size={14}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    className="shrink-0 text-fg-hint group-hover:text-fg"
+                  />
+                </button>
               </div>
             )}
 
             <div>
               <label
                 htmlFor={inputId}
-                className="block text-sm font-medium text-fg-body mb-1"
+                className="mb-1 block text-xs text-fg-hint"
               >
                 {t('dialog.keyLine')}
               </label>
@@ -190,39 +213,19 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
                 onChange={(e) => setKeyLine(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t('dialog.keyLinePlaceholder')}
-                className="w-full px-4 py-3 rounded-lg border border-line
-                  bg-field text-fg text-base
-                  focus:ring-2 focus:ring-focus focus:border-focus
-                  placeholder:text-fg-hint
-                  touch-manipulation"
-                style={{ fontSize: '16px' }}
+                className="w-full h-10 px-3 rounded-[10px] border-0 bg-field text-fg text-base md:text-sm
+                  focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
+                  placeholder:text-fg-hint touch-manipulation"
               />
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end items-center gap-3 px-4 sm:px-6 py-4 border-t border-line">
-            <button
-              type="button"
-              onClick={() => {
-                if (!song) return
-                handleClose()
-                navigate({
-                  to: '/songs/$songId',
-                  params: { songId: String(song.id) },
-                })
-              }}
-              className="flex items-center gap-1.5 px-3 py-2.5 text-base font-medium
-                text-fg-label hover:underline"
-            >
-              <ExternalLink size={16} />
-              <span>{t('dialog.openSong')}</span>
-            </button>
+          <div className="flex justify-end items-center gap-2 px-5 py-3 border-t border-line">
             <button
               onClick={handleClose}
-              className="px-5 py-2.5 text-base font-medium text-fg-body
-                bg-field rounded-lg hover:bg-hover
-                transition-colors min-w-[90px]"
+              type="button"
+              className="h-9 px-4 text-sm font-medium text-fg bg-field rounded-lg hover:bg-hover transition-colors"
             >
               {t('dialog.cancel')}
             </button>
@@ -230,8 +233,8 @@ export const KeyLineEditDialog = forwardRef<KeyLineEditDialogHandle>(
               onClick={handleSave}
               disabled={updateMutation.isPending}
               data-testid="key-line-save"
-              className="px-5 py-2.5 text-base font-medium text-white bg-primary rounded-lg
-                hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[90px]"
+              type="button"
+              className="h-9 px-4 text-sm font-medium text-white bg-primary rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {updateMutation.isPending ? t('dialog.saving') : t('dialog.save')}
             </button>
