@@ -1,10 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-  useSearch,
-} from '@tanstack/react-router'
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Bookmark,
@@ -64,11 +59,13 @@ import {
   type CategoryEditDialogHandle,
   SongBookmarksPanel,
   SongControlPanel,
+  SongEditor,
   SongLoadError,
   SongSlidesPanel,
   SongStageBoard,
   SongVersionsPanel,
 } from '~/features/songs/components'
+import type { SongEditorMode } from '~/features/songs/components/song-editor/SongEditorModeSwitch'
 import {
   useAddBookmark,
   useHasMediaPreviewBackground,
@@ -82,7 +79,6 @@ import {
   useSongKeyboardShortcuts,
   useSongSlideSelectionKeyboard,
   useUndismissedSuggestionCount,
-  useUpsertSong,
 } from '~/features/songs/hooks'
 import type { SongSlide } from '~/features/songs/types'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
@@ -99,6 +95,7 @@ import { KeyboardShortcutBadge } from '~/ui/kbd'
 import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
+import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast'
 
@@ -106,6 +103,8 @@ interface SongSearchParams {
   q?: string
   reset?: number
   aiSearchId?: number
+  /** Open the song editor, on its slides or on its text. */
+  edit?: SongEditorMode
 }
 
 /**
@@ -144,7 +143,7 @@ const POWERPOINT_WORKSPACE_LAYOUT: WorkspaceLayout = {
 }
 
 export const Route = createFileRoute('/songs/$songId/')({
-  component: SongPreviewPage,
+  component: SongPage,
   validateSearch: (search: Record<string, unknown>): SongSearchParams => ({
     q: typeof search.q === 'string' ? search.q : undefined,
     reset:
@@ -159,14 +158,68 @@ export const Route = createFileRoute('/songs/$songId/')({
         : typeof search.aiSearchId === 'string'
           ? parseInt(search.aiSearchId, 10) || undefined
           : undefined,
+    edit:
+      search.edit === 'slides' || search.edit === 'text'
+        ? search.edit
+        : undefined,
   }),
-  beforeLoad: ({ params }) => {
-    // Redirect "new" to the edit page
-    if (params.songId === 'new') {
-      throw redirect({ to: '/songs/$songId/edit', params: { songId: 'new' } })
-    }
-  },
 })
+
+/** The song page, or its editor while one is open (always, for a new song). */
+function SongPage() {
+  const { songId } = Route.useParams()
+  const { edit } = Route.useSearch()
+  return songId === 'new' || edit ? (
+    <SongEditorPage mode={edit ?? 'slides'} />
+  ) : (
+    <SongPreviewPage />
+  )
+}
+
+function SongEditorPage({ mode }: { mode: SongEditorMode }) {
+  const navigate = useNavigate()
+  const { songId } = Route.useParams()
+  const { q, reset } = Route.useSearch()
+  const isNew = songId === 'new'
+
+  // The app's reset shortcut goes back to the song list from here too.
+  useEffect(() => {
+    if (reset) navigate({ to: '/songs', search: { reset, fromSong: true } })
+  }, [reset, navigate])
+
+  const backToList = useCallback(
+    () => navigate({ to: '/songs', search: { q } }),
+    [navigate, q],
+  )
+
+  return (
+    <PagePermissionGuard permission={isNew ? 'songs.create' : 'songs.edit'}>
+      <SongEditor
+        songId={isNew ? null : Number(songId)}
+        initialMode={mode}
+        onClose={
+          isNew
+            ? backToList
+            : () =>
+                navigate({
+                  to: '/songs/$songId',
+                  params: { songId },
+                  search: { q },
+                })
+        }
+        onCreated={(id) =>
+          navigate({
+            to: '/songs/$songId',
+            params: { songId: String(id) },
+            search: { q, edit: mode },
+            replace: true,
+          })
+        }
+        onDeleted={backToList}
+      />
+    </PagePermissionGuard>
+  )
+}
 
 function SongPreviewPage() {
   const { t } = useTranslation('songs')
@@ -233,7 +286,6 @@ function SongPreviewPage() {
   const isScheduleLive = scheduleNav.isScheduleLive
   const { saveSong, isPending: isSaving } = useSaveSongToFile()
   const resetPresentationCount = useResetPresentationCount()
-  const upsertSong = useUpsertSong()
   const songHistory = useSongHistoryAction(numericId, song?.title ?? '')
   const addBookmarkMutation = useAddBookmark()
   const removeBookmarkMutation = useRemoveBookmark()
@@ -248,7 +300,6 @@ function SongPreviewPage() {
   const [showResetCountConfirm, setShowResetCountConfirm] = useState(false)
   const isLargeScreen = useIsLargeScreen()
   const [selectedSlideIndex, setSelectedSlideIndex] = useState(0)
-  const [isEditMode, setIsEditMode] = useState(false)
   // Preview mode (persisted globally): when ON, clicking a verse stages it in
   // the local stage instead of projecting. `stagedSlideIndex` is the slide
   // staged (indigo) but not yet projected.
@@ -285,7 +336,6 @@ function SongPreviewPage() {
   )
   const hidePreviewBackground =
     hideBackgroundChoice && hasMediaPreviewBackground
-  const [pendingExit, setPendingExit] = useState(false)
   const keyLineDialogRef = useRef<KeyLineEditDialogHandle>(null)
   const categoryDialogRef = useRef<CategoryEditDialogHandle>(null)
 
@@ -499,54 +549,12 @@ function SongPreviewPage() {
   }, [previewMode, presentedSlideIndex, clearTemporary])
 
   const handleEdit = useCallback(() => {
-    navigate({ to: '/songs/$songId/edit', params: { songId } })
-  }, [navigate, songId])
-
-  const isMutating = upsertSong.isPending
-
-  const handleToggleEditMode = useCallback(() => {
-    setPendingExit(false)
-    setIsEditMode((prev) => !prev)
-  }, [])
-
-  const handleSave = useCallback(() => {
-    // Force blur to trigger any pending slide edits before exiting
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur()
-    }
-    setPendingExit(true)
-  }, [])
-
-  // Exit edit mode after pending saves complete
-  useEffect(() => {
-    if (pendingExit && !isMutating) {
-      setPendingExit(false)
-      setIsEditMode(false)
-    }
-  }, [pendingExit, isMutating])
-
-  const handleEditAsTextApply = useCallback(
-    async (
-      newSlides: Array<{
-        id: string | number
-        content: string
-        sortOrder: number
-        label?: string | null
-      }>,
-    ) => {
-      if (!song) return
-      await upsertSong.mutateAsync({
-        id: numericId,
-        title: song.title,
-        slides: newSlides.map((s, i) => ({
-          content: s.content,
-          sortOrder: i,
-          label: s.label ?? null,
-        })),
-      })
-    },
-    [song, upsertSong, numericId],
-  )
+    navigate({
+      to: '/songs/$songId',
+      params: { songId },
+      search: { q: searchQuery, edit: 'slides' },
+    })
+  }, [navigate, songId, searchQuery])
 
   // Every bookmark row for this song. A song may be bookmarked more than once,
   // so this is a list rather than a flag.
@@ -960,13 +968,7 @@ function SongPreviewPage() {
                     presentedSlideIndex={presentedSlideIndex}
                     selectedSlideIndex={selectedSlideIndex}
                     isLoading={isLoading}
-                    isEditMode={isEditMode}
-                    onToggleEditMode={handleToggleEditMode}
-                    canEdit={canEditSong}
-                    onSave={handleSave}
                     onSlideClick={handleSlideClick}
-                    isSaving={pendingExit || isMutating}
-                    onApplyText={handleEditAsTextApply}
                     previewMode={previewMode}
                     stagedSlideIndex={stagedSlideIndex}
                     onSlideDoubleClick={handleSlideProject}
@@ -1042,16 +1044,6 @@ function SongPreviewPage() {
                 editorLayout === 'powerpoint' ? 'normal' : 'powerpoint',
               ),
             testId: 'song-toggle-layout',
-          },
-          {
-            id: 'edit',
-            label: t('preview.edit'),
-            description: t('actionsMenu.editDescription'),
-            icon: <Pencil size={18} />,
-            iconClassName:
-              'bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white',
-            onSelect: handleEdit,
-            testId: 'song-edit',
           },
         ]
       : []),
@@ -1173,6 +1165,19 @@ function SongPreviewPage() {
             label={t('actionsMenu.trigger')}
             testId="song-actions-menu"
           />
+          {/* Last in the bar: opens the song editor on its slides. */}
+          {canEditSong && (
+            <button
+              type="button"
+              onClick={handleEdit}
+              data-testid="song-edit"
+              title={t('actionsMenu.editDescription')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+            >
+              <Pencil size={16} />
+              {t('preview.edit')}
+            </button>
+          )}
         </div>
       </div>
 

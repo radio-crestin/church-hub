@@ -1,0 +1,162 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { SlideNumberGutter } from './SlideNumberGutter'
+import type { LocalSlide } from '../../types'
+import { findSlideStartLines } from '../../utils/findSlideStartLines'
+import { slidesToSongText } from '../../utils/slidesToSongText'
+import { songTextToSlides } from '../../utils/songTextToSlides'
+
+/** Pause in typing after which the text is turned back into slides. */
+const PARSE_DELAY_MS = 200
+const LINE_HEIGHT_PX = 24
+const PADDING_TOP_PX = 12
+
+interface SongTextEditorProps {
+  slides: LocalSlide[]
+  onSlidesChange: (slides: LocalSlide[]) => void
+}
+
+/**
+ * The whole song as one text: a blank line between slides, chords in brackets
+ * before their word, `#C1` for a slide's label.
+ *
+ * Built to stay instant on a long song: the textarea keeps its own text, so a
+ * keystroke renders nothing; the slide numbers in the gutter render only when
+ * a slide starts or ends; the text is turned back into slides once typing
+ * pauses (and when the editor closes), not on every key.
+ */
+export function SongTextEditor({
+  slides,
+  onSlidesChange,
+}: SongTextEditorProps) {
+  const { t } = useTranslation('songs')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const gutterRef = useRef<HTMLDivElement>(null)
+  const [initialText] = useState(() => slidesToSongText(slides))
+  const [startLines, setStartLines] = useState(() =>
+    findSlideStartLines(initialText),
+  )
+  const [activeSlide, setActiveSlide] = useState(0)
+
+  // What the parent last had, so an edit is turned into slides against it.
+  const slidesRef = useRef(slides)
+  slidesRef.current = slides
+  const onSlidesChangeRef = useRef(onSlidesChange)
+  onSlidesChangeRef.current = onSlidesChange
+  const startLinesRef = useRef(startLines)
+  startLinesRef.current = startLines
+  const parsedTextRef = useRef(initialText)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flush = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = null
+    const text = textareaRef.current?.value
+    if (text === undefined || text === parsedTextRef.current) return
+    parsedTextRef.current = text
+    onSlidesChangeRef.current(songTextToSlides(text, slidesRef.current))
+  }, [])
+
+  // Closing the editor (back to the slides) keeps what was typed last.
+  useEffect(() => flush, [flush])
+
+  const trackCaret = useCallback(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const caretLine = countLines(textarea.value, textarea.selectionStart)
+    const starts = startLinesRef.current
+    let slide = 0
+    while (slide + 1 < starts.length && starts[slide + 1] <= caretLine) {
+      slide += 1
+    }
+    setActiveSlide(slide)
+  }, [])
+
+  const handleInput = useCallback(() => {
+    const text = textareaRef.current?.value ?? ''
+    const starts = findSlideStartLines(text)
+    if (!sameLines(starts, startLinesRef.current)) setStartLines(starts)
+    trackCaret()
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(flush, PARSE_DELAY_MS)
+  }, [flush, trackCaret])
+
+  // The numbers follow the text's scroll without a render.
+  const syncGutter = useCallback(() => {
+    const textarea = textareaRef.current
+    if (textarea && gutterRef.current) {
+      gutterRef.current.style.transform = `translateY(${-textarea.scrollTop}px)`
+    }
+  }, [])
+
+  return (
+    <div
+      data-testid="song-text-editor"
+      className="flex h-full min-h-[60vh] flex-col gap-2 lg:min-h-0"
+    >
+      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-900">
+        <div
+          aria-hidden
+          className="relative w-9 shrink-0 overflow-hidden border-r border-gray-100 bg-gray-50/70 dark:border-gray-800 dark:bg-gray-950/40"
+        >
+          <SlideNumberGutter
+            ref={gutterRef}
+            startLines={startLines}
+            activeSlide={activeSlide}
+            lineHeight={LINE_HEIGHT_PX}
+            paddingTop={PADDING_TOP_PX}
+          />
+        </div>
+        <textarea
+          ref={textareaRef}
+          data-testid="song-text-input"
+          defaultValue={initialText}
+          onInput={handleInput}
+          onSelect={trackCaret}
+          onScroll={syncGutter}
+          onBlur={flush}
+          placeholder={t('textEditor.placeholder')}
+          spellCheck={false}
+          autoFocus
+          wrap="off"
+          style={{
+            lineHeight: `${LINE_HEIGHT_PX}px`,
+            paddingTop: PADDING_TOP_PX,
+            paddingBottom: PADDING_TOP_PX,
+          }}
+          className="min-w-0 flex-1 resize-none overflow-auto whitespace-pre border-0 bg-transparent px-3 text-[15px] text-gray-900 placeholder-gray-400 outline-none focus:ring-0 dark:text-gray-100"
+        />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs text-gray-500 dark:text-gray-400">
+        <span data-testid="song-text-slide-count" className="tabular-nums">
+          {t('textEditor.slideCount', { count: startLines.length })}
+        </span>
+        <span className="flex flex-wrap gap-x-3 gap-y-1">
+          <span>{t('textEditor.help.newSlide')}</span>
+          <span>
+            <code className="text-amber-600 dark:text-amber-400">[G]</code>{' '}
+            {t('textEditor.help.chord')}
+          </span>
+          <span>
+            <code className="text-indigo-600 dark:text-indigo-400">#C1</code>{' '}
+            {t('textEditor.help.label')}
+          </span>
+          <span>
+            <code>**{t('textEditor.help.bold')}**</code>
+          </span>
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function countLines(text: string, end: number): number {
+  let lines = 0
+  for (let i = 0; i < end; i += 1) if (text[i] === '\n') lines += 1
+  return lines
+}
+
+function sameLines(a: number[], b: number[]): boolean {
+  return a.length === b.length && a.every((line, i) => line === b[i])
+}

@@ -14,8 +14,8 @@ import { ConfirmModal } from '~/ui/modal'
 import { isTypingTarget } from '~/utils/isTypingTarget'
 import { SlideFilmstrip } from './SlideFilmstrip'
 import { StageCanvas } from './StageCanvas'
+import type { LocalSlide } from '../../types'
 import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
-import { type LocalSlide } from '../SongSlideList'
 
 /** How many slides after the active one the filmstrip keeps in view. */
 const FILMSTRIP_LOOKAHEAD = 2

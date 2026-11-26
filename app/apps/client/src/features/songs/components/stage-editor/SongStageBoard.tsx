@@ -22,12 +22,16 @@ import { SlideStyleToolbar } from './SlideStyleToolbar'
 import { SongStageEditor } from './SongStageEditor'
 import { StageTimer } from './StageTimer'
 import { useSongKeyboardShortcuts, useUpsertSong } from '../../hooks'
-import type { SlideStyleOverride, SongSlide, SongWithSlides } from '../../types'
+import type {
+  LocalSlide,
+  SlideStyleOverride,
+  SongSlide,
+  SongWithSlides,
+} from '../../types'
 import { adoptSavedSlideIds } from '../../utils/adoptSavedSlideIds'
 import { expandSongSlidesWithChoruses } from '../../utils/expandSongSlides'
 import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
 import { SlideCounter } from '../SlideCounter'
-import { type LocalSlide } from '../SongSlideList'
 
 interface SongStageBoardProps {
   song: SongWithSlides
