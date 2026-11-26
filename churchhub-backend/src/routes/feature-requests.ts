@@ -10,6 +10,7 @@ import {
   submitFeatureRequest,
 } from '../feature-requests'
 import type { Bindings } from '../types'
+import { publicOrigin } from '../utils/publicOrigin'
 
 // `<random UUID>.<ext>`: unguessable, so only the issue's link finds it.
 const SCREENSHOT_ID_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp)$/
@@ -52,7 +53,7 @@ featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => 
     const issue = await submitFeatureRequest(
       c.env,
       request,
-      new URL(c.req.url).origin
+      publicOrigin(c.env, c.req.url)
     )
     return c.json({
       success: true,
