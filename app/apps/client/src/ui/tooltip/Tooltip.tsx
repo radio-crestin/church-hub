@@ -81,8 +81,9 @@ export function Tooltip({
     <div
       ref={triggerRef}
       className={`relative inline-flex ${className ?? ''}`}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={hide}
+      // A tap is not a hover: on touch the tooltip would stick over the page.
+      onPointerEnter={(e) => e.pointerType !== 'touch' && setIsVisible(true)}
+      onPointerLeave={hide}
     >
       {children}
       {isVisible &&

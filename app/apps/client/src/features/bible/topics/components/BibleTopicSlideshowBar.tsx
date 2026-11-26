@@ -1,4 +1,4 @@
-import { Play, Repeat } from 'lucide-react'
+import { Play, Repeat, Square } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
@@ -16,8 +16,9 @@ interface BibleTopicSlideshowBarProps {
 /**
  * The topic as a presentation in one tap: ▶ shows its verses one after
  * another, each for its reading time, and stops on the last; 🔁 plays them
- * over and over. Pressed again, either stops it; the other switches mode from
- * the verse on screen. The gauge sets the reading speed.
+ * over and over. Pressed again (▶ turns into ■), either stops it; the
+ * other switches mode from the verse on screen. The gauge sets the reading
+ * speed.
  */
 export function BibleTopicSlideshowBar({
   slideshow,
@@ -39,7 +40,11 @@ export function BibleTopicSlideshowBar({
           isAutoAdvancing ? slideshow.stop() : slideshow.start('once', from)
         }
       >
-        <Play size={16} strokeWidth={1.5} />
+        {isAutoAdvancing ? (
+          <Square size={16} strokeWidth={1.5} />
+        ) : (
+          <Play size={16} strokeWidth={1.5} />
+        )}
       </HeaderIconButton>
       <HeaderIconButton
         label={t('topics.slideshow.loop')}
