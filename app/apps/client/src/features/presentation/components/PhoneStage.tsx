@@ -48,9 +48,9 @@ export function PhoneStage({
   return (
     <div
       data-testid={testId}
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+      className="bg-panel rounded-xl border border-line overflow-hidden"
     >
-      <div className="flex items-center gap-2 p-2 border-b border-gray-200 dark:border-gray-700 group-data-[stuck=true]/pinned:hidden">
+      <div className="flex items-center gap-2 p-2 border-b border-line group-data-[stuck=true]/pinned:hidden">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {content && <ContentTypeButton temporaryContent={content} />}
           {highlights && highlights.length > 0 && (
@@ -58,13 +58,13 @@ export function PhoneStage({
               type="button"
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
-              className="flex items-center p-1.5 text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 shrink-0"
+              className="flex items-center justify-center h-8 w-8 text-fg-label rounded-lg hover:bg-hover hover:text-fg disabled:opacity-50 shrink-0"
               aria-label={t('controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
               ) : (
-                <Eraser size={16} />
+                <Eraser size={16} strokeWidth={1.5} />
               )}
             </button>
           )}

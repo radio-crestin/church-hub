@@ -39,7 +39,7 @@ export function PublicationsSection() {
         description={t('songSources.publish.description')}
       />
       {!storage ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-fg-hint">
           {t('songSources.publish.needsStorage')}
         </p>
       ) : (
@@ -66,11 +66,9 @@ export function PublicationsSection() {
         </div>
       )}
       {publications.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {t('songSources.publish.empty')}
-        </p>
+        <p className="text-sm text-fg-hint">{t('songSources.publish.empty')}</p>
       ) : (
-        <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-700">
+        <ul className="divide-y divide-line rounded-lg border border-line">
           {publications.map((publication) => (
             <PublicationRow key={publication.id} publication={publication} />
           ))}

@@ -50,8 +50,8 @@ function AppearanceSettings() {
       {/* Language */}
       <div className="mb-6 space-y-2">
         <div className="flex items-center gap-2">
-          <Languages className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
+          <Languages strokeWidth={1.5} className="h-4 w-4 text-fg-label" />
+          <label className="text-[13px] font-medium text-fg">
             {t('sections.language.title')}
           </label>
         </div>
@@ -62,7 +62,7 @@ function AppearanceSettings() {
           disabled={isLanguageLoading || !canEditAppearance}
           allowClear={false}
         />
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-fg-label">
           {t('sections.language.description')}
         </p>
       </div>
@@ -70,8 +70,8 @@ function AppearanceSettings() {
       {/* Theme */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Palette className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
+          <Palette strokeWidth={1.5} className="h-4 w-4 text-fg-label" />
+          <label className="text-[13px] font-medium text-fg">
             {t('sections.theme.title')}
           </label>
         </div>
@@ -82,7 +82,7 @@ function AppearanceSettings() {
           disabled={isThemeLoading || !canEditAppearance}
           allowClear={false}
         />
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-fg-label">
           {t('sections.theme.description')}
         </p>
       </div>

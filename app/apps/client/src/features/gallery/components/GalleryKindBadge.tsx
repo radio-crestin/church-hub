@@ -20,7 +20,7 @@ export function GalleryKindBadge({
     <span
       className={`inline-flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white ${className}`}
     >
-      <Icon className="h-3 w-3" aria-hidden="true" />
+      <Icon className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
       {t(`kinds.${kind}`)}
     </span>
   )

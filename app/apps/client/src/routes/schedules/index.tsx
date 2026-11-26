@@ -104,7 +104,7 @@ function SchedulesPage() {
                 aria-label={t('actions.create')}
                 className="gap-2"
               >
-                <Plus size={16} />
+                <Plus size={16} strokeWidth={1.5} />
                 <span className="hidden sm:inline">{t('actions.create')}</span>
               </Button>
               <ActionMenu
@@ -118,8 +118,6 @@ function SchedulesPage() {
                     ) : (
                       <Upload size={18} />
                     ),
-                    iconClassName:
-                      'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
                     onSelect: handleImportSchedule,
                     disabled: isImporting,
                     testId: 'schedules-import-from-file-action',

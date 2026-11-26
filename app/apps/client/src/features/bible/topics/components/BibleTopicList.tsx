@@ -36,9 +36,12 @@ export function BibleTopicList({
 
   return (
     <>
-      <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+          <Search
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-hint"
+            strokeWidth={1.75}
+          />
           <input
             ref={inputRef}
             data-slide-navigation=""
@@ -47,14 +50,14 @@ export function BibleTopicList({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder={t('topics.searchPlaceholder')}
-            className="w-full pl-8 pr-7 py-1.5 text-sm md:text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+            className="w-full h-8 pl-8 pr-7 text-[13px] bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
           {query && (
             <ClearSearchButton
               inputRef={inputRef}
               onClear={() => onQueryChange('')}
               size={14}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg-label"
             />
           )}
         </div>
@@ -62,33 +65,36 @@ export function BibleTopicList({
 
       <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
         {isLoading ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
             ...
           </div>
         ) : visible.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
             {topics.length === 0 ? t('topics.empty') : t('topics.noResults')}
           </div>
         ) : (
-          <ul className="p-2 flex flex-col gap-1">
+          <ul className="p-1.5 flex flex-col gap-0.5">
             {visible.map((topic) => (
               <li key={topic.id}>
                 <button
                   type="button"
                   data-testid={`bible-topic-${topic.key}`}
                   onClick={() => onOpenTopic(topic)}
-                  className="w-full flex items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-hover"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <span className="block truncate text-[13px] font-medium text-fg">
                       {titleOf(topic)}
                     </span>
-                    <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                    <span className="block truncate text-xs text-fg-hint">
                       {subtitleOf(topic)} ·{' '}
                       {t('topics.verseCount', { count: topic.referenceCount })}
                     </span>
                   </span>
-                  <ChevronRight className="w-4 h-4 shrink-0 text-gray-400" />
+                  <ChevronRight
+                    className="w-4 h-4 shrink-0 text-fg-hint"
+                    strokeWidth={1.5}
+                  />
                 </button>
               </li>
             ))}

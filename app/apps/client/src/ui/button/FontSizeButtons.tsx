@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { useFontScale } from '~/hooks/useFontScale'
 
 const BUTTON_CLASS =
-  'flex items-center justify-center p-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+  'flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
 
 interface FontSizeButtonsProps {
   fontScale: ReturnType<typeof useFontScale>
@@ -29,7 +29,7 @@ export function FontSizeButtons({
         data-testid={`${testIdPrefix}-decrease`}
         className={BUTTON_CLASS}
       >
-        <AArrowDown size={16} />
+        <AArrowDown size={16} strokeWidth={1.5} />
       </button>
       <button
         type="button"
@@ -40,7 +40,7 @@ export function FontSizeButtons({
         data-testid={`${testIdPrefix}-increase`}
         className={BUTTON_CLASS}
       >
-        <AArrowUp size={18} />
+        <AArrowUp size={16} strokeWidth={1.5} />
       </button>
     </div>
   )

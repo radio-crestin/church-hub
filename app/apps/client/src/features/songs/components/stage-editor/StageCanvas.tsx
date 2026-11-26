@@ -196,14 +196,14 @@ export function StageCanvas({
         data-editing={framed ? 'true' : 'false'}
         className={`rounded-2xl border-2 p-2 transition-colors ${
           canEdit ? 'cursor-text' : ''
-        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'} ${
+        } ${framed ? 'border-focus' : 'border-transparent'} ${
           fitHeight ? 'flex w-fit items-center justify-center' : 'w-full'
         }`}
       >
         <div
           style={boxStyle}
           data-testid="slide-canvas-box"
-          className={`relative aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
+          className={`relative aspect-video rounded-lg overflow-hidden bg-black ${
             showEditor ? '' : 'select-none'
           } ${fitHeight ? '' : 'w-full'}`}
         >
@@ -222,7 +222,7 @@ export function StageCanvas({
         </div>
       </div>
       {framed && (
-        <p className="mt-2 shrink-0 text-center text-xs text-indigo-500 dark:text-indigo-400">
+        <p className="mt-2 shrink-0 text-center text-xs text-fg-hint">
           {t('stageEditor.editHint')}
         </p>
       )}

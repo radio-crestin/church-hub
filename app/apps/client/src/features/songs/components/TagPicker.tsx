@@ -134,14 +134,14 @@ export function TagPicker({
         {selected.map((tag) => (
           <span
             key={tag.id}
-            className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-medium"
+            className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-md bg-field text-fg-label text-xs font-medium"
           >
             {tag.name}
             <button
               type="button"
               onClick={() => remove(tag.id)}
               disabled={disabled}
-              className="p-0.5 rounded-full hover:bg-indigo-200 dark:hover:bg-indigo-800/60 disabled:opacity-50"
+              className="p-0.5 rounded-full hover:bg-hover disabled:opacity-50"
               aria-label={t('tags.removeTag', { name: tag.name })}
             >
               <X className="w-3 h-3" />
@@ -154,7 +154,7 @@ export function TagPicker({
           onClick={() => !disabled && setIsOpen((v) => !v)}
           disabled={disabled}
           data-testid="tag-picker-trigger"
-          className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-dashed border-gray-300 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-dashed border-line text-xs text-fg-label hover:bg-hover disabled:opacity-50"
         >
           <Plus className="w-3 h-3" />
           {selected.length === 0 ? t('tags.addFirst') : t('tags.add')}
@@ -166,7 +166,7 @@ export function TagPicker({
           <div
             ref={dropdownRef}
             data-testid="tag-picker-dropdown"
-            className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+            className="fixed z-[9999] bg-panel border border-line rounded-[10px] shadow-popover overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
                 ? { bottom: dropdownPosition.bottom }
@@ -175,7 +175,7 @@ export function TagPicker({
               width: dropdownPosition.width,
             }}
           >
-            <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-2 border-b border-line">
               <div className="relative">
                 <input
                   ref={inputRef}
@@ -201,7 +201,7 @@ export function TagPicker({
                     }
                   }}
                   placeholder={t('tags.searchPlaceholder')}
-                  className={`w-full pl-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                  className={`w-full pl-2 py-1 bg-field border border-line rounded text-sm text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-focus ${
                     search ? 'pr-7' : 'pr-2'
                   }`}
                 />
@@ -210,7 +210,7 @@ export function TagPicker({
                     inputRef={inputRef}
                     onClear={() => setSearch('')}
                     size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg"
                   />
                 )}
               </div>
@@ -218,7 +218,7 @@ export function TagPicker({
 
             <div className="max-h-48 overflow-y-auto">
               {filtered.length === 0 && !trimmedSearch && (
-                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="px-3 py-2 text-sm text-fg-hint">
                   {t('tags.empty')}
                 </div>
               )}
@@ -230,15 +230,13 @@ export function TagPicker({
                     type="button"
                     data-testid="tag-picker-option"
                     onClick={() => toggle(tag.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                      isSelected
-                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-                        : 'text-gray-900 dark:text-white'
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-hover ${
+                      isSelected ? 'bg-selected text-fg' : 'text-fg'
                     }`}
                   >
                     <span className="truncate">{tag.name}</span>
                     {isSelected && (
-                      <span className="text-xs text-indigo-500">✓</span>
+                      <span className="text-xs text-fg-label">✓</span>
                     )}
                   </button>
                 )
@@ -248,7 +246,7 @@ export function TagPicker({
                   type="button"
                   onClick={createAndSelect}
                   disabled={upsertTag.isPending}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-50 border-t border-gray-200 dark:border-gray-700"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-fg-label hover:bg-hover hover:text-fg disabled:opacity-50 border-t border-line"
                 >
                   <Plus className="w-4 h-4" />
                   {t('tags.createNamed', { name: trimmedSearch })}

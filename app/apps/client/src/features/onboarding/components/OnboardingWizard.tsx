@@ -36,12 +36,12 @@ export function OnboardingWizard() {
   return (
     <div
       data-testid="onboarding"
-      className="fixed inset-0 z-50 overflow-y-auto bg-gray-50 dark:bg-gray-950"
+      className="fixed inset-0 z-50 overflow-y-auto bg-app"
     >
       <div className="mx-auto flex min-h-full max-w-2xl flex-col justify-center gap-8 p-4 py-10 sm:p-8">
         <OnboardingProgress step={step} />
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-line bg-panel p-6 sm:p-8">
           {step === 'welcome' && <WelcomeStep />}
           {step === 'features' && (
             <FeaturesStep selected={selected} onToggle={toggle} />
@@ -89,7 +89,7 @@ export function OnboardingWizard() {
           </div>
         </div>
         {finish.isError && (
-          <p role="alert" className="text-center text-sm text-red-600">
+          <p role="alert" className="text-center text-[13px] text-red-600">
             {t('saveError')}
           </p>
         )}

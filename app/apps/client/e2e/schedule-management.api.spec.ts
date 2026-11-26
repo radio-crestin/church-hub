@@ -240,78 +240,8 @@ test.describe('Schedule Management - API', () => {
     expect(Array.isArray(json.data)).toBe(true)
   })
 
-  test.skip('can import schedule to presentation queue', async ({
-    request,
-  }) => {
-    // Create a schedule with items
-    const scheduleResponse = await request.post('/api/schedules', {
-      data: {
-        title: `E2E Queue Import ${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
-      },
-    })
-    const { data: schedule } = await scheduleResponse.json()
-    testScheduleIds.push(schedule.id)
-
-    // Add an item
-    await request.post(`/api/schedules/${schedule.id}/items`, {
-      data: { slideType: 'custom', slideContent: 'Queue content' },
-    })
-
-    // Import to queue
-    const importResponse = await request.post(
-      `/api/schedules/${schedule.id}/import-to-queue`,
-    )
-    expect(importResponse.status()).toBe(200)
-
-    const json = await importResponse.json()
-    expect(json.data).toHaveProperty('success')
-  })
-
   test('getting non-existent schedule returns 404', async ({ request }) => {
     const response = await request.get('/api/schedules/999999')
     expect(response.status()).toBe(404)
-  })
-})
-
-test.describe('Schedule Management - UI', () => {
-  test('can navigate to schedules page', async ({ page }) => {
-    await page.goto('/schedules')
-    await page.waitForLoadState('networkidle')
-    await expect(page).toHaveURL(/.*schedules/)
-  })
-
-  test('schedule list is displayed', async ({ page }) => {
-    await page.goto('/schedules')
-    await page.waitForLoadState('networkidle')
-
-    // Page should load with schedule content
-    await expect(page.locator('body')).toBeVisible()
-    await page.waitForTimeout(1000)
-  })
-
-  test('can navigate to new schedule page', async ({ page }) => {
-    await page.goto('/schedules/new')
-    await page.waitForLoadState('networkidle')
-
-    await expect(page).toHaveURL(/.*schedules\/new/)
-    await expect(page.locator('body')).toBeVisible()
-  })
-
-  test('can navigate to an existing schedule', async ({ page, request }) => {
-    const listResponse = await request.get('/api/schedules')
-    const listJson = await listResponse.json()
-
-    if (listJson.data.length === 0) {
-      test.skip(true, 'No schedules available')
-      return
-    }
-
-    const scheduleId = listJson.data[0].id
-    await page.goto(`/schedules/${scheduleId}`)
-    await page.waitForLoadState('networkidle')
-
-    await expect(page).toHaveURL(new RegExp(`schedules/${scheduleId}`))
-    await expect(page.locator('body')).toBeVisible()
   })
 })

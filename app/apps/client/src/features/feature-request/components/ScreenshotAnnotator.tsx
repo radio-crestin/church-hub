@@ -61,7 +61,7 @@ export function ScreenshotAnnotator({
         data-testid="feature-request-canvas"
         data-tool={tool}
         aria-label={t('common:featureRequest.canvasLabel')}
-        className="block w-full h-auto sm:w-auto max-w-full sm:max-h-[40vh] md:max-h-[44vh] rounded-lg border border-gray-200 dark:border-gray-700 touch-none bg-gray-100 dark:bg-gray-900"
+        className="block w-full h-auto sm:w-auto max-w-full sm:max-h-[40vh] md:max-h-[44vh] rounded-lg border border-line touch-none bg-field"
         style={{ cursor: getToolCursor(tool, color) }}
         {...canvasHandlers}
       />

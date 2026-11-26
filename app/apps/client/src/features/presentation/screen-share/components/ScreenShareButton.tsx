@@ -24,11 +24,12 @@ export function ScreenShareButton() {
       {isLive || isSharingHere ? (
         <Button
           variant="danger"
+          size="sm"
           onClick={() => void stop()}
           aria-label={t('controlRoom.screenShare.stop')}
           className="gap-2"
         >
-          <MonitorOff className="w-4 h-4" />
+          <MonitorOff size={16} strokeWidth={1.5} />
           <span className="hidden sm:inline">
             {t('controlRoom.screenShare.stop')}
           </span>
@@ -36,15 +37,16 @@ export function ScreenShareButton() {
       ) : (
         <Button
           variant="secondary"
+          size="sm"
           onClick={requestStart}
           disabled={isStarting}
           aria-label={t('controlRoom.screenShare.start')}
           className="gap-2"
         >
           {isStarting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
           ) : (
-            <MonitorPlay className="w-4 h-4" />
+            <MonitorPlay size={16} strokeWidth={1.5} />
           )}
           <span className="hidden sm:inline">
             {t('controlRoom.screenShare.start')}

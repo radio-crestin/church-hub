@@ -117,7 +117,7 @@ async function removeProgram(request: APIRequestContext, program: Program) {
 /** The live row is fully on screen, near the top of the list. */
 async function expectFollowed(page: Page, step: number): Promise<void> {
   const live: Locator = page.getByTestId(`schedule-sub-item-${step}`)
-  await expect(live).toHaveClass(/ring-green-500/, { timeout: 10000 })
+  await expect(live).toHaveClass(/ring-live/, { timeout: 10000 })
   await expect(live).toBeInViewport({ ratio: 1, timeout: 5000 })
 }
 

@@ -24,14 +24,12 @@ import {
   useSidebarConfig,
   useSidebarItemShortcuts,
 } from '../../features/sidebar-config'
-import { DEFAULT_ICON_COLORS } from '../../features/sidebar-config/constants'
 import type {
-  BuiltInMenuItem,
   CustomPageMenuItem,
-  IconColor,
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
 import { usePermissions } from '../../provider/permissions-provider'
+import { AppMark } from '../brand/AppMark'
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean
@@ -106,22 +104,6 @@ export function Sidebar({
     [config],
   )
 
-  // Get icon color for an item
-  const getItemIconColor = useCallback(
-    (itemId: string): IconColor | undefined => {
-      const item = config?.items.find((i) => i.id === itemId)
-      if (item?.settings?.iconColor) {
-        return item.settings.iconColor
-      }
-      // Return default color for builtin items
-      if (item?.type === 'builtin') {
-        return DEFAULT_ICON_COLORS[(item as BuiltInMenuItem).builtinId]
-      }
-      return 'gray'
-    },
-    [config],
-  )
-
   // Get kiosk settings to determine if kiosk menu item should be visible
   const { data: kioskSettings } = useKioskSettings()
 
@@ -185,7 +167,7 @@ export function Sidebar({
         data-collapsed={isCollapsed}
         className={`
           fixed md:relative z-50 md:z-auto
-          flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
+          flex flex-col h-full bg-panel border-r border-line
           transition-all duration-300 ease-in-out
           w-72 top-0 left-0
           safe-area-top safe-area-left safe-area-bottom
@@ -194,19 +176,17 @@ export function Sidebar({
         `}
       >
         {/* Mobile Close Button */}
-        <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+        <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-3">
-            <img src="/logo192.png" alt="Church Hub" className="w-8 h-8" />
-            <span className="font-semibold text-gray-900 dark:text-white">
-              Church Hub
-            </span>
+            <AppMark size={28} />
+            <span className="text-sm font-semibold text-fg">Church Hub</span>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
             aria-label={t('sidebar:actions.closeMenu')}
           >
-            <X size={24} />
+            <X size={20} strokeWidth={1.5} />
           </button>
         </div>
 
@@ -215,7 +195,7 @@ export function Sidebar({
           <SidebarHeader isCollapsed={isCollapsed} />
         </div>
 
-        <nav className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 flex flex-col gap-0.5 p-2 overflow-y-auto scrollbar-thin">
           {menuItems.map((item) => (
             <SidebarItem
               key={item.id}
@@ -234,14 +214,12 @@ export function Sidebar({
               nativeWindowSettings={getItemNativeWindowSettings(item.id)}
               iconName={getItemIconName(item.id)}
               externalUrl={getItemExternalUrl(item.id)}
-              iconColor={getItemIconColor(item.id)}
               customIconUrl={item.customIconUrl}
-              faviconBgColor={item.faviconBgColor}
             />
           ))}
 
           {/* Bottom section - fixed at the bottom, above the collapse button */}
-          <div className="mt-auto space-y-1">
+          <div className="mt-auto space-y-0.5">
             {/* Kiosk - shown when kiosk mode is enabled */}
             {showKiosk && (
               <SidebarItem
@@ -254,12 +232,11 @@ export function Sidebar({
                 className="md:flex"
                 onClick={(e) => handleSidebarItemClick('/kiosk', e)}
                 nativeWindowSettings={getItemNativeWindowSettings('kiosk')}
-                iconColor={getItemIconColor('kiosk')}
               />
             )}
 
             {/* Divider */}
-            <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+            <div className="my-1.5 border-t border-line" />
 
             {/* Feedback — opens the screenshot tool (mark it up, add notes)
                 that files a public GitHub issue.
@@ -275,23 +252,22 @@ export function Sidebar({
                   setIsMobileMenuOpen(false)
                   setIsFeatureRequestOpen(true)
                 }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 ${isCollapsed ? 'md:justify-center' : ''}`}
+                className={`flex items-center gap-2.5 px-3 py-2.5 md:h-8 md:py-0 md:px-2.5 rounded-lg transition-colors w-full text-fg-label hover:bg-hover hover:text-fg ${isCollapsed ? 'md:justify-center' : ''}`}
                 title={
                   isCollapsed ? t('sidebar:navigation.feedback') : undefined
                 }
                 aria-label={t('sidebar:navigation.feedback')}
               >
-                <span className="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
-                  <MessageSquarePlus
-                    size={16}
-                    className="text-gray-600 dark:text-gray-400"
-                  />
-                </span>
-                <span className="text-sm font-medium md:hidden">
+                <MessageSquarePlus
+                  size={16}
+                  strokeWidth={1.5}
+                  className="flex-shrink-0"
+                />
+                <span className="text-[13px] font-medium md:hidden">
                   {t('sidebar:navigation.feedback')}
                 </span>
                 {!isCollapsed && (
-                  <span className="text-sm font-medium hidden md:inline flex-1 text-left">
+                  <span className="text-[13px] font-medium hidden md:inline flex-1 text-left">
                     {t('sidebar:navigation.feedback')}
                   </span>
                 )}
@@ -317,7 +293,6 @@ export function Sidebar({
                   className="md:flex flex-1 min-w-0"
                   onClick={(e) => handleSidebarItemClick('/settings', e)}
                   nativeWindowSettings={getItemNativeWindowSettings('settings')}
-                  iconColor={getItemIconColor('settings')}
                 />
               )}
               {!isScreenRoute && (
@@ -333,14 +308,14 @@ export function Sidebar({
           </div>
         </nav>
 
-        <div className="p-3 border-t border-gray-200 dark:border-gray-800">
+        <div className="p-2 border-t border-line">
           {/* Desktop-only collapse button */}
           <button
             onClick={toggleCollapsed}
             data-testid="sidebar-collapse-toggle"
-            className="hidden md:flex w-full items-center gap-3 px-4 py-3 rounded-lg
-              text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-              transition-colors"
+            className={`hidden md:flex w-full h-8 items-center gap-2.5 px-2.5 rounded-lg
+              text-fg-label hover:bg-hover hover:text-fg
+              transition-colors ${isCollapsed ? 'justify-center' : ''}`}
             title={
               isCollapsed
                 ? t('sidebar:actions.expand')
@@ -348,11 +323,19 @@ export function Sidebar({
             }
           >
             {isCollapsed ? (
-              <ChevronRight size={20} className="flex-shrink-0" />
+              <ChevronRight
+                size={16}
+                strokeWidth={1.5}
+                className="flex-shrink-0"
+              />
             ) : (
               <>
-                <ChevronLeft size={20} className="flex-shrink-0" />
-                <span className="text-sm font-medium">
+                <ChevronLeft
+                  size={16}
+                  strokeWidth={1.5}
+                  className="flex-shrink-0"
+                />
+                <span className="text-[13px] font-medium">
                   {t('sidebar:actions.collapse')}
                 </span>
               </>

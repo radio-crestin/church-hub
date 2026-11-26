@@ -102,12 +102,13 @@ export function BibleHistoryExportMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         data-testid="bible-history-export"
-        className="flex items-center gap-0.5 p-1.5 rounded-md bg-teal-50 text-teal-600 hover:bg-teal-100 dark:bg-teal-900/30 dark:text-teal-400 dark:hover:bg-teal-900/50 transition-colors"
+        className="flex h-8 items-center gap-0.5 px-2 rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
         title={t('history.export')}
       >
-        <Download className="w-3.5 h-3.5" />
+        <Download className="w-4 h-4" strokeWidth={1.5} />
         <ChevronDown
           className={`w-3 h-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          strokeWidth={2}
         />
       </button>
 
@@ -123,17 +124,19 @@ export function BibleHistoryExportMenu({
                 left: coords.left,
                 width: MENU_WIDTH,
               }}
-              className="z-[100] rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+              className="z-[100] rounded-[10px] border border-line bg-panel p-1 shadow-lg"
             >
               <MenuItem
-                icon={<CalendarClock className="w-3.5 h-3.5" />}
+                icon={
+                  <CalendarClock className="w-3.5 h-3.5" strokeWidth={1.75} />
+                }
                 label={t('history.exportLastSession')}
                 count={sessionCount}
                 testId="bible-history-export-session"
                 onClick={() => handleChoose('session')}
               />
               <MenuItem
-                icon={<History className="w-3.5 h-3.5" />}
+                icon={<History className="w-3.5 h-3.5" strokeWidth={1.75} />}
                 label={t('history.exportEntireHistory')}
                 count={totalCount}
                 testId="bible-history-export-all"
@@ -165,11 +168,11 @@ function MenuItem({ icon, label, count, testId, onClick }: MenuItemProps) {
       onClick={onClick}
       disabled={count === 0}
       data-testid={testId}
-      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent dark:text-gray-200 dark:hover:bg-gray-700"
+      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] text-fg-body transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
     >
-      <span className="text-teal-600 dark:text-teal-400">{icon}</span>
+      <span className="text-fg-label">{icon}</span>
       <span className="flex-1 truncate">{label}</span>
-      <span className="text-[11px] text-gray-500 dark:text-gray-400">
+      <span className="text-xs text-fg-hint tabular-nums">
         {t('history.exportVerseCount', { count })}
       </span>
     </button>

@@ -187,22 +187,24 @@ export function Combobox({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         data-testid={testId}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full h-9 flex items-center justify-between gap-2 px-3 bg-field rounded-[10px] text-left text-[13px] text-fg focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <span
-          className={`truncate min-w-0 ${selectedOption ? '' : 'text-gray-400 dark:text-gray-500'}`}
+          className={`truncate min-w-0 ${selectedOption ? '' : 'text-fg-hint'}`}
         >
           {selectedOption?.label || placeholder}
         </span>
         <div className="flex items-center gap-1 flex-shrink-0">
           {allowClear && selectedOption && (
             <X
-              className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              strokeWidth={1.5}
+              className="w-4 h-4 text-fg-hint hover:text-fg"
               onClick={handleClear}
             />
           )}
           <ChevronDown
-            className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            strokeWidth={1.5}
+            className={`w-4 h-4 text-fg-label transition-transform ${isOpen ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
@@ -212,7 +214,7 @@ export function Combobox({
           <div
             ref={dropdownRef}
             data-testid={testId ? `${testId}-dropdown` : undefined}
-            className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden"
+            className="fixed z-[9999] bg-panel border border-line rounded-[10px] shadow-popover overflow-hidden"
             style={{
               ...(dropdownPosition.openUpward
                 ? { bottom: dropdownPosition.bottom }
@@ -221,7 +223,7 @@ export function Combobox({
               width: dropdownPosition.width,
             }}
           >
-            <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-1.5 border-b border-line">
               <div className="relative">
                 <input
                   ref={inputRef}
@@ -230,7 +232,7 @@ export function Combobox({
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Search..."
-                  className={`w-full pl-2 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
+                  className={`w-full h-8 pl-2.5 bg-field rounded-lg text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
                     search ? 'pr-7' : 'pr-2'
                   }`}
                 />
@@ -239,27 +241,27 @@ export function Combobox({
                     inputRef={inputRef}
                     onClear={() => setSearch('')}
                     size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg"
                   />
                 )}
               </div>
             </div>
 
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto scrollbar-thin p-1">
               {showCreateOption && (
                 <button
                   type="button"
                   onClick={handleCreateNew}
                   disabled={isCreating}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-50"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-fg hover:bg-hover disabled:opacity-50"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
                   {createNewLabel} "{search}"
                 </button>
               )}
 
               {filteredOptions.length === 0 && !showCreateOption ? (
-                <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="px-2.5 py-1.5 text-[13px] text-fg-hint">
                   No options found
                 </div>
               ) : (
@@ -268,10 +270,10 @@ export function Combobox({
                     key={option.value}
                     data-testid={testId ? `${testId}-option` : undefined}
                     data-value={option.value}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 group ${
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[13px] text-left group ${
                       option.value === value
-                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-                        : 'text-gray-900 dark:text-white'
+                        ? 'bg-selected text-fg'
+                        : 'text-fg-body hover:bg-hover'
                     }`}
                   >
                     <button
@@ -283,23 +285,21 @@ export function Combobox({
                       {(option.description || option.details) && (
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           {option.description && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-fg-hint">
                               {option.description}
                             </span>
                           )}
                           {option.details?.map((detail, idx) => (
                             <span
                               key={idx}
-                              className={`text-xs px-1.5 py-0.5 rounded ${
+                              className={`text-xs ${
                                 detail.variant === 'success'
-                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  ? 'text-ok'
                                   : detail.variant === 'warning'
-                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    ? 'text-amber-600 dark:text-amber-400'
                                     : detail.variant === 'error'
-                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                      : detail.variant === 'info'
-                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                      ? 'text-red-600 dark:text-red-400'
+                                      : 'text-fg-hint'
                               }`}
                             >
                               {detail.label}
@@ -309,15 +309,17 @@ export function Combobox({
                       )}
                     </button>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      {option.value === value && <Check className="w-4 h-4" />}
+                      {option.value === value && (
+                        <Check strokeWidth={1.5} className="w-4 h-4" />
+                      )}
                       {allowDelete && onDelete && (
                         <button
                           type="button"
                           onClick={(e) => handleDelete(e, option.value)}
-                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-opacity"
+                          className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-hover text-fg-hint hover:text-red-600 dark:hover:text-red-400 transition-opacity"
                           title="Delete"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 strokeWidth={1.75} className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>

@@ -26,8 +26,8 @@ export function NotificationsBell({ onClick }: NotificationsBellProps) {
   const label = hasUnread ? t('notifications.unread') : t('notifications.title')
   const stateClasses =
     pathname === '/notifications'
-      ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
-      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+      ? 'bg-selected text-fg'
+      : 'text-fg-label hover:bg-hover hover:text-fg'
 
   return (
     <>
@@ -39,11 +39,11 @@ export function NotificationsBell({ onClick }: NotificationsBellProps) {
         onClick={onClick}
         className={`relative flex-shrink-0 self-center p-3 rounded-lg transition-colors ${stateClasses}`}
       >
-        <Bell size={20} />
+        <Bell size={16} strokeWidth={1.5} />
         {hasUnread && (
           <span
             data-testid="sidebar-notifications-dot"
-            className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900"
+            className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-panel"
           />
         )}
       </Link>

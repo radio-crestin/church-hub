@@ -83,24 +83,22 @@ export function UpdatePanel() {
   return (
     <div className="space-y-4" data-testid="update-panel">
       {/* Version + check */}
-      <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <div className="rounded-xl border border-line p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className="text-base font-bold text-gray-900 dark:text-white"
+                className="text-base font-semibold tabular-nums text-fg"
                 data-testid="update-current-version"
               >
                 v{updateInfo?.currentVersion ?? '—'}
               </span>
-              <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-medium text-white">
-                {tNotes('current')}
-              </span>
+              <span className="text-xs text-fg-hint">{tNotes('current')}</span>
               {hasUpdate && (
                 <>
-                  <span className="text-gray-400">→</span>
+                  <span className="text-fg-hint">→</span>
                   <span
-                    className="rounded-full bg-green-600 px-2 py-0.5 text-xs font-medium text-white"
+                    className="text-base font-semibold tabular-nums text-fg"
                     data-testid="update-new-version"
                   >
                     v{version}
@@ -108,7 +106,7 @@ export function UpdatePanel() {
                 </>
               )}
             </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-fg-hint">
               {hasUpdate
                 ? t('sections.updates.status.available', { version })
                 : t('sections.updates.status.upToDate', {
@@ -122,11 +120,12 @@ export function UpdatePanel() {
             onClick={checkNow}
             disabled={isLoading}
             data-testid="update-check-now"
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+            className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
           >
             {/* The spin is the whole feedback for this button — without it a
                 check that finds nothing looks like a dead click. */}
             <RefreshCw
+              strokeWidth={1.5}
               className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
             />
             {isLoading
@@ -139,7 +138,7 @@ export function UpdatePanel() {
       {/* What's new — the same card the release-notes history uses */}
       {hasUpdate && versionNotes && (
         <div data-testid="update-available">
-          <h4 className="mb-2 text-sm font-semibold text-gray-900 dark:text-white">
+          <h4 className="mb-2 text-[13px] font-semibold text-fg">
             {t('sections.updates.whatsNew', { version })}
           </h4>
 
@@ -150,7 +149,7 @@ export function UpdatePanel() {
           >
             {(isDownloading || isReady || isInstalling) && (
               <div className="mb-3">
-                <div className="mb-1 flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                <div className="mb-1 flex items-center justify-between text-xs text-fg-label">
                   <span>
                     {isInstalling
                       ? t('sections.updates.available.installing')
@@ -169,11 +168,11 @@ export function UpdatePanel() {
                   </span>
                 </div>
                 <div
-                  className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+                  className="h-1.5 overflow-hidden rounded-full bg-field"
                   data-testid="update-progress"
                 >
                   <div
-                    className="h-full rounded-full bg-green-600 transition-[width] duration-200 dark:bg-green-500"
+                    className="h-full rounded-full bg-primary transition-[width] duration-200"
                     style={{
                       width: `${isReady || isInstalling ? 100 : (progress ?? 0)}%`,
                     }}
@@ -186,9 +185,9 @@ export function UpdatePanel() {
               <div
                 role="alert"
                 data-testid="update-error"
-                className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900 dark:bg-red-900/20"
+                className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900 dark:bg-red-900/20"
               >
-                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                <p className="text-[13px] font-medium text-red-700 dark:text-red-300">
                   {t(
                     `sections.updates.available.errors.${errorCode ?? 'unknown'}`,
                   )}
@@ -206,12 +205,12 @@ export function UpdatePanel() {
                   onClick={() => void install()}
                   disabled={isInstalling}
                   data-testid="update-install"
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {isInstalling ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    <CheckCircle2 size={16} />
+                    <CheckCircle2 size={16} strokeWidth={1.5} />
                   )}
                   {t('sections.updates.available.install')}
                 </button>
@@ -219,7 +218,7 @@ export function UpdatePanel() {
                 /* A disabled button with only a tooltip left the operator with
                    no idea why nothing happened. Say it outright. */
                 <p
-                  className="text-sm text-amber-700 dark:text-amber-400"
+                  className="text-[13px] text-amber-700 dark:text-amber-400"
                   data-testid="update-unavailable"
                 >
                   {t('sections.updates.available.unavailable')}
@@ -230,12 +229,12 @@ export function UpdatePanel() {
                   onClick={() => void startDownload()}
                   disabled={isDownloading}
                   data-testid="update-download"
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {isDownloading ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    <Download size={16} />
+                    <Download size={16} strokeWidth={1.5} />
                   )}
                   {error
                     ? t('sections.updates.available.retry')
@@ -247,9 +246,9 @@ export function UpdatePanel() {
                 href={updateInfo?.releaseUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+                className="inline-flex items-center gap-1 text-xs text-focus hover:underline"
               >
-                <ExternalLink size={12} />
+                <ExternalLink size={12} strokeWidth={2} />
                 {t('sections.updates.available.openRelease')}
               </a>
             </div>
@@ -258,10 +257,7 @@ export function UpdatePanel() {
       )}
 
       {/* How it works — so the restart does not come as a surprise */}
-      <p
-        className="text-xs text-gray-500 dark:text-gray-400"
-        data-testid="update-how-it-works"
-      >
+      <p className="text-xs text-fg-hint" data-testid="update-how-it-works">
         {t('sections.updates.howItWorks')}
       </p>
     </div>

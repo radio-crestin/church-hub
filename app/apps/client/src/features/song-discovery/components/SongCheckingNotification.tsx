@@ -21,7 +21,7 @@ export function SongCheckingNotification() {
       testId="notification-songs-checking"
       icon={Loader2}
       isBusy
-      tone="indigo"
+      tone="neutral"
       title={t('notification.checkingTitle')}
       description={t('notification.checkingDescription')}
       actions={

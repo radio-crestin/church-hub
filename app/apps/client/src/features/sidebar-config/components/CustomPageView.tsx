@@ -87,7 +87,10 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2
+          strokeWidth={1.5}
+          className="w-8 h-8 animate-spin text-fg-hint"
+        />
       </div>
     )
   }
@@ -95,8 +98,8 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
   if (!page) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
-        <AlertCircle className="w-12 h-12 text-gray-400" />
-        <p className="text-gray-600 dark:text-gray-400">
+        <AlertCircle strokeWidth={1.5} className="w-12 h-12 text-fg-hint" />
+        <p className="text-fg-label">
           {t('sections.sidebar.pageNotFound', {
             defaultValue: 'Page not found',
           })}
@@ -130,13 +133,16 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
 
   return (
     <div className="-m-4 md:-m-6 h-[calc(100%+2rem)] md:h-[calc(100%+3rem)] flex flex-col">
-      <div className="flex-1 relative bg-white dark:bg-gray-900">
+      <div className="flex-1 relative bg-panel">
         {/* Loading overlay */}
         {isWebviewLoading && !webviewError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-800 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-field z-10">
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <Loader2
+                strokeWidth={1.5}
+                className="w-8 h-8 animate-spin text-fg-hint"
+              />
+              <p className="text-[13px] text-fg-hint">
                 {t('sections.sidebar.loadingPage', {
                   defaultValue: 'Loading page...',
                 })}
@@ -147,17 +153,15 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
 
         {/* Error state */}
         {webviewError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 gap-4 p-8">
-            <AlertCircle className="w-12 h-12 text-red-500" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-field gap-4 p-8">
+            <AlertCircle strokeWidth={1.5} className="w-12 h-12 text-red-500" />
             <div className="text-center max-w-md">
-              <p className="text-gray-900 dark:text-white font-medium mb-2">
+              <p className="text-fg font-medium mb-2">
                 {t('sections.sidebar.loadError', {
                   defaultValue: 'Failed to load page',
                 })}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {webviewError}
-              </p>
+              <p className="text-[13px] text-fg-label">{webviewError}</p>
             </div>
           </div>
         )}

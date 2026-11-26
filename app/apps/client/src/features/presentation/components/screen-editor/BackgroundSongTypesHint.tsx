@@ -27,7 +27,7 @@ export function BackgroundSongTypesHint({
   return (
     <p
       data-testid="background-song-types-hint"
-      className="text-xs text-gray-500 dark:text-gray-400"
+      className="text-xs text-fg-hint"
     >
       {t('screens.background.songTypesHint', {
         song: t('screens.contentTypes.song'),

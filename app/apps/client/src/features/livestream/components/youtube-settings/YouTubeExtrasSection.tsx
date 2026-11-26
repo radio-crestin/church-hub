@@ -39,7 +39,7 @@ export function YouTubeExtrasSection({
                 src={draft.thumbnailUrl}
                 alt={t('youtubeSettings.extras.thumbnail')}
                 data-testid="youtube-thumbnail"
-                className="aspect-video w-48 rounded-md border border-gray-200 object-cover dark:border-gray-700"
+                className="aspect-video w-48 rounded-lg border border-line object-cover"
               />
               <Button
                 variant="secondary"
@@ -50,7 +50,7 @@ export function YouTubeExtrasSection({
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-hint">
               {t('youtubeSettings.extras.thumbnailNone')}
             </p>
           )

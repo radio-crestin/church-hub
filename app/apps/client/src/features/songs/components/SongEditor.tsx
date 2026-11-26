@@ -372,7 +372,7 @@ export function SongEditor({
       render: () => (
         <div className="h-full">
           {showsLiveProgramItem ? (
-            <div className="h-full overflow-hidden rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+            <div className="h-full overflow-hidden rounded-lg border border-line bg-panel p-3">
               <ScheduleLiveItemPanel nav={scheduleNav} />
             </div>
           ) : (
@@ -406,7 +406,7 @@ export function SongEditor({
           width. */}
       <div
         data-testid="song-editor-sticky-header"
-        className="sticky top-0 z-20 -mx-3 -mt-2 shrink-0 bg-gray-50 px-3 pb-2 pt-2 sm:-mx-4 sm:px-4 md:-mx-6 md:-mt-3 md:px-6 md:pt-3 lg:static lg:m-0 lg:p-0 dark:bg-gray-950"
+        className="sticky top-0 z-20 -mx-3 -mt-2 shrink-0 bg-app px-3 pb-2 pt-2 sm:-mx-4 sm:px-4 md:-mx-6 md:-mt-3 md:px-6 md:pt-3 lg:static lg:m-0 lg:p-0"
       >
         <div
           data-testid="song-editor-header"
@@ -417,19 +417,16 @@ export function SongEditor({
               type="button"
               onClick={onBack}
               data-testid="song-editor-back"
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
+              className="p-2 rounded-lg hover:bg-hover shrink-0"
             >
-              <ArrowLeft
-                size={20}
-                className="text-gray-600 dark:text-gray-400"
-              />
+              <ArrowLeft size={20} className="text-fg-label" />
             </button>
             <h1
               data-testid="song-editor-title"
-              className="text-2xl font-bold text-gray-900 dark:text-white truncate"
+              className="text-2xl font-bold text-fg truncate"
             >
               {isLoading ? (
-                <span className="inline-block w-48 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <span className="inline-block w-48 h-8 bg-field rounded animate-pulse" />
               ) : isNew ? (
                 t('actions.create')
               ) : (
@@ -447,7 +444,7 @@ export function SongEditor({
                   type="button"
                   onClick={handleAddToScheduleClick}
                   disabled={isLoading}
-                  className="px-2 py-2 @3xl:px-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+                  className="h-8 px-2 @3xl:px-3 text-[13px] font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                   title={t('songs:actions.addToSchedule')}
                 >
                   <CalendarPlus size={20} />
@@ -459,7 +456,7 @@ export function SongEditor({
                   type="button"
                   onClick={handlePresentNow}
                   disabled={isLoading || presentTemporarySong.isPending}
-                  className="px-2 py-2 @3xl:px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+                  className="h-8 px-2 @3xl:px-3 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
                   title={t('queue:actions.presentNow')}
                 >
                   <Play size={20} />
@@ -489,7 +486,7 @@ export function SongEditor({
               onClick={() => onSave()}
               data-testid="song-editor-save"
               disabled={isSaving || isLoading || !title.trim() || !isDirty}
-              className="px-2 py-2 @3xl:px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+              className="h-8 px-2 @3xl:px-3 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
               title={t('songs:actions.save')}
             >
               {isSaving ? (
@@ -535,7 +532,7 @@ export function SongEditor({
       {/* Unsaved Changes Confirmation Modal */}
       <dialog
         ref={unsavedChangesDialogRef}
-        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl shadow-popover backdrop:bg-black/50"
         onClick={(e) => {
           if (
             e.target === unsavedChangesDialogRef.current &&
@@ -546,8 +543,8 @@ export function SongEditor({
       >
         <div className="flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="flex items-center justify-between p-4 border-b border-line">
+            <h2 className="text-base font-semibold text-fg">
               {isSavingBeforeAction
                 ? t('songs:actions.save')
                 : t('songs:modal.unsavedChangesTitle')}
@@ -556,9 +553,9 @@ export function SongEditor({
               <button
                 type="button"
                 onClick={handleCancelAction}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1 rounded hover:bg-hover"
               >
-                <X size={20} className="text-gray-500" />
+                <X size={20} className="text-fg-hint" />
               </button>
             )}
           </div>
@@ -567,13 +564,13 @@ export function SongEditor({
           <div className="p-4">
             {isSavingBeforeAction ? (
               <div className="flex flex-col items-center justify-center py-4 gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Loader2 className="w-8 h-8 animate-spin text-fg-hint" />
+                <p className="text-sm text-fg-hint">
                   {t('songs:messages.saving')}
                 </p>
               </div>
             ) : (
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-fg-label">
                 {t('songs:modal.unsavedBeforeActionMessage')}
               </p>
             )}
@@ -581,25 +578,25 @@ export function SongEditor({
 
           {/* Footer */}
           {!isSavingBeforeAction && (
-            <div className="flex flex-col gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col gap-2 p-4 border-t border-line">
               <button
                 type="button"
                 onClick={handleSaveAndContinue}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                className="w-full h-9 px-3.5 text-[13px] font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
               >
                 {t('songs:modal.saveAndContinue')}
               </button>
               <button
                 type="button"
                 onClick={handleContinueWithoutSaving}
-                className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                className="w-full px-4 py-2 text-sm font-medium text-fg-body bg-field hover:bg-hover rounded-lg transition-colors"
               >
                 {t('songs:modal.continueWithoutSaving')}
               </button>
               <button
                 type="button"
                 onClick={handleCancelAction}
-                className="w-full px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-full px-4 py-2 text-sm font-medium text-fg-hint hover:text-fg transition-colors"
               >
                 {t('songs:modal.cancel')}
               </button>

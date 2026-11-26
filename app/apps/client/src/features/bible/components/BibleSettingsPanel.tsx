@@ -10,8 +10,7 @@ import { BibleTranslationsManager } from './BibleTranslationsManager'
 import { ReadingSpeedSettings } from './ReadingSpeedSettings'
 import { useImportTranslation } from '../hooks'
 
-const cardClass =
-  'rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-800 dark:bg-gray-900'
+const cardClass = 'rounded-xl border border-line bg-panel p-4 sm:p-6'
 
 /**
  * Bible settings, rendered as a settings-page panel (extracted from the former
@@ -74,12 +73,12 @@ export function BibleSettingsPanel() {
                 type="button"
                 onClick={handleImportClick}
                 disabled={isImporting}
-                className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                className="flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-line-strong"
               >
                 {isImporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
                 ) : (
-                  <FileUp className="h-4 w-4" />
+                  <FileUp className="h-4 w-4" strokeWidth={1.5} />
                 )}
                 {t('settings.import.button')}
               </button>
@@ -94,23 +93,26 @@ export function BibleSettingsPanel() {
           />
 
           {/* Format instructions */}
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="rounded-lg border border-line-strong bg-selected p-4">
             <div className="flex items-start gap-3">
-              <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-              <div className="text-sm">
-                <p className="mb-2 font-medium text-blue-900 dark:text-blue-100">
+              <Info
+                className="mt-0.5 h-5 w-5 flex-shrink-0 text-fg"
+                strokeWidth={1.5}
+              />
+              <div className="text-[13px]">
+                <p className="mb-2 font-medium text-fg">
                   {t('settings.import.formatTitle')}
                 </p>
-                <p className="mb-2 text-blue-800 dark:text-blue-200">
+                <p className="mb-2 text-fg">
                   {t('settings.import.formatSimple')}
                 </p>
-                <p className="text-blue-800 dark:text-blue-200">
+                <p className="text-fg">
                   {t('settings.import.formatExamples')}{' '}
                   <a
                     href="https://github.com/radio-crestin/open-bibles"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline hover:text-blue-900 dark:hover:text-blue-100"
+                    className="underline hover:text-fg"
                   >
                     github.com/radio-crestin/open-bibles
                   </a>

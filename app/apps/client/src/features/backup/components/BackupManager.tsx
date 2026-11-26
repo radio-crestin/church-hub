@@ -197,7 +197,7 @@ export function BackupManager() {
           isLoading
         />
         <div
-          className="h-[74px] animate-pulse rounded-lg bg-gray-50 dark:bg-gray-800"
+          className="h-[74px] rounded-xl bg-field"
           data-testid="backup-drive-loading"
         />
       </div>
@@ -223,36 +223,33 @@ export function BackupManager() {
           isLoading={false}
         />
         <div
-          className={`rounded-lg p-4 ${
+          className={`rounded-xl p-4 ${
             sessionExpired
               ? 'border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
-              : 'bg-gray-50 dark:bg-gray-800'
+              : 'border border-line'
           }`}
         >
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div
-                className={`rounded-lg p-2 ${
-                  sessionExpired
-                    ? 'bg-amber-100 dark:bg-amber-900/30'
-                    : 'bg-indigo-100 dark:bg-indigo-900/30'
-                }`}
-              >
+              <div className="shrink-0">
                 {sessionExpired ? (
-                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <AlertTriangle
+                    strokeWidth={1.5}
+                    className="h-5 w-5 text-amber-600 dark:text-amber-400"
+                  />
                 ) : (
-                  <Cloud className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  <Cloud strokeWidth={1.5} className="h-5 w-5 text-fg-label" />
                 )}
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                <h4 className="text-[13px] font-medium text-fg">
                   {t(
                     sessionExpired
                       ? 'sections.backup.expired.title'
                       : 'sections.backup.connect.title',
                   )}
                 </h4>
-                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-0.5 text-xs text-fg-hint">
                   {t(
                     sessionExpired
                       ? 'sections.backup.expired.description'
@@ -266,10 +263,10 @@ export function BackupManager() {
                 type="button"
                 onClick={() => backup.connect()}
                 disabled={backup.isAuthenticating}
-                className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
+                className={`inline-flex h-8 items-center justify-center gap-2 rounded-lg px-3 text-[13px] font-medium text-white disabled:opacity-50 ${
                   sessionExpired
                     ? 'bg-amber-600 hover:bg-amber-700'
-                    : 'bg-indigo-600 hover:bg-indigo-700'
+                    : 'bg-primary hover:bg-indigo-700'
                 }`}
               >
                 {backup.isAuthenticating && (
@@ -284,10 +281,10 @@ export function BackupManager() {
               <button
                 type="button"
                 onClick={handleShowLink}
-                className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1 text-xs text-fg-label hover:text-fg"
                 title={t('sections.backup.copyLinkHint')}
               >
-                <Copy className="h-3.5 w-3.5" />
+                <Copy strokeWidth={1.75} className="h-3.5 w-3.5" />
                 {t('sections.backup.copyLink')}
               </button>
             </div>
@@ -299,18 +296,18 @@ export function BackupManager() {
                   readOnly
                   value={connectUrl}
                   onFocus={(e) => e.currentTarget.select()}
-                  className="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 font-mono text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300"
+                  className="h-8 w-full rounded-[10px] bg-field px-2.5 font-mono text-xs text-fg-body focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 <button
                   type="button"
                   onClick={handleCopyShownUrl}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-field px-2.5 text-xs font-medium text-fg hover:bg-hover"
                 >
-                  <Copy className="h-3.5 w-3.5" />
+                  <Copy strokeWidth={1.75} className="h-3.5 w-3.5" />
                   {t('sections.backup.copyLink')}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-fg-hint">
                 {t('sections.backup.copyLinkHint')}
               </p>
             </div>
@@ -329,23 +326,21 @@ export function BackupManager() {
       />
 
       {/* Connection status row */}
-      <div className="flex flex-col items-start gap-3 rounded-lg bg-gray-50 p-4 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col items-start gap-3 rounded-xl border border-line p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-            <Cloud className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <div className="shrink-0">
+            <Cloud strokeWidth={1.5} className="h-5 w-5 text-ok" />
           </div>
           <div>
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+            <h4 className="text-[13px] font-medium text-fg">
               {t('sections.backup.status.connected')}
             </h4>
             {backup.email && (
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                {backup.email}
-              </p>
+              <p className="mt-0.5 text-xs text-fg-hint">{backup.email}</p>
             )}
             {backup.storage && backup.storage.limitBytes !== null && (
-              <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                <HardDrive className="h-3.5 w-3.5" />
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-fg-hint">
+                <HardDrive strokeWidth={1.75} className="h-3.5 w-3.5" />
                 {t('sections.backup.storage.summary', {
                   used: formatBytes(backup.storage.usageBytes),
                   total: formatBytes(backup.storage.limitBytes),
@@ -359,19 +354,22 @@ export function BackupManager() {
           type="button"
           onClick={() => backup.disconnect()}
           disabled={backup.isDisconnecting}
-          className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-[13px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut strokeWidth={1.5} className="h-4 w-4" />
           {t('sections.backup.status.disconnect')}
         </button>
       </div>
 
       {/* Reconnect banner when the Drive scope is missing */}
       {backup.requiresReconnect && (
-        <div className="flex flex-col items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm text-amber-800 dark:text-amber-300">
+            <AlertTriangle
+              strokeWidth={1.5}
+              className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400"
+            />
+            <p className="text-[13px] text-amber-800 dark:text-amber-300">
               {t('sections.backup.reconnect.message')}
             </p>
           </div>
@@ -379,7 +377,7 @@ export function BackupManager() {
             type="button"
             onClick={() => backup.connect()}
             disabled={backup.isAuthenticating}
-            className="inline-flex items-center gap-2 rounded-md bg-amber-600 px-3 py-1.5 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-2 rounded-lg bg-amber-600 px-3 text-[13px] font-medium text-white hover:bg-amber-700 disabled:opacity-50"
           >
             {backup.isAuthenticating && (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -391,13 +389,16 @@ export function BackupManager() {
 
       {/* Insufficient Drive space: warn before a backup would fail */}
       {backup.driveReady && backup.storage?.insufficientSpace && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <AlertTriangle
+            strokeWidth={1.5}
+            className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400"
+          />
           <div>
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+            <p className="text-[13px] font-medium text-red-800 dark:text-red-300">
               {t('sections.backup.storage.warningTitle')}
             </p>
-            <p className="mt-0.5 text-sm text-red-700 dark:text-red-400">
+            <p className="mt-0.5 text-[13px] text-red-700 dark:text-red-400">
               {t('sections.backup.storage.warningMessage', {
                 free: formatBytes(backup.storage.availableBytes ?? 0),
                 needed: formatBytes(backup.storage.dbSizeBytes),
@@ -412,16 +413,19 @@ export function BackupManager() {
           {/* Backup now + auto-backup */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* Manual backup */}
-            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+            <div className="rounded-xl border border-line p-4">
               <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-indigo-100 p-2 dark:bg-indigo-900/30">
-                  <CloudUpload className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <div className="shrink-0">
+                  <CloudUpload
+                    strokeWidth={1.5}
+                    className="h-5 w-5 text-fg-label"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="text-[13px] font-medium text-fg">
                     {t('sections.backup.now.title')}
                   </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-0.5 text-xs text-fg-hint">
                     {t('sections.backup.now.lastBackup')}:{' '}
                     {formatDate(backup.lastBackupAt ?? 0)}
                   </p>
@@ -429,12 +433,12 @@ export function BackupManager() {
                     type="button"
                     onClick={handleBackupNow}
                     disabled={backup.isBackingUp}
-                    className="mt-3 inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                    className="mt-3 inline-flex h-8 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {backup.isBackingUp ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <CloudUpload className="h-4 w-4" />
+                      <CloudUpload strokeWidth={1.5} className="h-4 w-4" />
                     )}
                     {backup.isBackingUp
                       ? t('sections.backup.now.backingUp')
@@ -445,13 +449,13 @@ export function BackupManager() {
             </div>
 
             {/* Auto-backup */}
-            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+            <div className="rounded-xl border border-line p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <h4 className="text-[13px] font-medium text-fg">
                     {t('sections.backup.auto.title')}
                   </h4>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-0.5 text-xs text-fg-hint">
                     {t('sections.backup.auto.description')}
                   </p>
                 </div>
@@ -459,14 +463,12 @@ export function BackupManager() {
                   type="button"
                   onClick={handleToggleAuto}
                   disabled={backup.isUpdatingConfig}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-                    backup.autoBackupEnabled
-                      ? 'bg-indigo-600'
-                      : 'bg-gray-200 dark:bg-gray-700'
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+                    backup.autoBackupEnabled ? 'bg-primary' : 'bg-line-strong'
                   } ${backup.isUpdatingConfig ? 'cursor-not-allowed opacity-50' : ''}`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-panel shadow ring-0 transition duration-200 ease-in-out ${
                       backup.autoBackupEnabled
                         ? 'translate-x-5'
                         : 'translate-x-0'
@@ -476,10 +478,10 @@ export function BackupManager() {
               </div>
               {backup.autoBackupEnabled && (
                 <div className="mt-3">
-                  <p className="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <p className="mb-1.5 text-xs font-medium text-fg-label">
                     {t('sections.backup.auto.interval')}
                   </p>
-                  <div className="inline-flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-900">
+                  <div className="inline-flex flex-wrap gap-1 rounded-lg bg-field p-1">
                     {INTERVAL_OPTIONS.map((h) => {
                       const selected = backup.intervalHours === h
                       return (
@@ -489,10 +491,10 @@ export function BackupManager() {
                           onClick={() => handleIntervalChange(h)}
                           disabled={backup.isUpdatingConfig}
                           aria-pressed={selected}
-                          className={`min-w-[3rem] rounded-md px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                          className={`min-w-[3rem] rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                             selected
-                              ? 'bg-indigo-600 text-white shadow-sm'
-                              : 'text-gray-600 hover:bg-white hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+                              ? 'bg-selected text-fg'
+                              : 'text-fg-label hover:bg-hover hover:text-fg'
                           }`}
                         >
                           {intervalLabel(h)}
@@ -500,7 +502,7 @@ export function BackupManager() {
                       )
                     })}
                   </div>
-                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1.5 text-xs text-fg-hint">
                     {t('sections.backup.auto.everyHours', {
                       hours: backup.intervalHours,
                     })}
@@ -509,13 +511,13 @@ export function BackupManager() {
               )}
 
               {/* Retention: applies to manual and automatic backups alike */}
-              <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+              <div className="mt-3 border-t border-line pt-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <p className="text-xs font-medium text-fg-label">
                       {t('sections.backup.retention.title')}
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-0.5 text-xs text-fg-hint">
                       {t('sections.backup.retention.description', {
                         total: backup.maxBackups,
                       })}
@@ -533,7 +535,7 @@ export function BackupManager() {
                     }
                     disabled={backup.isUpdatingConfig}
                     aria-label={t('sections.backup.retention.title')}
-                    className="w-16 shrink-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-center text-sm text-gray-900 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                    className="h-8 w-16 shrink-0 rounded-[10px] bg-field px-2 text-center text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -541,9 +543,9 @@ export function BackupManager() {
           </div>
 
           {/* Backup list */}
-          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+          <div className="rounded-xl border border-line p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+              <h4 className="text-[13px] font-medium text-fg">
                 {t('sections.backup.list.title')}
               </h4>
               <button
@@ -555,9 +557,10 @@ export function BackupManager() {
                   backup.isBackingUp
                 }
                 title={t('sections.backup.list.refresh')}
-                className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-50"
               >
                 <RefreshCw
+                  strokeWidth={1.5}
                   className={`h-4 w-4 ${
                     backup.isFetchingBackups ||
                     backup.isAwaitingBackup ||
@@ -569,30 +572,30 @@ export function BackupManager() {
               </button>
             </div>
             {backup.backupsError ? (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-[13px] text-red-600 dark:text-red-400">
                 {backup.backupsError}
               </p>
             ) : backup.isLoadingBackups ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-2 text-[13px] text-fg-hint">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t('sections.backup.list.loading')}
               </div>
             ) : backup.backups.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-[13px] text-fg-hint">
                 {t('sections.backup.list.empty')}
               </p>
             ) : (
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              <ul className="divide-y divide-line">
                 {backup.backups.map((file) => (
                   <li
                     key={file.id}
                     className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm text-gray-900 dark:text-white">
+                      <p className="truncate text-[13px] text-fg">
                         {formatDate(file.createdAtMs)}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-fg-hint">
                         {formatBytes(file.sizeBytes)}
                         {file.appVersion ? ` · v${file.appVersion}` : ''}
                       </p>
@@ -602,17 +605,17 @@ export function BackupManager() {
                         type="button"
                         onClick={() => setInspecting(file)}
                         title={t('sections.backup.list.inspect')}
-                        className="inline-flex items-center justify-center rounded-md border border-gray-300 p-1.5 text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye strokeWidth={1.5} className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setPendingRestore(file)}
                         disabled={backup.isRestoring}
-                        className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                        className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
                       >
-                        <CloudDownload className="h-4 w-4" />
+                        <CloudDownload strokeWidth={1.5} className="h-4 w-4" />
                         {t('sections.backup.list.restore')}
                       </button>
                       <button
@@ -620,9 +623,9 @@ export function BackupManager() {
                         onClick={() => setPendingDelete(file)}
                         disabled={backup.isDeleting}
                         title={t('sections.backup.list.delete')}
-                        className="inline-flex items-center justify-center rounded-md border border-red-300 p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-red-600 disabled:opacity-50 dark:hover:text-red-400"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 strokeWidth={1.5} className="h-4 w-4" />
                       </button>
                     </div>
                   </li>
@@ -655,31 +658,32 @@ export function BackupManager() {
               setPendingRestore(null)
             }
           />
-          <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+          <div className="relative mx-4 w-full max-w-md rounded-xl border border-line bg-panel shadow-popover p-6">
             {backup.isRestoring && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/80 dark:bg-gray-800/80">
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-panel/80">
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Loader2 className="h-8 w-8 animate-spin text-fg-hint" />
+                  <span className="text-sm font-medium text-fg-body">
                     {t('sections.backup.restoreModal.restoring')}
                   </span>
                 </div>
               </div>
             )}
             <div className="flex items-start gap-4">
-              <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/30">
-                <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-              </div>
+              <AlertTriangle
+                strokeWidth={1.5}
+                className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
+              />
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base font-semibold text-fg">
                   {t('sections.backup.restoreModal.title')}
                 </h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-[13px] text-fg-label">
                   {t('sections.backup.restoreModal.message', {
                     date: formatDate(pendingRestore.createdAtMs),
                   })}
                 </p>
-                <p className="mt-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+                <p className="mt-2 text-[13px] font-medium text-amber-700 dark:text-amber-400">
                   {t('sections.backup.restoreModal.warning')}
                 </p>
               </div>
@@ -689,7 +693,7 @@ export function BackupManager() {
                 type="button"
                 onClick={() => setPendingRestore(null)}
                 disabled={backup.isRestoring}
-                className="rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="h-9 rounded-lg bg-field px-3.5 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 {t('sections.backup.restoreModal.cancel')}
               </button>
@@ -697,7 +701,7 @@ export function BackupManager() {
                 type="button"
                 onClick={handleRestoreConfirm}
                 disabled={backup.isRestoring}
-                className="flex items-center gap-2 rounded-md bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700 disabled:opacity-50"
+                className="flex h-9 items-center gap-2 rounded-lg bg-amber-600 px-3.5 text-[13px] font-medium text-white hover:bg-amber-700 disabled:opacity-50"
               >
                 {backup.isRestoring && (
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -721,16 +725,17 @@ export function BackupManager() {
               e.key === 'Escape' && !backup.isDeleting && setPendingDelete(null)
             }
           />
-          <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+          <div className="relative mx-4 w-full max-w-md rounded-xl border border-line bg-panel shadow-popover p-6">
             <div className="flex items-start gap-4">
-              <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30">
-                <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
-              </div>
+              <Trash2
+                strokeWidth={1.5}
+                className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
+              />
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base font-semibold text-fg">
                   {t('sections.backup.deleteModal.title')}
                 </h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-[13px] text-fg-label">
                   {t('sections.backup.deleteModal.message', {
                     date: formatDate(pendingDelete.createdAtMs),
                   })}
@@ -742,7 +747,7 @@ export function BackupManager() {
                 type="button"
                 onClick={() => setPendingDelete(null)}
                 disabled={backup.isDeleting}
-                className="rounded-md px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="h-9 rounded-lg bg-field px-3.5 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 {t('sections.backup.deleteModal.cancel')}
               </button>
@@ -750,7 +755,7 @@ export function BackupManager() {
                 type="button"
                 onClick={handleDeleteConfirm}
                 disabled={backup.isDeleting}
-                className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+                className="flex h-9 items-center gap-2 rounded-lg bg-red-600 px-3.5 text-[13px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {backup.isDeleting && (
                   <RefreshCw className="h-4 w-4 animate-spin" />

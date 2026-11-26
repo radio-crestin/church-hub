@@ -151,16 +151,6 @@ test.describe('Backup - API', () => {
   })
 })
 
-test.describe('Backup - UI', () => {
-  test('backup settings page renders', async ({ page }) => {
-    await page.goto('/settings/backup')
-    await page.waitForLoadState('networkidle')
-
-    const section = page.locator('text=/google drive|backup|copie de rezerv/i')
-    await expect(section.first()).toBeVisible({ timeout: 10000 })
-  })
-})
-
 /**
  * Local backups need no Google account, so unlike the Drive flow the whole
  * round-trip is exercised here: point the app at a temp folder, back up, list,

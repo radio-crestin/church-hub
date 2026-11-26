@@ -59,14 +59,14 @@ export function SourcePickerDialog({
     <dialog
       ref={dialogRef}
       aria-labelledby="screen-share-picker-title"
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 w-[min(56rem,calc(100vw-1rem))] max-h-[calc(100vh-2rem)]"
+      className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel w-[min(56rem,calc(100vw-1rem))] max-h-[calc(100vh-2rem)]"
       onClose={onClose}
     >
       <div className="flex flex-col max-h-[calc(100vh-2rem)]">
-        <div className="flex items-center justify-between gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-2 p-4 border-b border-line">
           <h2
             id="screen-share-picker-title"
-            className="text-lg font-semibold text-gray-900 dark:text-white"
+            className="text-base font-semibold text-fg"
           >
             {t('presentation:controlRoom.screenShare.picker.title')}
           </h2>
@@ -76,7 +76,7 @@ export function SourcePickerDialog({
             disabled={sources === null}
             className="gap-2"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw size={16} strokeWidth={1.5} />
             <span className="hidden sm:inline">
               {t('presentation:controlRoom.screenShare.picker.refresh')}
             </span>
@@ -85,12 +85,12 @@ export function SourcePickerDialog({
 
         <div className="overflow-y-auto p-4 flex flex-col gap-6">
           {sources === null ? (
-            <div className="flex items-center justify-center gap-2 py-12 text-gray-500 dark:text-gray-400">
-              <Loader2 className="w-5 h-5 animate-spin" />
+            <div className="flex items-center justify-center gap-2 py-12 text-fg-hint">
+              <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
               {t('presentation:controlRoom.screenShare.picker.loading')}
             </div>
           ) : sources.length === 0 ? (
-            <p className="py-12 text-center text-gray-500 dark:text-gray-400">
+            <p className="py-12 text-center text-fg-hint">
               {t(
                 failed
                   ? 'presentation:controlRoom.screenShare.picker.error'
@@ -120,7 +120,7 @@ export function SourcePickerDialog({
           )}
         </div>
 
-        <div className="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end p-4 border-t border-line">
           <Button variant="secondary" onClick={onClose}>
             {t('common:buttons.cancel')}
           </Button>
@@ -143,9 +143,7 @@ function SourceGroup({
   if (sources.length === 0) return null
   return (
     <section>
-      <h3 className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-        {title}
-      </h3>
+      <h3 className="mb-2 text-[13px] font-medium text-fg-label">{title}</h3>
       <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {sources.map((source) => (
           <li key={source.id}>
@@ -153,7 +151,7 @@ function SourceGroup({
               type="button"
               onClick={() => onPick(source.id)}
               data-source-id={source.id}
-              className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 focus-visible:outline-2 focus-visible:outline-indigo-500 overflow-hidden bg-gray-50 dark:bg-gray-900"
+              className="w-full text-left rounded-lg border border-line hover:border-line-strong focus-visible:outline-2 focus-visible:outline-focus overflow-hidden bg-field"
             >
               <div className="aspect-video bg-black flex items-center justify-center">
                 {source.thumbnail ? (
@@ -163,22 +161,30 @@ function SourceGroup({
                     className="w-full h-full object-contain"
                   />
                 ) : (
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-white/60">
                     {t('controlRoom.screenShare.picker.noPreview')}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2 p-2 min-w-0">
                 {source.kind === 'monitor' ? (
-                  <Monitor className="w-4 h-4 shrink-0 text-gray-500" />
+                  <Monitor
+                    size={16}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-fg-label"
+                  />
                 ) : (
-                  <AppWindow className="w-4 h-4 shrink-0 text-gray-500" />
+                  <AppWindow
+                    size={16}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-fg-label"
+                  />
                 )}
                 <div className="min-w-0">
-                  <div className="truncate text-sm text-gray-900 dark:text-white">
+                  <div className="truncate text-[13px] font-medium text-fg">
                     {source.name}
                   </div>
-                  <div className="truncate text-xs text-gray-500 dark:text-gray-400">
+                  <div className="truncate text-xs text-fg-hint">
                     {source.appName ?? `${source.width}×${source.height}`}
                   </div>
                 </div>

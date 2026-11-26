@@ -32,7 +32,7 @@ export function PlayerControls({
         disabled={!canPlayPrevious}
         title={t('player.previous')}
       >
-        <SkipBack className="h-4 w-4" />
+        <SkipBack className="h-4 w-4" strokeWidth={1.5} />
       </Button>
 
       <Button
@@ -56,7 +56,7 @@ export function PlayerControls({
         disabled={!canPlayNext}
         title={t('player.next')}
       >
-        <SkipForward className="h-4 w-4" />
+        <SkipForward className="h-4 w-4" strokeWidth={1.5} />
       </Button>
     </div>
   )
