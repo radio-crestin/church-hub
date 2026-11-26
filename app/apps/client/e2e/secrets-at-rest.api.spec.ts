@@ -341,9 +341,11 @@ test('the settings API masks saved keys; the mask keeps them, empty clears', asy
   ).toBe(SECRETS.aiKey)
 
   // A new key is sealed; an empty one clears it.
-  expect((await save({ ...read(), apiKey: 'church-new-ai-key-not-from-the-repo' })).ok()).toBe(
-    true,
-  )
+  expect(
+    (
+      await save({ ...read(), apiKey: 'church-new-ai-key-not-from-the-repo' })
+    ).ok(),
+  ).toBe(true)
   expect(plainSecretsIn(computerA.dataDir)).toEqual([])
   expect(
     openSealed(
@@ -478,4 +480,92 @@ test('a backup restored on another computer asks to set its features up again', 
   expect(
     (await json(apiB.get('/api/secret-store'))).data.resetFeatures,
   ).toEqual([])
+})
+
+test('a saved key is never sent to a new address without entering it again', async () => {
+  const aiConfig = (overrides: Record<string, unknown>) =>
+    apiA.post('/api/settings/app_settings', {
+      data: {
+        key: 'bible_ai_search_config',
+        value: JSON.stringify({
+          enabled: true,
+          provider: 'custom',
+          model: 'e2e-model',
+          baseUrl: 'https://ai.church.example/v1',
+          apiKey: MASK,
+          ...overrides,
+        }),
+      },
+    })
+  const storedAiKey = () =>
+    openSealed(
+      computerA.databasePath,
+      JSON.parse(
+        storedValue(
+          computerA.databasePath,
+          "SELECT value FROM app_settings WHERE key = 'bible_ai_search_config'",
+        ),
+      ).apiKey,
+      'app_settings.value:bible_ai_search_config.apiKey',
+    )
+
+  expect((await aiConfig({ apiKey: SECRETS.aiKey })).ok()).toBe(true)
+  // The mask with the same address keeps the key.
+  expect((await aiConfig({ model: 'e2e-model-2' })).ok()).toBe(true)
+  expect(storedAiKey()).toBe(SECRETS.aiKey)
+  // The mask with a new base URL or provider is refused.
+  for (const change of [
+    { baseUrl: 'https://keys.attacker.example/v1' },
+    { provider: 'openai' },
+  ]) {
+    const refused = await aiConfig(change)
+    expect(refused.status()).toBe(400)
+    expect((await refused.json()).error).toMatch(/re-enter the key/i)
+    expect(storedAiKey()).toBe(SECRETS.aiKey)
+  }
+  // A key entered with the new address is taken.
+  expect(
+    (
+      await aiConfig({
+        baseUrl: 'https://ai2.church.example/v1',
+        apiKey: 'church-ai-key-for-the-new-address',
+      })
+    ).ok(),
+  ).toBe(true)
+  expect(storedAiKey()).toBe('church-ai-key-for-the-new-address')
+
+  // S3: a blank secret keeps the saved one only for the same endpoint.
+  const storage = (await json(apiA.get('/api/song-sources/storage'))).data
+  const putStorage = (input: Record<string, unknown>) =>
+    apiA.put('/api/song-sources/storage', { data: { ...storage, ...input } })
+  expect((await putStorage({ secretAccessKey: '' })).ok()).toBe(true)
+  const movedBucket = await putStorage({
+    endpoint: 'https://s3.attacker.example',
+    secretAccessKey: '',
+  })
+  expect(movedBucket.status()).toBe(400)
+  expect((await movedBucket.json()).error).toMatch(/re-enter the key/i)
+  expect(
+    (
+      await putStorage({
+        endpoint: 'https://s3.church.example',
+        secretAccessKey: 'church-s3-secret-for-the-new-endpoint',
+      })
+    ).ok(),
+  ).toBe(true)
+
+  // OBS: a new host keeps no saved password.
+  const obs = (await json(apiA.get('/api/livestream/obs/config'))).data
+  const movedObs = await apiA.put('/api/livestream/obs/config', {
+    data: { host: 'obs.attacker.example', port: obs.port },
+  })
+  expect(movedObs.status()).toBe(400)
+  expect(
+    (
+      await apiA.put('/api/livestream/obs/config', {
+        data: { host: 'obs.church.example', password: 'church-obs-password-2' },
+      })
+    ).ok(),
+  ).toBe(true)
+  expect(plainSecretsIn(computerA.dataDir)).toEqual([])
 })

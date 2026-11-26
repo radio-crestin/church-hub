@@ -7,9 +7,10 @@ const at = (table: string, column: string, row?: string): SecretPlace => ({
 })
 
 /**
- * The places of the secrets kept in their own columns. Each feature's store
- * seals and opens its values here; stored-secrets/secretColumns lists the
- * same columns for sealStoredSecrets.
+ * The places of the secrets kept in their own columns, and for those a user
+ * can point elsewhere, their destination fields. Each feature's store seals
+ * and opens its values here; stored-secrets/secretColumns lists the same
+ * columns for sealStoredSecrets.
  */
 export const secretPlaces = {
   serverSecret: (key: string) => at('server_secrets', 'value', key),
@@ -20,8 +21,14 @@ export const secretPlaces = {
   cloudServerToken: at('cloud_sync', 'server_token'),
   /** The church's unlisted read path: its secret part opens the library. */
   cloudReadUrl: at('cloud_sync', 'read_url'),
-  obsPassword: at('obs_config', 'password'),
-  s3SecretAccessKey: at('song_source_storage', 'secret_access_key'),
+  obsPassword: {
+    ...at('obs_config', 'password'),
+    destination: ['host', 'port'],
+  },
+  s3SecretAccessKey: {
+    ...at('song_source_storage', 'secret_access_key'),
+    destination: ['endpoint'],
+  },
   /** A user's token, tied to its row by the token's hash. */
   userToken: (tokenHash: string) => at('users', 'token', tokenHash),
   systemToken: (name: string) => at('app_sessions', 'session_token', name),

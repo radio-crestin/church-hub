@@ -8,6 +8,7 @@ import { toErrorMessage } from '../../utils/toErrorMessage'
 import {
   maskSettingValue,
   openSettingValue,
+  SecretDestinationChangedError,
   sealSettingValue,
 } from '../secret-store'
 import type { OperationResult } from '../users'
@@ -41,7 +42,8 @@ function readStoredValue(table: SettingsTable, key: string): string | null {
  * Upserts a setting in the specified table
  * Creates a new record if key doesn't exist, updates if it does. Secret
  * fields (secret-store/secretSettingFields) are sealed; one sent back as the
- * mask keeps the secret saved before.
+ * mask keeps the secret saved before, unless the save changes where it is
+ * sent: then it throws SecretDestinationChangedError.
  */
 export function upsertSetting(
   table: SettingsTable,
@@ -78,6 +80,8 @@ export function upsertSetting(
     log('info', `Setting upserted successfully: ${input.key}`)
     return { success: true }
   } catch (error) {
+    // The caller answers this one (400): the key must be entered again.
+    if (error instanceof SecretDestinationChangedError) throw error
     log('error', `Failed to upsert setting: ${error}`)
     return { success: false, error: toErrorMessage(error) }
   }

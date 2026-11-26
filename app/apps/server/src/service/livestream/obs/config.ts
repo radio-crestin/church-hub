@@ -2,7 +2,12 @@ import { eq } from 'drizzle-orm'
 
 import { getDatabase } from '../../../db'
 import { obsConfig } from '../../../db/schema'
-import { openSecret, sealSecret, secretPlaces } from '../../secret-store'
+import {
+  openSecret,
+  requireSameDestination,
+  sealSecret,
+  secretPlaces,
+} from '../../secret-store'
 import type { OBSConfig } from '../types'
 
 type OBSConfigRow = typeof obsConfig.$inferSelect
@@ -41,6 +46,14 @@ export async function updateOBSConfig(
 ): Promise<OBSConfig> {
   const db = getDatabase()
   const current = await getOBSConfig()
+  // The saved password is kept only for the address it was saved for.
+  if (data.password === undefined && current.password !== '') {
+    requireSameDestination(
+      { ...current },
+      { ...current, ...data },
+      secretPlaces.obsPassword.destination,
+    )
+  }
 
   const [updated] = await db
     .update(obsConfig)

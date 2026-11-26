@@ -1,7 +1,11 @@
 import { getS3Storage } from './getS3Storage'
 import type { S3Storage, S3StorageInput } from './types'
 import { getRawDatabase } from '../../../db'
-import { sealSecret, secretPlaces } from '../../secret-store'
+import {
+  requireSameDestination,
+  sealSecret,
+  secretPlaces,
+} from '../../secret-store'
 
 const trimSlashes = (value: string) => value.trim().replace(/^\/+|\/+$/g, '')
 
@@ -16,11 +20,20 @@ function requireHttpUrl(value: string, field: string): string {
 
 /**
  * Saves the S3 storage. A missing secret keeps the stored one, so the form
- * never has to show it again.
+ * never has to show it again, but only for the same endpoint: a new one
+ * needs the secret entered again (SecretDestinationChangedError).
  */
 export function upsertS3Storage(input: S3StorageInput): S3Storage {
-  const secretAccessKey =
-    input.secretAccessKey?.trim() || getS3Storage()?.secretAccessKey
+  const stored = getS3Storage()
+  const sentSecret = input.secretAccessKey?.trim()
+  if (!sentSecret && stored?.secretAccessKey) {
+    requireSameDestination(
+      { ...stored },
+      { endpoint: requireHttpUrl(input.endpoint, 'Endpoint') },
+      secretPlaces.s3SecretAccessKey.destination,
+    )
+  }
+  const secretAccessKey = sentSecret || stored?.secretAccessKey
   if (!secretAccessKey) throw new Error('The secret access key is required')
   if (!input.bucket.trim() || !input.accessKeyId.trim()) {
     throw new Error('The bucket and the access key are required')

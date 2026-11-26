@@ -10,8 +10,13 @@ export { SecretStoreLockedError } from './keyRing'
 export { maskSettingValue } from './maskSettingValue'
 export { openSecret } from './openSecret'
 export { openSettingValue } from './openSettingValue'
+export {
+  requireSameDestination,
+  SecretDestinationChangedError,
+} from './requireSameDestination'
 export { sealSecret } from './sealSecret'
 export { sealSettingValue } from './sealSettingValue'
 export { isSecretMask, SECRET_MASK } from './secretMask'
 export { secretPlaces } from './secretPlaces'
+export { SECRET_SETTINGS } from './secretSettingFields'
 export { dismissResetFeatures } from './stored-secrets/resetFeatures'

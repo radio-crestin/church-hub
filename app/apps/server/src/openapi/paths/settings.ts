@@ -50,7 +50,10 @@ export const settingsPaths = {
         'writable by any authenticated user; other keys require the relevant ' +
         'settings permission. Secret fields (`apiKey`, `geminiApiKey`, ' +
         '`openaiApiKey`) are sealed before they are stored; one sent as ' +
-        '`••••••••` keeps the value saved before, an empty one clears it.',
+        '`••••••••` keeps the value saved before, but only while the fields saying ' +
+        'where it is sent (`provider`, `baseUrl`) are unchanged: otherwise the ' +
+        'save is refused (400) and the key must be entered again. An empty ' +
+        'one clears it.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       parameters: [
         {

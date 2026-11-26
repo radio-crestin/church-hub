@@ -1,7 +1,7 @@
 import { openSecret } from './openSecret'
 import {
   parseSettingObject,
-  SECRET_SETTING_FIELDS,
+  SECRET_SETTINGS,
   settingPlace,
 } from './secretSettingFields'
 
@@ -10,7 +10,7 @@ import {
  * own use. A secret it can't open reads as empty (not set).
  */
 export function openSettingValue(key: string, stored: string): string {
-  const fields = SECRET_SETTING_FIELDS[key]
+  const fields = SECRET_SETTINGS[key]?.secrets
   const value = fields && parseSettingObject(stored)
   if (!fields || !value) return stored
   for (const field of fields) {

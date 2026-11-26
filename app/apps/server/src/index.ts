@@ -296,6 +296,7 @@ import {
   type SaveSearchInput,
   saveSearch,
 } from './service/search-history'
+import { SecretDestinationChangedError } from './service/secret-store'
 import {
   addBookmark,
   addBookmarkNote,
@@ -1584,12 +1585,14 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
-        } catch (_error) {
+        } catch (error) {
+          const message =
+            error instanceof SecretDestinationChangedError
+              ? error.message
+              : 'Invalid JSON body'
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-            }),
+            new Response(JSON.stringify({ error: message }), { status: 400 }),
           )
         }
       }

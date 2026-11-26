@@ -8,6 +8,11 @@ export interface SecretPlace {
   table: string
   column: string
   row?: string
+  /**
+   * The row's fields that say where the secret is sent: a save that keeps
+   * the stored secret must leave them unchanged (requireSameDestination).
+   */
+  destination?: readonly string[]
 }
 
 export const describePlace = ({ table, column, row }: SecretPlace) =>

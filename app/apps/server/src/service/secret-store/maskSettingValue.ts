@@ -1,8 +1,5 @@
 import { SECRET_MASK } from './secretMask'
-import {
-  parseSettingObject,
-  SECRET_SETTING_FIELDS,
-} from './secretSettingFields'
+import { parseSettingObject, SECRET_SETTINGS } from './secretSettingFields'
 
 /**
  * An opened settings value as the settings API returns it: each saved
@@ -10,7 +7,7 @@ import {
  * secret row that isn't a JSON object can't be checked and isn't returned.
  */
 export function maskSettingValue(key: string, value: string): string {
-  const fields = SECRET_SETTING_FIELDS[key]
+  const fields = SECRET_SETTINGS[key]?.secrets
   if (!fields) return value
   const masked = parseSettingObject(value)
   if (!masked) return ''

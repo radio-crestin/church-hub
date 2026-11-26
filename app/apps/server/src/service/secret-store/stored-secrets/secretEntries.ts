@@ -8,7 +8,7 @@ import type { SecretPlace } from '../secretPlace'
 import { secretPlaces } from '../secretPlaces'
 import {
   parseSettingObject,
-  SECRET_SETTING_FIELDS,
+  SECRET_SETTINGS,
   settingPlace,
 } from '../secretSettingFields'
 
@@ -62,7 +62,7 @@ function* columnEntries(db: Database): Generator<SecretEntry> {
 
 function* settingEntries(db: Database): Generator<SecretEntry> {
   if (!hasColumn(db, 'app_settings', 'value')) return
-  for (const [key, fields] of Object.entries(SECRET_SETTING_FIELDS)) {
+  for (const [key, { secrets: fields }] of Object.entries(SECRET_SETTINGS)) {
     const row = db
       .query<{ value: string }, [string]>(
         'SELECT value FROM app_settings WHERE key = ?',
