@@ -12,6 +12,7 @@ import {
 import { listBackups, usageOf } from '../backup/account/listBackups'
 import { readAccount } from '../backup/account/accountStore'
 import { presignDownload } from '../backup/account/presignDownload'
+import { presignFiles } from '../backup/account/presignFiles'
 import { presignParts } from '../backup/account/presignParts'
 import { revokeSessions } from '../backup/account/revokeSessions'
 import { startUpload } from '../backup/account/startUpload'
@@ -159,7 +160,7 @@ backup.get('/backup/usage', async (c) => {
   return c.json(usageOf(record, settings.limits))
 })
 
-/** POST /backup/uploads { sizeBytes, appVersion, keyVersion }: start one. */
+/** POST /backup/uploads { userBytes, manifestBytes, blobs, appVersion, keyVersion }: start one. */
 backup.post('/backup/uploads', async (c) => {
   const body = (await readJsonBody(c)) as Record<string, unknown>
   return c.json(await startUpload(await signedIn(c), body ?? {}), 201)
@@ -173,7 +174,15 @@ backup.post('/backup/uploads/:backupId/parts', async (c) => {
   )
 })
 
-/** POST /backup/uploads/:backupId/complete: assemble, list, apply retention. */
+/** POST /backup/uploads/:backupId/files { files }: URLs for the manifest and new blobs. */
+backup.post('/backup/uploads/:backupId/files', async (c) => {
+  const body = (await readJsonBody(c)) as { files?: unknown }
+  return c.json(
+    await presignFiles(await signedIn(c), c.req.param('backupId'), body?.files)
+  )
+})
+
+/** POST /backup/uploads/:backupId/complete: check sizes, assemble, list, count. */
 backup.post('/backup/uploads/:backupId/complete', async (c) =>
   c.json({
     backup: await completeUpload(await signedIn(c), c.req.param('backupId')),
@@ -186,7 +195,7 @@ backup.delete('/backup/uploads/:backupId', async (c) => {
   return c.json({ aborted: true })
 })
 
-/** POST /backup/backups/:backupId/download: a presigned GET URL. */
+/** POST /backup/backups/:backupId/download: presigned GETs for its manifest, user part and blobs. */
 backup.post('/backup/backups/:backupId/download', async (c) =>
   c.json(await presignDownload(await signedIn(c), c.req.param('backupId')))
 )

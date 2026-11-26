@@ -54,7 +54,9 @@ export interface BackupBucket {
     parts: UploadedPart[]
   ): Promise<void>
   abortMultipartUpload(key: string, uploadId: string): Promise<void>
-  presignDownload(key: string): Promise<string>
+  /** A PUT URL for a whole object, signed for exactly `contentLength` bytes. */
+  presignPut(key: string, contentLength: number): Promise<string>
+  presignGet(key: string): Promise<string>
 }
 
 const CONDITION_FAILED = new Set([409, 412])
@@ -289,7 +291,10 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
         method: 'DELETE',
       })
     },
-    presignDownload(key) {
+    presignPut(key, contentLength) {
+      return presign('PUT', key, {}, { 'content-length': String(contentLength) })
+    },
+    presignGet(key) {
       return presign('GET', key)
     },
   }

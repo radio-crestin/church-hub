@@ -118,10 +118,9 @@ test('every change needs the CSRF token and a same-origin request', async () => 
 test('a quota override changes what the account may upload', async () => {
   const { user, id } = await userAccount()
   const admin = await signedInAdmin()
-  const start = (sizeBytes: number) =>
-    harness.json('/backup/uploads', 'POST', { sizeBytes, keyVersion: 1 }, user.accessToken)
-  expect((await start(900)).status).toBe(201)
-  expect((await start(200)).status).toBe(413)
+  const start = (userBytes: number) => harness.start(user.accessToken, userBytes)
+  expect((await start(850)).status).toBe(201)
+  expect((await start(150)).status).toBe(413)
 
   const raised = await harness.adminApi(`/accounts/${id}/quota`, {
     method: 'PUT',
@@ -129,7 +128,7 @@ test('a quota override changes what the account may upload', async () => {
     ...admin,
   })
   expect(((await raised.json()) as { quotaBytes: number }).quotaBytes).toBe(5000)
-  expect((await start(200)).status).toBe(201)
+  expect((await start(150)).status).toBe(201)
   const usage = (await (await harness.request('/backup/usage', {}, user.accessToken)).json()) as {
     quotaBytes: number
   }
@@ -146,7 +145,7 @@ test('a quota override changes what the account may upload', async () => {
 test('a paused account can’t start uploads', async () => {
   const { user, id } = await userAccount()
   await harness.adminApi(`/accounts/${id}/suspended`, { method: 'PUT', body: { suspended: true }, ...(await signedInAdmin()) })
-  const refused = await harness.json('/backup/uploads', 'POST', { sizeBytes: 10, keyVersion: 1 }, user.accessToken)
+  const refused = await harness.start(user.accessToken, 10)
   expect(refused.status).toBe(403)
   expect(((await refused.json()) as { code: string }).code).toBe('suspended')
 })
@@ -176,7 +175,7 @@ test('every admin call is in the audit log, changes with before and after', asyn
     after: { quotaBytes: 4000 },
   })
   expect(find(`PUT /admin/api/accounts/${id}/suspended`)).toMatchObject({ before: { suspended: false }, after: { suspended: true } })
-  expect(find(`POST /admin/api/accounts/${id}/reconcile`)).toMatchObject({ after: { usedBytes: 100 } })
+  expect(find(`POST /admin/api/accounts/${id}/reconcile`)).toMatchObject({ after: { usedBytes: 150 } })
   expect(entries.filter((e) => e.action === `DELETE /admin/api/accounts/${id}`).map((e) => e.status).sort()).toEqual([200, 400])
   expect(find('sign_in')).toMatchObject({ admin: ADMIN.email, status: 200 })
   expect(entries.some((e) => e.action === 'GET /admin/api/accounts' && e.admin === null && e.status === 403)).toBe(true)

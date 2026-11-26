@@ -1,20 +1,25 @@
 import { updateAccount } from './accountStore'
 import type { BackupContext } from './BackupContext'
+import { deleteObjects } from './deleteObjects'
+import { dropBackups } from './dropBackups'
 import { findBackup } from './findBackup'
 import { requireBackupId } from './findPendingUpload'
-import { sweepUnlistedObjects } from './sweepUnlistedObjects'
 
-/** Deletes one of the caller's own backups: unlisted (its bytes freed), then removed. */
+/**
+ * Deletes one of the caller's own backups: unlisted, its bytes freed, its
+ * blob refs released; then its objects and the blobs nobody needs go.
+ */
 export async function deleteBackup(
   { bucket, caller }: BackupContext,
   backupId: string | undefined
 ): Promise<void> {
   const id = requireBackupId(backupId)
-  const record = await updateAccount(bucket, caller.accountId, (record) => {
-    const backup = findBackup(record, id)
-    record.backups = record.backups.filter((entry) => entry !== backup)
-    record.usedBytes = Math.max(0, record.usedBytes - backup.sizeBytes)
-    return record
+  const { unreferenced, blobPrefix } = await updateAccount(bucket, caller.accountId, (record) => ({
+    unreferenced: dropBackups(record, [findBackup(record, id)]),
+    blobPrefix: record.blobPrefix,
+  }))
+  await deleteObjects(bucket, caller.accountId, blobPrefix, {
+    backupIds: [id],
+    blobs: unreferenced,
   })
-  await sweepUnlistedObjects(bucket, caller.accountId, record)
 }

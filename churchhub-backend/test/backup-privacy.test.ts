@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, expect, spyOn, test } from 'bun:test'
-import { applyRetention } from '../src/backup/account/applyRetention'
 import { createMemoryRateLimiter } from '../src/node/createMemoryRateLimiter'
 import { resolveClientIp } from '../src/node/resolveClientIp'
 import { withClientIp } from '../src/node/withClientIp'
@@ -7,7 +6,7 @@ import { BackupHarness, backupEnv } from './support/backupHarness'
 
 /**
  * What cloud backup never lets out (tokens, emails, object keys in answers
- * and logs), its rate limits, retention and docs. Run with `bun test` from
+ * and logs), its rate limits and docs. Run with `bun test` from
  * churchhub-backend/.
  */
 const ALICE = { sub: 'google-sub-alice', email: 'alice@example.com' }
@@ -113,38 +112,6 @@ test('a body over 16 KiB is refused', async () => {
     body: JSON.stringify({ grant: 'x'.repeat(20_000) }),
   })
   expect(response.status).toBe(413)
-})
-
-test('retention: the newest three, one a day for a week, one a week for five', () => {
-  const day = 24 * 60 * 60 * 1000
-  const now = 100 * day
-  const backup = (ageMs: number, id: string) => ({
-    id,
-    sizeBytes: 1,
-    createdAt: now - ageMs,
-    appVersion: '1',
-    keyVersion: 1,
-  })
-  const backups = [
-    backup(0, 'a'),
-    backup(1000, 'b'),
-    backup(2000, 'c'),
-    backup(3000, 'same-day'),
-    backup(1.5 * day, 'yesterday'),
-    backup(1.6 * day, 'yesterday-older'),
-    backup(10 * day, 'week-1'),
-    backup(11 * day, 'week-1-older'),
-    backup(60 * day, 'too-old'),
-  ]
-  const { kept, removed } = applyRetention(backups, 12, now)
-  expect(kept.map((b) => b.id)).toEqual(['a', 'b', 'c', 'yesterday', 'week-1'])
-  expect(removed.map((b) => b.id)).toEqual([
-    'same-day',
-    'yesterday-older',
-    'week-1-older',
-    'too-old',
-  ])
-  expect(applyRetention(backups, 2, now).kept.map((b) => b.id)).toEqual(['a', 'b'])
 })
 
 test('the docs page loads a pinned Scalar build with its integrity hash', async () => {

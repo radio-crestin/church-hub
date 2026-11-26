@@ -17,6 +17,7 @@ export function describeAccount(
     lastBackupAt: record.lastBackupAt,
     lastReconciledAt: record.lastReconciledAt,
     backupCount: record.backups.length,
+    blobCount: Object.keys(record.blobs).length,
     usedBytes: record.usedBytes,
     reservedBytes: reservedBytes(record),
     quotaBytes: effectiveQuota(record, limits),

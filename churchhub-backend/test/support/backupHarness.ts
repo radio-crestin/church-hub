@@ -162,34 +162,61 @@ export class BackupHarness {
     )
   }
 
-  /** Starts, uploads in parts through the presigned URLs and completes. */
-  async upload(token: string, bytes: Uint8Array) {
-    const started = await this.json(
+  /** The SHA-256 (hex) of bytes, as a blob's name. */
+  static hashOf(bytes: Uint8Array): string {
+    return createHash('sha256').update(bytes).digest('hex')
+  }
+
+  /** POST /backup/uploads for a user part, manifest and blobs (sizes only). */
+  start(
+    token: string,
+    user: number | Uint8Array,
+    blobs: Uint8Array[] = [],
+    manifest = 50
+  ) {
+    return this.json(
       '/backup/uploads',
       'POST',
-      { sizeBytes: bytes.length, appVersion: '0.2.0', keyVersion: 1 },
+      {
+        userBytes: typeof user === 'number' ? user : user.length,
+        manifestBytes: manifest,
+        blobs: blobs.map((blob) => ({ hash: BackupHarness.hashOf(blob), sizeBytes: blob.length })),
+        appVersion: '0.2.0',
+        keyVersion: 1,
+      },
       token
     )
-    const { backupId, partSize, partCount } = (await started.json()) as {
+  }
+
+  /**
+   * A whole backup as the PC sends it: start, the user part in parts, the
+   * manifest and the blobs the service asks for, each through its
+   * presigned URL, then complete.
+   */
+  async upload(token: string, user: Uint8Array, blobs: Uint8Array[] = []) {
+    const manifest = new Uint8Array(50).fill(9)
+    const started = await this.start(token, user, blobs, manifest.length)
+    const { backupId, partSize, partCount, missingBlobs } = (await started.json()) as {
       backupId: string
       partSize: number
       partCount: number
+      missingBlobs: string[]
     }
     const numbers = Array.from({ length: partCount }, (_, i) => i + 1)
-    const presigned = await this.json(
-      `/backup/uploads/${backupId}/parts`,
-      'POST',
-      { partNumbers: numbers },
-      token
-    )
-    const { parts } = (await presigned.json()) as {
-      parts: { partNumber: number; url: string }[]
-    }
+    const presigned = await this.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: numbers }, token)
+    const { parts } = (await presigned.json()) as { parts: { partNumber: number; url: string }[] }
     for (const part of parts) {
       const start = (part.partNumber - 1) * partSize
-      await fetch(part.url, { method: 'PUT', body: bytes.slice(start, start + partSize) })
+      await fetch(part.url, { method: 'PUT', body: user.slice(start, start + partSize) })
+    }
+    const byHash = new Map(blobs.map((blob) => [BackupHarness.hashOf(blob), blob]))
+    const filed = await this.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['manifest', ...missingBlobs] }, token)
+    const { files } = (await filed.json()) as { files: { name: string; url: string }[] }
+    for (const file of files) {
+      const body = file.name === 'manifest' ? manifest : (byHash.get(file.name) as Uint8Array)
+      await fetch(file.url, { method: 'PUT', body })
     }
     const done = await this.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, token)
-    return { backupId, done }
+    return { backupId, done, missingBlobs }
   }
 }

@@ -5,12 +5,12 @@ const MIB = 1024 * 1024
 
 /** The free tier, unless the environment overrides a limit. */
 export const DEFAULT_LIMITS = {
-  /** One backup, as uploaded (encrypted and gzipped). */
+  /** One upload: its user part, manifest and new resource blobs. */
   maxBackupBytes: 512 * MIB,
   /** Everything an account keeps, uploads in progress included. */
   quotaBytes: 2048 * MIB,
-  /** Backups an account keeps after retention. */
-  maxBackups: 12,
+  /** A backup expires this many days after it was made. */
+  retentionDays: 30,
   /** Uploads an account may start in a rolling 24 hours. */
   uploadsPerDay: 24,
 }
@@ -82,7 +82,10 @@ export function readBackupSettings(env: Bindings): BackupSettings {
         DEFAULT_LIMITS.maxBackupBytes
       ),
       quotaBytes: positive(env.BACKUP_QUOTA_BYTES, DEFAULT_LIMITS.quotaBytes),
-      maxBackups: positive(env.BACKUP_MAX_COUNT, DEFAULT_LIMITS.maxBackups),
+      retentionDays: positive(
+        env.BACKUP_RETENTION_DAYS,
+        DEFAULT_LIMITS.retentionDays
+      ),
       uploadsPerDay: positive(
         env.BACKUP_UPLOADS_PER_DAY,
         DEFAULT_LIMITS.uploadsPerDay

@@ -1,13 +1,33 @@
 import { hashToken } from '../../sync/hashToken'
 
-/** The account's folder in the bucket: everything it owns is under it. */
-export const accountPrefix = (accountId: string) => `accounts/${accountId}/`
-
+/**
+ * The bucket's layout. Three top-level prefixes, so a lifecycle rule can
+ * target backups alone:
+ * - accounts/<accountId>/account.json   the record (compare-and-swap)
+ * - backups/<accountId>/<backupId>/     manifest.chb and user.chb, encrypted;
+ *                                       they expire (lifecycle safety net)
+ * - blobs/<accountId>/<blobPrefix>/<sha256>  shared resources, plaintext,
+ *                                       immutable, kept while referenced
+ */
 export const accountRecordKey = (accountId: string) =>
-  `${accountPrefix(accountId)}account.json`
+  `accounts/${accountId}/account.json`
 
-export const backupObjectKey = (accountId: string, backupId: string) =>
-  `${accountPrefix(accountId)}backups/${backupId}.chb`
+export const accountBackupsPrefix = (accountId: string) =>
+  `backups/${accountId}/`
+
+export const backupPrefix = (accountId: string, backupId: string) =>
+  `${accountBackupsPrefix(accountId)}${backupId}/`
+
+export const userPartKey = (accountId: string, backupId: string) =>
+  `${backupPrefix(accountId, backupId)}user.chb`
+
+export const manifestKey = (accountId: string, backupId: string) =>
+  `${backupPrefix(accountId, backupId)}manifest.chb`
+
+export const accountBlobsPrefix = (accountId: string) => `blobs/${accountId}/`
+
+export const blobKey = (accountId: string, blobPrefix: string, hash: string) =>
+  `${accountBlobsPrefix(accountId)}${blobPrefix}/${hash}`
 
 /**
  * The account's id in the bucket: HMAC-SHA-256 of its Google `sub` under

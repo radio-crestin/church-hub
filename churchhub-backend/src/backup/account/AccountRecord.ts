@@ -1,22 +1,48 @@
-/** One finished backup an account keeps. */
+/**
+ * One finished backup: an encrypted manifest and encrypted user part of its
+ * own, plus the shared resource blobs it references by hash.
+ */
 export interface BackupEntry {
   id: string
-  /** Bytes as stored (encrypted and gzipped), read from the bucket. */
-  sizeBytes: number
-  /** Unix ms. */
+  /** Unix ms; the backup expires BACKUP_RETENTION_DAYS after it. */
   createdAt: number
   appVersion: string
-  /** The account key version the backup's data key is wrapped with. */
+  /** The account key version the user part and manifest are wrapped with. */
   keyVersion: number
+  /** Bytes of the encrypted user part, as stored. */
+  userBytes: number
+  /** Bytes of the encrypted manifest, as stored. */
+  manifestBytes: number
+  /** SHA-256 (hex) of every resource blob the backup needs. */
+  blobs: string[]
 }
 
-/** An upload started and not finished yet: its size is reserved. */
+/**
+ * A resource blob of the account: plaintext, content-addressed, never
+ * rewritten. `refs` counts the backups and uploads in flight that need it;
+ * at zero it is deleted. Counted once in the usage, however many refer to it.
+ */
+export interface BlobEntry {
+  /** Bytes as stored (gzipped). */
+  sizeBytes: number
+  refs: number
+  /** False until an upload's completion found it in the bucket. */
+  stored: boolean
+}
+
+/** An upload started and not finished yet: its bytes are reserved. */
 export interface PendingUpload {
   id: string
+  /** The multipart upload of the user part. */
   uploadId: string
-  sizeBytes: number
+  userBytes: number
+  manifestBytes: number
   partSize: number
   partCount: number
+  /** Every blob the backup references (each holds one ref for it). */
+  blobs: string[]
+  /** The blobs not stored when it started: this upload sends them. */
+  newBlobs: { hash: string; sizeBytes: number }[]
   appVersion: string
   keyVersion: number
   /** Unix ms. */
@@ -41,11 +67,14 @@ export interface SessionFamily {
  * kept for the internal admin panel only.
  */
 export interface AccountRecord {
-  version: 1
+  version: 2
   /** Tokens issued at or before this (unix ms) are refused. */
   tokensValidAfter: number
   sessions: Record<string, SessionFamily>
-  /** Bytes of the finished backups: the authoritative usage counter. */
+  /**
+   * Bytes stored: every backup's user part and manifest, plus each stored
+   * blob once. The authoritative usage counter.
+   */
   usedBytes: number
   /** An admin's quota for this account; null = the global default. */
   quotaBytes: number | null
@@ -56,6 +85,12 @@ export interface AccountRecord {
   lastSignInAt: number | null
   lastBackupAt: number | null
   lastReconciledAt: number | null
+  /**
+   * 128 random bits in every blob's key: a blob's URL can't be guessed from
+   * its content's hash (a public Bible's hash is easy to compute).
+   */
+  blobPrefix: string
+  blobs: Record<string, BlobEntry>
   backups: BackupEntry[]
   uploads: PendingUpload[]
   /** When uploads started in the last 24 hours (unix ms), for the daily limit. */
@@ -63,7 +98,7 @@ export interface AccountRecord {
 }
 
 export const emptyAccount = (): AccountRecord => ({
-  version: 1,
+  version: 2,
   tokensValidAfter: 0,
   sessions: {},
   usedBytes: 0,
@@ -74,6 +109,8 @@ export const emptyAccount = (): AccountRecord => ({
   lastSignInAt: null,
   lastBackupAt: null,
   lastReconciledAt: null,
+  blobPrefix: '',
+  blobs: {},
   backups: [],
   uploads: [],
   uploadLog: [],

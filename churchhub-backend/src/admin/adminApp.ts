@@ -6,6 +6,7 @@ import type { AccountRecord } from '../backup/account/AccountRecord'
 import { accountRecordKey } from '../backup/account/accountKeys'
 import { readAccount, updateAccount } from '../backup/account/accountStore'
 import { deleteAccount } from '../backup/account/deleteAccount'
+import { publicBackup } from '../backup/account/publicBackup'
 import { reconcileAccount } from '../backup/account/reconcileAccount'
 import { readBackupSettings } from '../backup/backupSettings'
 import { handleBackupError } from '../backup/handleBackupError'
@@ -269,7 +270,9 @@ adminApp.get('/admin/api/accounts/:accountId', async (c) => {
   const { record } = await readAccount(bucket, accountId)
   return c.json({
     ...describeAccount(accountId, record, settings.limits),
-    backups: [...record.backups].sort((a, b) => b.createdAt - a.createdAt),
+    backups: [...record.backups]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map(publicBackup),
   })
 })
 
@@ -297,7 +300,11 @@ adminApp.put('/admin/api/accounts/:accountId/suspended', async (c) => {
 /** POST …/reconcile: recompute the usage from the bucket now. */
 adminApp.post('/admin/api/accounts/:accountId/reconcile', async (c) => {
   const { accountId, bucket } = await requireAccount(c)
-  const result = await reconcileAccount(bucket, accountId)
+  const result = await reconcileAccount(
+    bucket,
+    accountId,
+    storage(c).settings.limits.retentionDays
+  )
   c.set('audit', {
     before: { usedBytes: result.usedBytesBefore },
     after: { usedBytes: result.usedBytesAfter },

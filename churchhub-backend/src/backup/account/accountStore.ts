@@ -1,3 +1,4 @@
+import { randomId } from '../../sync/randomId'
 import { SyncError } from '../../sync/SyncError'
 import type { BackupBucket } from '../storage/createBackupBucket'
 import { type AccountRecord, emptyAccount } from './AccountRecord'
@@ -30,6 +31,7 @@ export async function updateAccount<T>(
 ): Promise<T> {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const { record, etag } = await readAccount(bucket, accountId)
+    record.blobPrefix ||= randomId(16)
     const result = await change(record)
     const written = await bucket.put(
       accountRecordKey(accountId),

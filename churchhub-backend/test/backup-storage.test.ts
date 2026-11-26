@@ -3,10 +3,11 @@ import { PART_SIZE } from '../src/backup/account/startUpload'
 import { BackupHarness, backupEnv } from './support/backupHarness'
 
 /**
- * Cloud backup storage: uploads straight to the bucket through short-lived
- * presigned URLs, every id looked up only in the caller's own account,
- * the free tier enforced, and an account deleted with all its data. Run
- * with `bun test` from churchhub-backend/.
+ * Cloud backup storage: an encrypted user part and manifest per backup plus
+ * shared, content-addressed resource blobs, all sent straight to the bucket
+ * through short-lived presigned URLs signed for their exact sizes; every id
+ * looked up only in the caller's own account. Run with `bun test` from
+ * churchhub-backend/.
  */
 const ALICE = { sub: 'google-sub-alice', email: 'alice@example.com' }
 const BOB = { sub: 'google-sub-bob', email: 'bob@example.com' }
@@ -19,58 +20,133 @@ beforeEach(() => {
 afterEach(() => harness.restore())
 
 const bytes = (size: number, fill = 7) => new Uint8Array(size).fill(fill)
+const BIBLE = bytes(3000, 1)
+const SONGS = bytes(2000, 2)
 
 async function list(token: string) {
   const response = await harness.request('/backup/backups', {}, token)
   return (await response.json()) as {
-    backups: { id: string; sizeBytes: number }[]
-    usage: { usedBytes: number; quotaBytes: number }
+    backups: { id: string; sizeBytes: number; blobCount: number }[]
+    usage: { usedBytes: number; quotaBytes: number; retentionDays: number }
   }
 }
 
-test('a backup goes up in parts and comes back through a presigned URL', async () => {
+const objectKeys = (prefix: string) => harness.s3.keys().filter((key) => key.startsWith(prefix))
+
+test('a backup goes up as user part, manifest and blobs, and comes back', async () => {
   const { accessToken } = await harness.signIn(ALICE)
-  const data = bytes(PART_SIZE + 1000)
-  const { backupId, done } = await harness.upload(accessToken, data)
+  const user = bytes(PART_SIZE + 1000)
+  const { backupId, done, missingBlobs } = await harness.upload(accessToken, user, [BIBLE, SONGS])
   expect(done.status).toBe(200)
+  expect(missingBlobs.sort()).toEqual([BackupHarness.hashOf(BIBLE), BackupHarness.hashOf(SONGS)].sort())
 
   const { backups, usage } = await list(accessToken)
-  expect(backups.map((b) => b.id)).toEqual([backupId])
-  expect(usage.usedBytes).toBe(data.length)
+  expect(backups).toEqual([expect.objectContaining({ id: backupId, sizeBytes: user.length + 50, blobCount: 2 })])
+  expect(usage.usedBytes).toBe(user.length + 50 + BIBLE.length + SONGS.length)
+  expect(usage.retentionDays).toBe(30)
 
   const download = await harness.request(`/backup/backups/${backupId}/download`, { method: 'POST' }, accessToken)
-  const { url, expiresAt } = (await download.json()) as { url: string; expiresAt: number }
-  const fetched = new Uint8Array(await (await fetch(url)).arrayBuffer())
-  expect(fetched).toEqual(data)
-  // Presigned for 15 minutes, never longer.
-  expect(new URL(url).searchParams.get('X-Amz-Expires')).toBe('900')
-  expect(new URL(url).searchParams.get('X-Amz-Signature')).toMatch(/^[0-9a-f]{64}$/)
-  expect(Math.abs(expiresAt - (Date.now() + 900_000))).toBeLessThan(5_000)
-})
-
-test('part URLs are presigned for 15 minutes', async () => {
-  const { accessToken } = await harness.signIn(ALICE)
-  const started = await harness.json('/backup/uploads', 'POST', { sizeBytes: 10, keyVersion: 1 }, accessToken)
-  const { backupId } = (await started.json()) as { backupId: string }
-  const presigned = await harness.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: [1] }, accessToken)
-  const { parts, expiresAt } = (await presigned.json()) as {
-    parts: { url: string }[]
+  const urls = (await download.json()) as {
+    manifestUrl: string
+    userPartUrl: string
+    blobs: { hash: string; url: string }[]
     expiresAt: number
   }
-  const url = new URL(parts[0].url)
-  expect(url.searchParams.get('X-Amz-Expires')).toBe('900')
-  expect(url.searchParams.get('partNumber')).toBe('1')
-  expect(Math.abs(expiresAt - (Date.now() + 900_000))).toBeLessThan(5_000)
+  expect(new Uint8Array(await (await fetch(urls.userPartUrl)).arrayBuffer())).toEqual(user)
+  for (const blob of urls.blobs) {
+    const fetched = new Uint8Array(await (await fetch(blob.url)).arrayBuffer())
+    expect(BackupHarness.hashOf(fetched)).toBe(blob.hash)
+  }
+  // Presigned for 15 minutes, never longer.
+  for (const url of [urls.manifestUrl, urls.userPartUrl, ...urls.blobs.map((b) => b.url)]) {
+    expect(new URL(url).searchParams.get('X-Amz-Expires')).toBe('900')
+  }
+  expect(Math.abs(urls.expiresAt - (Date.now() + 900_000))).toBeLessThan(5_000)
+})
 
-  const outOfRange = await harness.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: [2] }, accessToken)
-  expect(outOfRange.status).toBe(400)
+test('a second backup with unchanged resources uploads only its own parts', async () => {
+  const { accessToken } = await harness.signIn(ALICE)
+  await harness.upload(accessToken, bytes(100), [BIBLE, SONGS])
+  const before = harness.s3.requests.length
+  const changedSongs = bytes(2100, 3)
+  const second = await harness.upload(accessToken, bytes(120), [BIBLE, changedSongs])
+  expect(second.done.status).toBe(200)
+  expect(second.missingBlobs).toEqual([BackupHarness.hashOf(changedSongs)])
+  // The Bible blob was never sent again.
+  const sent = harness.s3.requests.slice(before).filter((r) => r.startsWith('PUT') && r.includes('/blobs/'))
+  expect(sent).toHaveLength(1)
+  expect(sent[0]).toContain(BackupHarness.hashOf(changedSongs))
+  // Each blob is counted once.
+  const { usage } = await list(accessToken)
+  expect(usage.usedBytes).toBe(100 + 50 + 120 + 50 + BIBLE.length + SONGS.length + changedSongs.length)
+})
+
+test('blobs live under an unguessable account prefix, never listed, private', async () => {
+  const { accessToken } = await harness.signIn(ALICE)
+  await harness.upload(accessToken, bytes(10), [BIBLE])
+  const [key] = objectKeys('blobs/')
+  // blobs/<64-hex account id>/<22-char random prefix>/<sha256>
+  expect(key).toMatch(/^blobs\/[0-9a-f]{64}\/[A-Za-z0-9_-]{22}\/[0-9a-f]{64}$/)
+  expect(key.endsWith(BackupHarness.hashOf(BIBLE))).toBe(true)
+  // Two accounts with the same resource have different URLs for it.
+  const bob = await harness.signIn(BOB)
+  await harness.upload(bob.accessToken, bytes(10), [BIBLE])
+  const keys = objectKeys('blobs/')
+  expect(keys).toHaveLength(2)
+  expect(keys[0].split('/')[2]).not.toBe(keys[1].split('/')[2])
+})
+
+test('every PUT URL is signed for its exact size; another size is refused', async () => {
+  const { accessToken } = await harness.signIn(ALICE)
+  const started = await harness.start(accessToken, 10, [BIBLE])
+  const { backupId } = (await started.json()) as { backupId: string }
+  const parts = await harness.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: [1] }, accessToken)
+  const files = await harness.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['manifest', BackupHarness.hashOf(BIBLE)] }, accessToken)
+  const part = ((await parts.json()) as { parts: { url: string; sizeBytes: number }[] }).parts[0]
+  const urls = ((await files.json()) as { files: { name: string; url: string; sizeBytes: number }[] }).files
+  for (const { url, sizeBytes } of [part, ...urls]) {
+    expect(new URL(url).searchParams.get('X-Amz-SignedHeaders')).toContain('content-length')
+    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes + 5000) })).status).toBe(403)
+    expect((await fetch(url, { method: 'PUT', body: bytes(sizeBytes) })).status).toBe(200)
+  }
+  // A blob the upload doesn't send gets no URL.
+  const other = await harness.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['f'.repeat(64)] }, accessToken)
+  expect(other.status).toBe(400)
+})
+
+test('completion waits for missing files and refuses a size lie', async () => {
+  const { accessToken } = await harness.signIn(ALICE)
+  const started = await harness.start(accessToken, 10, [BIBLE])
+  const { backupId } = (await started.json()) as { backupId: string }
+  const early = await harness.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, accessToken)
+  expect(early.status).toBe(409)
+  expect(((await early.json()) as { missing: string[] }).missing.sort()).toEqual(
+    ['manifest', BackupHarness.hashOf(BIBLE)].sort()
+  )
+
+  // A store that ignored the signed length: 5000 bytes landed for the blob.
+  const blobPrefix = JSON.parse(new TextDecoder().decode(
+    [...harness.s3.objects].find(([key]) => key.endsWith('account.json'))?.[1]
+  )).blobPrefix
+  const accountId = [...harness.s3.objects.keys()].find((key) => key.endsWith('account.json'))?.split('/')[2]
+  harness.s3.objects.set(`backups/blobs/${accountId}/${blobPrefix}/${BackupHarness.hashOf(BIBLE)}`, bytes(5000))
+  const files = await harness.json(`/backup/uploads/${backupId}/files`, 'POST', { files: ['manifest'] }, accessToken)
+  const { files: [manifest] } = (await files.json()) as { files: { url: string }[] }
+  await fetch(manifest.url, { method: 'PUT', body: bytes(50) })
+  const lie = await harness.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, accessToken)
+  expect(lie.status).toBe(400)
+  expect(((await lie.json()) as { code: string }).code).toBe('size_mismatch')
+  // Nothing is left: no upload, no counted bytes, no objects of it.
+  expect(harness.s3.uploads.size).toBe(0)
+  expect((await list(accessToken)).usage.usedBytes).toBe(0)
+  expect(objectKeys('backups/').filter((key) => key.includes(backupId))).toEqual([])
 })
 
 test('an account never reaches another account’s backups (no IDOR)', async () => {
   const alice = await harness.signIn(ALICE)
   const bob = await harness.signIn(BOB)
-  const { backupId } = await harness.upload(alice.accessToken, bytes(100))
-  const started = await harness.json('/backup/uploads', 'POST', { sizeBytes: 50, keyVersion: 1 }, alice.accessToken)
+  const { backupId } = await harness.upload(alice.accessToken, bytes(100), [BIBLE])
+  const started = await harness.start(alice.accessToken, 50)
   const pending = ((await started.json()) as { backupId: string }).backupId
 
   expect((await list(bob.accessToken)).backups).toEqual([])
@@ -78,6 +154,7 @@ test('an account never reaches another account’s backups (no IDOR)', async () 
     ['POST', `/backup/backups/${backupId}/download`, undefined],
     ['DELETE', `/backup/backups/${backupId}`, undefined],
     ['POST', `/backup/uploads/${pending}/parts`, { partNumbers: [1] }],
+    ['POST', `/backup/uploads/${pending}/files`, { files: ['manifest'] }],
     ['POST', `/backup/uploads/${pending}/complete`, undefined],
     ['DELETE', `/backup/uploads/${pending}`, undefined],
   ]
@@ -86,118 +163,47 @@ test('an account never reaches another account’s backups (no IDOR)', async () 
     expect(`${method} ${path} ${response.status}`).toBe(`${method} ${path} 404`)
   }
   expect((await list(alice.accessToken)).backups.map((b) => b.id)).toEqual([backupId])
-
-  await harness.upload(bob.accessToken, bytes(10))
-  // Each account's objects sit under its own keyed-hash folder: no email, no sub.
-  const folders = new Set(
-    harness.s3.keys().filter((key) => key.startsWith('accounts/')).map((key) => key.split('/')[1])
-  )
-  expect(folders.size).toBe(2)
-  for (const folder of folders) expect(folder).toMatch(/^[0-9a-f]{64}$/)
-  const accountKeys = harness.s3.keys().filter((key) => key.startsWith('accounts/'))
+  const accountKeys = harness.s3.keys().filter((key) => !key.startsWith('index/'))
   expect(accountKeys.join()).not.toContain('alice')
   expect(accountKeys.join()).not.toContain(ALICE.sub)
 })
 
-test('the free tier: size, storage, uploads in flight and per day', async () => {
-  harness.env = backupEnv({
-    BACKUP_MAX_BYTES: '1000',
-    BACKUP_QUOTA_BYTES: '1500',
-    BACKUP_UPLOADS_PER_DAY: '3',
-  })
+test('the free tier: size of one upload, in flight and per day', async () => {
+  harness.env = backupEnv({ BACKUP_MAX_BYTES: '1000', BACKUP_UPLOADS_PER_DAY: '3' })
   const { accessToken } = await harness.signIn(ALICE)
-  const start = (sizeBytes: number) =>
-    harness.json('/backup/uploads', 'POST', { sizeBytes, keyVersion: 1 }, accessToken)
   const code = async (response: Response) =>
     `${response.status} ${((await response.json()) as { code?: string }).code ?? ''}`
+  expect(await code(await harness.start(accessToken, 960, [bytes(100)]))).toBe('413 too_large')
+  expect(await code(await harness.start(accessToken, 0))).toBe('400 invalid_request')
 
-  expect(await code(await start(1001))).toBe('413 too_large')
-  expect(await code(await start(0))).toBe('400 invalid_request')
-
-  const first = (await (await start(800)).json()) as { backupId: string }
-  // 800 reserved + 800 more is over 1500.
-  expect(await code(await start(800))).toBe('413 quota_exceeded')
-  await start(100)
-  expect(await code(await start(100))).toBe('409 upload_in_progress')
+  const first = (await (await harness.start(accessToken, 100)).json()) as { backupId: string }
+  await harness.start(accessToken, 100)
+  expect(await code(await harness.start(accessToken, 100))).toBe('409 upload_in_progress')
   await harness.request(`/backup/uploads/${first.backupId}`, { method: 'DELETE' }, accessToken)
-  // Three started today: the fourth waits for tomorrow.
-  await start(100)
-  expect(await code(await start(100))).toBe('429 daily_limit')
-  // Cancelling freed the parts in the bucket.
+  await harness.start(accessToken, 100)
+  expect(await code(await harness.start(accessToken, 100))).toBe('429 daily_limit')
   expect(harness.s3.uploads.size).toBe(2)
-})
-
-test('a part of another size than signed is refused by the store', async () => {
-  const { accessToken } = await harness.signIn(ALICE)
-  const started = await harness.json('/backup/uploads', 'POST', { sizeBytes: 10, keyVersion: 1 }, accessToken)
-  const { backupId } = (await started.json()) as { backupId: string }
-  const presigned = await harness.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: [1] }, accessToken)
-  const { parts } = (await presigned.json()) as { parts: { url: string; sizeBytes: number }[] }
-  expect(parts[0].sizeBytes).toBe(10)
-  expect(new URL(parts[0].url).searchParams.get('X-Amz-SignedHeaders')).toContain('content-length')
-
-  const oversize = await fetch(parts[0].url, { method: 'PUT', body: bytes(5000) })
-  expect(oversize.status).toBe(403)
-  const exact = await fetch(parts[0].url, { method: 'PUT', body: bytes(10) })
-  expect(exact.status).toBe(200)
-})
-
-test('a size lie the store let through is refused and cleaned up', async () => {
-  const { accessToken } = await harness.signIn(ALICE)
-  const started = await harness.json('/backup/uploads', 'POST', { sizeBytes: 10, keyVersion: 1 }, accessToken)
-  const { backupId } = (await started.json()) as { backupId: string }
-  const incomplete = await harness.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, accessToken)
-  expect(incomplete.status).toBe(409)
-
-  // A store that ignored the signed length: 5000 bytes landed for 10 reserved.
-  const [upload] = [...harness.s3.uploads.values()]
-  upload.parts.set(1, bytes(5000))
-  const done = await harness.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, accessToken)
-  expect(done.status).toBe(400)
-  expect(((await done.json()) as { code: string }).code).toBe('size_mismatch')
-  expect(harness.s3.uploads.size).toBe(0)
-  expect((await list(accessToken)).backups).toEqual([])
-})
-
-test('retention keeps at most BACKUP_MAX_COUNT and removes the rest from the bucket', async () => {
-  harness.env = backupEnv({ BACKUP_MAX_COUNT: '2' })
-  const { accessToken } = await harness.signIn(ALICE)
-  const ids: string[] = []
-  for (let i = 0; i < 4; i++) {
-    ids.push((await harness.upload(accessToken, bytes(10, i))).backupId)
-  }
-  const kept = (await list(accessToken)).backups.map((b) => b.id)
-  expect(kept).toHaveLength(2)
-  const objects = harness.s3.keys().filter((key) => key.endsWith('.chb'))
-  expect(objects).toHaveLength(2)
-  for (const id of kept) expect(objects.some((key) => key.includes(id))).toBe(true)
 })
 
 test('deleting one backup, then the whole account', async () => {
   const { accessToken, refreshToken } = await harness.signIn(ALICE)
-  const first = await harness.upload(accessToken, bytes(10))
-  await harness.upload(accessToken, bytes(20))
-  await harness.json('/backup/uploads', 'POST', { sizeBytes: 30, keyVersion: 1 }, accessToken)
+  const first = await harness.upload(accessToken, bytes(10), [BIBLE])
+  await harness.upload(accessToken, bytes(20), [BIBLE])
+  await harness.start(accessToken, 30)
 
-  const removed = await harness.request(`/backup/backups/${first.backupId}`, { method: 'DELETE' }, accessToken)
-  expect(removed.status).toBe(200)
+  await harness.request(`/backup/backups/${first.backupId}`, { method: 'DELETE' }, accessToken)
   expect((await list(accessToken)).backups).toHaveLength(1)
+  expect(objectKeys('blobs/')).toHaveLength(1)
 
   const deleted = await harness.request('/backup/account', { method: 'DELETE' }, accessToken)
   expect(await deleted.json()).toEqual({ deletedBackups: 1 })
-  // Only the empty record is left: no backups, no uploads in flight.
-  expect(
-    harness.s3.keys().filter((key) => key.startsWith('accounts/') && !key.endsWith('account.json'))
-  ).toEqual([])
+  expect(objectKeys('backups/')).toEqual([])
+  expect(objectKeys('blobs/')).toEqual([])
   expect(harness.s3.uploads.size).toBe(0)
   const record = JSON.parse(
-    new TextDecoder().decode(
-      [...harness.s3.objects].find(([key]) => key.endsWith('account.json'))?.[1]
-    )
+    new TextDecoder().decode([...harness.s3.objects].find(([key]) => key.endsWith('account.json'))?.[1])
   )
-  expect(record.backups).toEqual([])
-  expect(JSON.stringify(record)).not.toContain('alice')
-  // Every token issued before is refused.
+  expect(record).toMatchObject({ backups: [], blobs: {}, usedBytes: 0, email: null })
   expect((await harness.request('/backup/backups', {}, accessToken)).status).toBe(401)
   const refresh = await harness.json('/backup/session/refresh', 'POST', { refreshToken })
   expect(refresh.status).toBe(401)

@@ -2,7 +2,6 @@
  * OpenAPI 3.1 document of Church Hub Cloud backup (served at
  * /backup/openapi.json, rendered by Scalar at /backup/docs).
  */
-import { RETENTION } from './account/applyRetention'
 import { MAX_PENDING_UPLOADS } from './account/checkCanStartUpload'
 import { UPLOAD_MAX_AGE_MS } from './account/takeExpiredUploads'
 import { DEFAULT_LIMITS } from './backupSettings'
@@ -80,14 +79,18 @@ export const backupOpenApi = {
       '',
       '**Sign-in.** The PC opens `/backup/sign-in` with its loopback callback, a nonce and the SHA-256 (base64url) of a verifier it keeps. Google answers `/backup/callback` (PKCE, scopes `openid email`, verified email required), which redirects to the PC with its nonce and a five-minute grant. The PC swaps the grant and its verifier for a session (`POST /backup/session`): an access token (one hour) and a refresh token (180 days). Tokens are HMAC-signed, compared in constant time and bound to the Google `sub` and to the PC’s session family. A refresh token is single use: each refresh moves its family to the next generation, and a token of an older generation (a copy used twice) ends every session of the account. Signing out ends the PC’s family; deleting the account ends them all.',
       '',
-      '**Storage.** Each account has a folder in a private bucket, named by a keyed hash of its Google `sub` (never its email). Backups go straight to the bucket in parts through presigned URLs valid ' +
-        `${PRESIGN_TTL_SECONDS / 60} minutes, handed out only to the signed-in account within its quota, each signed for its part’s exact Content-Length; downloads are presigned the same way.`,
+      '**What a backup is.** Three kinds of objects in a private, unlisted bucket, under folders named by a keyed hash of the Google `sub` (never its email):',
+      '- the **user part**: the church’s own data (settings, users, programs, history, bookmarks, its own and edited songs, every song’s usage), an SQLite file the app gzips and encrypts (AES-256-GCM in 1 MiB chunks under a fresh key, wrapped with the account key from `GET /backup/key`);',
+      '- the **manifest**: encrypted the same way; it lists the user part’s hash and the blobs the backup needs;',
+      '- **resource blobs**: shared, rarely changing data (Bible translations; the slides of unedited songs from song libraries), plaintext, content-addressed by the SHA-256 of their contents, immutable, under a random per-account prefix. A blob the account already stores is never sent again, so a backup with unchanged resources uploads only its user part and manifest.',
       '',
-      '**Quota.** Each account may store its quota (2 GiB by default, `BACKUP_QUOTA_BYTES`, or an admin’s override). The account record keeps the authoritative usage counter, changed only by compare-and-swap: an upload reserves its size at start (used + reserved + it must fit; when it doesn’t, backups retention would drop after it are removed first), the real size is read from the bucket at completion, deletes and retention free it, and a daily reconcile recomputes it from the bucket.',
+      `Uploads and downloads go straight to the bucket through presigned URLs valid ${PRESIGN_TTL_SECONDS / 60} minutes, each PUT signed for its exact Content-Length. Restore verifies every blob’s hash and the user part’s hash from the manifest.`,
       '',
-      '**Encryption.** The app encrypts each backup before uploading it: AES-256-GCM in 1 MiB chunks under a fresh random key, which it wraps with the account key from `GET /backup/key` (derived from a service secret and the account’s `sub`). The bucket alone can’t read a backup; the same account can restore after a reinstall by signing in again.',
+      `**Quota.** Each account may store its quota (${DEFAULT_LIMITS.quotaBytes / MIB} MiB by default, \`BACKUP_QUOTA_BYTES\`, or an admin’s override), counting every backup’s user part and manifest plus each blob once. The record keeps the authoritative usage counter and the blobs’ reference counts, changed only by compare-and-swap. An upload reserves what it adds at start; when used + reserved + that would pass the quota it is refused (nothing is deleted to make room). Sizes are read from the bucket at completion; a blob with no backup referring to it is deleted; a daily reconcile recomputes everything from the bucket.`,
       '',
-      `**Free tier** (defaults): ${DEFAULT_LIMITS.maxBackupBytes / MIB} MiB a backup, ${DEFAULT_LIMITS.quotaBytes / MIB} MiB an account, ${DEFAULT_LIMITS.uploadsPerDay} uploads a day, ${MAX_PENDING_UPLOADS} in flight (dropped after ${UPLOAD_MAX_AGE_MS / 3600000} hours). Retention keeps the newest ${RETENTION.latest}, one a day for ${RETENTION.days} days and one a week for ${RETENTION.weeks} weeks, at most ${DEFAULT_LIMITS.maxBackups}.`,
+      `**Retention.** A backup expires ${DEFAULT_LIMITS.retentionDays} days after it was made (\`BACKUP_RETENTION_DAYS\`), removed by the hourly upkeep. No other pruning.`,
+      '',
+      `**Free tier** (defaults): ${DEFAULT_LIMITS.maxBackupBytes / MIB} MiB an upload, ${DEFAULT_LIMITS.uploadsPerDay} uploads a day, ${MAX_PENDING_UPLOADS} in flight (dropped after ${UPLOAD_MAX_AGE_MS / 3600000} hours).`,
     ].join('\n'),
   },
   components: {
@@ -129,12 +132,13 @@ export const backupOpenApi = {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          sizeBytes: { type: 'integer', description: 'As stored (encrypted)' },
-          createdAt: { type: 'integer', description: 'Unix ms' },
+          sizeBytes: { type: 'integer', description: 'Its own bytes: user part + manifest (blobs are shared)' },
+          blobCount: { type: 'integer', description: 'Resource blobs it references' },
+          createdAt: { type: 'integer', description: 'Unix ms; it expires retentionDays after' },
           appVersion: { type: 'string' },
           keyVersion: { type: 'integer' },
         },
-        required: ['id', 'sizeBytes', 'createdAt', 'appVersion', 'keyVersion'],
+        required: ['id', 'sizeBytes', 'blobCount', 'createdAt', 'appVersion', 'keyVersion'],
       },
     },
   },
@@ -235,7 +239,7 @@ export const backupOpenApi = {
               reservedBytes: { type: 'integer', description: 'Uploads in flight' },
               quotaBytes: { type: 'integer', description: 'The account’s quota' },
               maxBackupBytes: { type: 'integer' },
-              maxBackups: { type: 'integer' },
+              retentionDays: { type: 'integer' },
               uploadsPerDay: { type: 'integer' },
               suspended: { type: 'boolean' },
             },
@@ -277,7 +281,7 @@ export const backupOpenApi = {
                   usedBytes: { type: 'integer' },
                   maxBackupBytes: { type: 'integer' },
                   quotaBytes: { type: 'integer' },
-                  maxBackups: { type: 'integer' },
+                  retentionDays: { type: 'integer' },
                   uploadsPerDay: { type: 'integer' },
                 },
               },
@@ -292,15 +296,27 @@ export const backupOpenApi = {
         tags: ['Backups'],
         summary: 'Start an upload',
         description:
-          'Checks the free tier (size, daily uploads, uploads in flight, storage after retention), then opens a multipart upload in the bucket and reserves its size.',
+          'Declares the encrypted user part and manifest and every resource blob the backup references. Checks the free tier (size, daily uploads, uploads in flight, used + reserved + what this upload adds within the quota), opens a multipart upload for the user part, takes a ref on every blob and reserves the bytes. Answers which blobs to send: the others are already stored.',
         security: signedIn,
         requestBody: body(
           {
-            sizeBytes: { type: 'integer', description: 'The encrypted file’s exact size' },
+            userBytes: { type: 'integer', description: 'The encrypted user part’s exact size' },
+            manifestBytes: { type: 'integer', description: 'The encrypted manifest’s exact size (≤ 256 KiB)' },
+            blobs: {
+              type: 'array',
+              maxItems: 200,
+              items: {
+                type: 'object',
+                properties: {
+                  hash: { type: 'string', pattern: '^[0-9a-f]{64}$', description: 'SHA-256 of the blob’s contents' },
+                  sizeBytes: { type: 'integer', description: 'Its exact size as stored (gzipped)' },
+                },
+              },
+            },
             appVersion: { type: 'string' },
             keyVersion: { type: 'integer', const: 1 },
           },
-          ['sizeBytes', 'keyVersion']
+          ['userBytes', 'manifestBytes', 'blobs', 'keyVersion']
         ),
         responses: {
           '201': json('Started', {
@@ -309,6 +325,7 @@ export const backupOpenApi = {
               backupId: { type: 'string' },
               partSize: { type: 'integer', description: 'Every part but the last' },
               partCount: { type: 'integer' },
+              missingBlobs: { type: 'array', items: { type: 'string' }, description: 'The blobs to send' },
               expiresAt: { type: 'integer', description: 'Unix ms; unfinished, it is dropped' },
             },
           }),
@@ -324,7 +341,7 @@ export const backupOpenApi = {
     '/backup/uploads/{backupId}/parts': {
       post: {
         tags: ['Backups'],
-        summary: 'Presigned URLs for parts',
+        summary: 'Presigned URLs for parts of the user part',
         description: `PUT each part's bytes to its URL (valid ${PRESIGN_TTL_SECONDS / 60} minutes), exactly sizeBytes of them: the URL is signed with that Content-Length and the store refuses any other. Ask for at most 50 at a time, as the upload goes.`,
         security: signedIn,
         parameters: [backupId],
@@ -356,12 +373,43 @@ export const backupOpenApi = {
         },
       },
     },
+    '/backup/uploads/{backupId}/files': {
+      post: {
+        tags: ['Backups'],
+        summary: 'Presigned URLs for the manifest and the blobs to send',
+        description: `PUT each file to its URL (valid ${PRESIGN_TTL_SECONDS / 60} minutes), exactly sizeBytes of it: the URL is signed with that Content-Length.`,
+        security: signedIn,
+        parameters: [backupId],
+        requestBody: body(
+          { files: { type: 'array', maxItems: 50, items: { type: 'string', description: '"manifest", or a blob hash from missingBlobs' } } },
+          ['files']
+        ),
+        responses: {
+          '200': json('The URLs', {
+            type: 'object',
+            properties: {
+              files: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { name: { type: 'string' }, sizeBytes: { type: 'integer' }, url: { type: 'string' } },
+                },
+              },
+              expiresAt: { type: 'integer', description: 'Unix ms' },
+            },
+          }),
+          '400': error('Not the manifest or a blob this upload sends (invalid_request)'),
+          '404': notFound,
+          ...common,
+        },
+      },
+    },
     '/backup/uploads/{backupId}/complete': {
       post: {
         tags: ['Backups'],
         summary: 'Finish an upload',
         description:
-          'The parts must add up to exactly the reserved size. The real size is then read from the bucket: another size, or a total past the quota, deletes the object and is refused. Otherwise the backup is listed, counted, and retention removes the backups it replaces.',
+          'The manifest and every blob this upload sends must be in the bucket at their declared sizes (missing: 409 with `missing`), and the user part’s parts must add up to its declared size. Sizes are read from the bucket; a wrong one aborts the upload. Then the backup is listed, its new blobs marked stored and the usage grows by what was really added; past the quota the upload is dropped.',
         security: signedIn,
         parameters: [backupId],
         responses: {
@@ -372,7 +420,7 @@ export const backupOpenApi = {
           '400': error('Not the reserved size: aborted or deleted (size_mismatch)'),
           '413': error('Past the quota: deleted (quota_exceeded)'),
           '404': notFound,
-          '409': error('Parts missing (upload_incomplete, with uploadedParts)'),
+          '409': error('Files or parts missing (upload_incomplete, with missing or uploadedParts)'),
           ...common,
         },
       },
@@ -393,16 +441,20 @@ export const backupOpenApi = {
     '/backup/backups/{backupId}/download': {
       post: {
         tags: ['Backups'],
-        summary: 'A presigned download URL',
+        summary: 'Presigned download URLs: manifest, user part, blobs',
         security: signedIn,
         parameters: [backupId],
         responses: {
           '200': json('GET it within the time', {
             type: 'object',
             properties: {
-              url: { type: 'string' },
+              manifestUrl: { type: 'string' },
+              userPartUrl: { type: 'string' },
+              blobs: {
+                type: 'array',
+                items: { type: 'object', properties: { hash: { type: 'string' }, url: { type: 'string' } } },
+              },
               expiresAt: { type: 'integer', description: 'Unix ms' },
-              sizeBytes: { type: 'integer' },
               keyVersion: { type: 'integer' },
             },
           }),

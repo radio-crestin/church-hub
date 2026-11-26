@@ -78,7 +78,7 @@ export interface Bindings {
   /** Free-tier overrides (bytes, counts); defaults in backup/backupSettings. */
   BACKUP_MAX_BYTES?: string
   BACKUP_QUOTA_BYTES?: string
-  BACKUP_MAX_COUNT?: string
+  BACKUP_RETENTION_DAYS?: string
   BACKUP_UPLOADS_PER_DAY?: string
   /** The backup sign-in's callback (default: <this service>/backup/callback). */
   BACKUP_REDIRECT_URI?: string

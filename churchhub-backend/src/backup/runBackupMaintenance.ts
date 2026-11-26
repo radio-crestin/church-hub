@@ -1,18 +1,21 @@
 import type { Bindings } from '../types'
 import { readAccountIndex } from './account/accountIndex'
+import { expireAccountBackups } from './account/expireAccountBackups'
 import { reconcileAccount } from './account/reconcileAccount'
 import { UPLOAD_MAX_AGE_MS } from './account/takeExpiredUploads'
 import { readBackupSettings } from './backupSettings'
-import { createBackupBucket, type StoredObject } from './storage/createBackupBucket'
+import {
+  type BackupBucket,
+  createBackupBucket,
+  type StoredObject,
+} from './storage/createBackupBucket'
 
-const ACCOUNT_KEY = /^accounts\/([0-9a-f]{64})\/backups\//
+/** The account id of a `backups/<id>/…` or `blobs/<id>/…` key. */
+const OWNER = /^(?:backups|blobs)\/([0-9a-f]{64})\//
 
 /** Aborts multipart uploads left unfinished past their time, in every account. */
-async function abortStaleUploads(
-  bucket: ReturnType<typeof createBackupBucket>,
-  now: number
-): Promise<number> {
-  const stale = (await bucket.listMultipartUploads('accounts/')).filter(
+async function abortStaleUploads(bucket: BackupBucket, now: number) {
+  const stale = (await bucket.listMultipartUploads('backups/')).filter(
     (upload) => now - upload.initiatedAt > UPLOAD_MAX_AGE_MS
   )
   for (const upload of stale) {
@@ -21,29 +24,44 @@ async function abortStaleUploads(
   return stale.length
 }
 
-/** Recomputes every account's usage from one listing of the bucket. */
-async function reconcileAll(
-  bucket: ReturnType<typeof createBackupBucket>
-): Promise<number> {
-  const byAccount = new Map<string, StoredObject[]>()
-  for (const object of await bucket.list('accounts/')) {
-    const accountId = object.key.match(ACCOUNT_KEY)?.[1]
-    if (accountId) byAccount.set(accountId, [...(byAccount.get(accountId) ?? []), object])
-  }
+/** Every account that signed in, or still has objects. */
+async function knownAccounts(bucket: BackupBucket, objects: StoredObject[] = []) {
   const { index } = await readAccountIndex(bucket)
-  const accounts = new Set([...byAccount.keys(), ...Object.keys(index)])
-  for (const accountId of accounts) {
-    await reconcileAccount(bucket, accountId, byAccount.get(accountId) ?? [])
+  const owners = objects.map((o) => o.key.match(OWNER)?.[1]).filter(Boolean) as string[]
+  return [...new Set([...Object.keys(index), ...owners])]
+}
+
+/** Recomputes every account from one listing of the bucket. */
+async function reconcileAll(bucket: BackupBucket, retentionDays: number) {
+  const objects = [...(await bucket.list('backups/')), ...(await bucket.list('blobs/'))]
+  const byAccount = new Map<string, StoredObject[]>()
+  for (const object of objects) {
+    const owner = object.key.match(OWNER)?.[1]
+    if (owner) byAccount.set(owner, [...(byAccount.get(owner) ?? []), object])
   }
-  return accounts.size
+  const accounts = await knownAccounts(bucket, objects)
+  for (const accountId of accounts) {
+    await reconcileAccount(bucket, accountId, retentionDays, byAccount.get(accountId) ?? [])
+  }
+  return accounts.length
+}
+
+/** Expires backups past the retention in every account. */
+async function expireAll(bucket: BackupBucket, retentionDays: number) {
+  let expired = 0
+  for (const accountId of await knownAccounts(bucket)) {
+    expired += await expireAccountBackups(bucket, accountId, retentionDays)
+  }
+  return expired
 }
 
 /**
  * The backup service's scheduled upkeep, the same on Cloudflare (cron
- * triggers) and Node (timers): every hour, multipart uploads left
- * unfinished are aborted; once a day (`reconcile`), every account's usage
- * is recomputed from the bucket. Skipped quietly while cloud backup is not
- * configured; failures are logged without keys.
+ * triggers) and Node (timers). Every hour: multipart uploads left
+ * unfinished are aborted and backups past the retention (30 days) expire.
+ * Once a day (`reconcile`): every account is recomputed from the bucket.
+ * Skipped quietly while cloud backup is not configured; failures are
+ * logged without keys.
  */
 export async function runBackupMaintenance(
   env: Bindings,
@@ -56,11 +74,13 @@ export async function runBackupMaintenance(
     return
   }
   const bucket = createBackupBucket(settings.bucket)
+  const { retentionDays } = settings.limits
   try {
     const aborted = await abortStaleUploads(bucket, Date.now())
-    const reconciled = options.reconcile ? await reconcileAll(bucket) : 0
+    const expired = await expireAll(bucket, retentionDays)
+    const reconciled = options.reconcile ? await reconcileAll(bucket, retentionDays) : 0
     console.log(
-      `[backup] maintenance: ${aborted} stale uploads aborted, ${reconciled} accounts reconciled`
+      `[backup] maintenance: ${aborted} stale uploads aborted, ${expired} backups expired, ${reconciled} accounts reconciled`
     )
   } catch (error) {
     console.error(

@@ -1,7 +1,7 @@
 import { SyncError } from '../../sync/SyncError'
 import { PRESIGN_TTL_SECONDS } from '../storage/createBackupBucket'
 import type { PendingUpload } from './AccountRecord'
-import { backupObjectKey } from './accountKeys'
+import { userPartKey } from './accountKeys'
 import { readAccount } from './accountStore'
 import type { BackupContext } from './BackupContext'
 import { findPendingUpload, requireBackupId } from './findPendingUpload'
@@ -13,11 +13,11 @@ const MAX_PARTS_PER_REQUEST = 50
 export const partLength = (upload: PendingUpload, partNumber: number) =>
   partNumber < upload.partCount
     ? upload.partSize
-    : upload.sizeBytes - upload.partSize * (upload.partCount - 1)
+    : upload.userBytes - upload.partSize * (upload.partCount - 1)
 
 /**
- * Presigned PUT URLs (15 minutes) for parts of the caller's own upload in
- * flight. Each is signed for its exact Content-Length, so the store refuses
+ * Presigned PUT URLs (15 minutes) for parts of the user part of the
+ * caller's own upload in flight. Each is signed for its exact Content-Length, so the store refuses
  * a part of any other size: the upload can't grow past what was reserved.
  */
 export async function presignParts(
@@ -46,7 +46,7 @@ export async function presignParts(
       `partNumbers must be 1-${MAX_PARTS_PER_REQUEST} distinct parts of 1-${upload.partCount}`
     )
   }
-  const key = backupObjectKey(caller.accountId, id)
+  const key = userPartKey(caller.accountId, id)
   const expiresAt = Date.now() + PRESIGN_TTL_SECONDS * 1000
   const parts = await Promise.all(
     (partNumbers as number[]).map(async (partNumber) => {
