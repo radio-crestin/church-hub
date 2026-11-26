@@ -28,7 +28,7 @@ export {
   getYouTubeConfig,
   getYoutubePlaylists,
   logoutYouTube,
-  storePKCESession,
+  startYouTubeSignIn,
   storeYouTubeTokens,
   updateYouTubeConfig,
   type YouTubeConfigUpdate,

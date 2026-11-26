@@ -342,15 +342,6 @@ test.describe('Request origins', () => {
     expect(drive.status()).toBe(200)
     expect(await drive.text()).not.toContain('<script>window.__x')
 
-    for (const param of ['error', 'code']) {
-      const youtube = await request.get(
-        `/api/livestream/youtube/callback?${param}=${encodeURIComponent(markup)}`,
-        { headers: navigation },
-      )
-      expect(youtube.status()).toBe(200)
-      expect(await youtube.text()).not.toContain('<script>window.__x')
-    }
-
     // The owner sign-in's return, without a nonce this server issued.
     const owner = await request.get(
       '/api/sync/cloud/owner/callback?nonce=unknown&ticket=x&expiresAt=1',
@@ -358,5 +349,163 @@ test.describe('Request origins', () => {
     )
     expect(owner.status()).toBe(200)
     expect(await owner.text()).toContain('Sign-in failed')
+  })
+
+  test('YouTube tokens are stored only with a sign-in this server started', async ({
+    request,
+  }) => {
+    const tokens = {
+      accessToken: 'e2e-access',
+      refreshToken: 'e2e-refresh',
+      expiresAt: Date.now() + 3_600_000,
+    }
+    const store = (state?: string) =>
+      request.post('/api/livestream/youtube/tokens', {
+        data: { ...tokens, state },
+      })
+
+    try {
+      // What the app's callback page would send for a link built elsewhere.
+      for (const state of [undefined, 'made-up']) {
+        const refused = await store(state)
+        expect(refused.status()).toBe(400)
+        expect((await refused.json()).error).toBe('unknown_sign_in')
+      }
+
+      const signIn = await request.post('/api/livestream/youtube/sign-in')
+      expect(signIn.ok()).toBe(true)
+      const { state } = (await signIn.json()).data as { state: string }
+      expect((await store(state)).ok()).toBe(true)
+      expect((await store(state)).status()).toBe(400)
+
+      // The server's own callback, which posted the code to any window, is gone.
+      const oldCallback = await request.get(
+        '/api/livestream/youtube/callback?code=x',
+      )
+      expect(await oldCallback.text()).not.toContain('youtube-auth-code')
+    } finally {
+      await request.delete('/api/livestream/youtube/logout')
+    }
+  })
+
+  test('the sign-in redirect routes are gone', async ({ request }) => {
+    for (const path of [
+      '/api/auth/login-redirect/any-ticket',
+      '/api/auth/logout-redirect',
+    ]) {
+      // Unknown paths get the app's page: no redirect, no cookie.
+      const res = await request.get(path, { maxRedirects: 0 })
+      expect(res.status(), path).not.toBe(302)
+      expect(res.headers().location, path).toBeUndefined()
+      expect(res.headers()['set-cookie'], path).toBeUndefined()
+    }
+  })
+
+  test('a user sign-in link signs in when opened by the user, asks when opened by a page', async ({
+    request,
+    baseURL,
+  }) => {
+    const base = baseURL as string
+    const created = await request.post('/api/users', {
+      data: {
+        name: `E2E <b>link</b> ${Date.now()}`,
+        permissions: ['songs.view'],
+      },
+    })
+    expect(created.ok()).toBe(true)
+    const { data } = await created.json()
+    const path = `/api/auth/user/${encodeURIComponent(data.token as string)}`
+    const cookieOf = (headers: Record<string, unknown>) =>
+      [headers['set-cookie'] ?? []].flat().join('\n')
+
+    try {
+      // Scanned, typed or pasted: signed in at once, as before.
+      const opened = await rawRequest(base, path, {
+        headers: { 'Sec-Fetch-Site': 'none', 'Sec-Fetch-Mode': 'navigate' },
+      })
+      expect(opened.status).toBe(302)
+      expect(cookieOf(opened.headers)).toContain('user_auth=')
+
+      // Opened by another site's page, or a browser that can't tell: asked.
+      const askedFor: Record<string, string>[] = [
+        { 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'navigate' },
+        {},
+      ]
+      for (const headers of askedFor) {
+        const asked = await rawRequest(base, path, { headers })
+        expect(asked.status).toBe(200)
+        expect(asked.headers['set-cookie']).toBeUndefined()
+        expect(asked.body).toContain(`<form method="post" action="${path}">`)
+        expect(asked.body).toContain('&lt;b&gt;link&lt;/b&gt;')
+        expect(asked.body).not.toContain('<b>link</b>')
+      }
+
+      // The page's button posts the link back from the server's own origin.
+      const confirmed = await rawRequest(base, path, {
+        method: 'POST',
+        headers: {
+          Origin: base,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+      expect(confirmed.status).toBe(303)
+      expect(cookieOf(confirmed.headers)).toContain('user_auth=')
+
+      const fromElsewhere = await rawRequest(base, path, {
+        method: 'POST',
+        headers: {
+          Origin: FOREIGN,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+      expect(fromElsewhere.status).toBe(403)
+      expect(fromElsewhere.headers['set-cookie']).toBeUndefined()
+    } finally {
+      await request.delete(`/api/users/${data.user.id}`)
+    }
+  })
+
+  test('a session cookie from Chrome on this machine is reissued as Lax', async ({
+    request,
+    baseURL,
+  }) => {
+    const base = baseURL as string
+    const created = await request.post('/api/users', {
+      data: { name: `E2E cookie ${Date.now()}`, permissions: ['songs.view'] },
+    })
+    const { data } = await created.json()
+    const chrome =
+      'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
+    const safari =
+      'Mozilla/5.0 AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15'
+    const me = (headers: Record<string, string>) =>
+      rawRequest(base, '/api/auth/me', {
+        headers: { Cookie: `user_auth=${data.token}`, ...headers },
+      })
+
+    try {
+      const fromChrome = await me({ 'User-Agent': chrome })
+      expect(JSON.parse(fromChrome.body).data.id).toBe(data.user.id)
+      const reissued = [fromChrome.headers['set-cookie'] ?? []]
+        .flat()
+        .join('\n')
+      expect(reissued).toContain(`user_auth=${data.token}`)
+      expect(reissued).toContain('SameSite=Lax')
+      expect(reissued).not.toContain('Secure')
+
+      // The Windows desktop webview keeps its cross-site cookie; WebKit was
+      // never given one.
+      const keptFor: Record<string, string>[] = [
+        { 'User-Agent': chrome, Origin: 'http://tauri.localhost' },
+        { 'User-Agent': safari },
+      ]
+      for (const headers of keptFor) {
+        const res = await me(headers)
+        expect(res.status).toBe(200)
+        expect(res.headers['set-cookie']).toBeUndefined()
+      }
+    } finally {
+      await request.delete(`/api/users/${data.user.id}`)
+    }
   })
 })
