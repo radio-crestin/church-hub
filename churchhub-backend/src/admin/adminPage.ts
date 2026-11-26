@@ -67,6 +67,7 @@ dt{color:var(--hint)}dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap
     <div class="row spread">
       <div class="tabs" role="tablist">
         <button type="button" id="tabAccounts" aria-pressed="true">Accounts</button>
+        <button type="button" id="tabDeleted" aria-pressed="false">Deleted accounts</button>
         <button type="button" id="tabAudit" aria-pressed="false">Audit log</button>
       </div>
       <input id="search" type="search" placeholder="Search by email" aria-label="Search by email">
@@ -74,6 +75,10 @@ dt{color:var(--hint)}dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap
     <div id="accountsView">
       <div class="scroll"><table><thead><tr><th>Email</th><th>Usage</th><th>Last backup</th><th>Status</th></tr></thead><tbody id="accounts"></tbody></table></div>
       <div class="row"><button type="button" id="prev">Previous</button><span class="hint" id="pageInfo"></span><button type="button" id="next">Next</button></div>
+    </div>
+    <div id="deletedView" hidden>
+      <p class="hint">What a deleted account keeps: only its limits (pause, quota, today’s uploads), purged 90 days after deletion. A new sign-in with the same Google account takes them back.</p>
+      <div class="scroll"><table><thead><tr><th>Account id</th><th>Deleted</th><th>Uploads</th><th>Quota</th><th>Purged on</th><th></th></tr></thead><tbody id="deleted"></tbody></table></div>
     </div>
     <div id="auditView" hidden>
       <div class="scroll"><table><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Change</th><th>Status</th></tr></thead><tbody id="audit"></tbody></table></div>
@@ -184,14 +189,31 @@ async function loadAudit() {
   }))
 }
 
-function showTab(audit) {
-  $('tabAccounts').setAttribute('aria-pressed', String(!audit)); $('tabAudit').setAttribute('aria-pressed', String(audit))
-  $('accountsView').hidden = audit; $('auditView').hidden = !audit; $('search').hidden = audit
-  if (audit) loadAudit()
+async function loadDeleted() {
+  const { tombstones } = await api('/tombstones')
+  $('deleted').replaceChildren(...tombstones.map((t) => {
+    const tr = document.createElement('tr')
+    const purge = document.createElement('button'); purge.type = 'button'; purge.textContent = 'Purge now'
+    purge.onclick = async () => { await api('/tombstones/' + t.accountId, { method: 'DELETE', body: '{}' }); loadDeleted() }
+    const action = document.createElement('td'); action.append(purge)
+    tr.append(cell(t.accountId.slice(0, 12)), cell(when(t.deletedAt)), cell(t.suspended ? 'Paused' : 'Allowed'),
+      cell(t.quotaBytes === null ? 'Default' : size(t.quotaBytes)), cell(new Date(t.purgeAt).toLocaleDateString()), action)
+    return tr
+  }))
 }
 
-$('tabAccounts').onclick = () => showTab(false)
-$('tabAudit').onclick = () => showTab(true)
+function showTab(tab) {
+  for (const [name, view] of [['Accounts', 'accountsView'], ['Deleted', 'deletedView'], ['Audit', 'auditView']]) {
+    $('tab' + name).setAttribute('aria-pressed', String(tab === name)); $(view).hidden = tab !== name
+  }
+  $('search').hidden = tab !== 'Accounts'
+  if (tab === 'Audit') loadAudit()
+  if (tab === 'Deleted') loadDeleted()
+}
+
+$('tabAccounts').onclick = () => showTab('Accounts')
+$('tabDeleted').onclick = () => showTab('Deleted')
+$('tabAudit').onclick = () => showTab('Audit')
 $('prev').onclick = () => { page--; loadAccounts() }
 $('next').onclick = () => { page++; loadAccounts() }
 let searchTimer

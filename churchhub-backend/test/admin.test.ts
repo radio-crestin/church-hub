@@ -22,6 +22,8 @@ afterEach(() => harness.restore())
 
 const ACCOUNT = 'a'.repeat(64)
 const ADMIN_ROUTES: [string, string, unknown?][] = [
+  ['GET', '/tombstones'],
+  ['DELETE', `/tombstones/${ACCOUNT}`, {}],
   ['GET', '/session'],
   ['POST', '/sign-out', {}],
   ['GET', '/accounts'],
@@ -195,4 +197,27 @@ test('accounts are searchable by email and paged', async () => {
     accounts: { email: string }[]
   }
   expect(found.accounts.map((a) => a.email)).toEqual(['other@church.test'])
+})
+
+test('an admin purges a deleted account’s tombstone early, audited', async () => {
+  const { user, id } = await userAccount()
+  await harness.request('/backup/account', { method: 'DELETE' }, user.accessToken)
+  const admin = await signedInAdmin()
+  const listed = (await (await harness.adminApi('/tombstones', admin)).json()) as {
+    tombstones: { accountId: string; purgeAt: number; deletedAt: number }[]
+  }
+  expect(listed.tombstones.map((t) => t.accountId)).toEqual([id])
+  expect(listed.tombstones[0].purgeAt - listed.tombstones[0].deletedAt).toBe(90 * 24 * 60 * 60 * 1000)
+
+  const purged = await harness.adminApi(`/tombstones/${id}`, { method: 'DELETE', body: {}, ...admin })
+  expect(purged.status).toBe(200)
+  expect(harness.s3.keys().filter((key) => key.startsWith('tombstones/'))).toEqual([])
+  const { entries } = (await (await harness.adminApi('/audit', admin)).json()) as {
+    entries: { action: string; admin: string; before?: unknown; after?: unknown }[]
+  }
+  expect(entries.find((e) => e.action === `DELETE /admin/api/tombstones/${id}`)).toMatchObject({
+    admin: ADMIN.email,
+    before: { suspended: false },
+    after: { purged: true },
+  })
 })

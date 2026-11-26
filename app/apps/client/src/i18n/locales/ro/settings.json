@@ -1053,7 +1053,7 @@
         "deleteAccount": {
           "button": "Deconectează-te și șterge copiile din cloud",
           "title": "Ștergi toate copiile din cloud?",
-          "message": "Toate copiile acestui cont din Church Hub Cloud vor fi șterse definitiv, iar tu vei fi deconectat. Copiile de pe acest computer și din Google Drive nu sunt afectate.",
+          "message": "Toate copiile acestui cont din Church Hub Cloud vor fi șterse definitiv, iar tu vei fi deconectat. Limitele speciale acordate (o pauză sau o cotă de stocare mai mare) rămân valabile timp de 90 de zile. Copiile de pe acest computer și din Google Drive nu sunt afectate.",
           "confirm": "Șterge și deconectează-te"
         },
         "now": {

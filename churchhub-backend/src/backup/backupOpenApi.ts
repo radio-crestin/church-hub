@@ -481,7 +481,7 @@ export const backupOpenApi = {
         tags: ['Backups'],
         summary: 'Delete the account and all its backups',
         description:
-          'Deletes every backup and upload in flight and refuses every token issued so far. What stays is a record with no backups: when tokens became invalid and the day’s upload times.',
+          'Deletes every backup, blob and upload in flight and the record, and refuses every token issued so far. What stays is a tombstone keyed by the account hash: the pause, an admin’s quota override, the day’s upload count and date, and when it was deleted (no email, no Google id). A new sign-in with the same account takes those limits back; it is purged 90 days after the deletion.',
         security: signedIn,
         responses: {
           '200': json('Deleted', {

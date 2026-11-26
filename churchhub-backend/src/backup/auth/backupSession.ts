@@ -6,6 +6,7 @@ import type { AccountRecord } from '../account/AccountRecord'
 import { updateAccountIndex } from '../account/accountIndex'
 import { accountIdFor } from '../account/accountKeys'
 import { readAccount, updateAccount } from '../account/accountStore'
+import { applyTombstone, readTombstone, tombstoneKey } from '../account/tombstone'
 import type { BackupSettings } from '../backupSettings'
 import type { BackupBucket } from '../storage/createBackupBucket'
 import {
@@ -53,7 +54,8 @@ function dropOldestSessions(record: AccountRecord) {
  * The PC's first session after a sign-in: the grant from the callback and
  * the verifier whose hash the sign-in carried (constant-time compared).
  * Records a new session family, the account's email and sign-in time, and
- * its entry in the admin index.
+ * its entry in the admin index; an account deleted before takes back the
+ * limits its tombstone kept.
  */
 export async function openBackupSession(
   bucket: BackupBucket,
@@ -74,7 +76,10 @@ export async function openBackupSession(
   const accountId = await accountIdFor(data.sub, settings.keySecret)
   const fid = randomId(12)
   const now = Date.now()
+  const tombstone = await readTombstone(bucket, accountId)
   const record = await updateAccount(bucket, accountId, (record) => {
+    // A deleted account signing in again takes its limits back.
+    if (tombstone && record.createdAt === null) applyTombstone(record, tombstone, now)
     record.sessions[fid] = { generation: 0, createdAt: now, lastUsedAt: now }
     dropOldestSessions(record)
     record.email = data.email
@@ -82,6 +87,7 @@ export async function openBackupSession(
     record.lastSignInAt = now
     return record
   })
+  if (tombstone) await bucket.delete(tombstoneKey(accountId))
   await updateAccountIndex(bucket, (index) => {
     index[accountId] = {
       email: data.email,

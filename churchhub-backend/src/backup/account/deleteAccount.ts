@@ -5,6 +5,7 @@ import { updateAccountIndex } from './accountIndex'
 import { accountRecordKey } from './accountKeys'
 import { updateAccount } from './accountStore'
 import { listAccountObjects } from './sweepUnlistedObjects'
+import { tombstoneKey, tombstoneOf } from './tombstone'
 
 const PREFIXES = (accountId: string) => [
   `accounts/${accountId}/`,
@@ -13,12 +14,14 @@ const PREFIXES = (accountId: string) => [
 ]
 
 /**
- * Erases an account entirely. First its sessions end (compare-and-swap,
- * so no request in flight can add anything); then every multipart upload
- * under its prefixes is aborted, every object under accounts/<id>/,
+ * Erases an account. First its sessions end (compare-and-swap, so no
+ * request in flight can add anything); then every multipart upload under
+ * its prefixes is aborted, every object under accounts/<id>/,
  * backups/<id>/ and blobs/<id>/ is deleted (an older layout included), its
- * entry leaves the admin index, and its record goes last. Nothing is left:
- * a later sign-in starts a new, empty account.
+ * entry leaves the admin index, and its record goes last. What stays is a
+ * tombstone (tombstones/<id>.json): the pause, an admin's quota and the
+ * day's uploads, nothing personal, purged after 90 days; a later sign-in
+ * with the same account takes those limits back.
  */
 export async function deleteAccount(bucket: BackupBucket, accountId: string) {
   const before = await updateAccount<AccountRecord>(bucket, accountId, (record) => {
@@ -43,5 +46,10 @@ export async function deleteAccount(bucket: BackupBucket, accountId: string) {
     delete index[accountId]
   })
   await bucket.delete(record)
+  // A tombstone left by an earlier deletion gives way to this one.
+  await bucket.delete(tombstoneKey(accountId))
+  await bucket.put(tombstoneKey(accountId), JSON.stringify(tombstoneOf(before, Date.now())), {
+    ifNoneMatch: '*',
+  })
   return { deletedBackups: before.backups.length, before }
 }

@@ -213,8 +213,10 @@ test('deleting one backup, then the whole account', async () => {
   expect(objectKeys('backups/')).toEqual([])
   expect(objectKeys('blobs/')).toEqual([])
   expect(harness.s3.uploads.size).toBe(0)
-  // Nothing is left: not even the record.
-  expect(harness.s3.keys().filter((key) => !key.startsWith('index/'))).toEqual([])
+  // Nothing is left but the tombstone: not even the record.
+  expect(harness.s3.keys().filter((key) => !key.startsWith('index/'))).toEqual([
+    expect.stringMatching(/^tombstones\/[0-9a-f]{64}\.json$/),
+  ])
   expect((await harness.request('/backup/backups', {}, accessToken)).status).toBe(401)
   const refresh = await harness.json('/backup/session/refresh', 'POST', { refreshToken })
   expect(refresh.status).toBe(401)

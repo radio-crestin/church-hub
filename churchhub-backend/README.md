@@ -186,7 +186,12 @@ Free backups of a church's database, only for people signed in with Google
   Each account is handled on its own: one bad record never stops the rest.
 - **Deleting an account** erases everything under `accounts/<id>/`,
   `backups/<id>/` and `blobs/<id>/` (multipart uploads aborted, the record
-  last): nothing is left.
+  last). Only a tombstone stays, `tombstones/<id>.json`: the pause, an
+  admin's quota override, the day's upload count and date, and when it was
+  deleted (no email, no Google id, no backup data). A new sign-in with the
+  same Google account takes those limits back; the hourly upkeep purges a
+  tombstone 90 days after the deletion, and an admin can purge it earlier
+  (audit-logged).
 
 **Settings** (secrets; unset = `/backup` answers `503 not_configured`):
 

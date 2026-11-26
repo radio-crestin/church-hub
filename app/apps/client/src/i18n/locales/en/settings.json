@@ -1046,7 +1046,7 @@
         "deleteAccount": {
           "button": "Sign out and delete my cloud backups",
           "title": "Delete all cloud backups?",
-          "message": "Every backup of this account in Church Hub Cloud is deleted for good, and you are signed out. Backups on this computer and in Google Drive are not affected.",
+          "message": "Every backup of this account in Church Hub Cloud is deleted for good, and you are signed out. Limits you were given (a pause or a larger storage quota) are kept for 90 days. Backups on this computer and in Google Drive are not affected.",
           "confirm": "Delete and sign out"
         },
         "now": {

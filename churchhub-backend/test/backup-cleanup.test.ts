@@ -71,7 +71,7 @@ test('files sent after an abort are swept once no URL can write them', async () 
   expect(stray()).toEqual([])
 })
 
-test('deleting an account erases everything under its prefixes, an older layout included', async () => {
+test('deleting an account erases everything under its prefixes, an older layout included, but the tombstone', async () => {
   const { accessToken } = await harness.signIn(ALICE)
   await harness.upload(accessToken, bytes(10), [bytes(100, 1)])
   await harness.start(accessToken, 10)
@@ -81,7 +81,10 @@ test('deleting an account erases everything under its prefixes, an older layout 
 
   await harness.request('/backup/account', { method: 'DELETE' }, accessToken)
 
-  expect(harness.s3.keys().filter((key) => key.includes(accountId))).toEqual([])
+  // Only the tombstone (limits, nothing personal) carries the account id.
+  expect(harness.s3.keys().filter((key) => key.includes(accountId))).toEqual([
+    `tombstones/${accountId}.json`,
+  ])
   expect(harness.s3.uploads.size).toBe(0)
   // A later sign-in starts a new, empty account.
   const again = await harness.signIn(ALICE)

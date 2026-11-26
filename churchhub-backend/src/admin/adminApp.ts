@@ -8,6 +8,12 @@ import { readAccount, updateAccount } from '../backup/account/accountStore'
 import { deleteAccount } from '../backup/account/deleteAccount'
 import { publicBackup } from '../backup/account/publicBackup'
 import { reconcileAccount } from '../backup/account/reconcileAccount'
+import {
+  readTombstone,
+  TOMBSTONE_DAYS,
+  TOMBSTONES_PREFIX,
+  tombstoneKey,
+} from '../backup/account/tombstone'
 import { readBackupSettings } from '../backup/backupSettings'
 import { handleBackupError } from '../backup/handleBackupError'
 import { createBackupBucket } from '../backup/storage/createBackupBucket'
@@ -326,6 +332,39 @@ adminApp.delete('/admin/api/accounts/:accountId', async (c) => {
     after: { deleted: true },
   })
   return c.json({ deletedBackups })
+})
+
+/** GET /admin/api/tombstones: what deleted accounts keep (limits only), until purged. */
+adminApp.get('/admin/api/tombstones', async (c) => {
+  const { bucket } = storage(c)
+  const ids = (await bucket.list(TOMBSTONES_PREFIX)).map(({ key }) =>
+    key.slice(TOMBSTONES_PREFIX.length, -'.json'.length)
+  )
+  const tombstones = await Promise.all(
+    ids.filter((id) => ACCOUNT_ID.test(id)).map(async (accountId) => {
+      const tombstone = await readTombstone(bucket, accountId)
+      return tombstone && {
+        accountId,
+        ...tombstone,
+        purgeAt: tombstone.deletedAt + TOMBSTONE_DAYS * 24 * 60 * 60 * 1000,
+      }
+    })
+  )
+  return c.json({ tombstones: tombstones.filter(Boolean) })
+})
+
+/** DELETE /admin/api/tombstones/:accountId: purge a deleted account's limits now. */
+adminApp.delete('/admin/api/tombstones/:accountId', async (c) => {
+  const accountId = c.req.param('accountId')
+  if (!ACCOUNT_ID.test(accountId)) {
+    throw new SyncError(400, 'invalid_request', 'Invalid account id')
+  }
+  const { bucket } = storage(c)
+  const tombstone = await readTombstone(bucket, accountId)
+  if (!tombstone) throw new SyncError(404, 'not_found', 'No such tombstone')
+  await bucket.delete(tombstoneKey(accountId))
+  c.set('audit', { before: tombstone, after: { purged: true } })
+  return c.json({ purged: true })
 })
 
 /** GET /admin/api/audit?limit: the newest audit entries. */

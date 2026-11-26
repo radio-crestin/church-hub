@@ -4,6 +4,7 @@ import { expireAccountBackups } from './account/expireAccountBackups'
 import { reconcileAccount } from './account/reconcileAccount'
 import { sweepUnlistedObjects } from './account/sweepUnlistedObjects'
 import { UPLOAD_MAX_AGE_MS } from './account/takeExpiredUploads'
+import { purgeOldTombstones } from './account/tombstone'
 import { readBackupSettings } from './backupSettings'
 import { describeError } from './describeError'
 import {
@@ -72,8 +73,9 @@ async function eachAccount(
 /**
  * The backup service's scheduled upkeep, the same on Cloudflare (cron
  * triggers) and Node (timers). Every hour: multipart uploads left
- * unfinished are aborted, backups past the retention (30 days) expire and
- * objects no record lists (older than any presigned URL) are swept. Once a
+ * unfinished are aborted, backups past the retention (30 days) expire,
+ * objects no record lists (older than any presigned URL) are swept and
+ * tombstones of deleted accounts older than 90 days are purged. Once a
  * day (`reconcile`): every account is recomputed from the bucket. Each
  * account is handled on its own; skipped quietly while cloud backup is not
  * configured.
@@ -97,13 +99,14 @@ export async function runBackupMaintenance(
       await expireAccountBackups(bucket, accountId, retentionDays)
       await sweepUnlistedObjects(bucket, accountId, objects)
     })
+    const purged = await purgeOldTombstones(bucket)
     const reconciled = options.reconcile
       ? await eachAccount(accounts, 'reconcile', (accountId, objects) =>
           reconcileAccount(bucket, accountId, retentionDays, objects)
         )
       : 0
     console.log(
-      `[backup] maintenance: ${aborted} stale uploads aborted, ${tidied} accounts tidied, ${reconciled} reconciled`
+      `[backup] maintenance: ${aborted} stale uploads aborted, ${tidied} accounts tidied, ${purged} tombstones purged, ${reconciled} reconciled`
     )
   } catch (error) {
     console.error(

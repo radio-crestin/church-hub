@@ -146,7 +146,7 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'Sign out, optionally deleting every cloud backup',
       description:
-        'With `deleteBackups`, the account’s backups and data are deleted on the service first. Either way every token issued so far is refused, this PC forgets its sign-in and automatic cloud backups stop.',
+        'With `deleteBackups`, the account’s backups and data are deleted on the service first (only its limits are kept, for 90 days). Either way every token issued so far is refused, this PC forgets its sign-in and automatic cloud backups stop.',
       requestBody: body({
         deleteBackups: { type: 'boolean' },
         confirmToken: {
