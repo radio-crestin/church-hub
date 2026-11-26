@@ -1,1 +1,2 @@
-export { PublicApp } from './components/PublicApp'
+export { WebAppNoticePage } from './components/WebAppNoticePage'
+export { startWebApp } from './service/startWebApp'

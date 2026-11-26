@@ -2,6 +2,7 @@ import {
   createTunnel,
   type Tunnel,
 } from '~/features/remote-access/tunnel/createTunnel'
+import { holdServerLock } from './holdServerLock'
 import type { BootMessage, BootStep, StartMessage } from '../worker/protocol'
 
 export interface BrowserServer {
@@ -16,12 +17,14 @@ export interface BrowserServer {
  * Starts the church server in a Web Worker of this page (T-175): its
  * database on sqlite-wasm, a church's synced or a guest's own. Resolves
  * once it is ready, with the tunnel the page reaches it through: the same
- * the church PC answers over WebRTC.
+ * the church PC answers over WebRTC. Another tab running it already:
+ * OtherTabError.
  */
-export function startBrowserServer(
+export async function startBrowserServer(
   start: StartMessage,
   onStep: (step: BootStep) => void,
 ): Promise<BrowserServer> {
+  await holdServerLock()
   const worker = new Worker(
     new URL('../worker/browserServer.worker.ts', import.meta.url),
     { type: 'module', name: 'church-hub-server' },

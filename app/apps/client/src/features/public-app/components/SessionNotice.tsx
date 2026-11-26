@@ -5,7 +5,6 @@ import { Button } from '~/ui/button'
 interface SessionNoticeProps {
   /** Key of `publicApp`: its `title` and `body` are shown. */
   notice:
-    | 'notJoined'
     | 'removed'
     | 'joinFailed.invalid'
     | 'joinFailed.refused'

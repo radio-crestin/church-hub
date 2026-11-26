@@ -1,22 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
-
 import { createLogger } from '~/utils/logger'
-import {
-  type ChurchBinding,
-  clearChurchBinding,
-  getChurchBinding,
-} from '../service/churchBinding'
-import { DeviceRefusedError } from '../service/fetchReadUrl'
-import { joinChurch } from '../service/joinChurch'
-import { parseJoinLink } from '../service/parseJoinLink'
-import { refreshBinding } from '../service/refreshBinding'
+import { type ChurchBinding, getChurchBinding } from './churchBinding'
+import { DeviceRefusedError } from './fetchReadUrl'
+import { joinChurch } from './joinChurch'
+import { parseJoinLink } from './parseJoinLink'
+import { refreshBinding } from './refreshBinding'
 
 const logger = createLogger('public-app')
 
 export type JoinFailure = 'invalid' | 'refused' | 'offline'
 
 export type ChurchSession =
-  | { kind: 'loading' }
   | { kind: 'notJoined' }
   | { kind: 'removed' }
   | { kind: 'joinFailed'; reason: JoinFailure }
@@ -50,30 +43,16 @@ async function openJoinLink(hash: string): Promise<ChurchSession> {
   }
 }
 
-async function startSession(): Promise<ChurchSession> {
+/**
+ * The web app's church, as it starts: joining with the link it was opened
+ * with, the church this device is bound to, or none (never joined, or
+ * removed).
+ */
+export async function openChurchSession(): Promise<ChurchSession> {
   const { pathname, hash } = window.location
   if (pathname === `${BASE}join` && hash.length > 1) return openJoinLink(hash)
   const saved = getChurchBinding()
   if (!saved) return { kind: 'notJoined' }
   const binding = await refreshBinding(saved)
   return binding ? { kind: 'joined', binding } : { kind: 'removed' }
-}
-
-/**
- * The public app's state: joining with the link it was opened with, the
- * church this device is bound to, or none (never joined, or removed).
- */
-export function useChurchSession() {
-  const [session, setSession] = useState<ChurchSession>({ kind: 'loading' })
-
-  useEffect(() => {
-    void startSession().then(setSession)
-  }, [])
-
-  const leave = useCallback(() => {
-    clearChurchBinding()
-    setSession({ kind: 'notJoined' })
-  }, [])
-
-  return { session, leave }
 }

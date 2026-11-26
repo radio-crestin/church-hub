@@ -16,6 +16,9 @@ export interface ChurchBinding {
   pcSignalId: string | null
   /** The signaling relay of that room, where WebRTC is set up (T-174). */
   relayUrl: string
+  /** This device on the sync service, and its user (T-175; absent before). */
+  deviceId?: string
+  userId?: string
 }
 
 const STORAGE_KEY = 'church-hub-church-binding'

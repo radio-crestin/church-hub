@@ -6,7 +6,10 @@
     "songs": "Adăugăm cântările",
     "bibles": "Adăugăm traducerile Bibliei",
     "search": "Pregătim căutarea cântărilor",
-    "finishing": "Aproape gata"
+    "finishing": "Aproape gata",
+    "download": "Descărcăm cântările și Bibliile",
+    "sync": "Aducem biblioteca bisericii",
+    "save": "Salvăm pe acest dispozitiv"
   },
   "progress": "Cântări: {{done}} din {{total}}",
   "stepOf": "Pasul {{step}} din {{total}}",
@@ -20,5 +23,10 @@
   "restart": "Repornește serverul",
   "retryHint": "Apasă „Reîncearcă” mai jos sau închide complet Church Hub și deschide-l din nou.",
   "restartHint": "Repornește-l mai jos sau închide complet Church Hub și deschide-l din nou.",
-  "reported": "Eroarea a fost raportată automat echipei."
+  "reported": "Eroarea a fost raportată automat echipei.",
+  "reachingChurchPc": "Căutăm calculatorul bisericii",
+  "errorWebStart": "Church Hub nu a putut porni în acest browser",
+  "needsOnlineOnce": "Conectează-te o dată la internet ca să deschizi biserica pe acest dispozitiv.",
+  "otherTab": "Church Hub este deja deschis într-o altă filă a acestui browser.",
+  "otherTabHint": "Închide fila aceea, apoi încearcă din nou."
 }

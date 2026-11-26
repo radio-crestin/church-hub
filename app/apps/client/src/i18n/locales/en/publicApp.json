@@ -44,5 +44,8 @@
     "connecting": "Looking for the church computer…",
     "live": "Live from the church computer",
     "cloud": "From the cloud"
+  },
+  "guest": {
+    "button": "Use Church Hub as a guest"
   }
 }

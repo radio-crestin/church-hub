@@ -45,5 +45,8 @@
     "connecting": "Se caută calculatorul bisericii…",
     "live": "În direct de pe calculatorul bisericii",
     "cloud": "Din cloud"
+  },
+  "guest": {
+    "button": "Folosește Church Hub ca invitat"
   }
 }

@@ -29,6 +29,16 @@ export function getServerPort(): number {
   return import.meta.env.DEV ? DEV_SERVER_PORT : INSTALLED_APP_PORT
 }
 
+/**
+ * The web app's API (`bun run build:public`): a name that never resolves,
+ * so only the tunnel installed for it answers: to the church PC over WebRTC,
+ * or to the server running in this browser (features/browser-server).
+ */
+export const WEB_APP_API_ORIGIN = 'http://church-pc.invalid'
+
+/** The web app (Cloudflare Pages), not the desktop app or its LAN page. */
+export const isWebApp = import.meta.env.VITE_PUBLIC_APP === '1'
+
 // Check if we're running in Tauri mode
 const isTauriEnv =
   typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -113,6 +123,8 @@ function getApiHost(): string {
  * On mobile, uses the stored API URL from localStorage
  */
 export function getApiUrl(): string | null {
+  if (isWebApp) return WEB_APP_API_ORIGIN
+
   // On mobile, use the stored API URL
   if (isMobile()) {
     const storedUrl = getStoredApiUrl()
@@ -134,6 +146,8 @@ export function getApiUrl(): string | null {
  * On mobile, derives from the stored API URL
  */
 export function getWsUrl(): string | null {
+  if (isWebApp) return WEB_APP_API_ORIGIN.replace(/^http/, 'ws')
+
   // On mobile, derive WS URL from stored API URL
   if (isMobile()) {
     const storedUrl = getStoredApiUrl()
