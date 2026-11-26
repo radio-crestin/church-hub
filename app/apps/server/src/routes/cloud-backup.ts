@@ -104,7 +104,7 @@ export async function handleCloudBackupRoutes(
       })
       return callbackPage(
         `Signed in to Church Hub Cloud as ${email}. You can close this window and return to Church Hub.`,
-        `Te-ai conectat la Church Hub Cloud ca ${email}. Poți închide fereastra și reveni în Church Hub.`,
+        `Te-ai conectat la Church Hub Cloud ca ${email}. Poți închide această fereastră și te poți întoarce la Church Hub.`,
       )
     } catch (error) {
       const code =
