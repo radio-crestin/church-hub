@@ -5,9 +5,9 @@ import {
   updateCloudIdentity,
 } from './cloudIdentityStore'
 import { fetchRemoteChanges } from './fetchRemoteChanges'
-import { pushAccessIfChanged } from './pushAccessIfChanged'
 import { pushChanges } from './pushChanges'
 import { refreshReadUrl } from './refreshReadUrl'
+import { rollBackRejected } from './rollBackRejected'
 import { getServerConflict } from './serverConflict'
 import { getSyncVersions, setSyncVersions } from './syncVersionsStore'
 import { getRawDatabase } from '../../../db'
@@ -17,6 +17,7 @@ import { broadcastSyncApplied } from '../../../websocket'
 import { adoptRemoteIdentities } from '../adoptRemoteIdentities'
 import { applyRemoteChanges } from '../applyRemoteChanges'
 import { TOMBSTONE_RETENTION_DAYS } from '../constants'
+import { getChangeAuthors } from '../getChangeAuthors'
 import { getPendingKeys } from '../getPendingKeys'
 import { mergeLibraries } from '../mergeLibraries'
 import { serializeLibrary } from '../serializeLibrary'
@@ -31,7 +32,7 @@ const MAX_CONFLICT_ROUNDS = 3
 /** The PC checks in with the service at least this often (reads skip it). */
 const CHECK_IN_EVERY_MS = 15 * 60 * 1000
 
-let isRunning = false
+let running: Promise<SyncCycleResult> | null = null
 let lastCheckInAt = 0
 
 interface RoundResult {
@@ -44,7 +45,6 @@ interface RoundResult {
 /** One pull → merge → apply → push round against the church's bucket. */
 async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
   const cycleStartSeconds = Math.floor(Date.now() / 1000)
-  await pushAccessIfChanged(identity)
 
   const remote = await fetchRemoteChanges(identity)
   // A server joining a church that already has a library matches its own
@@ -87,15 +87,22 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
     dirtyKeys,
     applyOps,
     getSyncVersions(),
+    getChangeAuthors(),
   )
   if (changes.length > 0) {
-    const outcome = await pushChanges(identity, changes)
-    if (outcome === 'conflict') {
+    const pushed = await pushChanges(identity, changes)
+    if (pushed.outcome !== 'pushed') {
+      // Refused changes go back as the church has them; the next round
+      // sends the rest.
+      const rolledBack =
+        pushed.outcome === 'rejected'
+          ? await rollBackRejected(identity, pushed.rejected, local)
+          : 0
       return {
-        outcome,
+        outcome: 'conflict',
         applied: appliedCount,
         pushed: false,
-        reported: reportedCount,
+        reported: reportedCount + rolledBack,
       }
     }
     logger.info(`Published ${changes.length} change(s) to cloud sync`)
@@ -124,10 +131,21 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
  * church's bucket, merges it with the local library (last writer wins, the
  * Drive transport's merge), applies it, and publishes the local edits that
  * won through the sync service. A write the service refuses as a conflict is
- * pulled and merged again. Failures are kept on sync_config.lastError.
+ * pulled and merged again; one it refuses as not allowed is put back as the
+ * church has it. Failures are kept on sync_config.lastError.
+ *
+ * One cycle at a time: a call while one runs waits for it, then runs its
+ * own, so what was queued before the call is sent when it returns.
  */
 export async function runCloudSyncCycle(): Promise<SyncCycleResult> {
-  if (isRunning) return { success: true, skipped: 'no_changes' }
+  while (running) await running
+  running = cloudSyncCycle().finally(() => {
+    running = null
+  })
+  return running
+}
+
+async function cloudSyncCycle(): Promise<SyncCycleResult> {
   const identity = await getCloudIdentity()
   if (!identity) {
     await upsertSyncConfig({ lastError: 'not_connected' })
@@ -139,7 +157,6 @@ export async function runCloudSyncCycle(): Promise<SyncCycleResult> {
     return { success: false, error: 'server_in_use' }
   }
 
-  isRunning = true
   try {
     // Reads go to the bucket alone; checking in finds another PC holding
     // this church's token, a new read path and a new owner.
@@ -168,7 +185,5 @@ export async function runCloudSyncCycle(): Promise<SyncCycleResult> {
     logger.error(`Cloud sync cycle failed: ${message}`)
     await upsertSyncConfig({ lastError: message })
     return { success: false, error: message }
-  } finally {
-    isRunning = false
   }
 }

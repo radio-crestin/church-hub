@@ -3,6 +3,7 @@ import { copyFile, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { type BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite'
 
+import { stampActingUser } from './actingUser'
 import { type MigrationResult, runMigrations } from './migrations'
 import * as schema from './schema'
 import { Database } from 'bun:sqlite'
@@ -212,6 +213,7 @@ export async function initializeDatabase(): Promise<InitializeResult> {
     t = performance.now()
     const migrationResult = runMigrations(sqlite)
     logTiming('run_migrations', t)
+    stampActingUser(sqlite)
 
     return { db, migrationResult }
   } catch (error) {
@@ -230,6 +232,7 @@ export async function initializeDatabase(): Promise<InitializeResult> {
 export function connectDatabase(): void {
   sqlite = new Database(DATABASE_PATH)
   applyPragmas(sqlite)
+  stampActingUser(sqlite)
   db = drizzle(sqlite, { schema })
 }
 

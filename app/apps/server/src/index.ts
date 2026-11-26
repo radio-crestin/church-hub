@@ -27,6 +27,7 @@ import { existsSync } from 'node:fs'
 import process from 'node:process'
 
 import { closeDatabase, getRawDatabase, initializeDatabase } from './db'
+import { runAsRequest, setRequestActor } from './db/actingUser'
 import type { RequestContext } from './middleware'
 import {
   appOnlyAuthMiddleware,
@@ -74,6 +75,7 @@ import {
   getSetting,
   getUserById,
   getUserByToken,
+  getUserUuid,
   type Permission,
   regenerateUserToken,
   type SettingsTable,
@@ -1389,6 +1391,7 @@ async function startRealServer(): Promise<void> {
         const authResult = await combinedAuthMiddleware(req)
         if (authResult.response) return handleCors(req, authResult.response)
         _context = authResult.context
+        if (_context?.userId) setRequestActor(getUserUuid(_context.userId))
       }
       if (url.pathname === '/ping' || url.pathname === '/api/ping') {
         return handleCors(req, new Response(JSON.stringify({ data: 'pong' })))
@@ -8478,6 +8481,11 @@ async function startRealServer(): Promise<void> {
       message: handleWebSocketMessage,
       close: handleWebSocketClose,
     },
+  }
+  // Each request has its own actor: the user its changes are stamped with.
+  const handleRequest = serveOptions.fetch
+  serveOptions.fetch = function (req, server) {
+    return runAsRequest(() => handleRequest.call(this, req, server))
   }
   const server = await serveWithRetry<WebSocketData>(serveOptions)
   const testLanPort = getTestLanPort()

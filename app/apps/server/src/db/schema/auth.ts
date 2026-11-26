@@ -11,6 +11,8 @@ export const roles = sqliteTable(
   'roles',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     name: text('name').notNull().unique(),
     isSystem: integer('is_system', { mode: 'boolean' })
       .notNull()
@@ -47,6 +49,8 @@ export const users = sqliteTable(
   'users',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     name: text('name').notNull(),
     token: text('token').notNull(),
     tokenHash: text('token_hash').notNull().unique(),

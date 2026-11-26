@@ -54,7 +54,6 @@ export function addCloudSync(db: Database): void {
         server_token TEXT NOT NULL,
         seq INTEGER NOT NULL DEFAULT 0,
         head_etag TEXT,
-        access_hash TEXT,
         created_at INTEGER NOT NULL DEFAULT (unixepoch()),
         updated_at INTEGER NOT NULL DEFAULT (unixepoch())
       )

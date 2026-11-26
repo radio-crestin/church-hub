@@ -4,8 +4,10 @@ import {
   getCloudIdentity,
   updateCloudIdentity,
 } from './cloudIdentityStore'
-import { pushAccessIfChanged } from './pushAccessIfChanged'
+import { runCloudSyncCycle } from './runCloudSyncCycle'
 import { serviceError, syncServiceRequest } from './syncServiceRequest'
+import { getUserUuid } from '../../users/getUserUuid'
+import { idByUuid } from '../records/idByUuid'
 
 async function requireIdentity(): Promise<CloudIdentity> {
   const identity = await getCloudIdentity()
@@ -15,8 +17,8 @@ async function requireIdentity(): Promise<CloudIdentity> {
 
 /**
  * Mints a device token for one of this server's users, so a phone writes
- * with their permissions (the join link of T-168 carries it). The users are
- * mirrored first, so a user added a moment ago is known to the service.
+ * with their permissions (the join link of T-168 carries it). A sync cycle
+ * runs first, so a user added a moment ago is known to the service.
  */
 export async function addCloudDevice(input: {
   userId: number
@@ -29,12 +31,14 @@ export async function addCloudDevice(input: {
   joinUrl: string
 }> {
   const identity = await requireIdentity()
-  await pushAccessIfChanged(identity)
+  const userUuid = getUserUuid(input.userId)
+  if (!userUuid) throw new Error('unknown_user')
+  await runCloudSyncCycle()
   const response = await syncServiceRequest<{
     deviceId: string
     token: string
   }>({ serviceUrl: identity.serviceUrl, identity }, 'POST', '/devices', {
-    userId: String(input.userId),
+    userId: userUuid,
     name: input.name,
   })
   if (response.status !== 201) throw serviceError(response)
@@ -70,7 +74,7 @@ export async function listCloudDevices(): Promise<CloudDevice[]> {
   if (response.status !== 200) throw serviceError(response)
   return response.body.devices.map((device) => ({
     ...device,
-    userId: device.userId === null ? null : Number(device.userId),
+    userId: device.userId === null ? null : idByUuid('users', device.userId),
   }))
 }
 
