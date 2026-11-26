@@ -59,6 +59,16 @@ const writeErrors = {
 }
 
 export const libraryOpenApiPaths = {
+  '/sync/libraries': {
+    get: {
+      summary: 'Where the catalog of listed libraries is read from',
+      description:
+        'The public URL of libraries/catalog.json: {format: church-hub-library-catalog, version: 1, libraries: [{sourceId, name, publisher, songCount, updatedAt}]}, the libraries their publishers listed. A library’s manifest is at <sourceId>/manifest.json next to it.',
+      responses: {
+        '200': ok('Its URL', { catalogUrl: { type: 'string' } }),
+      },
+    },
+  },
   '/sync/libraries/{sourceId}': {
     get: {
       summary: 'Where a library is read from',

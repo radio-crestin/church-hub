@@ -122,6 +122,12 @@ libraries.post(`${CURATED}/submissions/:id/decision`, async (c) => {
   })
 })
 
+/** GET /sync/libraries: where the public catalog of listed libraries is read from. */
+libraries.get('/sync/libraries', (c) => {
+  const { bucket } = createSyncStore(c.env)
+  return c.json({ catalogUrl: bucket.publicUrl(libraryKeys.catalog) })
+})
+
 /** GET /sync/libraries/:sourceId: where the library is read from. */
 libraries.get('/sync/libraries/:sourceId', (c) => {
   const { bucket } = createSyncStore(c.env)
