@@ -85,11 +85,15 @@ test.describe
     })
 
     test.afterAll(async () => {
-      await phone?.close()
-      await pc.dispose()
-      await publicApp.stop()
-      await service.dispose()
-      await s3.stop()
+      try {
+        await phone?.close()
+        await pc.dispose()
+      } finally {
+        // Whatever failed, the ports are let go for the next spec.
+        await publicApp.stop()
+        await service.dispose()
+        await s3.stop()
+      }
     })
 
     test('the PC joins the cloud, mints a link for a phone, then turns off', async () => {

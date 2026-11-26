@@ -86,8 +86,12 @@ export class PublicAppServer {
     )
   }
 
+  /** Stops it; nothing to do when it never started (a failed build). */
   async stop(): Promise<void> {
-    this.server?.closeAllConnections()
-    await new Promise<void>((resolve) => this.server?.close(() => resolve()))
+    const server = this.server
+    this.server = undefined
+    if (!server) return
+    server.closeAllConnections()
+    await new Promise<void>((resolve) => server.close(() => resolve()))
   }
 }
