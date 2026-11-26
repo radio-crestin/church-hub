@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button'
@@ -10,10 +11,16 @@ interface SessionNoticeProps {
     | 'joinFailed.refused'
     | 'joinFailed.offline'
   onRetry?: () => void
+  /** What else the user can do from here, under the notice. */
+  children?: ReactNode
 }
 
 /** Why there is no church to show, and what to do about it. */
-export function SessionNotice({ notice, onRetry }: SessionNoticeProps) {
+export function SessionNotice({
+  notice,
+  onRetry,
+  children,
+}: SessionNoticeProps) {
   const { t } = useTranslation('publicApp')
   return (
     <div
@@ -30,6 +37,7 @@ export function SessionNotice({ notice, onRetry }: SessionNoticeProps) {
           {t('retry')}
         </Button>
       )}
+      {children}
     </div>
   )
 }

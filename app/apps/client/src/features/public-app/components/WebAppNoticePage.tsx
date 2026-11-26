@@ -37,14 +37,16 @@ export function WebAppNoticePage({ notice }: { notice: WebAppNotice }) {
               ? () => window.location.reload()
               : undefined
           }
-        />
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={() => window.location.replace(BASE)}
         >
-          {t('guest.button')}
-        </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="mt-2"
+            onClick={() => window.location.replace(BASE)}
+          >
+            {t('guest.button')}
+          </Button>
+        </SessionNotice>
       </main>
     </div>
   )

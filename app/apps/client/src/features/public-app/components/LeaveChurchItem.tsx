@@ -20,7 +20,7 @@ export function LeaveChurchItem() {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-sm font-medium text-red-600 hover:bg-hover dark:text-red-400"
+        className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-sm font-medium text-fg hover:bg-hover"
       >
         <LogOut strokeWidth={1.5} className="h-4 w-4" />
         {t('leaveChurch.button')}

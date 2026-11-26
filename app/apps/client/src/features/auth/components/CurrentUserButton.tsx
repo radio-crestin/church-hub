@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 
 import { isWebApp } from '~/config'
 import { LeaveChurchItem } from '~/features/public-app/components/LeaveChurchItem'
+import { getChurchBinding } from '~/features/public-app/service/churchBinding'
 import { getLocalUsers, login, performLogout } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
@@ -220,7 +221,10 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
           </div>
         </div>
 
-        <div className="-mx-1 my-1 h-px bg-line" />
+        {/* A guest web app has nothing under its header */}
+        {(!isWebApp || getChurchBinding()) && (
+          <div className="-mx-1 my-1 h-px bg-line" />
+        )}
 
         {selected ? (
           /* Inline password prompt for a protected account */
