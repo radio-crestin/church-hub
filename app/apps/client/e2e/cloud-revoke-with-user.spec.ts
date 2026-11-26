@@ -95,11 +95,25 @@ test.describe
     test.setTimeout(120_000)
 
     let churchId = ''
+    /** On the service from the first upload's first chunk: users go first. */
+    let earlyUserId = 0
+
+    /** The service refuses `token`, once the server has signed it out. */
+    const expectSignedOut = (token: string) =>
+      expect
+        .poll(async () => (await askPath(churchId, token)).status, {
+          timeout: 60_000,
+        })
+        .toBe(401)
 
     test.beforeAll(async ({ request }) => {
       s3.signedWritesOnly = true
       await s3.start()
       await service.start(s3.endpoint, { SYNC_COMPACT_AFTER: '100000' })
+      const early = await request.post('/api/users', {
+        data: { name: `E2E Early ${Date.now()}`, permissions: ['songs.view'] },
+      })
+      earlyUserId = (await early.json()).data.user.id
       const connected = await request.post('/api/sync/cloud', {
         data: { serviceUrl: service.url },
       })
@@ -111,6 +125,26 @@ test.describe
       await request.delete('/api/sync/cloud')
       await service.dispose()
       await s3.stop()
+    })
+
+    test('a device revoked while the library is still uploading is refused before the upload ends', async ({
+      request,
+    }) => {
+      const minted = await request.post('/api/sync/cloud/devices', {
+        data: { userId: earlyUserId, name: 'Early phone' },
+      })
+      expect(minted.status()).toBe(201)
+      const device = (await minted.json()).data as Device & { deviceId: string }
+
+      const revoked = await request.delete(
+        `/api/sync/cloud/devices/${device.deviceId}`,
+      )
+      expect(revoked.ok()).toBe(true)
+      expect((await askPath(churchId, device.token)).status).toBe(401)
+      // The server's writes go one at a time: the path move waited for the
+      // chunk in flight, not for the whole upload.
+      const status = await (await request.get('/api/sync/status')).json()
+      expect(status.data.pendingCount).toBeGreaterThan(0)
     })
 
     test('removing a user signs out their device, which never learns the new path', async ({
@@ -135,10 +169,9 @@ test.describe
         page.getByTestId('user-card').filter({ hasText: name }),
       ).toHaveCount(0)
 
-      // Refused for reads and writes; the old path is gone.
-      expect(await askPath(churchId, removed.device.token)).toMatchObject({
-        status: 401,
-      })
+      // Refused for reads and writes; the old path is gone. The server signs
+      // the device out after answering: the library may still be uploading.
+      await expectSignedOut(removed.device.token)
       expect(await phoneWrite(churchId, removed.device.token)).toBe(401)
       expect((await fetch(`${before.readUrl}/head.json`)).status).toBe(404)
 
@@ -175,7 +208,7 @@ test.describe
         .click()
       await expect(card).toContainText('Inactive')
 
-      expect((await askPath(churchId, device.token)).status).toBe(401)
+      await expectSignedOut(device.token)
       expect(await phoneWrite(churchId, device.token)).toBe(401)
 
       const reactivated = await request.put(`/api/users/${userId}`, {
