@@ -49,7 +49,7 @@ async function mintOnceSynced(
   name: string,
 ): Promise<MintResponse> {
   let synced = false
-  const cycle = runSyncCycle().finally(() => {
+  const cycle = runSyncCycle({ waitsItsTurn: true }).finally(() => {
     synced = true
   })
   while (!synced) {

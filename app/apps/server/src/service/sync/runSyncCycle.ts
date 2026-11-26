@@ -28,14 +28,17 @@ let isRunning = false
  * (runCloudSyncCycle) or, as the backup option, the shared Drive library file:
  * download → adopt identities → merge (last-writer-wins) → apply remote
  * changes locally → upload the merged file. Concurrent calls coalesce into a
- * no-op; failures are recorded on sync_config.lastError for the UI.
+ * no-op (on the cloud, one that `waitsItsTurn` runs after the current one);
+ * failures are recorded on sync_config.lastError for the UI.
  */
-export async function runSyncCycle(): Promise<SyncCycleResult> {
+export async function runSyncCycle(
+  options: { waitsItsTurn?: boolean } = {},
+): Promise<SyncCycleResult> {
   if (isRunning) return { success: true, skipped: 'no_changes' }
 
   const config = await getSyncConfig()
   if (!config.syncEnabled) return { success: false, skipped: 'disabled' }
-  if (config.transport === 'cloud') return runCloudSyncCycle()
+  if (config.transport === 'cloud') return runCloudSyncCycle(options)
 
   const drive = await getDriveService()
   if (!drive) {
