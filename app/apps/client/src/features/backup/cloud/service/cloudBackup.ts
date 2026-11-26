@@ -21,7 +21,7 @@ export interface CloudBackupStatus {
 /** A backup kept in Church Hub Cloud. */
 export interface CloudBackupFile {
   id: string
-  /** Bytes as stored (encrypted and compressed). */
+  /** Its own bytes: the church's encrypted data (shared resources apart). */
   sizeBytes: number
   createdAt: number
   appVersion: string
@@ -32,7 +32,7 @@ export interface CloudBackupUsage {
   usedBytes: number
   quotaBytes: number
   maxBackupBytes: number
-  maxBackups: number
+  retentionDays: number
   uploadsPerDay: number
 }
 

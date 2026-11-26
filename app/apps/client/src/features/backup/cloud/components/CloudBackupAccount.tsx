@@ -70,7 +70,9 @@ export function CloudBackupAccount({ email, usage }: CloudBackupAccountProps) {
               </p>
             )}
             <p className="mt-0.5 text-xs text-fg-hint">
-              {t('sections.backup.cloud.retention')}
+              {t('sections.backup.cloud.retention', {
+                days: usage?.retentionDays ?? 30,
+              })}
             </p>
           </div>
         </div>

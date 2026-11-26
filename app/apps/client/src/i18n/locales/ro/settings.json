@@ -1062,7 +1062,7 @@
           "never": "Nu există încă nicio copie de pe acest computer.",
           "button": "Fă o copie acum",
           "running": "Se face copia…",
-          "encrypted": "Copia este criptată pe acest computer înainte să fie trimisă."
+          "encrypted": "Datele bisericii tale sunt criptate pe acest computer înainte să fie trimise. Textele biblice și cântările din colecții sunt păstrate ca copii partajate, fără criptare."
         },
         "auto": {
           "title": "Copii automate",
@@ -1100,7 +1100,7 @@
         },
         "errors": {
           "cloud_sign_in_required": "Sesiunea ta Church Hub Cloud a expirat. Conectează-te din nou cu Google.",
-          "quota_exceeded": "Spațiul gratuit din cloud este plin. Șterge o copie mai veche din cloud și încearcă din nou.",
+          "quota_exceeded": "Spațiul gratuit este plin. Șterge o copie mai veche din cloud sau așteaptă să expire cele vechi după 30 de zile.",
           "too_large": "Baza de date depășește limita pentru copiile gratuite.",
           "daily_limit": "Ai atins limita de copii pentru astăzi. Încearcă din nou mâine.",
           "rate_limited": "Sunt prea multe solicitări. Așteaptă un minut și încearcă din nou.",
@@ -1111,11 +1111,11 @@
           "service_unreachable": "Church Hub Cloud nu este accesibil. Verifică-ți conexiunea la internet.",
           "not_configured": "Church Hub Cloud nu este disponibil momentan.",
           "generic": "A apărut o problemă cu Church Hub Cloud. Încearcă din nou.",
-          "quota_exceeded_details": "Această copie necesită {{needed}} de spațiu, dar ai doar {{free}} liberi din {{total}}. Șterge o copie mai veche din cloud și încearcă din nou.",
+          "quota_exceeded_details": "Această copie necesită {{needed}}, dar ai doar {{free}} liberi din {{total}}. Șterge o copie mai veche din cloud sau așteaptă să expire cele vechi după 30 de zile.",
           "suspended": "Copiile în cloud sunt suspendate pentru acest cont. Contactează Church Hub pentru ajutor."
         },
-        "description": "Copii gratuite și criptate ale datelor bisericii tale, păstrate de Church Hub. Le poți restaura pe orice computer conectându-te cu același cont Google.",
-        "retention": "Păstrează cele mai recente 3 copii, apoi câte una pe zi timp de o săptămână și câte una pe săptămână timp de 5 săptămâni."
+        "description": "Copii gratuite ale datelor bisericii tale, păstrate de Church Hub timp de 30 de zile. Le poți restaura pe orice computer conectându-te cu același cont Google.",
+        "retention": "Fiecare copie este păstrată timp de {{days}} zile. Când spațiul gratuit se umple, nu se mai fac copii noi până când expiră cele vechi sau ștergi câteva."
       }
     },
     "cloudSync": {
