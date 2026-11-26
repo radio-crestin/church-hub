@@ -114,3 +114,17 @@ export function requireAnyPermission(
     return null
   }
 }
+
+/**
+ * Whether the request's user holds a permission, without refusing or
+ * logging: for answers that differ by permission (e.g. a secret shown only
+ * to those who may change it).
+ */
+export function holdsPermission(
+  context: RequestContext | null,
+  permission: Permission,
+): boolean {
+  if (!context) return false
+  if (context.authType === 'app') return true
+  return context.permissions?.includes(permission) ?? false
+}

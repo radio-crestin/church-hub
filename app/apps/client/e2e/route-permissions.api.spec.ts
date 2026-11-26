@@ -438,6 +438,101 @@ test.describe('Every route checks its permission', () => {
     })
   }
 
+  test('secrets go only to those who may change the settings', async ({
+    request,
+    baseURL,
+  }) => {
+    const base = baseURL as string
+    const reader = await tokenFor(request, ['settings.view'])
+    const editor = await tokenFor(request, ['settings.view', 'settings.edit'])
+    const OBS_PASSWORD = 'e2e-obs-password'
+    const GEMINI_KEY = 'e2e-gemini-key'
+    const AI_KEY = 'e2e-ai-search-key'
+
+    const obsBefore = (
+      await (await request.get('/api/livestream/obs/config')).json()
+    ).data
+    const translationBefore = await (
+      await request.get('/api/live-translation/settings')
+    ).json()
+    const aiBefore = (
+      await (
+        await request.get('/api/settings/app_settings/songs_ai_search_config')
+      ).json()
+    ).data
+
+    try {
+      await request.put('/api/livestream/obs/config', {
+        data: { password: OBS_PASSWORD },
+      })
+      await request.put('/api/live-translation/settings', {
+        data: { ...translationBefore, geminiApiKey: GEMINI_KEY },
+      })
+      await request.post('/api/settings/app_settings', {
+        data: {
+          key: 'songs_ai_search_config',
+          value: JSON.stringify({
+            enabled: true,
+            provider: 'openai',
+            model: 'm',
+            apiKey: AI_KEY,
+          }),
+        },
+      })
+
+      const reads: Array<[string, string, string]> = [
+        ['/api/livestream/obs/config', OBS_PASSWORD, 'passwordSet'],
+        ['/api/live-translation/settings', GEMINI_KEY, 'geminiKeySet'],
+        [
+          '/api/settings/app_settings/live_translation_settings',
+          GEMINI_KEY,
+          'geminiKeySet',
+        ],
+        [
+          '/api/settings/app_settings/songs_ai_search_config',
+          AI_KEY,
+          'apiKeySet',
+        ],
+        ['/api/settings/app_settings', GEMINI_KEY, 'geminiKeySet'],
+      ]
+      for (const [path, secret, flag] of reads) {
+        // Readers (and this machine's windows) learn only that it is set.
+        for (const headers of [{ 'X-User-Auth': reader }, {}] as Record<
+          string,
+          string
+        >[]) {
+          const res = await rawRequest(base, path, { headers })
+          expect(res.status, path).toBe(200)
+          expect(res.body, path).not.toContain(secret)
+          expect(res.body.replace(/\\"/g, '"'), path).toContain(
+            `"${flag}":true`,
+          )
+        }
+        // Editors still get it, to copy it into OBS or change it.
+        const edited = await rawRequest(base, path, {
+          headers: { 'X-User-Auth': editor },
+        })
+        expect(edited.body, path).toContain(secret)
+      }
+    } finally {
+      await request.put('/api/livestream/obs/config', {
+        data: { password: obsBefore.password ?? '' },
+      })
+      await request.put('/api/live-translation/settings', {
+        data: translationBefore,
+      })
+      if (aiBefore) {
+        await request.post('/api/settings/app_settings', {
+          data: { key: 'songs_ai_search_config', value: aiBefore.value },
+        })
+      } else {
+        await request.delete(
+          '/api/settings/app_settings/songs_ai_search_config',
+        )
+      }
+    }
+  })
+
   test('a non-admin user with every permission is refused admin routes', async ({
     request,
     baseURL,

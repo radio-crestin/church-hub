@@ -32,6 +32,7 @@ import {
   appOnlyAuthMiddleware,
   buildUserAuthCookie,
   combinedAuthMiddleware,
+  holdsPermission,
   isLocalhost,
   reissueSessionCookie,
   requireAnyPermission,
@@ -87,6 +88,7 @@ import {
   updateUser,
   updateUserPermissions,
   upsertSetting,
+  withoutSettingSecrets,
 } from './service'
 import { aiBibleSearch } from './service/ai-bible-search'
 import { aiSearchSongs } from './service/ai-search'
@@ -1326,10 +1328,14 @@ async function startRealServer(): Promise<void> {
         }
 
         const setting = getSetting(table, key)
+        const shown =
+          setting && !holdsPermission(_context, 'settings.edit')
+            ? withoutSettingSecrets(setting)
+            : setting
 
         return handleCors(
           req,
-          new Response(JSON.stringify({ data: setting ?? null }), {
+          new Response(JSON.stringify({ data: shown ?? null }), {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
@@ -1344,7 +1350,10 @@ async function startRealServer(): Promise<void> {
         if (permError) return permError
 
         const table = getAllSettingsMatch[1] as SettingsTable
-        const settings = getAllSettings(table)
+        const all = getAllSettings(table)
+        const settings = holdsPermission(_context, 'settings.edit')
+          ? all
+          : all.map(withoutSettingSecrets)
 
         return handleCors(
           req,
@@ -8233,6 +8242,7 @@ async function startRealServer(): Promise<void> {
         url,
         handleCors,
         checkPermission,
+        _context,
       )
       if (livestreamResponse) return livestreamResponse
 
@@ -8270,6 +8280,7 @@ async function startRealServer(): Promise<void> {
           req,
           url,
           checkPermission,
+          _context,
         )
         if (translationResponse) return handleCors(req, translationResponse)
       }

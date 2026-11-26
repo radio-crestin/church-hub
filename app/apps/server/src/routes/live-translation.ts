@@ -1,8 +1,10 @@
 import { LIVE_TRANSLATION_PERMISSIONS } from './live-translation-permissions'
+import { holdsPermission } from '../middleware/permissions'
 import {
   type CheckPermission,
   checkRoutePermission,
 } from '../middleware/route-permissions'
+import type { RequestContext } from '../middleware/types'
 import { getAudioDevices } from '../service/live-translation/audio-io'
 import { defaultVoiceForEngine } from '../service/live-translation/engines'
 import {
@@ -44,8 +46,9 @@ import type {
   TranslationEngine,
   TranslationTarget,
 } from '../service/live-translation/types'
-import { getSetting, upsertSetting } from '../service/settings'
+import { getSetting, SETTING_SECRETS, upsertSetting } from '../service/settings'
 import { log } from '../utils/fileLogger'
+import { hideSecrets } from '../utils/hideSecrets'
 import { toErrorMessage } from '../utils/toErrorMessage'
 import {
   broadcastTranslationAudioLevel,
@@ -112,6 +115,7 @@ export async function handleLiveTranslationRoutes(
   req: Request,
   url: URL,
   checkPermission: CheckPermission,
+  context: RequestContext | null,
 ): Promise<Response | null> {
   if (!url.pathname.startsWith('/api/live-translation/')) return null
   const refused = checkRoutePermission(
@@ -158,7 +162,7 @@ export async function handleLiveTranslationRoutes(
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/settings'
   ) {
-    return handleGetSettings()
+    return handleGetSettings(holdsPermission(context, 'settings.edit'))
   }
 
   if (
@@ -218,8 +222,14 @@ function loadPersistedSettings(): PersistedSettings {
   }
 }
 
-function handleGetSettings(): Response {
-  return Response.json(loadPersistedSettings())
+/** The keys only to who may change them; readers learn whether each is set. */
+function handleGetSettings(mayEdit: boolean): Response {
+  const settings = loadPersistedSettings()
+  return Response.json(
+    mayEdit
+      ? settings
+      : hideSecrets(settings, SETTING_SECRETS.live_translation_settings ?? {}),
+  )
 }
 
 function handleSaveSettings(req: Request): Response {

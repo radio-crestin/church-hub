@@ -53,7 +53,10 @@ export interface OBSConfig {
   id?: number
   host: string
   port: number
-  password: string
+  /** Only to users who may change the settings. */
+  password?: string
+  /** Sent instead of `password` to everyone else. */
+  passwordSet?: boolean
   autoConnect: boolean
 }
 

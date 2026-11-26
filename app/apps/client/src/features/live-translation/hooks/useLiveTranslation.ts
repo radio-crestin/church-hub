@@ -113,6 +113,9 @@ export interface LiveTranslationSettings {
   primaryTargetId?: string
   openaiApiKey: string
   geminiApiKey: string
+  /** Sent instead of the keys to users who may not change settings. */
+  openaiKeySet?: boolean
+  geminiKeySet?: boolean
   inputDeviceId: number | null
   outputDeviceId: number | null
   outputMode: OutputMode
@@ -372,8 +375,13 @@ export function useLiveTranslation() {
   const apiKey =
     settings.engine === 'gemini' ? settings.geminiApiKey : settings.openaiApiKey
 
-  const canStart =
-    apiKey.length > 0 && settings.targets.length > 0 && !state.isActive
+  const hasApiKey =
+    apiKey.length > 0 ||
+    !!(settings.engine === 'gemini'
+      ? settings.geminiKeySet
+      : settings.openaiKeySet)
+
+  const canStart = hasApiKey && settings.targets.length > 0 && !state.isActive
 
   const startTranslation = useCallback(async () => {
     if (!canStart) return
@@ -463,6 +471,7 @@ export function useLiveTranslation() {
     settings,
     settingsLoaded,
     apiKey,
+    hasApiKey,
     audioDevices,
     streamUrl,
     streamSecret,
