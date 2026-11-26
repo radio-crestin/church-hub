@@ -1,8 +1,12 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 
+import { useTypewriterEnabled } from './TypewriterContext'
+import type { LayerTypewriter } from './useSlideAnimation'
+import { useTypewriter } from './useTypewriter'
 import { calculateFontSize } from './utils/calculateFontSize'
 import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
+import { revealMarkup } from './utils/revealMarkup'
 import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type { TextStyle, TextStyleRange } from '../../types'
 import { applyStylesToText } from '../../utils/applyStylesToText'
@@ -27,6 +31,8 @@ interface TextLayerProps {
   styleAnchorOffset?: number
   /** A slide fading out under the new one: hidden from assistive tech */
   leaving?: boolean
+  /** Set while the text types itself in (see useSlideAnimation) */
+  typewriter?: LayerTypewriter<TextLayerContent> | null
 }
 
 /**
@@ -39,6 +45,7 @@ export function TextLayer({
   animationStyle,
   styleAnchorOffset,
   leaving = false,
+  typewriter = null,
 }: TextLayerProps) {
   const { text, style, width, height, left, top, contentScale, styleRanges } =
     content
@@ -50,6 +57,17 @@ export function TextLayer({
     if (!styleRanges || styleRanges.length === 0) return null
     return applyStylesToText(text, styleRanges)
   }, [text, styleRanges])
+
+  const reveal = useTypewriter({
+    text,
+    previousText: typewriter?.replaces?.text,
+    maxDurationMs: typewriter?.maxDurationMs ?? 0,
+    active: useTypewriterEnabled() && typewriter !== null,
+  })
+  // While it types, the text is drawn whole with its untyped part invisible.
+  const html = reveal
+    ? revealMarkup(text, styledHtml, reveal.hidden, reveal.caret)
+    : styledHtml
 
   // Calculate font size synchronously before paint
   useLayoutEffect(() => {
@@ -158,9 +176,9 @@ export function TextLayer({
         style={textStyles}
         data-style-anchor={styleAnchorOffset}
       >
-        {styledHtml ? (
+        {html ? (
           // Wrap in span to prevent flexbox from treating inline elements as flex items
-          <span dangerouslySetInnerHTML={{ __html: styledHtml }} />
+          <span dangerouslySetInnerHTML={{ __html: html }} />
         ) : (
           text
         )}

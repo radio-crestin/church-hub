@@ -223,6 +223,7 @@ const AnimatedTextInner = memo(function AnimatedText({
       animationStyle={layer.style}
       styleAnchorOffset={styleAnchorOffset}
       leaving={layer.leaving}
+      typewriter={layer.typewriter}
     />
   ))
 }, arePropsEqual)

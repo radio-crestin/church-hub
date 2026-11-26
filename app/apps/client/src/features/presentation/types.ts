@@ -543,6 +543,8 @@ export type AnimationType =
   | 'slide-down'
   | 'zoom'
   | 'blur'
+  /** Enter only: the words are typed in; its duration is the longest it may take. */
+  | 'typewriter'
 
 /**
  * Easing types

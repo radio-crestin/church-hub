@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { AnimationType } from '../../types'
 import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
+import { TYPEWRITER_DURATION } from '../../utils/typewriterDuration'
 
 export interface SlideAnimationConfig {
   type?: AnimationType
@@ -36,6 +37,16 @@ export interface SlideLayer<T> {
   style: React.CSSProperties
   /** The previous slide, fading out under the new one */
   leaving: boolean
+  /** Set while the layer types its text in (a typewriter enter) */
+  typewriter: LayerTypewriter<T> | null
+}
+
+/** A layer typing its text in. */
+export interface LayerTypewriter<T> {
+  /** The longest the typing may take: the enter animation's duration */
+  maxDurationMs: number
+  /** The slide this one replaced, whose lines need no typing again */
+  replaces?: T
 }
 
 interface LeavingLayer<T> {
@@ -50,6 +61,9 @@ const DEFAULT_SLIDE_TRANSITION_DURATION =
 
 /** The CSS transition for one animation, with its own duration and easing. */
 function toCssTransition(config: SlideAnimationConfig): string {
+  // A typewriter changes no style: a transition would only slow the box down
+  // when the screen resizes as it types.
+  if (config.type === 'typewriter') return 'none'
   const duration = config.duration ?? DEFAULT_ANIMATION_DURATION
   return `all ${duration}ms ${config.easing ?? 'ease-out'}`
 }
@@ -141,6 +155,8 @@ export function useSlideAnimation<T>({
   // Cache content for exit animations (show old content while animating out)
   const cachedContentRef = useRef<T>(content)
   const cachedKeyRef = useRef(contentKey)
+  // The slide the current one replaced; none when it came on an empty screen
+  const replacedContentRef = useRef<T | undefined>(undefined)
   const layerIdRef = useRef(0)
   const [leaving, setLeaving] = useState<LeavingLayer<T> | null>(null)
 
@@ -248,6 +264,7 @@ export function useSlideAnimation<T>({
 
     if (becameVisible) {
       // Presentation starting - update content and animate in
+      replacedContentRef.current = undefined
       cachedContentRef.current = content
       cachedKeyRef.current = contentKey
 
@@ -297,6 +314,7 @@ export function useSlideAnimation<T>({
         )
       }
       layerIdRef.current++
+      replacedContentRef.current = cachedContentRef.current
       cachedContentRef.current = content
       cachedKeyRef.current = contentKey
       startEnterAnimation(enterConfig)
@@ -385,6 +403,15 @@ export function useSlideAnimation<T>({
     isBecomingVisible ||
     (phase !== 'exiting' && cachedKeyRef.current === contentKey)
 
+  // A typewriter types while the enter runs, and shows the whole text once it
+  // ends, as the slide leaves, or as the screen is hidden.
+  const typingConfig = isBecomingVisible
+    ? getEnterAnimation(false)
+    : (currentEnterConfig ?? getEnterAnimation(false))
+  const isTyping =
+    typingConfig.type === 'typewriter' &&
+    (isBecomingVisible || phase === 'mounting' || phase === 'entering')
+
   const layers: SlideLayer<T>[] = []
   if (leaving) {
     const leavingStyles = getAnimationStyles(leaving.config.type ?? 'fade')
@@ -396,6 +423,7 @@ export function useSlideAnimation<T>({
         transition: toCssTransition(leaving.config),
       },
       leaving: true,
+      typewriter: null,
     })
   }
   if (shouldRender) {
@@ -404,6 +432,12 @@ export function useSlideAnimation<T>({
       content: showsLiveContent ? content : cachedContentRef.current,
       style: getStyle(),
       leaving: false,
+      typewriter: isTyping
+        ? {
+            maxDurationMs: typingConfig.duration ?? TYPEWRITER_DURATION.default,
+            replaces: replacedContentRef.current,
+          }
+        : null,
     })
   }
   return layers
