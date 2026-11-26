@@ -78,6 +78,7 @@ import {
   writeSelectedScheduleId,
 } from '../service/selectedSchedule'
 import type { Schedule, ScheduleItem } from '../types'
+import { flattenScheduleItems } from '../utils/flattenScheduleItems'
 import { isSamePassage } from '../utils/isSamePassage'
 import { countScheduleItemSteps } from '../utils/scheduleFlatItems'
 
@@ -331,7 +332,7 @@ export function SchedulePanel({
    * within it goes up next is chosen on the left of the page, or with the
    * next/prev arrows — this list is the running order, not a verse picker.
    */
-  const presentItem = useCallback(
+  const presentLeafItem = useCallback(
     (item: ScheduleItem) => {
       if (item.itemType === 'song') {
         const presented = presentSongSlide(item, 0)
@@ -362,6 +363,16 @@ export function SchedulePanel({
       presentSongSlide,
       presentVerseteEntry,
     ],
+  )
+
+  // A presentation inside it starts from its first item.
+  const presentItem = useCallback(
+    (item: ScheduleItem) => {
+      const leaf =
+        item.itemType === 'schedule' ? flattenScheduleItems([item])[0] : item
+      return leaf ? presentLeafItem(leaf) : undefined
+    },
+    [presentLeafItem],
   )
 
   const handleToggleSung = useCallback(

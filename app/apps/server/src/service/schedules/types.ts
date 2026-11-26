@@ -17,6 +17,8 @@ export type ScheduleItemType =
   | 'video'
   | 'verses'
   | 'slides'
+  /** Another presentation, played in its place (`childScheduleId`). */
+  | 'schedule'
 
 /**
  * Slide template types for standalone slides (same as queue)
@@ -121,8 +123,17 @@ export interface Schedule {
   templateId: number | null
   itemCount: number
   songCount: number
+  /** The presentations its `schedule` items play, for the cycle check. */
+  childScheduleIds: number[]
   createdAt: number
   updatedAt: number
+}
+
+/** The presentation a `schedule` item plays, with its items (nested too). */
+export interface ChildSchedule {
+  id: number
+  title: string
+  items: ScheduleItem[]
 }
 
 /**
@@ -217,6 +228,13 @@ export interface ScheduleItem {
   video: ScheduleVideoPick | null
   /** A MIDI file played with a song item while it runs, its slides following it. */
   midi: ScheduleItemMidi | null
+  /** A `schedule` item's presentation id. */
+  childScheduleId: number | null
+  /**
+   * A `schedule` item's presentation with its items; null for other items,
+   * and where it would contain itself (old or synced data).
+   */
+  childSchedule: ChildSchedule | null
   // Common fields
   sortOrder: number
   createdAt: number
@@ -299,6 +317,8 @@ export interface AddToScheduleInput {
   media?: { itemType: MediaItemType; itemConfig: unknown }
   /** A Slides item: its deck (service/slides-deck), checked before it is stored. */
   slides?: unknown
+  /** A `schedule` item: the presentation it plays. Never one containing this one. */
+  childScheduleId?: number
 }
 
 /**

@@ -10,10 +10,12 @@ import type {
 import type { SQLQueryBindings } from 'bun:sqlite'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
+import { nestingProblem } from '../schedules/nestingLimits'
 import {
   type ResolvedLegacyBiblePassage,
   resolveLegacyBiblePassage,
 } from '../schedules/resolveLegacyBiblePassage'
+import { scheduleContains } from '../schedules/scheduleContains'
 import {
   removeFromScheduleSearchIndex,
   updateScheduleSearchIndex,
@@ -173,8 +175,8 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
     `INSERT INTO schedule_items (
        schedule_id, item_type, song_id, slide_type, slide_content,
        bible_passage_reference, bible_passage_translation, obs_scene_name,
-       item_config, sort_order, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+       item_config, child_schedule_id, sort_order, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
   )
   const insertVerse = db.query(
     `INSERT INTO schedule_bible_passage_verses (schedule_item_id, verse_id, reference, text, sort_order)
@@ -191,6 +193,30 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
   )
 
   for (const item of schedule.items) {
+    // A presentation it plays that this device doesn't have yet is left out:
+    // an item playing nothing has nothing to show.
+    const childScheduleId = item.childScheduleUuid
+      ? idByUuid('schedules', item.childScheduleUuid)
+      : null
+    if (item.itemType === 'schedule' && childScheduleId === null) {
+      logger.warning(
+        `Schedule "${schedule.title}": presentation ${item.childScheduleUuid ?? '?'} missing locally, item left out`,
+      )
+      continue
+    }
+    // Held to the same rules as one added here: no loop, within the limits.
+    const nestingIssue =
+      childScheduleId === null
+        ? null
+        : scheduleContains(childScheduleId, scheduleId)
+          ? 'it would make a loop'
+          : nestingProblem(scheduleId, childScheduleId)
+    if (nestingIssue) {
+      logger.warning(
+        `Schedule "${schedule.title}": presentation ${item.childScheduleUuid ?? '?'} left out: ${nestingIssue}`,
+      )
+      continue
+    }
     const songId = item.songUuid ? idByUuid('songs', item.songUuid) : null
     if (item.itemType === 'song' && item.songUuid && songId === null) {
       logger.warning(
@@ -233,6 +259,7 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
       mergedEntry ? null : item.biblePassageTranslation,
       item.obsSceneName,
       item.itemConfig ?? null,
+      childScheduleId,
       item.sortOrder,
       schedule.updatedAt,
       schedule.updatedAt,

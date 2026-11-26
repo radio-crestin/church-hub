@@ -1,6 +1,7 @@
 import { DeckSlideRows } from '~/features/slides-deck/components/DeckSlideRows'
 import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
 import type { SlideDeck } from '~/features/slides-deck/types'
+import { NestedScheduleItems } from './NestedScheduleItems'
 import { ScheduleAnnouncementSlideRow } from './ScheduleAnnouncementSlideRow'
 import { ScheduleBiblePassageVerseList } from './ScheduleBiblePassageVerseList'
 import { ScheduleSceneSlideRow } from './ScheduleSceneSlideRow'
@@ -153,6 +154,24 @@ function ItemSteps({
   }
 
   if (item.itemType === 'music') return <MusicPlayRow item={item} />
+
+  if (item.itemType === 'schedule') {
+    return (
+      <NestedScheduleItems
+        item={item}
+        presentedInfo={presentedInfo}
+        itemStartFlatIndex={itemStartFlatIndex}
+        highlightedRef={highlightedRef}
+        onSlideClick={onSlideClick}
+        onVerseClick={onVerseClick}
+        onEntryClick={onEntryClick}
+        onAnnouncementClick={onAnnouncementClick}
+        onSceneClick={onSceneClick}
+        onVideoClick={onVideoClick}
+        onDeckStepClick={onDeckStepClick}
+      />
+    )
+  }
 
   return null
 }

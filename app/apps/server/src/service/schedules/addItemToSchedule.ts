@@ -1,5 +1,6 @@
 import { and, eq, gte, max, sql } from 'drizzle-orm'
 
+import { assertNestable } from './assertNestable'
 import { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
 import { formatEntryReference } from './formatEntryReference'
 import { getEntryVerses } from './getEntryVerses'
@@ -53,9 +54,10 @@ function formatPassageReference(
 }
 
 /**
- * Adds an item (song, slide, bible_passage, an item with settings or a Slides
- * deck) to a schedule. Settings that don't fit the item throw, before anything
- * is stored, so the API can say what is wrong with them.
+ * Adds an item (song, slide, bible_passage, an item with settings, a Slides
+ * deck or another presentation) to a schedule. Settings that don't fit the
+ * item, and a presentation that would make a loop, throw before anything is
+ * stored, so the API can say what is wrong with them.
  */
 export function addItemToSchedule(
   input: AddToScheduleInput,
@@ -73,6 +75,10 @@ export function addItemToSchedule(
         parseItemConfig(configured.itemType, configured.itemConfig),
       )
     : null
+  const childScheduleId = input.childScheduleId
+  if (childScheduleId !== undefined) {
+    assertNestable(input.scheduleId, childScheduleId)
+  }
 
   try {
     // A Bible passage is no longer an item type of its own: it is stored as one
@@ -91,7 +97,8 @@ export function addItemToSchedule(
       input.slideType === 'scene' && input.obsSceneName !== undefined
 
     let itemTypeStr = 'slide'
-    if (configured) itemTypeStr = configured.itemType
+    if (childScheduleId !== undefined) itemTypeStr = 'schedule'
+    else if (configured) itemTypeStr = configured.itemType
     else if (isSong) itemTypeStr = 'song'
     else if (isVerseteTineri) itemTypeStr = 'versete_tineri'
     else if (isScene) itemTypeStr = 'scene'
@@ -144,7 +151,21 @@ export function addItemToSchedule(
     // Insert the item
     let itemId: number
 
-    if (configured && mediaConfig) {
+    if (childScheduleId !== undefined) {
+      const result = db
+        .insert(scheduleItems)
+        .values({
+          scheduleId: input.scheduleId,
+          itemType: 'schedule',
+          childScheduleId,
+          sortOrder: targetOrder,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning({ id: scheduleItems.id })
+        .get()
+      itemId = result.id
+    } else if (configured && mediaConfig) {
       const result = db
         .insert(scheduleItems)
         .values({

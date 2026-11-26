@@ -30,6 +30,15 @@ export async function getScheduleById(
   return response.data ?? null
 }
 
+/** The control room's queue: a presentation hidden from the list. */
+export async function getQueueSchedule(): Promise<ScheduleWithItems> {
+  const response = await fetcher<ApiResponse<ScheduleWithItems>>(
+    '/api/schedules/queue',
+  )
+  if (!response.data) throw new Error(response.error ?? 'No queue')
+  return response.data
+}
+
 export async function upsertSchedule(
   input: UpsertScheduleInput,
 ): Promise<{ success: boolean; data?: Schedule; error?: string }> {
