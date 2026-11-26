@@ -90,7 +90,7 @@ function getApiHost(): string {
   // the browser reject every fetch / WebSocket because the document CSP only
   // whitelists `http://localhost:*` — see `tauri.conf.json` connect-src.
   // Force `localhost` so the URL matches CSP. CORS still works because the
-  // server reflects the request Origin and allows credentials.
+  // server trusts the app webview's origin (and only the app's own origins).
   if (isTauriEnv && !isMobile()) {
     return 'localhost'
   }
