@@ -62,8 +62,16 @@ export const backupPaths: Record<string, Record<string, unknown>> = {
       tags: ['Backup'],
       summary: 'Google Drive OAuth callback (from the OAuth worker)',
       description:
-        'The redirect target the ChurchHub OAuth worker returns to after Google authorization. Persists the tokens and returns a small HTML page. Not called directly by clients.',
+        'The redirect target the ChurchHub OAuth worker returns to after Google authorization. Persists the tokens, only for a connect flow this server started (its `state`), and returns a small HTML page. Not called directly by clients.',
       parameters: [
+        {
+          name: 'state',
+          in: 'query',
+          required: true,
+          schema: { type: 'string' },
+          description:
+            'The connect flow, as issued in the returnUrl of /api/backup/google/connect; single use, valid 10 minutes',
+        },
         { name: 'accessToken', in: 'query', schema: { type: 'string' } },
         { name: 'refreshToken', in: 'query', schema: { type: 'string' } },
         {

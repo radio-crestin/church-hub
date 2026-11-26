@@ -59,7 +59,9 @@ import {
 } from '../service/livestream/youtube'
 import type { YouTubeConfigUpdate } from '../service/livestream/youtube/config'
 import { loadMIDIShortcuts } from '../service/midi/shortcuts'
+import { escapeHtml } from '../service/text-search/text/escapeHtml'
 import { toErrorMessage } from '../utils/toErrorMessage'
+import { toScriptLiteral } from '../utils/toScriptLiteral'
 import {
   broadcastLivestreamStatus,
   broadcastOBSConnectionStatus,
@@ -144,10 +146,10 @@ export async function handleLivestreamRoutes(
           <html>
           <body>
             <script>
-              window.opener?.postMessage({ type: 'youtube-auth-error', error: '${error}' }, '*');
+              window.opener?.postMessage({ type: 'youtube-auth-error', error: ${toScriptLiteral(error)} }, '*');
               window.close();
             </script>
-            <p>Authorization failed: ${error}. You can close this window.</p>
+            <p>Authorization failed: ${escapeHtml(error)}. You can close this window.</p>
           </body>
           </html>`,
           { headers: { 'Content-Type': 'text/html' } },
@@ -230,7 +232,7 @@ export async function handleLivestreamRoutes(
               <html>
               <body>
                 <p>Authorization successful! You can close this window.</p>
-                <p>Connected as: ${status.channelName || 'Unknown'}</p>
+                <p>Connected as: ${escapeHtml(status.channelName || 'Unknown')}</p>
               </body>
               </html>`,
               { headers: { 'Content-Type': 'text/html' } },
@@ -245,7 +247,7 @@ export async function handleLivestreamRoutes(
               `<!DOCTYPE html>
               <html>
               <body>
-                <p>Authorization failed: ${errorMessage}</p>
+                <p>Authorization failed: ${escapeHtml(errorMessage)}</p>
                 <p>You can close this window and try again.</p>
               </body>
               </html>`,
@@ -264,7 +266,7 @@ export async function handleLivestreamRoutes(
         <html>
         <body>
           <script>
-            window.opener?.postMessage({ type: 'youtube-auth-code', code: '${code}' }, '*');
+            window.opener?.postMessage({ type: 'youtube-auth-code', code: ${toScriptLiteral(code)} }, '*');
             window.close();
           </script>
           <p>Authorization successful! You can close this window.</p>

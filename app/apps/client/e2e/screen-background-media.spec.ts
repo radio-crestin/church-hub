@@ -156,6 +156,7 @@ test.describe('Screen background media', () => {
 
   test('API stores, lists, serves (with ranges) and deletes an upload', async ({
     request,
+    baseURL,
   }) => {
     const media = await uploadMedia(request, PNG, 'image/png', 'e2e bg.png')
 
@@ -200,8 +201,9 @@ test.describe('Screen background media', () => {
       `bytes */${PNG.length}`,
     )
 
+    // A text file, sent as the app's page sends it (with its origin).
     const unsupported = await request.post(`${MEDIA_API}?name=notes.txt`, {
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'text/plain', Origin: baseURL as string },
       data: Buffer.from('not an image'),
     })
     expect(unsupported.status()).toBe(415)
