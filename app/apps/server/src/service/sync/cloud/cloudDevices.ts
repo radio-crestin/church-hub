@@ -29,6 +29,39 @@ async function mintDevice(
   })
 }
 
+/** How often a device is asked for again while its user is on the way. */
+const RETRY_MS = 300
+
+type MintResponse = Awaited<ReturnType<typeof mintDevice>>
+
+const unknownUser = (response: MintResponse) =>
+  response.status === 400 && response.body.code === 'unknown_user'
+
+/**
+ * Mints the device once the service knows its user: a sync cycle sends
+ * them, users and roles in its first request, so the device is asked for
+ * again while the cycle runs (a first upload of the whole library takes a
+ * while), and once more after it.
+ */
+async function mintOnceSynced(
+  identity: CloudIdentity,
+  userUuid: string,
+  name: string,
+): Promise<MintResponse> {
+  let synced = false
+  const cycle = runSyncCycle().finally(() => {
+    synced = true
+  })
+  while (!synced) {
+    await Promise.race([cycle, Bun.sleep(RETRY_MS)])
+    if (synced) break
+    const response = await mintDevice(identity, userUuid, name)
+    if (!unknownUser(response)) return response
+  }
+  await cycle
+  return mintDevice(identity, userUuid, name)
+}
+
 /**
  * Mints a device token for one of this server's users, so a phone writes
  * with their permissions (the join link of T-168 carries it). A user the
@@ -48,9 +81,8 @@ export async function addCloudDevice(input: {
   const userUuid = getUserUuid(input.userId)
   if (!userUuid) throw new Error('unknown_user')
   let response = await mintDevice(identity, userUuid, input.name)
-  if (response.status === 400 && response.body.code === 'unknown_user') {
-    await runSyncCycle()
-    response = await mintDevice(identity, userUuid, input.name)
+  if (unknownUser(response)) {
+    response = await mintOnceSynced(identity, userUuid, input.name)
   }
   if (response.status !== 201) throw serviceError(response)
   return {
