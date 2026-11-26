@@ -22,6 +22,7 @@ import {
   Wrench,
 } from 'lucide-react'
 
+import { isWebApp } from '~/config'
 import type { Permission } from '~/features/users/types'
 
 /**
@@ -43,6 +44,8 @@ export interface SettingsNavItemDef {
   to: string
   /** Defaults to always-visible when omitted. */
   visible?: (ctx: SettingsVisibilityContext) => boolean
+  /** Settings of the church PC itself (its hardware, files, network): the web app hides them. */
+  pcOnly?: boolean
   /**
    * The settings shown on this page, as `namespace:key` i18n keys of their
    * visible labels: what the settings search finds and highlights.
@@ -91,6 +94,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'sections.phones.title',
         icon: Smartphone,
         to: '/settings/phones',
+        pcOnly: true,
         // The computer shows the code; a phone in the app connects itself.
         visible: (ctx) => !ctx.isMobile && ctx.hasPermission('users.view'),
         settings: ['settings:sections.phones.account'],
@@ -213,6 +217,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'nav.items.livestream',
         icon: Radio,
         to: '/settings/livestream',
+        pcOnly: true,
         visible: canEdit,
         settings: ['livestream:scenes.title'],
       },
@@ -243,6 +248,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'sections.midi.title',
         icon: Sliders,
         to: '/settings/midi',
+        pcOnly: true,
         visible: canEdit,
         settings: [
           'settings:sections.shortcuts.midi.inputDevice',
@@ -260,6 +266,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'nav.items.logs',
         icon: ScrollText,
         to: '/settings/logs',
+        pcOnly: true,
         visible: (ctx) => ctx.hasPermission('logs.view'),
         settings: [
           'settings:sections.logs.title',
@@ -271,6 +278,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'nav.items.backup',
         icon: CloudUpload,
         to: '/settings/backup',
+        pcOnly: true,
         visible: (ctx) => ctx.isLocalhost && canEdit(ctx),
         settings: [
           'settings:sections.backup.title',
@@ -303,6 +311,7 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
         labelKey: 'nav.items.updates',
         icon: DownloadCloud,
         to: '/settings/updates',
+        pcOnly: true,
         visible: (ctx) => ctx.isLocalhost && canEdit(ctx),
         settings: ['settings:sections.updates.title'],
       },
@@ -327,6 +336,7 @@ export function isItemVisible(
   item: SettingsNavItemDef,
   ctx: SettingsVisibilityContext,
 ): boolean {
+  if (isWebApp && item.pcOnly) return false
   return item.visible ? item.visible(ctx) : true
 }
 

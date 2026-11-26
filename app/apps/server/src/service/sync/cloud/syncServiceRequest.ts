@@ -2,6 +2,7 @@ import type { CloudIdentity } from './cloudIdentityStore'
 import { getInstallation } from './getInstallation'
 import { oneWriteAtATime } from './oneWriteAtATime'
 import { setServerConflict } from './serverConflict'
+import { reportTokenRefused } from './tokenRefused'
 
 /** Requests to the sync service give up after this long. */
 const REQUEST_TIMEOUT_MS = 60_000
@@ -21,10 +22,10 @@ interface ServerInUseBody {
  * Calls the sync service (churchhub-backend's /sync routes). With an
  * identity, `path` is under the church and the server token authenticates;
  * `ownerTicket` signs in as the church's owner instead. Every call names
- * this installation, so the service can tell a second PC holding the same
- * token (a restored backup) from this one: its 409 server_in_use is kept
- * (getServerConflict) and thrown as `server_in_use`. Writes go one at a
- * time (oneWriteAtATime).
+ * this installation (a PC's; a browser has none), so the service can tell a
+ * second PC holding the same token (a restored backup) from this one: its
+ * 409 server_in_use is kept (getServerConflict) and thrown as
+ * `server_in_use`. Writes go one at a time (oneWriteAtATime).
  */
 export async function syncServiceRequest<T>(
   target: {
@@ -48,8 +49,12 @@ export async function syncServiceRequest<T>(
       method,
       headers: {
         'Content-Type': 'application/json',
-        'X-Church-Hub-Installation': installation.id,
-        'X-Church-Hub-Installation-Name': encodeURIComponent(installation.name),
+        ...(installation && {
+          'X-Church-Hub-Installation': installation.id,
+          'X-Church-Hub-Installation-Name': encodeURIComponent(
+            installation.name,
+          ),
+        }),
         ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -69,6 +74,7 @@ export async function syncServiceRequest<T>(
     throw new Error('server_in_use')
   }
   if (identity && response.ok) setServerConflict(null)
+  if (identity && response.status === 401) reportTokenRefused()
   return { status: response.status, body: json }
 }
 

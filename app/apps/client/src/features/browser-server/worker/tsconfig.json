@@ -1,0 +1,10 @@
+{
+  // The browser server compiles the server's own code: checked with the
+  // server's settings, plus a Web Worker's globals.
+  "extends": "../../../../../server/tsconfig.json",
+  "include": ["./**/*.ts", "../../../../../server/src/types/*.d.ts"],
+  "compilerOptions": {
+    "lib": ["ESNext", "WebWorker"],
+    "types": ["bun-types"]
+  }
+}

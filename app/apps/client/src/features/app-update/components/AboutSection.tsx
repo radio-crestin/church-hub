@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Download, ExternalLink, Info, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
 import { CreditsSection } from './CreditsSection'
 import { ReleaseNotesSection } from '../../release-notes'
 import { SettingsSection } from '../../settings'
@@ -29,7 +30,7 @@ export function AboutSection() {
                 v{updateInfo?.currentVersion || '...'}
               </p>
             </div>
-            {!isDevInstance && (
+            {!isDevInstance && !isWebApp && (
               <button
                 onClick={() => void checkNow()}
                 disabled={isLoading}

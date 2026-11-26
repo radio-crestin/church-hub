@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { idByUuid } from './idByUuid'
 import { readPermissions, writePermissions } from './permissions'
 import { getRawDatabase } from '../../../db'
@@ -49,7 +51,7 @@ export function upsertUser(user: LibraryUser): number | null {
   const db = getRawDatabase()
   const roleId = user.roleUuid ? idByUuid('roles', user.roleUuid) : null
   const token = generateUserToken()
-  const tokenHash = new Bun.CryptoHasher('sha256').update(token).digest('hex')
+  const tokenHash = createHash('sha256').update(token).digest('hex')
   db.query(
     `INSERT INTO users (
        uuid, name, token, token_hash, is_active, is_super_admin, role_id,
