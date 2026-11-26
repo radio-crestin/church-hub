@@ -18,6 +18,7 @@ const EXPLAINED = new Set([
   'service_unreachable',
   'not_configured',
   'suspended',
+  'not_available',
 ])
 
 /** Turns a failed cloud backup call into a sentence the operator can act on. */

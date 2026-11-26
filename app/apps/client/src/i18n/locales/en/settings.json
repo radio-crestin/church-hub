@@ -1112,10 +1112,15 @@
           "not_configured": "Church Hub Cloud is not available right now.",
           "generic": "Something went wrong with Church Hub Cloud. Try again.",
           "quota_exceeded_details": "This backup needs {{needed}}, but only {{free}} of your {{total}} is free. Delete an older cloud backup, or wait until older ones expire after 30 days.",
-          "suspended": "Cloud backups are paused for this account. Contact Church Hub for help."
+          "suspended": "Cloud backups are paused for this account. Contact Church Hub for help.",
+          "not_available": "Church Hub Cloud is not available in this version yet. It will be available after an update."
         },
         "description": "Free backups of this church’s data, kept by Church Hub for 30 days. Restore them on any computer by signing in with the same Google account.",
-        "retention": "Each backup is kept for {{days}} days. When the free storage is full, new backups are refused until older ones expire or you delete some."
+        "retention": "Each backup is kept for {{days}} days. When the free storage is full, new backups are refused until older ones expire or you delete some.",
+        "unavailable": {
+          "title": "Not available yet",
+          "description": "This version of Church Hub can’t use Church Hub Cloud yet. It will be available after an update."
+        }
       }
     },
     "cloudSync": {

@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { CloudBackupError } from './CloudBackupError'
 import { cloudBackupFetch } from './cloudBackupFetch'
 import { keepServiceSession, type ServiceSession } from './cloudBackupSession'
-import { getCloudBackupUrl } from './getCloudBackupUrl'
+import { getCloudBackupUrl, isCloudBackupAvailable } from './getCloudBackupUrl'
 import { getServerPort } from '../../../utils/serverPort'
 
 const CALLBACK_PATH = '/api/backup/cloud/callback'
@@ -26,6 +26,8 @@ const pending = new Map<string, PendingSignIn>()
  * is useless to anyone else.
  */
 export function startCloudBackupSignIn(): { authUrl: string } {
+  if (!isCloudBackupAvailable())
+    throw new CloudBackupError('not_available', 409)
   const serviceUrl = getCloudBackupUrl()
   const nonce = randomBytes(24).toString('base64url')
   const verifier = randomBytes(32).toString('base64url')

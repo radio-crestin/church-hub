@@ -3,6 +3,7 @@ import { CloudBackupList } from './CloudBackupList'
 import { CloudBackupNow } from './CloudBackupNow'
 import { CloudBackupSchedule } from './CloudBackupSchedule'
 import { CloudBackupSignedOut } from './CloudBackupSignedOut'
+import { CloudBackupUnavailable } from './CloudBackupUnavailable'
 import { useCloudBackupStatus, useCloudBackups } from '../hooks'
 
 /**
@@ -19,6 +20,8 @@ export function CloudBackupPanel() {
     <div className="space-y-4" data-testid="cloud-backup-panel">
       {isLoading || !status ? (
         <div className="h-[74px] rounded-xl bg-field" aria-busy="true" />
+      ) : !status.available ? (
+        <CloudBackupUnavailable />
       ) : !signedIn ? (
         <CloudBackupSignedOut />
       ) : (

@@ -11,6 +11,8 @@ interface ApiResponse<T> {
 
 /** This PC's Church Hub Cloud sign-in and automatic schedule. */
 export interface CloudBackupStatus {
+  /** False while this build points at the legacy backend (not available yet). */
+  available: boolean
   signedIn: boolean
   email: string | null
   autoBackupEnabled: boolean

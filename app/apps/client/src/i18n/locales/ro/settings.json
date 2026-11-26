@@ -1120,10 +1120,15 @@
           "not_configured": "Church Hub Cloud nu este disponibil momentan.",
           "generic": "A apărut o problemă cu Church Hub Cloud. Încearcă din nou.",
           "quota_exceeded_details": "Această copie necesită {{needed}}, dar ai doar {{free}} liberi din {{total}}. Șterge o copie mai veche din cloud sau așteaptă să expire cele vechi după 30 de zile.",
-          "suspended": "Copiile în cloud sunt suspendate pentru acest cont. Contactează Church Hub pentru ajutor."
+          "suspended": "Copiile în cloud sunt suspendate pentru acest cont. Contactează Church Hub pentru ajutor.",
+          "not_available": "Church Hub Cloud nu este disponibil încă în această versiune. Va fi disponibil după o actualizare."
         },
         "description": "Copii gratuite ale datelor bisericii tale, păstrate de Church Hub timp de 30 de zile. Le poți restaura pe orice computer conectându-te cu același cont Google.",
-        "retention": "Fiecare copie este păstrată timp de {{days}} zile. Când spațiul gratuit se umple, nu se mai fac copii noi până când expiră cele vechi sau ștergi câteva."
+        "retention": "Fiecare copie este păstrată timp de {{days}} zile. Când spațiul gratuit se umple, nu se mai fac copii noi până când expiră cele vechi sau ștergi câteva.",
+        "unavailable": {
+          "title": "Nu este disponibil încă",
+          "description": "Această versiune a aplicației Church Hub nu poate folosi încă Church Hub Cloud. Funcția va fi disponibilă după o actualizare."
+        }
       }
     },
     "cloudSync": {
