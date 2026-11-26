@@ -16,7 +16,12 @@ export async function getCloudIdentity(): Promise<CloudIdentity | null> {
 export async function saveCloudIdentity(
   identity: Pick<
     CloudIdentity,
-    'serviceUrl' | 'churchId' | 'readUrl' | 'deviceId' | 'serverToken'
+    | 'serviceUrl'
+    | 'churchId'
+    | 'readUrl'
+    | 'deviceId'
+    | 'serverToken'
+    | 'ownerEmail'
   >,
 ): Promise<void> {
   const db = getDatabase()
@@ -25,10 +30,22 @@ export async function saveCloudIdentity(
   await db.insert(cloudSync).values({ id: 1, ...identity })
 }
 
-/** Updates what a cycle learned: seq, head version, read path, access. */
+/**
+ * Updates what a cycle learned (seq, head version, read path, access, the
+ * owner) or what the owner changed (a fresh server token).
+ */
 export async function updateCloudIdentity(
   patch: Partial<
-    Pick<CloudIdentity, 'seq' | 'headEtag' | 'readUrl' | 'accessHash'>
+    Pick<
+      CloudIdentity,
+      | 'seq'
+      | 'headEtag'
+      | 'readUrl'
+      | 'accessHash'
+      | 'ownerEmail'
+      | 'deviceId'
+      | 'serverToken'
+    >
   >,
 ): Promise<void> {
   await getDatabase()

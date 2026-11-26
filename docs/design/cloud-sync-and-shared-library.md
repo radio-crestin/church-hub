@@ -126,6 +126,14 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - The backup file therefore holds secrets; the backup screen says so.
   - If a backup is restored on a second PC while the first is still active, the server token shows it, and the user is asked which PC keeps the church.
 
+**As built (T-172).**
+- There is no `churches` table or KV (T-171 keeps each church as one encrypted state object): the owner `{ googleSub, email, claimedAt }` and a pending transfer live in that state, and empty marker objects `sync-owners/<hmac(email)>/<churchId>` list an account's churches.
+- The sign-in goes through the sync service (`/sync/owner/sign-in`, scopes `openid email`, the shared Google client). It returns to the PC's loopback callback with a signed owner ticket valid one hour and the nonce the PC issued; the PC refuses any other nonce. The ticket stays in the PC's memory only, never in the database, so a backup can't act as the owner.
+- The owner email is kept with the cloud identity (`cloud_sync.owner_email`). A local backup is the whole database file, so it carries the church id, the read URL (with the path secret), the server token and the owner; restoring it reconnects.
+- Which PC: each install has an id in a file next to the database (`installation-id`, outside backups) and sends it on every call. The service remembers the installation holding the server token and answers another `409 server_in_use`; that PC stops syncing and asks "keep it on this PC" (takeover) or "let the other PC keep it" (disconnect). The PC checks in every 15 minutes (`GET path`), so an idle PC finds out too, and learns a new path or owner.
+- Revoke every device = reset: all tokens revoked (the server's too), a fresh server token for this PC, the path rotated. Recovery revokes only the old server token.
+- Transfer is an offer by email; it is the new owner's once that Google account signs in and accepts it.
+
 ## 7. Joining: a QR code or a link (T-168)
 
 - On the PC, **"Add a device"** shows a QR code and a link: `https://<public app>/join#c=<churchId>-<pathSecret>&t=<deviceToken>&p=<pcSignalId>`.

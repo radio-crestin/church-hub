@@ -11,6 +11,24 @@ export interface DeviceRecord {
   isServer: boolean
   createdAt: number
   revokedAt: number | null
+  /**
+   * The church server only: the installation (one PC's install of the app)
+   * holding its token. A restored backup copies the token to another PC;
+   * this tells the two apart (T-172). Absent on states written before it.
+   */
+  installationId?: string | null
+  /** The PC's name (its hostname), shown to the other PC on a conflict. */
+  installationName?: string | null
+  /** Unix seconds the server's installation last called (to the minute). */
+  lastSeenAt?: number | null
+}
+
+/** The Google account that owns a church (T-172). */
+export interface ChurchOwner {
+  /** Google's stable account id (`sub`). */
+  googleSub: string
+  email: string
+  claimedAt: number
 }
 
 export interface RoleRecord {
@@ -56,6 +74,10 @@ export interface ChurchState {
    * change deleted it.
    */
   versions: Record<string, number>
+  /** Null (or absent, before T-172): a guest church nobody owns yet. */
+  owner?: ChurchOwner | null
+  /** A transfer the owner started: this account accepts it to own it. */
+  pendingOwnerEmail?: string | null
   createdAt: number
   updatedAt: number
 }

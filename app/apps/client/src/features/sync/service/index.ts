@@ -1,4 +1,6 @@
 export {
+  type CloudServerConflict,
+  type CloudSyncInfo,
   getSyncConfig,
   getSyncPending,
   getSyncStatus,

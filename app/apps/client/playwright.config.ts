@@ -215,6 +215,9 @@ export default defineConfig({
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
       CHURCH_HUB_AUDIO_SERVER_PORT: String(server.fakeAudioPort),
       CHURCH_HUB_SIGNALING_URL: server.fakeRelayUrl,
+      // "Turn on cloud sync" in the settings talks to the spec's own sync
+      // service (cloud-owner.spec.ts), never the church's real one.
+      CHURCH_HUB_SYNC_URL: `http://127.0.0.1:${server.syncServicePort}`,
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has
