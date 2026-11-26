@@ -34,6 +34,10 @@ export const syncConfig = sqliteTable('sync_config', {
   pollIntervalMinutes: integer('poll_interval_minutes').notNull().default(5),
   lastSyncAt: integer('last_sync_at', { mode: 'timestamp' }),
   lastError: text('last_error'),
+  /** Which transport syncs the library: the cloud sync service or Drive. */
+  transport: text('transport', { enum: ['drive', 'cloud'] })
+    .notNull()
+    .default('drive'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -137,4 +141,45 @@ export const syncUpdates = sqliteTable(
     index('idx_sync_updates_seen').on(table.seen),
     index('idx_sync_updates_entity').on(table.entityType, table.entityUuid),
   ],
+)
+
+/**
+ * This server's church on the cloud sync service (T-171), single row id = 1.
+ * `readUrl` is the public, unlisted bucket path the library is read from;
+ * `serverToken` authenticates its writes. `seq` is the last segment applied
+ * here, `headEtag` the head.json version it came from.
+ */
+export const cloudSync = sqliteTable('cloud_sync', {
+  id: integer('id').primaryKey(),
+  serviceUrl: text('service_url').notNull(),
+  churchId: text('church_id').notNull(),
+  readUrl: text('read_url').notNull(),
+  deviceId: text('device_id').notNull(),
+  serverToken: text('server_token').notNull(),
+  seq: integer('seq').notNull().default(0),
+  headEtag: text('head_etag'),
+  /** Hash of the roles and users last mirrored to the service. */
+  accessHash: text('access_hash'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+/**
+ * The central version of every synced row (cloud transport): sent as the
+ * base of the next change to it, so the service can refuse one made on an
+ * older version. `deleted` marks a delete already published.
+ */
+export const syncVersions = sqliteTable(
+  'sync_versions',
+  {
+    entityType: text('entity_type').notNull(),
+    entityUuid: text('entity_uuid').notNull(),
+    version: integer('version').notNull(),
+    deleted: integer('deleted', { mode: 'boolean' }).notNull().default(false),
+  },
+  (table) => [primaryKey({ columns: [table.entityType, table.entityUuid] })],
 )

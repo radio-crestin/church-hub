@@ -1,0 +1,153 @@
+import { AwsClient } from 'aws4fetch'
+import { SyncError } from './SyncError'
+import type { Bindings } from '../types'
+
+export interface PutOptions {
+  contentType: string
+  cacheControl: string
+  /** Write only if the object still has this ETag (compare-and-swap). */
+  ifMatch?: string
+  /** Write only if no object has this key yet. */
+  ifNoneMatch?: '*'
+}
+
+/** A bucket only this service writes to (with its keys). */
+export interface Bucket {
+  /** The new object's ETag, or null when a condition failed (412). */
+  put(
+    key: string,
+    body: Uint8Array,
+    options: PutOptions
+  ): Promise<string | null>
+  /** The object and its ETag, or null when it doesn't exist. */
+  get(key: string): Promise<{ bytes: ArrayBuffer; etag: string } | null>
+  /** The object's ETag, without its body, or null when it doesn't exist. */
+  etag(key: string): Promise<string | null>
+  /** Every key under `prefix` (listing needs the service's keys). */
+  list(prefix: string): Promise<string[]>
+  delete(key: string): Promise<void>
+  /** Where readers GET `key` from, without credentials. */
+  publicUrl(key: string): string
+}
+
+/** A conditional write that lost: 412, or 409 while another one is in flight. */
+const CONDITION_FAILED = new Set([409, 412])
+
+function decodeXml(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+}
+
+/**
+ * Any S3-compatible bucket with conditional writes (R2, AWS S3, MinIO…),
+ * path-style and signed with SigV4, from the S3_* settings: the public
+ * bucket readers fetch from, or (`name`) the one holding the churches'
+ * encrypted state.
+ */
+export function createBucket(env: Bindings, name = env.S3_BUCKET): Bucket {
+  const { S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL } =
+    env
+  if (
+    !S3_ENDPOINT ||
+    !name ||
+    !S3_ACCESS_KEY_ID ||
+    !S3_SECRET_ACCESS_KEY ||
+    !S3_PUBLIC_URL
+  ) {
+    throw new SyncError(
+      503,
+      'not_configured',
+      'Cloud sync storage is not configured'
+    )
+  }
+  const client = new AwsClient({
+    accessKeyId: S3_ACCESS_KEY_ID,
+    secretAccessKey: S3_SECRET_ACCESS_KEY,
+    service: 's3',
+    region: env.S3_REGION || 'auto',
+  })
+  const base = `${S3_ENDPOINT.replace(/\/+$/, '')}/${name}`
+  const objectUrl = (key: string) =>
+    `${base}/${key.split('/').map(encodeURIComponent).join('/')}`
+
+  const send = async (
+    url: string,
+    init: RequestInit,
+    allowed: (status: number) => boolean = () => false
+  ): Promise<Response> => {
+    const response = await client.fetch(url, init)
+    if (response.ok || response.status === 404 || allowed(response.status)) {
+      return response
+    }
+    const detail = await response.text().catch(() => '')
+    throw new Error(
+      `S3 ${init.method} ${url} failed: ${response.status} ${detail.slice(0, 200)}`
+    )
+  }
+
+  return {
+    async put(key, body, options) {
+      const response = await send(
+        objectUrl(key),
+        {
+          method: 'PUT',
+          body,
+          headers: {
+            'Content-Type': options.contentType,
+            'Cache-Control': options.cacheControl,
+            ...(options.ifMatch ? { 'If-Match': options.ifMatch } : {}),
+            ...(options.ifNoneMatch
+              ? { 'If-None-Match': options.ifNoneMatch }
+              : {}),
+          },
+        },
+        (status) => CONDITION_FAILED.has(status)
+      )
+      if (CONDITION_FAILED.has(response.status)) return null
+      return response.headers.get('ETag') ?? ''
+    },
+    async get(key) {
+      const response = await send(objectUrl(key), { method: 'GET' })
+      if (response.status === 404) return null
+      return {
+        bytes: await response.arrayBuffer(),
+        etag: response.headers.get('ETag') ?? '',
+      }
+    },
+    async etag(key) {
+      const response = await send(objectUrl(key), { method: 'HEAD' })
+      return response.status === 404
+        ? null
+        : (response.headers.get('ETag') ?? '')
+    },
+    async list(prefix) {
+      const keys: string[] = []
+      let token: string | undefined
+      do {
+        const query = new URLSearchParams({ 'list-type': '2', prefix })
+        if (token) query.set('continuation-token', token)
+        const response = await send(`${base}?${query}`, { method: 'GET' })
+        const xml = await response.text()
+        for (const match of xml.matchAll(/<Key>([^<]*)<\/Key>/g)) {
+          keys.push(decodeXml(match[1]))
+        }
+        token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
+          ? decodeXml(
+              xml.match(/<NextContinuationToken>([^<]*)</)?.[1] ?? ''
+            ) || undefined
+          : undefined
+      } while (token)
+      return keys
+    },
+    async delete(key) {
+      await send(objectUrl(key), { method: 'DELETE' })
+    },
+    publicUrl(key) {
+      return `${S3_PUBLIC_URL.replace(/\/+$/, '')}/${key}`
+    },
+  }
+}

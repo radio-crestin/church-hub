@@ -407,6 +407,6 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
     updateScheduleSearchIndex(scheduleId)
   }
 
-  logger.info(`Applied ${appliedCount} remote change(s) from Drive sync`)
+  logger.info(`Applied ${appliedCount} remote change(s) from library sync`)
   return { appliedCount, reportedCount }
 }

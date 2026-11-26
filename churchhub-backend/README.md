@@ -26,10 +26,77 @@ This worker provides a stateless OAuth flow using:
 | `/health` | GET | Health check endpoint |
 | `/feature-requests` | POST | "Request a feature": stores the screenshot in R2, opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email). Max 3/min and 50 per rolling 24h per IP (hashed IP counter in `SIGNALING_KV`) |
 | `/feature-requests/screenshots/:id` | GET | Serves a feature-request screenshot from R2 (embedded in the issue; random id, cached a year) |
+| `/sync/*` | GET, POST, PUT, DELETE | Cloud sync service (see below); documented at `/sync/openapi.json`, rendered at `/sync/docs` |
 
 > Drive setup: enable the **Google Drive API** in the same Google Cloud project
 > and register `https://churchub-backend.radiocrestin.ro/auth/drive/callback`
 > as an additional authorized redirect URI on the SAME OAuth client.
+
+## Cloud sync (`/sync/*`)
+
+The one writer of every church's synced library
+(`docs/design/cloud-sync-and-shared-library.md` §3-5). A church server
+registers as a guest (`POST /sync/churches`), mirrors its roles and users
+(`PUT …/access`), mints device tokens for its users (`POST …/devices`), and
+every device writes through `POST …/changes`: authenticated by its token,
+authorized against its user's permissions, version-checked, then published to
+an S3-compatible bucket as one segment under `churches/<churchId>-<pathSecret>/`.
+Reads never call the service: clients GET that public, unlisted path directly.
+
+**No database.** Each church's state (its devices, as token hashes only; its
+roles, users and permissions; every row's version; the segments after the
+snapshot) is one object, `sync-state/<churchId>.bin`, gzipped and sealed
+with AES-256-GCM under a key derived from `SYNC_SECRET`. It can sit in the
+public bucket (without the secret it is unreadable, and tampering is
+detected), or in a private bucket of its own (`S3_STATE_BUCKET`), which is
+better still. Every change is a compare-and-swap on that object: the service
+writes it with `If-Match` on the ETag it read, and when another write got
+there first (412) it reads again and retries.
+
+So the bucket must support **conditional writes** (`If-Match` and
+`If-None-Match: *` on `PutObject`): Cloudflare R2, AWS S3 and MinIO do. A
+store without them can't keep concurrent writers apart. The service also
+lists its own prefixes (with its keys) to delete what a snapshot replaced:
+after each compaction, the snapshot before last and every segment it covers
+go, so no lifecycle rule is needed and none can delete a segment `head.json`
+still lists. Missing settings make the routes answer `503 not_configured`,
+so the rest of the Worker deploys without them.
+
+**Settings** (Worker vars or secrets, or environment when self-hosted):
+
+| Name | |
+|---|---|
+| `SYNC_SECRET` | Hashes the device tokens and, derived, encrypts the church states (secret; `openssl rand -hex 32`). Losing it locks every church out. |
+| `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION` | An S3-compatible bucket with conditional writes, path-style (`S3_REGION` defaults to `auto`, R2's) |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Read, write and list keys, held only by the service (secrets) |
+| `S3_PUBLIC_URL` | The bucket's public read URL (anonymous `GetObject` on `churches/*`, no listing) |
+| `S3_STATE_BUCKET` | Optional: a private bucket (same endpoint and keys) for `sync-state/` |
+| `SYNC_COMPACT_AFTER` | Segments between snapshots (default 40) |
+| `SYNC_RATE_LIMITER` | Optional rate-limit binding on registration |
+
+**On Cloudflare**, once:
+
+```bash
+npx wrangler r2 bucket create church-hub-sync # public access through a custom domain; no listing
+```
+
+Then add the secrets above to `.prod.vars` (an R2 API token with read and
+write on the bucket). Plan on the Workers paid plan: compacting a large
+library (building, gzipping and uploading a snapshot of several MB) will
+likely take more than the free plan's 10 ms of CPU per request.
+
+**Self-hosted** (Bun or Node, and your own bucket: MinIO, AWS S3, R2…):
+
+```bash
+npm ci
+SYNC_SECRET=… S3_ENDPOINT=… S3_BUCKET=… S3_ACCESS_KEY_ID=… \
+  S3_SECRET_ACCESS_KEY=… S3_PUBLIC_URL=… PORT=8787 \
+  bun src/selfhost/server.ts            # or: npx tsx src/selfhost/server.ts (Node)
+```
+
+The app points at it with `CHURCH_HUB_SYNC_URL` (or `serviceUrl` in
+`POST /api/sync/cloud`). The e2e spec `app/apps/client/e2e/cloud-sync.spec.ts`
+runs it this way against an S3 stand-in.
 
 ## Google Cloud Console Setup
 
