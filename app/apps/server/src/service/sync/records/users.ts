@@ -1,6 +1,7 @@
 import { idByUuid } from './idByUuid'
 import { readPermissions, writePermissions } from './permissions'
 import { getRawDatabase } from '../../../db'
+import { sealSecret, secretPlaces } from '../../secret-store'
 import { generateUserToken } from '../../users/users'
 import type { LibraryUser } from '../types'
 
@@ -41,7 +42,8 @@ export function serializeUsers(): LibraryUser[] {
 
 /**
  * An account made elsewhere gets a login token of its own here (tokens and
- * passwords never travel); an existing one keeps its own.
+ * passwords never travel), sealed like every stored token; an existing one
+ * keeps its own.
  */
 export function upsertUser(user: LibraryUser): number | null {
   const db = getRawDatabase()
@@ -60,7 +62,7 @@ export function upsertUser(user: LibraryUser): number | null {
   ).run(
     user.uuid,
     user.name,
-    token,
+    sealSecret(token, secretPlaces.userToken(tokenHash)),
     tokenHash,
     user.isActive,
     user.isSuperAdmin,
