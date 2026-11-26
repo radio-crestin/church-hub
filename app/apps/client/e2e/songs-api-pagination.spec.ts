@@ -84,7 +84,7 @@ test.describe('Songs API pagination', () => {
       await expect(
         page.getByText(
           // Romanian says "20 de cântări" from 20 up.
-          new RegExp(`${data.total} (de )?(cântări|cântare|songs?) `, 'i'),
+          new RegExp(`\\b${data.total} (de )?(cântări|cântare|songs?) `, 'i'),
         ),
       ).toBeVisible()
     }
