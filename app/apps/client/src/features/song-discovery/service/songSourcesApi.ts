@@ -3,7 +3,11 @@ import type { ParsedOpenSong } from '@church-hub/song-formats'
 import { getApiUrl } from '~/config'
 import { fetcher } from '~/utils/fetcher'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
-import type { SongBundleFile, SongSource } from '../providers/types'
+import type {
+  ManagedRelease,
+  SongBundleFile,
+  SongSource,
+} from '../providers/types'
 import type { DiscoveryMatchResult } from '../types'
 
 interface ApiResponse<T> {
@@ -41,6 +45,12 @@ export const getSourceChecksum = async (sourceId: string) =>
       `/api/song-sources/${encodeURIComponent(sourceId)}/checksum`,
     )
   ).checksum
+
+/** The version of a managed source's hosted copy; null while there is none. */
+export const getManagedRelease = (sourceId: string) =>
+  call<ManagedRelease | null>(
+    `/api/song-sources/${encodeURIComponent(sourceId)}/managed`,
+  )
 
 /**
  * A song file source's archive, downloaded through the server, reporting

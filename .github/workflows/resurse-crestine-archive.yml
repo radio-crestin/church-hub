@@ -1,7 +1,8 @@
-# Rebuilds the Resurse Creștine song archive from resursecrestine.ro and
-# publishes it to the `song-sources` release, where the app's built-in
-# Resurse Creștine source downloads it. Daily, and on demand. Uploads only
-# when a song changed (the checksum differs from the published one).
+# Rebuilds Resurse Creștine, Church Hub's managed song source, from
+# resursecrestine.ro and publishes it where the app reads it: our S3 bucket
+# (a versioned copy plus latest.json, docs/managed-song-sources.md) and, as
+# the app's fallback, the `song-sources` release. Daily, and on demand. Each
+# copy is updated only when the songs changed (the checksum differs).
 name: Resurse Creștine archive
 
 on:
@@ -38,24 +39,22 @@ jobs:
         working-directory: app
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Read the published checksum
-        id: published
+      - name: Build the archive
+        id: build
+        working-directory: app/apps/server
+        run: bun scripts/build-resurse-crestine-archive.ts "$RUNNER_TEMP/archive"
+
+      - name: Read the release's checksum
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           checksum=$(gh release download song-sources --repo "$GITHUB_REPOSITORY" \
             --pattern resurse-crestine.chsongs.sha256 --output - 2>/dev/null || true)
-          echo "checksum=${checksum}" >> "$GITHUB_OUTPUT"
-
-      - name: Build the archive
-        id: build
-        working-directory: app/apps/server
-        env:
-          PREVIOUS: ${{ steps.published.outputs.checksum }}
-        run: bun scripts/build-resurse-crestine-archive.ts "$RUNNER_TEMP/archive" "$PREVIOUS"
+          echo "checksum=$(echo "$checksum" | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
 
       - name: Publish to the song-sources release
-        if: steps.build.outputs.changed == 'true'
+        if: steps.build.outputs.checksum != steps.release.outputs.checksum
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -63,3 +62,43 @@ jobs:
             "$RUNNER_TEMP/archive/resurse-crestine.chsongs" \
             "$RUNNER_TEMP/archive/resurse-crestine-opensong.zip" \
             "$RUNNER_TEMP/archive/resurse-crestine.chsongs.sha256"
+
+      # Secrets can't be tested in `if:`; until they are added, the bucket is
+      # skipped and the app keeps reading the release.
+      - name: Check the bucket is set up
+        id: bucket
+        env:
+          ENDPOINT: ${{ secrets.SONG_SOURCES_S3_ENDPOINT }}
+          BUCKET: ${{ secrets.SONG_SOURCES_S3_BUCKET }}
+          ACCESS_KEY_ID: ${{ secrets.SONG_SOURCES_S3_ACCESS_KEY_ID }}
+          SECRET_ACCESS_KEY: ${{ secrets.SONG_SOURCES_S3_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -n "$ENDPOINT" ] && [ -n "$BUCKET" ] && [ -n "$ACCESS_KEY_ID" ] && [ -n "$SECRET_ACCESS_KEY" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::The SONG_SOURCES_S3_* secrets are not set: skipping the bucket (docs/managed-song-sources.md)"
+          fi
+
+      - name: Publish to our bucket
+        id: s3
+        if: steps.bucket.outputs.configured == 'true'
+        working-directory: app/apps/server
+        env:
+          SONG_SOURCES_S3_ENDPOINT: ${{ secrets.SONG_SOURCES_S3_ENDPOINT }}
+          SONG_SOURCES_S3_BUCKET: ${{ secrets.SONG_SOURCES_S3_BUCKET }}
+          SONG_SOURCES_S3_ACCESS_KEY_ID: ${{ secrets.SONG_SOURCES_S3_ACCESS_KEY_ID }}
+          SONG_SOURCES_S3_SECRET_ACCESS_KEY: ${{ secrets.SONG_SOURCES_S3_SECRET_ACCESS_KEY }}
+          SONG_SOURCES_S3_REGION: ${{ secrets.SONG_SOURCES_S3_REGION }}
+        run: bun scripts/publish-managed-source.ts "$RUNNER_TEMP/archive" resurse-crestine
+
+      - name: Check the public copy answers
+        if: steps.s3.outputs.published == 'true'
+        env:
+          PUBLIC_URL: ${{ vars.SONG_SOURCES_PUBLIC_URL }}
+          ARCHIVE: ${{ steps.s3.outputs.archive }}
+        run: |
+          if [ -z "$PUBLIC_URL" ]; then
+            echo "::notice::The SONG_SOURCES_PUBLIC_URL variable is not set: the public copy was not checked"
+            exit 0
+          fi
+          curl --fail --silent --show-error --head "${PUBLIC_URL%/}/$ARCHIVE" > /dev/null
