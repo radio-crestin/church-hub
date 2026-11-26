@@ -154,13 +154,18 @@ sync.get('/sync/churches/:churchId/path', async (c) => {
   })
 })
 
-/** PUT /sync/churches/:churchId/access: the church's roles and users. */
+/**
+ * PUT /sync/churches/:churchId/access: the church's roles and users; with
+ * revokeDevicesWithUser, a deactivated or removed user's devices are revoked
+ * and the path moves (the answer has the read location either way).
+ */
 sync.put('/sync/churches/:churchId/access', async (c) => {
   const access = parseAccess(await readJsonBody(c))
   const store = createSyncStore(c.env)
   const { who, church } = await caller(c, store)
   requirePermission(church.state, who, MANAGE_PERMISSION)
-  return c.json({ changed: await updateAccess(store, who.churchId, access) })
+  const { state, ...update } = await updateAccess(store, who.churchId, access)
+  return c.json({ ...update, ...readLocation(store, state) })
 })
 
 /** GET /sync/churches/:churchId/devices: every device, revoked ones too. */
