@@ -22,6 +22,10 @@ const ALLOWED_STYLES = new Set([
   'font-style',
   'text-decoration',
   'line-height',
+  // An imported PowerPoint paragraph's indent and spacing.
+  'margin-left',
+  'margin-top',
+  'margin-bottom',
 ])
 
 /** Elements dropped with everything in them. */
@@ -76,8 +80,8 @@ function sanitizeTag(closing: string, name: string, attributes: string) {
 /**
  * A text box's HTML as the screens may show it: only paragraphs, line breaks,
  * spans, bold, italic, underline and lists, each with only its font, size,
- * colour, weight, style, decoration, alignment and line height. Every other
- * tag goes (its text stays; a script's or style's goes with it), as do all
+ * colour, weight, style, decoration, alignment, line height, and left, top
+ * and bottom margins. Every other tag goes (its text stays; a script's or style's goes with it), as do all
  * other attributes, so nothing in a deck can run or load anything.
  */
 export function sanitizeDeckHtml(html: string): string {

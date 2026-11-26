@@ -23,7 +23,7 @@ const color = {
 const html = {
   type: 'string',
   description:
-    'Sanitized on save: only p, div, span, br, b, strong, i, em, u, ul, ol, li, with style limited to font-size, font-family, color, text-align, font-weight, font-style, text-decoration, line-height',
+    'Sanitized on save: only p, div, span, br, b, strong, i, em, u, ul, ol, li, with style limited to font-size, font-family, color, text-align, font-weight, font-style, text-decoration, line-height, margin-left, margin-top, margin-bottom',
 }
 const direction = { type: 'string', enum: [...DECK_DIRECTIONS] }
 
