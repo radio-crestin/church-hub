@@ -84,12 +84,35 @@ export const livestreamYouTubePaths = {
       security,
       summary: 'Start a YouTube sign-in',
       description:
-        'The state the sign-in must bring its tokens back with (single use, valid 10 minutes). In the desktop app it rides in the OAuth worker’s returnUrl to the app’s /auth/youtube/callback page.',
+        'The page to open, on Church Hub’s backend (it holds the Google client), and the state the sign-in must bring its tokens back with (single use, valid 10 minutes). `redirect` (the desktop app, the default): the state rides in the returnUrl to the app’s /auth/youtube/callback page. `postMessage` (a browser popup): the backend posts the tokens to the opener, which stores them with the state.',
+      requestBody: {
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                mode: {
+                  type: 'string',
+                  enum: ['redirect', 'postMessage'],
+                  default: 'redirect',
+                },
+              },
+            },
+          },
+        },
+      },
       responses: {
         '200': json(
-          { type: 'object', properties: { state: { type: 'string' } } },
-          'The sign-in’s state',
+          {
+            type: 'object',
+            properties: {
+              state: { type: 'string' },
+              authUrl: { type: 'string', description: 'The page to open' },
+            },
+          },
+          'The sign-in’s state and page',
         ),
+        '400': { description: 'mode is not redirect or postMessage' },
         '401': errors['401'],
       },
     },

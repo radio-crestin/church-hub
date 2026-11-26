@@ -1,4 +1,4 @@
-import { getSignalingBaseUrl } from './signalingBaseUrl'
+import { getSignalingRelayUrls } from './getSignalingRelayUrls'
 import { log } from '../../utils/fileLogger'
 
 const logger = {
@@ -22,16 +22,27 @@ interface SignalingRelayOptions {
 }
 
 /**
- * Keeps this computer's room open on the signaling relay and answers each
- * device's WebRTC offer; returns the function that closes the room.
+ * Keeps this computer's room open on every signaling relay it announces on
+ * (getSignalingRelayUrls) and answers each device's WebRTC offer; returns the
+ * function that closes the room everywhere.
  */
-export function startSignalingRelay({
-  secret,
-  hostKey,
-  pollMs,
-  answer,
-}: SignalingRelayOptions): () => Promise<void> {
-  const base = getSignalingBaseUrl()
+export function startSignalingRelay(
+  options: SignalingRelayOptions,
+): () => Promise<void> {
+  const closers = getSignalingRelayUrls().map((base) =>
+    openRoomOn(base, options),
+  )
+  return async () => {
+    await Promise.all(closers.map((close) => close()))
+  }
+}
+
+/** The room on one relay; returns the function that closes it there. */
+function openRoomOn(
+  base: string,
+  { secret, hostKey, pollMs, answer }: SignalingRelayOptions,
+): () => Promise<void> {
+  const relay = new URL(base).host
   // Host calls carry the host key; listeners only ever hold the room id.
   const authorization = { authorization: `Bearer ${hostKey}` }
   const post = (path: string, body: unknown) =>
@@ -45,9 +56,15 @@ export function startSignalingRelay({
     try {
       const res = await post('/signal/register', { secret })
       if (!res.ok)
-        logger.error('Room registration refused', { status: res.status })
+        logger.error('Room registration refused', {
+          relay,
+          status: res.status,
+        })
     } catch (error) {
-      logger.warn('Signaling relay unreachable', { error: String(error) })
+      logger.warn('Signaling relay unreachable', {
+        relay,
+        error: String(error),
+      })
     }
   }
 
@@ -77,7 +94,10 @@ export function startSignalingRelay({
         }
       }
     } catch (error) {
-      logger.warn('Polling for offers failed', { error: String(error) })
+      logger.warn('Polling for offers failed', {
+        relay,
+        error: String(error),
+      })
     } finally {
       polling = false
     }
@@ -86,7 +106,7 @@ export function startSignalingRelay({
   void register()
   const registerTimer = setInterval(register, REGISTER_EVERY_MS)
   const pollTimer = setInterval(poll, pollMs)
-  logger.info('Signaling room open')
+  logger.info('Signaling room open', { relay })
 
   return async () => {
     clearInterval(registerTimer)
@@ -94,8 +114,11 @@ export function startSignalingRelay({
     try {
       await post('/signal/unregister', { secret })
     } catch (error) {
-      logger.warn('Room not closed on the relay', { error: String(error) })
+      logger.warn('Room not closed on the relay', {
+        relay,
+        error: String(error),
+      })
     }
-    logger.info('Signaling room closed')
+    logger.info('Signaling room closed', { relay })
   }
 }

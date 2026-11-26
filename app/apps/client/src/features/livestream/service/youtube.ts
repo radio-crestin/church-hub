@@ -21,16 +21,23 @@ interface StoreTokensInput {
 }
 
 /**
- * Starts a YouTube sign-in: the state its tokens must come back with. The
- * server stores tokens only with a state it issued (single use, 10 minutes).
+ * Starts a YouTube sign-in on the server: the backend page to open (the
+ * server knows where the backend is) and the state the tokens must come back
+ * with (single use, 10 minutes).
  */
-export async function startYouTubeSignIn(): Promise<string> {
-  const response = await fetcher<{ data?: { state: string }; error?: string }>(
-    '/api/livestream/youtube/sign-in',
-    { method: 'POST' },
-  )
+export async function startYouTubeSignIn(
+  mode: 'redirect' | 'postMessage',
+): Promise<{ state: string; authUrl: string }> {
+  const response = await fetcher<{
+    data?: { state: string; authUrl: string }
+    error?: string
+  }>('/api/livestream/youtube/sign-in', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  })
   if (!response.data) throw new Error(response.error ?? 'sign_in_failed')
-  return response.data.state
+  return response.data
 }
 
 /**
