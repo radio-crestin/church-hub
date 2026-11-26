@@ -1,5 +1,11 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-public",
+    "src/features/browser-server/worker"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

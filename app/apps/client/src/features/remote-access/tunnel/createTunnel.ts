@@ -33,10 +33,22 @@ const toBytes = (base64: string) =>
   Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
 
 /**
- * Requests and WebSockets to the computer's server over an open data
- * channel (the computer replays them: server service/remote-access).
+ * The text channel a tunnel runs over: a WebRTC data channel to the
+ * computer, or the messages of the worker running the server in this
+ * browser (browser-server).
  */
-export function createTunnel(channel: RTCDataChannel): Tunnel {
+export interface TunnelChannel {
+  send(text: string): void
+  close(): void
+  onmessage: ((event: MessageEvent) => void) | null
+  onclose: ((event: Event) => void) | null
+}
+
+/**
+ * Requests and WebSockets to a server over an open channel (it replays
+ * them: server service/remote-access/tunnelSession.ts).
+ */
+export function createTunnel(channel: TunnelChannel): Tunnel {
   let nextId = 0
   const pending = new Map<number, (response: TunnelResponse) => void>()
   const sockets = new Map<number, TunnelSocketEvents>()
