@@ -21,7 +21,9 @@
     "checkingAll": "Se verifică sursele…",
     "upToDate": "La zi",
     "downloadFailed": "Descărcarea a eșuat: {{status}}",
-    "checkFailed": "Verificarea a eșuat: {{error}}"
+    "checkFailed": "Verificarea a eșuat: {{error}}",
+    "managed": "Gestionat de Church Hub",
+    "managedVersion": "Gestionat de Church Hub · versiunea {{version}}"
   },
   "verdict": {
     "new": "Nouă",
