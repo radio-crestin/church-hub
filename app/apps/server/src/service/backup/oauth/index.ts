@@ -1,4 +1,5 @@
 import { getDriveReturnUrl, getLocalOrigin, getOAuthWorkerUrl } from './config'
+import { consumeDriveAuthState, issueDriveAuthState } from './driveAuthStates'
 import { createLogger } from '../../../utils/logger'
 import { storeDriveAuth } from '../driveAuthStore'
 
@@ -10,13 +11,14 @@ export type CreateDriveAuthUrlResult = { authUrl: string }
  * Starts a Drive connect flow through the ChurchHub OAuth worker (the same
  * Cloudflare worker the YouTube flow uses — it holds the Google client
  * credentials server-side). The worker runs PKCE against Google and redirects
- * back to this server's /api/backup/google/callback with the tokens.
+ * back to this server's /api/backup/google/callback with the tokens and the
+ * flow's state, which the callback requires.
  */
 export function createDriveAuthUrl(): CreateDriveAuthUrlResult {
   const url = new URL('/auth/drive', getOAuthWorkerUrl())
   url.searchParams.set('origin', getLocalOrigin())
   url.searchParams.set('mode', 'redirect')
-  url.searchParams.set('returnUrl', getDriveReturnUrl())
+  url.searchParams.set('returnUrl', getDriveReturnUrl(issueDriveAuthState()))
   return { authUrl: url.toString() }
 }
 
@@ -33,12 +35,19 @@ export type CompleteDriveAuthResult =
 
 /**
  * Completes the Drive connect flow: persists the tokens the worker handed back
- * on the redirect. A missing refresh token means we couldn't stay connected
- * across restarts, so it is rejected (the worker requests offline access).
+ * on the redirect, only for a flow this server started (its `state`), so no
+ * other page can connect the backup to an account of its choosing. A missing
+ * refresh token means we couldn't stay connected across restarts, so it is
+ * rejected (the worker requests offline access).
  */
 export async function completeDriveAuth(
+  state: string | null,
   tokens: WorkerDriveTokens,
 ): Promise<CompleteDriveAuthResult> {
+  if (!consumeDriveAuthState(state)) {
+    logger.warning('Drive connect refused: unknown or expired state')
+    return { success: false, error: 'unknown_connect_flow' }
+  }
   if (!tokens.accessToken || !tokens.refreshToken) {
     return { success: false, error: 'missing_tokens' }
   }

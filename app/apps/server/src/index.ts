@@ -36,6 +36,7 @@ import {
   requireAnyPermission,
   requirePermission,
 } from './middleware'
+import { isTrustedOrigin, refuseUntrustedRequest } from './middleware/origins'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import {
   handleAnalyticsConsentRead,
@@ -381,6 +382,7 @@ import {
   startSyncScheduler,
   upsertSyncConfig,
 } from './service/sync'
+import { escapeHtml } from './service/text-search/text/escapeHtml'
 import { startBootServer } from './utils/bootServer'
 import {
   type BootPhase,
@@ -848,24 +850,28 @@ async function startRealServer(): Promise<void> {
   const logger = createLogger('BibleAPI')
 
   function handleCors(req: Request, res: Response) {
-    // Allow any origin - this app is designed for LAN use
-    // Reflect the origin header if present, otherwise allow all
-    const origin = req.headers.get('Origin') || '*'
-    res.headers.set('Access-Control-Allow-Origin', origin)
-    res.headers.set(
-      'Access-Control-Allow-Methods',
-      'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-    )
-    // When credentials are allowed, wildcard (*) doesn't work for headers
-    // Must explicitly list all allowed headers
-    res.headers.set(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, Cookie, X-User-Auth, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
-    )
-    res.headers.set('Access-Control-Allow-Credentials', 'true')
-    res.headers.set('Access-Control-Max-Age', '86400')
+    // Cross-origin access only for the app's own origins (the desktop and
+    // phone webviews, pages on this machine, the server as reached); any
+    // other origin gets no CORS headers (refuseUntrustedRequest refused it).
+    const origin = req.headers.get('Origin')
+    if (origin && isTrustedOrigin(origin, req)) {
+      res.headers.set('Access-Control-Allow-Origin', origin)
+      res.headers.append('Vary', 'Origin')
+      res.headers.set(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+      )
+      // When credentials are allowed, wildcard (*) doesn't work for headers
+      // Must explicitly list all allowed headers
+      res.headers.set(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, Cookie, X-User-Auth, Accept, Origin, X-Requested-With, Cache-Control, Pragma',
+      )
+      res.headers.set('Access-Control-Allow-Credentials', 'true')
+      res.headers.set('Access-Control-Max-Age', '86400')
+      res.headers.set('Access-Control-Expose-Headers', DATABASE_ID_HEADER)
+    }
     res.headers.set(DATABASE_ID_HEADER, getDatabaseId())
-    res.headers.set('Access-Control-Expose-Headers', DATABASE_ID_HEADER)
 
     // Persist every failed response (4xx/5xx) to the on-disk log so the Logs
     // viewer and bug reports surface what went wrong (permission denials,
@@ -927,6 +933,14 @@ async function startRealServer(): Promise<void> {
       const requestStartTime = performance.now()
       setRequestPeer(req, peerAddress(req, server))
       logRequest(req)
+
+      // Before any route (the WebSocket and preflights too): a request
+      // another site's page could have sent with the user's credentials.
+      const untrusted = refuseUntrustedRequest(req)
+      if (untrusted) {
+        logResponse(req, untrusted.status, requestStartTime)
+        return untrusted
+      }
 
       if (req.method === 'OPTIONS') {
         logResponse(req, 204, requestStartTime)
@@ -2440,7 +2454,7 @@ async function startRealServer(): Promise<void> {
           handleCors(
             req,
             new Response(
-              `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${message}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
+              `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${escapeHtml(message)}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
               { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
             ),
           )
@@ -2452,7 +2466,7 @@ async function startRealServer(): Promise<void> {
           return renderPage('Backup', 'Missing tokens in callback.')
         }
 
-        const result = await completeDriveAuth({
+        const result = await completeDriveAuth(url.searchParams.get('state'), {
           accessToken,
           refreshToken,
           expiresAt,
