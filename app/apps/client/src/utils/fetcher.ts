@@ -38,7 +38,8 @@ function getApiBaseUrl(): string {
   // Tauri desktop loads the frontend at `http://tauri.localhost` but the
   // sidecar binds to localhost — using `tauri.localhost` here makes every
   // fetch fail the document CSP (`connect-src http://localhost:*`). Force
-  // `localhost` so the URL matches CSP; CORS handles cross-origin allow.
+  // `localhost` so the URL matches CSP; the server trusts the webview's
+  // origin for CORS.
   return `http://localhost:${getServerPort()}`
 }
 
