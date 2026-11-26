@@ -69,7 +69,7 @@ export function ScheduleSongSlideList({
             type="button"
             data-testid={`schedule-sub-item-${itemStartFlatIndex + index}`}
             onClick={() => onSlideClick(item, index)}
-            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+            className={`w-full text-left px-3 py-2 rounded-lg outline-none transition-colors ${
               isPresented
                 ? 'bg-live-tint ring-1 ring-inset ring-live'
                 : 'hover:bg-hover'

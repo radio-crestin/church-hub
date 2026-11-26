@@ -9,6 +9,7 @@ import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
 import { PhoneSlideControls } from './PhoneSlideControls'
+import { PreviewScreenPicker } from './PreviewScreenPicker'
 import {
   type LiveProgramSteps,
   useClearSlide,
@@ -164,6 +165,7 @@ export function ControlRoom({ liveProgram }: ControlRoomProps) {
                 )}
               </button>
             )}
+            <PreviewScreenPicker placement="down" />
             {/* Hide/Show Button (on a phone, in the bottom bar) */}
             {isPhone ? null : !isHidden ? (
               <button

@@ -1,11 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eraser,
-  Eye,
-  EyeOff,
-  Loader2,
-} from 'lucide-react'
+import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -15,6 +8,7 @@ import {
   usePresentationState,
   useWebSocket,
 } from '~/features/presentation'
+import { PreviewNavControls } from '~/features/presentation/components/PreviewNavControls'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
@@ -153,32 +147,14 @@ export function SchedulePreviewPanel({
           <LivePreview />
         </div>
 
-        {/* Navigation Controls */}
-        <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">
-          <button
-            type="button"
-            onClick={handlePrev}
-            disabled={!canNavigatePrev || clearTemporary.isPending}
-            data-testid="schedule-preview-prev"
-            className="flex items-center gap-2 px-4 py-3 bg-field text-fg-body rounded-lg hover:bg-selected disabled:opacity-50 transition-colors"
-            title={t('bible:controls.prev')}
-          >
-            <ChevronLeft size={20} strokeWidth={1.5} />
-            <span className="text-base">{t('bible:controls.prev')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!canNavigateNext || clearTemporary.isPending}
-            data-testid="schedule-preview-next"
-            className="flex items-center gap-2 px-4 py-3 bg-field text-fg-body rounded-lg hover:bg-selected disabled:opacity-50 transition-colors"
-            title={t('bible:controls.next')}
-          >
-            <span className="text-base">{t('bible:controls.next')}</span>
-            <ChevronRight size={20} strokeWidth={1.5} />
-          </button>
-        </div>
+        <PreviewNavControls
+          onPrev={handlePrev}
+          onNext={handleNext}
+          canPrev={canNavigatePrev}
+          canNext={canNavigateNext}
+          isBusy={clearTemporary.isPending}
+          testIdPrefix="schedule-preview"
+        />
       </div>
     </div>
   )

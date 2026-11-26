@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useLocalizedBookNames } from '~/features/bible/hooks'
-import { PreviewScreenPicker } from './PreviewScreenPicker'
 import { ScreenPreview } from './ScreenPreview'
 import { TextStyleContextMenu } from './TextStyleContextMenu'
 import { usePresentationState } from '../hooks'
@@ -241,7 +240,6 @@ export function LivePreview({
             />
           )}
         </div>
-        <PreviewScreenPicker previewScreenId={screen.id} />
       </div>
     </div>
   )

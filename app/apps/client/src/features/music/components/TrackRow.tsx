@@ -97,12 +97,20 @@ export function TrackRow({
           <p className="truncate font-medium" data-testid="music-track-title">
             {title}
           </p>
-          <p className="truncate text-xs text-fg-hint @3xl:hidden">
+          {/* Plain text, one line each, so nothing inside sticks out past
+              the row while it truncates: the full meta on a narrow row, the
+              artist alone once the plays and date have their own columns. */}
+          <p className="truncate text-xs text-fg-hint @md:hidden">
+            {[
+              track.artist,
+              t('tracks.plays', { count: track.playCount }),
+              lastPlayed,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <p className="hidden truncate text-xs text-fg-hint @md:block @3xl:hidden">
             {track.artist}
-            <span className="@md:hidden">
-              {track.artist ? ' · ' : ''}
-              {t('tracks.plays', { count: track.playCount })} · {lastPlayed}
-            </span>
           </p>
         </div>
       </div>

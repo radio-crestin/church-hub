@@ -562,7 +562,7 @@ export function VersesList({
                           )
                         }
                         style={fontScale.textStyle}
-                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
+                        className={`w-full text-left px-3 py-2 rounded-lg outline-none transition-colors ${getButtonClass()}`}
                       >
                         <span
                           className={`font-semibold mr-2 ${getVerseNumberClass()}`}
