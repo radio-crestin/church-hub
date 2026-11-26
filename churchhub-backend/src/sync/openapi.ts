@@ -274,6 +274,43 @@ export const syncOpenApi = {
       },
     },
     '/sync/churches/{churchId}/devices': {
+      get: {
+        summary: 'List devices',
+        description:
+          'Every device of the church, newest first, revoked ones included (never their tokens). Needs users.edit.',
+        security: [{ deviceToken: [] }],
+        parameters: [churchId],
+        responses: {
+          '200': {
+            description: 'The devices',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    devices: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' },
+                          userId: { type: 'string', nullable: true },
+                          isServer: { type: 'boolean' },
+                          createdAt: { type: 'integer' },
+                          revokedAt: { type: 'integer', nullable: true },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': unauthorized,
+          '403': forbidden,
+        },
+      },
       post: {
         summary: 'Add a device',
         description:

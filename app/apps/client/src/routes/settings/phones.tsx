@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Smartphone } from 'lucide-react'
+import { Link2, Smartphone } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { CloudDevicesSection } from '~/features/cloud-devices'
 import { ConnectPhone } from '~/features/phone-pairing'
 import { SettingsLeafGuard, SettingsSection } from '~/features/settings'
 
@@ -19,6 +20,13 @@ function PhonesSettings() {
         icon={Smartphone}
       >
         <ConnectPhone />
+      </SettingsSection>
+      <SettingsSection
+        title={t('sections.cloudDevices.title')}
+        description={t('sections.cloudDevices.description')}
+        icon={Link2}
+      >
+        <CloudDevicesSection />
       </SettingsSection>
     </SettingsLeafGuard>
   )

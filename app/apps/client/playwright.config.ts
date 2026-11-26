@@ -4,6 +4,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, devices } from '@playwright/test'
 
+import { PORT_OFFSETS, PORTS_PER_SERVER } from './e2e/helpers/server-ports'
+
 // Resolve `localhost` to 127.0.0.1 (the server binds IPv4 0.0.0.0; Node ≥17
 // would otherwise try ::1 first and fail). We must use the literal hostname
 // `localhost` — NOT 127.0.0.1 — because the session cookie is `Secure`
@@ -31,24 +33,6 @@ export const SERVER_COUNT = Number(
 // on the running app drove its real projector and database ("slides appear
 // with nobody presenting", T-030).
 const BASE_PORT = Number(process.env.TEST_PORT ?? '3099')
-/**
- * The ports one server uses, as offsets from its own port: one row each, so
- * two features never take the same port (T-206: the LAN stand-in and the fake
- * audio server both took +1, and music.spec failed with EADDRINUSE). Server n
- * starts at TEST_PORT + n × PORTS_PER_SERVER, so two servers fit in the ten
- * ports a Superfactory worktree owns from $PORT.
- */
-const PORT_OFFSETS = {
-  // The server's LAN stand-in (see apps/server/src/utils/testLanListener.ts).
-  lan: 1,
-  // The desktop app's audio server stand-in (fake-audio-server.ts).
-  fakeAudio: 2,
-  // The church's signaling relay stand-in (fake-signaling-relay.ts).
-  fakeRelay: 3,
-  // The self-hosted cloud sync service (sync-service.ts, T-171).
-  syncService: 4,
-} as const
-const PORTS_PER_SERVER = 5
 
 /** Everything one worker's test server is reached by. */
 function testServer(index: number) {
@@ -60,6 +44,7 @@ function testServer(index: number) {
     fakeAudioPort: port + PORT_OFFSETS.fakeAudio,
     fakeRelayUrl: `http://127.0.0.1:${port + PORT_OFFSETS.fakeRelay}`,
     syncServicePort: port + PORT_OFFSETS.syncService,
+    publicAppUrl: `http://127.0.0.1:${port + PORT_OFFSETS.publicApp}`,
     // Run tests against an isolated, freshly-seeded database so they neither
     // depend on nor mutate the developer's real dev DB (which may, for
     // example, have a password set on the super admin, breaking the login).
@@ -111,6 +96,9 @@ export const FAKE_RELAY_URL = SERVER.fakeRelayUrl
 
 /** Where the cloud sync spec runs churchhub-backend's sync service. */
 export const SYNC_SERVICE_PORT = SERVER.syncServicePort
+
+/** Where the join spec serves the public web app; join links point there. */
+export const PUBLIC_APP_URL = SERVER.publicAppUrl
 
 /**
  * The line the server prints once the real server is bound and boot is done
@@ -215,9 +203,11 @@ export default defineConfig({
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
       CHURCH_HUB_AUDIO_SERVER_PORT: String(server.fakeAudioPort),
       CHURCH_HUB_SIGNALING_URL: server.fakeRelayUrl,
-      // "Turn on cloud sync" in the settings talks to the spec's own sync
-      // service (cloud-owner.spec.ts), never the church's real one.
+      // Cloud sync goes to the spec's own sync service (cloud-owner,
+      // public-join), never the church's real one, and its join links open
+      // the spec's public app.
       CHURCH_HUB_SYNC_URL: `http://127.0.0.1:${server.syncServicePort}`,
+      CHURCH_HUB_PUBLIC_APP_URL: server.publicAppUrl,
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has

@@ -457,6 +457,43 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
     },
   },
   '/api/sync/cloud/devices': {
+    get: {
+      tags: ['Sync'],
+      summary: 'List cloud sync devices',
+      description:
+        'The church’s devices on the sync service, newest first, revoked ones included (never their tokens). Requires users.edit.',
+      responses: {
+        '200': {
+          description: 'The devices',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        name: { type: 'string' },
+                        userId: { type: 'integer', nullable: true },
+                        isServer: { type: 'boolean' },
+                        createdAt: { type: 'integer' },
+                        revokedAt: { type: 'integer', nullable: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        '403': cloudError('Requires users.edit'),
+        '409': cloudError('Not connected to cloud sync'),
+        '502': cloudError('The sync service refused or failed'),
+      },
+    },
     post: {
       tags: ['Sync'],
       summary: 'Add a cloud sync device',
@@ -492,6 +529,11 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
                       token: { type: 'string' },
                       churchId: { type: 'string' },
                       readUrl: { type: 'string' },
+                      joinUrl: {
+                        type: 'string',
+                        description:
+                          'The link the device opens to join: <public app>/join#c=<churchId>-<pathSecret>&t=<token>[&p=<remote access room>][&s=<sync service>] (CHURCH_HUB_PUBLIC_APP_URL)',
+                      },
                     },
                   },
                 },
