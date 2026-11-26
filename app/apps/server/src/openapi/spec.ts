@@ -12,6 +12,7 @@ import {
   biblePaths,
   bibleTopicsPaths,
   categoriesPaths,
+  cloudBackupPaths,
   conversionPaths,
   databasePaths,
   devicesPaths,
@@ -29,6 +30,7 @@ import {
   schedulesPaths,
   screenSharePaths,
   screensPaths,
+  secretStorePaths,
   settingsPaths,
   slideTemplatesPaths,
   songBookmarksPaths,
@@ -160,6 +162,11 @@ export const openApiSpec = {
       name: 'Notifications',
       description: 'The notifications history: song syncs and app updates',
     },
+    {
+      name: 'Secret Store',
+      description:
+        'Saved passwords, API keys and tokens are sealed with a key kept outside the database',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -168,6 +175,7 @@ export const openApiSpec = {
     ...settingsPaths,
     ...databasePaths,
     ...backupPaths,
+    ...cloudBackupPaths,
     ...syncPaths,
     ...syncOwnerPaths,
     ...devicesPaths,
@@ -197,6 +205,7 @@ export const openApiSpec = {
     ...feedbackPaths,
     ...analyticsPaths,
     ...notificationsPaths,
+    ...secretStorePaths,
   },
   components: {
     securitySchemes,

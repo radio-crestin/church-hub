@@ -28,6 +28,7 @@ This worker provides a stateless OAuth flow using:
 | `/feature-requests` | POST | "Request a feature": stores the screenshot (the S3 bucket, or R2 when bound), opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email). Max 3/min and 50 per rolling 24h per IP (hashed IP counter in `SIGNALING_KV`) |
 | `/feature-requests/screenshots/:id` | GET | Serves a feature-request screenshot from its storage (embedded in the issue; random id, cached a year) |
 | `/sync/*` | GET, POST, PUT, DELETE | Cloud sync service (see below); documented at `/sync/openapi.json`, rendered at `/sync/docs` |
+| `/backup/*` | GET, POST, DELETE | Church Hub Cloud backup, free with Google sign-in (see below); documented at `/backup/openapi.json`, rendered at `/backup/docs` |
 
 > Drive setup: enable the **Google Drive API** in the same Google Cloud project
 > and register `https://churchub-backend.radiocrestin.ro/auth/drive/callback`
@@ -123,6 +124,128 @@ runs it (`bun src/node/server.ts`) against an S3 stand-in, and
 For the owner sign-in in production, register
 `https://churchub-backend.radiocrestin.ro/sync/owner/callback` as an
 authorized redirect URI on the Google OAuth client.
+
+## Cloud backup (`/backup/*`)
+
+Free backups of a church's database, only for people signed in with Google
+(no guest or anonymous path). The API, its limits and its errors are in
+`/backup/openapi.json` (code: `src/backup/`, routes in
+`src/routes/backup.ts`).
+
+- **Sign-in**: the PC opens `/backup/sign-in` with its loopback callback, a
+  nonce and the SHA-256 of a verifier it keeps; Google (PKCE, `openid email`,
+  verified email only) answers `/backup/callback`, which hands the PC a
+  five-minute grant. The PC swaps grant + verifier for a one-hour access
+  token and a 180-day refresh token (`chba_`/`chbr_`, HMAC-signed with
+  `BACKUP_SECRET`, bound to the Google `sub` and to the PC's session
+  family). Refresh tokens are single use: a reused one ends every session of
+  the account. Signing out ends the PC's family; deleting the account, all.
+- **What a backup is**: an encrypted **user part** (the church's own data:
+  settings, users, programs, history, bookmarks, its own and edited songs,
+  every song's usage) and an encrypted **manifest** (the user part's hash,
+  the blobs it needs), plus plaintext **resource blobs** (Bible
+  translations; the slides of unedited library songs): content-addressed
+  by SHA-256, immutable, under a random per-account prefix, sent only when
+  the account doesn't store them yet. The split is the app's
+  (`app/apps/server/src/service/backup/cloud/resources/planResources.ts`).
+- **Layout** (private, unlisted bucket): `accounts/<HMAC(sub)>/account.json`
+  (usage counter, blob reference counts, quota override, sessions,
+  backups, and the email for the admin panel); `backups/<HMAC(sub)>/<id>/`
+  (`user.chb`, `manifest.chb`); `blobs/<HMAC(sub)>/<random>/<sha256>`;
+  `index/accounts.json` (admin search); `admin/audit/` (audit log).
+  Uploads and downloads go straight to the bucket through presigned URLs:
+  parts and downloads valid 15 minutes; whole files (manifest, blobs) 5
+  minutes, only for blobs still unstored, signed for their exact
+  Content-Length and `If-None-Match: *` (never overwritten).
+- **Encryption**: the app encrypts the user part and manifest (AES-256-GCM,
+  a fresh key per backup) and wraps that key with the account key from
+  `GET /backup/key`, derived from `BACKUP_KEY_SECRET` and the `sub`: the
+  bucket alone can't read them, and the same account restores after a
+  reinstall by signing in. Restore checks every hash before replacing
+  anything.
+- **Quota**: 2 GiB per Google account (`BACKUP_QUOTA_BYTES`), or an admin's
+  override, counting every backup's user part and manifest plus each blob
+  once. The record's usage counter and blob refs are changed only by
+  compare-and-swap: an upload reserves what it adds at start (past the
+  quota: refused, nothing is deleted to make room), sizes are read back at
+  completion, a blob no backup needs is deleted. `GET /backup/usage`
+  answers used, reserved and quota bytes.
+- **History**: a backup expires 30 days after it was made
+  (`BACKUP_RETENTION_DAYS`). No other pruning.
+- **Free tier** (each overridable): 512 MiB an upload (`BACKUP_MAX_BYTES`),
+  24 uploads a day (`BACKUP_UPLOADS_PER_DAY`), 2 in flight. Per IP (60/min)
+  and per account (30/min): the `BACKUP_RATE_LIMITER` and
+  `BACKUP_ACCOUNT_RATE_LIMITER` bindings on Cloudflare; on Node, Redis or
+  memory (`BACKUP_RATE_LIMIT_PER_MINUTE`,
+  `BACKUP_ACCOUNT_RATE_LIMIT_PER_MINUTE`). The IP is `CF-Connecting-IP`
+  only (Cloudflare's, or the Node server's resolved address).
+- **Upkeep** (`src/backup/runBackupMaintenance.ts`; cron triggers on the
+  Worker, timers on Node): hourly, multipart uploads unfinished after 6
+  hours are aborted, backups past 30 days expire, and objects no record
+  lists (older than any presigned URL) are swept; daily, every account is
+  recomputed from the bucket (blob refs, usage; lost objects unlisted).
+  Each account is handled on its own: one bad record never stops the rest.
+- **Deleting an account** erases everything under `accounts/<id>/`,
+  `backups/<id>/` and `blobs/<id>/` (multipart uploads aborted, the record
+  last). Only a tombstone stays, `tombstones/<id>.json`: the pause, an
+  admin's quota override, the uploads of the last 24 hours, and when it was
+  deleted (no email, no Google id, no backup data). It is written before
+  anything is removed, while the record is marked deleting (a sign-in then
+  gets 409; the upkeep finishes a deletion left unfinished). A new sign-in
+  with the same Google account takes those limits back; the tombstone
+  stays until the hourly upkeep purges it 90 days after the deletion, or an
+  admin purges it earlier (audit-logged).
+
+**Settings** (secrets; unset = `/backup` answers `503 not_configured`):
+
+| Name | |
+|---|---|
+| `BACKUP_SECRET` | Signs tokens, admin sessions and the OAuth state (`openssl rand -hex 32`). Rotating it signs everyone out. |
+| `BACKUP_KEY_SECRET` | Derives account ids and account keys (`openssl rand -hex 32`). Never rotate it: losing it loses every backup. |
+| `BACKUP_S3_ENDPOINT`, `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | The private bucket, path-style, with multipart uploads and conditional writes (`BACKUP_S3_REGION` defaults to `auto`) |
+| `BACKUP_S3_ACCESS_KEY_ID`, `BACKUP_S3_SECRET_ACCESS_KEY` | Read, write, list and multipart on that bucket only |
+| `BACKUP_S3_PRESIGN_ENDPOINT` | Optional: the bucket's public address for presigned URLs, when the service reaches it on another (e.g. inside a cluster) |
+| `BACKUP_REDIRECT_URI` | The sign-in's callback, registered on the Google client (in `wrangler.toml`; default `<this service>/backup/callback`) |
+
+**The bucket**: no public access and no listing for anyone but the service;
+it must enforce signed headers on presigned URLs (Content-Length). Lifecycle
+rules (backstops to the hourly upkeep): abort incomplete multipart uploads
+after 1 day; expire objects under `backups/` after 32 days. Never a rule on
+`blobs/` (a blob a recent backup still needs can be older than 30 days) or
+`accounts/`.
+
+### Admin panel (internal only)
+
+`src/admin/`: list accounts (searchable by email), see an account's
+backups and usage against its quota, change its quota (0-50 GiB, or back to
+the default), pause or resume its uploads, reconcile its usage, delete it
+(typing its email to confirm), and read the audit log.
+
+- **Network**: served only by the Node runtime on its own listener
+  (`ADMIN_PORT`, `ADMIN_HOST` default `127.0.0.1`), which the cluster must
+  expose internally only. The public listener and the Worker have no
+  `/admin` routes at all.
+- **Identity**: Google sign-in (PKCE, a nonce bound to a `__Host-` flow
+  cookie in the browser that started it), then the allowlist:
+  `ADMIN_GOOGLE_SUBS` and/or `ADMIN_EMAILS` (Google-verified), checked again
+  on every call. Nobody is an admin while both are empty.
+- **Session**: one hour, in a `__Host-chadmin` cookie (HttpOnly, Secure,
+  SameSite=Strict). Every changing call needs the session's `X-CSRF-Token`
+  and a same-origin request (`Origin` host = `Host`, `Sec-Fetch-Site`).
+- **Audit**: every `/admin/api` call, refused ones too, and every sign-in
+  is appended to `admin/audit/` (a new object each, never overwritten): who,
+  what, which account, when, the status, and before/after for changes.
+
+| Name | |
+|---|---|
+| `ADMIN_PORT` | The admin listener's port (unset = no admin panel). Must differ from `PORT` |
+| `ADMIN_HOST` | Its address (default `127.0.0.1`; `0.0.0.0` in a pod, behind an internal-only Service) |
+| `ADMIN_GOOGLE_SUBS`, `ADMIN_EMAILS` | Comma-separated allowlist |
+| `ADMIN_REDIRECT_URI` | The admin sign-in's callback, registered on the Google client (default `<admin listener>/admin/callback`) |
+
+**Metrics** (admin listener only, `GET /metrics`, Prometheus text):
+`churchhub_admin_signin_total{result="success|failure"}`, per replica, for
+an alert on repeated failures. No emails or addresses in labels.
 
 ## Self-hosted (Node)
 
@@ -329,13 +452,11 @@ To set up the custom domain:
 4. Add `churchub-backend.radiocrestin.ro`
 5. Cloudflare will automatically configure DNS and SSL
 
-### 4. Update Client Configuration
+### 4. Point the app at it
 
-In your ChurchHub app, update the environment variable:
-
-```env
-VITE_YOUTUBE_OAUTH_SERVER=https://churchub-backend.radiocrestin.ro
-```
+The app finds its backend with `getBackendBaseUrl()`: a release build bakes
+it in, and `CHURCH_HUB_BACKEND_URL` overrides it on one machine. How to move
+the app to another backend: [docs/backend-endpoint.md](../docs/backend-endpoint.md).
 
 ## Security Considerations
 

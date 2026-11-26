@@ -1,10 +1,52 @@
 export const liveTranslationPaths = {
+  '/api/live-translation/settings': {
+    get: {
+      tags: ['Live Translation'],
+      summary: 'Get the saved live translation settings',
+      description:
+        'Engine, languages, voices and devices. The API keys are stored sealed and returned as `••••••••` when set.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The settings',
+          content: { 'application/json': { schema: { type: 'object' } } },
+        },
+      },
+    },
+    put: {
+      tags: ['Live Translation'],
+      summary: 'Save the live translation settings',
+      description:
+        'A `geminiApiKey` or `openaiApiKey` sent as `••••••••` keeps the key saved before; an empty one clears it. Keys are sealed before they are stored.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: { 'application/json': { schema: { type: 'object' } } },
+      },
+      responses: {
+        '200': {
+          description: 'Saved; the settings as GET returns them',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  settings: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   '/api/live-translation/stream-secret': {
     get: {
       tags: ['Live Translation'],
       summary: 'Get the listener link’s room id',
       description:
-        'The id in the listener link (https://churchub-backend.radiocrestin.ro/listen/<secret>): a hosted room\'s id ("h1" + 43 characters). The host key it comes from stays on the server.',
+        'The id in the listener link (<relay>/listen/<secret>): a hosted room\'s id ("h1" + 43 characters). The host key it comes from stays on the server.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {
@@ -15,6 +57,11 @@ export const liveTranslationPaths = {
                 type: 'object',
                 properties: {
                   secret: { type: 'string', pattern: '^h1[A-Za-z0-9_-]{43}$' },
+                  link: {
+                    type: 'string',
+                    description:
+                      "The listener link: the listener page of this computer's signaling relay (<relay>/listen/<secret>)",
+                  },
                   linkChanged: {
                     type: 'boolean',
                     description:
@@ -37,12 +84,19 @@ export const liveTranslationPaths = {
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {
-          description: 'The new room id',
+          description: 'The new room id and its listener link',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
-                properties: { secret: { type: 'string' } },
+                properties: {
+                  secret: { type: 'string' },
+                  link: {
+                    type: 'string',
+                    description:
+                      "The listener link: the listener page of this computer's signaling relay (<relay>/listen/<secret>)",
+                  },
+                },
               },
             },
           },

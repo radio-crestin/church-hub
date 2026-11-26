@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Combobox } from '~/ui/combobox'
 import { useAISearchSettings } from '../hooks'
 import type { AISearchConfig, AISearchConfigKey } from '../types'
+import { keyForDestination } from '../utils'
 
 const PROVIDERS = [
   { value: 'openai', label: 'OpenAI' },
@@ -76,7 +77,12 @@ export function AISearchSettings({
     field: K,
     value: AISearchConfig[K],
   ) => {
-    setLocalConfig((prev) => ({ ...prev, [field]: value }))
+    setLocalConfig((prev) => {
+      const next = { ...prev, [field]: value }
+      return field === 'provider' || field === 'baseUrl'
+        ? keyForDestination(next, config)
+        : next
+    })
   }
 
   if (isLoading) {

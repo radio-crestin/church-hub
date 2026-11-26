@@ -5,8 +5,8 @@ import {
   getDriveAuth,
   updateDriveAccessToken,
 } from './driveAuthStore'
-import { getOAuthWorkerUrl } from './oauth/config'
 import { createLogger } from '../../utils/logger'
+import { getBackendBaseUrl } from '../backend'
 
 const logger = createLogger('backup')
 
@@ -28,7 +28,7 @@ async function refreshViaWorker(
   | { ok: true; accessToken: string; expiresAt: number }
   | { ok: false; requiresReauth: boolean; error: string }
 > {
-  const response = await fetch(`${getOAuthWorkerUrl()}/auth/drive/refresh`, {
+  const response = await fetch(`${getBackendBaseUrl()}/auth/drive/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),

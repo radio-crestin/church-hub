@@ -84,10 +84,11 @@ test.describe
       const qr = page.getByTestId('join-qr')
       await expect(qr).toBeVisible()
       joinUrl = (await qr.getAttribute('data-url')) ?? ''
-      // Everything in the fragment: no server logs the token.
+      // Everything in the fragment: no server logs the token. `s` names the
+      // sync service, always (a link without it means the legacy backend).
       expect(joinUrl).toMatch(
         new RegExp(
-          `^${publicApp.url}/join#c=[A-Za-z0-9_-]{16}-[A-Za-z0-9_-]{43}&t=[^&]+$`,
+          `^${publicApp.url}/join#c=[A-Za-z0-9_-]{16}-[A-Za-z0-9_-]{43}&t=[^&]+&s=${encodeURIComponent(service.url).replace(/\./g, '\\.')}$`,
         ),
       )
       await expect(page.getByTestId('cloud-device')).toContainText('E2E phone')

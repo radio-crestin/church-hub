@@ -2,7 +2,7 @@ import { ListMinus, ListMusic, ListPlus, Play, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { ActionMenu, type ActionMenuItem } from '~/ui/menu'
-import type { LibraryTrack, MusicPlaylist } from '../types'
+import type { LibraryTrack } from '../types'
 import { formatLastPlayed } from '../utils'
 
 /**
@@ -16,10 +16,9 @@ export const TRACK_GRID =
 interface TrackRowProps {
   track: LibraryTrack
   isPlaying: boolean
-  playlists: MusicPlaylist[]
   onPlay: (track: LibraryTrack) => void
   onAddToQueue: (track: LibraryTrack) => void
-  onAddToPlaylist: (track: LibraryTrack, playlistId: number) => void
+  onPickPlaylist: (track: LibraryTrack) => void
   onCreatePlaylistWith: (track: LibraryTrack) => void
   onRemoveFromPlaylist?: (track: LibraryTrack) => void
 }
@@ -28,10 +27,9 @@ interface TrackRowProps {
 export function TrackRow({
   track,
   isPlaying,
-  playlists,
   onPlay,
   onAddToQueue,
-  onAddToPlaylist,
+  onPickPlaylist,
   onCreatePlaylistWith,
   onRemoveFromPlaylist,
 }: TrackRowProps) {
@@ -42,13 +40,13 @@ export function TrackRow({
     : '—'
 
   const menuItems: ActionMenuItem[] = [
-    ...playlists.map((playlist) => ({
-      id: `playlist-${playlist.id}`,
-      label: t('tracks.addToPlaylist', { name: playlist.name }),
+    {
+      id: 'add-to-playlist',
+      label: t('playlist.addTo'),
       icon: <ListMusic className="h-4 w-4" strokeWidth={1.5} />,
-      onSelect: () => onAddToPlaylist(track, playlist.id),
-      testId: `music-add-to-playlist-${playlist.id}`,
-    })),
+      onSelect: () => onPickPlaylist(track),
+      testId: 'music-add-to-playlist',
+    },
     {
       id: 'new-playlist',
       label: t('tracks.newPlaylistWith'),

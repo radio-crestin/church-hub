@@ -1,9 +1,11 @@
 import { type ChildProcess, spawn } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
+import { copyFileSync, mkdirSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, type Page, test } from '@playwright/test'
+
+import { TEST_DB_PATH } from '../playwright.config'
 
 /**
  * T-096: with several Church Hub apps open, a song shown in a list said it
@@ -94,6 +96,14 @@ test.describe('Opening a song with several Church Hub apps (T-096)', () => {
       data: { destinationPath: otherDatabase },
     })
     expect(exported.ok()).toBe(true)
+    // Another app on the same computer opens the same saved secrets: the
+    // apps find each other's data key in the OS store, the suite's servers
+    // keep theirs in a file. Without it the copy's user tokens would be
+    // renewed as if restored on another computer, and the window signed out.
+    copyFileSync(
+      join(dirname(TEST_DB_PATH), 'secret-key.json'),
+      join(otherDir, 'secret-key.json'),
+    )
 
     const title = `T096 only here ${Math.random().toString(36).slice(2, 8)}`
     const created = await request.post('/api/songs', {

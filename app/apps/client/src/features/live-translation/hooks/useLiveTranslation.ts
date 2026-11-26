@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getApiUrl } from '~/config'
 
 export type TranslationEngine = 'openai' | 'gemini'
 export type OutputModality = 'audio_text' | 'text_only'
+
+/** The listeners' room and the link that opens it (/api/live-translation/stream-secret). */
+interface StreamLink {
+  secret: string
+  link: string
+}
 
 export interface TranscriptionEntry {
   id: string
@@ -159,6 +165,7 @@ export function useLiveTranslation() {
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [streamSecret, setStreamSecret] = useState<string>('')
+  const [streamUrl, setStreamUrl] = useState<string>('')
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const baseUrl = getApiUrl() || ''
@@ -218,7 +225,10 @@ export function useLiveTranslation() {
   useEffect(() => {
     fetch(`${baseUrl}/api/live-translation/stream-secret`)
       .then((res) => res.json())
-      .then((data: { secret: string }) => setStreamSecret(data.secret))
+      .then((data: StreamLink) => {
+        setStreamSecret(data.secret)
+        setStreamUrl(data.link)
+      })
       .catch(() => {})
   }, [baseUrl])
 
@@ -451,18 +461,11 @@ export function useLiveTranslation() {
       { method: 'POST' },
     )
     if (res.ok) {
-      const data = await res.json()
+      const data = (await res.json()) as StreamLink
       setStreamSecret(data.secret)
+      setStreamUrl(data.link)
     }
   }, [baseUrl])
-
-  const streamUrl = useMemo(
-    () =>
-      streamSecret
-        ? `https://churchub-backend.radiocrestin.ro/listen/${streamSecret}`
-        : '',
-    [streamSecret],
-  )
 
   return {
     state,
