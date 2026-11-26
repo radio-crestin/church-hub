@@ -11,6 +11,19 @@ import { BackupHarness, backupEnv } from './support/backupHarness'
  * churchhub-backend/.
  */
 const ALICE = { sub: 'google-sub-alice', email: 'alice@example.com' }
+/** An email address; a package path like `name@1.0.20` or `@scope/name` is not one. */
+const EMAIL = /[\w.+-]+@[a-z][\w-]*(\.[a-z][\w-]*)+/i
+
+test('the email pattern matches emails, not dependency paths', () => {
+  expect(ALICE.email).toMatch(EMAIL)
+  for (const path of [
+    '/Users/x/.bun/install/cache/links/aws4fetch@1.0.20-abc123/node_modules/aws4fetch/dist/aws4fetch.esm.mjs',
+    '/app/node_modules/@hono/node-server/dist/index.mjs',
+    '/cache/links/@hono+node-server@1.19.4-f00/node_modules/@hono/node-server/dist/index.mjs',
+  ]) {
+    expect(path).not.toMatch(EMAIL)
+  }
+})
 
 let harness: BackupHarness
 let lines: string[]
@@ -77,9 +90,12 @@ test('a failing account’s upkeep and request logs name no key, URL or email', 
   const logged = lines.join('\n')
   expect(logged).toContain(`failed for account ${accountId.slice(0, 12)}: TypeError`)
   expect(logged).toContain('[backup] request failed: TypeError')
-  for (const secret of ['s3.test', 'https://', 'accounts/', 'blobs/', '@', blobPrefix, accountId]) {
+  for (const secret of ['s3.test', 'https://', 'accounts/', 'blobs/', ALICE.email, blobPrefix, accountId]) {
     expect(logged).not.toContain(secret)
   }
+  // Stack frames name dependency paths with '@' (scoped packages, the Bun
+  // store's name@version folders): only an email-shaped value counts.
+  expect(logged).not.toMatch(EMAIL)
 })
 
 test('a refused sign-in names neither the code nor the account', async () => {
