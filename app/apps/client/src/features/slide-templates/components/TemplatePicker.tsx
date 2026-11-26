@@ -24,9 +24,9 @@ interface TemplatePickerProps {
 }
 
 const TRIGGER_CLASS = {
-  card: 'flex w-full items-center gap-3 rounded-lg bg-field p-2 text-left text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:opacity-50',
+  card: 'flex w-full items-center gap-3 rounded-lg bg-field p-2 text-left text-sm font-medium text-fg transition-colors hover:bg-hover disabled:opacity-50',
   compact:
-    'flex h-8 max-w-56 items-center gap-2 rounded-lg bg-raised py-1 pr-2 pl-1 text-left text-[13px] font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover disabled:opacity-50',
+    'flex h-8 max-w-56 items-center gap-2 rounded-lg bg-raised py-1 pr-2 pl-1 text-left text-sm font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover disabled:opacity-50',
   chip: 'flex max-w-40 items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs text-fg-hint transition-colors hover:bg-hover hover:text-fg-body disabled:opacity-50',
 }
 

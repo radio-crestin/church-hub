@@ -37,7 +37,7 @@ export function SlideBackgroundControls({
                 ? set({ background: { type: 'color', color: '#000000' } })
                 : setPicking(option)
             }
-            className={`flex-1 rounded-md px-2 py-1 text-[13px] font-medium ${
+            className={`flex-1 rounded-md px-2 py-1 text-sm font-medium ${
               type === option
                 ? 'bg-selected text-fg'
                 : 'text-fg-label hover:text-fg'

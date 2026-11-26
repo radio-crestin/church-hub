@@ -60,7 +60,7 @@ export function AutomationTriggerRow({
   return (
     <div className="space-y-2 py-2">
       <div>
-        <label htmlFor={id} className="block text-[13px] font-medium text-fg">
+        <label htmlFor={id} className="block text-sm font-medium text-fg">
           {label}
         </label>
         <p className="mt-0.5 text-xs text-fg-hint">{description}</p>

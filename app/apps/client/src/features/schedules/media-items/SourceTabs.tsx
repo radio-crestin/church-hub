@@ -25,7 +25,7 @@ export function SourceTabs<T extends string>({
           role="radio"
           aria-checked={option.value === value}
           onClick={() => onChange(option.value)}
-          className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
+          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
             option.value === value
               ? 'bg-selected text-fg'
               : 'text-fg-label hover:text-fg'

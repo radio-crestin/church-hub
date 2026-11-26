@@ -113,7 +113,7 @@ export function ScheduleItemAdvance({
                     onChange={(e) => setValue(e.target.valueAsNumber)}
                     autoFocus
                     data-testid="schedule-item-advance-input"
-                    className="w-16 rounded-[10px] border-0 bg-field px-2 py-1 text-right tabular-nums text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                    className="w-16 rounded-[10px] border-0 bg-field px-2 py-1 text-right text-base md:text-sm tabular-nums text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                   />
                   s
                 </span>

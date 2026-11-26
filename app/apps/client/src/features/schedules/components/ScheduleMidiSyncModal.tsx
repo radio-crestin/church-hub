@@ -118,16 +118,14 @@ export function ScheduleMidiSyncModal({
           <h2 className="text-base font-semibold text-fg">
             {t('midi.syncTitle')}
           </h2>
-          <p className="truncate text-[13px] text-fg-hint">
-            {item.song?.title}
-          </p>
+          <p className="truncate text-sm text-fg-hint">{item.song?.title}</p>
         </div>
         <button
           type="button"
           onClick={save}
           disabled={setVerseTimes.isPending}
           data-testid="schedule-midi-sync-save"
-          className="h-9 rounded-lg bg-primary px-4 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           {t('midi.syncSave')}
         </button>
@@ -150,7 +148,7 @@ export function ScheduleMidiSyncModal({
           current={session.current}
           onSeek={session.seek}
         />
-        <p className="text-[13px] text-fg-label">{t('midi.syncHelp')}</p>
+        <p className="text-sm text-fg-label">{t('midi.syncHelp')}</p>
         <ol className="space-y-0.5">
           {verses.map((verse, index) => (
             <MidiSyncVerseRow

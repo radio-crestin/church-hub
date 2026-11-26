@@ -56,7 +56,7 @@ export function MidiSyncVerseRow({
       <span className="w-8 shrink-0 text-xs font-medium tabular-nums text-fg-hint">
         {index + 1}
       </span>
-      <span className="min-w-0 flex-1 truncate text-[13px] text-fg-body">
+      <span className="min-w-0 flex-1 truncate text-sm text-fg-body">
         {verse.text.split('\n')[0]}
       </span>
       <button
@@ -71,7 +71,7 @@ export function MidiSyncVerseRow({
         <Minus size={14} strokeWidth={1.75} />
       </button>
       <span
-        className="w-14 shrink-0 text-center text-[13px] tabular-nums text-fg-body"
+        className="w-14 shrink-0 text-center text-sm tabular-nums text-fg-body"
         data-testid="schedule-midi-sync-time"
       >
         {formatClock(time, true)}

@@ -49,7 +49,7 @@ export function ScreenTabs({ screens, selectedId, onSelect }: ScreenTabsProps) {
               }
             />
             <span className="min-w-0">
-              <span className="block truncate text-[13px] font-medium text-fg">
+              <span className="block truncate text-sm font-medium text-fg">
                 {screen.name}
               </span>
               <span className="block truncate text-xs text-fg-hint">

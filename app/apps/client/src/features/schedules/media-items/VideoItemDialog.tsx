@@ -63,11 +63,9 @@ export function VideoItemDialog({
         ]}
       />
       {videos.length === 0 ? (
-        <p className="text-[13px] text-fg-hint">
-          {t('mediaItems.video.noVideos')}
-        </p>
+        <p className="text-sm text-fg-hint">{t('mediaItems.video.noVideos')}</p>
       ) : source === 'random' ? (
-        <p className="text-[13px] text-fg-label">
+        <p className="text-sm text-fg-label">
           {t('mediaItems.video.randomDescription', { count: videos.length })}
         </p>
       ) : (

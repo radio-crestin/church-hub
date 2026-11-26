@@ -25,7 +25,7 @@ export function VideoStepRow({
   const { t } = useTranslation('schedules')
   if (!item.video) {
     return (
-      <p className="px-3 py-2 text-[13px] text-amber-700 dark:text-amber-300">
+      <p className="px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
         {t('mediaItems.video.noVideos')}
       </p>
     )
@@ -63,9 +63,7 @@ export function VideoStepRow({
         strokeWidth={1.5}
         className={`shrink-0 ${isPresented ? 'text-fg-label' : 'text-fg-hint'}`}
       />
-      <span
-        className={`text-[13px] ${isPresented ? 'text-fg' : 'text-fg-body'}`}
-      >
+      <span className={`text-sm ${isPresented ? 'text-fg' : 'text-fg-body'}`}>
         {t('mediaItems.video.playFullScreen')}
       </span>
     </button>

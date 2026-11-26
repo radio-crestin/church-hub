@@ -19,13 +19,13 @@ export function DesignTab({ slide, selected, editor, change }: DesignTabProps) {
   return (
     <div className="space-y-4">
       <section className="space-y-2">
-        <h3 className="text-[13px] font-medium text-fg-label">
+        <h3 className="text-sm font-medium text-fg-label">
           {t('deckEditor.design.slide')}
         </h3>
         <SlideBackgroundControls slide={slide} change={change} />
       </section>
       <section className="space-y-2">
-        <h3 className="text-[13px] font-medium text-fg-label">
+        <h3 className="text-sm font-medium text-fg-label">
           {t('deckEditor.design.element')}
         </h3>
         {selected ? (
@@ -45,7 +45,7 @@ export function DesignTab({ slide, selected, editor, change }: DesignTabProps) {
             }
           />
         ) : (
-          <p className="text-[13px] text-fg-hint">
+          <p className="text-sm text-fg-hint">
             {t('deckEditor.design.nothingSelected')}
           </p>
         )}

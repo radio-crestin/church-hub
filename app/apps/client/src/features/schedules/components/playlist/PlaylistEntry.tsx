@@ -56,7 +56,7 @@ export function PlaylistEntry({
               strokeWidth={1.5}
               className="shrink-0 text-fg-hint"
             />
-            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-fg">
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-fg">
               {schedule.title}
             </span>
           </button>

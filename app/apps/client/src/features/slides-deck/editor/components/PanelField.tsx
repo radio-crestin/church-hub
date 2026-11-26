@@ -10,7 +10,7 @@ export function PanelField({
 }) {
   return (
     <label className="block space-y-1">
-      <span className="text-[13px] text-fg-label">{label}</span>
+      <span className="text-sm text-fg-label">{label}</span>
       {children}
     </label>
   )

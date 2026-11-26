@@ -28,7 +28,7 @@ export function MidiSyncNowNext({ verses, current }: MidiSyncNowNextProps) {
       <p className="mt-1 line-clamp-3 whitespace-pre-line text-lg font-semibold leading-snug sm:text-xl">
         {verse?.text}
       </p>
-      <p className="mt-2 truncate text-[13px] text-fg-label">
+      <p className="mt-2 truncate text-sm text-fg-label">
         {next
           ? `${t('midi.nextVerse')}: ${next.text.split('\n')[0]}`
           : t('midi.lastVerse')}

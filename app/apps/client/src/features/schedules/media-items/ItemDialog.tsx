@@ -67,7 +67,7 @@ export function ItemDialog({
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="flex items-center gap-2 h-9 px-4 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-4 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50 transition-colors"
           >
             <X size={16} strokeWidth={1.5} />
             {t('actions.cancel')}
@@ -77,7 +77,7 @@ export function ItemDialog({
             data-testid={`${testId}-save`}
             onClick={onSave}
             disabled={!canSave || isSaving}
-            className="flex items-center gap-2 h-9 px-4 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 h-9 px-4 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {isSaving ? (
               <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />

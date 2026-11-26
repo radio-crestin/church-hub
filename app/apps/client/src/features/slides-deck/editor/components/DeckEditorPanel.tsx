@@ -58,7 +58,7 @@ export function DeckEditorPanel({
               setTab(name)
               setOpen(true)
             }}
-            className={`px-3 py-2 text-[13px] font-medium ${
+            className={`px-3 py-2 text-sm font-medium ${
               tab === name
                 ? 'border-b-2 border-fg text-fg'
                 : 'text-fg-label hover:text-fg'

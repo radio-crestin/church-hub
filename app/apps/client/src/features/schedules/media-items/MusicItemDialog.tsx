@@ -75,7 +75,7 @@ export function MusicItemDialog({
 
       {source === 'folder' ? (
         folders.length === 0 ? (
-          <p className="text-[13px] text-fg-hint">
+          <p className="text-sm text-fg-hint">
             {t('mediaItems.music.noFolders')}
           </p>
         ) : (
@@ -87,7 +87,7 @@ export function MusicItemDialog({
                 role="radio"
                 aria-checked={folder.id === folderId}
                 onClick={() => setFolderId(folder.id)}
-                className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-[13px] ${
+                className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm ${
                   folder.id === folderId
                     ? 'bg-selected text-fg'
                     : 'text-fg-body hover:bg-hover'
@@ -110,7 +110,7 @@ export function MusicItemDialog({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('mediaItems.music.searchTracks')}
-            className="w-full h-9 px-3 text-[13px] bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+            className="w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
           <p className="text-xs text-fg-hint tabular-nums">
             {t('mediaItems.music.picked', { count: fileIds.length })}
@@ -125,7 +125,7 @@ export function MusicItemDialog({
                   role="checkbox"
                   aria-checked={picked >= 0}
                   onClick={() => toggleFile(file.id)}
-                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-fg-body hover:bg-hover"
                 >
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs tabular-nums ${

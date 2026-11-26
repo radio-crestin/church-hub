@@ -75,7 +75,7 @@ export function PresentationPlaylist() {
           type="button"
           onClick={() => setShowAll((v) => !v)}
           data-testid="playlist-show-all"
-          className="rounded-lg py-2 text-[13px] font-medium text-fg-label tabular-nums hover:bg-hover hover:text-fg"
+          className="rounded-lg py-2 text-sm font-medium text-fg-label tabular-nums hover:bg-hover hover:text-fg"
         >
           {showAll
             ? t('playlist.showFewer')

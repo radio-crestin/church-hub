@@ -45,7 +45,7 @@ function Choice({
       }`}
     >
       {children}
-      <span className="truncate text-[13px] font-medium text-fg">{label}</span>
+      <span className="truncate text-sm font-medium text-fg">{label}</span>
       {detail && <span className="-mt-1 text-xs text-fg-hint">{detail}</span>}
       {selected && (
         <Check

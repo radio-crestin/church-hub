@@ -46,7 +46,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
   }
 
   const button =
-    'rounded-lg px-2 py-1 text-[13px] text-fg-body hover:bg-hover disabled:opacity-50'
+    'rounded-lg px-2 py-1 text-sm text-fg-body hover:bg-hover disabled:opacity-50'
 
   return (
     <>
@@ -98,7 +98,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
             onContextMenu={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
-            <p className="text-[13px] font-medium text-fg">{t('midi.title')}</p>
+            <p className="text-sm font-medium text-fg">{t('midi.title')}</p>
             <p className="mt-1 text-xs text-fg-hint">{t('midi.description')}</p>
             {midi && (
               <div className="mt-2 rounded-lg bg-field px-2 py-1.5 text-xs">
@@ -159,7 +159,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
                     setSyncing(true)
                   }}
                   data-testid="schedule-item-midi-sync"
-                  className="rounded-lg bg-primary px-3 py-1 text-[13px] text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-primary px-3 py-1 text-sm text-white hover:bg-indigo-700"
                 >
                   {t('midi.sync')}
                 </button>

@@ -43,7 +43,7 @@ export function InsertMenu({
         type="button"
         data-testid="deck-editor-insert"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-8 items-center gap-1 rounded-lg bg-primary px-3 text-[13px] font-medium text-white hover:bg-indigo-700"
+        className="flex h-8 items-center gap-1 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-indigo-700"
       >
         <Plus size={14} strokeWidth={1.75} />
         {t('deckEditor.insert.title')}
@@ -59,7 +59,7 @@ export function InsertMenu({
                 setOpen(false)
                 onInsert(choice)
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-fg-body hover:bg-hover"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-fg-body hover:bg-hover"
             >
               <Icon size={14} strokeWidth={1.75} className="text-fg-label" />
               {t(`deckEditor.insert.${choice}`)}

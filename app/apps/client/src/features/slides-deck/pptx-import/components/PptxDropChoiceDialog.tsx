@@ -21,7 +21,7 @@ export function PptxDropChoiceDialog({ choice }: { choice: PptxDropChoice }) {
   }, [open])
 
   const button =
-    'flex w-full items-center gap-3 rounded-lg border border-line px-4 py-3 text-left text-[13px] font-medium text-fg hover:bg-hover'
+    'flex w-full items-center gap-3 rounded-lg border border-line px-4 py-3 text-left text-sm font-medium text-fg hover:bg-hover'
   return (
     <>
       <span hidden data-testid="pptx-drop-target" data-ready={choice.ready} />
@@ -74,7 +74,7 @@ export function PptxDropChoiceDialog({ choice }: { choice: PptxDropChoice }) {
               type="button"
               data-testid="pptx-drop-cancel"
               onClick={choice.cancel}
-              className="h-9 rounded-lg bg-field px-4 text-[13px] font-medium text-fg hover:bg-hover"
+              className="h-9 rounded-lg bg-field px-4 text-sm font-medium text-fg hover:bg-hover"
             >
               {t('slidesImport.cancel')}
             </button>

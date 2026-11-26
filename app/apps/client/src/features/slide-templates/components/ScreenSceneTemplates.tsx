@@ -34,7 +34,7 @@ export function ScreenSceneTemplates({ screen }: ScreenSceneTemplatesProps) {
 
   return (
     <div className="py-2" data-testid="screen-scene-templates">
-      <p className="text-[13px] font-medium text-fg">
+      <p className="text-sm font-medium text-fg">
         {t('templates.screen.scenes.title')}
       </p>
       <p className="mt-0.5 text-xs text-fg-hint">
@@ -46,7 +46,7 @@ export function ScreenSceneTemplates({ screen }: ScreenSceneTemplatesProps) {
             key={scene.obsSceneName}
             className="grid items-center gap-2 sm:grid-cols-[10rem_1fr]"
           >
-            <span className="truncate text-[13px] text-fg-body">
+            <span className="truncate text-sm text-fg-body">
               {scene.displayName || scene.obsSceneName}
             </span>
             <TemplatePicker

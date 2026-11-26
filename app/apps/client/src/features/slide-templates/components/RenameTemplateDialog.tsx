@@ -50,13 +50,13 @@ export function RenameTemplateDialog({
           {t('templates.rename.title')}
         </h2>
         <label className="block space-y-1">
-          <span className="text-[13px] font-medium text-fg-label">
+          <span className="text-sm font-medium text-fg-label">
             {t('templates.rename.label')}
           </span>
           <input
             value={value}
             onChange={(event) => setValue(event.target.value)}
-            className="w-full h-9 px-3 text-[13px] bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+            className="w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
         </label>
         <div className="flex justify-end gap-2">

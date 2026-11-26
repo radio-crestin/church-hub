@@ -26,7 +26,7 @@ export function AddSlideMenu({
         type="button"
         data-testid="deck-editor-add-slide"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-line-strong px-3 py-2 text-[13px] font-medium text-fg-label hover:bg-hover hover:text-fg"
+        className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-line-strong px-3 py-2 text-sm font-medium text-fg-label hover:bg-hover hover:text-fg"
       >
         <Plus size={14} strokeWidth={1.75} />
         {t('deckEditor.newSlide')}
@@ -42,7 +42,7 @@ export function AddSlideMenu({
                 setOpen(false)
                 onAdd(kind)
               }}
-              className="block w-full rounded-lg px-3 py-2 text-left text-[13px] text-fg-body hover:bg-hover"
+              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-fg-body hover:bg-hover"
             >
               {t(`deckEditor.kinds.${kind}`)}
             </button>

@@ -24,7 +24,7 @@ export function CountPicker({
   return (
     <fieldset className="space-y-2" data-testid={testId}>
       {allowAll && (
-        <label className="flex items-center gap-2 text-[13px] text-fg-body">
+        <label className="flex items-center gap-2 text-sm text-fg-body">
           <input
             type="radio"
             className="accent-primary"
@@ -34,7 +34,7 @@ export function CountPicker({
           {t('mediaItems.count.all')}
         </label>
       )}
-      <label className="flex flex-wrap items-center gap-2 text-[13px] text-fg-body">
+      <label className="flex flex-wrap items-center gap-2 text-sm text-fg-body">
         {allowAll && (
           <input
             type="radio"
@@ -54,7 +54,7 @@ export function CountPicker({
             const value = Number.parseInt(e.target.value, 10)
             if (value > 0) onChange(Math.min(value, 100))
           }}
-          className="h-9 w-20 rounded-[10px] border-0 bg-field px-3 text-[13px] text-fg tabular-nums focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus disabled:opacity-50"
+          className="h-9 w-20 rounded-[10px] border-0 bg-field px-3 text-base md:text-sm text-fg tabular-nums focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus disabled:opacity-50"
         />
         {t('mediaItems.count.random')}
       </label>

@@ -45,7 +45,7 @@ export function TemplateCard({
         <div className="flex items-center gap-2">
           <h3
             data-testid="template-card-name"
-            className="truncate text-[13px] font-medium text-fg"
+            className="truncate text-sm font-medium text-fg"
           >
             {templateDisplayName(template, t)}
           </h3>

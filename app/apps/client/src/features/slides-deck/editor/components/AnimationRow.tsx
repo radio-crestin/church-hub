@@ -17,7 +17,7 @@ import {
 } from '../../utils/animationDirection'
 
 const SELECT =
-  'h-8 w-full rounded-[10px] border-0 bg-field px-2 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus'
+  'h-8 w-full rounded-[10px] border-0 bg-field px-2 text-base md:text-sm text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus'
 
 interface AnimationRowProps {
   animation: DeckAnimation
@@ -104,7 +104,7 @@ export function AnimationRow({
         <button
           type="button"
           onClick={onSelect}
-          className="min-w-0 flex-1 truncate text-left text-[13px] font-medium text-fg-body"
+          className="min-w-0 flex-1 truncate text-left text-sm font-medium text-fg-body"
         >
           {target}
         </button>

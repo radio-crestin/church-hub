@@ -22,7 +22,7 @@ interface VersesItemDialogProps {
 }
 
 const FIELD_CLASS =
-  'w-full h-9 px-3 text-[13px] bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus'
+  'w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus'
 
 /**
  * A verses item's settings: random verses from a book, or a topic's passages
@@ -100,7 +100,7 @@ export function VersesItemDialog({
         ]}
       />
 
-      <label className="block space-y-1 text-[13px] text-fg-label">
+      <label className="block space-y-1 text-sm text-fg-label">
         <span>{t('mediaItems.verses.translation')}</span>
         <select
           value={shownTranslationId ?? ''}
@@ -116,7 +116,7 @@ export function VersesItemDialog({
       </label>
 
       {source === 'book' ? (
-        <label className="block space-y-1 text-[13px] text-fg-label">
+        <label className="block space-y-1 text-sm text-fg-label">
           <span>{t('mediaItems.verses.book')}</span>
           <select
             value={bookCode}
@@ -144,7 +144,7 @@ export function VersesItemDialog({
             className={FIELD_CLASS}
           />
           {pickedTopic && (
-            <p className="text-[13px] text-fg-label">
+            <p className="text-sm text-fg-label">
               {t('mediaItems.verses.pickedTopic', {
                 title: titleOf(pickedTopic),
                 count: pickedTopic.referenceCount,
@@ -159,7 +159,7 @@ export function VersesItemDialog({
                 role="radio"
                 aria-checked={topic.key === topicKey}
                 onClick={() => setTopicKey(topic.key)}
-                className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-[13px] ${
+                className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm ${
                   topic.key === topicKey
                     ? 'bg-selected text-fg'
                     : 'text-fg-body hover:bg-hover'

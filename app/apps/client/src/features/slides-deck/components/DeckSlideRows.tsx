@@ -39,7 +39,7 @@ export function DeckSlideRows({
   const steps = deckSteps(deck)
   if (deck.slides.length === 0) {
     return (
-      <p className="px-3 py-2 text-[13px] text-amber-700 dark:text-amber-300">
+      <p className="px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
         {t('slidesDeck.noSlides')}
       </p>
     )
@@ -83,7 +83,7 @@ export function DeckSlideRows({
                 {slideIndex + 1}
               </span>
               <span
-                className={`line-clamp-2 min-w-0 text-[13px] ${
+                className={`line-clamp-2 min-w-0 text-sm ${
                   isPresented ? 'text-fg' : 'text-fg-body'
                 }`}
               >

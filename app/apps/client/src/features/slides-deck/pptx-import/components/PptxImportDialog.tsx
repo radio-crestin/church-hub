@@ -74,7 +74,7 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
               data-phase={progress.phase}
               className="space-y-3"
             >
-              <p className="flex items-center gap-2 text-[13px] text-fg-body tabular-nums">
+              <p className="flex items-center gap-2 text-sm text-fg-body tabular-nums">
                 <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
                 {progress.phase === 'uploading'
                   ? t('slidesImport.uploading', {
@@ -101,7 +101,7 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
           {state.status === 'error' && (
             <p
               data-testid="pptx-import-error"
-              className="text-[13px] text-red-600 dark:text-red-400"
+              className="text-sm text-red-600 dark:text-red-400"
             >
               {t(
                 state.failed === 'read'
@@ -117,7 +117,7 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
               type="button"
               data-testid="pptx-import-done"
               onClick={pptx.close}
-              className="h-9 rounded-lg bg-primary px-4 text-[13px] font-medium text-white hover:bg-indigo-700"
+              className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-indigo-700"
             >
               {t('slidesImport.close')}
             </button>

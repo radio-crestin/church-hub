@@ -36,7 +36,7 @@ function ColorField({
 }) {
   return (
     <label className="flex items-center justify-between gap-3 py-1.5">
-      <span className="text-[13px] text-fg-body">{label}</span>
+      <span className="text-sm text-fg-body">{label}</span>
       <input
         type="color"
         value={value}

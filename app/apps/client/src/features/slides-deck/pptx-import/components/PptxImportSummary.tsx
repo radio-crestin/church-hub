@@ -21,23 +21,21 @@ export function PptxImportSummary({ result }: { result: PptxImportResult }) {
   )
   return (
     <div data-testid="pptx-import-summary" className="space-y-3">
-      <p className="text-[13px] font-medium text-fg">
+      <p className="text-sm font-medium text-fg">
         {t('slidesImport.imported', { count: result.deck.slides.length })}
       </p>
-      <p className="text-[13px] text-fg-label tabular-nums">
+      <p className="text-sm text-fg-label tabular-nums">
         {t('slidesImport.pictures', { count: result.pictures })} ·{' '}
         {t('slidesImport.videos', { count: result.videos })}
       </p>
       {notes.length === 0 ? (
-        <p className="text-[13px] text-fg-body">
-          {t('slidesImport.allImported')}
-        </p>
+        <p className="text-sm text-fg-body">{t('slidesImport.allImported')}</p>
       ) : (
         <>
-          <h3 className="text-[13px] font-semibold text-fg">
+          <h3 className="text-sm font-semibold text-fg">
             {t('slidesImport.differences')}
           </h3>
-          <ul className="max-h-[50vh] space-y-2 overflow-y-auto text-[13px]">
+          <ul className="max-h-[50vh] space-y-2 overflow-y-auto text-sm">
             {notes.map((note, index) => (
               <li
                 // Notes have no id; their order is fixed for the dialog's life.

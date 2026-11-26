@@ -107,7 +107,7 @@ export function TextControls({ element, editor, update }: TextControlsProps) {
               data-testid="deck-editor-font"
               value={shown.fontFamily ?? ''}
               onChange={(e) => setFont(e.target.value)}
-              className="h-8 w-full rounded-[10px] border-0 bg-field px-2 text-[13px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+              className="h-8 w-full rounded-[10px] border-0 bg-field px-2 text-base md:text-sm text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
             >
               <option value="">{t('deckEditor.design.themeFont')}</option>
               {fonts.map((o) => (
@@ -193,7 +193,7 @@ export function TextControls({ element, editor, update }: TextControlsProps) {
               key={align}
               type="button"
               onClick={() => update({ verticalAlign: align })}
-              className={`flex-1 rounded-md px-2 py-1 text-[13px] font-medium ${
+              className={`flex-1 rounded-md px-2 py-1 text-sm font-medium ${
                 (text.verticalAlign ?? 'top') === align
                   ? 'bg-selected text-fg'
                   : 'text-fg-label hover:text-fg'

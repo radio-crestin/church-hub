@@ -30,7 +30,7 @@ export function MusicPlayRow({ item }: MusicPlayRowProps) {
       className="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 hover:bg-hover"
     >
       <Play size={16} strokeWidth={1.5} className="shrink-0 text-fg-hint" />
-      <span className="text-[13px] text-fg-body">
+      <span className="text-sm text-fg-body">
         {t('mediaItems.music.playNow')}
       </span>
     </button>
