@@ -47,7 +47,7 @@ interface ControlRoomProps {
    * phone): what the operator follows and steps through.
    */
   playlist?: ReactNode
-  /** The playlist's name, read out by screen readers (it shows no heading). */
+  /** The playlist's name, for screen readers. */
   playlistTitle?: string
 }
 

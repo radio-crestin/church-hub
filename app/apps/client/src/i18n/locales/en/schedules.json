@@ -681,6 +681,18 @@
     "open": "Open the presentation",
     "showAll": "Show all presentations ({{count}})",
     "showFewer": "Show fewer",
-    "running": "Running"
+    "running": "Running",
+    "addHint": "Add a song, Bible verses, music or a video",
+    "addTo": "Add to",
+    "afterLive": "After the one on screen",
+    "atEnd": "At the end"
+  },
+  "addPresentation": {
+    "search": "Search presentations",
+    "none": "No other presentation with items",
+    "add_one": "Add {{count}} item",
+    "add_other": "Add {{count}} items",
+    "added_one": "{{count}} item added",
+    "added_other": "{{count}} items added"
   }
 }

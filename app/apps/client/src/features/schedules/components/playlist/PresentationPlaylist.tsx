@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
+import { usePermissions } from '~/provider/permissions-provider'
 import { EmptyState } from '~/ui/page'
+import { PlaylistAddButton } from './PlaylistAddButton'
 import { PlaylistEntry } from './PlaylistEntry'
 import { useScheduleAutomation, useSchedules } from '../../hooks'
 import { playlistOrder } from '../../utils/playlistOrder'
@@ -12,13 +14,15 @@ import { derivePresentedScheduleInfo } from '../../utils/presentedScheduleInfo'
 /**
  * The control room's playlist: the presentations with their items, the one on
  * the screens first, opened and marked LIVE, so the operator follows it slide
- * by slide; then those that run by themselves, then the latest ones.
+ * by slide; then those that run by themselves, then the latest ones. Add puts
+ * a song, verses, music, a video… into one of them, after the step on screen.
  */
 export function PresentationPlaylist() {
   const { t } = useTranslation('schedules')
   const { data: schedules = [], isLoading } = useSchedules()
   const { data: presentationState } = usePresentationState()
   const { data: automation } = useScheduleAutomation()
+  const canEdit = usePermissions().hasPermission('programs.edit')
   const [showAll, setShowAll] = useState(false)
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
 
@@ -33,6 +37,7 @@ export function PresentationPlaylist() {
     if (liveId != null) setExpanded((prev) => new Set(prev).add(liveId))
   }, [liveId])
 
+  const expand = (id: number) => setExpanded((prev) => new Set(prev).add(id))
   const toggle = (id: number) =>
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -60,6 +65,16 @@ export function PresentationPlaylist() {
 
   return (
     <div className="flex flex-col gap-2" data-testid="presentation-playlist">
+      <div className="flex items-center justify-between gap-2 pl-2">
+        <h2 className="text-sm font-medium text-fg">{t('playlist.title')}</h2>
+        {canEdit && (
+          <PlaylistAddButton
+            schedules={[...shown, ...hidden]}
+            defaultScheduleId={shown[0].id}
+            onAdded={expand}
+          />
+        )}
+      </div>
       {visible.map((schedule) => (
         <PlaylistEntry
           key={schedule.id}
