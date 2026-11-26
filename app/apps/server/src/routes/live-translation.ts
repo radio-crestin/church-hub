@@ -21,15 +21,19 @@ import {
 import {
   broadcastAudioForTarget,
   broadcastTextForTarget,
+  closeListenerRoom,
   getListenerCount,
   getListenerCountsByTarget,
-  getStreamSecret,
+  openListenerRoom,
   resetStreamSecret,
   setAvailableLanguages,
   setListenerCountsCallback,
-  startSignalingRelay,
-  stopSignalingRelay,
 } from '../service/live-translation/stream'
+import {
+  dismissLinkChange,
+  getStreamSecret,
+  isLinkChangeUnseen,
+} from '../service/live-translation/streamLink'
 import type {
   LiveTranslationConfig,
   OutputModality,
@@ -156,7 +160,18 @@ export async function handleLiveTranslationRoutes(
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/stream-secret'
   ) {
-    return Response.json({ secret: getStreamSecret() })
+    return Response.json({
+      secret: getStreamSecret(),
+      linkChanged: isLinkChangeUnseen(),
+    })
+  }
+
+  if (
+    req.method === 'DELETE' &&
+    url.pathname === '/api/live-translation/link-changed'
+  ) {
+    dismissLinkChange()
+    return Response.json({ success: true })
   }
 
   if (
@@ -284,7 +299,7 @@ function handleStart(req: Request): Response {
       // Always start the signaling relay — listeners use a single link
       // regardless of outputMode. (Device-only output still allows external
       // listeners to connect to the configured target languages.)
-      await startSignalingRelay()
+      await openListenerRoom()
 
       logger.info('Translation started', {
         engine: config.engine,
@@ -305,7 +320,7 @@ function handleStart(req: Request): Response {
 function handleStop(): Response {
   const stopPromise = (async () => {
     try {
-      await stopSignalingRelay()
+      await closeListenerRoom()
       await stopTranslation()
       setAvailableLanguages([])
       logger.info('Translation stopped')

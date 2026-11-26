@@ -1,23 +1,31 @@
 import { type Context, Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
+import { authorizeHost } from '../signal/authorizeHost'
+import {
+  ANSWER_TTL,
+  MAX_PENDING_OFFERS,
+  OFFER_TTL,
+  ROOM_TTL,
+  SDP_MAX_LENGTH,
+  SECRET_PATTERN,
+  SESSION_ID_PATTERN,
+} from '../signal/constants'
 import type { Bindings } from '../types'
 import { publicOrigin } from '../utils/publicOrigin'
 import { toScriptLiteral } from '../utils/toScriptLiteral'
 
+/**
+ * The WebRTC signaling relay. Two parties use a room:
+ * - the host (the church computer) opens and closes it, takes the pending
+ *   offers and answers them. For a hosted room (an "h1…" id, see
+ *   signal/hostedRoomId.ts) every such call carries the host key the id
+ *   comes from, as `Authorization: Bearer <key>`; a room id the released
+ *   apps make keeps working with the id alone (signal/authorizeHost.ts);
+ * - a listener (a phone) holds the room id alone: it checks whether the room
+ *   is open, leaves its own offer and reads the answer to it, by the session
+ *   id only it was given.
+ */
 const signal = new Hono<{ Bindings: Bindings }>()
-
-const OFFER_TTL = 60 // seconds - CF KV minimum is 60
-const ANSWER_TTL = 60
-const ROOM_TTL = 3600 // 1 hour - room registration
-
-/** Room secrets the apps generate: 32 characters, base64url or [a-z0-9]. */
-const SECRET_PATTERN = /^[A-Za-z0-9_-]{16,128}$/
-const SESSION_ID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-/** An SDP offer or answer is a few kilobytes. */
-const SDP_MAX_LENGTH = 64 * 1024
-/** Offers waiting for the host at once; more are refused until it polls. */
-const MAX_PENDING_OFFERS = 50
 
 type SignalContext = Context<{ Bindings: Bindings }>
 
@@ -53,13 +61,15 @@ const invalidRoom = (c: SignalContext) =>
   c.json({ error: 'Room not found or inactive' }, 404)
 
 /**
- * POST /signal/register
- * Local app registers a room with its secret.
- * Body: { secret: string }
+ * POST /signal/register (host)
+ * Opens the room. Body: { secret: string }
+ * Header, for a hosted room: Authorization: Bearer <hostKey>
  */
 signal.post('/signal/register', async (c) => {
   const secret = (await readBody(c))?.secret
   if (!isRoomSecret(secret)) return c.json({ error: 'secret is required' }, 400)
+  const refused = await authorizeHost(c, secret)
+  if (refused) return refused
 
   await c.env.SIGNALING_KV.put(`room:${secret}`, JSON.stringify({
     createdAt: Date.now(),
@@ -70,23 +80,25 @@ signal.post('/signal/register', async (c) => {
 })
 
 /**
- * POST /signal/unregister
- * Local app unregisters a room.
- * Body: { secret: string }
+ * POST /signal/unregister (host)
+ * Closes the room. Body: { secret: string }
+ * Header, for a hosted room: Authorization: Bearer <hostKey>
  */
 signal.post('/signal/unregister', async (c) => {
   const secret = (await readBody(c))?.secret
   if (!isRoomSecret(secret)) return c.json({ error: 'secret is required' }, 400)
+  const refused = await authorizeHost(c, secret)
+  if (refused) return refused
 
   await c.env.SIGNALING_KV.delete(`room:${secret}`)
   return c.json({ success: true })
 })
 
 /**
- * POST /signal/:secret/offer
- * Listener sends an SDP offer for the local app to answer.
+ * POST /signal/:secret/offer (listener)
+ * Leaves an SDP offer for the host to answer.
  * Body: { offer: string }
- * Returns: { sessionId: string }
+ * Returns: { sessionId: string }, the id only this listener reads its answer by.
  */
 signal.post('/signal/:secret/offer', async (c) => {
   const secret = roomSecret(c)
@@ -124,13 +136,16 @@ signal.post('/signal/:secret/offer', async (c) => {
 })
 
 /**
- * GET /signal/:secret/offers
- * Local app polls for pending SDP offers.
+ * GET /signal/:secret/offers (host)
+ * Takes the pending SDP offers.
+ * Header, for a hosted room: Authorization: Bearer <hostKey>
  * Returns: { offers: Array<{ sessionId: string, offer: string }> }
  */
 signal.get('/signal/:secret/offers', async (c) => {
   const secret = roomSecret(c)
   if (!secret) return c.json({ offers: [] })
+  const refused = await authorizeHost(c, secret)
+  if (refused) return refused
 
   const pendingKey = `pending:${secret}`
   const existing = await c.env.SIGNALING_KV.get(pendingKey)
@@ -156,8 +171,9 @@ signal.get('/signal/:secret/offers', async (c) => {
 })
 
 /**
- * POST /signal/:secret/answer
- * Local app sends an SDP answer for a specific session.
+ * POST /signal/:secret/answer (host)
+ * Answers one listener's offer.
+ * Header, for a hosted room: Authorization: Bearer <hostKey>
  * Body: { sessionId: string, answer: string }
  */
 signal.post('/signal/:secret/answer', async (c) => {
@@ -174,6 +190,8 @@ signal.post('/signal/:secret/answer', async (c) => {
   ) {
     return c.json({ error: 'sessionId and answer are required' }, 400)
   }
+  const refused = await authorizeHost(c, secret)
+  if (refused) return refused
 
   await c.env.SIGNALING_KV.put(
     `answer:${secret}:${sessionId}`,
@@ -185,8 +203,8 @@ signal.post('/signal/:secret/answer', async (c) => {
 })
 
 /**
- * GET /signal/:secret/answer/:sessionId
- * Listener polls for an SDP answer from the local app.
+ * GET /signal/:secret/answer/:sessionId (listener)
+ * Polls for the host's answer to this listener's own offer.
  * Returns: { answer: string } or { pending: true }
  */
 signal.get('/signal/:secret/answer/:sessionId', async (c) => {
@@ -207,8 +225,8 @@ signal.get('/signal/:secret/answer/:sessionId', async (c) => {
 })
 
 /**
- * GET /signal/:secret/check
- * Listener checks if the room is active (host connected).
+ * GET /signal/:secret/check (listener)
+ * Whether the room is open (the host is there).
  */
 signal.get('/signal/:secret/check', async (c) => {
   const secret = roomSecret(c)

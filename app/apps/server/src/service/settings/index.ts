@@ -1,3 +1,4 @@
+export { isServerSecretKey } from './isServerSecretKey'
 export {
   deleteSetting,
   getAllSettings,

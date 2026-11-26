@@ -17,7 +17,10 @@ routes = [
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
-invocation_logs = true
+# Off: an invocation log records each request's full URL, and the signaling
+# routes carry room secrets in the path. The app's own request logger
+# (src/middleware/requestLogger.ts) logs the route pattern of every request.
+invocation_logs = false
 
 # KV namespace for WebRTC signaling relay; also holds the per-IP (hashed)
 # rolling 24h quota of POST /feature-requests.
