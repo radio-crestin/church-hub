@@ -50,6 +50,18 @@ export function useVerseSlideshow(
       ? { index: playing.currentEntryIndex, count: playing.entries.length }
       : null,
     start,
+    /** The slideshow on screen redraws, on the same verse, with this template. */
+    restyle: (newTemplateId: number | null) => {
+      if (!playing) return
+      present.mutate({
+        entries: playing.entries,
+        currentEntryIndex: playing.currentEntryIndex,
+        loop: playing.loop,
+        autoAdvance: playing.autoAdvance,
+        slideshow,
+        templateId: newTemplateId,
+      })
+    },
     stop: () => clear.mutate(),
   }
 }

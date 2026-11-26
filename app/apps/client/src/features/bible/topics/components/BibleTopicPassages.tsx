@@ -43,6 +43,10 @@ export function BibleTopicPassages({
   const [templateId, setTemplateId] = useTopicLoopTemplate()
   const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
   const navigateSlideshow = useNavigateTemporary()
+  const chooseTemplate = (id: number | null) => {
+    setTemplateId(id)
+    slideshow.restyle(id)
+  }
   const activeIndex =
     slideshow.position?.index ??
     passages.findIndex((passage) =>
@@ -111,7 +115,7 @@ export function BibleTopicPassages({
         <BibleTopicSlideshowBar
           slideshow={slideshow}
           templateId={templateId}
-          onTemplateChange={setTemplateId}
+          onTemplateChange={chooseTemplate}
         />
       )}
 
