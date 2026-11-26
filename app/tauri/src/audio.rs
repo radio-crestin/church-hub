@@ -1,10 +1,14 @@
+mod smooth_seek;
+
 use std::fs::File;
-use std::io::BufReader;
-use std::sync::mpsc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
 use std::time::Duration;
 
-use rodio::{Decoder, OutputStream, Sink, Source};
+use rodio::{Decoder, OutputStreamBuilder, Sink, Source};
 use serde::{Deserialize, Serialize};
+
+use smooth_seek::SmoothSeek;
 
 /// Commands sent to the audio thread.
 enum AudioCommand {
@@ -148,8 +152,8 @@ fn default_state() -> AudioState {
 /// The audio thread loop — owns the OutputStream and Sink.
 fn audio_thread_loop(cmd_rx: mpsc::Receiver<AudioCommand>) {
     // Initialize audio output
-    let (stream, stream_handle) = match OutputStream::try_default() {
-        Ok(pair) => pair,
+    let mut stream = match OutputStreamBuilder::open_default_stream() {
+        Ok(stream) => stream,
         Err(e) => {
             eprintln!("[audio] Failed to open audio output: {e}");
             // Drain commands so senders don't block
@@ -171,15 +175,14 @@ fn audio_thread_loop(cmd_rx: mpsc::Receiver<AudioCommand>) {
         }
     };
 
-    let mut sink = Sink::try_new(&stream_handle).expect("Failed to create audio sink");
+    stream.log_on_drop(false);
+    let mut sink = Sink::connect_new(stream.mixer());
+    let paused = Arc::new(AtomicBool::new(false));
     let mut current_file: Option<String> = None;
     let mut duration_secs: f64 = 0.0;
     let mut volume: f32 = 0.5;
     let mut is_muted = false;
     sink.set_volume(volume);
-
-    // Keep stream alive
-    let _stream = stream;
 
     for cmd in cmd_rx {
         match cmd {
@@ -187,18 +190,18 @@ fn audio_thread_loop(cmd_rx: mpsc::Receiver<AudioCommand>) {
                 let result = (|| -> Result<(), String> {
                     let file = File::open(&path)
                         .map_err(|e| format!("Failed to open file: {e}"))?;
-                    let reader = BufReader::new(file);
-                    let source = Decoder::new(reader)
+                    // From the file itself, so the decoder knows its length and can seek back
+                    let source = Decoder::try_from(file)
                         .map_err(|e| format!("Failed to decode audio: {e}"))?;
 
                     let dur = source.total_duration().map(|d| d.as_secs_f64()).unwrap_or(0.0);
 
                     // Stop current playback and recreate sink
                     sink.stop();
-                    sink = Sink::try_new(&stream_handle)
-                        .map_err(|e| format!("Failed to recreate sink: {e}"))?;
+                    sink = Sink::connect_new(stream.mixer());
                     sink.set_volume(if is_muted { 0.0 } else { volume });
-                    sink.append(source);
+                    paused.store(false, Ordering::SeqCst);
+                    sink.append(SmoothSeek::new(source, paused.clone()));
 
                     current_file = Some(path);
                     duration_secs = dur;
@@ -207,17 +210,16 @@ fn audio_thread_loop(cmd_rx: mpsc::Receiver<AudioCommand>) {
                 let _ = reply.send(result);
             }
             AudioCommand::Pause => {
+                paused.store(true, Ordering::SeqCst);
                 sink.pause();
             }
             AudioCommand::Resume => {
+                paused.store(false, Ordering::SeqCst);
                 sink.play();
             }
             AudioCommand::Stop => {
                 sink.stop();
-                sink = Sink::try_new(&stream_handle).unwrap_or_else(|_| {
-                    // This shouldn't fail, but handle gracefully
-                    panic!("Failed to recreate sink after stop");
-                });
+                sink = Sink::connect_new(stream.mixer());
                 sink.set_volume(if is_muted { 0.0 } else { volume });
                 current_file = None;
                 duration_secs = 0.0;

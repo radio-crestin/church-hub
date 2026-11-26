@@ -45,6 +45,7 @@ export function VolumeSlider({
         step={0.01}
         onValueChange={handleVolumeChange}
         showValue={false}
+        label={t('player.volume')}
         className="w-24 sm:w-28 md:w-32"
       />
     </div>

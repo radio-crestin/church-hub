@@ -94,7 +94,7 @@ export function ReadingSpeedControl({ testId }: ReadingSpeedControlProps) {
               step={10}
               showValue={false}
               testId={`${testId}-slider`}
-              ariaLabel={title}
+              label={title}
               ariaValueText={speed}
               className="mt-3"
             />
