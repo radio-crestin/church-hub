@@ -91,6 +91,10 @@ interface Frame {
   incoming: number
   /** How opaque the word going away looks, wherever it is drawn */
   outgoing: number
+  /** An opacity animation is running on the incoming word or around it */
+  incomingFades: boolean
+  /** An opacity animation is running on the outgoing word or around it */
+  outgoingFades: boolean
   /** The words drawn fading out on their own over the new slide */
   leavingWords: string[]
   /** A whole slide fading out under the new one */
@@ -155,6 +159,31 @@ async function sampleSlideChange(
           }
           return opacity
         }
+        const isOpacityAnimation = (animation: Animation) =>
+          (animation.effect as KeyframeEffect)
+            .getKeyframes()
+            .some((keyframe) => 'opacity' in keyframe)
+        // Seen even between two sparse frames: a slow machine may draw no
+        // frame in the middle of a 300 ms fade.
+        const isAnimatingOpacity = (element: HTMLElement | undefined) => {
+          for (let el = element ?? null; el; el = el.parentElement) {
+            if (
+              el
+                .getAnimations()
+                .some(
+                  (animation) =>
+                    animation.playState === 'running' &&
+                    isOpacityAnimation(animation),
+                )
+            )
+              return true
+          }
+          return false
+        }
+        const outgoingWords = () =>
+          inRoot('[data-token]').filter(
+            (word) => word.textContent === outgoing && isShown(word),
+          )
 
         const marked = wordsIn(currentText()).filter(
           (word) => word.textContent?.trim() && word.textContent !== outgoing,
@@ -168,6 +197,9 @@ async function sampleSlideChange(
           new Promise((resolve) => {
             const sample = () => {
               const text = currentText()
+              const incomingWord = wordsIn(text).find(
+                (word) => word.textContent === incoming,
+              )
               const frame: Frame = {
                 kept: marked.map((word) => {
                   const animations = [
@@ -176,11 +208,7 @@ async function sampleSlideChange(
                       .closest<HTMLElement>('[data-line]')
                       ?.getAnimations() ?? []),
                   ]
-                  const fades = animations.filter((animation) =>
-                    (animation.effect as KeyframeEffect)
-                      .getKeyframes()
-                      .some((keyframe) => 'opacity' in keyframe),
-                  ).length
+                  const fades = animations.filter(isOpacityAnimation).length
                   return {
                     text: word.textContent ?? '',
                     same: word.__kept === true && !!text?.contains(word),
@@ -189,17 +217,10 @@ async function sampleSlideChange(
                     glides: animations.length - fades,
                   }
                 }),
-                incoming: opacityOf(
-                  wordsIn(text).find((word) => word.textContent === incoming),
-                ),
-                outgoing: Math.max(
-                  0,
-                  ...inRoot('[data-token]')
-                    .filter(
-                      (word) => word.textContent === outgoing && isShown(word),
-                    )
-                    .map(opacityOf),
-                ),
+                incoming: opacityOf(incomingWord),
+                outgoing: Math.max(0, ...outgoingWords().map(opacityOf)),
+                incomingFades: isAnimatingOpacity(incomingWord),
+                outgoingFades: outgoingWords().some(isAnimatingOpacity),
                 leavingWords: inRoot('[data-leaving-lines] [data-token]')
                   .filter((word) => word.textContent?.trim() && isShown(word))
                   .map((word) => word.textContent ?? ''),
@@ -230,6 +251,10 @@ async function sampleSlideChange(
 }
 
 const isFading = (opacity: number) => opacity > 0.05 && opacity < 0.95
+const incomingFades = (frame: Frame) =>
+  frame.incomingFades || isFading(frame.incoming)
+const outgoingFades = (frame: Frame) =>
+  frame.outgoingFades || isFading(frame.outgoing)
 
 function nextSlide(request: APIRequestContext) {
   return request.post('/api/presentation/navigate-temporary', {
@@ -271,14 +296,10 @@ async function expectOnlyTheWordChanges(
     frames.some((frame) => frame.slideCrossfade),
     'the whole slide never crossfades',
   ).toBe(false)
-  expect(
-    frames.some((frame) => isFading(frame.outgoing)),
-    `"${change.outgoing}" fades out`,
-  ).toBe(true)
-  expect(
-    frames.some((frame) => isFading(frame.incoming)),
-    `"${change.incoming}" fades in`,
-  ).toBe(true)
+  expect(frames.some(outgoingFades), `"${change.outgoing}" fades out`).toBe(
+    true,
+  )
+  expect(frames.some(incomingFades), `"${change.incoming}" fades in`).toBe(true)
   expect(frames.at(-1)).toMatchObject({ incoming: 1, outgoing: 0 })
   await expect(page.locator(`${change.root} [data-leaving-lines]`)).toHaveCount(
     0,
@@ -391,9 +412,7 @@ test.describe('Slide changes animate only the words that changed', () => {
       'no word leaves on its own',
     ).toBe(true)
     expect(
-      crossfade.some(
-        (frame) => isFading(frame.incoming) && isFading(frame.outgoing),
-      ),
+      crossfade.some((frame) => incomingFades(frame) && outgoingFades(frame)),
       'the slides cross',
     ).toBe(true)
     expect(crossfade.at(-1)).toMatchObject({ incoming: 1, outgoing: 0 })
@@ -567,10 +586,27 @@ function expectSteadyFrames(label: string, intervals: number[]) {
   expect(sorted.at(-1), `${label}: longest frame (ms)`).toBeLessThan(50)
 }
 
+/** The median interval (ms) between frames of a page with nothing moving. */
+async function idleFrameInterval(page: Page) {
+  await page.setContent('<p>idle</p>')
+  const intervals = await frameIntervalsDuring(page, 500, async () => {})
+  return [...intervals].sort((a, b) => a - b)[Math.floor(intervals.length / 2)]
+}
+
 test.describe('Slide changes and exits run at a steady frame rate on a full HD projector', () => {
   test.use({ viewport: { width: 1920, height: 1080 } })
   let screenId: number | undefined
   let songId: number | undefined
+
+  // Smoothness is judged against a machine that draws 60 fps at rest; CI's
+  // GPU-less WebKit draws about 5, so there it would time the runner.
+  test.beforeEach(async ({ page }) => {
+    const idle = await idleFrameInterval(page)
+    test.skip(
+      idle > 20,
+      `this browser draws a frame every ${idle.toFixed(0)} ms at rest`,
+    )
+  })
 
   test.beforeAll(async ({ request }) => {
     const screen = await request.post('/api/screens', {
