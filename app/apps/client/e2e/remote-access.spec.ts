@@ -1,7 +1,14 @@
-import { expect, type Page, test } from '@playwright/test'
+import {
+  type APIRequestContext,
+  type Browser,
+  expect,
+  type Page,
+  test,
+} from '@playwright/test'
 
+import { ExtraServer } from './helpers/extra-server'
 import { startFakeSignalingRelay } from './helpers/fake-signaling-relay'
-import { FAKE_RELAY_URL } from '../playwright.config'
+import { FAKE_RELAY_URL, SERVER_PORT } from '../playwright.config'
 
 /**
  * Remote access (CH-050): with "Reach this computer from anywhere" on in
@@ -39,6 +46,114 @@ async function setRemoteAccess(page: Page, enabled: boolean) {
   return (await res.json()).data as { secret: string; relay: string }
 }
 
+/** The account's token and the room its phone was paired with. */
+interface PhonePairing {
+  token: string
+  pairing: { relay: string; secret: string }
+}
+
+/**
+ * The paired Church Hub app on an iPhone, away from the church Wi-Fi: its
+ * HTTP client does real requests, and the computer's Wi-Fi address refuses.
+ */
+async function openPairedPhone(
+  browser: Browser,
+  { token, pairing }: PhonePairing,
+  baseURL?: string,
+) {
+  const phone = await browser.newContext({
+    ...(baseURL && { baseURL }),
+    storageState: { cookies: [], origins: [] },
+    viewport: PHONE,
+    userAgent: IPHONE_UA,
+  })
+  const app = await phone.newPage()
+  await app.addInitScript(
+    ({ computer, token, pairing }) => {
+      localStorage.setItem('church-hub-api-url', computer)
+      localStorage.setItem('church-hub-user-auth', token)
+      localStorage.setItem('church-hub-remote-pairing', JSON.stringify(pairing))
+      const requests = new Map<number, { url: string; init: RequestInit }>()
+      const bodies = new Map<number, Uint8Array>()
+      let nextRid = 1
+      Object.assign(window, {
+        __TAURI_INTERNALS__: {
+          metadata: {
+            currentWindow: { label: 'main' },
+            currentWebview: { windowLabel: 'main', label: 'main' },
+          },
+          transformCallback: () => 0,
+          unregisterCallback: () => undefined,
+          convertFileSrc: (path: string) => path,
+          invoke: async (command: string, args?: Record<string, unknown>) => {
+            if (command === 'plugin:http|fetch') {
+              const config = args?.clientConfig as {
+                url: string
+                method: string
+                headers: Array<[string, string]>
+                data?: number[]
+              }
+              const rid = nextRid++
+              requests.set(rid, {
+                url: config.url,
+                init: {
+                  method: config.method,
+                  headers: config.headers,
+                  body: config.data ? new Uint8Array(config.data) : undefined,
+                },
+              })
+              return rid
+            }
+            if (command === 'plugin:http|fetch_send') {
+              const request = requests.get(args?.rid as number)
+              if (!request) throw new Error('unknown request')
+              const res = await fetch(request.url, request.init)
+              const rid = nextRid++
+              bodies.set(rid, new Uint8Array(await res.arrayBuffer()))
+              const headers: Array<[string, string]> = []
+              res.headers.forEach((value, key) => headers.push([key, value]))
+              return {
+                status: res.status,
+                statusText: res.statusText,
+                url: request.url,
+                headers,
+                rid,
+              }
+            }
+            if (command === 'plugin:http|fetch_read_body') {
+              // The plugin's body stream: chunks end in 0, the end is [1].
+              const channel = args?.streamChannel as {
+                onmessage: (chunk: Uint8Array) => void
+              }
+              const body = bodies.get(args?.rid as number) ?? new Uint8Array()
+              channel.onmessage(Uint8Array.from([...body, 0]))
+              channel.onmessage(Uint8Array.from([1]))
+              return null
+            }
+            return null
+          },
+        },
+      })
+    },
+    { computer: UNREACHABLE_COMPUTER, token, pairing },
+  )
+  await app.goto('/')
+  return { phone, app }
+}
+
+/** The account the phone's requests reach the computer as, through the tunnel. */
+async function expectTunnelAs(app: Page, name: string) {
+  const me = () =>
+    app
+      .evaluate(async (computer) => {
+        const res = await fetch(`${computer}/api/auth/me`)
+        return ((await res.json()) as { data: { name: string } | null }).data
+          ?.name
+      }, UNREACHABLE_COMPUTER)
+      .catch(() => null)
+  await expect.poll(me, { timeout: 30_000 }).toBe(name)
+}
+
 test.describe('Remote access', () => {
   test.afterEach(async ({ page }) => {
     await setRemoteAccess(page, false)
@@ -73,110 +188,13 @@ test.describe('Remote access', () => {
     })
     const { data } = await created.json()
     try {
-      const phone = await browser.newContext({
-        storageState: { cookies: [], origins: [] },
-        viewport: PHONE,
-        userAgent: IPHONE_UA,
+      const { phone, app } = await openPairedPhone(browser, {
+        token: data.token as string,
+        pairing: { relay: room.relay, secret: room.secret },
       })
-      const app = await phone.newPage()
-      // The paired Church Hub app on an iPhone, its HTTP client doing real
-      // requests (the computer's Wi-Fi address refuses: it is away).
-      await app.addInitScript(
-        ({ computer, token, pairing }) => {
-          localStorage.setItem('church-hub-api-url', computer)
-          localStorage.setItem('church-hub-user-auth', token)
-          localStorage.setItem(
-            'church-hub-remote-pairing',
-            JSON.stringify(pairing),
-          )
-          const requests = new Map<number, { url: string; init: RequestInit }>()
-          const bodies = new Map<number, Uint8Array>()
-          let nextRid = 1
-          Object.assign(window, {
-            __TAURI_INTERNALS__: {
-              metadata: {
-                currentWindow: { label: 'main' },
-                currentWebview: { windowLabel: 'main', label: 'main' },
-              },
-              transformCallback: () => 0,
-              unregisterCallback: () => undefined,
-              convertFileSrc: (path: string) => path,
-              invoke: async (
-                command: string,
-                args?: Record<string, unknown>,
-              ) => {
-                if (command === 'plugin:http|fetch') {
-                  const config = args?.clientConfig as {
-                    url: string
-                    method: string
-                    headers: Array<[string, string]>
-                    data?: number[]
-                  }
-                  const rid = nextRid++
-                  requests.set(rid, {
-                    url: config.url,
-                    init: {
-                      method: config.method,
-                      headers: config.headers,
-                      body: config.data
-                        ? new Uint8Array(config.data)
-                        : undefined,
-                    },
-                  })
-                  return rid
-                }
-                if (command === 'plugin:http|fetch_send') {
-                  const request = requests.get(args?.rid as number)
-                  if (!request) throw new Error('unknown request')
-                  const res = await fetch(request.url, request.init)
-                  const rid = nextRid++
-                  bodies.set(rid, new Uint8Array(await res.arrayBuffer()))
-                  const headers: Array<[string, string]> = []
-                  res.headers.forEach((value, key) =>
-                    headers.push([key, value]),
-                  )
-                  return {
-                    status: res.status,
-                    statusText: res.statusText,
-                    url: request.url,
-                    headers,
-                    rid,
-                  }
-                }
-                if (command === 'plugin:http|fetch_read_body') {
-                  // The plugin's body stream: chunks end in 0, the end is [1].
-                  const channel = args?.streamChannel as {
-                    onmessage: (chunk: Uint8Array) => void
-                  }
-                  const body =
-                    bodies.get(args?.rid as number) ?? new Uint8Array()
-                  channel.onmessage(Uint8Array.from([...body, 0]))
-                  channel.onmessage(Uint8Array.from([1]))
-                  return null
-                }
-                return null
-              },
-            },
-          })
-        },
-        {
-          computer: UNREACHABLE_COMPUTER,
-          token: data.token as string,
-          pairing: { relay: room.relay, secret: room.secret },
-        },
-      )
-      await app.goto('/')
 
       // Requests reach the computer through the tunnel, as the phone's account…
-      const me = () =>
-        app
-          .evaluate(async (computer) => {
-            const res = await fetch(`${computer}/api/auth/me`)
-            return ((await res.json()) as { data: { name: string } | null })
-              .data?.name
-          }, UNREACHABLE_COMPUTER)
-          .catch(() => null)
-      await expect.poll(me, { timeout: 30_000 }).toBe(name)
+      await expectTunnelAs(app, name)
 
       // …from elsewhere, never the computer itself: no localhost-only routes.
       const systemToken = await app.evaluate(async (computer) => {
@@ -191,5 +209,101 @@ test.describe('Remote access', () => {
     } finally {
       await page.request.delete(`/api/users/${data.user.id}`)
     }
+  })
+})
+
+/**
+ * A release that moves to a new backend (docs/backend-endpoint.md): the
+ * computer opens its room on the new relay, which its pairing code now names,
+ * and on the legacy one too, so phones paired before the move, and released
+ * phone apps holding that pairing, still reach it.
+ */
+test.describe('Remote access after a move to a new backend', () => {
+  const newRelay = `http://127.0.0.1:${SERVER_PORT + 601}`
+  const legacyRelay = `http://127.0.0.1:${SERVER_PORT + 602}`
+  let stopRelays: Array<() => void> = []
+  let server: ExtraServer
+  let api: APIRequestContext
+  let room: { secret: string; relay: string }
+
+  test.describe.configure({ mode: 'serial' })
+
+  test.beforeAll(async () => {
+    test.setTimeout(300_000)
+    stopRelays = await Promise.all([
+      startFakeSignalingRelay(newRelay),
+      startFakeSignalingRelay(legacyRelay),
+    ])
+    server = new ExtraServer()
+    await server.start({
+      // As a release build with BACKEND_PUBLIC_URL set; the legacy backend
+      // is a stand-in, and nothing on this machine overrides either.
+      CHURCH_HUB_BUILD_BACKEND_URL: newRelay,
+      CHURCH_HUB_LEGACY_BACKEND_URL: legacyRelay,
+      CHURCH_HUB_BACKEND_URL: '',
+      CHURCH_HUB_SIGNALING_URL: '',
+    })
+    api = await server.adminRequest()
+    const res = await api.put('/api/remote-access', { data: { enabled: true } })
+    expect(res.ok()).toBe(true)
+    room = (await res.json()).data
+  })
+
+  test.afterAll(async () => {
+    await api?.dispose()
+    await server?.dispose()
+    for (const stop of stopRelays) stop()
+  })
+
+  const isOpenOn = async (relay: string) =>
+    (
+      (await (await fetch(`${relay}/signal/${room.secret}/check`)).json()) as {
+        active: boolean
+      }
+    ).active
+
+  test('the pairing code names the new relay; the room is open on both', async () => {
+    expect(room.relay).toBe(newRelay)
+    await expect.poll(() => isOpenOn(newRelay)).toBe(true)
+    await expect.poll(() => isOpenOn(legacyRelay)).toBe(true)
+  })
+
+  for (const [paired, relay] of [
+    ['on the new relay (its new pairing code)', newRelay],
+    ['on the legacy relay (before the move)', legacyRelay],
+  ] as const) {
+    test(`a phone paired ${paired} reaches the computer`, async ({
+      browser,
+    }) => {
+      test.setTimeout(120_000)
+      const name = `Moved phone ${Date.now()}`
+      const created = await api.post('/api/users', {
+        data: { name, permissions: ['songs.view', 'control_room.view'] },
+      })
+      const { data } = await created.json()
+      try {
+        const { phone, app } = await openPairedPhone(
+          browser,
+          {
+            token: data.token as string,
+            pairing: { relay, secret: room.secret },
+          },
+          server.baseURL,
+        )
+        await expectTunnelAs(app, name)
+        await phone.close()
+      } finally {
+        await api.delete(`/api/users/${data.user.id}`)
+      }
+    })
+  }
+
+  test('turning remote access off closes the room on both relays', async () => {
+    const res = await api.put('/api/remote-access', {
+      data: { enabled: false },
+    })
+    expect(res.ok()).toBe(true)
+    expect(await isOpenOn(newRelay)).toBe(false)
+    expect(await isOpenOn(legacyRelay)).toBe(false)
   })
 })

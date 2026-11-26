@@ -6,9 +6,13 @@ import { FAKE_RELAY_URL } from '../../playwright.config'
  * The church's signaling relay (churchhub-backend /signal routes) for the
  * suite: rooms the computer opens, offers phones leave there, answers the
  * computer returns. In memory, and open to any origin like a fetch from the
- * phone app's Tauri HTTP client would be. Returns the function that stops it.
+ * phone app's Tauri HTTP client would be. `url`: where it listens, the
+ * suite's relay unless a spec needs another one. Returns the function that
+ * stops it.
  */
-export async function startFakeSignalingRelay(): Promise<() => void> {
+export async function startFakeSignalingRelay(
+  url = FAKE_RELAY_URL,
+): Promise<() => void> {
   const rooms = new Set<string>()
   const offers = new Map<string, Array<{ sessionId: string; offer: string }>>()
   const answers = new Map<string, string>()
@@ -30,7 +34,7 @@ export async function startFakeSignalingRelay(): Promise<() => void> {
       res.end(JSON.stringify(data))
     }
     if (req.method === 'OPTIONS') return reply(204, {})
-    const path = new URL(req.url ?? '/', FAKE_RELAY_URL).pathname
+    const path = new URL(req.url ?? '/', url).pathname
     const [, , secret, action, sessionId] = path.split('/')
 
     if (req.method === 'POST' && path === '/signal/register') {
@@ -42,6 +46,9 @@ export async function startFakeSignalingRelay(): Promise<() => void> {
       return reply(200, { success: true })
     }
     if (!secret) return reply(404, { error: 'Not found' })
+    if (req.method === 'GET' && action === 'check') {
+      return reply(200, { active: rooms.has(secret) })
+    }
     if (req.method === 'POST' && action === 'offer') {
       if (!rooms.has(secret)) return reply(404, { error: 'Room not found' })
       const id = `session-${++nextSession}`
@@ -69,7 +76,7 @@ export async function startFakeSignalingRelay(): Promise<() => void> {
   })
 
   await new Promise<void>((resolve) =>
-    server.listen(Number(new URL(FAKE_RELAY_URL).port), '127.0.0.1', resolve),
+    server.listen(Number(new URL(url).port), '127.0.0.1', resolve),
   )
   return () => server.close()
 }
