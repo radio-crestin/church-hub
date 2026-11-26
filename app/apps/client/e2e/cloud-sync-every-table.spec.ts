@@ -469,8 +469,9 @@ test.describe
         storageState: { cookies: [], origins: [] },
         extraHTTPHeaders: { 'X-User-Auth': losing.loginToken },
       })
+      // Test DBs persist between runs: a name no earlier run left behind.
       const edited = await asLosing.post('/api/song-tags', {
-        data: { id: tagId, name: 'Not allowed anymore' },
+        data: { id: tagId, name: `E2E refused ${Date.now()}` },
       })
       expect(edited.ok()).toBe(true)
       await asLosing.dispose()
