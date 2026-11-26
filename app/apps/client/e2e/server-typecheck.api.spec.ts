@@ -21,10 +21,14 @@ test.describe('server type-check', () => {
         cwd: APP_DIR,
         encoding: 'utf8',
         timeout: 540_000,
+        // tsc peaks near 4 GB here; Node sizes its default heap from the
+        // machine's RAM, which aborts it on GitHub's 7 GB macOS runner.
+        env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=6144' },
       },
     )
 
-    expect(tsc.signal).toBeNull()
-    expect(tsc.status, `${tsc.stdout}\n${tsc.stderr}`.slice(0, 5000)).toBe(0)
+    const output = `${tsc.stderr}\n${tsc.stdout}`.slice(0, 5000)
+    expect(tsc.signal, output).toBeNull()
+    expect(tsc.status, output).toBe(0)
   })
 })
