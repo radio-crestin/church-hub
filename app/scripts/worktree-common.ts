@@ -7,7 +7,17 @@ import { spawnSync } from 'node:child_process'
 import { realpathSync } from 'node:fs'
 import { dirname } from 'node:path'
 
-const PORT_BASE = 3100
+import { PORTS_PER_SERVER } from '../apps/client/e2e/helpers/server-ports'
+
+/**
+ * Each task owns a block of ports for its e2e run, one server per worker:
+ * TASK_PORT_BASE + n × TASK_PORT_BLOCK onwards. Blocks never overlap, stay
+ * clear of 3000/3001 and the review ports (4100 + n), and stay below the
+ * OS's ephemeral range (Linux starts at 32768) up to task ~1000.
+ */
+export const WORKTREE_E2E_WORKERS = 2
+const TASK_PORT_BLOCK = WORKTREE_E2E_WORKERS * PORTS_PER_SERVER
+const TASK_PORT_BASE = 20000
 const REVIEW_PORT_BASE = 4100
 
 function taskNumberOf(taskId: string | undefined, usage: string): number {
@@ -16,9 +26,15 @@ function taskNumberOf(taskId: string | undefined, usage: string): number {
   return taskNumber
 }
 
-/** A task's own port: 3100 + its number (T-052 → 3152). */
+/** A task's own port, the first of its block (T-052 → 20624). */
 export function portFor(taskId: string | undefined, usage: string): number {
-  return PORT_BASE + taskNumberOf(taskId, usage)
+  return TASK_PORT_BASE + taskNumberOf(taskId, usage) * TASK_PORT_BLOCK
+}
+
+/** Every port of a task's block: its server and its e2e workers' ports. */
+export function taskPorts(taskId: string | undefined, usage: string): number[] {
+  const first = portFor(taskId, usage)
+  return Array.from({ length: TASK_PORT_BLOCK }, (_, i) => first + i)
 }
 
 /** A task's review-app port: 4100 + its number (T-052 → 4152). */

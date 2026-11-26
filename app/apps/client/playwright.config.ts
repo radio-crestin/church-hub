@@ -4,6 +4,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, devices } from '@playwright/test'
 
+import { PORT_OFFSETS, PORTS_PER_SERVER } from './e2e/helpers/server-ports'
+
 // Resolve `localhost` to 127.0.0.1 (the server binds IPv4 0.0.0.0; Node ≥17
 // would otherwise try ::1 first and fail). We must use the literal hostname
 // `localhost` — NOT 127.0.0.1 — because the session cookie is `Secure`
@@ -31,26 +33,6 @@ export const SERVER_COUNT = Number(
 // on the running app drove its real projector and database ("slides appear
 // with nobody presenting", T-030).
 const BASE_PORT = Number(process.env.TEST_PORT ?? '3099')
-/**
- * The ports one server uses, as offsets from its own port: one row each, so
- * two features never take the same port (T-206: the LAN stand-in and the fake
- * audio server both took +1, and music.spec failed with EADDRINUSE). Server n
- * starts at TEST_PORT + n × PORTS_PER_SERVER, so two servers take twelve
- * ports from $PORT.
- */
-const PORT_OFFSETS = {
-  // The server's LAN stand-in (see apps/server/src/utils/testLanListener.ts).
-  lan: 1,
-  // The desktop app's audio server stand-in (fake-audio-server.ts).
-  fakeAudio: 2,
-  // The church's signaling relay stand-in (fake-signaling-relay.ts).
-  fakeRelay: 3,
-  // The self-hosted cloud sync service (sync-service.ts, T-171).
-  syncService: 4,
-  // The public web app, built and served statically (public-app.ts, T-168).
-  publicApp: 5,
-} as const
-const PORTS_PER_SERVER = 6
 
 /** Everything one worker's test server is reached by. */
 function testServer(index: number) {
