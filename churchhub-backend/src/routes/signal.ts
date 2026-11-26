@@ -1,6 +1,7 @@
 import { type Context, Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import type { Bindings } from '../types'
+import { publicOrigin } from '../utils/publicOrigin'
 import { toScriptLiteral } from '../utils/toScriptLiteral'
 
 const signal = new Hono<{ Bindings: Bindings }>()
@@ -223,7 +224,7 @@ signal.get('/signal/:secret/check', async (c) => {
 signal.get('/listen/:secret', async (c) => {
   const secret = roomSecret(c)
   if (!secret) return c.json({ error: 'Not found' }, 404)
-  const baseUrl = new URL(c.req.url).origin
+  const baseUrl = publicOrigin(c.env, c.req.url)
 
   return c.html(getListenerPageHtml(secret, baseUrl))
 })
