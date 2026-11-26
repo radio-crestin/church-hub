@@ -6,6 +6,7 @@ import { useToast } from '~/ui/toast'
 import {
   getYouTubeAuthStatus,
   logoutYouTube,
+  startYouTubeSignIn,
   storeYouTubeTokens,
 } from '../service'
 import { isTauri, openAuthUrl } from '../utils'
@@ -101,10 +102,10 @@ export function useYouTubeAuth() {
       // In Tauri, use redirect mode with a return URL
       if (isTauri()) {
         authUrl.searchParams.set('mode', 'redirect')
-        authUrl.searchParams.set(
-          'returnUrl',
-          `${callbackOrigin}/auth/youtube/callback`,
-        )
+        // The callback page stores the tokens only with this sign-in's state
+        const returnUrl = new URL('/auth/youtube/callback', callbackOrigin)
+        returnUrl.searchParams.set('state', await startYouTubeSignIn())
+        authUrl.searchParams.set('returnUrl', returnUrl.toString())
 
         // biome-ignore lint/suspicious/noConsole: Debug logging
         console.log('[useYouTubeAuth] Opening auth URL:', authUrl.toString())
@@ -142,7 +143,9 @@ export function useYouTubeAuth() {
 
           try {
             // Send tokens to server for storage
+            // Tokens from the OAuth server's own window (origin checked above)
             await storeMutation.mutateAsync({
+              state: await startYouTubeSignIn(),
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
               expiresAt: tokens.expiresAt,

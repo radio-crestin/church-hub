@@ -1,5 +1,5 @@
 import { getDriveReturnUrl, getLocalOrigin, getOAuthWorkerUrl } from './config'
-import { consumeDriveAuthState, issueDriveAuthState } from './driveAuthStates'
+import { driveAuthStates } from './driveAuthStates'
 import { createLogger } from '../../../utils/logger'
 import { storeDriveAuth } from '../driveAuthStore'
 
@@ -18,7 +18,7 @@ export function createDriveAuthUrl(): CreateDriveAuthUrlResult {
   const url = new URL('/auth/drive', getOAuthWorkerUrl())
   url.searchParams.set('origin', getLocalOrigin())
   url.searchParams.set('mode', 'redirect')
-  url.searchParams.set('returnUrl', getDriveReturnUrl(issueDriveAuthState()))
+  url.searchParams.set('returnUrl', getDriveReturnUrl(driveAuthStates.issue()))
   return { authUrl: url.toString() }
 }
 
@@ -44,7 +44,7 @@ export async function completeDriveAuth(
   state: string | null,
   tokens: WorkerDriveTokens,
 ): Promise<CompleteDriveAuthResult> {
-  if (!consumeDriveAuthState(state)) {
+  if (!driveAuthStates.consume(state)) {
     logger.warning('Drive connect refused: unknown or expired state')
     return { success: false, error: 'unknown_connect_flow' }
   }

@@ -50,20 +50,11 @@ export function buildUserAuthCookie(
   token: string,
   maxAgeSeconds: number,
 ): string {
-  const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-  const isLocal = host === 'localhost' || host === '127.0.0.1'
-  const ua = req.headers.get('user-agent') ?? ''
-  // Every Chromium UA advertises both AppleWebKit and Chrome/Chromium;
-  // genuine WebKit (Safari, WKWebView, webkitgtk) advertises only the former.
-  const isNonChromiumWebKit =
-    ua.includes('AppleWebKit') &&
-    !ua.includes('Chrome') &&
-    !ua.includes('Chromium')
-
-  const fromAppWebview = isAppWebviewOrigin(req.headers.get('origin') ?? '')
+  const host = cookieHost(req)
+  const isLocal = isLocalCookieHost(host)
 
   const parts = [`user_auth=${token}`, 'HttpOnly']
-  if (isLocal && fromAppWebview && !isNonChromiumWebKit) {
+  if (isLocal && fromAppWebview(req) && !isNonChromiumWebKit(req)) {
     parts.push('SameSite=None', 'Secure')
   } else {
     parts.push('SameSite=Lax')
@@ -74,6 +65,48 @@ export function buildUserAuthCookie(
     parts.push(`Domain=${host}`)
   }
   return parts.join('; ')
+}
+
+/**
+ * The session cookie again, now `Lax`, for a request it authenticated from a
+ * Chromium browser on this machine outside the desktop webview: until
+ * 2026-11-26 every such browser was given `SameSite=None`, which other
+ * sites' pages carry along. Null for every other request.
+ */
+export function reissueSessionCookie(req: Request): string | null {
+  const token = parseCookies(req.headers.get('Cookie') ?? '')['user_auth']
+  const hadCrossSiteCookie =
+    isLocalCookieHost(cookieHost(req)) && !isNonChromiumWebKit(req)
+  if (!token || !hadCrossSiteCookie || fromAppWebview(req)) return null
+  return buildUserAuthCookie(req, token, SESSION_COOKIE_MAX_AGE_SECONDS)
+}
+
+/** How long a session cookie lasts. */
+export const SESSION_COOKIE_MAX_AGE_SECONDS = 31536000
+
+function cookieHost(req: Request): string {
+  return req.headers.get('host')?.split(':')[0] ?? 'localhost'
+}
+
+function isLocalCookieHost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1'
+}
+
+function fromAppWebview(req: Request): boolean {
+  return isAppWebviewOrigin(req.headers.get('origin') ?? '')
+}
+
+/**
+ * Every Chromium UA advertises both AppleWebKit and Chrome/Chromium; genuine
+ * WebKit (Safari, WKWebView, webkitgtk) advertises only the former.
+ */
+function isNonChromiumWebKit(req: Request): boolean {
+  const ua = req.headers.get('user-agent') ?? ''
+  return (
+    ua.includes('AppleWebKit') &&
+    !ua.includes('Chrome') &&
+    !ua.includes('Chromium')
+  )
 }
 
 /**
