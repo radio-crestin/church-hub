@@ -72,10 +72,15 @@ export const musicPlaylists = sqliteTable(
   'music_playlists',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     name: text('name').notNull(),
     description: text('description'),
     itemCount: integer('item_count').notNull().default(0),
     totalDuration: real('total_duration').notNull().default(0),
+    // Synced items whose file isn't on this device, kept (JSON) so an edit
+    // here doesn't drop them for every other device.
+    unresolvedItems: text('unresolved_items'),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),

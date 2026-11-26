@@ -28,7 +28,9 @@ export function OBSAccessSection() {
 
   const isDirty =
     !!config &&
-    (host !== config.host || port !== config.port || !config.password)
+    (host !== config.host ||
+      port !== config.port ||
+      !(config.password || config.passwordSet))
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(password)

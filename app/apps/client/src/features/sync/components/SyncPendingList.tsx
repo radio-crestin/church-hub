@@ -1,10 +1,18 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  BookMarked,
+  Bookmark,
   CalendarDays,
   CheckCircle2,
   FolderOpen,
+  ListMusic,
   Music,
+  Settings,
+  Shield,
+  StickyNote,
   Tag,
+  Tags,
+  User,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -17,6 +25,15 @@ const ENTITY_ICONS: Record<SyncEntityType, LucideIcon> = {
   song_category: Tag,
   song_group: FolderOpen,
   schedule: CalendarDays,
+  song_tag: Tags,
+  song_bookmark: Bookmark,
+  song_bookmark_note: StickyNote,
+  bible_bookmark: BookMarked,
+  bible_bookmark_note: StickyNote,
+  music_playlist: ListMusic,
+  setting: Settings,
+  role: Shield,
+  user: User,
 }
 
 /**

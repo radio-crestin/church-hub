@@ -1,3 +1,5 @@
+import { COLLECTION_BY_TYPE } from './libraryCollections'
+import type { LibraryCollectionKey } from './types'
 import { getRawDatabase } from '../../db'
 import type { SyncEntityType } from '../../db/schema/sync'
 
@@ -11,12 +13,27 @@ export interface PendingChangeEntry {
   queuedAt: number
 }
 
-const TITLE_QUERIES: Record<SyncEntityType, string> = {
-  song: 'SELECT id, title FROM songs WHERE uuid = ?',
-  song_category: 'SELECT id, name AS title FROM song_categories WHERE uuid = ?',
-  song_group:
-    'SELECT id, canonical_title AS title FROM song_groups WHERE uuid = ?',
-  schedule: 'SELECT id, title FROM schedules WHERE uuid = ?',
+/** A pending row's local id and display title, by its sync identity. */
+function titleQuery(entityType: SyncEntityType): string {
+  const { table, uuidColumn, key } = COLLECTION_BY_TYPE[entityType]
+  const title = TITLE_COLUMNS[key] ?? 'NULL'
+  return `SELECT id, ${title} AS title FROM ${table} WHERE ${uuidColumn} = ?`
+}
+
+const TITLE_COLUMNS: Partial<Record<LibraryCollectionKey, string>> = {
+  songs: 'title',
+  categories: 'name',
+  groups: 'canonical_title',
+  schedules: 'title',
+  tags: 'name',
+  songBookmarks: '(SELECT title FROM songs WHERE songs.id = song_id)',
+  songBookmarkNotes: 'content',
+  bibleBookmarks: 'reference',
+  bibleBookmarkNotes: 'content',
+  playlists: 'name',
+  settings: 'key',
+  roles: 'name',
+  users: 'name',
 }
 
 /**
@@ -39,10 +56,11 @@ export function listPendingChanges(): PendingChangeEntry[] {
 
   const entries: PendingChangeEntry[] = []
   for (const row of rows) {
-    const titleQuery = TITLE_QUERIES[row.entity_type]
-    if (!titleQuery) continue
+    if (!(row.entity_type in COLLECTION_BY_TYPE)) continue
     const entity = db
-      .query<{ id: number; title: string }, [string]>(titleQuery)
+      .query<{ id: number; title: string }, [string]>(
+        titleQuery(row.entity_type),
+      )
       .get(row.entity_uuid)
     entries.push({
       entityType: row.entity_type,

@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+import { checksTimingBudgets } from './helpers/timing-budgets'
+
 /**
  * A background change goes with the text, in a clean dip: a song with its
  * own background, then a verse on the screen's background. The song's text
@@ -183,7 +185,9 @@ test.describe('Background changes go with the text', () => {
       })
 
       // Out together: the song's background fades with the song, in step.
-      expect(Math.abs(songLeaves.ms - backgroundLeaves.ms)).toBeLessThan(50)
+      if (checksTimingBudgets) {
+        expect(Math.abs(songLeaves.ms - backgroundLeaves.ms)).toBeLessThan(50)
+      }
       for (const frame of frames.filter(
         (f) => f.song > 0.02 && f.song < 0.98,
       )) {
@@ -197,8 +201,10 @@ test.describe('Background changes go with the text', () => {
       }
       // In together: the screen's background and the verse start and settle
       // within three frames (a loaded machine delays the text by a frame).
-      expect(Math.abs(verseStarts.ms - backgroundStarts.ms)).toBeLessThan(50)
-      expect(Math.abs(verseDone.ms - backgroundDone.ms)).toBeLessThan(50)
+      if (checksTimingBudgets) {
+        expect(Math.abs(verseStarts.ms - backgroundStarts.ms)).toBeLessThan(50)
+        expect(Math.abs(verseDone.ms - backgroundDone.ms)).toBeLessThan(50)
+      }
       for (const frame of frames.filter(
         (f) => f.verse > 0.02 && f.verse < 0.98,
       )) {

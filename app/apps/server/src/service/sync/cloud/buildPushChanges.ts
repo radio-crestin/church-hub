@@ -1,19 +1,15 @@
 import type { ChangeInput, EntityVersion } from './types'
+import { LIBRARY_COLLECTIONS } from '../libraryCollections'
 import { dirtyKey } from '../mergeLibraries'
 import type { ApplyOp, LibraryAggregate, LibraryFile } from '../types'
-
-const COLLECTIONS = [
-  ['song_category', 'categories'],
-  ['song_group', 'groups'],
-  ['song', 'songs'],
-  ['schedule', 'schedules'],
-] as const
 
 /**
  * The local changes to publish after a merge: every edited row that is still
  * this server's version (the remote one did not win it), and every local
  * deletion not yet published. Each carries the central version it was made
- * on, so the service can refuse it if someone changed the row since.
+ * on, so the service can refuse it if someone changed the row since, and
+ * its author, whose permissions the service checks it against. Roles and
+ * users go first: a change later in the batch may be by a user they add.
  */
 export function buildPushChanges(
   merged: LibraryFile,
@@ -21,6 +17,7 @@ export function buildPushChanges(
   dirtyKeys: Set<string>,
   applyOps: ApplyOp[],
   versions: Map<string, EntityVersion>,
+  authors: Map<string, string | null>,
 ): ChangeInput[] {
   const remoteWon = new Set(
     applyOps.map((op) => dirtyKey(op.entityType, op.uuid)),
@@ -28,7 +25,7 @@ export function buildPushChanges(
   const baseVersion = (key: string) => versions.get(key)?.version ?? 0
 
   const changes: ChangeInput[] = []
-  for (const [type, collection] of COLLECTIONS) {
+  for (const { entityType: type, key: collection } of LIBRARY_COLLECTIONS) {
     for (const item of merged[collection] as LibraryAggregate[]) {
       const key = dirtyKey(type, item.uuid)
       if (!dirtyKeys.has(key) || remoteWon.has(key)) continue
@@ -37,6 +34,7 @@ export function buildPushChanges(
         uuid: item.uuid,
         op: 'upsert',
         baseVersion: baseVersion(key),
+        author: authors.get(key) ?? null,
         data: item,
       })
     }
@@ -55,6 +53,7 @@ export function buildPushChanges(
       uuid: tomb.uuid,
       op: 'delete',
       baseVersion: baseVersion(key),
+      author: authors.get(key) ?? null,
       deletedAt: tomb.deletedAt,
     })
   }
