@@ -154,7 +154,8 @@ test.describe
       // A song saved on the PC is there, found by the PC's own search…
       const title = `E2E Live ${Date.now()}`
       const id = await saveSong(request, { title, lyrics: 'Live from the PC' })
-      await page.getByRole('searchbox').fill(title)
+      // Typed key by key: the search box stays while each search loads.
+      await page.getByRole('searchbox').pressSequentially(title)
       const song = page.getByTestId('church-song').filter({ hasText: title })
       await song.click()
       const slide = page.getByTestId('song-slide')

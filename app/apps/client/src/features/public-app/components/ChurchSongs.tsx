@@ -27,19 +27,13 @@ export function ChurchSongs({ binding }: { binding: ChurchBinding }) {
   // A row's key belongs to its source (the cloud's uuid or the PC's id).
   const [opened, setOpened] = useState<{ key: string; live: boolean }>()
   const openKey = opened?.live === live ? opened.key : null
-  const { rows, total, isLoading, isError } = useSongRows(
-    binding.readUrl,
-    link,
-    query,
-  )
+  const { rows, total, isError } = useSongRows(binding.readUrl, link, query)
   const open = useOpenSong(binding.readUrl, link, openKey)
 
   if (open)
     return <SongLyrics song={open} onBack={() => setOpened(undefined)} />
-  if (isLoading && !rows) return <Message text={t('loading')} />
-  if (isError || !rows) return <Message text={t('songs.loadFailed')} />
-
-  const hidden = (query.trim() ? rows.length : total) - MAX_SHOWN
+  // The search box stays while results load: typing goes on in it.
+  const hidden = rows ? (query.trim() ? rows.length : total) - MAX_SHOWN : 0
 
   return (
     <div className="flex flex-col gap-3">
@@ -64,7 +58,11 @@ export function ChurchSongs({ binding }: { binding: ChurchBinding }) {
         </p>
         <PcLinkStatus link={link} listening={listening} />
       </div>
-      {rows.length === 0 ? (
+      {isError ? (
+        <Message text={t('songs.loadFailed')} />
+      ) : !rows ? (
+        <Message text={t('loading')} />
+      ) : rows.length === 0 ? (
         <Message text={t(total ? 'songs.noMatch' : 'songs.empty')} />
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-panel">

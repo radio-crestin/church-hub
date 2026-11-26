@@ -11,7 +11,6 @@ export interface SongRows {
   rows: SongRow[] | undefined
   /** Every song the church has. */
   total: number
-  isLoading: boolean
   isError: boolean
 }
 
@@ -51,7 +50,6 @@ export function useSongRows(
     return {
       rows: cloudRows,
       total: cloud.data?.length ?? 0,
-      isLoading: cloud.isLoading,
       isError: cloud.isError,
     }
   }
@@ -59,7 +57,6 @@ export function useSongRows(
   return {
     rows: search ? found.data : page.data?.rows,
     total: page.data?.total ?? 0,
-    isLoading: current.isLoading,
     isError: current.isError,
   }
 }
