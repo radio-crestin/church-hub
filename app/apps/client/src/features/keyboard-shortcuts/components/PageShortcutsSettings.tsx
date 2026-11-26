@@ -275,7 +275,7 @@ export function PageShortcutsSettings({ page }: PageShortcutsSettingsProps) {
       {hasSlideKeys && (
         <div className="space-y-4 border-line border-t pt-3">
           <div>
-            <h4 className="font-semibold text-fg text-[13px]">
+            <h4 className="font-semibold text-fg text-sm">
               {t('sections.sidebarItem.shortcuts.page.title')}
             </h4>
             <p className="mt-0.5 text-fg-hint text-xs">

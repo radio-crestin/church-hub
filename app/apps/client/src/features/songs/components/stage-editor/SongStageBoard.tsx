@@ -533,7 +533,7 @@ export function SongStageBoard({
             type="button"
             onClick={handlePresent}
             disabled={isStartingPresentation}
-            className="inline-flex items-center gap-2 h-8 px-3 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 h-8 px-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             data-testid="stage-present"
           >
             <Play size={16} />

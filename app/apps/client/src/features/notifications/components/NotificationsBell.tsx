@@ -37,13 +37,13 @@ export function NotificationsBell({ onClick }: NotificationsBellProps) {
         aria-label={label}
         title={label}
         onClick={onClick}
-        className={`relative flex-shrink-0 self-center p-3 rounded-lg transition-colors ${stateClasses}`}
+        className={`relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${stateClasses}`}
       >
-        <Bell size={16} strokeWidth={1.5} />
+        <Bell size={18} strokeWidth={1.5} />
         {hasUnread && (
           <span
             data-testid="sidebar-notifications-dot"
-            className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-primary ring-2 ring-panel"
+            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-panel"
           />
         )}
       </Link>

@@ -120,7 +120,7 @@ export function UpdatePanel() {
             onClick={checkNow}
             disabled={isLoading}
             data-testid="update-check-now"
-            className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
+            className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
           >
             {/* The spin is the whole feedback for this button — without it a
                 check that finds nothing looks like a dead click. */}
@@ -138,7 +138,7 @@ export function UpdatePanel() {
       {/* What's new — the same card the release-notes history uses */}
       {hasUpdate && versionNotes && (
         <div data-testid="update-available">
-          <h4 className="mb-2 text-[13px] font-semibold text-fg">
+          <h4 className="mb-2 text-sm font-semibold text-fg">
             {t('sections.updates.whatsNew', { version })}
           </h4>
 
@@ -187,7 +187,7 @@ export function UpdatePanel() {
                 data-testid="update-error"
                 className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900 dark:bg-red-900/20"
               >
-                <p className="text-[13px] font-medium text-red-700 dark:text-red-300">
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
                   {t(
                     `sections.updates.available.errors.${errorCode ?? 'unknown'}`,
                   )}
@@ -205,7 +205,7 @@ export function UpdatePanel() {
                   onClick={() => void install()}
                   disabled={isInstalling}
                   data-testid="update-install"
-                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {isInstalling ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -218,7 +218,7 @@ export function UpdatePanel() {
                 /* A disabled button with only a tooltip left the operator with
                    no idea why nothing happened. Say it outright. */
                 <p
-                  className="text-[13px] text-amber-700 dark:text-amber-400"
+                  className="text-sm text-amber-700 dark:text-amber-400"
                   data-testid="update-unavailable"
                 >
                   {t('sections.updates.available.unavailable')}
@@ -229,7 +229,7 @@ export function UpdatePanel() {
                   onClick={() => void startDownload()}
                   disabled={isDownloading}
                   data-testid="update-download"
-                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {isDownloading ? (
                     <Loader2 size={16} className="animate-spin" />

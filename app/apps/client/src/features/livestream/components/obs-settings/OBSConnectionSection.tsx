@@ -21,7 +21,7 @@ export function OBSConnectionSection() {
       testId="obs-settings-connection"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 py-2">
-        <p className="text-[13px] text-fg-body">
+        <p className="text-sm text-fg-body">
           {isConnected
             ? t('obs.connected')
             : isConnecting

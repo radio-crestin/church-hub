@@ -81,7 +81,7 @@ export function DuplicateSongDialog({
             <div className="font-medium">
               {t('duplicateDialog.openExisting')}
             </div>
-            <div className="text-[13px] text-white/75">
+            <div className="text-sm text-white/75">
               {t('duplicateDialog.openExistingDescription')}
             </div>
           </button>

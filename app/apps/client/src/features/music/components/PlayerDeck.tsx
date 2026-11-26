@@ -19,7 +19,7 @@ export function PlayerDeck({ player }: { player: ServerAudioPlayer }) {
     <>
       <div className="p-3 sm:p-4 border-b border-line flex-shrink-0 overflow-hidden group-data-[stuck=true]/pinned:hidden">
         <div className="flex items-center gap-2 w-full">
-          <h3 className="text-[13px] sm:text-sm font-semibold text-fg flex-1 min-w-0 truncate">
+          <h3 className="text-sm sm:text-sm font-semibold text-fg flex-1 min-w-0 truncate">
             {t('player.title')}
           </h3>
           <VolumeSlider

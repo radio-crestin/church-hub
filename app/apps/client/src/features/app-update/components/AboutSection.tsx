@@ -22,7 +22,7 @@ export function AboutSection() {
           {/* Current Version */}
           <div className="flex items-center justify-between p-4 border border-line rounded-xl">
             <div>
-              <p className="text-[13px] font-medium text-fg">
+              <p className="text-sm font-medium text-fg">
                 {t('sections.about.currentVersion')}
               </p>
               <p className="text-xl font-semibold tabular-nums text-fg mt-1">
@@ -33,7 +33,7 @@ export function AboutSection() {
               <button
                 onClick={() => void checkNow()}
                 disabled={isLoading}
-                className="flex h-8 items-center gap-2 px-3 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
+                className="flex h-8 items-center gap-2 px-3 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
                 title={t('sections.about.checkForUpdates')}
               >
                 <RefreshCw
@@ -49,7 +49,7 @@ export function AboutSection() {
           {/* Dev instance note / Latest Version / Update Available */}
           {isDevInstance ? (
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
-              <p className="text-[13px] font-medium text-amber-800 dark:text-amber-200">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                 {t('sections.about.devInstance')}
               </p>
               <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
@@ -60,7 +60,7 @@ export function AboutSection() {
             <div className="p-4 border border-line rounded-xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[13px] font-medium text-fg">
+                  <p className="text-sm font-medium text-fg">
                     {t('sections.about.updateAvailable')}
                   </p>
                   <p className="text-xl font-semibold tabular-nums text-fg mt-1">
@@ -76,7 +76,7 @@ export function AboutSection() {
                 <Link
                   to="/settings/updates"
                   data-testid="about-open-updates"
-                  className="flex h-9 items-center gap-2 px-3.5 bg-primary hover:bg-indigo-700 text-white rounded-lg text-[13px] font-medium transition-colors whitespace-nowrap"
+                  className="flex h-9 items-center gap-2 px-3.5 bg-primary hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
                 >
                   <Download size={16} strokeWidth={1.5} />
                   {t('sections.about.openUpdates')}
@@ -85,7 +85,7 @@ export function AboutSection() {
             </div>
           ) : (
             <div className="p-4 border border-line rounded-xl">
-              <p className="text-[13px] text-fg-label">
+              <p className="text-sm text-fg-label">
                 {t('sections.about.upToDate')}
               </p>
             </div>
@@ -97,7 +97,7 @@ export function AboutSection() {
               href={updateInfo.releaseUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-[13px] text-focus hover:underline"
+              className="flex items-center gap-2 text-sm text-focus hover:underline"
             >
               <ExternalLink size={14} strokeWidth={1.75} />
               {t('sections.about.viewReleaseNotes')}

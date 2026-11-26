@@ -111,14 +111,14 @@ export function CategoryForm({
             <button
               type="button"
               onClick={onCancel}
-              className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+              className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
             >
               {t('common:buttons.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading || !name.trim()}
-              className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {category
                 ? t('sections.categories.modals.edit.submit')

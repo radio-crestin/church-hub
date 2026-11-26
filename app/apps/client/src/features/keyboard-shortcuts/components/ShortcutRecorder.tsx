@@ -157,7 +157,7 @@ export function ShortcutRecorder({
           onFocus={handleFocus}
           onBlur={handleBlur}
           className={`
-            w-full h-9 text-[13px]
+            w-full h-9 text-sm
             border rounded-[10px]
             bg-field
             text-fg

@@ -81,7 +81,7 @@ export function LoginPairingPrompt() {
           >
             {t('pairing.title')}
           </h2>
-          <p className="text-[13px] text-fg-label">
+          <p className="text-sm text-fg-label">
             {t('pairing.description', {
               name: request.userName,
               ip: request.requesterIp,
@@ -102,7 +102,7 @@ export function LoginPairingPrompt() {
           <button
             type="button"
             onClick={() => setRequest(null)}
-            className="h-9 w-full rounded-lg bg-field px-4 text-[13px] font-medium text-fg transition-colors hover:bg-hover"
+            className="h-9 w-full rounded-lg bg-field px-4 text-sm font-medium text-fg transition-colors hover:bg-hover"
           >
             {t('pairing.dismiss')}
           </button>

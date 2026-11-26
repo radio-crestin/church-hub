@@ -63,7 +63,7 @@ function SettingsGroup({
 }) {
   return (
     <section data-testid={testId} className="min-w-0">
-      <h4 className="text-[13px] font-medium text-fg-label">{title}</h4>
+      <h4 className="text-sm font-medium text-fg-label">{title}</h4>
       <div className="divide-y divide-line/60">{children}</div>
     </section>
   )
@@ -162,7 +162,7 @@ export function ScreenCard({
             }`}
           />
           <div className="min-w-0">
-            <h3 className="text-[13px] font-medium text-fg truncate">
+            <h3 className="text-sm font-medium text-fg truncate">
               {screen.name}
             </h3>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
@@ -296,7 +296,7 @@ export function ScreenCard({
           <ScreenMonitorPicker screen={screen} />
           <PreviewScreenRadio screen={screen} checked={isShownInPreviews} />
           <details data-testid="screen-group-advanced" className="group py-2">
-            <summary className="flex items-center gap-1 cursor-pointer list-none text-[13px] font-medium text-fg-body [&::-webkit-details-marker]:hidden">
+            <summary className="flex items-center gap-1 cursor-pointer list-none text-sm font-medium text-fg-body [&::-webkit-details-marker]:hidden">
               <ChevronRight
                 size={16}
                 strokeWidth={1.5}

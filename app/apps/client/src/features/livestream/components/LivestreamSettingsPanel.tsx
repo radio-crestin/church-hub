@@ -72,7 +72,7 @@ export function LivestreamSettingsPanel() {
   return (
     <div className={`flex-1 ${cardClass}`}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-[13px] font-medium text-fg">{t('scenes.title')}</h3>
+        <h3 className="text-sm font-medium text-fg">{t('scenes.title')}</h3>
         <Button
           type="button"
           size="sm"
@@ -114,7 +114,7 @@ export function LivestreamSettingsPanel() {
               value={newSceneName}
               onChange={(e) => setNewSceneName(e.target.value)}
               placeholder={t('scenes.newScenePlaceholder')}
-              className="flex-1 rounded-[10px] bg-field px-3 py-2 text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+              className="flex-1 rounded-[10px] bg-field px-3 py-2 text-sm text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleAddScene()
                 if (e.key === 'Escape') {
@@ -146,7 +146,7 @@ export function LivestreamSettingsPanel() {
           <button
             type="button"
             onClick={() => setShowAddForm(true)}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-fg-label transition-colors hover:bg-hover hover:text-fg"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-fg-label transition-colors hover:bg-hover hover:text-fg"
           >
             <Plus size={16} strokeWidth={1.5} />
             {t('scenes.addCustomScene')}

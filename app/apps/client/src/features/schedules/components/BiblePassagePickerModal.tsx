@@ -236,7 +236,7 @@ export function BiblePassagePickerModal({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Reference Input */}
           <div>
-            <label className="block text-[13px] font-medium text-fg-body mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('biblePassage.reference')}
             </label>
             <input
@@ -267,7 +267,7 @@ export function BiblePassagePickerModal({
                   <span className="font-medium text-fg-label">
                     {parsedResult.formattedReference}
                   </span>
-                  <span className="flex items-center gap-1 text-[13px] text-fg-label">
+                  <span className="flex items-center gap-1 text-sm text-fg-label">
                     <Check size={16} strokeWidth={1.5} />
                     {t('biblePassage.valid')}
                   </span>
@@ -288,7 +288,7 @@ export function BiblePassagePickerModal({
             type="button"
             onClick={handleClose}
             disabled={isPending}
-            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg disabled:opacity-50"
+            className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg disabled:opacity-50"
           >
             {t('actions.cancel')}
           </button>
@@ -296,7 +296,7 @@ export function BiblePassagePickerModal({
             type="button"
             onClick={handleSave}
             disabled={isPending || !isValid}
-            className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {isPending ? (
               <Loader2 size={18} className="animate-spin" />

@@ -129,7 +129,7 @@ export function LogsViewer({
           type="button"
           onClick={onRefresh}
           disabled={isLoading}
-          className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:opacity-50"
         >
           <RefreshCw
             strokeWidth={1.5}
@@ -144,7 +144,7 @@ export function LogsViewer({
       {error ? (
         <p
           role="alert"
-          className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-[13px] text-red-700 dark:bg-red-900/20 dark:text-red-400"
+          className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
         >
           <AlertCircle strokeWidth={1.5} className="h-4 w-4 shrink-0" />
           {t('sections.logs.toast.loadFailed', { error })}
@@ -163,7 +163,7 @@ export function LogsViewer({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t('sections.logs.viewer.search')}
-                className="h-9 w-full rounded-[10px] bg-field pl-9 pr-3 text-[13px] text-fg placeholder:text-fg-hint outline-none transition-colors focus:ring-1 focus:ring-inset focus:ring-focus"
+                className="h-9 w-full rounded-[10px] bg-field pl-9 pr-3 text-sm text-fg placeholder:text-fg-hint outline-none transition-colors focus:ring-1 focus:ring-inset focus:ring-focus"
               />
             </div>
             <div className="flex flex-wrap items-center gap-1.5">

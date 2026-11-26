@@ -64,19 +64,19 @@ export function UserQRModal({
           </button>
         </div>
 
-        <p className="text-[13px] text-fg-label mb-2">
+        <p className="text-sm text-fg-label mb-2">
           {t('sections.users.modals.qrCode.userName')}:{' '}
           <strong>{userName}</strong>
         </p>
 
-        <p className="text-[13px] text-fg-label mb-4">
+        <p className="text-sm text-fg-label mb-4">
           {t('sections.users.modals.qrCode.description')}
         </p>
 
         {isOpen && <PairingQRCode token={token} />}
 
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
-          <p className="text-[13px] text-amber-800 dark:text-amber-200">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
             {t('sections.users.modals.qrCode.warning')}
           </p>
         </div>
@@ -84,7 +84,7 @@ export function UserQRModal({
         <div className="flex justify-end mt-6">
           <button
             onClick={onClose}
-            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg
+            className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg
               transition-colors"
           >
             {t('sections.users.modals.qrCode.done')}

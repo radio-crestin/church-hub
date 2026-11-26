@@ -31,8 +31,10 @@ import { generateCustomPageId } from '../service/sidebarConfig'
 import type {
   CustomPageInput,
   CustomPageMenuItem,
+  SidebarGroupId,
   SidebarMenuItem,
 } from '../types'
+import { isGroupable } from '../utils/sidebarGroups'
 
 /**
  * Main component for managing sidebar configuration in settings
@@ -97,6 +99,26 @@ export function SidebarConfigManager() {
 
     const updatedItems = config.items.map((item) =>
       item.id === itemId ? { ...item, isVisible: !item.isVisible } : item,
+    )
+
+    updateConfig.mutate(
+      { ...config, items: updatedItems },
+      {
+        onSuccess: () => {
+          showToast(t('sections.sidebar.toast.saved'), 'success')
+        },
+        onError: () => {
+          showToast(t('sections.sidebar.toast.error'), 'error')
+        },
+      },
+    )
+  }
+
+  const handleChangeGroup = (itemId: string, group: SidebarGroupId) => {
+    if (!config) return
+
+    const updatedItems = config.items.map((item) =>
+      item.id === itemId ? { ...item, group } : item,
     )
 
     updateConfig.mutate(
@@ -245,7 +267,7 @@ export function SidebarConfigManager() {
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 h-8 px-3 bg-primary hover:bg-indigo-700 text-white text-[13px] font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 h-8 px-3 bg-primary hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <Plus strokeWidth={1.5} size={16} />
             {t('sections.sidebar.addCustomPage')}
@@ -269,6 +291,11 @@ export function SidebarConfigManager() {
                 key={item.id}
                 item={item}
                 onToggleVisibility={() => handleToggleVisibility(item.id)}
+                onChangeGroup={
+                  isGroupable(item.id)
+                    ? (group) => handleChangeGroup(item.id, group)
+                    : undefined
+                }
                 onOpenSettings={() => setSettingsItem(item)}
                 onDelete={
                   item.type === 'custom'

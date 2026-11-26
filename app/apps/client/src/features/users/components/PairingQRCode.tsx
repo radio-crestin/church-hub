@@ -67,7 +67,7 @@ export function PairingQRCode({ token, fragment = '' }: PairingQRCodeProps) {
     <div className="flex flex-col gap-4">
       {interfaces.length > 0 && (
         <div>
-          <label className="mb-2 block text-[13px] font-medium text-fg-body">
+          <label className="mb-2 block text-sm font-medium text-fg-body">
             {t('sections.users.modals.qrCode.networkInterface')}
           </label>
           <Combobox
@@ -98,7 +98,7 @@ export function PairingQRCode({ token, fragment = '' }: PairingQRCodeProps) {
       </div>
 
       <div>
-        <p className="mb-2 text-[13px] text-fg-label">
+        <p className="mb-2 text-sm text-fg-label">
           {t('sections.users.modals.qrCode.manualUrl')}
         </p>
         <div className="flex items-center gap-2 rounded-lg bg-field p-2">

@@ -102,7 +102,7 @@ export function TextStyleContextMenu({
       <button
         type="button"
         onClick={handleHighlight}
-        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover transition-colors"
       >
         <Highlighter
           size={14}
@@ -116,7 +116,7 @@ export function TextStyleContextMenu({
       <button
         type="button"
         onClick={handleBold}
-        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover transition-colors"
       >
         <Bold size={14} strokeWidth={1.75} />
         {t('textStyle.bold')}
@@ -126,7 +126,7 @@ export function TextStyleContextMenu({
       <button
         type="button"
         onClick={handleUnderline}
-        className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover transition-colors"
       >
         <Underline size={14} strokeWidth={1.75} />
         {t('textStyle.underline')}
@@ -139,7 +139,7 @@ export function TextStyleContextMenu({
           <button
             type="button"
             onClick={handleRemoveStyle}
-            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-hover transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-hover transition-colors"
           >
             <X size={14} strokeWidth={1.75} />
             {t('textStyle.removeStyle')}

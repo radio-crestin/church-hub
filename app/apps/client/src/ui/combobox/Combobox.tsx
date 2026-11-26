@@ -187,7 +187,7 @@ export function Combobox({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         data-testid={testId}
-        className="w-full h-9 flex items-center justify-between gap-2 px-3 bg-field rounded-[10px] text-left text-[13px] text-fg focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full h-9 flex items-center justify-between gap-2 px-3 bg-field rounded-[10px] text-left text-sm text-fg focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <span
           className={`truncate min-w-0 ${selectedOption ? '' : 'text-fg-hint'}`}
@@ -232,7 +232,7 @@ export function Combobox({
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Search..."
-                  className={`w-full h-8 pl-2.5 bg-field rounded-lg text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
+                  className={`w-full h-8 pl-2.5 bg-field rounded-lg text-sm text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
                     search ? 'pr-7' : 'pr-2'
                   }`}
                 />
@@ -253,7 +253,7 @@ export function Combobox({
                   type="button"
                   onClick={handleCreateNew}
                   disabled={isCreating}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-fg hover:bg-hover disabled:opacity-50"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-fg hover:bg-hover disabled:opacity-50"
                 >
                   <Plus strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
                   {createNewLabel} "{search}"
@@ -261,7 +261,7 @@ export function Combobox({
               )}
 
               {filteredOptions.length === 0 && !showCreateOption ? (
-                <div className="px-2.5 py-1.5 text-[13px] text-fg-hint">
+                <div className="px-2.5 py-1.5 text-sm text-fg-hint">
                   No options found
                 </div>
               ) : (
@@ -270,7 +270,7 @@ export function Combobox({
                     key={option.value}
                     data-testid={testId ? `${testId}-option` : undefined}
                     data-value={option.value}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[13px] text-left group ${
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm text-left group ${
                       option.value === value
                         ? 'bg-selected text-fg'
                         : 'text-fg-body hover:bg-hover'

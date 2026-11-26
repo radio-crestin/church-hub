@@ -99,7 +99,7 @@ export function ScheduleList({
       ) : (
         <div className="grid gap-3">
           {isSearching && (
-            <p className="text-[13px] text-fg-hint">
+            <p className="text-sm text-fg-hint">
               {t('search.resultsCount', { count: displaySchedules.length })}
             </p>
           )}

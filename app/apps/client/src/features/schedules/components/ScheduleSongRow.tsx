@@ -129,7 +129,7 @@ export function ScheduleSongRow({
         <div className="flex min-w-0 items-center gap-1.5">
           <ScheduleRowNumber position={position} isLive={isLive} />
           <ScheduleItemTypeIcon item={item} size="sm" />
-          <span className="truncate text-[13px] font-medium text-fg">
+          <span className="truncate text-sm font-medium text-fg">
             {song.title}
           </span>
         </div>

@@ -238,7 +238,7 @@ export function SceneSettingsForm({
           <div>
             <label
               htmlFor="displayName"
-              className="block text-[13px] font-medium text-fg mb-2"
+              className="block text-sm font-medium text-fg mb-2"
             >
               {t('scenes.displayName')}
             </label>
@@ -248,7 +248,7 @@ export function SceneSettingsForm({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={scene.obsSceneName}
-              className="w-full px-3 py-2 text-[13px] rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+              className="w-full px-3 py-2 text-sm rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
             />
             {scene.displayName !== scene.obsSceneName && (
               <p className="mt-1 text-xs text-fg-hint">
@@ -272,7 +272,7 @@ export function SceneSettingsForm({
               ) : (
                 <EyeOff size={16} strokeWidth={1.5} />
               )}
-              <span className="text-[13px] font-medium">
+              <span className="text-sm font-medium">
                 {isVisible ? t('scenes.visible') : t('scenes.hidden')}
               </span>
             </button>
@@ -280,7 +280,7 @@ export function SceneSettingsForm({
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-[13px] font-medium text-fg">
+              <label className="block text-sm font-medium text-fg">
                 {t('scenes.shortcuts')}
               </label>
             </div>
@@ -314,7 +314,7 @@ export function SceneSettingsForm({
             <button
               type="button"
               onClick={handleAddShortcut}
-              className="flex items-center gap-2 text-[13px] font-medium text-focus hover:underline"
+              className="flex items-center gap-2 text-sm font-medium text-focus hover:underline"
             >
               <Plus size={16} strokeWidth={1.5} />
               {t('scenes.addShortcut')}
@@ -323,7 +323,7 @@ export function SceneSettingsForm({
 
           {youtubeConfig && onUpdateYouTubeConfig && (
             <div className="pt-4 border-t border-line">
-              <h4 className="text-[13px] font-medium text-fg mb-3">
+              <h4 className="text-sm font-medium text-fg mb-3">
                 {t('scenes.streamSceneSettings')}
               </h4>
 
@@ -338,7 +338,7 @@ export function SceneSettingsForm({
               >
                 <Play size={16} strokeWidth={1.5} />
                 <div className="flex-1 text-left">
-                  <span className="text-[13px] font-medium block">
+                  <span className="text-sm font-medium block">
                     {t('scenes.useAsStartScene')}
                   </span>
                   <span className="text-xs text-fg-hint">
@@ -358,7 +358,7 @@ export function SceneSettingsForm({
               >
                 <Square size={16} strokeWidth={1.5} />
                 <div className="flex-1 text-left">
-                  <span className="text-[13px] font-medium block">
+                  <span className="text-sm font-medium block">
                     {t('scenes.useAsStopScene')}
                   </span>
                   <span className="text-xs text-fg-hint">
@@ -370,7 +370,7 @@ export function SceneSettingsForm({
           )}
 
           <div className="pt-4 border-t border-line">
-            <h4 className="text-[13px] font-medium text-fg mb-2">
+            <h4 className="text-sm font-medium text-fg mb-2">
               {t('scenes.autoSceneSettings')}
             </h4>
             <p className="text-xs text-fg-hint mb-3">
@@ -404,7 +404,7 @@ export function SceneSettingsForm({
                     handleToggleContentType(e.target.value as ContentType)
                   }
                 }}
-                className="flex-1 min-w-[100px] text-[13px] bg-transparent border-none outline-none text-fg-hint cursor-pointer"
+                className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-fg-hint cursor-pointer"
               >
                 <option value="">
                   {contentTypes.length === 0
@@ -424,7 +424,7 @@ export function SceneSettingsForm({
 
           {mixerChannels.length > 0 && (
             <div className="pt-4 border-t border-line">
-              <h4 className="text-[13px] font-medium text-fg mb-2">
+              <h4 className="text-sm font-medium text-fg mb-2">
                 {t('scenes.mixerActions')}
               </h4>
               <p className="text-xs text-fg-hint mb-3">
@@ -440,7 +440,7 @@ export function SceneSettingsForm({
                         strokeWidth={1.5}
                         className="text-fg-label"
                       />
-                      <span className="text-[13px] font-medium text-fg-body">
+                      <span className="text-sm font-medium text-fg-body">
                         {t('scenes.unmute')}
                       </span>
                     </div>
@@ -482,7 +482,7 @@ export function SceneSettingsForm({
                           handleToggleMixerUnmute(e.target.value)
                         }
                       }}
-                      className="flex-1 min-w-[100px] text-[13px] bg-transparent border-none outline-none text-fg-hint cursor-pointer"
+                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-fg-hint cursor-pointer"
                     >
                       <option value="">
                         {mixerUnmute.length === 0
@@ -518,7 +518,7 @@ export function SceneSettingsForm({
                         strokeWidth={1.5}
                         className="text-fg-label"
                       />
-                      <span className="text-[13px] font-medium text-fg-body">
+                      <span className="text-sm font-medium text-fg-body">
                         {t('scenes.mute')}
                       </span>
                     </div>
@@ -560,7 +560,7 @@ export function SceneSettingsForm({
                           handleToggleMixerMute(e.target.value)
                         }
                       }}
-                      className="flex-1 min-w-[100px] text-[13px] bg-transparent border-none outline-none text-fg-hint cursor-pointer"
+                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-fg-hint cursor-pointer"
                     >
                       <option value="">
                         {mixerMute.length === 0
@@ -598,7 +598,7 @@ export function SceneSettingsForm({
               type="button"
               onClick={onDelete}
               disabled={isDeleting}
-              className="flex h-9 items-center gap-1.5 px-3 text-[13px] font-medium text-fg-label hover:text-red-600 dark:hover:text-red-400 hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+              className="flex h-9 items-center gap-1.5 px-3 text-sm font-medium text-fg-label hover:text-red-600 dark:hover:text-red-400 hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
               <Trash2 size={16} strokeWidth={1.5} />
               {isDeleting ? t('scenes.deleting') : t('scenes.delete')}

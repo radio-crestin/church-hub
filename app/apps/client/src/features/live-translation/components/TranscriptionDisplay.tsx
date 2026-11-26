@@ -73,10 +73,10 @@ export function TranscriptionDisplay({
       <div className="flex-1 flex items-center justify-center text-fg-hint">
         <div className="text-center">
           <Mic className="mx-auto mb-3 h-8 w-8" strokeWidth={1.25} />
-          <p className="text-[15px] font-medium text-fg-label">
+          <p className="text-base font-medium text-fg-label">
             {t('transcription.waitingForSpeech')}
           </p>
-          <p className="text-[13px] mt-1">{t('transcription.startSpeaking')}</p>
+          <p className="text-sm mt-1">{t('transcription.startSpeaking')}</p>
         </div>
       </div>
     )

@@ -138,9 +138,7 @@ export function ScheduleSlideRow({
       >
         <ScheduleRowNumber position={position} isLive={isLive} />
         <ScheduleItemTypeIcon item={item} size="sm" />
-        <span className="min-w-0 flex-1 truncate text-[13px] text-fg">
-          {label}
-        </span>
+        <span className="min-w-0 flex-1 truncate text-sm text-fg">{label}</span>
       </button>
 
       {onEdit ? (

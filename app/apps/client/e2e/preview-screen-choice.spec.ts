@@ -71,7 +71,8 @@ async function previewRatio(page: Page) {
 async function expectEveryPreviewMirrors(page: Page, screen: ScreenSummary) {
   for (const path of PREVIEW_PAGES) {
     await page.goto(path)
-    await expect(page.getByTestId('preview-screen-picker')).toHaveValue(
+    await expect(page.getByTestId('preview-screen-picker')).toHaveAttribute(
+      'data-value',
       String(screen.id),
       { timeout: 15000 },
     )
@@ -155,9 +156,8 @@ test.describe('The previews mirror the screen chosen for them', () => {
     request,
   }) => {
     await page.goto('/present')
-    await page
-      .getByTestId('preview-screen-picker')
-      .selectOption(String(stage.id))
+    await page.getByTestId('preview-screen-picker').click()
+    await page.getByTestId(`preview-screen-option-${stage.id}`).click()
     await expect
       .poll(
         async () =>
@@ -174,7 +174,8 @@ test.describe('The previews mirror the screen chosen for them', () => {
   }) => {
     await setPreviewFlag(request, stage, true)
     await page.goto('/present')
-    await expect(page.getByTestId('preview-screen-picker')).toHaveValue(
+    await expect(page.getByTestId('preview-screen-picker')).toHaveAttribute(
+      'data-value',
       String(stage.id),
       { timeout: 15000 },
     )
@@ -182,7 +183,8 @@ test.describe('The previews mirror the screen chosen for them', () => {
     // Deleted elsewhere: the open Control Room hears it and falls back.
     expect((await request.delete(`/api/screens/${stage.id}`)).ok()).toBeTruthy()
     const main = mainScreenOf(await listScreens(request))
-    await expect(page.getByTestId('preview-screen-picker')).toHaveValue(
+    await expect(page.getByTestId('preview-screen-picker')).toHaveAttribute(
+      'data-value',
       String(main.id),
       { timeout: 15000 },
     )

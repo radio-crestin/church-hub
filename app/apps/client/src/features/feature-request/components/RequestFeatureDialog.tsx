@@ -143,7 +143,7 @@ export function RequestFeatureDialog({
             <PublicNotice />
             {errorMessage && (
               <p
-                className="text-[13px] text-red-600 dark:text-red-400"
+                className="text-sm text-red-600 dark:text-red-400"
                 role="alert"
               >
                 {errorMessage}
@@ -154,7 +154,7 @@ export function RequestFeatureDialog({
               <button
                 type="button"
                 onClick={() => setIsContactOpen(true)}
-                className="px-3 py-2 text-[13px] font-medium text-focus hover:underline"
+                className="px-3 py-2 text-sm font-medium text-focus hover:underline"
               >
                 {t('common:contact.title')}
               </button>
@@ -171,7 +171,7 @@ export function RequestFeatureDialog({
                   type="submit"
                   data-testid="feature-request-submit"
                   disabled={isSending || missingKey !== null}
-                  className="flex items-center justify-center gap-1.5 h-9 px-4 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-primary"
+                  className="flex items-center justify-center gap-1.5 h-9 px-4 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-60 disabled:hover:bg-primary"
                 >
                   {isSending
                     ? t('common:featureRequest.sending')

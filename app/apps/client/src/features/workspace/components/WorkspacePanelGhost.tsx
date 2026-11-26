@@ -22,7 +22,7 @@ export function WorkspacePanelGhost({ title }: WorkspacePanelGhostProps) {
       className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-focus bg-focus/10 p-2 text-center"
     >
       <GripHorizontal size={16} strokeWidth={1.5} className="text-fg-label" />
-      <span className="truncate text-[13px] font-medium text-fg">{title}</span>
+      <span className="truncate text-sm font-medium text-fg">{title}</span>
       <span className="truncate text-xs text-fg-hint">
         {t('workspace.newPosition')}
       </span>

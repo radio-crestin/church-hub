@@ -103,7 +103,7 @@ export function CreateScheduleModal({
         <div className="p-4">
           <label
             htmlFor="create-schedule-title"
-            className="block text-[13px] font-medium text-fg-body mb-2"
+            className="block text-sm font-medium text-fg-body mb-2"
           >
             {t('modal.scheduleName')}
           </label>
@@ -134,7 +134,7 @@ export function CreateScheduleModal({
             type="button"
             onClick={handleClose}
             disabled={isPending}
-            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
+            className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
           >
             {t('modal.cancel')}
           </button>
@@ -142,7 +142,7 @@ export function CreateScheduleModal({
             type="submit"
             disabled={!title.trim() || isPending}
             data-testid="create-schedule-save"
-            className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
           >
             {upsertSchedule.isPending && (
               <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />

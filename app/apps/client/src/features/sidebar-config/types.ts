@@ -84,6 +84,9 @@ export interface SidebarItemSettings {
   customIconBgColor?: string
 }
 
+/** The sidebar sections pages are grouped under. */
+export type SidebarGroupId = 'live' | 'library' | 'tools'
+
 /**
  * Base properties shared by all menu items
  */
@@ -91,6 +94,8 @@ interface BaseMenuItem {
   id: string
   order: number
   isVisible: boolean
+  /** The section the operator put this page in; unset means its default one. */
+  group?: SidebarGroupId
   /** Optional settings for shortcuts and navigation behavior */
   settings?: SidebarItemSettings
 }
@@ -184,4 +189,6 @@ export interface ResolvedMenuItem {
   customIconUrl?: string
   /** Favicon background color (hex or from iconColor setting) */
   faviconBgColor?: string
+  /** The section the operator put this page in; unset means its default one. */
+  group?: SidebarGroupId
 }

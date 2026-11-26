@@ -310,12 +310,12 @@ export function ConstraintControls({
                   updateSize({ width: parseFloat(e.target.value) || 0 })
                 }
                 step="0.1"
-                className="w-20 h-8 text-[13px] text-fg font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-20 h-8 text-sm text-fg font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 type="button"
                 onClick={handleWidthUnitToggle}
-                className="h-8 px-2 text-[13px] text-fg-label hover:bg-hover hover:text-fg font-medium"
+                className="h-8 px-2 text-sm text-fg-label hover:bg-hover hover:text-fg font-medium"
               >
                 {size.widthUnit}
               </button>
@@ -344,12 +344,12 @@ export function ConstraintControls({
                   updateSize({ height: parseFloat(e.target.value) || 0 })
                 }
                 step="0.1"
-                className="w-20 h-8 text-[13px] text-fg font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-20 h-8 text-sm text-fg font-medium bg-transparent px-2 text-center border-0 focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 type="button"
                 onClick={handleHeightUnitToggle}
-                className="h-8 px-2 text-[13px] text-fg-label hover:bg-hover hover:text-fg font-medium"
+                className="h-8 px-2 text-sm text-fg-label hover:bg-hover hover:text-fg font-medium"
               >
                 {size.heightUnit}
               </button>

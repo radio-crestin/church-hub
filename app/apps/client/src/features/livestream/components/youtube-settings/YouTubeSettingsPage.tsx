@@ -47,7 +47,7 @@ export function YouTubeSettingsPage() {
         isAuthenticated && (
           <>
             {form.isDirty && (
-              <span className="text-[13px] text-amber-700 dark:text-amber-300">
+              <span className="text-sm text-amber-700 dark:text-amber-300">
                 {t('youtubeSettings.unsaved')}
               </span>
             )}
