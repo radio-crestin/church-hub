@@ -9,6 +9,7 @@ import {
   SearchIndexRebuild,
 } from '~/features/database-management'
 import { OpenLogsFolder } from '~/features/logs'
+import { SecretStoreResetNotice } from '~/features/secret-store'
 import { SettingsLeafGuard, SettingsSection } from '~/features/settings'
 import { SystemTokenManager } from '~/features/system-token'
 import { useDebugMode } from '~/hooks/useDebugMode'
@@ -102,6 +103,9 @@ function DeveloperSettings() {
 
           {/* Open Logs Folder (localhost only — host file manager) */}
           {isLocalhost() && <OpenLogsFolder />}
+
+          {/* After importing a database from another computer: what to set up again */}
+          {isLocalhost() && <SecretStoreResetNotice />}
 
           {/* Database Management (localhost only) */}
           {isLocalhost() && <DatabaseManager />}

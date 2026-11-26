@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm'
 import { google } from 'googleapis'
 
 import { parseGoogleAuthError, type YouTubeAuthError } from './errors'
+import { readYouTubeAuth, updateYouTubeAccessToken } from './youtubeAuthStore'
 import { getDatabase } from '../../../db'
 import { youtubeAuth } from '../../../db/schema'
 import { broadcastYouTubeAuthStatus } from '../../../websocket'
@@ -118,8 +118,7 @@ async function refreshTokensViaWorker(
 }
 
 export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
-  const db = getDatabase()
-  const [auth] = await db.select().from(youtubeAuth).limit(1)
+  const auth = await readYouTubeAuth()
 
   if (!auth) {
     return null
@@ -143,16 +142,11 @@ export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
         const { credentials } = await localClient.refreshAccessToken()
         log('info', 'Token refreshed successfully via local client')
 
-        await db
-          .update(youtubeAuth)
-          .set({
-            accessToken: credentials.access_token!,
-            expiresAt: new Date(
-              credentials.expiry_date || Date.now() + 3600 * 1000,
-            ),
-            updatedAt: new Date(),
-          })
-          .where(eq(youtubeAuth.id, auth.id))
+        await updateYouTubeAccessToken(
+          auth.id,
+          credentials.access_token!,
+          new Date(credentials.expiry_date || Date.now() + 3600 * 1000),
+        )
 
         localClient.setCredentials(credentials)
         return localClient
@@ -183,14 +177,11 @@ export async function getAuthenticatedClient(): Promise<OAuth2Client | null> {
     if (workerResult.success && workerResult.tokens) {
       log('info', 'Token refreshed successfully via OAuth worker')
 
-      await db
-        .update(youtubeAuth)
-        .set({
-          accessToken: workerResult.tokens.accessToken,
-          expiresAt: new Date(workerResult.tokens.expiresAt),
-          updatedAt: new Date(),
-        })
-        .where(eq(youtubeAuth.id, auth.id))
+      await updateYouTubeAccessToken(
+        auth.id,
+        workerResult.tokens.accessToken,
+        new Date(workerResult.tokens.expiresAt),
+      )
 
       // Create a simple OAuth2Client with the new credentials for googleapis
       const client = new OAuth2Client()
@@ -270,8 +261,7 @@ export async function getYouTubeService() {
  * This can be used for direct API calls without needing OAuth credentials.
  */
 export async function getAccessToken(): Promise<string | null> {
-  const db = getDatabase()
-  const [auth] = await db.select().from(youtubeAuth).limit(1)
+  const auth = await readYouTubeAuth()
 
   if (!auth) {
     return null
@@ -293,16 +283,11 @@ export async function getAccessToken(): Promise<string | null> {
         const { credentials } = await client.refreshAccessToken()
         log('info', 'Token refreshed successfully via local client')
 
-        await db
-          .update(youtubeAuth)
-          .set({
-            accessToken: credentials.access_token!,
-            expiresAt: new Date(
-              credentials.expiry_date || Date.now() + 3600 * 1000,
-            ),
-            updatedAt: new Date(),
-          })
-          .where(eq(youtubeAuth.id, auth.id))
+        await updateYouTubeAccessToken(
+          auth.id,
+          credentials.access_token!,
+          new Date(credentials.expiry_date || Date.now() + 3600 * 1000),
+        )
 
         return credentials.access_token!
       } catch (error) {
@@ -318,14 +303,11 @@ export async function getAccessToken(): Promise<string | null> {
     if (workerResult.success && workerResult.tokens) {
       log('info', 'Token refreshed successfully via OAuth worker')
 
-      await db
-        .update(youtubeAuth)
-        .set({
-          accessToken: workerResult.tokens.accessToken,
-          expiresAt: new Date(workerResult.tokens.expiresAt),
-          updatedAt: new Date(),
-        })
-        .where(eq(youtubeAuth.id, auth.id))
+      await updateYouTubeAccessToken(
+        auth.id,
+        workerResult.tokens.accessToken,
+        new Date(workerResult.tokens.expiresAt),
+      )
 
       return workerResult.tokens.accessToken
     }

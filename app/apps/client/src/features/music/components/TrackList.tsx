@@ -1,15 +1,14 @@
 import { useTranslation } from 'react-i18next'
 
 import { TRACK_GRID, TrackRow } from './TrackRow'
-import type { LibraryTrack, MusicPlaylist } from '../types'
+import type { LibraryTrack } from '../types'
 
 interface TrackListProps {
   tracks: LibraryTrack[]
   playingFileId: number | null
-  playlists: MusicPlaylist[]
   onPlay: (track: LibraryTrack) => void
   onAddToQueue: (track: LibraryTrack) => void
-  onAddToPlaylist: (track: LibraryTrack, playlistId: number) => void
+  onPickPlaylist: (track: LibraryTrack) => void
   onCreatePlaylistWith: (track: LibraryTrack) => void
   onRemoveFromPlaylist?: (track: LibraryTrack) => void
 }

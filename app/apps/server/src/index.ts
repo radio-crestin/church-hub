@@ -62,6 +62,7 @@ import { handleScheduleItemRoutes } from './routes/schedule-items'
 import { handleScheduleMidiRoutes } from './routes/schedule-midi'
 import { handleScheduleTemplateRoutes } from './routes/schedule-templates'
 import { handleScreenShareRoutes } from './routes/screen-share'
+import { handleSecretStoreRoutes } from './routes/secret-store'
 import { handleSlideTemplateRoutes } from './routes/slide-templates'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
@@ -76,7 +77,7 @@ import {
   getAllSettings,
   getAllUsers,
   getLocalUsers,
-  getSetting,
+  getPublicSetting,
   getUserById,
   isServerSecretKey,
   type Permission,
@@ -299,6 +300,7 @@ import {
   type SaveSearchInput,
   saveSearch,
 } from './service/search-history'
+import { SecretDestinationChangedError } from './service/secret-store'
 import {
   addBookmark,
   addBookmarkNote,
@@ -1326,7 +1328,7 @@ async function startRealServer(): Promise<void> {
           if (permError) return permError
         }
 
-        const setting = getSetting(table, key)
+        const setting = getPublicSetting(table, key)
 
         return handleCors(
           req,
@@ -1452,12 +1454,14 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
-        } catch (_error) {
+        } catch (error) {
+          const message =
+            error instanceof SecretDestinationChangedError
+              ? error.message
+              : 'Invalid JSON body'
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-            }),
+            new Response(JSON.stringify({ error: message }), { status: 400 }),
           )
         }
       }
@@ -8304,6 +8308,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (notificationsResponse) return notificationsResponse
+
+      // Where the key sealing saved secrets is kept
+      const secretStoreResponse = await handleSecretStoreRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (secretStoreResponse) return secretStoreResponse
 
       // A presentation song item's MIDI file, its slides synced to it
       const scheduleMidiResponse = await handleScheduleMidiRoutes(

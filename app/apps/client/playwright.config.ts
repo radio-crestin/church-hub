@@ -34,6 +34,11 @@ export const SERVER_COUNT = Number(
 // with nobody presenting", T-030).
 const BASE_PORT = Number(process.env.TEST_PORT ?? '3099')
 
+// Every server the suite starts (these, the specs' own, their children)
+// keeps the data key sealing saved secrets in a file next to its database,
+// never in the developer's keychain.
+process.env.CHURCH_HUB_SECRET_STORE = 'file'
+
 /** Everything one worker's test server is reached by. */
 function testServer(index: number) {
   const port = BASE_PORT + index * PORTS_PER_SERVER
