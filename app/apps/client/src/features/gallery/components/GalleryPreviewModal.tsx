@@ -47,7 +47,7 @@ export function GalleryPreviewModal({
     }
   }
 
-  const src = useMediaUrl(media?.url) ?? ''
+  const src = useMediaUrl(media?.url).src ?? ''
 
   return (
     <dialog

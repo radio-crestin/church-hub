@@ -33,9 +33,7 @@ export function publicAppPlugins(): PluginOption[] {
       // index.html already links public/site.webmanifest.
       manifest: false,
       workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,png,svg,ico,woff2,webmanifest,wasm}',
-        ],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2,webmanifest,wasm}'],
         // The app's largest chunks and the browser server are a few MB.
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',
@@ -60,6 +58,32 @@ export function publicAppPlugins(): PluginOption[] {
             options: {
               cacheName: 'church-library',
               expiration: { maxEntries: 200 },
+            },
+          },
+          {
+            // The church's media index (cloud-media): the newest when
+            // online, the last one offline.
+            urlPattern: ({ url }) =>
+              /\/churches\/[^/]+\/media\/index\.json$/.test(url.pathname),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'church-media-index',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 8 },
+            },
+          },
+          {
+            // Media files are named by their content: kept once loaded, so
+            // they show offline. Images load as <img> (opaque, status 0);
+            // a video's range requests are answered from a whole copy.
+            urlPattern: ({ url }) =>
+              /\/churches\/[^/]+\/media\/[0-9a-f]{64}$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'church-media',
+              cacheableResponse: { statuses: [0, 200] },
+              rangeRequests: true,
+              expiration: { maxEntries: 500, purgeOnQuotaError: true },
             },
           },
         ],
