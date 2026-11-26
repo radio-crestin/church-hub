@@ -29,6 +29,7 @@ export function memoryBucket(): Bucket & { keys(): string[] } {
       objects.delete(key)
     },
     publicUrl: (key) => `https://bucket.test/${key}`,
+    presignPut: async (key) => `https://bucket.test/${key}?X-Amz-Signature=test`,
     keys: () => [...objects.keys()],
   }
 }
