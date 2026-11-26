@@ -1,4 +1,5 @@
 import { getBackupConfig, upsertBackupConfig } from './backupConfig'
+import { runScheduledCloudBackupIfDue } from './cloud'
 import { runLocalBackup } from './localBackup'
 import { uploadBackup } from './uploadBackup'
 import { createLogger } from '../../utils/logger'
@@ -62,6 +63,8 @@ export function startBackupScheduler(): void {
   if (timer) return
   timer = setInterval(() => {
     void runScheduledBackupIfDue()
+    // Church Hub Cloud keeps its own schedule (cloud/cloudBackupSchedule).
+    void runScheduledCloudBackupIfDue()
   }, CHECK_INTERVAL_MS)
   timer.unref?.()
   logger.info('Backup scheduler started')
