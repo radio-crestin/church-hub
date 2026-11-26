@@ -170,9 +170,11 @@ export function getWsUrl(): string | null {
  * Checks if the client is accessing from localhost
  * In Tauri desktop mode, always returns true since sidecar runs locally
  * In Tauri mobile mode, returns false since we connect to remote API
+ * In the web app, returns false: its server is the church PC or this browser,
+ * never a sidecar on this machine
  */
 export function isLocalhost(): boolean {
-  if (typeof window === 'undefined') return false
+  if (typeof window === 'undefined' || isWebApp) return false
 
   // On mobile, we're connecting to a remote API
   if (isMobile()) return false

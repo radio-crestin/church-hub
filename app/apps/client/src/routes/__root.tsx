@@ -31,6 +31,7 @@ import {
 } from '~/features/presentation/hooks'
 import { ScreenShareProvider } from '~/features/presentation/screen-share'
 import { ServerChangedNotice } from '~/features/server-identity'
+import { PcOnlyPageGate } from '~/features/sidebar-config/components/PcOnlyPageGate'
 import { useAutoOpenPageWindows } from '~/features/sidebar-config/hooks'
 import { FileDropZoneProvider } from '~/features/song-import'
 import { SongDragGhost } from '~/features/songs/components/SongDragGhost'
@@ -179,7 +180,9 @@ function MainLayout() {
                               <HistoryNavigationManager />
                               <OnboardingGate>
                                 <AppLayout>
-                                  <Outlet />
+                                  <PcOnlyPageGate>
+                                    <Outlet />
+                                  </PcOnlyPageGate>
                                 </AppLayout>
                               </OnboardingGate>
                             </FileDropZoneProvider>

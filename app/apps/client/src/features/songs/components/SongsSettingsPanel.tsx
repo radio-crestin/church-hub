@@ -1,3 +1,4 @@
+import { isWebApp } from '~/config'
 import { AISearchSettings } from '~/features/ai-search'
 import { SynonymManager } from '~/features/search'
 import { DiscoverySyncSettings } from '~/features/song-discovery'
@@ -29,9 +30,12 @@ export function SongsSettingsPanel() {
       <div className={cardClass}>
         <ImportExportManager />
       </div>
-      <div className={cardClass}>
-        <DiscoverySyncSettings />
-      </div>
+      {/* Song updates are checked by the church PC */}
+      {!isWebApp && (
+        <div className={cardClass}>
+          <DiscoverySyncSettings />
+        </div>
+      )}
       <div className={cardClass}>
         <SongSourcesSettings />
       </div>

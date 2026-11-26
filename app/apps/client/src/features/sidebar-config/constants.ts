@@ -208,6 +208,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.livestream',
     to: '/livestream',
     permission: 'settings.view',
+    pcOnly: true,
   },
   music: {
     id: 'music',
@@ -215,6 +216,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.music',
     to: '/music',
     permission: 'settings.view',
+    pcOnly: true,
   },
   song_key: {
     id: 'song_key',
@@ -229,6 +231,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.liveTranslation',
     to: '/live-translation',
     permission: 'settings.view',
+    pcOnly: true,
   },
   feedback: {
     id: 'feedback',

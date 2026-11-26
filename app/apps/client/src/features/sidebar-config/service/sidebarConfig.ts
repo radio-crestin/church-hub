@@ -1,3 +1,4 @@
+import { isWebApp } from '~/config'
 import { getSetting, upsertSetting } from '~/service/settings/settings'
 import type { CustomPagePermission } from '../../users/types'
 import {
@@ -11,6 +12,7 @@ import type {
   SidebarConfiguration,
   SidebarMenuItem,
 } from '../types'
+import { isPcOnlyItem } from '../utils/pcOnlyPages'
 
 /**
  * Merges stored configuration with defaults to handle new built-in items
@@ -93,11 +95,11 @@ function migrateToV2(config: SidebarConfiguration): SidebarConfiguration {
 }
 
 /**
- * Gets the sidebar configuration from settings
+ * The stored sidebar configuration, every page included.
  * Returns default configuration if none exists or if parsing fails
  * Automatically migrates older versions to the current version
  */
-export async function getSidebarConfiguration(): Promise<SidebarConfiguration> {
+async function readSidebarConfiguration(): Promise<SidebarConfiguration> {
   const setting = await getSetting('app_settings', SIDEBAR_CONFIG_KEY)
 
   if (!setting) {
@@ -122,14 +124,31 @@ export async function getSidebarConfiguration(): Promise<SidebarConfiguration> {
 }
 
 /**
- * Saves the sidebar configuration to settings
+ * The sidebar configuration. The web app leaves out the pages only the
+ * church PC serves, so no menu, shortcut or settings list offers them.
+ */
+export async function getSidebarConfiguration(): Promise<SidebarConfiguration> {
+  const config = await readSidebarConfiguration()
+  if (!isWebApp) return config
+  return { ...config, items: config.items.filter((i) => !isPcOnlyItem(i)) }
+}
+
+/**
+ * Saves the sidebar configuration to settings. The web app keeps the
+ * PC-only pages it never showed as they are stored.
  */
 export async function saveSidebarConfiguration(
   config: SidebarConfiguration,
 ): Promise<boolean> {
+  const pcOnlyItems = isWebApp
+    ? (await readSidebarConfiguration()).items.filter(isPcOnlyItem)
+    : []
   return upsertSetting('app_settings', {
     key: SIDEBAR_CONFIG_KEY,
-    value: JSON.stringify(config),
+    value: JSON.stringify({
+      ...config,
+      items: [...config.items, ...pcOnlyItems],
+    }),
   })
 }
 
