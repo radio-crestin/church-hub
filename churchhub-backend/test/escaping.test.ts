@@ -1,8 +1,8 @@
 // Run: cd churchhub-backend && bun test
 import { describe, expect, it } from 'bun:test'
 
-import { escapeHtml } from '../escapeHtml'
-import { toScriptLiteral } from '../toScriptLiteral'
+import { escapeHtml } from '../src/utils/escapeHtml'
+import { toScriptLiteral } from '../src/utils/toScriptLiteral'
 
 describe('escapeHtml', () => {
   it('escapes every HTML metacharacter', () => {

@@ -13,11 +13,11 @@
   "dependencies": {
     "@hono/node-server": "^2.1.11",
     "aws4fetch": "^1.0.20",
-    "hono": "^4.13.12"
+    "hono": "^4.13.18"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261003.1",
     "typescript": "^5.7.0",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.160.1"
   }
 }
