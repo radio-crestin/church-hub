@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 /**
  * Builds the desktop app of this checkout for review on this computer and
- * keeps it in `.review-build/<task id>/` in the MAIN checkout, ready to open:
- * a standalone copy that outlives the task's worktree. It is the one thing a
- * reviewer opens (installers for other platforms only on request:
- * pr-build.yml); worktree-cleanup.ts deletes it once the task is merged.
+ * keeps it in the checkout's own `.review-build/<task id>/` (reviewBuildsRoot:
+ * task sessions see the main checkout read-only), ready to open. It is the one
+ * thing a reviewer opens (installers for other platforms only on request:
+ * pr-build.yml); worktree-cleanup.ts deletes it with the worktree once the
+ * task is merged.
  *
  * Fast, and several at once: the Rust shell is compiled once and reused
  * (review-shell.ts); each review build only builds the task's web client and
@@ -15,7 +16,7 @@
  * (read by tauri/src/review.rs) gives it:
  *   - its own port, 4100 + task number (not 3000/3001, not the task's e2e ports:
  *     the app kills whatever holds its port at start),
- *   - its own data folder, `.review-build/<task id>/data` (database, logs, backups),
+ *   - its own data folder, `<out>/data` (database, logs, backups),
  *   - its own bundle identifier, so a running Church Hub (single instance)
  *     and its window state, settings and web storage stay apart,
  *   - no updater: an update would replace it with the real release.
@@ -47,7 +48,7 @@ import { pathToFileURL } from 'node:url'
 
 import { ensureShell, SHELL_BINARY, shellEntry } from './review-shell'
 import {
-  mainCheckoutRoot,
+  reviewBuildsRoot,
   reviewIdentifier,
   reviewPortFor,
   run,
@@ -56,7 +57,6 @@ import {
 
 const USAGE =
   'usage: bun app/scripts/review-build.ts <task id, e.g. T-023> [--out <dir>]'
-const REVIEW_DIR = '.review-build'
 const SIDECAR = 'church-hub-sidecar'
 const CLIENT_DIST = 'client-dist'
 
@@ -67,12 +67,11 @@ function parseArgs() {
   const root = realpathSync(
     run('git', ['rev-parse', '--show-toplevel'], process.cwd()),
   )
-  const reviewRoot = join(mainCheckoutRoot(root), REVIEW_DIR)
   const out =
     outFlag > 0
       ? resolve(process.argv[outFlag + 1])
-      : join(reviewRoot, taskId.toUpperCase())
-  return { taskId: taskId.toUpperCase(), port, root, reviewRoot, out }
+      : join(reviewBuildsRoot(root), taskId.toUpperCase())
+  return { taskId: taskId.toUpperCase(), port, root, out }
 }
 
 /** Without the review shell this branch's app would use port 3000 and the real data. */
@@ -236,7 +235,7 @@ function renameMacApp(layout: Layout, taskId: string, name: string) {
 
 if (!['darwin', 'win32', 'linux'].includes(process.platform))
   throw new Error(`no review build for ${process.platform}`)
-const { taskId, port, root, reviewRoot, out } = parseArgs()
+const { taskId, port, root, out } = parseArgs()
 const app = join(root, 'app')
 const dataDir = join(out, 'data')
 const name = `church-hub-${taskId}`
@@ -250,7 +249,7 @@ writeFileSync(join(out, '.gitignore'), '*\n')
 step('sidecar', () => buildSidecar(app))
 let shell = ''
 step('shell', () => {
-  const result = ensureShell(root, join(reviewRoot, '.shells'))
+  const result = ensureShell(root)
   shell = result.shell
   return `${result.built ? 'built' : 'reused'} ${result.key}`
 })

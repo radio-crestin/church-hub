@@ -22,5 +22,10 @@ try {
   process.exit(0)
 }
 
-git(['config', 'core.hooksPath', '.githooks'])
+let current = ''
+try {
+  current = git(['config', 'core.hooksPath'])
+} catch {}
+// Written only when it differs: a task session's .git/config is read-only.
+if (current !== '.githooks') git(['config', 'core.hooksPath', '.githooks'])
 console.log('git hooks: core.hooksPath = .githooks (gitleaks on commit and push)')

@@ -4,8 +4,9 @@
  */
 
 import { spawnSync } from 'node:child_process'
-import { realpathSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { accessSync, constants, realpathSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { dirname, join } from 'node:path'
 
 import { PORTS_PER_SERVER } from '../apps/client/e2e/helpers/server-ports'
 
@@ -85,4 +86,50 @@ export function mainCheckoutRoot(cwd: string): string {
     cwd,
   )
   return realpathSync(dirname(commonDir))
+}
+
+/**
+ * Where a checkout keeps its review builds (review-build.ts): its own
+ * `.review-build/`, gitignored and removed with the worktree. Never the main
+ * checkout's: a task session sees the main checkout read-only.
+ */
+export function reviewBuildsRoot(checkoutRoot: string): string {
+  return join(checkoutRoot, '.review-build')
+}
+
+/**
+ * This user's cache folder for Church Hub's build caches, shared by every
+ * checkout and writable from task sessions: ~/Library/Caches on macOS,
+ * %LOCALAPPDATA% on Windows, $XDG_CACHE_HOME or ~/.cache on Linux.
+ */
+export function userCacheDir(): string {
+  const home = homedir()
+  if (process.platform === 'darwin')
+    return join(home, 'Library', 'Caches', 'church-hub')
+  if (process.platform === 'win32')
+    return join(
+      process.env.LOCALAPPDATA || join(home, 'AppData', 'Local'),
+      'church-hub',
+    )
+  return join(process.env.XDG_CACHE_HOME || join(home, '.cache'), 'church-hub')
+}
+
+function isWritable(dir: string) {
+  try {
+    accessSync(dir, constants.W_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * The Cargo target dir the worktrees share: the main checkout's, or the user
+ * cache's when the main checkout is read-only (a task session).
+ */
+export function sharedCargoTarget(mainRoot: string): string {
+  const tauri = join(mainRoot, 'app', 'tauri')
+  return isWritable(tauri)
+    ? join(tauri, 'target')
+    : join(userCacheDir(), 'cargo-target')
 }

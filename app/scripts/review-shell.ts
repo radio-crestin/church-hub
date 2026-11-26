@@ -3,7 +3,8 @@
  * feature (tauri/src/review.rs) and reused by every task's review build, so a
  * review build compiles no Rust unless the task changed the shell itself.
  *
- * Shells live in the main checkout's `.review-build/.shells/<key>/`. The key
+ * Shells live in the user's cache, `<userCacheDir>/review-shells/<key>/`,
+ * shared by every checkout and writable from task sessions. The key
  * hashes every file the binary is built from (app/tauri without its
  * per-task resources and sidecar, app/tauri-plugins), committed or not, so a
  * task that touches the shell gets its own, built from its own code.
@@ -25,13 +26,14 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 
-import { run } from './worktree-common'
+import { run, userCacheDir } from './worktree-common'
 
 const SHELL_SOURCES = ['app/tauri', 'app/tauri-plugins']
 // Copied per task, so they never make a new shell.
 const PER_TASK = ['app/tauri/bin/', 'app/tauri/resources/']
 const SHELLS_KEPT = 3
 const LOCK_WAIT_MS = 30 * 60 * 1000
+const SHELLS_DIR = join(userCacheDir(), 'review-shells')
 
 export const SHELL_BINARY =
   process.platform === 'win32' ? 'church-hub.exe' : 'church-hub'
@@ -224,7 +226,8 @@ function pruneShells(shellsDir: string, keep: string) {
  * The shell for this checkout's code: the cached one, or built now (under
  * the lock, then cached). Returns its folder and whether it was built.
  */
-export function ensureShell(root: string, shellsDir: string) {
+export function ensureShell(root: string) {
+  const shellsDir = SHELLS_DIR
   const app = join(root, 'app')
   const key = shellKey(root)
   const shell = join(shellsDir, key)
