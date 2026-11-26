@@ -15,10 +15,24 @@ async function requireIdentity(): Promise<CloudIdentity> {
   return identity
 }
 
+async function mintDevice(
+  identity: CloudIdentity,
+  userUuid: string,
+  name: string,
+) {
+  return syncServiceRequest<{
+    deviceId: string
+    token: string
+  }>({ serviceUrl: identity.serviceUrl, identity }, 'POST', '/devices', {
+    userId: userUuid,
+    name,
+  })
+}
+
 /**
  * Mints a device token for one of this server's users, so a phone writes
- * with their permissions (the join link of T-168 carries it). A sync cycle
- * runs first, so a user added a moment ago is known to the service.
+ * with their permissions (the join link of T-168 carries it). A user the
+ * service doesn't know yet (added a moment ago) is synced first.
  */
 export async function addCloudDevice(input: {
   userId: number
@@ -33,14 +47,11 @@ export async function addCloudDevice(input: {
   const identity = await requireIdentity()
   const userUuid = getUserUuid(input.userId)
   if (!userUuid) throw new Error('unknown_user')
-  await runCloudSyncCycle()
-  const response = await syncServiceRequest<{
-    deviceId: string
-    token: string
-  }>({ serviceUrl: identity.serviceUrl, identity }, 'POST', '/devices', {
-    userId: userUuid,
-    name: input.name,
-  })
+  let response = await mintDevice(identity, userUuid, input.name)
+  if (response.status === 400 && response.body.code === 'unknown_user') {
+    await runCloudSyncCycle()
+    response = await mintDevice(identity, userUuid, input.name)
+  }
   if (response.status !== 201) throw serviceError(response)
   return {
     ...response.body,

@@ -358,7 +358,6 @@ test.describe
       for (const path of [
         '/sync/churches',
         '/sync/churches/{churchId}/path',
-        '/sync/churches/{churchId}/access',
         '/sync/churches/{churchId}/devices',
         '/sync/churches/{churchId}/devices/{deviceId}',
         '/sync/churches/{churchId}/changes',

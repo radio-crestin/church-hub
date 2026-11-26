@@ -49,6 +49,18 @@ const TABLES_WITHOUT_UPDATED_AT = [
 const AUTHOR = '(SELECT acting_user FROM sync_state WHERE id = 1)'
 
 /**
+ * Queues a row as changed by the current user. An upsert, not `INSERT OR
+ * REPLACE`: inside a trigger, SQLite applies the outer statement's conflict
+ * policy instead, so an upsert of the synced row (a setting saved twice)
+ * failed on sync_pending's primary key.
+ */
+const QUEUE_CHANGE = (entityType: string, uuid: string) => `
+      INSERT INTO sync_pending (entity_type, entity_uuid, queued_at, author)
+        VALUES ('${entityType}', ${uuid}, unixepoch(), ${AUTHOR})
+        ON CONFLICT (entity_type, entity_uuid) DO UPDATE SET
+          queued_at = excluded.queued_at, author = excluded.author;`
+
+/**
  * Child tables whose edits count as an edit of their aggregate root: the
  * trigger bumps the parent row's `updated_at`, which in turn fires the parent's
  * own pending-trigger. `parentIdExpr` resolves the parent id from a child row
@@ -339,8 +351,7 @@ function rootTriggers({
     CREATE TRIGGER sync_trg_${table}_pending_ai AFTER INSERT ON ${table}
     WHEN ${synced('NEW')}
     BEGIN
-      INSERT OR REPLACE INTO sync_pending (entity_type, entity_uuid, queued_at, author)
-        VALUES ('${entityType}', ${id('NEW')}, unixepoch(), ${AUTHOR});
+      ${QUEUE_CHANGE(entityType, id('NEW'))}
       DELETE FROM sync_tombstones
         WHERE entity_type = '${entityType}' AND entity_uuid = ${id('NEW')};
     END
@@ -350,8 +361,7 @@ function rootTriggers({
     CREATE TRIGGER sync_trg_${table}_pending_au AFTER UPDATE${changeOf} ON ${table}
     WHEN ${synced('NEW')}
     BEGIN
-      INSERT OR REPLACE INTO sync_pending (entity_type, entity_uuid, queued_at, author)
-        VALUES ('${entityType}', ${id('NEW')}, unixepoch(), ${AUTHOR});
+      ${QUEUE_CHANGE(entityType, id('NEW'))}
     END
   `)
 
@@ -370,8 +380,10 @@ function rootTriggers({
     CREATE TRIGGER sync_trg_${table}_tombstone_ad AFTER DELETE ON ${table}
     WHEN ${synced('OLD')}
     BEGIN
-      INSERT OR REPLACE INTO sync_tombstones (entity_type, entity_uuid, deleted_at, author)
-        VALUES ('${entityType}', ${id('OLD')}, unixepoch(), ${AUTHOR});
+      INSERT INTO sync_tombstones (entity_type, entity_uuid, deleted_at, author)
+        VALUES ('${entityType}', ${id('OLD')}, unixepoch(), ${AUTHOR})
+        ON CONFLICT (entity_type, entity_uuid) DO UPDATE SET
+          deleted_at = excluded.deleted_at, author = excluded.author;
       DELETE FROM sync_pending
         WHERE entity_type = '${entityType}' AND entity_uuid = ${id('OLD')};
     END
