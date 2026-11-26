@@ -53,7 +53,8 @@ export async function handleRemoteAccessRoutes(
 
 /** The settings, and the relay a phone looks for this computer on. */
 function settingsResponse() {
+  const { enabled, secret } = getRemoteAccessSettings()
   return Response.json({
-    data: { ...getRemoteAccessSettings(), relay: getSignalingBaseUrl() },
+    data: { enabled, secret, relay: getSignalingBaseUrl() },
   })
 }

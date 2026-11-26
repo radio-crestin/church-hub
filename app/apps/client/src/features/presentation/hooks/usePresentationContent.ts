@@ -118,8 +118,9 @@ interface UsePresentationContentResult {
   morphLines: boolean
   nextSlideData: NextSlideData | undefined
   /**
-   * The previous content type's content while it fades out under the new one
-   * (a song, then a verse); drawn by ScreenContentLayers. Null otherwise.
+   * The previous kind of slide while it fades out before the new one fades
+   * in (a song, then a verse, or another template), with the screen it was
+   * drawn with; drawn by ScreenContentLayers. Null otherwise.
    */
   leaving: ShownContent<ContentData, NextSlideData | undefined> | null
   presentationState: ReturnType<typeof usePresentationState>['data']
@@ -668,9 +669,8 @@ export function usePresentationContent({
   )
 
   const shown = useContentTypeHandoff(
-    { contentType, contentData, contentKey, nextSlideData },
+    { contentType, contentData, contentKey, nextSlideData, screen },
     isVisible,
-    screen?.contentConfigs,
   )
 
   return { ...shown, screen, morphLines, isExitAnimating, presentationState }

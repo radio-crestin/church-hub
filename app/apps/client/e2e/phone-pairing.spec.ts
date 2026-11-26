@@ -55,6 +55,13 @@ test.describe('Pairing a phone', () => {
       const phonePage = await phone.newPage()
       const path = new URL(link).pathname
       await phonePage.goto(`${lanBaseUrl()}${path}`)
+      // Over plain http on the network a browser can't say who opened the
+      // link, so the phone confirms with one tap.
+      await expect(
+        phonePage.getByText(`Sign in on this device as ${name}?`),
+      ).toBeVisible()
+      await phonePage.getByRole('button', { name: /Sign in/ }).click()
+      await phonePage.waitForURL(/\/$/)
       await phonePage.goto(`${lanBaseUrl()}/present`)
       await expect
         .poll(() =>
@@ -66,6 +73,57 @@ test.describe('Pairing a phone', () => {
         )
         .toBe(name)
       await phone.close()
+    } finally {
+      await page.request.delete(`/api/users/${user.id}`)
+    }
+  })
+
+  test('a link opened from another site asks before it signs in', async ({
+    page,
+    browser,
+    baseURL,
+  }) => {
+    const name = `Linked from a page ${Date.now()}`
+    const user = await createUser(page, name)
+    const link = `${baseURL}/api/auth/user/${encodeURIComponent(user.token)}`
+    try {
+      const visitor = await browser.newContext({
+        storageState: { cookies: [], origins: [] },
+      })
+      const other = await visitor.newPage()
+      // Another site's page that links to the sign-in link.
+      await other.route('http://other-site.test/', (route) =>
+        route.fulfill({
+          contentType: 'text/html',
+          body: `<a href="${link}">Open the link</a>`,
+        }),
+      )
+      await other.goto('http://other-site.test/')
+      await other.getByRole('link', { name: 'Open the link' }).click()
+
+      await expect(
+        other.getByRole('heading', { name: 'Sign in to Church Hub' }),
+      ).toBeVisible()
+      await expect(
+        other.getByText(`Sign in on this device as ${name}?`),
+      ).toBeVisible()
+      await expect(
+        other.getByText(`Te conectezi pe acest dispozitiv ca ${name}?`),
+      ).toBeVisible()
+      const cookies = await visitor.cookies()
+      expect(cookies.some((c) => c.name === 'user_auth')).toBe(false)
+
+      await other.getByRole('button', { name: /Sign in/ }).click()
+      await expect
+        .poll(() =>
+          other.evaluate(async () => {
+            const res = await fetch('/api/auth/me', { credentials: 'include' })
+            return ((await res.json()) as { data: { name: string } | null })
+              .data?.name
+          }),
+        )
+        .toBe(name)
+      await visitor.close()
     } finally {
       await page.request.delete(`/api/users/${user.id}`)
     }

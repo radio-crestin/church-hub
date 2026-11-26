@@ -13,6 +13,7 @@ import {
   SECRET_NAME,
   SECRET_VALUE,
 } from '../../server/src/db/fixtures/secret-patterns'
+import { isSecretSettingKey } from '../../server/src/service/settings/isSecretSettingKey'
 import {
   SYNCED_SETTING_KEYS,
   SYNCED_TABLES,
@@ -192,8 +193,10 @@ test.describe
       request,
     }) => {
       // What is synced is named: nothing holding a secret is on the lists.
-      for (const key of SYNCED_SETTING_KEYS)
+      for (const key of SYNCED_SETTING_KEYS) {
         expect(key).not.toMatch(SECRET_NAME)
+        expect(isSecretSettingKey(key), key).toBe(false)
+      }
       for (const { table } of SYNCED_TABLES) {
         expect(table).not.toMatch(/secret|token|session|oauth|credential/i)
       }

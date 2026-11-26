@@ -12,7 +12,7 @@ let closeRoom: (() => Promise<void>) | null = null
  * setting: while open, paired phones reach it over WebRTC from anywhere.
  */
 export async function applyRemoteAccess() {
-  const { enabled, secret } = getRemoteAccessSettings()
+  const { enabled, secret, hostKey } = getRemoteAccessSettings()
   if (closeRoom) {
     await closeRoom()
     closeRoom = null
@@ -21,6 +21,7 @@ export async function applyRemoteAccess() {
   if (!enabled) return
   closeRoom = startSignalingRelay({
     secret,
+    hostKey,
     pollMs: POLL_MS,
     answer: answerTunnelOffer,
   })

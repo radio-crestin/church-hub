@@ -68,6 +68,40 @@ export interface Bindings {
   GOOGLE_USERINFO_URL?: string
   /** Abuse guard for registering a church (optional binding). */
   SYNC_RATE_LIMITER?: RateLimit
+  /**
+   * Church Hub Cloud backup (free, Google sign-in): a PRIVATE bucket of its
+   * own and two secrets. Unset = /backup answers 503. See src/backup/.
+   */
+  /** Signs the backup tokens and OAuth state (openssl rand -hex 32). */
+  BACKUP_SECRET?: string
+  /** Derives account ids and account keys; never rotate (openssl rand -hex 32). */
+  BACKUP_KEY_SECRET?: string
+  BACKUP_S3_ENDPOINT?: string
+  /** The bucket's address presigned URLs use, if not BACKUP_S3_ENDPOINT. */
+  BACKUP_S3_PRESIGN_ENDPOINT?: string
+  BACKUP_S3_BUCKET?: string
+  BACKUP_S3_REGION?: string
+  BACKUP_S3_ACCESS_KEY_ID?: string
+  BACKUP_S3_SECRET_ACCESS_KEY?: string
+  /** Free-tier overrides (bytes, counts); defaults in backup/backupSettings. */
+  BACKUP_MAX_BYTES?: string
+  BACKUP_QUOTA_BYTES?: string
+  BACKUP_RETENTION_DAYS?: string
+  BACKUP_UPLOADS_PER_DAY?: string
+  /** The backup sign-in's callback (default: <this service>/backup/callback). */
+  BACKUP_REDIRECT_URI?: string
+  /**
+   * The internal admin panel (src/admin), served only by the Node runtime on
+   * its own listener (ADMIN_PORT, ADMIN_HOST), never on the Worker. Who may
+   * sign in: Google subs and/or verified emails, comma-separated.
+   */
+  ADMIN_GOOGLE_SUBS?: string
+  ADMIN_EMAILS?: string
+  /** The admin sign-in's callback (default: <admin listener>/admin/callback). */
+  ADMIN_REDIRECT_URI?: string
+  /** Per-IP and per-account abuse guards (optional bindings). */
+  BACKUP_RATE_LIMITER?: RateLimit
+  BACKUP_ACCOUNT_RATE_LIMITER?: RateLimit
 }
 
 export interface OAuthState {

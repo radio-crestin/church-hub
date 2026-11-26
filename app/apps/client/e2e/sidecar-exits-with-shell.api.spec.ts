@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process'
 import { mkdirSync, rmSync } from 'node:fs'
-import { createServer } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, type TestInfo, test } from '@playwright/test'
+
+import { freePort } from './helpers/free-port'
 
 /**
  * T-149: after a SIGTERM to the desktop shell, the sidecar lived on
@@ -17,17 +18,6 @@ import { expect, type TestInfo, test } from '@playwright/test'
  */
 
 const APP_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
-
-function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = createServer()
-    server.on('error', reject)
-    server.listen(0, () => {
-      const { port } = server.address() as { port: number }
-      server.close(() => resolve(port))
-    })
-  })
-}
 
 function isAlive(pid: number): boolean {
   try {

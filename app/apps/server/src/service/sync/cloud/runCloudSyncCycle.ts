@@ -134,10 +134,15 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
  * pulled and merged again; one it refuses as not allowed is put back as the
  * church has it. Failures are kept on sync_config.lastError.
  *
- * One cycle at a time: a call while one runs waits for it, then runs its
- * own, so what was queued before the call is sent when it returns.
+ * One cycle at a time: a call while one runs is skipped, unless it
+ * `waitsItsTurn` (a change that must go out now, like a user's sign-out):
+ * then it waits for that cycle and runs its own, so what was queued before
+ * the call is sent when it returns.
  */
-export async function runCloudSyncCycle(): Promise<SyncCycleResult> {
+export async function runCloudSyncCycle({
+  waitsItsTurn = false,
+} = {}): Promise<SyncCycleResult> {
+  if (running && !waitsItsTurn) return { success: true, skipped: 'no_changes' }
   while (running) await running
   running = cloudSyncCycle().finally(() => {
     running = null

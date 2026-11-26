@@ -11,7 +11,7 @@ async function signOut(userId: number): Promise<void> {
   if (!(await getCloudIdentity())) return
   const config = await getSyncConfig()
   if (config.syncEnabled && config.transport === 'cloud') {
-    const result = await runSyncCycle()
+    const result = await runSyncCycle({ waitsItsTurn: true })
     if (!result.success) throw new Error(result.error ?? 'sync failed')
     return
   }

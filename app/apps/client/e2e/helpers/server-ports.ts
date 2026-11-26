@@ -10,8 +10,8 @@ export const PORT_OFFSETS = {
   lan: 1,
   // The desktop app's audio server stand-in (fake-audio-server.ts).
   fakeAudio: 2,
-  // The church's signaling relay stand-in (fake-signaling-relay.ts).
-  fakeRelay: 3,
+  // The church's signaling relay, churchhub-backend's app (signaling-relay.ts).
+  signalingRelay: 3,
   // The self-hosted cloud sync service (sync-service.ts, T-171).
   syncService: 4,
   // The public web app, built and served statically (public-app.ts, T-168).

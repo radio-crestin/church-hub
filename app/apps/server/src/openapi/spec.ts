@@ -12,12 +12,14 @@ import {
   biblePaths,
   bibleTopicsPaths,
   categoriesPaths,
+  cloudBackupPaths,
   conversionPaths,
   databasePaths,
   devicesPaths,
   feedbackPaths,
   healthPaths,
   livestreamYouTubePaths,
+  liveTranslationPaths,
   logsPaths,
   musicPaths,
   notificationsPaths,
@@ -28,6 +30,7 @@ import {
   schedulesPaths,
   screenSharePaths,
   screensPaths,
+  secretStorePaths,
   settingsPaths,
   slideTemplatesPaths,
   songBookmarksPaths,
@@ -84,6 +87,10 @@ export const openApiSpec = {
   tags: [
     { name: 'Health', description: 'Health check endpoints' },
     { name: 'Settings', description: 'Application and user settings' },
+    {
+      name: 'Live Translation',
+      description: 'The listener link of live translation',
+    },
     { name: 'Database', description: 'Database management and backup' },
     {
       name: 'Backup',
@@ -155,6 +162,11 @@ export const openApiSpec = {
       name: 'Notifications',
       description: 'The notifications history: song syncs and app updates',
     },
+    {
+      name: 'Secret Store',
+      description:
+        'Saved passwords, API keys and tokens are sealed with a key kept outside the database',
+    },
   ],
   paths: {
     ...healthPaths,
@@ -163,11 +175,13 @@ export const openApiSpec = {
     ...settingsPaths,
     ...databasePaths,
     ...backupPaths,
+    ...cloudBackupPaths,
     ...syncPaths,
     ...syncOwnerPaths,
     ...devicesPaths,
     ...authPaths,
     ...remoteAccessPaths,
+    ...liveTranslationPaths,
     ...usersPaths,
     ...songsPaths,
     ...songGroupsPaths,
@@ -191,6 +205,7 @@ export const openApiSpec = {
     ...feedbackPaths,
     ...analyticsPaths,
     ...notificationsPaths,
+    ...secretStorePaths,
   },
   components: {
     securitySchemes,

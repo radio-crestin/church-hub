@@ -1,40 +1,62 @@
+const userLinkToken = {
+  name: 'token',
+  in: 'path',
+  required: true,
+  schema: { type: 'string' },
+  description: "The user's token (usr_...)",
+}
+
+const signedInRedirect = {
+  description: 'Signed in, redirecting to the app',
+  headers: {
+    'Set-Cookie': {
+      description: 'Authentication cookie',
+      schema: { type: 'string' },
+    },
+    Location: {
+      description: 'The app on the host the link was opened from',
+      schema: { type: 'string' },
+    },
+  },
+}
+
+const invalidUserLink = {
+  description: 'Invalid or inactive user token',
+  content: {
+    'application/json': {
+      schema: { $ref: '#/components/schemas/Error' },
+    },
+  },
+}
+
 export const authPaths = {
   '/api/auth/user/{token}': {
     get: {
       tags: ['Authentication'],
-      summary: 'Sign a device in as a user',
+      summary: 'Open a user sign-in link',
       description:
-        "The link in a user's QR code (Settings > Users, Settings > Phones): sets the user's authentication cookie and redirects to the app on the host it was opened from.",
-      parameters: [
-        {
-          name: 'token',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-          description: "The user's token (usr_...)",
-        },
-      ],
+        "The link in a user's QR code (Settings > Users, Settings > Phones). Opened by the user (scanned, typed or pasted: `Sec-Fetch-Site` `none` or `same-origin`), it sets the user's authentication cookie and redirects to the app on the host it was opened from. Opened from another site's page, or without `Sec-Fetch-Site` (browsers send it only to https and to this machine, so every plain-http network address), it answers a page that asks the user to confirm, whose button posts the link back.",
+      parameters: [userLinkToken],
       responses: {
-        '302': {
-          description: 'Authentication successful, redirecting to app',
-          headers: {
-            'Set-Cookie': {
-              description: 'Authentication cookie',
-              schema: { type: 'string' },
-            },
-            Location: {
-              description: 'Redirect location',
-              schema: { type: 'string', example: '/' },
-            },
-          },
+        '200': {
+          description: 'The confirmation page (opened from another page)',
+          content: { 'text/html': { schema: { type: 'string' } } },
         },
-        '401': {
-          description: 'Invalid or inactive user token',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/Error' },
-            },
-          },
+        '302': signedInRedirect,
+        '401': invalidUserLink,
+      },
+    },
+    post: {
+      tags: ['Authentication'],
+      summary: 'Sign a device in with a user sign-in link',
+      description:
+        "The confirmation page's button: sets the user's authentication cookie and redirects to the app. Like every write, refused from an origin the server doesn't trust.",
+      parameters: [userLinkToken],
+      responses: {
+        '303': signedInRedirect,
+        '401': invalidUserLink,
+        '403': {
+          description: 'Sent from an origin the server does not trust',
         },
       },
     },
@@ -167,8 +189,14 @@ export const authPaths = {
                   data: { $ref: '#/components/schemas/CurrentUser' },
                   ticket: {
                     type: 'string',
+                    example: 'signed-in',
                     description:
-                      'One-time ticket to finalize the session via GET /api/auth/login-redirect/{ticket} (top-level navigation).',
+                      'Always `signed-in`: phone apps released before 2026-11-27 read it as the sign of success.',
+                  },
+                  token: {
+                    type: 'string',
+                    description:
+                      'The session token, only to a request from this machine (the desktop app sends it back as `X-User-Auth`).',
                   },
                 },
               },
@@ -195,42 +223,6 @@ export const authPaths = {
                 },
               },
             },
-          },
-        },
-      },
-    },
-  },
-  '/api/auth/login-redirect/{ticket}': {
-    get: {
-      tags: ['Authentication'],
-      summary: 'Finalize a login via top-level navigation',
-      description:
-        'Consumes a one-time login ticket, sets the `user_auth` cookie on a 302 response (reliable cookie overwrite in webviews), and redirects back to the app. Used by "switch user".',
-      parameters: [
-        {
-          name: 'ticket',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'return',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-          description:
-            'App origin to return to (only same-machine origins are allowed).',
-        },
-      ],
-      responses: {
-        '302': {
-          description: 'Session established; redirecting to the app',
-          headers: {
-            'Set-Cookie': {
-              description: 'Session cookie',
-              schema: { type: 'string' },
-            },
-            Location: { schema: { type: 'string' } },
           },
         },
       },

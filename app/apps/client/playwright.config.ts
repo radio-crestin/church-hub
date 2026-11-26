@@ -34,6 +34,11 @@ export const SERVER_COUNT = Number(
 // with nobody presenting", T-030).
 const BASE_PORT = Number(process.env.TEST_PORT ?? '3099')
 
+// Every server the suite starts (these, the specs' own, their children)
+// keeps the data key sealing saved secrets in a file next to its database,
+// never in the developer's keychain.
+process.env.CHURCH_HUB_SECRET_STORE = 'file'
+
 /** Everything one worker's test server is reached by. */
 function testServer(index: number) {
   const port = BASE_PORT + index * PORTS_PER_SERVER
@@ -42,7 +47,7 @@ function testServer(index: number) {
     baseURL: `http://localhost:${port}`,
     lanPort: port + PORT_OFFSETS.lan,
     fakeAudioPort: port + PORT_OFFSETS.fakeAudio,
-    fakeRelayUrl: `http://127.0.0.1:${port + PORT_OFFSETS.fakeRelay}`,
+    signalingRelayUrl: `http://127.0.0.1:${port + PORT_OFFSETS.signalingRelay}`,
     syncServicePort: port + PORT_OFFSETS.syncService,
     publicAppUrl: `http://127.0.0.1:${port + PORT_OFFSETS.publicApp}`,
     // Run tests against an isolated, freshly-seeded database so they neither
@@ -91,8 +96,9 @@ export const TEST_LAN_PORT = String(SERVER.lanPort)
  * spec starts a stand-in there, so music really "plays" (fake-audio-server.ts).
  */
 export const FAKE_AUDIO_PORT = SERVER.fakeAudioPort
-/** Where the test server finds the signaling relay (remote access, CH-050). */
-export const FAKE_RELAY_URL = SERVER.fakeRelayUrl
+export const SERVER_BASE_URL = SERVER.baseURL
+/** Where the test server finds the signaling relay (signaling-relay.ts). */
+export const SIGNALING_RELAY_URL = SERVER.signalingRelayUrl
 
 /** Where the cloud sync spec runs churchhub-backend's sync service. */
 export const SYNC_SERVICE_PORT = SERVER.syncServicePort
@@ -203,12 +209,17 @@ export default defineConfig({
       // Tests start the song-source checks they need (no network at start).
       CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
       CHURCH_HUB_AUDIO_SERVER_PORT: String(server.fakeAudioPort),
-      CHURCH_HUB_SIGNALING_URL: server.fakeRelayUrl,
+      CHURCH_HUB_SIGNALING_URL: server.signalingRelayUrl,
       // Cloud sync goes to the spec's own sync service (cloud-owner,
       // public-join), never the church's real one, and its join links open
       // the spec's public app.
       CHURCH_HUB_SYNC_URL: `http://127.0.0.1:${server.syncServicePort}`,
+      // The one backend base URL (cloud backup reads it): the spec's own
+      // backend, never a real one.
+      CHURCH_HUB_BACKEND_URL: `http://127.0.0.1:${server.syncServicePort}`,
       CHURCH_HUB_PUBLIC_APP_URL: server.publicAppUrl,
+      // A cloud backup compares songs with no public source here (offline).
+      CHURCH_HUB_BACKUP_PUBLIC_SOURCES: '',
     },
     // Ready when OUR server says so, not when an HTTP probe of the URL
     // answers: Playwright's probe (and its "port already used" pre-check) has

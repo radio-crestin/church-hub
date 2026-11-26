@@ -40,7 +40,6 @@ import type {
   OBSConfig,
 } from '../service/livestream/types'
 import {
-  consumePKCESession,
   createBroadcast,
   endBroadcast,
   getActiveBroadcast,
@@ -53,15 +52,14 @@ import {
   getVideoCategories,
   getYouTubeConfig,
   logout,
-  storePKCESession,
   storeTokens,
   updateYouTubeConfig,
 } from '../service/livestream/youtube'
 import type { YouTubeConfigUpdate } from '../service/livestream/youtube/config'
 import { loadMIDIShortcuts } from '../service/midi/shortcuts'
-import { escapeHtml } from '../service/text-search/text/escapeHtml'
+import { SecretDestinationChangedError } from '../service/secret-store'
+import { createFlowStates } from '../utils/createFlowStates'
 import { toErrorMessage } from '../utils/toErrorMessage'
-import { toScriptLiteral } from '../utils/toScriptLiteral'
 import {
   broadcastLivestreamStatus,
   broadcastOBSConnectionStatus,
@@ -71,12 +69,12 @@ import {
 
 type HandleCors = (req: Request, res: Response) => Response
 
-// Environment variables for OAuth (needed for server-side token exchange)
-// Note: Google requires client_secret even for Desktop apps with PKCE
-const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID || ''
-const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET || ''
-const YOUTUBE_REDIRECT_URI =
-  'http://localhost:3000/api/livestream/youtube/callback'
+/**
+ * YouTube sign-ins this server started. Tokens are stored only with one of
+ * their states, so a link that lands on the app's callback page with tokens
+ * of someone else's choosing can't connect another channel.
+ */
+const youtubeSignIns = createFlowStates()
 
 export async function handleLivestreamRoutes(
   req: Request,
@@ -85,199 +83,25 @@ export async function handleLivestreamRoutes(
 ): Promise<Response | null> {
   // YouTube OAuth endpoints
 
-  // POST /api/livestream/youtube/pkce-session - Store PKCE session for server-side token exchange
-  // Used when auth is initiated from Tauri and callback can't use postMessage
+  // POST /api/livestream/youtube/sign-in - Starts a YouTube sign-in: the
+  // state its tokens must come back with (single use, 10 minutes)
   if (
     req.method === 'POST' &&
-    url.pathname === '/api/livestream/youtube/pkce-session'
+    url.pathname === '/api/livestream/youtube/sign-in'
   ) {
-    try {
-      const body = (await req.json()) as {
-        codeVerifier: string
-        codeChallenge: string
-      }
-
-      if (!body.codeVerifier || !body.codeChallenge) {
-        return handleCors(
-          req,
-          new Response(
-            JSON.stringify({ error: 'Missing codeVerifier or codeChallenge' }),
-            { status: 400, headers: { 'Content-Type': 'application/json' } },
-          ),
-        )
-      }
-
-      const sessionId = storePKCESession(body.codeVerifier, body.codeChallenge)
-
-      return handleCors(
-        req,
-        new Response(JSON.stringify({ data: { sessionId } }), {
-          status: 201,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      )
-    } catch {
-      return handleCors(
-        req,
-        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      )
-    }
-  }
-
-  // GET /api/livestream/youtube/callback - Handles OAuth callback
-  // If there's a PKCE session ID in state, exchanges tokens server-side
-  // Otherwise sends code to client via postMessage for client-side exchange
-  if (
-    req.method === 'GET' &&
-    url.pathname === '/api/livestream/youtube/callback'
-  ) {
-    const code = url.searchParams.get('code')
-    const error = url.searchParams.get('error')
-    const state = url.searchParams.get('state')
-
-    if (error) {
-      return handleCors(
-        req,
-        new Response(
-          `<!DOCTYPE html>
-          <html>
-          <body>
-            <script>
-              window.opener?.postMessage({ type: 'youtube-auth-error', error: ${toScriptLiteral(error)} }, '*');
-              window.close();
-            </script>
-            <p>Authorization failed: ${escapeHtml(error)}. You can close this window.</p>
-          </body>
-          </html>`,
-          { headers: { 'Content-Type': 'text/html' } },
-        ),
-      )
-    }
-
-    if (!code) {
-      return handleCors(
-        req,
-        new Response(
-          `<!DOCTYPE html>
-          <html>
-          <body>
-            <script>
-              window.opener?.postMessage({ type: 'youtube-auth-error', error: 'No authorization code received' }, '*');
-              window.close();
-            </script>
-            <p>Authorization failed. You can close this window.</p>
-          </body>
-          </html>`,
-          { headers: { 'Content-Type': 'text/html' } },
-        ),
-      )
-    }
-
-    // Check if there's a PKCE session ID in state (used for Tauri/external browser flow)
-    if (state) {
-      const session = consumePKCESession(state)
-      if (session) {
-        try {
-          // Exchange code for tokens on the server
-          const tokenResponse = await fetch(
-            'https://oauth2.googleapis.com/token',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: new URLSearchParams({
-                client_id: YOUTUBE_CLIENT_ID,
-                client_secret: YOUTUBE_CLIENT_SECRET,
-                code,
-                code_verifier: session.codeVerifier,
-                grant_type: 'authorization_code',
-                redirect_uri: YOUTUBE_REDIRECT_URI,
-              }),
-            },
-          )
-
-          if (!tokenResponse.ok) {
-            const errorData = await tokenResponse.json()
-            throw new Error(
-              errorData.error_description || 'Token exchange failed',
-            )
-          }
-
-          const tokenData = await tokenResponse.json()
-
-          // Store tokens
-          const status = await storeTokens({
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token,
-            expiresAt: new Date(Date.now() + tokenData.expires_in * 1000),
-          })
-
-          // Broadcast auth status to all clients
-          broadcastYouTubeAuthStatus({
-            isAuthenticated: status.isAuthenticated,
-            channelId: status.channelId,
-            channelName: status.channelName,
-            expiresAt: status.expiresAt,
-            updatedAt: Date.now(),
-          })
-
-          return handleCors(
-            req,
-            new Response(
-              `<!DOCTYPE html>
-              <html>
-              <body>
-                <p>Authorization successful! You can close this window.</p>
-                <p>Connected as: ${escapeHtml(status.channelName || 'Unknown')}</p>
-              </body>
-              </html>`,
-              { headers: { 'Content-Type': 'text/html' } },
-            ),
-          )
-        } catch (err) {
-          const errorMessage =
-            err instanceof Error ? err.message : 'Token exchange failed'
-          return handleCors(
-            req,
-            new Response(
-              `<!DOCTYPE html>
-              <html>
-              <body>
-                <p>Authorization failed: ${escapeHtml(errorMessage)}</p>
-                <p>You can close this window and try again.</p>
-              </body>
-              </html>`,
-              { headers: { 'Content-Type': 'text/html' } },
-            ),
-          )
-        }
-      }
-    }
-
-    // No PKCE session - use postMessage for client-side token exchange (popup flow)
     return handleCors(
       req,
       new Response(
-        `<!DOCTYPE html>
-        <html>
-        <body>
-          <script>
-            window.opener?.postMessage({ type: 'youtube-auth-code', code: ${toScriptLiteral(code)} }, '*');
-            window.close();
-          </script>
-          <p>Authorization successful! You can close this window.</p>
-        </body>
-        </html>`,
-        { headers: { 'Content-Type': 'text/html' } },
+        JSON.stringify({ data: { state: youtubeSignIns.issue() } }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        },
       ),
     )
   }
 
-  // POST /api/livestream/youtube/tokens - Store tokens from client after PKCE exchange
+  // POST /api/livestream/youtube/tokens - Store the tokens a sign-in brought
+  // back, with the state POST /api/livestream/youtube/sign-in gave it
   if (
     req.method === 'POST' &&
     url.pathname === '/api/livestream/youtube/tokens'
@@ -288,11 +112,22 @@ export async function handleLivestreamRoutes(
     )
     try {
       const body = (await req.json()) as {
+        state?: string
         accessToken: string
         refreshToken: string
         expiresAt: number
         channelId?: string
         channelName?: string
+      }
+
+      if (!youtubeSignIns.consume(body.state)) {
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: 'unknown_sign_in' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       if (!body.accessToken || !body.refreshToken || !body.expiresAt) {
@@ -1144,10 +979,14 @@ export async function handleLivestreamRoutes(
           headers: { 'Content-Type': 'application/json' },
         }),
       )
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof SecretDestinationChangedError
+          ? error.message
+          : 'Invalid JSON body'
       return handleCors(
         req,
-        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        new Response(JSON.stringify({ error: message }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         }),
