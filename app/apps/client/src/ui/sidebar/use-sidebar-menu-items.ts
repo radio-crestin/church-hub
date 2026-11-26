@@ -7,8 +7,8 @@ import { usePermissions } from '../../provider/permissions-provider'
 
 /**
  * The pages the sidebar lists, in the operator's order, that this user may
- * open. Settings, kiosk and feedback are left out: the sidebar draws them as
- * their own buttons at its foot.
+ * open. Settings and kiosk are left out: the sidebar draws them as their own
+ * buttons at its foot.
  */
 export function useSidebarMenuItems() {
   const { hasPermission } = usePermissions()
@@ -16,11 +16,7 @@ export function useSidebarMenuItems() {
   const resolvedItems = useResolvedSidebarItems(config?.items)
 
   return resolvedItems.filter((item) => {
-    if (
-      item.id === 'settings' ||
-      item.id === 'kiosk' ||
-      item.id === 'feedback'
-    ) {
+    if (item.id === 'settings' || item.id === 'kiosk') {
       return false
     }
     // Custom pages: check dynamic permission
