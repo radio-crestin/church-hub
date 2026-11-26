@@ -1,4 +1,3 @@
-import { scryptSync } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,14 +13,9 @@ const FIXTURES_DIR = fileURLToPath(
 
 /**
  * A fresh install must not start with a secret from the repo:
- * no AI provider key, and its own random live-translation stream secret.
+ * no AI provider key, and its own listener link (a hosted room whose host
+ * key it made itself).
  */
-// Same fingerprint as server migrations/remove-seeded-secrets.ts
-const OLD_SEEDED_STREAM_FINGERPRINT =
-  '6f9702d11a0bf68e7818162bef13ac62e5aebc662c02d578b7440c25f32dead2'
-
-const fingerprint = (value: string) =>
-  scryptSync(value, 'church-hub-seeded-secret-v1', 32).toString('hex')
 
 test.describe('Seeded secrets', () => {
   test('the stream secret is made by this install', async ({ request }) => {
@@ -29,8 +23,7 @@ test.describe('Seeded secrets', () => {
     expect(response.status()).toBe(200)
 
     const { secret } = await response.json()
-    expect(secret).toMatch(/^[a-z0-9]{32}$/)
-    expect(fingerprint(secret)).not.toBe(OLD_SEEDED_STREAM_FINGERPRINT)
+    expect(secret).toMatch(/^h1[A-Za-z0-9_-]{43}$/)
   })
 
   test('no seeded setting holds an API key', async ({ request }) => {
