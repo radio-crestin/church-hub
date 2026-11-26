@@ -1,3 +1,4 @@
+import { forgetChurchDatabase } from '~/features/browser-server'
 import { createLogger } from '~/utils/logger'
 import { type ChurchBinding, getChurchBinding } from './churchBinding'
 import { DeviceRefusedError } from './fetchReadUrl'
@@ -54,5 +55,8 @@ export async function openChurchSession(): Promise<ChurchSession> {
   const saved = getChurchBinding()
   if (!saved) return { kind: 'notJoined' }
   const binding = await refreshBinding(saved)
-  return binding ? { kind: 'joined', binding } : { kind: 'removed' }
+  if (binding) return { kind: 'joined', binding }
+  // Removed by the church: nothing of it stays on this device.
+  await forgetChurchDatabase(saved.churchId)
+  return { kind: 'removed' }
 }

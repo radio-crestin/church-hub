@@ -6,8 +6,9 @@
  */
 import './shims/globals'
 
-import { bootBrowserServer } from './bootBrowserServer'
-import type { BootMessage, StartMessage } from './protocol'
+import { bootBrowserServer, churchDatabaseFile } from './bootBrowserServer'
+import { openStorage } from './database'
+import type { BootMessage, ForgetMessage, StartMessage } from './protocol'
 import { workerTarget } from './workerTarget'
 import { createFetchHandler } from '../../../../../server/src/http/createFetchHandler'
 import { createTunnelSession } from '../../../../../server/src/service/remote-access/tunnelSession'
@@ -35,7 +36,16 @@ async function start(message: StartMessage): Promise<void> {
   }
 }
 
-self.onmessage = (event: MessageEvent<StartMessage | string>) => {
+async function forget({ churchId }: ForgetMessage): Promise<void> {
+  const storage = await openStorage()
+  storage.pool?.unlink(churchDatabaseFile(churchId))
+  post({ type: 'forgotten' })
+}
+
+self.onmessage = (
+  event: MessageEvent<StartMessage | ForgetMessage | string>,
+) => {
   if (typeof event.data === 'string') session?.receive(event.data)
   else if (event.data.type === 'start') void start(event.data)
+  else if (event.data.type === 'forget') void forget(event.data)
 }

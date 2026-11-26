@@ -20,6 +20,12 @@ export type StartMessage =
   | { type: 'start'; mode: 'guest' }
   | { type: 'start'; mode: 'church'; church: ChurchConnection }
 
+/** Deletes a church's database: the church removed this device. */
+export interface ForgetMessage {
+  type: 'forget'
+  churchId: string
+}
+
 /** A first start's steps, shown on the loading screen. */
 export type BootStep = 'download' | 'seed' | 'sync' | 'search' | 'save'
 
@@ -33,3 +39,4 @@ export type BootMessage =
       persistent: boolean
     }
   | { type: 'failed'; message: string }
+  | { type: 'forgotten' }

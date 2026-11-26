@@ -4,12 +4,14 @@ import { setAppLanguage } from './helpers/app-language'
 import { FakeS3 } from './helpers/fake-s3'
 import { PublicAppServer } from './helpers/public-app'
 import { SyncService } from './helpers/sync-service'
+import { findSong, waitForApp } from './helpers/web-app'
 
 /**
  * Join a church by QR code or link (T-168): the PC mints a device token in
  * Settings > Phones and shows the link; a phone opens it on the public web
- * app, which binds it to the church and shows the church's songs, read
- * straight from the bucket, offline too. Revoking the device ends that.
+ * app, which binds it to the church and runs the full app on the church's
+ * library, synced from the bucket into its own server (T-175), offline
+ * too. Revoking the device ends that.
  */
 
 const s3 = new FakeS3()
@@ -39,6 +41,8 @@ test.describe
     let joinUrl = ''
 
     test.beforeAll(async () => {
+      // The public app's build (the whole app and its server) takes a while.
+      test.setTimeout(300_000)
       s3.signedWritesOnly = true
       await s3.start()
       await service.start(s3.endpoint, {
@@ -94,41 +98,27 @@ test.describe
       await publishAll(request)
     })
 
-    test('a phone opens the link: it joins, forgets the link and reads the songs, offline too', async ({
+    test('a phone opens the link: it joins, forgets the link and has the songs, offline too', async ({
       browser,
     }) => {
       const phone = await browser.newContext({ ...devices['Pixel 7'] })
       const page = await phone.newPage()
       await page.goto(joinUrl)
-
-      const search = page.getByRole('searchbox')
-      await expect(search).toBeVisible({ timeout: 30_000 })
-      await expect(page).toHaveURL(`${publicApp.url}/`)
-      await search.fill(title)
-      await page.getByTestId('church-song').filter({ hasText: title }).click()
-      await expect(page.getByTestId('song-slide')).toHaveText(
-        'Glory to God\nin the highest',
-      )
+      await waitForApp(page)
+      await expect(page).toHaveURL(new RegExp(`^${publicApp.url}/(?!join)`))
+      expect(await findSong(page, title)).toBeTruthy()
 
       // Bound: it opens on the church's songs without the link.
       await page.evaluate(() => navigator.serviceWorker.ready)
-      await page.reload()
-      await expect(page.getByRole('searchbox')).toBeVisible()
-      await expect(
-        page.getByTestId('church-song').filter({ hasText: title }),
-      ).toBeHidden()
-      await page.getByRole('searchbox').fill(title)
-      await expect(
-        page.getByTestId('church-song').filter({ hasText: title }),
-      ).toBeVisible()
+      await page.goto(publicApp.url)
+      await waitForApp(page)
+      expect(await findSong(page, title)).toBeTruthy()
 
-      // The service worker keeps the app and the church's reads.
+      // The service worker keeps the app, and the browser its database.
       await phone.setOffline(true)
       await page.reload()
-      await page.getByRole('searchbox').fill(title)
-      await expect(
-        page.getByTestId('church-song').filter({ hasText: title }),
-      ).toBeVisible()
+      await waitForApp(page)
+      expect(await findSong(page, title)).toBeTruthy()
       await phone.close()
     })
 
@@ -139,9 +129,7 @@ test.describe
       const phone = await browser.newContext({ ...devices['Pixel 7'] })
       const phonePage = await phone.newPage()
       await phonePage.goto(joinUrl)
-      await expect(phonePage.getByRole('searchbox')).toBeVisible({
-        timeout: 30_000,
-      })
+      await waitForApp(phonePage)
 
       await setAppLanguage(page, 'en')
       await page.goto('/settings/phones')

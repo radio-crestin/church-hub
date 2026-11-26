@@ -3,7 +3,40 @@ import {
   type Tunnel,
 } from '~/features/remote-access/tunnel/createTunnel'
 import { holdServerLock } from './holdServerLock'
-import type { BootMessage, BootStep, StartMessage } from '../worker/protocol'
+import type {
+  BootMessage,
+  BootStep,
+  ForgetMessage,
+  StartMessage,
+} from '../worker/protocol'
+
+function createServerWorker(): Worker {
+  return new Worker(
+    new URL('../worker/browserServer.worker.ts', import.meta.url),
+    { type: 'module', name: 'church-hub-server' },
+  )
+}
+
+/**
+ * Deletes what this browser kept of a church (its database): the church
+ * removed this device. Another tab holding the database: left for later.
+ */
+export async function forgetChurchDatabase(churchId: string): Promise<void> {
+  try {
+    await holdServerLock()
+  } catch {
+    return
+  }
+  const worker = createServerWorker()
+  await new Promise<void>((resolve) => {
+    worker.onmessage = (event: MessageEvent<BootMessage>) => {
+      if (event.data.type === 'forgotten') resolve()
+    }
+    worker.onerror = () => resolve()
+    worker.postMessage({ type: 'forget', churchId } satisfies ForgetMessage)
+  })
+  worker.terminate()
+}
 
 export interface BrowserServer {
   tunnel: Tunnel
@@ -25,10 +58,7 @@ export async function startBrowserServer(
   onStep: (step: BootStep) => void,
 ): Promise<BrowserServer> {
   await holdServerLock()
-  const worker = new Worker(
-    new URL('../worker/browserServer.worker.ts', import.meta.url),
-    { type: 'module', name: 'church-hub-server' },
-  )
+  const worker = createServerWorker()
   const channel = {
     send: (text: string) => worker.postMessage(text),
     close: () => worker.terminate(),

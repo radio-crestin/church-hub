@@ -20,10 +20,12 @@ const BIBLE_FIXTURES = ['default-bibles.json', 'default-bible-topics.json']
 /** A guest gets the Church Hub dataset a new PC starts with: songs too. */
 const GUEST_FIXTURES = [...BIBLE_FIXTURES, 'default-songs.json']
 
+export const churchDatabaseFile = (churchId: string) => `/church-${churchId}.db`
+
 function databaseFile(start: StartMessage): string {
   return start.mode === 'guest'
     ? '/guest.db'
-    : `/church-${start.church.churchId}.db`
+    : churchDatabaseFile(start.church.churchId)
 }
 
 /**
