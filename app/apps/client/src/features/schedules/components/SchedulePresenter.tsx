@@ -41,8 +41,10 @@ import { TemplatePicker } from '~/features/slide-templates/components/TemplatePi
 import { TemplatePickerDialog } from '~/features/slide-templates/components/TemplatePickerDialog'
 import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
 import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
+import { PptxDropChoiceDialog } from '~/features/slides-deck/pptx-import/components/PptxDropChoiceDialog'
 import { PptxImportDialog } from '~/features/slides-deck/pptx-import/components/PptxImportDialog'
 import { useImportPptxItem } from '~/features/slides-deck/pptx-import/hooks/useImportPptxItem'
+import { usePptxDropChoice } from '~/features/slides-deck/pptx-import/hooks/usePptxDropChoice'
 import { KeyLineEditDialog } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
@@ -227,7 +229,11 @@ export function SchedulePresenter({
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
   const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
   const addDeck = useAddDeckItem(scheduleId, refetch)
-  const { pptx, importPptx } = useImportPptxItem(scheduleId, refetch)
+  const { pptx, importPptx, importPptxFile } = useImportPptxItem(
+    scheduleId,
+    refetch,
+  )
+  const pptxDrop = usePptxDropChoice(importPptxFile)
   const openDeckEditor = useOpenDeckEditor()
   const importDialogRef = useRef<HTMLDialogElement>(null)
   const { keyLineDialogRef, editKeyLine: handleEditKeyLine } =
@@ -825,6 +831,7 @@ export function SchedulePresenter({
                 onImportPptx={() => importPptx(quickInsertAfterId ?? undefined)}
               />
               <PptxImportDialog pptx={pptx} />
+              <PptxDropChoiceDialog choice={pptxDrop} />
             </div>
           </div>
           <div className="flex-1 overflow-hidden p-3 pt-2 lg:min-h-0 lg:p-4">

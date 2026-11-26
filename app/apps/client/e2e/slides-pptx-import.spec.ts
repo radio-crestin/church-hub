@@ -233,6 +233,47 @@ async function expectStep(
   // render of the same click once reference images exist.
 }
 
+/**
+ * Drops a file on the page as a file from outside would: a synthetic drop
+ * carrying it (like file-drop-import.spec), once the presentation's page has
+ * taken .pptx drops, so the drop cannot race it.
+ */
+async function dropFile(page: Page, file: string, mime: string) {
+  await expect(page.getByTestId('pptx-drop-target')).toHaveAttribute(
+    'data-ready',
+    'true',
+  )
+  await page.evaluate(
+    ({ base64, name, type }) => {
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+      const transfer = new DataTransfer()
+      transfer.items.add(new File([bytes], name, { type }))
+      document.dispatchEvent(
+        new DragEvent('drop', {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: transfer,
+        }),
+      )
+    },
+    {
+      base64: fs.readFileSync(file).toString('base64'),
+      name: path.basename(file),
+      type: mime,
+    },
+  )
+}
+
+const PPTX_MIME =
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+
+/** The song a drop opened, deleted (its page is /songs/<id>). */
+async function deleteOpenedSong(page: Page, request: APIRequestContext) {
+  await expect(page).toHaveURL(/\/songs\/\d+/, { timeout: 30_000 })
+  const id = page.url().match(/\/songs\/(\d+)/)?.[1]
+  await request.delete(`/api/songs/${id}`)
+}
+
 test.describe('PowerPoint import', () => {
   const uploaded: string[] = []
   let scheduleId = 0
@@ -591,6 +632,44 @@ test.describe('PowerPoint import', () => {
     expect(byId(slide, '7')).toMatchObject({ shape: 'rect', fill: '#7030a0' })
     // The table's cells, in a text box.
     expect(byId(slide, '8')?.html).toContain('Duminică')
+  })
+
+  test('a .pptx dropped on the presentation asks: as slides or as a song; a .ppt stays a song', async ({
+    page,
+    request,
+  }) => {
+    await page.goto(`/schedules/${scheduleId}`)
+
+    // As slides: the same import as Add > Import PowerPoint.
+    await dropFile(page, fixture('a-inheritance.pptx'), PPTX_MIME)
+    const choice = page.getByTestId('pptx-drop-choice')
+    await expect(choice).toBeVisible()
+    await expect(choice).toContainText('a-inheritance.pptx')
+    await choice.getByTestId('pptx-drop-as-slides').click()
+    expect(await finishedImport(page)).toEqual([])
+    await page.getByTestId('pptx-import-done').click()
+    const decks = await savedDecks(request, scheduleId)
+    expect(decks).toHaveLength(1)
+    expect(decks[0]?.deck.source?.fileName).toBe('a-inheritance.pptx')
+    await expect(page.getByTestId('schedule-item')).toContainText(
+      'Bine ați venit',
+    )
+
+    // As a song: what a drop does on every other page.
+    await dropFile(page, fixture('a-inheritance.pptx'), PPTX_MIME)
+    await choice.getByTestId('pptx-drop-as-song').click()
+    await deleteOpenedSong(page, request)
+    expect(await savedDecks(request, scheduleId)).toHaveLength(1)
+
+    // A legacy .ppt is only ever a song: no question.
+    await page.goto(`/schedules/${scheduleId}`)
+    await dropFile(
+      page,
+      path.join(FIXTURES, '..', 'Se cuvine.ppt'),
+      'application/vnd.ms-powerpoint',
+    )
+    await deleteOpenedSong(page, request)
+    await expect(choice).toHaveCount(0)
   })
 
   test('the Slides editor inserts the slides of a PowerPoint file after its own', async ({

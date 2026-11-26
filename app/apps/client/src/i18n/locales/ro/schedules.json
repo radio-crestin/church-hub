@@ -509,7 +509,11 @@
     },
     "readFailed": "Fișierul nu a putut fi citit ca prezentare PowerPoint (.pptx).",
     "saveFailed": "Diapozitivele nu au putut fi salvate. Încearcă din nou.",
-    "close": "Închide"
+    "close": "Închide",
+    "dropTitle": "Ce să devină acest PowerPoint?",
+    "asSlides": "Ca diapozitive",
+    "asSong": "Ca o cântare",
+    "cancel": "Renunță"
   },
   "deckEditor": {
     "back": "Înapoi la prezentare",

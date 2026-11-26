@@ -480,7 +480,11 @@
     },
     "readFailed": "This file could not be read as a PowerPoint presentation (.pptx).",
     "saveFailed": "The slides could not be saved. Try again.",
-    "close": "Close"
+    "close": "Close",
+    "dropTitle": "What should this PowerPoint become?",
+    "asSlides": "As slides",
+    "asSong": "As a song",
+    "cancel": "Cancel"
   },
   "deckEditor": {
     "back": "Back to the presentation",
