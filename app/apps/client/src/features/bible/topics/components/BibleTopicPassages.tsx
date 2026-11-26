@@ -6,6 +6,7 @@ import { useNavigateTemporary } from '~/features/presentation'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
+import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
 import type { BibleTopicPassage } from '../types'
 import { toSlideshowEntries } from '../utils/toSlideshowEntries'
 
@@ -39,7 +40,8 @@ export function BibleTopicPassages({
 }: BibleTopicPassagesProps) {
   const { t } = useTranslation('bible')
   const entries = useMemo(() => toSlideshowEntries(passages), [passages])
-  const slideshow = useVerseSlideshow(`topic:${topicId}`, entries)
+  const [templateId, setTemplateId] = useTopicLoopTemplate()
+  const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
   const navigateSlideshow = useNavigateTemporary()
   const activeIndex =
     slideshow.position?.index ??
@@ -105,7 +107,13 @@ export function BibleTopicPassages({
         </button>
       </div>
 
-      {passages.length > 0 && <BibleTopicSlideshowBar slideshow={slideshow} />}
+      {passages.length > 0 && (
+        <BibleTopicSlideshowBar
+          slideshow={slideshow}
+          templateId={templateId}
+          onTemplateChange={setTemplateId}
+        />
+      )}
 
       <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
         {isLoading ? (

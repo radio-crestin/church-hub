@@ -10,7 +10,7 @@ import {
   type BackgroundMedia,
   BUILT_IN_VIDEO,
   decodedImageSize,
-  deleteMediaExcept,
+  deleteUploadedMedia,
   HEAVY_GIF,
   heavyGifDetails,
   LIGHT_GIF,
@@ -79,14 +79,8 @@ async function openGallery(page: Page) {
 }
 
 test.describe('Gallery', () => {
-  let preexistingMediaIds = new Set<string>()
-
-  test.beforeAll(async ({ request }) => {
-    preexistingMediaIds = new Set(await listMediaIds(request))
-  })
-
   test.afterEach(async ({ request }) => {
-    await deleteMediaExcept(request, preexistingMediaIds)
+    await deleteUploadedMedia(request)
   })
 
   test('the video shipped with the app is in the gallery from the first start', async ({

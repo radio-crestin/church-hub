@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Maximize, Minimize } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { isMobile } from '~/config'
 import { createLogger } from '~/utils/logger'
@@ -14,7 +14,7 @@ import { usePresentationContent } from '../../hooks/usePresentationContent'
 import { useScreen } from '../../hooks/useScreen'
 import { useSlideHighlights } from '../../hooks/useSlideHighlights'
 import { ScreenShareView } from '../../screen-share'
-import type { ScreenShareContentConfig, ScreenWithConfigs } from '../../types'
+import type { ScreenShareContentConfig } from '../../types'
 import { setWindowFullscreen } from '../../utils/fullscreen'
 import { isTauri } from '../../utils/openDisplayWindow'
 import { resolveScreenBackground } from '../../utils/resolveScreenBackground'
@@ -44,37 +44,12 @@ export function ScreenRenderer({
   const { debugInfo: wsDebugInfo } = useWebSocket()
   const navigate = useNavigate()
 
-  const { data: screenData, isLoading, isError } = useScreen(screenId)
+  const { data: ownScreen, isLoading, isError } = useScreen(screenId)
   const { data: kioskSettings } = useKioskSettings()
   const clearSlide = useClearSlide()
   const navigateTemporary = useNavigateTemporary()
   const { data: slideHighlights } = useSlideHighlights()
   const { currentScene } = useOBSScenes()
-
-  // Apply scene-specific config overrides when an OBS scene is active
-  const screen: ScreenWithConfigs | undefined = useMemo(() => {
-    if (!screenData) return undefined
-    const sceneName = currentScene?.obsSceneName
-    if (!sceneName || !screenData.sceneOverrides?.[sceneName]) {
-      return screenData
-    }
-
-    const overrides = screenData.sceneOverrides[sceneName]
-    // Shallow clone and apply overrides (scene configs are full replacements)
-    const mergedConfigs = { ...screenData.contentConfigs } as Record<
-      string,
-      unknown
-    >
-    for (const [ct, overrideConfig] of Object.entries(overrides)) {
-      mergedConfigs[ct] = overrideConfig
-    }
-
-    return {
-      ...screenData,
-      contentConfigs:
-        mergedConfigs as unknown as ScreenWithConfigs['contentConfigs'],
-    }
-  }, [screenData, currentScene?.obsSceneName])
 
   // Memoize getNextVerse callback to prevent infinite re-renders
   // The dependency array is empty because getNextVerse is a stable import
@@ -85,6 +60,7 @@ export function ScreenRenderer({
 
   // Use shared presentation content hook
   const {
+    screen,
     contentType,
     contentData,
     contentKey,
@@ -94,8 +70,8 @@ export function ScreenRenderer({
     leaving,
     presentationState,
   } = usePresentationContent({
-    screen,
-    includeNextSlide: screen?.nextSlideConfig?.enabled ?? false,
+    screen: ownScreen,
+    obsSceneName: currentScene?.obsSceneName,
     getNextVerse: memoizedGetNextVerse,
   })
 
@@ -770,6 +746,7 @@ export function ScreenRenderer({
                   isVisible={isVisible}
                   nextSlideData={nextSlideData}
                   styleRanges={styleRanges}
+                  videoSound={screen.type === 'primary'}
                 />
               )}
             </>

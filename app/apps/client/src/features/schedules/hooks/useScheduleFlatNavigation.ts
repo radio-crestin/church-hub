@@ -15,6 +15,8 @@ import {
 } from '~/features/presentation'
 import { createLogger } from '~/utils/logger'
 import { useSchedule } from './useSchedule'
+import { usePresentScheduleStep } from '../media-items/hooks/usePresentScheduleStep'
+import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import {
   readProgramPosition,
   rememberProgramPosition,
@@ -79,6 +81,9 @@ export interface ScheduleFlatNavigation {
   presentVerseteEntry: (item: ScheduleItem, entryIndex: number) => Promise<void>
   presentAnnouncement: (item: ScheduleItem) => Promise<void>
   presentScene: (item: ScheduleItem) => Promise<void>
+  presentVideo: (item: ScheduleItem) => Promise<void>
+  /** A Slides item's step `stepIndex` (a slide, with its clicks up to one). */
+  presentDeckStep: (item: ScheduleItem, stepIndex: number) => Promise<void>
   navigateToFlatItem: (
     flatItem: ScheduleFlatItem,
     flatIndex: number,
@@ -122,6 +127,8 @@ export function useScheduleFlatNavigation({
   const presentTemporaryAnnouncement = usePresentTemporaryAnnouncement()
   const presentTemporaryScene = usePresentTemporaryScene()
   const clearTemporary = useClearTemporaryContent()
+  // `mutateAsync` stays the same function, so the callbacks using it do too.
+  const { mutateAsync: presentStep } = usePresentScheduleStep()
 
   // A plain mutation rather than `useOBSScenes`, whose 30s poll has no place on
   // the song or Bible page — the scene list itself is never read here.
@@ -309,11 +316,9 @@ export function useScheduleFlatNavigation({
 
   const presentVerseteEntry = useCallback(
     async (item: ScheduleItem, entryIndex: number) => {
-      if (
-        item.itemType !== 'slide' ||
-        item.slideType !== 'versete_tineri' ||
-        !item.verseteTineriEntries.length
-      ) {
+      const isEntries =
+        item.slideType === 'versete_tineri' || item.itemType === 'verses'
+      if (!isEntries || !item.verseteTineriEntries.length) {
         return
       }
 
@@ -417,6 +422,31 @@ export function useScheduleFlatNavigation({
     ],
   )
 
+  // A video goes up through the server, which builds it as its runner does.
+  const presentVideo = useCallback(
+    async (item: ScheduleItem) => {
+      // A background video has no step: the steps after it show it.
+      if (item.itemType !== 'video' || !item.video || !scheduleId) return
+      if (isBackgroundVideo(item)) return
+      const flatIndex = getFlatItemIndex(item, 0)
+      onBeforeNavigate?.(flatIndex, { item, type: 'video', index: 0 })
+      await presentStep({ scheduleId, stepIndex: flatIndex })
+    },
+    [getFlatItemIndex, onBeforeNavigate, presentStep, scheduleId],
+  )
+
+  // A deck's step goes up through the server too: it holds the deck.
+  const presentDeckStep = useCallback(
+    async (item: ScheduleItem, stepIndex: number) => {
+      if (item.itemType !== 'slides' || !scheduleId) return
+      const flatIndex = getFlatItemIndex(item, stepIndex)
+      if (flatIndex < 0) return
+      beforeNavigate(flatIndex, { item, type: 'deck', index: stepIndex })
+      await presentStep({ scheduleId, stepIndex: flatIndex })
+    },
+    [getFlatItemIndex, beforeNavigate, presentStep, scheduleId],
+  )
+
   const navigateToFlatItem = useCallback(
     async (flatItem: ScheduleFlatItem, _flatIndex: number) => {
       const { item, type, index } = flatItem
@@ -431,12 +461,18 @@ export function useScheduleFlatNavigation({
           return presentAnnouncement(item)
         case 'scene':
           return presentScene(item)
+        case 'video':
+          return presentVideo(item)
+        case 'deck':
+          return presentDeckStep(item, index)
       }
     },
     [
       presentAnnouncement,
+      presentDeckStep,
       presentPassageVerse,
       presentScene,
+      presentVideo,
       presentSongSlide,
       presentVerseteEntry,
     ],
@@ -545,6 +581,8 @@ export function useScheduleFlatNavigation({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
+    presentDeckStep,
     navigateToFlatItem,
     presentFlatIndex,
     goNext,

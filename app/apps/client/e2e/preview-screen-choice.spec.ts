@@ -1,6 +1,7 @@
 import {
   type APIRequestContext,
   expect,
+  type Locator,
   type Page,
   test,
 } from '@playwright/test'
@@ -82,6 +83,21 @@ async function expectEveryPreviewMirrors(page: Page, screen: ScreenSummary) {
   }
 }
 
+/** The screen's "Shown in the previews" radio, under its "More options". */
+async function previewRadio(page: Page, id: number): Promise<Locator> {
+  await page.goto(`/settings/screens?screen=${id}`)
+  const card = page.locator(
+    `[data-testid="screen-card"][data-screen-id="${id}"]`,
+  )
+  await card
+    .getByTestId('screen-group-advanced')
+    .getByText(label('settings', 'sections.screens.groups.more'))
+    .click()
+  return card.getByRole('radio', {
+    name: label('settings', 'sections.screens.previewScreen.label'),
+  })
+}
+
 test.describe('The previews mirror the screen chosen for them', () => {
   test.describe.configure({ mode: 'serial' })
 
@@ -119,25 +135,17 @@ test.describe('The previews mirror the screen chosen for them', () => {
     await expectEveryPreviewMirrors(page, main)
 
     // Settings say the same: the main screen is the one checked.
-    await page.goto('/settings/screens')
-    const radio = (id: number) =>
-      page
-        .locator(`[data-testid="screen-card"][data-screen-id="${id}"]`)
-        .getByRole('radio', {
-          name: label('settings', 'sections.screens.previewScreen.label'),
-        })
-    await expect(radio(main.id)).toBeChecked({ timeout: 10000 })
-    await expect(radio(stage.id)).not.toBeChecked()
+    await expect(await previewRadio(page, main.id)).toBeChecked({
+      timeout: 10000,
+    })
+    await expect(await previewRadio(page, stage.id)).not.toBeChecked()
   })
 
   test('choosing Stage in Settings switches every preview to it', async ({
     page,
     request,
   }) => {
-    await page.goto('/settings/screens')
-    const stageRadio = page
-      .locator(`[data-testid="screen-card"][data-screen-id="${stage.id}"]`)
-      .getByTestId('screen-preview-screen')
+    const stageRadio = await previewRadio(page, stage.id)
     await stageRadio.click()
     await expect(stageRadio).toBeChecked()
     await expect

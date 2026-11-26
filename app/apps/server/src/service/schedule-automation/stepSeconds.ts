@@ -1,4 +1,5 @@
 import type { ScheduleStep } from './buildScheduleSteps'
+import { deckStepSeconds } from './deckStepSeconds'
 import { stepText } from './stepText'
 import type { ScheduleAutomationSettings } from '../schedules/types'
 
@@ -11,8 +12,9 @@ const LOOK_UP_SECONDS = 2
  * How long a step stays up while its presentation runs by itself, like
  * PowerPoint's "advance after": the item's own time when it has one, else the
  * presentation's seconds per slide, longer for a slide with more text when
- * `autoplayByText` is on. Mirrored by the client's `stepSeconds`, which shows
- * the times beside each item.
+ * `autoplayByText` is on; a Slides item's step, its slide's own time and as
+ * long as its effects play (deckStepSeconds). Mirrored by the client's
+ * `stepSeconds`, which shows the times beside each item.
  */
 export function stepSeconds(
   step: ScheduleStep,
@@ -21,6 +23,17 @@ export function stepSeconds(
   },
 ): number {
   if (step.item.advanceSeconds != null) return step.item.advanceSeconds
+  const seconds = readingSeconds(step, automation)
+  return step.type === 'deck' ? deckStepSeconds(step, seconds) : seconds
+}
+
+/** The presentation's seconds per slide, longer for more text when it reads by text. */
+function readingSeconds(
+  step: ScheduleStep,
+  automation: Pick<ScheduleAutomationSettings, 'autoplayByText'> & {
+    autoplaySeconds: number
+  },
+): number {
   if (!automation.autoplayByText) return automation.autoplaySeconds
   const words = stepText(step).split(/\s+/).filter(Boolean).length
   return Math.max(

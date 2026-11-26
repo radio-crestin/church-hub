@@ -1,4 +1,14 @@
-import { Book, Camera, Megaphone, Music, User } from 'lucide-react'
+import {
+  Book,
+  BookOpen,
+  Camera,
+  Film,
+  ListMusic,
+  Megaphone,
+  Music,
+  Presentation,
+  User,
+} from 'lucide-react'
 
 import type { ScheduleItem } from '../types'
 
@@ -15,6 +25,18 @@ interface ScheduleItemTypeIconProps {
 function describeKind(item: ScheduleItem) {
   if (item.itemType === 'song') {
     return { Icon: Music }
+  }
+  if (item.itemType === 'music') {
+    return { Icon: ListMusic }
+  }
+  if (item.itemType === 'video') {
+    return { Icon: Film }
+  }
+  if (item.itemType === 'slides') {
+    return { Icon: Presentation }
+  }
+  if (item.itemType === 'verses') {
+    return { Icon: BookOpen }
   }
   if (item.itemType === 'bible_passage') {
     return { Icon: Book }

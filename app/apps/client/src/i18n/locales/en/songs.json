@@ -242,6 +242,7 @@
     "songTitle": "Song Title",
     "createSong": "Create Song",
     "dropHint": "Drop PPTX file to import as song",
+    "dropHintPresentation": "Drop to import the PowerPoint",
     "slideNumber": "Slide {{number}}",
     "duplicateIdentical": "A song named \"{{title}}\" already exists with identical content. Import was skipped.",
     "duplicateDifferent": "A song named \"{{title}}\" already exists but with different content. Import as a new song with an auto-numbered title?",

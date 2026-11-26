@@ -3,7 +3,7 @@
  * Run with: bun run fixtures
  *
  * Dumps:
- * - Screens (with content configs and next slide configs)
+ * - Screens (with their own template's design)
  * - Songs (with slides)
  * - Song categories
  * - Bible translations (metadata only)
@@ -32,21 +32,12 @@ interface ScreenRow {
   is_active: number
   open_mode: string
   is_fullscreen: number
+  sort_order: number
   width: number
   height: number
+  layouts: string
   global_settings: string
-  sort_order: number
-}
-
-interface ContentConfigRow {
-  screen_id: number
-  content_type: string
-  config: string
-}
-
-interface NextSlideConfigRow {
-  screen_id: number
-  config: string
+  next_slide: string
 }
 
 interface ScreenFixture {
@@ -55,12 +46,15 @@ interface ScreenFixture {
   isActive: boolean
   openMode: string
   isFullscreen: boolean
-  width: number
-  height: number
-  globalSettings: Record<string, unknown>
   sortOrder: number
-  contentConfigs: Record<string, Record<string, unknown>>
-  nextSlideConfig?: Record<string, unknown>
+  /** The screen's own template (seed-screens makes it a template again). */
+  design: {
+    width: number
+    height: number
+    layouts: Record<string, Record<string, unknown>>
+    globalSettings: Record<string, unknown>
+    nextSlide: Record<string, unknown>
+  }
 }
 
 interface SongCategoryRow {
@@ -174,7 +168,11 @@ interface AppSettingFixture {
 
 function dumpScreens(db: Database): void {
   const screens = db
-    .query('SELECT * FROM screens ORDER BY sort_order')
+    .query(
+      `SELECT s.*, t.width, t.height, t.layouts, t.global_settings, t.next_slide
+       FROM screens s JOIN slide_templates t ON t.id = s.template_id
+       ORDER BY s.sort_order`,
+    )
     .all() as ScreenRow[]
 
   if (screens.length === 0) {
@@ -183,45 +181,21 @@ function dumpScreens(db: Database): void {
     return
   }
 
-  const fixtures: ScreenFixture[] = []
-
-  for (const screen of screens) {
-    // Get content configs
-    const contentConfigs = db
-      .query(
-        'SELECT content_type, config FROM screen_content_configs WHERE screen_id = ?',
-      )
-      .all(screen.id) as ContentConfigRow[]
-
-    const contentConfigsMap: Record<string, Record<string, unknown>> = {}
-    for (const cc of contentConfigs) {
-      contentConfigsMap[cc.content_type] = JSON.parse(cc.config)
-    }
-
-    // Get next slide config (for stage screens)
-    const nextSlideConfig = db
-      .query('SELECT config FROM screen_next_slide_configs WHERE screen_id = ?')
-      .get(screen.id) as NextSlideConfigRow | null
-
-    const fixture: ScreenFixture = {
-      name: screen.name,
-      type: screen.type,
-      isActive: screen.is_active === 1,
-      openMode: screen.open_mode,
-      isFullscreen: screen.is_fullscreen === 1,
+  const fixtures: ScreenFixture[] = screens.map((screen) => ({
+    name: screen.name,
+    type: screen.type,
+    isActive: screen.is_active === 1,
+    openMode: screen.open_mode,
+    isFullscreen: screen.is_fullscreen === 1,
+    sortOrder: screen.sort_order,
+    design: {
       width: screen.width,
       height: screen.height,
+      layouts: JSON.parse(screen.layouts),
       globalSettings: JSON.parse(screen.global_settings),
-      sortOrder: screen.sort_order,
-      contentConfigs: contentConfigsMap,
-    }
-
-    if (nextSlideConfig) {
-      fixture.nextSlideConfig = JSON.parse(nextSlideConfig.config)
-    }
-
-    fixtures.push(fixture)
-  }
+      nextSlide: JSON.parse(screen.next_slide),
+    },
+  }))
 
   const outputPath = join(FIXTURES_DIR, 'default-screens.json')
   writeFixture(outputPath, fixtures)

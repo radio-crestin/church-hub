@@ -1,4 +1,7 @@
-import { ScreenManager } from './screen-manager/ScreenManager'
+import {
+  ScreenManager,
+  type ScreenManagerProps,
+} from './screen-manager/ScreenManager'
 
 const cardClass = 'rounded-xl border border-line bg-panel p-3 sm:p-6'
 
@@ -6,10 +9,10 @@ const cardClass = 'rounded-xl border border-line bg-panel p-3 sm:p-6'
  * Display/screens settings panel. Slide-navigation shortcuts moved to the
  * consolidated Shortcuts settings page (/settings/shortcuts).
  */
-export function ScreenSettingsPanel() {
+export function ScreenSettingsPanel(props: ScreenManagerProps) {
   return (
     <div className={`flex-1 ${cardClass}`}>
-      <ScreenManager />
+      <ScreenManager {...props} />
     </div>
   )
 }

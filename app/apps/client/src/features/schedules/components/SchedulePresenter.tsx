@@ -6,7 +6,9 @@ import {
   ChevronsUpDown,
   Download,
   FileText,
+  LayoutTemplate,
   Loader2,
+  Paintbrush,
   Pencil,
   Play,
   Square,
@@ -34,6 +36,15 @@ import {
   useLoadScheduleFromFile,
   useSaveScheduleToFile,
 } from '~/features/schedule-export'
+import { PresentationThemeEditor } from '~/features/slide-templates/components/PresentationThemeEditor'
+import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
+import { TemplatePickerDialog } from '~/features/slide-templates/components/TemplatePickerDialog'
+import { useAddDeckItem } from '~/features/slides-deck/hooks/useAddDeckItem'
+import { useOpenDeckEditor } from '~/features/slides-deck/hooks/useOpenDeckEditor'
+import { PptxDropChoiceDialog } from '~/features/slides-deck/pptx-import/components/PptxDropChoiceDialog'
+import { PptxImportDialog } from '~/features/slides-deck/pptx-import/components/PptxImportDialog'
+import { useImportPptxItem } from '~/features/slides-deck/pptx-import/hooks/useImportPptxItem'
+import { usePptxDropChoice } from '~/features/slides-deck/pptx-import/hooks/usePptxDropChoice'
 import { KeyLineEditDialog } from '~/features/song-key'
 import { SongEditorModal, SongPickerModal } from '~/features/songs/components'
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
@@ -64,6 +75,14 @@ import {
   useSetScheduleItemAdvance,
   useUpsertSchedule,
 } from '../hooks'
+import {
+  useSetScheduleItemTemplate,
+  useSetScheduleTemplate,
+} from '../hooks/useSetScheduleTemplates'
+import {
+  MediaItemEditors,
+  type MediaItemEditorsHandle,
+} from '../media-items/MediaItemEditors'
 import type { ScheduleItem, SlideTemplate } from '../types'
 import { isAutomationOn } from '../utils/isAutomationOn'
 
@@ -113,6 +132,7 @@ export function SchedulePresenter({
     isError,
     refetch,
   } = useSchedule(scheduleId)
+  const runToggle = useScheduleRunToggle(scheduleId)
 
   // Handle schedule not found - redirect to list with toast
   useEffect(() => {
@@ -143,7 +163,6 @@ export function SchedulePresenter({
   const markSung = useMarkScheduleItemSung()
   const setItemAdvance = useSetScheduleItemAdvance()
   const addItemMutation = useAddItemToSchedule()
-  const runToggle = useScheduleRunToggle(scheduleId)
 
   // Layout state
   const [isLargeScreen, setIsLargeScreen] = useState(false)
@@ -151,6 +170,8 @@ export function SchedulePresenter({
   // URL sync tracking - prevents loops when URL changes
   const lastUrlItemIndexRef = useRef<number | undefined>(undefined)
   const isInternalNavigationRef = useRef(false)
+  // The ?itemIndex= the effect below last acted on.
+  const handledUrlItemIndexRef = useRef<number | undefined>(undefined)
 
   // Title editing state
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -166,6 +187,10 @@ export function SchedulePresenter({
   // presentation runs, or once opened from the menu. Once up it stays, even
   // after its last setting is turned off, until the operator closes it.
   const [automationOpen, setAutomationOpen] = useState(false)
+  // On a phone the template is chosen from the menu, so the name keeps its room.
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
+  // Its own theme, open in the theme editor.
+  const [themeEditorOpen, setThemeEditorOpen] = useState(false)
   const { data: runner } = useScheduleAutomation()
   const automationNeeded =
     (schedule ? isAutomationOn(schedule.automation) : false) ||
@@ -202,6 +227,14 @@ export function SchedulePresenter({
   const [collapseAllTrigger, setCollapseAllTrigger] = useState(0)
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null)
+  const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
+  const addDeck = useAddDeckItem(scheduleId, refetch)
+  const { pptx, importPptx, importPptxFile } = useImportPptxItem(
+    scheduleId,
+    refetch,
+  )
+  const pptxDrop = usePptxDropChoice(importPptxFile)
+  const openDeckEditor = useOpenDeckEditor()
   const importDialogRef = useRef<HTMLDialogElement>(null)
   const { keyLineDialogRef, editKeyLine: handleEditKeyLine } =
     useScheduleKeyLineEditor()
@@ -270,6 +303,8 @@ export function SchedulePresenter({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
+    presentDeckStep,
     presentFlatIndex,
     goNext,
     goPrev,
@@ -282,7 +317,15 @@ export function SchedulePresenter({
   })
 
   // Someone arrived on (or navigated to) a ?itemIndex= URL — put that step up.
+  // Only a new URL counts: the URL lags behind quick presses, and taking an
+  // old one again whenever `presentFlatIndex` changed put a step back up.
   useEffect(() => {
+    if (
+      flatItems.length === 0 ||
+      urlItemIndex === handledUrlItemIndexRef.current
+    )
+      return
+    handledUrlItemIndexRef.current = urlItemIndex
     if (
       urlItemIndex === lastUrlItemIndexRef.current ||
       isInternalNavigationRef.current
@@ -293,9 +336,7 @@ export function SchedulePresenter({
 
     lastUrlItemIndexRef.current = urlItemIndex
 
-    if (urlItemIndex !== undefined && flatItems.length > 0) {
-      void presentFlatIndex(urlItemIndex)
-    }
+    if (urlItemIndex !== undefined) void presentFlatIndex(urlItemIndex)
   }, [urlItemIndex, flatItems.length, presentFlatIndex])
 
   // Title editing handlers
@@ -460,6 +501,8 @@ export function SchedulePresenter({
   // can be given its own time, like PowerPoint's "After" per slide.
   const autoplaySeconds = schedule?.automation.autoplaySeconds ?? null
   const autoplayByText = schedule?.automation.autoplayByText ?? true
+  const setScheduleTemplate = useSetScheduleTemplate()
+  const setItemTemplate = useSetScheduleItemTemplate()
   const itemAdvance = useMemo(
     () =>
       canEditProgram && autoplaySeconds != null
@@ -503,17 +546,25 @@ export function SchedulePresenter({
   )
 
   // Edit item handler (for non-song items)
-  const handleEditItem = useCallback((item: ScheduleItem) => {
-    if (item.itemType === 'song' && item.songId) {
-      setEditingSongId(item.songId)
-    } else if (item.itemType === 'bible_passage') {
-      // Open bible passage picker for editing
-      setEditingBiblePassageItem(item)
-    } else if (item.itemType === 'slide') {
-      // Open slide modal for editing (announcements and versete tineri)
-      setEditingSlideItem(item)
-    }
-  }, [])
+  const handleEditItem = useCallback(
+    (item: ScheduleItem) => {
+      if (mediaEditorsRef.current?.edit(item)) return
+      if (item.itemType === 'slides') {
+        openDeckEditor(item.scheduleId, item.id)
+        return
+      }
+      if (item.itemType === 'song' && item.songId) {
+        setEditingSongId(item.songId)
+      } else if (item.itemType === 'bible_passage') {
+        // Open bible passage picker for editing
+        setEditingBiblePassageItem(item)
+      } else if (item.itemType === 'slide') {
+        // Open slide modal for editing (announcements and versete tineri)
+        setEditingSlideItem(item)
+      }
+    },
+    [openDeckEditor],
+  )
 
   // Change song handler - replace song in schedule with another
   const handleChangeSong = useCallback((item: ScheduleItem) => {
@@ -750,9 +801,11 @@ export function SchedulePresenter({
               )}
             </button>
             <div className="flex items-center gap-1.5">
+              {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
               <button
                 type="button"
                 onClick={() => setShowEditAsText(true)}
+                data-testid="schedule-edit-as-text"
                 className="flex h-8 items-center gap-2 rounded-lg bg-field px-2 text-sm font-medium text-fg transition-colors hover:bg-hover sm:px-3"
               >
                 <FileText size={16} strokeWidth={1.5} />
@@ -771,7 +824,17 @@ export function SchedulePresenter({
                 onAddBiblePassage={handleAddBiblePassage}
                 onAddSlide={handleAddSlide}
                 onAddScene={handleAddScene}
+                onAddMedia={(type) =>
+                  mediaEditorsRef.current?.add(
+                    type,
+                    quickInsertAfterId ?? undefined,
+                  )
+                }
+                onAddDeck={() => addDeck(quickInsertAfterId ?? undefined)}
+                onImportPptx={() => importPptx(quickInsertAfterId ?? undefined)}
               />
+              <PptxImportDialog pptx={pptx} />
+              <PptxDropChoiceDialog choice={pptxDrop} />
             </div>
           </div>
           <div className="flex-1 overflow-hidden p-3 pt-2 lg:min-h-0 lg:p-4">
@@ -784,6 +847,8 @@ export function SchedulePresenter({
               onEntryClick={handleEntryClick}
               onAnnouncementClick={handleAnnouncementClick}
               onSceneClick={handleSceneClick}
+              onVideoClick={presentVideo}
+              onDeckStepClick={presentDeckStep}
               onReorder={handleReorder}
               onEditSong={handleEditSong}
               onNavigateToSong={handleNavigateToSong}
@@ -793,6 +858,17 @@ export function SchedulePresenter({
               onEditKeyLine={handleEditKeyLine}
               onToggleSung={handleToggleSung}
               itemAdvance={itemAdvance}
+              onItemTemplateChange={
+                canEditProgram
+                  ? (item, templateId) =>
+                      setItemTemplate.mutate({
+                        scheduleId,
+                        itemId: item.id,
+                        templateId,
+                      })
+                  : undefined
+              }
+              midiScheduleId={canEditProgram ? scheduleId : undefined}
               onQuickInsert={canEditProgram ? handleQuickInsert : undefined}
               selectedItemId={selectedItemId}
               onSelectItem={selectItem}
@@ -817,16 +893,20 @@ export function SchedulePresenter({
     },
   ]
 
-  // A phone has room only for the menu beside the title, so the program's
-  // whole name stays readable: Run and Delete join the menu there.
-  const phoneRunActions: ActionMenuItem[] = runToggle.canRun
+  // On a phone the header has room for the name and the menu only, so Run
+  // and Delete move into the menu.
+  const phoneRunAction: ActionMenuItem[] = runToggle.allowed
     ? [
         {
           id: 'run-schedule',
-          label: runToggle.label,
+          label: runToggle.progress
+            ? `${runToggle.label} (${runToggle.progress})`
+            : runToggle.label,
+          description: runToggle.description,
           icon: runToggle.isRunning ? <Square size={18} /> : <Play size={18} />,
           onSelect: runToggle.toggle,
           disabled: runToggle.isPending,
+          active: runToggle.isRunning,
           testId: 'schedule-run-action',
         },
       ]
@@ -841,7 +921,7 @@ export function SchedulePresenter({
 
   // Panels only form movable columns on a large screen; renaming works anywhere.
   const menuItems: ActionMenuItem[] = [
-    ...(isLargeScreen ? [] : phoneRunActions),
+    ...(isLargeScreen ? [] : phoneRunAction),
     ...(canEditProgram
       ? [
           {
@@ -861,6 +941,34 @@ export function SchedulePresenter({
             onSelect: handleStartEditTitle,
             testId: 'schedule-rename-action',
           },
+          ...(isLargeScreen
+            ? []
+            : [
+                {
+                  id: 'template',
+                  label: t('presentation:templates.presentation.menu'),
+                  description: t(
+                    'presentation:templates.presentation.menuDescription',
+                  ),
+                  icon: <LayoutTemplate size={18} />,
+                  onSelect: () => setTemplateDialogOpen(true),
+                  testId: 'schedule-template-action',
+                },
+              ]),
+          ...(schedule?.templateId
+            ? [
+                {
+                  id: 'edit-theme',
+                  label: t('presentation:templates.presentation.edit'),
+                  description: t(
+                    'presentation:templates.presentation.editDescription',
+                  ),
+                  icon: <Paintbrush size={18} />,
+                  onSelect: () => setThemeEditorOpen(true),
+                  testId: 'schedule-edit-theme-action',
+                },
+              ]
+            : []),
         ]
       : []),
     {
@@ -973,7 +1081,29 @@ export function SchedulePresenter({
 
         {/* Header action buttons - matching songs/bible design */}
         <div className="flex items-center gap-2 shrink-0">
-          {isLargeScreen && <ScheduleRunButton scheduleId={scheduleId} />}
+          {canEditProgram && isLargeScreen && (
+            <TemplatePicker
+              variant="compact"
+              value={schedule.templateId}
+              noneLabel={t('presentation:templates.presentation.none')}
+              onChange={(templateId) =>
+                setScheduleTemplate.mutate({ scheduleId, templateId })
+              }
+              testId="schedule-template-picker"
+            />
+          )}
+          {canEditProgram && isLargeScreen && schedule.templateId && (
+            <button
+              type="button"
+              onClick={() => setThemeEditorOpen(true)}
+              title={t('presentation:templates.presentation.editDescription')}
+              data-testid="schedule-edit-theme"
+              className="flex h-8 items-center gap-1.5 rounded-lg bg-raised px-3 text-sm font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover"
+            >
+              <Paintbrush className="h-4 w-4" strokeWidth={1.5} />
+              {t('presentation:templates.presentation.edit')}
+            </button>
+          )}
           {isLargeScreen && (
             <button
               type="button"
@@ -1004,6 +1134,24 @@ export function SchedulePresenter({
         stackedAsTabs
         className="lg:flex-1 lg:min-h-0"
       />
+      {themeEditorOpen && schedule.templateId && (
+        <PresentationThemeEditor
+          templateId={schedule.templateId}
+          onClose={() => setThemeEditorOpen(false)}
+        />
+      )}
+      {canEditProgram && !isLargeScreen && (
+        <TemplatePickerDialog
+          open={templateDialogOpen}
+          onClose={() => setTemplateDialogOpen(false)}
+          value={schedule.templateId}
+          noneLabel={t('presentation:templates.presentation.none')}
+          onChange={(templateId) =>
+            setScheduleTemplate.mutate({ scheduleId, templateId })
+          }
+          testId="schedule-template-picker"
+        />
+      )}
       {!isLargeScreen && (
         <PhoneSlideControls
           testId="schedule-phone"
@@ -1017,6 +1165,13 @@ export function SchedulePresenter({
           isHiding={clearTemporary.isPending}
         />
       )}
+
+      <MediaItemEditors
+        ref={mediaEditorsRef}
+        scheduleId={scheduleId}
+        onChanged={refetch}
+        onAddCancelled={handleReopenAddMenu}
+      />
 
       {/* Song Picker Modal — only for replacing an existing song; adding a new
           one happens inside AddScheduleItemModal. */}
@@ -1046,7 +1201,10 @@ export function SchedulePresenter({
                 id: editingSlideItem.id,
                 slideType: editingSlideItem.slideType,
                 slideContent: editingSlideItem.slideContent,
-                verseteTineriEntries: editingSlideItem.verseteTineriEntries,
+                verseteTineriEntries:
+                  editingSlideItem.allVerseteTineriEntries ??
+                  editingSlideItem.verseteTineriEntries,
+                itemConfig: editingSlideItem.itemConfig,
               }
             : undefined
         }
@@ -1114,7 +1272,7 @@ export function SchedulePresenter({
         onClick={(e) => {
           if (e.target === deleteDialogRef.current) setShowDeleteConfirm(false)
         }}
-        className="fixed inset-0 m-auto w-full max-w-sm p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-sm p-0 bg-panel rounded-xl border border-line shadow-popover backdrop:bg-black/50"
       >
         <div className="p-6">
           <h3 className="text-base font-semibold text-fg mb-2">
@@ -1162,7 +1320,7 @@ export function SchedulePresenter({
             setImportData(null)
           }
         }}
-        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl border border-line shadow-popover backdrop:bg-black/50"
       >
         <div className="p-6">
           <h3 className="text-base font-semibold text-fg mb-2">

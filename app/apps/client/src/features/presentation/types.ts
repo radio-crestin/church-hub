@@ -1,3 +1,4 @@
+import type { DeckSlide } from '~/features/slides-deck/types'
 import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 
 /**
@@ -135,6 +136,8 @@ export interface TemporarySongContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last slide)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -146,6 +149,8 @@ export interface TemporaryAnnouncementContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -181,6 +186,8 @@ export interface TemporaryBiblePassageContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last verse)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -216,6 +223,8 @@ export interface TemporaryVerseteTineriContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (when at last entry)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -227,6 +236,8 @@ export interface TemporarySceneContent {
   nextItemPreview?: NextItemPreview // Preview of next schedule item
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -239,13 +250,15 @@ export interface TemporaryScreenShareContent {
   startedAt: number
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
 /**
  * Union type for temporary content
  */
-export type TemporaryContent =
+export type TemporaryContent = (
   | { type: 'bible'; data: TemporaryBibleContent }
   | { type: 'song'; data: TemporarySongContent }
   | { type: 'announcement'; data: TemporaryAnnouncementContent }
@@ -253,6 +266,55 @@ export type TemporaryContent =
   | { type: 'versete_tineri'; data: TemporaryVerseteTineriContent }
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
+  | { type: 'video'; data: TemporaryVideoContent }
+  | { type: 'deck_slide'; data: TemporaryDeckSlideContent }
+) & {
+  /**
+   * The looping video a presentation shows behind its steps after a video
+   * item set as their background (main and kiosk screens); absent otherwise.
+   */
+  presentationBackground?: PresentationBackground | null
+}
+
+/** A presentation's background video (`/api/media/backgrounds/<id>`). */
+export interface PresentationBackground {
+  url: string
+}
+
+/**
+ * A presentation's video item, played full screen on the displays
+ */
+export interface TemporaryVideoContent {
+  /** The gallery video's id and URL (`/api/media/backgrounds/<id>`) */
+  mediaId: string
+  url: string
+  /** Plays again from the start when it ends, until the step changes. */
+  loop?: boolean
+  nextItemPreview?: NextItemPreview
+  scheduleId?: number
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/**
+ * One slide of a presentation's Slides item, with its click groups up to
+ * `buildIndex` played (the server's TemporaryDeckSlideContent).
+ */
+export interface TemporaryDeckSlideContent {
+  itemId: number
+  /** The deck's design size. */
+  width: number
+  height: number
+  slide: DeckSlide
+  slideIndex: number
+  slideCount: number
+  /** 0: the slide as it comes in; each Down plays one more click group. */
+  buildIndex: number
+  nextItemPreview?: NextItemPreview
+  scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
+  scheduleItemIndex?: number // Index in flatItems for navigation
+}
 
 /**
  * Input for presenting a temporary Bible verse
@@ -283,6 +345,8 @@ export interface PresentTemporarySongInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -301,6 +365,8 @@ export interface PresentTemporaryAnnouncementInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -327,6 +393,8 @@ export interface PresentTemporaryBiblePassageInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -342,6 +410,8 @@ export interface PresentTemporaryVerseteTineriInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -353,6 +423,8 @@ export interface PresentTemporarySceneInput {
   nextItemPreview?: NextItemPreview // Preview of next schedule item (for schedule presentations)
   // Schedule context (for deep-linking back to schedule)
   scheduleId?: number
+  /** The slide template screens that follow presentations draw it with. */
+  templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
 }
 
@@ -378,6 +450,8 @@ export type ContentType =
   | 'versete_tineri'
   | 'screen_share'
   | 'empty'
+  /** A Slides item's slide: drawn with its own design, no layout of a template. */
+  | 'deck_slide'
 
 /**
  * Position unit - pixels or percentage
@@ -717,6 +791,8 @@ export interface ContentConfigMap {
   versete_tineri: VerseteTineriContentConfig
   empty: EmptyContentConfig
   screen_share: ScreenShareContentConfig
+  /** A deck slide brings its own design: templates have no layout for it. */
+  deck_slide?: undefined
 }
 
 /**
@@ -770,6 +846,13 @@ export interface Screen {
    * null to open wherever the window lands.
    */
   monitorName: string | null
+  /** The slide template this screen draws with. */
+  templateId: number
+  /** A running presentation restyles this screen with its own template. */
+  followsPresentation: boolean
+  /** While one of these OBS scenes is live, the screen draws with its template. */
+  sceneTemplates: Record<string, number>
+  /** The design canvas, the clock and fallback background: its template's. */
   width: number
   height: number
   globalSettings: ScreenGlobalSettings
@@ -795,10 +878,9 @@ export interface ScreenContentConfigEntity {
  */
 export interface ScreenWithConfigs extends Screen {
   contentConfigs: {
-    [K in ContentType]: ContentConfigMap[K]
+    [K in keyof ContentConfigMap]: ContentConfigMap[K]
   }
-  nextSlideConfig?: NextSlideSectionConfig
-  sceneOverrides?: Record<string, Record<string, Record<string, unknown>>>
+  nextSlideConfig: NextSlideSectionConfig
 }
 
 /**
@@ -817,6 +899,10 @@ export interface UpsertScreenInput {
   openOnStartup?: boolean
   /** Monitor to project onto, or null to open wherever the window lands. */
   monitorName?: string | null
+  /** Draw with this template. */
+  templateId?: number
+  followsPresentation?: boolean
+  /** Written to the screen's own template (copied first when bundled). */
   width?: number
   height?: number
   globalSettings?: ScreenGlobalSettings

@@ -329,7 +329,10 @@ export function ScheduleItemList({
           isOpen={editingVerseteTineriItem !== null}
           scheduleId={scheduleId}
           itemId={editingVerseteTineriItem.id}
-          entries={editingVerseteTineriItem.verseteTineriEntries}
+          entries={
+            editingVerseteTineriItem.allVerseteTineriEntries ??
+            editingVerseteTineriItem.verseteTineriEntries
+          }
           onClose={() => setEditingVerseteTineriItem(null)}
           onSaved={() => {
             // Schedule will be invalidated automatically

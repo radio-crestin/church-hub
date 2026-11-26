@@ -1,4 +1,5 @@
 export * from './highlights'
+export * from './notifyScreenDesignChanged'
 export * from './presentation-state'
 export * from './screens'
 export * from './types'

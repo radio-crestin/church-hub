@@ -33,6 +33,15 @@ export type PresentedScheduleInfo =
       scheduleId?: number
       scheduleItemIndex: number
     }
+  | { type: 'video'; scheduleId?: number; scheduleItemIndex: number }
+  | {
+      type: 'deck_slide'
+      itemId: number
+      slideIndex: number
+      buildIndex: number
+      scheduleId?: number
+      scheduleItemIndex: number
+    }
 
 /**
  * Reads the live presentation state into a shape the program panels can match
@@ -77,6 +86,21 @@ export function derivePresentedScheduleInfo(
       return {
         type: 'scene',
         obsSceneName: temporaryContent.data.obsSceneName,
+        scheduleId: temporaryContent.data.scheduleId,
+        scheduleItemIndex: temporaryContent.data.scheduleItemIndex ?? -1,
+      }
+    case 'video':
+      return {
+        type: 'video',
+        scheduleId: temporaryContent.data.scheduleId,
+        scheduleItemIndex: temporaryContent.data.scheduleItemIndex ?? -1,
+      }
+    case 'deck_slide':
+      return {
+        type: 'deck_slide',
+        itemId: temporaryContent.data.itemId,
+        slideIndex: temporaryContent.data.slideIndex,
+        buildIndex: temporaryContent.data.buildIndex,
         scheduleId: temporaryContent.data.scheduleId,
         scheduleItemIndex: temporaryContent.data.scheduleItemIndex ?? -1,
       }

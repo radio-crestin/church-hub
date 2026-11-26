@@ -2,9 +2,9 @@ import { Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SettingsSection } from '~/features/settings/components/SettingsSection'
+import { NativeSelect } from '~/ui/select'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import type { SetSetting, YouTubeSettingsDraft } from './useYouTubeSettingsForm'
-import { NativeSelect } from '../settings-page/NativeSelect'
 import { SettingField } from '../settings-page/SettingField'
 
 interface YouTubeAudienceSectionProps {

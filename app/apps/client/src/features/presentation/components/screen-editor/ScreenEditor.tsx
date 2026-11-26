@@ -1,17 +1,15 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { Monitor, RotateCcw, Save, X, ZoomIn, ZoomOut } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { RotateCcw, Save, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button/Button'
-import { Combobox } from '~/ui/combobox/Combobox'
+import { DesignPanel } from './design/DesignPanel'
 import { useEditorState } from './hooks/useEditorState'
 import { ScreenEditorCanvas } from './ScreenEditorCanvas'
 import { ScreenEditorSidebar } from './ScreenEditorSidebar'
-import { useOBSScenes } from '../../../livestream/hooks'
+import { SlideTypeStrip } from './SlideTypeStrip'
+import { toTemplateDesign } from './toTemplateDesign'
 import { useWebSocket } from '../../hooks'
-import { useUpsertSceneOverride } from '../../hooks/useSceneOverrides'
-import { screenQueryKey } from '../../hooks/useScreen'
 import type {
   Constraints,
   ContentType,
@@ -20,141 +18,79 @@ import type {
 } from '../../types'
 
 interface ScreenEditorProps {
+  /**
+   * The screen drawing the template being edited, kept current: a save made
+   * elsewhere while editing arrives through it.
+   */
   screen: ScreenWithConfigs
-  /** The slide type shown first (the song by default). */
+  /** The template's name, shown as the title. */
+  title: string
+  /** The slide shown first (the song by default). */
   initialContentType?: ContentType
   onSave: (screen: ScreenWithConfigs) => Promise<void>
   onClose: () => void
 }
 
-const CONTENT_TYPE_VALUES: ContentType[] = [
-  'song',
-  'song_first_slide',
-  'song_last_slide',
-  'bible',
-  'bible_passage',
-  'announcement',
-  'versete_tineri',
-  'empty',
-  'screen_share',
-]
-
-const getContentTypeOptions = (
-  t: (key: string) => string,
-): { value: ContentType; label: string }[] =>
-  CONTENT_TYPE_VALUES.map((value) => ({
-    value,
-    label: t(`screens.contentTypes.${value}`),
-  }))
-
+/**
+ * Edits a slide template: one layout per slide type, the clock and the
+ * next-slide strip. Every screen drawing with the template shows the unsaved
+ * design live, and goes back to the saved one when editing is left unsaved.
+ */
 export function ScreenEditor({
-  screen: initialScreen,
+  screen,
+  title,
   initialContentType,
   onSave,
   onClose,
 }: ScreenEditorProps) {
   const [state, actions] = useEditorState()
   const { t } = useTranslation('presentation')
-  const contentTypeOptions = useMemo(() => getContentTypeOptions(t), [t])
   const { send } = useWebSocket()
-  const queryClient = useQueryClient()
   const lastEmitRef = useRef<number>(0)
-  const isLocalUpdateRef = useRef<boolean>(false)
-  // Use a version counter to track save operations - more reliable than timeout
-  const saveVersionRef = useRef<number>(0)
-  const lastAppliedVersionRef = useRef<number>(0)
+  const savingRef = useRef(false)
   // Portal container for dropdowns - use state to trigger re-render when set
   const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(
     null,
   )
-  const { scenes } = useOBSScenes()
-  const upsertSceneOverrideMutation = useUpsertSceneOverride()
-
-  // Scene selector options
-  const sceneOptions = useMemo(() => {
-    const opts: { value: string; label: string }[] = [
-      { value: '__default__', label: t('screens.editor.noScene') },
-    ]
-    for (const scene of scenes) {
-      opts.push({
-        value: scene.obsSceneName,
-        label: scene.displayName || scene.obsSceneName,
-      })
-    }
-    return opts
-  }, [scenes, t])
+  // The right pane: the whole theme's design, or the chosen slide's own.
+  const [pane, setPane] = useState<'design' | 'slide'>('slide')
 
   // Initialize editor with screen data (only on mount)
   useEffect(() => {
-    actions.setScreen(initialScreen)
+    actions.setScreen(screen)
     if (initialContentType) actions.setSelectedContentType(initialContentType)
-    // Set initial version to match the current data
-    lastAppliedVersionRef.current = Date.now()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Subscribe to React Query cache changes for this screen (from WebSocket updates)
+  // A save made elsewhere while editing (keeps this editor's unsaved state flag)
+  const firstScreenRef = useRef(screen)
   useEffect(() => {
-    const queryKey = screenQueryKey(initialScreen.id)
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (
-        event.type === 'updated' &&
-        event.query.queryKey[0] === queryKey[0] &&
-        event.query.queryKey[1] === queryKey[1]
-      ) {
-        // Skip if we're in the middle of a save (saveVersionRef is newer than lastAppliedVersionRef)
-        // This is more robust than a timeout - we track the actual save operation
-        if (saveVersionRef.current > lastAppliedVersionRef.current) {
-          // Update the last applied version to the save version after save completes
-          lastAppliedVersionRef.current = saveVersionRef.current
-          return
-        }
+    if (screen === firstScreenRef.current || savingRef.current) return
+    actions.setScreenExternal(screen)
+  }, [screen, actions])
 
-        // Skip if this is our own local update
-        if (isLocalUpdateRef.current) {
-          isLocalUpdateRef.current = false
-          return
-        }
+  const templateId = screen.templateId
+  const sendPreview = useCallback(
+    (design: ReturnType<typeof toTemplateDesign> | null) =>
+      send({ type: 'slide_template_preview', payload: { templateId, design } }),
+    [send, templateId],
+  )
 
-        const newData = event.query.state.data as ScreenWithConfigs | undefined
-        if (newData) {
-          // Update local state with external changes (preserves isDirty)
-          actions.setScreenExternal(newData)
-          lastAppliedVersionRef.current = Date.now()
-        }
-      }
-    })
-
-    return () => unsubscribe()
-  }, [initialScreen.id, queryClient, actions])
-
-  // Emit config changes via WebSocket (debounced to avoid flooding)
+  // Emit the unsaved design (debounced to avoid flooding)
   useEffect(() => {
-    if (!state.effectiveScreen || !state.isDirty) return
-
+    if (!state.screen || !state.isDirty) return
+    const design = toTemplateDesign(state.screen)
     const emitUpdate = () => {
-      // Mark as local update to prevent echo back
-      isLocalUpdateRef.current = true
-      send({
-        type: 'screen_config_preview',
-        payload: {
-          screenId: state.effectiveScreen!.id,
-          config: state.effectiveScreen,
-        },
-      })
+      sendPreview(design)
       lastEmitRef.current = Date.now()
     }
-
-    const now = Date.now()
-    // Debounce: emit at most every 100ms
-    const timeSinceLastEmit = now - lastEmitRef.current
+    const timeSinceLastEmit = Date.now() - lastEmitRef.current
     if (timeSinceLastEmit < 100) {
       const timeoutId = setTimeout(emitUpdate, 100 - timeSinceLastEmit)
       return () => clearTimeout(timeoutId)
     }
-
     emitUpdate()
-  }, [state.effectiveScreen, state.isDirty, send])
+  }, [state.screen, state.isDirty, sendPreview])
 
   const handleZoomIn = useCallback(() => {
     actions.setZoom(Math.min(state.zoom + 0.25, 2))
@@ -170,75 +106,31 @@ export function ScreenEditor({
 
   const handleSave = useCallback(async () => {
     if (!state.screen) return
-    // Mark the save version so we can ignore cache updates during/after save
-    saveVersionRef.current = Date.now()
+    savingRef.current = true
     try {
       await onSave(state.screen)
-
-      // Save scene overrides
-      if (state.screen.sceneOverrides) {
-        for (const [sceneName, configs] of Object.entries(
-          state.screen.sceneOverrides,
-        )) {
-          for (const [contentType, config] of Object.entries(configs)) {
-            await upsertSceneOverrideMutation.mutateAsync({
-              screenId: state.screen.id,
-              obsSceneName: sceneName,
-              contentType: contentType as ContentType,
-              config: config as Record<string, unknown>,
-            })
-          }
-        }
-      }
-
       actions.markClean()
-      // Update the last applied version to match the save version
-      lastAppliedVersionRef.current = saveVersionRef.current
-      // Emit final saved config
-      send({
-        type: 'screen_config_preview',
-        payload: {
-          screenId: state.screen.id,
-          config: state.effectiveScreen,
-        },
-      })
-    } catch {
-      // On error, reset the save version so we don't ignore future updates
-      saveVersionRef.current = lastAppliedVersionRef.current
-      throw new Error('Save failed')
+    } finally {
+      savingRef.current = false
     }
-  }, [
-    state.screen,
-    state.effectiveScreen,
-    onSave,
-    actions,
-    send,
-    upsertSceneOverrideMutation,
-  ])
+  }, [state.screen, onSave, actions])
 
   const handleClose = useCallback(() => {
-    // Emit final config before closing (in case there are unsaved preview changes)
-    if (state.effectiveScreen) {
-      send({
-        type: 'screen_config_preview',
-        payload: {
-          screenId: state.effectiveScreen.id,
-          config: initialScreen, // Revert to original config on close without save
-        },
-      })
-    }
+    // Screens showing the unsaved design go back to the saved one
+    if (state.isDirty) sendPreview(null)
     onClose()
-  }, [state.effectiveScreen, initialScreen, send, onClose])
+  }, [state.isDirty, sendPreview, onClose])
 
   const handleUpdateElement = useCallback(
     (
       elementType: string,
       updates: { constraints?: Constraints; size?: SizeWithUnits },
     ) => {
-      if (!state.effectiveScreen) return
+      if (!state.screen) return
 
-      const config =
-        state.effectiveScreen.contentConfigs[state.selectedContentType]
+      const config = state.screen.contentConfigs[state.selectedContentType]
+      // A deck slide has no layout to edit.
+      if (!config) return
       const newConfig = { ...config }
 
       // Update the specific element with constraints and size
@@ -301,22 +193,19 @@ export function ScreenEditor({
         }
       } else if (
         elementType === 'clock' &&
-        state.effectiveScreen.globalSettings.clockConfig
+        state.screen.globalSettings.clockConfig
       ) {
         // Clock uses global settings, not content config
         actions.updateGlobalSettings({
-          ...state.effectiveScreen.globalSettings,
+          ...state.screen.globalSettings,
           clockConfig: {
-            ...state.effectiveScreen.globalSettings.clockConfig,
+            ...state.screen.globalSettings.clockConfig,
             ...(updates.constraints && { constraints: updates.constraints }),
             ...(updates.size && { size: updates.size }),
           },
         })
         return
-      } else if (
-        elementType === 'nextSlide' &&
-        state.effectiveScreen.nextSlideConfig
-      ) {
+      } else if (elementType === 'nextSlide' && state.screen.nextSlideConfig) {
         // Pass only the changed fields - updateNextSlideConfig will merge with previous state
         actions.updateNextSlideConfig({
           ...(updates.constraints && { constraints: updates.constraints }),
@@ -330,10 +219,10 @@ export function ScreenEditor({
         newConfig as typeof config,
       )
     },
-    [state.effectiveScreen, state.selectedContentType, actions],
+    [state.screen, state.selectedContentType, actions],
   )
 
-  if (!state.effectiveScreen) {
+  if (!state.screen) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-fg-hint">Loading...</div>
@@ -347,56 +236,10 @@ export function ScreenEditor({
           type picker under them; one row from sm up */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 sm:px-4 py-2 sm:py-3 border-b border-line bg-panel">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-none">
-          <h2 className="text-base font-semibold text-fg truncate">
-            {state.effectiveScreen.name}
-          </h2>
-          <span className="text-xs text-fg-hint flex-shrink-0">
-            {t(`screens.screenTypes.${state.effectiveScreen.type}`)}
-          </span>
+          <h2 className="text-base font-semibold text-fg truncate">{title}</h2>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 order-last sm:order-none w-full sm:w-auto sm:ml-auto">
-          {/* Scene selector (only shown when OBS scenes exist) */}
-          {scenes.length > 0 && (
-            <div className="flex items-center gap-2 min-w-0">
-              <Monitor
-                size={16}
-                strokeWidth={1.5}
-                className="flex-shrink-0 text-fg-hint"
-              />
-              <Combobox
-                value={state.selectedScene ?? '__default__'}
-                onChange={(value) => {
-                  actions.setSelectedScene(
-                    value === '__default__' ? null : (value as string),
-                  )
-                  actions.clearSelection()
-                }}
-                options={sceneOptions}
-                className="flex-1 min-w-0 sm:flex-none sm:w-56"
-                portalContainer={portalContainer}
-              />
-            </div>
-          )}
-
-          {/* The slide type whose layout is being edited */}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm text-fg-hint whitespace-nowrap">
-              {t('screens.editor.slideType')}
-            </span>
-            <Combobox
-              value={state.selectedContentType}
-              onChange={(value) => {
-                actions.setSelectedContentType(value as ContentType)
-                actions.clearSelection()
-              }}
-              options={contentTypeOptions}
-              className="flex-1 min-w-0 sm:flex-none sm:w-56"
-              portalContainer={portalContainer}
-              testId="screen-editor-content-type"
-            />
-          </div>
-
           {/* Zoom controls: pinch zoom does it on a phone */}
           <div className="hidden sm:flex items-center gap-1 border-l border-line pl-4">
             <Button
@@ -469,36 +312,81 @@ export function ScreenEditor({
       {/* Main content: stacked on mobile (canvas on top, controls below),
           side-by-side from md up */}
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
+        {/* Every slide type as a slide, like PowerPoint's slide list */}
+        <SlideTypeStrip
+          screen={state.screen}
+          selected={state.selectedContentType}
+          onSelect={(contentType) => {
+            actions.setSelectedContentType(contentType)
+            actions.clearSelection()
+          }}
+        />
+
         {/* Canvas area */}
         <ScreenEditorCanvas
-          screen={state.effectiveScreen}
+          screen={state.screen}
           contentType={state.selectedContentType}
           selectedElement={state.selectedElement}
           zoom={state.zoom}
           previewTexts={state.previewTexts[state.selectedContentType]}
-          onSelectElement={actions.setSelectedElement}
+          onSelectElement={(element) => {
+            actions.setSelectedElement(element)
+            if (element) setPane('slide')
+          }}
           onUpdateElement={handleUpdateElement}
         />
 
-        {/* Right sidebar */}
-        <ScreenEditorSidebar
-          screen={state.effectiveScreen}
-          contentType={state.selectedContentType}
-          selectedElement={state.selectedElement}
-          previewTexts={state.previewTexts[state.selectedContentType]}
-          onSetPreviewText={(key, text) =>
-            actions.setPreviewText(state.selectedContentType, key, text)
-          }
-          onResetPreviewTexts={() =>
-            actions.resetPreviewTexts(state.selectedContentType)
-          }
-          onSelectElement={actions.setSelectedElement}
-          onUpdateContentConfig={actions.updateContentConfig}
-          onUpdateNextSlideConfig={actions.updateNextSlideConfig}
-          onUpdateGlobalSettings={actions.updateGlobalSettings}
-          onUpdateScreenDimensions={actions.updateScreenDimensions}
-          portalContainer={portalContainer}
-        />
+        {/* Right pane: the theme's design, or this slide's settings */}
+        <div className="w-full flex-1 min-h-0 md:flex-none md:w-96 md:flex-shrink-0 bg-panel border-t md:border-t-0 md:border-l border-line overflow-y-auto">
+          <div
+            role="tablist"
+            className="sticky top-0 z-10 flex gap-1 border-b border-line bg-panel p-2"
+          >
+            {(['design', 'slide'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={pane === value}
+                data-testid={`screen-editor-tab-${value}`}
+                onClick={() => setPane(value)}
+                className={`flex-1 h-8 rounded-lg text-sm font-medium transition-colors ${
+                  pane === value
+                    ? 'bg-selected text-fg'
+                    : 'text-fg-label hover:bg-hover hover:text-fg'
+                }`}
+              >
+                {t(`templates.editor.${value}`)}
+              </button>
+            ))}
+          </div>
+          {pane === 'design' ? (
+            <DesignPanel
+              screen={state.screen}
+              onChange={actions.updateScreen}
+              portalContainer={portalContainer}
+            />
+          ) : (
+            <ScreenEditorSidebar
+              screen={state.screen}
+              contentType={state.selectedContentType}
+              selectedElement={state.selectedElement}
+              previewTexts={state.previewTexts[state.selectedContentType]}
+              onSetPreviewText={(key, text) =>
+                actions.setPreviewText(state.selectedContentType, key, text)
+              }
+              onResetPreviewTexts={() =>
+                actions.resetPreviewTexts(state.selectedContentType)
+              }
+              onSelectElement={actions.setSelectedElement}
+              onUpdateContentConfig={actions.updateContentConfig}
+              onUpdateNextSlideConfig={actions.updateNextSlideConfig}
+              onUpdateGlobalSettings={actions.updateGlobalSettings}
+              onUpdateScreenDimensions={actions.updateScreenDimensions}
+              portalContainer={portalContainer}
+            />
+          )}
+        </div>
       </div>
       {/* Portal container for dropdowns - rendered last to be on top */}
       <div

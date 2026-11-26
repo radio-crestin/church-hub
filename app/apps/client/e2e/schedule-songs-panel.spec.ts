@@ -1023,11 +1023,11 @@ test.describe('Song list row actions', () => {
         )
       })
 
-      await expect(page.locator('text=/powerpoint|pptx/i').first()).toBeVisible(
-        {
-          timeout: 5000,
-        },
-      )
+      // The overlay itself: the closed Add menu and PowerPoint import dialogs
+      // also say "PowerPoint".
+      const overlay = page.getByTestId('file-drop-overlay')
+      await expect(overlay).toBeVisible({ timeout: 5000 })
+      await expect(overlay).toContainText(/powerpoint|pptx/i)
     } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
     }

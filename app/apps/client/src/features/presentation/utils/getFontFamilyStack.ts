@@ -27,6 +27,11 @@ const FONT_STACKS: Record<string, string[]> = {
     'Noto Sans',
     'sans-serif',
   ],
+  // Office's fonts, for imported PowerPoint slides: the bundled
+  // metric-compatible stand-in (officeFonts.css) keeps their line breaks.
+  calibri: ['Calibri', 'Carlito', 'sans-serif'],
+  'calibri light': ['Calibri Light', 'Calibri', 'Carlito', 'sans-serif'],
+  cambria: ['Cambria', 'Caladea', 'serif'],
   arial: ['Arial', 'Helvetica', 'Liberation Sans', 'Arimo', 'sans-serif'],
   georgia: ['Georgia', 'Gelasio', 'DejaVu Serif', 'serif'],
   'times new roman': [

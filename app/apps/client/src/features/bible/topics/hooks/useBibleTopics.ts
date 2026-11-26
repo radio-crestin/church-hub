@@ -4,11 +4,12 @@ import { getBibleTopic, getBibleTopics } from '../service/getBibleTopics'
 
 export const BIBLE_TOPICS_QUERY_KEY = ['bible', 'topics'] as const
 
-export function useBibleTopics() {
+export function useBibleTopics({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: BIBLE_TOPICS_QUERY_KEY,
     queryFn: getBibleTopics,
     staleTime: 10 * 60 * 1000,
+    enabled,
   })
 }
 
