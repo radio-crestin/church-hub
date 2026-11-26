@@ -22,6 +22,7 @@ export {
   type OwnerSignInIntent,
   startOwnerSignIn,
 } from './cloud/ownerSignIn'
+export { signOutUserDevices } from './cloud/signOutUserDevices'
 export {
   APP_DATA_FOLDER,
   LIBRARY_FILE_NAME,
