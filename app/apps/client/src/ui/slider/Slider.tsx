@@ -12,6 +12,8 @@ interface SliderProps {
   className?: string
   showValue?: boolean
   formatValue?: (value: number) => string
+  /** What the slider sets, for screen readers */
+  label?: string
   /** Test id of the range input */
   testId?: string
 }
@@ -29,6 +31,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
       className = '',
       showValue = true,
       formatValue,
+      label,
       testId,
     },
     ref,
@@ -62,6 +65,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
           ref={ref}
           type="range"
           data-testid={testId}
+          aria-label={label}
           value={value[0]}
           onChange={(e) => {
             // The user's moves are input events; the change event that ends a

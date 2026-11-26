@@ -1,4 +1,4 @@
-import { Music, X } from 'lucide-react'
+import { Music, Play, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '~/ui/page'
@@ -54,7 +54,7 @@ export function QueueList({
         >
           <div className="w-5 h-5 shrink-0 flex items-center justify-center text-xs font-medium tabular-nums text-fg-hint">
             {index === currentIndex ? (
-              <span className="text-live">{'\u25B6'}</span>
+              <Play className="h-3 w-3 fill-current text-live" />
             ) : (
               index + 1
             )}
@@ -76,10 +76,11 @@ export function QueueList({
               e.stopPropagation()
               onRemoveFromQueue(item.id)
             }}
-            className="p-1 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-hover rounded-md transition-opacity"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-opacity hover:bg-hover lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
             title={t('player.removeFromQueue')}
+            aria-label={t('player.removeFromQueue')}
           >
-            <X className="w-3 h-3 text-fg-label" strokeWidth={2} />
+            <X className="h-3.5 w-3.5 text-fg-label" strokeWidth={1.75} />
           </button>
         </div>
       ))}

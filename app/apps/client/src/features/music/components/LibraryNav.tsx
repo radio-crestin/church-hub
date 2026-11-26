@@ -1,8 +1,8 @@
 import { Clock, Folder, ListMusic, Music } from 'lucide-react'
-import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { LibraryNavItem } from './LibraryNavItem'
+import { MusicSection } from './MusicSection'
 import { useMusicFiles, useMusicFolders, usePlaylists } from '../hooks'
 import type { LibraryView } from '../types'
 
@@ -18,18 +18,9 @@ function isView(view: LibraryView, other: LibraryView): boolean {
   )
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="space-y-1">
-      <h3 className="px-3 pb-1 text-xs font-medium text-fg-hint">{title}</h3>
-      {children}
-    </section>
-  )
-}
-
 /**
- * The views of the music: all of it, the recently played, each playlist and
- * each folder. A column on a large screen, a row to scroll on a phone.
+ * The views of the music, in three sections: the whole library and the
+ * recently played, the playlists, the folders.
  */
 export function LibraryNav({ view, onSelect }: LibraryNavProps) {
   const { t } = useTranslation('music')
@@ -61,49 +52,70 @@ export function LibraryNav({ view, onSelect }: LibraryNavProps) {
     <nav
       aria-label={t('library.title')}
       data-testid="music-library-nav"
-      className="flex flex-col gap-4"
+      className="flex flex-col divide-y divide-line"
     >
-      <Section title={t('library.title')}>
-        {item(
-          { kind: 'all' },
-          Music,
-          t('library.all'),
-          totalCount,
-          'music-view-all',
-        )}
-        {item(
-          { kind: 'recent' },
-          Clock,
-          t('library.recent'),
-          recent.length,
-          'music-view-recent',
-        )}
-      </Section>
-      <Section title={t('playlist.title')}>
+      <MusicSection title={t('library.title')} testId="music-library">
+        <div className="flex flex-col gap-0.5">
+          {item(
+            { kind: 'all' },
+            Music,
+            t('library.all'),
+            totalCount,
+            'music-view-all',
+          )}
+          {item(
+            { kind: 'recent' },
+            Clock,
+            t('library.recent'),
+            recent.length,
+            'music-view-recent',
+          )}
+        </div>
+      </MusicSection>
+      <MusicSection
+        title={t('playlist.title')}
+        variant="group"
+        testId="music-playlists"
+      >
         {playlists.length === 0 && (
-          <p className="px-3 text-sm text-fg-hint">{t('playlist.empty')}</p>
+          <p className="px-2.5 pb-1 text-sm text-fg-hint">
+            {t('playlist.empty')}
+          </p>
         )}
-        {playlists.map((playlist) =>
-          item(
-            { kind: 'playlist', id: playlist.id },
-            ListMusic,
-            playlist.name,
-            playlist.itemCount,
-            `music-view-playlist-${playlist.id}`,
-          ),
+        <div className="flex flex-col gap-0.5 empty:hidden">
+          {playlists.map((playlist) =>
+            item(
+              { kind: 'playlist', id: playlist.id },
+              ListMusic,
+              playlist.name,
+              playlist.itemCount,
+              `music-view-playlist-${playlist.id}`,
+            ),
+          )}
+        </div>
+      </MusicSection>
+      <MusicSection
+        title={t('folders.title')}
+        variant="group"
+        testId="music-folders"
+      >
+        {folders.length === 0 && (
+          <p className="px-2.5 pb-1 text-sm text-fg-hint">
+            {t('folders.empty')}
+          </p>
         )}
-      </Section>
-      <Section title={t('folders.title')}>
-        {folders.map((folder) =>
-          item(
-            { kind: 'folder', id: folder.id },
-            Folder,
-            folder.name,
-            folder.fileCount,
-            `music-view-folder-${folder.id}`,
-          ),
-        )}
-      </Section>
+        <div className="flex flex-col gap-0.5 empty:hidden">
+          {folders.map((folder) =>
+            item(
+              { kind: 'folder', id: folder.id },
+              Folder,
+              folder.name,
+              folder.fileCount,
+              `music-view-folder-${folder.id}`,
+            ),
+          )}
+        </div>
+      </MusicSection>
     </nav>
   )
 }

@@ -1,8 +1,6 @@
-import { ListPlus } from 'lucide-react'
-import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
-import { type ReactNode, useCallback, useState } from 'react'
+import { ListMusic } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import 'overlayscrollbars/overlayscrollbars.css'
 
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
 import { useEditLayoutAction, Workspace } from '~/features/workspace'
@@ -12,10 +10,11 @@ import { ActionMenu } from '~/ui/menu'
 import { Page, PageHeader } from '~/ui/page'
 import { AddFolderButton } from './AddFolderButton'
 import { LibraryNav } from './LibraryNav'
+import { MusicPanel } from './MusicPanel'
 import { NameModal } from './NameModal'
-import { PlayerCard } from './PlayerCard'
 import { PlayerDeck } from './PlayerDeck'
 import { PlayerQueue } from './PlayerQueue'
+import { Scrollable } from './Scrollable'
 import { TrackPanel } from './TrackPanel'
 import {
   useAddToPlaylist,
@@ -39,25 +38,6 @@ const MUSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
     { id: 'col-2', panelIds: ['tracks'] },
     { id: 'col-3', panelIds: ['player'] },
   ],
-}
-
-function Scrollable({
-  enabled,
-  children,
-}: {
-  enabled: boolean
-  children: ReactNode
-}) {
-  if (!enabled) return children
-  return (
-    <OverlayScrollbarsComponent
-      className="h-full"
-      options={{ scrollbars: { autoHide: 'scroll', autoHideDelay: 400 } }}
-      defer
-    >
-      {children}
-    </OverlayScrollbarsComponent>
-  )
 }
 
 export function MusicPage() {
@@ -120,9 +100,9 @@ export function MusicPage() {
       pinned: true,
       available: !isLargeScreen,
       render: () => (
-        <PlayerCard>
+        <MusicPanel>
           <PlayerDeck player={player} />
-        </PlayerCard>
+        </MusicPanel>
       ),
     },
     {
@@ -130,20 +110,19 @@ export function MusicPage() {
       title: t('player.title'),
       available: isLargeScreen,
       render: () => (
-        <PlayerCard>
+        <MusicPanel>
           <PlayerDeck player={player} />
-          <div className="flex flex-col lg:flex-1 lg:min-h-0 border-t border-line">
-            <PlayerQueue player={player} />
-          </div>
-        </PlayerCard>
+          <PlayerQueue player={player} />
+        </MusicPanel>
       ),
     },
     {
       id: 'tracks',
       title: t('tracks.title'),
       render: () => (
-        <Scrollable enabled={isLargeScreen}>
+        <MusicPanel>
           <TrackPanel
+            scrollable={isLargeScreen}
             view={view}
             viewName={viewName}
             search={search}
@@ -155,16 +134,18 @@ export function MusicPage() {
             onCreatePlaylistWith={(track) => setNewPlaylist({ track })}
             onViewRemoved={() => selectView({ kind: 'all' })}
           />
-        </Scrollable>
+        </MusicPanel>
       ),
     },
     {
       id: 'library',
       title: t('library.title'),
       render: () => (
-        <Scrollable enabled={isLargeScreen}>
-          <LibraryNav view={view} onSelect={selectView} />
-        </Scrollable>
+        <MusicPanel>
+          <Scrollable enabled={isLargeScreen}>
+            <LibraryNav view={view} onSelect={selectView} />
+          </Scrollable>
+        </MusicPanel>
       ),
     },
     {
@@ -172,9 +153,9 @@ export function MusicPage() {
       title: t('player.queue'),
       available: !isLargeScreen,
       render: () => (
-        <PlayerCard>
+        <MusicPanel>
           <PlayerQueue player={player} />
-        </PlayerCard>
+        </MusicPanel>
       ),
     },
   ]
@@ -193,7 +174,7 @@ export function MusicPage() {
               className="shrink-0"
               data-testid="music-new-playlist"
             >
-              <ListPlus className="h-4 w-4 sm:mr-2" />
+              <ListMusic className="h-4 w-4 sm:mr-2" strokeWidth={1.5} />
               <span className="hidden sm:inline">{t('playlist.new')}</span>
             </Button>
             <AddFolderButton />

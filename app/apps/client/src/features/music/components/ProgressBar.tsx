@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Slider } from '~/ui/slider'
 import { formatDuration } from '../utils'
@@ -24,6 +25,7 @@ export function ProgressBar({
   duration,
   onSeek,
 }: ProgressBarProps) {
+  const { t } = useTranslation('music')
   const [held, setHeld] = useState<{ time: number; sought: boolean } | null>(
     null,
   )
@@ -62,6 +64,7 @@ export function ProgressBar({
         onValueCommit={commit}
         className="flex-1"
         showValue={false}
+        label={t('player.position')}
         testId="music-progress"
       />
       <span className="text-xs text-fg-hint tabular-nums w-10">

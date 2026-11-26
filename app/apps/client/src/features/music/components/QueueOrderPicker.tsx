@@ -29,7 +29,7 @@ export function QueueOrderPicker({ order, onChange }: QueueOrderPickerProps) {
           className={`rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
             order === option
               ? 'bg-selected text-fg'
-              : 'bg-field text-fg-label hover:bg-hover hover:text-fg'
+              : 'text-fg-label hover:bg-hover hover:text-fg'
           }`}
         >
           {t(`player.orders.${option}`)}
