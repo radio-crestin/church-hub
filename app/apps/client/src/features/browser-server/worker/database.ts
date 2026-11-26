@@ -21,23 +21,46 @@ export interface Storage {
 
 const POOL_NAME = 'church-hub'
 
+/** How long a start waits for the pool's files a closing page still holds. */
+const POOL_BUSY_MS = 10_000
+const POOL_RETRY_MS = 250
+
+/** Another worker (a page reloading, still closing) holds the pool's files. */
+const isBusy = (error: unknown) =>
+  error instanceof DOMException && error.name === 'NoModificationAllowedError'
+
 /**
  * Loads sqlite-wasm and the OPFS pool its databases live in (the
- * `opfs-sahpool` VFS: no COOP/COEP headers needed). Only one tab can hold
- * the pool; without OPFS (an old or private browser) databases stay in
- * memory for this visit.
+ * `opfs-sahpool` VFS: no COOP/COEP headers needed). The pool's files open
+ * once the page before this one (a reload) lets go of them; a failed try
+ * keeps them (sqlite-wasm would delete the pool). Without OPFS (an old or
+ * private browser) databases stay in memory for this visit.
  */
 export async function openStorage(): Promise<Storage> {
   const sqlite3 = await sqlite3InitModule()
-  try {
-    const pool = await sqlite3.installOpfsSAHPoolVfs({
-      name: POOL_NAME,
-      initialCapacity: 4,
-    })
-    return { sqlite3, pool }
-  } catch (error) {
-    logger.warning(`No OPFS, the database stays in memory: ${error}`)
-    return { sqlite3, pool: null }
+  const options = {
+    name: POOL_NAME,
+    initialCapacity: 4,
+    preserveOnInitFailure: true,
+    // Not in sqlite-wasm's types yet: a failed try is tried again.
+    forceReinitIfPreviouslyFailed: true,
+  }
+  const deadline = Date.now() + POOL_BUSY_MS
+  for (;;) {
+    try {
+      const pool = await sqlite3.installOpfsSAHPoolVfs(options)
+      return { sqlite3, pool }
+    } catch (error) {
+      if (isBusy(error) && Date.now() < deadline) {
+        logger.debug('The OPFS pool is still held by a closing page; waiting')
+        await new Promise((resolve) => setTimeout(resolve, POOL_RETRY_MS))
+        continue
+      }
+      // Its files still held: never a second, empty database beside them.
+      if (isBusy(error)) throw error
+      logger.warning(`No OPFS, the database stays in memory: ${error}`)
+      return { sqlite3, pool: null }
+    }
   }
 }
 

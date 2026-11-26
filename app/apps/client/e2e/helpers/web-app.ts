@@ -66,6 +66,15 @@ export async function findSchedule(
   )?.id
 }
 
+/** Queues searches on the page's server without waiting for them. */
+export async function keepServerBusy(page: Page) {
+  await page.evaluate((api) => {
+    for (let i = 0; i < 40; i++) {
+      fetch(`${api}/api/songs/search?q=isus+${i}`).catch(() => {})
+    }
+  }, WEB_APP_API)
+}
+
 /** Waits for the web app to start its server and sign in. */
 export async function waitForApp(page: Page) {
   await expect

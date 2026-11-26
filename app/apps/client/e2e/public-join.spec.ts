@@ -4,7 +4,7 @@ import { setAppLanguage } from './helpers/app-language'
 import { FakeS3 } from './helpers/fake-s3'
 import { PublicAppServer } from './helpers/public-app'
 import { SyncService } from './helpers/sync-service'
-import { findSong, waitForApp } from './helpers/web-app'
+import { findSong, keepServerBusy, waitForApp } from './helpers/web-app'
 
 /**
  * Join a church by QR code or link (T-168): the PC mints a device token in
@@ -118,8 +118,11 @@ test.describe
       await waitForApp(page)
       expect(await findSong(page, title)).toBeTruthy()
 
-      // The service worker keeps the app, and the browser its database.
+      // The service worker keeps the app, and the browser its database:
+      // reloaded while its server is busy, the new one waits for the old
+      // one's files instead of starting empty.
       await phone.setOffline(true)
+      await keepServerBusy(page)
       await page.reload()
       await waitForApp(page)
       expect(await findSong(page, title)).toBeTruthy()
