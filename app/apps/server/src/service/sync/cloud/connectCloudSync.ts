@@ -3,6 +3,7 @@ import { getInstallation } from './getInstallation'
 import { getSyncServiceUrl } from './getSyncServiceUrl'
 import { serviceError, syncServiceRequest } from './syncServiceRequest'
 import { getRawDatabase } from '../../../db'
+import { BUMP_PENDING_SEQ, PENDING_SEQ } from '../pendingSeqSql'
 import { runSyncCycle } from '../runSyncCycle'
 import { upsertSyncConfig } from '../syncConfigStore'
 import { SYNCED_TABLES, syncedRowsSql } from '../syncedTables'
@@ -32,7 +33,7 @@ export async function connectCloudSync(
     { serviceUrl },
     'POST',
     '/churches',
-    { name: getInstallation().name, ...(ownerTicket && { ownerTicket }) },
+    { name: getInstallation()?.name, ...(ownerTicket && { ownerTicket }) },
   )
   if (response.status !== 201) throw serviceError(response)
   const { churchId, readUrl, deviceId, serverToken, ownerEmail } = response.body
@@ -58,12 +59,12 @@ export async function connectCloudSync(
 /** Every synced row, queued for a new church's first upload. */
 function queueWholeLibrary(): void {
   const db = getRawDatabase()
+  db.run(BUMP_PENDING_SEQ)
   for (const synced of SYNCED_TABLES) {
-    // Dated a second back, so the first cycle clears them once it has
-    // published them (it clears what was queued before its first second).
     db.query(
-      `INSERT OR IGNORE INTO sync_pending (entity_type, entity_uuid, queued_at)
-       SELECT ?, uuid, unixepoch() - 1 FROM (${syncedRowsSql(synced)})`,
+      `INSERT OR IGNORE INTO sync_pending (entity_type, entity_uuid, queued_at, seq)
+       SELECT ?, uuid, unixepoch(), ${PENDING_SEQ}
+         FROM (${syncedRowsSql(synced)})`,
     ).run(synced.entityType)
   }
 }

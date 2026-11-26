@@ -1,14 +1,18 @@
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
 import { PermissionGate } from '~/ui/PermissionGate'
 import { LinkSourcesSection } from './LinkSourcesSection'
 import { PublicationsSection } from './PublicationsSection'
 import { S3StorageSection } from './S3StorageSection'
+import { ShareMySongsSection } from './ShareMySongsSection'
 import { SongFileExportSection } from './SongFileExportSection'
 
 /**
  * Settings card for song sources: sources from links, exporting a category
- * as a `.chsongs` file, and sharing categories through the user's S3 bucket.
+ * as a `.chsongs` file, sharing the songs through Church Hub's cloud sync,
+ * and sharing categories through the user's own S3 bucket. The web app
+ * keeps only the export: the sources, the share and the bucket are the PC's.
  */
 export function SongSourcesSettings() {
   const { t } = useTranslation('songDiscovery')
@@ -23,14 +27,19 @@ export function SongSourcesSettings() {
           {t('songSources.description')}
         </p>
       </div>
-      <PermissionGate permission="songs.create">
-        <LinkSourcesSection />
-      </PermissionGate>
+      {!isWebApp && (
+        <PermissionGate permission="songs.create">
+          <LinkSourcesSection />
+        </PermissionGate>
+      )}
       <SongFileExportSection />
-      <PermissionGate permission="settings.edit">
-        <S3StorageSection />
-        <PublicationsSection />
-      </PermissionGate>
+      {!isWebApp && (
+        <PermissionGate permission="settings.edit">
+          <ShareMySongsSection />
+          <S3StorageSection />
+          <PublicationsSection />
+        </PermissionGate>
+      )}
     </div>
   )
 }

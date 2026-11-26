@@ -6,7 +6,6 @@ import {
 import { libraryRequest } from './libraryRequest'
 import { readCuratedLibrary } from './readCuratedLibrary'
 import { CURATED_LIBRARY_INFO } from './types'
-import { uploadShard } from './uploadShard'
 
 /** Another curator publishing at the same moment: build again from theirs. */
 const MAX_ATTEMPTS = 4
@@ -35,7 +34,12 @@ export async function publishCuratedSong(
     )
     for (const [path, bytes] of next.shards) {
       const entry = next.manifest.shards.find((shard) => shard.path === path)
-      if (entry) await uploadShard(ticket, entry.hash, bytes)
+      if (entry) {
+        await libraryRequest('PUT', `/shards/${entry.hash}`, {
+          ticket,
+          body: bytes,
+        })
+      }
     }
     try {
       await libraryRequest('PUT', '/manifest', {

@@ -1,8 +1,10 @@
 import { isAppWebviewOrigin, isLoopbackHostname } from './origins'
 import type { AuthResult } from './types'
 import { validateSystemToken } from '../service/app-sessions'
+import { deviceSessionUserId } from '../service/sync/cloud/deviceSessions'
 import {
   ALL_PERMISSIONS,
+  getUserById,
   getUserByToken,
   type Permission,
   updateUserLastUsed,
@@ -201,7 +203,12 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
     cookies['user_auth'] || req.headers.get('X-User-Auth') || undefined
 
   if (userToken) {
-    const user = await getUserByToken(userToken)
+    // A joined phone's device session (T-174), else the user's own token.
+    const deviceUserId = await deviceSessionUserId(userToken)
+    const user =
+      deviceUserId === null
+        ? await getUserByToken(userToken)
+        : getUserById(deviceUserId)
     if (user && user.isActive) {
       logger.debug(`Authenticated user: ${user.name} (id: ${user.id})`)
       updateUserLastUsed(user.id)

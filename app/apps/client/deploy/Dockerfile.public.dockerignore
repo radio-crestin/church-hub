@@ -6,6 +6,9 @@
 !app/tsconfig.json
 !app/tauri/tauri.conf.json
 !app/apps/server/package.json
+# The browser server (T-175) compiles the server's own code into the web app.
+!app/apps/server/tsconfig.json
+!app/apps/server/src
 !app/packages
 !app/apps/client
 **/node_modules

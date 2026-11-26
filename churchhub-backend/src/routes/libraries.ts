@@ -4,6 +4,7 @@ import { authorizeLibraryWrite } from '../library/authorizeLibraryWrite'
 import { checkManifest } from '../library/checkManifest'
 import { createSubmission } from '../library/createSubmission'
 import { decideSubmission } from '../library/decideSubmission'
+import { deleteLibrary } from '../library/deleteLibrary'
 import { isCurator } from '../library/isCurator'
 import { isSourceId } from '../library/isSourceId'
 import { libraryKeys } from '../library/libraryKeys'
@@ -121,6 +122,12 @@ libraries.post(`${CURATED}/submissions/:id/decision`, async (c) => {
   })
 })
 
+/** GET /sync/libraries: where the public catalog of listed libraries is read from. */
+libraries.get('/sync/libraries', (c) => {
+  const { bucket } = createSyncStore(c.env)
+  return c.json({ catalogUrl: bucket.publicUrl(libraryKeys.catalog) })
+})
+
 /** GET /sync/libraries/:sourceId: where the library is read from. */
 libraries.get('/sync/libraries/:sourceId', (c) => {
   const { bucket } = createSyncStore(c.env)
@@ -167,5 +174,14 @@ libraries.put(
     return c.json({ checksum: manifest.checksum })
   }
 )
+
+/** DELETE /sync/libraries/:sourceId: stop sharing it (its publisher only). */
+libraries.delete('/sync/libraries/:sourceId', async (c) => {
+  const sourceId = sourceIdOf(c)
+  const store = createSyncStore(c.env)
+  await authorizeLibraryWrite(c, store, sourceId)
+  await deleteLibrary(store.bucket, sourceId)
+  return c.json({ deleted: true })
+})
 
 export default libraries

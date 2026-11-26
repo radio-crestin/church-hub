@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
+import { isWebApp } from '~/config'
 import { createLogger } from '~/utils/logger'
 import { useLivestreamWebSocket } from './useLivestreamWebSocket'
 import { getActiveBroadcast, startStream, stopStream } from '../service'
@@ -25,6 +26,8 @@ export function useStreaming() {
     },
     staleTime: 10 * 1000,
     refetchInterval: 30 * 1000,
+    // The broadcast is the church PC's (its OBS and YouTube account)
+    enabled: !isWebApp,
   })
 
   const startMutation = useMutation({

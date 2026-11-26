@@ -7,14 +7,18 @@ import {
   cancelSongUpdates,
   deleteLinkSource,
   deletePublication,
+  deleteShare,
   getPublication,
   getS3Storage,
+  getShare,
   getSongUpdatesState,
+  type LibraryShareInput,
   listPublications,
   listSongSources,
+  publishShare,
+  readCatalog,
   readChangedForReview,
   readLackingSongs,
-  readManagedRelease,
   readSourceArchive,
   readSourceChecksum,
   readSourceSongs,
@@ -23,6 +27,7 @@ import {
   runSongUpdatesInWorker,
   type S3StorageInput,
   SONG_BUNDLE_EXTENSION,
+  saveShare,
   setAutoUpdateSongs,
   syncPendingSongs,
   syncPublication,
@@ -34,6 +39,7 @@ import {
   zipBundleFiles,
 } from '../service/song-sources'
 import { getCategoryById } from '../service/songs'
+import { getCloudIdentity } from '../service/sync/cloud/cloudIdentityStore'
 import type { Permission } from '../service/users'
 import { createLogger } from '../utils/logger'
 
@@ -44,7 +50,6 @@ const logger = createLogger('song-sources')
 const SOURCE_SONGS_PATH = /^\/api\/song-sources\/([\w-]+)\/songs$/
 const SOURCE_ARCHIVE_PATH = /^\/api\/song-sources\/([\w-]+)\/archive$/
 const SOURCE_CHECKSUM_PATH = /^\/api\/song-sources\/([\w-]+)\/checksum$/
-const SOURCE_MANAGED_PATH = /^\/api\/song-sources\/([\w-]+)\/managed$/
 const SOURCE_LACKING_PATH = /^\/api\/song-sources\/([\w-]+)\/lacking$/
 const SOURCE_CHANGED_PATH = /^\/api\/song-sources\/([\w-]+)\/changed$/
 const SOURCE_RECOUNT_PATH = /^\/api\/song-sources\/([\w-]+)\/recount$/
@@ -72,7 +77,6 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - GET    /api/song-sources/:id/songs           a shared folder's OpenSong files (songs.create)
  * - GET    /api/song-sources/:id/archive         a song file source's .chsongs (songs.create)
  * - GET    /api/song-sources/:id/checksum        what changes when the source's songs do (songs.view)
- * - GET    /api/song-sources/:id/managed         the version of our managed copy, null while there is none (songs.view)
  * - GET    /api/song-sources/:id/lacking         the songs its last check found the library lacks (songs.create)
  * - GET    /api/song-sources/:id/changed         library songs its last check found changed, both versions (songs.create)
  * - POST   /api/song-sources/:id/changed         update or keep some of them `{ songIds, action: 'update'|'keep' }` (songs.create)
@@ -89,6 +93,11 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - POST   /api/song-sources/publications        publish a category `{ categoryId }` (settings.edit)
  * - POST   /api/song-sources/publications/:id/sync   upload its changes now (settings.edit)
  * - DELETE /api/song-sources/publications/:id    stop publishing, delete its files (settings.edit)
+ * - GET    /api/song-sources/share               "Share my songs": the share, and whether cloud sync is on (settings.view)
+ * - PUT    /api/song-sources/share               share `{ name, publisher?, categoryIds: number[]|null, listed }` and publish (settings.edit)
+ * - POST   /api/song-sources/share/sync          publish it again now (settings.edit)
+ * - DELETE /api/song-sources/share               stop sharing: out of the catalog and the bucket (settings.edit)
+ * - GET    /api/song-sources/catalog             the shared libraries listed in the public catalog (songs.view)
  */
 export async function handleSongSourceRoutes(
   req: Request,
@@ -281,6 +290,77 @@ export async function handleSongSourceRoutes(
     }
   }
 
+  if (pathname === '/api/song-sources/share') {
+    if (req.method === 'GET') {
+      const denied = deny('settings.view')
+      if (denied) return denied
+      return respond(200, {
+        data: getShare(),
+        cloudSync: (await getCloudIdentity()) !== null,
+      })
+    }
+    if (req.method === 'PUT') {
+      const denied = deny('settings.edit')
+      if (denied) return denied
+      const input = await readJson<LibraryShareInput>()
+      const categoryIds = Array.isArray(input.categoryIds)
+        ? input.categoryIds.filter((id) => Number.isInteger(id))
+        : null
+      if (categoryIds?.length === 0) {
+        return respond(400, { error: 'Choose at least one category' })
+      }
+      try {
+        const share = await saveShare({
+          name: String(input.name ?? ''),
+          publisher:
+            typeof input.publisher === 'string' ? input.publisher : undefined,
+          categoryIds,
+          listed: input.listed === true,
+        })
+        return respond(200, { data: share })
+      } catch (error) {
+        return respond(errorMessage(error) === 'cloud_sync_off' ? 409 : 502, {
+          error: errorMessage(error),
+        })
+      }
+    }
+    if (req.method === 'DELETE') {
+      const denied = deny('settings.edit')
+      if (denied) return denied
+      try {
+        await deleteShare()
+      } catch (error) {
+        logger.warning(`Stopping the share failed: ${error}`)
+        return respond(502, { error: errorMessage(error) })
+      }
+      return respond(200, { data: null })
+    }
+  }
+
+  if (req.method === 'POST' && pathname === '/api/song-sources/share/sync') {
+    const denied = deny('settings.edit')
+    if (denied) return denied
+    if (!getShare()) return respond(404, { error: 'Nothing is shared' })
+    try {
+      await publishShare({ force: true })
+    } catch (error) {
+      logger.warning(`Sharing the songs failed: ${error}`)
+      return respond(502, { error: errorMessage(error), data: getShare() })
+    }
+    return respond(200, { data: getShare() })
+  }
+
+  if (req.method === 'GET' && pathname === '/api/song-sources/catalog') {
+    const denied = deny('songs.view')
+    if (denied) return denied
+    try {
+      return respond(200, { data: await readCatalog() })
+    } catch (error) {
+      logger.warning(`Reading the library catalog failed: ${error}`)
+      return respond(502, { error: errorMessage(error) })
+    }
+  }
+
   if (pathname === '/api/song-sources/publications') {
     if (req.method === 'GET') {
       return deny('settings.view') ?? respond(200, { data: publicationsView() })
@@ -377,18 +457,6 @@ export async function handleSongSourceRoutes(
       })
     } catch (error) {
       logger.warning(`Checksum of ${checksumId} failed: ${error}`)
-      return respond(502, { error: errorMessage(error) })
-    }
-  }
-
-  const managedId = pathname.match(SOURCE_MANAGED_PATH)?.[1]
-  if (req.method === 'GET' && managedId) {
-    const denied = deny('songs.view')
-    if (denied) return denied
-    try {
-      return respond(200, { data: await readManagedRelease(managedId) })
-    } catch (error) {
-      logger.warning(`Managed copy of ${managedId} failed: ${error}`)
       return respond(502, { error: errorMessage(error) })
     }
   }

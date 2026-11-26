@@ -1,14 +1,16 @@
 import type { SourceSong } from '@church-hub/song-formats'
 
 import { applySourcePending } from './applySourcePending'
-import { saveChangedSongs } from './changedSongsStore'
+import { readChangedSongs, saveChangedSongs } from './changedSongsStore'
 import { findChangedSongs } from './findChangedSongs'
 import { type LackingSong, saveLackingSongs } from './lackingSongsStore'
 import { readSourceSongList } from './readSourceSongList'
+import { sourceLyricsHash } from './sourceLyricsHash'
 import type { SongUpdatesRun, SourceSongChanges, SourceUpdate } from './types'
 import {
   backfillAlternateTitles,
   type DiscoveryMatchResult,
+  linkSourceSongs,
   matchCandidatesAgainstLibrary,
 } from '../../songs'
 import { readSourceChecksum } from '../readSourceChecksum'
@@ -34,14 +36,20 @@ function recoverTitles(songs: SourceSong[]): void {
   )
 }
 
-/** Each song's verdict against the library. */
-function matchSongs(songs: SourceSong[]): DiscoveryMatchResult[] {
+/** Each song's verdict against the library: by its id here, its lyrics, its file, its title. */
+function matchSongs(
+  sourceId: string,
+  songs: SourceSong[],
+): DiscoveryMatchResult[] {
   return matchCandidatesAgainstLibrary(
     songs.map((song) => ({
       tempId: song.id,
       title: song.parsed.title,
       lyrics: song.parsed.slides.map((slide) => slide.htmlContent).join(' '),
       sourceFilename: song.sourceFilename,
+      sourceId,
+      sourceSongId: song.id,
+      fingerprint: sourceLyricsHash(song),
     })),
   )
 }
@@ -81,7 +89,9 @@ export async function checkSourceForUpdates(
   const checksum = await readSourceChecksum(source.id)
   const now = Date.now()
   if (!run.force && previous && checksum && checksum === previous.checksum) {
-    const waiting = previous.newCount > 0 || previous.changedCount > 0
+    const waiting =
+      previous.newCount > 0 ||
+      readChangedSongs(source.id).some((song) => !song.edited)
     if (!run.autoUpdate || !waiting) {
       return {
         update: { ...previous, name: source.name, checkedAt: now },
@@ -94,7 +104,7 @@ export async function checkSourceForUpdates(
         ...previous,
         name: source.name,
         newCount: 0,
-        changedCount: 0,
+        changedCount: readChangedSongs(source.id).length,
         imported: changes.added.count,
         updated: changes.updated.count,
         checkedAt: now,
@@ -105,9 +115,10 @@ export async function checkSourceForUpdates(
 
   const songs = await readSourceSongList(source)
   recoverTitles(songs)
-  const verdicts = matchSongs(songs)
+  const verdicts = matchSongs(source.id, songs)
   const lacking = findLacking(songs, verdicts)
-  const changed = findChangedSongs(source.id, songs, verdicts)
+  const { changed, links } = findChangedSongs(source.id, songs, verdicts)
+  linkSourceSongs(source.id, links)
   saveLackingSongs(source.id, lacking)
   saveChangedSongs(source.id, changed)
   const changes = run.autoUpdate
@@ -121,7 +132,9 @@ export async function checkSourceForUpdates(
       checksum,
       newCount: run.autoUpdate ? 0 : fresh,
       similarCount: lacking.length - fresh,
-      changedCount: run.autoUpdate ? 0 : changed.length,
+      changedCount: run.autoUpdate
+        ? changed.filter((song) => song.edited).length
+        : changed.length,
       imported: changes.added.count,
       updated: changes.updated.count,
       checkedAt: now,

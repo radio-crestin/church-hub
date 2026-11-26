@@ -1579,6 +1579,7 @@
       "account": "Account",
       "name": "Device name",
       "namePlaceholder": "For example: Andrei's phone",
+      "remoteOff": "“Reach this computer from anywhere” is off: this device will read the songs from the cloud only. Turn it on before you create the link, so the device also works live with this computer while it is on.",
       "create": "Create the link",
       "creating": "Creating…",
       "createFailed": "Could not create the link: {{error}}",

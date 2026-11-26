@@ -39,8 +39,10 @@ interface SlideRow {
   label: string | null
 }
 
-/** Which songs: a category's, or one song. */
-export type CategorySongsFilter = { categoryId: number } | { songId: number }
+/** Which songs: a category's (null: the songs with none), or one song. */
+export type CategorySongsFilter =
+  | { categoryId: number | null }
+  | { songId: number }
 
 /** Songs with their slides in order, two queries in all. */
 export function readCategorySongs(filter: CategorySongsFilter): CategorySong[] {
@@ -50,17 +52,17 @@ export function readCategorySongs(filter: CategorySongsFilter): CategorySong[] {
       ? (['category_id', filter.categoryId] as const)
       : (['id', filter.songId] as const)
   const songRows = db
-    .query<SongRow, [number]>(
+    .query<SongRow, [number | null]>(
       `SELECT id, uuid, title, source_filename, author, copyright, ccli, tempo,
               time_signature, theme, alt_theme, hymn_number, key_line
-         FROM songs WHERE ${column} = ? ORDER BY title, id`,
+         FROM songs WHERE ${column} IS ? ORDER BY title, id`,
     )
     .all(value)
   const slideRows = db
-    .query<SlideRow, [number]>(
+    .query<SlideRow, [number | null]>(
       `SELECT sl.song_id, sl.content, sl.label
          FROM song_slides sl JOIN songs s ON s.id = sl.song_id
-        WHERE s.${column} = ? ORDER BY sl.song_id, sl.sort_order, sl.id`,
+        WHERE s.${column} IS ? ORDER BY sl.song_id, sl.sort_order, sl.id`,
     )
     .all(value)
 

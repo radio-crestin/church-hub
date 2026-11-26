@@ -57,7 +57,7 @@ The user's review (22/11): «make sure that each client can modify only what's a
 - **With the PC off**, phones keep full control (D3). They read directly from the bucket, and write through the same service, under the same checks.
 - **Per-request cost stays small**: the service is called **only for writes**, and reads never touch a Worker. There is **no database**: each church's central state is one encrypted object in the bucket, changed by compare-and-swap (conditional PUT), so a deploy is the service plus a bucket. Self-hosted, the same Hono app runs on Bun or Node.
 - **Any S3-compatible storage** works, as long as it allows public read without listing. R2 is the default: no egress fees, and the first 10 GB are free.
-  - The spike checked it with a standard AWS bucket policy (anonymous `s3:GetObject` on `churches/*` and `libraries/*`, nothing else) on SeaweedFS: anonymous GET there 200, elsewhere 403, listing 403 with or without a prefix (`app/spikes/cloud-sync/scripts/publicRead.py`).
+  - The spike checked it with a standard AWS bucket policy (anonymous `s3:GetObject` on `churches/*` and `libraries/*`, nothing else) on SeaweedFS: anonymous GET there 200, elsewhere 403, listing 403 with or without a prefix (`churchhub-backend/scripts/publicRead.py`).
   - For self-hosters: the bucket must support conditional writes (`If-Match` on `PutObject`, section 4): R2, AWS S3 and MinIO do (MinIO stopped publishing binaries and images in Oct 2025: build it from source or use a community build such as `pgsty/minio`). Check any other store for it first.
 
 ## 4. Central state and bucket layout
@@ -146,7 +146,7 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - Settings > Phones > *Join with a link*: connect to the cloud (guest), pick the account and a name, get the QR code and link; the device list revokes (`GET /sync/churches/:id/devices` on the service). The link also carries `&s=<service>` when the PC uses a self-hosted service.
   - The public app is `app/apps/client/src/publicApp.tsx` (`features/public-app/`), built by `bun run build:public` into `dist-public/` (vite-plugin-pwa: precached shell, `head.json` network-first, snapshots and segments cache-first). `bun run deploy:public` publishes it to the Pages project `church-hub` (`https://church-hub.pages.dev`, the PC's default; `CHURCH_HUB_PUBLIC_APP_URL` overrides it). Pages serves `index.html` for `/join` (no `404.html`: SPA mode).
   - It needs the service's `ALLOWED_ORIGINS` to list the public app's origin, and the bucket a CORS rule allowing GET from it.
-  - Until T-174/T-175 the joined device reads the church's songs from the bucket (read-only); `p` (the PC's remote access room) is stored for T-174.
+  - Since T-175 the public app is the full app (section 8, "As built (T-175)"); `p` (the PC's remote access room) is where it reaches the PC (T-174).
 
 ## 8. A phone with the PC off: full control (D3)
 
@@ -161,8 +161,22 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
 - **How the phone runs it**: the server's service layer runs **in a Web Worker on the phone**, against `@sqlite.org/sqlite-wasm` on OPFS, through drizzle's SQLite driver. The services use drizzle today, so the same code serves the PC and the phone, and nothing is written twice.
   - The wasm engine is about 0.4 MB compressed and cached by the service worker.
   - FTS5 and `normalizeForIndex` give the same search results as the desktop, in milliseconds, offline.
-- **Presenting**: a phone can run a presentation and show it on its own screen, or on any display that opens the phone's presenter page. Displays and OBS physically wired to the PC need the PC on.
-- **Measured in the spike** (T-170, `app/spikes/cloud-sync/`):
+- **Presenting**: a phone can run a presentation and show it on its own screen (a display window it opens), or on any display that opens the phone's presenter page (that last part over WebRTC: a follow-up task). Displays and OBS physically wired to the PC need the PC on.
+- **As built (T-175)**:
+  - **One API**: the server's whole router is one importable fetch handler (`server/src/http/createFetchHandler.ts`). `Bun.serve` runs it on the PC; the browser server (`client/src/features/browser-server/`) runs the same handler in a module Web Worker. `client/browserServerBuild.ts` builds the server's own modules for it: `bun:sqlite`, `node:crypto`, `node:async_hooks` and `node:path` get browser versions, `db/connection.ts` opens sqlite-wasm on OPFS (`opfs-sahpool`), and the rest of Node and the PC-only packages (OBS, MIDI, audio, Google, AI, WebRTC answerer, telemetry) are stand-ins. The worker is 385 KB gzipped (the server's code), plus 407 KB of wasm.
+  - **What needs the PC**: its hardware, files and network (OBS, mixer, MIDI, music, screen share, backups, the database file, logs, PowerPoint conversion, remote access, live translation, song sources' checks) answer `503 needs_church_pc` in the browser (`worker/pcOnlyRoutes.ts`), and the web app hides them.
+  - **The web app** (`bun run build:public`, any phone or browser) starts like this (`public-app/service/startWebApp.ts`):
+    - Joined: the church PC over WebRTC when it answers (T-174); otherwise the church's server in this browser, signed in as the device's user (`GET /sync/churches/:id/device` says whose token it is). It syncs like the PC: the PC's own cloud cycle and scheduler, with the device token. Its first sync reads the snapshot and segments from the bucket into a database built in memory, then saved to OPFS in one `importDb`. The rows a new database seeds for itself are dropped first, unsent.
+    - Not joined: a guest, on the library a new PC starts with. The same seed migrations run from the fixtures, which the build ships as gzipped assets (songs 8.5 MB, Bibles 3 MB); it is local only, never synced.
+    - Either way, the full app is mounted on a tunnel to that server (the remote-access `Tunnel`). The API is addressed as `http://church-pc.invalid` (`config.WEB_APP_API_ORIGIN`), and only the installed tunnel answers it.
+  - **This device's own machine**: the page is the browser server's only client, so its requests come from `localhost`, as the desktop app's windows do on the PC.
+  - **One tab** holds the database (a Web Lock); another tab says so. Displays the app opens with `window.open` (the device's own screen, a second monitor) reach the opener's server, each on a `MessagePort` of its own.
+  - **Its session**: the page signs in with a token its own database minted (tokens never sync), kept in memory only and handed to the displays it opens; the phone stores no login. It opens only this browser's copy; the church is reached with the device token alone.
+  - **A removed device** loses the church on its next call to the sync service (a push, the check-in every 15 minutes, a start): the 401 reaches the page (`sync/cloud/tokenRefused.ts`), which confirms it with `/device`, starts again on the "removed" notice and deletes the church's database from this browser.
+  - **A reload** waits for the OPFS pool's files the closing page still holds (up to 10 s), never opening a second, empty database; sqlite-wasm keeps the pool when that fails (`preserveOnInitFailure`).
+  - **Deploying**: the Pages project serves the wasm (`application/wasm`) and the fixtures (each under Pages' 25 MiB limit). The sync service lists the app's origin in `ALLOWED_ORIGINS`. The bucket's CORS rule allows GET from it; with no exposed headers, the browser never sends `If-None-Match`, so no preflight is needed.
+  - **Measured**: see the table below for the spike; a guest's first start (26,462 songs, 2 Bibles, desktop CPU) takes 17.6 s, and 1.4 s after that from OPFS.
+- **Measured in the spike** (T-170; the spike's code became the browser server):
   - **The service layer runs unchanged.** In a Worker, sqlite-wasm's oo1 API is synchronous, so a small shim of `bun:sqlite` on it runs the server's synchronous code and drizzle's `bun-sqlite` driver as they are: no async rewrite. Swapped: `db/connection.ts` and the seed fixtures; shimmed: two `node:crypto` calls; stubbed: telemetry.
   - **Size**: the worker (the server's code included) is 175 KB gzipped, plus 406 KB for `sqlite3.wasm`.
   - **OPFS**: each autocommit costs 3 to 10 ms, whatever the pragmas. So the first sync is built in memory and written to OPFS in one `importDb`; later edits write through OPFS directly (one song edit: 30 to 40 ms).

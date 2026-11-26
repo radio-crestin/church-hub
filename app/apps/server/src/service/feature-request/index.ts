@@ -1,1 +1,0 @@
-export { forwardFeatureRequest } from './forwardFeatureRequest'

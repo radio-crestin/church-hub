@@ -5,7 +5,6 @@ import {
   Headphones,
   Images,
   KeyRound,
-  MessageSquarePlus,
   Monitor,
   Music,
   Radio,
@@ -53,7 +52,6 @@ export const DEFAULT_ICON_COLORS: Record<BuiltInMenuItemId, IconColor> = {
   music: 'purple',
   song_key: 'yellow',
   live_translation: 'blue',
-  feedback: 'gray',
   kiosk: 'gray',
   settings: 'gray',
 }
@@ -114,7 +112,6 @@ export const PAGES_WITH_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   livestream: false,
   song_key: false,
   live_translation: false,
-  feedback: false,
   kiosk: false,
   settings: false,
 }
@@ -140,7 +137,6 @@ export const DEFAULT_FOCUS_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   livestream: false,
   song_key: false,
   live_translation: false,
-  feedback: false,
   kiosk: false,
   settings: false,
 }
@@ -208,6 +204,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.livestream',
     to: '/livestream',
     permission: 'settings.view',
+    pcOnly: true,
   },
   music: {
     id: 'music',
@@ -215,6 +212,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.music',
     to: '/music',
     permission: 'settings.view',
+    pcOnly: true,
   },
   song_key: {
     id: 'song_key',
@@ -229,13 +227,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.liveTranslation',
     to: '/live-translation',
     permission: 'settings.view',
-  },
-  feedback: {
-    id: 'feedback',
-    icon: MessageSquarePlus,
-    labelKey: 'sidebar:navigation.feedback',
-    to: '/feedback', // Special marker - opens the Feedback tool, not a route
-    permission: 'settings.view',
+    pcOnly: true,
   },
   kiosk: {
     id: 'kiosk',
@@ -330,14 +322,6 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       order: 8,
       isVisible: true,
       settings: getDefaultSidebarItemSettings('live_translation'),
-    },
-    {
-      id: 'feedback',
-      type: 'builtin',
-      builtinId: 'feedback',
-      order: 9,
-      isVisible: true,
-      settings: getDefaultSidebarItemSettings('feedback'),
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
     // Note: Kiosk is not configurable - it's dynamically shown when kiosk mode is enabled

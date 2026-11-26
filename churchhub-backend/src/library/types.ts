@@ -47,7 +47,29 @@ export interface LibraryManifest {
   format: 'church-hub-song-bundle'
   version: number
   sourceId: string
+  name?: string
+  publisher?: string
+  /** In the public catalog when true; unlisted (link only) otherwise. */
+  listed?: boolean
+  updatedAt?: string
+  songCount?: number
   checksum: string
   songs: Array<{ id: string; path: string }>
   shards: Array<{ path: string; hash: string }>
+}
+
+/** One listed library in the public catalog. */
+export interface CatalogEntry {
+  sourceId: string
+  name: string
+  publisher: string
+  songCount: number
+  updatedAt: string
+}
+
+/** `libraries/catalog.json`: the libraries their publishers listed. */
+export interface Catalog {
+  format: 'church-hub-library-catalog'
+  version: 1
+  libraries: CatalogEntry[]
 }

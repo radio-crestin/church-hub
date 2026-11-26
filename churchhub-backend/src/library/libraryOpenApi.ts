@@ -59,6 +59,16 @@ const writeErrors = {
 }
 
 export const libraryOpenApiPaths = {
+  '/sync/libraries': {
+    get: {
+      summary: 'Where the catalog of listed libraries is read from',
+      description:
+        'The public URL of libraries/catalog.json: {format: church-hub-library-catalog, version: 1, libraries: [{sourceId, name, publisher, songCount, updatedAt}]}, the libraries their publishers listed. A library’s manifest is at <sourceId>/manifest.json next to it.',
+      responses: {
+        '200': ok('Its URL', { catalogUrl: { type: 'string' } }),
+      },
+    },
+  },
   '/sync/libraries/{sourceId}': {
     get: {
       summary: 'Where a library is read from',
@@ -67,6 +77,17 @@ export const libraryOpenApiPaths = {
       parameters: [sourceId],
       responses: {
         '200': ok('Its manifest URL', { manifestUrl: { type: 'string' } }),
+      },
+    },
+    delete: {
+      summary: 'Stop sharing a library',
+      description:
+        'Takes it out of the catalog, then deletes its manifest and shards. Only its publisher: a church’s token with songs.edit for <churchId>-…, a curator for church-hub.',
+      security: [{ ownerTicket: [] }, { deviceToken: [] }],
+      parameters: [sourceId],
+      responses: {
+        '200': ok('Deleted', { deleted: { type: 'boolean' } }),
+        ...writeErrors,
       },
     },
   },
@@ -95,7 +116,7 @@ export const libraryOpenApiPaths = {
     put: {
       summary: 'Publish a library’s next manifest',
       description:
-        'Built by the PC from the manifest with baseChecksum (null: the first publish). Checked: bundle version 3, its sourceId, every shard named by its hash and already stored. Written with If-Match on the ETag read; afterwards the shards neither this nor the previous manifest lists are deleted.',
+        'Built by the PC from the manifest with baseChecksum (null: the first publish). Checked: bundle version 3, its sourceId, every shard named by its hash and already stored. Written with If-Match on the ETag read; afterwards the shards neither this nor the previous manifest lists are deleted, and the public catalog (libraries/catalog.json: {format: church-hub-library-catalog, version: 1, libraries: [{sourceId, name, publisher, songCount, updatedAt}]}) lists the library when manifest.listed is true, and no longer lists it otherwise.',
       security: [{ ownerTicket: [] }, { deviceToken: [] }],
       parameters: [sourceId],
       requestBody: json(

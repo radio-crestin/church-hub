@@ -22,12 +22,6 @@ export interface SongSourceConfig {
   url: string
   homepage?: string
   license?: string
-  /**
-   * Set when Church Hub computes and hosts the source itself: its folder in
-   * our bucket (managed/types.ts), read before `url`, which stays the
-   * fallback while the bucket has no copy.
-   */
-  managed?: string
 }
 
 /**

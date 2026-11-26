@@ -12,6 +12,9 @@ COPY app/apps/server/package.json apps/server/
 COPY app/packages packages
 RUN bun install --frozen-lockfile --ignore-scripts
 COPY app/tauri/tauri.conf.json tauri/
+# The browser server (T-175) compiles the server's own code into the web app.
+COPY app/apps/server/tsconfig.json apps/server/
+COPY app/apps/server/src apps/server/src
 COPY app/apps/client apps/client
 # Empty = the sync service built into the code (defaultSyncServiceUrl.ts).
 ARG VITE_SYNC_SERVICE_URL=""
