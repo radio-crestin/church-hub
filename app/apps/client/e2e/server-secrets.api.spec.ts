@@ -3,6 +3,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
 import { ExtraServer } from './helpers/extra-server'
+import { openSealed } from './helpers/sealed-secrets'
 
 /**
  * The signaling host keys are server secrets: they live in server_secrets,
@@ -47,6 +48,20 @@ function toReleasedShape(databasePath: string) {
   }
 }
 
+/** The host keys as kept in server_secrets, opened (they are sealed). */
+function readHostKeys(): { key: string; value: string }[] {
+  return readDatabase<{ key: string; value: string }>(
+    'SELECT key, value FROM server_secrets',
+  ).map(({ key, value }) => ({
+    key,
+    value: openSealed(
+      server.databasePath,
+      value,
+      `server_secrets.value:${key}`,
+    ),
+  }))
+}
+
 function readDatabase<T>(query: string): T[] {
   const db = new DatabaseSync(server.databasePath, { readOnly: true })
   try {
@@ -88,9 +103,7 @@ test('the listener link is a hosted room, and the change is told once', async ()
   expect(link.secret).not.toContain(OLD_STREAM_SECRET)
   expect(link.linkChanged).toBe(true)
 
-  const keys = readDatabase<{ key: string; value: string }>(
-    'SELECT key, value FROM server_secrets',
-  )
+  const keys = readHostKeys()
   const liveKey = keys.find((k) => k.key === 'live_translation_host_key')
   expect(liveKey && hostedRoomId(liveKey.value)).toBe(link.secret)
 
@@ -103,18 +116,14 @@ test('the listener link is a hosted room, and the change is told once', async ()
 test('remote access opens a hosted room with a key the API never returns', async () => {
   const { data } = await (await api.get('/api/remote-access')).json()
   expect(data.secret).toMatch(/^h1[A-Za-z0-9_-]{43}$/)
-  const keys = readDatabase<{ key: string; value: string }>(
-    "SELECT value FROM server_secrets WHERE key = 'remote_access_host_key'",
-  )
+  const keys = readHostKeys().filter((k) => k.key === 'remote_access_host_key')
   expect(keys).toHaveLength(1)
   expect(hostedRoomId(keys[0].value)).toBe(data.secret)
   expect(JSON.stringify(data)).not.toContain(keys[0].value)
 })
 
 test('the settings API never reads, lists, writes or deletes a secret key', async () => {
-  const hostKeys = readDatabase<{ value: string }>(
-    'SELECT value FROM server_secrets',
-  ).map((k) => k.value)
+  const hostKeys = readHostKeys().map((k) => k.value)
   expect(hostKeys.length).toBeGreaterThan(0)
 
   for (const key of SECRET_KEYS) {
