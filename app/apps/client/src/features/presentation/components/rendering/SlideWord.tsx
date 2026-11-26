@@ -32,6 +32,10 @@ export const SlideWord = memo(function SlideWord({
     (element: HTMLElement | null) => unitRef?.(unitKey, element),
     [unitKey, unitRef],
   )
+  // Plain spaces, and a text not cut into words, stay bare text, exactly as
+  // the text was drawn before words could animate
+  if (!isWord && html === null) return text
+
   const style: React.CSSProperties = {
     display: isWord ? 'inline-block' : undefined,
     textDecoration: isWord && underline ? 'underline' : undefined,
