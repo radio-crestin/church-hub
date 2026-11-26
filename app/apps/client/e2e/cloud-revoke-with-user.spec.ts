@@ -96,6 +96,14 @@ test.describe
 
     let churchId = ''
 
+    /** The service refuses `token`, once the server has signed it out. */
+    const expectSignedOut = (token: string) =>
+      expect
+        .poll(async () => (await askPath(churchId, token)).status, {
+          timeout: 60_000,
+        })
+        .toBe(401)
+
     test.beforeAll(async ({ request }) => {
       s3.signedWritesOnly = true
       await s3.start()
@@ -135,10 +143,9 @@ test.describe
         page.getByTestId('user-card').filter({ hasText: name }),
       ).toHaveCount(0)
 
-      // Refused for reads and writes; the old path is gone.
-      expect(await askPath(churchId, removed.device.token)).toMatchObject({
-        status: 401,
-      })
+      // Refused for reads and writes; the old path is gone. The server signs
+      // the device out after answering: the library may still be uploading.
+      await expectSignedOut(removed.device.token)
       expect(await phoneWrite(churchId, removed.device.token)).toBe(401)
       expect((await fetch(`${before.readUrl}/head.json`)).status).toBe(404)
 
@@ -175,7 +182,7 @@ test.describe
         .click()
       await expect(card).toContainText('Inactive')
 
-      expect((await askPath(churchId, device.token)).status).toBe(401)
+      await expectSignedOut(device.token)
       expect(await phoneWrite(churchId, device.token)).toBe(401)
 
       const reactivated = await request.put(`/api/users/${userId}`, {
