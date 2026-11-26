@@ -47,3 +47,8 @@ test('a feature request body over 8 MB is refused while it streams', async () =>
   const response = await post('/feature-requests', 9 * 1024 * 1024)
   expect(response.status).toBe(413)
 })
+
+test('a token refresh body over 16 KB is refused', async () => {
+  const response = await post('/auth/youtube/refresh', 64 * 1024)
+  expect(response.status).toBe(413)
+})

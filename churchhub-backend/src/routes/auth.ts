@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
 import type { Bindings, OAuthState, TokenResult } from '../types'
 import { encryptState, decryptState } from '../utils/crypto'
@@ -11,6 +12,15 @@ import { toScriptLiteral } from '../utils/toScriptLiteral'
 import { parseOAuthStart } from '../utils/parseOAuthStart'
 
 const auth = new Hono<{ Bindings: Bindings }>()
+
+// The refresh routes take a refresh token; nothing here needs more.
+auth.use(
+  '/auth/*',
+  bodyLimit({
+    maxSize: 16 * 1024,
+    onError: (c) => c.json({ error: 'Request is too large' }, 413),
+  })
+)
 
 /** OAuth flow this request belongs to — drives the postMessage type. */
 type Provider = 'youtube' | 'drive'
