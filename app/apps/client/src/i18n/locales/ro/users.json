@@ -47,5 +47,11 @@
     "expires": "Expiră în {{seconds}} s",
     "warning": "Nu-l da mai departe dacă nu știi cine l-a cerut.",
     "dismiss": "Închide"
+  },
+  "leaveChurch": {
+    "button": "Ieși din biserică",
+    "title": "Ieși din această biserică?",
+    "message": "Dispozitivul uită biserica și se deschide ca invitat. Va avea nevoie de un link nou ca să se conecteze din nou.",
+    "cancel": "Anulează"
   }
 }

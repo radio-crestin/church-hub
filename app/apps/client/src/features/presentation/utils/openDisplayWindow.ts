@@ -126,7 +126,7 @@ export function getFrontendUrl(): string {
     return `http://127.0.0.1:${getServerPort()}`
   }
   // In browser mode, use the current origin
-  return window.location.origin
+  return window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '')
 }
 
 /**

@@ -16,9 +16,14 @@ export interface ChurchBinding {
   pcSignalId: string | null
   /** The signaling relay of that room, where WebRTC is set up (T-174). */
   relayUrl: string
+  /** This device on the sync service, and its user (T-175; absent before). */
+  deviceId?: string
+  userId?: string
 }
 
 const STORAGE_KEY = 'church-hub-church-binding'
+/** A church this device left: its database is deleted on the next start. */
+const LEFT_KEY = 'church-hub-left-church'
 
 export function getChurchBinding(): ChurchBinding | null {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -32,8 +37,22 @@ export function saveChurchBinding(binding: ChurchBinding) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(binding))
 }
 
-/** Forgets the church, and the PC session its device token gave (T-174). */
+/**
+ * Forgets the church, and the PC session its device token gave (T-174);
+ * its database here goes on the next start (forgetLeftChurch, T-175).
+ */
 export function clearChurchBinding() {
+  const binding = getChurchBinding()
+  if (binding) localStorage.setItem(LEFT_KEY, binding.churchId)
   localStorage.removeItem(STORAGE_KEY)
   clearStoredUserToken()
+}
+
+/** The church this device left and still keeps a database of, if any. */
+export function getLeftChurchId(): string | null {
+  return localStorage.getItem(LEFT_KEY)
+}
+
+export function clearLeftChurchId() {
+  localStorage.removeItem(LEFT_KEY)
 }

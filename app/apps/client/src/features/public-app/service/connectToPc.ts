@@ -1,8 +1,8 @@
+import { WEB_APP_API_ORIGIN } from '~/config'
 import { openTunnel, type Tunnel, tunnelFetch } from '~/features/remote-access'
 import { setStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import type { ChurchBinding } from './churchBinding'
-import { PC_API_ORIGIN } from './pcApiOrigin'
 
 const logger = createLogger('public-app')
 
@@ -10,7 +10,7 @@ const logger = createLogger('public-app')
 async function signIn(tunnel: Tunnel, deviceToken: string): Promise<string> {
   const response = await tunnelFetch(
     tunnel,
-    new Request(`${PC_API_ORIGIN}/api/auth/device-login`, {
+    new Request(`${WEB_APP_API_ORIGIN}/api/auth/device-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: deviceToken }),

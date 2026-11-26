@@ -1,5 +1,6 @@
 import { type RTCDataChannel, RTCPeerConnection } from 'werift'
 
+import { remoteAccessTarget } from './remoteAccessTarget'
 import { createTunnelSession } from './tunnelSession'
 import { log } from '../../utils/fileLogger'
 import { ICE_SERVERS } from '../signaling/iceServers'
@@ -35,7 +36,7 @@ export async function answerTunnelOffer(offerSdp: string): Promise<string> {
     channels.add(channel)
     const session = createTunnelSession((text) => {
       if (channel.readyState === 'open') channel.send(text)
-    })
+    }, remoteAccessTarget())
     logger.info('Phone connected over the tunnel')
     channel.onMessage.subscribe((data) => {
       const text =

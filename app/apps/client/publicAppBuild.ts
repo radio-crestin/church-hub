@@ -4,8 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 /**
  * The public web app (T-168): the same client, built with its own entry
  * (`src/publicApp.tsx`) as a PWA for static hosting on Cloudflare Pages.
- * Its service worker precaches the app and keeps the church's reads from
- * the bucket, so it opens and shows the songs offline.
+ * Its service worker precaches the app (the browser server and its
+ * sqlite-wasm too, T-175) and keeps the church's reads from the bucket, so
+ * it opens and works offline.
  */
 export const isPublicAppBuild = process.env.VITE_PUBLIC_APP === '1'
 
@@ -32,7 +33,9 @@ export function publicAppPlugins(): PluginOption[] {
       // index.html already links public/site.webmanifest.
       manifest: false,
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2,webmanifest,wasm}'],
+        // The app's largest chunks and the browser server are a few MB.
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',
         runtimeCaching: [
           {

@@ -28,8 +28,9 @@ async function readGzip<T>(url: string): Promise<T> {
     signal: AbortSignal.timeout(READ_TIMEOUT_MS),
   })
   if (!response.ok) throw new Error(`GET ${url} failed: ${response.status}`)
-  const bytes = new Uint8Array(await response.arrayBuffer())
-  return JSON.parse(new TextDecoder().decode(Bun.gunzipSync(bytes))) as T
+  if (!response.body) throw new Error(`GET ${url} returned no body`)
+  const json = response.body.pipeThrough(new DecompressionStream('gzip'))
+  return (await new Response(json).json()) as T
 }
 
 async function readHead(

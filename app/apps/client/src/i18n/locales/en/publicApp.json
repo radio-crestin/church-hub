@@ -1,11 +1,6 @@
 {
   "appName": "Church Hub",
-  "loading": "Loading…",
   "retry": "Try again",
-  "notJoined": {
-    "title": "Open the link from your church",
-    "body": "On the church computer, open Settings > Phones > Join with a link, then scan the code or open the link on this device."
-  },
   "removed": {
     "title": "This device was removed",
     "body": "The church took back this device's access. Ask for a new link to join again."
@@ -24,25 +19,7 @@
       "body": "Check the internet connection and try again."
     }
   },
-  "leave": {
-    "button": "Leave",
-    "title": "Leave this church?",
-    "message": "This device will need a new link to join again.",
-    "cancel": "Cancel"
-  },
-  "songs": {
-    "search": "Search songs",
-    "count_one": "{{count}} song",
-    "count_other": "{{count}} songs",
-    "empty": "The church has no songs yet.",
-    "noMatch": "No song matches.",
-    "loadFailed": "Could not load the songs. Check the internet connection.",
-    "back": "Songs",
-    "more": "Search to find the other {{count}}."
-  },
-  "link": {
-    "connecting": "Looking for the church computer…",
-    "live": "Live from the church computer",
-    "cloud": "From the cloud"
+  "guest": {
+    "button": "Use Church Hub as a guest"
   }
 }

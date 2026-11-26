@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
 import { useToast } from '~/ui/toast'
 import { isTauri } from '~/utils/isTauri'
 import { takeUpdateOutcome } from '../services/takeUpdateOutcome'
@@ -15,6 +16,10 @@ const CHECK_INTERVAL = 1000 * 60 * 60 // Check every hour
 // artifact to compare against, so we never check for or prompt updates — and
 // surface a "dev instance" badge instead.
 const IS_DEV_INSTANCE = import.meta.env.DEV
+
+// Checks run on their own only where an update can follow: not on a dev
+// instance, and not in the web app, which updates itself as a PWA.
+const CHECKS_ON_ITS_OWN = !IS_DEV_INSTANCE && !isWebApp
 
 interface UseAppUpdateResult {
   updateInfo: UpdateInfo | null
@@ -79,19 +84,19 @@ export function useAppUpdate(): UseAppUpdateResult {
     }
   }, [])
 
-  // On mount a dev instance only shows its own version; the operator can still
-  // press "Check now" to reach the release feed deliberately.
+  // On mount a dev instance (or the web app) only shows its own version; on a
+  // dev instance the operator can still press "Check now" to reach the feed.
   useEffect(() => {
-    if (IS_DEV_INSTANCE) {
+    if (!CHECKS_ON_ITS_OWN) {
       void showLocalVersionOnly()
       return
     }
     void checkNow()
   }, [checkNow, showLocalVersionOnly])
 
-  // Periodic check — skipped entirely on dev instances (nothing to poll).
+  // Periodic check — skipped on dev instances and in the web app.
   useEffect(() => {
-    if (IS_DEV_INSTANCE) return
+    if (!CHECKS_ON_ITS_OWN) return
     const intervalId = setInterval(() => {
       void checkNow()
     }, CHECK_INTERVAL)

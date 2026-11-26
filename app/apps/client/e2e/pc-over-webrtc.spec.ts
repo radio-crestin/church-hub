@@ -1,18 +1,26 @@
-import { type APIRequestContext, devices, expect, test } from '@playwright/test'
+import {
+  type APIRequestContext,
+  devices,
+  expect,
+  type Page,
+  test,
+} from '@playwright/test'
 
 import { FakeS3 } from './helpers/fake-s3'
 import { PublicAppServer } from './helpers/public-app'
 import { relayToService } from './helpers/relay-to-service'
 import { SyncService } from './helpers/sync-service'
+import { findSong, pageApi, waitForApp } from './helpers/web-app'
 import { SIGNALING_RELAY_URL } from '../playwright.config'
 
 /**
  * Phones reach the church PC over WebRTC when it's online (T-174): a phone
  * that joined with a link (T-168) away from the church connects to the PC
  * through the PC's room on churchhub-backend's /signal routes, signs in with
- * its device token as its own user, and gets the PC's live API and
- * WebSocket events: a song saved on the PC shows on the phone at once. With
- * the PC out of reach, it reads the cloud.
+ * its device token as its own user, and runs the full app on the PC's live
+ * API and WebSocket events: a song saved on the PC reaches the phone at
+ * once. With the PC out of reach, it runs the church's server itself, synced
+ * through the cloud (T-175).
  */
 
 // Chromium hides its host addresses behind mDNS names the PC's WebRTC peer
@@ -25,8 +33,11 @@ test.use({
 const s3 = new FakeS3()
 const service = new SyncService()
 const publicApp = new PublicAppServer()
-/** The phone's address for the PC's API (features/public-app pcApiOrigin). */
-const PC = 'http://church-pc.invalid'
+
+/** Only the PC serves music: the phone's own server answers 503. */
+async function onThePc(page: Page): Promise<boolean> {
+  return (await pageApi(page, 'GET', '/api/music/folders')).status !== 503
+}
 
 async function setRemoteAccess(request: APIRequestContext, enabled: boolean) {
   const res = await request.put('/api/remote-access', { data: { enabled } })
@@ -75,8 +86,8 @@ test.describe
     let stopRelay = () => {}
 
     test.beforeAll(async ({ request }) => {
-      // The public app's build and the PC's first upload of its whole
-      // library (26k songs) take well over a hook's default 30 s.
+      // The public app's build (the whole app and its server) and the PC's
+      // first upload of its whole library (26k songs) take a while.
       test.setTimeout(300_000)
       s3.signedWritesOnly = true
       await s3.start()
@@ -135,69 +146,70 @@ test.describe
       const phone = await browser.newContext({ ...devices['Pixel 7'] })
       const page = await phone.newPage()
       await page.goto(joinUrl)
-      const link = page.getByTestId('pc-link')
-      await expect(link).toHaveAttribute('data-link', 'live', {
-        timeout: 60_000,
-      })
-      // Its WebSocket to the PC is open: edits from now on reach it.
-      await expect(link).toHaveAttribute('data-listening', 'true')
+      await waitForApp(page)
+      expect(await onThePc(page)).toBe(true)
 
       // Signed in on the PC as the device's user, from elsewhere.
-      const me = await page.evaluate(async (pc) => {
-        const res = await fetch(`${pc}/api/auth/me`)
-        return ((await res.json()) as { data: { name: string } }).data.name
-      }, PC)
-      expect(me).toBe(userName)
-      const systemToken = await page.evaluate(
-        async (pc) => (await fetch(`${pc}/api/system-token`)).status,
-        PC,
-      )
-      expect(systemToken).toBe(403)
+      const me = await pageApi(page, 'GET', '/api/auth/me')
+      expect(me.json?.data).toMatchObject({ name: userName })
+      expect((await pageApi(page, 'GET', '/api/system-token')).status).toBe(403)
 
-      // A song saved on the PC is there, found by the PC's own search…
+      // The PC's WebSocket reaches the phone: a song saved on the PC is
+      // announced at once, long before the cloud's next look.
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            const socket = new WebSocket('ws://church-pc.invalid/ws')
+            const updated: number[] = []
+            Object.assign(window, { e2eSongUpdates: updated })
+            socket.onopen = () => resolve()
+            socket.onmessage = (event) => {
+              const message = JSON.parse(String(event.data))
+              if (message.type === 'song_updated') {
+                updated.push(message.payload.songId)
+              }
+            }
+          }),
+      )
       const title = `E2E Live ${Date.now()}`
       const id = await saveSong(request, { title, lyrics: 'Live from the PC' })
-      // Typed key by key: the search box stays while each search loads.
-      await page.getByRole('searchbox').pressSequentially(title)
-      const song = page.getByTestId('church-song').filter({ hasText: title })
-      await song.click()
-      const slide = page.getByTestId('song-slide')
-      await expect(slide).toHaveText('Live from the PC')
-
-      // …and an edit on the PC shows at once: its WebSocket says so, long
-      // before the cloud's minute-long refresh.
-      await saveSong(request, { id, title, lyrics: 'Edited on the PC' })
-      await expect(slide).toHaveText('Edited on the PC', { timeout: 10_000 })
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              (window as unknown as { e2eSongUpdates: number[] })
+                .e2eSongUpdates,
+          ),
+        )
+        .toContain(id)
+      // …and found by the PC's own search.
+      expect(await findSong(page, title)).toBeTruthy()
       await phone.close()
     })
 
-    test('with the PC out of reach the phone reads the cloud, and comes back live', async ({
+    test('with the PC out of reach the phone runs the church’s server itself', async ({
       browser,
       request,
     }) => {
       const phone = await browser.newContext({ ...devices['Pixel 7'] })
       const page = await phone.newPage()
-      // Time runs as usual; the test skips ahead to the phone's next look.
-      await page.clock.install()
       await page.goto(joinUrl)
-      const link = page.getByTestId('pc-link')
-      await expect(link).toHaveAttribute('data-link', 'live', {
-        timeout: 60_000,
-      })
+      await waitForApp(page)
+      expect(await onThePc(page)).toBe(true)
 
-      // Remote access off closes the PC's room and its tunnels.
+      // Remote access off closes the PC's room and its tunnels: the app
+      // starts over on its own server, the church's library synced to it.
       await setRemoteAccess(request, false)
-      await expect(link).toHaveAttribute('data-link', 'cloud', {
-        timeout: 30_000,
-      })
-      await expect(page.getByTestId('church-song').first()).toBeVisible()
+      await expect.poll(() => onThePc(page), { timeout: 150_000 }).toBe(false)
+      await waitForApp(page)
+      const songs = await pageApi(page, 'GET', '/api/songs?limit=1')
+      expect((songs.json?.data as { songs: unknown[] }).songs.length).toBe(1)
 
-      // The phone looks for the PC again and finds it.
+      // The PC back: the next start reaches it again.
       await setRemoteAccess(request, true)
-      await page.clock.fastForward(31_000)
-      await expect(link).toHaveAttribute('data-link', 'live', {
-        timeout: 60_000,
-      })
+      await page.reload()
+      await waitForApp(page)
+      expect(await onThePc(page)).toBe(true)
       await phone.close()
     })
 
@@ -236,17 +248,11 @@ test.describe
       const phone = await browser.newContext({ ...devices['Pixel 7'] })
       const page = await phone.newPage()
       await page.goto(joinUrl)
-      await expect(page.getByTestId('pc-link')).toHaveAttribute(
-        'data-link',
-        'live',
-        { timeout: 60_000 },
-      )
+      await waitForApp(page)
+      expect(await onThePc(page)).toBe(true)
       // A route that needs the session (songs.view), unlike public /me.
-      const songs = () =>
-        page.evaluate(
-          async (pc) => (await fetch(`${pc}/api/songs?limit=1`)).status,
-          PC,
-        )
+      const songs = async () =>
+        (await pageApi(page, 'GET', '/api/songs?limit=1')).status
       expect(await songs()).toBe(200)
 
       const revoked = await request.delete(

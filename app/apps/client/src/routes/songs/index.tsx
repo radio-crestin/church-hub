@@ -3,6 +3,7 @@ import { Eye, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
@@ -442,10 +443,13 @@ function SongsPage() {
               )}
               {/* Discovering + importing from external sources is a create
                 operation — same gate as the create button, same route guard.
-                Songs waiting for approval add a small button that syncs them. */}
-              <PermissionGate permission="songs.create">
-                <DiscoverButton />
-              </PermissionGate>
+                Songs waiting for approval add a small button that syncs them.
+                The sources are the church PC's: the web app has none. */}
+              {!isWebApp && (
+                <PermissionGate permission="songs.create">
+                  <DiscoverButton />
+                </PermissionGate>
+              )}
               {/* Creating songs requires songs.create — hide the button entirely
                 for users without it (the /songs/new route is guarded too). */}
               <PermissionGate permission="songs.create">

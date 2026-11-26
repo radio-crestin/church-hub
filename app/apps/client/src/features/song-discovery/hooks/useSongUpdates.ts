@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { isWebApp } from '~/config'
 import { NOTIFICATIONS_QUERY_KEY } from '~/features/notifications/service/notificationsApi'
 import { usePermissions } from '~/provider/permissions-provider'
 import {
@@ -30,7 +31,8 @@ export function useSongUpdates() {
   const query = useQuery<SongUpdatesState>({
     queryKey: SONG_UPDATES_QUERY_KEY,
     queryFn: getSongUpdates,
-    enabled: hasPermission('songs.view'),
+    // The church PC checks the sources: the web app has no updates to read
+    enabled: !isWebApp && hasPermission('songs.view'),
     refetchInterval: (q) =>
       q.state.data?.running ? RUNNING_POLL_MS : IDLE_POLL_MS,
   })

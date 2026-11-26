@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
 
+import { isWebApp } from '~/config'
 import { useAppShortcuts } from '../../hooks'
 import { MIDIProvider } from '../context'
 import type { MIDIConfig } from '../types'
@@ -13,7 +14,7 @@ interface MIDISettingsProviderProps {
  * Wrapper component that connects MIDIProvider to app settings
  * Handles loading MIDI config from settings and persisting changes
  *
- * IMPORTANT: Always renders MIDIProvider to prevent unmount/remount cycles
+ * IMPORTANT: Always renders MIDIProvider (except in the web app) to prevent unmount/remount cycles
  * which would reset LED states. Uses a stable config reference while loading
  * to avoid triggering unnecessary reconnections.
  */
@@ -35,6 +36,9 @@ export function MIDISettingsProvider({ children }: MIDISettingsProviderProps) {
     },
     [updateMIDIConfig],
   )
+
+  // MIDI devices are the church PC's: the web app has none to listen to
+  if (isWebApp) return <>{children}</>
 
   // Always render MIDIProvider to prevent unmount/remount cycles
   // Use the last valid config while loading to maintain stable state

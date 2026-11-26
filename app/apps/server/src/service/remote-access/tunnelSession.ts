@@ -1,5 +1,4 @@
 import { createUnframer, sendFramed } from './framing'
-import { getRemoteAccessOrigin } from './remoteAccessListener'
 import type { ComputerMessage, PhoneMessage } from './tunnelProtocol'
 import { log } from '../../utils/fileLogger'
 
@@ -11,13 +10,46 @@ const logger = {
 /** Headers the tunnel sets itself, never the phone's. */
 const DROPPED_HEADERS = new Set(['host', 'connection', 'content-length'])
 
+/** The part of a WebSocket a tunnel session uses. */
+export interface TunnelSocket {
+  onopen: (() => void) | null
+  onmessage: ((event: { data: unknown }) => void) | null
+  onclose: (() => void) | null
+  send(data: string): void
+  close(): void
+}
+
+/** Where a tunnel session replays what comes in. */
+export interface TunnelTarget {
+  /** The server's origin: requests only ever reach it. */
+  origin: string
+  fetch(url: URL, init: RequestInit): Promise<Response>
+  openSocket(url: URL): TunnelSocket
+}
+
+const toBase64 = (bytes: Uint8Array) => {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+  }
+  return btoa(binary)
+}
+
+const fromBase64 = (base64: string) =>
+  Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
+
 /**
- * One phone's tunnel: replays its HTTP requests and WebSockets on the
- * remote-access listener (requests from elsewhere, never this machine).
+ * One tunnel's session: replays its HTTP requests and WebSockets on a
+ * server. On the PC, a phone's WebRTC tunnel on the remote-access listener
+ * (requests from elsewhere, never this machine: remoteAccessTarget); in a
+ * browser, the page's requests on the server running in its worker.
  */
-export function createTunnelSession(sendText: (text: string) => void) {
-  const origin = getRemoteAccessOrigin()
-  const sockets = new Map<number, WebSocket>()
+export function createTunnelSession(
+  sendText: (text: string) => void,
+  target: TunnelTarget,
+) {
+  const { origin } = target
+  const sockets = new Map<number, TunnelSocket>()
   const send = (message: ComputerMessage) => sendFramed(sendText, message)
 
   /** The URL on this server, or null for anything that would leave it. */
@@ -38,10 +70,10 @@ export function createTunnelSession(sendText: (text: string) => void) {
     const headers = message.headers.filter(
       ([name]) => !DROPPED_HEADERS.has(name.toLowerCase()),
     )
-    const response = await fetch(url, {
+    const response = await target.fetch(url, {
       method: message.method,
       headers,
-      body: message.body ? Buffer.from(message.body, 'base64') : undefined,
+      body: message.body ? fromBase64(message.body) : undefined,
       redirect: 'manual',
     })
     const responseHeaders: Array<[string, string]> = []
@@ -53,7 +85,7 @@ export function createTunnelSession(sendText: (text: string) => void) {
       id: message.id,
       status: response.status,
       headers: responseHeaders,
-      body: Buffer.from(await response.arrayBuffer()).toString('base64'),
+      body: toBase64(new Uint8Array(await response.arrayBuffer())),
     })
   }
 
@@ -64,7 +96,7 @@ export function createTunnelSession(sendText: (text: string) => void) {
       return
     }
     url.protocol = 'ws:'
-    const socket = new WebSocket(url)
+    const socket = target.openSocket(url)
     sockets.set(id, socket)
     socket.onopen = () => send({ type: 'ws-open', id })
     socket.onmessage = (event) =>

@@ -2,6 +2,7 @@ import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
 import { useAppShortcuts } from '~/features/keyboard-shortcuts'
 import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
@@ -128,7 +129,8 @@ export function ControlRoom({
     <div className="flex flex-col h-full gap-4">
       <PageHeader
         title={t('presentation:controlRoom.title')}
-        actions={<ScreenShareButton />}
+        // Sharing a screen is the church PC's: the web app can't capture one
+        actions={isWebApp ? undefined : <ScreenShareButton />}
       />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:flex-1 lg:min-h-0">
