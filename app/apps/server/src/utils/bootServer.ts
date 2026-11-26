@@ -1,3 +1,4 @@
+import { bootLoadingPage } from './bootLoadingPage'
 import { type BootHealth, getBootHealth, onBootHealthChange } from './bootState'
 import { parentToWatch } from './exitWithParent'
 import { logToFile } from './fileLogger'
@@ -13,13 +14,15 @@ type BootServerMessage =
   | { type: 'stop' }
 
 /**
- * The boot server's answer to one request: `/ping` and `/health` answer, the
- * rest get a 503 with the boot state. Self-contained (no outer names): it runs
- * inside the worker as source text.
+ * The boot server's answer to one request: `/ping` and `/health` answer, a
+ * browser opening a page gets the loading page, the rest get a 503 with the
+ * boot state. Self-contained (no outer names): it runs inside the worker as
+ * source text.
  */
 function bootServerResponse(
   req: Request,
   published: PublishedHealth,
+  loadingPage: string,
 ): Response {
   // CORS for the app's own origins only, as the real server does
   // (middleware/origins), restated here because this runs as source text:
@@ -57,6 +60,20 @@ function bootServerResponse(
   if (pathname === '/ping' || pathname === '/api/ping') {
     return new Response(JSON.stringify({ data: 'pong' }), { headers: json })
   }
+  const opensPage =
+    req.method === 'GET' &&
+    !pathname.startsWith('/api/') &&
+    (req.headers.get('accept') ?? '').includes('text/html')
+  if (opensPage) {
+    return new Response(loadingPage, {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Retry-After': '1',
+      },
+    })
+  }
   return new Response(JSON.stringify(health), {
     status: 503,
     headers: { ...json, 'Retry-After': '1' },
@@ -76,6 +93,7 @@ function bootServerWorkerMain(
   port: number,
   hostname: string,
   initial: PublishedHealth,
+  loadingPage: string,
   respond: typeof bootServerResponse,
   parentPid: number,
 ): void {
@@ -98,7 +116,7 @@ function bootServerWorkerMain(
     port,
     hostname,
     reusePort: true,
-    fetch: (req) => respond(req, health),
+    fetch: (req) => respond(req, health, loadingPage),
   })
   self.onmessage = async (event: MessageEvent<BootServerMessage>) => {
     if (event.data.type === 'health') health = event.data.health
@@ -155,7 +173,7 @@ function waitForWorker(worker: Worker, type: string): Promise<void> {
 async function startBootServerWorker(port: number): Promise<BootServer> {
   const source = `(${bootServerWorkerMain.toString()})(${port}, ${JSON.stringify(getListenHost())}, ${JSON.stringify(
     publishedHealth(),
-  )}, ${bootServerResponse.toString()}, ${parentToWatch()})`
+  )}, ${JSON.stringify(bootLoadingPage())}, ${bootServerResponse.toString()}, ${parentToWatch()})`
   const url = URL.createObjectURL(
     new Blob([source], { type: 'application/javascript' }),
   )
@@ -196,13 +214,14 @@ const INLINE_BIND_RETRY_MS = 300
  * Retries the bind: a worker that timed out may still be letting the port go.
  */
 async function startBootServerInline(port: number): Promise<BootServer> {
+  const loadingPage = bootLoadingPage()
   for (let attempt = 1; ; attempt++) {
     try {
       const server = Bun.serve({
         port,
         hostname: getListenHost(),
         reusePort: true,
-        fetch: (req) => bootServerResponse(req, publishedHealth()),
+        fetch: (req) => bootServerResponse(req, publishedHealth(), loadingPage),
       })
       return { stop: () => server.stop(true) }
     } catch (error) {
