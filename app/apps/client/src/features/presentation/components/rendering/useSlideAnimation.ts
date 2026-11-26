@@ -75,13 +75,19 @@ const DEFAULT_ANIMATION_DURATION = FACTORY_TRANSITIONS.animationIn.duration
 const DEFAULT_SLIDE_TRANSITION_DURATION =
   FACTORY_TRANSITIONS.slideTransitionOut.duration
 
+/** What a slide animation changes (getAnimationStyles): never layout. */
+const ANIMATED_PROPERTIES = ['opacity', 'transform', 'filter']
+
 /** The CSS transition for one animation, with its own duration and easing. */
 function toCssTransition(config: SlideAnimationConfig): string {
   // A typewriter changes no style: a transition would only slow the box down
   // when the screen resizes as it types.
   if (config.type === 'typewriter') return 'none'
   const duration = config.duration ?? DEFAULT_ANIMATION_DURATION
-  return `all ${duration}ms ${config.easing ?? 'ease-out'}`
+  const easing = config.easing ?? 'ease-out'
+  return ANIMATED_PROPERTIES.map(
+    (property) => `${property} ${duration}ms ${easing}`,
+  ).join(', ')
 }
 
 /**
