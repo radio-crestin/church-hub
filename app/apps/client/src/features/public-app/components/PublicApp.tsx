@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AppMark } from '~/ui/brand/AppMark'
+import { Button } from '~/ui/button'
 import { ConfirmModal } from '~/ui/modal'
 import { ChurchSongs } from './ChurchSongs'
 import { SessionNotice } from './SessionNotice'
@@ -30,24 +32,26 @@ function PublicAppShell() {
   const [confirmLeave, setConfirmLeave] = useState(false)
 
   return (
-    <div className="min-h-dvh bg-gray-50 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] dark:bg-gray-950">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
-        <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+    <div className="min-h-dvh bg-app pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-line bg-app px-4">
+        <h1 className="flex items-center gap-2 text-sm font-semibold tracking-[-0.01em] text-fg">
+          <AppMark size={24} />
           {t('appName')}
         </h1>
         {session.kind === 'joined' && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="lg"
+            className="-mr-3 px-3"
             onClick={() => setConfirmLeave(true)}
-            className="rounded-lg px-2 py-1 text-sm text-gray-600 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
           >
             {t('leave.button')}
-          </button>
+          </Button>
         )}
       </header>
       <main className="mx-auto w-full max-w-2xl px-4 py-4">
         {session.kind === 'loading' && (
-          <p className="py-16 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="py-16 text-center text-sm text-fg-label">
             {t('loading')}
           </p>
         )}

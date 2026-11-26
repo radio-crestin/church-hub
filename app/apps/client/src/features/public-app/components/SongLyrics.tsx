@@ -19,31 +19,23 @@ export function SongLyrics({ song, onBack }: SongLyricsProps) {
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-2 self-start rounded-lg py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400"
+        className="-ml-2 flex min-h-11 items-center gap-2 self-start rounded-lg px-2 text-sm font-medium text-fg-label hover:bg-hover hover:text-fg focus-visible:ring-1 focus-visible:ring-focus focus-visible:outline-none"
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={16} strokeWidth={1.5} />
         {t('songs.back')}
       </button>
       <header>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          {song.title}
-        </h2>
-        {song.author && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {song.author}
-          </p>
-        )}
+        <h2 className="text-lg font-semibold text-fg">{song.title}</h2>
+        {song.author && <p className="text-sm text-fg-hint">{song.author}</p>}
       </header>
       {slides.map((slide) => (
         <section key={slide.sortOrder} className="flex flex-col gap-1">
           {slide.label && (
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              {slide.label}
-            </h3>
+            <h3 className="text-xs font-medium text-fg-hint">{slide.label}</h3>
           )}
           <p
             data-testid="song-slide"
-            className="whitespace-pre-line text-base leading-relaxed text-gray-800 dark:text-gray-200"
+            className="whitespace-pre-line text-base leading-relaxed text-fg-body"
           >
             {slideText(slide.content)}
           </p>

@@ -37,26 +37,26 @@ export function CloudDeviceList({ devices, revoke }: CloudDeviceListProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+      <h3 className="text-sm font-medium text-fg">
         {t('sections.cloudDevices.devices')}
       </h3>
       {joined.length === 0 ? (
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-fg-label">
           {t('sections.cloudDevices.none')}
         </p>
       ) : (
-        <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+        <ul className="divide-y divide-line rounded-lg border border-line">
           {joined.map((device) => (
             <li
               key={device.id}
               data-testid="cloud-device"
-              className="flex items-center justify-between gap-3 px-3 py-2"
+              className="flex min-h-12 items-center justify-between gap-3 px-3 py-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="truncate text-sm font-medium text-fg">
                   {device.name}
                 </p>
-                <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                <p className="truncate text-xs text-fg-hint">
                   {users.find((user) => user.id === device.userId)?.name ?? ''}
                   {' · '}
                   {t('sections.cloudDevices.addedOn', {
@@ -67,7 +67,7 @@ export function CloudDeviceList({ devices, revoke }: CloudDeviceListProps) {
                 </p>
               </div>
               {device.revokedAt ? (
-                <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                <span className="shrink-0 text-xs text-fg-hint">
                   {t('sections.cloudDevices.revoked')}
                 </span>
               ) : (

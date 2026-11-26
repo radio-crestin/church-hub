@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '~/ui/button'
+
 interface SessionNoticeProps {
   /** Key of `publicApp`: its `title` and `body` are shown. */
   notice:
@@ -20,20 +22,14 @@ export function SessionNotice({ notice, onRetry }: SessionNoticeProps) {
       data-notice={notice}
       className="mx-auto flex max-w-sm flex-col items-center gap-3 py-16 text-center"
     >
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <h2 className="text-base font-semibold text-fg">
         {t(`${notice}.title`)}
       </h2>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        {t(`${notice}.body`)}
-      </p>
+      <p className="text-sm text-fg-label">{t(`${notice}.body`)}</p>
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white active:bg-indigo-700"
-        >
+        <Button size="lg" onClick={onRetry} className="mt-2">
           {t('retry')}
-        </button>
+        </Button>
       )}
     </div>
   )

@@ -27,7 +27,7 @@ export function CloudDevicesSection() {
   if (!connected) {
     return (
       <div className="flex flex-col items-start gap-3">
-        <p className="text-sm text-gray-700 dark:text-gray-300">
+        <p className="text-sm text-fg-body">
           {t('sections.cloudDevices.notConnected')}
         </p>
         <Button

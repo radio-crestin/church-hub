@@ -6,6 +6,7 @@ import './styles.css'
 
 import { PublicApp } from './features/public-app'
 import { initPublicI18n } from './features/public-app/i18n'
+import { followSystemTheme } from './features/public-app/utils/followSystemTheme'
 import { hideLoadingScreen } from './features/startup/loadingScreen'
 
 /**
@@ -13,6 +14,7 @@ import { hideLoadingScreen } from './features/startup/loadingScreen'
  * the church's songs, for any phone or browser. Its service worker keeps it
  * working offline and updates it in the background.
  */
+followSystemTheme()
 registerSW({ immediate: true })
 void initPublicI18n().then(() => {
   hideLoadingScreen()
