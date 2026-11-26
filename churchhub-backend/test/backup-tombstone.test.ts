@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, expect, test } from 'bun:test'
+import { deleteAccount } from '../src/backup/account/deleteAccount'
+import { readAccount } from '../src/backup/account/accountStore'
+import { readBackupSettings } from '../src/backup/backupSettings'
 import { runBackupMaintenance } from '../src/backup/runBackupMaintenance'
+import { createBackupBucket } from '../src/backup/storage/createBackupBucket'
 import { BackupHarness, backupEnv } from './support/backupHarness'
 
 /**
@@ -156,4 +160,90 @@ test('tombstones are purged 90 days after the deletion', async () => {
   // Past the purge, a new sign-in starts with no limits.
   const again = await harness.signIn(ALICE)
   expect((await usage(again.accessToken)).suspended).toBe(false)
+})
+
+const bucketOf = () => createBackupBucket(readBackupSettings(harness.env).bucket)
+const tombstoneValue = () => JSON.parse(new TextDecoder().decode(tombstones()[0][1]))
+
+test('deleting an account that isn’t there writes nothing, and keeps a tombstone intact', async () => {
+  const accountId = 'c'.repeat(64)
+  const strict = { deletedAt: Date.now(), suspended: true, quotaBytes: 7000, uploadLog: [Date.now()] }
+  const key = `backups/tombstones/${accountId}.json`
+  harness.s3.objects.set(key, new TextEncoder().encode(JSON.stringify(strict)))
+
+  const result = await deleteAccount(bucketOf(), accountId)
+
+  expect(result.before).toBeNull()
+  expect(JSON.parse(new TextDecoder().decode(harness.s3.objects.get(key)))).toEqual(strict)
+  expect(harness.s3.keys().some((k) => k.includes(`accounts/${accountId}`))).toBe(false)
+})
+
+test('a second deletion merges into the stricter tombstone', async () => {
+  const first = await harness.signIn(ALICE)
+  editRecord((record) => {
+    record.suspended = true
+    record.quotaBytes = 5000
+    record.uploadLog = [Date.now() - 60_000]
+  })
+  await harness.request('/backup/account', { method: 'DELETE' }, first.accessToken)
+
+  // Signed in again, the limits are lifted on the new record, then deleted again.
+  const again = await harness.signIn(ALICE)
+  editRecord((record) => {
+    record.suspended = false
+    record.quotaBytes = null
+    record.uploadLog = [Date.now() - 30_000]
+  })
+  await harness.request('/backup/account', { method: 'DELETE' }, again.accessToken)
+
+  const merged = tombstoneValue()
+  expect(merged.suspended).toBe(true)
+  expect(merged.quotaBytes).toBe(5000)
+  expect(merged.uploadLog).toHaveLength(2)
+})
+
+test('a sign-in racing a deletion ends up paused, or is refused', async () => {
+  for (let round = 0; round < 5; round++) {
+    const account = { sub: `google-sub-race-${round}`, email: `race${round}@example.com` }
+    const first = await harness.signIn(account)
+    const key = [...harness.s3.objects.keys()].find(
+      (k) => k.endsWith('account.json') && new TextDecoder().decode(harness.s3.objects.get(k)).includes(account.email)
+    ) as string
+    const record = JSON.parse(new TextDecoder().decode(harness.s3.objects.get(key)))
+    harness.s3.objects.set(key, new TextEncoder().encode(JSON.stringify({ ...record, suspended: true })))
+
+    const [, racing] = await Promise.all([
+      harness.request('/backup/account', { method: 'DELETE' }, first.accessToken),
+      harness.signIn(account),
+    ])
+    if (racing.sessionStatus === 409) continue
+    expect(racing.sessionStatus).toBe(200)
+    // Whatever the order, the account isn't left without its pause.
+    const signedIn = racing.accessToken
+    const live = await harness.request('/backup/usage', {}, signedIn)
+    if (live.status === 200) {
+      expect(((await live.json()) as { suspended: boolean }).suspended).toBe(true)
+    } else {
+      // The deletion ended this session; the next sign-in gets the pause back.
+      const after = await harness.signIn(account)
+      expect((await usage(after.accessToken)).suspended).toBe(true)
+    }
+  }
+})
+
+test('the upkeep resumes a deletion only if the record didn’t change since it read it', async () => {
+  await harness.signIn(ALICE)
+  editRecord((record) => {
+    record.deletingSince = Date.now() - 16 * 60 * 1000
+  })
+  const accountId = (recordKey() as string).split('/')[2]
+  const { etag } = await readAccount(bucketOf(), accountId)
+  editRecord((record) => {
+    record.suspended = true
+  })
+
+  const skipped = await deleteAccount(bucketOf(), accountId, { expectEtag: etag as string })
+  expect(skipped.before).toBeNull()
+  expect(recordKey()).toBeDefined()
+  expect(tombstones()).toEqual([])
 })

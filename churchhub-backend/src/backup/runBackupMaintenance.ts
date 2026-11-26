@@ -99,9 +99,14 @@ export async function runBackupMaintenance(
     const aborted = await abortStaleUploads(bucket, Date.now())
     const accounts = await accountsWithObjects(bucket)
     const tidied = await eachAccount(accounts, 'upkeep', async (accountId, objects) => {
-      const { record } = await readAccount(bucket, accountId)
-      if (record.deletingSince !== null && Date.now() - record.deletingSince > STUCK_DELETION_MS) {
-        await deleteAccount(bucket, accountId)
+      const { record, etag } = await readAccount(bucket, accountId)
+      if (
+        etag !== null &&
+        record.deletingSince !== null &&
+        Date.now() - record.deletingSince > STUCK_DELETION_MS
+      ) {
+        // Only if nothing changed the record since it was read here.
+        await deleteAccount(bucket, accountId, { expectEtag: etag })
         return
       }
       await expireAccountBackups(bucket, accountId, retentionDays)

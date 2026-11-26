@@ -43,8 +43,25 @@ export async function readTombstone(
 }
 
 /**
- * Writes the account's tombstone with a compare-and-swap: a new one, or in
- * place of the one an earlier deletion left (on its ETag).
+ * Two tombstones of one account as one, keeping the stricter limits:
+ * paused if either is, the earlier quota override when the newer has none,
+ * every upload of either still within the last 24 hours.
+ */
+export function mergeTombstones(earlier: Tombstone, newer: Tombstone, now: number): Tombstone {
+  return {
+    deletedAt: newer.deletedAt,
+    suspended: earlier.suspended || newer.suspended,
+    quotaBytes: newer.quotaBytes ?? earlier.quotaBytes,
+    uploadLog: [...new Set([...earlier.uploadLog, ...newer.uploadLog])]
+      .filter((at) => now - at < DAY_MS)
+      .sort((a, b) => a - b),
+  }
+}
+
+/**
+ * Writes the account's tombstone with a compare-and-swap: a new one, or
+ * merged into the one an earlier deletion left (on its ETag), so a later
+ * deletion never lifts a stricter limit.
  */
 export async function writeTombstone(
   bucket: BackupBucket,
@@ -54,9 +71,12 @@ export async function writeTombstone(
   const key = tombstoneKey(accountId)
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const found = await bucket.get(key)
+    const merged = found
+      ? mergeTombstones(JSON.parse(found.text) as Tombstone, tombstone, Date.now())
+      : tombstone
     const written = await bucket.put(
       key,
-      JSON.stringify(tombstone),
+      JSON.stringify(merged),
       found ? { ifMatch: found.etag } : { ifNoneMatch: '*' }
     )
     if (written !== null) return

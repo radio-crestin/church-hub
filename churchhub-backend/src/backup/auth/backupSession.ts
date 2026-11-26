@@ -76,15 +76,18 @@ export async function openBackupSession(
   const accountId = await accountIdFor(data.sub, settings.keySecret)
   const fid = randomId(12)
   const now = Date.now()
-  const tombstone = await readTombstone(bucket, accountId)
-  const record = await updateAccount(bucket, accountId, (record) => {
+  const record = await updateAccount(bucket, accountId, async (record) => {
     if (record.deletingSince !== null) {
       throw new SyncError(409, 'account_deleting', 'The account is being deleted; try again in a moment')
     }
     // A new record of an account deleted before takes its limits back. The
-    // tombstone stays until purged, so two sign-ins at once can't lose it:
-    // the second one finds the record the first created.
-    if (tombstone && record.createdAt === null) applyTombstone(record, tombstone, now)
+    // tombstone is read here, on every compare-and-swap attempt, so a
+    // deletion that lands meanwhile is never missed; it stays until purged,
+    // so two sign-ins at once both find it.
+    if (record.createdAt === null) {
+      const tombstone = await readTombstone(bucket, accountId)
+      if (tombstone) applyTombstone(record, tombstone, now)
+    }
     record.sessions[fid] = { generation: 0, createdAt: now, lastUsedAt: now }
     dropOldestSessions(record)
     record.email = data.email
