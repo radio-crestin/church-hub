@@ -1,4 +1,3 @@
-import { randomId } from '../../sync/randomId'
 import { createSignedToken, readSignedToken } from './signedToken'
 
 /** A sign-in's grant: the PC swaps it (with its verifier) for a session. */
@@ -24,7 +23,14 @@ export interface GrantData extends BackupIdentity {
 export interface SessionTokenData extends BackupIdentity {
   /** Issued at, unix ms: compared with the account's tokensValidAfter. */
   iat: number
+  /** The session family (one signed-in PC) in the account's record. */
+  fid: string
   exp: number
+}
+
+export interface RefreshTokenData extends SessionTokenData {
+  /** The family's generation it was issued for; single use. */
+  gen: number
 }
 
 export interface BackupSession {
@@ -52,17 +58,20 @@ export function createGrant(
 export const readGrant = (token: string | null | undefined, secret: string) =>
   readSignedToken<GrantData>('chbg', token, secret)
 
-/** A new access token and refresh token for the account. */
+/**
+ * A new access token and refresh token for one session family at one
+ * generation (the account's record must already hold that generation).
+ */
 export async function createSession(
   identity: BackupIdentity,
+  family: { fid: string; gen: number },
   secret: string
 ): Promise<BackupSession> {
   const iat = Date.now()
   const now = seconds()
   const accessExpiresAt = now + ACCESS_TTL_SECONDS
   const refreshExpiresAt = now + REFRESH_TTL_SECONDS
-  // A random id: two sessions made in the same millisecond still differ.
-  const data = { sub: identity.sub, email: identity.email, iat, jti: randomId(9) }
+  const data = { sub: identity.sub, email: identity.email, iat, fid: family.fid }
   return {
     accessToken: await createSignedToken(
       'chba',
@@ -72,7 +81,7 @@ export async function createSession(
     accessExpiresAt,
     refreshToken: await createSignedToken(
       'chbr',
-      { ...data, exp: refreshExpiresAt },
+      { ...data, gen: family.gen, exp: refreshExpiresAt },
       secret
     ),
     refreshExpiresAt,
@@ -88,4 +97,4 @@ export const readAccessToken = (
 export const readRefreshToken = (
   token: string | null | undefined,
   secret: string
-) => readSignedToken<SessionTokenData>('chbr', token, secret)
+) => readSignedToken<RefreshTokenData>('chbr', token, secret)

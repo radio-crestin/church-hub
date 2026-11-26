@@ -19,6 +19,7 @@ afterEach(() => harness.restore())
 const SIGNED_IN_ROUTES: [string, string][] = [
   ['GET', '/backup/key'],
   ['GET', '/backup/backups'],
+  ['GET', '/backup/usage'],
   ['POST', '/backup/uploads'],
   ['POST', '/backup/uploads/AAAAAAAAAAAAAAAAAAAAAA/parts'],
   ['POST', '/backup/uploads/AAAAAAAAAAAAAAAAAAAAAA/complete'],
@@ -115,6 +116,38 @@ test('a refresh token rotates and keeps working until the account signs out', as
   await Bun.sleep(2)
   const back = await harness.signIn(ALICE)
   expect((await harness.request('/backup/backups', {}, back.accessToken)).status).toBe(200)
+})
+
+test('a reused refresh token is refused and ends every session of the account', async () => {
+  const pc1 = await harness.signIn(ALICE)
+  const pc2 = await harness.signIn(ALICE)
+  const rotated = await harness.json('/backup/session/refresh', 'POST', {
+    refreshToken: pc1.refreshToken,
+  })
+  const fresh = (await rotated.json()) as { accessToken: string; refreshToken: string }
+  expect((await harness.request('/backup/backups', {}, fresh.accessToken)).status).toBe(200)
+
+  // The old refresh token again: a copy was used (theft).
+  await Bun.sleep(2)
+  const reused = await harness.json('/backup/session/refresh', 'POST', {
+    refreshToken: pc1.refreshToken,
+  })
+  expect(reused.status).toBe(401)
+  for (const token of [fresh.accessToken, pc2.accessToken]) {
+    expect((await harness.request('/backup/backups', {}, token)).status).toBe(401)
+  }
+  for (const refreshToken of [fresh.refreshToken, pc2.refreshToken]) {
+    const again = await harness.json('/backup/session/refresh', 'POST', { refreshToken })
+    expect(again.status).toBe(401)
+  }
+})
+
+test('signing out one PC keeps the account’s other PCs signed in', async () => {
+  const pc1 = await harness.signIn(ALICE)
+  const pc2 = await harness.signIn(ALICE)
+  await harness.request('/backup/session', { method: 'DELETE' }, pc1.accessToken)
+  expect((await harness.request('/backup/backups', {}, pc1.accessToken)).status).toBe(401)
+  expect((await harness.request('/backup/backups', {}, pc2.accessToken)).status).toBe(200)
 })
 
 test('an expired access token is refused', async () => {

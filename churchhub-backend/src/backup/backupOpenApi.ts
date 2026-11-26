@@ -78,10 +78,12 @@ export const backupOpenApi = {
     description: [
       'Free cloud backups of a church’s Church Hub database, for a Google account.',
       '',
-      '**Sign-in.** The PC opens `/backup/sign-in` with its loopback callback, a nonce and the SHA-256 (base64url) of a verifier it keeps. Google answers `/backup/callback` (PKCE, scopes `openid email`, verified email required), which redirects to the PC with its nonce and a five-minute grant. The PC swaps the grant and its verifier for a session (`POST /backup/session`): an access token (one hour) and a refresh token (180 days, rotated on each refresh). Tokens are HMAC-signed, compared in constant time and bound to the Google `sub`; signing out or deleting the account refuses every token issued before.',
+      '**Sign-in.** The PC opens `/backup/sign-in` with its loopback callback, a nonce and the SHA-256 (base64url) of a verifier it keeps. Google answers `/backup/callback` (PKCE, scopes `openid email`, verified email required), which redirects to the PC with its nonce and a five-minute grant. The PC swaps the grant and its verifier for a session (`POST /backup/session`): an access token (one hour) and a refresh token (180 days). Tokens are HMAC-signed, compared in constant time and bound to the Google `sub` and to the PC’s session family. A refresh token is single use: each refresh moves its family to the next generation, and a token of an older generation (a copy used twice) ends every session of the account. Signing out ends the PC’s family; deleting the account ends them all.',
       '',
       '**Storage.** Each account has a folder in a private bucket, named by a keyed hash of its Google `sub` (never its email). Backups go straight to the bucket in parts through presigned URLs valid ' +
-        `${PRESIGN_TTL_SECONDS / 60} minutes, handed out only to the signed-in account within its free tier; downloads are presigned the same way.`,
+        `${PRESIGN_TTL_SECONDS / 60} minutes, handed out only to the signed-in account within its quota, each signed for its part’s exact Content-Length; downloads are presigned the same way.`,
+      '',
+      '**Quota.** Each account may store its quota (2 GiB by default, `BACKUP_QUOTA_BYTES`, or an admin’s override). The account record keeps the authoritative usage counter, changed only by compare-and-swap: an upload reserves its size at start (used + reserved + it must fit; when it doesn’t, backups retention would drop after it are removed first), the real size is read from the bucket at completion, deletes and retention free it, and a daily reconcile recomputes it from the bucket.',
       '',
       '**Encryption.** The app encrypts each backup before uploading it: AES-256-GCM in 1 MiB chunks under a fresh random key, which it wraps with the account key from `GET /backup/key` (derived from a service secret and the account’s `sub`). The bucket alone can’t read a backup; the same account can restore after a reinstall by signing in again.',
       '',
@@ -109,6 +111,7 @@ export const backupOpenApi = {
               'not_found',
               'too_large',
               'quota_exceeded',
+              'suspended',
               'daily_limit',
               'upload_in_progress',
               'upload_incomplete',
@@ -199,8 +202,8 @@ export const backupOpenApi = {
       },
       delete: {
         tags: ['Sign-in'],
-        summary: 'Sign out everywhere',
-        description: 'Every access and refresh token issued so far is refused.',
+        summary: 'Sign this PC out',
+        description: 'Ends the caller’s session family: its access and refresh tokens are refused; the account’s other PCs stay signed in.',
         security: signedIn,
         responses: {
           '200': json('Signed out', { type: 'object', properties: { signedOut: { type: 'boolean' } } }),
@@ -215,7 +218,29 @@ export const backupOpenApi = {
         requestBody: body({ refreshToken: { type: 'string' } }, ['refreshToken']),
         responses: {
           '200': json('The new session (a new refresh token too)', session),
-          '401': error('Refresh token forged, expired or revoked'),
+          '401': error('Refresh token forged, expired, revoked, or used before (which ends every session of the account)'),
+        },
+      },
+    },
+    '/backup/usage': {
+      get: {
+        tags: ['Backups'],
+        summary: 'Used, reserved and quota bytes',
+        security: signedIn,
+        responses: {
+          '200': json('The account’s usage', {
+            type: 'object',
+            properties: {
+              usedBytes: { type: 'integer', description: 'Finished backups, real sizes' },
+              reservedBytes: { type: 'integer', description: 'Uploads in flight' },
+              quotaBytes: { type: 'integer', description: 'The account’s quota' },
+              maxBackupBytes: { type: 'integer' },
+              maxBackups: { type: 'integer' },
+              uploadsPerDay: { type: 'integer' },
+              suspended: { type: 'boolean' },
+            },
+          }),
+          ...common,
         },
       },
     },
@@ -288,8 +313,9 @@ export const backupOpenApi = {
             },
           }),
           '400': error('Bad size or key version (invalid_request)'),
+          '403': error('An admin paused uploads for this account (suspended)'),
           '409': error('Too many uploads in flight (upload_in_progress)'),
-          '413': error('Over the backup size (too_large) or the account’s storage (quota_exceeded)'),
+          '413': error('Over the backup size (too_large) or the account’s quota (quota_exceeded, with usedBytes, reservedBytes, neededBytes, quotaBytes)'),
           ...common,
           '429': error('rate_limited, or daily_limit'),
         },
@@ -299,7 +325,7 @@ export const backupOpenApi = {
       post: {
         tags: ['Backups'],
         summary: 'Presigned URLs for parts',
-        description: `PUT each part's bytes to its URL (valid ${PRESIGN_TTL_SECONDS / 60} minutes). Ask for at most 50 at a time, as the upload goes.`,
+        description: `PUT each part's bytes to its URL (valid ${PRESIGN_TTL_SECONDS / 60} minutes), exactly sizeBytes of them: the URL is signed with that Content-Length and the store refuses any other. Ask for at most 50 at a time, as the upload goes.`,
         security: signedIn,
         parameters: [backupId],
         requestBody: body(
@@ -314,7 +340,11 @@ export const backupOpenApi = {
                 type: 'array',
                 items: {
                   type: 'object',
-                  properties: { partNumber: { type: 'integer' }, url: { type: 'string' } },
+                  properties: {
+                    partNumber: { type: 'integer' },
+                    sizeBytes: { type: 'integer', description: 'The exact length signed into the URL' },
+                    url: { type: 'string' },
+                  },
                 },
               },
               expiresAt: { type: 'integer', description: 'Unix ms' },
@@ -331,7 +361,7 @@ export const backupOpenApi = {
         tags: ['Backups'],
         summary: 'Finish an upload',
         description:
-          'The parts must add up to exactly the reserved size. The backup is then listed and retention removes the backups it replaces.',
+          'The parts must add up to exactly the reserved size. The real size is then read from the bucket: another size, or a total past the quota, deletes the object and is refused. Otherwise the backup is listed, counted, and retention removes the backups it replaces.',
         security: signedIn,
         parameters: [backupId],
         responses: {
@@ -339,7 +369,8 @@ export const backupOpenApi = {
             type: 'object',
             properties: { backup: { $ref: '#/components/schemas/Backup' } },
           }),
-          '400': error('Larger than reserved: aborted (size_mismatch)'),
+          '400': error('Not the reserved size: aborted or deleted (size_mismatch)'),
+          '413': error('Past the quota: deleted (quota_exceeded)'),
           '404': notFound,
           '409': error('Parts missing (upload_incomplete, with uploadedParts)'),
           ...common,

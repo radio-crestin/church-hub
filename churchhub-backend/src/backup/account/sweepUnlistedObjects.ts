@@ -17,8 +17,8 @@ export async function sweepUnlistedObjects(
       backupObjectKey(accountId, entry.id)
     )
   )
-  const keys = await bucket.list(`${accountPrefix(accountId)}backups/`)
-  for (const key of keys.filter((key) => !listed.has(key))) {
+  const objects = await bucket.list(`${accountPrefix(accountId)}backups/`)
+  for (const { key } of objects.filter(({ key }) => !listed.has(key))) {
     await bucket.delete(key).catch((error: Error) => {
       console.error(`[backup] delete failed: ${error.message}`)
     })

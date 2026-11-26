@@ -9,6 +9,7 @@
  */
 import { serve } from '@hono/node-server'
 import app from '../index'
+import { runBackupMaintenance } from '../backup/runBackupMaintenance'
 import { buildNodeBindings } from './buildNodeBindings'
 import { connectRedis } from './connectRedis'
 import { createCidrMatcher } from './createCidrMatcher'
@@ -43,6 +44,14 @@ const server = serve({
   },
 })
 console.log(`[server] Church Hub backend listening on http://${hostname}:${port}`)
+
+// Cloud backup upkeep, as Cloudflare's cron triggers do on the Worker.
+const HOUR_MS = 60 * 60 * 1000
+const maintenance = [
+  setInterval(() => void runBackupMaintenance(bindingsFor(), { reconcile: false }), HOUR_MS),
+  setInterval(() => void runBackupMaintenance(bindingsFor(), { reconcile: true }), 24 * HOUR_MS),
+]
+for (const timer of maintenance) timer.unref()
 
 function shutdown(): void {
   console.log('[server] shutting down')

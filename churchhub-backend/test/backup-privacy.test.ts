@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, expect, spyOn, test } from 'bun:test'
 import { applyRetention } from '../src/backup/account/applyRetention'
-import { limitInMemory } from '../src/backup/rateLimit'
+import { createMemoryRateLimiter } from '../src/node/createMemoryRateLimiter'
+import { resolveClientIp } from '../src/node/resolveClientIp'
+import { withClientIp } from '../src/node/withClientIp'
 import { BackupHarness, backupEnv } from './support/backupHarness'
 
 /**
@@ -85,12 +87,24 @@ test('over the per-account limit the service answers 429', async () => {
   expect((await harness.request('/backup/backups', {}, accessToken)).status).toBe(429)
 })
 
-test('without a binding (Node) the limit is kept in memory, per minute', () => {
-  const now = 1_000_000
-  for (let i = 0; i < 3; i++) expect(limitInMemory('ip:test', 3, now)).toBe(true)
-  expect(limitInMemory('ip:test', 3, now + 1)).toBe(false)
-  expect(limitInMemory('ip:other', 3, now + 1)).toBe(true)
-  expect(limitInMemory('ip:test', 3, now + 60_000)).toBe(true)
+test('a forged X-Forwarded-For off Cloudflare gets no fresh limit', async () => {
+  harness.env = backupEnv({
+    BACKUP_RATE_LIMITER: createMemoryRateLimiter({ limit: 2, periodSeconds: 60 }),
+  })
+  // The Node server resolves the address from the socket: an untrusted peer's
+  // X-Forwarded-For is its own claim and is ignored (node/resolveClientIp).
+  const fromPeer = (forwardedFor: string) => {
+    const ip = resolveClientIp({ peer: '203.0.113.9', forwardedFor, isTrustedProxy: () => false })
+    const request = new Request('https://backend.test/backup/backups', {
+      headers: { 'X-Forwarded-For': forwardedFor, 'CF-Connecting-IP': '198.51.100.1' },
+    })
+    return harness.app.request(withClientIp(request, ip), undefined, harness.env)
+  }
+  const statuses = []
+  for (const forged of ['10.0.0.1', '10.0.0.2', '10.0.0.3']) {
+    statuses.push((await fromPeer(forged)).status)
+  }
+  expect(statuses).toEqual([401, 401, 429])
 })
 
 test('a body over 16 KiB is refused', async () => {

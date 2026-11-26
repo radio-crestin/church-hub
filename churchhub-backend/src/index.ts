@@ -7,6 +7,7 @@ import {
 import { requestLogger } from './middleware/requestLogger'
 import auth from './routes/auth'
 import backup from './routes/backup'
+import { runBackupMaintenance } from './backup/runBackupMaintenance'
 import featureRequests from './routes/feature-requests'
 import health from './routes/health'
 import signal from './routes/signal'
@@ -44,4 +45,13 @@ app.onError((err, c) => {
   return c.json({ error: 'Internal server error' }, 500)
 })
 
-export default app
+/** Cron triggers (wrangler.toml): the backup service's scheduled upkeep. */
+const DAILY_BACKUP_CRON = '43 3 * * *'
+
+export default Object.assign(app, {
+  scheduled(event: ScheduledController, env: Bindings, ctx: ExecutionContext) {
+    ctx.waitUntil(
+      runBackupMaintenance(env, { reconcile: event.cron === DAILY_BACKUP_CRON })
+    )
+  },
+})

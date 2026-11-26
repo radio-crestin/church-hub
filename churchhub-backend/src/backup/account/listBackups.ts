@@ -1,15 +1,28 @@
+import type { BackupLimits } from '../backupSettings'
+import type { AccountRecord } from './AccountRecord'
 import { readAccount } from './accountStore'
 import type { BackupContext } from './BackupContext'
+import { reservedBytes } from './checkCanStartUpload'
+import { effectiveQuota } from './effectiveQuota'
 
-/** The caller's backups, newest first, and how much of the free tier they use. */
+/** How much of its quota the account uses, and the free tier's limits. */
+export function usageOf(record: AccountRecord, limits: BackupLimits) {
+  return {
+    usedBytes: record.usedBytes,
+    reservedBytes: reservedBytes(record),
+    quotaBytes: effectiveQuota(record, limits),
+    maxBackupBytes: limits.maxBackupBytes,
+    maxBackups: limits.maxBackups,
+    uploadsPerDay: limits.uploadsPerDay,
+    suspended: record.suspended,
+  }
+}
+
+/** The caller's backups, newest first, and its usage. */
 export async function listBackups({ bucket, settings, caller }: BackupContext) {
   const { record } = await readAccount(bucket, caller.accountId)
-  const backups = [...record.backups].sort((a, b) => b.createdAt - a.createdAt)
   return {
-    backups,
-    usage: {
-      usedBytes: backups.reduce((sum, backup) => sum + backup.sizeBytes, 0),
-      ...settings.limits,
-    },
+    backups: [...record.backups].sort((a, b) => b.createdAt - a.createdAt),
+    usage: usageOf(record, settings.limits),
   }
 }

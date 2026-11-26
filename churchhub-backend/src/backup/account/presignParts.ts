@@ -1,5 +1,6 @@
 import { SyncError } from '../../sync/SyncError'
 import { PRESIGN_TTL_SECONDS } from '../storage/createBackupBucket'
+import type { PendingUpload } from './AccountRecord'
 import { backupObjectKey } from './accountKeys'
 import { readAccount } from './accountStore'
 import type { BackupContext } from './BackupContext'
@@ -8,9 +9,16 @@ import { findPendingUpload, requireBackupId } from './findPendingUpload'
 /** Part URLs handed out per request; the app asks again as it goes. */
 const MAX_PARTS_PER_REQUEST = 50
 
+/** A part's exact length: the part size, or what is left for the last one. */
+export const partLength = (upload: PendingUpload, partNumber: number) =>
+  partNumber < upload.partCount
+    ? upload.partSize
+    : upload.sizeBytes - upload.partSize * (upload.partCount - 1)
+
 /**
  * Presigned PUT URLs (15 minutes) for parts of the caller's own upload in
- * flight, so the backup goes straight to the bucket, never through here.
+ * flight. Each is signed for its exact Content-Length, so the store refuses
+ * a part of any other size: the upload can't grow past what was reserved.
  */
 export async function presignParts(
   { bucket, caller }: BackupContext,
@@ -20,6 +28,9 @@ export async function presignParts(
   const id = requireBackupId(backupId)
   const { record } = await readAccount(bucket, caller.accountId)
   const upload = findPendingUpload(record, id)
+  if (record.suspended) {
+    throw new SyncError(403, 'suspended', 'Backups are paused for this account')
+  }
   if (
     !Array.isArray(partNumbers) ||
     partNumbers.length === 0 ||
@@ -38,10 +49,14 @@ export async function presignParts(
   const key = backupObjectKey(caller.accountId, id)
   const expiresAt = Date.now() + PRESIGN_TTL_SECONDS * 1000
   const parts = await Promise.all(
-    (partNumbers as number[]).map(async (partNumber) => ({
-      partNumber,
-      url: await bucket.presignUploadPart(key, upload.uploadId, partNumber),
-    }))
+    (partNumbers as number[]).map(async (partNumber) => {
+      const sizeBytes = partLength(upload, partNumber)
+      return {
+        partNumber,
+        sizeBytes,
+        url: await bucket.presignUploadPart(key, upload.uploadId, partNumber, sizeBytes),
+      }
+    })
   )
   return { parts, expiresAt }
 }

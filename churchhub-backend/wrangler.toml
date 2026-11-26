@@ -74,6 +74,12 @@ namespace_id = "1011"
   limit = 30
   period = 60
 
+# Cloud backup upkeep (src/backup/runBackupMaintenance.ts): every hour,
+# abort multipart uploads left unfinished; daily at 03:43 UTC, also
+# recompute every account's usage from the bucket.
+[triggers]
+crons = ["17 * * * *", "43 3 * * *"]
+
 # Non-sensitive environment variables
 [vars]
 YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"

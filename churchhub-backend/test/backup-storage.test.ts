@@ -89,11 +89,14 @@ test('an account never reaches another account’s backups (no IDOR)', async () 
 
   await harness.upload(bob.accessToken, bytes(10))
   // Each account's objects sit under its own keyed-hash folder: no email, no sub.
-  const folders = new Set(harness.s3.keys().map((key) => key.split('/')[1]))
+  const folders = new Set(
+    harness.s3.keys().filter((key) => key.startsWith('accounts/')).map((key) => key.split('/')[1])
+  )
   expect(folders.size).toBe(2)
   for (const folder of folders) expect(folder).toMatch(/^[0-9a-f]{64}$/)
-  expect(harness.s3.keys().join()).not.toContain('alice')
-  expect(harness.s3.keys().join()).not.toContain(ALICE.sub)
+  const accountKeys = harness.s3.keys().filter((key) => key.startsWith('accounts/'))
+  expect(accountKeys.join()).not.toContain('alice')
+  expect(accountKeys.join()).not.toContain(ALICE.sub)
 })
 
 test('the free tier: size, storage, uploads in flight and per day', async () => {
@@ -124,16 +127,31 @@ test('the free tier: size, storage, uploads in flight and per day', async () => 
   expect(harness.s3.uploads.size).toBe(2)
 })
 
-test('parts adding up to more than reserved are refused and aborted', async () => {
+test('a part of another size than signed is refused by the store', async () => {
+  const { accessToken } = await harness.signIn(ALICE)
+  const started = await harness.json('/backup/uploads', 'POST', { sizeBytes: 10, keyVersion: 1 }, accessToken)
+  const { backupId } = (await started.json()) as { backupId: string }
+  const presigned = await harness.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: [1] }, accessToken)
+  const { parts } = (await presigned.json()) as { parts: { url: string; sizeBytes: number }[] }
+  expect(parts[0].sizeBytes).toBe(10)
+  expect(new URL(parts[0].url).searchParams.get('X-Amz-SignedHeaders')).toContain('content-length')
+
+  const oversize = await fetch(parts[0].url, { method: 'PUT', body: bytes(5000) })
+  expect(oversize.status).toBe(403)
+  const exact = await fetch(parts[0].url, { method: 'PUT', body: bytes(10) })
+  expect(exact.status).toBe(200)
+})
+
+test('a size lie the store let through is refused and cleaned up', async () => {
   const { accessToken } = await harness.signIn(ALICE)
   const started = await harness.json('/backup/uploads', 'POST', { sizeBytes: 10, keyVersion: 1 }, accessToken)
   const { backupId } = (await started.json()) as { backupId: string }
   const incomplete = await harness.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, accessToken)
   expect(incomplete.status).toBe(409)
 
-  const presigned = await harness.json(`/backup/uploads/${backupId}/parts`, 'POST', { partNumbers: [1] }, accessToken)
-  const { parts } = (await presigned.json()) as { parts: { url: string }[] }
-  await fetch(parts[0].url, { method: 'PUT', body: bytes(5000) })
+  // A store that ignored the signed length: 5000 bytes landed for 10 reserved.
+  const [upload] = [...harness.s3.uploads.values()]
+  upload.parts.set(1, bytes(5000))
   const done = await harness.request(`/backup/uploads/${backupId}/complete`, { method: 'POST' }, accessToken)
   expect(done.status).toBe(400)
   expect(((await done.json()) as { code: string }).code).toBe('size_mismatch')
@@ -168,10 +186,14 @@ test('deleting one backup, then the whole account', async () => {
   const deleted = await harness.request('/backup/account', { method: 'DELETE' }, accessToken)
   expect(await deleted.json()).toEqual({ deletedBackups: 1 })
   // Only the empty record is left: no backups, no uploads in flight.
-  expect(harness.s3.keys().filter((key) => !key.endsWith('account.json'))).toEqual([])
+  expect(
+    harness.s3.keys().filter((key) => key.startsWith('accounts/') && !key.endsWith('account.json'))
+  ).toEqual([])
   expect(harness.s3.uploads.size).toBe(0)
   const record = JSON.parse(
-    new TextDecoder().decode([...harness.s3.objects.values()][0])
+    new TextDecoder().decode(
+      [...harness.s3.objects].find(([key]) => key.endsWith('account.json'))?.[1]
+    )
   )
   expect(record.backups).toEqual([])
   expect(JSON.stringify(record)).not.toContain('alice')

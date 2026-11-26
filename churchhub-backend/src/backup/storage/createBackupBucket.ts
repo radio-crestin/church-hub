@@ -4,6 +4,18 @@ import type { BackupBucketSettings } from '../backupSettings'
 /** How long a presigned upload-part or download URL works. */
 export const PRESIGN_TTL_SECONDS = 15 * 60
 
+export interface StoredObject {
+  key: string
+  size: number
+}
+
+export interface InFlightUpload {
+  key: string
+  uploadId: string
+  /** Unix ms. */
+  initiatedAt: number
+}
+
 export interface UploadedPart {
   partNumber: number
   etag: string
@@ -22,14 +34,19 @@ export interface BackupBucket {
   ): Promise<string | null>
   /** The object's size, or null when it doesn't exist. */
   size(key: string): Promise<number | null>
-  list(prefix: string): Promise<string[]>
+  /** Objects under `prefix`, in key order; at most `limit` when given. */
+  list(prefix: string, limit?: number): Promise<StoredObject[]>
   delete(key: string): Promise<void>
   createMultipartUpload(key: string): Promise<string>
+  /** A PUT URL for one part, signed for exactly `contentLength` bytes. */
   presignUploadPart(
     key: string,
     uploadId: string,
-    partNumber: number
+    partNumber: number,
+    contentLength: number
   ): Promise<string>
+  /** Multipart uploads not completed nor aborted yet, under `prefix`. */
+  listMultipartUploads(prefix: string): Promise<InFlightUpload[]>
   listParts(key: string, uploadId: string): Promise<UploadedPart[]>
   completeMultipartUpload(
     key: string,
@@ -107,16 +124,20 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
   const presign = async (
     method: 'GET' | 'PUT',
     key: string,
-    query: Record<string, string> = {}
+    query: Record<string, string> = {},
+    headers: Record<string, string> = {}
   ) => {
     const url = new URL(urlOf(settings.presignEndpoint, key))
     for (const [name, value] of Object.entries(query)) {
       url.searchParams.set(name, value)
     }
     url.searchParams.set('X-Amz-Expires', String(PRESIGN_TTL_SECONDS))
+    // allHeaders: aws4fetch leaves Content-Length out of the signature
+    // otherwise; signed, the store refuses a body of any other length.
     const signed = await client.sign(url.toString(), {
       method,
-      aws: { signQuery: true },
+      headers,
+      aws: { signQuery: true, allHeaders: true },
     })
     return signed.url
   }
@@ -154,11 +175,12 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
       if (response.status === 404) return null
       return Number(response.headers.get('Content-Length') ?? 0)
     },
-    async list(prefix) {
-      const keys: string[] = []
+    async list(prefix, limit) {
+      const objects: StoredObject[] = []
       let token: string | undefined
       do {
         const query = new URLSearchParams({ 'list-type': '2', prefix })
+        if (limit) query.set('max-keys', String(limit))
         if (token) query.set('continuation-token', token)
         const response = await send(
           'ListObjectsV2',
@@ -166,14 +188,17 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
           { method: 'GET' }
         )
         const xml = await response.text()
-        for (const match of xml.matchAll(/<Key>([^<]*)<\/Key>/g)) {
-          keys.push(decodeXml(match[1]))
+        for (const [, entry] of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
+          objects.push({
+            key: decodeXml(tag(entry, 'Key') ?? ''),
+            size: Number(tag(entry, 'Size') ?? 0),
+          })
         }
         token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
           ? decodeXml(tag(xml, 'NextContinuationToken') ?? '') || undefined
           : undefined
-      } while (token)
-      return keys
+      } while (token && (!limit || objects.length < limit))
+      return limit ? objects.slice(0, limit) : objects
     },
     async delete(key) {
       await send('DeleteObject', objectUrl(key), { method: 'DELETE' })
@@ -191,8 +216,42 @@ export function createBackupBucket(settings: BackupBucketSettings): BackupBucket
       if (!uploadId) throw new Error('S3 CreateMultipartUpload failed: no UploadId')
       return decodeXml(uploadId)
     },
-    presignUploadPart(key, uploadId, partNumber) {
-      return presign('PUT', key, { partNumber: String(partNumber), uploadId })
+    presignUploadPart(key, uploadId, partNumber, contentLength) {
+      return presign(
+        'PUT',
+        key,
+        { partNumber: String(partNumber), uploadId },
+        { 'content-length': String(contentLength) }
+      )
+    },
+    async listMultipartUploads(prefix) {
+      const uploads: InFlightUpload[] = []
+      let keyMarker: string | undefined
+      let uploadIdMarker: string | undefined
+      do {
+        const query = new URLSearchParams({ uploads: '', prefix })
+        if (keyMarker) query.set('key-marker', keyMarker)
+        if (uploadIdMarker) query.set('upload-id-marker', uploadIdMarker)
+        const response = await send(
+          'ListMultipartUploads',
+          `${urlOf(settings.endpoint)}?${query}`,
+          { method: 'GET' }
+        )
+        const xml = await response.text()
+        for (const [, entry] of xml.matchAll(/<Upload>([\s\S]*?)<\/Upload>/g)) {
+          uploads.push({
+            key: decodeXml(tag(entry, 'Key') ?? ''),
+            uploadId: decodeXml(tag(entry, 'UploadId') ?? ''),
+            initiatedAt: Date.parse(tag(entry, 'Initiated') ?? '') || 0,
+          })
+        }
+        const truncated = /<IsTruncated>true<\/IsTruncated>/.test(xml)
+        keyMarker = truncated ? decodeXml(tag(xml, 'NextKeyMarker') ?? '') : undefined
+        uploadIdMarker = truncated
+          ? decodeXml(tag(xml, 'NextUploadIdMarker') ?? '')
+          : undefined
+      } while (keyMarker)
+      return uploads
     },
     async listParts(key, uploadId) {
       const response = await send('ListParts', objectUrl(key, { uploadId }), {

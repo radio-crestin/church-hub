@@ -9,7 +9,8 @@ import {
   ACCOUNT_KEY_VERSION,
   deriveAccountKey,
 } from '../backup/account/deriveAccountKey'
-import { listBackups } from '../backup/account/listBackups'
+import { listBackups, usageOf } from '../backup/account/listBackups'
+import { readAccount } from '../backup/account/accountStore'
 import { presignDownload } from '../backup/account/presignDownload'
 import { presignParts } from '../backup/account/presignParts'
 import { revokeSessions } from '../backup/account/revokeSessions'
@@ -23,7 +24,7 @@ import { finishBackupSignIn, startBackupSignIn } from '../backup/auth/backupSign
 import { backupOpenApi } from '../backup/backupOpenApi'
 import { readBackupSettings } from '../backup/backupSettings'
 import { handleBackupError } from '../backup/handleBackupError'
-import { clientIp, enforceRateLimit } from '../backup/rateLimit'
+import { enforceRateLimit } from '../backup/rateLimit'
 import { createBackupBucket } from '../backup/storage/createBackupBucket'
 import { readJsonBody } from '../sync/readJsonBody'
 import type { Bindings } from '../types'
@@ -55,7 +56,7 @@ backup.use(
   })
 )
 backup.use('/backup/*', async (c, next) => {
-  await enforceRateLimit(c.env, 'ip', clientIp(c))
+  await enforceRateLimit(c, 'ip')
   await next()
   // Answers carry tokens, keys and presigned URLs: never cached.
   c.header('Cache-Control', 'no-store')
@@ -74,7 +75,7 @@ async function signedIn(c: BackupRequest): Promise<BackupContext> {
     settings,
     c.req.header('Authorization')
   )
-  await enforceRateLimit(c.env, 'account', caller.accountId)
+  await enforceRateLimit(c, 'account', caller.accountId)
   return { settings, bucket, caller }
 }
 
@@ -118,8 +119,10 @@ backup.get('/backup/callback', async (c) => {
 /** POST /backup/session { grant, verifier }: the PC's first session. */
 backup.post('/backup/session', async (c) => {
   const body = (await readJsonBody(c)) as { grant?: unknown; verifier?: unknown }
-  const { settings } = storage(c)
-  return c.json(await openBackupSession(settings, body?.grant, body?.verifier))
+  const { settings, bucket } = storage(c)
+  return c.json(
+    await openBackupSession(bucket, settings, body?.grant, body?.verifier)
+  )
 })
 
 /** POST /backup/session/refresh { refreshToken }: a new session. */
@@ -129,7 +132,7 @@ backup.post('/backup/session/refresh', async (c) => {
   return c.json(await refreshBackupSession(bucket, settings, body?.refreshToken))
 })
 
-/** DELETE /backup/session: sign out everywhere (every token is refused). */
+/** DELETE /backup/session: sign this PC out (its session family ends). */
 backup.delete('/backup/session', async (c) => {
   await revokeSessions(await signedIn(c))
   return c.json({ signedOut: true })
@@ -148,6 +151,13 @@ backup.get('/backup/key', async (c) => {
 backup.get('/backup/backups', async (c) =>
   c.json(await listBackups(await signedIn(c)))
 )
+
+/** GET /backup/usage: used, reserved and quota bytes (an admin's override). */
+backup.get('/backup/usage', async (c) => {
+  const { bucket, settings, caller } = await signedIn(c)
+  const { record } = await readAccount(bucket, caller.accountId)
+  return c.json(usageOf(record, settings.limits))
+})
 
 /** POST /backup/uploads { sizeBytes, appVersion, keyVersion }: start one. */
 backup.post('/backup/uploads', async (c) => {
@@ -188,8 +198,10 @@ backup.delete('/backup/backups/:backupId', async (c) => {
 })
 
 /** DELETE /backup/account: delete every backup and sign out everywhere. */
-backup.delete('/backup/account', async (c) =>
-  c.json(await deleteAccount(await signedIn(c)))
-)
+backup.delete('/backup/account', async (c) => {
+  const { bucket, caller } = await signedIn(c)
+  const { deletedBackups } = await deleteAccount(bucket, caller.accountId)
+  return c.json({ deletedBackups })
+})
 
 export default backup

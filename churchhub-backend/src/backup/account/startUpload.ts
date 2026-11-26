@@ -7,6 +7,8 @@ import { readAccount, updateAccount } from './accountStore'
 import type { BackupContext } from './BackupContext'
 import { checkCanStartUpload } from './checkCanStartUpload'
 import { ACCOUNT_KEY_VERSION } from './deriveAccountKey'
+import { makeRoom } from './makeRoom'
+import { sweepUnlistedObjects } from './sweepUnlistedObjects'
 import { UPLOAD_MAX_AGE_MS, takeExpiredUploads } from './takeExpiredUploads'
 
 /** Each part the app uploads, but the last (S3's minimum is 5 MiB). */
@@ -20,9 +22,11 @@ export interface StartUploadInput {
 }
 
 /**
- * Starts a backup upload within the free tier: a multipart upload in the
- * bucket, recorded as pending with its size reserved. The app then asks
- * for presigned part URLs and uploads straight to the bucket.
+ * Starts a backup upload within the account's quota: used + reserved + this
+ * one may not pass it. When it doesn't fit, the backups retention would drop
+ * after this one are removed first; if it still doesn't fit, 413. Then a
+ * multipart upload is opened in the bucket and its size reserved; the app
+ * asks for part URLs, each signed for its exact length.
  */
 export async function startUpload(
   { bucket, settings, caller }: BackupContext,
@@ -37,14 +41,16 @@ export async function startUpload(
   }
   const size = sizeBytes as number
   const now = Date.now()
-  // Refuse early, before anything is created in the bucket.
-  const { record: current } = await readAccount(bucket, caller.accountId)
-  takeExpiredUploads(current, now)
-  checkCanStartUpload(current, size, settings.limits, now)
+  // Refuse early, on a copy, before anything is created in the bucket.
+  const { record: preview } = await readAccount(bucket, caller.accountId)
+  takeExpiredUploads(preview, now)
+  makeRoom(preview, size, settings.limits, now)
+  checkCanStartUpload(preview, size, settings.limits, now)
 
   const id = randomId(16)
-  const key = backupObjectKey(caller.accountId, id)
-  const uploadId = await bucket.createMultipartUpload(key)
+  const uploadId = await bucket.createMultipartUpload(
+    backupObjectKey(caller.accountId, id)
+  )
   const upload: PendingUpload = {
     id,
     uploadId,
@@ -58,19 +64,24 @@ export async function startUpload(
     keyVersion: ACCOUNT_KEY_VERSION,
     startedAt: now,
   }
-  let expired: PendingUpload[] = []
+  let result
   try {
-    await updateAccount(bucket, caller.accountId, (record) => {
-      expired = takeExpiredUploads(record, now)
+    result = await updateAccount(bucket, caller.accountId, (record) => {
+      const expired = takeExpiredUploads(record, now)
+      const dropped = makeRoom(record, size, settings.limits, now)
       checkCanStartUpload(record, size, settings.limits, now)
       record.uploads.push(upload)
       record.uploadLog.push(now)
+      return { expired, dropped, record }
     })
   } catch (error) {
     await abortUploads(bucket, caller.accountId, [upload])
     throw error
   }
-  await abortUploads(bucket, caller.accountId, expired)
+  await abortUploads(bucket, caller.accountId, result.expired)
+  if (result.dropped.length > 0) {
+    await sweepUnlistedObjects(bucket, caller.accountId, result.record)
+  }
   return {
     backupId: id,
     partSize: upload.partSize,

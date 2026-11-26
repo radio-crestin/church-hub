@@ -13,7 +13,9 @@ export async function readAccount(
 ): Promise<{ record: AccountRecord; etag: string | null }> {
   const found = await bucket.get(accountRecordKey(accountId))
   if (!found) return { record: emptyAccount(), etag: null }
-  return { record: JSON.parse(found.text) as AccountRecord, etag: found.etag }
+  // Fields added later read as their defaults.
+  const record = { ...emptyAccount(), ...(JSON.parse(found.text) as Partial<AccountRecord>) }
+  return { record, etag: found.etag }
 }
 
 /**

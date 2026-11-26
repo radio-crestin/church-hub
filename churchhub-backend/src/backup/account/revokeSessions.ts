@@ -1,9 +1,9 @@
 import { updateAccount } from './accountStore'
 import type { BackupContext } from './BackupContext'
 
-/** Signs the account out everywhere: every token issued so far is refused. */
+/** Signs this PC out: its session family ends; other PCs stay signed in. */
 export async function revokeSessions({ bucket, caller }: BackupContext) {
   await updateAccount(bucket, caller.accountId, (record) => {
-    record.tokensValidAfter = Date.now()
+    delete record.sessions[caller.fid]
   })
 }
