@@ -7,6 +7,8 @@ export class CloudBackupError extends Error {
   constructor(
     readonly code: string,
     readonly status = 502,
+    /** Numbers the app can show, e.g. a quota refusal's used and needed bytes. */
+    readonly details: Record<string, number> = {},
   ) {
     super(code)
     this.name = 'CloudBackupError'

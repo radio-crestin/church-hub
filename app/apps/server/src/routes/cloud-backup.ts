@@ -2,9 +2,12 @@ import {
   CLOUD_BACKUP_INTERVALS,
   CloudBackupError,
   completeCloudBackupSignIn,
+  consumeConfirmation,
   deleteCloudBackup,
   getCloudBackupStatus,
+  issueConfirmation,
   listCloudBackups,
+  refuseForeignMutation,
   restoreCloudBackup,
   signOutCloudBackup,
   startCloudBackupSignIn,
@@ -24,7 +27,10 @@ const RESTORE_PATH =
 function failure(error: unknown): Response {
   if (error instanceof CloudBackupError) {
     if (error.status >= 500) logger.error(`Cloud backup failed: ${error.code}`)
-    return Response.json({ error: error.code }, { status: error.status })
+    return Response.json(
+      { error: error.code, ...error.details },
+      { status: error.status },
+    )
   }
   logger.error(
     `Cloud backup failed: ${error instanceof Error ? error.message : 'unknown'}`,
@@ -46,6 +52,28 @@ function callbackPage(english: string, romanian: string): Response {
     `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Church Hub</title></head><body style="font-family:system-ui;padding:2rem;text-align:center"><p>${escapeHtml(english)}</p><p>${escapeHtml(romanian)}</p><script>setTimeout(()=>window.close(),1500)</script></body></html>`,
     { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
   )
+}
+
+const confirmationRequired = () =>
+  Response.json({ error: 'confirmation_required' }, { status: 400 })
+
+/** POST confirmations: a single-use token for restore or delete-all. */
+async function confirm(req: Request): Promise<Response> {
+  const body = (await req.json().catch(() => ({}))) as {
+    action?: unknown
+    backupId?: unknown
+  }
+  if (body.action === 'delete-account') {
+    return answer(() => issueConfirmation('delete-account', 'account'))
+  }
+  if (
+    body.action === 'restore' &&
+    typeof body.backupId === 'string' &&
+    /^[A-Za-z0-9_-]{22}$/.test(body.backupId)
+  ) {
+    return answer(() => issueConfirmation('restore', body.backupId as string))
+  }
+  return Response.json({ error: 'invalid_request' }, { status: 400 })
 }
 
 /** PUT config: the automatic schedule's switch and interval, validated. */
@@ -71,15 +99,20 @@ async function updateSchedule(req: Request): Promise<Response> {
 }
 
 /**
- * Church Hub Cloud backup on this PC, localhost only (the caller guards):
+ * Church Hub Cloud backup on this PC, localhost only (the caller guards).
+ * Every change must come from the app's own UI as JSON
+ * (refuseForeignMutation); restore and delete-all also need a single-use
+ * confirmation from the UI's dialog. The sign-in callback, a navigation
+ * from Google, is bound instead to the nonce this PC issued at its start:
  * GET    /api/backup/cloud/status                 signed in?, email, schedule
  * POST   /api/backup/cloud/sign-in                → { authUrl }
  * GET    /api/backup/cloud/callback               the sign-in's return (HTML)
- * POST   /api/backup/cloud/sign-out               { deleteBackups }
+ * POST   /api/backup/cloud/confirmations          { action, backupId? } → { token }
+ * POST   /api/backup/cloud/sign-out               { deleteBackups, confirmToken? }
  * PUT    /api/backup/cloud/config                 { autoBackupEnabled?, intervalHours? }
  * GET    /api/backup/cloud/backups                → { backups, usage }
  * POST   /api/backup/cloud/backups                back up now → { backup }
- * POST   /api/backup/cloud/backups/:id/restore    → { requiresRestart }
+ * POST   /api/backup/cloud/backups/:id/restore    { confirmToken } → { requiresRestart }
  * DELETE /api/backup/cloud/backups/:id
  */
 export async function handleCloudBackupRoutes(
@@ -88,6 +121,8 @@ export async function handleCloudBackupRoutes(
 ): Promise<Response | null> {
   const { pathname } = url
   const { method } = req
+  const refused = refuseForeignMutation(req)
+  if (refused) return refused
 
   if (pathname === '/api/backup/cloud/status' && method === 'GET') {
     return answer(getCloudBackupStatus)
@@ -116,11 +151,22 @@ export async function handleCloudBackupRoutes(
       )
     }
   }
+  if (pathname === '/api/backup/cloud/confirmations' && method === 'POST') {
+    return confirm(req)
+  }
   if (pathname === '/api/backup/cloud/sign-out' && method === 'POST') {
     const body = (await req.json().catch(() => ({}))) as {
       deleteBackups?: unknown
+      confirmToken?: unknown
     }
-    return answer(() => signOutCloudBackup(body.deleteBackups === true))
+    const deleteBackups = body.deleteBackups === true
+    if (
+      deleteBackups &&
+      !consumeConfirmation(body.confirmToken, 'delete-account', 'account')
+    ) {
+      return confirmationRequired()
+    }
+    return answer(() => signOutCloudBackup(deleteBackups))
   }
   if (pathname === '/api/backup/cloud/config' && method === 'PUT') {
     return updateSchedule(req)
@@ -133,7 +179,14 @@ export async function handleCloudBackupRoutes(
   }
   const restore = pathname.match(RESTORE_PATH)
   if (restore && method === 'POST') {
-    return answer(() => restoreCloudBackup(restore[1] as string))
+    const backupId = restore[1] as string
+    const body = (await req.json().catch(() => ({}))) as {
+      confirmToken?: unknown
+    }
+    if (!consumeConfirmation(body.confirmToken, 'restore', backupId)) {
+      return confirmationRequired()
+    }
+    return answer(() => restoreCloudBackup(backupId))
   }
   const single = pathname.match(BACKUP_PATH)
   if (single && method === 'DELETE') {

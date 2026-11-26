@@ -5,6 +5,17 @@ const REQUEST_TIMEOUT_MS = 60_000
 /** Service refusals the user can act on keep their status. */
 const KEPT_STATUSES = new Set([401, 404, 409, 413, 429, 503])
 
+const QUOTA_FIELDS = ['usedBytes', 'reservedBytes', 'neededBytes', 'quotaBytes']
+
+/** A quota refusal's numbers, and nothing else of the answer. */
+function quotaNumbers(body: Record<string, unknown>): Record<string, number> {
+  return Object.fromEntries(
+    QUOTA_FIELDS.filter((name) => typeof body[name] === 'number').map(
+      (name) => [name, body[name] as number],
+    ),
+  )
+}
+
 /**
  * One JSON call to the backup service (churchhub-backend /backup). A
  * refusal becomes a CloudBackupError with the service's code; nothing of
@@ -34,6 +45,7 @@ export async function cloudBackupFetch<T>(
     throw new CloudBackupError(
       typeof json.code === 'string' ? json.code : `http_${response.status}`,
       KEPT_STATUSES.has(response.status) ? response.status : 502,
+      quotaNumbers(json),
     )
   }
   return json

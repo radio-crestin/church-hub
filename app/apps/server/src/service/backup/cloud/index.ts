@@ -8,9 +8,11 @@ export {
   completeCloudBackupSignIn,
   startCloudBackupSignIn,
 } from './cloudBackupSignIn'
+export { consumeConfirmation, issueConfirmation } from './confirmations'
 export { deleteCloudBackup } from './deleteCloudBackup'
 export { getCloudBackupStatus } from './getCloudBackupStatus'
 export { listCloudBackups } from './listCloudBackups'
+export { refuseForeignMutation } from './refuseForeignMutation'
 export { restoreCloudBackup } from './restoreCloudBackup'
 export { runScheduledCloudBackupIfDue } from './runScheduledCloudBackupIfDue'
 export { signOutCloudBackup } from './signOutCloudBackup'

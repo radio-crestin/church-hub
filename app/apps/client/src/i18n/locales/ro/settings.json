@@ -1110,7 +1110,9 @@
           "not_found": "Această copie nu mai există.",
           "service_unreachable": "Church Hub Cloud nu este accesibil. Verifică-ți conexiunea la internet.",
           "not_configured": "Church Hub Cloud nu este disponibil momentan.",
-          "generic": "A apărut o problemă cu Church Hub Cloud. Încearcă din nou."
+          "generic": "A apărut o problemă cu Church Hub Cloud. Încearcă din nou.",
+          "quota_exceeded_details": "Această copie necesită {{needed}} de spațiu, dar ai doar {{free}} liberi din {{total}}. Șterge o copie mai veche din cloud și încearcă din nou.",
+          "suspended": "Copiile în cloud sunt suspendate pentru acest cont. Contactează Church Hub pentru ajutor."
         },
         "description": "Copii gratuite și criptate ale datelor bisericii tale, păstrate de Church Hub. Le poți restaura pe orice computer conectându-te cu același cont Google.",
         "retention": "Păstrează cele mai recente 3 copii, apoi câte una pe zi timp de o săptămână și câte una pe săptămână timp de 5 săptămâni."

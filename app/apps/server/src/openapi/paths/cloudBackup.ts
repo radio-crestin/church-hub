@@ -53,13 +53,25 @@ const schedule = {
   lastBackupAt: { type: ['integer', 'null'], description: 'Unix ms' },
 }
 
+/** Refusals every changing route answers before anything else. */
+const guardErrors = {
+  '403': error(
+    'Not from localhost, or not from the app’s own UI: a foreign Origin, or a cross-site request without the app’s Origin (foreign_origin)',
+  ),
+  '415': error(
+    'The body must be JSON, so a browser preflights it (json_required)',
+  ),
+}
+
 const signedInErrors = {
   '401': error('Not signed in, or the session ended (cloud_sign_in_required)'),
-  '403': error('Not from localhost'),
+  ...guardErrors,
   '409': error(
     'Another cloud backup or restore is running (busy), or upload_in_progress',
   ),
-  '413': error('Over the free tier: too_large or quota_exceeded'),
+  '413': error(
+    'Over the free tier: too_large, or quota_exceeded with usedBytes, reservedBytes, neededBytes and quotaBytes',
+  ),
   '429': error('daily_limit or rate_limited'),
   '502': error('The backup service failed or could not be reached'),
 }
@@ -92,7 +104,7 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
         'Returns the backup service’s sign-in URL to open in the browser. A nonce and the hash of a verifier only this PC knows ride along; the sign-in returns to /api/backup/cloud/callback with a grant this server swaps (with the verifier) for a session.',
       responses: {
         '200': json('Open it in the browser', { authUrl: { type: 'string' } }),
-        '403': error('Not from localhost'),
+        ...guardErrors,
       },
     },
   },
@@ -109,13 +121,39 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
       },
     },
   },
+  '/api/backup/cloud/confirmations': {
+    post: {
+      tags: ['Backup'],
+      summary: 'A single-use confirmation for restore or delete-all',
+      description:
+        'The UI asks for it when the operator confirms in its dialog. Valid two minutes, once, for exactly this action and backup.',
+      requestBody: body({
+        action: { type: 'string', enum: ['restore', 'delete-account'] },
+        backupId: { type: 'string', description: 'For restore' },
+      }),
+      responses: {
+        '200': json('The token', {
+          token: { type: 'string' },
+          expiresAt: { type: 'integer', description: 'Unix ms' },
+        }),
+        '400': error('invalid_request'),
+        ...guardErrors,
+      },
+    },
+  },
   '/api/backup/cloud/sign-out': {
     post: {
       tags: ['Backup'],
       summary: 'Sign out, optionally deleting every cloud backup',
       description:
         'With `deleteBackups`, the account’s backups and data are deleted on the service first. Either way every token issued so far is refused, this PC forgets its sign-in and automatic cloud backups stop.',
-      requestBody: body({ deleteBackups: { type: 'boolean' } }),
+      requestBody: body({
+        deleteBackups: { type: 'boolean' },
+        confirmToken: {
+          type: 'string',
+          description: 'Required with deleteBackups (action delete-account)',
+        },
+      }),
       responses: {
         '200': json('Signed out', {
           signedOut: { type: 'boolean' },
@@ -136,7 +174,7 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
       responses: {
         '200': json('The schedule', schedule),
         '400': error('invalid_request'),
-        '403': error('Not from localhost'),
+        ...guardErrors,
       },
     },
   },
@@ -179,8 +217,17 @@ export const cloudBackupPaths: Record<string, Record<string, unknown>> = {
       description:
         'Downloads, decrypts and checks the backup, then replaces the database (the current one is kept to fall back on). This PC stays signed in as it was.',
       parameters: [backupId],
+      requestBody: body({
+        confirmToken: {
+          type: 'string',
+          description: 'action restore, this backup',
+        },
+      }),
       responses: {
         '200': json('Restored', { requiresRestart: { type: 'boolean' } }),
+        '400': error(
+          'No live confirmation for this backup (confirmation_required)',
+        ),
         '404': error('No such backup in the account (not_found)'),
         '422': error(
           'The file was changed or the key is wrong (backup_unreadable)',

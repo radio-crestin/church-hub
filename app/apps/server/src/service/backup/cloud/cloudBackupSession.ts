@@ -19,6 +19,12 @@ const RENEW_BEFORE_S = 60
 
 /** The current access token, in memory only. */
 let access: { token: string; expiresAt: number } | null = null
+/**
+ * The refresh in progress, shared by every caller meanwhile: refresh tokens
+ * are single use, so a second refresh with the same token would look like
+ * a stolen copy to the service and end every session of the account.
+ */
+let refreshing: Promise<{ serviceUrl: string; token: string }> | null = null
 
 /** Keeps a new session: the refresh token in server_secrets, access in memory. */
 export function keepServiceSession(
@@ -54,15 +60,25 @@ export async function getCloudAccess(
   if (!forceRefresh && access && access.expiresAt - RENEW_BEFORE_S > now) {
     return { serviceUrl: credential.serviceUrl, token: access.token }
   }
+  refreshing ??= refresh(
+    credential.serviceUrl,
+    credential.refreshToken,
+  ).finally(() => {
+    refreshing = null
+  })
+  return refreshing
+}
+
+async function refresh(serviceUrl: string, refreshToken: string) {
   try {
     const session = await cloudBackupFetch<ServiceSession>(
-      credential.serviceUrl,
+      serviceUrl,
       'POST',
       '/backup/session/refresh',
-      { body: { refreshToken: credential.refreshToken } },
+      { body: { refreshToken } },
     )
-    keepServiceSession(credential.serviceUrl, session)
-    return { serviceUrl: credential.serviceUrl, token: session.accessToken }
+    keepServiceSession(serviceUrl, session)
+    return { serviceUrl, token: session.accessToken }
   } catch (error) {
     if (error instanceof CloudBackupError && error.status === 401) {
       forgetServiceSession()

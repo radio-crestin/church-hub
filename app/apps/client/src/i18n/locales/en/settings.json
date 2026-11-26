@@ -1103,7 +1103,9 @@
           "not_found": "This backup no longer exists.",
           "service_unreachable": "Church Hub Cloud can’t be reached. Check the internet connection.",
           "not_configured": "Church Hub Cloud is not available right now.",
-          "generic": "Something went wrong with Church Hub Cloud. Try again."
+          "generic": "Something went wrong with Church Hub Cloud. Try again.",
+          "quota_exceeded_details": "This backup needs {{needed}}, but only {{free}} of your {{total}} is free. Delete an older cloud backup and try again.",
+          "suspended": "Cloud backups are paused for this account. Contact Church Hub for help."
         },
         "description": "Free, encrypted backups of this church’s data, kept by Church Hub. Restore them on any computer by signing in with the same Google account.",
         "retention": "Keeps the newest 3, then one a day for a week and one a week for 5 weeks."

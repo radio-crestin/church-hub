@@ -89,8 +89,15 @@ test.describe
     })
 
     test.afterAll(async ({ request }) => {
+      const confirmation = await request.post(
+        '/api/backup/cloud/confirmations',
+        { data: { action: 'delete-account' } },
+      )
       await request.post('/api/backup/cloud/sign-out', {
-        data: { deleteBackups: true },
+        data: {
+          deleteBackups: true,
+          confirmToken: (await confirmation.json()).data.token,
+        },
       })
       await request.delete(MARKER)
       await service.dispose()
@@ -163,6 +170,7 @@ test.describe
       request,
     }) => {
       const made = await request.post('/api/backup/cloud/backups', {
+        data: {},
         timeout: SLOW.timeout,
       })
       expect(made.status()).toBe(200)
