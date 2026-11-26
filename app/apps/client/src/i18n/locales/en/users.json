@@ -47,5 +47,11 @@
     "expires": "Expires in {{seconds}} s",
     "warning": "Don't give it out if you don't know who asked.",
     "dismiss": "Close"
+  },
+  "leaveChurch": {
+    "button": "Leave this church",
+    "title": "Leave this church?",
+    "message": "This device forgets the church and opens as a guest. It needs a new link to join again.",
+    "cancel": "Cancel"
   }
 }

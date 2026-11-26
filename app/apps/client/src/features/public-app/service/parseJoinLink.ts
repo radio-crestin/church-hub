@@ -5,6 +5,8 @@ export interface JoinLink {
   churchId: string
   token: string
   pcSignalId: string | null
+  /** The signaling relay the PC's room is on (`/signal`, T-174). */
+  relayUrl: string
 }
 
 /** A church id is 12 random bytes in base64url; the path secret follows it. */
@@ -26,7 +28,8 @@ function isServiceUrl(value: string): boolean {
 
 /**
  * The join link's fragment, `#c=<churchId>-<pathSecret>&t=<deviceToken>`
- * plus `&p=<pcSignalId>` and `&s=<sync service>` when given; null when it
+ * plus `&p=<pcSignalId>`, `&r=<signaling relay>` and `&s=<sync service>`
+ * when given (the relay is the sync service unless named); null when it
  * isn't one.
  */
 export function parseJoinLink(hash: string): JoinLink | null {
@@ -34,11 +37,14 @@ export function parseJoinLink(hash: string): JoinLink | null {
   const churchId = params.get('c')?.match(CHURCH)?.[1]
   const token = params.get('t')
   const serviceUrl = params.get('s') ?? DEFAULT_SYNC_SERVICE_URL
-  if (!churchId || !token || !isServiceUrl(serviceUrl)) return null
+  const relayUrl = params.get('r') ?? serviceUrl
+  if (!churchId || !token) return null
+  if (!isServiceUrl(serviceUrl) || !isServiceUrl(relayUrl)) return null
   return {
     serviceUrl: serviceUrl.replace(/\/+$/, ''),
     churchId,
     token,
     pcSignalId: params.get('p'),
+    relayUrl: relayUrl.replace(/\/+$/, ''),
   }
 }

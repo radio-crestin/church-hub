@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useRemoteAccess } from '~/features/remote-access'
 import { LinkQRCode, useUsers } from '~/features/users'
 import { Button } from '~/ui/button'
 import { Combobox } from '~/ui/combobox'
@@ -20,6 +21,7 @@ export function AddCloudDevice({ add }: AddCloudDeviceProps) {
   const { t } = useTranslation('settings')
   const { showToast } = useToast()
   const { data: users = [] } = useUsers()
+  const { remoteAccess } = useRemoteAccess()
   const accounts = users.filter((user) => user.isActive)
   const [userId, setUserId] = useState<number | null>(null)
   const [name, setName] = useState('')
@@ -85,6 +87,14 @@ export function AddCloudDevice({ add }: AddCloudDeviceProps) {
           onChange={(event) => setName(event.target.value)}
         />
       </div>
+      {remoteAccess?.enabled === false && (
+        <p
+          data-testid="cloud-device-remote-off"
+          className="text-sm text-fg-hint"
+        >
+          {t('sections.cloudDevices.remoteOff')}
+        </p>
+      )}
       <Button
         onClick={create}
         disabled={!account || add.isPending}

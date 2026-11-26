@@ -60,7 +60,9 @@
     "noPermissionTitle": "Access Denied",
     "contactAdmin": "Please contact your administrator if you believe this is an error.",
     "connectionLostTitle": "Connection Lost",
-    "connectionLost": "Unable to connect to the server. Please check your network connection and try again."
+    "connectionLost": "Unable to connect to the server. Please check your network connection and try again.",
+    "needsChurchPcTitle": "Needs the church computer",
+    "needsChurchPc": "This works only on the church computer."
   },
   "theme": {
     "system": "System",

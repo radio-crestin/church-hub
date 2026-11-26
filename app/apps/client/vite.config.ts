@@ -7,6 +7,7 @@ import type { Plugin } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 
+import { serverInBrowser } from './browserServerBuild'
 import {
   isPublicAppBuild,
   publicAppBase,
@@ -151,8 +152,16 @@ const config = defineConfig(({ mode }) => {
         '~': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    // The browser server (features/browser-server): the server's own code
+    // in a module worker, on sqlite-wasm.
+    worker: {
+      format: 'es',
+      plugins: () => [serverInBrowser()],
+    },
     // Pre-bundle heavy dependencies for faster dev startup
     optimizeDeps: {
+      // sqlite-wasm finds its .wasm next to its own module.
+      exclude: ['@sqlite.org/sqlite-wasm'],
       include: [
         'react',
         'react-dom',

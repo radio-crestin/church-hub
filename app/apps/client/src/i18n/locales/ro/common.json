@@ -60,7 +60,9 @@
     "noPermissionTitle": "Acces interzis",
     "contactAdmin": "Dacă crezi că e o greșeală, vorbește cu administratorul.",
     "connectionLostTitle": "Conexiune pierdută",
-    "connectionLost": "Nu s-a putut face conexiunea la server. Verifică rețeaua și încearcă din nou."
+    "connectionLost": "Nu s-a putut face conexiunea la server. Verifică rețeaua și încearcă din nou.",
+    "needsChurchPcTitle": "E nevoie de calculatorul bisericii",
+    "needsChurchPc": "Funcția aceasta merge doar pe calculatorul bisericii."
   },
   "theme": {
     "system": "Sistem",

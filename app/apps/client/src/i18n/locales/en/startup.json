@@ -6,7 +6,10 @@
     "songs": "Adding the songs",
     "bibles": "Adding the Bibles",
     "search": "Preparing song search",
-    "finishing": "Almost ready"
+    "finishing": "Almost ready",
+    "download": "Downloading the songs and Bibles",
+    "sync": "Bringing in your church's library",
+    "save": "Saving on this device"
   },
   "progress": "{{done}} of {{total}} songs",
   "stepOf": "Step {{step}} of {{total}}",
@@ -20,5 +23,10 @@
   "restart": "Restart the server",
   "retryHint": "Tap retry below — or fully quit and reopen Church Hub.",
   "restartHint": "Restart it below — or fully quit and reopen Church Hub.",
-  "reported": "The error was reported to the team automatically."
+  "reported": "The error was reported to the team automatically.",
+  "reachingChurchPc": "Looking for the church computer",
+  "errorWebStart": "Church Hub could not start in this browser",
+  "needsOnlineOnce": "Connect to the internet once to open your church on this device.",
+  "otherTab": "Church Hub is already open in another tab of this browser.",
+  "otherTabHint": "Close that tab, then try again."
 }

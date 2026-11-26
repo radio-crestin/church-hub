@@ -23,9 +23,12 @@ export async function saveShare(
   const share = upsertShare(
     {
       ...input,
-      name: input.name.trim().slice(0, 200) || getInstallation().name,
+      name:
+        input.name.trim().slice(0, 200) ||
+        (getInstallation()?.name ?? 'Church Hub'),
       publisher:
-        input.publisher?.trim().slice(0, 200) || getInstallation().name,
+        input.publisher?.trim().slice(0, 200) ||
+        (getInstallation()?.name ?? 'Church Hub'),
     },
     () => `${identity.churchId}-${randomPart()}`,
   )

@@ -99,6 +99,8 @@ export interface SongTag {
  */
 export interface Song {
   id: number
+  /** The song's identity across the church's devices (cloud sync). */
+  uuid: string
   title: string
   /**
    * Other names this song goes by — usually the title its source gave it,

@@ -4,6 +4,7 @@ import {
   getCloudIdentity,
   updateCloudIdentity,
 } from './cloudIdentityStore'
+import { closeDeviceSessions } from './deviceSessions'
 import { serviceError, syncServiceRequest } from './syncServiceRequest'
 import { getUserUuid } from '../../users/getUserUuid'
 import { idByUuid } from '../records/idByUuid'
@@ -135,6 +136,7 @@ export async function revokeCloudDevice(
     `/devices/${encodeURIComponent(deviceId)}`,
   )
   if (response.status !== 200) throw serviceError(response)
+  closeDeviceSessions(deviceId)
   await updateCloudIdentity({ readUrl: response.body.readUrl, headEtag: null })
   return { readUrl: response.body.readUrl }
 }

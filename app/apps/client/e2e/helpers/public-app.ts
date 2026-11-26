@@ -4,11 +4,18 @@ import { createServer, type Server } from 'node:http'
 import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { makeTempDir, removeTempDir } from './temp-dir'
 import { PUBLIC_APP_URL, SYNC_SERVICE_PORT } from '../../playwright.config'
 
 const CLIENT_DIR = fileURLToPath(new URL('../..', import.meta.url))
-const DIST_DIR = join(CLIENT_DIR, 'dist-public')
 const BUILD_TIMEOUT_MS = 300_000
+
+/**
+ * This worker's build, made once: it is the whole app with the browser
+ * server (a minute), and in a folder of its own, so workers building at
+ * the same time never write over each other.
+ */
+let distDir: string | undefined
 
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -20,6 +27,8 @@ const TYPES: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
+  // sqlite-wasm compiles it while it downloads only when served as wasm.
+  '.wasm': 'application/wasm',
 }
 
 /**
@@ -31,10 +40,12 @@ export class PublicAppServer {
   readonly url = PUBLIC_APP_URL
   private server: Server | undefined
 
-  private build(): void {
+  private build(): string {
+    if (distDir) return distDir
+    const outDir = makeTempDir('church-hub-public-app-')
     const result = spawnSync(
       process.platform === 'win32' ? 'bun.exe' : 'bun',
-      ['run', 'build:public'],
+      ['run', 'build:public', '--outDir', outDir],
       {
         cwd: CLIENT_DIR,
         stdio: 'pipe',
@@ -50,14 +61,17 @@ export class PublicAppServer {
         `build:public failed:\n${result.stdout?.toString()}\n${result.stderr?.toString()}`,
       )
     }
+    distDir = outDir
+    process.once('exit', () => removeTempDir(outDir))
+    return outDir
   }
 
   async start(): Promise<void> {
-    this.build()
+    const dist = this.build()
     this.server = createServer(async (req, res) => {
       const path = normalize(decodeURIComponent(req.url ?? '/').split('?')[0])
       // Any path that isn't a file is the app's (the SPA fallback).
-      const file = join(DIST_DIR, extname(path) ? path : 'index.html')
+      const file = join(dist, extname(path) ? path : 'index.html')
       try {
         const body = await readFile(file)
         const type = TYPES[extname(file)] ?? 'application/octet-stream'
@@ -72,8 +86,12 @@ export class PublicAppServer {
     )
   }
 
+  /** Stops it; nothing to do when it never started (a failed build). */
   async stop(): Promise<void> {
-    this.server?.closeAllConnections()
-    await new Promise<void>((resolve) => this.server?.close(() => resolve()))
+    const server = this.server
+    this.server = undefined
+    if (!server) return
+    server.closeAllConnections()
+    await new Promise<void>((resolve) => server.close(() => resolve()))
   }
 }

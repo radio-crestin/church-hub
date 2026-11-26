@@ -78,5 +78,10 @@ export async function openTunnel(pairing: RemotePairing): Promise<Tunnel> {
   }
   const tunnel = createTunnel(channel)
   tunnel.onClose(() => pc.close())
+  // A computer switched off or gone from the network closes nothing: its
+  // connection fails once it stops answering.
+  pc.addEventListener('connectionstatechange', () => {
+    if (pc.connectionState === 'failed') tunnel.close()
+  })
   return tunnel
 }
