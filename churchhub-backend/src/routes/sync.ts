@@ -143,6 +143,17 @@ sync.get('/sync/churches/:churchId/path', async (c) => {
   })
 })
 
+/**
+ * GET /sync/churches/:churchId/device: the device behind the token, and its
+ * user. The church PC asks it with a phone's token before it lets the phone
+ * in over WebRTC (T-174): a revoked token is refused here first.
+ */
+sync.get('/sync/churches/:churchId/device', async (c) => {
+  const store = createSyncStore(c.env)
+  const { who } = await caller(c, store)
+  return c.json({ deviceId: who.deviceId, userId: who.userId, isServer: who.isServer })
+})
+
 /** GET /sync/churches/:churchId/devices: every device, revoked ones too. */
 sync.get('/sync/churches/:churchId/devices', async (c) => {
   const store = createSyncStore(c.env)

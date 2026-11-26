@@ -82,6 +82,7 @@ function insertSlidesBulkAll(
 function toSong(record: typeof songs.$inferSelect): Song {
   return {
     id: record.id,
+    uuid: record.uuid,
     title: record.title,
     categoryId: record.categoryId,
     songGroupId: record.songGroupId,
@@ -246,6 +247,7 @@ export function getSongsPaginated(
       )
       .all(...params, limit, offset) as Array<{
       id: number
+      uuid: string
       title: string
       category_id: number | null
       song_group_id: number | null
@@ -275,6 +277,7 @@ export function getSongsPaginated(
 
     const songsList: Song[] = records.map((record) => ({
       id: record.id,
+      uuid: record.uuid,
       title: record.title,
       categoryId: record.category_id,
       songGroupId: record.song_group_id,

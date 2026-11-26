@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { createLogger } from '~/utils/logger'
-import { getApiUrl } from '../../../config'
+import { getApiUrl, isWebApp } from '../../../config'
 import type {
   LivestreamStatus,
   OBSConnectionStatus,
@@ -249,6 +249,8 @@ export function useLivestreamWebSocket() {
   disconnectRef.current = disconnect
 
   useEffect(() => {
+    // OBS and YouTube are driven by the church PC: nothing to hear in the web app
+    if (isWebApp) return
     connectRef.current()
 
     return () => {

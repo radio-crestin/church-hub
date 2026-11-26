@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { isWebApp } from '~/config'
 import type { ContentType } from '../constants/content-types'
 import {
   createOBSScene,
@@ -20,6 +21,8 @@ export function useOBSScenes(visibleOnly = false) {
     queryFn: () => getOBSScenes(visibleOnly),
     staleTime: 10 * 1000,
     refetchInterval: 30 * 1000,
+    // OBS runs on the church PC: the web app has no scenes to read
+    enabled: !isWebApp,
   })
 
   const updateMutation = useMutation({
