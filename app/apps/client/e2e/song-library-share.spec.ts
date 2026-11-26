@@ -1,0 +1,416 @@
+import { createHash } from 'node:crypto'
+import { gunzipSync } from 'node:zlib'
+import {
+  buildLibrary,
+  type LibraryManifest,
+  type LibraryShard,
+  type LibrarySongInput,
+  lyricsFingerprint,
+} from '@church-hub/song-formats'
+import { type APIRequestContext, expect, test } from '@playwright/test'
+
+import { setAppLanguage } from './helpers/app-language'
+import { FakeS3 } from './helpers/fake-s3'
+import {
+  addLinkSource,
+  checkSource,
+  clearNotifications,
+  deleteCategoriesNamed,
+  openSongXml,
+  setAutoUpdate,
+  stopSongUpdates,
+} from './helpers/song-folder-source'
+import { SYNC_BUCKET, SyncService } from './helpers/sync-service'
+
+/**
+ * Shared song libraries (T-176): "Share my songs" publishes the church's
+ * songs through the sync service (no S3 keys of its own) as hash-named
+ * gzipped shards plus a manifest under libraries/<sourceId>/, unlisted or in
+ * the public catalog. Any church imports one through the one song-source
+ * path: deduplicated by source song, then lyrics fingerprint; a song follows
+ * its source only while nobody changed it here, else it is offered as a new
+ * version with its lyrics diff; an update downloads only changed shards.
+ */
+
+// Letters only: titles lose their digits on the way in.
+const tag = String(Date.now()).replace(/\d/g, (d) => 'abcdefghij'[Number(d)])
+const ourCategory = `E2E Share ${tag}`
+const shareName = `Cantarile noastre ${tag}`
+const ours = [
+  { title: `Lumina din vale ${tag}`, lyrics: `${tag} lumina coboara in vale` },
+  {
+    title: `Drumul spre casa ${tag}`,
+    lyrics: `${tag} pe drumul spre casa cantam`,
+  },
+]
+// Another church's library, put straight in the bucket.
+const otherId = `OtherChurch${tag.slice(0, 5)}-lib`
+const otherName = `Biserica vecina ${tag}`
+const fresh = `Rasarit nou ${tag}`
+const freshLyrics = (version: string) =>
+  `${tag} soarele rasare ${version} peste dealuri`
+// The same lyrics as ours[0], under another title: the same song.
+const twinTitle = `Alt nume ${tag}`
+const bigId = `BigLibrary${tag.slice(0, 6)}-big`
+const bigName = `Biblioteca mare ${tag}`
+
+const s3 = new FakeS3()
+const service = new SyncService()
+const libraryKey = (sourceId: string, path: string) =>
+  `/${SYNC_BUCKET}/libraries/${sourceId}/${path}`
+
+const song = (id: string, title: string, lyrics: string): LibrarySongInput => ({
+  id,
+  title,
+  xml: openSongXml(title, [lyrics]),
+  lyrics: [lyrics],
+})
+
+/** Builds a library and puts it in the bucket, as the service would. */
+async function putLibrary(
+  sourceId: string,
+  name: string,
+  songs: LibrarySongInput[],
+): Promise<LibraryManifest> {
+  const { manifest, shards } = await buildLibrary(
+    { sourceId, name, categoryName: name, listed: false, publisher: 'E2E' },
+    songs,
+  )
+  for (const [path, bytes] of shards) {
+    s3.objects.set(libraryKey(sourceId, path), Buffer.from(bytes))
+  }
+  s3.objects.set(
+    libraryKey(sourceId, 'manifest.json'),
+    Buffer.from(JSON.stringify(manifest)),
+  )
+  return manifest
+}
+
+const manifestUrl = (sourceId: string) =>
+  `${s3.endpoint}${libraryKey(sourceId, 'manifest.json')}`
+
+async function songIdTitled(request: APIRequestContext, title: string) {
+  const res = await request.get(
+    `/api/songs/search?q=${encodeURIComponent(title)}`,
+  )
+  const hits = (await res.json()).data as { id: number; title: string }[]
+  return hits.filter((hit) => hit.title === title).map((hit) => hit.id)
+}
+
+async function lyricsOf(request: APIRequestContext, id: number) {
+  const res = await request.get(`/api/songs/${id}`)
+  return ((await res.json()).data.slides as { content: string }[])
+    .map((slide) => slide.content)
+    .join('')
+}
+
+/** Songs whose lyrics contain this text, wherever they are filed. */
+async function songsWithLyrics(request: APIRequestContext, text: string) {
+  const res = await request.get(
+    `/api/songs/search?q=${encodeURIComponent(text)}`,
+  )
+  return ((await res.json()).data as { id: number }[]).length
+}
+
+async function share(request: APIRequestContext) {
+  return (await (await request.get('/api/song-sources/share')).json()).data as {
+    sourceId: string
+    manifestUrl: string | null
+    listed: boolean
+    songCount: number
+  } | null
+}
+
+async function catalog(request: APIRequestContext) {
+  const res = await request.get('/api/song-sources/catalog')
+  expect(res.ok()).toBeTruthy()
+  return (await res.json()).data as { sourceId: string; name: string }[]
+}
+
+test.describe
+  .serial('Shared song libraries', () => {
+    test.setTimeout(180_000)
+
+    let churchId = ''
+    let categoryId = 0
+    let otherSourceId = ''
+    let bigSourceId = ''
+
+    test.beforeAll(async ({ request }) => {
+      s3.signedWritesOnly = true
+      await s3.start()
+      await service.start(s3.endpoint, { SYNC_COMPACT_AFTER: '100000' })
+      const connected = await request.post('/api/sync/cloud', {
+        data: { serviceUrl: service.url },
+      })
+      expect(connected.status()).toBe(200)
+      churchId = (await connected.json()).data.churchId
+
+      const category = await request.post('/api/categories', {
+        data: { name: ourCategory },
+      })
+      categoryId = (await category.json()).data.id
+      for (const { title, lyrics } of ours) {
+        const created = await request.post('/api/songs', {
+          data: {
+            title,
+            categoryId,
+            slides: [{ content: `<p>${lyrics}</p>`, sortOrder: 0 }],
+          },
+        })
+        expect(created.ok()).toBeTruthy()
+      }
+    })
+
+    test.beforeEach(({ page }) => setAppLanguage(page, 'en'))
+
+    test.afterAll(async ({ request }) => {
+      await stopSongUpdates(request)
+      await request.delete('/api/song-sources/share')
+      for (const id of [otherSourceId, bigSourceId]) {
+        if (id) await request.delete(`/api/song-sources/${id}`)
+      }
+      await deleteCategoriesNamed(request, [ourCategory, otherName])
+      await setAutoUpdate(request, true)
+      await clearNotifications(request)
+      await request.delete('/api/sync/cloud')
+      await service.dispose()
+      await s3.stop()
+    })
+
+    test('Share my songs publishes hash-named gzipped shards and a manifest through the service', async ({
+      page,
+      request,
+    }) => {
+      await page.goto('/settings/songs')
+      const section = page.getByTestId('share-my-songs')
+      await section.getByLabel('Name').fill(shareName)
+      await section.getByLabel('Chosen categories').check()
+      await section
+        .getByTestId('share-categories')
+        .getByLabel(ourCategory)
+        .check()
+      await section.getByRole('button', { name: 'Share', exact: true }).click()
+      const link = section.getByTestId('library-share-link')
+      await expect(link).toContainText('/libraries/')
+      await expect(
+        section
+          .getByTestId('library-share')
+          .getByText('unlisted', { exact: true }),
+      ).toBeVisible()
+
+      // The library's folder names this church: only it may write there.
+      const shared = await share(request)
+      expect(shared?.sourceId.startsWith(`${churchId}-`)).toBe(true)
+      expect(shared?.manifestUrl).toBe(manifestUrl(shared?.sourceId ?? ''))
+      expect(shared?.songCount).toBe(2)
+
+      const manifest = JSON.parse(
+        s3.text(libraryKey(shared?.sourceId ?? '', 'manifest.json')) ?? '{}',
+      ) as LibraryManifest
+      expect(manifest).toMatchObject({
+        format: 'church-hub-song-bundle',
+        version: 3,
+        name: shareName,
+        listed: false,
+        songCount: 2,
+      })
+      expect(manifest.shards).toHaveLength(1)
+      const [entry] = manifest.shards
+      expect(entry.path).toMatch(/^shards\/[0-9a-f]{64}\.json\.gz$/)
+      const key = libraryKey(manifest.sourceId, entry.path)
+      expect(s3.cacheControl.get(key)).toBe(
+        'public, max-age=31536000, immutable',
+      )
+      // Gzipped, and named by the SHA-256 of its JSON.
+      const json = gunzipSync(s3.objects.get(key) as Buffer)
+      const digest = createHash('sha256').update(json).digest('hex')
+      expect(entry.path).toBe(`shards/${digest}.json.gz`)
+      const shard = JSON.parse(json.toString('utf8')) as LibraryShard
+      const first = shard.songs.find((s) => s.title === ours[0].title)
+      expect(first?.fingerprint).toBe(
+        await lyricsFingerprint([`<p>${ours[0].lyrics}</p>`]),
+      )
+
+      // Unlisted: not in the catalog.
+      expect((await catalog(request)).map((l) => l.sourceId)).not.toContain(
+        manifest.sourceId,
+      )
+    })
+
+    test('a listed library is in the catalog; only its church may write it', async ({
+      page,
+      request,
+    }) => {
+      await page.goto('/settings/songs')
+      const section = page.getByTestId('share-my-songs')
+      await section.getByLabel('List it in the public catalog').check()
+      await section.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(
+        section
+          .getByTestId('library-share')
+          .getByText('in the catalog', { exact: true }),
+      ).toBeVisible()
+      const shared = await share(request)
+      expect((await catalog(request)).map((l) => l.name)).toContain(shareName)
+
+      await page.goto('/songs/discover')
+      await page.getByRole('button', { name: 'Shared libraries' }).click()
+      await expect(
+        page.getByTestId('library-catalog').getByText(shareName),
+      ).toBeVisible()
+
+      // Without the church's token, the service refuses to write it.
+      for (const sourceId of [shared?.sourceId, 'church-hub']) {
+        const refused = await fetch(
+          `${service.url}/sync/libraries/${sourceId}/manifest`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ baseChecksum: null, manifest: {} }),
+          },
+        )
+        expect(refused.status).toBeGreaterThanOrEqual(400)
+        expect(refused.status).toBeLessThan(500)
+      }
+      const anonymous = await fetch(
+        `${service.url}/sync/libraries/${shared?.sourceId}`,
+        { method: 'DELETE' },
+      )
+      expect(anonymous.status).toBe(401)
+    })
+
+    test('importing deduplicates by source song, then by lyrics fingerprint', async ({
+      request,
+    }) => {
+      await setAutoUpdate(request, true)
+      await putLibrary(otherId, otherName, [
+        song('fresh', fresh, freshLyrics('v1')),
+        song('twin', twinTitle, ours[0].lyrics),
+      ])
+      otherSourceId = await addLinkSource(request, manifestUrl(otherId))
+      expect(otherSourceId).toBe(`library-${otherId}`)
+
+      // The twin has our song's lyrics under another title: linked, not added.
+      expect(await checkSource(request, otherSourceId)).toMatchObject({
+        imported: 1,
+      })
+      expect(await songIdTitled(request, fresh)).toHaveLength(1)
+      expect(await songIdTitled(request, twinTitle)).toHaveLength(0)
+      expect(await songsWithLyrics(request, ours[0].lyrics)).toBe(1)
+
+      // Checked again, its own song is found by its id: still one of each.
+      expect(await checkSource(request, otherSourceId)).toMatchObject({
+        newCount: 0,
+        similarCount: 0,
+      })
+      expect(await songIdTitled(request, fresh)).toHaveLength(1)
+    })
+
+    test('a song follows its source only while untouched; changed here, it is offered as a new version', async ({
+      page,
+      request,
+    }) => {
+      const [id] = await songIdTitled(request, fresh)
+      // Untouched: the new lyrics land on their own.
+      await putLibrary(otherId, otherName, [
+        song('fresh', fresh, freshLyrics('v2')),
+        song('twin', twinTitle, ours[0].lyrics),
+      ])
+      expect(await checkSource(request, otherSourceId)).toMatchObject({
+        updated: 1,
+      })
+      expect(await lyricsOf(request, id)).toContain(freshLyrics('v2'))
+
+      // Changed here: never replaced on its own, offered with a badge.
+      const edit = await request.post('/api/songs', {
+        data: {
+          id,
+          title: fresh,
+          slides: [
+            { content: `<p>${tag} versurile noastre</p>`, sortOrder: 0 },
+          ],
+        },
+      })
+      expect(edit.ok()).toBeTruthy()
+      await putLibrary(otherId, otherName, [
+        song('fresh', fresh, freshLyrics('v3')),
+        song('twin', twinTitle, ours[0].lyrics),
+      ])
+      expect(await checkSource(request, otherSourceId)).toMatchObject({
+        updated: 0,
+        changedCount: 1,
+      })
+      expect(await lyricsOf(request, id)).toContain('versurile noastre')
+      const changed = (
+        await (
+          await request.get(`/api/song-sources/${otherSourceId}/changed`)
+        ).json()
+      ).data as { songId: number; edited: boolean }[]
+      expect(changed).toEqual([
+        expect.objectContaining({ songId: id, edited: true }),
+      ])
+
+      await page.goto(`/songs/discover?source=${otherSourceId}`)
+      const updates = page.getByTestId('changed-songs')
+      await expect(updates.getByTestId('changed-edited-badge')).toHaveText(
+        'Edited here · new version',
+      )
+      await updates.getByRole('button', { name: new RegExp(fresh) }).click()
+      await expect(page.getByText(`${tag} versurile noastre`)).toBeVisible()
+      await expect(page.getByText(freshLyrics('v3'))).toBeVisible()
+      // Taken on purpose, the new version replaces the edit.
+      await page.getByRole('button', { name: 'Update', exact: true }).click()
+      await expect(updates).toHaveCount(0)
+      expect(await lyricsOf(request, id)).toContain(freshLyrics('v3'))
+    })
+
+    test('an update downloads only the shards that changed', async ({
+      request,
+    }) => {
+      const songs = Array.from({ length: 600 }, (_, n) =>
+        song(`big-${n}`, `Big ${n}`, `${tag} big song ${n}`),
+      )
+      const first = await putLibrary(bigId, bigName, songs)
+      expect(first.shards).toHaveLength(2)
+      bigSourceId = await addLinkSource(request, manifestUrl(bigId))
+      const shardGets = () =>
+        s3.requests.filter(
+          (r) => r.startsWith('GET ') && r.includes(`/${bigId}/shards/`),
+        ).length
+
+      s3.requests.length = 0
+      const read = await request.get(`/api/song-sources/${bigSourceId}/songs`)
+      expect(((await read.json()).data as unknown[]).length).toBe(600)
+      expect(shardGets()).toBe(2)
+
+      songs[7] = song('big-7', 'Big 7', `${tag} big song 7, changed`)
+      const second = await putLibrary(bigId, bigName, songs)
+      const kept = second.shards.filter((s) =>
+        first.shards.some((f) => f.path === s.path),
+      )
+      expect(kept).toHaveLength(1)
+
+      s3.requests.length = 0
+      const again = await request.get(`/api/song-sources/${bigSourceId}/songs`)
+      const files = (await again.json()).data as { id: string; xml: string }[]
+      expect(files.find((f) => f.id === 'big-7')?.xml).toContain('changed')
+      expect(shardGets()).toBe(1)
+    })
+
+    test('stopping the share takes it out of the catalog and the bucket', async ({
+      request,
+    }) => {
+      const shared = await share(request)
+      const stopped = await request.delete('/api/song-sources/share')
+      expect(stopped.ok()).toBeTruthy()
+      expect(await share(request)).toBeNull()
+      expect((await catalog(request)).map((l) => l.name)).not.toContain(
+        shareName,
+      )
+      const left = [...s3.objects.keys()].filter((key) =>
+        key.includes(`/libraries/${shared?.sourceId}/`),
+      )
+      expect(left).toEqual([])
+    })
+  })
