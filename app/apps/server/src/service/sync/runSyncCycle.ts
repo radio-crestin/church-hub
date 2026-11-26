@@ -8,6 +8,7 @@ import {
   uploadLibrary,
 } from './driveLibraryFile'
 import { getPendingKeys } from './getPendingKeys'
+import { libraryChanged } from './libraryChanged'
 import { mergeLibraries } from './mergeLibraries'
 import { serializeLibrary } from './serializeLibrary'
 import { getSyncConfig, upsertSyncConfig } from './syncConfigStore'
@@ -77,12 +78,13 @@ export async function runSyncCycle(
     const dirtyKeys = getPendingKeys()
     const local = serializeLibrary(state.deviceId, state.deviceName, dirtyKeys)
 
-    const { merged, applyOps, uploadNeeded } = mergeLibraries(
+    const { merged, applyOps } = mergeLibraries(
       local,
       remote,
       dirtyKeys,
       cycleStartSeconds,
     )
+    const uploadNeeded = libraryChanged(merged, remote)
 
     const { reportedCount, appliedCount } = applyRemoteChanges(applyOps)
 

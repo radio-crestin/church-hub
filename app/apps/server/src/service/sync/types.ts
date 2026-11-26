@@ -286,8 +286,6 @@ export interface MergeResult {
   merged: LibraryFile
   /** Remote-driven changes to apply to the local DB. */
   applyOps: ApplyOp[]
-  /** True when the merged file differs from the remote file (upload needed). */
-  uploadNeeded: boolean
 }
 
 export interface SyncCycleResult {

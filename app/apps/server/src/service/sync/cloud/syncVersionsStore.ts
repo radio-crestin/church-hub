@@ -2,8 +2,14 @@ import type { EntityVersion } from './types'
 import { getRawDatabase } from '../../../db'
 import { dirtyKey } from '../mergeLibraries'
 
-/** Every row's central version, by `entityType:uuid`. */
-export function getSyncVersions(): Map<string, EntityVersion> {
+/**
+ * The rows' central versions, by `entityType:uuid`: those of `keys`, or
+ * every row's.
+ */
+export function getSyncVersions(
+  keys?: ReadonlySet<string>,
+): Map<string, EntityVersion> {
+  const only = keys ? JSON.stringify([...keys]) : null
   const rows = getRawDatabase()
     .query<
       {
@@ -12,9 +18,13 @@ export function getSyncVersions(): Map<string, EntityVersion> {
         version: number
         deleted: number
       },
-      []
-    >('SELECT entity_type, entity_uuid, version, deleted FROM sync_versions')
-    .all()
+      [string | null, string | null]
+    >(
+      `SELECT entity_type, entity_uuid, version, deleted FROM sync_versions
+        WHERE ? IS NULL
+           OR entity_type || ':' || entity_uuid IN (SELECT value FROM json_each(?))`,
+    )
+    .all(only, only)
   return new Map(
     rows.map((row) => [
       dirtyKey(row.entity_type, row.entity_uuid),

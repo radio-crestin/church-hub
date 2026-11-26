@@ -18,13 +18,22 @@ import type { SyncEntityType } from '../../db/schema/sync'
  * stamped with `modifiedByDevice = deviceName` so other devices can show where
  * each change was made; clean rows inherit their attribution from the remote
  * file during the merge.
+ *
+ * `only` (`entityType:uuid` keys) serializes just those rows, picked in SQL:
+ * a cloud round merges the rows that changed, never the whole library, which
+ * on a phone's in-browser server blocked every request for seconds (T-218).
+ * Tombstones are always all serialized.
  */
 export function serializeLibrary(
   deviceId: string,
   deviceName: string,
   dirtyKeys: ReadonlySet<string>,
+  only?: ReadonlySet<string>,
 ): LibraryFile {
   const db = getRawDatabase()
+  const pick = uuidFilter(only)
+  const included = (type: SyncEntityType, uuid: string) =>
+    !only || only.has(`${type}:${uuid}`)
 
   const categories = db
     .query<
@@ -36,11 +45,12 @@ export function serializeLibrary(
         created_at: number
         updated_at: number
       },
-      []
+      UuidFilter
     >(
-      "SELECT uuid, name, priority, is_hidden, created_at, updated_at FROM song_categories WHERE uuid != ''",
+      `SELECT uuid, name, priority, is_hidden, created_at, updated_at
+         FROM song_categories WHERE uuid != '' AND ${PICKED('uuid')}`,
     )
-    .all()
+    .all(...pick('song_category'))
     .map((row) => ({
       uuid: row.uuid,
       name: row.name,
@@ -59,15 +69,15 @@ export function serializeLibrary(
         created_at: number
         updated_at: number
       },
-      []
+      UuidFilter
     >(
       `SELECT g.uuid, g.canonical_title, s.uuid AS primary_song_uuid,
               g.created_at, g.updated_at
          FROM song_groups g
          LEFT JOIN songs s ON s.id = g.primary_song_id
-        WHERE g.uuid != ''`,
+        WHERE g.uuid != '' AND ${PICKED('g.uuid')}`,
     )
-    .all()
+    .all(...pick('song_group'))
     .map((row) => ({
       uuid: row.uuid,
       canonicalTitle: row.canonical_title,
@@ -102,7 +112,7 @@ export function serializeLibrary(
         created_at: number
         updated_at: number
       },
-      []
+      UuidFilter
     >(
       `SELECT s.id, s.uuid, s.title, c.uuid AS category_uuid, g.uuid AS group_uuid,
               s.source_filename, s.author, s.copyright, s.ccli, s.tempo,
@@ -112,9 +122,9 @@ export function serializeLibrary(
          FROM songs s
          LEFT JOIN song_categories c ON c.id = s.category_id
          LEFT JOIN song_groups g ON g.id = s.song_group_id
-        WHERE s.uuid != ''`,
+        WHERE s.uuid != '' AND ${PICKED('s.uuid')}`,
     )
-    .all()
+    .all(...pick('song'))
 
   const slideRows = db
     .query<
@@ -127,11 +137,14 @@ export function serializeLibrary(
         style_overrides: string | null
         sort_order: number
       },
-      []
+      UuidFilter
     >(
-      'SELECT song_id, content, chords, label, notes, style_overrides, sort_order FROM song_slides ORDER BY song_id, sort_order, id',
+      `SELECT song_id, content, chords, label, notes, style_overrides, sort_order
+         FROM song_slides
+        WHERE song_id IN (SELECT id FROM songs WHERE ${PICKED('uuid')})
+        ORDER BY song_id, sort_order, id`,
     )
-    .all()
+    .all(...pick('song'))
 
   const slidesBySongId = new Map<number, LibrarySong['slides']>()
   for (const slide of slideRows) {
@@ -152,11 +165,13 @@ export function serializeLibrary(
 
   const tagsBySongId = new Map<number, string[]>()
   for (const row of db
-    .query<{ song_id: number; uuid: string }, []>(
+    .query<{ song_id: number; uuid: string }, UuidFilter>(
       `SELECT a.song_id, t.uuid FROM song_tag_assignments a
-         JOIN song_tags t ON t.id = a.tag_id ORDER BY t.uuid`,
+         JOIN song_tags t ON t.id = a.tag_id
+        WHERE a.song_id IN (SELECT id FROM songs WHERE ${PICKED('uuid')})
+        ORDER BY t.uuid`,
     )
-    .all()) {
+    .all(...pick('song'))) {
     tagsBySongId.set(row.song_id, [
       ...(tagsBySongId.get(row.song_id) ?? []),
       row.uuid,
@@ -206,14 +221,15 @@ export function serializeLibrary(
         created_at: number
         updated_at: number
       },
-      []
+      UuidFilter
     >(
       `SELECT id, uuid, title, description, autoplay_seconds, autoplay_by_text,
               loop, music_volume, start_on_app_start, start_trigger,
               stop_trigger, created_at, updated_at
-         FROM schedules WHERE uuid != '' AND is_queue = 0`,
+         FROM schedules
+        WHERE uuid != '' AND is_queue = 0 AND ${PICKED('uuid')}`,
     )
-    .all()
+    .all(...pick('schedule'))
 
   const itemRows = db
     .query<
@@ -234,7 +250,7 @@ export function serializeLibrary(
         sung_at: number | null
         sort_order: number
       },
-      []
+      UuidFilter
     >(
       `SELECT i.id, i.schedule_id, i.item_type, s.uuid AS song_uuid,
               i.slide_type, i.slide_content, i.bible_passage_reference,
@@ -244,9 +260,10 @@ export function serializeLibrary(
          FROM schedule_items i
          LEFT JOIN songs s ON s.id = i.song_id
          LEFT JOIN schedules c ON c.id = i.child_schedule_id
+        WHERE i.schedule_id IN (SELECT id FROM schedules WHERE ${PICKED('uuid')})
         ORDER BY i.schedule_id, i.sort_order, i.id`,
     )
-    .all()
+    .all(...pick('schedule'))
 
   const verseRows = db
     .query<
@@ -257,11 +274,14 @@ export function serializeLibrary(
         text: string
         sort_order: number
       },
-      []
+      UuidFilter
     >(
-      'SELECT schedule_item_id, verse_id, reference, text, sort_order FROM schedule_bible_passage_verses ORDER BY schedule_item_id, sort_order, id',
+      `SELECT schedule_item_id, verse_id, reference, text, sort_order
+         FROM schedule_bible_passage_verses
+        WHERE schedule_item_id IN (${ITEMS_OF_PICKED_SCHEDULES})
+        ORDER BY schedule_item_id, sort_order, id`,
     )
-    .all()
+    .all(...pick('schedule'))
 
   const vtRows = db
     .query<
@@ -279,11 +299,16 @@ export function serializeLibrary(
         end_verse: number
         sort_order: number
       },
-      []
+      UuidFilter
     >(
-      'SELECT schedule_item_id, person_name, translation_id, book_code, book_name, reference, text, start_chapter, start_verse, end_chapter, end_verse, sort_order FROM schedule_versete_tineri_entries ORDER BY schedule_item_id, sort_order, id',
+      `SELECT schedule_item_id, person_name, translation_id, book_code,
+              book_name, reference, text, start_chapter, start_verse,
+              end_chapter, end_verse, sort_order
+         FROM schedule_versete_tineri_entries
+        WHERE schedule_item_id IN (${ITEMS_OF_PICKED_SCHEDULES})
+        ORDER BY schedule_item_id, sort_order, id`,
     )
-    .all()
+    .all(...pick('schedule'))
 
   const versesByItemId = new Map<number, LibraryScheduleItem['bibleVerses']>()
   for (const verse of verseRows) {
@@ -386,8 +411,11 @@ export function serializeLibrary(
     schedules,
     tombstones,
   }
-  for (const { key, records } of LIBRARY_COLLECTIONS) {
-    if (records) library[key] = records.serialize() as never
+  for (const { entityType, key, records } of LIBRARY_COLLECTIONS) {
+    if (!records) continue
+    library[key] = records
+      .serialize()
+      .filter((item) => included(entityType, item.uuid)) as never
   }
 
   for (const { entityType, key } of LIBRARY_COLLECTIONS) {
@@ -398,4 +426,28 @@ export function serializeLibrary(
     }
   }
   return library
+}
+
+/** A query's `only` parameters: null (every row), or a JSON array of uuids. */
+type UuidFilter = [string | null, string | null]
+
+/** Matches the rows `pick` names: `?` twice, the same JSON array (or null). */
+const PICKED = (column: string) =>
+  `(? IS NULL OR ${column} IN (SELECT value FROM json_each(?)))`
+
+const ITEMS_OF_PICKED_SCHEDULES = `SELECT id FROM schedule_items
+  WHERE schedule_id IN (SELECT id FROM schedules WHERE ${PICKED('uuid')})`
+
+/** The uuids `only` holds of one entity type, as a query's parameters. */
+function uuidFilter(only: ReadonlySet<string> | undefined) {
+  return (type: SyncEntityType): UuidFilter => {
+    if (!only) return [null, null]
+    const prefix = `${type}:`
+    const uuids = JSON.stringify(
+      [...only]
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length)),
+    )
+    return [uuids, uuids]
+  }
 }
