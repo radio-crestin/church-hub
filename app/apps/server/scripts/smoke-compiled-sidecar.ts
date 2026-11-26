@@ -95,6 +95,7 @@ async function compile(binaryPath: string) {
       '--minify-syntax',
       '--target',
       'bun',
+      '--env=CHURCH_HUB_BUILD_*',
       '--bundle',
       resolve(import.meta.dir, '../src/index.ts'),
       ...WORKER_ENTRYPOINTS.map((entry) =>

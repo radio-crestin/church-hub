@@ -8,7 +8,7 @@ import { SYNC_SERVICE_PORT } from '../../playwright.config'
 const BACKEND_DIR = fileURLToPath(
   new URL('../../../../../churchhub-backend', import.meta.url),
 )
-const READY_LINE = /\[sync\] Church Hub cloud sync listening/
+const READY_LINE = /\[server\] Church Hub backend listening/
 const BOOT_TIMEOUT_MS = 60_000
 const INSTALL_TIMEOUT_MS = 300_000
 
@@ -16,8 +16,8 @@ const INSTALL_TIMEOUT_MS = 300_000
 export const SYNC_BUCKET = 'church-hub-sync'
 
 /**
- * churchhub-backend's cloud sync service, self-hosted on Bun the way a
- * church would run it, with the spec's S3 stand-in as its only storage: the
+ * churchhub-backend, self-hosted on Bun the way a church would run it
+ * (its Node entry), with the spec's S3 stand-in as its only storage: the
  * public bucket, holding each church's encrypted state too (no database).
  * Its npm dependencies are installed on first use (they live outside the
  * app's workspace).
@@ -62,7 +62,7 @@ export class SyncService {
     this.installDependencies()
     const child = spawn(
       process.platform === 'win32' ? 'bun.exe' : 'bun',
-      ['src/selfhost/server.ts'],
+      ['src/node/server.ts'],
       {
         cwd: BACKEND_DIR,
         env: {
@@ -76,6 +76,8 @@ export class SyncService {
           S3_ACCESS_KEY_ID: 'e2e-access-key',
           S3_SECRET_ACCESS_KEY: 'e2e-secret-key',
           S3_PUBLIC_URL: `${s3Endpoint}/${SYNC_BUCKET}`,
+          // Every spec registers its churches from 127.0.0.1.
+          SYNC_RATE_LIMIT_PER_MINUTE: '1000',
           ...env,
         },
         stdio: ['ignore', 'pipe', 'pipe'],

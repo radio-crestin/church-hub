@@ -1,17 +1,24 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { useTemplatedScreen } from '~/features/slide-templates/hooks/useTemplatedScreen'
+import type { DeckShownSlide } from '~/features/slides-deck/types'
+import {
+  type DeckShownBefore,
+  deckShownSlide,
+} from '~/features/slides-deck/utils/deckShownSlide'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { createLogger } from '~/utils/logger'
+import { useContentExit } from './useContentExit'
 import {
   type ShownContent,
   useContentTypeHandoff,
 } from './useContentTypeHandoff'
 import { usePresentationState } from './usePresentationState'
 import type { NextSlideData } from '../components/rendering/types'
-import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/calculateMaxExitAnimationDuration'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,
+  PresentationBackground,
   ScreenBackgroundConfig,
   ScreenWithConfigs,
   SongContentConfig,
@@ -20,6 +27,7 @@ import type {
   TemporarySongContent,
 } from '../types'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
+import { type ShownSlide, sharesSlideLines } from '../utils/sharesSlideLines'
 import {
   resolveSongKey,
   resolveSongSlideBody,
@@ -27,9 +35,6 @@ import {
 } from '../utils/songElements'
 
 const logger = createLogger('app:presentation:content')
-
-// Extra buffer time after animation completes before transitioning to empty state (ms)
-const EXIT_ANIMATION_BUFFER = 200
 
 interface ChordMapping {
   wordIndex: number
@@ -54,12 +59,24 @@ export interface ContentData {
   styleOverrides?: SlideStyleOverride | null
   /** The song's own background (see `resolveScreenBackground`). */
   songBackground?: ScreenBackgroundConfig | null
+  /** A presentation's video item, shown full screen (ScreenVideo). */
+  videoUrl?: string
+  /** The video item plays again from the start until the step changes. */
+  videoLoop?: boolean
+  /** A gallery image, shown full screen (ScreenImage). */
+  imageUrl?: string
+  /** A presentation's looping background video (see `resolveScreenBackground`). */
+  presentationBackground?: PresentationBackground | null
+  /** A Slides item's slide (DeckSlideRenderer). */
+  deck?: DeckShownSlide
 }
 
 interface UsePresentationContentOptions {
-  /** Screen config for animation duration calculation */
+  /** The screen drawing the content, with its own template's layouts. */
   screen: ScreenWithConfigs | null | undefined
-  /** Whether to calculate next slide data (for preview) */
+  /** The live OBS scene: a screen may draw with another template for it. */
+  obsSceneName?: string | null
+  /** Whether to build the next slide's data; left out, the template decides. */
   includeNextSlide?: boolean
   /** Function to get next verse for bible passages */
   getNextVerse?: (verseId: number) => Promise<{
@@ -81,12 +98,24 @@ interface UsePresentationContentOptions {
 }
 
 interface UsePresentationContentResult {
+  /**
+   * The screen with the template the content is drawn with (an OBS scene's,
+   * a presentation's): draw with this one, not the screen passed in.
+   */
+  screen: ScreenWithConfigs | null | undefined
   contentType: ContentType
   contentData: ContentData
   /** Identity-based key that only changes on slide navigation, not content edits */
   contentKey: string
   isVisible: boolean
   isExitAnimating: boolean
+  /**
+   * The slide keeps the previous slide's kind of content, background and
+   * template and keeps or changes in place some of its lines, so the renderer
+   * animates only the lines and words that changed (see sharesSlideLines).
+   * False means the whole slide transitions.
+   */
+  morphLines: boolean
   nextSlideData: NextSlideData | undefined
   /**
    * The previous content type's content while it fades out under the new one
@@ -176,6 +205,21 @@ function buildSongSlideContent(
 }
 
 /**
+ * The template what is shown is drawn with: a verse list's entry may carry
+ * its own (a Bible topic passage's) over the slide's.
+ */
+function getShownTemplateId(
+  content: TemporaryContent | null | undefined,
+): number | null | undefined {
+  if (content?.type === 'versete_tineri') {
+    const entry = content.data.entries[content.data.currentEntryIndex]
+    return entry?.templateId ?? content.data.templateId
+  }
+  return (content?.data as { templateId?: number | null } | undefined)
+    ?.templateId
+}
+
+/**
  * Shared hook for managing presentation content display.
  * Used by both LivePreview and ScreenRenderer to ensure consistent behavior.
  *
@@ -183,15 +227,25 @@ function buildSongSlideContent(
  * 1. Exit animation timing - delays empty state transition for smooth animations
  * 2. Content fetching - determines what to display based on presentation state
  * 3. Visibility calculation - determines if content should be visible
+ * 4. Line morphing - whether a slide change animates only its changed lines
  */
 export function usePresentationContent({
-  screen,
-  includeNextSlide = false,
+  screen: ownScreen,
+  obsSceneName = null,
+  includeNextSlide: includeNextSlideOption,
   getNextVerse,
   getBookName,
   previewContent = null,
 }: UsePresentationContentOptions): UsePresentationContentResult {
   const { data: presentationState } = usePresentationState()
+  // A presentation's (or its item's, or a topic passage's) template, carried
+  // by what is shown
+  const shownTemplateId = getShownTemplateId(
+    previewContent ?? presentationState?.temporaryContent,
+  )
+  const screen = useTemplatedScreen(ownScreen, obsSceneName, shownTemplateId)
+  const includeNextSlide =
+    includeNextSlideOption ?? screen?.nextSlideConfig?.enabled ?? false
   const songUpdateTimestamp = useSongUpdateTimestamp()
 
   const [contentType, setContentType] = useState<ContentType>('empty')
@@ -200,126 +254,66 @@ export function usePresentationContent({
   const [nextSlideData, setNextSlideData] = useState<
     NextSlideData | undefined
   >()
-  const [isExitAnimating, setIsExitAnimating] = useState(false)
+  const [morphLines, setMorphLines] = useState(false)
+  // The slide shown last, which the next one is compared with for morphLines
+  const shownSlideRef = useRef<ShownSlide>({ type: 'empty', data: {} })
 
-  const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevHiddenRef = useRef(presentationState?.isHidden)
   const currentContentTypeRef = useRef<ContentType>(contentType)
-  // Track if exit animation should complete - prevents race condition where
-  // timeout fires after user has started a new presentation
-  const shouldCompleteExitRef = useRef(false)
-  // Synchronous flag to prevent visibility flicker during the render cycle
-  // where isHidden becomes true but isExitAnimating hasn't been set yet
-  const exitAnimatingSyncRef = useRef(false)
   // Tracks whether the previous render was showing a local preview override, so
   // we can clear the stage when preview is dismissed while the real projection
   // is hidden (no visible -> hidden transition to drive the exit animation).
   const prevPreviewRef = useRef<TemporaryContent | null>(previewContent)
+  // What this screen showed last, for how a deck slide comes on (played, or
+  // drawn as it stands); null until it has seen a presentation state.
+  const deckBeforeRef = useRef<DeckShownBefore | null>(null)
 
   // Keep track of current content type for exit animation calculation
   if (contentType !== 'empty') {
     currentContentTypeRef.current = contentType
   }
 
-  // Detect transition synchronously during render to prevent visibility flicker.
-  // useEffect runs after render, so without this, there's one frame where
-  // isHidden=true and isExitAnimating=false, causing content to disappear then reappear.
-  const wasHiddenSync = prevHiddenRef.current
-  const isHiddenSync = presentationState?.isHidden
-  if (
-    wasHiddenSync === false &&
-    isHiddenSync &&
-    !exitAnimatingSyncRef.current
-  ) {
-    exitAnimatingSyncRef.current = true
-  }
-  if (wasHiddenSync && !isHiddenSync && exitAnimatingSyncRef.current) {
-    exitAnimatingSyncRef.current = false
-  }
+  const clearContent = useCallback(() => {
+    logger.debug('Exit animation complete, clearing content')
+    shownSlideRef.current = { type: 'empty', data: {} }
+    setContentData({})
+    setContentKey('')
+    setContentType('empty')
+    setNextSlideData(undefined)
+  }, [])
+  const {
+    isExiting: isExitAnimating,
+    beginExit,
+    cancelExit,
+  } = useContentExit(screen?.contentConfigs, clearContent)
 
-  // Handle exit animation timing - delay empty state transition
+  // Fade the slide out when the presentation is hidden, and back in when it
+  // is shown again before the fade is over
   useEffect(() => {
     const wasHidden = prevHiddenRef.current
     const isHidden = presentationState?.isHidden
+    prevHiddenRef.current = isHidden
 
     // While a local preview override drives the stage, the real isHidden state
     // is irrelevant — skip the exit-animation machinery so toggling the real
-    // projection (or it being hidden) never clears the staged content. Keep the
-    // ref in sync so resuming normal mode doesn't see a phantom transition.
-    if (previewContent) {
-      prevHiddenRef.current = isHidden
-      return
-    }
+    // projection (or it being hidden) never clears the staged content.
+    if (previewContent) return
 
     logger.debug(
-      `Exit animation effect: wasHidden=${wasHidden}, isHidden=${isHidden}, isExitAnimating=${isExitAnimating}, updatedAt=${presentationState?.updatedAt}`,
+      `Exit animation effect: wasHidden=${wasHidden}, isHidden=${isHidden}, updatedAt=${presentationState?.updatedAt}`,
     )
 
-    // Detect transition from visible to hidden
     // wasHidden must be explicitly false (not undefined) to count as "was visible"
     // This prevents false triggering on initial load when prevHiddenRef is undefined
     if (wasHidden === false && isHidden) {
       logger.debug('Transition: visible -> hidden, starting exit animation')
-      // Clear any existing timeout
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-      }
-
-      // Mark that exit animation should complete
-      shouldCompleteExitRef.current = true
-
-      // Start exit animation
-      setIsExitAnimating(true)
-
-      // Calculate the max exit animation duration from the current content type's config
-      const currentConfig =
-        screen?.contentConfigs[currentContentTypeRef.current]
-      const animationDuration = calculateMaxExitAnimationDuration(currentConfig)
-      const totalDelay = animationDuration + EXIT_ANIMATION_BUFFER
-
-      logger.debug(
-        `Exit animation scheduled for ${totalDelay}ms (animation: ${animationDuration}ms)`,
-      )
-
-      // After animation duration + buffer, transition to empty state
-      exitTimeoutRef.current = setTimeout(() => {
-        // Only execute if exit wasn't cancelled (e.g., by starting new presentation)
-        if (!shouldCompleteExitRef.current) {
-          logger.debug('Exit animation cancelled, skipping content clear')
-          return
-        }
-        logger.debug('Exit animation complete, clearing content')
-        exitAnimatingSyncRef.current = false
-        setContentData({})
-        setContentKey('')
-        setContentType('empty')
-        setNextSlideData(undefined)
-        setIsExitAnimating(false)
-      }, totalDelay)
+      beginExit(currentContentTypeRef.current)
     }
-
-    // If becoming visible, cancel any pending exit transition
     if (wasHidden && !isHidden) {
       logger.debug('Transition: hidden -> visible, cancelling exit animation')
-      // Cancel exit animation - this prevents the timeout from clearing content
-      shouldCompleteExitRef.current = false
-      exitAnimatingSyncRef.current = false
-
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-        exitTimeoutRef.current = null
-      }
-      setIsExitAnimating(false)
+      cancelExit()
     }
-
-    prevHiddenRef.current = isHidden
-
-    return () => {
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-      }
-    }
-  }, [presentationState?.isHidden, screen, previewContent])
+  }, [presentationState?.isHidden, previewContent, beginExit, cancelExit])
 
   // Fetch content based on presentation state
   useEffect(() => {
@@ -335,8 +329,30 @@ export function usePresentationContent({
       data: ContentData,
       key = '',
     ): void => {
+      // The content ended while on screen (stopped, or an empty item): fade
+      // the slide out, then clear it, instead of cutting to the empty screen
+      if (
+        type === 'empty' &&
+        shownSlideRef.current.type !== 'empty' &&
+        !previewContent
+      ) {
+        beginExit(currentContentTypeRef.current)
+        return
+      }
+      cancelExit()
+      // A presentation's background video stays behind every step it covers.
+      const presentationBackground =
+        previewContent || presentationState?.isHidden
+          ? null
+          : presentationState?.temporaryContent?.presentationBackground
+      const shown = presentationBackground
+        ? { ...data, presentationBackground }
+        : data
+      const slide = { type, data: shown, template: shownTemplateId }
+      setMorphLines(sharesSlideLines(shownSlideRef.current, slide, screen))
+      shownSlideRef.current = slide
       setContentType(type)
-      setContentData(data)
+      setContentData(shown)
       setContentKey(key)
     }
 
@@ -393,6 +409,19 @@ export function usePresentationContent({
         showContent('empty', {})
         setNextSlideData(undefined)
         return
+      }
+
+      // How a deck step comes on depends on what was shown before it.
+      const live = presentationState.temporaryContent
+      const deck =
+        live?.type === 'deck_slide' && !presentationState.isHidden
+          ? deckShownSlide(live.data, deckBeforeRef.current)
+          : null
+      if (!presentationState.isHidden || !deckBeforeRef.current) {
+        const data = live?.data as DeckShownBefore['step'] | undefined
+        deckBeforeRef.current = presentationState.isHidden
+          ? { deck: null, step: null }
+          : { deck, step: data ?? null }
       }
 
       // When hidden, don't fetch new content - check isHidden directly here because
@@ -542,6 +571,39 @@ export function usePresentationContent({
           return
         }
 
+        // A video item plays full screen over the empty slide, whose own
+        // settings (its background, its clock) stay as they are.
+        if (temp.type === 'video') {
+          if (isCancelled) return
+          showContent(
+            'empty',
+            { videoUrl: temp.data.url, videoLoop: temp.data.loop === true },
+            `video|${temp.data.url}`,
+          )
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A gallery image, fit full screen over the empty slide, like a video.
+        if (temp.type === 'image') {
+          if (isCancelled) return
+          showContent(
+            'empty',
+            { imageUrl: temp.data.url },
+            `image|${temp.data.url}`,
+          )
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A Slides item's slide draws itself, with its own design.
+        if (deck) {
+          if (isCancelled) return
+          showContent('deck_slide', { deck }, deck.key)
+          setNextSlideData(undefined)
+          return
+        }
+
         // A scene item (e.g. "Solo") switches OBS and projects the empty
         // slide, with that slide's own settings such as its clock. There is
         // no "scene" slide layout to render.
@@ -585,20 +647,21 @@ export function usePresentationContent({
     getNextVerse,
     getBookName,
     previewContent,
+    beginExit,
+    cancelExit,
   ])
 
   // Calculate visibility
-  // isVisible stays true during exit animation so CSS transitions can complete smoothly.
-  // Content becomes invisible only after the exit animation finishes and state is cleared.
+  // Hidden the moment the presentation is, so every text element starts its
+  // exit fade at once (AnimatedText keeps drawing the slide while it fades).
+  // The content itself stays until the fade is over (the exit effect above),
+  // so the slide's layout stays mounted under its fade.
   const hasContent = Object.keys(contentData).length > 0
   const isVisible = previewContent
     ? // Staged preview is always shown locally regardless of the real
       // projection's hidden state.
       hasContent
-    : (!presentationState?.isHidden ||
-        isExitAnimating ||
-        exitAnimatingSyncRef.current) &&
-      hasContent
+    : !presentationState?.isHidden && !isExitAnimating && hasContent
 
   logger.debug(
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
@@ -610,5 +673,5 @@ export function usePresentationContent({
     screen?.contentConfigs,
   )
 
-  return { ...shown, isExitAnimating, presentationState }
+  return { ...shown, screen, morphLines, isExitAnimating, presentationState }
 }

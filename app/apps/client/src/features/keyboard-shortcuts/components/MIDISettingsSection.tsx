@@ -20,12 +20,12 @@ export function MIDISettingsSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Disc3 size={24} className="text-indigo-600 dark:text-indigo-400" />
+        <Disc3 size={16} strokeWidth={1.5} className="text-fg-label" />
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {t('sections.midi.title', { defaultValue: 'MIDI Controller' })}
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-fg-label">
             {t('sections.midi.description', {
               defaultValue:
                 'Configure your MIDI controller to use hardware buttons for shortcuts.',

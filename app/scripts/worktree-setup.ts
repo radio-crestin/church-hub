@@ -8,7 +8,8 @@
  *      at the main checkout's, so `cargo check`/`clippy`/`test` reuse its crates,
  *   3. the built sidecar binary, which tauri-build requires before compiling,
  *   4. the Playwright browser in the shared per-user cache (checked, never downloaded),
- *   5. then builds the client for the worktree's own port (3100 + task number).
+ *   5. then builds the client for the worktree's own port (the first of the
+ *      task's port block, see portFor).
  *
  * Usage, from anywhere inside the worktree:
  *   bun app/scripts/worktree-setup.ts T-052
@@ -27,7 +28,13 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 
-import { mainCheckoutRoot, portFor, run, step } from './worktree-common'
+import {
+  mainCheckoutRoot,
+  portFor,
+  run,
+  step,
+  WORKTREE_E2E_WORKERS,
+} from './worktree-common'
 
 const SIDECAR_PREFIX = 'church-hub-sidecar'
 const USAGE = 'usage: bun app/scripts/worktree-setup.ts <task id, e.g. T-052>'
@@ -115,5 +122,5 @@ step('sidecar', () => copySidecar(worktreeApp, mainApp))
 step('playwright browser', () => checkBrowser(worktreeApp))
 step('client build', () => buildClient(worktreeApp, port))
 console.log(
-  `\nRun e2e: cd app/apps/client && CI=1 TEST_PORT=${port} bunx playwright test <spec> --workers=1 --retries=2`,
+  `\nRun e2e: cd app/apps/client && CI=1 E2E_WORKERS=${WORKTREE_E2E_WORKERS} TEST_PORT=${port} bunx playwright test <spec> --retries=2`,
 )

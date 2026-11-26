@@ -46,7 +46,7 @@ export function BackgroundMediaUploadButton({
         {isUploading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <Upload className="mr-2 h-4 w-4" />
+          <Upload className="mr-2 h-4 w-4" strokeWidth={1.5} />
         )}
         {isUploading
           ? t('screens.background.uploading')

@@ -7,8 +7,6 @@
     "isActive": true,
     "openMode": "browser",
     "isFullscreen": false,
-    "width": 1920,
-    "height": 1080,
     "sortOrder": 0
   },
   {
@@ -19,8 +17,6 @@
     "isActive": false,
     "openMode": "browser",
     "isFullscreen": false,
-    "width": 1920,
-    "height": 1080,
     "sortOrder": 0
   },
   {
@@ -31,8 +27,6 @@
     "isActive": false,
     "openMode": "browser",
     "isFullscreen": false,
-    "width": 1080,
-    "height": 420,
     "sortOrder": 0
   },
   {
@@ -43,8 +37,6 @@
     "isActive": false,
     "openMode": "browser",
     "isFullscreen": true,
-    "width": 1080,
-    "height": 1920,
     "sortOrder": 0
   }
 ]

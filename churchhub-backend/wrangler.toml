@@ -41,6 +41,16 @@ namespace_id = "1001"
   limit = 3
   period = 60
 
+# Abuse guard for POST /sync/churches (registering a church server): 3 per
+# minute per IP. A church registers once, so this never limits real use.
+[[ratelimits]]
+name = "SYNC_RATE_LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 3
+  period = 60
+
 # Non-sensitive environment variables
 [vars]
 YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"

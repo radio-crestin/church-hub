@@ -135,7 +135,7 @@ export function ElementSettings({
 
   return (
     <div data-testid="screen-editor-element-settings">
-      <div className="flex items-center gap-2 px-2 py-2 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+      <div className="flex items-center gap-2 px-2 py-2 border-b border-line bg-field">
         <Button
           variant="ghost"
           size="sm"
@@ -144,13 +144,13 @@ export function ElementSettings({
           aria-label={t('screens.editor.backToScreen')}
           data-testid="screen-editor-back"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft size={16} strokeWidth={1.5} />
         </Button>
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200 truncate">
+          <h3 className="text-sm font-semibold text-fg truncate">
             {t(`screens.elements.${element.type}`)}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fg-hint">
             {isClock || isNextSlide
               ? t('screens.editor.appliesToScreen')
               : t('screens.editor.appliesToSlideType')}
@@ -159,7 +159,7 @@ export function ElementSettings({
       </div>
 
       {elementConfig.constraints && (
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+        <div className="px-4 py-3 border-b border-line">
           <Checkbox
             checked={elementConfig.hidden ?? false}
             onCheckedChange={(checked) => update({ hidden: !!checked })}
@@ -169,7 +169,7 @@ export function ElementSettings({
       )}
 
       {element.type === 'songTitle' && (
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+        <div className="px-4 py-3 border-b border-line">
           <Checkbox
             checked={elementConfig.showNumber ?? false}
             onCheckedChange={(checked) => update({ showNumber: !!checked })}
@@ -222,7 +222,7 @@ export function ElementSettings({
             label={t('screens.clock.showSeconds')}
           />
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.clock.format')}
             </Label>
             <SegmentedControl
@@ -249,7 +249,7 @@ export function ElementSettings({
             onLockedChange={(locked) => update({ locked })}
           />
           {elementConfig.locked && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-hint">
               {t('screens.position.lockedDescription')}
             </p>
           )}
@@ -290,15 +290,15 @@ export function ElementSettings({
           icon={Eye}
           defaultOpen={false}
         >
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fg-hint">
             {t('screens.editor.previewTextDescription')}
           </p>
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.editor.customPreviewText')}
             </Label>
             <textarea
-              className="w-full h-24 px-3 py-2 text-sm border rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-24 px-3 py-2 text-sm rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               placeholder={t('screens.editor.previewTextPlaceholder')}
               value={previewText}
               onChange={(e) => setPreviewText(e.target.value)}

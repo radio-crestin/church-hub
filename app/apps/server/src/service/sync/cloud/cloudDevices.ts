@@ -1,3 +1,4 @@
+import { buildJoinUrl } from './buildJoinUrl'
 import {
   type CloudIdentity,
   getCloudIdentity,
@@ -25,6 +26,7 @@ export async function addCloudDevice(input: {
   token: string
   churchId: string
   readUrl: string
+  joinUrl: string
 }> {
   const identity = await requireIdentity()
   await pushAccessIfChanged(identity)
@@ -40,7 +42,36 @@ export async function addCloudDevice(input: {
     ...response.body,
     churchId: identity.churchId,
     readUrl: identity.readUrl,
+    joinUrl: buildJoinUrl({
+      readUrl: identity.readUrl,
+      token: response.body.token,
+      serviceUrl: identity.serviceUrl,
+    }),
   }
+}
+
+export interface CloudDevice {
+  id: string
+  name: string
+  /** This server's user the device writes as (null: the server itself). */
+  userId: number | null
+  isServer: boolean
+  /** Unix seconds. */
+  createdAt: number
+  revokedAt: number | null
+}
+
+/** The church's devices on the sync service, newest first. */
+export async function listCloudDevices(): Promise<CloudDevice[]> {
+  const identity = await requireIdentity()
+  const response = await syncServiceRequest<{
+    devices: (Omit<CloudDevice, 'userId'> & { userId: string | null })[]
+  }>({ serviceUrl: identity.serviceUrl, identity }, 'GET', '/devices')
+  if (response.status !== 200) throw serviceError(response)
+  return response.body.devices.map((device) => ({
+    ...device,
+    userId: device.userId === null ? null : Number(device.userId),
+  }))
 }
 
 /**

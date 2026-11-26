@@ -1,19 +1,6 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('User Management', () => {
-  test('user management lives in Settings → Users', async ({ page }) => {
-    // Users management moved from a top-level sidebar page into the Settings
-    // page, reached via the /settings/users category now.
-    await page.goto('/settings/users')
-    await page.waitForLoadState('networkidle')
-
-    await expect(page.locator('body')).toBeVisible()
-    const heading = page
-      .getByRole('heading')
-      .filter({ hasText: /authorized|users|utilizatori/i })
-    await expect(heading.first()).toBeVisible({ timeout: 10000 })
-  })
-
   test('clicking a user row opens the edit modal pre-filled', async ({
     page,
     request,

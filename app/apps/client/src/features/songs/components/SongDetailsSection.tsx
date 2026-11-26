@@ -96,25 +96,25 @@ export function SongDetailsSection({
   const inputId = (name: string) => `${idPrefix}${name}`
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-panel rounded-lg border border-line p-6">
       <div className="space-y-4">
         {/* Title */}
         <div>
           <label
             htmlFor={inputId('title')}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            className="block text-sm font-medium text-fg-body mb-1"
           >
             {t('editor.titlePlaceholder').replace('...', '')}
           </label>
           {isLoading ? (
-            <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="w-full h-10 bg-field rounded-lg animate-pulse" />
           ) : (
             <input
               id={inputId('title')}
               type="text"
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg"
               placeholder={t('editor.titlePlaceholder')}
             />
           )}
@@ -124,12 +124,12 @@ export function SongDetailsSection({
         <div>
           <label
             htmlFor={inputId('keyLine')}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            className="block text-sm font-medium text-fg-body mb-1"
           >
             {t('metadata.keyLine')}
           </label>
           {isLoading ? (
-            <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="w-full h-10 bg-field rounded-lg animate-pulse" />
           ) : (
             <input
               id={inputId('keyLine')}
@@ -138,7 +138,7 @@ export function SongDetailsSection({
               onChange={(e) =>
                 handleMetadataFieldChange('keyLine', e.target.value)
               }
-              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg"
               placeholder={t('metadata.keyLinePlaceholder')}
             />
           )}
@@ -146,11 +146,11 @@ export function SongDetailsSection({
 
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-fg-body mb-1">
             {t('category.name')}
           </label>
           {isLoading ? (
-            <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="w-full h-10 bg-field rounded-lg animate-pulse" />
           ) : (
             <CategoryPicker
               value={categoryId}
@@ -162,14 +162,12 @@ export function SongDetailsSection({
 
         {/* Tags (orthogonal to category — multi-assignable audience labels) */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-fg-body mb-1">
             {t('tags.name')}
           </label>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            {t('tags.helper')}
-          </p>
+          <p className="text-xs text-fg-hint mb-2">{t('tags.helper')}</p>
           {isLoading ? (
-            <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="w-full h-10 bg-field rounded-lg animate-pulse" />
           ) : (
             <TagPicker
               value={tagIds}
@@ -182,7 +180,7 @@ export function SongDetailsSection({
         {/* Background (the song's own, over the screens' song backgrounds) */}
         {onBackgroundChange &&
           (isLoading ? (
-            <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="w-full h-10 bg-field rounded-lg animate-pulse" />
           ) : (
             <SongBackgroundField
               value={background}
@@ -192,16 +190,16 @@ export function SongDetailsSection({
           ))}
 
         {/* Collapsible Details Section */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div className="border-t border-line pt-4">
           <button
             type="button"
             onClick={() => setShowDetails(!showDetails)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-fg-body hover:text-fg transition-colors"
           >
             {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             {t('metadata.detailsSection')}
             {!showDetails && hasMetadata && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+              <span className="text-xs text-fg-hint ml-2">
                 {[
                   metadata.author,
                   metadata.hymnNumber && `#${metadata.hymnNumber}`,
@@ -218,7 +216,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('author')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.author')}
                 </label>
@@ -229,7 +227,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('author', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -237,7 +235,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('copyright')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.copyright')}
                 </label>
@@ -248,7 +246,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('copyright', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -256,7 +254,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('ccli')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.ccli')}
                 </label>
@@ -267,7 +265,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('ccli', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -275,7 +273,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('hymnNumber')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.hymnNumber')}
                 </label>
@@ -286,7 +284,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('hymnNumber', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -294,7 +292,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('tempo')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.tempo')}
                 </label>
@@ -305,7 +303,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('tempo', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -313,7 +311,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('timeSignature')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.timeSignature')}
                 </label>
@@ -324,7 +322,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('timeSignature', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -332,7 +330,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('theme')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.theme')}
                 </label>
@@ -343,7 +341,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('theme', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -351,7 +349,7 @@ export function SongDetailsSection({
               <div>
                 <label
                   htmlFor={inputId('altTheme')}
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-fg-body mb-1"
                 >
                   {t('metadata.altTheme')}
                 </label>
@@ -362,7 +360,7 @@ export function SongDetailsSection({
                   onChange={(e) =>
                     handleMetadataFieldChange('altTheme', e.target.value)
                   }
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 dark:text-white text-sm"
+                  className="w-full px-3 py-2 bg-panel border border-line rounded-lg focus:ring-2 focus:ring-focus focus:border-focus text-fg text-sm"
                 />
               </div>
 
@@ -371,7 +369,7 @@ export function SongDetailsSection({
                 <div className="sm:col-span-2">
                   <label
                     htmlFor={inputId('sourceFilename')}
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    className="block text-sm font-medium text-fg-body mb-1"
                   >
                     {t('metadata.sourceFilename')}
                   </label>
@@ -380,7 +378,7 @@ export function SongDetailsSection({
                     type="text"
                     value={metadata.sourceFilename || ''}
                     readOnly
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-field border border-line rounded-lg text-fg-label text-sm cursor-not-allowed"
                   />
                 </div>
               )}
@@ -390,7 +388,7 @@ export function SongDetailsSection({
                 <div className="sm:col-span-2">
                   <label
                     htmlFor={inputId('presentationOrder')}
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    className="block text-sm font-medium text-fg-body mb-1"
                   >
                     {t('metadata.presentationOrder')}
                   </label>
@@ -399,7 +397,7 @@ export function SongDetailsSection({
                     type="text"
                     value={metadata.presentationOrder || ''}
                     readOnly
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-field border border-line rounded-lg text-fg-label text-sm cursor-not-allowed"
                   />
                 </div>
               )}
@@ -410,7 +408,7 @@ export function SongDetailsSection({
                   <div>
                     <label
                       htmlFor={inputId('presentationCount')}
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      className="block text-sm font-medium text-fg-body mb-1"
                     >
                       {t('metadata.presentationCount')}
                     </label>
@@ -419,13 +417,13 @@ export function SongDetailsSection({
                       type="text"
                       value={presentationCount}
                       readOnly
-                      className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
+                      className="w-full px-3 py-2 bg-field border border-line rounded-lg text-fg-label text-sm cursor-not-allowed"
                     />
                   </div>
                   <div>
                     <label
                       htmlFor={inputId('lastManualEdit')}
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      className="block text-sm font-medium text-fg-body mb-1"
                     >
                       {t('metadata.lastManualEdit')}
                     </label>
@@ -438,7 +436,7 @@ export function SongDetailsSection({
                           : t('metadata.neverEdited')
                       }
                       readOnly
-                      className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 text-sm cursor-not-allowed"
+                      className="w-full px-3 py-2 bg-field border border-line rounded-lg text-fg-label text-sm cursor-not-allowed"
                     />
                   </div>
                 </>

@@ -52,7 +52,7 @@ export function WorkspaceTabs({
         data-stuck={stuck}
         data-sticky-header=""
         data-testid="workspace-pinned"
-        className="group/pinned sticky top-0 z-20 -mx-3 px-3 pb-2 bg-gray-50 dark:bg-gray-950 flex flex-col gap-2"
+        className="group/pinned sticky top-0 z-20 -mx-3 px-3 pb-2 bg-app flex flex-col gap-2"
       >
         {pinned.map((panel) => (
           <div
@@ -64,10 +64,7 @@ export function WorkspaceTabs({
           </div>
         ))}
         {tabs.length > 1 && (
-          <div
-            role="tablist"
-            className="flex gap-1 p-1 rounded-lg bg-gray-200/70 dark:bg-gray-800"
-          >
+          <div role="tablist" className="flex gap-1 p-1 rounded-lg bg-field">
             {tabs.map((panel) => (
               <button
                 key={panel.id}
@@ -78,8 +75,8 @@ export function WorkspaceTabs({
                 onClick={() => setActiveId(panel.id)}
                 className={`flex-1 min-w-0 truncate px-2 py-2 rounded-md text-sm font-medium transition-colors ${
                   panel.id === active?.id
-                    ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white'
-                    : 'text-gray-600 dark:text-gray-400'
+                    ? 'bg-selected text-fg'
+                    : 'text-fg-label hover:text-fg'
                 }`}
               >
                 {panel.title}

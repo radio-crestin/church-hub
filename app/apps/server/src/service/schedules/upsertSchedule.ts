@@ -1,6 +1,7 @@
 import { eq, ne, sql } from 'drizzle-orm'
 
 import { automationColumns } from './automationColumns'
+import { childScheduleIds } from './childScheduleIds'
 import { updateScheduleSearchIndex } from './search'
 import { toScheduleAutomation } from './toScheduleAutomation'
 import type { Schedule, UpsertScheduleInput } from './types'
@@ -90,8 +91,10 @@ export function upsertSchedule(input: UpsertScheduleInput): Schedule | null {
       title: schedule.title,
       description: schedule.description,
       automation: toScheduleAutomation(schedule),
+      templateId: schedule.templateId,
       itemCount: counts?.itemCount ?? 0,
       songCount: counts?.songCount ?? 0,
+      childScheduleIds: childScheduleIds().get(scheduleId) ?? [],
       createdAt: Math.floor(schedule.createdAt.getTime() / 1000),
       updatedAt: Math.floor(schedule.updatedAt.getTime() / 1000),
     }

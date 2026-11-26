@@ -1,36 +1,60 @@
-import { ChevronDown, MonitorPlay } from 'lucide-react'
+import { Check, MonitorPlay } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useHasPermission } from '~/ui/PermissionGate'
 import { useToast } from '~/ui/toast/useToast'
+import { usePreviewScreen } from '../hooks/usePreviewScreen'
 import { useScreens } from '../hooks/useScreens'
 import { useSetPreviewScreen } from '../hooks/useSetPreviewScreen'
 
 interface PreviewScreenPickerProps {
-  /** The screen the preview mirrors now (see resolvePreviewScreen). */
-  previewScreenId: number
+  /** Which way the list opens: up from a bottom row of controls, down from a header. */
+  placement?: 'up' | 'down'
+  /** Which edge of the button the list lines up with. */
+  align?: 'start' | 'end'
 }
 
 /**
- * A small screen picker laid over a live preview, so the operator switches
- * which screen every preview mirrors without leaving the page. A native
- * select, so phones open their own picker. Hidden when there is nothing to
- * choose between or the user may not edit screens.
+ * Which screen the previews mirror: an icon button beside the preview's
+ * controls that opens a small list of the screens. Hidden when there is
+ * nothing to choose between or the user may not edit screens.
  */
 export function PreviewScreenPicker({
-  previewScreenId,
+  placement = 'up',
+  align = 'end',
 }: PreviewScreenPickerProps) {
   const { t } = useTranslation('presentation')
   const { showToast } = useToast()
   const { data: screens } = useScreens()
+  const { previewScreen } = usePreviewScreen()
   const { setPreviewScreen, isPending } = useSetPreviewScreen()
   const canEdit = useHasPermission('displays.edit')
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
 
-  if (!canEdit || !screens || screens.length < 2) return null
+  useEffect(() => {
+    if (!open) return
+    const closeOutside = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
 
-  const handleChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const screen = screens.find((s) => s.id === Number(event.target.value))
-    if (!screen) return
+  if (!canEdit || !screens || screens.length < 2 || !previewScreen) return null
+
+  const choose = async (screenId: number) => {
+    setOpen(false)
+    const screen = screens.find((s) => s.id === screenId)
+    if (!screen || screen.id === previewScreen.id) return
     try {
       await setPreviewScreen(screen)
       showToast(
@@ -44,29 +68,64 @@ export function PreviewScreenPicker({
     }
   }
 
+  const label = `${t('previewScreenPicker.label')}: ${previewScreen.name}`
+
   return (
-    <label className="absolute bottom-2 left-2 z-10 flex items-center gap-1 max-w-[60%] rounded-md bg-black/60 px-2 py-1 text-xs text-white opacity-80 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm">
-      <MonitorPlay size={14} className="shrink-0" aria-hidden />
-      <select
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
         data-testid="preview-screen-picker"
-        aria-label={t('previewScreenPicker.label')}
-        title={t('previewScreenPicker.label')}
-        value={previewScreenId}
-        onChange={handleChange}
+        data-value={previewScreen.id}
+        aria-label={label}
+        title={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
         disabled={isPending}
-        className="min-w-0 appearance-none truncate bg-transparent pr-4 outline-none cursor-pointer [&>option]:text-gray-900"
+        onClick={() => setOpen((value) => !value)}
+        className={`flex h-9 w-9 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg disabled:opacity-50 ${
+          open ? 'bg-selected text-fg' : 'bg-field'
+        }`}
       >
-        {screens.map((screen) => (
-          <option key={screen.id} value={screen.id}>
-            {screen.name}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        size={12}
-        className="pointer-events-none -ml-4 shrink-0"
-        aria-hidden
-      />
-    </label>
+        <MonitorPlay size={18} strokeWidth={1.5} aria-hidden />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label={t('previewScreenPicker.label')}
+          className={`absolute z-30 min-w-52 ${align === 'start' ? 'left-0' : 'right-0'} rounded-[10px] border border-line bg-panel p-1 shadow-popover ${
+            placement === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
+          }`}
+        >
+          <p className="px-2 pt-1 pb-1.5 text-xs text-fg-hint">
+            {t('previewScreenPicker.label')}
+          </p>
+          {screens.map((screen) => {
+            const isCurrent = screen.id === previewScreen.id
+            return (
+              <button
+                key={screen.id}
+                type="button"
+                role="menuitemradio"
+                aria-checked={isCurrent}
+                data-testid={`preview-screen-option-${screen.id}`}
+                onClick={() => choose(screen.id)}
+                className={`flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors hover:bg-hover ${
+                  isCurrent ? 'text-fg' : 'text-fg-body'
+                }`}
+              >
+                <span className="min-w-0 flex-1 truncate">{screen.name}</span>
+                {isCurrent && (
+                  <Check
+                    size={16}
+                    strokeWidth={1.75}
+                    className="shrink-0 text-primary"
+                  />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

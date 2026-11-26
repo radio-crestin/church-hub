@@ -29,14 +29,17 @@ export function CloudSyncOff({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+      <div className="rounded-xl border border-line p-4">
         <div className="flex items-start gap-3">
-          <Cloud className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-500" />
+          <Cloud
+            strokeWidth={1.5}
+            className="mt-0.5 h-5 w-5 flex-shrink-0 text-fg-label"
+          />
           <div className="min-w-0 flex-1">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+            <h4 className="text-sm font-medium text-fg">
               {t('sections.cloudSync.off.title')}
             </h4>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-0.5 text-xs text-fg-hint">
               {t('sections.cloudSync.off.description')}
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -47,9 +50,9 @@ export function CloudSyncOff({
                 data-testid="cloud-continue-google"
               >
                 {waitingFor === 'connect' ? (
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <LogIn className="mr-1.5 h-4 w-4" />
+                  <LogIn strokeWidth={1.5} className="h-4 w-4" />
                 )}
                 {t('sections.cloudSync.off.google')}
               </Button>
@@ -60,15 +63,15 @@ export function CloudSyncOff({
                 onClick={() => guest.mutate(undefined)}
                 data-testid="cloud-continue-guest"
               >
-                <UserRound className="mr-1.5 h-4 w-4" />
+                <UserRound strokeWidth={1.5} className="h-4 w-4" />
                 {t('sections.cloudSync.off.guest')}
               </Button>
             </div>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-xs text-fg-hint">
               {t('sections.cloudSync.off.ownerHint')}
             </p>
             {guest.error && (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+              <p className="mt-1 text-xs text-live">
                 {t('sections.cloudSync.off.failed')}
               </p>
             )}
@@ -76,16 +79,16 @@ export function CloudSyncOff({
         </div>
       </div>
 
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+      <div className="rounded-xl border border-line p-4">
+        <h4 className="text-sm font-medium text-fg">
           {t('sections.cloudSync.recover.title')}
         </h4>
-        <p className="mt-0.5 mb-3 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-0.5 mb-3 text-xs text-fg-hint">
           {t('sections.cloudSync.recover.description')}
         </p>
         {ownerEmail ? (
           <>
-            <p className="mb-2 text-xs text-gray-600 dark:text-gray-300">
+            <p className="mb-2 text-xs text-fg-label">
               {t('sections.cloudSync.owner.signedInAs', { email: ownerEmail })}
             </p>
             <OwnerChurchList currentChurchId={null} />
@@ -99,7 +102,7 @@ export function CloudSyncOff({
             data-testid="cloud-recover-google"
           >
             {waitingFor === 'manage' && (
-              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             )}
             {t('sections.cloudSync.recover.signIn')}
           </Button>

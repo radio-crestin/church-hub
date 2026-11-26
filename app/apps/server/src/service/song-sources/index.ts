@@ -6,6 +6,8 @@ export { isProxyAllowedUrl } from './isProxyAllowedUrl'
 export { deleteLinkSource } from './links/deleteLinkSource'
 export { upsertLinkSource } from './links/upsertLinkSource'
 export { listSongSources } from './listSongSources'
+export { readManagedRelease } from './managed/readManagedRelease'
+export type { ManagedRelease } from './managed/types'
 export { deletePublication } from './publications/deletePublication'
 export {
   getPublication,

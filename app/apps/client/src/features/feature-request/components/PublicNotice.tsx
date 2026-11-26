@@ -9,7 +9,7 @@ export function PublicNotice() {
       data-testid="feature-request-public-notice"
       className="flex items-start gap-1.5 text-xs text-amber-800 dark:text-amber-300"
     >
-      <Globe size={14} className="flex-shrink-0 mt-px" />
+      <Globe strokeWidth={1.75} size={14} className="flex-shrink-0 mt-px" />
       {t('common:featureRequest.publicNotice')}
     </p>
   )

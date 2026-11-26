@@ -1,6 +1,7 @@
 import {
   type APIRequestContext,
   expect,
+  type Locator,
   type Page,
   test,
 } from '@playwright/test'
@@ -71,7 +72,8 @@ async function previewRatio(page: Page) {
 async function expectEveryPreviewMirrors(page: Page, screen: ScreenSummary) {
   for (const path of PREVIEW_PAGES) {
     await page.goto(path)
-    await expect(page.getByTestId('preview-screen-picker')).toHaveValue(
+    await expect(page.getByTestId('preview-screen-picker')).toHaveAttribute(
+      'data-value',
       String(screen.id),
       { timeout: 15000 },
     )
@@ -79,6 +81,21 @@ async function expectEveryPreviewMirrors(page: Page, screen: ScreenSummary) {
       .poll(() => previewRatio(page), { message: `preview on ${path}` })
       .toBeCloseTo(screen.width / screen.height, 1)
   }
+}
+
+/** The screen's "Shown in the previews" radio, under its "More options". */
+async function previewRadio(page: Page, id: number): Promise<Locator> {
+  await page.goto(`/settings/screens?screen=${id}`)
+  const card = page.locator(
+    `[data-testid="screen-card"][data-screen-id="${id}"]`,
+  )
+  await card
+    .getByTestId('screen-group-advanced')
+    .getByText(label('settings', 'sections.screens.groups.more'))
+    .click()
+  return card.getByRole('radio', {
+    name: label('settings', 'sections.screens.previewScreen.label'),
+  })
 }
 
 test.describe('The previews mirror the screen chosen for them', () => {
@@ -118,25 +135,17 @@ test.describe('The previews mirror the screen chosen for them', () => {
     await expectEveryPreviewMirrors(page, main)
 
     // Settings say the same: the main screen is the one checked.
-    await page.goto('/settings/screens')
-    const radio = (id: number) =>
-      page
-        .locator(`[data-testid="screen-card"][data-screen-id="${id}"]`)
-        .getByRole('radio', {
-          name: label('settings', 'sections.screens.previewScreen.label'),
-        })
-    await expect(radio(main.id)).toBeChecked({ timeout: 10000 })
-    await expect(radio(stage.id)).not.toBeChecked()
+    await expect(await previewRadio(page, main.id)).toBeChecked({
+      timeout: 10000,
+    })
+    await expect(await previewRadio(page, stage.id)).not.toBeChecked()
   })
 
   test('choosing Stage in Settings switches every preview to it', async ({
     page,
     request,
   }) => {
-    await page.goto('/settings/screens')
-    const stageRadio = page
-      .locator(`[data-testid="screen-card"][data-screen-id="${stage.id}"]`)
-      .getByTestId('screen-preview-screen')
+    const stageRadio = await previewRadio(page, stage.id)
     await stageRadio.click()
     await expect(stageRadio).toBeChecked()
     await expect
@@ -155,9 +164,8 @@ test.describe('The previews mirror the screen chosen for them', () => {
     request,
   }) => {
     await page.goto('/present')
-    await page
-      .getByTestId('preview-screen-picker')
-      .selectOption(String(stage.id))
+    await page.getByTestId('preview-screen-picker').click()
+    await page.getByTestId(`preview-screen-option-${stage.id}`).click()
     await expect
       .poll(
         async () =>
@@ -174,7 +182,8 @@ test.describe('The previews mirror the screen chosen for them', () => {
   }) => {
     await setPreviewFlag(request, stage, true)
     await page.goto('/present')
-    await expect(page.getByTestId('preview-screen-picker')).toHaveValue(
+    await expect(page.getByTestId('preview-screen-picker')).toHaveAttribute(
+      'data-value',
       String(stage.id),
       { timeout: 15000 },
     )
@@ -182,7 +191,8 @@ test.describe('The previews mirror the screen chosen for them', () => {
     // Deleted elsewhere: the open Control Room hears it and falls back.
     expect((await request.delete(`/api/screens/${stage.id}`)).ok()).toBeTruthy()
     const main = mainScreenOf(await listScreens(request))
-    await expect(page.getByTestId('preview-screen-picker')).toHaveValue(
+    await expect(page.getByTestId('preview-screen-picker')).toHaveAttribute(
+      'data-value',
       String(main.id),
       { timeout: 15000 },
     )

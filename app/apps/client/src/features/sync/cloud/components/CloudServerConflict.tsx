@@ -22,16 +22,19 @@ export function CloudServerConflict({ conflict }: { conflict: Conflict }) {
 
   return (
     <div
-      className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20"
+      className="rounded-xl border border-line-strong p-4"
       data-testid="cloud-conflict"
     >
       <div className="flex items-start gap-3">
-        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+        <AlertTriangle
+          strokeWidth={1.5}
+          className="mt-0.5 h-5 w-5 flex-shrink-0 text-fg"
+        />
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100">
+          <h4 className="text-sm font-medium text-fg">
             {t('sections.cloudSync.conflict.title')}
           </h4>
-          <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+          <p className="mt-1 text-xs text-fg-label">
             {t('sections.cloudSync.conflict.body', { name, lastSeen })}
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">

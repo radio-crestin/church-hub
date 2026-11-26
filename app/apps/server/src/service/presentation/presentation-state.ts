@@ -4,6 +4,7 @@ import { expandSongSlidesWithChoruses } from './expand-song-slides'
 import { clearSlideHighlights, parseSlideHighlights } from './highlights'
 import { stepScheduleItemIndex } from './step-schedule-item-index'
 import type {
+  PresentationBackground,
   PresentationState,
   PresentTemporaryAnnouncementInput,
   PresentTemporaryBibleInput,
@@ -19,6 +20,8 @@ import type {
   TemporaryVerseteTineriContent,
   UpdatePresentationStateInput,
 } from './types'
+import { withPresentationTemplate } from './withPresentationTemplate'
+import { withTopicTemplates } from './withTopicTemplates'
 import { getDatabase, getRawDatabase } from '../../db'
 import {
   presentationState,
@@ -51,6 +54,68 @@ export function setOnSongPresentedCallback(
   callback: ((songId: number) => void) | null,
 ): void {
   onSongPresentedCallback = callback
+}
+
+// Callback to notify when a presentation's step goes up (its music starts)
+let onScheduleStepPresentedCallback:
+  | ((scheduleId: number, stepIndex: number) => void)
+  | null = null
+
+/**
+ * Sets a callback called when a step of a presentation (its `scheduleId` and
+ * `scheduleItemIndex`) goes up, from its runner or from any page.
+ */
+export function setOnScheduleStepPresentedCallback(
+  callback: ((scheduleId: number, stepIndex: number) => void) | null,
+): void {
+  onScheduleStepPresentedCallback = callback
+}
+
+// Finds the background video behind a presentation's step
+let scheduleBackgroundResolver:
+  | ((scheduleId: number, stepIndex: number) => PresentationBackground | null)
+  | null = null
+
+/** Sets how the background video behind a presentation's step is found. */
+export function setScheduleBackgroundResolver(
+  resolver:
+    | ((scheduleId: number, stepIndex: number) => PresentationBackground | null)
+    | null,
+): void {
+  scheduleBackgroundResolver = resolver
+}
+
+/**
+ * The content with its presentation's background video: the one it had for
+ * the same step, else found anew; none outside a presentation.
+ */
+function withPresentationBackground(
+  content: TemporaryContent | null,
+  before: TemporaryContent | null,
+): TemporaryContent | null {
+  if (!content) return content
+  const step = scheduleStepOf(content)
+  if (!step) return { ...content, presentationBackground: null }
+  const sameStep = scheduleStepOf(before)
+  const presentationBackground =
+    before?.presentationBackground !== undefined &&
+    sameStep?.scheduleId === step.scheduleId &&
+    sameStep.scheduleItemIndex === step.scheduleItemIndex
+      ? before.presentationBackground
+      : (scheduleBackgroundResolver?.(
+          step.scheduleId,
+          step.scheduleItemIndex,
+        ) ?? null)
+  return { ...content, presentationBackground }
+}
+
+/** The presentation step a temporary content is, if it is one. */
+function scheduleStepOf(content: TemporaryContent | null) {
+  const data = content?.data
+  if (!data || !('scheduleId' in data)) return null
+  const { scheduleId, scheduleItemIndex } = data
+  if (scheduleId == null || scheduleItemIndex == null) return null
+  return { scheduleId, scheduleItemIndex }
 }
 
 /**
@@ -231,7 +296,12 @@ export function updatePresentationState(
     // Handle temporary content
     const temporaryContent: TemporaryContent | null =
       input.temporaryContent !== undefined
-        ? input.temporaryContent
+        ? withPresentationBackground(
+            withTopicTemplates(
+              withPresentationTemplate(input.temporaryContent),
+            ),
+            current.temporaryContent,
+          )
         : current.temporaryContent
 
     const temporaryContentJson = temporaryContent
@@ -260,6 +330,16 @@ export function updatePresentationState(
         },
       })
       .run()
+
+    const step = scheduleStepOf(temporaryContent)
+    const before = scheduleStepOf(current.temporaryContent)
+    if (
+      step &&
+      (step.scheduleId !== before?.scheduleId ||
+        step.scheduleItemIndex !== before?.scheduleItemIndex)
+    ) {
+      onScheduleStepPresentedCallback?.(step.scheduleId, step.scheduleItemIndex)
+    }
 
     // Track presentation count for song slides
     // Only count when:
@@ -381,6 +461,9 @@ export function presentTemporaryBible(
         secondaryBookName: input.secondaryBookName,
         secondaryTranslationAbbreviation:
           input.secondaryTranslationAbbreviation,
+        // A topic's verse: drawn with its template (withTopicTemplates); the
+        // verses stepped to from it keep it (they spread this data).
+        topic: input.topic,
       },
     }
 
@@ -1177,6 +1260,8 @@ export function presentTemporaryVerseteTineri(
         nextItemPreview: input.nextItemPreview,
         scheduleId: input.scheduleId,
         scheduleItemIndex: input.scheduleItemIndex,
+        // A topic's verse loop is drawn with the template chosen for it.
+        templateId: input.templateId,
       },
     }
 

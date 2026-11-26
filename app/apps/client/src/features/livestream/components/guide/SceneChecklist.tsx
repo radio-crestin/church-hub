@@ -25,7 +25,7 @@ export function SceneChecklist({
 
   return (
     <ul
-      className="divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+      className="divide-y divide-line rounded-lg border border-line"
       data-testid="livestream-guide-scenes"
     >
       {scenes.map((scene) => (
@@ -34,23 +34,26 @@ export function SceneChecklist({
           className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2"
         >
           <div className="min-w-0">
-            <span className="font-medium text-gray-900 dark:text-white">
+            <span className="text-sm font-medium text-fg">
               {scene.obsSceneName}
             </span>
             {scene.contentTypes.length > 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-fg-hint">
                 {t('guide.firstScene.switchedBy', { types: switchedBy(scene) })}
               </p>
             )}
           </div>
           {isOBSConnected && (
             <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+              className={`inline-flex items-center gap-1.5 text-xs ${
                 scene.isCustom
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
-                  : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-fg-hint'
               }`}
             >
+              {!scene.isCustom && (
+                <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
+              )}
               {scene.isCustom
                 ? t('guide.firstScene.missingInOBS')
                 : t('guide.firstScene.inOBS')}

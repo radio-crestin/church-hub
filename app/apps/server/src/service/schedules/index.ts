@@ -2,6 +2,7 @@ export { addItemToSchedule } from './addItemToSchedule'
 export { biblePassageToVerseteTineriEntry } from './biblePassageToVerseteTineriEntry'
 export { deleteSchedule } from './deleteSchedule'
 export { formatPassageReference } from './formatPassageReference'
+export { getQueueSchedule } from './getQueueSchedule'
 export {
   getScheduleById,
   getScheduleItemById,
@@ -29,6 +30,16 @@ export {
   updateScheduleSearchIndex,
 } from './search'
 export { setScheduleItemAdvance } from './setScheduleItemAdvance'
+export { setScheduleItemConfig } from './setScheduleItemConfig'
+export {
+  type ScheduleItemMidiInput,
+  setScheduleItemMidi,
+  setScheduleItemMidiVerseTimes,
+} from './setScheduleItemMidi'
+export {
+  setScheduleItemTemplate,
+  setScheduleTemplate,
+} from './setScheduleTemplate'
 export * from './types'
 export { updateScheduleSlide } from './updateScheduleSlide'
 export { upsertSchedule } from './upsertSchedule'

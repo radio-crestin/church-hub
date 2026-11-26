@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Slider } from '~/ui/slider'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { useToast } from '~/ui/toast'
+import { AutomationTriggerRow } from './AutomationTriggerRow'
 import { useUpsertSchedule } from '../hooks'
 import type { Schedule, ScheduleAutomationSettings as Settings } from '../types'
 
@@ -20,7 +21,8 @@ interface ScheduleAutomationSettingsProps {
 
 /**
  * The automation settings, one under the other: autoplay (seconds per slide,
- * longer for more text), loop, the music volume and starting with Church Hub.
+ * longer for more text), loop, the music volume, starting with Church Hub,
+ * and what in OBS starts and stops it.
  * Each change is saved as it is made. An item's own time is set beside it in
  * the items list.
  */
@@ -81,7 +83,7 @@ export function ScheduleAutomationSettings({
   }, [volumeOn, volume, automation.musicVolume])
 
   return (
-    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+    <div className="divide-y divide-line">
       <div>
         <SwitchRow
           label={t('automation.autoplay')}
@@ -93,7 +95,7 @@ export function ScheduleAutomationSettings({
           testId="automation-autoplay"
         />
         {autoplayOn && (
-          <label className="flex items-center justify-between gap-3 pb-2 text-sm text-gray-700 dark:text-gray-300">
+          <label className="flex items-center justify-between gap-3 pb-2 text-sm text-fg-body">
             {t('automation.seconds')}
             <input
               type="number"
@@ -102,7 +104,7 @@ export function ScheduleAutomationSettings({
               value={Number.isFinite(seconds) ? seconds : ''}
               onChange={(e) => setSeconds(e.target.valueAsNumber)}
               data-testid="automation-seconds"
-              className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-20 rounded-lg border border-line bg-panel px-2 py-1 text-right text-fg"
             />
           </label>
         )}
@@ -149,6 +151,20 @@ export function ScheduleAutomationSettings({
         checked={automation.startOnAppStart}
         onCheckedChange={(startOnAppStart) => save({ startOnAppStart })}
         testId="automation-start-on-app-start"
+      />
+      <AutomationTriggerRow
+        label={t('automation.trigger.start')}
+        description={t('automation.trigger.startDescription')}
+        trigger={automation.startTrigger}
+        onChange={(startTrigger) => save({ startTrigger })}
+        testId="automation-start-trigger"
+      />
+      <AutomationTriggerRow
+        label={t('automation.trigger.stop')}
+        description={t('automation.trigger.stopDescription')}
+        trigger={automation.stopTrigger}
+        onChange={(stopTrigger) => save({ stopTrigger })}
+        testId="automation-stop-trigger"
       />
     </div>
   )

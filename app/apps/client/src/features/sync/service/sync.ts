@@ -27,11 +27,12 @@ export interface CloudSyncInfo {
 
 export interface SyncStatus {
   enabled: boolean
+  /** The cloud sync service, or Google Drive as the backup option. */
   transport: 'drive' | 'cloud'
   cloud: CloudSyncInfo | null
   /** The owner signed in on this PC (for an hour). */
   ownerSession: { email: string; expiresAt: number } | null
-  /** A Google account (the backup connection) is available for sync. */
+  /** The transport can sync: a church on the sync service, or a Google account. */
   connected: boolean
   accountEmail: string | null
   pollIntervalMinutes: number

@@ -17,15 +17,15 @@ This worker provides a stateless OAuth flow using:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/auth/youtube` | GET | Initiates the YouTube OAuth flow, redirects to Google |
+| `/auth/youtube` | GET | Initiates the YouTube OAuth flow, redirects to Google. `origin` must be in `ALLOWED_ORIGINS`; `mode=redirect` takes a `returnUrl` on that same origin |
 | `/auth/youtube/callback` | GET | Handles Google callback, returns tokens (+ channel info) |
 | `/auth/youtube/refresh` | POST | Refreshes a YouTube access token |
-| `/auth/drive` | GET | Initiates the Drive backup OAuth flow (`drive.appdata` + identity scopes) |
+| `/auth/drive` | GET | Initiates the Drive backup OAuth flow (`drive.appdata` + identity scopes); same `origin`/`returnUrl` rules |
 | `/auth/drive/callback` | GET | Handles Google callback, returns tokens (+ account email) |
 | `/auth/drive/refresh` | POST | Refreshes a Drive access token |
 | `/health` | GET | Health check endpoint |
-| `/feature-requests` | POST | "Request a feature": stores the screenshot in R2, opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email). Max 3/min and 50 per rolling 24h per IP (hashed IP counter in `SIGNALING_KV`) |
-| `/feature-requests/screenshots/:id` | GET | Serves a feature-request screenshot from R2 (embedded in the issue; random id, cached a year) |
+| `/feature-requests` | POST | "Request a feature": stores the screenshot (the S3 bucket, or R2 when bound), opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email). Max 3/min and 50 per rolling 24h per IP (hashed IP counter in `SIGNALING_KV`) |
+| `/feature-requests/screenshots/:id` | GET | Serves a feature-request screenshot from its storage (embedded in the issue; random id, cached a year) |
 | `/sync/*` | GET, POST, PUT, DELETE | Cloud sync service (see below); documented at `/sync/openapi.json`, rendered at `/sync/docs` |
 
 > Drive setup: enable the **Google Drive API** in the same Google Cloud project
@@ -55,7 +55,10 @@ there first (412) it reads again and retries.
 
 So the bucket must support **conditional writes** (`If-Match` and
 `If-None-Match: *` on `PutObject`): Cloudflare R2, AWS S3 and MinIO do. A
-store without them can't keep concurrent writers apart. The service also
+store without them can't keep concurrent writers apart, and some honour them
+only on unversioned buckets: check a new bucket with
+`bun scripts/probeConditionalWrites.ts` (same `S3_*` settings; it writes and
+deletes one object under `probe/`, exit 1 = unsafe). The service also
 lists its own prefixes (with its keys) to delete what a snapshot replaced:
 after each compaction, the snapshot before last and every segment it covers
 go, so no lifecycle rule is needed and none can delete a segment `head.json`
@@ -72,7 +75,7 @@ so the rest of the Worker deploys without them.
 | `S3_PUBLIC_URL` | The bucket's public read URL (anonymous `GetObject` on `churches/*`, no listing) |
 | `S3_STATE_BUCKET` | Optional: a private bucket (same endpoint and keys) for `sync-state/` |
 | `SYNC_COMPACT_AFTER` | Segments between snapshots (default 40) |
-| `SYNC_RATE_LIMITER` | Optional rate-limit binding on registration |
+| `SYNC_RATE_LIMITER` | Rate-limit binding on registration (bound in `wrangler.toml`: 3/min per IP; optional when self-hosted) |
 | `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET` | The Google OAuth client the owner sign-in uses (the one YouTube and Drive share) |
 | `OWNER_REDIRECT_URI` | Optional: the sign-in's callback, registered on that client (default `<this service>/sync/owner/callback`) |
 | `GOOGLE_AUTH_URL`, `GOOGLE_TOKEN_URL`, `GOOGLE_USERINFO_URL` | Optional: Google's endpoints, for a test's stand-in |
@@ -108,23 +111,68 @@ write on the bucket). Plan on the Workers paid plan: compacting a large
 library (building, gzipping and uploading a snapshot of several MB) will
 likely take more than the free plan's 10 ms of CPU per request.
 
-**Self-hosted** (Bun or Node, and your own bucket: MinIO, AWS S3, R2…):
-
-```bash
-npm ci
-SYNC_SECRET=… S3_ENDPOINT=… S3_BUCKET=… S3_ACCESS_KEY_ID=… \
-  S3_SECRET_ACCESS_KEY=… S3_PUBLIC_URL=… PORT=8787 \
-  bun src/selfhost/server.ts            # or: npx tsx src/selfhost/server.ts (Node)
-```
+**Self-hosted**: the whole backend runs on Node or Bun with your own bucket
+(MinIO, AWS S3, R2…); see [Self-hosted (Node)](#self-hosted-node).
 
 The app points at it with `CHURCH_HUB_SYNC_URL` (or `serviceUrl` in
-`POST /api/sync/cloud`). The e2e spec `app/apps/client/e2e/cloud-sync.spec.ts`
-runs it this way against an S3 stand-in, and `cloud-owner.spec.ts` with a
-Google stand-in too.
+`POST /api/sync/cloud`). The e2e spec `app/apps/client/e2e/cloud-sync.api.spec.ts`
+runs it (`bun src/node/server.ts`) against an S3 stand-in, and
+`cloud-owner.spec.ts` with a Google stand-in too.
 
 For the owner sign-in in production, register
 `https://churchub-backend.radiocrestin.ro/sync/owner/callback` as an
 authorized redirect URI on the Google OAuth client.
+
+## Self-hosted (Node)
+
+`src/node/server.ts` serves the same app on Node 24 (or Bun) without
+Cloudflare: Redis replaces KV and the rate limiters (memory outside
+production), and screenshots go to the S3 bucket. It writes nothing to the
+local disk, so it runs with a read-only root filesystem.
+
+```bash
+npm ci && npm run build:node        # one file: dist/server.mjs
+PORT=8787 node dist/server.mjs      # or, in development: bun src/node/server.ts
+```
+
+It reads the settings of [Cloud sync](#cloud-sync-sync) and
+[Production Deployment](#production-deployment) from the environment
+(`SYNC_SECRET`, `S3_*`, `YOUTUBE_*`, `COOKIE_ENCRYPTION_KEY`,
+`ALLOWED_ORIGINS`, `GITHUB_TOKEN`, `WAHA_*`, `DRIVE_REDIRECT_URI`,
+`OWNER_REDIRECT_URI`; `YOUTUBE_SCOPE`, `DRIVE_SCOPE`, `COOKIE_NAME` and
+`COOKIE_MAX_AGE` default to `wrangler.toml`'s values), plus:
+
+| Name | |
+|---|---|
+| `REDIS_URL` | `redis://:<password>@<host>:6379`: signaling, the feature-request quota and the rate limits, shared by every replica. Required when `NODE_ENV=production`; elsewhere unset = this process's memory |
+| `FEATURE_REQUEST_S3_BUCKET` | Bucket for feature-request screenshots, under `feature-requests/` (default `S3_STATE_BUCKET`, then `S3_BUCKET`); same endpoint and keys |
+| `TRUSTED_PROXY_CIDRS` | Comma-separated CIDRs of every proxy in front: the ingress pods, plus any outer proxy the ingress trusts. Only a peer inside them may pass the client address in `X-Forwarded-For`, which is read from the right, skipping these addresses; required in production (the server refuses to start without it), empty elsewhere = trust nobody |
+| `PUBLIC_BASE_URL` | This service's public origin, for the links it hands out (screenshot URLs in issues, the listener page, the owner sign-in callback) instead of the request's `Host` (also honoured on Cloudflare) |
+| `FEATURE_REQUEST_RATE_LIMIT_PER_MINUTE`, `SYNC_RATE_LIMIT_PER_MINUTE` | Per-IP limits of `POST /feature-requests` and `POST /sync/churches` (default 3, as on Cloudflare) |
+| `PORT`, `HOST` | Listen address (default `8787`, `0.0.0.0`) |
+
+The resolved client address replaces any `CF-Connecting-IP` the client sent.
+At startup it checks the sync buckets for conditional writes
+(`src/sync/probeConditionalWrites.ts`); until they pass, `/sync` answers
+`503 not_configured`.
+
+`bun scripts/compareBackends.ts <reference URL> <candidate URL>` sends the
+calls released apps make to two deployments and prints every difference in
+status, CORS and security headers, redirects and JSON shape: run it before
+pointing apps at a new deployment.
+
+**Images** (both for `linux/amd64`, built without emulation on any host):
+
+```bash
+docker buildx build --platform linux/amd64 -t <registry>/church-hub-backend:<tag> --push churchhub-backend
+docker buildx build --platform linux/amd64 -f app/apps/client/deploy/Dockerfile.public \
+  -t <registry>/church-hub-web:<tag> --push .        # from the repository root
+```
+
+The backend image is distroless Node (user 65532, no shell, port 8787). The
+web image is the public web app (`bun run build:public`) on unprivileged,
+slim nginx (user 101, port 8080, needs a writable `/tmp`), with SPA fallback, PWA
+cache headers and a CSP that allows `index.html`'s inline scripts by hash.
 
 ## Google Cloud Console Setup
 

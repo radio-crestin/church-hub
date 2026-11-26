@@ -11,13 +11,18 @@ import {
 } from 'react'
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
+import { BIBLE_TOPICS_QUERY_KEY } from '~/features/bible/topics/hooks/useBibleTopics'
 import { isTunnelOpen } from '~/features/remote-access/tunnel/tunnelState'
+import { slideTemplatesQueryKey } from '~/features/slide-templates/hooks/useSlideTemplates'
+import {
+  applyTemplatePreview,
+  type TemplateDesign,
+} from '~/features/slide-templates/utils/applyTemplatePreview'
 import type { ChordMapping, SlideStyleOverride } from '~/features/songs/types'
 import { getStoredUserToken } from '~/service/api-url'
 import { createLogger } from '~/utils/logger'
 import { updateStateIfNewer } from '../hooks/usePresentationControls'
 import { presentationStateQueryKey } from '../hooks/usePresentationState'
-import { screenQueryKey } from '../hooks/useScreen'
 import { screensQueryKey } from '../hooks/useScreens'
 import { slideHighlightsQueryKey } from '../hooks/useSlideHighlights'
 import type { PresentationState } from '../types'
@@ -53,11 +58,27 @@ interface ScreenConfigUpdatedMessage {
   }
 }
 
-interface ScreenConfigPreviewMessage {
-  type: 'screen_config_preview'
+interface BibleTopicsUpdatedMessage {
+  type: 'bible_topics_updated'
   payload: {
-    screenId: number
-    config: Record<string, unknown>
+    topicId: number
+    updatedAt: number
+  }
+}
+
+interface SlideTemplateUpdatedMessage {
+  type: 'slide_template_updated'
+  payload: {
+    templateId: number
+    updatedAt: number
+  }
+}
+
+interface SlideTemplatePreviewMessage {
+  type: 'slide_template_preview'
+  payload: {
+    templateId: number
+    design: TemplateDesign | null
     updatedAt: number
   }
 }
@@ -173,7 +194,9 @@ interface LoginPairingRequestMessage {
 type MessageData =
   | PresentationMessage
   | ScreenConfigUpdatedMessage
-  | ScreenConfigPreviewMessage
+  | SlideTemplatePreviewMessage
+  | SlideTemplateUpdatedMessage
+  | BibleTopicsUpdatedMessage
   | HighlightColorsUpdatedMessage
   | SlideHighlightsUpdatedMessage
   | SongUpdatedMessage
@@ -182,6 +205,8 @@ type MessageData =
   | SidebarNavigationMessage
   | SyncAppliedMessage
   | { type: 'schedule_automation'; payload: Record<string, unknown> }
+  | { type: 'schedule_picks'; payload: { scheduleId: number } }
+  | { type: 'verse_loop_timer'; payload: Record<string, unknown> | null }
   | { type: 'translation_state'; payload: Record<string, unknown> }
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
@@ -298,10 +323,20 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           reloadQueries(queryClient, screensQueryKey)
         }
 
-        if (data.type === 'screen_config_preview') {
-          queryClient.setQueryData(
-            screenQueryKey(data.payload.screenId),
-            data.payload.config,
+        if (data.type === 'slide_template_updated') {
+          reloadQueries(queryClient, slideTemplatesQueryKey)
+        }
+
+        // A topic's or a passage's template changed on another computer
+        if (data.type === 'bible_topics_updated') {
+          reloadQueries(queryClient, BIBLE_TOPICS_QUERY_KEY)
+        }
+
+        if (data.type === 'slide_template_preview') {
+          applyTemplatePreview(
+            queryClient,
+            data.payload.templateId,
+            data.payload.design,
           )
         }
 
@@ -438,6 +473,19 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           // The presentation runner moved on, started or stopped (the query
           // of the schedules feature's useScheduleAutomation).
           queryClient.setQueryData(['scheduleAutomation'], data.payload)
+        }
+
+        if (data.type === 'verse_loop_timer') {
+          // A verse slideshow's timer started, changed speed or stopped (the
+          // bible feature's useVerseLoopTimer).
+          queryClient.setQueryData(['verseLoopTimer'], data.payload)
+        }
+
+        if (data.type === 'schedule_picks') {
+          // A presentation picked its random verses and videos again.
+          queryClient.invalidateQueries({
+            queryKey: ['schedule', data.payload.scheduleId],
+          })
         }
 
         if (data.type === 'sidebar_navigation') {

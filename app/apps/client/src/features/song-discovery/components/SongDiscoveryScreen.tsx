@@ -179,7 +179,7 @@ export function SongDiscoveryScreen({
       <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
         <aside className="flex min-h-0 w-full flex-col gap-3 lg:w-96 lg:shrink-0">
           <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-fg-hint" />
             <input
               ref={searchRef}
               type="search"
@@ -187,7 +187,7 @@ export function SongDiscoveryScreen({
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t('search.placeholder')}
               aria-label={t('search.placeholder')}
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pr-9 pl-9 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full h-9 rounded-[10px] border-0 bg-field pr-9 pl-9 text-sm text-fg placeholder:text-fg-hint focus:ring-1 focus:ring-inset focus:ring-focus focus:outline-none"
             />
             {query && (
               <ClearSearchButton

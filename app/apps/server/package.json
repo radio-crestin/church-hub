@@ -35,10 +35,12 @@
     "obs-websocket-js": "^5.0.8",
     "posthog-node": "^4.5.0",
     "ppt-to-text": "^1.0.1",
+    "spessasynth_core": "^4.4.12",
     "werift": "^0.22.9"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "aws4fetch": "^1.0.20",
     "better-sqlite3": "^12.8.0",
     "drizzle-kit": "^0.31.10"
   },

@@ -108,33 +108,33 @@ export function ShortcutActionRow({
   }, [config, onUpdate])
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div className="border border-line bg-panel rounded-xl p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-            <Icon size={20} className="text-indigo-600 dark:text-indigo-400" />
-          </div>
+          <Icon
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-fg-label"
+          />
           <div>
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+            <h4 className="text-sm font-medium text-fg">
               {t(action.labelKey)}
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t(action.descriptionKey)}
-            </p>
+            <p className="text-xs text-fg-hint">{t(action.descriptionKey)}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={handleToggleEnabled}
           className={`
-            px-3 py-1 text-xs font-medium rounded-full transition-colors
-            ${
-              config.enabled
-                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-            }
+            inline-flex items-center gap-1.5 h-7 px-2.5 text-xs font-medium rounded-lg bg-field hover:bg-hover transition-colors
+            ${config.enabled ? 'text-fg' : 'text-fg-hint'}
           `}
         >
+          <span
+            aria-hidden="true"
+            className={`h-1.5 w-1.5 rounded-full ${config.enabled ? 'bg-ok' : 'bg-fg-hint'}`}
+          />
           {config.enabled
             ? t('sections.shortcuts.enabled')
             : t('sections.shortcuts.disabled')}
@@ -143,7 +143,7 @@ export function ShortcutActionRow({
 
       <div className="space-y-2">
         {config.shortcuts.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+          <p className="text-sm text-fg-hint">
             {t('sections.shortcuts.noShortcuts')}
           </p>
         ) : (
@@ -158,7 +158,9 @@ export function ShortcutActionRow({
                 scopeKind="action"
               />
               {errors[index] && (
-                <p className="mt-1 text-xs text-red-500">{errors[index]}</p>
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  {errors[index]}
+                </p>
               )}
             </div>
           ))
@@ -167,9 +169,9 @@ export function ShortcutActionRow({
         <button
           type="button"
           onClick={handleAddShortcut}
-          className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 mt-2"
+          className="flex items-center gap-2 h-8 px-2 -mx-2 rounded-lg text-sm text-fg-label hover:bg-hover hover:text-fg transition-colors mt-2"
         >
-          <Plus size={16} />
+          <Plus size={16} strokeWidth={1.5} />
           {t('sections.shortcuts.addShortcut')}
         </button>
       </div>

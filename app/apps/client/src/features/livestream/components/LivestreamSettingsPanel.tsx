@@ -17,11 +17,11 @@ import { Plus, RefreshCw, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '~/ui/button'
 import { SceneSettingsItem } from './SceneSettingsItem'
 import { useOBSConnection, useOBSScenes } from '../hooks'
 
-const cardClass =
-  'rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-gray-800 dark:bg-gray-900'
+const cardClass = 'rounded-xl border border-line bg-panel p-4 sm:p-6'
 
 /**
  * Livestream settings panel: OBS scene management. Start/stop stream shortcuts
@@ -72,19 +72,21 @@ export function LivestreamSettingsPanel() {
   return (
     <div className={`flex-1 ${cardClass}`}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-medium text-gray-900 dark:text-white">
-          {t('scenes.title')}
-        </h3>
-        <button
+        <h3 className="text-sm font-medium text-fg">{t('scenes.title')}</h3>
+        <Button
           type="button"
+          size="sm"
           onClick={() => syncScenesAsync()}
           disabled={isSyncing || !isOBSConnected}
-          className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
           title={!isOBSConnected ? t('obs.disconnected') : undefined}
         >
-          <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+          <RefreshCw
+            size={14}
+            strokeWidth={1.75}
+            className={isSyncing ? 'animate-spin' : ''}
+          />
           {t('scenes.syncFromOBS')}
-        </button>
+        </Button>
       </div>
 
       <DndContext
@@ -104,7 +106,7 @@ export function LivestreamSettingsPanel() {
         </SortableContext>
       </DndContext>
 
-      <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+      <div className="mt-4 border-t border-line pt-4">
         {showAddForm ? (
           <div className="flex gap-2">
             <input
@@ -112,7 +114,7 @@ export function LivestreamSettingsPanel() {
               value={newSceneName}
               onChange={(e) => setNewSceneName(e.target.value)}
               placeholder={t('scenes.newScenePlaceholder')}
-              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800"
+              className="flex-1 rounded-[10px] bg-field px-3 py-2 text-sm text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleAddScene()
                 if (e.key === 'Escape') {
@@ -122,32 +124,31 @@ export function LivestreamSettingsPanel() {
               }}
               autoFocus
             />
-            <button
+            <Button
               type="button"
               onClick={handleAddScene}
               disabled={!newSceneName.trim() || isCreating}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isCreating ? t('scenes.adding') : t('scenes.add')}
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => {
                 setShowAddForm(false)
                 setNewSceneName('')
               }}
-              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
             >
-              <X size={20} />
+              <X size={16} strokeWidth={1.5} />
             </button>
           </div>
         ) : (
           <button
             type="button"
             onClick={() => setShowAddForm(true)}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-fg-label transition-colors hover:bg-hover hover:text-fg"
           >
-            <Plus size={18} />
+            <Plus size={16} strokeWidth={1.5} />
             {t('scenes.addCustomScene')}
           </button>
         )}

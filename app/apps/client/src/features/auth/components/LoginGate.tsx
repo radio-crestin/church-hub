@@ -14,8 +14,8 @@ import { LoginScreen } from './LoginScreen'
 
 function FullScreenSpinner() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600" />
+    <div className="flex min-h-screen items-center justify-center bg-app">
+      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-fg-label" />
     </div>
   )
 }
@@ -24,16 +24,16 @@ function ConnectionLost({ onRetry }: { onRetry?: () => void }) {
   const { t } = useTranslation('common')
   const { refresh } = usePermissions()
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-8 text-center dark:bg-gray-900">
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-app p-8 text-center">
+      <h1 className="text-base font-semibold text-fg">
         {t('errors.connectionLostTitle')}
       </h1>
-      <p className="max-w-md text-gray-600 dark:text-gray-400">
+      <p className="max-w-md text-sm text-fg-label">
         {t('errors.connectionLost')}
       </p>
       <button
         onClick={() => (onRetry ? onRetry() : refresh())}
-        className="rounded-md bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700"
+        className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
       >
         {t('buttons.retry')}
       </button>

@@ -21,10 +21,18 @@
     "verseteTineriDescription": "Add Bible verses with names",
     "scene": "OBS Scene",
     "sceneDescription": "Switch to an OBS scene",
-    "importSchedule": {
-      "title": "Import Presentation",
-      "description": "Import from an existing presentation"
-    }
+    "music": "Music",
+    "musicDescription": "Play a music folder or tracks you pick, in order or shuffled",
+    "video": "Video",
+    "videoDescription": "Play a video from the Gallery full screen",
+    "verses": "Verses",
+    "versesDescription": "Verses from a topic or a book, all or some at random",
+    "slides": "Slides",
+    "slidesDescription": "Your own slides, with text, pictures, videos and animations",
+    "importPptx": "Import PowerPoint",
+    "importPptxDescription": "Slides from a .pptx file, with their pictures, videos and animations",
+    "program": "Program",
+    "programDescription": "Another presentation, played in its place"
   },
   "fontSize": {
     "increase": "Increase text size",

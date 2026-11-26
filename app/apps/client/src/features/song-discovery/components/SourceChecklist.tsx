@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { ManagedSourceNote } from './ManagedSourceNote'
 import type { SongSource } from '../providers'
 
 interface SourceChecklistProps {
@@ -68,27 +69,27 @@ export function SourceChecklist({
     const count = counts.get(source.id)
     if (count === undefined) {
       return isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+        <Loader2 className="h-4 w-4 animate-spin text-fg-hint" />
       ) : null
     }
     if (count === 0) {
       return (
         <CheckCircle2
           aria-label={t('source.upToDate')}
-          className="h-4 w-4 text-green-600 dark:text-green-400"
+          className="h-4 w-4 text-ok"
         />
       )
     }
     return (
-      <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+      <span className="text-xs tabular-nums text-fg-hint">
         {count.toLocaleString()}
       </span>
     )
   }
 
   return (
-    <fieldset className="rounded-xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
-      <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+    <fieldset className="rounded-xl border border-line bg-panel p-2">
+      <legend className="px-2 text-xs font-medium text-fg-hint">
         {t('source.label')}
       </legend>
       {sources.map((source) => {
@@ -98,22 +99,23 @@ export function SourceChecklist({
         return (
           <label
             key={source.id}
-            className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800/60"
+            className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-hover"
           >
             <input
               type="checkbox"
               aria-label={label}
               checked={isChecked(source.id)}
               onChange={() => onToggle(source.id)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+              className="h-4 w-4 rounded border-line text-primary focus:ring-focus bg-field"
             />
-            <span className="min-w-0 flex-1 text-sm text-gray-800 dark:text-gray-100">
+            <span className="min-w-0 flex-1 text-sm text-fg-body">
               <span className="block truncate">
                 {source.name}
                 {from && (
-                  <span className="ml-1 text-xs text-gray-500">{from}</span>
+                  <span className="ml-1 text-xs text-fg-hint">{from}</span>
                 )}
               </span>
+              {source.managed && <ManagedSourceNote source={source} />}
               {error && (
                 <span
                   data-testid={`source-error-${source.id}`}

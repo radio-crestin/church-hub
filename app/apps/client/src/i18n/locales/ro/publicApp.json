@@ -1,0 +1,44 @@
+{
+  "appName": "Church Hub",
+  "loading": "Se încarcă…",
+  "retry": "Încearcă din nou",
+  "notJoined": {
+    "title": "Deschide linkul primit de la biserică",
+    "body": "Pe calculatorul bisericii, deschide Setări > Telefoane > Conectare cu un link, apoi scanează codul sau deschide linkul pe acest dispozitiv."
+  },
+  "removed": {
+    "title": "Acest dispozitiv a fost scos",
+    "body": "Biserica a retras accesul acestui dispozitiv. Cere un link nou ca să te conectezi din nou."
+  },
+  "joinFailed": {
+    "invalid": {
+      "title": "Acesta nu este un link Church Hub",
+      "body": "Verifică dacă ai copiat tot linkul sau scanează din nou codul."
+    },
+    "refused": {
+      "title": "Linkul nu mai este valabil",
+      "body": "A fost revocat. Cere un link nou."
+    },
+    "offline": {
+      "title": "Church Hub Cloud nu răspunde",
+      "body": "Verifică conexiunea la internet și încearcă din nou."
+    }
+  },
+  "leave": {
+    "button": "Ieși",
+    "title": "Ieși din această biserică?",
+    "message": "Dispozitivul va avea nevoie de un link nou ca să se conecteze din nou.",
+    "cancel": "Renunță"
+  },
+  "songs": {
+    "search": "Caută cântări",
+    "count_one": "{{count}} cântare",
+    "count_few": "{{count}} cântări",
+    "count_other": "{{count}} de cântări",
+    "empty": "Biserica nu are încă nicio cântare.",
+    "noMatch": "Nicio cântare nu se potrivește.",
+    "loadFailed": "Cântările nu s-au putut încărca. Verifică conexiunea la internet.",
+    "back": "Cântări",
+    "more": "Caută ca să le găsești pe celelalte {{count}}."
+  }
+}

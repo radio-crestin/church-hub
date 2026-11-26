@@ -27,21 +27,29 @@ import { Fragment, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePresentationState } from '~/features/presentation'
+import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
+import type { SlideDeck } from '~/features/slides-deck/types'
 import { ScheduleItemAdvance } from './ScheduleItemAdvance'
 import { ScheduleItemContextMenu } from './ScheduleItemContextMenu'
+import { ScheduleItemMidi } from './ScheduleItemMidi'
 import { ScheduleItemSubItems } from './ScheduleItemSubItems'
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
 import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
 import { ScheduleQuickInsertBar } from './ScheduleQuickInsertBar'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
 import { useScheduleItemExpansion } from '../hooks/useScheduleItemExpansion'
+import { useMediaItemText } from '../media-items/hooks/useMediaItemText'
+import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import type { ScheduleItem } from '../types'
 import { itemStepSeconds } from '../utils/itemStepSeconds'
 import {
   derivePresentedScheduleInfo,
   type PresentedScheduleInfo,
 } from '../utils/presentedScheduleInfo'
-import { buildItemStartFlatIndex } from '../utils/scheduleFlatItems'
+import {
+  buildItemStartFlatIndex,
+  countScheduleItemSteps,
+} from '../utils/scheduleFlatItems'
 import { scheduleItemShortTitle } from '../utils/scheduleItemShortTitle'
 import type { AutoplayTiming } from '../utils/stepSeconds'
 
@@ -54,6 +62,8 @@ interface ScheduleItemsPanelProps {
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
+  onVideoClick?: (item: ScheduleItem) => void
+  onDeckStepClick?: (item: ScheduleItem, stepIndex: number) => void
   onReorder?: (oldIndex: number, newIndex: number) => void
   onEditSong?: (songId: number) => void
   onNavigateToSong?: (songId: number) => void
@@ -74,8 +84,19 @@ interface ScheduleItemsPanelProps {
    * can be given its own time. Absent hides it.
    */
   itemAdvance?: ItemAdvance
+  /** Gives an item its own slide template (null: the presentation's). */
+  onItemTemplateChange?: (item: ScheduleItem, templateId: number | null) => void
+  /**
+   * The presentation whose song items show their MIDI music and can be given
+   * one (editors only). Absent hides it.
+   */
+  midiScheduleId?: number
   expandAllTrigger?: number
   collapseAllTrigger?: number
+  /** Follow and present only, as in the control room: no dragging, no edit menu. */
+  readOnly?: boolean
+  /** Items already gone by on the screens read quieter (the control room). */
+  quietPast?: boolean
 }
 
 interface ItemAdvance {
@@ -97,6 +118,8 @@ export function ScheduleItemsPanel({
   onEntryClick,
   onAnnouncementClick,
   onSceneClick,
+  onVideoClick,
+  onDeckStepClick,
   onReorder,
   onEditSong,
   onNavigateToSong,
@@ -109,8 +132,12 @@ export function ScheduleItemsPanel({
   selectedItemId = null,
   onSelectItem,
   itemAdvance,
+  onItemTemplateChange,
+  midiScheduleId,
   expandAllTrigger,
   collapseAllTrigger,
+  readOnly = false,
+  quietPast = false,
 }: ScheduleItemsPanelProps) {
   const { t } = useTranslation('schedules')
   const { data: presentationState } = usePresentationState()
@@ -244,14 +271,14 @@ export function ScheduleItemsPanel({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+      <div className="flex flex-col items-center justify-center py-12 text-fg-hint">
         <p className="text-sm">{t('editor.noItems')}</p>
         <p className="text-xs mt-1">{t('editor.addFirstItem')}</p>
       </div>
@@ -271,7 +298,7 @@ export function ScheduleItemsPanel({
         >
           <div
             ref={containerRef}
-            className="flex-1 min-h-0 space-y-2 overflow-hidden lg:overflow-y-auto p-1"
+            className="flex-1 min-h-0 space-y-2 p-1 overflow-hidden lg:overflow-y-auto"
           >
             {items.map((item, index) => (
               <Fragment key={item.id}>
@@ -279,6 +306,13 @@ export function ScheduleItemsPanel({
                   item={item}
                   isExpanded={isExpanded(item.id)}
                   isSelected={item.id === selectedItemId}
+                  isPast={
+                    quietPast &&
+                    !!presentedInfo &&
+                    (itemStartFlatIndex[item.id] ?? 0) +
+                      countScheduleItemSteps(item) <=
+                      presentedInfo.scheduleItemIndex
+                  }
                   presentedInfo={presentedInfo}
                   itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
                   highlightedRef={highlightedRef}
@@ -291,9 +325,14 @@ export function ScheduleItemsPanel({
                   onEntryClick={onEntryClick}
                   onAnnouncementClick={onAnnouncementClick}
                   onSceneClick={onSceneClick}
+                  onVideoClick={onVideoClick}
+                  onDeckStepClick={onDeckStepClick}
                   onToggleSung={onToggleSung}
                   onEditKeyLine={onEditKeyLine}
                   itemAdvance={itemAdvance}
+                  onItemTemplateChange={onItemTemplateChange}
+                  midiScheduleId={midiScheduleId}
+                  readOnly={readOnly}
                   t={t}
                 />
                 {onQuickInsert && index < items.length - 1 ? (
@@ -329,6 +368,8 @@ interface SortableItemWrapperProps {
   item: ScheduleItem
   isExpanded: boolean
   isSelected: boolean
+  /** Already gone by on the screens: it reads quieter. */
+  isPast?: boolean
   presentedInfo: PresentedScheduleInfo | null
   itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
@@ -341,9 +382,14 @@ interface SortableItemWrapperProps {
   onEntryClick: (item: ScheduleItem, entryIndex: number) => void
   onAnnouncementClick: (item: ScheduleItem) => void
   onSceneClick?: (item: ScheduleItem) => void
+  onVideoClick?: (item: ScheduleItem) => void
+  onDeckStepClick?: (item: ScheduleItem, stepIndex: number) => void
   onToggleSung?: (item: ScheduleItem) => void
   onEditKeyLine?: (item: ScheduleItem) => void
   itemAdvance?: ItemAdvance
+  onItemTemplateChange?: (item: ScheduleItem, templateId: number | null) => void
+  midiScheduleId?: number
+  readOnly: boolean
   t: TFunction
 }
 
@@ -351,6 +397,7 @@ function SortableItemWrapper({
   item,
   isExpanded,
   isSelected,
+  isPast = false,
   presentedInfo,
   itemStartFlatIndex,
   highlightedRef,
@@ -363,9 +410,14 @@ function SortableItemWrapper({
   onEntryClick,
   onAnnouncementClick,
   onSceneClick,
+  onVideoClick,
+  onDeckStepClick,
   onToggleSung,
   onEditKeyLine,
   itemAdvance,
+  onItemTemplateChange,
+  midiScheduleId,
+  readOnly,
   t,
 }: SortableItemWrapperProps) {
   const {
@@ -382,8 +434,15 @@ function SortableItemWrapper({
     transition,
   }
 
+  const mediaText = useMediaItemText(item)
   // Check if item has missing content
   const hasMissingContent =
+    (item.itemType === 'verses' && item.verseteTineriEntries.length === 0) ||
+    (item.itemType === 'video' && !item.video) ||
+    (item.itemType === 'slides' &&
+      (item.itemConfig as SlideDeck | null)?.slides.length === 0) ||
+    (item.itemType === 'music' && !item.music?.trackCount) ||
+    (item.itemType === 'schedule' && !item.childSchedule?.items.length) ||
     (item.itemType === 'song' && item.slides.length === 0) ||
     (item.itemType === 'bible_passage' &&
       item.biblePassageVerses.length === 0) ||
@@ -396,34 +455,38 @@ function SortableItemWrapper({
       ref={setNodeRef}
       data-testid="schedule-item"
       data-selected={isSelected || undefined}
+      data-past={isPast || undefined}
       style={style}
-      className={`rounded-lg border bg-white dark:bg-gray-800 overflow-hidden ${
-        isDragging ? 'opacity-50 shadow-lg' : ''
+      className={`rounded-lg border overflow-hidden ${
+        isDragging ? 'opacity-50' : isPast ? 'opacity-60 hover:opacity-100' : ''
       } ${
         hasMissingContent
           ? 'border-amber-400 dark:border-amber-500'
-          : 'border-gray-200 dark:border-gray-700'
-      } ${isSelected ? 'ring-2 ring-indigo-500 dark:ring-indigo-400' : ''}`}
+          : 'border-line'
+      } ${isSelected ? 'bg-selected' : 'bg-panel'}`}
     >
       {/* Item Header */}
       <div
-        className="w-full flex items-center gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+        className="w-full flex flex-wrap items-center gap-x-2 gap-y-1 p-3 hover:bg-hover transition-colors cursor-pointer"
         onClick={(e) => onHeaderClick(e, item)}
         onAuxClick={(e) => onAuxClick(e, item)}
-        onDoubleClick={() => onDoubleClick(item)}
-        onContextMenu={(e) => onContextMenu(e, item)}
+        onDoubleClick={readOnly ? undefined : () => onDoubleClick(item)}
+        onContextMenu={readOnly ? undefined : (e) => onContextMenu(e, item)}
       >
         {/* Drag Handle */}
-        <div
-          className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical
-            size={16}
-            className="text-gray-400 dark:text-gray-500"
-          />
-        </div>
+        {!readOnly && (
+          <div
+            className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical
+              size={16}
+              className="text-fg-hint"
+              strokeWidth={1.5}
+            />
+          </div>
+        )}
 
         {/* Done-marker — every kind of item can be ticked off a program. */}
         {onToggleSung ? (
@@ -438,23 +501,22 @@ function SortableItemWrapper({
         {/* Expand/Collapse Icon */}
         <div className="flex-shrink-0">
           {isExpanded ? (
-            <ChevronDown
-              size={16}
-              className="text-gray-400 dark:text-gray-500"
-            />
+            <ChevronDown size={16} className="text-fg-hint" strokeWidth={1.5} />
           ) : (
             <ChevronRight
               size={16}
-              className="text-gray-400 dark:text-gray-500"
+              className="text-fg-hint"
+              strokeWidth={1.5}
             />
           )}
         </div>
 
         <ScheduleItemTypeIcon item={item} />
 
-        {/* Item Title & Info */}
-        <div className="flex-1 min-w-0 text-left">
-          <div className="font-medium text-sm sm:truncate text-gray-900 dark:text-white">
+        {/* Item Title & Info — never narrower than this: on a narrow row the
+            item's controls wrap under it instead of squeezing it away. */}
+        <div className="flex-1 min-w-40 text-left">
+          <div className="font-medium text-sm sm:truncate text-fg">
             {item.itemType === 'song' && (
               <span className="flex min-w-0 items-center gap-2">
                 {/* A phone has no room for one line: the title takes two. */}
@@ -468,6 +530,7 @@ function SortableItemWrapper({
                 />
               </span>
             )}
+            {mediaText?.title}
             {item.itemType === 'slide' &&
               item.slideType === 'announcement' &&
               t('presenter.announcement')}
@@ -493,8 +556,9 @@ function SortableItemWrapper({
                 {item.biblePassageVerses.length === 0 && (
                   <AlertTriangle
                     size={12}
-                    className="text-amber-500 flex-shrink-0"
+                    className="text-amber-600 dark:text-amber-400 flex-shrink-0"
                     aria-label={t('warnings.invalidReference')}
+                    strokeWidth={2}
                   />
                 )}
               </span>
@@ -503,7 +567,8 @@ function SortableItemWrapper({
           {/* Song rows deliberately carry no second line: the title, its gama
               and the slides underneath are the whole story while running a
               program. */}
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-xs text-fg-hint">
+            {mediaText?.detail}
             {item.itemType === 'bible_passage' && (
               <>
                 {t('presenter.versesCount', {
@@ -535,47 +600,72 @@ function SortableItemWrapper({
           </div>
         </div>
 
-        {/* Warning indicator for missing content */}
-        {hasMissingContent && (
-          <div
-            className="flex-shrink-0 p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30"
-            title={t('warnings.missingContent')}
-          >
-            <AlertTriangle
-              size={16}
-              className="text-amber-600 dark:text-amber-400"
-            />
-          </div>
-        )}
+        <div className="ml-auto flex flex-shrink-0 items-center gap-2">
+          {/* Warning indicator for missing content */}
+          {hasMissingContent && (
+            <div
+              className="flex-shrink-0 p-2"
+              title={t('warnings.missingContent')}
+            >
+              <AlertTriangle
+                size={16}
+                className="text-amber-600 dark:text-amber-400"
+                strokeWidth={1.5}
+              />
+            </div>
+          )}
 
-        {itemAdvance && (
-          <ScheduleItemAdvance
-            advanceSeconds={item.advanceSeconds}
-            defaultSeconds={itemStepSeconds(
-              { ...item, advanceSeconds: null },
-              itemAdvance.timing,
+          {midiScheduleId !== undefined && item.itemType === 'song' && (
+            <ScheduleItemMidi scheduleId={midiScheduleId} item={item} />
+          )}
+
+          {/* Music shows nothing, so it has no time on screen; a MIDI item's
+            slides follow its music, not a time per slide. */}
+          {itemAdvance &&
+            item.itemType !== 'music' &&
+            !isBackgroundVideo(item) &&
+            !item.midi && (
+              <ScheduleItemAdvance
+                advanceSeconds={item.advanceSeconds}
+                defaultSeconds={itemStepSeconds(
+                  { ...item, advanceSeconds: null },
+                  itemAdvance.timing,
+                )}
+                onChange={(seconds) => itemAdvance.onChange(item, seconds)}
+              />
             )}
-            onChange={(seconds) => itemAdvance.onChange(item, seconds)}
-          />
-        )}
 
-        {/* Options Menu Button */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onContextMenu(e, item)
-          }}
-          className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          title={t('common:options')}
-          aria-label={t('common:options')}
-          data-testid="schedule-item-options"
-        >
-          <MoreVertical
-            size={16}
-            className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
-          />
-        </button>
+          {onItemTemplateChange && (
+            <TemplatePicker
+              variant="chip"
+              value={item.templateId}
+              noneLabel={t('presentation:templates.presentation.itemNone')}
+              onChange={(templateId) => onItemTemplateChange(item, templateId)}
+              testId={`schedule-item-template-${item.id}`}
+            />
+          )}
+
+          {/* Options Menu Button */}
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onContextMenu(e, item)
+              }}
+              className="flex-shrink-0 p-2 rounded-lg hover:bg-hover transition-colors"
+              title={t('common:options')}
+              aria-label={t('common:options')}
+              data-testid="schedule-item-options"
+            >
+              <MoreVertical
+                size={16}
+                className="text-fg-hint hover:text-fg"
+                strokeWidth={1.5}
+              />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Expanded Content — the item's presentable steps */}
@@ -591,6 +681,8 @@ function SortableItemWrapper({
             onEntryClick={onEntryClick}
             onAnnouncementClick={onAnnouncementClick}
             onSceneClick={onSceneClick}
+            onVideoClick={onVideoClick}
+            onDeckStepClick={onDeckStepClick}
           />
         </div>
       )}

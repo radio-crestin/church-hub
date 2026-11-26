@@ -160,7 +160,8 @@
         "slideRight": "Alunecare spre dreapta",
         "scale": "Scalare",
         "blur": "Încețoșare",
-        "zoom": "Zoom"
+        "zoom": "Zoom",
+        "typewriter": "Mașină de scris"
       },
       "easings": {
         "linear": "Liniar",
@@ -169,7 +170,8 @@
         "easeInOut": "Ease In Out",
         "bounce": "Bounce"
       },
-      "durationMs": "Durată (ms)"
+      "durationMs": "Durată (ms)",
+      "typingMs": "Timp maxim de scriere (ms)"
     },
     "background": {
       "type": "Tip",
@@ -452,5 +454,119 @@
     "label": "Ecranul afișat în previzualizare",
     "changed": "Previzualizările arată acum {{name}}",
     "error": "Nu s-a putut schimba ecranul din previzualizare"
+  },
+  "templates": {
+    "bundled": {
+      "classic": "Clasic",
+      "stage": "Scenă",
+      "lower_third": "Bandă jos",
+      "kiosk": "Kiosk",
+      "verses_evening": "Versete · Seară",
+      "verses_light": "Versete · Lumină",
+      "verses_calm": "Versete · Liniște",
+      "typewriter_paper": "Mașină de scris · Hârtie",
+      "typewriter_night": "Mașină de scris · Noapte",
+      "photo_mountain_sunrise": "Răsărit pe munte",
+      "photo_misty_forest": "Pădure în ceață",
+      "photo_golden_wheat": "Lan de grâu",
+      "photo_calm_sea": "Mare liniștită",
+      "photo_starry_night": "Noapte înstelată",
+      "photo_sea_of_clouds": "Mare de nori",
+      "video_ocean_horizon": "Orizont pe mare · video",
+      "video_golden_clouds": "Nori aurii · video",
+      "video_forest_light": "Lumină în pădure · video",
+      "video_blue_particles": "Particule albastre · video"
+    },
+    "bundledBadge": "Inclusă",
+    "sample": {
+      "reference": "Ioan 3:16",
+      "verse": "Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu."
+    },
+    "usedBy": "Folosită de {{names}}",
+    "unused": "Nefolosită încă",
+    "copyName": "{{name}} (copie)",
+    "picker": {
+      "title": "Alege o temă",
+      "change": "Schimbă tema",
+      "close": "Închide",
+      "manage": "Gestionează temele",
+      "current": "Tema: {{name}}"
+    },
+    "page": {
+      "title": "Teme",
+      "description": "Cum arată slide-urile: culori, fonturi, fundal, poziții, tranziții. Alegi câte una pentru fiecare ecran și prezentare.",
+      "new": "Temă nouă",
+      "newName": "Temă nouă",
+      "empty": "Încă nu există teme."
+    },
+    "actions": {
+      "edit": "Editează",
+      "duplicate": "Duplică",
+      "rename": "Redenumește",
+      "delete": "Șterge"
+    },
+    "rename": {
+      "title": "Redenumește tema",
+      "label": "Nume",
+      "save": "Salvează"
+    },
+    "delete": {
+      "title": "Ștergi această temă?",
+      "message": "„{{name}}” va fi ștearsă.",
+      "inUse": "Folosită de {{names}}: alege acolo altă temă mai întâi.",
+      "bundled": "Temele incluse nu se pot șterge."
+    },
+    "toast": {
+      "saved": "Tema a fost salvată",
+      "savedAsCopy": "Temele incluse nu se schimbă: salvată ca „{{name}}”",
+      "duplicated": "Tema „{{name}}” a fost creată",
+      "renamed": "Tema a fost redenumită",
+      "deleted": "Tema a fost ștearsă",
+      "changed": "Tema a fost schimbată",
+      "error": "Tema nu s-a putut salva"
+    },
+    "screen": {
+      "description": "Alege o temă: ecranul arată toate slide-urile cu ea.",
+      "follows": {
+        "label": "Prezentările îi pot schimba aspectul",
+        "description": "O prezentare cu temă proprie apare aici în tema ei."
+      },
+      "scenes": {
+        "title": "Pe scene OBS",
+        "description": "Cât timp o scenă e live, ecranul folosește altă temă.",
+        "own": "Tema ecranului"
+      }
+    },
+    "presentation": {
+      "none": "Al fiecărui ecran",
+      "itemNone": "Tema prezentării",
+      "menu": "Temă",
+      "menuDescription": "Cum arată slide-urile acestei prezentări",
+      "own": "Tema acestei prezentări",
+      "edit": "Editează tema",
+      "editDescription": "Culori, fonturi, fundal și fiecare slide, doar pentru această prezentare"
+    },
+    "design": {
+      "title": "Design (toate slide-urile)",
+      "description": "Culori, fonturi, fundal și tranziție, schimbate deodată pe toate slide-urile temei.",
+      "colors": "Culori",
+      "textColor": "Text",
+      "accentColor": "Accent: referință, titlu, gamă",
+      "shadow": "Umbră sub text",
+      "shadowDescription": "Textul rămâne lizibil pe poze și video.",
+      "fonts": "Fonturi",
+      "textFont": "Fontul textului",
+      "accentFont": "Fontul accentului",
+      "background": "Fundal pentru toate slide-urile",
+      "transition": "Tranziție între slide-uri",
+      "duration": "Durată",
+      "typewriter": "Mașină de scris",
+      "typewriterDescription": "Versetele și anunțurile se afișează literă cu literă. Cântările apar treptat, ca să puteți cânta cu toții de la început."
+    },
+    "editor": {
+      "design": "Design",
+      "slide": "Slide-ul acesta",
+      "slides": "Slide-uri"
+    }
   }
 }

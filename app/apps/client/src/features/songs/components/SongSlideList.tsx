@@ -189,18 +189,16 @@ export function SongSlideList({
           </SortableContext>
         </DndContext>
       ) : (
-        <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-          <FileQuestion className="w-10 h-10 text-gray-400 mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('editor.noSlides')}
-          </p>
+        <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-line rounded-lg">
+          <FileQuestion className="w-10 h-10 text-fg-hint mb-3" />
+          <p className="text-sm text-fg-hint">{t('editor.noSlides')}</p>
         </div>
       )}
 
       <button
         type="button"
         onClick={handleAddSlide}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-line rounded-lg text-fg-label hover:border-line-strong hover:text-fg transition-colors"
       >
         <Plus size={20} />
         {t('actions.addSlide')}

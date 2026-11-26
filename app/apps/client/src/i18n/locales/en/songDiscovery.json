@@ -20,7 +20,9 @@
     "checkingAll": "Checking sources…",
     "upToDate": "Up to date",
     "downloadFailed": "Download failed: {{status}}",
-    "checkFailed": "Couldn't check it: {{error}}"
+    "checkFailed": "Couldn't check it: {{error}}",
+    "managed": "Managed by Church Hub",
+    "managedVersion": "Managed by Church Hub · version {{version}}"
   },
   "verdict": {
     "new": "New",

@@ -5,7 +5,7 @@
  * a second; the GitHub steps add a few more.
  *
  *   1. closes the task's review app and stops whatever listens on its ports
- *      (e2e 3100 + task number, review 4100 + task number; never 3000/3001),
+ *      (its e2e port block, review 4100 + task number; never 3000/3001),
  *   2. unlocks the worktree, renames it aside and prunes git's record of it,
  *   3. deletes the renamed folder (node_modules, test DB, dist, test-results)
  *      with one detached rm, so nobody waits for it,
@@ -39,10 +39,10 @@ import {
 import { removeReviewBuild, stopReviewApp } from './cleanup-review-build'
 import {
   mainCheckoutRoot,
-  portFor,
   reviewPortFor,
   run,
   step,
+  taskPorts,
 } from './worktree-common'
 
 /** The user's installed app (3000) and dev server (3001): never freed. */
@@ -190,7 +190,7 @@ function deleteBaseBranch(mainRoot: string, worktree: Worktree) {
   return deleteBranchIfSafe(mainRoot, base)
 }
 
-const port = portFor(process.argv[2], USAGE)
+const ports = taskPorts(process.argv[2], USAGE)
 const reviewPort = reviewPortFor(process.argv[2], USAGE)
 const taskId = process.argv[2]!.toUpperCase()
 const target = process.argv[3]
@@ -198,10 +198,12 @@ if (!target) throw new Error(USAGE)
 const mainRoot = mainCheckoutRoot(process.cwd())
 const worktree = findWorktree(mainRoot, target)
 // Asked first: the branch is deleted below, and the PR proves what was merged.
-const pull = worktree.branch ? findPullRequest(mainRoot, worktree.branch) : undefined
+const pull = worktree.branch
+  ? findPullRequest(mainRoot, worktree.branch)
+  : undefined
 const remoteBranch = pull?.headRefName ?? worktree.branch
 step('review app closed', () => stopReviewApp(taskId))
-step('ports stopped', () => stopPorts(mainRoot, [port, reviewPort]))
+step('ports stopped', () => stopPorts(mainRoot, [...ports, reviewPort]))
 step('worktree removed', () => removeWorktree(mainRoot, worktree))
 step('review build removed', () => removeReviewBuild(mainRoot, taskId))
 step('branch', () => deleteBranchIfSafe(mainRoot, worktree.branch, pull))

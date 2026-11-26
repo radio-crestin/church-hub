@@ -24,24 +24,16 @@ export function LibraryNavItem({
       onClick={onSelect}
       aria-current={isSelected ? 'page' : undefined}
       data-testid={testId}
-      className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors w-full ${
+      className={`flex min-h-11 w-full shrink-0 items-center gap-2 rounded-lg px-2.5 text-left text-sm transition-colors lg:min-h-9 ${
         isSelected
-          ? 'bg-indigo-600 text-white'
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 lg:bg-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 lg:dark:bg-transparent'
+          ? 'bg-selected text-fg'
+          : 'text-fg-label hover:bg-hover hover:text-fg'
       }`}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {count !== undefined && (
-        <span
-          className={`rounded px-1.5 text-xs tabular-nums ${
-            isSelected
-              ? 'bg-white/20'
-              : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-          }`}
-        >
-          {count}
-        </span>
+        <span className="text-xs tabular-nums text-fg-hint">{count}</span>
       )}
     </button>
   )

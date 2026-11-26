@@ -13,6 +13,7 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ShortcutRecorder } from '~/features/keyboard-shortcuts'
+import { Button } from '~/ui/button'
 import { CONTENT_TYPES, type ContentType } from '../../constants/content-types'
 import { useMixerChannels, useMixerConfig } from '../../hooks'
 import type { YouTubeConfigUpdate } from '../../service'
@@ -233,11 +234,11 @@ export function SceneSettingsForm({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-6">
+        <div className="space-y-6 rounded-xl border border-line bg-panel p-4 sm:p-6">
           <div>
             <label
               htmlFor="displayName"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-fg mb-2"
             >
               {t('scenes.displayName')}
             </label>
@@ -247,10 +248,10 @@ export function SceneSettingsForm({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={scene.obsSceneName}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 text-sm rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
             />
             {scene.displayName !== scene.obsSceneName && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-fg-hint">
                 OBS: {scene.obsSceneName}
               </p>
             )}
@@ -260,16 +261,17 @@ export function SceneSettingsForm({
             <button
               type="button"
               onClick={() => setIsVisible(!isVisible)}
-              className={`
-                flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-colors
-                ${
-                  isVisible
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }
-              `}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                isVisible
+                  ? 'bg-selected text-fg'
+                  : 'bg-field text-fg-label hover:bg-hover'
+              }`}
             >
-              {isVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+              {isVisible ? (
+                <Eye size={16} strokeWidth={1.5} />
+              ) : (
+                <EyeOff size={16} strokeWidth={1.5} />
+              )}
               <span className="text-sm font-medium">
                 {isVisible ? t('scenes.visible') : t('scenes.hidden')}
               </span>
@@ -278,13 +280,13 @@ export function SceneSettingsForm({
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium text-fg">
                 {t('scenes.shortcuts')}
               </label>
             </div>
 
             {shortcuts.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              <p className="text-xs text-fg-hint mb-2">
                 {t('scenes.noShortcuts')}
               </p>
             ) : (
@@ -300,7 +302,7 @@ export function SceneSettingsForm({
                       scopeKind="scene"
                     />
                     {errors[index] && (
-                      <p className="mt-1 text-xs text-red-500">
+                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                         {errors[index]}
                       </p>
                     )}
@@ -312,37 +314,34 @@ export function SceneSettingsForm({
             <button
               type="button"
               onClick={handleAddShortcut}
-              className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+              className="flex items-center gap-2 text-sm font-medium text-focus hover:underline"
             >
-              <Plus size={16} />
+              <Plus size={16} strokeWidth={1.5} />
               {t('scenes.addShortcut')}
             </button>
           </div>
 
           {youtubeConfig && onUpdateYouTubeConfig && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            <div className="pt-4 border-t border-line">
+              <h4 className="text-sm font-medium text-fg mb-3">
                 {t('scenes.streamSceneSettings')}
               </h4>
 
               <button
                 type="button"
                 onClick={handleToggleStartScene}
-                className={`
-                  flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-colors mb-2
-                  ${
-                    isStartScene
-                      ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }
-                `}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors mb-2 ${
+                  isStartScene
+                    ? 'bg-selected text-fg'
+                    : 'bg-field text-fg-label hover:bg-hover'
+                }`}
               >
-                <Play size={20} />
+                <Play size={16} strokeWidth={1.5} />
                 <div className="flex-1 text-left">
                   <span className="text-sm font-medium block">
                     {t('scenes.useAsStartScene')}
                   </span>
-                  <span className="text-xs opacity-75">
+                  <span className="text-xs text-fg-hint">
                     {t('scenes.useAsStartSceneDescription')}
                   </span>
                 </div>
@@ -351,21 +350,18 @@ export function SceneSettingsForm({
               <button
                 type="button"
                 onClick={handleToggleStopScene}
-                className={`
-                  flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-colors
-                  ${
-                    isStopScene
-                      ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }
-                `}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                  isStopScene
+                    ? 'bg-selected text-fg'
+                    : 'bg-field text-fg-label hover:bg-hover'
+                }`}
               >
-                <Square size={20} />
+                <Square size={16} strokeWidth={1.5} />
                 <div className="flex-1 text-left">
                   <span className="text-sm font-medium block">
                     {t('scenes.useAsStopScene')}
                   </span>
-                  <span className="text-xs opacity-75">
+                  <span className="text-xs text-fg-hint">
                     {t('scenes.useAsStopSceneDescription')}
                   </span>
                 </div>
@@ -373,14 +369,14 @@ export function SceneSettingsForm({
             </div>
           )}
 
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="pt-4 border-t border-line">
+            <h4 className="text-sm font-medium text-fg mb-2">
               {t('scenes.autoSceneSettings')}
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <p className="text-xs text-fg-hint mb-3">
               {t('scenes.autoSceneDescription')}
             </p>
-            <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 rounded-[10px] bg-field">
               {contentTypes.map((value) => {
                 const contentType = CONTENT_TYPES.find(
                   (ct) => ct.value === value,
@@ -388,13 +384,13 @@ export function SceneSettingsForm({
                 return (
                   <span
                     key={value}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-full"
+                    className="inline-flex items-center gap-1 rounded-md bg-selected px-2 py-0.5 text-xs font-medium text-fg-body"
                   >
                     {contentType ? t(contentType.labelKey) : value}
                     <button
                       type="button"
                       onClick={() => handleToggleContentType(value)}
-                      className="hover:text-indigo-900 dark:hover:text-indigo-200"
+                      className="text-fg-hint hover:text-fg"
                     >
                       <X size={12} />
                     </button>
@@ -408,7 +404,7 @@ export function SceneSettingsForm({
                     handleToggleContentType(e.target.value as ContentType)
                   }
                 }}
-                className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-gray-500 dark:text-gray-400 cursor-pointer"
+                className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-fg-hint cursor-pointer"
               >
                 <option value="">
                   {contentTypes.length === 0
@@ -427,11 +423,11 @@ export function SceneSettingsForm({
           </div>
 
           {mixerChannels.length > 0 && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="pt-4 border-t border-line">
+              <h4 className="text-sm font-medium text-fg mb-2">
                 {t('scenes.mixerActions')}
               </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              <p className="text-xs text-fg-hint mb-3">
                 {t('scenes.mixerActionsDescription')}
               </p>
 
@@ -441,21 +437,22 @@ export function SceneSettingsForm({
                     <div className="flex items-center gap-2">
                       <Volume2
                         size={16}
-                        className="text-green-600 dark:text-green-400"
+                        strokeWidth={1.5}
+                        className="text-fg-label"
                       />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-fg-body">
                         {t('scenes.unmute')}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={handleAddAllMixerUnmute}
-                      className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium"
+                      className="text-xs font-medium text-fg-label hover:text-fg"
                     >
                       {t('scenes.addAllChannels')}
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                  <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 rounded-[10px] bg-field">
                     {mixerUnmute.map((channelStr) => {
                       const channel = mixerChannels.find(
                         (ch) =>
@@ -465,13 +462,13 @@ export function SceneSettingsForm({
                       return (
                         <span
                           key={channelStr}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full"
+                          className="inline-flex items-center gap-1 rounded-md bg-selected px-2 py-0.5 text-xs font-medium text-fg-body"
                         >
                           {channel?.label || `CH${channelStr}`}
                           <button
                             type="button"
                             onClick={() => handleToggleMixerUnmute(channelStr)}
-                            className="hover:text-green-900 dark:hover:text-green-200"
+                            className="text-fg-hint hover:text-fg"
                           >
                             <X size={12} />
                           </button>
@@ -485,7 +482,7 @@ export function SceneSettingsForm({
                           handleToggleMixerUnmute(e.target.value)
                         }
                       }}
-                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-gray-500 dark:text-gray-400 cursor-pointer"
+                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-fg-hint cursor-pointer"
                     >
                       <option value="">
                         {mixerUnmute.length === 0
@@ -518,21 +515,22 @@ export function SceneSettingsForm({
                     <div className="flex items-center gap-2">
                       <VolumeX
                         size={16}
-                        className="text-red-600 dark:text-red-400"
+                        strokeWidth={1.5}
+                        className="text-fg-label"
                       />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-fg-body">
                         {t('scenes.mute')}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={handleAddAllMixerMute}
-                      className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
+                      className="text-xs font-medium text-fg-label hover:text-fg"
                     >
                       {t('scenes.addAllChannels')}
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                  <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 rounded-[10px] bg-field">
                     {mixerMute.map((channelStr) => {
                       const channel = mixerChannels.find(
                         (ch) =>
@@ -542,13 +540,13 @@ export function SceneSettingsForm({
                       return (
                         <span
                           key={channelStr}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full"
+                          className="inline-flex items-center gap-1 rounded-md bg-selected px-2 py-0.5 text-xs font-medium text-fg-body"
                         >
                           {channel?.label || `CH${channelStr}`}
                           <button
                             type="button"
                             onClick={() => handleToggleMixerMute(channelStr)}
-                            className="hover:text-red-900 dark:hover:text-red-200"
+                            className="text-fg-hint hover:text-fg"
                           >
                             <X size={12} />
                           </button>
@@ -562,7 +560,7 @@ export function SceneSettingsForm({
                           handleToggleMixerMute(e.target.value)
                         }
                       }}
-                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-gray-500 dark:text-gray-400 cursor-pointer"
+                      className="flex-1 min-w-[100px] text-sm bg-transparent border-none outline-none text-fg-hint cursor-pointer"
                     >
                       <option value="">
                         {mixerMute.length === 0
@@ -600,30 +598,21 @@ export function SceneSettingsForm({
               type="button"
               onClick={onDelete}
               disabled={isDeleting}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+              className="flex h-9 items-center gap-1.5 px-3 text-sm font-medium text-fg-label hover:text-red-600 dark:hover:text-red-400 hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
-              <Trash2 size={16} />
+              <Trash2 size={16} strokeWidth={1.5} />
               {isDeleting ? t('scenes.deleting') : t('scenes.delete')}
             </button>
           ) : (
             <div />
           )}
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
+            <Button type="button" variant="secondary" onClick={onCancel}>
               {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={hasErrors}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >
+            </Button>
+            <Button type="button" onClick={handleSave} disabled={hasErrors}>
               {t('common:buttons.save', { defaultValue: 'Save' })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

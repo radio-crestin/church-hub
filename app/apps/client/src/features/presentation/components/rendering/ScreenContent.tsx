@@ -1,11 +1,14 @@
 import { Book, Megaphone, Music, User } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 
+import { DeckSlideRenderer } from '~/features/slides-deck/components/DeckSlideRenderer'
 import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
 import { AnimatedText } from './AnimatedText'
 import { ChordsOverlay } from './ChordsOverlay'
 import { ClockText } from './ClockText'
 import { EditableMainText } from './EditableMainText'
+import { ScreenImage } from './ScreenImage'
+import { ScreenVideo } from './ScreenVideo'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
@@ -58,6 +61,11 @@ export interface ScreenContentProps {
   /** Identity-based key that changes only on slide navigation, not content edits */
   contentKey?: string
   /**
+   * The slide shares lines with the previous one (usePresentationContent):
+   * the main text, the verse and the reference animate only what changed.
+   */
+  morphLines?: boolean
+  /**
    * When true, the main lyrics element becomes editable in place (PowerPoint-style
    * slide editing). Only the stage editor sets this; projection is unaffected.
    */
@@ -74,6 +82,8 @@ export interface ScreenContentProps {
    * projections always render the screen's own clock settings.
    */
   clockOverride?: ClockOverride
+  /** A video item plays its sound here (a main display, not a preview). */
+  videoSound?: boolean
 }
 
 export function ScreenContent({
@@ -86,11 +96,13 @@ export function ScreenContent({
   nextSlideData,
   styleRanges,
   contentKey: externalContentKey,
+  morphLines = false,
   editableMainText = false,
   editPlaceholder,
   onMainTextEdit,
   textVersion,
   clockOverride,
+  videoSound = false,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
   const { data: presentationState } = usePresentationState()
@@ -252,6 +264,7 @@ export function ScreenContent({
         key="mainText"
         content={contentData?.mainText ?? ''}
         contentKey={`mainText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(mainStyle, fontScale)}
         width={scaledBounds.width}
@@ -312,6 +325,7 @@ export function ScreenContent({
         key="contentText"
         content={displayContent}
         contentKey={`contentText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(ct.style, fontScale)}
         width={scaledBounds.width}
@@ -358,6 +372,8 @@ export function ScreenContent({
         key="referenceText"
         content={contentData?.referenceText ?? ''}
         contentKey={`referenceText-${contentKey}`}
+        morphLines={morphLines}
+        splitBy="reference"
         isVisible={elementVisible}
         style={scaleTextStyle(rt.style, fontScale)}
         width={scaledBounds.width}
@@ -807,8 +823,28 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
+      {contentData?.deck && (
+        <DeckSlideRenderer
+          shown={contentData.deck}
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+          withSound={videoSound}
+          isVisible={isVisible}
+        />
+      )}
       {/* First, so the content's text is drawn over it; the screen background
           belongs to the parent and stays below */}
+      {contentData?.videoUrl && (
+        <ScreenVideo
+          url={contentData.videoUrl}
+          loop={contentData.videoLoop === true}
+          withSound={videoSound}
+        />
+      )}
+      <ScreenImage
+        url={contentData?.imageUrl}
+        isVisible={isVisible && !!contentData?.imageUrl}
+      />
       {renderClockOverride()}
       {renderMainText()}
       {renderContentText()}

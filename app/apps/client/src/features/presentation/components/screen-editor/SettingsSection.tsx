@@ -3,7 +3,11 @@ import { type ReactNode, useState } from 'react'
 
 interface SettingsSectionProps {
   title: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{
+    className?: string
+    size?: number
+    strokeWidth?: number
+  }>
   children: ReactNode
   defaultOpen?: boolean
   testId?: string
@@ -20,25 +24,28 @@ export function SettingsSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div
-      data-testid={testId}
-      className="border-b border-gray-200 dark:border-gray-800"
-    >
+    <div data-testid={testId} className="border-b border-line">
       <button
         type="button"
         aria-expanded={isOpen}
-        className="flex items-center w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800/50"
+        className="flex items-center w-full h-10 px-4 text-left hover:bg-hover"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
-          <ChevronDown className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+          <ChevronDown
+            size={14}
+            strokeWidth={1.75}
+            className="mr-2 text-fg-hint"
+          />
         ) : (
-          <ChevronRight className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+          <ChevronRight
+            size={14}
+            strokeWidth={1.75}
+            className="mr-2 text-fg-hint"
+          />
         )}
-        <Icon className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
-          {title}
-        </span>
+        <Icon size={16} strokeWidth={1.5} className="mr-2 text-fg-label" />
+        <span className="text-sm font-medium text-fg">{title}</span>
       </button>
       {isOpen && <div className="px-4 pb-4 space-y-4">{children}</div>}
     </div>

@@ -89,7 +89,8 @@ export function MixerConnectionSection() {
       </SettingFieldRow>
       <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
         {testStatus === 'success' && (
-          <span className="text-sm text-green-600 dark:text-green-400">
+          <span className="inline-flex items-center gap-1.5 text-sm text-fg-label">
+            <span className="h-1.5 w-1.5 rounded-full bg-ok" aria-hidden />
             {t('mixer.setup.testSuccess')}
           </span>
         )}

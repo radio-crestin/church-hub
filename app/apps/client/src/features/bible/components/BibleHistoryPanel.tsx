@@ -19,6 +19,8 @@ const ITEMS_PER_PAGE = 20
 
 interface BibleHistoryPanelProps {
   onSelectVerse: (item: BibleHistoryItemType) => void
+  /** A double-click: show the verse on screen right away. */
+  onPresentVerse: (item: BibleHistoryItemType) => void
   /**
    * Renders a chevron beside the title so the panel behaves like the song
    * page's Marcaje section: the body folds away while the header — and its
@@ -83,6 +85,7 @@ function groupHistoryByDay(
 
 export function BibleHistoryPanel({
   onSelectVerse,
+  onPresentVerse,
   isCollapsed = false,
   onToggleCollapse,
 }: BibleHistoryPanelProps) {
@@ -210,9 +213,9 @@ export function BibleHistoryPanel({
   )
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full">
+    <div className="bg-panel rounded-xl border border-line flex flex-col overflow-hidden h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-line flex-shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           {onToggleCollapse ? (
             <button
@@ -223,27 +226,28 @@ export function BibleHistoryPanel({
                 isCollapsed ? t('history.expand') : t('history.collapse')
               }
               data-testid="bible-history-collapse"
-              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-fg-hint transition-transform hover:bg-hover"
             >
               <ChevronDown
                 size={14}
                 className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                strokeWidth={1.75}
               />
             </button>
           ) : null}
-          <History className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <History className="w-4 h-4 text-fg-label" strokeWidth={1.5} />
+          <span className="text-sm font-medium text-fg">
             {t('history.title')}
           </span>
           {historyItems.length > 0 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-fg-hint tabular-nums">
               ({searchQuery ? `${filteredItems.length}/` : ''}
               {historyItems.length})
             </span>
           )}
         </div>
         {historyItems.length > 0 && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
             <BibleHistoryExportMenu
               sessionCount={sessionItems.length}
               totalCount={historyItems.length}
@@ -253,10 +257,10 @@ export function BibleHistoryPanel({
               type="button"
               onClick={handleClear}
               disabled={clearHistoryMutation.isPending}
-              className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors disabled:opacity-50"
               title={t('history.clear')}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </div>
         )}
@@ -266,9 +270,12 @@ export function BibleHistoryPanel({
         <>
           {/* Search */}
           {historyItems.length > 3 && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Search
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-hint"
+                  strokeWidth={1.75}
+                />
                 <input
                   ref={searchInputRef}
                   data-slide-navigation=""
@@ -276,14 +283,14 @@ export function BibleHistoryPanel({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('history.searchPlaceholder')}
-                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
                     inputRef={searchInputRef}
                     onClear={() => setSearchQuery('')}
                     size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg-label"
                   />
                 )}
               </div>
@@ -296,34 +303,35 @@ export function BibleHistoryPanel({
             className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : historyItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 {t('history.empty')}
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 {t('history.noResults')}
               </div>
             ) : (
-              <div className="p-2 flex flex-col gap-3">
+              <div className="p-1.5 flex flex-col gap-2">
                 {visibleGroupedHistory.map((group) => (
                   <div key={group.date}>
                     {/* Date Header */}
-                    <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1.5 mb-1.5">
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <div className="sticky top-0 z-10 bg-panel px-2 py-1.5">
+                      <span className="text-xs font-medium text-fg-hint">
                         {group.dateLabel}
                       </span>
                     </div>
                     {/* Items for this day */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-0.5">
                       {group.items.map((item) => (
                         <BibleHistoryItem
                           key={item.id}
                           item={item}
                           onClick={() => onSelectVerse(item)}
+                          onDoubleClick={() => onPresentVerse(item)}
                         />
                       ))}
                     </div>
@@ -333,7 +341,7 @@ export function BibleHistoryPanel({
                 {hasMore && (
                   <div
                     ref={loadMoreRef}
-                    className="py-2 text-center text-xs text-gray-400"
+                    className="py-2 text-center text-xs text-fg-hint"
                   >
                     ...
                   </div>

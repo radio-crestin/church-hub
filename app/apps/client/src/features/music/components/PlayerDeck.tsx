@@ -1,6 +1,7 @@
 import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { MusicSection } from './MusicSection'
 import { NowPlaying } from './NowPlaying'
 import { PlayerControls } from './PlayerControls'
 import { ProgressBar } from './ProgressBar'
@@ -16,27 +17,30 @@ export function PlayerDeck({ player }: { player: ServerAudioPlayer }) {
   const { state } = player
 
   return (
-    <>
-      <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-hidden group-data-[stuck=true]/pinned:hidden">
-        <div className="flex items-center gap-2 w-full">
-          <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white flex-1 min-w-0 truncate">
-            {t('player.title')}
-          </h3>
-          <VolumeSlider
-            volume={state.volume / 100}
-            isMuted={state.isMuted}
-            onVolumeChange={player.setVolume}
-            onToggleMute={player.toggleMute}
-          />
-        </div>
-      </div>
+    <MusicSection
+      title={t('player.nowPlaying')}
+      actions={
+        <VolumeSlider
+          volume={state.volume / 100}
+          isMuted={state.isMuted}
+          onVolumeChange={player.setVolume}
+          onToggleMute={player.toggleMute}
+        />
+      }
+      className="flex-shrink-0 group-data-[stuck=true]/pinned:py-2"
+      headerClassName="group-data-[stuck=true]/pinned:hidden"
+      testId="music-now-playing"
+    >
       {state.error && (
-        <div className="mx-3 sm:mx-4 mt-3 flex items-start gap-2 rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-400">
-          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-lg bg-field p-2.5 text-sm text-fg">
+          <AlertTriangle
+            className="h-4 w-4 mt-0.5 shrink-0 text-fg-label"
+            strokeWidth={1.5}
+          />
           <span>{state.error}</span>
         </div>
       )}
-      <div className="p-3 sm:p-4 space-y-4 flex-shrink-0 group-data-[stuck=true]/pinned:flex group-data-[stuck=true]/pinned:items-center group-data-[stuck=true]/pinned:gap-2 group-data-[stuck=true]/pinned:space-y-0 group-data-[stuck=true]/pinned:py-2">
+      <div className="space-y-3 group-data-[stuck=true]/pinned:flex group-data-[stuck=true]/pinned:items-center group-data-[stuck=true]/pinned:gap-2 group-data-[stuck=true]/pinned:space-y-0">
         <div className="min-w-0 group-data-[stuck=true]/pinned:flex-1">
           <NowPlaying currentTrack={player.currentTrack} />
         </div>
@@ -60,6 +64,6 @@ export function PlayerDeck({ player }: { player: ServerAudioPlayer }) {
           />
         </div>
       </div>
-    </>
+    </MusicSection>
   )
 }

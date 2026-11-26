@@ -39,7 +39,11 @@ import { usePresentTemporarySong } from '~/features/presentation'
 import { usePersistedChoice } from '~/hooks/usePersistedChoice'
 import { useScrollToBottomOnAdd } from '~/hooks/useScrollToBottomOnAdd'
 import { usePermissions } from '~/provider/permissions-provider'
-import { type OverflowAction, OverflowActions } from '~/ui/menu'
+import {
+  type OverflowAction,
+  OverflowActions,
+  PanelHeaderButton,
+} from '~/ui/menu'
 import { ClearSearchButton } from '~/ui/search'
 import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
@@ -138,23 +142,21 @@ function SortableBookmarkItem({
       ref={setNodeRef}
       style={style}
       data-testid="bookmark-item"
-      className={`flex items-center gap-1 rounded-lg border transition-colors ${
+      className={`group flex items-center gap-1 rounded-lg transition-colors ${
         isDragging
-          ? 'opacity-80 shadow-lg border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+          ? 'opacity-80 bg-selected'
           : isActive
-            ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-            : bookmark.isSung
-              ? 'border-green-200 dark:border-green-800/60 bg-green-50/50 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700'
-              : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 bg-white dark:bg-gray-800 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
+            ? 'bg-selected'
+            : 'hover:bg-hover'
       }`}
     >
       <div
         {...attributes}
         {...listeners}
         data-testid="bookmark-drag-handle"
-        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg text-fg-hint hover:text-fg-label"
       >
-        <GripVertical size={14} className="text-gray-400 dark:text-gray-500" />
+        <GripVertical size={14} strokeWidth={1.75} />
       </div>
 
       <button
@@ -167,11 +169,11 @@ function SortableBookmarkItem({
         data-testid="bookmark-sung-toggle"
         className={`flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
           bookmark.isSung
-            ? 'border-green-500 bg-green-500 text-white'
-            : 'border-gray-300 dark:border-gray-600 text-transparent hover:border-green-400 hover:text-green-400'
+            ? 'border-fg-label bg-fg-label text-panel'
+            : 'border-line-strong text-transparent hover:border-fg-label hover:text-fg-label'
         }`}
       >
-        <Check size={12} strokeWidth={3} />
+        <Check size={12} strokeWidth={2.5} />
       </button>
 
       <button
@@ -182,19 +184,23 @@ function SortableBookmarkItem({
         title={t('bookmarks.dragToProgram')}
         className="flex-1 min-w-0 text-left py-1.5 pr-1"
       >
-        <div className="text-sm font-medium truncate text-gray-900 dark:text-white">
+        <div
+          className={`text-sm font-medium truncate ${
+            bookmark.isSung ? 'text-fg-hint' : 'text-fg'
+          }`}
+        >
           {bookmark.songTitle}
         </div>
         {(bookmark.songCategoryName || bookmark.songKeyLine) && (
           <div className="flex items-center gap-2 mt-0.5">
             {bookmark.songCategoryName && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <span className="text-xs text-fg-hint truncate">
                 {bookmark.songCategoryName}
               </span>
             )}
             {bookmark.songKeyLine && (
               <span
-                className="text-xs text-amber-600 dark:text-amber-400 shrink-0"
+                className="text-xs font-medium text-key shrink-0"
                 data-testid="bookmark-key-line"
               >
                 {bookmark.songKeyLine}
@@ -203,12 +209,9 @@ function SortableBookmarkItem({
           </div>
         )}
         {bookmark.songTagNames?.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 mt-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
             {bookmark.songTagNames.map((name) => (
-              <span
-                key={name}
-                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium leading-none bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded"
-              >
+              <span key={name} className="text-xs text-fg-label">
                 {name}
               </span>
             ))}
@@ -223,11 +226,11 @@ function SortableBookmarkItem({
             e.stopPropagation()
             onEdit()
           }}
-          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
           title={t('bookmarks.editSong')}
           data-testid="bookmark-song-edit"
         >
-          <Pencil size={14} />
+          <Pencil size={16} strokeWidth={1.5} />
         </button>
       ) : null}
 
@@ -237,11 +240,11 @@ function SortableBookmarkItem({
           e.stopPropagation()
           onPresent()
         }}
-        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
         title={t('bookmarks.present')}
         data-testid="bookmark-song-present"
       >
-        <MonitorPlay size={14} />
+        <MonitorPlay size={16} strokeWidth={1.5} />
       </button>
 
       <button
@@ -250,11 +253,11 @@ function SortableBookmarkItem({
           e.stopPropagation()
           onRemove()
         }}
-        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-red-600"
         title={t('bookmarks.remove')}
         data-testid="bookmark-song-remove"
       >
-        <XIcon size={14} />
+        <XIcon size={16} strokeWidth={1.5} />
       </button>
     </div>
   )
@@ -309,19 +312,17 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1 rounded-lg border transition-colors ${
-        isDragging
-          ? 'opacity-80 shadow-lg border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-          : 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 hover:border-blue-300 dark:hover:border-blue-700'
+      className={`flex items-center gap-1 rounded-lg transition-colors ${
+        isDragging ? 'opacity-80 bg-selected' : 'hover:bg-hover'
       }`}
     >
       <div
         {...attributes}
         {...listeners}
         data-testid="bookmark-note-drag-handle"
-        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-blue-100 dark:hover:bg-blue-900/30"
+        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg text-fg-hint hover:text-fg-label"
       >
-        <GripVertical size={14} className="text-blue-400 dark:text-blue-500" />
+        <GripVertical size={14} strokeWidth={1.75} />
       </div>
 
       {isEditing ? (
@@ -335,31 +336,32 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
               if (e.key === 'Enter') handleSave()
               if (e.key === 'Escape') setIsEditing(false)
             }}
-            className="flex-1 min-w-0 text-xs bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded px-2 py-1 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 min-w-0 h-7 text-sm bg-field border-0 rounded-lg px-2 text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
           <button
             type="button"
             onClick={handleSave}
-            className="p-1 text-green-600 hover:text-green-700 dark:text-green-400"
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
           >
-            <Check size={14} />
+            <Check size={16} strokeWidth={1.5} />
           </button>
           <button
             type="button"
             onClick={() => setIsEditing(false)}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
           >
-            <XIcon size={14} />
+            <XIcon size={16} strokeWidth={1.5} />
           </button>
         </div>
       ) : (
         <>
           <div className="flex-1 min-w-0 py-1.5 pr-1 flex items-center gap-1.5">
             <StickyNote
-              size={12}
-              className="flex-shrink-0 text-blue-400 dark:text-blue-500"
+              size={14}
+              strokeWidth={1.75}
+              className="flex-shrink-0 text-fg-hint"
             />
-            <span className="text-xs text-blue-700 dark:text-blue-300 italic truncate">
+            <span className="text-sm text-fg-label italic truncate">
               {note.content}
             </span>
           </div>
@@ -367,10 +369,10 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
           <button
             type="button"
             onClick={handleStartEdit}
-            className="flex-shrink-0 p-1 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
             title={t('bookmarks.editNote')}
           >
-            <Pencil size={12} />
+            <Pencil size={16} strokeWidth={1.5} />
           </button>
           <button
             type="button"
@@ -378,10 +380,10 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
               e.stopPropagation()
               onRemove()
             }}
-            className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-red-600"
             title={t('bookmarks.deleteNote')}
           >
-            <XIcon size={14} />
+            <XIcon size={16} strokeWidth={1.5} />
           </button>
         </>
       )}
@@ -710,19 +712,17 @@ export function SongBookmarksPanel({
   const editTextAction: OverflowAction = {
     id: 'edit-text',
     label: t('bookmarks.textEdit.open'),
-    icon: <FileText size={18} />,
+    icon: <FileText size={16} strokeWidth={1.5} />,
     onSelect: () => setIsEditingText(true),
     testId: 'bookmarks-edit-text-menu',
     inline: (
-      <button
-        type="button"
+      <PanelHeaderButton
         onClick={() => setIsEditingText(true)}
         data-testid="bookmarks-edit-text"
-        className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors"
         title={t('bookmarks.textEdit.open')}
       >
-        <FileText className="w-3.5 h-3.5" />
-      </button>
+        <FileText size={14} strokeWidth={1.75} />
+      </PanelHeaderButton>
     ),
   }
 
@@ -732,42 +732,36 @@ export function SongBookmarksPanel({
           {
             id: 'add-note',
             label: t('bookmarks.addNote'),
-            icon: <Plus size={18} />,
-            iconClassName:
-              'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+            icon: <Plus size={16} strokeWidth={1.5} />,
             onSelect: startAddingNote,
             testId: 'bookmarks-add-note-menu',
             inline: (
-              <button
-                type="button"
+              <PanelHeaderButton
                 onClick={startAddingNote}
                 data-testid="bookmarks-add-note"
-                className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
                 title={t('bookmarks.addNote')}
               >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
+                <Plus size={14} strokeWidth={1.75} />
+              </PanelHeaderButton>
             ),
           },
           editTextAction,
           {
             id: 'export',
             label: t('bookmarks.exportAsMarkdown'),
-            icon: <Download size={18} />,
+            icon: <Download size={16} strokeWidth={1.5} />,
             disabled: exportMutation.isPending,
             onSelect: handleExport,
             testId: 'bookmarks-export-menu',
             inline: (
-              <button
-                type="button"
+              <PanelHeaderButton
                 onClick={handleExport}
                 disabled={exportMutation.isPending}
                 data-testid="bookmarks-export"
-                className="p-1.5 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                 title={t('bookmarks.exportAsMarkdown')}
               >
-                <Download className="w-3.5 h-3.5" />
-              </button>
+                <Download size={14} strokeWidth={1.75} />
+              </PanelHeaderButton>
             ),
           },
           ...(addAllToSchedule
@@ -775,21 +769,17 @@ export function SongBookmarksPanel({
                 {
                   id: 'add-all-to-schedule',
                   label: t('actions.addToSchedule'),
-                  icon: <CalendarPlus size={18} />,
-                  iconClassName:
-                    'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+                  icon: <CalendarPlus size={16} strokeWidth={1.5} />,
                   onSelect: addAllToSchedule,
                   testId: 'bookmarks-add-all-to-schedule-menu',
                   inline: (
-                    <button
-                      type="button"
+                    <PanelHeaderButton
                       onClick={addAllToSchedule}
                       data-testid="bookmarks-add-all-to-schedule"
                       title={t('actions.addToSchedule')}
-                      className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
                     >
-                      <CalendarPlus className="w-3.5 h-3.5" />
-                    </button>
+                      <CalendarPlus size={14} strokeWidth={1.75} />
+                    </PanelHeaderButton>
                   ),
                 },
               ]
@@ -797,23 +787,19 @@ export function SongBookmarksPanel({
           {
             id: 'clear',
             label: t('bookmarks.clear'),
-            icon: <Trash2 size={18} />,
-            iconClassName:
-              'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+            icon: <Trash2 size={16} strokeWidth={1.5} />,
             disabled: clearBookmarksMutation.isPending,
             onSelect: () => clearBookmarksMutation.mutate(),
             testId: 'bookmarks-clear-menu',
             inline: (
-              <button
-                type="button"
+              <PanelHeaderButton
                 onClick={() => clearBookmarksMutation.mutate()}
                 disabled={clearBookmarksMutation.isPending}
                 data-testid="bookmarks-clear"
-                className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
                 title={t('bookmarks.clear')}
               >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+                <Trash2 size={14} strokeWidth={1.75} />
+              </PanelHeaderButton>
             ),
           },
         ]
@@ -823,10 +809,10 @@ export function SongBookmarksPanel({
     <div
       ref={songDropRef}
       data-testid="bookmarks-drop-zone"
-      className={`bg-white dark:bg-gray-800 rounded-lg border flex flex-col overflow-hidden h-full transition-colors ${
+      className={`bg-panel rounded-xl border flex flex-col overflow-hidden h-full transition-colors ${
         isSongOver
-          ? 'border-amber-400 dark:border-amber-500 ring-2 ring-inset ring-amber-400/40'
-          : 'border-gray-200 dark:border-gray-700'
+          ? 'border-line-strong ring-1 ring-inset ring-focus'
+          : 'border-line'
       } ${songJustLanded ? 'song-drop-land' : ''}`}
     >
       {/* Header — when `onToggleCollapse` is wired, the leading chevron lets
@@ -836,7 +822,7 @@ export function SongBookmarksPanel({
           even when collapsed so the operator can still Add/Export/Clear. */}
       <div
         data-panel-header
-        className="flex items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+        className="flex items-center px-3 py-2 border-b border-line flex-shrink-0"
       >
         <OverflowActions
           testId="bookmarks-header-more"
@@ -854,7 +840,7 @@ export function SongBookmarksPanel({
                       : t('bookmarks.collapse', 'Collapse')
                   }
                   data-testid="bookmarks-collapse-toggle"
-                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-fg-hint transition-transform hover:bg-hover"
                 >
                   <ChevronDown
                     size={14}
@@ -862,13 +848,16 @@ export function SongBookmarksPanel({
                   />
                 </button>
               ) : null}
-              <Bookmark className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
+              <Bookmark
+                className="w-4 h-4 shrink-0 text-fg-label"
+                strokeWidth={1.5}
+              />
               {/* One truncating line, so a narrow column cuts the count
                   before it cuts into the title. */}
-              <span className="min-w-0 truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="min-w-0 truncate text-sm font-medium text-fg">
                 {t('bookmarks.title')}
                 {totalCount > 0 && (
-                  <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                  <span className="ml-2 text-xs font-normal text-fg-hint tabular-nums">
                     ({isSearching ? `${filteredItems.length}/` : ''}
                     {totalCount})
                   </span>
@@ -885,7 +874,7 @@ export function SongBookmarksPanel({
         <>
           {/* Add Note Input */}
           {isAddingNote && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
               <div className="flex items-center gap-1">
                 <input
                   ref={newNoteInputRef}
@@ -900,35 +889,31 @@ export function SongBookmarksPanel({
                     }
                   }}
                   placeholder={t('bookmarks.notePlaceholder')}
-                  className="flex-1 min-w-0 text-xs bg-gray-50 dark:bg-gray-900 border border-blue-300 dark:border-blue-600 rounded px-2 py-1.5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 min-w-0 h-8 text-sm bg-field border-0 rounded-lg px-2.5 text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={handleAddNote}
                   disabled={!newNoteContent.trim()}
-                  className="p-1.5 text-green-600 hover:text-green-700 dark:text-green-400 disabled:opacity-50"
                 >
-                  <Check size={14} />
-                </button>
-                <button
-                  type="button"
+                  <Check size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
+                <PanelHeaderButton
                   onClick={() => {
                     setIsAddingNote(false)
                     setNewNoteContent('')
                   }}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  <XIcon size={14} />
-                </button>
+                  <XIcon size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </div>
             </div>
           )}
 
           {/* Sung/pending/all filter — only when there are song bookmarks. */}
           {bookmarks.length > 0 && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
               <div
-                className="flex items-center gap-1 rounded-md bg-gray-100 p-0.5 dark:bg-gray-900"
+                className="flex items-center gap-0.5 rounded-lg bg-field p-0.5"
                 data-testid="bookmark-sung-filter"
               >
                 {(
@@ -956,14 +941,16 @@ export function SongBookmarksPanel({
                     onClick={() => setSungFilter(opt.key)}
                     aria-pressed={sungFilter === opt.key}
                     data-testid={`bookmark-filter-${opt.key}`}
-                    className={`flex-1 rounded px-2 py-1 text-[11px] font-medium transition-colors ${
+                    className={`flex-1 h-7 rounded-md px-2 text-xs font-medium transition-colors ${
                       sungFilter === opt.key
-                        ? 'bg-white text-amber-700 shadow-sm dark:bg-gray-700 dark:text-amber-300'
-                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                        ? 'bg-selected text-fg'
+                        : 'text-fg-label hover:text-fg'
                     }`}
                   >
                     {opt.label}
-                    <span className="ml-1 opacity-60">{opt.n}</span>
+                    <span className="ml-1 text-fg-hint tabular-nums">
+                      {opt.n}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -972,9 +959,12 @@ export function SongBookmarksPanel({
 
           {/* Search */}
           {totalCount > 3 && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Search
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-hint"
+                  strokeWidth={1.75}
+                />
                 <input
                   ref={searchInputRef}
                   data-slide-navigation=""
@@ -982,14 +972,14 @@ export function SongBookmarksPanel({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('bookmarks.searchPlaceholder')}
-                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
                     inputRef={searchInputRef}
                     onClear={() => setSearchQuery('')}
                     size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg"
                   />
                 )}
               </div>
@@ -1003,21 +993,22 @@ export function SongBookmarksPanel({
             className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : totalCount === 0 ? (
               <div className="px-4 py-6 text-center">
-                <Bookmark className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('bookmarks.empty')}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <Bookmark
+                  className="w-6 h-6 mx-auto mb-2 text-fg-hint"
+                  strokeWidth={1.5}
+                />
+                <p className="text-sm text-fg-label">{t('bookmarks.empty')}</p>
+                <p className="text-xs text-fg-hint mt-1">
                   {t('bookmarks.emptyDescription')}
                 </p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 {t('bookmarks.noResults')}
               </div>
             ) : (
@@ -1031,7 +1022,7 @@ export function SongBookmarksPanel({
                   items={filteredItems.map((item) => item.uniqueId)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="p-2 flex flex-col gap-1.5">
+                  <div className="p-1.5 flex flex-col gap-0.5">
                     {filteredItems.map(renderItem)}
                   </div>
                 </SortableContext>

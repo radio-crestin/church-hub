@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { PreviewTexts, SelectedElement } from './hooks/useEditorState'
+import { SAMPLE_CONTENT } from './sampleContent'
 import type {
   BibleContentConfig,
   Constraints,
@@ -33,54 +34,6 @@ interface ScreenEditorCanvasProps {
     elementType: string,
     updates: { constraints?: Constraints; size?: SizeWithUnits },
   ) => void
-}
-
-// Sample content for preview
-const SAMPLE_CONTENT: Record<
-  ContentType,
-  {
-    main?: string
-    reference?: string
-    person?: string
-    songKey?: string
-    amen?: string
-    songTitle?: string
-    songTitleNumber?: string
-  }
-> = {
-  song: {
-    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
-    songKey: 'G',
-    amen: 'Amin!',
-    songTitle: 'Aleluia, mărire Domnului',
-    songTitleNumber: 'PDC 19',
-  },
-  song_first_slide: {
-    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
-    songKey: 'G',
-  },
-  song_last_slide: {
-    main: 'Aleluia, Aleluia!\nMărire Domnului!\nAleluia, Aleluia!\nSlăvit să fie El!',
-    amen: 'Amin!',
-  },
-  bible: {
-    reference: 'Ioan 3:16',
-    main: 'Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu, pentru ca oricine crede în El să nu piară, ci să aibă viață veșnică.',
-  },
-  bible_passage: {
-    reference: 'Psalmul 23:1-3',
-    main: 'Domnul este Păstorul meu: nu voi duce lipsă de nimic. El mă paște în pășuni verzi și mă duce la ape de odihnă; îmi înviorează sufletul.',
-  },
-  announcement: {
-    main: '<h1>Anunț Important</h1><p>Program special duminica viitoare!</p>',
-  },
-  versete_tineri: {
-    person: 'Andrei Popescu',
-    reference: 'Romani 8:28',
-    main: 'De altă parte, știm că toate lucrurile lucrează împreună spre binele celor ce iubesc pe Dumnezeu.',
-  },
-  empty: {},
-  screen_share: {},
 }
 
 interface DraggableElementProps {
@@ -441,8 +394,8 @@ function DraggableElement({
 
   // Determine border style based on selection and hidden state
   const getBorderStyle = () => {
-    if (isSelected) return '2px solid #6366f1'
-    if (isHidden) return '2px dashed rgba(239, 68, 68, 0.5)' // Red dashed for hidden
+    if (isSelected) return '2px solid var(--color-focus)'
+    if (isHidden) return '2px dashed var(--color-fg-hint)'
     return '1px dashed rgba(255,255,255,0.3)'
   }
 
@@ -466,46 +419,46 @@ function DraggableElement({
       {children}
       {isLocked && (
         <div
-          className="absolute top-1 right-1 p-0.5 rounded bg-indigo-600/90 text-white pointer-events-none"
+          className="absolute top-1 right-1 p-0.5 rounded bg-primary text-white pointer-events-none"
           data-testid="screen-editor-element-locked"
         >
-          <Lock className="w-3 h-3" />
+          <Lock size={12} strokeWidth={2} />
         </div>
       )}
       {isSelected && !isLocked && (
         <>
           {/* Corner resize handles */}
           <div
-            className="absolute -right-1 -bottom-1 w-3 h-3 bg-indigo-500 cursor-se-resize rounded-sm"
+            className="absolute -right-1 -bottom-1 w-3 h-3 bg-focus cursor-se-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
           />
           <div
-            className="absolute -left-1 -bottom-1 w-3 h-3 bg-indigo-500 cursor-sw-resize rounded-sm"
+            className="absolute -left-1 -bottom-1 w-3 h-3 bg-focus cursor-sw-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 'sw')}
           />
           <div
-            className="absolute -right-1 -top-1 w-3 h-3 bg-indigo-500 cursor-ne-resize rounded-sm"
+            className="absolute -right-1 -top-1 w-3 h-3 bg-focus cursor-ne-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 'ne')}
           />
           <div
-            className="absolute -left-1 -top-1 w-3 h-3 bg-indigo-500 cursor-nw-resize rounded-sm"
+            className="absolute -left-1 -top-1 w-3 h-3 bg-focus cursor-nw-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 'nw')}
           />
           {/* Edge resize handles */}
           <div
-            className="absolute left-1/2 -translate-x-1/2 -top-1 w-6 h-2 bg-indigo-500 cursor-n-resize rounded-sm"
+            className="absolute left-1/2 -translate-x-1/2 -top-1 w-6 h-2 bg-focus cursor-n-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 'n')}
           />
           <div
-            className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-6 h-2 bg-indigo-500 cursor-s-resize rounded-sm"
+            className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-6 h-2 bg-focus cursor-s-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 's')}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 -left-1 w-2 h-6 bg-indigo-500 cursor-w-resize rounded-sm"
+            className="absolute top-1/2 -translate-y-1/2 -left-1 w-2 h-6 bg-focus cursor-w-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 'w')}
           />
           <div
-            className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-6 bg-indigo-500 cursor-e-resize rounded-sm"
+            className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-6 bg-focus cursor-e-resize rounded-sm"
             onMouseDown={(e) => handleResizeMouseDown(e, 'e')}
           />
         </>
@@ -1075,7 +1028,7 @@ export function ScreenEditorCanvas({
       els.push(
         <div
           key="screenSharePreview"
-          className="absolute bg-gray-800 flex items-center justify-center overflow-hidden border-2 border-dashed border-blue-400/50"
+          className="absolute bg-black/60 flex items-center justify-center overflow-hidden border border-dashed border-white/30"
           style={{
             left: bounds.x * scale,
             top: bounds.y * scale,
@@ -1085,7 +1038,7 @@ export function ScreenEditorCanvas({
         >
           {/* Video placeholder with object-fit preview */}
           <div
-            className="bg-gradient-to-br from-gray-700 to-gray-900 flex flex-col items-center justify-center gap-2"
+            className="flex flex-col items-center justify-center gap-2"
             style={{
               width: '100%',
               height: '100%',
@@ -1093,7 +1046,7 @@ export function ScreenEditorCanvas({
           >
             {/* Video icon */}
             <svg
-              className="w-12 h-12 text-blue-400/70"
+              className="w-8 h-8 text-white/60"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -1105,10 +1058,10 @@ export function ScreenEditorCanvas({
                 d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
               />
             </svg>
-            <span className="text-blue-400/70 text-xs font-medium">
+            <span className="text-white/60 text-xs font-medium">
               {t('screens.editor.screenSharePreview')}
             </span>
-            <span className="text-gray-500 text-xs">{ve.objectFit}</span>
+            <span className="text-white/50 text-xs">{ve.objectFit}</span>
           </div>
         </div>,
       )
@@ -1139,12 +1092,13 @@ export function ScreenEditorCanvas({
   return (
     <div
       ref={containerRef}
-      className="flex-1 min-h-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 overflow-auto p-4"
+      className="flex-1 min-h-0 flex items-center justify-center bg-app overflow-auto p-4"
       onClick={handleBackgroundClick}
     >
       <div
         ref={canvasRef}
-        className="relative rounded-lg overflow-hidden shadow-2xl border border-gray-300 dark:border-gray-600"
+        data-testid="screen-editor-canvas"
+        className="relative rounded-lg overflow-hidden border border-line"
         style={{
           width: displaySize.width,
           height: displaySize.height,

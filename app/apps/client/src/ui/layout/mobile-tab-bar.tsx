@@ -36,15 +36,13 @@ export function MobileTabBar({ onOpenMore }: MobileTabBarProps) {
 
   const tabClass = (isActive: boolean) =>
     `flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium transition-colors ${
-      isActive
-        ? 'text-indigo-600 dark:text-indigo-400'
-        : 'text-gray-500 dark:text-gray-400'
+      isActive ? 'text-fg' : 'text-fg-hint'
     }`
 
   return (
     <nav
       data-testid="mobile-tab-bar"
-      className="flex h-14 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800"
+      className="flex h-14 bg-panel border-t border-line"
     >
       {tabs.map((item) => {
         const isActive =
@@ -60,7 +58,7 @@ export function MobileTabBar({ onOpenMore }: MobileTabBarProps) {
             onClick={(e) => handleItemClick(item.to, e)}
             className={tabClass(isActive)}
           >
-            <Icon size={22} />
+            <Icon size={20} strokeWidth={1.5} />
             <span className="truncate max-w-full px-1">
               {SHORT_LABEL_KEYS[item.id]
                 ? t(SHORT_LABEL_KEYS[item.id])
@@ -75,7 +73,7 @@ export function MobileTabBar({ onOpenMore }: MobileTabBarProps) {
         onClick={onOpenMore}
         className={tabClass(false)}
       >
-        <Menu size={22} />
+        <Menu size={20} strokeWidth={1.5} />
         <span>{t('tabs.more')}</span>
       </button>
     </nav>

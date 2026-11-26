@@ -11,7 +11,6 @@ import {
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import { removeHtmlTags } from '~/utils/removeHtmlTags'
 import type { ScheduleItem } from '../types'
 
@@ -36,31 +35,32 @@ export function ScheduleItemSong({
   const menuRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className="rounded-lg border border-line bg-panel">
       {/* Song Header */}
       <div className="flex items-center gap-2 p-3">
         {/* Drag Handle */}
         <div
           {...dragHandleProps}
-          className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-hover"
         >
-          <GripVertical
-            size={16}
-            className="text-gray-400 dark:text-gray-500"
-          />
+          <GripVertical size={16} className="text-fg-hint" strokeWidth={1.5} />
         </div>
 
         {/* Expand/Collapse */}
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex-shrink-0 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="flex-shrink-0 p-1 rounded hover:bg-hover"
           title={isExpanded ? t('actions.collapse') : t('actions.expand')}
         >
           {isExpanded ? (
-            <ChevronDown size={16} className="text-gray-500" />
+            <ChevronDown size={16} className="text-fg-hint" strokeWidth={1.5} />
           ) : (
-            <ChevronRight size={16} className="text-gray-500" />
+            <ChevronRight
+              size={16}
+              className="text-fg-hint"
+              strokeWidth={1.5}
+            />
           )}
         </button>
 
@@ -70,18 +70,16 @@ export function ScheduleItemSong({
           onClick={onEditSong}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <div
-            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${ICON_COLOR_CLASSES.indigo.bg}`}
-          >
-            <Music size={16} className={ICON_COLOR_CLASSES.indigo.text} />
+          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+            <Music size={16} className="text-fg-label" strokeWidth={1.5} />
           </div>
 
           {/* Song Title & Info */}
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
+            <div className="font-medium text-sm truncate text-fg">
               {item.song?.title}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-xs text-fg-hint">
               {item.slides.length} slides
               {item.song?.categoryName && ` • ${item.song.categoryName}`}
             </div>
@@ -93,9 +91,13 @@ export function ScheduleItemSong({
           <button
             type="button"
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-1 rounded hover:bg-hover"
           >
-            <MoreVertical size={16} className="text-gray-500" />
+            <MoreVertical
+              size={16}
+              className="text-fg-hint"
+              strokeWidth={1.5}
+            />
           </button>
 
           {showMenu && (
@@ -104,16 +106,16 @@ export function ScheduleItemSong({
                 className="fixed inset-0 z-10"
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1">
+              <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-panel border border-line rounded-lg shadow-lg py-1">
                 <button
                   type="button"
                   onClick={() => {
                     setShowMenu(false)
                     onEditSong()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover"
                 >
-                  <Pencil size={14} />
+                  <Pencil size={14} strokeWidth={1.75} />
                   {t('actions.editSong')}
                 </button>
                 <button
@@ -122,12 +124,12 @@ export function ScheduleItemSong({
                     setShowMenu(false)
                     onInsertSongAfter()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover"
                 >
-                  <Plus size={14} />
+                  <Plus size={14} strokeWidth={1.75} />
                   {t('actions.insertAfter')}
                 </button>
-                <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                <hr className="my-1 border-line" />
                 <button
                   type="button"
                   onClick={() => {
@@ -136,7 +138,7 @@ export function ScheduleItemSong({
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={14} strokeWidth={1.75} />
                   {t('actions.remove')}
                 </button>
               </div>
@@ -151,12 +153,12 @@ export function ScheduleItemSong({
           {item.slides.map((slide, idx) => (
             <div
               key={slide.id}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm"
+              className="flex items-center gap-2 px-3 py-2 bg-app rounded-lg text-sm"
             >
-              <span className="flex-shrink-0 w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs flex items-center justify-center">
+              <span className="flex-shrink-0 w-5 h-5 rounded bg-field text-fg-label text-xs flex items-center justify-center">
                 {idx + 1}
               </span>
-              <span className="text-gray-600 dark:text-gray-400 line-clamp-1">
+              <span className="text-fg-label line-clamp-1">
                 {removeHtmlTags(slide.content).substring(0, 60)}
                 {slide.content.length > 60 ? '...' : ''}
               </span>

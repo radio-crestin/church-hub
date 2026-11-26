@@ -64,13 +64,13 @@ export function SynonymForm({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-md w-full"
+      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-panel max-w-md w-full"
       onClose={onCancel}
       onClick={handleDialogClick}
     >
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {synonym
               ? t('sections.synonyms.modals.edit.title')
               : t('sections.synonyms.modals.create.title')}
@@ -78,15 +78,15 @@ export function SynonymForm({
           <button
             type="button"
             onClick={onCancel}
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            className="text-fg-hint hover:text-fg-body"
           >
-            <X size={20} />
+            <X size={20} strokeWidth={1.5} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('sections.synonyms.primaryTerm')}
             </label>
             <input
@@ -95,13 +95,13 @@ export function SynonymForm({
               value={primary}
               onChange={(e) => setPrimary(e.target.value)}
               placeholder={t('sections.synonyms.primaryTermPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               required
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('sections.synonyms.synonymTerms')}
             </label>
             <input
@@ -109,10 +109,10 @@ export function SynonymForm({
               value={synonymsText}
               onChange={(e) => setSynonymsText(e.target.value)}
               placeholder={t('sections.synonyms.synonymTermsPlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               required
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-fg-hint">
               {t('sections.synonyms.synonymTermsHint')}
             </p>
           </div>
@@ -121,14 +121,14 @@ export function SynonymForm({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
             >
               {t('common:buttons.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={isLoading || !primary.trim() || !synonymsText.trim()}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
             >
               {synonym
                 ? t('sections.synonyms.modals.edit.submit')

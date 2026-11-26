@@ -1,4 +1,5 @@
 import type { SyncEntityType } from '../../db/schema/sync'
+import type { ScheduleItemType } from '../schedules/types'
 
 /** Serialized song slide (identified positionally within its song). */
 export interface LibrarySlide {
@@ -84,13 +85,21 @@ export interface LibraryVerseteTineriEntry {
 }
 
 export interface LibraryScheduleItem {
-  itemType: 'song' | 'slide' | 'bible_passage'
+  itemType: ScheduleItemType
   songUuid: string | null
   slideType: string | null
   slideContent: string | null
   biblePassageReference: string | null
   biblePassageTranslation: string | null
   obsSceneName: string | null
+  /**
+   * A music, video or verses item's settings, as JSON (service/schedule-items).
+   * Absent from libraries written before them. Music folders and tracks,
+   * videos and translations are named by this device's ids.
+   */
+  itemConfig?: string | null
+  /** A `schedule` item's presentation. Absent from older libraries. */
+  childScheduleUuid?: string | null
   sortOrder: number
   bibleVerses: LibraryBibleVerse[]
   verseteTineri: LibraryVerseteTineriEntry[]

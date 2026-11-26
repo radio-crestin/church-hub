@@ -1,10 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
-import {
-  BUILTIN_ITEMS,
-  DEFAULT_ICON_COLORS,
-  ICON_COLOR_CLASSES,
-} from '~/features/sidebar-config/constants'
+import { BUILTIN_ITEMS } from '~/features/sidebar-config/constants'
 import type { BuiltInMenuItemId } from '~/features/sidebar-config/types'
 import { ONBOARDING_FEATURES } from '../constants'
 
@@ -20,12 +16,8 @@ export function FeaturesStep({ selected, onToggle }: FeaturesStepProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {t('features.title')}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t('features.description')}
-        </p>
+        <h1 className="text-xl font-semibold text-fg">{t('features.title')}</h1>
+        <p className="text-fg-label">{t('features.description')}</p>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         {ONBOARDING_FEATURES.map((id) => {
@@ -34,22 +26,23 @@ export function FeaturesStep({ selected, onToggle }: FeaturesStepProps) {
             <label
               key={id}
               data-testid={`onboarding-feature-${id}`}
-              className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50/60 dark:border-gray-700 dark:hover:bg-gray-800 dark:has-[:checked]:border-indigo-500 dark:has-[:checked]:bg-indigo-950/50"
+              className="flex cursor-pointer items-start gap-3 rounded-lg bg-field p-3 transition-colors hover:bg-hover has-[:checked]:bg-selected"
             >
               <input
                 type="checkbox"
                 checked={selected.has(id)}
                 onChange={() => onToggle(id)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="mt-1 h-4 w-4 rounded border-line accent-primary text-primary focus:ring-focus"
               />
               <Icon
-                className={`mt-0.5 h-5 w-5 shrink-0 ${ICON_COLOR_CLASSES[DEFAULT_ICON_COLORS[id]].text}`}
+                strokeWidth={1.5}
+                className="mt-0.5 h-4 w-4 shrink-0 text-fg-label"
               />
               <span className="min-w-0">
-                <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                <span className="block text-sm font-medium text-fg">
                   {t(labelKey)}
                 </span>
-                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                <span className="block text-xs text-fg-hint">
                   {t(`features.items.${id}`)}
                 </span>
               </span>
@@ -57,7 +50,7 @@ export function FeaturesStep({ selected, onToggle }: FeaturesStepProps) {
           )
         })}
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <p className="text-sm text-fg-hint">
         {t('features.selected', {
           count: selected.size,
           total: ONBOARDING_FEATURES.length,

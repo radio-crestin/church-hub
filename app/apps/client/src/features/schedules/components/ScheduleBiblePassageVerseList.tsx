@@ -33,6 +33,7 @@ export function ScheduleBiblePassageVerseList({
         <AlertTriangle
           size={16}
           className="text-amber-600 dark:text-amber-400 flex-shrink-0"
+          strokeWidth={1.5}
         />
         <span className="text-sm text-amber-700 dark:text-amber-300">
           {t('warnings.noVerses')}
@@ -55,18 +56,16 @@ export function ScheduleBiblePassageVerseList({
             type="button"
             data-testid={`schedule-sub-item-${itemStartFlatIndex + index}`}
             onClick={() => onVerseClick(item, index)}
-            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+            className={`w-full text-left px-3 py-2 rounded-lg outline-none transition-colors ${
               isPresented
-                ? 'bg-green-100 dark:bg-green-900/50 ring-2 ring-inset ring-green-500'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
+                ? 'bg-live-tint ring-1 ring-inset ring-live'
+                : 'hover:bg-hover'
             }`}
           >
             <div className="flex items-start gap-2">
               <span
                 className={`font-semibold text-sm min-w-[24px] ${
-                  isPresented
-                    ? 'text-green-700 dark:text-green-300'
-                    : 'text-gray-500 dark:text-gray-400'
+                  isPresented ? 'text-live' : 'text-fg-hint'
                 }`}
               >
                 {index + 1}
@@ -74,18 +73,14 @@ export function ScheduleBiblePassageVerseList({
               <div className="flex-1 min-w-0">
                 <span
                   className={`text-xs font-medium ${
-                    isPresented
-                      ? 'text-green-700 dark:text-green-300'
-                      : 'text-indigo-600 dark:text-indigo-400'
+                    isPresented ? 'text-fg' : 'text-fg-label'
                   }`}
                 >
                   {verse.reference}
                 </span>
                 <span
                   className={`text-sm line-clamp-2 block ${
-                    isPresented
-                      ? 'text-green-900 dark:text-green-100'
-                      : 'text-gray-600 dark:text-gray-400'
+                    isPresented ? 'text-fg' : 'text-fg-body'
                   }`}
                 >
                   {verse.text}

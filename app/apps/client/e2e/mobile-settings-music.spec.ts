@@ -1,6 +1,9 @@
 import { expect, type Page, test } from '@playwright/test'
 
 import { startFakeAudioServer } from './helpers/fake-audio'
+import roSidebar from '../src/i18n/locales/ro/sidebar.json' with {
+  type: 'json',
+}
 
 /**
  * Settings and Music on a phone (CH-049): Settings opens on its list of
@@ -103,7 +106,8 @@ test.describe('Settings and Music on a phone', () => {
     await onPhone(page)
     await page.goto('/settings/sidebar')
     const panel = page.getByTestId('settings-panel')
-    for (const name of ['Cântări', 'Biblia', 'Programe']) {
+    const { songs, bible, schedules } = roSidebar.navigation
+    for (const name of [songs, bible, schedules]) {
       const label = panel.getByText(name, { exact: true }).first()
       await expect(label).toBeVisible()
       expect((await label.boundingBox())?.width ?? 0).toBeGreaterThan(30)

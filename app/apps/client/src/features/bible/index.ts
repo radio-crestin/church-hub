@@ -32,6 +32,7 @@ export {
   useAddBibleBookmark,
   useAddBibleBookmarkNote,
   useAddToHistory,
+  useAutoPresentOnSelect,
   useBibleBookmarkNotes,
   useBibleBookmarks,
   useBibleHistory,
@@ -47,6 +48,7 @@ export {
   useImportBibleBookmarksFromText,
   useImportTranslation,
   useMultiTranslationVerse,
+  usePresentWhenSelected,
   useRemoveBibleBookmark,
   useRemoveBibleBookmarkNote,
   useReorderBibleBookmarkItems,
@@ -56,6 +58,7 @@ export {
   useUpdateBibleBookmarkNote,
   useVerse,
   useVerses,
+  type VerseTarget,
 } from './hooks'
 // Service
 export type {

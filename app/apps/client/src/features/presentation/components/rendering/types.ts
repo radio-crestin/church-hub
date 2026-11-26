@@ -1,5 +1,10 @@
+import type { DeckShownSlide } from '~/features/slides-deck/types'
 import type { SlideStyleOverride } from '~/features/songs/types'
-import type { ContentType, ScreenBackgroundConfig } from '../../types'
+import type {
+  ContentType,
+  PresentationBackground,
+  ScreenBackgroundConfig,
+} from '../../types'
 
 export interface ChordMapping {
   wordIndex: number
@@ -20,6 +25,16 @@ export interface ContentData {
   styleOverrides?: SlideStyleOverride | null
   /** The song's own background (see `resolveScreenBackground`). */
   songBackground?: ScreenBackgroundConfig | null
+  /** A presentation's video item, shown full screen (ScreenVideo). */
+  videoUrl?: string
+  /** The video item plays again from the start until the step changes. */
+  videoLoop?: boolean
+  /** A gallery image, shown full screen (ScreenImage). */
+  imageUrl?: string
+  /** A presentation's looping background video (see `resolveScreenBackground`). */
+  presentationBackground?: PresentationBackground | null
+  /** A Slides item's slide (DeckSlideRenderer). */
+  deck?: DeckShownSlide
 }
 
 export interface VerseteTineriSummaryEntry {

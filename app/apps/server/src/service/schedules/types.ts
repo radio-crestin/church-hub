@@ -1,9 +1,24 @@
+import type {
+  ItemConfig,
+  MediaItemType,
+  ScheduleMusicSummary,
+  ScheduleVideoPick,
+} from '../schedule-items/types'
 import type { SongSlide } from '../songs'
 
 /**
  * Schedule item types (same as queue)
  */
-export type ScheduleItemType = 'song' | 'slide' | 'bible_passage'
+export type ScheduleItemType =
+  | 'song'
+  | 'slide'
+  | 'bible_passage'
+  | 'music'
+  | 'video'
+  | 'verses'
+  | 'slides'
+  /** Another presentation, played in its place (`childScheduleId`). */
+  | 'schedule'
 
 /**
  * Slide template types for standalone slides (same as queue)
@@ -50,6 +65,29 @@ export interface ScheduleRecord {
   updated_at: number
 }
 
+/** What happens in OBS that can start or stop a presentation. */
+export type AutomationTriggerEvent =
+  | 'scene_selected'
+  | 'stream_started'
+  | 'stream_stopped'
+  | 'recording_started'
+  | 'recording_stopped'
+
+export const AUTOMATION_TRIGGER_EVENTS: AutomationTriggerEvent[] = [
+  'scene_selected',
+  'stream_started',
+  'stream_stopped',
+  'recording_started',
+  'recording_stopped',
+]
+
+/** A presentation's start or stop trigger. */
+export interface AutomationTrigger {
+  event: AutomationTriggerEvent
+  /** The scene that fires it (`scene_selected` only); null otherwise. */
+  sceneName: string | null
+}
+
 /**
  * How a presentation runs by itself (see service/schedule-automation).
  */
@@ -67,6 +105,10 @@ export interface ScheduleAutomationSettings {
   musicVolume: number | null
   /** Started by itself when Church Hub starts (one presentation at most). */
   startOnAppStart: boolean
+  /** Started by itself when this happens in OBS; null = never. */
+  startTrigger: AutomationTrigger | null
+  /** Stopped (and taken off the screens) when this happens; null = never. */
+  stopTrigger: AutomationTrigger | null
 }
 
 /**
@@ -77,10 +119,21 @@ export interface Schedule {
   title: string
   description: string | null
   automation: ScheduleAutomationSettings
+  /** The slide template for all its slides; null = each screen's own. */
+  templateId: number | null
   itemCount: number
   songCount: number
+  /** The presentations its `schedule` items play, for the cycle check. */
+  childScheduleIds: number[]
   createdAt: number
   updatedAt: number
+}
+
+/** The presentation a `schedule` item plays, with its items (nested too). */
+export interface ChildSchedule {
+  id: number
+  title: string
+  items: ScheduleItem[]
 }
 
 /**
@@ -107,6 +160,19 @@ export interface ScheduleItemRecord {
 export interface ScheduleItemWithSongRecord extends ScheduleItemRecord {
   song_title: string | null
   category_name: string | null
+}
+
+/**
+ * A song item's MIDI file (service/midi-audio): played when the running
+ * presentation reaches the item, each slide going up at its time.
+ */
+export interface ScheduleItemMidi {
+  /** Content hash of the stored file. */
+  hash: string
+  fileName: string
+  durationSeconds: number
+  /** The second each slide starts at, as synced; null = split evenly. */
+  verseTimes: number[] | null
 }
 
 /**
@@ -142,6 +208,33 @@ export interface ScheduleItem {
   obsSceneName: string | null
   /** Seconds each slide of this item stays up when it runs by itself; null = the presentation's. */
   advanceSeconds: number | null
+  /** This item's own slide template; null = the presentation's. */
+  templateId: number | null
+  /**
+   * The settings of a music, video or verses item, or how many of a Versete
+   * Biblice slide's passages it shows (service/schedule-items); null for the
+   * others. Verses items carry their passages of this run in
+   * `verseteTineriEntries`.
+   */
+  itemConfig: ItemConfig | null
+  /**
+   * Every passage of a Versete Biblice slide that shows only some of them at
+   * random (its `itemConfig.count`), for its editor; null otherwise.
+   */
+  allVerseteTineriEntries: ScheduleVerseteTineriEntry[] | null
+  /** A music item's tracks (itemType === 'music'). */
+  music: ScheduleMusicSummary | null
+  /** The video a video item shows this run; null when the gallery has none. */
+  video: ScheduleVideoPick | null
+  /** A MIDI file played with a song item while it runs, its slides following it. */
+  midi: ScheduleItemMidi | null
+  /** A `schedule` item's presentation id. */
+  childScheduleId: number | null
+  /**
+   * A `schedule` item's presentation with its items; null for other items,
+   * and where it would contain itself (old or synced data).
+   */
+  childSchedule: ChildSchedule | null
   // Common fields
   sortOrder: number
   createdAt: number
@@ -220,6 +313,12 @@ export interface AddToScheduleInput {
   verseteTineriEntries?: VerseteTineriEntryInput[]
   // Scene fields
   obsSceneName?: string
+  /** A music, video or verses item and its settings. */
+  media?: { itemType: MediaItemType; itemConfig: unknown }
+  /** A Slides item: its deck (service/slides-deck), checked before it is stored. */
+  slides?: unknown
+  /** A `schedule` item: the presentation it plays. Never one containing this one. */
+  childScheduleId?: number
 }
 
 /**

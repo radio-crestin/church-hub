@@ -1,7 +1,9 @@
 import { Timer } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+
+import { useAnchoredPopover } from '../hooks/useAnchoredPopover'
 
 interface ScheduleItemAdvanceProps {
   /** The item's own time per slide; null = the presentation's. */
@@ -25,9 +27,13 @@ export function ScheduleItemAdvance({
   onChange,
 }: ScheduleItemAdvanceProps) {
   const { t } = useTranslation('schedules')
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const popoverRef = useRef<HTMLDivElement>(null)
-  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null)
+  const {
+    buttonRef,
+    popoverRef,
+    anchor,
+    open: openPopover,
+    close,
+  } = useAnchoredPopover(POPOVER_WIDTH)
   const [value, setValue] = useState(0)
 
   const min = Math.min(...defaultSeconds)
@@ -39,48 +45,16 @@ export function ScheduleItemAdvance({
       ? `${min} s`
       : `${min}–${max} s`
 
-  useEffect(() => {
-    if (!anchor) return
-    const close = (e: MouseEvent) => {
-      const target = e.target as Node
-      if (
-        !popoverRef.current?.contains(target) &&
-        !buttonRef.current?.contains(target)
-      )
-        setAnchor(null)
-    }
-    const escape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setAnchor(null)
-    }
-    document.addEventListener('mousedown', close)
-    document.addEventListener('keydown', escape)
-    return () => {
-      document.removeEventListener('mousedown', close)
-      document.removeEventListener('keydown', escape)
-    }
-  }, [anchor])
-
   const open = () => {
-    const rect = buttonRef.current?.getBoundingClientRect()
-    if (!rect) return
     setValue(advanceSeconds ?? max)
-    setAnchor({
-      x: Math.max(
-        8,
-        Math.min(
-          rect.right - POPOVER_WIDTH,
-          window.innerWidth - POPOVER_WIDTH - 8,
-        ),
-      ),
-      y: rect.bottom + 4,
-    })
+    openPopover()
   }
 
   const apply = (seconds: number | null) => {
     if (seconds === null || (Number.isFinite(seconds) && seconds >= 1)) {
       onChange(seconds === null ? null : Math.round(seconds))
     }
-    setAnchor(null)
+    close()
   }
 
   return (
@@ -90,7 +64,7 @@ export function ScheduleItemAdvance({
         type="button"
         onClick={(e) => {
           e.stopPropagation()
-          if (anchor) setAnchor(null)
+          if (anchor) close()
           else open()
         }}
         onDoubleClick={(e) => e.stopPropagation()}
@@ -99,11 +73,11 @@ export function ScheduleItemAdvance({
         data-custom={custom ? 'true' : undefined}
         className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs tabular-nums ${
           custom
-            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300'
-            : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+            ? 'bg-selected text-fg hover:bg-hover'
+            : 'text-fg-hint hover:bg-hover'
         }`}
       >
-        <Timer size={12} />
+        <Timer size={12} strokeWidth={2} />
         {label}
       </button>
       {anchor &&
@@ -113,7 +87,7 @@ export function ScheduleItemAdvance({
             role="dialog"
             aria-label={t('automation.advance.title')}
             data-testid="schedule-item-advance-popover"
-            className="fixed z-50 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            className="fixed z-50 rounded-[10px] border border-line bg-panel p-3 shadow-popover"
             style={{ left: anchor.x, top: anchor.y, width: POPOVER_WIDTH }}
             // React events bubble out of a portal to the item row, which
             // would open or present the item.
@@ -128,7 +102,7 @@ export function ScheduleItemAdvance({
                 apply(value)
               }}
             >
-              <label className="flex items-center justify-between gap-2 text-sm font-medium text-gray-900 dark:text-white">
+              <label className="flex items-center justify-between gap-2 text-sm font-medium text-fg">
                 {t('automation.advance.title')}
                 <span className="flex items-center gap-1">
                   <input
@@ -139,12 +113,12 @@ export function ScheduleItemAdvance({
                     onChange={(e) => setValue(e.target.valueAsNumber)}
                     autoFocus
                     data-testid="schedule-item-advance-input"
-                    className="w-16 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="w-16 rounded-[10px] border-0 bg-field px-2 py-1 text-right text-base md:text-sm tabular-nums text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                   />
                   s
                 </span>
               </label>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-fg-hint">
                 {t('automation.advance.description')}
               </p>
               <div className="mt-3 flex justify-end gap-2">
@@ -153,7 +127,7 @@ export function ScheduleItemAdvance({
                     type="button"
                     onClick={() => apply(null)}
                     data-testid="schedule-item-advance-reset"
-                    className="rounded-lg px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="rounded-lg px-2 py-1 text-sm text-fg-body hover:bg-hover"
                   >
                     {t('automation.advance.reset')}
                   </button>
@@ -161,7 +135,7 @@ export function ScheduleItemAdvance({
                 <button
                   type="submit"
                   data-testid="schedule-item-advance-save"
-                  className="rounded-lg bg-indigo-600 px-3 py-1 text-sm text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-primary px-3 py-1 text-sm text-white hover:bg-indigo-700"
                 >
                   {t('automation.advance.save')}
                 </button>

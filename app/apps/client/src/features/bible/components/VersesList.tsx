@@ -385,7 +385,7 @@ export function VersesList({
   if (isLoading && chapters.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
@@ -396,9 +396,9 @@ export function VersesList({
         <button
           type="button"
           onClick={onGoBack}
-          className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-fg-label hover:text-fg transition-colors"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={16} strokeWidth={1.5} />
           {t('navigation.back')}
           <KeyboardShortcutBadge shortcut="Escape" variant="muted" />
         </button>
@@ -412,10 +412,10 @@ export function VersesList({
                   block: 'center',
                 })
               }}
-              className="p-1.5 rounded-md text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+              className="p-1.5 rounded-md text-fg-label hover:bg-hover hover:text-fg transition-colors"
               title={t('navigation.scrollToVerse')}
             >
-              <LocateFixed size={16} />
+              <LocateFixed size={16} strokeWidth={1.5} />
             </button>
           )}
           <FontSizeButtons fontScale={fontScale} testIdPrefix="bible-font" />
@@ -433,12 +433,12 @@ export function VersesList({
             type="button"
             onClick={onLoadPrevious}
             disabled={isLoadingPrevious}
-            className="w-full flex items-center justify-center gap-2 py-2 mb-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors lg:hidden disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2 mb-2 text-sm text-fg hover:bg-hover rounded-lg transition-colors lg:hidden disabled:opacity-50"
           >
             {isLoadingPrevious ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
             ) : (
-              <ChevronUp size={16} />
+              <ChevronUp size={16} strokeWidth={1.5} />
             )}
             {t('navigation.loadPrevious')}
           </button>
@@ -449,7 +449,10 @@ export function VersesList({
           className="hidden lg:flex h-8 items-center justify-center"
         >
           {isLoadingPrevious && (
-            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            <Loader2
+              className="w-4 h-4 animate-spin text-fg-hint"
+              strokeWidth={1.5}
+            />
           )}
         </div>
 
@@ -467,13 +470,14 @@ export function VersesList({
                 data-chapter-group
                 className="pb-4"
               >
-                <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-white dark:bg-gray-800">
-                  <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                    {label}
-                  </span>
+                <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-panel">
+                  <span className="text-sm font-bold text-fg">{label}</span>
                 </div>
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  <Loader2
+                    className="w-5 h-5 animate-spin text-fg-hint"
+                    strokeWidth={1.5}
+                  />
                 </div>
               </div>
             )
@@ -486,10 +490,8 @@ export function VersesList({
               className="pb-4"
             >
               {/* Sticky chapter label */}
-              <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-white dark:bg-gray-800">
-                <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                  {label}
-                </span>
+              <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-panel">
+                <span className="text-sm font-bold text-fg">{label}</span>
               </div>
 
               <div className="space-y-1">
@@ -504,32 +506,32 @@ export function VersesList({
 
                   const getButtonClass = () => {
                     if (isPresented) {
-                      return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-inset ring-green-500'
+                      return 'bg-live-tint ring-1 ring-inset ring-live'
                     }
                     if (isSearched) {
-                      return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-inset ring-indigo-500'
+                      return 'bg-selected'
                     }
-                    return 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    return 'hover:bg-hover'
                   }
 
                   const getVerseNumberClass = () => {
                     if (isPresented) {
-                      return 'text-green-700 dark:text-green-300'
+                      return 'text-live'
                     }
                     if (isSearched) {
-                      return 'text-indigo-700 dark:text-indigo-300'
+                      return 'text-fg'
                     }
-                    return 'text-gray-500 dark:text-gray-400'
+                    return 'text-fg-hint'
                   }
 
                   const getTextClass = () => {
                     if (isPresented) {
-                      return 'text-green-900 dark:text-green-100'
+                      return 'text-fg'
                     }
                     if (isSearched) {
-                      return 'text-indigo-900 dark:text-indigo-100'
+                      return 'text-fg'
                     }
-                    return 'text-gray-700 dark:text-gray-200'
+                    return 'text-fg-body'
                   }
 
                   // Track first verse of current chapter for scroll targeting
@@ -560,7 +562,7 @@ export function VersesList({
                           )
                         }
                         style={fontScale.textStyle}
-                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${getButtonClass()}`}
+                        className={`w-full text-left px-3 py-2 rounded-lg outline-none transition-colors ${getButtonClass()}`}
                       >
                         <span
                           className={`font-semibold mr-2 ${getVerseNumberClass()}`}
@@ -589,7 +591,10 @@ export function VersesList({
           className="hidden lg:flex h-8 items-center justify-center"
         >
           {isLoadingNext && (
-            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            <Loader2
+              className="w-4 h-4 animate-spin text-fg-hint"
+              strokeWidth={1.5}
+            />
           )}
         </div>
         {/* Mobile: load next button */}
@@ -598,12 +603,12 @@ export function VersesList({
             type="button"
             onClick={onLoadNext}
             disabled={isLoadingNext}
-            className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors lg:hidden disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-sm text-fg hover:bg-hover rounded-lg transition-colors lg:hidden disabled:opacity-50"
           >
             {isLoadingNext ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
             ) : (
-              <ChevronDown size={16} />
+              <ChevronDown size={16} strokeWidth={1.5} />
             )}
             {t('navigation.loadNext')}
           </button>

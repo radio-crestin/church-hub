@@ -8,16 +8,21 @@
     "deploy:prod": "bash deploy.sh",
     "cf-typegen": "wrangler types",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "build:node": "esbuild src/node/server.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/server.mjs --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\"",
+    "start:node": "node dist/server.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.11",
     "aws4fetch": "^1.0.20",
-    "hono": "^4.13.12"
+    "hono": "^4.13.18",
+    "redis": "^5.12.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261003.1",
+    "@types/node": "^24.19.3",
+    "esbuild": "^0.28.2",
     "typescript": "^5.7.0",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.160.1"
   }
 }

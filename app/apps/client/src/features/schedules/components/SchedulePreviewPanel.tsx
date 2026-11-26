@@ -1,11 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eraser,
-  Eye,
-  EyeOff,
-  Loader2,
-} from 'lucide-react'
+import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -15,6 +8,7 @@ import {
   usePresentationState,
   useWebSocket,
 } from '~/features/presentation'
+import { PreviewNavControls } from '~/features/presentation/components/PreviewNavControls'
 import {
   useClearSlideHighlights,
   useSlideHighlights,
@@ -67,9 +61,9 @@ export function SchedulePreviewPanel({
   }
 
   return (
-    <div className="flex flex-col lg:h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col lg:h-full bg-panel rounded-xl border border-line">
       {/* Header with LIVE indicator and controls */}
-      <div className="flex items-center justify-between p-2 lg:p-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between p-2 lg:p-3 border-b border-line">
         {/* Left side - Content type button and clear highlights */}
         <div className="flex items-center gap-2">
           {state?.temporaryContent && (
@@ -80,13 +74,13 @@ export function SchedulePreviewPanel({
               type="button"
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-fg-label rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={t('bible:controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
               ) : (
-                <Eraser size={16} />
+                <Eraser size={16} strokeWidth={1.5} />
               )}
             </button>
           )}
@@ -94,25 +88,15 @@ export function SchedulePreviewPanel({
         {/* Right side - LIVE indicator and controls */}
         <div className="flex items-center gap-2">
           {/* LIVE Indicator */}
-          <div
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
-              isLive
-                ? 'bg-red-100 dark:bg-red-900/30'
-                : 'bg-gray-100 dark:bg-gray-700'
-            }`}
-          >
+          <div className="flex items-center gap-1.5 px-2 py-1">
             <span
               className={`w-2 h-2 rounded-full ${
-                isLive
-                  ? 'bg-red-500 animate-pulse'
-                  : 'bg-gray-400 dark:bg-gray-500'
+                isLive ? 'bg-live' : 'bg-line-strong'
               }`}
             />
             <span
               className={`text-xs font-semibold ${
-                isLive
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-400 dark:text-gray-500'
+                isLive ? 'text-live' : 'text-fg-hint'
               }`}
             >
               LIVE
@@ -125,7 +109,7 @@ export function SchedulePreviewPanel({
               type="button"
               onClick={handleHide}
               disabled={clearTemporary.isPending}
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={`${t('bible:controls.hide')} (Esc)`}
             >
               {clearTemporary.isPending ? (
@@ -146,7 +130,8 @@ export function SchedulePreviewPanel({
             <button
               type="button"
               disabled
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500 rounded-lg border border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed"
+              title={t('bible:controls.showHint')}
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-hint rounded-lg border border-line opacity-50 cursor-not-allowed"
             >
               <Eye size={18} />
               <span className="hidden sm:inline">
@@ -158,37 +143,19 @@ export function SchedulePreviewPanel({
       </div>
 
       {/* Preview Area */}
-      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
+      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col lg:justify-center lg:[container-type:size] [--preview-reserve:3.75rem]">
         <div className="w-full flex-shrink-0">
           <LivePreview />
         </div>
 
-        {/* Navigation Controls */}
-        <div className="flex items-center justify-center gap-3 pt-3 flex-shrink-0">
-          <button
-            type="button"
-            onClick={handlePrev}
-            disabled={!canNavigatePrev || clearTemporary.isPending}
-            data-testid="schedule-preview-prev"
-            className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-            title={t('bible:controls.prev')}
-          >
-            <ChevronLeft size={20} />
-            <span className="text-base">{t('bible:controls.prev')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!canNavigateNext || clearTemporary.isPending}
-            data-testid="schedule-preview-next"
-            className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-            title={t('bible:controls.next')}
-          >
-            <span className="text-base">{t('bible:controls.next')}</span>
-            <ChevronRight size={20} />
-          </button>
-        </div>
+        <PreviewNavControls
+          onPrev={handlePrev}
+          onNext={handleNext}
+          canPrev={canNavigatePrev}
+          canNext={canNavigateNext}
+          isBusy={clearTemporary.isPending}
+          testIdPrefix="schedule-preview"
+        />
       </div>
     </div>
   )

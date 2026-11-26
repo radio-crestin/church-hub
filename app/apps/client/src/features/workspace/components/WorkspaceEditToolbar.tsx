@@ -24,16 +24,17 @@ export function WorkspaceEditToolbar({
   return (
     <div
       data-testid="workspace-edit-toolbar"
-      className="flex shrink-0 flex-wrap items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 dark:border-indigo-800 dark:bg-indigo-900/30"
+      className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-line bg-panel px-3 py-2"
     >
       <LayoutGrid
         size={16}
-        className="shrink-0 text-indigo-600 dark:text-indigo-300"
+        strokeWidth={1.5}
+        className="shrink-0 text-fg-label"
       />
-      <span className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+      <span className="text-sm font-medium text-fg">
         {t('workspace.layout')}
       </span>
-      <span className="min-w-0 flex-1 truncate text-xs text-indigo-700 dark:text-indigo-300">
+      <span className="min-w-0 flex-1 truncate text-xs text-fg-hint">
         {t('workspace.editingHint')}
       </span>
       <button
@@ -41,18 +42,18 @@ export function WorkspaceEditToolbar({
         onClick={onReset}
         disabled={!isCustomised}
         data-testid="workspace-reset-layout"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-300 px-2.5 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-indigo-700 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+        className="inline-flex items-center gap-1.5 h-8 rounded-lg bg-field px-3 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <RotateCcw size={14} />
+        <RotateCcw size={14} strokeWidth={1.75} />
         {t('workspace.resetLayout')}
       </button>
       <button
         type="button"
         onClick={onDone}
         data-testid="workspace-done-editing"
-        className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-indigo-700"
+        className="inline-flex items-center gap-1.5 h-8 rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
       >
-        <Check size={14} />
+        <Check size={14} strokeWidth={1.75} />
         {t('workspace.doneEditing')}
       </button>
     </div>

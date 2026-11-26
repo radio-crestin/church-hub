@@ -38,14 +38,14 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
 
   if (booksWithTranslations.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="text-center py-8 text-fg-hint">
         {t('navigation.noBooks')}
       </div>
     )
@@ -55,7 +55,7 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
     <div className="h-full overflow-y-auto space-y-4">
       {oldTestamentBooks.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
+          <h3 className="text-xs font-semibold text-fg-hint mb-2 px-1">
             {t('navigation.oldTestament')}
           </h3>
           <div className="grid grid-cols-2 gap-1">
@@ -66,7 +66,7 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
                   key={book.id}
                   type="button"
                   onClick={() => onSelectBook(book.id, localizedName)}
-                  className="text-left px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors truncate"
+                  className="text-left px-2 py-1.5 text-sm text-fg-body hover:bg-hover rounded-md transition-colors truncate"
                 >
                   {localizedName}
                 </button>
@@ -78,7 +78,7 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
 
       {newTestamentBooks.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
+          <h3 className="text-xs font-semibold text-fg-hint mb-2 px-1">
             {t('navigation.newTestament')}
           </h3>
           <div className="grid grid-cols-2 gap-1">
@@ -89,7 +89,7 @@ export function BooksList({ books, isLoading, onSelectBook }: BooksListProps) {
                   key={book.id}
                   type="button"
                   onClick={() => onSelectBook(book.id, localizedName)}
-                  className="text-left px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors truncate"
+                  className="text-left px-2 py-1.5 text-sm text-fg-body hover:bg-hover rounded-md transition-colors truncate"
                 >
                   {localizedName}
                 </button>

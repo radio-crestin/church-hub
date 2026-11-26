@@ -21,10 +21,18 @@
     "verseteTineriDescription": "Adaugă versete biblice cu nume",
     "scene": "Scenă OBS",
     "sceneDescription": "Comută la o scenă OBS",
-    "importSchedule": {
-      "title": "Importă prezentare",
-      "description": "Importă dintr-o prezentare existentă"
-    }
+    "music": "Muzică",
+    "musicDescription": "Pornește un dosar de muzică sau piesele alese, în ordine sau amestecate",
+    "video": "Video",
+    "videoDescription": "Rulează pe tot ecranul un video din Galerie",
+    "verses": "Versete",
+    "versesDescription": "Versete dintr-o temă sau dintr-o carte, toate sau câteva la întâmplare",
+    "slides": "Diapozitive",
+    "slidesDescription": "Diapozitive proprii, cu text, imagini, video și animații",
+    "importPptx": "Importă PowerPoint",
+    "importPptxDescription": "Diapozitive dintr-un fișier .pptx, cu imagini, videoclipuri și animații",
+    "program": "Program",
+    "programDescription": "O altă prezentare, rulată în locul acesta"
   },
   "fontSize": {
     "increase": "Mărește textul",

@@ -7,6 +7,7 @@ import {
 import type {
   PresentationState,
   TextStyleRange,
+  VerseLoopTimer,
 } from '../service/presentation/types'
 import type { ScheduleAutomationState } from '../service/schedule-automation/types'
 import { wsLogger } from '../utils/fileLogger'
@@ -31,11 +32,28 @@ export type ScreenConfigUpdatedMessage = {
   }
 }
 
-export type ScreenConfigPreviewMessage = {
-  type: 'screen_config_preview'
+export type BibleTopicsUpdatedMessage = {
+  type: 'bible_topics_updated'
   payload: {
-    screenId: number
-    config: Record<string, unknown>
+    topicId: number
+    updatedAt: number
+  }
+}
+
+export type SlideTemplateUpdatedMessage = {
+  type: 'slide_template_updated'
+  payload: {
+    templateId: number
+    updatedAt: number
+  }
+}
+
+/** A template's unsaved design while it is edited, drawn live on its screens. */
+export type SlideTemplatePreviewMessage = {
+  type: 'slide_template_preview'
+  payload: {
+    templateId: number
+    design: Record<string, unknown> | null
     updatedAt: number
   }
 }
@@ -314,19 +332,20 @@ export function handleWebSocketMessage(
       return
     }
 
-    // Handle screen config preview - broadcast to all other clients
-    if (data.type === 'screen_config_preview') {
+    // A template being edited: its screens elsewhere draw the unsaved design
+    // (null: back to the saved one)
+    if (data.type === 'slide_template_preview') {
       const previewMessage = JSON.stringify({
-        type: 'screen_config_preview',
+        type: 'slide_template_preview',
         payload: {
-          screenId: data.payload.screenId,
-          config: data.payload.config,
+          templateId: data.payload.templateId,
+          design: data.payload.design,
           updatedAt: Date.now(),
         },
-      } satisfies ScreenConfigPreviewMessage)
+      } satisfies SlideTemplatePreviewMessage)
 
       wsLogger.debug(
-        `Broadcasting screen config preview for screen ${data.payload.screenId}`,
+        `Broadcasting slide template preview for template ${data.payload.templateId}`,
       )
 
       // Broadcast to all clients except the sender
@@ -453,6 +472,38 @@ export function broadcastScreenConfigUpdated(screenId: number) {
  * Notifies all connected clients that Drive sync just applied changes from
  * other devices, so open views can refetch songs/schedules and show badges.
  */
+/** A Bible topic's templates changed: clients reload the topics. */
+export function broadcastBibleTopicsUpdated(topicId: number) {
+  const message = JSON.stringify({
+    type: 'bible_topics_updated',
+    payload: { topicId, updatedAt: Date.now() },
+  } satisfies BibleTopicsUpdatedMessage)
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/** A slide template was saved, created or deleted: clients refetch it. */
+export function broadcastSlideTemplateUpdated(templateId: number) {
+  const message = JSON.stringify({
+    type: 'slide_template_updated',
+    payload: { templateId, updatedAt: Date.now() },
+  } satisfies SlideTemplateUpdatedMessage)
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
 export function broadcastSyncApplied(appliedCount: number) {
   const message = JSON.stringify({
     type: 'sync_applied',
@@ -475,6 +526,25 @@ export function broadcastSyncApplied(appliedCount: number) {
 }
 
 /**
+ * A presentation picked its random items again (verses, a video): pages
+ * showing it read it again.
+ */
+export function broadcastSchedulePicks(scheduleId: number) {
+  const message = JSON.stringify({
+    type: 'schedule_picks',
+    payload: { scheduleId },
+  })
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
  * Broadcasts what the presentation runner is doing (running which
  * presentation, at which step, when the next one goes up, or stopped).
  */
@@ -485,6 +555,25 @@ export function broadcastScheduleAutomation(state: ScheduleAutomationState) {
   })
 
   wsLogger.debug(`Broadcasting schedule_automation to ${clients.size} clients`)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts the verse slideshow's timer each time it starts, changes speed
+ * or stops (null).
+ */
+export function broadcastVerseLoopTimer(timer: VerseLoopTimer | null) {
+  const message = JSON.stringify({ type: 'verse_loop_timer', payload: timer })
+
+  wsLogger.debug(`Broadcasting verse_loop_timer to ${clients.size} clients`)
 
   for (const [clientId, conn] of clients) {
     try {

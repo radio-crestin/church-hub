@@ -69,9 +69,7 @@ export function KioskSettingsSection({
   }
 
   if (isLoading) {
-    return (
-      <div className="animate-pulse h-32 bg-gray-200 dark:bg-gray-700 rounded" />
-    )
+    return <div className="h-32 bg-field rounded-xl" />
   }
 
   // Build startup page options
@@ -94,23 +92,21 @@ export function KioskSettingsSection({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Monitor size={24} className="text-orange-600" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <Monitor size={16} strokeWidth={1.5} className="text-fg-label" />
+        <h3 className="text-base font-semibold text-fg">
           {t('sections.kiosk.title')}
         </h3>
       </div>
 
-      <p className="text-gray-600 dark:text-gray-400 text-sm">
-        {t('sections.kiosk.description')}
-      </p>
+      <p className="text-fg-label text-sm">{t('sections.kiosk.description')}</p>
 
       {/* Enable/Disable Kiosk Mode */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-panel border border-line rounded-xl">
         <div>
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
+          <label className="text-sm font-medium text-fg">
             {t('sections.kiosk.enable.label')}
           </label>
-          <p className="text-gray-600 dark:text-gray-400 text-xs mt-1">
+          <p className="text-fg-hint text-xs mt-1">
             {t('sections.kiosk.enable.description')}
           </p>
         </div>
@@ -124,8 +120,8 @@ export function KioskSettingsSection({
       {/* Startup Page Selection */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <PlayCircle className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
+          <PlayCircle size={16} strokeWidth={1.5} className="text-fg-label" />
+          <label className="text-sm font-medium text-fg">
             {t('sections.kiosk.startupPage.label')}
           </label>
         </div>
@@ -137,16 +133,16 @@ export function KioskSettingsSection({
           allowClear={false}
           portalContainer={portalContainer}
         />
-        <p className="text-gray-600 dark:text-gray-400 text-xs">
+        <p className="text-fg-hint text-xs">
           {t('sections.kiosk.startupPage.description')}
         </p>
       </div>
 
       {/* Debug: Test Screen Dim Overlay - Always show for testing */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="pt-4 border-t border-line">
         <div className="flex items-center gap-2 mb-3">
-          <Bug className="w-4 h-4 text-yellow-600" />
-          <span className="text-sm font-medium text-yellow-600">
+          <Bug size={16} strokeWidth={1.5} className="text-fg-label" />
+          <span className="text-sm font-medium text-fg-label">
             {t('sections.kiosk.debug.title')}
           </span>
         </div>
@@ -161,14 +157,14 @@ export function KioskSettingsSection({
             >
               {t('sections.kiosk.debug.testOverlay')}
             </Button>
-            <p className="text-gray-500 text-xs mt-1">
+            <p className="text-fg-hint text-xs mt-1">
               {t('sections.kiosk.debug.tapToDismiss')}
             </p>
           </div>
 
           {/* Brightness Controls */}
           <div className="space-y-2">
-            <p className="text-gray-500 text-xs">
+            <p className="text-fg-hint text-xs">
               {t('sections.kiosk.debug.brightnessControl')}{' '}
               {isBrightnessControlSupported()
                 ? t('sections.kiosk.debug.supported')

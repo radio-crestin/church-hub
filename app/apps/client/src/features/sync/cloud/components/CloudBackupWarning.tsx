@@ -14,15 +14,18 @@ export function CloudBackupWarning() {
 
   return (
     <div
-      className="mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+      className="mb-4 flex items-start gap-3 rounded-xl border border-line p-3"
       data-testid="cloud-backup-warning"
     >
-      <KeyRound className="mt-0.5 h-4 w-4 flex-shrink-0" />
+      <KeyRound
+        strokeWidth={1.5}
+        className="mt-0.5 h-4 w-4 flex-shrink-0 text-fg-label"
+      />
       <div>
-        <p className="font-medium">
+        <p className="text-sm font-medium text-fg">
           {t('sections.cloudSync.backupWarning.title')}
         </p>
-        <p className="mt-0.5 text-xs">
+        <p className="mt-0.5 text-xs text-fg-hint">
           {t('sections.cloudSync.backupWarning.body')}
         </p>
       </div>

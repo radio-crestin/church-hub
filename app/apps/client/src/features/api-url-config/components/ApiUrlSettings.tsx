@@ -64,13 +64,13 @@ export function ApiUrlSettings() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Server className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+        <Server strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
+        <h3 className="text-base font-semibold text-fg">
           {t('sections.apiUrl.title')}
         </h3>
       </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-sm text-fg-label">
         {t('sections.apiUrl.settingsDescription')}
       </p>
 
@@ -86,7 +86,7 @@ export function ApiUrlSettings() {
         <div className="space-y-2">
           <label
             htmlFor="settings-api-url"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-fg-body"
           >
             {t('sections.apiUrl.label')}
           </label>
@@ -110,8 +110,8 @@ export function ApiUrlSettings() {
         )}
 
         {connectionStatus === 'success' && (
-          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-            <Wifi className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-sm text-fg-body">
+            <Wifi strokeWidth={1.5} className="w-4 h-4 text-ok" />
             <span>{t('sections.apiUrl.connectionSuccess')}</span>
           </div>
         )}
@@ -125,17 +125,20 @@ export function ApiUrlSettings() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2
+                  strokeWidth={1.5}
+                  className="w-4 h-4 mr-2 animate-spin"
+                />
                 {t('sections.apiUrl.testing')}
               </>
             ) : connectionStatus === 'error' ? (
               <>
-                <WifiOff className="w-4 h-4 mr-2" />
+                <WifiOff strokeWidth={1.5} className="w-4 h-4 mr-2" />
                 {t('sections.apiUrl.retry')}
               </>
             ) : (
               <>
-                <Wifi className="w-4 h-4 mr-2" />
+                <Wifi strokeWidth={1.5} className="w-4 h-4 mr-2" />
                 {t('sections.apiUrl.testConnection')}
               </>
             )}

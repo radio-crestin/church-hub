@@ -1,3 +1,5 @@
+import { basename } from 'node:path'
+
 import {
   getNowPlayingQueue,
   getQueueItemAtIndex,
@@ -33,6 +35,9 @@ const AUDIO_SERVER_URL = `http://127.0.0.1:${AUDIO_SERVER_PORT}`
 let stateCallback: ((state: MusicPlayerState) => void) | null = null
 let statePollingInterval: ReturnType<typeof setInterval> | null = null
 let audioServerAvailable = false
+let audioServerConnected = false
+/** Counts seeks, so a state poll that left before one cannot undo it. */
+let seekCount = 0
 
 let playerState: MusicPlayerState = {
   isPlaying: false,
@@ -122,6 +127,7 @@ function startStatePolling(): void {
     if (!audioServerAvailable) return
 
     try {
+      const seeksBefore = seekCount
       const result = (await audioRequest('GET', '/state')) as {
         is_playing: boolean
         current_time: number
@@ -131,7 +137,7 @@ function startStatePolling(): void {
         current_file: string | null
       } | null
 
-      if (!result) return
+      if (!result || seeksBefore !== seekCount) return
 
       const wasPlaying = playerState.isPlaying
       const isNowPlaying = result.is_playing
@@ -144,8 +150,14 @@ function startStatePolling(): void {
         isMuted: result.is_muted,
       })
 
-      // Detect track end: was playing, now not playing, and we have a current track
-      if (wasPlaying && !isNowPlaying && playerState.currentTrack) {
+      // Detect track end: was playing, now not playing, and we have a current
+      // track from the queue (a file played by itself, fileId -1, just ends)
+      if (
+        wasPlaying &&
+        !isNowPlaying &&
+        playerState.currentTrack &&
+        playerState.currentTrack.fileId >= 0
+      ) {
         // Check if track reached the end (within 0.5s of duration)
         if (
           result.duration > 0 &&
@@ -212,6 +224,10 @@ export async function initializeMusicPlayer(): Promise<boolean> {
  * following its state.
  */
 async function connectAudioServer(): Promise<void> {
+  // The start-up wait and a first command can both find the server: a second
+  // connect would put the saved track back over the one playing.
+  if (audioServerConnected) return
+  audioServerConnected = true
   // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Audio server connected')
 
@@ -270,6 +286,7 @@ export function shutdownMusicPlayer(): void {
   })
 
   audioServerAvailable = false
+  audioServerConnected = false
 
   playerState = {
     isPlaying: false,
@@ -288,6 +305,12 @@ export function shutdownMusicPlayer(): void {
 
   // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
   console.log(LOG_PREFIX, 'Music player shutdown complete')
+}
+
+async function seekTo(time: number): Promise<void> {
+  await audioRequest('POST', '/seek', { time })
+  seekCount++
+  updateState({ currentTime: time })
 }
 
 async function loadAndPlayFile(filePath: string): Promise<void> {
@@ -315,7 +338,7 @@ async function playNext(): Promise<void> {
 
 async function playPrevious(): Promise<void> {
   if (playerState.currentTime > 3) {
-    await audioRequest('POST', '/seek', { time: 0 })
+    await seekTo(0)
     return
   }
 
@@ -323,7 +346,7 @@ async function playPrevious(): Promise<void> {
   if (prevIndex >= 0) {
     await playAtIndex(prevIndex)
   } else {
-    await audioRequest('POST', '/seek', { time: 0 })
+    await seekTo(0)
   }
 }
 
@@ -376,10 +399,8 @@ async function playFile(fileId: number): Promise<void> {
   await playAtIndex(index)
 }
 
-export async function executeCommand(
-  command: MusicPlayerCommand,
-): Promise<void> {
-  // An audio server that came up after the start is taken on at first use.
+/** An audio server that came up after the start is taken on at first use. */
+async function ensureAudioServer(action: string): Promise<boolean> {
   if (!audioServerAvailable && (await waitForAudioServer(1, 0))) {
     audioServerAvailable = true
     await connectAudioServer()
@@ -388,10 +409,42 @@ export async function executeCommand(
     // biome-ignore lint/suspicious/noConsole: Server-side logging for audio
     console.warn(
       LOG_PREFIX,
-      `Cannot execute '${command.type}': audio server not available`,
+      `Cannot execute '${action}': audio server not available`,
     )
-    return
   }
+  return audioServerAvailable
+}
+
+/**
+ * Plays a file that is not in the music library (a presentation's rendered
+ * MIDI audio) in place of the queue's track, with the player's volume; the
+ * queue stays as it is and does not move on when the file ends. False when
+ * there is no audio server.
+ */
+export async function playAudioFile(
+  path: string,
+  title: string,
+): Promise<boolean> {
+  if (!(await ensureAudioServer('play_audio_file'))) return false
+  updateState({
+    currentIndex: -1,
+    currentTrack: {
+      id: -1,
+      fileId: -1,
+      path,
+      filename: basename(path),
+      title,
+    },
+  })
+  await loadAndPlayFile(path)
+  updateState({ isPlaying: true, currentTime: 0 })
+  return true
+}
+
+export async function executeCommand(
+  command: MusicPlayerCommand,
+): Promise<void> {
+  if (!(await ensureAudioServer(command.type))) return
 
   switch (command.type) {
     case 'play':
@@ -420,7 +473,7 @@ export async function executeCommand(
       break
 
     case 'seek':
-      await audioRequest('POST', '/seek', { time: command.time })
+      await seekTo(command.time)
       break
 
     case 'volume':

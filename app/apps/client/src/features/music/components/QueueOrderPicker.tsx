@@ -26,10 +26,10 @@ export function QueueOrderPicker({ order, onChange }: QueueOrderPickerProps) {
           aria-checked={order === option}
           onClick={() => onChange(option)}
           data-testid={`music-queue-order-${option}`}
-          className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
             order === option
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+              ? 'bg-selected text-fg'
+              : 'text-fg-label hover:bg-hover hover:text-fg'
           }`}
         >
           {t(`player.orders.${option}`)}

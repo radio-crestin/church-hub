@@ -3,6 +3,7 @@ import {
   addCloudDevice,
   connectCloudSync,
   disconnectCloudSync,
+  listCloudDevices,
   revokeCloudDevice,
 } from '../service/sync'
 import type { Permission } from '../service/users/types'
@@ -29,7 +30,8 @@ function failure(error: unknown): Response {
  * Cloud sync (T-171): this server's church on the sync service.
  * POST   /api/sync/cloud                     { serviceUrl? } → { churchId, readUrl } (localhost)
  * DELETE /api/sync/cloud                     → disconnected (localhost)
- * POST   /api/sync/cloud/devices             { userId, name } → device token (users.edit)
+ * GET    /api/sync/cloud/devices             → the church's devices (users.edit)
+ * POST   /api/sync/cloud/devices             { userId, name } → device token and join link (users.edit)
  * DELETE /api/sync/cloud/devices/:deviceId   → revoked, new read path (users.edit)
  */
 export async function handleCloudSyncRoutes(
@@ -71,6 +73,16 @@ export async function handleCloudSyncRoutes(
     if (denied) return denied
     await disconnectCloudSync()
     return Response.json({ data: { connected: false } })
+  }
+
+  if (url.pathname === '/api/sync/cloud/devices' && req.method === 'GET') {
+    const denied = checkPermission('users.edit')
+    if (denied) return denied
+    try {
+      return Response.json({ data: await listCloudDevices() })
+    } catch (error) {
+      return failure(error)
+    }
   }
 
   if (url.pathname === '/api/sync/cloud/devices' && req.method === 'POST') {

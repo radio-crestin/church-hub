@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 
 import { addBackupConfig } from './add-backup-config'
+import { addBibleTopicTemplates } from './add-bible-topic-templates'
 import { addBibleTopics } from './add-bible-topics'
 import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
@@ -10,9 +11,13 @@ import { addLogsPermissions } from './add-logs-permissions'
 import { addNotifications } from './add-notifications'
 import { addPreviewScreen } from './add-preview-screen'
 import { addScheduleAutomation } from './add-schedule-automation'
+import { addScheduleItemConfig } from './add-schedule-item-config'
+import { addScheduleItemMidi } from './add-schedule-item-midi'
 import { addScheduleItemSung } from './add-schedule-item-sung'
+import { addScheduleNesting } from './add-schedule-nesting'
 import { addScreenMonitor } from './add-screen-monitor'
 import { addScreenOpenOnStartup } from './add-screen-open-on-startup'
+import { addSlideTemplates } from './add-slide-templates'
 import { addSongBackground } from './add-song-background'
 import { addSongBookmarkSung } from './add-song-bookmark-sung'
 import { addSongEditHistory } from './add-song-edit-history'
@@ -36,12 +41,14 @@ import { mergeBiblePassagesIntoVerseteTineri } from './merge-bible-passages-into
 import { migrateMidiDeviceByName } from './migrate-midi-device-by-name'
 import { migrateShortcuts } from './migrate-shortcuts'
 import { moveFocusOnlyToKeyScopes } from './move-focus-only-to-key-scopes'
+import { moveScreenLayoutsIntoTemplates } from './move-screen-layouts-into-templates'
 import { rebuildFtsForSingleCharFix } from './rebuild-fts-single-char-fix'
 import { removeSeededSecrets } from './remove-seeded-secrets'
 import { removeSeededTestSong } from './remove-seeded-test-song'
 import { seedSystemRoles } from './seed'
 import { seedBibleTopics } from './seed-bible-topics'
 import { seedBibleTranslations } from './seed-bibles'
+import { seedBundledTemplates } from './seed-bundled-templates'
 import { seedSampleMusic } from './seed-music'
 import { seedDefaultObsScenes } from './seed-obs-scenes'
 import { seedDefaultScreens } from './seed-screens'
@@ -261,6 +268,15 @@ export function runMigrations(rawDb: Database): MigrationResult {
     () => addYouTubeBroadcastSettings(rawDb),
   )
 
+  // Slide templates (CH-184): the tables, then the bundled designs, before
+  // seed-screens gives each new screen a template of its own.
+  runStep('add_slide_templates', 'Running add slide templates migration', () =>
+    addSlideTemplates(rawDb),
+  )
+  runStep('seed_bundled_templates', 'Seeding bundled slide templates', () =>
+    seedBundledTemplates(rawDb),
+  )
+
   // Seed default screens
   runStep('seed_screens', 'Seeding default screens', () =>
     seedDefaultScreens(rawDb),
@@ -414,6 +430,27 @@ export function runMigrations(rawDb: Database): MigrationResult {
     () => addScheduleAutomation(rawDb),
   )
 
+  // The settings of the music, video and verses items of a presentation.
+  runStep(
+    'add_schedule_item_config',
+    'Running add schedule item config migration',
+    () => addScheduleItemConfig(rawDb),
+  )
+
+  // A song item's MIDI file, its slides synced to the music.
+  runStep(
+    'add_schedule_item_midi',
+    'Running add schedule item MIDI migration',
+    () => addScheduleItemMidi(rawDb),
+  )
+
+  // Presentations inside presentations, and the control room's queue.
+  runStep(
+    'add_schedule_nesting',
+    'Running add schedule nesting migration',
+    () => addScheduleNesting(rawDb),
+  )
+
   // Merge the legacy `bible_passage` schedule items into the surviving
   // "Versete Biblice" shape (one versete_tineri slide holding the whole
   // passage). Must run after the Bible translations are seeded, because the
@@ -455,6 +492,12 @@ export function runMigrations(rawDb: Database): MigrationResult {
   runStep('seed_bible_topics', 'Seeding Bible topics', () =>
     seedBibleTopics(rawDb),
   )
+  // A topic's slide template, and a passage's own (T-902).
+  runStep(
+    'add_bible_topic_templates',
+    'Running add bible topic templates migration',
+    () => addBibleTopicTemplates(rawDb),
+  )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and
   // change-tracking triggers. Must run LAST so seeded rows get their uuid
@@ -484,6 +527,14 @@ export function runMigrations(rawDb: Database): MigrationResult {
     'upgrade_factory_transitions',
     'Running upgrade factory transitions migration',
     () => upgradeFactoryTransitions(rawDb),
+  )
+
+  // Every screen's own layouts become its template (after the steps above
+  // that still upgrade those layouts in place).
+  runStep(
+    'move_screen_layouts_into_templates',
+    'Moving screen layouts into slide templates',
+    () => moveScreenLayoutsIntoTemplates(rawDb),
   )
 
   // Song typos are found through the songs_fts vocabulary now (T-128).

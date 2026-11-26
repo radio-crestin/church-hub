@@ -31,7 +31,7 @@ const DEFAULT_BACKGROUND: ScreenBackgroundConfig = {
   opacity: 1,
 }
 
-const LABEL_CLASS = 'text-xs text-gray-500 dark:text-gray-400'
+const LABEL_CLASS = 'text-xs text-fg-label'
 
 interface BackgroundEditorProps {
   /** null = no background of its own (only offered with `allowInherit`) */
@@ -132,7 +132,7 @@ export function BackgroundEditor({
               type="color"
               value={current.color ?? DEFAULT_COLOR}
               onChange={(e) => update({ color: e.target.value })}
-              className="w-10 h-8 rounded cursor-pointer"
+              className="w-10 h-8 rounded-lg cursor-pointer"
             />
             <Input
               value={current.color ?? DEFAULT_COLOR}
