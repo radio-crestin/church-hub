@@ -186,6 +186,9 @@
     "openInBible": "Open in the Bible",
     "expand": "Expand topics",
     "collapse": "Collapse topics",
+    "passageTemplate": {
+      "none": "Same as the topic"
+    },
     "slideshow": {
       "play": "Play",
       "playHint": "Present every verse, one after another, each for the time it takes to read it; stops on the last one",

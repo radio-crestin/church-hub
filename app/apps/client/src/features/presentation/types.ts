@@ -208,6 +208,8 @@ export interface VerseteTineriEntry {
   endVerse: number
   text: string
   sortOrder: number
+  /** Its own slide template (a topic passage's); unset: the slide's. */
+  templateId?: number | null
 }
 
 /**

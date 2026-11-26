@@ -182,6 +182,12 @@ export const presentationSchemas = {
       endVerse: { type: 'integer' },
       text: { type: 'string' },
       sortOrder: { type: 'integer' },
+      templateId: {
+        type: 'integer',
+        nullable: true,
+        description:
+          "Its own slide template (a Bible topic passage's), over the slide's templateId while it is on screen",
+      },
     },
   },
   PresentTemporaryVerseteTineriInput: {

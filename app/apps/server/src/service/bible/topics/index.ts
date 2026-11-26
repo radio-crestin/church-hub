@@ -1,6 +1,7 @@
 export { getBibleTopicPassages } from './getBibleTopicPassages'
 export { getBibleTopicReferences } from './getBibleTopicReferences'
 export { listBibleTopics } from './listBibleTopics'
+export { setBibleTopicPassageTemplate } from './setBibleTopicPassageTemplate'
 export type {
   BibleTopic,
   BibleTopicFixture,

@@ -17,9 +17,10 @@ interface TemplatePickerProps {
   /**
    * `card`: the thumbnail and name, full width (settings). `compact`: a small
    * thumbnail and name (a page header). `chip`: an icon, plus the name once
-   * one is chosen (beside a list item).
+   * one is chosen (beside a list item). `icon`: an icon, or the chosen one's
+   * small thumbnail, its name in the tooltip (a row of a long list).
    */
-  variant?: 'card' | 'compact' | 'chip'
+  variant?: 'card' | 'compact' | 'chip' | 'icon'
   testId?: string
 }
 
@@ -28,9 +29,10 @@ const TRIGGER_CLASS = {
   compact:
     'flex h-8 max-w-56 items-center gap-2 rounded-lg bg-raised py-1 pr-2 pl-1 text-left text-sm font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover disabled:opacity-50',
   chip: 'flex max-w-40 items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs text-fg-hint transition-colors hover:bg-hover hover:text-fg-body disabled:opacity-50',
+  icon: 'flex h-7 min-w-7 items-center justify-center rounded-md p-1 text-fg-hint transition-colors hover:bg-hover hover:text-fg disabled:opacity-50',
 }
 
-const THUMB_WIDTH = { card: 'w-24', compact: 'w-12', chip: '' }
+const THUMB_WIDTH = { card: 'w-24', compact: 'w-12', chip: '', icon: 'w-8' }
 
 /**
  * Choosing a template is one choice: the current one shows with its
@@ -51,6 +53,13 @@ export function TemplatePicker({
   // A presentation's own theme isn't among the shared ones: read it by id.
   const { data: own } = useSlideTemplate(listed ? null : value)
   const current = listed ?? own ?? null
+  const currentName = current ? templateDisplayName(current, t) : noneLabel
+  const hasName = variant !== 'icon' && (variant !== 'chip' || current)
+  // Icon only: the name is read out and shown on hover.
+  const iconLabel =
+    variant === 'icon'
+      ? `${t('templates.picker.change')}: ${currentName ?? ''}`
+      : undefined
 
   return (
     <>
@@ -59,10 +68,14 @@ export function TemplatePicker({
         data-testid={testId}
         disabled={disabled}
         onClick={() => setOpen(true)}
-        title={t('templates.picker.change')}
+        data-value={value ?? undefined}
+        title={iconLabel ?? t('templates.picker.change')}
+        aria-label={iconLabel}
         className={TRIGGER_CLASS[variant]}
       >
-        {variant === 'chip' ? (
+        {variant === 'icon' && !current ? (
+          <LayoutTemplate size={16} strokeWidth={1.5} className="flex-none" />
+        ) : variant === 'chip' ? (
           <LayoutTemplate
             size={16}
             strokeWidth={1.5}
@@ -84,15 +97,15 @@ export function TemplatePicker({
             />
           </span>
         )}
-        {(variant !== 'chip' || current) && (
+        {hasName && (
           <span
             data-testid={`${testId}-value`}
             className="min-w-0 flex-1 truncate"
           >
-            {current ? templateDisplayName(current, t) : noneLabel}
+            {currentName}
           </span>
         )}
-        {variant !== 'chip' && (
+        {(variant === 'card' || variant === 'compact') && (
           <ChevronDown
             size={16}
             strokeWidth={1.5}

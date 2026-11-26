@@ -50,16 +50,25 @@ export function useVerseSlideshow(
       ? { index: playing.currentEntryIndex, count: playing.entries.length }
       : null,
     start,
-    /** The slideshow on screen redraws, on the same verse, with this template. */
-    restyle: (newTemplateId: number | null) => {
+    /**
+     * The slideshow on screen redraws, on the same verse, with another
+     * template or its entries' own templates changed.
+     */
+    refresh: (changes: {
+      templateId?: number | null
+      entries?: VerseteTineriEntry[]
+    }) => {
       if (!playing) return
       present.mutate({
-        entries: playing.entries,
+        entries: changes.entries ?? playing.entries,
         currentEntryIndex: playing.currentEntryIndex,
         loop: playing.loop,
         autoAdvance: playing.autoAdvance,
         slideshow,
-        templateId: newTemplateId,
+        templateId:
+          changes.templateId !== undefined
+            ? changes.templateId
+            : playing.templateId,
       })
     },
     stop: () => clear.mutate(),

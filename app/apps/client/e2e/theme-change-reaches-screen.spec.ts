@@ -9,7 +9,8 @@ import {
  * A Bible topic's template (its chip beside ▶ and 🔁) reaches the projector
  * however the topic is presented: a verse by hand, the verses stepped to from
  * it, its slideshow. Choosing another template mid-play restyles the screen
- * at once, and opening another topic mid-play moves the slideshow to it.
+ * at once, and opening another topic mid-play moves the slideshow to it. A
+ * passage may have its own template over the topic's.
  */
 
 const RED = 'rgb(255, 0, 0)'
@@ -225,5 +226,58 @@ test.describe("A Bible topic's template on screen", () => {
         autoAdvance: true,
         loop: false,
       })
+  })
+
+  test("a passage's own template wins over the topic's, by hand and in the slideshow", async ({
+    page,
+    request,
+  }) => {
+    const panel = page.getByTestId('bible-topics-panel')
+    const love = await topicId(request, 'gods-love')
+    const passages = panel.getByTestId('bible-topic-passage')
+    const presentByHand = (index: number) =>
+      passages.nth(index).getByRole('button').first().click()
+    await chooseTemplate(page, red)
+
+    // The second passage gets its own, from the button on its row.
+    const own = panel.getByTestId('bible-topic-passage-template-1')
+    await own.click()
+    await page.getByTestId(`template-choice-${blue}`).click()
+    await expect(own).toHaveAttribute('data-value', String(blue))
+    await expect(
+      panel.getByTestId('bible-topic-passage-template-0'),
+    ).not.toHaveAttribute('data-value')
+    await expect
+      .poll(async () => {
+        const topic = (
+          await (await request.get(`/api/bible/topics/${love}`)).json()
+        ).data
+        return topic.passages[1].templateId
+      })
+      .toBe(blue)
+
+    // By hand: each passage with its template.
+    await presentByHand(0)
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({ reference: 'Ioan 3:16', templateId: red })
+    await presentByHand(1)
+    await expect
+      .poll(() => onScreen(request))
+      .toMatchObject({ reference: 'Romani 5:8', templateId: blue })
+    await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
+
+    // In the slideshow: the topic's, then the passage's own.
+    await panel.getByTestId('bible-topic-loop').click()
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+    await panel.getByTestId('bible-topic-next').click()
+    await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
+    expect(await drawsColour(display, RED)).toBe(false)
+
+    // Back to the topic's, mid-play: the screen follows.
+    await own.click()
+    await page.getByTestId('template-choice-none').click()
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+    await expect(own).not.toHaveAttribute('data-value')
   })
 })

@@ -1,7 +1,10 @@
 import type { VerseteTineriEntry } from '~/features/presentation/types'
 import type { BibleTopicPassage } from '../types'
 
-/** A topic's passages as slideshow entries: one slide per passage. */
+/**
+ * A topic's passages as slideshow entries: one slide per passage, with its
+ * own template if it has one.
+ */
 export function toSlideshowEntries(
   passages: BibleTopicPassage[],
 ): VerseteTineriEntry[] {
@@ -22,6 +25,7 @@ export function toSlideshowEntries(
         endVerse: last.verse,
         text: passage.verses.map((verse) => verse.text).join(' '),
         sortOrder: index,
+        templateId: passage.templateId,
       },
     ]
   })

@@ -3,9 +3,11 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useNavigateTemporary } from '~/features/presentation'
+import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
+import { useSetPassageTemplate } from '../hooks/useSetPassageTemplate'
 import { useTakeOverTopicSlideshow } from '../hooks/useTakeOverTopicSlideshow'
 import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
 import type { BibleTopicPassage } from '../types'
@@ -19,7 +21,7 @@ interface BibleTopicPassagesProps {
   /** The verse on screen, to mark its passage */
   activeVerseId?: number
   onBack: () => void
-  /** Presents a verse drawn with the topic's template */
+  /** Presents a verse drawn with its passage's template, else the topic's */
   onPresentVerse: (verse: BibleVerse, templateId: number | null) => void
   onOpenVerse: (verse: BibleVerse) => void
 }
@@ -28,7 +30,8 @@ interface BibleTopicPassagesProps {
  * A topic's passages in the current translation, best first. A passage
  * presents its first verse (the Bible's next verse continues it);
  * Previous / Next present the topic's passages one by one, and the bar above
- * plays them all as a slideshow timed to each passage's length.
+ * plays them all as a slideshow timed to each passage's length. A passage
+ * may have its own template over the topic's, by hand and in the slideshow.
  */
 export function BibleTopicPassages({
   topicId,
@@ -46,9 +49,24 @@ export function BibleTopicPassages({
   const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
   useTakeOverTopicSlideshow(topicId, entries.length > 0, slideshow)
   const navigateSlideshow = useNavigateTemporary()
+  const setPassageTemplate = useSetPassageTemplate(topicId)
+  const templateOf = (passage: BibleTopicPassage) =>
+    passage.templateId ?? templateId
   const chooseTemplate = (id: number | null) => {
     setTemplateId(id)
-    slideshow.restyle(id)
+    slideshow.refresh({ templateId: id })
+  }
+  const choosePassageTemplate = (
+    passage: BibleTopicPassage,
+    id: number | null,
+  ) => {
+    setPassageTemplate.mutate({ passage, templateId: id })
+    const firstId = passage.verses[0]?.id
+    slideshow.refresh({
+      entries: entries.map((entry) =>
+        entry.id === firstId ? { ...entry, templateId: id } : entry,
+      ),
+    })
   }
   const activeIndex =
     slideshow.position?.index ??
@@ -64,8 +82,9 @@ export function BibleTopicPassages({
       })
       return
     }
-    const verse = passages[index]?.verses[0]
-    if (verse) onPresentVerse(verse, templateId)
+    const passage = passages[index]
+    const verse = passage?.verses[0]
+    if (verse) onPresentVerse(verse, templateOf(passage))
   }
 
   return (
@@ -142,7 +161,7 @@ export function BibleTopicPassages({
                 >
                   <button
                     type="button"
-                    onClick={() => onPresentVerse(first, templateId)}
+                    onClick={() => onPresentVerse(first, templateOf(passage))}
                     title={t('topics.present')}
                     className="min-w-0 flex-1 px-2.5 py-2 text-left hover:bg-hover rounded-l-lg"
                   >
@@ -172,6 +191,15 @@ export function BibleTopicPassages({
                   >
                     <BookOpen className="w-4 h-4" strokeWidth={1.5} />
                   </button>
+                  <div className="my-1 mr-1 -ml-1">
+                    <TemplatePicker
+                      variant="icon"
+                      value={passage.templateId}
+                      noneLabel={t('topics.passageTemplate.none')}
+                      onChange={(id) => choosePassageTemplate(passage, id)}
+                      testId={`bible-topic-passage-template-${index}`}
+                    />
+                  </div>
                 </li>
               )
             })}

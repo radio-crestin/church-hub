@@ -29,6 +29,8 @@ export interface BibleTopicPassage extends BibleTopicReference {
   /** e.g. "Ioan 3:16-17", with the translation's book name */
   reference: string
   verses: BibleVerse[]
+  /** Its own slide template; null: the topic's. */
+  templateId: number | null
 }
 
 export interface BibleTopicWithPassages extends BibleTopic {

@@ -189,6 +189,9 @@
     "openInBible": "Deschide în Biblie",
     "expand": "Extinde temele",
     "collapse": "Restrânge temele",
+    "passageTemplate": {
+      "none": "La fel ca tema subiectului"
+    },
     "slideshow": {
       "play": "Prezintă automat",
       "playHint": "Prezintă versetele pe rând, fiecare cât durează să fie citit; se oprește la ultimul",

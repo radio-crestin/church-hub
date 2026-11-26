@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 
 import { addBackupConfig } from './add-backup-config'
+import { addBibleTopicPassageTemplates } from './add-bible-topic-passage-templates'
 import { addBibleTopics } from './add-bible-topics'
 import { addCategoryHiddenFlag } from './add-category-hidden-flag'
 import { addCloseOnEscape } from './add-close-on-escape'
@@ -482,6 +483,12 @@ export function runMigrations(rawDb: Database): MigrationResult {
   )
   runStep('seed_bible_topics', 'Seeding Bible topics', () =>
     seedBibleTopics(rawDb),
+  )
+  // A topic's passage may have its own slide template (T-902).
+  runStep(
+    'add_bible_topic_passage_templates',
+    'Running add bible topic passage templates migration',
+    () => addBibleTopicPassageTemplates(rawDb),
   )
 
   // Google Drive library sync: uuid identity columns, sync engine tables and
