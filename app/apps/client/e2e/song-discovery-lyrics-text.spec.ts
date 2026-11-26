@@ -39,6 +39,7 @@ test('Compare shows a library song lyrics as text', async ({
     'Tu esti stanca mea si adapostul meu',
     'in Tine ma incred cand vine furtuna',
   ]
+  const libraryOnly = 'si cant cu bucurie pana la sfarsit'
 
   const seeded = await request.post('/api/songs', {
     data: {
@@ -46,7 +47,9 @@ test('Compare shows a library song lyrics as text', async ({
       sourceFilename: `library-text-${ts}.xml`,
       slides: [
         {
-          content: `${lyrics.map((line) => `<p>${line}</p>`).join('')}${MARKUP}`,
+          // One line more than the source's: a version of it, not the same
+          // lyrics (which would make it the same song, T-176).
+          content: `${[...lyrics, libraryOnly].map((line) => `<p>${line}</p>`).join('')}${MARKUP}`,
           sortOrder: 0,
         },
       ],
@@ -80,10 +83,8 @@ test('Compare shows a library song lyrics as text', async ({
     await page.getByText(candidateTitle).click({ timeout: 30_000 })
     await page.getByRole('button', { name: /^(Compare|Compară)$/ }).click()
 
-    // The library song's lines were read as text: the same as the candidate's.
-    await expect(
-      page.getByText(/The lyrics are identical|Versurile sunt identice/),
-    ).toBeVisible()
+    // The library song's lines were read as text: its own line shows as one.
+    await expect(page.getByText(libraryOnly, { exact: true })).toBeVisible()
 
     await expect(page.locator('[data-e2e-markup]')).toHaveCount(0)
     expect(await page.evaluate(() => (window as any).__e2eMarkupRan)).toBe(
