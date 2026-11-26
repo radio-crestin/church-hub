@@ -111,7 +111,7 @@ export function SidebarItemCard({
       ref={setNodeRef}
       style={style}
       className={`
-        flex items-center gap-3 p-3 bg-panel
+        flex flex-wrap items-center gap-3 p-3 bg-panel
         border border-line rounded-lg
         ${isDragging ? 'bg-selected shadow-popover' : ''}
         ${!item.isVisible ? 'opacity-60' : ''}
@@ -180,27 +180,28 @@ export function SidebarItemCard({
         )}
       </div>
 
+      {/* Which sidebar section the page sits in: inline from small tablets
+        up, on its own line on a phone so the page name keeps its room. */}
+      {onChangeGroup && (
+        <select
+          data-testid={`sidebar-item-group-${item.id}`}
+          aria-label={t('sidebar:groups.label')}
+          title={t('sidebar:groups.label')}
+          value={groupOf(item)}
+          onChange={(event) =>
+            onChangeGroup(event.target.value as SidebarGroupId)
+          }
+          className="order-last basis-full sm:order-none sm:basis-auto h-8 sm:max-w-40 cursor-pointer rounded-lg border-0 bg-field px-2 text-sm text-fg-body outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          {SIDEBAR_GROUPS.map((group) => (
+            <option key={group} value={group}>
+              {t(`sidebar:groups.${group}`)}
+            </option>
+          ))}
+        </select>
+      )}
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-1">
-        {/* Which sidebar section the page sits in */}
-        {onChangeGroup && (
-          <select
-            data-testid={`sidebar-item-group-${item.id}`}
-            aria-label={t('sidebar:groups.label')}
-            title={t('sidebar:groups.label')}
-            value={groupOf(item)}
-            onChange={(event) =>
-              onChangeGroup(event.target.value as SidebarGroupId)
-            }
-            className="h-8 max-w-40 cursor-pointer rounded-lg border-0 bg-field px-2 text-sm text-fg-body outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus"
-          >
-            {SIDEBAR_GROUPS.map((group) => (
-              <option key={group} value={group}>
-                {t(`sidebar:groups.${group}`)}
-              </option>
-            ))}
-          </select>
-        )}
         {/* Delete Button (custom pages only) */}
         {isCustom && onDelete && (
           <button
