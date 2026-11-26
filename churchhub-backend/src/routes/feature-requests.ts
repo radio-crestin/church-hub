@@ -10,6 +10,7 @@ import {
   submitFeatureRequest,
 } from '../feature-requests'
 import type { Bindings } from '../types'
+import { clientIp } from '../utils/clientIp'
 import { publicOrigin } from '../utils/publicOrigin'
 
 // `<random UUID>.<ext>`: unguessable, so only the issue's link finds it.
@@ -34,10 +35,10 @@ const featureRequestBodyLimit = bodyLimit({
  * checked before anything reaches GitHub or WhatsApp.
  */
 featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => {
-  const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown'
+  const ip = clientIp(c)
   const { success: withinLimit } =
     await c.env.FEATURE_REQUEST_RATE_LIMITER.limit({
-      key: `feature-request:${clientIp}`,
+      key: `feature-request:${ip}`,
     })
   if (!withinLimit) return rateLimited(c)
 
@@ -45,7 +46,7 @@ featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => 
     const request = parseFeatureRequest(await c.req.json().catch(() => null))
     const withinDailyQuota = await consumeDailyQuota(
       c.env.SIGNALING_KV,
-      clientIp,
+      ip,
       c.env.COOKIE_ENCRYPTION_KEY
     )
     if (!withinDailyQuota) return rateLimited(c)
