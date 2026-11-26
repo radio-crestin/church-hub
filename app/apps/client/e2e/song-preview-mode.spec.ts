@@ -27,7 +27,6 @@ test.describe('Song Preview Mode', () => {
     }
     await firstSong.click()
     await expect(page).toHaveURL(/\/songs\/\d+/, { timeout: 5000 })
-    await page.waitForTimeout(800)
 
     // Two icons instead of a labelled switch: live (a click projects) and
     // preview (a click stages). No "Previzualizare" text in the header.
@@ -64,7 +63,6 @@ test.describe('Song Preview Mode', () => {
 
     // Projecting promotes the staged slide to live (green ring).
     await projectBtn.click()
-    await page.waitForTimeout(800)
     await expect(slide0).toHaveClass(/ring-live/)
 
     // While THIS song is live, clicking another verse drives the projection too
@@ -73,7 +71,6 @@ test.describe('Song Preview Mode', () => {
     const slide1 = page.locator('[data-testid="song-slide-1"]')
     if (await slide1.isVisible({ timeout: 1000 }).catch(() => false)) {
       await slide1.click()
-      await page.waitForTimeout(800)
       await expect(slide1).toHaveClass(/ring-live/)
       await expect(slide0).not.toHaveClass(/ring-live/)
       liveSlide = slide1
@@ -84,7 +81,6 @@ test.describe('Song Preview Mode', () => {
     const hideBtn = page.getByRole('button', { name: /ascunde|hide/i }).first()
     await expect(hideBtn).toBeVisible({ timeout: 3000 })
     await hideBtn.click()
-    await page.waitForTimeout(600)
     await expect(liveSlide).toHaveClass(/bg-selected/)
     await expect(projectBtn).toBeVisible()
 

@@ -1,11 +1,12 @@
 import { DatabaseSync } from 'node:sqlite'
-import { fileURLToPath } from 'node:url'
 import {
   type APIRequestContext,
   expect,
   type Page,
   test,
 } from '@playwright/test'
+
+import { TEST_DB_PATH } from '../playwright.config'
 
 /**
  * A song's first slide (with a gama) and last slide (with "Amin") have their
@@ -15,9 +16,6 @@ import {
  * (T-110). Such a screen's first/last slide layouts follow its own song design.
  */
 
-const TEST_DB_PATH = fileURLToPath(
-  new URL('./.test-data/app.db', import.meta.url),
-)
 const CUSTOM_FONT = 'Times New Roman'
 
 /** A primary screen as an older version left it: no first/last slide layouts. */

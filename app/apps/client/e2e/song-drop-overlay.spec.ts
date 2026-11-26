@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test'
 
+import { pinShellServerPort } from './helpers/desktop-shell-port'
+
 /**
  * Dragging files over the desktop app shows the "drop to import" overlay;
  * dragging them back out must hide it again.
@@ -10,6 +12,7 @@ import { expect, type Page, test } from '@playwright/test'
  */
 
 async function fakeDesktopShell(page: Page) {
+  await pinShellServerPort(page)
   await page.addInitScript(() => {
     const callbacks = new Map<number, (event: unknown) => void>()
     const listeners: Array<{ event: string; id: number }> = []
