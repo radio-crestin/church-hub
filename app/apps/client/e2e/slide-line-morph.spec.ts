@@ -586,27 +586,19 @@ function expectSteadyFrames(label: string, intervals: number[]) {
   expect(sorted.at(-1), `${label}: longest frame (ms)`).toBeLessThan(50)
 }
 
-/** The median interval (ms) between frames of a page with nothing moving. */
-async function idleFrameInterval(page: Page) {
-  await page.setContent('<p>idle</p>')
-  const intervals = await frameIntervalsDuring(page, 500, async () => {})
-  return [...intervals].sort((a, b) => a - b)[Math.floor(intervals.length / 2)]
-}
-
 test.describe('Slide changes and exits run at a steady frame rate on a full HD projector', () => {
   test.use({ viewport: { width: 1920, height: 1080 } })
   let screenId: number | undefined
   let songId: number | undefined
 
-  // Smoothness is judged against a machine that draws 60 fps at rest; CI's
-  // GPU-less WebKit draws about 5, so there it would time the runner.
-  test.beforeEach(async ({ page }) => {
-    const idle = await idleFrameInterval(page)
-    test.skip(
-      idle > 20,
-      `this browser draws a frame every ${idle.toFixed(0)} ms at rest`,
-    )
-  })
+  // GitHub's runners draw WebKit without a GPU on shared CPUs: the same change
+  // measured a median frame of 18 to 561 ms there, so it would time the
+  // runner. Chromium there, and both browsers on a real machine, keep 60 fps.
+  test.skip(
+    ({ browserName }) =>
+      browserName === 'webkit' && !!process.env.GITHUB_ACTIONS,
+    "GitHub's GPU-less WebKit can't hold a frame rate",
+  )
 
   test.beforeAll(async ({ request }) => {
     const screen = await request.post('/api/screens', {
