@@ -380,6 +380,7 @@ import {
   listSyncUpdates,
   markSyncUpdatesSeen,
   runSyncCycle,
+  signOutUserDevices,
   startSyncScheduler,
   upsertSyncConfig,
 } from './service/sync'
@@ -2768,6 +2769,7 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
+          if (body.isActive === false) await signOutUserDevices()
 
           const updatedUser = getUserById(id)
           return handleCors(
@@ -2805,6 +2807,7 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
+        await signOutUserDevices()
 
         return handleCors(
           req,

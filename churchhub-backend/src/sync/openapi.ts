@@ -196,7 +196,7 @@ export const syncOpenApi = {
       put: {
         summary: 'Replace the church’s roles and users',
         description:
-          'The PC mirrors its roles, users and permissions here; every write is then checked against them. A row’s version rises only when it changed; missing rows are removed. Needs users.edit.',
+          'The PC mirrors its roles, users and permissions here; every write is then checked against them. A row’s version rises only when it changed; missing rows are removed. With revokeDevicesWithUser (sent by every newer PC, and remembered from then on), each device of a deactivated or removed user is revoked and the path secret rotates in the same write, so those devices neither write nor read again; reactivating the user does not bring them back. Without it (older PCs), their devices stay and only their writes are refused. Needs users.edit.',
         security: [{ deviceToken: [] }],
         parameters: [churchId],
         requestBody: {
@@ -241,6 +241,11 @@ export const syncOpenApi = {
                       required: ['id', 'name'],
                     },
                   },
+                  revokeDevicesWithUser: {
+                    type: 'boolean',
+                    description:
+                      'Revoke every device of a user who is inactive or missing, now and on every later update.',
+                  },
                 },
                 required: ['roles', 'users'],
               },
@@ -249,20 +254,31 @@ export const syncOpenApi = {
         },
         responses: {
           '200': {
-            description: 'How many rows changed',
+            description:
+              'How many rows changed, how many devices were revoked, and where the church is read from now',
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  properties: {
-                    changed: {
+                  allOf: [
+                    { $ref: '#/components/schemas/Location' },
+                    {
                       type: 'object',
                       properties: {
-                        roles: { type: 'integer' },
-                        users: { type: 'integer' },
+                        changed: {
+                          type: 'object',
+                          properties: {
+                            roles: { type: 'integer' },
+                            users: { type: 'integer' },
+                          },
+                        },
+                        revokedDevices: {
+                          type: 'integer',
+                          description:
+                            'Devices revoked because their user was deactivated or removed (a new pathSecret then).',
+                        },
                       },
                     },
-                  },
+                  ],
                 },
               },
             },
@@ -347,7 +363,9 @@ export const syncOpenApi = {
               },
             },
           },
-          '400': error('Missing fields, or no such user (code unknown_user)'),
+          '400': error(
+            'Missing fields, no such user (code unknown_user), or a deactivated one once the church revokes devices with their user (code inactive_user)'
+          ),
           '401': unauthorized,
           '403': forbidden,
         },
@@ -357,7 +375,7 @@ export const syncOpenApi = {
       delete: {
         summary: 'Revoke a device',
         description:
-          'Refuses the device’s writes from now on and rotates the path secret, since it still knows the old read path. The church server itself cannot be revoked. Needs users.edit.',
+          'Refuses the device’s writes from now on and rotates the path secret in the same write, since it still knows the old read path. The church server itself cannot be revoked. Needs users.edit.',
         security: [{ deviceToken: [] }],
         parameters: [
           churchId,
