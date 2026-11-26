@@ -202,7 +202,7 @@ export function SongStageBoard({
   }, [])
 
   // Takes in what the server now holds for the song: a different song opened
-  // on the page, or a save of this one made elsewhere — the Edit page, the
+  // on the page, or a save of this one made elsewhere — the song editor, the
   // editor modal behind the Marcaje/Programe pencils, another device. Seeding
   // the draft only once left the stage on the old lyrics, and its next
   // autosave wrote them back over that save. The board's own saves come back
@@ -560,11 +560,9 @@ export function SongStageBoard({
           navDir={nav.dir}
           isPresenting={isPresenting}
           followSeq={followSeq}
-          clickToEdit
           onProjectSlide={handleProjectSlide}
           onActiveSlideChange={setActiveSlideIndex}
           onSlidesChange={setSlides}
-          fillHeight
           textVersion={textVersion}
           canvasToolbar={
             <SlideStyleToolbar

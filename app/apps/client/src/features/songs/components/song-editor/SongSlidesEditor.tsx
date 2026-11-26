@@ -75,8 +75,6 @@ export function SongSlidesEditor({
       keyLine={keyLine}
       songId={songId}
       background={background}
-      clickToEdit
-      fillHeight
       textVersion={textVersion}
       onActiveSlideChange={setActiveSlideIndex}
       onSlidesChange={onSlidesChange}

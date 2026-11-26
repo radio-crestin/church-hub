@@ -21,17 +21,6 @@ interface StageCanvasProps {
   /** Whether the current slide can be edited (false when there are no slides) */
   canEdit: boolean
   /**
-   * PowerPoint-style implicit editing: editing is OFF until the operator clicks
-   * the stage, and turns OFF again the moment the shown slide changes (so the
-   * caret never carries over to another slide). When false (e.g. the /edit
-   * page) the canvas is simply always editable.
-   */
-  clickToEdit?: boolean
-  /** Fit the canvas within the available height (letterboxed) instead of
-   * sizing purely by width — lets the stage shrink so a notes panel below it
-   * can grow. */
-  fitHeight?: boolean
-  /**
    * Formatting bar for the slide being edited. Rendered above the canvas and
    * only while the in-place editor is actually mounted — the buttons act on the
    * caret or the selection, so they are meaningless without one.
@@ -44,7 +33,7 @@ interface StageCanvasProps {
    * slide is open, so this is what tells it to take the new text.
    */
   textVersion?: number
-  /** Told when the in-place editor opens and closes (`clickToEdit` only). */
+  /** Told when the in-place editor opens and closes. */
   onEditingChange?: (editing: boolean) => void
 }
 
@@ -64,18 +53,17 @@ function slideIdentity(content: TemporaryContent): string {
  * projected (via the shared presentation content hook) and makes the lyrics
  * editable in place, PowerPoint-style.
  *
- * With `clickToEdit`, editing is implicit and explicit-state-driven (no mode
- * toggle): clicking the stage mounts the in-place editor and shows a coloured
- * border; changing slide (thumbnail, arrows, Next/Prev) or clicking outside
- * leaves edit mode so the caret never lingers on a slide you didn't open.
+ * Editing is implicit (no mode toggle): clicking the stage mounts the in-place
+ * editor and shows a coloured border; changing slide (thumbnail, arrows,
+ * Next/Prev) or clicking outside leaves edit mode so the caret never lingers
+ * on a slide you didn't open. The canvas fits the height of its size container
+ * (letterboxed), so a notes panel below it can grow.
  */
 export function StageCanvas({
   screen,
   previewContent,
   hideBackground = false,
   canEdit,
-  clickToEdit = false,
-  fitHeight = false,
   editingToolbar,
   onEditText,
   textVersion,
@@ -102,13 +90,13 @@ export function StageCanvas({
     }
   }, [slideKey])
 
-  // The in-place editor is only mounted while actually editing (clickToEdit) —
-  // that's what guarantees no stray caret. Without clickToEdit it's always on.
-  const showEditor = clickToEdit ? canEdit && editing : canEdit
+  // The in-place editor is only mounted while actually editing — that's what
+  // guarantees no stray caret.
+  const showEditor = canEdit && editing
 
   // When entering edit mode, focus the freshly-mounted editor (caret at end).
   useLayoutEffect(() => {
-    if (!clickToEdit || !editing) return
+    if (!editing) return
     const el = stageRef.current?.querySelector<HTMLElement>(
       '[data-testid="slide-canvas-editable"]',
     )
@@ -120,13 +108,13 @@ export function StageCanvas({
     const sel = window.getSelection()
     sel?.removeAllRanges()
     sel?.addRange(range)
-  }, [clickToEdit, editing])
+  }, [editing])
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!canEdit) return
       // Not editing yet → this click starts editing the current slide.
-      if (clickToEdit && !editing) {
+      if (!editing) {
         e.preventDefault()
         setEditing(true)
         return
@@ -141,7 +129,7 @@ export function StageCanvas({
         el.focus()
       }
     },
-    [canEdit, clickToEdit, editing],
+    [canEdit, editing],
   )
 
   // Clicking outside the stage (a button, empty space) blurs the editor and
@@ -151,17 +139,13 @@ export function StageCanvas({
   // typed in, and leaving edit mode there would unmount the very editor the
   // field is about to restyle. Focus moving anywhere inside this canvas — bar
   // included — keeps editing alive.
-  const handleBlur = useCallback(
-    (event: React.FocusEvent<HTMLDivElement>) => {
-      if (!clickToEdit) return
-      const next = event.relatedTarget
-      if (next instanceof Node && rootRef.current?.contains(next)) return
-      setEditing(false)
-    },
-    [clickToEdit],
-  )
+  const handleBlur = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
+    const next = event.relatedTarget
+    if (next instanceof Node && rootRef.current?.contains(next)) return
+    setEditing(false)
+  }, [])
 
-  const framed = clickToEdit && editing
+  const framed = editing
   useEffect(() => {
     onEditingChange?.(framed)
   }, [framed, onEditingChange])
@@ -169,21 +153,15 @@ export function StageCanvas({
   // Vertical space to reserve inside the stage zone below the black box: the
   // nav row + this frame's padding/border. It is the same whether or not the
   // slide is being edited, so opening the editor never resizes the stage.
-  const boxStyle: React.CSSProperties | undefined = fitHeight
-    ? {
-        maxHeight: `calc(100cqh - ${FIT_RESERVE_PX}px)`,
-        width: `min(calc(100cqw - 24px), calc((100cqh - ${FIT_RESERVE_PX}px) * 16 / 9))`,
-      }
-    : undefined
+  const boxStyle: React.CSSProperties = {
+    maxHeight: `calc(100cqh - ${FIT_RESERVE_PX}px)`,
+    width: `min(calc(100cqw - 24px), calc((100cqh - ${FIT_RESERVE_PX}px) * 16 / 9))`,
+  }
 
   return (
     <div
       ref={rootRef}
-      className={
-        fitHeight
-          ? 'relative flex w-full shrink-0 flex-col items-center'
-          : 'relative w-full'
-      }
+      className="relative flex w-full shrink-0 flex-col items-center"
     >
       {/* The formatting bar floats inside the stage's top edge, PowerPoint-style:
           an overlay, so selecting the slide never moves or resizes the stage or
@@ -198,8 +176,7 @@ export function StageCanvas({
       )}
       {/* Outer frame: reserves the padding + border ring at all times (so
           toggling edit never reflows the slide) and only colours the frame
-          while editing. In fit-height mode it hugs the black box (content
-          width, centred) so the edit border sits uniformly around the canvas,
+          while editing. It hugs the black box (content width, centred) so the edit border sits uniformly around the canvas,
           and the box sizes to the largest 16:9 that fits within the enclosing
           size container minus the reserved footer space. */}
       <div
@@ -209,16 +186,14 @@ export function StageCanvas({
         data-editing={framed ? 'true' : 'false'}
         className={`rounded-2xl border-2 p-2 transition-colors ${
           canEdit ? 'cursor-text' : ''
-        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'} ${
-          fitHeight ? 'flex w-fit items-center justify-center' : 'w-full'
-        }`}
+        } ${framed ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'} flex w-fit items-center justify-center`}
       >
         <div
           style={boxStyle}
           data-testid="slide-canvas-box"
           className={`relative aspect-video rounded-lg overflow-hidden shadow-lg bg-black ${
             showEditor ? '' : 'select-none'
-          } ${fitHeight ? '' : 'w-full'}`}
+          }`}
         >
           <ScreenPreview
             screen={screen}
