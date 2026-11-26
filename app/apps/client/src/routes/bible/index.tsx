@@ -9,9 +9,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
-  BibleHistoryItem,
   BibleSearchResult,
   BibleVerse,
+  VerseTarget,
 } from '~/features/bible'
 import {
   BibleBookmarksPanel,
@@ -22,10 +22,12 @@ import {
   getVerseByReference,
   useAddBibleBookmark,
   useAddToHistory,
+  useAutoPresentOnSelect,
   useBibleBookmarks,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
   useBooks,
+  usePresentWhenSelected,
   useRemoveBibleBookmark,
   useSelectedBibleTranslations,
   useVerses,
@@ -1253,6 +1255,70 @@ function BiblePage() {
   ])
   usePageShortcutEvent('bible', 'showSlide', handleShowSelectedVerse)
 
+  // A verse picked in History or Bookmarks: select it without presenting
+  // (navigated via the URL), on the navigation tab on a phone.
+  const selectPanelVerse = useCallback(
+    (target: VerseTarget & { bookName: string }) => {
+      isBrowsingRef.current = true
+      pendingInternalNavRef.current = true
+      setPhoneTab('navigation')
+      navigate({
+        to: '/bible',
+        search: {
+          book: target.bookId,
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [navigate],
+  )
+  const presentWhenSelected = usePresentWhenSelected({
+    navigationState: navigation.state,
+    verses,
+    showSelected: handleShowSelectedVerse,
+  })
+  // A double-click in History or Bookmarks shows the verse right away.
+  const presentPanelVerse = useCallback(
+    (target: VerseTarget & { bookName: string }) => {
+      selectPanelVerse(target)
+      presentWhenSelected(target)
+    },
+    [selectPanelVerse, presentWhenSelected],
+  )
+
+  // Settings → Bible: "Present a verse as soon as I pick it" turns every
+  // pick (search results, History, Bookmarks, a program) into a present.
+  const autoPresent = useAutoPresentOnSelect()
+  const pickPanelVerse = autoPresent.enabled
+    ? presentPanelVerse
+    : selectPanelVerse
+  const pickSearchResult = useCallback(
+    (result: BibleSearchResult) => {
+      handleSelectSearchResult(result)
+      if (autoPresent.enabled) presentWhenSelected(result)
+    },
+    [handleSelectSearchResult, autoPresent.enabled, presentWhenSelected],
+  )
+  const pickSchedulePassage = useCallback(
+    (item: ScheduleItem) => {
+      handleSelectSchedulePassage(item)
+      const target = getSchedulePassageTarget(item)
+      const book = primaryBooks.find((b) => b.bookName === target?.bookName)
+      if (autoPresent.enabled && target && book) {
+        presentWhenSelected({ ...target, bookId: book.id })
+      }
+    },
+    [
+      handleSelectSchedulePassage,
+      autoPresent.enabled,
+      primaryBooks,
+      presentWhenSelected,
+    ],
+  )
+
   // Handle go back - use browser history when navigated internally, hierarchical when external
   const handleGoBack = useCallback(() => {
     // If there's a verse being presented, enable browse mode to prevent sync from snapping back
@@ -1396,7 +1462,7 @@ function BiblePage() {
             <BibleNavigationPanel
               navigation={navigation}
               onSelectVerse={handleSelectVerse}
-              onSelectSearchResult={handleSelectSearchResult}
+              onSelectSearchResult={pickSearchResult}
               onPresentSearched={handlePresentSearched}
               onNextVerse={handleNextVerse}
               onPreviousVerse={handlePreviousVerse}
@@ -1458,22 +1524,8 @@ function BiblePage() {
           onToggleCollapse={
             isLargeScreen ? () => setHistoryOpen(!historyOpen) : undefined
           }
-          onSelectVerse={(item: BibleHistoryItem) => {
-            // Navigate via URL - select only without presenting
-            isBrowsingRef.current = true
-            pendingInternalNavRef.current = true
-            setPhoneTab('navigation')
-            navigate({
-              to: '/bible',
-              search: {
-                book: item.bookId,
-                bookName: item.bookName,
-                chapter: item.chapter,
-                verse: item.verse,
-                select: true,
-              },
-            })
-          }}
+          onSelectVerse={pickPanelVerse}
+          onPresentVerse={presentPanelVerse}
         />
       ),
     },
@@ -1489,23 +1541,8 @@ function BiblePage() {
           }
           activeVerseId={focusedVerse?.id}
           translationId={primaryTranslation?.id}
-          onSelectVerse={(bookmark) => {
-            // Navigate via URL - select only without presenting, the same as
-            // picking a verse out of the history.
-            isBrowsingRef.current = true
-            pendingInternalNavRef.current = true
-            setPhoneTab('navigation')
-            navigate({
-              to: '/bible',
-              search: {
-                book: bookmark.bookId,
-                bookName: bookmark.bookName,
-                chapter: bookmark.chapter,
-                verse: bookmark.verse,
-                select: true,
-              },
-            })
-          }}
+          onSelectVerse={pickPanelVerse}
+          onPresentVerse={presentPanelVerse}
         />
       ),
     },
@@ -1549,7 +1586,7 @@ function BiblePage() {
       render: () => (
         <SchedulePanel
           activeReference={activePassageReference}
-          onSelectPassage={handleSelectSchedulePassage}
+          onSelectPassage={pickSchedulePassage}
           onSelectSong={handleSelectScheduleSong}
           onOpenSchedule={(scheduleId) =>
             navigate({
@@ -1595,7 +1632,7 @@ function BiblePage() {
 
   return (
     <PagePermissionGuard permission="bible.view">
-      <div className="flex flex-col gap-4 h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
+      <div className="flex flex-col gap-4 h-full lg:overflow-hidden">
         {/* Same single labelled menu as the song page, so both pages expose
             their actions the same way. */}
         <PageHeader

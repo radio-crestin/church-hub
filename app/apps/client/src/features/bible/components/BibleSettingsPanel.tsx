@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { AISearchSettings } from '~/features/ai-search'
 import { AlertModal } from '~/ui/modal'
 import { SectionHeader } from '~/ui/page'
+import { AutoPresentSettings } from './AutoPresentSettings'
 import { BibleDownloadSection } from './BibleDownloadSection'
 import { BibleTranslationsManager } from './BibleTranslationsManager'
 import { ReadingSpeedSettings } from './ReadingSpeedSettings'
@@ -120,6 +121,10 @@ export function BibleSettingsPanel() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className={cardClass}>
+          <AutoPresentSettings />
         </div>
 
         <div className={cardClass}>

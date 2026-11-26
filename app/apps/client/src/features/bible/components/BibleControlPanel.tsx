@@ -1,4 +1,5 @@
-import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { Eraser, Eye, EyeOff, Loader2, Settings, Zap } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -16,6 +17,8 @@ import {
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
+import { ActionMenu } from '~/ui/menu'
+import { useAutoPresentOnSelect } from '../hooks/useAutoPresentOnSelect'
 
 interface BibleControlPanelProps {
   onPrevVerse: () => void
@@ -33,6 +36,8 @@ export function BibleControlPanel({
   isHiding = false,
 }: BibleControlPanelProps) {
   const { t } = useTranslation('bible')
+  const navigate = useNavigate()
+  const autoPresent = useAutoPresentOnSelect()
 
   useWebSocket()
 
@@ -133,7 +138,8 @@ export function BibleControlPanel({
               onClick={handleShow}
               disabled={!hasContent || showSlideCommand.isPending}
               className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
-              title={t('controls.show')}
+              title={t('controls.showHint')}
+              aria-label={t('controls.show')}
             >
               {showSlideCommand.isPending ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -150,6 +156,29 @@ export function BibleControlPanel({
               )}
             </button>
           )}
+          <ActionMenu
+            label={t('controls.settings')}
+            testId="bible-preview-settings"
+            size="compact"
+            align="end"
+            items={[
+              {
+                id: 'auto-present',
+                label: t('settings.autoPresent.label'),
+                description: t('settings.autoPresent.description'),
+                icon: <Zap size={16} strokeWidth={1.5} />,
+                active: autoPresent.enabled,
+                onSelect: () => autoPresent.setEnabled(!autoPresent.enabled),
+                testId: 'bible-preview-auto-present',
+              },
+              {
+                id: 'bible-settings',
+                label: t('controls.bibleSettings'),
+                icon: <Settings size={16} strokeWidth={1.5} />,
+                onSelect: () => navigate({ to: '/settings/bible' }),
+              },
+            ]}
+          />
         </div>
       </div>
 
