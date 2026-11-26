@@ -46,7 +46,7 @@ export const liveTranslationPaths = {
       tags: ['Live Translation'],
       summary: 'Get the listener link’s room id',
       description:
-        'The id in the listener link (https://churchub-backend.radiocrestin.ro/listen/<secret>): a hosted room\'s id ("h1" + 43 characters). The host key it comes from stays on the server.',
+        'The id in the listener link (<relay>/listen/<secret>): a hosted room\'s id ("h1" + 43 characters). The host key it comes from stays on the server.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {
@@ -57,6 +57,11 @@ export const liveTranslationPaths = {
                 type: 'object',
                 properties: {
                   secret: { type: 'string', pattern: '^h1[A-Za-z0-9_-]{43}$' },
+                  link: {
+                    type: 'string',
+                    description:
+                      "The listener link: the listener page of this computer's signaling relay (<relay>/listen/<secret>)",
+                  },
                   linkChanged: {
                     type: 'boolean',
                     description:
@@ -79,12 +84,19 @@ export const liveTranslationPaths = {
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       responses: {
         '200': {
-          description: 'The new room id',
+          description: 'The new room id and its listener link',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
-                properties: { secret: { type: 'string' } },
+                properties: {
+                  secret: { type: 'string' },
+                  link: {
+                    type: 'string',
+                    description:
+                      "The listener link: the listener page of this computer's signaling relay (<relay>/listen/<secret>)",
+                  },
+                },
               },
             },
           },
