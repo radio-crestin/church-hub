@@ -51,7 +51,7 @@ export function ScheduleAnnouncementSlideRow({
           strokeWidth={1.5}
         />
         <span
-          className={`text-[13px] line-clamp-3 ${
+          className={`text-sm line-clamp-3 ${
             isPresented ? 'text-fg' : 'text-fg-body'
           }`}
         >

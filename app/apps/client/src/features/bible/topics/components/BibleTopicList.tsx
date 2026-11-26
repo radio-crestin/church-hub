@@ -50,7 +50,7 @@ export function BibleTopicList({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder={t('topics.searchPlaceholder')}
-            className="w-full h-8 pl-8 pr-7 text-[13px] bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+            className="w-full h-8 pl-8 pr-7 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
           {query && (
             <ClearSearchButton
@@ -65,11 +65,9 @@ export function BibleTopicList({
 
       <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
         {isLoading ? (
-          <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
-            ...
-          </div>
+          <div className="px-4 py-6 text-center text-sm text-fg-hint">...</div>
         ) : visible.length === 0 ? (
-          <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
+          <div className="px-4 py-6 text-center text-sm text-fg-hint">
             {topics.length === 0 ? t('topics.empty') : t('topics.noResults')}
           </div>
         ) : (
@@ -83,7 +81,7 @@ export function BibleTopicList({
                   className="w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-hover"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium text-fg">
+                    <span className="block truncate text-sm font-medium text-fg">
                       {titleOf(topic)}
                     </span>
                     <span className="block truncate text-xs text-fg-hint">

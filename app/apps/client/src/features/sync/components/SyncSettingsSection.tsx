@@ -99,7 +99,7 @@ export function SyncSettingsSection() {
 
   if (statusQuery.isLoading) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-line p-4 text-[13px] text-fg-hint">
+      <div className="flex items-center gap-2 rounded-xl border border-line p-4 text-sm text-fg-hint">
         <Loader2 className="h-4 w-4 animate-spin" />
         {t('sections.sync.loading')}
       </div>
@@ -112,7 +112,7 @@ export function SyncSettingsSection() {
       <div className="rounded-xl border border-line p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h4 className="text-[13px] font-medium text-fg">
+            <h4 className="text-sm font-medium text-fg">
               {t('sections.sync.toggle.title')}
             </h4>
             <p className="mt-0.5 text-xs text-fg-hint">
@@ -208,7 +208,7 @@ export function SyncSettingsSection() {
           type="button"
           onClick={handleSyncNow}
           disabled={!connected || !enabled || syncNowMutation.isPending}
-          className="inline-flex h-8 items-center gap-2 self-stretch justify-center rounded-lg bg-primary px-3 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50 sm:self-auto"
+          className="inline-flex h-8 items-center gap-2 self-stretch justify-center rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 sm:self-auto"
         >
           {syncNowMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />

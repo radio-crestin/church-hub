@@ -71,7 +71,7 @@ function StreamStartProgressUI({
     return (
       <div className="rounded-xl border border-line bg-panel p-4">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[13px] text-red-600 dark:text-red-400">
+          <span className="text-sm text-red-600 dark:text-red-400">
             {progress.error || t('errors.startStreamFailed')}
           </span>
           <div className="flex gap-2 shrink-0">
@@ -99,7 +99,7 @@ function StreamStartProgressUI({
     <div className="rounded-xl border border-line bg-panel p-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-[13px] font-medium text-fg-body">
+          <span className="text-sm font-medium text-fg-body">
             {t(`stream.progress.${progress.step}`)}
           </span>
           <span className="text-xs text-fg-hint tabular-nums">
@@ -157,7 +157,7 @@ export function BroadcastInfo() {
   if (isLoadingBroadcast) {
     return (
       <div className="rounded-xl border border-line bg-panel p-4">
-        <p className="text-[13px] text-fg-hint">{t('broadcast.loading')}</p>
+        <p className="text-sm text-fg-hint">{t('broadcast.loading')}</p>
       </div>
     )
   }
@@ -189,7 +189,7 @@ export function BroadcastInfo() {
           className="flex-1"
         >
           <div
-            className="relative w-full px-3 py-2 pr-10 text-[13px] text-fg-body bg-field rounded-lg whitespace-pre-wrap break-words cursor-pointer hover:bg-hover transition-colors"
+            className="relative w-full px-3 py-2 pr-10 text-sm text-fg-body bg-field rounded-lg whitespace-pre-wrap break-words cursor-pointer hover:bg-hover transition-colors"
             onClick={() => copyMessage(activeBroadcast.url)}
             role="button"
             tabIndex={0}

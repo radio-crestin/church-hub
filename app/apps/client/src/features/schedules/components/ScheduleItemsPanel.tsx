@@ -252,7 +252,7 @@ export function ScheduleItemsPanel({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-fg-hint">
-        <p className="text-[13px]">{t('editor.noItems')}</p>
+        <p className="text-sm">{t('editor.noItems')}</p>
         <p className="text-xs mt-1">{t('editor.addFirstItem')}</p>
       </div>
     )
@@ -449,7 +449,7 @@ function SortableItemWrapper({
 
         {/* Item Title & Info */}
         <div className="flex-1 min-w-0 text-left">
-          <div className="font-medium text-[13px] sm:truncate text-fg">
+          <div className="font-medium text-sm sm:truncate text-fg">
             {item.itemType === 'song' && (
               <span className="flex min-w-0 items-center gap-2">
                 {/* A phone has no room for one line: the title takes two. */}

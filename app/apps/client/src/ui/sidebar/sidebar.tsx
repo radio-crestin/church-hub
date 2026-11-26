@@ -10,6 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { groupSidebarItems } from './groupSidebarItems'
 import { SidebarHeader } from './sidebar-header'
 import { SidebarItem } from './sidebar-item'
 import { useSidebarCollapsed } from './use-sidebar-collapsed'
@@ -195,27 +196,42 @@ export function Sidebar({
           <SidebarHeader isCollapsed={isCollapsed} />
         </div>
 
-        <nav className="flex-1 flex flex-col gap-0.5 p-2 overflow-y-auto scrollbar-thin">
-          {menuItems.map((item) => (
-            <SidebarItem
-              key={item.id}
-              pageId={item.id}
-              icon={item.icon}
-              label={item.label}
-              to={item.to}
-              isCollapsed={isCollapsed}
-              isActive={
-                location.pathname === item.to ||
-                location.pathname.startsWith(`${item.to}/`)
-              }
-              className="md:flex"
-              onClick={(e) => handleSidebarItemClick(item.to, e)}
-              shortcut={routeShortcuts[item.to as keyof typeof routeShortcuts]}
-              nativeWindowSettings={getItemNativeWindowSettings(item.id)}
-              iconName={getItemIconName(item.id)}
-              externalUrl={getItemExternalUrl(item.id)}
-              customIconUrl={item.customIconUrl}
-            />
+        <nav className="flex-1 flex flex-col p-2 overflow-y-auto scrollbar-thin">
+          {groupSidebarItems(menuItems).map((group, index) => (
+            <section
+              key={group.id}
+              aria-label={t(`sidebar:groups.${group.id}`)}
+              className={`flex flex-col gap-0.5 ${index > 0 ? 'mt-2 border-t border-line pt-2' : ''}`}
+            >
+              {!isCollapsed && (
+                <h2 className="px-3 pt-1 pb-1.5 text-[13px] font-medium text-fg md:px-2.5">
+                  {t(`sidebar:groups.${group.id}`)}
+                </h2>
+              )}
+              {group.items.map((item) => (
+                <SidebarItem
+                  key={item.id}
+                  pageId={item.id}
+                  icon={item.icon}
+                  label={item.label}
+                  to={item.to}
+                  isCollapsed={isCollapsed}
+                  isActive={
+                    location.pathname === item.to ||
+                    location.pathname.startsWith(`${item.to}/`)
+                  }
+                  className="md:flex"
+                  onClick={(e) => handleSidebarItemClick(item.to, e)}
+                  shortcut={
+                    routeShortcuts[item.to as keyof typeof routeShortcuts]
+                  }
+                  nativeWindowSettings={getItemNativeWindowSettings(item.id)}
+                  iconName={getItemIconName(item.id)}
+                  externalUrl={getItemExternalUrl(item.id)}
+                  customIconUrl={item.customIconUrl}
+                />
+              ))}
+            </section>
           ))}
 
           {/* Bottom section - fixed at the bottom, above the collapse button */}
@@ -252,22 +268,22 @@ export function Sidebar({
                   setIsMobileMenuOpen(false)
                   setIsFeatureRequestOpen(true)
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2.5 md:h-8 md:py-0 md:px-2.5 rounded-lg transition-colors w-full text-fg-label hover:bg-hover hover:text-fg ${isCollapsed ? 'md:justify-center' : ''}`}
+                className={`flex items-center gap-3 px-3 py-2.5 md:h-9 md:py-0 md:px-2.5 rounded-lg transition-colors w-full text-fg-label hover:bg-hover hover:text-fg ${isCollapsed ? 'md:justify-center' : ''}`}
                 title={
                   isCollapsed ? t('sidebar:navigation.feedback') : undefined
                 }
                 aria-label={t('sidebar:navigation.feedback')}
               >
                 <MessageSquarePlus
-                  size={16}
+                  size={18}
                   strokeWidth={1.5}
                   className="flex-shrink-0"
                 />
-                <span className="text-[13px] font-medium md:hidden">
+                <span className="text-sm font-medium md:hidden">
                   {t('sidebar:navigation.feedback')}
                 </span>
                 {!isCollapsed && (
-                  <span className="text-[13px] font-medium hidden md:inline flex-1 text-left">
+                  <span className="text-sm font-medium hidden md:inline flex-1 text-left">
                     {t('sidebar:navigation.feedback')}
                   </span>
                 )}
@@ -313,7 +329,7 @@ export function Sidebar({
           <button
             onClick={toggleCollapsed}
             data-testid="sidebar-collapse-toggle"
-            className={`hidden md:flex w-full h-8 items-center gap-2.5 px-2.5 rounded-lg
+            className={`hidden md:flex w-full h-9 items-center gap-3 px-2.5 rounded-lg
               text-fg-label hover:bg-hover hover:text-fg
               transition-colors ${isCollapsed ? 'justify-center' : ''}`}
             title={
@@ -324,18 +340,18 @@ export function Sidebar({
           >
             {isCollapsed ? (
               <ChevronRight
-                size={16}
+                size={18}
                 strokeWidth={1.5}
                 className="flex-shrink-0"
               />
             ) : (
               <>
                 <ChevronLeft
-                  size={16}
+                  size={18}
                   strokeWidth={1.5}
                   className="flex-shrink-0"
                 />
-                <span className="text-[13px] font-medium">
+                <span className="text-sm font-medium">
                   {t('sidebar:actions.collapse')}
                 </span>
               </>

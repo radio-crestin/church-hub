@@ -206,7 +206,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
         <div className="flex items-center gap-2 px-1.5 py-1.5">
           <UserAvatar name={displayName} isSuperAdmin={isApp} size="sm" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold text-fg">
+            <p className="truncate text-sm font-semibold text-fg">
               {displayName}
             </p>
             <p className="truncate text-xs text-fg-hint">{roleLabel}</p>
@@ -227,7 +227,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 isSuperAdmin={selected.isSuperAdmin}
                 size="sm"
               />
-              <p className="min-w-0 truncate text-[13px] font-medium text-fg">
+              <p className="min-w-0 truncate text-sm font-medium text-fg">
                 {selected.name}
               </p>
             </div>
@@ -247,7 +247,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 disabled={submitting}
                 placeholder={t('login.passwordPlaceholder')}
                 aria-label={t('login.passwordLabel')}
-                className={`h-9 w-full rounded-[10px] bg-field pl-9 pr-9 text-[13px] text-fg outline-none transition-colors placeholder:text-fg-hint disabled:opacity-60 ${
+                className={`h-9 w-full rounded-[10px] bg-field pl-9 pr-9 text-sm text-fg outline-none transition-colors placeholder:text-fg-hint disabled:opacity-60 ${
                   error
                     ? 'ring-1 ring-inset ring-red-500'
                     : 'focus:ring-1 focus:ring-inset focus:ring-focus'
@@ -286,14 +286,14 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 type="button"
                 onClick={() => setSelected(null)}
                 disabled={submitting}
-                className="h-8 flex-1 rounded-lg bg-field px-3 text-[13px] font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
+                className="h-8 flex-1 rounded-lg bg-field px-3 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
               >
                 {t('login.back')}
               </button>
               <button
                 type="submit"
                 disabled={submitting || password.length === 0}
-                className="flex h-8 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                className="flex h-8 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -321,7 +321,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                         type="button"
                         onClick={() => handleSelect(user)}
                         disabled={submitting}
-                        className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-left text-[13px] text-fg-body transition-colors hover:bg-hover disabled:opacity-60"
+                        className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-left text-sm text-fg-body transition-colors hover:bg-hover disabled:opacity-60"
                       >
                         <UserAvatar
                           name={user.name}
@@ -349,7 +349,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-[13px] font-medium text-red-600 hover:bg-hover dark:text-red-400"
+              className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-sm font-medium text-red-600 hover:bg-hover dark:text-red-400"
             >
               <LogOut strokeWidth={1.5} className="h-4 w-4" />
               {t('logout')}
@@ -366,25 +366,25 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-2.5 px-3 py-2.5 md:h-8 md:py-0 md:px-2.5 rounded-lg transition-colors w-full text-fg-label hover:bg-hover hover:text-fg ${open ? 'bg-selected text-fg' : ''} ${isCollapsed ? 'md:justify-center' : ''}`}
+        className={`flex items-center gap-3 px-3 py-2 md:px-2 rounded-lg transition-colors w-full text-fg hover:bg-hover ${open ? 'bg-selected' : ''} ${isCollapsed ? 'md:justify-center' : ''}`}
         title={isCollapsed ? displayName : undefined}
         aria-label={t('profile.title')}
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        <UserAvatar name={displayName} isSuperAdmin={isApp} size="xs" />
+        <UserAvatar name={displayName} isSuperAdmin={isApp} size="sm" />
         <span className="flex-1 min-w-0 text-left md:hidden">
-          <span className="block truncate text-[13px] font-medium">
+          <span className="block truncate text-sm font-medium">
             {displayName}
           </span>
         </span>
         {!isCollapsed && (
           <>
-            <span className="hidden flex-1 min-w-0 items-baseline gap-1.5 text-left md:flex">
-              <span className="truncate text-[13px] font-medium">
+            <span className="hidden flex-1 min-w-0 flex-col text-left md:flex">
+              <span className="truncate text-sm font-medium leading-5">
                 {displayName}
               </span>
-              <span className="shrink-0 truncate text-xs text-fg-hint">
+              <span className="truncate text-xs leading-4 text-fg-hint">
                 {roleLabel}
               </span>
             </span>

@@ -40,5 +40,10 @@
   "tabs": {
     "present": "Live",
     "more": "Mai multe"
+  },
+  "groups": {
+    "live": "În desfășurare",
+    "library": "Resurse",
+    "tools": "Instrumente"
   }
 }

@@ -33,7 +33,7 @@ const CONTROL_ROOM_CLOCK: ClockOverride = {
 }
 
 const HEADER_BUTTON_CLASS =
-  'flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium text-fg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] rounded-lg hover:bg-hover disabled:opacity-50 transition-colors'
+  'flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-fg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] rounded-lg hover:bg-hover disabled:opacity-50 transition-colors'
 const ICON_BUTTON_CLASS =
   'flex items-center justify-center h-8 w-8 rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-50 transition-colors'
 

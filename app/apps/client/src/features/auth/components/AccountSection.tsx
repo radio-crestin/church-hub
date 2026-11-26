@@ -53,14 +53,14 @@ export function AccountSection() {
           <h3 className="truncate text-base font-semibold text-fg">
             {displayName}
           </h3>
-          <p className="text-[13px] text-fg-hint">
+          <p className="text-sm text-fg-hint">
             {isApp ? t('superAdmin') : t('profile.user')}
           </p>
         </div>
         <button
           type="button"
           onClick={handleLogout}
-          className="inline-flex h-8 shrink-0 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-red-600 transition-colors hover:bg-hover dark:text-red-400"
+          className="inline-flex h-8 shrink-0 items-center gap-2 rounded-lg bg-field px-3 text-sm font-medium text-red-600 transition-colors hover:bg-hover dark:text-red-400"
         >
           <LogOut strokeWidth={1.5} className="h-4 w-4" />
           <span className="hidden sm:inline">{t('logout')}</span>
@@ -69,11 +69,11 @@ export function AccountSection() {
 
       {/* Permissions */}
       <div>
-        <h4 className="mb-3 text-[13px] font-semibold text-fg">
+        <h4 className="mb-3 text-sm font-semibold text-fg">
           {t('profile.permissions')}
         </h4>
         {hasFullAccess ? (
-          <div className="flex items-center gap-2 rounded-lg bg-field p-3 text-[13px] text-fg-body">
+          <div className="flex items-center gap-2 rounded-lg bg-field p-3 text-sm text-fg-body">
             <ShieldCheck
               strokeWidth={1.5}
               className="h-4 w-4 shrink-0 text-fg-label"
@@ -81,9 +81,7 @@ export function AccountSection() {
             {t('profile.fullAccess')}
           </div>
         ) : permissions.length === 0 ? (
-          <p className="text-[13px] text-fg-hint">
-            {t('profile.noPermissions')}
-          </p>
+          <p className="text-sm text-fg-hint">{t('profile.noPermissions')}</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {GROUP_ORDER.map((group) => {
@@ -100,7 +98,7 @@ export function AccountSection() {
                     {granted.map((permission) => (
                       <li
                         key={permission}
-                        className="flex items-center gap-2 text-[13px] text-fg-body"
+                        className="flex items-center gap-2 text-sm text-fg-body"
                       >
                         <Check
                           strokeWidth={1.5}

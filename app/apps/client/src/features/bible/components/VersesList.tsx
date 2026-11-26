@@ -396,7 +396,7 @@ export function VersesList({
         <button
           type="button"
           onClick={onGoBack}
-          className="flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg transition-colors"
+          className="flex items-center gap-1.5 text-sm text-fg-label hover:text-fg transition-colors"
         >
           <ArrowLeft size={16} strokeWidth={1.5} />
           {t('navigation.back')}
@@ -433,7 +433,7 @@ export function VersesList({
             type="button"
             onClick={onLoadPrevious}
             disabled={isLoadingPrevious}
-            className="w-full flex items-center justify-center gap-2 py-2 mb-2 text-[13px] text-fg hover:bg-hover rounded-lg transition-colors lg:hidden disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2 mb-2 text-sm text-fg hover:bg-hover rounded-lg transition-colors lg:hidden disabled:opacity-50"
           >
             {isLoadingPrevious ? (
               <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
@@ -471,7 +471,7 @@ export function VersesList({
                 className="pb-4"
               >
                 <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-panel">
-                  <span className="text-[13px] font-bold text-fg">{label}</span>
+                  <span className="text-sm font-bold text-fg">{label}</span>
                 </div>
                 <div className="flex items-center justify-center py-8">
                   <Loader2
@@ -491,7 +491,7 @@ export function VersesList({
             >
               {/* Sticky chapter label */}
               <div className="sticky top-0 z-10 -mx-1 px-4 py-1.5 bg-panel">
-                <span className="text-[13px] font-bold text-fg">{label}</span>
+                <span className="text-sm font-bold text-fg">{label}</span>
               </div>
 
               <div className="space-y-1">
@@ -603,7 +603,7 @@ export function VersesList({
             type="button"
             onClick={onLoadNext}
             disabled={isLoadingNext}
-            className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-[13px] text-fg hover:bg-hover rounded-lg transition-colors lg:hidden disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-sm text-fg hover:bg-hover rounded-lg transition-colors lg:hidden disabled:opacity-50"
           >
             {isLoadingNext ? (
               <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />

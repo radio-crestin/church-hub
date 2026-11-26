@@ -96,7 +96,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
               <p className="text-xs text-fg-hint">
                 {t('common:contact.email')}
               </p>
-              <p className="text-[13px] text-fg">iosif@radiocrestin.ro</p>
+              <p className="text-sm text-fg">iosif@radiocrestin.ro</p>
             </div>
           </a>
 
@@ -113,7 +113,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
               <p className="text-xs text-fg-hint">
                 {t('common:contact.whatsapp')}
               </p>
-              <p className="text-[13px] text-fg">+40 766 338 046</p>
+              <p className="text-sm text-fg">+40 766 338 046</p>
             </div>
           </a>
         </div>
@@ -122,7 +122,7 @@ export function ContactModal({ isOpen, onClose }: ContactModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="h-9 px-3.5 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             {t('common:buttons.ok')}
           </button>

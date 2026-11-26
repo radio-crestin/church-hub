@@ -54,7 +54,7 @@ export function SongRefList({ label, set, onOpen }: SongRefListProps) {
             <button
               type="button"
               onClick={() => setIsOpen((open) => !open)}
-              className="rounded-md px-2 py-0.5 text-[13px] font-medium text-fg-label hover:bg-hover hover:text-fg"
+              className="rounded-md px-2 py-0.5 text-sm font-medium text-fg-label hover:bg-hover hover:text-fg"
             >
               {isOpen
                 ? t('notification.showLess')

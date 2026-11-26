@@ -59,7 +59,14 @@ Never use a raw hex or a palette class (`bg-zinc-800`, `text-purple-500`) in a c
 
 ## Type
 
-- **UI:** Inter (Google Fonts). Use 13px/18px weight 500 for labels and rows, 12px/16px for meta, 15px/24px for lyrics and verses, and 16px/24px weight 600 for page titles. 11px weight 500 is the floor, for keycaps only.
+- **UI:** Inter (bundled, works offline), on one scale:
+  - 14px/20px (`text-sm`): rows, labels, buttons and desktop inputs; the body size.
+  - 12px/16px (`text-xs`): meta such as counts, categories and timestamps.
+  - 13px weight 500, `text-fg`: sidebar group titles.
+  - 16px/24px (`text-base`): section and modal titles, and every input on a phone, so iOS never zooms.
+  - 18px/28px weight 600 (`text-lg`): page titles.
+  - 11px weight 500: keycaps only, the floor.
+  - Nothing smaller, and no all-caps.
 - **Slides:** Fira Sans 600. It appears only inside the black projector preview and its thumbnails.
 - **Numbers:** counts, positions ("2 / 6") and times use `font-variant-numeric: tabular-nums`.
 - **Capitals:** never use all-caps labels or eyebrow text above headings. Use sentence case everywhere.
@@ -78,7 +85,11 @@ Never use a raw hex or a palette class (`bg-zinc-800`, `text-purple-500`) in a c
 ## Components
 
 - **Logo:** the app mark (a blue `#0070dd` rounded square, radius 6/24, with a white open book) followed by "Church Hub" in Inter 600 14px. It is not a dropdown.
-- **Sidebar:** 248px wide, `bg-panel`, grouped into Live / Library / Tools. Each row has an icon, a label and its F-key keycap. The selected row is `bg-selected`.
+- **Sidebar:**
+  - 248px wide, on `bg-panel`.
+  - Pages are grouped under white 13px titles: Live / În desfășurare (Control Room), Library / Resurse (Songs, Bible, Presentations, Music, Gallery) and Tools / Instrumente (everything else, custom pages too), with a hairline between groups.
+  - Rows are 36px tall, with an 18px line icon, a 14px label and the F-key keycap. The selected row is `bg-selected`.
+  - The footer holds Feedback and Settings rows, then the user row: a 32px avatar with the name above the role.
 - **Live card:**
   - Sits in the sidebar footer, above Feedback and Settings.
   - Shows the live slide at full sidebar width with the `live` outline, then the title and "Chorus 2 / 6", then two equal buttons: gray Previous and blue Next.
@@ -98,6 +109,10 @@ Never use a raw hex or a palette class (`bg-zinc-800`, `text-purple-500`) in a c
   - On the same baseline, category first in `text-hint`, then the key in `key` 500.
   - The key is never blue or light blue.
 - **Bookmark:** outline icon in `text-label`; filled in `bookmark` when set.
+- **Preview panel:** the live preview fits its panel in both directions, through a size container plus `--preview-reserve` for the controls. It sits centred with Previous / Next, so a tall panel never leaves dead space under the buttons. The buttons never dim while a slide change is in flight; extra presses are ignored instead.
+- **Column toggle:** the hide/show button on a column divider sits at the top, level with the panel headers.
+- **Start-up screen:** a static skeleton of the page being opened, in the theme's colours (three columns for Songs, Bible and Presentations; a stage for Control Room; a nav and panel for Settings). The status sits in a small card at the bottom. No full-screen spinner.
+- **App icons:** the favicon, Apple touch icon and PWA icons are the app mark. The theme colour is `#0070dd`.
 - **Scrollbars:** thin (10px track, 3px transparent border, radius 8) in the `scrollbar` token.
 - **Focus:** a visible 1px inset `focus` ring on inputs. Keyboard focus on controls uses the same colour.
 

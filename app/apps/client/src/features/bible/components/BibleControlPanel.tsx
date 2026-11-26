@@ -87,7 +87,7 @@ export function BibleControlPanel({
               type="button"
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-[13px] text-fg-label rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors shrink-0"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-fg-label rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors shrink-0"
               title={t('controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
@@ -118,7 +118,7 @@ export function BibleControlPanel({
               type="button"
               onClick={handleHide}
               disabled={isHiding}
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-[13px] text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={`${t('controls.hide')} (Esc)`}
             >
               {isHiding ? (
@@ -138,7 +138,7 @@ export function BibleControlPanel({
               type="button"
               onClick={handleShow}
               disabled={!hasContent || showSlideCommand.isPending}
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-[13px] text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={t('controls.show')}
             >
               {showSlideCommand.isPending ? (
@@ -159,7 +159,7 @@ export function BibleControlPanel({
         </div>
       </div>
 
-      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
+      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col lg:justify-center lg:[container-type:size] [--preview-reserve:3.75rem]">
         <div className="w-full flex-shrink-0">
           <LivePreview />
         </div>

@@ -61,7 +61,7 @@ export function ClearLogs({ onCleared }: ClearLogsProps) {
           <Trash2 strokeWidth={1.5} className="h-5 w-5 text-fg-label" />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-[13px] font-medium text-fg">
+          <h4 className="text-sm font-medium text-fg">
             {t('sections.logs.clear.card.title')}
           </h4>
           <p className="mt-0.5 text-xs text-fg-hint">
@@ -71,7 +71,7 @@ export function ClearLogs({ onCleared }: ClearLogsProps) {
             type="button"
             onClick={() => setShowConfirm(true)}
             disabled={isPending}
-            className="mt-3 inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-[13px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            className="mt-3 inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
           >
             <Trash2 strokeWidth={1.5} className="h-4 w-4" />
             {isPending
@@ -98,10 +98,10 @@ export function ClearLogs({ onCleared }: ClearLogsProps) {
                 <h3 className="text-base font-semibold text-fg">
                   {t('sections.logs.clear.confirm.title')}
                 </h3>
-                <p className="mt-2 text-[13px] text-fg-label">
+                <p className="mt-2 text-sm text-fg-label">
                   {t('sections.logs.clear.confirm.message')}
                 </p>
-                <p className="mt-2 text-[13px] font-medium text-red-600 dark:text-red-400">
+                <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
                   {t('sections.logs.clear.confirm.warning')}
                 </p>
               </div>
@@ -110,14 +110,14 @@ export function ClearLogs({ onCleared }: ClearLogsProps) {
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="h-9 rounded-lg bg-field px-3.5 text-[13px] font-medium text-fg hover:bg-hover"
+                className="h-9 rounded-lg bg-field px-3.5 text-sm font-medium text-fg hover:bg-hover"
               >
                 {t('sections.logs.clear.confirm.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleClear}
-                className="h-9 rounded-lg bg-red-600 px-3.5 text-[13px] font-medium text-white hover:bg-red-700"
+                className="h-9 rounded-lg bg-red-600 px-3.5 text-sm font-medium text-white hover:bg-red-700"
               >
                 {t('sections.logs.clear.confirm.confirm')}
               </button>

@@ -141,14 +141,14 @@ export function ExportFormatModal({
           <button
             type="button"
             onClick={onCancel}
-            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('modal.cancel')}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             {t('export.confirmButton')}
           </button>

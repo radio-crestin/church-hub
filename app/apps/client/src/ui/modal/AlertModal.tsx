@@ -115,14 +115,14 @@ export function AlertModal({
           </div>
           <div className="flex-1">
             <h2 className="text-base font-semibold text-fg mb-1.5">{title}</h2>
-            <p className="text-[13px] text-fg-label">{message}</p>
+            <p className="text-sm text-fg-label">{message}</p>
           </div>
         </div>
         <div className="flex justify-end mt-5">
           <button
             type="button"
             onClick={onClose}
-            className={`h-9 px-4 rounded-lg text-[13px] font-medium text-white transition-colors ${buttonClass}`}
+            className={`h-9 px-4 rounded-lg text-sm font-medium text-white transition-colors ${buttonClass}`}
           >
             {t('common:buttons.ok')}
           </button>

@@ -74,7 +74,7 @@ export function BibleTopicPassages({
         </button>
         <span
           data-testid="bible-topic-title"
-          className="min-w-0 flex-1 truncate text-[13px] font-semibold text-fg"
+          className="min-w-0 flex-1 truncate text-sm font-semibold text-fg"
         >
           {title}
         </span>
@@ -109,9 +109,7 @@ export function BibleTopicPassages({
 
       <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
         {isLoading ? (
-          <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
-            ...
-          </div>
+          <div className="px-4 py-6 text-center text-sm text-fg-hint">...</div>
         ) : (
           <ul className="p-1.5 flex flex-col gap-0.5">
             {passages.map((passage, index) => {
@@ -136,7 +134,7 @@ export function BibleTopicPassages({
                     <span className="block text-xs font-semibold text-fg-label">
                       {passage.reference}
                     </span>
-                    <span className="block text-[13px] text-fg-body">
+                    <span className="block text-sm text-fg-body">
                       {passage.verses.map((verse) => (
                         <span key={verse.id}>
                           {passage.verses.length > 1 && (

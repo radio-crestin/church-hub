@@ -83,7 +83,7 @@ export function TrackRow({
           onPlay(track)
         }
       }}
-      className={`grid ${TRACK_GRID} cursor-pointer rounded-lg px-3 py-2 text-[13px] transition-colors ${
+      className={`grid ${TRACK_GRID} cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors ${
         isPlaying
           ? 'bg-live-tint text-fg ring-1 ring-inset ring-live'
           : 'text-fg-body hover:bg-hover'

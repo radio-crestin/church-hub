@@ -28,7 +28,7 @@ export function TodayProgramButton({
       title={hint}
       aria-label={hint}
       data-testid={testId}
-      className="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium rounded-lg bg-primary text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
+      className="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg bg-primary text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
     >
       {isPending ? (
         <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />

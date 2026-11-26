@@ -133,7 +133,7 @@ export function ImportBibleBookmarksModal({
         </div>
 
         <div className="p-4 space-y-3">
-          <p className="text-[13px] text-fg-label">
+          <p className="text-sm text-fg-label">
             {t('bookmarks.import.description')}
           </p>
 
@@ -146,13 +146,13 @@ export function ImportBibleBookmarksModal({
             placeholder={t('bookmarks.import.placeholder')}
             rows={10}
             data-testid="bible-bookmarks-import-textarea"
-            className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-none font-mono text-[13px]"
+            className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-none font-mono text-sm"
           />
 
           <button
             type="button"
             onClick={handlePickFile}
-            className="inline-flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg"
+            className="inline-flex items-center gap-1.5 text-sm text-fg-label hover:text-fg"
           >
             <FolderOpen className="w-4 h-4" strokeWidth={1.5} />
             {t('bookmarks.import.chooseFile')}
@@ -173,7 +173,7 @@ export function ImportBibleBookmarksModal({
               data-testid="bible-bookmarks-import-errors"
               className="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-900/20"
             >
-              <div className="flex items-center gap-1.5 text-[13px] font-medium text-amber-800 dark:text-amber-300">
+              <div className="flex items-center gap-1.5 text-sm font-medium text-amber-800 dark:text-amber-300">
                 <AlertTriangle className="w-4 h-4" strokeWidth={1.5} />
                 {t('bookmarks.import.partial', {
                   imported: result.imported,
@@ -205,7 +205,7 @@ export function ImportBibleBookmarksModal({
           <button
             type="button"
             onClick={handleClose}
-            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
           >
             {t('bookmarks.import.cancel')}
           </button>
@@ -214,7 +214,7 @@ export function ImportBibleBookmarksModal({
             onClick={handleImport}
             disabled={!text.trim() || importMutation.isPending}
             data-testid="bible-bookmarks-import-confirm"
-            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('bookmarks.import.confirm')}
           </button>

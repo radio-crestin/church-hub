@@ -25,7 +25,7 @@ export function MIDISettingsSection() {
           <h2 className="text-base font-semibold text-fg">
             {t('sections.midi.title', { defaultValue: 'MIDI Controller' })}
           </h2>
-          <p className="text-[13px] text-fg-label">
+          <p className="text-sm text-fg-label">
             {t('sections.midi.description', {
               defaultValue:
                 'Configure your MIDI controller to use hardware buttons for shortcuts.',

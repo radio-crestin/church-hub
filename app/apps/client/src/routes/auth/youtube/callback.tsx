@@ -76,17 +76,17 @@ function YouTubeCallbackPage() {
         {status === 'processing' && (
           <>
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-fg-label border-t-transparent mx-auto" />
-            <p className="text-[15px] text-fg">Connecting YouTube account...</p>
+            <p className="text-base text-fg">Connecting YouTube account...</p>
           </>
         )}
 
         {status === 'success' && (
           <>
             <div className="mb-4 text-4xl text-ok">✓</div>
-            <p className="text-[15px] text-ok">
+            <p className="text-base text-ok">
               YouTube account connected successfully!
             </p>
-            <p className="text-[13px] text-fg-hint mt-2">
+            <p className="text-sm text-fg-hint mt-2">
               Redirecting to livestream settings...
             </p>
           </>
@@ -95,11 +95,11 @@ function YouTubeCallbackPage() {
         {status === 'error' && (
           <>
             <div className="mb-4 text-4xl text-red-600">✗</div>
-            <p className="text-[15px] text-red-600">Connection failed</p>
-            <p className="text-[13px] text-fg-hint mt-2">{errorMessage}</p>
+            <p className="text-base text-red-600">Connection failed</p>
+            <p className="text-sm text-fg-hint mt-2">{errorMessage}</p>
             <button
               onClick={() => navigate({ to: '/livestream' })}
-              className="mt-4 h-9 px-4 bg-primary hover:bg-indigo-700 text-[13px] font-medium text-white rounded-lg"
+              className="mt-4 h-9 px-4 bg-primary hover:bg-indigo-700 text-sm font-medium text-white rounded-lg"
             >
               Go to Livestream Settings
             </button>

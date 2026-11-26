@@ -17,7 +17,7 @@ export function NowPlaying({ currentTrack }: NowPlayingProps) {
           <Music className="h-6 w-6 text-fg-hint" strokeWidth={1.25} />
         </div>
         <div>
-          <p className="text-[13px] text-fg-hint">{t('player.noTrack')}</p>
+          <p className="text-sm text-fg-hint">{t('player.noTrack')}</p>
         </div>
       </div>
     )
@@ -31,9 +31,7 @@ export function NowPlaying({ currentTrack }: NowPlayingProps) {
         <Music className="h-6 w-6 text-fg-hint" strokeWidth={1.25} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-medium truncate text-fg">
-          {displayTitle}
-        </p>
+        <p className="text-sm font-medium truncate text-fg">{displayTitle}</p>
         {currentTrack.artist && (
           <p className="text-xs text-fg-hint truncate">{currentTrack.artist}</p>
         )}

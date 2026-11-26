@@ -141,7 +141,7 @@ export function SidebarItemCard({
 
       {/* Label, then its type badge and shortcuts under it */}
       <div className="flex-1 min-w-0">
-        <span className="block text-[13px] font-medium text-fg truncate">
+        <span className="block text-sm font-medium text-fg truncate">
           {label}
         </span>
         <div className="mt-0.5 flex flex-wrap items-center gap-1">

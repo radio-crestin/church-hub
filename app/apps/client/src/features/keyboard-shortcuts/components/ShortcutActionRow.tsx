@@ -117,7 +117,7 @@ export function ShortcutActionRow({
             className="shrink-0 text-fg-label"
           />
           <div>
-            <h4 className="text-[13px] font-medium text-fg">
+            <h4 className="text-sm font-medium text-fg">
               {t(action.labelKey)}
             </h4>
             <p className="text-xs text-fg-hint">{t(action.descriptionKey)}</p>
@@ -143,7 +143,7 @@ export function ShortcutActionRow({
 
       <div className="space-y-2">
         {config.shortcuts.length === 0 ? (
-          <p className="text-[13px] text-fg-hint">
+          <p className="text-sm text-fg-hint">
             {t('sections.shortcuts.noShortcuts')}
           </p>
         ) : (
@@ -169,7 +169,7 @@ export function ShortcutActionRow({
         <button
           type="button"
           onClick={handleAddShortcut}
-          className="flex items-center gap-2 h-8 px-2 -mx-2 rounded-lg text-[13px] text-fg-label hover:bg-hover hover:text-fg transition-colors mt-2"
+          className="flex items-center gap-2 h-8 px-2 -mx-2 rounded-lg text-sm text-fg-label hover:bg-hover hover:text-fg transition-colors mt-2"
         >
           <Plus size={16} strokeWidth={1.5} />
           {t('sections.shortcuts.addShortcut')}

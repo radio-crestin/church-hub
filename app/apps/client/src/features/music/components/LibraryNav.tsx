@@ -81,7 +81,7 @@ export function LibraryNav({ view, onSelect }: LibraryNavProps) {
       </Section>
       <Section title={t('playlist.title')}>
         {playlists.length === 0 && (
-          <p className="px-3 text-[13px] text-fg-hint">{t('playlist.empty')}</p>
+          <p className="px-3 text-sm text-fg-hint">{t('playlist.empty')}</p>
         )}
         {playlists.map((playlist) =>
           item(

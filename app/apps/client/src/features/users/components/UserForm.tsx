@@ -77,7 +77,7 @@ export function UserForm({
         <div>
           <label
             htmlFor="user-name"
-            className="block text-[13px] font-medium text-fg-body mb-1"
+            className="block text-sm font-medium text-fg-body mb-1"
           >
             {t('sections.users.userName')}
           </label>
@@ -89,7 +89,7 @@ export function UserForm({
             placeholder={t('sections.users.userNamePlaceholder')}
             disabled={isLoading}
             className="block w-full h-9 px-3 bg-field
-            border-0 rounded-[10px] text-[13px]
+            border-0 rounded-[10px] text-sm
             text-fg placeholder:text-fg-hint
             focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
             disabled:opacity-50"
@@ -100,7 +100,7 @@ export function UserForm({
         <div>
           <label
             htmlFor="user-password"
-            className="block text-[13px] font-medium text-fg-body mb-1"
+            className="block text-sm font-medium text-fg-body mb-1"
           >
             {t('users:password.label')}{' '}
             <span className="text-fg-hint font-normal">
@@ -121,7 +121,7 @@ export function UserForm({
               disabled={isLoading || removePassword}
               autoComplete="new-password"
               className="block w-full h-9 pl-3 pr-11 bg-field
-              border-0 rounded-[10px] text-[13px]
+              border-0 rounded-[10px] text-sm
               text-fg placeholder:text-fg-hint
               focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
               disabled:opacity-50"
@@ -149,7 +149,7 @@ export function UserForm({
             {t('users:password.hint')}
           </p>
           {isEditing && user?.hasPassword && (
-            <label className="flex items-center gap-2 mt-2 text-[13px] text-fg-body">
+            <label className="flex items-center gap-2 mt-2 text-sm text-fg-body">
               <input
                 type="checkbox"
                 checked={removePassword}
@@ -177,7 +177,7 @@ export function UserForm({
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg
+          className="h-9 px-3.5 text-sm font-medium bg-field text-fg
             hover:bg-hover rounded-lg
             transition-colors disabled:opacity-50"
         >
@@ -186,7 +186,7 @@ export function UserForm({
         <button
           type="submit"
           disabled={isLoading || !name.trim()}
-          className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg
+          className="h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg
             transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (

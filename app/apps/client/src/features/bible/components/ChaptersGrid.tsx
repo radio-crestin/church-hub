@@ -33,13 +33,13 @@ export function ChaptersGrid({
       <button
         type="button"
         onClick={onGoBack}
-        className="flex items-center gap-1.5 text-[13px] text-fg-label hover:text-fg transition-colors"
+        className="flex items-center gap-1.5 text-sm text-fg-label hover:text-fg transition-colors"
       >
         <ArrowLeft size={16} strokeWidth={1.5} />
         {t('navigation.back')}
       </button>
 
-      <h3 className="text-[13px] font-medium text-fg">{bookName}</h3>
+      <h3 className="text-sm font-medium text-fg">{bookName}</h3>
 
       <div className="grid grid-cols-6 gap-1.5">
         {chapters.map((chapter) => (
@@ -47,7 +47,7 @@ export function ChaptersGrid({
             key={chapter.chapter}
             type="button"
             onClick={() => onSelectChapter(chapter.chapter)}
-            className="aspect-square flex items-center justify-center text-[13px] font-medium text-fg-body bg-field hover:bg-hover rounded-md transition-colors"
+            className="aspect-square flex items-center justify-center text-sm font-medium text-fg-body bg-field hover:bg-hover rounded-md transition-colors"
           >
             {chapter.chapter}
           </button>

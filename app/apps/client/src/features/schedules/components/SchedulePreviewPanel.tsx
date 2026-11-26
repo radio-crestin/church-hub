@@ -80,7 +80,7 @@ export function SchedulePreviewPanel({
               type="button"
               onClick={() => clearHighlights.mutate()}
               disabled={clearHighlights.isPending}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-[13px] text-fg-label rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-fg-label rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={t('bible:controls.clearHighlights')}
             >
               {clearHighlights.isPending ? (
@@ -115,7 +115,7 @@ export function SchedulePreviewPanel({
               type="button"
               onClick={handleHide}
               disabled={clearTemporary.isPending}
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-[13px] text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-body rounded-lg border border-line hover:bg-hover disabled:opacity-50 transition-colors"
               title={`${t('bible:controls.hide')} (Esc)`}
             >
               {clearTemporary.isPending ? (
@@ -136,7 +136,7 @@ export function SchedulePreviewPanel({
             <button
               type="button"
               disabled
-              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-[13px] text-fg-hint rounded-lg border border-line opacity-50 cursor-not-allowed"
+              className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-sm text-fg-hint rounded-lg border border-line opacity-50 cursor-not-allowed"
             >
               <Eye size={18} />
               <span className="hidden sm:inline">
@@ -148,7 +148,7 @@ export function SchedulePreviewPanel({
       </div>
 
       {/* Preview Area */}
-      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col">
+      <div className="p-2 lg:p-3 lg:flex-1 lg:min-h-0 flex flex-col lg:justify-center lg:[container-type:size] [--preview-reserve:3.75rem]">
         <div className="w-full flex-shrink-0">
           <LivePreview />
         </div>

@@ -36,7 +36,7 @@ export function ScheduleVerseteTineriEntryList({
           className="text-amber-600 dark:text-amber-400 flex-shrink-0"
           strokeWidth={1.5}
         />
-        <span className="text-[13px] text-amber-700 dark:text-amber-300">
+        <span className="text-sm text-amber-700 dark:text-amber-300">
           {t('warnings.noEntries')}
         </span>
       </div>
@@ -65,7 +65,7 @@ export function ScheduleVerseteTineriEntryList({
           >
             <div className="flex items-start gap-2">
               <span
-                className={`font-semibold text-[13px] min-w-[24px] ${
+                className={`font-semibold text-sm min-w-[24px] ${
                   isPresented ? 'text-live' : 'text-fg-hint'
                 }`}
               >
@@ -101,7 +101,7 @@ export function ScheduleVerseteTineriEntryList({
                   )}
                 </span>
                 <span
-                  className={`text-[13px] line-clamp-2 block ${
+                  className={`text-sm line-clamp-2 block ${
                     isPresented ? 'text-fg' : 'text-fg-body'
                   }`}
                 >

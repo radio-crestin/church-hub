@@ -175,7 +175,7 @@ export function UserList() {
             type="button"
             onClick={() => setModal({ type: 'create' })}
             className="flex items-center gap-2 h-8 px-3 font-medium bg-primary hover:bg-indigo-700
-            text-white rounded-lg transition-colors text-[13px]"
+            text-white rounded-lg transition-colors text-sm"
           >
             <Plus strokeWidth={1.5} size={16} />
             {t('sections.users.addUser')}
@@ -195,7 +195,7 @@ export function UserList() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('sections.users.searchPlaceholder')}
-            className={`h-9 w-full rounded-[10px] bg-field pl-9 text-[13px] text-fg placeholder:text-fg-hint outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
+            className={`h-9 w-full rounded-[10px] bg-field pl-9 text-sm text-fg placeholder:text-fg-hint outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
               search ? 'pr-9' : 'pr-3'
             }`}
           />
@@ -226,7 +226,7 @@ export function UserList() {
             ))}
           </div>
         ) : (
-          <p className="text-center py-8 text-[13px] text-fg-hint">
+          <p className="text-center py-8 text-sm text-fg-hint">
             {t('sections.users.noResults')}
           </p>
         )
@@ -240,7 +240,7 @@ export function UserList() {
           <p className="text-fg-label font-medium">
             {t('sections.users.noUsers')}
           </p>
-          <p className="text-[13px] text-fg-hint mt-1">
+          <p className="text-sm text-fg-hint mt-1">
             {t('sections.users.noUsersDescription')}
           </p>
         </div>

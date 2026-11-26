@@ -186,7 +186,7 @@ export function ScreenExportModal({
         </div>
 
         {/* Description */}
-        <p className="text-[13px] text-fg-label mb-6">
+        <p className="text-sm text-fg-label mb-6">
           {t('sections.screens.export.description')}
         </p>
 
@@ -216,7 +216,7 @@ export function ScreenExportModal({
                     strokeWidth={1.5}
                     className="text-fg-label"
                   />
-                  <span className="text-[13px] font-medium text-fg">
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.screens.export.options.url.title')}
                   </span>
                 </div>
@@ -249,7 +249,7 @@ export function ScreenExportModal({
                     strokeWidth={1.5}
                     className="text-fg-label"
                   />
-                  <span className="text-[13px] font-medium text-fg">
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.screens.export.options.staticFile.title')}
                   </span>
                 </div>
@@ -264,7 +264,7 @@ export function ScreenExportModal({
         {/* Server URL Selection - only show for static file mode */}
         {!isSuccess && selectedMode === 'staticFile' && (
           <div className="mb-6">
-            <label className="block text-[13px] font-medium text-fg-label mb-2">
+            <label className="block text-sm font-medium text-fg-label mb-2">
               {t('sections.screens.export.serverUrl.label')}
             </label>
 
@@ -300,7 +300,7 @@ export function ScreenExportModal({
         {/* Note about OBS */}
         {!isSuccess && selectedMode === 'staticFile' && (
           <div className="bg-field rounded-lg p-3 mb-6">
-            <p className="text-[13px] text-fg-body">
+            <p className="text-sm text-fg-body">
               {t('sections.screens.export.note')}
             </p>
           </div>
@@ -319,7 +319,7 @@ export function ScreenExportModal({
               <p className="text-xs text-fg-hint mb-1">
                 {t('sections.screens.export.filePath', { path: '' })}
               </p>
-              <code className="text-[13px] font-mono text-fg break-all">
+              <code className="text-sm font-mono text-fg break-all">
                 {filePath}
               </code>
             </div>
@@ -329,9 +329,7 @@ export function ScreenExportModal({
         {/* Error State */}
         {isError && error && (
           <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 mb-6">
-            <p className="text-[13px] text-red-800 dark:text-red-200">
-              {error}
-            </p>
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
           </div>
         )}
 

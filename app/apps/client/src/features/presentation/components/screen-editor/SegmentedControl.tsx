@@ -17,7 +17,7 @@ export function SegmentedControl<T extends string>({
           key={option.value}
           type="button"
           aria-pressed={value === option.value}
-          className={`flex-1 min-w-0 h-8 text-[13px] font-medium rounded-lg transition-colors ${
+          className={`flex-1 min-w-0 h-8 text-sm font-medium rounded-lg transition-colors ${
             value === option.value
               ? 'bg-selected text-fg'
               : 'bg-field text-fg-label hover:bg-hover hover:text-fg'

@@ -75,14 +75,14 @@ export function ConfirmModal({
       <div className="p-5 min-w-[300px] max-w-md">
         <h2 className="text-base font-semibold text-fg mb-1.5">{title}</h2>
         <div className="mb-5 space-y-3">
-          <p className="text-[13px] text-fg-label">{message}</p>
+          <p className="text-sm text-fg-label">{message}</p>
           {children}
         </div>
         <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="h-9 px-4 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-4 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {cancelLabel ?? t('common:buttons.cancel')}
           </button>
@@ -90,7 +90,7 @@ export function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`h-9 px-4 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${confirmButtonClass}`}
+            className={`h-9 px-4 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${confirmButtonClass}`}
           >
             {confirmLabel}
           </button>

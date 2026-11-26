@@ -46,7 +46,7 @@ export function SyncChangesList() {
   return (
     <div className="rounded-xl border border-line p-4">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-[13px] font-medium text-fg">
+        <h4 className="text-sm font-medium text-fg">
           {t('sections.sync.changes.received')}
         </h4>
         {hasUnseen && (
@@ -84,7 +84,7 @@ export function SyncChangesList() {
                   />
                 )}
                 <span
-                  className={`min-w-0 flex-1 truncate text-[13px] ${
+                  className={`min-w-0 flex-1 truncate text-sm ${
                     update.seen ? 'text-fg-body' : 'font-medium text-fg'
                   }`}
                 >

@@ -245,7 +245,7 @@ export function SidebarConfigManager() {
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 h-8 px-3 bg-primary hover:bg-indigo-700 text-white text-[13px] font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 h-8 px-3 bg-primary hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <Plus strokeWidth={1.5} size={16} />
             {t('sections.sidebar.addCustomPage')}

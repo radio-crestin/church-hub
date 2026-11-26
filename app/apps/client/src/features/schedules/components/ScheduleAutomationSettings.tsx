@@ -93,7 +93,7 @@ export function ScheduleAutomationSettings({
           testId="automation-autoplay"
         />
         {autoplayOn && (
-          <label className="flex items-center justify-between gap-3 pb-2 text-[13px] text-fg-body">
+          <label className="flex items-center justify-between gap-3 pb-2 text-sm text-fg-body">
             {t('automation.seconds')}
             <input
               type="number"

@@ -77,11 +77,10 @@ export function WorkspaceSeparator({
           aria-expanded={!columnToggle.collapsed}
           title={toggleLabel}
           data-testid="workspace-last-column-toggle"
-          className={`absolute top-1/2 z-20 flex h-8 w-4 cursor-pointer items-center justify-center rounded border border-line bg-panel text-fg-label transition-colors hover:bg-hover hover:text-fg ${
-            // Just above the grip, which stays the divider's drag cue.
-            columnToggle.collapsed
-              ? 'right-0 -translate-y-[calc(100%+12px)]'
-              : 'left-1/2 -translate-x-1/2 -translate-y-[calc(100%+12px)]'
+          className={`absolute top-2 z-20 flex h-8 w-4 cursor-pointer items-center justify-center rounded border border-line bg-panel text-fg-label transition-colors hover:bg-hover hover:text-fg ${
+            // At the top, level with the panels' headers; the grip in the
+            // middle stays the divider's drag cue.
+            columnToggle.collapsed ? 'right-0' : 'left-1/2 -translate-x-1/2'
           }`}
         >
           {columnToggle.collapsed ? (
