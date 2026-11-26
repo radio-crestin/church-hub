@@ -4,6 +4,7 @@ import { CrossfadeScreenBackground } from './rendering/CrossfadeScreenBackground
 import { ScreenBackground } from './rendering/ScreenBackground'
 import { ScreenContentLayers } from './rendering/ScreenContentLayers'
 import type { ContentData, NextSlideData } from './rendering/types'
+import { textEnterAnimation } from './rendering/utils/textEnterAnimation'
 import type { ShownContent } from '../hooks/useContentTypeHandoff'
 import type {
   ClockOverride,
@@ -97,15 +98,26 @@ export function ScreenPreview({
     }
   }, [])
 
+  // The leaving content's background until it is gone, so the new background
+  // comes in with the new text
+  const backgroundFor = leaving ?? { contentType, contentData }
   const bg = hideBackground
     ? HIDDEN_BACKGROUND
-    : resolveScreenBackground({ screen, contentType, contentData })
+    : resolveScreenBackground({
+        screen,
+        contentType: backgroundFor.contentType,
+        contentData: backgroundFor.contentData,
+      })
 
   return (
     <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* First, so the (positioned) content paints above it */}
       {crossfadeBackground ? (
-        <CrossfadeScreenBackground background={bg} playVideo={playVideo} />
+        <CrossfadeScreenBackground
+          background={bg}
+          enter={textEnterAnimation(screen.contentConfigs[contentType])}
+          playVideo={playVideo}
+        />
       ) : (
         <ScreenBackground background={bg} playVideo={playVideo} />
       )}

@@ -7,6 +7,7 @@ import { createLogger } from '~/utils/logger'
 import { CrossfadeScreenBackground } from './CrossfadeScreenBackground'
 import { ScreenContentLayers } from './ScreenContentLayers'
 import { TypewriterContext } from './TypewriterContext'
+import { textEnterAnimation } from './utils/textEnterAnimation'
 import { getNextVerse } from '../../../bible/service/bible'
 import { useKioskSettings } from '../../../kiosk'
 import { useOBSScenes } from '../../../livestream/hooks'
@@ -628,13 +629,14 @@ export function ScreenRenderer({
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
   )
 
-  // The song's own background or the screen's one for the content shown.
-  // When disconnected and hidden, use empty state background
-  const effectiveContentType = isDisconnectedAndHidden ? 'empty' : contentType
+  // The song's own background or the screen's one for the content shown;
+  // the leaving content's until it is gone, so the new background comes in
+  // with the new text. When disconnected and hidden, use empty state background
+  const backgroundFor = leaving ?? { contentType, contentData }
   const bg = resolveScreenBackground({
     screen,
-    contentType: effectiveContentType,
-    contentData,
+    contentType: isDisconnectedAndHidden ? 'empty' : backgroundFor.contentType,
+    contentData: backgroundFor.contentData,
   })
 
   // Get styleRanges from useSlideHighlights hook for real-time WebSocket updates
@@ -657,7 +659,10 @@ export function ScreenRenderer({
       onClick={handleClick}
     >
       {/* First, so everything after it paints above the background */}
-      <CrossfadeScreenBackground background={bg} />
+      <CrossfadeScreenBackground
+        background={bg}
+        enter={textEnterAnimation(screen.contentConfigs[contentType])}
+      />
 
       {/* Safe area wrapper - adds padding on mobile to avoid status bar.
           Positioned so its whole subtree stacks above the background layer. */}

@@ -1,24 +1,27 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * A background change dissolves on the projection instead of cutting: a song
- * with its own background, then a verse on the screen's background. The new
- * background fades in over the old one, which stays underneath until it is
- * covered, then leaves.
+ * A background change dissolves on the projection, in step with the text: a
+ * song with its own background, then a verse on the screen's background. The
+ * song's background stays while the song fades out; then the screen's
+ * background fades in over it together with the verse, with the same timing.
  */
 
 const ROOT = '[data-testid="screen-renderer-root"]'
 const SONG_COLOR = 'rgb(32, 64, 96)'
+const VERSE = 'Fiindcă atât de mult a iubit Dumnezeu lumea.'
 
 interface Frame {
   ms: number
+  song: number
+  verse: number
   layers: number
   /** Opacity of the topmost (newest) background layer */
-  topOpacity: number
-  topColor: string
+  background: number
+  backgroundColor: string
 }
 
-test.describe('Background changes dissolve', () => {
+test.describe('Background changes dissolve with the text', () => {
   let screenId: number | undefined
   let songId: number | undefined
   const lyric = `Strofa cu fundal ${Date.now()}`
@@ -46,7 +49,7 @@ test.describe('Background changes dissolve', () => {
     if (songId) await request.delete(`/api/songs/${songId}`)
   })
 
-  test("a verse after a song with its own background dissolves into the screen's", async ({
+  test("a verse after a song with its own background: the screen's background comes in with the verse", async ({
     page,
     request,
   }) => {
@@ -58,16 +61,26 @@ test.describe('Background changes dissolve', () => {
       data: { songId, slideIndex: 0 },
     })
     const background = page.locator(`${ROOT} [data-testid="screen-background"]`)
-    await expect(background).toHaveCount(1)
     await expect(background).toHaveCSS('background-color', SONG_COLOR)
-    // The song's background has dissolved in over the empty screen's
+    // The song and its background have finished coming in
     await expect(
       page.locator(`${ROOT} [data-testid="screen-background-layer"]`),
     ).toHaveCount(1)
+    await page.waitForTimeout(600)
 
     const frames = await page.evaluate(
-      (root) =>
+      ({ root, lyric, verse, songColor }) =>
         new Promise<Frame[]>((resolve, reject) => {
+          const textOpacity = (text: string) => {
+            const anchor = [
+              ...document.querySelectorAll<HTMLElement>('[data-style-anchor]'),
+            ].find((element) => element.textContent?.includes(text))
+            let opacity = anchor ? 1 : 0
+            for (let el = anchor ?? null; el; el = el.parentElement) {
+              opacity *= Number(getComputedStyle(el).opacity)
+            }
+            return opacity
+          }
           const frames: Frame[] = []
           const start = performance.now()
           const sample = () => {
@@ -77,19 +90,24 @@ test.describe('Background changes dissolve', () => {
               ),
             ]
             const top = layers[layers.length - 1]
-            const ms = performance.now() - start
-            frames.push({
-              ms,
+            const frame = {
+              ms: performance.now() - start,
+              song: textOpacity(lyric),
+              verse: textOpacity(verse),
               layers: layers.length,
-              topOpacity: Number(getComputedStyle(top).opacity),
-              topColor: getComputedStyle(
+              background: Number(getComputedStyle(top).opacity),
+              backgroundColor: getComputedStyle(
                 top.querySelector('[data-testid="screen-background"]') ?? top,
               ).backgroundColor,
-            })
-            const dissolved = frames.some((frame) => frame.layers > 1)
-            if (dissolved && layers.length === 1) resolve(frames)
-            else if (ms > 4000)
-              reject(new Error('the background never changed'))
+            }
+            frames.push(frame)
+            const settled =
+              frame.verse >= 0.999 &&
+              frame.layers === 1 &&
+              frame.backgroundColor !== songColor
+            if (settled) resolve(frames)
+            else if (frame.ms > 4000)
+              reject(new Error('the verse and its background never settled'))
             else requestAnimationFrame(sample)
           }
           fetch('/api/presentation/temporary-bible', {
@@ -98,7 +116,7 @@ test.describe('Background changes dissolve', () => {
             body: JSON.stringify({
               verseId: 9100,
               reference: 'Ioan 3:16',
-              text: 'Fiindcă atât de mult a iubit Dumnezeu lumea.',
+              text: verse,
               translationAbbreviation: 'VDC',
               bookName: 'Ioan',
               translationId: 1,
@@ -110,34 +128,52 @@ test.describe('Background changes dissolve', () => {
           }).catch(reject)
           sample()
         }),
-      ROOT,
+      { root: ROOT, lyric, verse: VERSE, songColor: SONG_COLOR },
     )
 
-    const dissolving = frames.filter((frame) => frame.layers > 1)
-    const last = frames[frames.length - 1]
+    const isNewBackground = (f: Frame) =>
+      f.layers > 1 || f.backgroundColor !== SONG_COLOR
+    const verseStarts = frames.find((f) => f.verse > 0.02)
+    const backgroundStarts = frames.find(
+      (f) => isNewBackground(f) && f.background > 0.02,
+    )
+    const verseDone = frames.find((f) => f.verse >= 0.999)
+    const backgroundDone = frames.find(
+      (f) => isNewBackground(f) && f.background >= 0.999,
+    )
     test.info().annotations.push({
-      type: 'dissolve',
+      type: 'sync',
       description: JSON.stringify({
-        ms: dissolving[dissolving.length - 1].ms - dissolving[0].ms,
-        frames: dissolving.length,
+        verseStarts: verseStarts?.ms,
+        backgroundStarts: backgroundStarts?.ms,
+        verseDone: verseDone?.ms,
+        backgroundDone: backgroundDone?.ms,
       }),
     })
 
-    // The new background eases in over the old one, never jumping back.
-    expect(
-      dissolving.some((f) => f.topOpacity > 0.2 && f.topOpacity < 0.8),
-    ).toBe(true)
-    for (let i = 1; i < dissolving.length; i++) {
-      expect(dissolving[i].topOpacity).toBeGreaterThanOrEqual(
-        dissolving[i - 1].topOpacity,
-      )
+    // While the song fades out, its own background stays.
+    for (const frame of frames.filter((f) => f.song > 0.02)) {
+      expect(frame.layers).toBe(1)
+      expect(frame.backgroundColor).toBe(SONG_COLOR)
     }
-    // Over the slide's own handoff (~800 ms), not a cut and not a drag.
-    const dissolveMs = dissolving[dissolving.length - 1].ms - dissolving[0].ms
-    expect(dissolveMs).toBeGreaterThan(500)
-    expect(dissolveMs).toBeLessThan(1200)
-    // Then only the screen's background is left, fully opaque.
-    expect(last.topOpacity).toBe(1)
-    expect(last.topColor).not.toBe(SONG_COLOR)
+    // The new background and the verse start together and settle together,
+    // within three frames (a loaded machine delays the text by a frame).
+    if (!verseStarts || !backgroundStarts || !verseDone || !backgroundDone) {
+      throw new Error('the verse or its background never came in')
+    }
+    expect(Math.abs(verseStarts.ms - backgroundStarts.ms)).toBeLessThan(50)
+    expect(Math.abs(verseDone.ms - backgroundDone.ms)).toBeLessThan(50)
+    // In step all the way: the same duration and curve, so about the same
+    // opacity each frame (a frame apart on the steep start of the ease-out is
+    // ~0.3; another timing, like an 800 ms ease-in-out, is off by over 0.5).
+    for (const frame of frames.filter((f) => f.layers > 1)) {
+      expect(Math.abs(frame.background - frame.verse)).toBeLessThan(0.35)
+    }
+    // A dissolve, not a cut: the background passes through half opacity.
+    expect(
+      frames.some(
+        (f) => f.layers > 1 && f.background > 0.2 && f.background < 0.8,
+      ),
+    ).toBe(true)
   })
 })
