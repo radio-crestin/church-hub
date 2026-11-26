@@ -11,7 +11,7 @@ import {
 } from '@playwright/test'
 import JSZip from 'jszip'
 
-import { MEDIA_API } from './helpers/background-media'
+import { label, MEDIA_API } from './helpers/background-media'
 
 /**
  * Importing a PowerPoint file into a Slides item (CH-183, phase 3): read in
@@ -639,6 +639,24 @@ test.describe('PowerPoint import', () => {
     request,
   }) => {
     await page.goto(`/schedules/${scheduleId}`)
+
+    // Dragged over the page, a .pptx is not promised as a song.
+    await expect(page.getByTestId('pptx-drop-target')).toHaveAttribute(
+      'data-ready',
+      'true',
+    )
+    await page.evaluate((type) => {
+      const transfer = new DataTransfer()
+      transfer.items.add(new File(['x'], 'deck.pptx', { type }))
+      document.dispatchEvent(
+        new DragEvent('dragenter', { bubbles: true, dataTransfer: transfer }),
+      )
+    }, PPTX_MIME)
+    await expect(page.getByTestId('file-drop-overlay')).toHaveText(
+      label('songs', 'pptxImport.dropHintPresentation'),
+    )
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('file-drop-overlay')).toHaveCount(0)
 
     // As slides: the same import as Add > Import PowerPoint.
     await dropFile(page, fixture('a-inheritance.pptx'), PPTX_MIME)

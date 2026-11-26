@@ -35,6 +35,9 @@ import {
 import { parsePptViaServer } from '../utils/parsePptViaServer'
 import { type ParsedPptx, parsePptxFile } from '../utils/parsePptx'
 
+const PPTX_MIME =
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+
 interface PendingImport {
   type: 'pptx' | 'opensong'
   title: string
@@ -213,8 +216,13 @@ export function FileDropZoneProvider({ children }: Props) {
   const upsertMutation = useUpsertSong()
   const openSongFile = useOpenSongFile()
   const pptxDropHandlerRef = useRef<PptxDropHandler | null>(null)
+  // Whether the open page takes .pptx drops, and whether the file being
+  // dragged is one: the overlay then does not promise a song.
+  const [hasPptxDropHandler, setHasPptxDropHandler] = useState(false)
+  const [isDraggingPptx, setIsDraggingPptx] = useState(false)
   const setPptxDropHandler = useCallback((handler: PptxDropHandler | null) => {
     pptxDropHandlerRef.current = handler
+    setHasPptxDropHandler(handler !== null)
   }, [])
 
   // State for duplicate dialog
@@ -580,6 +588,11 @@ export function FileDropZoneProvider({ children }: Props) {
         )
         if (hasFile) {
           setIsDragging(true)
+          setIsDraggingPptx(
+            Array.from(e.dataTransfer.items).some(
+              (item) => item.type === PPTX_MIME,
+            ),
+          )
           armDragOverTimer()
         }
       }
@@ -792,7 +805,15 @@ export function FileDropZoneProvider({ children }: Props) {
       try {
         const webview = getCurrentWebview()
         unlisten = await webview.onDragDropEvent(async (event) => {
-          if (event.payload.type === 'over') {
+          if (event.payload.type === 'enter') {
+            // Files dragged into the window: their paths tell what they are
+            setIsDragging(true)
+            setIsDraggingPptx(
+              event.payload.paths.some((path) =>
+                path.toLowerCase().endsWith('.pptx'),
+              ),
+            )
+          } else if (event.payload.type === 'over') {
             // User is hovering files over the window
             setIsDragging(true)
           } else if (event.payload.type === 'drop') {
@@ -969,7 +990,11 @@ export function FileDropZoneProvider({ children }: Props) {
         >
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-xl">
             <p className="text-xl font-semibold text-gray-900 dark:text-white">
-              {t('pptxImport.dropHint')}
+              {t(
+                hasPptxDropHandler && isDraggingPptx
+                  ? 'pptxImport.dropHintPresentation'
+                  : 'pptxImport.dropHint',
+              )}
             </p>
           </div>
         </div>
