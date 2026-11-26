@@ -1,6 +1,6 @@
 import { type RTCDataChannel, RTCPeerConnection } from 'werift'
 
-import { getStreamRooms, renewStreamLink } from './streamLink'
+import { getStreamRoom, renewStreamLink } from './streamLink'
 import { log } from '../../utils/fileLogger'
 import { ICE_SERVERS } from '../signaling/iceServers'
 import { startSignalingRelay } from '../signaling/startSignalingRelay'
@@ -32,8 +32,7 @@ interface Listener {
 
 const listeners = new Map<string, Listener>()
 let pingInterval: ReturnType<typeof setInterval> | null = null
-let closeRooms: Array<() => Promise<void>> = []
-let roomsOpen = false
+let closeRoom: (() => Promise<void>) | null = null
 let listenerIdCounter = 0
 let availableLanguages: AvailableLanguage[] = []
 let listenerCountsCallback: ((counts: Record<string, number>) => void) | null =
@@ -52,7 +51,7 @@ export function resetStreamSecret(): string {
   }
   notifyListenerCounts()
   logger.info('Stream secret reset, all listeners disconnected')
-  if (roomsOpen) void openListenerRoom()
+  if (closeRoom) void openListenerRoom()
   return secret
 }
 
@@ -90,36 +89,28 @@ function notifyListenerCounts(): void {
   listenerCountsCallback(counts)
 }
 
-async function closeRoomsOnRelay(): Promise<void> {
-  const closing = closeRooms
-  closeRooms = []
-  await Promise.all(closing.map((close) => close()))
-}
-
 /**
- * Opens (or reopens, after a new link) the listeners' rooms on the
- * signaling relay, the current link's and the old one's while it is served,
- * and answers each listener's offer.
+ * Opens (or reopens, after a new link) the listeners' room on the signaling
+ * relay and answers each listener's offer.
  */
 export async function openListenerRoom(): Promise<void> {
-  roomsOpen = true
-  await closeRoomsOnRelay()
-  closeRooms = getStreamRooms().map(({ secret, hostKey }) =>
-    startSignalingRelay({
-      secret,
-      hostKey,
-      // Every poll fetches a small JSON; polling fast cuts up to 2 s off a
-      // new listener's first connect.
-      pollMs: 500,
-      answer: async (offer) => (await handleListenerOffer(offer)).answer,
-    }),
-  )
+  const close = closeRoom
+  closeRoom = null
+  await close?.()
+  closeRoom = startSignalingRelay({
+    ...getStreamRoom(),
+    // Every poll fetches a small JSON; polling fast cuts up to 2 s off a new
+    // listener's first connect.
+    pollMs: 500,
+    answer: async (offer) => (await handleListenerOffer(offer)).answer,
+  })
 }
 
-/** Closes the listeners' rooms and disconnects every listener. */
+/** Closes the listeners' room and disconnects every listener. */
 export async function closeListenerRoom(): Promise<void> {
-  roomsOpen = false
-  await closeRoomsOnRelay()
+  const close = closeRoom
+  closeRoom = null
+  await close?.()
   for (const [id] of listeners) {
     cleanupListener(id)
   }

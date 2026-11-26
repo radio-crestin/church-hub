@@ -1,10 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
 
-/**
- * A new host key: 256 random bits, base64url. It stays on this computer and
- * goes only to the relay, as `Authorization: Bearer <key>`.
- */
-export const newHostKey = () => randomBytes(32).toString('base64url')
+import { readServerSecret, upsertServerSecret } from '../server-secrets'
 
 /**
  * The id of the room a host key opens on the relay ("h1" + SHA-256 of the
@@ -13,3 +9,17 @@ export const newHostKey = () => randomBytes(32).toString('base64url')
  */
 export const hostedRoomId = (hostKey: string) =>
   `h1${createHash('sha256').update(hostKey).digest('base64url')}`
+
+/**
+ * A new host key (256 random bits, base64url) kept under `name` in the
+ * server's secrets: it goes only to the relay, as `Authorization: Bearer`.
+ */
+export function renewHostKey(name: string): string {
+  const hostKey = randomBytes(32).toString('base64url')
+  upsertServerSecret(name, hostKey)
+  return hostKey
+}
+
+/** The host key kept under `name`, made on first use. */
+export const hostKeyFor = (name: string) =>
+  readServerSecret(name) ?? renewHostKey(name)

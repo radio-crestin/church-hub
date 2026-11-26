@@ -29,7 +29,11 @@ import {
   setAvailableLanguages,
   setListenerCountsCallback,
 } from '../service/live-translation/stream'
-import { getStreamSecret } from '../service/live-translation/streamLink'
+import {
+  dismissLinkChange,
+  getStreamSecret,
+  isLinkChangeUnseen,
+} from '../service/live-translation/streamLink'
 import type {
   LiveTranslationConfig,
   OutputModality,
@@ -156,7 +160,18 @@ export async function handleLiveTranslationRoutes(
     req.method === 'GET' &&
     url.pathname === '/api/live-translation/stream-secret'
   ) {
-    return Response.json({ secret: getStreamSecret() })
+    return Response.json({
+      secret: getStreamSecret(),
+      linkChanged: isLinkChangeUnseen(),
+    })
+  }
+
+  if (
+    req.method === 'DELETE' &&
+    url.pathname === '/api/live-translation/link-changed'
+  ) {
+    dismissLinkChange()
+    return Response.json({ success: true })
   }
 
   if (

@@ -13,11 +13,8 @@ const REGISTER_EVERY_MS = 30 * 60 * 1000
 interface SignalingRelayOptions {
   /** The room's id, shared with the devices that may connect. */
   secret: string
-  /**
-   * The host key the room id comes from (hostedRoom.ts), or null for a room
-   * id a released version made, which the relay lets its id alone host.
-   */
-  hostKey: string | null
+  /** The host key the room id comes from (hostedRoom.ts). */
+  hostKey: string
   /** How often to look for new offers. */
   pollMs: number
   /** Answers a device's SDP offer with this computer's SDP answer. */
@@ -36,9 +33,7 @@ export function startSignalingRelay({
 }: SignalingRelayOptions): () => Promise<void> {
   const base = getSignalingBaseUrl()
   // Host calls carry the host key; listeners only ever hold the room id.
-  const authorization: Record<string, string> = hostKey
-    ? { authorization: `Bearer ${hostKey}` }
-    : {}
+  const authorization = { authorization: `Bearer ${hostKey}` }
   const post = (path: string, body: unknown) =>
     fetch(`${base}${path}`, {
       method: 'POST',

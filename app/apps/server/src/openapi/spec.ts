@@ -18,6 +18,7 @@ import {
   feedbackPaths,
   healthPaths,
   livestreamYouTubePaths,
+  liveTranslationPaths,
   logsPaths,
   musicPaths,
   notificationsPaths,
@@ -79,6 +80,10 @@ export const openApiSpec = {
   tags: [
     { name: 'Health', description: 'Health check endpoints' },
     { name: 'Settings', description: 'Application and user settings' },
+    {
+      name: 'Live Translation',
+      description: 'The listener link of live translation',
+    },
     { name: 'Database', description: 'Database management and backup' },
     {
       name: 'Backup',
@@ -163,6 +168,7 @@ export const openApiSpec = {
     ...devicesPaths,
     ...authPaths,
     ...remoteAccessPaths,
+    ...liveTranslationPaths,
     ...usersPaths,
     ...songsPaths,
     ...songGroupsPaths,

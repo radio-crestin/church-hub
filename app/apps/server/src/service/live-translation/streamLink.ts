@@ -1,53 +1,33 @@
-import { deleteSetting, getSetting, upsertSetting } from '../settings'
-import { hostedRoomId, newHostKey } from '../signaling/hostedRoom'
+import { deleteSetting, getSetting } from '../settings'
+import { hostedRoomId, hostKeyFor, renewHostKey } from '../signaling/hostedRoom'
 
-const HOST_KEY_SETTING = 'live_translation_stream_host_key'
+const HOST_KEY_NAME = 'live_translation_host_key'
 /**
- * The listener link's room id that released versions made (32 characters,
- * hosted without a key). Links and QR codes churches already shared carry
- * it, so the room stays open next to the new one until it is turned off.
+ * Set by migration 0035 on an install that had shared a listener link of an
+ * earlier version: that link stopped, and the dashboard says so once.
  */
-const OLD_SECRET_SETTING = 'live_translation_stream_secret'
+const LINK_CHANGED_KEY = 'live_translation_link_changed'
 
 export interface StreamRoom {
   secret: string
-  /** Null for the old link's room, which the relay hosts by its id alone. */
-  hostKey: string | null
+  hostKey: string
 }
 
-function streamHostKey(): string {
-  const saved = getSetting('app_settings', HOST_KEY_SETTING)?.value
-  if (saved) return saved
-  const hostKey = newHostKey()
-  upsertSetting('app_settings', { key: HOST_KEY_SETTING, value: hostKey })
-  return hostKey
+/** The listeners' room: its id is in the listener link (/listen/<id>). */
+export function getStreamRoom(): StreamRoom {
+  const hostKey = hostKeyFor(HOST_KEY_NAME)
+  return { secret: hostedRoomId(hostKey), hostKey }
 }
 
-/** The room id in the listener link (/listen/<id>). */
-export const getStreamSecret = () => hostedRoomId(streamHostKey())
+export const getStreamSecret = () => getStreamRoom().secret
 
-/** The old link's room id, while it is still served. */
-export const getOldStreamSecret = () =>
-  getSetting('app_settings', OLD_SECRET_SETTING)?.value ?? null
+/** A new listener link: the one shared before stops working. */
+export const renewStreamLink = () => hostedRoomId(renewHostKey(HOST_KEY_NAME))
 
-/** Every room listeners can join this computer by. */
-export function getStreamRooms(): StreamRoom[] {
-  const hostKey = streamHostKey()
-  const rooms: StreamRoom[] = [{ secret: hostedRoomId(hostKey), hostKey }]
-  const old = getOldStreamSecret()
-  if (old) rooms.push({ secret: old, hostKey: null })
-  return rooms
-}
+/** Whether to tell the user their listener link changed with the update. */
+export const isLinkChangeUnseen = () =>
+  getSetting('app_settings', LINK_CHANGED_KEY)?.value === 'true'
 
-/** Stops serving the old link: only the current one is left. */
-export function retireOldStreamLink(): void {
-  deleteSetting('app_settings', OLD_SECRET_SETTING)
-}
-
-/** A new listener link; the old one, if any, goes too. */
-export function renewStreamLink(): string {
-  retireOldStreamLink()
-  const hostKey = newHostKey()
-  upsertSetting('app_settings', { key: HOST_KEY_SETTING, value: hostKey })
-  return hostedRoomId(hostKey)
+export function dismissLinkChange(): void {
+  if (isLinkChangeUnseen()) deleteSetting('app_settings', LINK_CHANGED_KEY)
 }

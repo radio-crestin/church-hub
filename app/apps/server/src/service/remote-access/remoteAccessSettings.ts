@@ -1,8 +1,8 @@
 import { getSetting, upsertSetting } from '../settings'
-import { hostedRoomId, newHostKey } from '../signaling/hostedRoom'
+import { hostedRoomId, hostKeyFor, renewHostKey } from '../signaling/hostedRoom'
 
 const ENABLED_KEY = 'remote_access_enabled'
-const HOST_KEY = 'remote_access_host_key'
+const HOST_KEY_NAME = 'remote_access_host_key'
 
 export interface RemoteAccessSettings {
   enabled: boolean
@@ -13,11 +13,7 @@ export interface RemoteAccessSettings {
 }
 
 export function getRemoteAccessSettings(): RemoteAccessSettings {
-  let hostKey = getSetting('app_settings', HOST_KEY)?.value
-  if (!hostKey) {
-    hostKey = newHostKey()
-    upsertSetting('app_settings', { key: HOST_KEY, value: hostKey })
-  }
+  const hostKey = hostKeyFor(HOST_KEY_NAME)
   return {
     enabled: getSetting('app_settings', ENABLED_KEY)?.value === 'true',
     secret: hostedRoomId(hostKey),
@@ -31,5 +27,5 @@ export function setRemoteAccessEnabled(enabled: boolean) {
 
 /** A new room: phones paired before must scan the code again. */
 export function resetRemoteAccessSecret() {
-  upsertSetting('app_settings', { key: HOST_KEY, value: newHostKey() })
+  renewHostKey(HOST_KEY_NAME)
 }
