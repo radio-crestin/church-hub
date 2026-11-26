@@ -1,5 +1,8 @@
+import type { Installation } from './checkInstallation'
 import { churchPrefix } from './churchPrefix'
 import { createDeviceToken } from './createDeviceToken'
+import { addOwnerMarker } from './owner/ownerIndex'
+import type { OwnerIdentity } from './owner/OwnerIdentity'
 import { publishHead } from './publishHead'
 import { randomId } from './randomId'
 import type { ChurchState, SyncStore } from './state/ChurchState'
@@ -13,16 +16,21 @@ export interface RegisteredChurch {
   deviceId: string
   /** The church server's token; shown once, only its hash is kept. */
   serverToken: string
+  /** The owner's email, when registered signed in with Google. */
+  ownerEmail: string | null
 }
 
 /**
- * Registers a church server as a guest (no owner yet, T-172 adds Google
- * sign-in): a church id, a 256-bit path secret, the server's device token,
- * and an empty head.json readers can poll at once.
+ * Registers a church server: a church id, a 256-bit path secret, the
+ * server's device token, and an empty head.json readers can poll at once.
+ * Signed in with Google, the account owns it; as a guest nobody does until
+ * it is claimed (claimChurch).
  */
 export async function registerChurch(
   store: SyncStore,
-  serverName: string
+  serverName: string,
+  owner: OwnerIdentity | null = null,
+  installation: Installation | null = null
 ): Promise<RegisteredChurch> {
   const churchId = randomId(12)
   const deviceId = randomId(12)
@@ -44,11 +52,16 @@ export async function registerChurch(
         isServer: true,
         createdAt: now,
         revokedAt: null,
+        installationId: installation?.id ?? null,
+        installationName: installation?.name ?? null,
+        lastSeenAt: installation ? now : null,
       },
     ],
     roles: [],
     users: [],
     versions: {},
+    owner: owner && { ...owner, claimedAt: now },
+    pendingOwnerEmail: null,
     createdAt: now,
     updatedAt: now,
   }
@@ -56,6 +69,7 @@ export async function registerChurch(
   const etag = await writeChurch(store, state, null)
   if (etag === null) throw new Error(`Church id ${churchId} already exists`)
   await publishHead(store, state, etag)
+  if (owner) await addOwnerMarker(store, owner.email, churchId)
 
   return {
     churchId,
@@ -63,5 +77,6 @@ export async function registerChurch(
     readUrl: store.bucket.publicUrl(churchPrefix(churchId, state.pathSecret)),
     deviceId,
     serverToken: token,
+    ownerEmail: owner?.email ?? null,
   }
 }

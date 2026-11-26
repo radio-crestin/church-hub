@@ -113,6 +113,29 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
                             type: 'integer',
                             description: 'Last segment applied here.',
                           },
+                          ownerEmail: {
+                            type: ['string', 'null'],
+                            description:
+                              'The Google account owning the church; null for a guest church.',
+                          },
+                          serverConflict: {
+                            type: ['object', 'null'],
+                            description:
+                              'Another PC holds this church’s token (a restored backup): POST /api/sync/cloud/keep picks one.',
+                            properties: {
+                              otherPcName: { type: ['string', 'null'] },
+                              otherPcLastSeenAt: { type: ['integer', 'null'] },
+                            },
+                          },
+                        },
+                      },
+                      ownerSession: {
+                        type: ['object', 'null'],
+                        description:
+                          'The owner signed in on this PC (an hour, in memory).',
+                        properties: {
+                          email: { type: 'string' },
+                          expiresAt: { type: 'integer' },
                         },
                       },
                       accountEmail: { type: ['string', 'null'] },
@@ -359,7 +382,7 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
       tags: ['Sync'],
       summary: 'Connect to cloud sync',
       description:
-        'Registers this server on the cloud sync service as a guest church (churchhub-backend /sync/churches, or CHURCH_HUB_SYNC_URL), keeps its identity, queues the whole library for the first upload, makes cloud the sync transport and starts a first cycle in the background. Google Drive stays available as the backup option. Only accessible from localhost.',
+        'Registers this server on the cloud sync service as a guest church (to own it, sign in with intent `connect` instead: /api/sync/cloud/owner/sign-in) (churchhub-backend /sync/churches, or CHURCH_HUB_SYNC_URL), keeps its identity, queues the whole library for the first upload, makes cloud the sync transport and starts a first cycle in the background. Google Drive stays available as the backup option. Only accessible from localhost.',
       requestBody: {
         content: {
           'application/json': {

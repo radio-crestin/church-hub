@@ -33,6 +33,7 @@ import {
   songHistoryPaths,
   songSourcesPaths,
   songsPaths,
+  syncOwnerPaths,
   syncPaths,
   usersPaths,
 } from './paths'
@@ -155,6 +156,7 @@ export const openApiSpec = {
     ...databasePaths,
     ...backupPaths,
     ...syncPaths,
+    ...syncOwnerPaths,
     ...devicesPaths,
     ...authPaths,
     ...remoteAccessPaths,
