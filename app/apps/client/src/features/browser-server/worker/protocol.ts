@@ -48,3 +48,5 @@ export type BootMessage =
     }
   | { type: 'failed'; message: string }
   | { type: 'forgotten' }
+  /** The sync service refused this device's token: the church revoked it? */
+  | { type: 'revoked' }

@@ -22,6 +22,7 @@ import { captureError } from '~/utils/error-handler'
 import type { ChurchBinding } from './churchBinding'
 import { connectToPc } from './connectToPc'
 import { type ChurchSession, openChurchSession } from './openChurchSession'
+import { reloadIfRemoved } from './reloadIfRemoved'
 
 /** A start that stops at a notice: a failed link, or a removed device. */
 export type WebAppNotice = Exclude<
@@ -62,12 +63,17 @@ function failed(message: string, hint: string, error?: unknown): void {
  * lets the windows it opens (displays) reach it. A display opened by the
  * page running it uses that page's.
  */
-async function runBrowserServer(start: StartMessage): Promise<void> {
+async function runBrowserServer(
+  start: StartMessage,
+  onRevoked: () => void = () => {},
+): Promise<void> {
   const opener = await connectToOpener()
-  if (opener) return runApp(opener)
+  if (opener) return runApp(opener.tunnel, opener.userToken)
   try {
-    const server = await startBrowserServer(start, (step) =>
-      updateLoadingMessage(startupStepText(STEP_TEXT[step])),
+    const server = await startBrowserServer(
+      start,
+      (step) => updateLoadingMessage(startupStepText(STEP_TEXT[step])),
+      onRevoked,
     )
     shareServer(server)
     await runApp(server.tunnel, server.userToken)
@@ -94,18 +100,21 @@ async function startChurch(binding: ChurchBinding): Promise<void> {
     failed(startupText('needsOnlineOnce'), startupText('retryHint'))
     return
   }
-  return runBrowserServer({
-    type: 'start',
-    mode: 'church',
-    church: {
-      serviceUrl: binding.serviceUrl,
-      churchId: binding.churchId,
-      readUrl: binding.readUrl,
-      token: binding.token,
-      deviceId,
-      userId,
+  return runBrowserServer(
+    {
+      type: 'start',
+      mode: 'church',
+      church: {
+        serviceUrl: binding.serviceUrl,
+        churchId: binding.churchId,
+        readUrl: binding.readUrl,
+        token: binding.token,
+        deviceId,
+        userId,
+      },
     },
-  })
+    () => void reloadIfRemoved(binding),
+  )
 }
 
 /**

@@ -56,11 +56,13 @@ export interface BrowserServer {
  * database on sqlite-wasm, a church's synced or a guest's own. Resolves
  * once it is ready, with the tunnel the page reaches it through: the same
  * the church PC answers over WebRTC. Another tab running it already:
- * OtherTabError.
+ * OtherTabError. `onRevoked`: the sync service refused the church's device
+ * token.
  */
 export async function startBrowserServer(
   start: StartMessage,
   onStep: (step: BootStep) => void,
+  onRevoked: () => void,
 ): Promise<BrowserServer> {
   await holdServerLock()
   const worker = createServerWorker()
@@ -83,6 +85,7 @@ export async function startBrowserServer(
         return
       }
       if (message.type === 'progress') onStep(message.step)
+      if (message.type === 'revoked') onRevoked()
       if (message.type === 'failed') {
         worker.terminate()
         reject(new Error(message.message))

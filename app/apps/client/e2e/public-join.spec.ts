@@ -4,7 +4,12 @@ import { setAppLanguage } from './helpers/app-language'
 import { FakeS3 } from './helpers/fake-s3'
 import { PublicAppServer } from './helpers/public-app'
 import { SyncService } from './helpers/sync-service'
-import { findSong, keepServerBusy, waitForApp } from './helpers/web-app'
+import {
+  findSong,
+  keepServerBusy,
+  pageApi,
+  waitForApp,
+} from './helpers/web-app'
 
 /**
  * Join a church by QR code or link (T-168): the PC mints a device token in
@@ -111,6 +116,10 @@ test.describe
       await waitForApp(page)
       await expect(page).toHaveURL(new RegExp(`^${publicApp.url}/(?!join)`))
       expect(await findSong(page, title)).toBeTruthy()
+      // Signed in for this visit only: the phone stores no login.
+      expect(
+        await page.evaluate(() => localStorage.getItem('church-hub-user-auth')),
+      ).toBeNull()
 
       // Bound: it opens on the church's songs without the link.
       await page.evaluate(() => navigator.serviceWorker.ready)
@@ -151,10 +160,16 @@ test.describe
         .click()
       await expect(device).toContainText('Revoked')
 
-      await phonePage.reload()
+      // Still open: the next call its sync makes to the service finds it
+      // out, and it leaves the church at once.
+      await pageApi(phonePage, 'POST', '/api/schedules', {
+        title: `E2E after the revoke ${Date.now()}`,
+      })
+      await pageApi(phonePage, 'POST', '/api/sync/now')
       await expect(phonePage.getByTestId('session-notice')).toHaveAttribute(
         'data-notice',
         'removed',
+        { timeout: 30_000 },
       )
 
       // The same link no longer lets anyone in.

@@ -17,6 +17,7 @@ import type {
 import { workerTarget } from './workerTarget'
 import { createFetchHandler } from '../../../../../server/src/http/createFetchHandler'
 import { createTunnelSession } from '../../../../../server/src/service/remote-access/tunnelSession'
+import { onTokenRefused } from '../../../../../server/src/service/sync/cloud/tokenRefused'
 import { createLogger } from '../../../../../server/src/utils/logger'
 
 const logger = createLogger('browser-server')
@@ -27,6 +28,8 @@ let session: ReturnType<typeof createTunnelSession> | null = null
 let target: ReturnType<typeof workerTarget> | null = null
 
 async function start(message: StartMessage): Promise<void> {
+  // A revoked device loses the church on the request that finds it out.
+  if (message.mode === 'church') onTokenRefused(() => post({ type: 'revoked' }))
   try {
     const booted = await bootBrowserServer(message, (step) =>
       post({ type: 'progress', step }),

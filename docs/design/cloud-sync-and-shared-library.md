@@ -171,7 +171,9 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
     - Either way, the full app is mounted on a tunnel to that server (the remote-access `Tunnel`). The API is addressed as `http://church-pc.invalid` (`config.WEB_APP_API_ORIGIN`), and only the installed tunnel answers it.
   - **This device's own machine**: the page is the browser server's only client, so its requests come from `localhost`, as the desktop app's windows do on the PC.
   - **One tab** holds the database (a Web Lock); another tab says so. Displays the app opens with `window.open` (the device's own screen, a second monitor) reach the opener's server, each on a `MessagePort` of its own.
-  - **A removed device** (the service refuses its token) deletes the church's database from this browser.
+  - **Its session**: the page signs in with a token its own database minted (tokens never sync), kept in memory only and handed to the displays it opens; the phone stores no login. It opens only this browser's copy; the church is reached with the device token alone.
+  - **A removed device** loses the church on its next call to the sync service (a push, the check-in every 15 minutes, a start): the 401 reaches the page (`sync/cloud/tokenRefused.ts`), which confirms it with `/device`, starts again on the "removed" notice and deletes the church's database from this browser.
+  - **A reload** waits for the OPFS pool's files the closing page still holds (up to 10 s), never opening a second, empty database; sqlite-wasm keeps the pool when that fails (`preserveOnInitFailure`).
   - **Deploying**: the Pages project serves the wasm (`application/wasm`) and the fixtures (each under Pages' 25 MiB limit). The sync service lists the app's origin in `ALLOWED_ORIGINS`. The bucket's CORS rule allows GET from it; with no exposed headers, the browser never sends `If-None-Match`, so no preflight is needed.
   - **Measured**: see the table below for the spike; a guest's first start (26,462 songs, 2 Bibles, desktop CPU) takes 17.6 s, and 1.4 s after that from OPFS.
 - **Measured in the spike** (T-170; the spike's code became the browser server):

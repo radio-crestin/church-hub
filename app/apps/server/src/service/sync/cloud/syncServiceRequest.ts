@@ -1,6 +1,7 @@
 import type { CloudIdentity } from './cloudIdentityStore'
 import { getInstallation } from './getInstallation'
 import { setServerConflict } from './serverConflict'
+import { reportTokenRefused } from './tokenRefused'
 
 /** Requests to the sync service give up after this long. */
 const REQUEST_TIMEOUT_MS = 60_000
@@ -67,6 +68,7 @@ export async function syncServiceRequest<T>(
     throw new Error('server_in_use')
   }
   if (identity && response.ok) setServerConflict(null)
+  if (identity && response.status === 401) reportTokenRefused()
   return { status: response.status, body: json }
 }
 
