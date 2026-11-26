@@ -77,6 +77,7 @@ import {
   getLocalUsers,
   getSetting,
   getUserById,
+  isServerSecretKey,
   type Permission,
   regenerateUserToken,
   type SettingsTable,
@@ -806,6 +807,17 @@ async function startRealServer(): Promise<void> {
 
   const logger = createLogger('BibleAPI')
 
+  /** The settings API never touches a server secret key (isServerSecretKey). */
+  function serverSecretRefused(req: Request) {
+    return handleCors(
+      req,
+      new Response(
+        JSON.stringify({ error: 'This setting is not available here' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
+      ),
+    )
+  }
+
   function handleCors(req: Request, res: Response) {
     // Cross-origin access only for the app's own origins (the desktop and
     // phone webviews, pages on this machine, the server as reached); any
@@ -1282,6 +1294,7 @@ async function startRealServer(): Promise<void> {
       if (req.method === 'GET' && getSettingMatch?.[1] && getSettingMatch[2]) {
         const table = getSettingMatch[1] as SettingsTable
         const key = getSettingMatch[2]
+        if (isServerSecretKey(key)) return serverSecretRefused(req)
 
         // Per-key permission: some app settings belong to a feature (or to the
         // shared navigation shell) rather than to general Settings, so gating
@@ -1360,6 +1373,7 @@ async function startRealServer(): Promise<void> {
               }),
             )
           }
+          if (isServerSecretKey(body.key)) return serverSecretRefused(req)
 
           // Choosing which Bible translation to read is part of viewing the
           // Bible, so it's gated by `bible.view` rather than `settings.edit`.
@@ -1461,6 +1475,7 @@ async function startRealServer(): Promise<void> {
 
         const table = deleteSettingMatch[1] as SettingsTable
         const key = deleteSettingMatch[2]
+        if (isServerSecretKey(key)) return serverSecretRefused(req)
 
         const result = deleteSetting(table, key)
         if (table === 'app_settings' && key === READING_SPEED_SETTING_KEY) {

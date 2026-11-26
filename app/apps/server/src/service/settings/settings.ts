@@ -1,5 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 
+import { isServerSecretKey } from './isServerSecretKey'
 import type { Setting, SettingsTable, UpsertSettingInput } from './types'
 import { getDatabase } from '../../db'
 import { appSettings, cacheMetadata, userPreferences } from '../../db/schema'
@@ -139,7 +140,7 @@ export function getSetting(table: SettingsTable, key: string): Setting | null {
 }
 
 /**
- * Gets all settings from the specified table
+ * Gets all settings from the specified table, without server secret keys
  */
 export function getAllSettings(table: SettingsTable): Setting[] {
   try {
@@ -161,19 +162,21 @@ export function getAllSettings(table: SettingsTable): Setting[] {
       .all()
 
     log('debug', `Retrieved ${results.length} settings`)
-    return results.map((r) => ({
-      id: r.id,
-      key: r.key,
-      value: r.value,
-      created_at:
-        r.created_at instanceof Date
-          ? Math.floor(r.created_at.getTime() / 1000)
-          : (r.created_at as number),
-      updated_at:
-        r.updated_at instanceof Date
-          ? Math.floor(r.updated_at.getTime() / 1000)
-          : (r.updated_at as number),
-    }))
+    return results
+      .filter((r) => !isServerSecretKey(r.key))
+      .map((r) => ({
+        id: r.id,
+        key: r.key,
+        value: r.value,
+        created_at:
+          r.created_at instanceof Date
+            ? Math.floor(r.created_at.getTime() / 1000)
+            : (r.created_at as number),
+        updated_at:
+          r.updated_at instanceof Date
+            ? Math.floor(r.updated_at.getTime() / 1000)
+            : (r.updated_at as number),
+      }))
   } catch (error) {
     log('error', `Failed to get all settings: ${error}`)
     return []
