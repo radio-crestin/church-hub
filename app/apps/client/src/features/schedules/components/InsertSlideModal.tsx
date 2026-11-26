@@ -317,7 +317,7 @@ export function InsertSlideModal({
       onCancel={handleClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
-      className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-lg bg-panel backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-xl border border-line bg-panel shadow-popover backdrop:bg-black/50"
     >
       <div className="flex flex-col max-h-[80vh]">
         {/* Header */}

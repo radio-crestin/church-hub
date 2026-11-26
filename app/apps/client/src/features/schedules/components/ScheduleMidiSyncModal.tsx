@@ -103,7 +103,7 @@ export function ScheduleMidiSyncModal({
   return createPortal(
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800 sm:h-auto sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-xl sm:rounded-xl"
+      className="fixed inset-0 m-auto flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col bg-panel p-0 shadow-popover backdrop:bg-black/50 sm:h-auto sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-xl sm:rounded-xl sm:border sm:border-line"
       // Escape pauses the music first; a second Escape closes.
       onCancel={(e) => {
         e.preventDefault()
@@ -113,12 +113,12 @@ export function ScheduleMidiSyncModal({
       onClick={(e) => e.stopPropagation()}
       data-testid="schedule-midi-sync-modal"
     >
-      <div className="flex items-center gap-2 border-b border-gray-200 p-3 dark:border-gray-700 sm:p-4">
+      <div className="flex items-center gap-2 border-b border-line p-3 sm:p-4">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {t('midi.syncTitle')}
           </h2>
-          <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+          <p className="truncate text-[13px] text-fg-hint">
             {item.song?.title}
           </p>
         </div>
@@ -127,7 +127,7 @@ export function ScheduleMidiSyncModal({
           onClick={save}
           disabled={setVerseTimes.isPending}
           data-testid="schedule-midi-sync-save"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="h-9 rounded-lg bg-primary px-4 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           {t('midi.syncSave')}
         </button>
@@ -135,9 +135,9 @@ export function ScheduleMidiSyncModal({
           type="button"
           onClick={close}
           aria-label={t('modal.cancel')}
-          className="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="rounded-lg p-2 text-fg-label hover:bg-hover hover:text-fg"
         >
-          <X size={20} className="text-gray-500" />
+          <X size={20} strokeWidth={1.5} />
         </button>
       </div>
 
@@ -150,9 +150,7 @@ export function ScheduleMidiSyncModal({
           current={session.current}
           onSeek={session.seek}
         />
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          {t('midi.syncHelp')}
-        </p>
+        <p className="text-[13px] text-fg-label">{t('midi.syncHelp')}</p>
         <ol className="space-y-0.5">
           {verses.map((verse, index) => (
             <MidiSyncVerseRow
@@ -169,7 +167,7 @@ export function ScheduleMidiSyncModal({
         </ol>
       </div>
 
-      <div className="border-t border-gray-200 p-3 dark:border-gray-700 sm:p-4">
+      <div className="border-t border-line p-3 sm:p-4">
         <div className="flex items-stretch gap-2">
           <button
             type="button"
@@ -178,9 +176,9 @@ export function ScheduleMidiSyncModal({
             title={t('midi.undo')}
             aria-label={t('midi.undo')}
             data-testid="schedule-midi-sync-undo"
-            className="flex w-14 items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="flex w-14 items-center justify-center rounded-lg text-fg shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-hover disabled:opacity-40"
           >
-            <Undo2 size={20} />
+            <Undo2 size={20} strokeWidth={1.5} />
           </button>
           <button
             type="button"
@@ -192,14 +190,14 @@ export function ScheduleMidiSyncModal({
             aria-label={session.playing ? t('midi.pause') : t('midi.syncStart')}
             data-testid="schedule-midi-sync-start"
             data-playing={session.playing ? 'true' : undefined}
-            className="flex w-14 items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-40 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="flex w-14 items-center justify-center rounded-lg text-fg shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-hover disabled:opacity-40"
           >
             {session.starting ? (
-              <Loader2 size={20} className="animate-spin" />
+              <Loader2 size={20} strokeWidth={1.5} className="animate-spin" />
             ) : session.playing ? (
-              <Pause size={20} />
+              <Pause size={20} strokeWidth={1.5} />
             ) : (
-              <Play size={20} />
+              <Play size={20} strokeWidth={1.5} />
             )}
           </button>
           <button
@@ -211,14 +209,14 @@ export function ScheduleMidiSyncModal({
             }}
             disabled={!session.playing || allMarked}
             data-testid="schedule-midi-sync-next"
-            className="min-h-16 flex-1 rounded-lg bg-indigo-600 px-4 text-lg font-semibold text-white hover:bg-indigo-700 disabled:bg-indigo-300 dark:disabled:bg-indigo-900"
+            className="min-h-16 flex-1 rounded-lg bg-primary px-4 text-lg font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             {allMarked && session.playing
               ? t('midi.allMarked')
               : t('midi.syncNext')}
           </button>
         </div>
-        <p className="mt-2 hidden text-center text-xs text-gray-500 dark:text-gray-400 sm:block">
+        <p className="mt-2 hidden text-center text-xs text-fg-hint sm:block">
           {t('midi.keys')}
         </p>
       </div>

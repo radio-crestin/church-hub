@@ -546,7 +546,7 @@ function SortableItemWrapper({
                 {item.biblePassageVerses.length === 0 && (
                   <AlertTriangle
                     size={12}
-                    className="text-amber-500 flex-shrink-0"
+                    className="text-amber-600 dark:text-amber-400 flex-shrink-0"
                     aria-label={t('warnings.invalidReference')}
                     strokeWidth={2}
                   />

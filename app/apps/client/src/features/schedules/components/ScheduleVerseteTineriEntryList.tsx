@@ -98,8 +98,9 @@ export function ScheduleVerseteTineriEntryList({
                   {entry.reference}
                   {!entry.text && (
                     <AlertTriangle
-                      size={10}
-                      className="text-amber-500 flex-shrink-0"
+                      size={12}
+                      strokeWidth={2}
+                      className="text-amber-600 dark:text-amber-400 flex-shrink-0"
                       aria-label={t('warnings.invalidReference')}
                     />
                   )}

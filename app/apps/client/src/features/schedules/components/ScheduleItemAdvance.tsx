@@ -87,7 +87,7 @@ export function ScheduleItemAdvance({
             role="dialog"
             aria-label={t('automation.advance.title')}
             data-testid="schedule-item-advance-popover"
-            className="fixed z-50 rounded-lg border border-line bg-panel p-3 shadow-lg"
+            className="fixed z-50 rounded-[10px] border border-line bg-panel p-3 shadow-popover"
             style={{ left: anchor.x, top: anchor.y, width: POPOVER_WIDTH }}
             // React events bubble out of a portal to the item row, which
             // would open or present the item.
@@ -113,7 +113,7 @@ export function ScheduleItemAdvance({
                     onChange={(e) => setValue(e.target.valueAsNumber)}
                     autoFocus
                     data-testid="schedule-item-advance-input"
-                    className="w-16 rounded-lg border border-line bg-panel px-2 py-1 text-right text-fg"
+                    className="w-16 rounded-[10px] border-0 bg-field px-2 py-1 text-right tabular-nums text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                   />
                   s
                 </span>

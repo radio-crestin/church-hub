@@ -110,7 +110,7 @@ test.describe('The control room playlist', () => {
       String(presentation.id),
     )
     await expect(entry.getByTestId('schedule-sub-item-0')).toHaveClass(
-      /ring-green-500/,
+      /ring-live/,
     )
 
     // Next walks the live presentation: through the song, into the next item.
@@ -120,7 +120,7 @@ test.describe('The control room playlist', () => {
       .poll(() => liveStep(request))
       .toEqual({ scheduleId: presentation.id, index: 1 })
     await expect(entry.getByTestId('schedule-sub-item-1')).toHaveClass(
-      /ring-green-500/,
+      /ring-live/,
     )
     await next.click()
     await next.click()
@@ -128,7 +128,7 @@ test.describe('The control room playlist', () => {
       .poll(() => liveStep(request))
       .toEqual({ scheduleId: presentation.id, index: 3 })
     await expect(entry.getByTestId('schedule-sub-item-3')).toHaveClass(
-      /ring-green-500/,
+      /ring-live/,
     )
 
     await page.getByTestId('control-room-prev').click()
@@ -158,7 +158,7 @@ test.describe('The control room playlist', () => {
     await expect(entry.getByTestId('schedule-run-progress')).toHaveText('1/4')
     // Running, it is opened at its live step.
     await expect(entry.getByTestId('schedule-sub-item-0')).toHaveClass(
-      /ring-green-500/,
+      /ring-live/,
     )
 
     await entry.getByTestId('schedule-run-button').click()
@@ -188,7 +188,7 @@ test.describe('The control room playlist', () => {
     const playlist = await entry.boundingBox()
     expect(playlist?.y ?? 0).toBeGreaterThan(preview?.y ?? 0)
     await expect(entry.getByTestId('schedule-sub-item-0')).toHaveClass(
-      /ring-green-500/,
+      /ring-live/,
     )
     // No horizontal scrolling on a phone.
     const overflow = await page.evaluate(
@@ -201,7 +201,7 @@ test.describe('The control room playlist', () => {
       .poll(() => liveStep(request))
       .toEqual({ scheduleId: presentation.id, index: 1 })
     await expect(entry.getByTestId('schedule-sub-item-1')).toHaveClass(
-      /ring-green-500/,
+      /ring-live/,
     )
   })
 })

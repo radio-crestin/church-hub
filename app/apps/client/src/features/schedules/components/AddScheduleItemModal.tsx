@@ -275,7 +275,7 @@ export function AddScheduleItemModal({
         }}
         // The menu stays compact; the song step expands to ~90% of the viewport
         // so searching the library doesn't happen through a keyhole.
-        className={`fixed inset-0 m-auto p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50 ${
+        className={`fixed inset-0 m-auto p-0 bg-panel rounded-xl border border-line shadow-popover backdrop:bg-black/50 ${
           isLargeStep
             ? 'h-[90vh] w-[90vw] max-w-none'
             : 'w-full max-w-sm max-h-[90vh]'
@@ -379,7 +379,7 @@ export function AddScheduleItemModal({
                                 data-testid="add-schedule-item-preview-slide"
                                 className="rounded-lg border border-line bg-app p-3"
                               >
-                                <div className="mb-1 text-[10px] font-medium text-fg-hint">
+                                <div className="mb-1 text-xs font-medium text-fg-hint">
                                   {slide.label || `${index + 1}`}
                                 </div>
                                 <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-fg-body">

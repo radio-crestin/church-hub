@@ -1272,7 +1272,7 @@ export function SchedulePresenter({
         onClick={(e) => {
           if (e.target === deleteDialogRef.current) setShowDeleteConfirm(false)
         }}
-        className="fixed inset-0 m-auto w-full max-w-sm p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-sm p-0 bg-panel rounded-xl border border-line shadow-popover backdrop:bg-black/50"
       >
         <div className="p-6">
           <h3 className="text-base font-semibold text-fg mb-2">
@@ -1320,7 +1320,7 @@ export function SchedulePresenter({
             setImportData(null)
           }
         }}
-        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl border border-line shadow-popover backdrop:bg-black/50"
       >
         <div className="p-6">
           <h3 className="text-base font-semibold text-fg mb-2">
@@ -1332,7 +1332,7 @@ export function SchedulePresenter({
                 {t('import.message', { title: importData.schedule.title })}
               </p>
               <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
-                <p className="text-[13px] text-amber-800 dark:text-amber-200">
+                <p className="text-[13px] text-amber-700 dark:text-amber-300">
                   {t('import.warning')}
                 </p>
               </div>

@@ -173,7 +173,7 @@ export function ScheduleSlideRow({
             e.stopPropagation()
             onRemove()
           }}
-          className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-600 dark:hover:text-red-400 rounded-r-lg hover:bg-hover transition-colors"
           title={t('panel.removeFromSchedule')}
           data-testid="schedule-slide-remove"
         >

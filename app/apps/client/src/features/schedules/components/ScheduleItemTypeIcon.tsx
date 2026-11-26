@@ -27,32 +27,16 @@ function describeKind(item: ScheduleItem) {
     return { Icon: Music }
   }
   if (item.itemType === 'music') {
-    return {
-      Icon: ListMusic,
-      tint: 'text-pink-600 dark:text-pink-400',
-      disc: 'bg-pink-100 dark:bg-pink-900/30',
-    }
+    return { Icon: ListMusic }
   }
   if (item.itemType === 'video') {
-    return {
-      Icon: Film,
-      tint: 'text-sky-600 dark:text-sky-400',
-      disc: 'bg-sky-100 dark:bg-sky-900/30',
-    }
+    return { Icon: Film }
   }
   if (item.itemType === 'slides') {
-    return {
-      Icon: Presentation,
-      tint: 'text-amber-600 dark:text-amber-400',
-      disc: 'bg-amber-100 dark:bg-amber-900/30',
-    }
+    return { Icon: Presentation }
   }
   if (item.itemType === 'verses') {
-    return {
-      Icon: BookOpen,
-      tint: 'text-emerald-600 dark:text-emerald-400',
-      disc: 'bg-emerald-100 dark:bg-emerald-900/30',
-    }
+    return { Icon: BookOpen }
   }
   if (item.itemType === 'bible_passage') {
     return { Icon: Book }

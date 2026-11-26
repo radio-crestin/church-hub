@@ -46,7 +46,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
   }
 
   const button =
-    'rounded-lg px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700'
+    'rounded-lg px-2 py-1 text-[13px] text-fg-body hover:bg-hover disabled:opacity-50'
 
   return (
     <>
@@ -62,13 +62,13 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
         title={t('midi.title')}
         data-testid="schedule-item-midi"
         data-attached={midi ? 'true' : undefined}
-        className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs ${
+        className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs tabular-nums ${
           midi
-            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300'
-            : 'text-gray-400 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-700'
+            ? 'bg-selected text-fg hover:bg-hover'
+            : 'text-fg-hint hover:bg-hover'
         }`}
       >
-        <Music size={12} />
+        <Music size={12} strokeWidth={2} />
         {midi ? formatClock(midi.durationSeconds) : t('midi.short')}
       </button>
       <input
@@ -90,7 +90,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
             role="dialog"
             aria-label={t('midi.title')}
             data-testid="schedule-item-midi-popover"
-            className="fixed z-50 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            className="fixed z-50 rounded-[10px] border border-line bg-panel p-3 shadow-popover"
             style={{ left: anchor.x, top: anchor.y, width: POPOVER_WIDTH }}
             // React events bubble out of a portal to the item row.
             onClick={(e) => e.stopPropagation()}
@@ -98,22 +98,18 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
             onContextMenu={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {t('midi.title')}
-            </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {t('midi.description')}
-            </p>
+            <p className="text-[13px] font-medium text-fg">{t('midi.title')}</p>
+            <p className="mt-1 text-xs text-fg-hint">{t('midi.description')}</p>
             {midi && (
-              <div className="mt-2 rounded-md bg-gray-50 px-2 py-1.5 text-xs dark:bg-gray-900/40">
+              <div className="mt-2 rounded-lg bg-field px-2 py-1.5 text-xs">
                 <p
-                  className="truncate font-medium text-gray-800 dark:text-gray-200"
+                  className="truncate font-medium tabular-nums text-fg-body"
                   data-testid="schedule-item-midi-name"
                 >
                   {midi.fileName} · {formatClock(midi.durationSeconds)}
                 </p>
                 <p
-                  className="text-gray-500 dark:text-gray-400"
+                  className="text-fg-hint"
                   data-testid="schedule-item-midi-sync-state"
                   data-synced={midi.verseTimes ? 'true' : 'false'}
                 >
@@ -163,7 +159,7 @@ export function ScheduleItemMidi({ scheduleId, item }: ScheduleItemMidiProps) {
                     setSyncing(true)
                   }}
                   data-testid="schedule-item-midi-sync"
-                  className="rounded-lg bg-indigo-600 px-3 py-1 text-sm text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-primary px-3 py-1 text-[13px] text-white hover:bg-indigo-700"
                 >
                   {t('midi.sync')}
                 </button>
