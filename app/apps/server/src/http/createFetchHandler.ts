@@ -41,6 +41,7 @@ import { handleRemoteAccessRoutes } from '../routes/remote-access'
 import { handleScheduleItemRoutes } from '../routes/schedule-items'
 import { handleScheduleMidiRoutes } from '../routes/schedule-midi'
 import { handleScheduleTemplateRoutes } from '../routes/schedule-templates'
+import { handleScreenLinkRoutes } from '../routes/screen-links'
 import { handleScreenShareRoutes } from '../routes/screen-share'
 import { handleSecretStoreRoutes } from '../routes/secret-store'
 import { handleSlideTemplateRoutes } from '../routes/slide-templates'
@@ -7753,6 +7754,17 @@ export function createFetchHandler(): (
       checkPermission,
     )
     if (screenShareResponse) return screenShareResponse
+
+    // Screen links: another device shows a screen over WebRTC (T-214)
+    if (url.pathname.startsWith('/api/screen-links')) {
+      const screenLinkResponse = await handleScreenLinkRoutes(
+        req,
+        url,
+        _context,
+        checkPermission,
+      )
+      if (screenLinkResponse) return handleCors(req, screenLinkResponse)
+    }
 
     // Remote access (phones reaching this computer over WebRTC)
     if (url.pathname.startsWith('/api/remote-access')) {

@@ -1,6 +1,10 @@
 import { isAppWebviewOrigin, isLoopbackHostname } from './origins'
 import type { AuthResult } from './types'
 import { validateSystemToken } from '../service/app-sessions'
+import {
+  findScreenLink,
+  SCREEN_LINK_PERMISSIONS,
+} from '../service/screen-links'
 import { deviceSessionUserId } from '../service/sync/cloud/deviceSessions'
 import {
   ALL_PERMISSIONS,
@@ -203,6 +207,18 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
     cookies['user_auth'] || req.headers.get('X-User-Auth') || undefined
 
   if (userToken) {
+    // A screen link another device opened (T-214): what a screen reads.
+    const screenLink = await findScreenLink(userToken)
+    if (screenLink) {
+      return {
+        response: null,
+        context: {
+          authType: 'user',
+          permissions: SCREEN_LINK_PERMISSIONS,
+          screenLink,
+        },
+      }
+    }
     // A joined phone's device session (T-174), else the user's own token.
     const deviceUserId = await deviceSessionUserId(userToken)
     const user =
