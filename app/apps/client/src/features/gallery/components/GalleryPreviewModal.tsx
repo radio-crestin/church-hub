@@ -55,14 +55,14 @@ export function GalleryPreviewModal({
         mouseDownTargetRef.current = event.target
       }}
       onClick={handleClick}
-      className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-5xl overflow-hidden rounded-lg bg-gray-950 p-0 text-white shadow-2xl backdrop:bg-black/80"
+      className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-5xl overflow-hidden rounded-xl bg-black p-0 text-white shadow-[0_12px_32px_rgba(0,0,0,0.55)] backdrop:bg-black/80"
     >
       {media && (
         <div className="flex flex-col">
           <div className="flex items-center justify-between gap-3 px-3 py-2">
             <div className="flex min-w-0 items-center gap-2">
               <GalleryKindBadge kind={media.kind} />
-              <GalleryMediaMeta media={media} className="text-gray-300" />
+              <GalleryMediaMeta media={media} className="text-white/70" />
             </div>
             <button
               type="button"
@@ -70,9 +70,9 @@ export function GalleryPreviewModal({
               onClick={onClose}
               aria-label={t('preview.close')}
               title={t('preview.close')}
-              className="shrink-0 rounded p-1.5 text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+              className="shrink-0 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" strokeWidth={1.5} />
             </button>
           </div>
           <div className="flex items-center justify-center bg-black">

@@ -309,8 +309,12 @@ export function Workspace({
           *what* is being moved. */}
       <DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>
         {draggingPanelId ? (
-          <div className="pointer-events-none inline-flex items-center gap-2 rounded-lg border border-indigo-400 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-lg dark:bg-gray-800 dark:text-gray-200">
-            <GripHorizontal size={14} className="text-indigo-500" />
+          <div className="pointer-events-none inline-flex items-center gap-2 rounded-[10px] border border-line bg-panel px-3 py-2 text-[13px] font-medium text-fg shadow-popover">
+            <GripHorizontal
+              size={14}
+              strokeWidth={1.75}
+              className="text-fg-label"
+            />
             {panelsById.get(draggingPanelId)?.title}
           </div>
         ) : null}

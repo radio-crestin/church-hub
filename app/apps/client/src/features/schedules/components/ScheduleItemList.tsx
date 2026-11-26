@@ -225,22 +225,17 @@ export function ScheduleItemList({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
 
   if (!items || items.length === 0) {
     return (
-      <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-        <ListMusic
-          size={48}
-          className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
-        />
-        <p className="text-gray-600 dark:text-gray-400 font-medium">
-          {t('editor.noItems')}
-        </p>
-        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+      <div className="text-center py-8 border border-dashed border-line rounded-lg">
+        <ListMusic size={48} className="mx-auto text-fg-hint mb-3" />
+        <p className="text-fg-label font-medium">{t('editor.noItems')}</p>
+        <p className="text-[13px] text-fg-hint mt-1">
           {t('editor.addFirstItem')}
         </p>
       </div>

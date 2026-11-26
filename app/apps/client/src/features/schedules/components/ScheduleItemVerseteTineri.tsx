@@ -11,7 +11,6 @@ import {
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import type { ScheduleItem, SlideTemplate } from '../types'
 
 interface ScheduleItemVerseteTineriProps {
@@ -36,31 +35,32 @@ export function ScheduleItemVerseteTineri({
   const menuRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className="rounded-lg border border-line bg-panel">
       {/* Header */}
       <div className="flex items-center gap-2 p-3">
         {/* Drag Handle */}
         <div
           {...dragHandleProps}
-          className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-hover"
         >
-          <GripVertical
-            size={16}
-            className="text-gray-400 dark:text-gray-500"
-          />
+          <GripVertical size={16} className="text-fg-hint" strokeWidth={1.5} />
         </div>
 
         {/* Expand/Collapse */}
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex-shrink-0 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="flex-shrink-0 p-1 rounded hover:bg-hover"
           title={isExpanded ? t('actions.collapse') : t('actions.expand')}
         >
           {isExpanded ? (
-            <ChevronDown size={16} className="text-gray-500" />
+            <ChevronDown size={16} className="text-fg-hint" strokeWidth={1.5} />
           ) : (
-            <ChevronRight size={16} className="text-gray-500" />
+            <ChevronRight
+              size={16}
+              className="text-fg-hint"
+              strokeWidth={1.5}
+            />
           )}
         </button>
 
@@ -70,10 +70,8 @@ export function ScheduleItemVerseteTineri({
           onClick={onEditSlide}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <div
-            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${ICON_COLOR_CLASSES.green.bg}`}
-          >
-            <Users size={16} className={ICON_COLOR_CLASSES.green.text} />
+          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+            <Users size={16} className="text-fg-label" strokeWidth={1.5} />
           </div>
 
           {/* Title & Info */}
@@ -83,19 +81,19 @@ export function ScheduleItemVerseteTineri({
                 {item.verseteTineriEntries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center gap-2 text-sm"
+                    className="flex items-center gap-2 text-[13px]"
                   >
-                    <span className="font-medium truncate text-gray-900 dark:text-white">
+                    <span className="font-medium truncate text-fg">
                       {entry.personName}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                    <span className="text-xs text-fg-hint shrink-0">
                       {entry.reference}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <span className="font-medium text-sm text-gray-400 dark:text-gray-500">
+              <span className="font-medium text-[13px] text-fg-hint">
                 {t('verseteTineri.entriesCount', { count: 0 })}
               </span>
             )}
@@ -107,9 +105,13 @@ export function ScheduleItemVerseteTineri({
           <button
             type="button"
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-1 rounded hover:bg-hover"
           >
-            <MoreVertical size={16} className="text-gray-500" />
+            <MoreVertical
+              size={16}
+              className="text-fg-hint"
+              strokeWidth={1.5}
+            />
           </button>
 
           {showMenu && (
@@ -118,16 +120,16 @@ export function ScheduleItemVerseteTineri({
                 className="fixed inset-0 z-10"
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1">
+              <div className="absolute right-0 top-full mt-1 z-20 w-48 bg-panel border border-line rounded-lg shadow-lg py-1">
                 <button
                   type="button"
                   onClick={() => {
                     setShowMenu(false)
                     onEditSlide()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover"
                 >
-                  <Pencil size={14} />
+                  <Pencil size={14} strokeWidth={1.75} />
                   {t('actions.editSlide')}
                 </button>
                 <button
@@ -136,21 +138,21 @@ export function ScheduleItemVerseteTineri({
                     setShowMenu(false)
                     onInsertSongAfter()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover"
                 >
-                  <Plus size={14} />
+                  <Plus size={14} strokeWidth={1.75} />
                   {t('actions.insertAfter')}
                 </button>
-                <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                <hr className="my-1 border-line" />
                 <button
                   type="button"
                   onClick={() => {
                     setShowMenu(false)
                     onRemove()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={14} strokeWidth={1.75} />
                   {t('actions.remove')}
                 </button>
               </div>
@@ -163,21 +165,12 @@ export function ScheduleItemVerseteTineri({
       {isExpanded && item.verseteTineriEntries.length > 0 && (
         <div className="px-3 pb-3 space-y-1.5">
           {item.verseteTineriEntries.map((entry) => (
-            <div
-              key={entry.id}
-              className="p-2 rounded bg-gray-50 dark:bg-gray-700/50 text-sm"
-            >
+            <div key={entry.id} className="p-2 rounded bg-field text-[13px]">
               <div className="flex items-center justify-between mb-1">
-                <span
-                  className={`font-medium ${ICON_COLOR_CLASSES.green.text}`}
-                >
-                  {entry.personName}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {entry.reference}
-                </span>
+                <span className="font-medium text-fg">{entry.personName}</span>
+                <span className="text-xs text-fg-hint">{entry.reference}</span>
               </div>
-              <div className="text-gray-600 dark:text-gray-300 line-clamp-2 text-xs">
+              <div className="text-fg-label line-clamp-2 text-xs">
                 {entry.text}
               </div>
             </div>

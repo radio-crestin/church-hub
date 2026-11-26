@@ -46,37 +46,37 @@ export function UserQRModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel"
       onClose={onClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <div className="p-6 min-w-[350px] max-w-md">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-base font-semibold text-fg">
             {t('sections.users.modals.qrCode.title')}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
           >
-            <X size={20} />
+            <X strokeWidth={1.5} size={16} />
           </button>
         </div>
 
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+        <p className="text-[13px] text-fg-label mb-2">
           {t('sections.users.modals.qrCode.userName')}:{' '}
           <strong>{userName}</strong>
         </p>
 
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-[13px] text-fg-label mb-4">
           {t('sections.users.modals.qrCode.description')}
         </p>
 
         {isOpen && <PairingQRCode token={token} />}
 
-        <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-800 dark:bg-yellow-900/20">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+          <p className="text-[13px] text-amber-800 dark:text-amber-200">
             {t('sections.users.modals.qrCode.warning')}
           </p>
         </div>
@@ -84,7 +84,7 @@ export function UserQRModal({
         <div className="flex justify-end mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg
+            className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg
               transition-colors"
           >
             {t('sections.users.modals.qrCode.done')}

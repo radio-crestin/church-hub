@@ -38,7 +38,7 @@ export function LivestreamGuideModal({
     <dialog
       ref={dialogRef}
       aria-labelledby="livestream-guide-title"
-      className="fixed inset-0 m-auto w-full max-w-2xl rounded-lg bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800 max-h-[90vh]"
+      className="fixed inset-0 m-auto w-full max-w-2xl rounded-xl border border-line bg-panel p-0 shadow-xl backdrop:bg-black/50 max-h-[90vh]"
       // The OBS and mixer setups open inside the guide: their close and
       // clicks bubble up the React tree, and must not close the guide too.
       onClose={(e) => e.target === dialogRef.current && onClose()}
@@ -46,15 +46,15 @@ export function LivestreamGuideModal({
     >
       {isOpen && (
         <div className="flex max-h-[90vh] flex-col">
-          <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-4 sm:p-6 dark:border-gray-700">
+          <div className="flex items-start justify-between gap-4 border-b border-line p-4 sm:p-6">
             <div>
               <h2
                 id="livestream-guide-title"
-                className="text-xl font-semibold text-gray-900 dark:text-white"
+                className="text-base font-semibold text-fg"
               >
                 {t('guide.title')}
               </h2>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-1 text-[13px] text-fg-label">
                 {t('guide.intro')}
               </p>
             </div>
@@ -62,9 +62,9 @@ export function LivestreamGuideModal({
               type="button"
               onClick={onClose}
               aria-label={t('guide.close')}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
             >
-              <X className="h-5 w-5" aria-hidden />
+              <X size={16} strokeWidth={1.5} aria-hidden />
             </button>
           </div>
           <ol className="space-y-6 overflow-y-auto p-4 sm:p-6">

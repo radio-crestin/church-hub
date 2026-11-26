@@ -30,13 +30,11 @@ export function VerseCard({
   )
 
   return (
-    <div className="group bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
+    <div className="group bg-panel rounded-lg border border-line p-4 hover:border-line-strong transition-colors">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 dark:text-white text-sm">
-            {reference}
-          </h3>
-          <p className="mt-1 text-gray-600 dark:text-gray-300 text-sm line-clamp-3 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
+          <h3 className="font-medium text-fg text-[13px]">{reference}</h3>
+          <p className="mt-1 text-fg-label text-[13px] line-clamp-3 [&_mark]:bg-yellow-300 [&_mark]:dark:bg-yellow-400/60 [&_mark]:rounded-sm [&_mark]:px-0.5">
             <HighlightedText text={highlightedText || verse.text} />
           </p>
         </div>
@@ -45,20 +43,20 @@ export function VerseCard({
             <button
               type="button"
               onClick={() => onAddToQueue(verse)}
-              className="p-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              className="p-1.5 rounded-md text-fg-label hover:bg-hover hover:text-fg transition-colors"
               title={t('actions.addToQueue')}
             >
-              <ListPlus size={16} />
+              <ListPlus size={16} strokeWidth={1.5} />
             </button>
           )}
           {onPresentNow && (
             <button
               type="button"
               onClick={() => onPresentNow(verse)}
-              className="p-1.5 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-green-100 dark:hover:bg-green-900/30 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+              className="p-1.5 rounded-md text-fg-label hover:bg-hover hover:text-fg transition-colors"
               title={t('actions.presentNow')}
             >
-              <Play size={16} />
+              <Play size={16} strokeWidth={1.5} />
             </button>
           )}
         </div>

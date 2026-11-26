@@ -65,7 +65,7 @@ test.describe('Bible Feature', () => {
     // Parse the second result's reference to know what verse to expect
     const secondResult = results.nth(1)
     const referenceText = await secondResult
-      .locator('span.text-indigo-600, span.text-indigo-400')
+      .getByTestId('bible-search-result-reference')
       .first()
       .textContent()
     const refMatch = referenceText?.match(/(\d+):(\d+)/)
@@ -81,7 +81,7 @@ test.describe('Bible Feature', () => {
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2)
 
     // Wait for verse list to show (search results disappear, verse list appears)
-    const highlightedVerse = page.locator('.ring-indigo-500')
+    const highlightedVerse = page.locator('button[data-verse].bg-selected')
     await expect(highlightedVerse).toBeVisible({ timeout: 10000 })
 
     // The highlighted verse number must match the clicked search result
@@ -107,7 +107,7 @@ test.describe('Bible Feature', () => {
     // Get expected verse from the second result
     const secondResultRef = await results
       .nth(1)
-      .locator('span.text-indigo-600, span.text-indigo-400')
+      .getByTestId('bible-search-result-reference')
       .first()
       .textContent()
     const refMatch = secondResultRef?.match(/(\d+):(\d+)/)
@@ -123,7 +123,7 @@ test.describe('Bible Feature', () => {
     await page.keyboard.press('Enter')
 
     // Wait for the verse list with highlighted verse to appear
-    const highlightedVerse = page.locator('.ring-indigo-500')
+    const highlightedVerse = page.locator('button[data-verse].bg-selected')
     await expect(highlightedVerse).toBeVisible({ timeout: 10000 })
 
     // The highlighted verse must match the SECOND result, not the first
@@ -169,7 +169,7 @@ test.describe('Bible Feature', () => {
     // Parse the second result's reference
     const secondResult = results.nth(1)
     const referenceText = await secondResult
-      .locator('span.text-indigo-600, span.text-indigo-400')
+      .getByTestId('bible-search-result-reference')
       .first()
       .textContent()
     const refMatch = referenceText?.match(/(\d+):(\d+)/)
@@ -184,7 +184,7 @@ test.describe('Bible Feature', () => {
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2)
 
     // Wait for verse list with highlighted verse (not search results)
-    const highlightedVerse = page.locator('.ring-indigo-500')
+    const highlightedVerse = page.locator('button[data-verse].bg-selected')
     await expect(highlightedVerse).toBeVisible({ timeout: 10000 })
 
     // Verify the correct verse is highlighted (not the pre-search chapter's verse)
@@ -220,7 +220,7 @@ test.describe('Bible Feature', () => {
     await searchInput.fill('Evrei 2:14')
 
     // Wait for smart search to navigate (indigo highlight)
-    const indigoHighlight = page.locator('button.ring-indigo-500')
+    const indigoHighlight = page.locator('button[data-verse].bg-selected')
     await expect(indigoHighlight).toBeVisible({ timeout: 15000 })
 
     // Verify URL has select=true
@@ -234,7 +234,7 @@ test.describe('Bible Feature', () => {
 
     // Present the verse via Enter
     await searchInput.press('Enter')
-    await expect(page.locator('button.ring-green-500')).toBeVisible({
+    await expect(page.locator('button.ring-live')).toBeVisible({
       timeout: 5000,
     })
 
@@ -245,13 +245,13 @@ test.describe('Bible Feature', () => {
     for (let target = 15; target <= 18; target++) {
       await page.keyboard.press('ArrowDown')
       await expect(
-        page.locator('button.ring-green-500 span.font-semibold').first(),
+        page.locator('button.ring-live span.font-semibold').first(),
       ).toHaveText(String(target), { timeout: 15000 })
     }
 
     // Should be on the last verse now (> 14)
     const lastVNum = await page
-      .locator('button.ring-green-500 span.font-semibold')
+      .locator('button.ring-live span.font-semibold')
       .first()
       .textContent()
     expect(parseInt(lastVNum!.trim(), 10)).toBeGreaterThan(14)
@@ -270,7 +270,7 @@ test.describe('Bible Feature', () => {
     // sync effect -> next-chapter load); poll with an auto-retrying assertion
     // instead of a one-shot read after a fixed wait so we don't sample an
     // intermediate state mid-settle.
-    const newHighlight = page.locator('button.ring-green-500')
+    const newHighlight = page.locator('button.ring-live')
     await expect(newHighlight.locator('span.font-semibold').first()).toHaveText(
       '1',
       { timeout: 15000 },
@@ -287,7 +287,7 @@ test.describe('Bible Feature', () => {
 
     // Re-check after a moment that it does not delayed-snap-back.
     await page.waitForTimeout(2000)
-    const afterWait = page.locator('button.ring-green-500')
+    const afterWait = page.locator('button.ring-live')
     await expect(afterWait.locator('span.font-semibold').first()).toHaveText(
       '1',
       { timeout: 5000 },
@@ -320,12 +320,12 @@ test.describe('Bible Feature', () => {
     await expect(searchInput).toBeVisible({ timeout: 5000 })
     await searchInput.fill('Geneza 2:25')
 
-    const indigoHighlight = page.locator('button.ring-indigo-500')
+    const indigoHighlight = page.locator('button[data-verse].bg-selected')
     await expect(indigoHighlight).toBeVisible({ timeout: 15000 })
     await expect(page).toHaveURL(/select=true/)
 
     await searchInput.press('Enter')
-    await expect(page.locator('button.ring-green-500')).toBeVisible({
+    await expect(page.locator('button.ring-live')).toBeVisible({
       timeout: 5000,
     })
 
@@ -334,7 +334,7 @@ test.describe('Bible Feature', () => {
     // Poll for the settled verse 1 (async boundary cross) instead of a one-shot
     // read after a fixed wait.
     await expect(
-      page.locator('button.ring-green-500 span.font-semibold').first(),
+      page.locator('button.ring-live span.font-semibold').first(),
     ).toHaveText('1', { timeout: 10000 })
   })
 
@@ -368,7 +368,7 @@ test.describe('Bible Feature', () => {
     await verseButtons.nth(verseCount - 1).click()
 
     // Verify green highlight on presented verse
-    const greenHighlight = page.locator('button.ring-green-500')
+    const greenHighlight = page.locator('button.ring-live')
     await expect(greenHighlight).toBeVisible({ timeout: 5000 })
 
     const lastVerseNum = await greenHighlight
@@ -387,7 +387,7 @@ test.describe('Bible Feature', () => {
     // one-shot read so we don't sample an intermediate state (the old last
     // verse, or a transient mid-settle value) before it reconciles.
     await expect(
-      page.locator('button.ring-green-500 span.font-semibold').first(),
+      page.locator('button.ring-live span.font-semibold').first(),
     ).toHaveText('1', { timeout: 10000 })
 
     // Verify a chapter header with "3" is visible
@@ -430,7 +430,7 @@ test.describe('Bible Feature', () => {
     // of the list, so a warp-back is unmistakable (scrollTop collapses to ~0)
     // rather than landing coincidentally near where we scrolled to.
     await verseButtons.first().click()
-    await expect(page.locator('button.ring-green-500')).toBeVisible({
+    await expect(page.locator('button.ring-live')).toBeVisible({
       timeout: 5000,
     })
 
@@ -498,7 +498,7 @@ test.describe('Bible Feature', () => {
     // Click the FIRST verse to present it
     await verseButtons.first().click()
 
-    const greenHighlight = page.locator('button.ring-green-500')
+    const greenHighlight = page.locator('button.ring-live')
     await expect(greenHighlight).toBeVisible({ timeout: 5000 })
 
     const verseNum = await greenHighlight
@@ -516,7 +516,7 @@ test.describe('Bible Feature', () => {
       .poll(
         async () => {
           const text = await page
-            .locator('button.ring-green-500 span.font-semibold')
+            .locator('button.ring-live span.font-semibold')
             .first()
             .textContent()
           return parseInt(text?.trim() ?? '0', 10)

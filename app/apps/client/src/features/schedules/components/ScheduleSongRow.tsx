@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next'
 
 import { ScheduleItemTypeIcon } from './ScheduleItemTypeIcon'
 import { ScheduleKeyLineChip } from './ScheduleKeyLineChip'
+import { ScheduleRowNumber } from './ScheduleRowNumber'
 import { ScheduleSungToggle } from './ScheduleSungToggle'
+import { scheduleRowClass } from './scheduleRowClass'
 import type { ScheduleItem } from '../types'
 
 interface ScheduleSongRowProps {
@@ -14,6 +16,8 @@ interface ScheduleSongRowProps {
   isActive: boolean
   /** The program is showing a slide of this song right now. */
   isLive?: boolean
+  /** Place in the program's running order, from 1. */
+  position: number
   /**
    * Drag-to-reorder is only meaningful on the unfiltered list, so the handle is
    * hidden while a search is narrowing the panel — same rule the Marcaje list
@@ -51,6 +55,7 @@ export function ScheduleSongRow({
   item,
   isActive,
   isLive = false,
+  position,
   isSortable,
   rowRef,
   onPresent,
@@ -79,22 +84,6 @@ export function ScheduleSongRow({
     position: isDragging ? 'relative' : undefined,
   }
 
-  const getRowClass = () => {
-    if (isDragging) {
-      return 'opacity-80 shadow-lg border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-    }
-    if (isLive) {
-      return 'border-orange-400 bg-orange-50 ring-2 ring-inset ring-orange-500 dark:border-orange-500 dark:bg-orange-900/30'
-    }
-    if (isActive) {
-      return 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-    }
-    if (item.isSung) {
-      return 'border-green-200 dark:border-green-800/60 bg-green-50/50 dark:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700'
-    }
-    return 'border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600 bg-white dark:bg-gray-800 hover:bg-orange-50/50 dark:hover:bg-orange-900/10'
-  }
-
   const song = item.song
   if (!song) return null
 
@@ -106,7 +95,7 @@ export function ScheduleSongRow({
       }}
       style={style}
       data-testid="schedule-song-item"
-      className={`flex items-center gap-1 rounded-lg border transition-colors ${getRowClass()}`}
+      className={`flex items-center gap-1 rounded-lg transition-colors ${scheduleRowClass({ isDragging, isLive, isActive })}`}
     >
       {isSortable ? (
         <div
@@ -114,12 +103,9 @@ export function ScheduleSongRow({
           {...listeners}
           data-testid="schedule-song-drag-handle"
           title={t('panel.dragToReorder')}
-          className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-hover"
         >
-          <GripVertical
-            size={14}
-            className="text-gray-400 dark:text-gray-500"
-          />
+          <GripVertical size={14} className="text-fg-hint" strokeWidth={1.75} />
         </div>
       ) : (
         <span className="w-1.5" />
@@ -141,23 +127,21 @@ export function ScheduleSongRow({
         className="flex-1 min-w-0 text-left py-1.5 pr-1 pl-1"
       >
         <div className="flex min-w-0 items-center gap-1.5">
+          <ScheduleRowNumber position={position} isLive={isLive} />
           <ScheduleItemTypeIcon item={item} size="sm" />
-          <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
+          <span className="truncate text-[13px] font-medium text-fg">
             {song.title}
           </span>
         </div>
         {song.categoryName && (
-          <div className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-0.5 truncate text-xs text-fg-hint">
             {song.categoryName}
           </div>
         )}
         {song.tagNames.length > 0 && (
-          <div className="mt-1 flex flex-wrap items-center gap-1">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2">
             {song.tagNames.map((name) => (
-              <span
-                key={name}
-                className="inline-flex items-center rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
-              >
+              <span key={name} className="text-xs text-fg-label">
                 {name}
               </span>
             ))}
@@ -178,11 +162,11 @@ export function ScheduleSongRow({
             e.stopPropagation()
             onEdit()
           }}
-          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+          className="flex-shrink-0 p-1.5 text-fg-hint hover:text-fg rounded hover:bg-hover transition-colors"
           title={t('contextMenu.edit')}
           data-testid="schedule-song-edit"
         >
-          <Pencil size={14} />
+          <Pencil size={14} strokeWidth={1.75} />
         </button>
       ) : null}
 
@@ -193,11 +177,11 @@ export function ScheduleSongRow({
             e.stopPropagation()
             onPresent()
           }}
-          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 rounded hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+          className="flex-shrink-0 p-1.5 text-fg-hint hover:text-fg-label rounded hover:bg-hover transition-colors"
           title={t('panel.presentItem')}
           data-testid="schedule-song-present"
         >
-          <MonitorPlay size={14} />
+          <MonitorPlay size={14} strokeWidth={1.75} />
         </button>
       ) : null}
 
@@ -208,11 +192,11 @@ export function ScheduleSongRow({
             e.stopPropagation()
             onRemove()
           }}
-          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           title={t('panel.removeFromSchedule')}
           data-testid="schedule-song-remove"
         >
-          <XIcon size={14} />
+          <XIcon size={14} strokeWidth={1.75} />
         </button>
       ) : null}
     </div>

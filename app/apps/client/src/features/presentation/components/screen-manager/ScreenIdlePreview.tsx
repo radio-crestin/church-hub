@@ -33,15 +33,15 @@ export function ScreenIdlePreview({ screen, onClick }: ScreenIdlePreviewProps) {
       data-testid="screen-idle-preview"
       data-closes={screen?.closeOnEscape ? 'true' : 'false'}
       title={t('sections.screens.idle.editEmptySlide')}
-      className="relative flex-shrink-0 max-w-full overflow-hidden rounded-md border border-gray-300 dark:border-gray-600 bg-black hover:ring-2 hover:ring-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className="relative flex-shrink-0 max-w-full overflow-hidden rounded-lg border border-line bg-black hover:border-line-strong focus:outline-none focus-visible:ring-1 focus-visible:ring-focus"
       style={size}
     >
       {screen && !screen.closeOnEscape && (
         <ScreenPreview screen={screen} contentType="empty" contentData={{}} />
       )}
       {screen?.closeOnEscape && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gray-700 p-2 text-center text-gray-200">
-          <MonitorOff className="w-5 h-5" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-field p-2 text-center text-fg-label">
+          <MonitorOff size={16} strokeWidth={1.5} />
           <span className="text-xs leading-tight">
             {t('sections.screens.idle.windowCloses')}
           </span>

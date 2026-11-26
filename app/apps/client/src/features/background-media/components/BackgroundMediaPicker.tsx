@@ -117,7 +117,7 @@ export function BackgroundMediaPicker({
     return (
       <p
         data-testid="background-media-no-permission"
-        className="text-xs text-gray-500 dark:text-gray-400"
+        className="text-xs text-fg-hint"
       >
         {t('screens.background.noViewPermission')}
       </p>
@@ -135,7 +135,7 @@ export function BackgroundMediaPicker({
 
       {isLoading ? (
         <div className="flex justify-center py-3">
-          <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+          <Loader2 className="h-5 w-5 animate-spin text-fg-hint" />
         </div>
       ) : isError ? (
         <p className="text-xs text-red-600 dark:text-red-400">
@@ -144,7 +144,7 @@ export function BackgroundMediaPicker({
       ) : items.length === 0 ? (
         <p
           data-testid="background-media-empty"
-          className="rounded-md border border-dashed border-gray-300 px-3 py-4 text-center text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400"
+          className="rounded-lg border border-dashed border-line-strong px-3 py-4 text-center text-xs text-fg-hint"
         >
           {t(`screens.background.empty.${kind}`)}
         </p>
@@ -163,7 +163,7 @@ export function BackgroundMediaPicker({
       )}
 
       {canEdit && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-fg-hint">
           {t('screens.background.hint.any')}
         </p>
       )}

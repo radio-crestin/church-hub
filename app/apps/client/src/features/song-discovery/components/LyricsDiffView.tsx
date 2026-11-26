@@ -13,7 +13,7 @@ interface LyricsDiffViewProps {
 const ROW_STYLES: Record<DiffLine['type'], string> = {
   added: 'bg-green-50 text-green-800 dark:bg-green-950/40 dark:text-green-300',
   removed: 'bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300',
-  context: 'text-gray-600 dark:text-gray-400',
+  context: 'text-fg-label',
 }
 
 const ROW_SIGN: Record<DiffLine['type'], string> = {
@@ -39,16 +39,12 @@ export function LyricsDiffView({
   )
 
   if (!hasChanges(diff)) {
-    return (
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        {t('diff.identical')}
-      </p>
-    )
+    return <p className="mt-2 text-xs text-fg-hint">{t('diff.identical')}</p>
   }
 
   return (
-    <div className="mt-2 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] text-gray-500 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400">
+    <div className="mt-2 overflow-hidden rounded-md border border-line">
+      <div className="flex items-center gap-3 border-b border-line bg-field px-3 py-1.5 text-xs text-fg-hint">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-2 rounded-sm bg-red-400" />
           {t('diff.inLibrary')}
@@ -58,7 +54,7 @@ export function LyricsDiffView({
           {t('diff.inCatalog')}
         </span>
       </div>
-      <div className="max-h-72 overflow-y-auto bg-white font-mono text-xs leading-relaxed dark:bg-gray-900">
+      <div className="max-h-72 overflow-y-auto bg-panel font-mono text-xs leading-relaxed">
         {diff.map((line, index) => (
           <div
             key={index}

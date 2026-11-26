@@ -74,54 +74,54 @@ export function PptxImportDialog({
       className="fixed inset-0 p-0 m-auto w-full max-w-lg bg-transparent backdrop:bg-black/50"
       onClose={handleClose}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-panel rounded-lg shadow-popover">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <FileText className="w-5 h-5 text-fg-label" />
+            <h2 className="text-base font-semibold text-fg">
               {t('songs:pptxImport.title')}
             </h2>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1 hover:bg-hover rounded transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-fg-hint" />
           </button>
         </div>
 
         <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-fg-label">
             {t('songs:pptxImport.description', {
               count: parsedPptx?.slides.length || 0,
             })}
           </p>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('songs:pptxImport.songTitle')}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-panel border border-line rounded-lg text-fg focus:ring-2 focus:ring-focus focus:border-focus"
               placeholder={t('songs:editor.titlePlaceholder')}
             />
           </div>
 
           {/* Preview of slides */}
-          <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="max-h-48 overflow-y-auto border border-line rounded-lg">
             {parsedPptx?.slides.map((slide, idx) => (
               <div
                 key={slide.slideNumber}
-                className="px-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                className="px-3 py-2 border-b border-line last:border-b-0"
               >
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-fg-hint">
                   {t('songs:pptxImport.slideNumber', { number: idx + 1 })}
                 </span>
-                <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                <p className="text-sm text-fg-body truncate">
                   {slide.text.split('\n')[0]}
                 </p>
               </div>
@@ -129,11 +129,11 @@ export function PptxImportDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-2 px-4 py-3 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('common:buttons.cancel')}
           </button>
@@ -142,7 +142,7 @@ export function PptxImportDialog({
             type="button"
             onClick={handleImportAsSong}
             disabled={!title.trim() || upsertMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Music className="w-4 h-4" />
             {t('songs:pptxImport.createSong')}

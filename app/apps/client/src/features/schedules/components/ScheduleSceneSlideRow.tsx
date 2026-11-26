@@ -39,25 +39,20 @@ export function ScheduleSceneSlideRow({
       onClick={() => onSceneClick?.(item)}
       className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
         isPresented
-          ? 'bg-violet-100 dark:bg-violet-900/50 ring-2 ring-inset ring-violet-500'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
+          ? 'bg-live-tint ring-1 ring-inset ring-live'
+          : 'hover:bg-hover'
       }`}
     >
       <div className="flex items-center gap-2">
         <Camera
           size={16}
           className={`flex-shrink-0 ${
-            isPresented
-              ? 'text-violet-600 dark:text-violet-400'
-              : 'text-gray-400'
+            isPresented ? 'text-fg' : 'text-fg-hint'
           }`}
+          strokeWidth={1.5}
         />
         <span
-          className={`text-sm ${
-            isPresented
-              ? 'text-violet-900 dark:text-violet-100'
-              : 'text-gray-600 dark:text-gray-400'
-          }`}
+          className={`text-[13px] ${isPresented ? 'text-fg' : 'text-fg-label'}`}
         >
           {t('slideTemplates.scene')}: {item.slideContent || item.obsSceneName}
         </span>

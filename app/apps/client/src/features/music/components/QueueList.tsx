@@ -35,10 +35,10 @@ export function QueueList({
       {queue.map((item, index) => (
         <div
           key={item.id}
-          className={`flex items-center gap-1 sm:gap-2 p-2 rounded-md cursor-pointer group overflow-hidden ${
+          className={`flex items-center gap-1 sm:gap-2 p-2 rounded-lg cursor-pointer group overflow-hidden ${
             index === currentIndex
-              ? 'bg-purple-100 dark:bg-purple-900/30'
-              : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+              ? 'bg-live-tint ring-1 ring-inset ring-live'
+              : 'hover:bg-hover'
           }`}
           onClick={() => onPlayAtIndex(index)}
           onKeyDown={(e) => {
@@ -52,26 +52,22 @@ export function QueueList({
           data-testid="music-queue-item"
           data-current={index === currentIndex || undefined}
         >
-          <div className="w-5 h-5 shrink-0 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+          <div className="w-5 h-5 shrink-0 flex items-center justify-center text-xs font-medium tabular-nums text-fg-hint">
             {index === currentIndex ? (
-              <span className="text-purple-600 dark:text-purple-400">
-                {'\u25B6'}
-              </span>
+              <span className="text-live">{'\u25B6'}</span>
             ) : (
               index + 1
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            <p className="text-[13px] font-medium text-fg-body truncate">
               {item.title || item.filename}
             </p>
             {item.artist && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {item.artist}
-              </p>
+              <p className="text-xs text-fg-hint truncate">{item.artist}</p>
             )}
           </div>
-          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+          <span className="text-xs tabular-nums text-fg-hint shrink-0">
             {formatDuration(item.duration)}
           </span>
           <button
@@ -80,10 +76,10 @@ export function QueueList({
               e.stopPropagation()
               onRemoveFromQueue(item.id)
             }}
-            className="p-1 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+            className="p-1 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-hover rounded-md transition-opacity"
             title={t('player.removeFromQueue')}
           >
-            <X className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+            <X className="w-3 h-3 text-fg-label" strokeWidth={2} />
           </button>
         </div>
       ))}

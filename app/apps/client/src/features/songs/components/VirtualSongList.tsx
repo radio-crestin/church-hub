@@ -100,7 +100,7 @@ export function VirtualSongList<T extends { id: number }>({
 
       {isFetchingNextPage && (
         <div className="py-4 flex justify-center">
-          <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+          <Loader2 className="w-6 h-6 text-fg-hint animate-spin" />
         </div>
       )}
     </div>

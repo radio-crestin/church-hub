@@ -20,19 +20,12 @@ import {
   useUpdateScreenContentConfig,
   useUpsertScreen,
 } from '../../hooks'
-import type { ContentType, Screen, ScreenType } from '../../types'
+import type { ContentType, Screen } from '../../types'
 import {
   closeDisplayWindow,
   openDisplayWindow,
   setDisplayAlwaysOnTop,
 } from '../../utils/openDisplayWindow'
-
-const SCREEN_TYPE_COLORS: Record<ScreenType, string> = {
-  primary: 'bg-blue-600',
-  stage: 'bg-purple-600',
-  livestream: 'bg-green-600',
-  kiosk: 'bg-orange-600',
-}
 
 /**
  * The per-screen switches saved straight from the card, each with the i18n
@@ -70,12 +63,8 @@ function SettingsGroup({
 }) {
   return (
     <section data-testid={testId} className="min-w-0">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        {title}
-      </h4>
-      <div className="divide-y divide-gray-100 dark:divide-gray-700/60">
-        {children}
-      </div>
+      <h4 className="text-[13px] font-medium text-fg-label">{title}</h4>
+      <div className="divide-y divide-line/60">{children}</div>
     </section>
   )
 }
@@ -162,32 +151,30 @@ export function ScreenCard({
     <div
       data-testid="screen-card"
       data-screen-id={screen.id}
-      className="p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+      className="p-3 md:p-4 bg-panel rounded-xl border border-line"
     >
       {/* Identity: status, name, type, size, and the screen's actions */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className={`w-3 h-3 rounded-full flex-shrink-0 ${
-              screen.isActive ? 'bg-green-500' : 'bg-gray-400'
+            className={`w-2 h-2 rounded-full flex-shrink-0 ${
+              screen.isActive ? 'bg-ok' : 'bg-fg-hint'
             }`}
           />
           <div className="min-w-0">
-            <h3 className="font-medium text-gray-900 dark:text-white truncate">
+            <h3 className="text-[13px] font-medium text-fg truncate">
               {screen.name}
             </h3>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-              <span
-                className={`px-2 py-0.5 text-xs font-medium rounded-full text-white ${SCREEN_TYPE_COLORS[screen.type]}`}
-              >
+              <span className="text-xs text-fg-hint">
                 {t(`presentation:screens.screenTypes.${screen.type}`)}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-fg-hint tabular-nums">
                 {screen.width}×{screen.height}
               </span>
               <span
                 data-testid="screen-window-status"
-                className="text-sm text-gray-500 dark:text-gray-400"
+                className="text-xs text-fg-hint"
               >
                 ·{' '}
                 {screen.isActive
@@ -205,7 +192,7 @@ export function ScreenCard({
             onClick={() => onEdit()}
             title={t('sections.screens.actions.editTooltip')}
           >
-            <Edit size={16} />
+            <Edit size={16} strokeWidth={1.5} />
             <span className="ml-1">{t('sections.screens.actions.edit')}</span>
           </Button>
           <Button
@@ -215,7 +202,7 @@ export function ScreenCard({
             title={t('sections.screens.export.title')}
             aria-label={t('sections.screens.export.title')}
           >
-            <ExternalLink size={16} />
+            <ExternalLink size={16} strokeWidth={1.5} />
           </Button>
           <Button
             variant="ghost"
@@ -224,7 +211,7 @@ export function ScreenCard({
             title={t('sections.screens.actions.copyUrl')}
             aria-label={t('sections.screens.actions.copyUrl')}
           >
-            <Copy size={16} />
+            <Copy size={16} strokeWidth={1.5} />
           </Button>
           <Button
             variant="ghost"
@@ -235,22 +222,22 @@ export function ScreenCard({
             title={t('sections.screens.actions.duplicate')}
             aria-label={t('sections.screens.actions.duplicate')}
           >
-            <CopyPlus size={16} />
+            <CopyPlus size={16} strokeWidth={1.5} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={onDelete}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="hover:text-red-600"
             title={t('sections.screens.actions.delete')}
             aria-label={t('sections.screens.actions.delete')}
           >
-            <Trash2 size={16} />
+            <Trash2 size={16} strokeWidth={1.5} />
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-x-8 gap-y-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/60 lg:grid-cols-2">
+      <div className="grid gap-x-8 gap-y-4 mt-3 pt-3 border-t border-line lg:grid-cols-2">
         {/* What the projector shows between items */}
         <SettingsGroup
           title={t('sections.screens.groups.idle')}
@@ -261,7 +248,7 @@ export function ScreenCard({
               screen={screenWithConfigs}
               onClick={() => onEdit('empty')}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-hint">
               {screen.closeOnEscape
                 ? t('sections.screens.idle.summaryClosed')
                 : t('sections.screens.idle.summaryOpen')}
@@ -309,11 +296,15 @@ export function ScreenCard({
           <ScreenMonitorPicker screen={screen} />
           <PreviewScreenRadio screen={screen} checked={isShownInPreviews} />
           <details data-testid="screen-group-advanced" className="group py-2">
-            <summary className="flex items-center gap-1 cursor-pointer list-none text-sm font-medium text-gray-700 dark:text-gray-300 [&::-webkit-details-marker]:hidden">
-              <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
+            <summary className="flex items-center gap-1 cursor-pointer list-none text-[13px] font-medium text-fg-body [&::-webkit-details-marker]:hidden">
+              <ChevronRight
+                size={16}
+                strokeWidth={1.5}
+                className="text-fg-label transition-transform group-open:rotate-90"
+              />
               {t('sections.screens.groups.advanced')}
             </summary>
-            <div className="divide-y divide-gray-100 dark:divide-gray-700/60 pl-5">
+            <div className="divide-y divide-line/60 pl-5">
               <SwitchRow
                 label={t('sections.screens.fullscreen.label')}
                 description={t('sections.screens.fullscreen.description')}

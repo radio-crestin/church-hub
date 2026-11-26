@@ -7,9 +7,8 @@ interface PreviewModeToggleProps {
 }
 
 /**
- * Two icons for how a click on a verse behaves: live (green, like the live
- * verse) shows it on screen at once; preview (indigo, like the staged verse)
- * stages it here first, for the singers, until Afișează projects it.
+ * Two icons for how a click on a verse behaves: live shows it on screen at
+ * once; preview stages it here first, for the singers, until Afișează projects it.
  */
 export function PreviewModeToggle({
   previewMode,
@@ -23,7 +22,6 @@ export function PreviewModeToggle({
       Icon: MonitorPlay,
       label: t('preview.liveMode'),
       hint: t('preview.liveModeHint'),
-      activeClass: 'bg-green-600 text-white',
     },
     {
       id: 'preview',
@@ -31,7 +29,6 @@ export function PreviewModeToggle({
       Icon: Eye,
       label: t('preview.previewMode'),
       hint: t('preview.previewModeHint'),
-      activeClass: 'bg-indigo-600 text-white',
     },
   ]
 
@@ -40,9 +37,9 @@ export function PreviewModeToggle({
       role="radiogroup"
       aria-label={t('preview.modeLabel')}
       data-testid="song-mode-toggle"
-      className="flex shrink-0 gap-0.5 rounded-lg border border-gray-300 p-0.5 dark:border-gray-600"
+      className="flex shrink-0 gap-0.5 rounded-lg bg-field p-0.5"
     >
-      {modes.map(({ id, isActive, Icon, label, hint, activeClass }) => (
+      {modes.map(({ id, isActive, Icon, label, hint }) => (
         <button
           key={id}
           type="button"
@@ -55,12 +52,10 @@ export function PreviewModeToggle({
             if (!isActive) onTogglePreviewMode()
           }}
           className={`flex items-center rounded-md p-1.5 transition-colors ${
-            isActive
-              ? activeClass
-              : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+            isActive ? 'bg-selected text-fg' : 'text-fg-label hover:text-fg'
           }`}
         >
-          <Icon size={16} />
+          <Icon size={16} strokeWidth={1.5} />
         </button>
       ))}
     </div>

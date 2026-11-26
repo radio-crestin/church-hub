@@ -52,24 +52,24 @@ export function LiveTranslationStreamsCard() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-800 col-span-1 md:col-span-2 lg:col-span-3">
+    <div className="bg-panel rounded-xl p-6 border border-line col-span-1 md:col-span-2 lg:col-span-3">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
-          <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <Globe className="w-4 h-4 text-fg-label" strokeWidth={1.5} />
+          <h3 className="text-base font-semibold text-fg">
             {t('dashboard.cardTitle')}
           </h3>
         </div>
         <Link
           to="/live-translation"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-field hover:bg-hover text-fg-body rounded-lg transition-colors"
         >
-          <Settings className="w-3.5 h-3.5" />
+          <Settings className="w-3.5 h-3.5" strokeWidth={1.75} />
           {t('dashboard.openSettings')}
         </Link>
       </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+      <p className="text-[13px] text-fg-label mb-4">
         {t('dashboard.cardDescription')}
       </p>
 
@@ -80,17 +80,17 @@ export function LiveTranslationStreamsCard() {
             readOnly
             value={streamUrl}
             onClick={(e) => (e.target as HTMLInputElement).select()}
-            className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg font-mono select-all"
+            className="flex-1 px-3 py-2 text-xs bg-field text-fg-body border border-line rounded-lg font-mono select-all outline-none focus:border-focus"
           />
           <button
             type="button"
             onClick={copy}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
           >
             {copied ? (
-              <Check className="w-3.5 h-3.5" />
+              <Check className="w-3.5 h-3.5" strokeWidth={1.75} />
             ) : (
-              <Copy className="w-3.5 h-3.5" />
+              <Copy className="w-3.5 h-3.5" strokeWidth={1.75} />
             )}
             {copied ? t('settings.copiedUrl') : t('settings.copyUrl')}
           </button>
@@ -98,11 +98,11 @@ export function LiveTranslationStreamsCard() {
       )}
 
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+        <div className="text-xs font-medium text-fg-label mb-2">
           {t('dashboard.configuredLanguages')}
         </div>
         {targets.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-[13px] text-fg-hint">
             {t('dashboard.noLanguages')}
           </p>
         ) : (
@@ -110,12 +110,12 @@ export function LiveTranslationStreamsCard() {
             {targets.map((tgt) => (
               <span
                 key={tgt.id}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full"
+                className="inline-flex items-center gap-1.5 text-xs text-fg-body"
               >
                 <span className="font-semibold">
                   {tgt.targetLanguage.toUpperCase()}
                 </span>
-                <span className="text-blue-600/70 dark:text-blue-400/70">
+                <span className="text-fg-hint">
                   {langName(tgt.targetLanguage)}
                 </span>
               </span>

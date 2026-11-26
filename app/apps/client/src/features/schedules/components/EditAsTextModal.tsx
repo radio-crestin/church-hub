@@ -526,21 +526,21 @@ export function EditAsTextModal({
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-h-[90vh] flex flex-col">
+      <div className="bg-panel rounded-lg shadow-xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-line">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <FileText className="w-5 h-5 text-fg" strokeWidth={1.5} />
+            <h2 className="text-base font-semibold text-fg">
               {t('editAsText.title')}
             </h2>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1 hover:bg-hover rounded transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-fg-hint" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -549,7 +549,7 @@ export function EditAsTextModal({
           {modalState === 'editing' && (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-[13px] text-fg-label">
                   {t('editAsText.description')}
                 </p>
                 <button
@@ -557,18 +557,16 @@ export function EditAsTextModal({
                   onClick={() => setPlainView((v) => !v)}
                   className="flex items-center gap-2 group"
                 >
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                  <span className="text-xs font-medium text-fg-hint group-hover:text-fg-body transition-colors">
                     {t('editAsText.plainView')}
                   </span>
                   <div
                     className={`relative w-9 h-5 rounded-full transition-colors ${
-                      plainView
-                        ? 'bg-indigo-500'
-                        : 'bg-gray-300 dark:bg-gray-600'
+                      plainView ? 'bg-primary' : 'bg-line-strong'
                     }`}
                   >
                     <div
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-panel shadow-sm transition-transform ${
                         plainView ? 'translate-x-4' : 'translate-x-0'
                       }`}
                     />
@@ -577,7 +575,7 @@ export function EditAsTextModal({
               </div>
 
               {plainView ? (
-                <pre className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white font-mono text-sm whitespace-pre-wrap min-h-[22.5rem] select-text">
+                <pre className="w-full px-3 py-2 bg-app border border-line rounded-lg text-fg font-mono text-[13px] whitespace-pre-wrap min-h-[22.5rem] select-text">
                   {plainText}
                 </pre>
               ) : (
@@ -593,14 +591,14 @@ export function EditAsTextModal({
                   }}
                   placeholder={t('editAsText.formatHelp')}
                   rows={15}
-                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none font-mono text-sm"
+                  className="w-full px-3 py-2 bg-field border border-transparent rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus resize-none font-mono text-[13px]"
                 />
               )}
 
               {!plainView && (
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-[13px]">
                   {parseResult.items.length > 0 && (
-                    <span className="text-indigo-600 dark:text-indigo-400">
+                    <span className="text-fg">
                       {t('editAsText.preview', {
                         count: parseResult.items.length,
                       })}
@@ -617,7 +615,7 @@ export function EditAsTextModal({
               )}
 
               {!plainView && parseResult.errors.length > 0 && (
-                <div className="text-sm text-red-600 dark:text-red-400 space-y-1">
+                <div className="text-[13px] text-red-600 dark:text-red-400 space-y-1">
                   {parseResult.errors.map((error) => (
                     <div key={error.line}>
                       {t('editAsText.lineError', {
@@ -632,10 +630,10 @@ export function EditAsTextModal({
               {!plainView && validationErrors.length > 0 && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium">
-                    <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="w-4 h-4" strokeWidth={1.5} />
                     <span>{t('editAsText.validationErrors')}</span>
                   </div>
-                  <div className="text-sm text-amber-600 dark:text-amber-300 space-y-1">
+                  <div className="text-[13px] text-amber-600 dark:text-amber-300 space-y-1">
                     {validationErrors.map((error, idx) => (
                       <div key={`${error.lineNumber}-${idx}`}>
                         {t('editAsText.lineError', {
@@ -663,8 +661,8 @@ export function EditAsTextModal({
 
           {modalState === 'processing' && (
             <div className="flex items-center justify-center py-8 gap-3">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-              <span className="text-gray-600 dark:text-gray-400">
+              <Loader2 className="w-6 h-6 animate-spin text-fg" />
+              <span className="text-fg-label">
                 {t('editAsText.processing')}
               </span>
             </div>
@@ -673,11 +671,11 @@ export function EditAsTextModal({
 
         {/* Footer */}
         {modalState === 'editing' && !plainView && (
-          <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-2 px-4 py-3 border-t border-line">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
             >
               {t('editAsText.cancel')}
             </button>
@@ -689,7 +687,7 @@ export function EditAsTextModal({
                 parseResult.errors.length > 0 ||
                 !scheduleId
               }
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('editAsText.save')}
             </button>

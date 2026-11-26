@@ -47,7 +47,7 @@ export function ScanPairingCodeButton({
       className="w-full"
       data-testid="scan-pairing-code"
     >
-      <ScanLine className="mr-2 h-4 w-4" />
+      <ScanLine strokeWidth={1.5} className="mr-2 h-4 w-4" />
       {t('sections.apiUrl.scan')}
     </Button>
   )

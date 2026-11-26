@@ -47,11 +47,11 @@ export function ScheduleSungToggle({
       data-testid={testId}
       className={`flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
         isSung
-          ? 'border-green-500 bg-green-500 text-white'
-          : 'border-gray-300 dark:border-gray-600 text-transparent hover:border-green-400 hover:text-green-400'
+          ? 'border-transparent bg-selected text-fg'
+          : 'border-line-strong text-transparent hover:text-fg-label'
       }`}
     >
-      <Check size={12} strokeWidth={3} />
+      <Check size={12} strokeWidth={2.5} />
     </button>
   )
 }

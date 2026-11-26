@@ -16,10 +16,10 @@ export function SongSourcesSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-fg">
           {t('songSources.title')}
         </h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-fg-hint">
           {t('songSources.description')}
         </p>
       </div>

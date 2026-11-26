@@ -23,13 +23,13 @@ export function NotificationAction({
       onClick={onClick}
       disabled={disabled}
       data-testid={testId}
-      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60 ${
+      className={`inline-flex items-center gap-1.5 h-8 rounded-lg px-3 text-[13px] font-medium transition-colors disabled:opacity-60 ${
         primary
-          ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-          : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600'
+          ? 'bg-primary text-white hover:bg-indigo-700'
+          : 'bg-field text-fg hover:bg-hover'
       }`}
     >
-      {Icon && <Icon size={14} />}
+      {Icon && <Icon size={14} strokeWidth={1.75} />}
       {children}
     </button>
   )
