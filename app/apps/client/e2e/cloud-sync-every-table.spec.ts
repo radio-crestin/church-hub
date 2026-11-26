@@ -429,6 +429,25 @@ test.describe
       expect(stale.status).toBe(409)
     })
 
+    test('a change goes out once, even when synced in the second it was made', async ({
+      request,
+    }) => {
+      const name = `E2E Once ${Date.now()}`
+      await request.post('/api/users', {
+        data: { name, permissions: ['songs.view'] },
+      })
+      const copies = async () =>
+        (await published(readUrl)).filter(
+          (change) => change.type === 'user' && change.data?.name === name,
+        ).length
+
+      await syncUntil(request, async () => (await copies()) > 0)
+      // Sent again, a stale copy would undo a newer change made elsewhere.
+      await request.post('/api/sync/now')
+      await request.post('/api/sync/now')
+      expect(await copies()).toBe(1)
+    })
+
     test('a change made on the PC by someone the church no longer allows is put back and shown', async ({
       page,
       request,
@@ -469,8 +488,9 @@ test.describe
         storageState: { cookies: [], origins: [] },
         extraHTTPHeaders: { 'X-User-Auth': losing.loginToken },
       })
+      // Test DBs persist between runs: a name no earlier run left behind.
       const edited = await asLosing.post('/api/song-tags', {
-        data: { id: tagId, name: 'Not allowed anymore' },
+        data: { id: tagId, name: `E2E refused ${Date.now()}` },
       })
       expect(edited.ok()).toBe(true)
       await asLosing.dispose()

@@ -81,6 +81,8 @@ export const syncState = sqliteTable('sync_state', {
    * they queue. Null: the server itself.
    */
   actingUser: text('acting_user'),
+  /** Counts the changes queued so far: each one's number (syncPending.seq). */
+  pendingSeq: integer('pending_seq').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -104,6 +106,8 @@ export const syncPending = sqliteTable(
       .default(sql`(unixepoch())`),
     /** The user (uuid) who made the change; null: the server itself. */
     author: text('author'),
+    /** The order it was queued in (syncState.pendingSeq). */
+    seq: integer('seq').notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.entityType, table.entityUuid] })],
 )
