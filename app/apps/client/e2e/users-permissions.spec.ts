@@ -78,7 +78,7 @@ test.describe('Users & permissions', () => {
 
       // But the sidebar configuration is readable without settings.view, so
       // limited users see the same hidden/shown nav items the owner configured
-      // (e.g. a hidden Feedback button stays hidden for everyone).
+      // (e.g. a hidden page stays hidden for everyone).
       const sidebarCfg = await guest.get(
         '/api/settings/app_settings/sidebar_configuration',
       )

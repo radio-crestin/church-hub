@@ -48,6 +48,22 @@ function mergeWithDefaults(stored: SidebarConfiguration): SidebarConfiguration {
 }
 
 /**
+ * Drops built-in pages a stored configuration still names but this version
+ * no longer has (the Feedback page, removed with "Request a feature").
+ */
+function dropRemovedBuiltins(
+  config: SidebarConfiguration,
+): SidebarConfiguration {
+  return {
+    ...config,
+    items: config.items.filter(
+      (item) =>
+        item.type !== 'builtin' || Object.hasOwn(BUILTIN_ITEMS, item.builtinId),
+    ),
+  }
+}
+
+/**
  * Validates that a parsed configuration has the expected structure
  */
 function isValidConfiguration(obj: unknown): obj is SidebarConfiguration {
@@ -117,7 +133,7 @@ async function readSidebarConfiguration(): Promise<SidebarConfiguration> {
     const migrated = migrateToV2(parsed)
 
     // Merge with defaults to handle new built-in items
-    return mergeWithDefaults(migrated)
+    return mergeWithDefaults(dropRemovedBuiltins(migrated))
   } catch {
     return DEFAULT_SIDEBAR_CONFIG
   }

@@ -1,11 +1,24 @@
+import {
+  LIBRARY_BUNDLE_VERSION,
+  type LibraryManifest,
+} from '@church-hub/song-formats'
+
 import { readLinkManifest } from './readLinkManifest'
 import { requireLinkUrl } from './requireLinkUrl'
 import { getRawDatabase } from '../../../db'
+import type { SongBundleManifest } from '../bundle/types'
 import { listSongSources } from '../listSongSources'
 import type { SongSource } from '../types'
 
-/** Same link, same id: adding a link twice updates the one source. */
-function linkSourceId(url: string): string {
+/**
+ * Same link, same id: adding a link twice updates the one source. A shared
+ * library keeps its own id (`library-<sourceId>`), whatever URL it is read
+ * from, so the songs it added stay linked to it.
+ */
+function linkSourceId(url: string, manifest: SongBundleManifest): string {
+  if (manifest.version >= LIBRARY_BUNDLE_VERSION) {
+    return `library-${(manifest as unknown as LibraryManifest).sourceId}`
+  }
   const hash = new Bun.CryptoHasher('sha256').update(url).digest('hex')
   return `link-${hash.slice(0, 12)}`
 }
@@ -18,14 +31,15 @@ function linkSourceId(url: string): string {
 export async function upsertLinkSource(link: string): Promise<SongSource> {
   const url = requireLinkUrl(link).toString()
   const { manifest, format } = await readLinkManifest(url)
-  const id = linkSourceId(url)
+  const id = linkSourceId(url, manifest)
 
   getRawDatabase()
     .query(
       `INSERT INTO song_source_subscriptions (id, name, category_name, format, url)
        VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET name = excluded.name,
-         category_name = excluded.category_name, format = excluded.format`,
+         category_name = excluded.category_name, format = excluded.format,
+         url = excluded.url`,
     )
     .run(id, manifest.name, manifest.categoryName, format, url)
 

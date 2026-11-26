@@ -85,8 +85,11 @@ export function ChangedSongList({
                   {sourceNames.get(item.sourceId)}
                 </span>
               </span>
-              <span className="inline-flex items-center text-xs font-medium text-fg-label">
-                {t('changed.badge')}
+              <span
+                className="inline-flex shrink-0 items-center text-xs font-medium text-fg-label"
+                data-testid={item.edited ? 'changed-edited-badge' : undefined}
+              >
+                {item.edited ? t('changed.editedBadge') : t('changed.badge')}
               </span>
             </button>
           </li>

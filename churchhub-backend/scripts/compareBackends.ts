@@ -6,7 +6,7 @@
  * shape (keys and value types, not values). The host of each deployment is
  * normalised away. Safe to run against production: it only reads, gets
  * validation errors, or opens and closes a throwaway signaling room. Costs
- * one of each IP's per-minute feature-request calls.
+ * one of each IP's per-minute church-registration calls.
  *
  *   bun scripts/compareBackends.ts <reference base URL> <candidate base URL>
  *
@@ -68,8 +68,6 @@ const CALLS: Call[] = [
   { name: 'YouTube callback without state', path: '/auth/youtube/callback?code=x' },
   { name: 'YouTube refresh, no token', method: 'POST', path: '/auth/youtube/refresh', headers: json, body: {} },
   { name: 'Drive refresh, no token', method: 'POST', path: '/auth/drive/refresh', headers: json, body: {} },
-  { name: 'feature request, invalid', method: 'POST', path: '/feature-requests', headers: json, body: {} },
-  { name: 'screenshot, unknown id', path: `/feature-requests/screenshots/${crypto.randomUUID()}.png` },
   { name: 'signal register', method: 'POST', path: '/signal/register', headers: json, body: { secret } },
   { name: 'signal check', path: `/signal/${secret}/check`, headers: { Origin: APP_ORIGIN } },
   {

@@ -2,6 +2,7 @@
  * OpenAPI 3.1 document of the cloud sync service (served at
  * /sync/openapi.json, rendered by Scalar at /sync/docs).
  */
+import { libraryOpenApiPaths } from '../library/libraryOpenApi'
 import { installationHeaders, ownerOpenApiPaths } from './owner/ownerOpenApi'
 import { ENTITY_TYPES } from './types'
 
@@ -539,6 +540,7 @@ export const syncOpenApi = {
       },
     },
     ...ownerOpenApiPaths,
+    ...libraryOpenApiPaths,
     '/sync/openapi.json': {
       get: {
         summary: 'This document',

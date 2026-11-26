@@ -31,7 +31,6 @@ export type BuiltInMenuItemId =
   | 'music'
   | 'song_key'
   | 'live_translation'
-  | 'feedback'
   | 'kiosk'
   | 'settings'
 

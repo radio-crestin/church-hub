@@ -2,8 +2,8 @@ import type { NodeSettings, RateLimitRule } from './types'
 
 /** The Worker's rate-limit bindings (wrangler.toml), calls a minute. */
 const DEFAULT_PER_MINUTE = {
-  FEATURE_REQUEST_RATE_LIMITER: 3,
   SYNC_RATE_LIMITER: 3,
+  LIBRARY_RATE_LIMITER: 5,
   BACKUP_RATE_LIMITER: 60,
   BACKUP_ACCOUNT_RATE_LIMITER: 30,
 }

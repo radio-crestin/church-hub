@@ -44,6 +44,9 @@ test.describe
 
     const title = `E2E Join ${Date.now()}`
     let joinUrl = ''
+    // The phone's own account: the picker would default to the newest user,
+    // whoever an earlier spec on this worker left behind.
+    let phoneUserId = 0
 
     test.beforeAll(async () => {
       // The public app's build (the whole app and its server) takes a while.
@@ -61,6 +64,7 @@ test.describe
     test.afterAll(async ({ request }) => {
       try {
         await request.delete('/api/sync/cloud')
+        if (phoneUserId) await request.delete(`/api/users/${phoneUserId}`)
       } finally {
         // Whatever failed, the ports are let go for the next spec.
         await publicApp.stop()
@@ -86,11 +90,25 @@ test.describe
           ],
         },
       })
+      const phoneUser = await request.post('/api/users', {
+        data: {
+          name: `E2E Join phone ${Date.now()}`,
+          // What the phone does here: reads songs, adds a program, syncs.
+          permissions: ['songs.view', 'programs.create', 'settings.edit'],
+        },
+      })
+      phoneUserId = (await phoneUser.json()).data.user.id
 
       // The shipped fixtures save Romanian; the assertions read English.
       await setAppLanguage(page, 'en')
       await page.goto('/settings/phones')
       await page.getByTestId('cloud-connect').click()
+      await page.getByTestId('cloud-device-account').click()
+      await page
+        .locator(
+          `[data-testid="cloud-device-account-option"][data-value="${phoneUserId}"] button`,
+        )
+        .click()
       await page.getByLabel('Device name').fill('E2E phone')
       await page.getByTestId('cloud-device-create').click()
 

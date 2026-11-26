@@ -1,12 +1,5 @@
 import { useLocation } from '@tanstack/react-router'
-import {
-  ChevronLeft,
-  ChevronRight,
-  MessageSquarePlus,
-  Monitor,
-  Settings,
-  X,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Monitor, Settings, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -16,7 +9,6 @@ import { useSidebarCollapsed } from './use-sidebar-collapsed'
 import { useSidebarItemClick } from './use-sidebar-item-click'
 import { useSidebarMenuItems } from './use-sidebar-menu-items'
 import { CurrentUserButton } from '../../features/auth'
-import { RequestFeatureTool } from '../../features/feature-request'
 import { useKioskSettings } from '../../features/kiosk'
 import { NotificationsBell } from '../../features/notifications/components/NotificationsBell'
 import {
@@ -44,12 +36,11 @@ export function Sidebar({
   const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false)
   const isMobileMenuOpen = externalMobileMenuOpen ?? internalMobileMenuOpen
   const setIsMobileMenuOpen = onMobileMenuChange ?? setInternalMobileMenuOpen
-  const [isFeatureRequestOpen, setIsFeatureRequestOpen] = useState(false)
   const location = useLocation()
   // Defensive: /screen/* renders fullscreen via app-layout and never
   // mounts the sidebar. If something ever does mount it here (HMR race,
-  // a future layout wrapper), this guard keeps the support surface off
-  // projector windows. Hiding the button is non-negotiable for screens.
+  // a future layout wrapper), this guard keeps the notifications bell off
+  // projector windows.
   const isScreenRoute = location.pathname.startsWith('/screen/')
   const { t } = useTranslation(['sidebar', 'common'])
   const { hasPermission } = usePermissions()
@@ -108,12 +99,6 @@ export function Sidebar({
   const { data: kioskSettings } = useKioskSettings()
 
   const menuItems = useSidebarMenuItems()
-
-  // Feedback visibility comes from sidebar config so the user can toggle it
-  // in "Sidebar configuration" settings like any other built-in item.
-  const isFeedbackVisible = config?.items.some(
-    (item) => item.id === 'feedback' && item.isVisible,
-  )
 
   // Check if user has permission to view settings
   const canViewSettings = hasPermission('settings.view')
@@ -259,42 +244,6 @@ export function Sidebar({
             {/* Divider */}
             <div className="my-1.5 border-t border-line" />
 
-            {/* Feedback — opens the screenshot tool (mark it up, add notes)
-                that files a public GitHub issue.
-                Never rendered on /screen/* — those windows are church
-                projector output. Visibility is user-controlled via Sidebar
-                configuration in Settings (builtin id stays `feedback`). */}
-            {!isScreenRoute && isFeedbackVisible && (
-              <button
-                type="button"
-                data-testid="sidebar-request-feature"
-                onClick={() => {
-                  // Close the phone drawer so the app is visible to pick from.
-                  setIsMobileMenuOpen(false)
-                  setIsFeatureRequestOpen(true)
-                }}
-                className={`flex items-center gap-3 px-3 py-2.5 md:h-9 md:py-0 md:px-2.5 rounded-lg transition-colors w-full text-fg-label hover:bg-hover hover:text-fg ${isCollapsed ? 'md:justify-center' : ''}`}
-                title={
-                  isCollapsed ? t('sidebar:navigation.feedback') : undefined
-                }
-                aria-label={t('sidebar:navigation.feedback')}
-              >
-                <MessageSquarePlus
-                  size={18}
-                  strokeWidth={1.5}
-                  className="flex-shrink-0"
-                />
-                <span className="text-sm font-medium md:hidden">
-                  {t('sidebar:navigation.feedback')}
-                </span>
-                {!isCollapsed && (
-                  <span className="text-sm font-medium hidden md:inline flex-1 text-left">
-                    {t('sidebar:navigation.feedback')}
-                  </span>
-                )}
-              </button>
-            )}
-
             {/* Settings */}
             {canViewSettings && (
               <SidebarItem
@@ -354,10 +303,6 @@ export function Sidebar({
           </button>
         </div>
       </aside>
-
-      {isFeatureRequestOpen && (
-        <RequestFeatureTool onClose={() => setIsFeatureRequestOpen(false)} />
-      )}
     </>
   )
 }

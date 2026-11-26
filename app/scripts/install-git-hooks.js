@@ -25,7 +25,9 @@ try {
 let current = ''
 try {
   current = git(['config', '--get', 'core.hooksPath'])
-} catch {}
-// A task worktree's .git/config may be read-only: write only when it differs.
+} catch {
+  // not set yet: git exits 1
+}
+// Task worktrees have a read-only .git/config: skip the write when it is already set.
 if (current !== '.githooks') git(['config', 'core.hooksPath', '.githooks'])
 console.log('git hooks: core.hooksPath = .githooks (gitleaks on commit and push)')
