@@ -1,5 +1,6 @@
 import { broadcastSchedulePicks } from '../../websocket'
 import { forgetItemPicks } from '../schedule-items'
+import { flattenScheduleItems } from '../schedules/flattenScheduleItems'
 import { getScheduleById } from '../schedules/getSchedules'
 import type { ScheduleWithItems } from '../schedules/types'
 
@@ -11,7 +12,7 @@ import type { ScheduleWithItems } from '../schedules/types'
 export function repickSchedule(scheduleId: number): ScheduleWithItems | null {
   const before = getScheduleById(scheduleId)
   if (!before) return null
-  forgetItemPicks(before.items.map((item) => item.id))
+  forgetItemPicks(flattenScheduleItems(before.items).map((item) => item.id))
   broadcastSchedulePicks(scheduleId)
   return getScheduleById(scheduleId)
 }

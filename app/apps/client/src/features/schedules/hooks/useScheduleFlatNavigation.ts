@@ -23,6 +23,7 @@ import {
 } from '../service/lastProgramPosition'
 import type { ScheduleItem } from '../types'
 import { enqueueProgramNavigation } from '../utils/enqueueProgramNavigation'
+import { flattenScheduleItems } from '../utils/flattenScheduleItems'
 import { liveScheduleFlatIndex } from '../utils/liveScheduleFlatIndex'
 import { getNextScheduleItemPreview } from '../utils/nextScheduleItemPreview'
 import {
@@ -152,6 +153,8 @@ export function useScheduleFlatNavigation({
   )
 
   const flatItems = useMemo(() => buildScheduleFlatItems(items), [items])
+  // The items as they run, presentations inside it opened in place.
+  const runItems = useMemo(() => flattenScheduleItems(items), [items])
   const itemStartFlatIndex = useMemo(
     () => buildItemStartFlatIndex(items),
     [items],
@@ -244,12 +247,18 @@ export function useScheduleFlatNavigation({
       await presentTemporarySong.mutateAsync({
         songId: item.songId,
         slideIndex,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
-    [getFlatItemIndex, items, beforeNavigate, presentTemporarySong, scheduleId],
+    [
+      getFlatItemIndex,
+      runItems,
+      beforeNavigate,
+      presentTemporarySong,
+      scheduleId,
+    ],
   )
 
   const presentPassageVerse = useCallback(
@@ -300,14 +309,14 @@ export function useScheduleFlatNavigation({
         endVerse: parsedLast.verse,
         verses,
         currentVerseIndex: verseIndex,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
+      runItems,
       beforeNavigate,
       presentTemporaryBiblePassage,
       scheduleId,
@@ -342,14 +351,14 @@ export function useScheduleFlatNavigation({
       await presentTemporaryVerseteTineri.mutateAsync({
         entries,
         currentEntryIndex: entryIndex,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
+      runItems,
       beforeNavigate,
       presentTemporaryVerseteTineri,
       scheduleId,
@@ -371,14 +380,14 @@ export function useScheduleFlatNavigation({
 
       await presentTemporaryAnnouncement.mutateAsync({
         content: item.slideContent,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
+      runItems,
       beforeNavigate,
       presentTemporaryAnnouncement,
       scheduleId,
@@ -407,14 +416,14 @@ export function useScheduleFlatNavigation({
 
       await presentTemporaryScene.mutateAsync({
         obsSceneName: item.obsSceneName,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
+      runItems,
       beforeNavigate,
       presentTemporaryScene,
       scheduleId,

@@ -21,6 +21,7 @@ import {
   clearTemporaryContent,
   getPresentationState,
 } from '../presentation/presentation-state'
+import { flattenScheduleItems } from '../schedules/flattenScheduleItems'
 import { getScheduleById } from '../schedules/getSchedules'
 import type { Schedule, ScheduleItem } from '../schedules/types'
 import { endScreenShareSession } from '../screen-share/session'
@@ -174,7 +175,7 @@ export async function startScheduleAutomation(
   const [firstStep] = steps
   if (!firstStep) {
     await setMusicVolume(schedule.automation.musicVolume)
-    if (await playMusicOnly(schedule.items)) return state
+    if (await playMusicOnly(flattenScheduleItems(schedule.items))) return state
     throw new Error(`Presentation ${scheduleId} has nothing to show`)
   }
 
@@ -182,7 +183,7 @@ export async function startScheduleAutomation(
   await endItemMidi({ stop: true })
   endScreenShareSession()
   await setMusicVolume(schedule.automation.musicVolume)
-  await presentStep(scheduleId, schedule.items, steps, 0)
+  await presentStep(scheduleId, flattenScheduleItems(schedule.items), steps, 0)
 
   const { autoplaySeconds, loop } = schedule.automation
   if (!autoplaySeconds && !firstStep.item.midi) return state
@@ -256,7 +257,12 @@ async function tick() {
     }
     const step = steps[stepIndex] as ScheduleStep
 
-    await presentStep(run.scheduleId, schedule.items, steps, stepIndex)
+    await presentStep(
+      run.scheduleId,
+      flattenScheduleItems(schedule.items),
+      steps,
+      stepIndex,
+    )
     // Autoplay turned off while it runs: finish with the last time it had.
     const timing = await stepTiming(
       steps,

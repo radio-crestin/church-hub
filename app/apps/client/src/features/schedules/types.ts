@@ -20,6 +20,8 @@ export type ScheduleItemType =
   | 'verses'
   /** A deck of our own slides (features/slides-deck), its `itemConfig`. */
   | 'slides'
+  /** Another presentation, played in its place (`childSchedule`). */
+  | 'schedule'
 
 /**
  * Slide template types for standalone slides (same as queue)
@@ -124,8 +126,17 @@ export interface Schedule {
   templateId: number | null
   itemCount: number
   songCount: number
+  /** The presentations its `schedule` items play. */
+  childScheduleIds: number[]
   createdAt: number
   updatedAt: number
+}
+
+/** The presentation a `schedule` item plays, with its items (nested too). */
+export interface ChildSchedule {
+  id: number
+  title: string
+  items: ScheduleItem[]
 }
 
 /**
@@ -180,6 +191,10 @@ export interface ScheduleItem {
   video: ScheduleVideoPick | null
   /** A MIDI file played when the running presentation reaches this song item. */
   midi: ScheduleItemMidi | null
+  /** A `schedule` item's presentation id. */
+  childScheduleId: number | null
+  /** A `schedule` item's presentation with its items; null when it is gone or would loop. */
+  childSchedule: ChildSchedule | null
   sortOrder: number
   createdAt: number
   updatedAt: number
@@ -268,6 +283,8 @@ export interface AddToScheduleInput {
   media?: { itemType: MediaItemType; itemConfig: ItemConfig }
   /** A Slides item: its deck. */
   slides?: SlideDeck
+  /** Another presentation, played in its place. */
+  childScheduleId?: number
 }
 
 /**
