@@ -20,7 +20,7 @@ const PC_ONLY_PREFIXES = [
   '/api/song-sources',
 ]
 
-export const NEEDS_CHURCH_PC = 'needs_church_pc'
+const NEEDS_CHURCH_PC = 'needs_church_pc'
 
 export function needsChurchPc(pathname: string): boolean {
   return PC_ONLY_PREFIXES.some(

@@ -1,8 +1,10 @@
 import { WEB_APP_API_ORIGIN } from '~/config'
 import {
   type BootStep,
+  connectToOpener,
   OtherTabError,
   type StartMessage,
+  shareServer,
   startBrowserServer,
 } from '~/features/browser-server'
 import { installTunnel, type Tunnel } from '~/features/remote-access'
@@ -55,12 +57,19 @@ function failed(message: string, hint: string, error?: unknown): void {
   )
 }
 
-/** Runs the church server in this browser: a church's, or a guest's. */
+/**
+ * Runs the church server in this browser, a church's or a guest's, and
+ * lets the windows it opens (displays) reach it. A display opened by the
+ * page running it uses that page's.
+ */
 async function runBrowserServer(start: StartMessage): Promise<void> {
+  const opener = await connectToOpener()
+  if (opener) return runApp(opener)
   try {
     const server = await startBrowserServer(start, (step) =>
       updateLoadingMessage(startupStepText(STEP_TEXT[step])),
     )
+    shareServer(server)
     await runApp(server.tunnel, server.userToken)
   } catch (error) {
     if (error instanceof OtherTabError) {

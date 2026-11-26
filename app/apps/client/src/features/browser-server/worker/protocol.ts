@@ -20,6 +20,14 @@ export type StartMessage =
   | { type: 'start'; mode: 'guest' }
   | { type: 'start'; mode: 'church'; church: ChurchConnection }
 
+/**
+ * Another page's tunnel to the running server: a display window the app
+ * opened (shareServer.ts). It talks over the transferred port.
+ */
+export interface ConnectMessage {
+  type: 'connect'
+}
+
 /** Deletes a church's database: the church removed this device. */
 export interface ForgetMessage {
   type: 'forget'

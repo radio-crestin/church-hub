@@ -1,10 +1,10 @@
 export { OtherTabError } from './service/holdServerLock'
+export { connectToOpener, shareServer } from './service/shareServer'
 export {
   type BrowserServer,
   forgetChurchDatabase,
   startBrowserServer,
 } from './service/startBrowserServer'
-export { NEEDS_CHURCH_PC } from './worker/pcOnlyRoutes'
 export type {
   BootStep,
   ChurchConnection,

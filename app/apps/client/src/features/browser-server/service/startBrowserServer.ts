@@ -6,6 +6,7 @@ import { holdServerLock } from './holdServerLock'
 import type {
   BootMessage,
   BootStep,
+  ConnectMessage,
   ForgetMessage,
   StartMessage,
 } from '../worker/protocol'
@@ -44,6 +45,8 @@ export interface BrowserServer {
   userToken: string
   /** False when the browser keeps nothing (no OPFS): memory only. */
   persistent: boolean
+  /** A channel of its own to the server, for another page (a display). */
+  openPort: () => MessagePort
 }
 
 /**
@@ -87,6 +90,13 @@ export async function startBrowserServer(
           tunnel: createTunnel(channel),
           userToken: message.userToken,
           persistent: message.persistent,
+          openPort: () => {
+            const { port1, port2 } = new MessageChannel()
+            worker.postMessage({ type: 'connect' } satisfies ConnectMessage, [
+              port1,
+            ])
+            return port2
+          },
         })
       }
     }

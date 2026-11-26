@@ -8,7 +8,12 @@ import './shims/globals'
 
 import { bootBrowserServer, churchDatabaseFile } from './bootBrowserServer'
 import { openStorage } from './database'
-import type { BootMessage, ForgetMessage, StartMessage } from './protocol'
+import type {
+  BootMessage,
+  ConnectMessage,
+  ForgetMessage,
+  StartMessage,
+} from './protocol'
 import { workerTarget } from './workerTarget'
 import { createFetchHandler } from '../../../../../server/src/http/createFetchHandler'
 import { createTunnelSession } from '../../../../../server/src/service/remote-access/tunnelSession'
@@ -19,13 +24,15 @@ const logger = createLogger('browser-server')
 const post = (message: BootMessage | string) => self.postMessage(message)
 
 let session: ReturnType<typeof createTunnelSession> | null = null
+let target: ReturnType<typeof workerTarget> | null = null
 
 async function start(message: StartMessage): Promise<void> {
   try {
     const booted = await bootBrowserServer(message, (step) =>
       post({ type: 'progress', step }),
     )
-    session = createTunnelSession(post, workerTarget(createFetchHandler()))
+    target = workerTarget(createFetchHandler())
+    session = createTunnelSession(post, target)
     post({ type: 'ready', ...booted })
   } catch (error) {
     logger.error(`Boot failed: ${error instanceof Error ? error.stack : error}`)
@@ -36,6 +43,13 @@ async function start(message: StartMessage): Promise<void> {
   }
 }
 
+/** A display window's own session, on the port the page handed over. */
+function connect(port: MessagePort | undefined): void {
+  if (!port || !target) return
+  const display = createTunnelSession((text) => port.postMessage(text), target)
+  port.onmessage = (event: MessageEvent<string>) => display.receive(event.data)
+}
+
 async function forget({ churchId }: ForgetMessage): Promise<void> {
   const storage = await openStorage()
   storage.pool?.unlink(churchDatabaseFile(churchId))
@@ -43,9 +57,10 @@ async function forget({ churchId }: ForgetMessage): Promise<void> {
 }
 
 self.onmessage = (
-  event: MessageEvent<StartMessage | ForgetMessage | string>,
+  event: MessageEvent<StartMessage | ConnectMessage | ForgetMessage | string>,
 ) => {
   if (typeof event.data === 'string') session?.receive(event.data)
   else if (event.data.type === 'start') void start(event.data)
+  else if (event.data.type === 'connect') connect(event.ports[0])
   else if (event.data.type === 'forget') void forget(event.data)
 }

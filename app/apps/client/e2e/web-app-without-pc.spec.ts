@@ -224,6 +224,29 @@ test.describe
       expect((found.json?.data as unknown[]).length).toBeGreaterThan(0)
       const bibles = await pageApi(page, 'GET', '/api/bible/translations')
       expect((bibles.json?.data as unknown[]).length).toBeGreaterThan(0)
+
+      // It presents on a display window it opens (its own screen, or a
+      // second monitor): the display reaches the server of the page that
+      // opened it.
+      const screens = await pageApi(page, 'GET', '/api/screens')
+      const [screen] = screens.json?.data as { id: number }[]
+      const [display] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.evaluate((id) => window.open(`/screen/${id}`), screen.id),
+      ])
+      await waitForApp(display)
+      const song = await pageApi(page, 'POST', '/api/songs', {
+        title: `E2E Guest Song ${stamp}`,
+        slides: [{ content: '<p>Sung in the browser</p>', sortOrder: 0 }],
+      })
+      const songId = (song.json?.data as { id: number }).id
+      await pageApi(page, 'POST', '/api/presentation/temporary-song', {
+        songId,
+        slideIndex: 0,
+      })
+      await expect(
+        display.getByText('Sung in the browser', { exact: true }).last(),
+      ).toBeVisible({ timeout: 15_000 })
       await guest.close()
     })
   })
