@@ -99,6 +99,9 @@ env:
   # The public URL of Church Hub's managed song sources, baked into the
   # sidecar (docs/managed-song-sources.md). Unset: the app reads the release.
   CHURCH_HUB_BUILD_SONG_SOURCES_URL: ${{ vars.SONG_SOURCES_PUBLIC_URL }}
+  # Church Hub's backend, baked into the sidecar (docs/backend-endpoint.md).
+  # Unset: the legacy backend every released version uses.
+  CHURCH_HUB_BUILD_BACKEND_URL: ${{ vars.BACKEND_PUBLIC_URL }}
 
 jobs:
   # The platforms to build. A job of its own because a matrix `exclude`
