@@ -195,10 +195,17 @@
     "collapse": "Collapse topics",
     "slideshow": {
       "play": "Play",
-      "playHint": "Present every verse, one after another, each for the time it takes to read it; stops on the last one",
       "loop": "Loop",
-      "loopHint": "Present the verses over and over, each for the time it takes to read it",
-      "stop": "Stop"
+      "stopPlay": "Stop playing",
+      "stopLoop": "Stop the loop"
     }
+  },
+  "slideshow": {
+    "wordsPerMinute_one": "{{count}} word a minute",
+    "wordsPerMinute_other": "{{count}} words a minute",
+    "slower": "Slower",
+    "faster": "Faster",
+    "speedHint": "Each verse stays up while it is read at this speed, at least 3 seconds.",
+    "nextIn": "Next verse in {{seconds}} s"
   }
 }

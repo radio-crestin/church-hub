@@ -198,10 +198,18 @@
     "collapse": "Restrânge temele",
     "slideshow": {
       "play": "Prezintă automat",
-      "playHint": "Prezintă versetele pe rând, fiecare cât durează să fie citit; se oprește la ultimul",
       "loop": "În buclă",
-      "loopHint": "Prezintă versetele iar și iar, fiecare cât durează să fie citit",
-      "stop": "Oprește"
+      "stopPlay": "Oprește prezentarea",
+      "stopLoop": "Oprește bucla"
     }
+  },
+  "slideshow": {
+    "wordsPerMinute_one": "{{count}} cuvânt pe minut",
+    "wordsPerMinute_few": "{{count}} cuvinte pe minut",
+    "wordsPerMinute_other": "{{count}} de cuvinte pe minut",
+    "slower": "Mai încet",
+    "faster": "Mai repede",
+    "speedHint": "Fiecare verset rămâne afișat cât timp este citit la această viteză, minimum 3 secunde.",
+    "nextIn": "Următorul verset în {{seconds}} s"
   }
 }

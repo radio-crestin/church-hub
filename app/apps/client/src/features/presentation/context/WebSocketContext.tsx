@@ -196,6 +196,7 @@ type MessageData =
   | SyncAppliedMessage
   | { type: 'schedule_automation'; payload: Record<string, unknown> }
   | { type: 'schedule_picks'; payload: { scheduleId: number } }
+  | { type: 'verse_loop_timer'; payload: Record<string, unknown> | null }
   | { type: 'translation_state'; payload: Record<string, unknown> }
   | { type: 'translation_audio_level'; payload: Record<string, unknown> }
   | { type: 'translation_transcription'; payload: Record<string, unknown> }
@@ -457,6 +458,12 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           // The presentation runner moved on, started or stopped (the query
           // of the schedules feature's useScheduleAutomation).
           queryClient.setQueryData(['scheduleAutomation'], data.payload)
+        }
+
+        if (data.type === 'verse_loop_timer') {
+          // A verse slideshow's timer started, changed speed or stopped (the
+          // bible feature's useVerseLoopTimer).
+          queryClient.setQueryData(['verseLoopTimer'], data.payload)
         }
 
         if (data.type === 'schedule_picks') {

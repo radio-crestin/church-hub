@@ -41,6 +41,7 @@ import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
 import { ImportBibleBookmarksModal } from './ImportBibleBookmarksModal'
 import { useBookmarkSlideshowActions } from './useBookmarkSlideshowActions'
+import { VerseProgressSlot } from './VerseProgressSlot'
 import {
   useAddBibleBookmarkNote,
   useBibleBookmarkNotes,
@@ -52,6 +53,10 @@ import {
   useReorderBibleBookmarkItems,
   useUpdateBibleBookmarkNote,
 } from '../hooks'
+import {
+  slideshowOrder,
+  useLiveBookmarkId,
+} from '../hooks/useBookmarkSlideshow'
 import type { BibleBookmark, BibleBookmarkNote } from '../service'
 
 /** One row of the list verses and notes share. */
@@ -69,6 +74,10 @@ interface SortableBookmarkItemProps {
   onSelect: () => void
   onPresent: () => void
   onRemove: () => void
+  /** Its place in the bookmarks slideshow, for the progress ring. */
+  slideshowIndex: number
+  /** On screen through the bookmarks slideshow. */
+  isLive: boolean
 }
 
 function SortableBookmarkItem({
@@ -77,6 +86,8 @@ function SortableBookmarkItem({
   onSelect,
   onPresent,
   onRemove,
+  slideshowIndex,
+  isLive,
 }: SortableBookmarkItemProps) {
   const { t } = useTranslation('bible')
   const uniqueId = `verse-${bookmark.id}`
@@ -103,19 +114,22 @@ function SortableBookmarkItem({
       ref={setNodeRef}
       style={style}
       data-testid="bible-bookmark-item"
+      data-live={isLive || undefined}
       className={`flex items-start gap-1 rounded-lg transition-colors ${
         isDragging
           ? 'bg-panel opacity-90 ring-1 ring-inset ring-line-strong'
-          : isActive
-            ? 'bg-selected'
-            : 'hover:bg-hover'
+          : isLive
+            ? 'bg-live-tint ring-1 ring-inset ring-live'
+            : isActive
+              ? 'bg-selected'
+              : 'hover:bg-hover'
       }`}
     >
       <div
         {...attributes}
         {...listeners}
         data-testid="bible-bookmark-drag-handle"
-        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-hover"
+        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg"
       >
         <GripVertical size={14} className="text-fg-hint" strokeWidth={1.75} />
       </div>
@@ -128,7 +142,9 @@ function SortableBookmarkItem({
       >
         <div className="flex items-baseline gap-1.5">
           <span
-            className="text-sm font-medium truncate text-fg"
+            className={`text-sm font-medium truncate ${
+              isLive ? 'text-live' : 'text-fg'
+            }`}
             data-testid="bible-bookmark-reference"
           >
             {bookmark.reference}
@@ -158,13 +174,19 @@ function SortableBookmarkItem({
         )}
       </button>
 
+      <VerseProgressSlot
+        slideshow="bookmarks"
+        entryIndex={slideshowIndex}
+        testId="bible-bookmark-progress"
+      />
+
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation()
           onRemove()
         }}
-        className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded-r-lg transition-colors"
         title={t('bookmarks.remove')}
       >
         <XIcon size={14} strokeWidth={1.75} />
@@ -347,6 +369,11 @@ export function BibleBookmarksPanel({
   // Local order override for instant (synchronous) drag feedback
   const [localOrder, setLocalOrder] = useState<BookmarkListItem[] | null>(null)
   const slideshowActions = useBookmarkSlideshowActions(bookmarks)
+  const liveBookmarkId = useLiveBookmarkId()
+  const slideshowIds = useMemo(
+    () => slideshowOrder(bookmarks).map((bookmark) => bookmark.id),
+    [bookmarks],
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -500,6 +527,8 @@ export function BibleBookmarksPanel({
           onSelect={() => onSelectVerse(item.bookmark!)}
           onPresent={() => onPresentVerse(item.bookmark!)}
           onRemove={() => removeBookmarkMutation.mutate(item.bookmark!.id)}
+          slideshowIndex={slideshowIds.indexOf(item.bookmark.id)}
+          isLive={liveBookmarkId === item.bookmark.id}
         />
       )
     }

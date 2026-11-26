@@ -2,6 +2,7 @@ import { ChevronDown, LayoutTemplate } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { HeaderIconButton } from '~/ui/button'
 import { TemplatePickerDialog } from './TemplatePickerDialog'
 import { TemplateThumbnail } from './TemplateThumbnail'
 import { useSlideTemplate, useSlideTemplates } from '../hooks/useSlideTemplates'
@@ -17,9 +18,10 @@ interface TemplatePickerProps {
   /**
    * `card`: the thumbnail and name, full width (settings). `compact`: a small
    * thumbnail and name (a page header). `chip`: an icon, plus the name once
-   * one is chosen (beside a list item).
+   * one is chosen (beside a list item). `icon`: the icon alone, the name in
+   * its tooltip (a panel header).
    */
-  variant?: 'card' | 'compact' | 'chip'
+  variant?: 'card' | 'compact' | 'chip' | 'icon'
   testId?: string
 }
 
@@ -51,6 +53,37 @@ export function TemplatePicker({
   // A presentation's own theme isn't among the shared ones: read it by id.
   const { data: own } = useSlideTemplate(listed ? null : value)
   const current = listed ?? own ?? null
+  const currentName = current ? templateDisplayName(current, t) : noneLabel
+
+  const dialog = (
+    <TemplatePickerDialog
+      open={open}
+      onClose={() => setOpen(false)}
+      value={value}
+      onChange={onChange}
+      noneLabel={noneLabel}
+      testId={testId}
+    />
+  )
+
+  if (variant === 'icon') {
+    const label = currentName
+      ? t('templates.picker.current', { name: currentName })
+      : t('templates.picker.change')
+    return (
+      <>
+        <HeaderIconButton
+          label={label}
+          data-testid={testId}
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+        >
+          <LayoutTemplate size={16} strokeWidth={1.5} />
+        </HeaderIconButton>
+        {dialog}
+      </>
+    )
+  }
 
   return (
     <>
@@ -89,7 +122,7 @@ export function TemplatePicker({
             data-testid={`${testId}-value`}
             className="min-w-0 flex-1 truncate"
           >
-            {current ? templateDisplayName(current, t) : noneLabel}
+            {currentName}
           </span>
         )}
         {variant !== 'chip' && (
@@ -101,14 +134,7 @@ export function TemplatePicker({
         )}
       </button>
 
-      <TemplatePickerDialog
-        open={open}
-        onClose={() => setOpen(false)}
-        value={value}
-        onChange={onChange}
-        noneLabel={noneLabel}
-        testId={testId}
-      />
+      {dialog}
     </>
   )
 }

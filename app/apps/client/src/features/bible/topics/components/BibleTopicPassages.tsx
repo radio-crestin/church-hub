@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigateTemporary } from '~/features/presentation'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
+import { VerseProgressSlot } from '../../components/VerseProgressSlot'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
 import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
@@ -97,7 +98,10 @@ export function BibleTopicPassages({
         >
           <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        <span className="text-xs tabular-nums text-fg-hint">
+        <span
+          data-testid="bible-topic-position"
+          className="text-xs tabular-nums text-fg-hint"
+        >
           {activeIndex >= 0 ? activeIndex + 1 : '–'}/{passages.length}
         </span>
         <button
@@ -171,6 +175,11 @@ export function BibleTopicPassages({
                       ))}
                     </span>
                   </button>
+                  <VerseProgressSlot
+                    slideshow={`topic:${topicId}`}
+                    entryIndex={index}
+                    testId="bible-topic-progress"
+                  />
                   <button
                     type="button"
                     onClick={() => onOpenVerse(first)}
