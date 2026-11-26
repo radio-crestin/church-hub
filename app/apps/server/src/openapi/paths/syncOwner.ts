@@ -69,7 +69,10 @@ export const syncOwnerPaths: Record<string, Record<string, unknown>> = {
         'Returns the sync service’s sign-in URL to open in the browser. A nonce only this PC knows rides along; the sign-in returns to /api/sync/cloud/owner/callback with a one-hour owner ticket, kept in memory (never in the database or backups). `connect` then turns cloud sync on owned by that account, `claim` makes this guest church theirs, `manage` and `curate` (the Church Hub Library’s curators, T-177) only sign in.',
       requestBody: body(
         {
-          intent: { type: 'string', enum: ['connect', 'claim', 'manage', 'curate'] },
+          intent: {
+            type: 'string',
+            enum: ['connect', 'claim', 'manage', 'curate'],
+          },
           serviceUrl: {
             type: 'string',
             description: 'A self-hosted sync service, for `connect`.',
