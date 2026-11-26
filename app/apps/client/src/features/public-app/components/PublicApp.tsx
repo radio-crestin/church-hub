@@ -32,22 +32,24 @@ function PublicAppShell() {
   const [confirmLeave, setConfirmLeave] = useState(false)
 
   return (
-    <div className="min-h-dvh bg-app pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-line bg-app px-4">
-        <h1 className="flex items-center gap-2 text-sm font-semibold tracking-[-0.01em] text-fg">
-          <AppMark size={24} />
-          {t('appName')}
-        </h1>
-        {session.kind === 'joined' && (
-          <Button
-            variant="ghost"
-            size="lg"
-            className="-mr-3 px-3"
-            onClick={() => setConfirmLeave(true)}
-          >
-            {t('leave.button')}
-          </Button>
-        )}
+    <div className="min-h-dvh bg-app pb-[env(safe-area-inset-bottom)]">
+      <header className="sticky top-0 z-10 border-b border-line bg-app pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 w-full max-w-2xl items-center justify-between px-4">
+          <h1 className="flex items-center gap-2 text-sm font-semibold tracking-[-0.01em] text-fg">
+            <AppMark size={24} />
+            {t('appName')}
+          </h1>
+          {session.kind === 'joined' && (
+            <Button
+              variant="ghost"
+              size="lg"
+              className="-mr-3 px-3"
+              onClick={() => setConfirmLeave(true)}
+            >
+              {t('leave.button')}
+            </Button>
+          )}
+        </div>
       </header>
       <main className="mx-auto w-full max-w-2xl px-4 py-4">
         {session.kind === 'loading' && (
