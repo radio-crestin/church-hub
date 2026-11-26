@@ -312,7 +312,13 @@ test.describe('The control room queue', () => {
       .poll(() => liveStep(request))
       .toEqual({ type: 'song', scheduleId: programId, index: 3 })
 
-    // Once it is off the screens, the column is the queue again.
+    // The new song's slide is lit in the column.
+    await expect(column.getByTestId('schedule-sub-item-3')).toHaveClass(
+      /ring-live/,
+    )
+
+    // Once it stops and is off the screens, the column is the queue again.
+    await request.post('/api/schedules/automation/stop')
     await request.post('/api/presentation/clear-temporary')
     await expect(column).toHaveAttribute('data-showing', 'queue')
   })

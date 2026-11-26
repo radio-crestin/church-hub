@@ -72,22 +72,25 @@ export function AddProgramModal({
       saveLabel={t('common:addMenu.button')}
       saveIcon={<Plus size={16} strokeWidth={1.5} />}
     >
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            add()
-          }
-        }}
-        autoFocus
-        aria-label={t('schedules:addProgram.search')}
-        placeholder={t('schedules:addProgram.search')}
-        data-testid="add-program-search"
-        className="w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
-      />
+      {/* The search stays in reach above a long list. */}
+      <div className="sticky -top-4 z-10 -mx-4 -mt-4 bg-panel px-4 pt-4 pb-2">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              add()
+            }
+          }}
+          autoFocus
+          aria-label={t('schedules:addProgram.search')}
+          placeholder={t('schedules:addProgram.search')}
+          data-testid="add-program-search"
+          className="w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+        />
+      </div>
       {matches.length === 0 ? (
         <p className="py-6 text-center text-sm text-fg-hint">
           {t('schedules:addProgram.none')}

@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import {
   forwardRef,
   type ReactNode,
@@ -85,6 +86,7 @@ export const ScheduleItemEditors = forwardRef<
   const addDeck = useAddDeckItem(scheduleId, onChanged)
   const { pptx, importPptx } = useImportPptxItem(scheduleId, onChanged)
   const openDeckEditor = useOpenDeckEditor()
+  const navigate = useNavigate()
 
   useImperativeHandle(
     ref,
@@ -96,6 +98,14 @@ export const ScheduleItemEditors = forwardRef<
           openDeckEditor(item.scheduleId, item.id)
           return
         }
+        // A presentation inside it is edited on its own page.
+        if (item.itemType === 'schedule' && item.childScheduleId !== null) {
+          void navigate({
+            to: '/schedules/$scheduleId',
+            params: { scheduleId: String(item.childScheduleId) },
+          })
+          return
+        }
         if (item.itemType === 'song' && item.songId) {
           setEditingSongId(item.songId)
         } else if (item.itemType === 'bible_passage') {
@@ -105,7 +115,7 @@ export const ScheduleItemEditors = forwardRef<
         }
       },
     }),
-    [openDeckEditor],
+    [navigate, openDeckEditor],
   )
 
   const handleAddSong = useCallback(
