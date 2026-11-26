@@ -4,7 +4,7 @@
  * Credential Manager, or the Secret Service (GNOME Keyring, KWallet) over
  * libsecret on Linux.
  */
-const SERVICE = 'Church Hub'
+export const OS_STORE_SERVICE = 'Church Hub'
 /** Long enough to answer a Linux keyring's unlock prompt. */
 const TIMEOUT_MS = 20_000
 
@@ -17,7 +17,7 @@ export const osStoreName = (): OsStoreName =>
       ? 'credential-manager'
       : 'secret-service'
 
-const entryName = (keyId: string) => `data-key-${keyId}`
+export const osEntryName = (keyId: string) => `data-key-${keyId}`
 
 function withTimeout<T>(promise: Promise<T>, what: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -37,7 +37,7 @@ function withTimeout<T>(promise: Promise<T>, what: string): Promise<T> {
  */
 export async function readOsKey(keyId: string): Promise<Buffer | null> {
   const value = await withTimeout(
-    Bun.secrets.get({ service: SERVICE, name: entryName(keyId) }),
+    Bun.secrets.get({ service: OS_STORE_SERVICE, name: osEntryName(keyId) }),
     'Reading the data key from the OS secret store',
   )
   return value ? Buffer.from(value, 'base64') : null
@@ -52,15 +52,11 @@ export async function readOsKey(keyId: string): Promise<Buffer | null> {
 export async function writeOsKey(keyId: string, key: Buffer): Promise<void> {
   await withTimeout(
     Bun.secrets.set({
-      service: SERVICE,
-      name: entryName(keyId),
+      service: OS_STORE_SERVICE,
+      name: osEntryName(keyId),
       value: key.toString('base64'),
       allowUnrestrictedAccess: true,
     }),
     'Saving the data key in the OS secret store',
   )
 }
-
-/** Removes a key (the smoke test's throwaway one). */
-export const deleteOsKey = (keyId: string) =>
-  Bun.secrets.delete({ service: SERVICE, name: entryName(keyId) })

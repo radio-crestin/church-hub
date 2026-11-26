@@ -52,8 +52,6 @@ export class ExtraServer {
           NODE_ENV: 'production',
           CLIENT_DIST_PATH: 'apps/client/dist',
           CHURCH_HUB_DATA_DIR: this.dataDir,
-          // Its data key in a file: never in the developer's keychain.
-          CHURCH_HUB_SECRET_STORE: 'file',
           DATABASE_PATH: this.databasePath,
           PORT: String(this.port),
           ...env,

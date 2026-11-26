@@ -34,6 +34,11 @@ export const SERVER_COUNT = Number(
 // with nobody presenting", T-030).
 const BASE_PORT = Number(process.env.TEST_PORT ?? '3099')
 
+// Every server the suite starts (these, the specs' own, their children)
+// keeps the data key sealing saved secrets in a file next to its database,
+// never in the developer's keychain.
+process.env.CHURCH_HUB_SECRET_STORE = 'file'
+
 /** Everything one worker's test server is reached by. */
 function testServer(index: number) {
   const port = BASE_PORT + index * PORTS_PER_SERVER
@@ -197,9 +202,6 @@ export default defineConfig({
       // Loopback only: a test server opens no LAN port, so Windows raises no
       // firewall prompt (T-193). LAN specs use the stand-in port instead.
       CHURCH_HUB_LISTEN_HOST: '127.0.0.1',
-      // The data key sealing saved secrets goes in a file next to the test
-      // database, never in the developer's keychain.
-      CHURCH_HUB_SECRET_STORE: 'file',
       CHURCH_HUB_TEST_LAN_PORT: String(server.lanPort),
       // Song-source specs share links from a stand-in S3 on 127.0.0.1;
       // every other private address stays refused.
