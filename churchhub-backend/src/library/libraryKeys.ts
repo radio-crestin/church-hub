@@ -1,5 +1,7 @@
 /** Where shared libraries and the curated library's submissions live. */
 export const libraryKeys = {
+  /** Public: the listed libraries (updateCatalog). */
+  catalog: 'libraries/catalog.json',
   /** Public, unlisted: `libraries/<sourceId>/`. */
   prefix: (sourceId: string) => `libraries/${sourceId}/`,
   manifest: (sourceId: string) => `libraries/${sourceId}/manifest.json`,

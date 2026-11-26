@@ -4,6 +4,7 @@ import { authorizeLibraryWrite } from '../library/authorizeLibraryWrite'
 import { checkManifest } from '../library/checkManifest'
 import { createSubmission } from '../library/createSubmission'
 import { decideSubmission } from '../library/decideSubmission'
+import { deleteLibrary } from '../library/deleteLibrary'
 import { isCurator } from '../library/isCurator'
 import { isSourceId } from '../library/isSourceId'
 import { libraryKeys } from '../library/libraryKeys'
@@ -167,5 +168,14 @@ libraries.put(
     return c.json({ checksum: manifest.checksum })
   }
 )
+
+/** DELETE /sync/libraries/:sourceId: stop sharing it (its publisher only). */
+libraries.delete('/sync/libraries/:sourceId', async (c) => {
+  const sourceId = sourceIdOf(c)
+  const store = createSyncStore(c.env)
+  await authorizeLibraryWrite(c, store, sourceId)
+  await deleteLibrary(store.bucket, sourceId)
+  return c.json({ deleted: true })
+})
 
 export default libraries
