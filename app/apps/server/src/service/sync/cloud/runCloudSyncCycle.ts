@@ -34,6 +34,15 @@ const CHECK_IN_EVERY_MS = 15 * 60 * 1000
 
 let running: Promise<SyncCycleResult> | null = null
 let lastCheckInAt = 0
+let followUp: (() => Promise<void>) | null = null
+
+/**
+ * Work that follows each successful cycle on this device, outside the
+ * cycle's turn (the PC publishing the media its data shows: cloud-media).
+ */
+export function setCloudSyncFollowUp(work: () => Promise<void>): void {
+  followUp = work
+}
 
 interface RoundResult {
   outcome: 'done' | 'conflict' | 'unchanged'
@@ -144,9 +153,14 @@ export async function runCloudSyncCycle({
 } = {}): Promise<SyncCycleResult> {
   if (running && !waitsItsTurn) return { success: true, skipped: 'no_changes' }
   while (running) await running
-  running = cloudSyncCycle().finally(() => {
-    running = null
-  })
+  running = cloudSyncCycle()
+    .then((result) => {
+      if (result.success) void followUp?.()
+      return result
+    })
+    .finally(() => {
+      running = null
+    })
   return running
 }
 
