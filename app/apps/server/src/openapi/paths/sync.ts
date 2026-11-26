@@ -532,7 +532,7 @@ export const syncPaths: Record<string, Record<string, unknown>> = {
                       joinUrl: {
                         type: 'string',
                         description:
-                          'The link the device opens to join: <public app>/join#c=<churchId>-<pathSecret>&t=<token>[&p=<remote access room>][&s=<sync service>] (CHURCH_HUB_PUBLIC_APP_URL)',
+                          'The link the device opens to join: <public app>/join#c=<churchId>-<pathSecret>&t=<token>[&p=<remote access room>]&s=<sync service> (CHURCH_HUB_PUBLIC_APP_URL; `s` always, since a link without it reads as the legacy backend)',
                       },
                     },
                   },

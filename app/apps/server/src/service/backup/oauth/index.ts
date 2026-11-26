@@ -1,6 +1,7 @@
-import { getDriveReturnUrl, getLocalOrigin, getOAuthWorkerUrl } from './config'
+import { getDriveReturnUrl, getLocalOrigin } from './config'
 import { driveAuthStates } from './driveAuthStates'
 import { createLogger } from '../../../utils/logger'
+import { getBackendBaseUrl } from '../../backend'
 import { storeDriveAuth } from '../driveAuthStore'
 
 const logger = createLogger('backup')
@@ -15,7 +16,7 @@ export type CreateDriveAuthUrlResult = { authUrl: string }
  * flow's state, which the callback requires.
  */
 export function createDriveAuthUrl(): CreateDriveAuthUrlResult {
-  const url = new URL('/auth/drive', getOAuthWorkerUrl())
+  const url = new URL('/auth/drive', getBackendBaseUrl())
   url.searchParams.set('origin', getLocalOrigin())
   url.searchParams.set('mode', 'redirect')
   url.searchParams.set('returnUrl', getDriveReturnUrl(driveAuthStates.issue()))
@@ -72,5 +73,3 @@ export async function completeDriveAuth(
     return { success: false, error: message }
   }
 }
-
-export { getOAuthWorkerUrl } from './config'
