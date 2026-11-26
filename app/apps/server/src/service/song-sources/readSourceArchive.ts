@@ -1,4 +1,4 @@
-import { fetchLink } from './links/fetchLink'
+import { downloadSongFile } from './downloadSongFile'
 import { findSongSource } from './listSongSources'
 
 /**
@@ -10,5 +10,5 @@ export function readSourceArchive(sourceId: string): Promise<Uint8Array> {
   if (source.format !== 'song-bundle-file') {
     throw new Error(`${source.name} is not a song file`)
   }
-  return fetchLink(source.url)
+  return downloadSongFile(source)
 }
