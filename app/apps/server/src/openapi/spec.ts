@@ -16,7 +16,6 @@ import {
   conversionPaths,
   databasePaths,
   devicesPaths,
-  feedbackPaths,
   healthPaths,
   livestreamYouTubePaths,
   liveTranslationPaths,
@@ -141,10 +140,6 @@ export const openApiSpec = {
     },
     { name: 'Conversion', description: 'File format conversion utilities' },
     {
-      name: 'Feedback',
-      description: 'Feature requests and user feedback submission',
-    },
-    {
       name: 'Analytics',
       description: 'Anonymous usage data: on/off and the install id',
     },
@@ -202,7 +197,6 @@ export const openApiSpec = {
     ...presentationHighlightsPaths,
     ...musicPaths,
     ...conversionPaths,
-    ...feedbackPaths,
     ...analyticsPaths,
     ...notificationsPaths,
     ...secretStorePaths,

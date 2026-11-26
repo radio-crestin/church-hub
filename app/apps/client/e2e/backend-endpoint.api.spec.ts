@@ -15,8 +15,8 @@ import { SERVER_PORT } from '../playwright.config'
 /**
  * One backend for every feature (docs/backend-endpoint.md): a server pointed
  * at a self-hosted backend with CHURCH_HUB_BACKEND_URL sends Google sign-in,
- * cloud sync, the signaling relay, feature requests and listener links
- * there, and nowhere else.
+ * cloud sync, the signaling relay and listener links there, and nowhere
+ * else.
  */
 
 let backend: RecordingBackend
@@ -90,14 +90,6 @@ test.describe('The backend set on this machine', () => {
     // The stand-in's answer isn't a registration: the church stays off.
     await api.post('/api/sync/cloud', { data: {} })
     expect(backend.requests).toContain('POST /sync/churches')
-  })
-
-  test('a feature request is relayed there', async () => {
-    const res = await api.post('/api/feature-requests', {
-      data: { title: 'A request', description: 'Through the right backend' },
-    })
-    expect(res.ok()).toBe(true)
-    expect(backend.requests).toContain('POST /feature-requests')
   })
 
   test('remote access opens its room on that relay alone, and its pairing code names it', async () => {
