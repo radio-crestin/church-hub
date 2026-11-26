@@ -195,6 +195,33 @@ export const syncOpenApi = {
         },
       },
     },
+    '/sync/churches/{churchId}/device': {
+      get: {
+        summary: 'The device behind a token',
+        description:
+          'Any valid token of the church: its device and the user it writes as (null for the church server). The church PC asks it with a phone\'s token before letting the phone in over WebRTC.',
+        security: [{ deviceToken: [] }],
+        parameters: [churchId],
+        responses: {
+          '200': {
+            description: 'The device and its user',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    deviceId: { type: 'string' },
+                    userId: { type: ['string', 'null'] },
+                    isServer: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+          '401': unauthorized,
+        },
+      },
+    },
     '/sync/churches/{churchId}/devices': {
       get: {
         summary: 'List devices',

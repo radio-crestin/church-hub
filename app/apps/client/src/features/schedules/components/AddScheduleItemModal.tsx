@@ -18,6 +18,7 @@ import {
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
 import { SongSearchPicker } from '~/features/songs/components/SongSearchPicker'
 import { useSong } from '~/features/songs/hooks/useSong'
 import { stripHtmlTags } from '~/features/songs/utils/stripHtmlTags'
@@ -88,6 +89,11 @@ const MEDIA_OPTIONS = [
     descriptionKey: 'addMenu.versesDescription',
   },
 ] satisfies (Omit<MenuOption, 'onSelect'> & { type: MediaItemType })[]
+
+/** Music plays from the church PC's folders: the web app can't add it. */
+const AVAILABLE_MEDIA_OPTIONS = isWebApp
+  ? MEDIA_OPTIONS.filter((option) => option.type !== 'music')
+  : MEDIA_OPTIONS
 
 /**
  * The single "add to program" modal.
@@ -217,7 +223,8 @@ export function AddScheduleItemModal({
       descriptionKey: 'addMenu.announcementDescription',
       onSelect: () => handHandoff(() => onAddSlide('announcement')),
     },
-    ...(onAddScene
+    // OBS scenes are the church PC's
+    ...(onAddScene && !isWebApp
       ? [
           {
             key: 'scene',
@@ -229,7 +236,7 @@ export function AddScheduleItemModal({
         ]
       : []),
     ...(onAddMedia
-      ? MEDIA_OPTIONS.map(
+      ? AVAILABLE_MEDIA_OPTIONS.map(
           (option): MenuOption => ({
             ...option,
             onSelect: () => handHandoff(() => onAddMedia(option.type)),

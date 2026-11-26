@@ -21,8 +21,10 @@ let cached: Installation | null = null
  * This install's id, kept in a file next to the database, never inside it:
  * a backup restored on another PC brings the church's server token along,
  * but not this id, so the sync service can tell the two PCs apart (T-172).
+ * Null in a browser, a device with a token of its own (its build swaps this
+ * file: client browserServerBuild.ts).
  */
-export function getInstallation(): Installation {
+export function getInstallation(): Installation | null {
   if (cached) return cached
   const path = join(dirname(getDatabasePath()), FILE_NAME)
   let id = existsSync(path) ? readFileSync(path, 'utf8').trim() : ''
