@@ -1039,6 +1039,96 @@
           "users": "Utilizatori",
           "screens": "Ecrane"
         }
+      },
+      "cloud": {
+        "title": "Church Hub Cloud (gratuit)",
+        "signedInAs": "Conectat ca {{email}}",
+        "usage": "Spațiu folosit: {{used}} din {{total}}",
+        "signOut": "Deconectează-te",
+        "signedOut": {
+          "title": "Nu ești conectat",
+          "description": "Conectează-te o dată cu Google. Fiecare copie este criptată pe acest computer înainte să fie trimisă.",
+          "signIn": "Conectează-te cu Google",
+          "cancel": "Anulează",
+          "waiting": "Finalizează conectarea în fereastra browserului, apoi revino aici.",
+          "failed": "Nu s-a putut începe conectarea. Verifică conexiunea la internet și încearcă din nou.",
+          "timedOut": "Conectarea nu a fost finalizată. Încearcă din nou."
+        },
+        "signOutModal": {
+          "title": "Te deconectezi de la Church Hub Cloud?",
+          "message": "Copiile din cloud rămân salvate, dar copiile automate se opresc. Conectează-te din nou cu același cont Google ca să le vezi."
+        },
+        "deleteAccount": {
+          "button": "Deconectează-te și șterge copiile din cloud",
+          "title": "Ștergi toate copiile din cloud?",
+          "message": "Toate copiile acestui cont din Church Hub Cloud vor fi șterse definitiv, iar tu vei fi deconectat. Limitele speciale acordate (o pauză sau o cotă de stocare mai mare) rămân valabile timp de 90 de zile. Copiile de pe acest computer și din Google Drive nu sunt afectate.",
+          "confirm": "Șterge și deconectează-te"
+        },
+        "now": {
+          "title": "Copie manuală",
+          "last": "Ultima copie: {{date}}",
+          "never": "Nu există încă nicio copie de pe acest computer.",
+          "button": "Fă o copie acum",
+          "running": "Se face copia…",
+          "encrypted": "Datele bisericii tale sunt criptate pe acest computer înainte să fie trimise. Textele biblice și cântările din colecții sunt păstrate ca copii partajate, fără criptare."
+        },
+        "auto": {
+          "title": "Copii automate",
+          "description": "Fă copii în Church Hub Cloud la intervale regulate cât timp aplicația este deschisă.",
+          "interval": "Cât de des",
+          "everyHours": "La fiecare {{hours}} ore",
+          "short": {
+            "hours": "{{count}}h",
+            "days": "{{count}}z"
+          }
+        },
+        "list": {
+          "title": "Copii în cloud",
+          "loading": "Se încarcă copiile…",
+          "empty": "Nu există încă nicio copie.",
+          "restore": "Restaurează",
+          "delete": "Șterge copia"
+        },
+        "restoreModal": {
+          "title": "Restaurezi această copie?",
+          "message": "Toate datele actuale vor fi înlocuite cu copia din {{date}}. Mai întâi, datele actuale vor fi salvate ca o copie pe acest computer. Aplicația se reîncarcă după terminare.",
+          "confirm": "Restaurează"
+        },
+        "deleteModal": {
+          "title": "Ștergi această copie?",
+          "message": "Copia din {{date}} va fi ștearsă definitiv din Church Hub Cloud.",
+          "confirm": "Șterge"
+        },
+        "toast": {
+          "backedUp": "Copia a fost salvată în Church Hub Cloud",
+          "restored": "Copia a fost restaurată. Se reîncarcă…",
+          "deleted": "Copia a fost ștearsă",
+          "signedOut": "Te-ai deconectat de la Church Hub Cloud",
+          "deletedAll": "Copiile din cloud au fost șterse și te-ai deconectat"
+        },
+        "errors": {
+          "cloud_sign_in_required": "Sesiunea ta Church Hub Cloud a expirat. Conectează-te din nou cu Google.",
+          "quota_exceeded": "Spațiul gratuit este plin. Șterge o copie mai veche din cloud sau așteaptă să expire cele vechi după 30 de zile.",
+          "too_large": "Baza de date depășește limita pentru copiile gratuite.",
+          "daily_limit": "Ai atins limita de copii pentru astăzi. Încearcă din nou mâine.",
+          "rate_limited": "Sunt prea multe solicitări. Așteaptă un minut și încearcă din nou.",
+          "busy": "Se face sau se restaurează deja o copie.",
+          "upload_in_progress": "O copie se încarcă încă. Încearcă din nou peste câteva minute.",
+          "backup_unreadable": "Copia nu poate fi deschisă: a fost modificată sau aparține altui cont.",
+          "not_found": "Această copie nu mai există.",
+          "service_unreachable": "Church Hub Cloud nu este accesibil. Verifică-ți conexiunea la internet.",
+          "not_configured": "Church Hub Cloud nu este disponibil momentan.",
+          "generic": "A apărut o problemă cu Church Hub Cloud. Încearcă din nou.",
+          "quota_exceeded_details": "Această copie necesită {{needed}}, dar ai doar {{free}} liberi din {{total}}. Șterge o copie mai veche din cloud sau așteaptă să expire cele vechi după 30 de zile.",
+          "suspended": "Copiile în cloud sunt suspendate pentru acest cont. Contactează Church Hub pentru ajutor.",
+          "not_available": "Church Hub Cloud nu este disponibil încă în această versiune. Va fi disponibil după o actualizare."
+        },
+        "description": "Copii gratuite ale datelor bisericii tale, păstrate de Church Hub timp de 30 de zile. Le poți restaura pe orice computer conectându-te cu același cont Google.",
+        "retention": "Fiecare copie este păstrată timp de {{days}} zile. Când spațiul gratuit se umple, nu se mai fac copii noi până când expiră cele vechi sau ștergi câteva.",
+        "unavailable": {
+          "title": "Nu este disponibil încă",
+          "description": "Această versiune a aplicației Church Hub nu poate folosi încă Church Hub Cloud. Funcția va fi disponibilă după o actualizare."
+        }
       }
     },
     "secretStore": {

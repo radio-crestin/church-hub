@@ -22,6 +22,11 @@ fi
 # parse .prod.vars generically and validate every value before shipping.
 # Optional keys (WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID, WAHA_SESSION,
 # WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) are shipped when present.
+# So are the cloud backup keys (BACKUP_SECRET, BACKUP_KEY_SECRET,
+# BACKUP_S3_ENDPOINT, BACKUP_S3_BUCKET, BACKUP_S3_ACCESS_KEY_ID,
+# BACKUP_S3_SECRET_ACCESS_KEY, optional BACKUP_S3_REGION,
+# BACKUP_S3_PRESIGN_ENDPOINT and the BACKUP_* limits): without them
+# /backup answers 503, so they are not required here.
 
 # Required minimum set: the secret Bindings from src/types.ts, i.e. the
 # runtime bindings MINUS the non-sensitive [vars] in wrangler.toml and the
