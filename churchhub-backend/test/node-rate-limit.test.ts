@@ -43,7 +43,7 @@ describe('readRateLimitRule', () => {
 
   test('rejects a value that is not a positive whole number', () => {
     expect(() =>
-      readRateLimitRule({ FEATURE_REQUEST_RATE_LIMIT_PER_MINUTE: '0' }, 'FEATURE_REQUEST_RATE_LIMITER')
+      readRateLimitRule({ SYNC_RATE_LIMIT_PER_MINUTE: '0' }, 'SYNC_RATE_LIMITER')
     ).toThrow()
   })
 })

@@ -89,9 +89,9 @@ Never use a raw hex or a palette class (`bg-zinc-800`, `text-purple-500`) in a c
   - 248px wide, on `bg-panel`.
   - Pages are grouped under white 13px titles: Live / În desfășurare (Control Room), Library / Resurse (Songs, Bible, Presentations, Music, Gallery) and Tools / Instrumente (everything else, custom pages too), with a hairline between groups. Settings > Sidebar moves any page to another group.
   - Rows are 36px tall, with an 18px line icon, a 14px label and the F-key keycap. The selected row is `bg-selected`.
-  - The footer holds Feedback and Settings rows, then the user row: a 32px avatar with the name above the role.
+  - The footer holds the Settings row, then the user row: a 32px avatar with the name above the role.
 - **Live card:**
-  - Sits in the sidebar footer, above Feedback and Settings.
+  - Sits in the sidebar footer, above Settings.
   - Shows the live slide at full sidebar width with the `live` outline, then the title and "Chorus 2 / 6", then two equal buttons: gray Previous and blue Next.
   - Appears on every page that has no preview of its own. Song view, Bible, the Schedule presenter and Control Room have their own preview and hide it.
 - **Live row:** what is on the projector gets a `live-tint` fill, a 1px inset `live` outline, and a `live`-coloured number. It never gets a "Live" text badge.

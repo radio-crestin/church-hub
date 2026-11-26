@@ -92,45 +92,6 @@ export function captureAppStarted(): void {
 }
 
 /**
- * Captures a feedback report under a custom distinctId (the report ID).
- * Sent only when the user sends a feature request, so it goes even with
- * usage data turned off: the user chose to send it.
- *
- * The triage flow: the user-facing feedback message embeds the report ID,
- * the GitHub issue references it, and the maintainer queries PostHog for
- * that distinctId to see the captured logs + system info. Keeping the log
- * payload out of the GitHub issue avoids leaking IP/path/user data into
- * a public issue tracker.
- */
-export function captureFeedbackReport(
-  reportId: string,
-  props: Record<string, unknown>,
-): void {
-  client.capture({
-    distinctId: reportId,
-    event: '$feedback_report',
-    properties: {
-      ...baseProps,
-      ...props,
-      report_id: reportId,
-    },
-  })
-}
-
-/**
- * Forces queued events to flush — call before a tight critical-path response
- * (e.g. feedback POST) so the user's submission lands in PostHog before the
- * HTTP response returns. Safe to await; swallows errors.
- */
-export async function flushPostHog(): Promise<void> {
-  try {
-    await client.flush()
-  } catch {
-    // best-effort
-  }
-}
-
-/**
  * posthog-node retries the flush for up to 30 s by default (with no network,
  * the whole 30 s), and the server holds its port until it exits: the next
  * launch would find the port taken (T-149). Two seconds sends what it can.

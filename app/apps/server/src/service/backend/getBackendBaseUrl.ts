@@ -2,7 +2,7 @@ import { getLegacyBackendUrl } from './legacyBackendUrl'
 
 /**
  * Church Hub's backend (churchhub-backend): Google sign-in for YouTube, Drive
- * and the cloud owner, cloud sync, the signaling relay, feature requests.
+ * and the cloud owner, cloud sync, the signaling relay.
  * Release builds bake CHURCH_HUB_BUILD_BACKEND_URL (build-desktop.yml, from
  * the BACKEND_PUBLIC_URL repo variable); unset, it is the legacy backend.
  * CHURCH_HUB_BACKEND_URL overrides both on one machine (development, tests,

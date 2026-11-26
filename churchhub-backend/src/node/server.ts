@@ -1,8 +1,7 @@
 /**
  * churchhub-backend on Node (or Bun): the same Hono app as the Worker, with
  * Redis (or memory, outside production) in place of Cloudflare's KV and rate
- * limiters, and the S3 bucket for screenshots. Settings come from the
- * environment (README, "Self-hosted (Node)").
+ * limiters. Settings come from the environment (README, "Self-hosted (Node)").
  *
  *   node dist/server.mjs        (the container; built by the Dockerfile)
  *   bun src/node/server.ts      (development, the e2e specs)

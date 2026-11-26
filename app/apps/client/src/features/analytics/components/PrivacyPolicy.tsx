@@ -45,15 +45,9 @@ export function PrivacyPolicy() {
       />
       {['device', 'replay'].map(paragraph)}
       <PropertyGlossary />
-      {[
-        'why',
-        'where',
-        'retention',
-        'anonymous',
-        'never',
-        'feedback',
-        'off',
-      ].map(paragraph)}
+      {['why', 'where', 'retention', 'anonymous', 'never', 'off'].map(
+        paragraph,
+      )}
     </article>
   )
 }

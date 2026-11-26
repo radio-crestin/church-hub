@@ -18,7 +18,6 @@ const OFFERED_FEATURES: BuiltInMenuItemId[] = [
   'music',
   'song_key',
   'live_translation',
-  'feedback',
 ]
 
 /** The offered pages this app can open: the web app leaves out the PC's own. */

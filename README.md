@@ -268,19 +268,9 @@ Built with modern web technologies and powered by Tauri, Church Hub runs as a na
 
 ---
 
-### 💬 Feedback
-
-<img src="docs/screenshots/feedback.png" alt="Feedback" width="100%">
-
-> Request a feature or report a bug from inside the app
-
-- 📸 **Screenshot & Notes** — Capture the page, draw on it and add a note
-- 🔔 **Notifications** — Updates and replies in one place, behind the bell in the sidebar
-
----
-
 ### 🌐 More
 
+- 🔔 **Notifications** — Updates and replies in one place, behind the bell in the sidebar
 - 🗣️ **Live Translation** — Translated sermon text and audio for listeners on their own phones
 - ↩️ **Back & Forward** — Mouse side buttons, Alt+Left/Right (Cmd+[ / Cmd+] on macOS), everywhere
 

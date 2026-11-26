@@ -359,21 +359,6 @@ const CLOUD_BACKUP: RouteCase[] = [
   },
 ]
 
-const FEEDBACK: RouteCase[] = [
-  {
-    method: 'POST',
-    path: '/api/feature-requests',
-    need: 'settings.view',
-    body: {},
-  },
-  {
-    method: 'POST',
-    path: '/api/feedback/attach-logs',
-    need: 'settings.view',
-    body: {},
-  },
-]
-
 const GROUPS: Record<string, RouteCase[]> = {
   'Live Stream': LIVESTREAM,
   'Live Translation': LIVE_TRANSLATION,
@@ -381,7 +366,6 @@ const GROUPS: Record<string, RouteCase[]> = {
   MIDI,
   "This computer's data (backups, sync, database, logs, cloud)": LOCAL_DATA,
   'Church Hub Cloud backup': CLOUD_BACKUP,
-  Feedback: FEEDBACK,
 }
 
 /** A permission none of the routes above needs. */
