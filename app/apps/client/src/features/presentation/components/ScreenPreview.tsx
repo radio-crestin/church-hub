@@ -4,7 +4,7 @@ import { CrossfadeScreenBackground } from './rendering/CrossfadeScreenBackground
 import { ScreenBackground } from './rendering/ScreenBackground'
 import { ScreenContentLayers } from './rendering/ScreenContentLayers'
 import type { ContentData, NextSlideData } from './rendering/types'
-import { textEnterAnimation } from './rendering/utils/textEnterAnimation'
+import { backgroundTransition } from './rendering/utils/backgroundTransition'
 import type { ShownContent } from '../hooks/useContentTypeHandoff'
 import type {
   ClockOverride,
@@ -13,7 +13,6 @@ import type {
   ScreenWithConfigs,
   TextStyleRange,
 } from '../types'
-import { resolveScreenBackground } from '../utils/resolveScreenBackground'
 
 /** What a preview draws instead of the background when it is hidden. */
 const HIDDEN_BACKGROUND: ScreenBackgroundConfig = {
@@ -98,28 +97,27 @@ export function ScreenPreview({
     }
   }, [])
 
-  // The leaving content's background until it is gone, so the new background
-  // comes in with the new text
-  const backgroundFor = leaving ?? { contentType, contentData }
-  const bg = hideBackground
-    ? HIDDEN_BACKGROUND
-    : resolveScreenBackground({
-        screen,
-        contentType: backgroundFor.contentType,
-        contentData: backgroundFor.contentData,
-      })
+  // Changes in step with the text (backgroundTransition)
+  const transition = backgroundTransition({
+    screen,
+    contentType,
+    contentData,
+    leaving,
+  })
+  const background = hideBackground
+    ? { ...transition, background: HIDDEN_BACKGROUND, exit: null }
+    : transition
 
   return (
     <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* First, so the (positioned) content paints above it */}
       {crossfadeBackground ? (
-        <CrossfadeScreenBackground
-          background={bg}
-          enter={textEnterAnimation(screen.contentConfigs[contentType])}
+        <CrossfadeScreenBackground {...background} playVideo={playVideo} />
+      ) : (
+        <ScreenBackground
+          background={background.background}
           playVideo={playVideo}
         />
-      ) : (
-        <ScreenBackground background={bg} playVideo={playVideo} />
       )}
       <ScreenContentLayers
         leaving={leaving}
