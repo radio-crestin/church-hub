@@ -28,6 +28,8 @@
   "verdict": {
     "new": "Nouă",
     "similar": "Există una similară",
+    "exact-source": "Deja în bibliotecă",
+    "exact-lyrics": "Deja în bibliotecă",
     "exact-title": "Deja în bibliotecă",
     "exact-filename": "Deja în bibliotecă"
   },

@@ -447,7 +447,14 @@ export const songSchemas = {
       tempId: { type: 'string' },
       verdict: {
         type: 'string',
-        enum: ['exact-filename', 'exact-title', 'similar', 'new'],
+        enum: [
+          'exact-source',
+          'exact-lyrics',
+          'exact-filename',
+          'exact-title',
+          'similar',
+          'new',
+        ],
         description:
           'How the candidate relates to the library: an exact filename/title duplicate, a fuzzy version match, or genuinely new.',
       },
@@ -455,7 +462,7 @@ export const songSchemas = {
         type: 'integer',
         nullable: true,
         description:
-          'The matched library song id for exact-filename / exact-title verdicts.',
+          'The matched library song id for the exact-* verdicts.',
       },
       similar: {
         type: 'array',

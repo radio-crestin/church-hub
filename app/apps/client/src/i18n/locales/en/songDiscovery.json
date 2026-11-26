@@ -27,6 +27,8 @@
   "verdict": {
     "new": "New",
     "similar": "Similar exists",
+    "exact-source": "Already in library",
+    "exact-lyrics": "Already in library",
     "exact-title": "Already in library",
     "exact-filename": "Already in library"
   },
