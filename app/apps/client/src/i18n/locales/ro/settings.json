@@ -1472,6 +1472,7 @@
       "account": "Contul",
       "name": "Numele dispozitivului",
       "namePlaceholder": "De exemplu: telefonul lui Andrei",
+      "remoteOff": "„Acces de oriunde” este oprit: dispozitivul va citi cântările doar din cloud. Pornește-l înainte să creezi linkul, ca dispozitivul să lucreze și în direct cu acest calculator cât timp e pornit.",
       "create": "Creează linkul",
       "creating": "Se creează…",
       "createFailed": "Linkul nu a putut fi creat: {{error}}",

@@ -187,6 +187,19 @@ test.describe
       await phone.close()
     })
 
+    test('the PC says when a new link won’t reach it live', async ({
+      page,
+      request,
+    }) => {
+      await page.goto('/settings/phones')
+      const hint = page.getByTestId('cloud-device-remote-off')
+      await setRemoteAccess(request, false)
+      await page.reload()
+      await expect(hint).toBeVisible()
+      await page.getByTestId('remote-access-switch').click()
+      await expect(hint).toBeHidden()
+    })
+
     test('the PC refuses a device token the service doesn’t know', async ({
       request,
     }) => {
