@@ -329,13 +329,11 @@ To set up the custom domain:
 4. Add `churchub-backend.radiocrestin.ro`
 5. Cloudflare will automatically configure DNS and SSL
 
-### 4. Update Client Configuration
+### 4. Point the app at it
 
-In your ChurchHub app, update the environment variable:
-
-```env
-VITE_YOUTUBE_OAUTH_SERVER=https://churchub-backend.radiocrestin.ro
-```
+The app finds its backend with `getBackendBaseUrl()`: a release build bakes
+it in, and `CHURCH_HUB_BACKEND_URL` overrides it on one machine. How to move
+the app to another backend: [docs/backend-endpoint.md](../docs/backend-endpoint.md).
 
 ## Security Considerations
 
