@@ -32,7 +32,7 @@ export async function connectCloudSync(
     { serviceUrl },
     'POST',
     '/churches',
-    { name: getInstallation().name, ...(ownerTicket && { ownerTicket }) },
+    { name: getInstallation()?.name, ...(ownerTicket && { ownerTicket }) },
   )
   if (response.status !== 201) throw serviceError(response)
   const { churchId, readUrl, deviceId, serverToken, ownerEmail } = response.body

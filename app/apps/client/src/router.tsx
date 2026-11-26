@@ -41,6 +41,8 @@ import { getServerConfig, restartServer } from './utils/tauri-commands'
 
 const router = createRouter({
   routeTree,
+  // The web app can be served under a path (a preview); elsewhere `/`.
+  basepath: import.meta.env.BASE_URL,
   defaultPreload: 'intent',
   // Catch + report render errors thrown inside route components.
   defaultErrorComponent: DefaultCatchBoundary,
