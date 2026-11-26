@@ -58,6 +58,11 @@ export interface ScreenContentProps {
   /** Identity-based key that changes only on slide navigation, not content edits */
   contentKey?: string
   /**
+   * The slide shares lines with the previous one (usePresentationContent): the
+   * main text animates only the lines that changed.
+   */
+  morphLines?: boolean
+  /**
    * When true, the main lyrics element becomes editable in place (PowerPoint-style
    * slide editing). Only the stage editor sets this; projection is unaffected.
    */
@@ -86,6 +91,7 @@ export function ScreenContent({
   nextSlideData,
   styleRanges,
   contentKey: externalContentKey,
+  morphLines = false,
   editableMainText = false,
   editPlaceholder,
   onMainTextEdit,
@@ -252,6 +258,7 @@ export function ScreenContent({
         key="mainText"
         content={contentData?.mainText ?? ''}
         contentKey={`mainText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(mainStyle, fontScale)}
         width={scaledBounds.width}

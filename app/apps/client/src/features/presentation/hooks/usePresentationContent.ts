@@ -20,6 +20,7 @@ import type {
   TemporarySongContent,
 } from '../types'
 import { resolveSlideChords } from '../utils/resolveSlideChords'
+import { type ShownSlide, sharesSlideLines } from '../utils/sharesSlideLines'
 import {
   resolveSongKey,
   resolveSongSlideBody,
@@ -87,6 +88,12 @@ interface UsePresentationContentResult {
   contentKey: string
   isVisible: boolean
   isExitAnimating: boolean
+  /**
+   * The slide keeps the previous slide's layout, background and template and
+   * shares lines with it, so the renderer animates only the lines that
+   * changed (see sharesSlideLines). False means the whole slide transitions.
+   */
+  morphLines: boolean
   nextSlideData: NextSlideData | undefined
   /**
    * The previous content type's content while it fades out under the new one
@@ -183,6 +190,7 @@ function buildSongSlideContent(
  * 1. Exit animation timing - delays empty state transition for smooth animations
  * 2. Content fetching - determines what to display based on presentation state
  * 3. Visibility calculation - determines if content should be visible
+ * 4. Line morphing - whether a slide change animates only its changed lines
  */
 export function usePresentationContent({
   screen,
@@ -201,6 +209,9 @@ export function usePresentationContent({
     NextSlideData | undefined
   >()
   const [isExitAnimating, setIsExitAnimating] = useState(false)
+  const [morphLines, setMorphLines] = useState(false)
+  // The slide shown last, which the next one is compared with for morphLines
+  const shownSlideRef = useRef<ShownSlide>({ type: 'empty', data: {} })
 
   const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevHiddenRef = useRef(presentationState?.isHidden)
@@ -290,6 +301,7 @@ export function usePresentationContent({
         }
         logger.debug('Exit animation complete, clearing content')
         exitAnimatingSyncRef.current = false
+        shownSlideRef.current = { type: 'empty', data: {} }
         setContentData({})
         setContentKey('')
         setContentType('empty')
@@ -335,6 +347,9 @@ export function usePresentationContent({
       data: ContentData,
       key = '',
     ): void => {
+      const slide = { type, data }
+      setMorphLines(sharesSlideLines(shownSlideRef.current, slide))
+      shownSlideRef.current = slide
       setContentType(type)
       setContentData(data)
       setContentKey(key)
@@ -610,5 +625,5 @@ export function usePresentationContent({
     screen?.contentConfigs,
   )
 
-  return { ...shown, isExitAnimating, presentationState }
+  return { ...shown, morphLines, isExitAnimating, presentationState }
 }

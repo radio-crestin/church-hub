@@ -1,10 +1,11 @@
-import { memo, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 
 import { TextLayer, type TextLayerContent } from './TextLayer'
 import {
   type SlideAnimationConfig,
   useSlideAnimation,
 } from './useSlideAnimation'
+import { canMorphText } from './utils/canMorphText'
 import { normalizeText } from './utils/normalizeText'
 import { compressLines } from './utils/textProcessing'
 import { attachRepetitionMarkers } from '../../../../utils/attachRepetitionMarkers'
@@ -13,6 +14,7 @@ import type {
   TextStyleRange,
   AnimationConfig as TypesAnimationConfig,
 } from '../../types'
+import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
 
 // Convert types animation config to hook animation config
 function toAnimationConfig(
@@ -31,6 +33,12 @@ interface AnimatedTextProps {
   content: string
   /** Unique key that changes when content changes (for animation triggers) */
   contentKey: string
+  /**
+   * The slide shares lines with the previous one (usePresentationContent): on
+   * this slide change only the changed lines animate, if the text keeps its
+   * box, style and fitted size.
+   */
+  morphLines?: boolean
   /** Whether the element is visible */
   isVisible: boolean
   /** Text styling */
@@ -105,6 +113,7 @@ function arePropsEqual(
   if (
     prevProps.content !== nextProps.content ||
     prevProps.contentKey !== nextProps.contentKey ||
+    prevProps.morphLines !== nextProps.morphLines ||
     prevProps.isVisible !== nextProps.isVisible ||
     prevProps.width !== nextProps.width ||
     prevProps.height !== nextProps.height ||
@@ -162,6 +171,7 @@ function arePropsEqual(
 const AnimatedTextInner = memo(function AnimatedText({
   content,
   contentKey,
+  morphLines = false,
   isVisible,
   style,
   width,
@@ -206,6 +216,24 @@ const AnimatedTextInner = memo(function AnimatedText({
     [text, style, width, height, left, top, contentScale, styleRanges],
   )
 
+  const canMorph = useCallback(
+    (from: TextLayerContent, to: TextLayerContent) =>
+      morphLines && canMorphText(from, to),
+    [morphLines],
+  )
+
+  const lineTransitions = useMemo(
+    () => ({
+      enter:
+        toAnimationConfig(slideTransitionIn) ??
+        FACTORY_TRANSITIONS.slideTransitionIn,
+      exit:
+        toAnimationConfig(slideTransitionOut) ??
+        FACTORY_TRANSITIONS.slideTransitionOut,
+    }),
+    [slideTransitionIn, slideTransitionOut],
+  )
+
   const layers = useSlideAnimation({
     content: layerContent,
     contentKey,
@@ -214,6 +242,7 @@ const AnimatedTextInner = memo(function AnimatedText({
     animationOut: toAnimationConfig(animationOut),
     slideTransitionOut: toAnimationConfig(slideTransitionOut),
     slideTransitionIn: toAnimationConfig(slideTransitionIn),
+    canMorph,
   })
 
   return layers.map((layer) => (
@@ -223,6 +252,9 @@ const AnimatedTextInner = memo(function AnimatedText({
       animationStyle={layer.style}
       styleAnchorOffset={styleAnchorOffset}
       leaving={layer.leaving}
+      morph={layer.morph}
+      onMorphRejected={layer.rejectMorph}
+      lineTransitions={lineTransitions}
     />
   ))
 }, arePropsEqual)
