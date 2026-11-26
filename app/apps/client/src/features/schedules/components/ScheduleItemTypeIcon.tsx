@@ -4,6 +4,7 @@ import {
   Camera,
   Film,
   ListMusic,
+  ListTree,
   Megaphone,
   Music,
   Presentation,
@@ -34,6 +35,9 @@ function describeKind(item: ScheduleItem) {
   }
   if (item.itemType === 'slides') {
     return { Icon: Presentation }
+  }
+  if (item.itemType === 'schedule') {
+    return { Icon: ListTree }
   }
   if (item.itemType === 'verses') {
     return { Icon: BookOpen }

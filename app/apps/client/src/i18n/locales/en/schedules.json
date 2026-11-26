@@ -675,12 +675,25 @@
     "allMarked": "All verses marked",
     "keys": "Space: next verse · Backspace: undo · ← →: 3 seconds · Esc: pause"
   },
-  "playlist": {
-    "title": "Presentations",
-    "empty": "No presentations yet",
-    "open": "Open the presentation",
-    "showAll": "Show all presentations ({{count}})",
-    "showFewer": "Show fewer",
-    "running": "Running"
+  "addProgram": {
+    "search": "Search presentations",
+    "none": "No presentation can go here"
+  },
+  "nested": {
+    "missing": "Presentation not found"
+  },
+  "queue": {
+    "title": "Queue",
+    "empty": "The queue is empty",
+    "emptyHint": "Add a song, Bible verses, a video or a program to show them in order.",
+    "addHint": "Add a song, Bible verses, music, a video or a program",
+    "addingTo": "Adding to {{title}}",
+    "afterLive": "After current item",
+    "atEnd": "At the end",
+    "clear": "Clear the queue",
+    "clearTitle": "Clear the queue?",
+    "clearMessage": "Every item in it is removed.",
+    "clearConfirm": "Clear",
+    "open": "Open the presentation"
   }
 }

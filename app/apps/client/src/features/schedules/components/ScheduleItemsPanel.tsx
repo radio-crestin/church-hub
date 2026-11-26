@@ -46,7 +46,10 @@ import {
   derivePresentedScheduleInfo,
   type PresentedScheduleInfo,
 } from '../utils/presentedScheduleInfo'
-import { buildItemStartFlatIndex } from '../utils/scheduleFlatItems'
+import {
+  buildItemStartFlatIndex,
+  countScheduleItemSteps,
+} from '../utils/scheduleFlatItems'
 import { scheduleItemShortTitle } from '../utils/scheduleItemShortTitle'
 import type { AutoplayTiming } from '../utils/stepSeconds'
 
@@ -90,12 +93,10 @@ interface ScheduleItemsPanelProps {
   midiScheduleId?: number
   expandAllTrigger?: number
   collapseAllTrigger?: number
-  /**
-   * Follow and present only, as in the control room's playlist: no dragging,
-   * no edit menu, and the list scrolls on its own so it can follow the live
-   * step inside a longer page.
-   */
+  /** Follow and present only, as in the control room: no dragging, no edit menu. */
   readOnly?: boolean
+  /** Items already gone by on the screens read quieter (the control room). */
+  quietPast?: boolean
 }
 
 interface ItemAdvance {
@@ -136,6 +137,7 @@ export function ScheduleItemsPanel({
   expandAllTrigger,
   collapseAllTrigger,
   readOnly = false,
+  quietPast = false,
 }: ScheduleItemsPanelProps) {
   const { t } = useTranslation('schedules')
   const { data: presentationState } = usePresentationState()
@@ -296,11 +298,7 @@ export function ScheduleItemsPanel({
         >
           <div
             ref={containerRef}
-            className={`flex-1 min-h-0 space-y-2 p-1 ${
-              readOnly
-                ? 'max-h-[60vh] overflow-y-auto'
-                : 'overflow-hidden lg:overflow-y-auto'
-            }`}
+            className="flex-1 min-h-0 space-y-2 p-1 overflow-hidden lg:overflow-y-auto"
           >
             {items.map((item, index) => (
               <Fragment key={item.id}>
@@ -308,6 +306,13 @@ export function ScheduleItemsPanel({
                   item={item}
                   isExpanded={isExpanded(item.id)}
                   isSelected={item.id === selectedItemId}
+                  isPast={
+                    quietPast &&
+                    !!presentedInfo &&
+                    (itemStartFlatIndex[item.id] ?? 0) +
+                      countScheduleItemSteps(item) <=
+                      presentedInfo.scheduleItemIndex
+                  }
                   presentedInfo={presentedInfo}
                   itemStartFlatIndex={itemStartFlatIndex[item.id] ?? 0}
                   highlightedRef={highlightedRef}
@@ -363,6 +368,8 @@ interface SortableItemWrapperProps {
   item: ScheduleItem
   isExpanded: boolean
   isSelected: boolean
+  /** Already gone by on the screens: it reads quieter. */
+  isPast?: boolean
   presentedInfo: PresentedScheduleInfo | null
   itemStartFlatIndex: number
   highlightedRef: React.RefObject<HTMLButtonElement | null>
@@ -390,6 +397,7 @@ function SortableItemWrapper({
   item,
   isExpanded,
   isSelected,
+  isPast = false,
   presentedInfo,
   itemStartFlatIndex,
   highlightedRef,
@@ -434,6 +442,7 @@ function SortableItemWrapper({
     (item.itemType === 'slides' &&
       (item.itemConfig as SlideDeck | null)?.slides.length === 0) ||
     (item.itemType === 'music' && !item.music?.trackCount) ||
+    (item.itemType === 'schedule' && !item.childSchedule?.items.length) ||
     (item.itemType === 'song' && item.slides.length === 0) ||
     (item.itemType === 'bible_passage' &&
       item.biblePassageVerses.length === 0) ||
@@ -446,9 +455,10 @@ function SortableItemWrapper({
       ref={setNodeRef}
       data-testid="schedule-item"
       data-selected={isSelected || undefined}
+      data-past={isPast || undefined}
       style={style}
       className={`rounded-lg border overflow-hidden ${
-        isDragging ? 'opacity-50' : ''
+        isDragging ? 'opacity-50' : isPast ? 'opacity-60 hover:opacity-100' : ''
       } ${
         hasMissingContent
           ? 'border-amber-400 dark:border-amber-500'

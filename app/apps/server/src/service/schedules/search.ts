@@ -26,13 +26,22 @@ export function updateScheduleSearchIndex(scheduleId: number): void {
 
     // Get schedule metadata
     const schedule = db
-      .select({ title: schedules.title, description: schedules.description })
+      .select({
+        title: schedules.title,
+        description: schedules.description,
+        isQueue: schedules.isQueue,
+      })
       .from(schedules)
       .where(eq(schedules.id, scheduleId))
       .get()
 
     if (!schedule) {
       log('debug', `Schedule not found for indexing: ${scheduleId}`)
+      return
+    }
+    // The control room's queue is no presentation to search for.
+    if (schedule.isQueue) {
+      removeFromScheduleSearchIndex(scheduleId)
       return
     }
 

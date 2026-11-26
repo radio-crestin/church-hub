@@ -1,6 +1,7 @@
 import type { SlideDeck } from '~/features/slides-deck/types'
 import { deckSteps } from '~/features/slides-deck/utils/deckSteps'
 import { expandSongSlidesWithChoruses } from '~/features/songs/utils/expandSongSlides'
+import { flattenScheduleItems } from './flattenScheduleItems'
 import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import type { ScheduleItem } from '../types'
 
@@ -30,6 +31,8 @@ export interface ScheduleFlatItem {
 
 /** How many presentable steps a single program item contributes. */
 export function countScheduleItemSteps(item: ScheduleItem): number {
+  // A presentation inside it: all of its steps.
+  if (item.itemType === 'schedule') return buildScheduleFlatItems([item]).length
   if (item.itemType === 'song') {
     return expandSongSlidesWithChoruses(item.slides).length
   }
@@ -66,7 +69,8 @@ export function buildScheduleFlatItems(
 ): ScheduleFlatItem[] {
   const result: ScheduleFlatItem[] = []
 
-  items.forEach((item) => {
+  // A presentation inside it runs its items in its place.
+  flattenScheduleItems(items).forEach((item) => {
     if (item.itemType === 'song') {
       expandSongSlidesWithChoruses(item.slides).forEach((_, index) => {
         result.push({ item, type: 'slide', index })
@@ -113,10 +117,20 @@ export function buildItemStartFlatIndex(
   const map: Record<number, number> = {}
   let flatIndex = 0
 
-  items.forEach((item) => {
-    map[item.id] = flatIndex
-    flatIndex += countScheduleItemSteps(item)
-  })
+  // A presentation inside it starts where its first item does; its items are
+  // listed too, so their rows light up like the others.
+  const walk = (list: ScheduleItem[], path: ReadonlySet<number>) => {
+    for (const item of list) {
+      map[item.id] = flatIndex
+      const child = item.childSchedule
+      if (item.itemType !== 'schedule') {
+        flatIndex += countScheduleItemSteps(item)
+      } else if (child && !path.has(child.id)) {
+        walk(child.items, new Set(path).add(child.id))
+      }
+    }
+  }
+  walk(items, new Set())
 
   return map
 }

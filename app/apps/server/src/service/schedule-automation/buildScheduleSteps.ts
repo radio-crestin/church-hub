@@ -1,5 +1,6 @@
 import { expandSongSlidesWithChoruses } from '../presentation/expand-song-slides'
 import { isBackgroundVideo } from '../schedule-items/isBackgroundVideo'
+import { flattenScheduleItems } from '../schedules/flattenScheduleItems'
 import type { ScheduleItem } from '../schedules/types'
 import { deckSteps } from '../slides-deck/deckSteps'
 import type { SlideDeck } from '../slides-deck/types'
@@ -34,7 +35,8 @@ export interface ScheduleStep {
  */
 export function buildScheduleSteps(items: ScheduleItem[]): ScheduleStep[] {
   const steps: ScheduleStep[] = []
-  for (const item of items) {
+  // A presentation inside it runs its items in its place.
+  for (const item of flattenScheduleItems(items)) {
     if (item.itemType === 'song') {
       expandSongSlidesWithChoruses(item.slides).forEach((_, index) => {
         steps.push({ item, type: 'slide', index })

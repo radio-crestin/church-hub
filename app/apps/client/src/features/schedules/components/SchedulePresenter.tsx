@@ -52,6 +52,7 @@ import { useEditLayoutAction, Workspace } from '~/features/workspace'
 import { usePermissions } from '~/provider/permissions-provider'
 import { ActionMenu, type ActionMenuItem } from '~/ui/menu'
 import { useToast } from '~/ui/toast'
+import { AddProgramModal } from './AddProgramModal'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { EditAsTextModal } from './EditAsTextModal'
@@ -204,6 +205,7 @@ export function SchedulePresenter({
   const [showEditAsText, setShowEditAsText] = useState(false)
   const [showBiblePassagePicker, setShowBiblePassagePicker] = useState(false)
   const [showScenePicker, setShowScenePicker] = useState(false)
+  const [showProgramPicker, setShowProgramPicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
   const [editingSlideItem, setEditingSlideItem] = useState<ScheduleItem | null>(
     null,
@@ -832,6 +834,7 @@ export function SchedulePresenter({
                 }
                 onAddDeck={() => addDeck(quickInsertAfterId ?? undefined)}
                 onImportPptx={() => importPptx(quickInsertAfterId ?? undefined)}
+                onAddProgram={() => setShowProgramPicker(true)}
               />
               <PptxImportDialog pptx={pptx} />
               <PptxDropChoiceDialog choice={pptxDrop} />
@@ -1257,6 +1260,22 @@ export function SchedulePresenter({
           setQuickInsertAfterId(null)
         }}
       />
+
+      {showProgramPicker && (
+        <AddProgramModal
+          scheduleId={scheduleId}
+          afterItemId={quickInsertAfterId ?? undefined}
+          onClose={(added) => {
+            setShowProgramPicker(false)
+            if (added) {
+              setQuickInsertAfterId(null)
+              refetch()
+            } else {
+              handleReopenAddMenu()
+            }
+          }}
+        />
+      )}
 
       {/* Export Format Modal */}
       <ScheduleExportFormatModal

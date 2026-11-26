@@ -2,6 +2,7 @@ import { buildScheduleSteps } from './buildScheduleSteps'
 import { createLogger } from '../../utils/logger'
 import { getPlayerState } from '../music-player'
 import { type MusicItemConfig, startMusicItems } from '../schedule-items'
+import { flattenScheduleItems } from '../schedules/flattenScheduleItems'
 import { getScheduleById } from '../schedules/getSchedules'
 import type { ScheduleItem } from '../schedules/types'
 
@@ -40,7 +41,10 @@ export async function cueMusicForStep(
   if (!schedule) return
   const step = buildScheduleSteps(schedule.items)[stepIndex]
   if (!step || step.index !== 0) return
-  const music = musicItemsBefore(schedule.items, step.item)
+  const music = musicItemsBefore(
+    flattenScheduleItems(schedule.items),
+    step.item,
+  )
   if (music.length === 0) return
 
   const key = music.map((m) => m.id).join(',')

@@ -18,7 +18,7 @@ export interface MediaItemText {
 }
 
 /**
- * How a music, video, verses or Slides item reads in a presentation's lists;
+ * How a music, video, verses, Slides or presentation item reads in a presentation's lists;
  * null for other items. One place, so the presentation page and the
  * Prezentări panel describe them the same way.
  */
@@ -70,6 +70,13 @@ export function useMediaItemText(item: ScheduleItem): MediaItemText | null {
     return {
       title: deckFirstText(deck) || t('slidesDeck.title'),
       detail: t('slidesDeck.slideCount', { count: deck?.slides.length ?? 0 }),
+    }
+  }
+
+  if (item.itemType === 'schedule') {
+    return {
+      title: item.childSchedule?.title ?? t('nested.missing'),
+      detail: t('itemCount', { count: item.childSchedule?.items.length ?? 0 }),
     }
   }
 

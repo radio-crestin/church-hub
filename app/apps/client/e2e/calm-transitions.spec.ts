@@ -6,34 +6,42 @@ import {
 } from '@playwright/test'
 
 /**
- * Factory transitions (T-112, made quick and per screen type in T-158): every
- * text element of a new screen gets its screen type's transitions, eased at
- * both ends, and the projected screen plays them so on a verse change: the old
- * verse eases out while the new one eases in (300 ms each, at the same time).
- * The stage display cuts, so the singers read each line at once.
+ * Factory transitions (T-112, made per screen type in T-158, calmer in #271):
+ * every text element of a new screen gets its screen type's transitions, in on
+ * a strong ease-out and out on a gentle ease-in, and the projected screen
+ * plays them so on a verse change: the new verse eases in (400 ms) while the
+ * old one leaves a little faster (350 ms), at the same time. The stage display
+ * cuts, so the singers read each line at once.
  */
 
 const SCREEN_TYPES = ['primary', 'stage', 'livestream', 'kiosk'] as const
-const fade = (duration: number) => ({
+const EASE_ENTER = 'cubic-bezier(0.23, 1, 0.32, 1)'
+const EASE_EXIT = 'cubic-bezier(0.32, 0, 0.67, 0)'
+const fade = (duration: number, easing: string) => ({
   type: 'fade',
   duration,
   delay: 0,
-  easing: 'ease-in-out',
+  easing,
 })
 const cut = { type: 'none', duration: 0, delay: 0, easing: 'ease-in-out' }
-const dissolve = (show: number, hide: number, slideChange: number) => ({
-  animationIn: fade(show),
-  animationOut: fade(hide),
-  slideTransitionIn: fade(slideChange),
-  slideTransitionOut: fade(slideChange),
+const dissolve = (
+  show: number,
+  hide: number,
+  slideIn: number,
+  slideOut: number,
+) => ({
+  animationIn: fade(show, EASE_ENTER),
+  animationOut: fade(hide, EASE_EXIT),
+  slideTransitionIn: fade(slideIn, EASE_ENTER),
+  slideTransitionOut: fade(slideOut, EASE_ENTER),
 })
 const FACTORY: Record<
   (typeof SCREEN_TYPES)[number],
   Record<string, unknown>
 > = {
-  primary: dissolve(300, 250, 300),
-  kiosk: dissolve(300, 250, 300),
-  livestream: dissolve(250, 200, 250),
+  primary: dissolve(450, 400, 400, 350),
+  kiosk: dissolve(450, 400, 400, 350),
+  livestream: dissolve(350, 300, 350, 300),
   stage: {
     animationIn: cut,
     animationOut: cut,
@@ -215,7 +223,8 @@ test.describe('Calm slide transitions', () => {
       ...new Set(frames.flatMap((frame) => frame.transitions)),
     ].join(' | ')
 
-    expect(seen).toContain('300ms ease-in-out')
+    expect(seen).toContain(`400ms ${EASE_ENTER}`)
+    expect(seen).toContain(`350ms ${EASE_ENTER}`)
     await expect(page.getByText(VERSES[1]).last()).toBeVisible()
     await expect(page.getByText(VERSES[0])).toHaveCount(0)
   })

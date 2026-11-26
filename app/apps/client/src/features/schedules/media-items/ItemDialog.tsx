@@ -12,6 +12,9 @@ interface ItemDialogProps {
   onSave: () => void
   onClose: () => void
   children: ReactNode
+  /** The primary button's label and icon; Save by default. */
+  saveLabel?: string
+  saveIcon?: ReactNode
 }
 
 /** The dialog an item's settings are edited in: header, body, Cancel/Save. */
@@ -24,6 +27,8 @@ export function ItemDialog({
   onSave,
   onClose,
   children,
+  saveLabel,
+  saveIcon = <Save size={16} strokeWidth={1.5} />,
 }: ItemDialogProps) {
   const { t } = useTranslation('schedules')
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -41,7 +46,7 @@ export function ItemDialog({
         e.preventDefault()
         if (!isSaving) onClose()
       }}
-      className="fixed inset-0 m-auto w-full max-w-xl p-0 rounded-xl border border-line bg-panel shadow-popover backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-xl p-0 rounded-[10px] border border-line bg-panel shadow-popover backdrop:bg-black/50"
     >
       <div className="flex flex-col max-h-[85vh]">
         <div className="flex items-center justify-between p-4 border-b border-line">
@@ -82,9 +87,9 @@ export function ItemDialog({
             {isSaving ? (
               <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
             ) : (
-              <Save size={16} strokeWidth={1.5} />
+              saveIcon
             )}
-            {t('insertSlide.save')}
+            {saveLabel ?? t('insertSlide.save')}
           </button>
         </div>
       </div>
