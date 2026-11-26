@@ -53,7 +53,7 @@ const LIVESTREAM: RouteCase[] = [
   {
     method: 'POST',
     path: '/api/livestream/youtube/tokens',
-    need: 'settings.edit',
+    need: 'settings.view',
     body: {},
   },
   {
@@ -317,6 +317,48 @@ const LOCAL_DATA: RouteCase[] = [
   { method: 'GET', path: '/api/sync/cloud/owner/churches', need: 'users.edit' },
 ]
 
+/** Church Hub Cloud backup: this machine only, and per route. */
+const CLOUD_BACKUP: RouteCase[] = [
+  { method: 'GET', path: '/api/backup/cloud/status', need: 'settings.view' },
+  {
+    method: 'POST',
+    path: '/api/backup/cloud/sign-in',
+    need: 'admin',
+    safe: true,
+  },
+  {
+    method: 'POST',
+    path: '/api/backup/cloud/confirmations',
+    need: 'settings.edit',
+    body: {},
+  },
+  {
+    method: 'POST',
+    path: '/api/backup/cloud/sign-out',
+    need: 'settings.edit',
+    body: {},
+  },
+  {
+    method: 'PUT',
+    path: '/api/backup/cloud/config',
+    need: 'settings.edit',
+    body: {},
+  },
+  { method: 'GET', path: '/api/backup/cloud/backups', need: 'settings.view' },
+  { method: 'POST', path: '/api/backup/cloud/backups', need: 'settings.edit' },
+  {
+    method: 'POST',
+    path: '/api/backup/cloud/backups/AAAAAAAAAAAAAAAAAAAAAA/restore',
+    need: 'admin',
+    body: {},
+  },
+  {
+    method: 'DELETE',
+    path: '/api/backup/cloud/backups/AAAAAAAAAAAAAAAAAAAAAA',
+    need: 'settings.edit',
+  },
+]
+
 const FEEDBACK: RouteCase[] = [
   {
     method: 'POST',
@@ -338,6 +380,7 @@ const GROUPS: Record<string, RouteCase[]> = {
   Music: MUSIC,
   MIDI,
   "This computer's data (backups, sync, database, logs, cloud)": LOCAL_DATA,
+  'Church Hub Cloud backup': CLOUD_BACKUP,
   Feedback: FEEDBACK,
 }
 
@@ -438,6 +481,21 @@ test.describe('Every route checks its permission', () => {
     })
   }
 
+  test('sign-in returns arrive without a session, bound to their flow', async ({
+    baseURL,
+  }) => {
+    const base = baseURL as string
+    // The Google window on this PC has no session: the nonce decides.
+    for (const path of [
+      '/api/backup/cloud/callback?nonce=unknown&grant=x',
+      '/api/sync/cloud/owner/callback?nonce=unknown&ticket=x&expiresAt=1',
+    ]) {
+      const res = await rawRequest(base, path)
+      expect([401, 403], path).not.toContain(res.status)
+      expect(res.headers['set-cookie'], path).toBeUndefined()
+    }
+  })
+
   test('secrets go only to those who may change the settings', async ({
     request,
     baseURL,
@@ -508,11 +566,18 @@ test.describe('Every route checks its permission', () => {
             `"${flag}":true`,
           )
         }
-        // Editors still get it, to copy it into OBS or change it.
+        // Editors still get the field: the OBS password in full (they copy
+        // it into OBS), API keys masked (secrets at rest).
         const edited = await rawRequest(base, path, {
           headers: { 'X-User-Auth': editor },
         })
-        expect(edited.body, path).toContain(secret)
+        const field =
+          flag === 'passwordSet'
+            ? 'password'
+            : flag.replace('KeySet', 'ApiKey').replace('apiApiKey', 'apiKey')
+        expect(edited.body.replace(/\\"/g, '"'), path).toContain(`"${field}":"`)
+        expect(edited.body, path).not.toContain(`"${flag}"`)
+        if (flag === 'passwordSet') expect(edited.body, path).toContain(secret)
       }
     } finally {
       await request.put('/api/livestream/obs/config', {

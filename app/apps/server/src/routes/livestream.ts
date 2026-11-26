@@ -64,6 +64,7 @@ import {
 } from '../service/livestream/youtube'
 import type { YouTubeConfigUpdate } from '../service/livestream/youtube/config'
 import { loadMIDIShortcuts } from '../service/midi/shortcuts'
+import { SecretDestinationChangedError } from '../service/secret-store'
 import { createFlowStates } from '../utils/createFlowStates'
 import { hideSecrets } from '../utils/hideSecrets'
 import { toErrorMessage } from '../utils/toErrorMessage'
@@ -1000,10 +1001,14 @@ export async function handleLivestreamRoutes(
           headers: { 'Content-Type': 'application/json' },
         }),
       )
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof SecretDestinationChangedError
+          ? error.message
+          : 'Invalid JSON body'
       return handleCors(
         req,
-        new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        new Response(JSON.stringify({ error: message }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         }),

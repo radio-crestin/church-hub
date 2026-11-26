@@ -1,8 +1,10 @@
+export { isSecretSettingKey } from './isSecretSettingKey'
 export { isServerSecretKey } from './isServerSecretKey'
 export { SETTING_SECRETS, withoutSettingSecrets } from './settingSecrets'
 export {
   deleteSetting,
   getAllSettings,
+  getPublicSetting,
   getSetting,
   upsertSetting,
 } from './settings'

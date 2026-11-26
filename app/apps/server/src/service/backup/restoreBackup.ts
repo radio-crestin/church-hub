@@ -2,6 +2,7 @@ import { unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 
 import { downloadBackupToTemp } from './downloadBackupToTemp'
+import { getDriveAuth, storeDriveAuth } from './driveAuthStore'
 import { getDriveService, isInsufficientScopeError } from './getDriveService'
 import { createLogger } from '../../utils/logger'
 import { getDataDir } from '../../utils/paths'
@@ -24,7 +25,9 @@ export interface RestoreBackupResult {
  * The downloaded file is streamed to a temp file and then handed to
  * `importDatabase`, which validates the SQLite header, backs up the current
  * database, swaps the file and reinitializes the connection (auto-rolling back
- * on failure).
+ * on failure). This PC stays signed in to Drive as it was: the restored
+ * file's own Drive sign-in, if any (sealed on another computer, it can't be
+ * opened here), is replaced by the current one.
  */
 export async function restoreBackup(
   fileId: string,
@@ -45,7 +48,15 @@ export async function restoreBackup(
     await downloadBackupToTemp(drive, fileId, tempPath)
 
     logger.info(`Downloaded backup ${fileId}, restoring database`)
+    const signedIn = await getDriveAuth()
     const result = await importDatabase(tempPath)
+    if (signedIn) {
+      await storeDriveAuth({
+        ...signedIn,
+        expiresAt: signedIn.expiresAt.getTime(),
+        email: signedIn.email ?? undefined,
+      })
+    }
     return {
       success: result.success,
       message: result.message,

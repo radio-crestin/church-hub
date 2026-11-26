@@ -15,6 +15,8 @@ interface ScreenBackgroundProps {
    * one capture shared by every thumbnail instead of a player each
    */
   playVideo?: boolean
+  /** A background being covered by the next one is no longer the screen's */
+  testId?: string
 }
 
 /**
@@ -27,6 +29,7 @@ interface ScreenBackgroundProps {
 export function ScreenBackground({
   background,
   playVideo = true,
+  testId = 'screen-background',
 }: ScreenBackgroundProps) {
   const type = background?.type ?? 'color'
   const opacity = background?.opacity ?? 1
@@ -39,7 +42,7 @@ export function ScreenBackground({
   if (type === 'image' || type === 'video') {
     return (
       <div
-        data-testid="screen-background"
+        data-testid={testId}
         data-background-type={type}
         className={LAYER_CLASS}
         style={{ backgroundColor: background?.color ?? DEFAULT_COLOR }}
@@ -70,7 +73,7 @@ export function ScreenBackground({
   // 'color', a missing config, or an unknown type: a solid colour (black)
   return (
     <div
-      data-testid="screen-background"
+      data-testid={testId}
       data-background-type="color"
       className={LAYER_CLASS}
       style={{

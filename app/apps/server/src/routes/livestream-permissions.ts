@@ -12,7 +12,9 @@ const MIXER = '/api/livestream/mixer'
  */
 export const LIVESTREAM_PERMISSIONS: RoutePermission[] = [
   { method: 'POST', path: `${YT}/sign-in`, permission: 'settings.edit' },
-  { method: 'POST', path: `${YT}/tokens`, permission: 'settings.edit' },
+  // From the app's callback page, often in a browser with no session: the
+  // single-use state an editor's sign-in issued is what allows it.
+  { method: 'POST', path: `${YT}/tokens`, permission: 'settings.view' },
   { method: 'GET', path: `${YT}/status`, permission: 'settings.view' },
   { method: 'DELETE', path: `${YT}/logout`, permission: 'settings.edit' },
   {

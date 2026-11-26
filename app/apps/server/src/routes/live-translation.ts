@@ -46,6 +46,7 @@ import type {
   TranslationEngine,
   TranslationTarget,
 } from '../service/live-translation/types'
+import { isSecretMask, maskSettingValue } from '../service/secret-store'
 import { getSetting, SETTING_SECRETS, upsertSetting } from '../service/settings'
 import { log } from '../utils/fileLogger'
 import { hideSecrets } from '../utils/hideSecrets'
@@ -222,13 +223,21 @@ function loadPersistedSettings(): PersistedSettings {
   }
 }
 
-/** The keys only to who may change them; readers learn whether each is set. */
+/** The saved settings as an editor sees them: API keys masked. */
+const publicSettings = (): PersistedSettings =>
+  JSON.parse(
+    maskSettingValue(SETTINGS_KEY, JSON.stringify(loadPersistedSettings())),
+  )
+
+/** Editors see the keys masked; readers learn only whether each is set. */
 function handleGetSettings(mayEdit: boolean): Response {
-  const settings = loadPersistedSettings()
   return Response.json(
     mayEdit
-      ? settings
-      : hideSecrets(settings, SETTING_SECRETS.live_translation_settings ?? {}),
+      ? publicSettings()
+      : hideSecrets(
+          loadPersistedSettings(),
+          SETTING_SECRETS.live_translation_settings ?? {},
+        ),
   )
 }
 
@@ -241,7 +250,7 @@ function handleSaveSettings(req: Request): Response {
         key: SETTINGS_KEY,
         value: JSON.stringify(migrated),
       })
-      return Response.json({ success: true, settings: migrated })
+      return Response.json({ success: true, settings: publicSettings() })
     } catch (error) {
       logger.error('Failed to save settings', { error: String(error) })
       return Response.json({ error: toErrorMessage(error) }, { status: 500 })
@@ -277,8 +286,10 @@ function handleStart(req: Request): Response {
         )
       }
 
-      const geminiApiKey = body.geminiApiKey || saved.geminiApiKey
-      const openaiApiKey = body.openaiApiKey || saved.openaiApiKey
+      // A masked key from the form means the saved one.
+      const sent = (key?: string) => (isSecretMask(key) ? undefined : key)
+      const geminiApiKey = sent(body.geminiApiKey) || saved.geminiApiKey
+      const openaiApiKey = sent(body.openaiApiKey) || saved.openaiApiKey
 
       const apiKey = engine === 'gemini' ? geminiApiKey : openaiApiKey
       if (!apiKey) {

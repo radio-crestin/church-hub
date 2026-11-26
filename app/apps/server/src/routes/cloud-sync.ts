@@ -44,9 +44,13 @@ export async function handleCloudSyncRoutes(
     url.pathname.startsWith('/api/sync/cloud/owner/') ||
     url.pathname === '/api/sync/cloud/keep'
   ) {
+    // The sign-in's return arrives in a browser with no session, bound to
+    // the nonce of a sign-in this PC started.
+    const isReturn =
+      url.pathname === '/api/sync/cloud/owner/callback' && req.method === 'GET'
     return (
       localhostGuard() ??
-      checkPermission('users.edit') ??
+      (isReturn ? null : checkPermission('users.edit')) ??
       handleCloudSyncOwnerRoutes(req, url)
     )
   }

@@ -40,6 +40,7 @@ import {
   SESSION_COOKIE_MAX_AGE_SECONDS,
 } from './middleware'
 import { isTrustedOrigin, refuseUntrustedRequest } from './middleware/origins'
+import { checkRoutePermission } from './middleware/route-permissions'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
 import {
   handleAnalyticsConsentRead,
@@ -49,6 +50,8 @@ import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleUserLinkRoute } from './routes/auth-user-link/handleUserLinkRoute'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleBibleTopicRoutes } from './routes/bible-topics'
+import { handleCloudBackupRoutes } from './routes/cloud-backup'
+import { CLOUD_BACKUP_PERMISSIONS } from './routes/cloud-backup-permissions'
 import { handleCloudSyncRoutes } from './routes/cloud-sync'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
@@ -62,6 +65,7 @@ import { handleScheduleItemRoutes } from './routes/schedule-items'
 import { handleScheduleMidiRoutes } from './routes/schedule-midi'
 import { handleScheduleTemplateRoutes } from './routes/schedule-templates'
 import { handleScreenShareRoutes } from './routes/screen-share'
+import { handleSecretStoreRoutes } from './routes/secret-store'
 import { handleSlideTemplateRoutes } from './routes/slide-templates'
 import { handleSongHistoryRoutes } from './routes/song-history'
 import { handleSongSourceRoutes } from './routes/song-sources'
@@ -76,7 +80,7 @@ import {
   getAllSettings,
   getAllUsers,
   getLocalUsers,
-  getSetting,
+  getPublicSetting,
   getUserById,
   isServerSecretKey,
   type Permission,
@@ -300,6 +304,7 @@ import {
   type SaveSearchInput,
   saveSearch,
 } from './service/search-history'
+import { SecretDestinationChangedError } from './service/secret-store'
 import {
   addBookmark,
   addBookmarkNote,
@@ -1327,7 +1332,7 @@ async function startRealServer(): Promise<void> {
           if (permError) return permError
         }
 
-        const setting = getSetting(table, key)
+        const setting = getPublicSetting(table, key)
         const shown =
           setting && !holdsPermission(_context, 'settings.edit')
             ? withoutSettingSecrets(setting)
@@ -1460,12 +1465,14 @@ async function startRealServer(): Promise<void> {
               headers: { 'Content-Type': 'application/json' },
             }),
           )
-        } catch (_error) {
+        } catch (error) {
+          const message =
+            error instanceof SecretDestinationChangedError
+              ? error.message
+              : 'Invalid JSON body'
           return handleCors(
             req,
-            new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-              status: 400,
-            }),
+            new Response(JSON.stringify({ error: message }), { status: 400 }),
           )
         }
       }
@@ -1535,6 +1542,18 @@ async function startRealServer(): Promise<void> {
         const result = requirePermission(permission)(_context)
         if (result) return handleCors(req, result)
         return null
+      }
+
+      /** A super admin or the system token (null), else 403. */
+      function checkAdmin(): Response | null {
+        if (_context?.authType === 'app') return null
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }
 
       // GET /api/roles - List all roles
@@ -1913,6 +1932,23 @@ async function startRealServer(): Promise<void> {
       ): Promise<Response | null> =>
         backupLocalhostGuard() ??
         (need === 'admin' ? await requireAppAuth() : checkPermission(need))
+
+      // Church Hub Cloud backup (free, Google sign-in): this machine, and
+      // each route's permission (routes/cloud-backup-permissions.ts)
+      if (url.pathname.startsWith('/api/backup/cloud/')) {
+        const refused =
+          backupLocalhostGuard() ??
+          checkRoutePermission(
+            req,
+            url.pathname,
+            CLOUD_BACKUP_PERMISSIONS,
+            checkPermission,
+            checkAdmin,
+          )
+        if (refused) return refused
+        const cloudBackupResponse = await handleCloudBackupRoutes(req, url)
+        if (cloudBackupResponse) return handleCors(req, cloudBackupResponse)
+      }
 
       // GET /api/backup/status - Drive connection + auto-backup settings
       if (req.method === 'GET' && url.pathname === '/api/backup/status') {
@@ -8347,6 +8383,15 @@ async function startRealServer(): Promise<void> {
         _context,
       )
       if (notificationsResponse) return notificationsResponse
+
+      // Where the key sealing saved secrets is kept
+      const secretStoreResponse = await handleSecretStoreRoutes(
+        req,
+        url,
+        handleCors,
+        _context,
+      )
+      if (secretStoreResponse) return secretStoreResponse
 
       // A presentation song item's MIDI file, its slides synced to it
       const scheduleMidiResponse = await handleScheduleMidiRoutes(

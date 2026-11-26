@@ -175,7 +175,8 @@ test.describe("A Bible topic's template on screen", () => {
     // The loop goes on where it was, now drawn with the other template.
     await chooseTemplate(page, blue)
     await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
-    expect(await drawsColour(display, RED)).toBe(false)
+    // The old background dissolves away under the new one (~800 ms)
+    await expect.poll(() => drawsColour(display, RED)).toBe(false)
     expect(await onScreen(request)).toMatchObject({
       loop: true,
       templateId: blue,
@@ -187,7 +188,7 @@ test.describe("A Bible topic's template on screen", () => {
     await chooseTemplate(page, red)
     await panel.getByTestId('bible-topic-loop').click()
     await expect.poll(() => drawsColour(display, RED)).toBe(true)
-    expect(await drawsColour(display, BLUE)).toBe(false)
+    await expect.poll(() => drawsColour(display, BLUE)).toBe(false)
   })
 
   test('another topic opened mid-play takes the slideshow over, in its mode', async ({
@@ -279,7 +280,7 @@ test.describe("A Bible topic's template on screen", () => {
     await expect.poll(() => drawsColour(display, RED)).toBe(true)
     await panel.getByTestId('bible-topic-next').click()
     await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
-    expect(await drawsColour(display, RED)).toBe(false)
+    await expect.poll(() => drawsColour(display, RED)).toBe(false)
 
     // Back to the topic's, mid-play: the screen follows.
     await own.click()

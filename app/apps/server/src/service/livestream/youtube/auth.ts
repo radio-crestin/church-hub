@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 
 import { getAuthenticatedClient, getOAuth2Client } from './client'
+import { readYouTubeAuth, sealYouTubeTokens } from './youtubeAuthStore'
 import { getDatabase } from '../../../db'
 import { youtubeAuth } from '../../../db/schema'
 import type { YouTubeAuthStatus } from '../types'
@@ -44,8 +45,7 @@ export async function storeTokens(
     await db
       .update(youtubeAuth)
       .set({
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        ...sealYouTubeTokens(tokens),
         expiresAt: tokens.expiresAt,
         channelId,
         channelName,
@@ -54,8 +54,7 @@ export async function storeTokens(
       .where(eq(youtubeAuth.id, existingAuth.id))
   } else {
     await db.insert(youtubeAuth).values({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
+      ...sealYouTubeTokens(tokens),
       expiresAt: tokens.expiresAt,
       channelId,
       channelName,
@@ -84,8 +83,7 @@ export async function getAuthStatus(): Promise<YouTubeAuthStatus> {
     return authStatusCache.data
   }
 
-  const db = getDatabase()
-  const [auth] = await db.select().from(youtubeAuth).limit(1)
+  const auth = await readYouTubeAuth()
 
   if (!auth) {
     const result: YouTubeAuthStatus = { isAuthenticated: false }
@@ -123,8 +121,7 @@ export async function logout(): Promise<void> {
   // Clear cache immediately
   clearAuthStatusCache()
 
-  const db = getDatabase()
-  const [auth] = await db.select().from(youtubeAuth).limit(1)
+  const auth = await readYouTubeAuth()
 
   if (auth) {
     // Try to revoke credentials if OAuth client is available
@@ -140,7 +137,7 @@ export async function logout(): Promise<void> {
         // Revoke credentials silently failed
       }
     }
-
-    await db.delete(youtubeAuth).where(eq(youtubeAuth.id, auth.id))
   }
+  // Signed out even when the tokens couldn't be opened.
+  await getDatabase().delete(youtubeAuth)
 }
