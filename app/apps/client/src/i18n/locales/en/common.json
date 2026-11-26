@@ -31,10 +31,8 @@
     "slidesDescription": "Your own slides, with text, pictures, videos and animations",
     "importPptx": "Import PowerPoint",
     "importPptxDescription": "Slides from a .pptx file, with their pictures, videos and animations",
-    "importSchedule": {
-      "title": "Import presentation",
-      "description": "Copy the items of another presentation"
-    }
+    "program": "Program",
+    "programDescription": "Another presentation, played in its place"
   },
   "fontSize": {
     "increase": "Increase text size",

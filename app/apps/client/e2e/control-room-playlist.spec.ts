@@ -6,11 +6,12 @@ import {
 } from '@playwright/test'
 
 /**
- * The control room is a playlist of presentations (CH-180): the one on the
- * screens comes first, opened and marked LIVE, its items listed as on the
- * presentation page so the operator follows it slide by slide; Next steps
- * through it; a presentation that runs by itself shows Running / In a loop
- * with Run and Stop; on a phone the playlist sits under the preview.
+ * The control room's left column (CH-180, then T-907): the queue by default,
+ * never the list of every presentation; while a presentation is on the
+ * screens or runs by itself, that presentation instead, its items listed as
+ * on the presentation page so the operator follows it slide by slide, with
+ * Run / Stop; Next steps through it; on a phone the column sits under the
+ * preview.
  */
 
 const PHONE = { width: 390, height: 844 }
@@ -62,16 +63,18 @@ async function liveStep(request: APIRequestContext) {
   return { scheduleId: data.scheduleId, index: data.scheduleItemIndex }
 }
 
-function entryOf(page: Page, presentation: Presentation) {
-  return page
-    .getByTestId('playlist-entry')
-    .filter({ hasText: presentation.title })
+function column(page: Page) {
+  return page.getByTestId('control-room-queue')
 }
 
-test.describe('The control room playlist', () => {
+test.describe('The control room column', () => {
   test.describe.configure({ mode: 'serial' })
 
   let created: Presentation[] = []
+
+  test.beforeEach(async ({ request }) => {
+    await request.post('/api/presentation/clear-temporary')
+  })
 
   test.afterEach(async ({ request }) => {
     await request.post('/api/schedules/automation/stop').catch(() => {})
@@ -83,7 +86,7 @@ test.describe('The control room playlist', () => {
     created = []
   })
 
-  test('a slide clicked in the playlist goes live, its presentation comes first, marked LIVE, and Next steps through it', async ({
+  test('shows the queue, not every presentation; a presentation on the screens takes its place, and Next steps through it', async ({
     page,
     request,
   }) => {
@@ -91,53 +94,41 @@ test.describe('The control room playlist', () => {
     created.push(presentation)
     await page.goto('/present')
 
-    const entry = entryOf(page, presentation)
-    await expect(entry).toBeVisible()
-    await expect(entry).toHaveAttribute('data-live', 'false')
+    await expect(column(page)).toHaveAttribute('data-showing', 'queue')
+    await expect(column(page).getByText(presentation.title)).toHaveCount(0)
 
-    // Opened, it lists its items as the presentation page does.
-    await entry.getByTestId('playlist-entry-toggle').click()
-    await entry.getByTestId('schedule-item').first().click()
-    await entry.getByTestId('schedule-sub-item-0').click()
-    await expect
-      .poll(() => liveStep(request))
-      .toEqual({ scheduleId: presentation.id, index: 0 })
-
-    await expect(entry).toHaveAttribute('data-live', 'true')
-    await expect(entry.getByTestId('live-badge')).toBeVisible()
-    await expect(page.getByTestId('playlist-entry').first()).toHaveAttribute(
-      'data-schedule-id',
-      String(presentation.id),
-    )
-    await expect(entry.getByTestId('schedule-sub-item-0')).toHaveClass(
+    // Put up from its own page, it takes the column, its slide lit.
+    await request.post(`/api/schedules/${presentation.id}/run`)
+    await expect(column(page)).toHaveAttribute('data-showing', 'program')
+    await expect(
+      column(page).getByTestId('control-room-queue-title'),
+    ).toHaveText(presentation.title)
+    await expect(column(page).getByTestId('schedule-sub-item-0')).toHaveClass(
       /ring-live/,
     )
 
-    // Next walks the live presentation: through the song, into the next item.
-    const next = page.getByTestId('control-room-next')
-    await next.click()
+    // A slide clicked in it goes live; Next walks through the song, into the
+    // next item.
+    await column(page).getByTestId('schedule-sub-item-1').click()
     await expect
       .poll(() => liveStep(request))
       .toEqual({ scheduleId: presentation.id, index: 1 })
-    await expect(entry.getByTestId('schedule-sub-item-1')).toHaveClass(
-      /ring-live/,
-    )
+    const next = page.getByTestId('control-room-next')
     await next.click()
     await next.click()
     await expect
       .poll(() => liveStep(request))
       .toEqual({ scheduleId: presentation.id, index: 3 })
-    await expect(entry.getByTestId('schedule-sub-item-3')).toHaveClass(
+    await expect(column(page).getByTestId('schedule-sub-item-3')).toHaveClass(
       /ring-live/,
     )
-
     await page.getByTestId('control-room-prev').click()
     await expect
       .poll(() => liveStep(request))
       .toEqual({ scheduleId: presentation.id, index: 2 })
   })
 
-  test('a presentation that runs by itself shows Running and In a loop, with Run and Stop', async ({
+  test('a presentation that runs by itself shows with its step, and Stop takes it off', async ({
     page,
     request,
   }) => {
@@ -148,25 +139,24 @@ test.describe('The control room playlist', () => {
     created.push(presentation)
     await page.goto('/present')
 
-    const entry = entryOf(page, presentation)
-    await expect(entry.getByTestId('playlist-looping')).toBeVisible()
-    await expect(entry.getByTestId('playlist-running')).toHaveCount(0)
-
-    await entry.getByTestId('schedule-run-button').click()
-    await expect(entry.getByTestId('playlist-running')).toBeVisible()
-    await expect(entry).toHaveAttribute('data-live', 'true')
-    await expect(entry.getByTestId('schedule-run-progress')).toHaveText('1/4')
-    // Running, it is opened at its live step.
-    await expect(entry.getByTestId('schedule-sub-item-0')).toHaveClass(
+    await request.post(`/api/schedules/${presentation.id}/run`)
+    await expect(column(page)).toHaveAttribute(
+      'data-schedule-id',
+      String(presentation.id),
+    )
+    await expect(column(page).getByTestId('schedule-run-progress')).toHaveText(
+      '1/4',
+    )
+    await expect(column(page).getByTestId('schedule-sub-item-0')).toHaveClass(
       /ring-live/,
     )
 
-    await entry.getByTestId('schedule-run-button').click()
-    await expect(entry.getByTestId('playlist-running')).toHaveCount(0)
+    await column(page).getByTestId('schedule-run-button').click()
     await expect.poll(() => liveStep(request)).toBeNull()
+    await expect(column(page)).toHaveAttribute('data-showing', 'queue')
   })
 
-  test('on a phone the playlist sits under the preview and the bottom bar steps through the live presentation', async ({
+  test('on a phone the column sits under the preview and the bottom bar steps through the live presentation', async ({
     page,
     request,
   }) => {
@@ -175,19 +165,12 @@ test.describe('The control room playlist', () => {
     await page.setViewportSize(PHONE)
     await page.goto('/present')
 
-    // The operator puts a slide up from the playlist, with a tap.
-    const entry = entryOf(page, presentation)
-    await entry.getByTestId('playlist-entry-toggle').click()
-    await entry.getByTestId('schedule-item').first().click()
-    await entry.getByTestId('schedule-sub-item-0').click()
-    await expect
-      .poll(() => liveStep(request))
-      .toEqual({ scheduleId: presentation.id, index: 0 })
-    await expect(entry).toHaveAttribute('data-live', 'true')
+    await request.post(`/api/schedules/${presentation.id}/run`)
+    await expect(column(page)).toHaveAttribute('data-showing', 'program')
     const preview = await page.getByTestId('control-room-live').boundingBox()
-    const playlist = await entry.boundingBox()
-    expect(playlist?.y ?? 0).toBeGreaterThan(preview?.y ?? 0)
-    await expect(entry.getByTestId('schedule-sub-item-0')).toHaveClass(
+    const list = await column(page).boundingBox()
+    expect(list?.y ?? 0).toBeGreaterThan(preview?.y ?? 0)
+    await expect(column(page).getByTestId('schedule-sub-item-0')).toHaveClass(
       /ring-live/,
     )
     // No horizontal scrolling on a phone.
@@ -200,7 +183,7 @@ test.describe('The control room playlist', () => {
     await expect
       .poll(() => liveStep(request))
       .toEqual({ scheduleId: presentation.id, index: 1 })
-    await expect(entry.getByTestId('schedule-sub-item-1')).toHaveClass(
+    await expect(column(page).getByTestId('schedule-sub-item-1')).toHaveClass(
       /ring-live/,
     )
   })

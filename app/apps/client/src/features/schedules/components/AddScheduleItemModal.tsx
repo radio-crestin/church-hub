@@ -6,8 +6,8 @@ import {
   FileText,
   FileUp,
   Film,
-  ListChecks,
   ListMusic,
+  ListTree,
   Loader2,
   Megaphone,
   Music,
@@ -46,8 +46,8 @@ interface AddScheduleItemModalProps {
   onAddDeck?: () => void
   /** A Slides item from a PowerPoint file the operator picks. */
   onImportPptx?: () => void
-  /** Another presentation's items, copied in. */
-  onAddPresentation?: () => void
+  /** Another presentation, played in its place. */
+  onAddProgram?: () => void
   /** Where the new item goes, shown above the kinds. */
   placement?: ReactNode
   /**
@@ -108,7 +108,7 @@ export function AddScheduleItemModal({
   onAddMedia,
   onAddDeck,
   onImportPptx,
-  onAddPresentation,
+  onAddProgram,
   placement,
   showTrigger = true,
 }: AddScheduleItemModalProps) {
@@ -258,14 +258,14 @@ export function AddScheduleItemModal({
           } satisfies MenuOption,
         ]
       : []),
-    ...(onAddPresentation
+    ...(onAddProgram
       ? [
           {
-            key: 'presentation',
-            icon: ListChecks,
-            titleKey: 'addMenu.importSchedule.title',
-            descriptionKey: 'addMenu.importSchedule.description',
-            onSelect: () => handHandoff(onAddPresentation),
+            key: 'program',
+            icon: ListTree,
+            titleKey: 'addMenu.program',
+            descriptionKey: 'addMenu.programDescription',
+            onSelect: () => handHandoff(onAddProgram),
           } satisfies MenuOption,
         ]
       : []),

@@ -434,6 +434,7 @@ function SortableItemWrapper({
     (item.itemType === 'slides' &&
       (item.itemConfig as SlideDeck | null)?.slides.length === 0) ||
     (item.itemType === 'music' && !item.music?.trackCount) ||
+    (item.itemType === 'schedule' && !item.childSchedule?.items.length) ||
     (item.itemType === 'song' && item.slides.length === 0) ||
     (item.itemType === 'bible_passage' &&
       item.biblePassageVerses.length === 0) ||

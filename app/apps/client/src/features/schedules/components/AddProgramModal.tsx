@@ -1,53 +1,58 @@
-import { ListChecks, Plus } from 'lucide-react'
+import { ListTree, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
-import { useAddPresentationItems, useSchedules } from '../hooks'
+import { useAddItemToSchedule, useSchedules } from '../hooks'
 import { ItemDialog } from '../media-items/ItemDialog'
+import { scheduleContains } from '../utils/scheduleContains'
 
-interface AddPresentationItemsModalProps {
-  /** The presentation the items go into. */
+interface AddProgramModalProps {
+  /** The presentation it goes into. */
   scheduleId: number
-  /** They go after this item; without it, at the end. */
+  /** It goes after this item; without it, at the end. */
   afterItemId?: number
   /** `added` is false when the operator went back without adding. */
   onClose: (added: boolean) => void
 }
 
 /**
- * Picks another presentation and copies its items in, in their order: a
+ * Picks another presentation to play inside this one, in its place: a
  * search, the presentations matching it, and Add. Enter adds the one picked
- * (the first match by default).
+ * (the first match by default). This one, and any that already plays it, are
+ * left out: adding them would make a loop.
  */
-export function AddPresentationItemsModal({
+export function AddProgramModal({
   scheduleId,
   afterItemId,
   onClose,
-}: AddPresentationItemsModalProps) {
+}: AddProgramModalProps) {
   const { t } = useTranslation(['schedules', 'common'])
   const { showToast } = useToast()
   const { data: schedules = [] } = useSchedules()
-  const addItems = useAddPresentationItems()
+  const addItem = useAddItemToSchedule()
   const [query, setQuery] = useState('')
   const [pickedId, setPickedId] = useState<number | null>(null)
 
   const needle = query.trim().toLocaleLowerCase()
   const matches = schedules.filter(
     (s) =>
-      s.id !== scheduleId &&
-      s.itemCount > 0 &&
+      !scheduleContains(schedules, s.id, scheduleId) &&
       s.title.toLocaleLowerCase().includes(needle),
   )
   const picked = matches.find((s) => s.id === pickedId) ?? matches[0]
 
   const add = () => {
-    if (!picked || addItems.isPending) return
-    addItems.mutate(
-      { scheduleId, sourceId: picked.id, afterItemId },
+    if (!picked || addItem.isPending) return
+    addItem.mutate(
+      { scheduleId, input: { childScheduleId: picked.id, afterItemId } },
       {
-        onSuccess: (count) => {
-          showToast(t('schedules:addPresentation.added', { count }), 'success')
+        onSuccess: (result) => {
+          if (!result.success) {
+            showToast(result.error ?? t('schedules:messages.error'), 'error')
+            return
+          }
+          showToast(t('schedules:messages.itemAdded'), 'success')
           onClose(true)
         },
         onError: () => showToast(t('schedules:messages.error'), 'error'),
@@ -57,20 +62,14 @@ export function AddPresentationItemsModal({
 
   return (
     <ItemDialog
-      title={t('common:addMenu.importSchedule.title')}
-      icon={
-        <ListChecks size={16} strokeWidth={1.5} className="text-fg-label" />
-      }
-      testId="add-presentation-items"
+      title={t('common:addMenu.program')}
+      icon={<ListTree size={16} strokeWidth={1.5} className="text-fg-label" />}
+      testId="add-program"
       canSave={!!picked}
-      isSaving={addItems.isPending}
+      isSaving={addItem.isPending}
       onSave={add}
       onClose={() => onClose(false)}
-      saveLabel={
-        picked
-          ? t('schedules:addPresentation.add', { count: picked.itemCount })
-          : t('common:addMenu.button')
-      }
+      saveLabel={t('common:addMenu.button')}
       saveIcon={<Plus size={16} strokeWidth={1.5} />}
     >
       <input
@@ -84,19 +83,19 @@ export function AddPresentationItemsModal({
           }
         }}
         autoFocus
-        aria-label={t('schedules:addPresentation.search')}
-        placeholder={t('schedules:addPresentation.search')}
-        data-testid="add-presentation-items-search"
+        aria-label={t('schedules:addProgram.search')}
+        placeholder={t('schedules:addProgram.search')}
+        data-testid="add-program-search"
         className="w-full h-9 px-3 text-base md:text-sm bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
       />
       {matches.length === 0 ? (
         <p className="py-6 text-center text-sm text-fg-hint">
-          {t('schedules:addPresentation.none')}
+          {t('schedules:addProgram.none')}
         </p>
       ) : (
         <div
           role="radiogroup"
-          aria-label={t('common:addMenu.importSchedule.title')}
+          aria-label={t('common:addMenu.program')}
           className="space-y-1"
         >
           {matches.map((schedule) => (
@@ -106,7 +105,8 @@ export function AddPresentationItemsModal({
               role="radio"
               aria-checked={schedule.id === picked?.id}
               onClick={() => setPickedId(schedule.id)}
-              data-testid="add-presentation-items-option"
+              data-testid="add-program-option"
+              data-schedule-id={schedule.id}
               className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus ${
                 schedule.id === picked?.id
                   ? 'bg-selected text-fg'

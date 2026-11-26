@@ -704,26 +704,25 @@
     "allMarked": "Toate strofele sunt marcate",
     "keys": "Space: strofa următoare · Backspace: anulează · ← →: 3 secunde · Esc: pauză"
   },
-  "playlist": {
-    "title": "Prezentări",
-    "empty": "Nicio prezentare încă",
-    "open": "Deschide prezentarea",
-    "showAll": "Arată toate prezentările ({{count}})",
-    "showFewer": "Arată mai puține",
-    "running": "Rulează",
-    "addHint": "Adaugă o cântare, versete, muzică sau un video",
-    "addTo": "Adaugă în",
-    "afterLive": "După cel de pe ecran",
-    "atEnd": "La sfârșit"
-  },
-  "addPresentation": {
+  "addProgram": {
     "search": "Caută prezentări",
-    "none": "Nicio altă prezentare cu elemente",
-    "add_one": "Adaugă {{count}} element",
-    "add_few": "Adaugă {{count}} elemente",
-    "add_other": "Adaugă {{count}} de elemente",
-    "added_one": "{{count}} element adăugat",
-    "added_few": "{{count}} elemente adăugate",
-    "added_other": "{{count}} de elemente adăugate"
+    "none": "Nicio prezentare nu poate fi adăugată aici"
+  },
+  "nested": {
+    "missing": "Prezentarea nu mai există"
+  },
+  "queue": {
+    "title": "Lista de rulare",
+    "empty": "Lista de rulare e goală",
+    "emptyHint": "Adaugă o cântare, versete, un video sau un program, ca să le prezinți pe rând.",
+    "addHint": "Adaugă o cântare, versete, muzică, un video sau un program",
+    "addingTo": "Se adaugă în {{title}}",
+    "afterLive": "După cel de pe ecran",
+    "atEnd": "La sfârșit",
+    "clear": "Golește lista",
+    "clearTitle": "Golești lista de rulare?",
+    "clearMessage": "Toate elementele din ea vor fi scoase.",
+    "clearConfirm": "Golește",
+    "open": "Deschide prezentarea"
   }
 }

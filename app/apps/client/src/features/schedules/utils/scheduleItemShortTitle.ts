@@ -19,6 +19,9 @@ export function scheduleItemShortTitle(item: ScheduleItem): string {
   }
   if (item.itemType === 'music') return shorten(item.music?.folderName ?? '')
   if (item.itemType === 'video') return ''
+  if (item.itemType === 'schedule') {
+    return shorten(item.childSchedule?.title ?? '')
+  }
   if (item.itemType === 'slides') {
     return shorten(deckFirstText(item.itemConfig as SlideDeck))
   }
